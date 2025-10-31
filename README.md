@@ -1,6 +1,6 @@
 # LeanSpec
 
-A lightweight, agile Software Design Documentation (SDD) methodology designed to reduce spec "mind burden" and keep teams focused on what truly matters.
+A lightweight, agile Spec-Driven Development (SDD) methodology designed to reduce spec "mind burden" and keep teams focused on what truly matters.
 
 ## The Problem
 
