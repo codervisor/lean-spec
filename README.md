@@ -15,14 +15,16 @@ Development teams—including AI coding agents—need clear direction without be
 
 ## The LeanSpec Solution
 
-LeanSpec is a **methodology, not a tool**. It provides a minimal framework for capturing what matters:
+LeanSpec is a **mindset and methodology, not a rigid format or tool**. It's about capturing what truly matters with minimal overhead.
+
+A simple example structure might include:
 - **The Goal**: Why this work exists
 - **Key Scenarios**: The critical user journeys that must succeed
 - **Acceptance Criteria**: Clear, testable conditions for "done"
 - **Technical Contracts**: Essential interfaces and constraints
 - **Non-Goals**: What we're explicitly not doing (to maintain focus)
 
-That's it. No more, no less.
+But the key is the mindset: focus on clarity, keep it lean, make it living documentation. The structure should serve your needs, not constrain them.
 
 ## Agile Principles
 
@@ -48,11 +50,14 @@ Use specs as conversation starters, not as replacements for human communication.
 
 ## Getting Started
 
-1. Copy the [LEANSPEC_TEMPLATE.md](LEANSPEC_TEMPLATE.md) template
-2. Fill in the five sections with the minimum information needed
-3. Share it with your team for feedback
-4. Update it as you learn more during development
-5. Keep it short—if your spec is longer than 2 pages, you're probably overthinking it
+The LeanSpec mindset is simple:
+
+1. **Start with why**: What problem are you solving?
+2. **Capture the essentials**: What absolutely must be communicated?
+3. **Stay lean**: If it doesn't add clarity, cut it
+4. **Keep it living**: Update as you learn
+
+For a practical example, see [LEANSPEC_TEMPLATE.md](LEANSPEC_TEMPLATE.md)—but remember, it's just one way to apply the methodology. Adapt the structure to fit your needs and context.
 
 ## When to Use LeanSpec
 
@@ -70,21 +75,23 @@ Use specs as conversation starters, not as replacements for human communication.
 
 ## LeanSpec for AI Coding Agents
 
-In the era of AI-assisted development, LeanSpec serves as an ideal format for communicating intent to AI coding agents:
+In the era of AI-assisted development, the LeanSpec mindset is particularly valuable for communicating intent to AI coding agents:
 
-- **Clear Context**: The "Goal" section gives AI agents the "why" behind the work
-- **Concrete Scenarios**: Key scenarios provide specific examples AI can use to understand expected behavior
-- **Testable Criteria**: Acceptance criteria give AI clear targets for implementation
-- **Boundaries**: Non-goals help AI agents avoid scope creep and stay focused
-- **Structured but Flexible**: The 5-section format is predictable for AI parsing while remaining human-readable
+- **Clear Context**: Starting with "why" gives AI agents the purpose behind the work
+- **Concrete Scenarios**: Specific examples help AI understand expected behavior
+- **Testable Criteria**: Clear targets guide AI implementation
+- **Boundaries**: Explicit non-goals help AI avoid scope creep
+- **Adaptable Structure**: Whatever format you choose, consistency helps AI parse effectively
 
-AI coding agents work best with clear, concise specifications that balance context with brevity—exactly what LeanSpec provides.
+AI coding agents work best with clear, concise specifications that balance context with brevity—exactly what the LeanSpec mindset promotes.
 
 ## Philosophy
 
 > "The best spec is the one that gets read, understood, and acted upon—by humans and AI alike."
 
-LeanSpec embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
+LeanSpec is a mindset, not a format. It embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
+
+The methodology is about principles over process—adapt it to your team, your tools, and your context.
 
 ## Contributing
 

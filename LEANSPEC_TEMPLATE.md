@@ -1,6 +1,10 @@
-# [Feature/Component Name]
+# LeanSpec Example
 
-## Goal (Why)
+> **Note**: This is just one simple example of how to apply the LeanSpec mindset. LeanSpec is a methodology, not a rigid format—feel free to adapt this structure to fit your needs and context.
+
+## [Feature/Component Name]
+
+### Goal (Why)
 
 _Why does this exist? What problem does it solve? What value does it deliver?_
 
@@ -9,7 +13,7 @@ Keep this section focused on the purpose and motivation.
 Example: "Enable users to export their data in CSV format so they can analyze it in Excel."
 -->
 
-## Key Scenarios
+### Key Scenarios
 
 _What are the critical user journeys that must work?_
 
@@ -20,7 +24,7 @@ Example:
 - User exports filtered data and CSV contains only the filtered subset
 -->
 
-## Acceptance Criteria
+### Acceptance Criteria
 
 _What specific, testable conditions define "done"?_
 
@@ -32,7 +36,7 @@ Example:
 - Should: Progress indicator shows during export
 -->
 
-## Technical Contracts
+### Technical Contracts
 
 _What are the essential interfaces, APIs, or constraints?_
 
@@ -45,7 +49,7 @@ Example:
 - Rate limit: 10 exports per user per hour
 -->
 
-## Non-Goals
+### Non-Goals
 
 _What are we explicitly NOT doing?_
 
@@ -59,9 +63,13 @@ Example:
 
 ---
 
-**Tips for using this template:**
-- Keep it short (aim for under 2 pages)
-- Write in plain language, not formal documentation style
-- Update it as you learn—specs should evolve
-- Use it as a conversation starter, not a contract
-- If a section doesn't apply, remove it rather than leaving it empty
+## Applying the LeanSpec Mindset
+
+Remember, this is just one example structure. The core principles are:
+
+- **Clarity over Documentation**: Write just enough to communicate intent
+- **Essential over Exhaustive**: Focus on what truly matters
+- **Living over Frozen**: Update as you learn
+- **Adaptable over Rigid**: Change the structure to fit your needs
+
+Your spec might have more sections, fewer sections, or completely different ones—that's fine! The goal is clear communication with minimal overhead, not adherence to a template.
