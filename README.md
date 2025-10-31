@@ -151,6 +151,27 @@ LeanSpec is a **mindset, methodology, and adaptive workflow**—not just a forma
 
 The methodology is about principles over process—adapt it to your team, your tools, and your context. When working with AI-powered development teams, LeanSpec becomes an SOP that integrates with system prompts, context engineering, and agent instructions to create a cohesive, intelligent workflow.
 
+## Example Setup
+
+Ready to implement LeanSpec in your repository? Check out the [examples/](examples/) directory for:
+
+- **Complete setup templates** - AGENTS.md, spec templates, and management scripts
+- **Ready-to-use automation** - Scripts for creating, archiving, and listing specs
+- **Customization guidance** - Adapt the examples to your specific tech stack and workflow
+
+Quick start:
+```bash
+# Copy the basic setup to your repository
+cp -r examples/basic-setup/AGENTS.md .
+cp -r examples/basic-setup/spec-templates .
+cp -r examples/basic-setup/scripts .
+
+# Create your first spec
+./scripts/create-spec.sh feature my-feature ./specs
+```
+
+See the [examples README](examples/README.md) for more details.
+
 ## Contributing
 
 Have ideas for improving LeanSpec? Open an issue or submit a pull request. Keep it lean! 🚀
