@@ -59,7 +59,48 @@ The LeanSpec mindset is simple:
 3. **Stay lean**: If it doesn't add clarity, cut it
 4. **Keep it living**: Update as you learn
 
-For a practical example, see [LEANSPEC_TEMPLATE.md](LEANSPEC_TEMPLATE.md)—but remember, it's just one way to apply the methodology. Adapt the structure to fit your needs and context.
+For a practical example, see `templates/spec.md` for a minimal spec template. Adapt it to your needs.
+
+## Quick Start
+
+```bash
+# Install (using pnpm, npm, or yarn)
+pnpm install -g lean-spec
+
+# Or use locally in your project
+pnpm add -D lean-spec
+
+# Create your first spec (stores in specs/YYYYMMDD/NNN-name.md)
+lspec create my-feature
+
+# List all specs
+lspec list
+
+# Archive old specs
+lspec archive specs/20251031/001-my-feature.md
+```
+
+See `AGENTS.md` for AI agent integration guidance.
+
+## Development
+
+This project is built with TypeScript and pnpm:
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build CLI
+pnpm build
+
+# Watch mode
+pnpm dev
+
+# Type check
+pnpm typecheck
+```
+
+**Note**: LeanSpec methodology is language/framework-agnostic. This TS implementation is for the CLI tool only.
 
 ## When to Use LeanSpec
 
@@ -119,29 +160,7 @@ To effectively use LeanSpec with AI agents, consider implementing:
 
 #### Example: AGENTS.md for LeanSpec Workflow
 
-Create an `AGENTS.md` file in your repository to guide AI agents:
-
-```markdown
-# AI Agent Instructions
-
-## Working with LeanSpec
-
-When implementing features in this repository:
-
-1. **Always start by reading the relevant LeanSpec document**
-2. **Follow the Goal → Scenarios → Criteria flow**
-3. **Respect Non-Goals explicitly stated**
-4. **Ask clarifying questions if acceptance criteria are unclear**
-5. **Update the LeanSpec if you discover gaps or ambiguities**
-
-## Code Standards
-
-- Write tests that validate the Acceptance Criteria
-- Reference the LeanSpec document in PR descriptions
-- Keep code focused on stated goals
-```
-
-This transforms LeanSpec from a documentation format into an operational workflow that guides AI behavior systematically.
+Create an `AGENTS.md` file in your repository to guide AI agents. See this repo's `AGENTS.md` for a working example.
 
 ## Philosophy
 
@@ -150,27 +169,6 @@ This transforms LeanSpec from a documentation format into an operational workflo
 LeanSpec is a **mindset, methodology, and adaptive workflow**—not just a format. It embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
 
 The methodology is about principles over process—adapt it to your team, your tools, and your context. When working with AI-powered development teams, LeanSpec becomes an SOP that integrates with system prompts, context engineering, and agent instructions to create a cohesive, intelligent workflow.
-
-## Example Setup
-
-Ready to implement LeanSpec in your repository? Check out the [examples/](examples/) directory for:
-
-- **Complete setup template** - AGENTS.md, spec template, and unified management script
-- **Ready-to-use automation** - Single command for creating, archiving, and listing specs
-- **Customization guidance** - Adapt the template to your specific needs
-
-Quick start:
-```bash
-# Copy the basic setup to your repository
-cp -r examples/basic-setup/AGENTS.md .
-cp -r examples/basic-setup/spec-templates .
-cp -r examples/basic-setup/scripts .
-
-# Create your first spec
-./scripts/leanspec create my-feature
-```
-
-See the [examples README](examples/README.md) for more details.
 
 ## Contributing
 
