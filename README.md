@@ -1,6 +1,8 @@
 # LeanSpec
 
-A lightweight, agile Spec-Driven Development (SDD) methodology designed to reduce spec "mind burden" and keep teams—both humans and AI coding agents—focused on what truly matters.
+A lightweight, agile Spec-Driven Development (SDD) methodology and adaptive workflow designed to reduce spec "mind burden" and keep teams—both humans and AI coding agents—focused on what truly matters.
+
+> **LeanSpec is not just a document—it's an adaptive workflow, SOP (Standard Operating Procedure), and living process for AI-powered development teams.**
 
 ## The Problem
 
@@ -67,6 +69,8 @@ For a practical example, see [LEANSPEC_TEMPLATE.md](LEANSPEC_TEMPLATE.md)—but 
 - Architecture decisions that need shared understanding
 - Quick alignment on work direction
 - Providing context to AI coding agents for implementation tasks
+- **Establishing an adaptive SOP for AI-powered development teams**
+- **Integrating with system prompts and agent instructions**
 
 **Not ideal for:**
 - Detailed API reference documentation (use code comments + auto-generated docs)
@@ -75,7 +79,9 @@ For a practical example, see [LEANSPEC_TEMPLATE.md](LEANSPEC_TEMPLATE.md)—but 
 
 ## LeanSpec for AI Coding Agents
 
-In the era of AI-assisted development, the LeanSpec mindset is particularly valuable for communicating intent to AI coding agents:
+In the era of AI-assisted development, LeanSpec serves as both a methodology and an adaptive workflow for AI-powered development teams. It's not just about writing specs—it's about establishing a living process that integrates with AI agent systems.
+
+### Core Benefits for AI Teams
 
 - **Clear Context**: Starting with "why" gives AI agents the purpose behind the work
 - **Concrete Scenarios**: Specific examples help AI understand expected behavior
@@ -85,13 +91,86 @@ In the era of AI-assisted development, the LeanSpec mindset is particularly valu
 
 AI coding agents work best with clear, concise specifications that balance context with brevity—exactly what the LeanSpec mindset promotes.
 
+### Implementing LeanSpec as an AI Workflow
+
+LeanSpec becomes truly powerful when integrated as a **Standard Operating Procedure (SOP)** for your AI-powered development team:
+
+#### System Prompts and Context Engineering
+
+To effectively use LeanSpec with AI agents, consider implementing:
+
+1. **System-Level Instructions** (e.g., `AGENTS.md`)
+   - Define how AI agents should interpret and apply LeanSpec principles
+   - Establish coding standards and conventions
+   - Specify how to handle ambiguity or missing information
+   - Set expectations for testing, documentation, and code quality
+
+2. **Context Engineering**
+   - Structure your repository to make LeanSpec documents discoverable
+   - Use consistent naming conventions (e.g., `LEANSPEC_*.md`)
+   - Place specs near the code they describe
+   - Link related specs together for complex features
+
+3. **Adaptive Workflow Integration**
+   - Start each work item with a LeanSpec document
+   - Have AI agents reference the spec during implementation
+   - Update specs as understanding evolves (living documentation)
+   - Use specs as the source of truth for feature discussions
+
+#### Example: AGENTS.md for LeanSpec Workflow
+
+Create an `AGENTS.md` file in your repository to guide AI agents:
+
+```markdown
+# AI Agent Instructions
+
+## Working with LeanSpec
+
+When implementing features in this repository:
+
+1. **Always start by reading the relevant LeanSpec document**
+2. **Follow the Goal → Scenarios → Criteria flow**
+3. **Respect Non-Goals explicitly stated**
+4. **Ask clarifying questions if acceptance criteria are unclear**
+5. **Update the LeanSpec if you discover gaps or ambiguities**
+
+## Code Standards
+
+- Write tests that validate the Acceptance Criteria
+- Reference the LeanSpec document in PR descriptions
+- Keep code focused on stated goals
+```
+
+This transforms LeanSpec from a documentation format into an operational workflow that guides AI behavior systematically.
+
 ## Philosophy
 
 > "The best spec is the one that gets read, understood, and acted upon—by humans and AI alike."
 
-LeanSpec is a mindset, not a format. It embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
+LeanSpec is a **mindset, methodology, and adaptive workflow**—not just a format. It embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
 
-The methodology is about principles over process—adapt it to your team, your tools, and your context.
+The methodology is about principles over process—adapt it to your team, your tools, and your context. When working with AI-powered development teams, LeanSpec becomes an SOP that integrates with system prompts, context engineering, and agent instructions to create a cohesive, intelligent workflow.
+
+## Example Setup
+
+Ready to implement LeanSpec in your repository? Check out the [examples/](examples/) directory for:
+
+- **Complete setup template** - AGENTS.md, spec template, and unified management script
+- **Ready-to-use automation** - Single command for creating, archiving, and listing specs
+- **Customization guidance** - Adapt the template to your specific needs
+
+Quick start:
+```bash
+# Copy the basic setup to your repository
+cp -r examples/basic-setup/AGENTS.md .
+cp -r examples/basic-setup/spec-templates .
+cp -r examples/basic-setup/scripts .
+
+# Create your first spec
+./scripts/leanspec create my-feature
+```
+
+See the [examples README](examples/README.md) for more details.
 
 ## Contributing
 
