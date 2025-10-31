@@ -9,8 +9,8 @@ This directory contains practical examples and templates for implementing the Le
 A complete, ready-to-use LeanSpec setup for your repository, including:
 
 - **AGENTS.md** - Standard Operating Procedures and guidelines for AI coding agents
-- **Spec Templates** - Pre-built templates for features, APIs, and components
-- **Management Scripts** - Automation tools for creating, archiving, and listing specs
+- **Spec Template** - A flexible, general-purpose template for any specification
+- **leanspec Script** - Unified command-line tool for managing specs
 
 **Best for**: Teams getting started with LeanSpec or setting up a new repository.
 
@@ -22,7 +22,7 @@ cp -r examples/basic-setup/spec-templates .
 cp -r examples/basic-setup/scripts .
 
 # Create your first spec
-./scripts/create-spec.sh feature my-feature ./specs
+./scripts/leanspec create my-feature
 ```
 
 ## Using These Examples
@@ -37,17 +37,14 @@ Each example directory contains:
 ### AGENTS.md Templates
 System prompts and SOPs that define how AI agents should work with LeanSpec in your repository. Think of this as the "constitution" for your AI-powered development workflow.
 
-### Spec Templates
-Ready-to-use templates for different types of specifications:
-- **Feature specs** - For new functionality and features
-- **API specs** - For endpoints and interfaces
-- **Component specs** - For UI components and modules
+### Spec Template
+A flexible, general-purpose template that works for any type of specification - features, APIs, components, processes, or anything else. Designed to be adapted to your specific needs.
 
-### Automation Scripts
-Bash scripts to streamline spec management:
-- `create-spec.sh` - Generate new specs from templates
-- `archive-spec.sh` - Archive deprecated specs
-- `list-specs.sh` - View all specs in your repository
+### leanspec Script
+A unified command-line tool to streamline spec management:
+- `create` - Generate new specs from the template
+- `archive` - Archive deprecated specs
+- `list` - View all specs in your repository
 
 ## Philosophy
 

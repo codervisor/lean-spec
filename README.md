@@ -155,9 +155,9 @@ The methodology is about principles over process—adapt it to your team, your t
 
 Ready to implement LeanSpec in your repository? Check out the [examples/](examples/) directory for:
 
-- **Complete setup templates** - AGENTS.md, spec templates, and management scripts
-- **Ready-to-use automation** - Scripts for creating, archiving, and listing specs
-- **Customization guidance** - Adapt the examples to your specific tech stack and workflow
+- **Complete setup template** - AGENTS.md, spec template, and unified management script
+- **Ready-to-use automation** - Single command for creating, archiving, and listing specs
+- **Customization guidance** - Adapt the template to your specific needs
 
 Quick start:
 ```bash
@@ -167,7 +167,7 @@ cp -r examples/basic-setup/spec-templates .
 cp -r examples/basic-setup/scripts .
 
 # Create your first spec
-./scripts/create-spec.sh feature my-feature ./specs
+./scripts/leanspec create my-feature
 ```
 
 See the [examples README](examples/README.md) for more details.

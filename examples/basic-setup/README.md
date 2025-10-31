@@ -7,14 +7,10 @@ This directory contains a complete example of how to structure a repository usin
 ```
 examples/basic-setup/
 ├── AGENTS.md                    # AI agent SOPs and guidelines
-├── spec-templates/              # Template files for different spec types
-│   ├── feature-template.md      # Template for feature specifications
-│   ├── api-template.md          # Template for API specifications
-│   └── component-template.md    # Template for component specifications
-├── scripts/                     # Automation scripts for spec management
-│   ├── create-spec.sh          # Create new specs from templates
-│   ├── archive-spec.sh         # Archive deprecated specs
-│   └── list-specs.sh           # List all specs in repository
+├── spec-templates/              # Template for LeanSpec documents
+│   └── template.md             # General-purpose LeanSpec template
+├── scripts/                     # Unified management script
+│   └── leanspec                # All-in-one command for managing specs
 └── README.md                    # This file
 ```
 
@@ -37,17 +33,20 @@ Edit `AGENTS.md` to match your team's specific workflow, coding standards, and c
 
 ### 3. Create Your First Spec
 
-Use the creation script to generate a new spec:
+Use the unified `leanspec` command to manage your specs:
 
 ```bash
-# Create a feature spec
-./scripts/create-spec.sh feature user-export ./specs
+# Create a new spec
+./scripts/leanspec create user-export
 
-# Create an API spec
-./scripts/create-spec.sh api payments ./specs
+# Create a spec in a specific directory
+./scripts/leanspec create user-export ./specs
 
-# Create a component spec
-./scripts/create-spec.sh component button ./specs
+# List all specs
+./scripts/leanspec list
+
+# Archive a spec
+./scripts/leanspec archive ./specs/LEANSPEC_old-feature.md "Replaced by new implementation"
 ```
 
 ### 4. Integrate with Your Workflow
@@ -81,87 +80,57 @@ Make sure AI agents are instructed to:
 
 **Customization**: Adapt this file to your team's specific needs, coding standards, and workflow preferences.
 
-### Spec Templates
+### Spec Template
 
-Three template types are provided:
+**template.md** - A flexible, general-purpose LeanSpec template that works for any type of specification.
 
-#### feature-template.md
-For general features and functionality. Includes:
-- Goal and success metrics
-- Key scenarios with user stories
-- Acceptance criteria (must/should have)
-- Technical contracts and dependencies
-- Non-goals and open questions
+The template includes:
+- Goal (Why) - Purpose and value
+- Key Scenarios - Critical use cases
+- Acceptance Criteria - Testable conditions
+- Technical Contracts - Essential interfaces and constraints
+- Non-Goals - Explicit scope boundaries
+- Notes - Additional context
 
-#### api-template.md
-For API endpoints and interfaces. Includes:
-- Request/response formats
-- Authentication and authorization
-- Error handling
-- Rate limiting
-- Example requests
+**Philosophy**: The template is intentionally generic so you can adapt it to any use case - features, APIs, components, processes, or anything else. Add, remove, or modify sections as needed. LeanSpec is about clarity, not rigid structure.
 
-#### component-template.md
-For UI components or reusable modules. Includes:
-- Component API (props, parameters)
-- Usage examples
-- Accessibility requirements
-- Testing strategy
-- Styling approach
+### leanspec Script
 
-### Scripts
+A unified command-line tool for managing all your LeanSpec documents.
 
-#### create-spec.sh
-Creates a new spec from a template.
+**Commands**:
 
 ```bash
-./scripts/create-spec.sh <type> <name> [directory]
+# Create a new spec
+./scripts/leanspec create <name> [directory]
+
+# Archive an existing spec
+./scripts/leanspec archive <spec-file> [reason]
+
+# List all specs
+./scripts/leanspec list [directory] [--archived]
+
+# Show help
+./scripts/leanspec help
 ```
 
 **Examples**:
 ```bash
 ./scripts/create-spec.sh feature user-export
-./scripts/create-spec.sh api payments ./src/api/specs
-./scripts/create-spec.sh component button ./src/components
-```
-
-#### archive-spec.sh
-Archives a spec when it's no longer active.
-
 ```bash
-./scripts/archive-spec.sh <spec-file> [reason]
+./scripts/leanspec create user-export
+./scripts/leanspec create api-payments ./src/api/specs
+./scripts/leanspec list
+./scripts/leanspec list ./src --archived
+./scripts/leanspec archive ./specs/LEANSPEC_old-feature.md "Replaced by v2"
 ```
 
-**Examples**:
-```bash
-./scripts/archive-spec.sh ./specs/LEANSPEC_old-feature.md
-./scripts/archive-spec.sh ./specs/LEANSPEC_old-api.md "Replaced by v2 API"
-```
-
-The script:
-- Creates an `archived/` subdirectory
-- Adds an archive header with date and reason
-- Optionally removes the original file
-
-#### list-specs.sh
-Lists all LeanSpec documents in the repository.
-
-```bash
-./scripts/list-specs.sh [directory] [--archived]
-```
-
-**Examples**:
-```bash
-./scripts/list-specs.sh                    # List specs in current directory
-./scripts/list-specs.sh ./src              # List specs in src directory
-./scripts/list-specs.sh . --archived       # Include archived specs
-```
-
-Output includes:
-- Status indicators (Draft, In Progress, Complete)
-- Creation dates
-- Color-coded display
-- Summary counts
+**Features**:
+- Unified interface for all spec management tasks
+- Create specs with automatic date substitution
+- Archive specs with metadata tracking
+- List specs with color-coded status indicators
+- Built-in help and usage examples
 
 ## Best Practices
 
@@ -200,7 +169,7 @@ Choose based on your team's preferences. Co-location can make specs easier to di
 #### Git Workflow
 ```bash
 # 1. Create spec
-./scripts/create-spec.sh feature my-feature
+./scripts/leanspec create my-feature
 
 # 2. Fill in the spec and commit
 git add specs/LEANSPEC_my-feature.md
@@ -239,60 +208,49 @@ Before implementing any feature:
 - **Review quarterly**: Check that active specs still reflect reality
 - **Archive promptly**: Don't let deprecated specs linger
 - **Keep AGENTS.md current**: Update as workflow evolves
-- **Refine templates**: Adjust based on what works for your team
+- **Refine the template**: Adjust based on what works for your team
 
 ## Customization Tips
 
-### Adapt to Your Stack
+### Adapt the Template
 
-**For React Projects**: Enhance `component-template.md` with:
-- Storybook story requirements
-- React-specific patterns (hooks, context)
-- Component composition examples
+The general-purpose template is designed to be flexible. Customize it for your needs:
 
-**For Backend Services**: Enhance `api-template.md` with:
-- Database schema changes
-- Migration considerations
-- Service dependencies
+**For Different Use Cases**:
+- Keep core sections (Goal, Scenarios, Criteria, Non-Goals)
+- Add domain-specific sections as needed
+- Remove sections that don't apply
+- Adjust detail level based on audience
 
-**For Mobile Apps**: Create new templates for:
-- Screen specifications
-- Navigation flows
-- Platform-specific considerations
+**Examples of Adaptations**:
+- Add "API Endpoints" section for backend services
+- Add "Component Props" section for UI components
+- Add "Migration Plan" section for database changes
+- Add "Performance Requirements" for high-scale features
 
-### Add New Templates
+The key is to maintain clarity and lean principles while adapting to your specific context.
 
-Create specialized templates as needed:
+### Extend the Script
 
-```bash
-# Create a new template
-cp spec-templates/feature-template.md spec-templates/database-template.md
+The `leanspec` script is simple bash and can be extended:
 
-# Edit to fit your needs
-# Update create-spec.sh to support the new type
-```
-
-### Extend the Scripts
-
-The scripts are simple bash and can be extended:
-
-- Add validation checks
-- Integrate with issue trackers
-- Auto-generate from templates
-- Add spec linting
+- Add validation checks for spec content
+- Integrate with issue trackers or project management tools
+- Add custom commands for your workflow
+- Implement spec linting or quality checks
 
 ## Troubleshooting
 
-### Scripts Don't Run
+### Script Doesn't Run
 ```bash
-# Make them executable
-chmod +x scripts/*.sh
+# Make it executable
+chmod +x scripts/leanspec
 ```
 
-### Templates Not Found
+### Template Not Found
 ```bash
-# Check paths in create-spec.sh
-# Ensure templates are in spec-templates/ directory
+# Ensure template exists in the correct location
+ls spec-templates/template.md
 ```
 
 ### Git Ignores Specs

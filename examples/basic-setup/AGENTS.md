@@ -71,7 +71,7 @@ When encountering unclear or missing information:
 ## Spec Lifecycle Management
 
 ### Creating New Specs
-- Use the `create-spec.sh` script to generate a new spec from the template
+- Use the `leanspec create` command to generate a new spec from the template
 - Place specs close to the code they describe (feature folders when applicable)
 - Use consistent naming: `LEANSPEC_feature_name.md`
 
@@ -81,7 +81,7 @@ When encountering unclear or missing information:
 - Keep specs synchronized with implementation
 
 ### Archiving Specs
-- Use `archive-spec.sh` when features are deprecated or replaced
+- Use `leanspec archive` when features are deprecated or replaced
 - Archived specs provide historical context
 - Never delete specs; archive them instead
 
