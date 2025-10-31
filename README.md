@@ -1,17 +1,17 @@
 # LeanSpec
 
-A lightweight, agile Spec-Driven Development (SDD) methodology designed to reduce spec "mind burden" and keep teams focused on what truly matters.
+A lightweight, agile Spec-Driven Development (SDD) methodology designed to reduce spec "mind burden" and keep teams—both humans and AI coding agents—focused on what truly matters.
 
 ## The Problem
 
 Traditional software specifications often suffer from:
-- **Documentation Overload**: Lengthy documents that nobody reads or maintains
+- **Documentation Overload**: Lengthy documents that nobody (human or AI) reads or maintains
 - **Frozen Contracts**: Specs that become outdated as soon as development begins
 - **Exhaustive Overthinking**: Trying to document every possible edge case upfront
 - **Mind Burden**: Cognitive load from managing verbose, complicated documentation
 - **Lost Intent**: The "why" gets buried under mountains of "what" and "how"
 
-Development teams need clear direction without being buried in documentation debt.
+Development teams—including AI coding agents—need clear direction without being buried in documentation debt.
 
 ## The LeanSpec Solution
 
@@ -61,17 +61,30 @@ Use specs as conversation starters, not as replacements for human communication.
 - API designs
 - Architecture decisions that need shared understanding
 - Quick alignment on work direction
+- Providing context to AI coding agents for implementation tasks
 
 **Not ideal for:**
 - Detailed API reference documentation (use code comments + auto-generated docs)
 - Step-by-step user manuals (use dedicated user documentation)
 - Compliance requirements that mandate specific formats
 
+## LeanSpec for AI Coding Agents
+
+In the era of AI-assisted development, LeanSpec serves as an ideal format for communicating intent to AI coding agents:
+
+- **Clear Context**: The "Goal" section gives AI agents the "why" behind the work
+- **Concrete Scenarios**: Key scenarios provide specific examples AI can use to understand expected behavior
+- **Testable Criteria**: Acceptance criteria give AI clear targets for implementation
+- **Boundaries**: Non-goals help AI agents avoid scope creep and stay focused
+- **Structured but Flexible**: The 5-section format is predictable for AI parsing while remaining human-readable
+
+AI coding agents work best with clear, concise specifications that balance context with brevity—exactly what LeanSpec provides.
+
 ## Philosophy
 
-> "The best spec is the one that gets read, understood, and acted upon."
+> "The best spec is the one that gets read, understood, and acted upon—by humans and AI alike."
 
-LeanSpec embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone understands beats a fifty-page document that nobody reads.
+LeanSpec embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs. A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
 
 ## Contributing
 
