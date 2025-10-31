@@ -1,6 +1,6 @@
 # LeanSpec Example
 
-> **Note**: This is just one simple example of how to apply the LeanSpec mindset. LeanSpec is a methodology, not a rigid format—feel free to adapt this structure to fit your needs and context.
+> **Note**: This is just one simple example of how to apply the LeanSpec mindset. LeanSpec is a methodology and adaptive workflow, not a rigid format—feel free to adapt this structure to fit your needs and context, especially when integrating with AI agent systems.
 
 ## [Feature/Component Name]
 
@@ -73,3 +73,24 @@ Remember, this is just one example structure. The core principles are:
 - **Adaptable over Rigid**: Change the structure to fit your needs
 
 Your spec might have more sections, fewer sections, or completely different ones—that's fine! The goal is clear communication with minimal overhead, not adherence to a template.
+
+## For AI-Powered Development Teams
+
+When using LeanSpec as part of an AI workflow:
+
+### Integration Tips
+
+- **Reference this spec in your system prompts** (e.g., AGENTS.md) to ensure AI agents understand the structure
+- **Keep specs near the code** they describe for easy discovery
+- **Use consistent naming** (e.g., `LEANSPEC_feature_name.md`) so AI can find and parse them
+- **Update the spec as you build** - make it a living document that AI can reference during development
+
+### AI Agent Context
+
+AI agents work best when specs provide:
+- Clear "why" (Goal section) for understanding purpose
+- Concrete examples (Key Scenarios) for behavior understanding  
+- Testable outcomes (Acceptance Criteria) for validation
+- Explicit boundaries (Non-Goals) to prevent scope creep
+
+This LeanSpec structure is designed to be both human-readable and AI-parseable, making it an effective SOP for AI-powered development workflows.
