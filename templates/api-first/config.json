@@ -1,0 +1,19 @@
+{
+  "name": "api-first",
+  "description": "API-driven development workflow",
+  "config": {
+    "template": "api-first",
+    "specsDir": "specs",
+    "structure": {
+      "pattern": "{date}/{seq}-{name}/",
+      "dateFormat": "YYYYMMDD",
+      "sequenceDigits": 3,
+      "defaultFile": "README.md"
+    },
+    "features": {
+      "aiAgents": true,
+      "examples": true,
+      "apiDocs": true
+    }
+  }
+}

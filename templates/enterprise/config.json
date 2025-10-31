@@ -1,0 +1,20 @@
+{
+  "name": "enterprise",
+  "description": "Enterprise-grade with governance & compliance",
+  "config": {
+    "template": "enterprise",
+    "specsDir": "specs",
+    "structure": {
+      "pattern": "{date}/{seq}-{name}/",
+      "dateFormat": "YYYYMMDD",
+      "sequenceDigits": 3,
+      "defaultFile": "README.md"
+    },
+    "features": {
+      "aiAgents": true,
+      "examples": true,
+      "compliance": true,
+      "approvals": true
+    }
+  }
+}
