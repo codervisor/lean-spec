@@ -59,26 +59,61 @@ The LeanSpec mindset is simple:
 3. **Stay lean**: If it doesn't add clarity, cut it
 4. **Keep it living**: Update as you learn
 
-For a practical example, see `templates/spec.md` for a minimal spec template. Adapt it to your needs.
+For a practical example, see `templates/` for available project initialization templates. Each template contains:
+- Full project structure (specs/ directory, examples)
+- `AGENTS.md` - AI agent instructions and coding standards
+- Supporting files - CONTRIBUTING.md, checklists, or other guides
+- `config.json` - Template configuration
+
+Initialize with `lspec init` to set up your project.
 
 ## Quick Start
 
 ```bash
-# Install (using pnpm, npm, or yarn)
+# Install globally
 pnpm install -g lean-spec
 
 # Or use locally in your project
 pnpm add -D lean-spec
 
-# Create your first spec (stores in specs/YYYYMMDD/NNN-name.md)
+# Initialize LeanSpec in your project (interactive)
+lspec init
+
+# Create your first spec (creates specs/YYYYMMDD/NNN-name/ folder)
 lspec create my-feature
+
+# List available templates
+lspec templates
 
 # List all specs
 lspec list
 
 # Archive old specs
-lspec archive specs/20251031/001-my-feature.md
+lspec archive specs/20251031/001-my-feature
 ```
+
+### Initialize Your Project
+
+`lspec init` provides three paths:
+
+1. **Quick start** - Zero configuration, solo-dev defaults
+2. **Choose template** - Pick from solo-dev, team, enterprise, or api-first
+3. **Customize everything** - Full control (coming soon)
+
+Each template is a complete working model with:
+- Spec structure and examples
+- AGENTS.md for AI agent integration
+- Supporting files (CONTRIBUTING.md, checklists, etc.)
+- Project-specific config
+
+### Available Templates
+
+- **solo-dev** - Quick setup for solo developers (default)
+- **team** - Small team collaboration with workflow guides
+- **enterprise** - Enterprise-grade with governance & compliance
+- **api-first** - API-driven development with endpoint specs
+
+Run `lspec templates` to see all available templates.
 
 See `AGENTS.md` for AI agent integration guidance.
 

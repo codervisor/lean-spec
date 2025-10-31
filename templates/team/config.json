@@ -1,0 +1,24 @@
+{
+  "name": "team",
+  "description": "Small team collaboration (2-5 people)",
+  "config": {
+    "template": "team",
+    "specsDir": "specs",
+    "structure": {
+      "pattern": "{date}/{seq}-{name}/",
+      "dateFormat": "YYYYMMDD",
+      "sequenceDigits": 3,
+      "defaultFile": "README.md"
+    },
+    "features": {
+      "aiAgents": true,
+      "examples": true,
+      "collaboration": true
+    }
+  },
+  "files": [
+    "files/AGENTS.md",
+    "files/CONTRIBUTING.md",
+    "files/specs/001-example-spec/README.md"
+  ]
+}

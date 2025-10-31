@@ -2,98 +2,114 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
+import { select } from '@inquirer/prompts';
+import { loadConfig, saveConfig, getToday, type LeanSpecConfig } from './config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Environment variables for customization
-const SPECS_DIR = process.env.SPECS_DIR || path.join(process.cwd(), 'specs');
-const TEMPLATE_PATH =
-  process.env.TEMPLATE_PATH || path.join(__dirname, '..', 'templates', 'spec.md');
-
-// Get today's date in YYYYMMDD format
-function getToday(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}${month}${day}`;
-}
+const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 
 // Get next sequence number for a date directory
-async function getNextSeq(dateDir: string): Promise<string> {
+async function getNextSeq(dateDir: string, digits: number): Promise<string> {
   try {
-    const files = await fs.readdir(dateDir);
-    const seqNumbers = files
-      .filter((f) => /^\d{3}-.+\.md$/.test(f))
-      .map((f) => parseInt(f.substring(0, 3), 10))
+    const entries = await fs.readdir(dateDir, { withFileTypes: true });
+    const seqNumbers = entries
+      .filter((e) => e.isDirectory() && /^\d{2,3}-.+/.test(e.name))
+      .map((e) => parseInt(e.name.split('-')[0], 10))
       .filter((n) => !isNaN(n));
 
     if (seqNumbers.length === 0) {
-      return '001';
+      return '1'.padStart(digits, '0');
     }
 
     const maxSeq = Math.max(...seqNumbers);
-    return String(maxSeq + 1).padStart(3, '0');
+    return String(maxSeq + 1).padStart(digits, '0');
   } catch {
-    return '001';
+    return '1'.padStart(digits, '0');
   }
 }
 
 export async function createSpec(name: string): Promise<void> {
-  const today = getToday();
-  const dateDir = path.join(SPECS_DIR, today);
+  const config = await loadConfig();
+  const cwd = process.cwd();
+  
+  const today = getToday(config.structure.dateFormat);
+  const specsDir = path.join(cwd, config.specsDir);
+  const dateDir = path.join(specsDir, today);
 
   await fs.mkdir(dateDir, { recursive: true });
 
-  const seq = await getNextSeq(dateDir);
-  const specFile = path.join(dateDir, `${seq}-${name}.md`);
+  const seq = await getNextSeq(dateDir, config.structure.sequenceDigits);
+  const specDir = path.join(dateDir, `${seq}-${name}`);
+  const specFile = path.join(specDir, config.structure.defaultFile);
 
-  // Check if file exists
+  // Check if directory exists
   try {
-    await fs.access(specFile);
-    console.log(chalk.yellow(`Warning: File exists: ${specFile}`));
+    await fs.access(specDir);
+    console.log(chalk.yellow(`Warning: Spec already exists: ${specDir}`));
     process.exit(1);
   } catch {
-    // File doesn't exist, continue
+    // Directory doesn't exist, continue
   }
 
-  // Read template
-  let template: string;
-  try {
-    template = await fs.readFile(TEMPLATE_PATH, 'utf-8');
-  } catch {
-    console.error(chalk.red(`Error: Template not found: ${TEMPLATE_PATH}`));
-    process.exit(1);
-  }
+  // Create spec directory
+  await fs.mkdir(specDir, { recursive: true });
 
-  // Replace placeholders
-  const currentDate = new Date().toISOString().split('T')[0];
-  const content = template.replace(/\[DATE\]/g, currentDate).replace(/\[NAME\]/g, name);
+  // Create minimal spec content
+  const content = `# ${name}
+
+**Status**: 📅 Planned  
+**Created**: ${new Date().toISOString().split('T')[0]}
+
+## Goal
+
+<!-- What problem does this solve? Why now? -->
+
+## Key Points
+
+- 
+- 
+- 
+
+## Non-Goals
+
+- 
+- 
+
+## Notes
+
+<!-- Decisions, constraints, open questions -->
+`;
 
   await fs.writeFile(specFile, content, 'utf-8');
 
-  console.log(chalk.green(`✓ Created: ${specFile}`));
+  console.log(chalk.green(`✓ Created: ${specDir}/`));
+  console.log(chalk.gray(`  Edit: ${specFile}`));
 }
 
 export async function archiveSpec(specPath: string): Promise<void> {
+  const config = await loadConfig();
+  const cwd = process.cwd();
+  const specsDir = path.join(cwd, config.specsDir);
+  
   const resolvedPath = path.resolve(specPath);
 
-  // Check if file exists
+  // Check if directory exists
   try {
     await fs.access(resolvedPath);
   } catch {
-    console.error(chalk.red(`Error: File not found: ${specPath}`));
+    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
     process.exit(1);
   }
 
-  const specDir = path.dirname(resolvedPath);
-  const dateFolder = path.basename(specDir);
-  const archiveDir = path.join(SPECS_DIR, 'archived', dateFolder);
+  // Get parent directory (date folder)
+  const parentDir = path.dirname(resolvedPath);
+  const dateFolder = path.basename(parentDir);
+  const archiveDir = path.join(specsDir, 'archived', dateFolder);
 
   await fs.mkdir(archiveDir, { recursive: true });
 
-  const fileName = path.basename(resolvedPath);
-  const archivePath = path.join(archiveDir, fileName);
+  const specName = path.basename(resolvedPath);
+  const archivePath = path.join(archiveDir, specName);
 
   await fs.rename(resolvedPath, archivePath);
 
@@ -101,47 +117,51 @@ export async function archiveSpec(specPath: string): Promise<void> {
 }
 
 export async function listSpecs(showArchived: boolean): Promise<void> {
+  const config = await loadConfig();
+  const cwd = process.cwd();
+  const specsDir = path.join(cwd, config.specsDir);
+  
   console.log('');
   console.log(chalk.green('=== Specs ==='));
   console.log('');
 
   try {
-    await fs.access(SPECS_DIR);
+    await fs.access(specsDir);
   } catch {
-    console.log('No specs directory found. Create one with: lspec create <name>');
+    console.log('No specs directory found. Initialize with: lspec init');
     console.log('');
     return;
   }
 
   // List active specs
-  const entries = await fs.readdir(SPECS_DIR, { withFileTypes: true });
+  const entries = await fs.readdir(specsDir, { withFileTypes: true });
   const dateDirs = entries
-    .filter((e) => e.isDirectory() && /^\d{8}$/.test(e.name) && e.name !== 'archived')
+    .filter((e) => e.isDirectory() && e.name !== 'archived')
     .sort((a, b) => b.name.localeCompare(a.name)); // Reverse chronological
 
   let foundActive = false;
   for (const dir of dateDirs) {
-    const dateDir = path.join(SPECS_DIR, dir.name);
-    const specs = await fs.readdir(dateDir);
-    const specFiles = specs.filter((f) => /^\d{3}-.+\.md$/.test(f)).sort();
+    const dateDir = path.join(specsDir, dir.name);
+    const specs = await fs.readdir(dateDir, { withFileTypes: true });
+    const specDirs = specs.filter((s) => s.isDirectory()).sort();
 
-    if (specFiles.length > 0) {
+    if (specDirs.length > 0) {
       foundActive = true;
       console.log(chalk.cyan(`${dir.name}/`));
-      for (const spec of specFiles) {
-        console.log(`  ${spec}`);
+      for (const spec of specDirs) {
+        console.log(`  ${spec.name}/`);
       }
       console.log('');
     }
   }
 
   if (!foundActive) {
-    console.log('No active specs found');
+    console.log('No active specs found. Create one with: lspec create <name>');
   }
 
   // List archived specs
   if (showArchived) {
-    const archivedPath = path.join(SPECS_DIR, 'archived');
+    const archivedPath = path.join(specsDir, 'archived');
     try {
       await fs.access(archivedPath);
       console.log(chalk.yellow('=== Archived ==='));
@@ -149,18 +169,18 @@ export async function listSpecs(showArchived: boolean): Promise<void> {
 
       const archivedEntries = await fs.readdir(archivedPath, { withFileTypes: true });
       const archivedDirs = archivedEntries
-        .filter((e) => e.isDirectory() && /^\d{8}$/.test(e.name))
+        .filter((e) => e.isDirectory())
         .sort((a, b) => b.name.localeCompare(a.name));
 
       for (const dir of archivedDirs) {
         const dateDir = path.join(archivedPath, dir.name);
-        const specs = await fs.readdir(dateDir);
-        const specFiles = specs.filter((f) => /^\d{3}-.+\.md$/.test(f)).sort();
+        const specs = await fs.readdir(dateDir, { withFileTypes: true });
+        const specDirs = specs.filter((s) => s.isDirectory()).sort();
 
-        if (specFiles.length > 0) {
+        if (specDirs.length > 0) {
           console.log(chalk.cyan(`${dir.name}/`));
-          for (const spec of specFiles) {
-            console.log(`  ${spec}`);
+          for (const spec of specDirs) {
+            console.log(`  ${spec.name}/`);
           }
           console.log('');
         }
@@ -170,5 +190,152 @@ export async function listSpecs(showArchived: boolean): Promise<void> {
     }
   }
 
+  console.log('');
+}
+
+export async function initProject(): Promise<void> {
+  const cwd = process.cwd();
+
+  // Check if already initialized
+  try {
+    await fs.access(path.join(cwd, '.lspec', 'config.json'));
+    console.log(chalk.yellow('LeanSpec already initialized in this directory.'));
+    console.log(chalk.gray('To reinitialize, delete .lspec/ directory first.'));
+    return;
+  } catch {
+    // Not initialized, continue
+  }
+
+  console.log('');
+  console.log(chalk.green('Welcome to LeanSpec!'));
+  console.log('');
+
+  // Main question: How to set up?
+  const setupMode = await select({
+    message: 'How would you like to set up?',
+    choices: [
+      {
+        name: 'Quick start (recommended)',
+        value: 'quick',
+        description: 'Use solo-dev defaults, start immediately',
+      },
+      {
+        name: 'Choose template',
+        value: 'template',
+        description: 'Pick from: solo-dev, team, enterprise, api-first',
+      },
+      {
+        name: 'Customize everything',
+        value: 'custom',
+        description: 'Full control over structure and settings',
+      },
+    ],
+  });
+
+  let templateName = 'solo-dev';
+
+  if (setupMode === 'template') {
+    // Let user choose template
+    templateName = await select({
+      message: 'Select template:',
+      choices: [
+        { name: 'solo-dev', value: 'solo-dev', description: 'Quick setup for solo developers' },
+        { name: 'team', value: 'team', description: 'Small team collaboration (2-5 people)' },
+        {
+          name: 'enterprise',
+          value: 'enterprise',
+          description: 'Enterprise-grade with governance',
+        },
+        {
+          name: 'api-first',
+          value: 'api-first',
+          description: 'API-driven development workflow',
+        },
+      ],
+    });
+  } else if (setupMode === 'custom') {
+    // TODO: Implement full customization flow
+    console.log(chalk.yellow('Full customization coming soon. Using solo-dev for now.'));
+  }
+
+  // Load template config
+  const templateDir = path.join(TEMPLATES_DIR, templateName);
+  const templateConfigPath = path.join(templateDir, 'config.json');
+
+  let templateConfig: LeanSpecConfig;
+  try {
+    const content = await fs.readFile(templateConfigPath, 'utf-8');
+    templateConfig = JSON.parse(content).config;
+  } catch {
+    console.error(chalk.red(`Error: Template not found: ${templateName}`));
+    process.exit(1);
+  }
+
+  // Save config
+  await saveConfig(templateConfig, cwd);
+  console.log(chalk.green('✓ Created .lspec/config.json'));
+
+  // Copy template files
+  const filesDir = path.join(templateDir, 'files');
+  try {
+    await copyDirectory(filesDir, cwd);
+    console.log(chalk.green('✓ Initialized project structure'));
+  } catch (error) {
+    console.error(chalk.red('Error copying template files:'), error);
+    process.exit(1);
+  }
+
+  console.log('');
+  console.log(chalk.green('✓ LeanSpec initialized!'));
+  console.log('');
+  console.log('Next steps:');
+  console.log(chalk.gray('  - Review and customize AGENTS.md'));
+  console.log(chalk.gray('  - Check out example spec in specs/'));
+  console.log(chalk.gray('  - Create your first spec: lspec create my-feature'));
+  console.log('');
+}
+
+// Helper to recursively copy directory
+async function copyDirectory(src: string, dest: string): Promise<void> {
+  await fs.mkdir(dest, { recursive: true });
+
+  const entries = await fs.readdir(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      await copyDirectory(srcPath, destPath);
+    } else {
+      await fs.copyFile(srcPath, destPath);
+    }
+  }
+}
+
+export async function listTemplates(): Promise<void> {
+  console.log('');
+  console.log(chalk.green('=== Available Templates ==='));
+  console.log('');
+
+  const templates = ['solo-dev', 'team', 'enterprise', 'api-first'];
+
+  for (const template of templates) {
+    const templateDir = path.join(TEMPLATES_DIR, template);
+    const configPath = path.join(templateDir, 'config.json');
+
+    try {
+      const content = await fs.readFile(configPath, 'utf-8');
+      const config = JSON.parse(content);
+      console.log(chalk.cyan(`${config.name}`));
+      console.log(`  ${config.description}`);
+      console.log('');
+    } catch {
+      console.log(chalk.yellow(`  ${template} (config not found)`));
+      console.log('');
+    }
+  }
+
+  console.log(chalk.gray('Initialize with: lspec init'));
   console.log('');
 }

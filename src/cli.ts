@@ -1,21 +1,25 @@
 import { parseArgs } from 'node:util';
-import { createSpec, archiveSpec, listSpecs } from './commands.js';
+import { createSpec, archiveSpec, listSpecs, listTemplates, initProject } from './commands.js';
 
 const USAGE = `lspec - Manage LeanSpec documents
 
 Usage: lspec <command> [args]
 
 Commands:
-  create <name>           Create new spec in today's directory
-  archive <spec-path>     Move spec to archived/
-  list [--archived]       List all specs
+  init                                 Initialize LeanSpec in current directory
+  create <name>                        Create new spec in folder structure
+  archive <spec-path>                  Move spec to archived/
+  list [--archived]                    List all specs
+  templates                            List available templates
 
-Structure: specs/YYYYMMDD/NNN-name.md (NNN starts at 001 per day)
+Structure: specs/YYYYMMDD/NNN-name/ (folders, not files)
 
 Examples:
+  lspec init
   lspec create user-export
   lspec list
-  lspec archive specs/20251031/001-user-export.md
+  lspec templates
+  lspec archive specs/20251031/001-user-export
 `;
 
 async function main() {
@@ -30,6 +34,10 @@ async function main() {
 
   try {
     switch (command) {
+      case 'init': {
+        await initProject();
+        break;
+      }
       case 'create': {
         const name = args[1];
         if (!name) {
@@ -51,6 +59,10 @@ async function main() {
       case 'list': {
         const showArchived = args.includes('--archived');
         await listSpecs(showArchived);
+        break;
+      }
+      case 'templates': {
+        await listTemplates();
         break;
       }
       default:
