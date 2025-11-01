@@ -1,13 +1,14 @@
 ---
-status: planned
+status: complete
 created: 2025-11-01T00:00:00.000Z
 tags: []
 priority: medium
+completed: '2025-11-01'
 ---
 
 # Migrate CLI to Commander.js Framework
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-01
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-01
 
 ## Overview
 
