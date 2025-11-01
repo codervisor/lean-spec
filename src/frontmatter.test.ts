@@ -134,6 +134,31 @@ priority: ${priority}
       expect(frontmatter?.priority).toBe(priority);
     }
   });
+
+  it('should still parse frontmatter with invalid status value', async () => {
+    const specFile = path.join(ctx.tmpDir, 'invalid-status.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: draft
+created: 2024-11-01
+tags: [test]
+---
+
+# Test
+`,
+      'utf-8'
+    );
+
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    // Should still return the frontmatter even with invalid status
+    expect(frontmatter).not.toBeNull();
+    expect(frontmatter?.status).toBe('draft'); // Returns the invalid status as-is
+    // The created field might be parsed as a Date object by gray-matter
+    expect(frontmatter?.created).toBeDefined();
+    expect(frontmatter?.tags).toEqual(['test']);
+  });
 });
 
 describe('updateFrontmatter', () => {

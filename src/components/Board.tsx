@@ -102,7 +102,11 @@ export const Board: React.FC<BoardProps> = ({ specs, showComplete, filter }) => 
   };
 
   for (const spec of specs) {
-    columns[spec.frontmatter.status].push(spec);
+    // Handle invalid status by treating as 'planned'
+    const status = columns[spec.frontmatter.status] !== undefined 
+      ? spec.frontmatter.status 
+      : 'planned';
+    columns[status].push(spec);
   }
 
   return (

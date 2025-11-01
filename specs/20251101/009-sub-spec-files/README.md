@@ -1,5 +1,5 @@
 ---
-status: draft
+status: planned
 created: 2025-11-01
 tags:
   - enhancement
@@ -11,7 +11,7 @@ priority: medium
 
 # Sub-Spec Files Management
 
-> **Status**: 📅 Draft · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: enhancement, cli, specs, organization
+> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: enhancement, cli, specs, organization
 
 ## Overview
 
