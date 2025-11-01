@@ -1,6 +1,6 @@
 ---
 status: planned
-created: 2025-11-01
+created: 2025-11-01T00:00:00.000Z
 tags: []
 priority: medium
 ---

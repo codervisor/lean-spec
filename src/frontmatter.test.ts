@@ -1,0 +1,447 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import {
+  parseFrontmatter,
+  updateFrontmatter,
+  matchesFilter,
+  getSpecFile,
+  type SpecFrontmatter,
+  type SpecFilterOptions,
+} from './frontmatter.js';
+import {
+  createTestEnvironment,
+  createTestSpec,
+  type TestContext,
+} from './test-helpers.js';
+
+describe('parseFrontmatter', () => {
+  let ctx: TestContext;
+
+  beforeEach(async () => {
+    ctx = await createTestEnvironment();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  it('should parse valid frontmatter', async () => {
+    const date = '20241101';
+    const specName = '001-test-spec';
+    const specDir = await createTestSpec(ctx.tmpDir, date, specName, {
+      status: 'planned',
+      created: '2024-11-01',
+      tags: ['api', 'backend'],
+      priority: 'high',
+    });
+
+    const specFile = path.join(specDir, 'README.md');
+    const frontmatter = await parseFrontmatter(specFile);
+
+    expect(frontmatter).not.toBeNull();
+    expect(frontmatter?.status).toBe('planned');
+    expect(frontmatter?.created).toBe('2024-11-01');
+    expect(frontmatter?.tags).toEqual(['api', 'backend']);
+    expect(frontmatter?.priority).toBe('high');
+  });
+
+  it('should return null for missing required fields', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `---
+tags: [test]
+---
+
+# Test
+`,
+      'utf-8'
+    );
+
+    const frontmatter = await parseFrontmatter(specFile);
+    expect(frontmatter).toBeNull();
+  });
+
+  it('should parse fallback inline fields', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `# Test Spec
+
+**Status**: 📅 Planned  
+**Created**: 2024-11-01
+
+## Overview
+`,
+      'utf-8'
+    );
+
+    const frontmatter = await parseFrontmatter(specFile);
+
+    expect(frontmatter).not.toBeNull();
+    expect(frontmatter?.status).toBe('planned');
+    expect(frontmatter?.created).toBe('2024-11-01');
+  });
+
+  it('should handle missing file gracefully', async () => {
+    const nonExistentFile = path.join(ctx.tmpDir, 'nonexistent.md');
+    const frontmatter = await parseFrontmatter(nonExistentFile);
+    expect(frontmatter).toBeNull();
+  });
+
+  it('should parse all valid status values', async () => {
+    const statuses = ['planned', 'in-progress', 'complete', 'archived'];
+
+    for (const status of statuses) {
+      const specFile = path.join(ctx.tmpDir, `${status}.md`);
+      await fs.writeFile(
+        specFile,
+        `---
+status: ${status}
+created: 2024-11-01
+---
+
+# Test
+`,
+        'utf-8'
+      );
+
+      const frontmatter = await parseFrontmatter(specFile);
+      expect(frontmatter?.status).toBe(status);
+    }
+  });
+
+  it('should parse all valid priority values', async () => {
+    const priorities = ['low', 'medium', 'high', 'critical'];
+
+    for (const priority of priorities) {
+      const specFile = path.join(ctx.tmpDir, `${priority}.md`);
+      await fs.writeFile(
+        specFile,
+        `---
+status: planned
+created: 2024-11-01
+priority: ${priority}
+---
+
+# Test
+`,
+        'utf-8'
+      );
+
+      const frontmatter = await parseFrontmatter(specFile);
+      expect(frontmatter?.priority).toBe(priority);
+    }
+  });
+});
+
+describe('updateFrontmatter', () => {
+  let ctx: TestContext;
+
+  beforeEach(async () => {
+    ctx = await createTestEnvironment();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  it('should update frontmatter fields', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: 2024-11-01
+---
+
+# Test Spec
+`,
+      'utf-8'
+    );
+
+    await updateFrontmatter(specFile, {
+      status: 'in-progress',
+      priority: 'high',
+    });
+
+    const frontmatter = await parseFrontmatter(specFile);
+    expect(frontmatter?.status).toBe('in-progress');
+    expect(frontmatter?.priority).toBe('high');
+  });
+
+  it('should preserve existing fields when updating', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: 2024-11-01
+tags: [api, backend]
+priority: medium
+---
+
+# Test Spec
+`,
+      'utf-8'
+    );
+
+    await updateFrontmatter(specFile, {
+      status: 'in-progress',
+    });
+
+    const frontmatter = await parseFrontmatter(specFile);
+    expect(frontmatter?.status).toBe('in-progress');
+    expect(frontmatter?.tags).toEqual(['api', 'backend']);
+    expect(frontmatter?.priority).toBe('medium');
+  });
+
+  it('should auto-set completed timestamp when status is complete', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: in-progress
+created: 2024-11-01
+---
+
+# Test Spec
+`,
+      'utf-8'
+    );
+
+    await updateFrontmatter(specFile, {
+      status: 'complete',
+    });
+
+    const frontmatter = await parseFrontmatter(specFile);
+    expect(frontmatter?.status).toBe('complete');
+    expect(frontmatter?.completed).toBeDefined();
+  });
+
+  it('should preserve content when updating frontmatter', async () => {
+    const content = `# Test Spec
+
+## Overview
+
+This is test content that should be preserved.
+
+## Details
+
+- Point 1
+- Point 2
+`;
+
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: 2024-11-01
+---
+
+${content}`,
+      'utf-8'
+    );
+
+    await updateFrontmatter(specFile, {
+      status: 'in-progress',
+    });
+
+    const updatedContent = await fs.readFile(specFile, 'utf-8');
+    expect(updatedContent).toContain('This is test content that should be preserved');
+    expect(updatedContent).toContain('- Point 1');
+  });
+});
+
+describe('matchesFilter', () => {
+  it('should match status filter', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+    };
+
+    const filter: SpecFilterOptions = {
+      status: 'planned',
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should not match wrong status', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+    };
+
+    const filter: SpecFilterOptions = {
+      status: 'in-progress',
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(false);
+  });
+
+  it('should match multiple status values', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'in-progress',
+      created: '2024-11-01',
+    };
+
+    const filter: SpecFilterOptions = {
+      status: ['planned', 'in-progress'],
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should match tags filter (all tags must match)', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+      tags: ['api', 'backend', 'urgent'],
+    };
+
+    const filter: SpecFilterOptions = {
+      tags: ['api', 'backend'],
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should not match if not all tags present', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+      tags: ['api'],
+    };
+
+    const filter: SpecFilterOptions = {
+      tags: ['api', 'backend'],
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(false);
+  });
+
+  it('should match priority filter', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+      priority: 'high',
+    };
+
+    const filter: SpecFilterOptions = {
+      priority: 'high',
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should match multiple priority values', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+      priority: 'high',
+    };
+
+    const filter: SpecFilterOptions = {
+      priority: ['high', 'critical'],
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should match assignee filter', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+      assignee: 'john',
+    };
+
+    const filter: SpecFilterOptions = {
+      assignee: 'john',
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should match multiple filters combined', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'in-progress',
+      created: '2024-11-01',
+      tags: ['api', 'backend'],
+      priority: 'high',
+      assignee: 'john',
+    };
+
+    const filter: SpecFilterOptions = {
+      status: 'in-progress',
+      tags: ['api'],
+      priority: 'high',
+      assignee: 'john',
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(true);
+  });
+
+  it('should not match if any filter fails', () => {
+    const frontmatter: SpecFrontmatter = {
+      status: 'in-progress',
+      created: '2024-11-01',
+      tags: ['api', 'backend'],
+      priority: 'high',
+      assignee: 'john',
+    };
+
+    const filter: SpecFilterOptions = {
+      status: 'in-progress',
+      tags: ['api'],
+      priority: 'low', // Wrong priority
+      assignee: 'john',
+    };
+
+    expect(matchesFilter(frontmatter, filter)).toBe(false);
+  });
+});
+
+describe('getSpecFile', () => {
+  let ctx: TestContext;
+
+  beforeEach(async () => {
+    ctx = await createTestEnvironment();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  it('should find default spec file', async () => {
+    const specDir = path.join(ctx.tmpDir, 'spec');
+    await fs.mkdir(specDir, { recursive: true });
+    
+    const specFile = path.join(specDir, 'README.md');
+    await fs.writeFile(specFile, '# Test', 'utf-8');
+
+    const result = await getSpecFile(specDir);
+    expect(result).toBe(specFile);
+  });
+
+  it('should return null if spec file does not exist', async () => {
+    const specDir = path.join(ctx.tmpDir, 'spec');
+    await fs.mkdir(specDir, { recursive: true });
+
+    const result = await getSpecFile(specDir);
+    expect(result).toBeNull();
+  });
+
+  it('should use custom default file name', async () => {
+    const specDir = path.join(ctx.tmpDir, 'spec');
+    await fs.mkdir(specDir, { recursive: true });
+    
+    const specFile = path.join(specDir, 'SPEC.md');
+    await fs.writeFile(specFile, '# Test', 'utf-8');
+
+    const result = await getSpecFile(specDir, 'SPEC.md');
+    expect(result).toBe(specFile);
+  });
+});

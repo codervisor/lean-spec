@@ -37,7 +37,13 @@ async function getNextSeq(dateDir: string, digits: number): Promise<string> {
   }
 }
 
-export async function createSpec(name: string, options: { title?: string; description?: string } = {}): Promise<void> {
+export async function createSpec(name: string, options: { 
+  title?: string; 
+  description?: string;
+  tags?: string[];
+  priority?: SpecPriority;
+  assignee?: string;
+} = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
   
@@ -75,6 +81,34 @@ export async function createSpec(name: string, options: { title?: string; descri
     content = template
       .replace(/{name}/g, title)
       .replace(/{date}/g, date);
+    
+    // Update frontmatter with provided metadata
+    if (options.tags || options.priority || options.assignee) {
+      // Parse existing frontmatter
+      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      if (frontmatterMatch) {
+        let frontmatter = frontmatterMatch[1];
+        
+        // Add tags if provided
+        if (options.tags && options.tags.length > 0) {
+          // Replace empty tags array
+          frontmatter = frontmatter.replace(/tags: \[\]/, `tags: [${options.tags.join(', ')}]`);
+        }
+        
+        // Add priority if provided
+        if (options.priority) {
+          frontmatter = frontmatter.replace(/priority: medium/, `priority: ${options.priority}`);
+        }
+        
+        // Add assignee if provided
+        if (options.assignee) {
+          // Add assignee field after priority
+          frontmatter = frontmatter.replace(/(priority: \w+)/, `$1\nassignee: ${options.assignee}`);
+        }
+        
+        content = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontmatter}\n---`);
+      }
+    }
     
     // Add description to Overview section if provided
     if (options.description) {
@@ -258,14 +292,53 @@ export async function updateSpec(
 ): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
+  const specsDir = path.join(cwd, config.specsDir);
   
-  const resolvedPath = path.resolve(specPath);
+  // Try to resolve path in multiple ways:
+  // 1. Absolute path as given
+  // 2. Relative to current directory
+  // 3. Relative to specs directory
+  // 4. Just the spec name (search in date directories)
+  
+  let resolvedPath: string | null = null;
+  
+  // Try absolute or relative to cwd first
+  if (path.isAbsolute(specPath)) {
+    resolvedPath = specPath;
+  } else {
+    const cwdPath = path.resolve(cwd, specPath);
+    try {
+      await fs.access(cwdPath);
+      resolvedPath = cwdPath;
+    } catch {
+      // Not found relative to cwd, try specs dir
+      const specsPath = path.join(specsDir, specPath);
+      try {
+        await fs.access(specsPath);
+        resolvedPath = specsPath;
+      } catch {
+        // Last resort: search for spec name in date directories
+        const specName = specPath.replace(/^.*\//, ''); // Get last part
+        const entries = await fs.readdir(specsDir, { withFileTypes: true });
+        const dateDirs = entries.filter(e => e.isDirectory() && e.name !== 'archived');
+        
+        for (const dateDir of dateDirs) {
+          const testPath = path.join(specsDir, dateDir.name, specName);
+          try {
+            await fs.access(testPath);
+            resolvedPath = testPath;
+            break;
+          } catch {
+            // Keep searching
+          }
+        }
+      }
+    }
+  }
 
-  // Check if directory exists
-  try {
-    await fs.access(resolvedPath);
-  } catch {
+  if (!resolvedPath) {
     console.error(chalk.red(`Error: Spec not found: ${specPath}`));
+    console.error(chalk.gray(`Tried: ${specPath}, specs/${specPath}, and searching in date directories`));
     process.exit(1);
   }
 
@@ -279,7 +352,7 @@ export async function updateSpec(
   // Update frontmatter
   await updateFrontmatter(specFile, updates);
 
-  console.log(chalk.green(`✓ Updated: ${specPath}`));
+  console.log(chalk.green(`✓ Updated: ${path.relative(cwd, resolvedPath)}`));
   
   // Show what was updated
   const updatedFields = Object.keys(updates).join(', ');

@@ -206,6 +206,17 @@ See `AGENTS.md` for AI agent integration guidance.
 
 ## Development
 
+### Testing
+
+```bash
+pnpm test        # Run tests in watch mode
+pnpm test:run    # Run tests once (CI mode)
+```
+
+See [docs/testing.md](docs/testing.md) for comprehensive testing documentation.
+
+### Build
+
 This project is built with TypeScript and pnpm:
 
 ```bash
@@ -298,4 +309,13 @@ Have ideas for improving LeanSpec? Open an issue or submit a pull request. Keep 
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](LICENSE) for details.## Documentation
+
+- **[Getting Started](README.md)** - You are here!
+- **[AI Agent Integration](AGENTS.md)** - Setup for AI-powered development
+- **[Contributing](CONTRIBUTING.md)** - How to contribute to LeanSpec
+- **[Developer Guide](docs/)** - Testing and technical docs
+
+## Contributing
+
+Have ideas for improving LeanSpec? See [CONTRIBUTING.md](CONTRIBUTING.md) for details. Keep it lean! 🚀

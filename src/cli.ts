@@ -103,13 +103,37 @@ async function main() {
         }
         
         // Parse optional flags
-        const options: { title?: string; description?: string } = {};
+        const options: { 
+          title?: string; 
+          description?: string;
+          tags?: string[];
+          priority?: SpecPriority;
+          assignee?: string;
+        } = {};
+        
         for (let i = 2; i < args.length; i++) {
-          if (args[i] === '--title' && args[i + 1]) {
+          const arg = args[i];
+          
+          if (arg === '--title' && args[i + 1]) {
             options.title = args[i + 1];
             i++;
-          } else if (args[i] === '--description' && args[i + 1]) {
+          } else if (arg === '--description' && args[i + 1]) {
             options.description = args[i + 1];
+            i++;
+          } else if (arg.startsWith('--tags=')) {
+            options.tags = arg.split('=')[1].split(',').map(t => t.trim());
+          } else if (arg === '--tags' && args[i + 1]) {
+            options.tags = args[i + 1].split(',').map(t => t.trim());
+            i++;
+          } else if (arg.startsWith('--priority=')) {
+            options.priority = arg.split('=')[1] as SpecPriority;
+          } else if (arg === '--priority' && args[i + 1]) {
+            options.priority = args[i + 1] as SpecPriority;
+            i++;
+          } else if (arg.startsWith('--assignee=')) {
+            options.assignee = arg.split('=')[1];
+          } else if (arg === '--assignee' && args[i + 1]) {
+            options.assignee = args[i + 1];
             i++;
           }
         }
