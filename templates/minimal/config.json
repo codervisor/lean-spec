@@ -1,19 +1,14 @@
 {
-  "name": "api-first",
-  "description": "API-driven development workflow",
+  "name": "Minimal",
+  "description": "Just the essentials - folder structure only",
   "config": {
-    "template": "api-first",
+    "template": "minimal",
     "specsDir": "specs",
     "structure": {
       "pattern": "{date}/{seq}-{name}/",
       "dateFormat": "YYYYMMDD",
       "sequenceDigits": 3,
       "defaultFile": "README.md"
-    },
-    "features": {
-      "aiAgents": true,
-      "examples": true,
-      "apiDocs": true
     }
   }
 }

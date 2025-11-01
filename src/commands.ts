@@ -54,8 +54,19 @@ export async function createSpec(name: string): Promise<void> {
   // Create spec directory
   await fs.mkdir(specDir, { recursive: true });
 
-  // Create minimal spec content
-  const content = `# ${name}
+  // Load spec template from configured template
+  const templatePath = path.join(TEMPLATES_DIR, config.template, 'spec-template.md');
+  let content: string;
+  
+  try {
+    const template = await fs.readFile(templatePath, 'utf-8');
+    const date = new Date().toISOString().split('T')[0];
+    content = template
+      .replace(/{name}/g, name)
+      .replace(/{date}/g, date);
+  } catch {
+    // Fallback to basic template if template file not found
+    content = `# ${name}
 
 **Status**: 📅 Planned  
 **Created**: ${new Date().toISOString().split('T')[0]}
@@ -79,6 +90,7 @@ export async function createSpec(name: string): Promise<void> {
 
 <!-- Decisions, constraints, open questions -->
 `;
+  }
 
   await fs.writeFile(specFile, content, 'utf-8');
 
@@ -193,6 +205,74 @@ export async function listSpecs(showArchived: boolean): Promise<void> {
   console.log('');
 }
 
+// Detect common system prompt files
+async function detectExistingSystemPrompts(cwd: string): Promise<string[]> {
+  const commonFiles = [
+    'AGENTS.md',
+    '.cursorrules',
+    '.github/copilot-instructions.md',
+  ];
+
+  const found: string[] = [];
+  for (const file of commonFiles) {
+    try {
+      await fs.access(path.join(cwd, file));
+      found.push(file);
+    } catch {
+      // File doesn't exist
+    }
+  }
+  return found;
+}
+
+// Handle existing system prompt files
+async function handleExistingFiles(
+  action: 'merge' | 'backup' | 'skip',
+  existingFiles: string[],
+  templateDir: string,
+  cwd: string
+): Promise<void> {
+  for (const file of existingFiles) {
+    const filePath = path.join(cwd, file);
+    const templateFilePath = path.join(templateDir, 'files', file);
+
+    // Check if template has this file
+    try {
+      await fs.access(templateFilePath);
+    } catch {
+      // Template doesn't have this file, skip
+      continue;
+    }
+
+    if (action === 'merge' && file === 'AGENTS.md') {
+      // Append LeanSpec section to existing AGENTS.md
+      const existing = await fs.readFile(filePath, 'utf-8');
+      const template = await fs.readFile(templateFilePath, 'utf-8');
+
+      const merged = `${existing}
+
+---
+
+## LeanSpec Integration
+
+${template.split('\n').slice(1).join('\n')}`;
+
+      await fs.writeFile(filePath, merged, 'utf-8');
+      console.log(chalk.green(`✓ Merged LeanSpec section into ${file}`));
+    } else if (action === 'backup') {
+      // Backup existing file
+      const backupPath = `${filePath}.backup`;
+      await fs.rename(filePath, backupPath);
+      console.log(chalk.yellow(`✓ Backed up ${file} → ${file}.backup`));
+
+      // Copy template file
+      await fs.copyFile(templateFilePath, filePath);
+      console.log(chalk.green(`✓ Created new ${file}`));
+    }
+    // If skip, do nothing with this file
+  }
+}
+
 export async function initProject(): Promise<void> {
   const cwd = process.cwd();
 
@@ -217,12 +297,12 @@ export async function initProject(): Promise<void> {
       {
         name: 'Quick start (recommended)',
         value: 'quick',
-        description: 'Use solo-dev defaults, start immediately',
+        description: 'Use standard template, start immediately',
       },
       {
         name: 'Choose template',
         value: 'template',
-        description: 'Pick from: solo-dev, team, enterprise, api-first',
+        description: 'Pick from: minimal, standard, enterprise',
       },
       {
         name: 'Customize everything',
@@ -232,30 +312,25 @@ export async function initProject(): Promise<void> {
     ],
   });
 
-  let templateName = 'solo-dev';
+  let templateName = 'standard';
 
   if (setupMode === 'template') {
     // Let user choose template
     templateName = await select({
       message: 'Select template:',
       choices: [
-        { name: 'solo-dev', value: 'solo-dev', description: 'Quick setup for solo developers' },
-        { name: 'team', value: 'team', description: 'Small team collaboration (2-5 people)' },
+        { name: 'minimal', value: 'minimal', description: 'Just folder structure, no extras' },
+        { name: 'standard', value: 'standard', description: 'Recommended - includes AGENTS.md' },
         {
           name: 'enterprise',
           value: 'enterprise',
-          description: 'Enterprise-grade with governance',
-        },
-        {
-          name: 'api-first',
-          value: 'api-first',
-          description: 'API-driven development workflow',
+          description: 'Governance with approvals and compliance',
         },
       ],
     });
   } else if (setupMode === 'custom') {
     // TODO: Implement full customization flow
-    console.log(chalk.yellow('Full customization coming soon. Using solo-dev for now.'));
+    console.log(chalk.yellow('Full customization coming soon. Using standard for now.'));
   }
 
   // Load template config
@@ -275,10 +350,46 @@ export async function initProject(): Promise<void> {
   await saveConfig(templateConfig, cwd);
   console.log(chalk.green('✓ Created .lspec/config.json'));
 
-  // Copy template files
+  // Check for existing system prompt files
+  const existingFiles = await detectExistingSystemPrompts(cwd);
+  let skipFiles: string[] = [];
+
+  if (existingFiles.length > 0) {
+    console.log('');
+    console.log(chalk.yellow(`Found existing: ${existingFiles.join(', ')}`));
+
+    const action = await select<'merge' | 'backup' | 'skip'>({
+      message: 'How would you like to proceed?',
+      choices: [
+        {
+          name: 'Merge - Add LeanSpec section to existing files',
+          value: 'merge',
+          description: 'Appends LeanSpec guidance to your existing AGENTS.md',
+        },
+        {
+          name: 'Backup - Save existing and create new',
+          value: 'backup',
+          description: 'Renames existing files to .backup and creates fresh ones',
+        },
+        {
+          name: 'Skip - Keep existing files as-is',
+          value: 'skip',
+          description: 'Only adds .lspec config and specs/ directory',
+        },
+      ],
+    });
+
+    await handleExistingFiles(action, existingFiles, templateDir, cwd);
+
+    if (action === 'skip') {
+      skipFiles = existingFiles;
+    }
+  }
+
+  // Copy template files (excluding those we're skipping)
   const filesDir = path.join(templateDir, 'files');
   try {
-    await copyDirectory(filesDir, cwd);
+    await copyDirectory(filesDir, cwd, skipFiles);
     console.log(chalk.green('✓ Initialized project structure'));
   } catch (error) {
     console.error(chalk.red('Error copying template files:'), error);
@@ -296,7 +407,7 @@ export async function initProject(): Promise<void> {
 }
 
 // Helper to recursively copy directory
-async function copyDirectory(src: string, dest: string): Promise<void> {
+async function copyDirectory(src: string, dest: string, skipFiles: string[] = []): Promise<void> {
   await fs.mkdir(dest, { recursive: true });
 
   const entries = await fs.readdir(src, { withFileTypes: true });
@@ -305,10 +416,22 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
+    // Check if this file should be skipped
+    if (skipFiles.includes(entry.name)) {
+      continue;
+    }
+
     if (entry.isDirectory()) {
-      await copyDirectory(srcPath, destPath);
+      await copyDirectory(srcPath, destPath, skipFiles);
     } else {
-      await fs.copyFile(srcPath, destPath);
+      // Only copy if file doesn't exist
+      try {
+        await fs.access(destPath);
+        // File exists, skip it
+      } catch {
+        // File doesn't exist, copy it
+        await fs.copyFile(srcPath, destPath);
+      }
     }
   }
 }
@@ -318,7 +441,7 @@ export async function listTemplates(): Promise<void> {
   console.log(chalk.green('=== Available Templates ==='));
   console.log('');
 
-  const templates = ['solo-dev', 'team', 'enterprise', 'api-first'];
+  const templates = ['minimal', 'standard', 'enterprise'];
 
   for (const template of templates) {
     const templateDir = path.join(TEMPLATES_DIR, template);

@@ -1,8 +1,8 @@
 {
-  "name": "Enterprise",
-  "description": "Governance-ready with approvals, compliance, and security",
+  "name": "Standard",
+  "description": "Recommended for most projects - solo devs and small teams",
   "config": {
-    "template": "enterprise",
+    "template": "standard",
     "specsDir": "specs",
     "structure": {
       "pattern": "{date}/{seq}-{name}/",
@@ -11,9 +11,7 @@
       "defaultFile": "README.md"
     },
     "features": {
-      "aiAgents": true,
-      "compliance": true,
-      "approvals": true
+      "aiAgents": true
     }
   }
 }

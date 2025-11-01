@@ -21,7 +21,7 @@ export interface LeanSpecConfig {
 }
 
 const DEFAULT_CONFIG: LeanSpecConfig = {
-  template: 'solo-dev',
+  template: 'standard',
   specsDir: 'specs',
   structure: {
     pattern: '{date}/{seq}-{name}/',
