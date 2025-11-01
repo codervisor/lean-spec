@@ -7,7 +7,9 @@ Usage: lspec <command> [args]
 
 Commands:
   init                                 Initialize LeanSpec in current directory
-  create <name>                        Create new spec in folder structure
+  create <name> [options]              Create new spec in folder structure
+    --title <title>                    Optional: Set custom title
+    --description <desc>               Optional: Set initial description
   archive <spec-path>                  Move spec to archived/
   list [--archived]                    List all specs
   templates                            List available templates
@@ -17,6 +19,7 @@ Structure: specs/YYYYMMDD/NNN-name/ (folders, not files)
 Examples:
   lspec init
   lspec create user-export
+  lspec create user-export --title "User Data Export" --description "Add CSV export"
   lspec list
   lspec templates
   lspec archive specs/20251031/001-user-export
@@ -44,7 +47,20 @@ async function main() {
           console.error('Error: Name required');
           process.exit(1);
         }
-        await createSpec(name);
+        
+        // Parse optional flags
+        const options: { title?: string; description?: string } = {};
+        for (let i = 2; i < args.length; i++) {
+          if (args[i] === '--title' && args[i + 1]) {
+            options.title = args[i + 1];
+            i++;
+          } else if (args[i] === '--description' && args[i + 1]) {
+            options.description = args[i + 1];
+            i++;
+          }
+        }
+        
+        await createSpec(name, options);
         break;
       }
       case 'archive': {

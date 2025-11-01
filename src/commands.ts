@@ -28,7 +28,7 @@ async function getNextSeq(dateDir: string, digits: number): Promise<string> {
   }
 }
 
-export async function createSpec(name: string): Promise<void> {
+export async function createSpec(name: string, options: { title?: string; description?: string } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
   
@@ -61,19 +61,32 @@ export async function createSpec(name: string): Promise<void> {
   try {
     const template = await fs.readFile(templatePath, 'utf-8');
     const date = new Date().toISOString().split('T')[0];
+    const title = options.title || name;
+    
     content = template
-      .replace(/{name}/g, name)
+      .replace(/{name}/g, title)
       .replace(/{date}/g, date);
+    
+    // Add description to Overview section if provided
+    if (options.description) {
+      content = content.replace(
+        /## Overview\s+<!-- What are we solving\? Why now\? -->/,
+        `## Overview\n\n${options.description}`
+      );
+    }
   } catch {
     // Fallback to basic template if template file not found
-    content = `# ${name}
+    const title = options.title || name;
+    const overview = options.description || '<!-- What problem does this solve? Why now? -->';
+    
+    content = `# ${title}
 
 **Status**: 📅 Planned  
 **Created**: ${new Date().toISOString().split('T')[0]}
 
 ## Goal
 
-<!-- What problem does this solve? Why now? -->
+${overview}
 
 ## Key Points
 
