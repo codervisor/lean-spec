@@ -45,6 +45,7 @@
     "chalk": "^5.3.0",
     "cli-spinners": "^3.3.0",
     "cli-table3": "^0.6.5",
+    "commander": "^14.0.2",
     "dayjs": "^1.11.19",
     "gray-matter": "^4.0.3",
     "ink": "^6.4.0",
