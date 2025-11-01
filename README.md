@@ -82,11 +82,19 @@ lspec init
 # Create your first spec (creates specs/YYYYMMDD/NNN-name/ folder)
 lspec create my-feature
 
-# List available templates
-lspec templates
-
 # List all specs
 lspec list
+
+# Filter specs by status, tags, or priority
+lspec list --status=in-progress
+lspec list --tag=api --priority=high
+
+# Update spec metadata
+lspec update specs/20251031/001-my-feature --status=complete
+lspec update specs/20251031/001-my-feature --priority=high --tags=api,backend
+
+# List available templates
+lspec templates
 
 # Archive old specs
 lspec archive specs/20251031/001-my-feature
@@ -105,6 +113,57 @@ Each template is a complete working model with:
 - AGENTS.md for AI agent integration
 - Supporting files (CONTRIBUTING.md, checklists, etc.)
 - Project-specific config
+
+#### Spec Metadata with Frontmatter
+
+LeanSpec uses YAML frontmatter for structured metadata. Each template includes different field sets:
+
+**Minimal Template** (status, created only):
+```yaml
+---
+status: planned
+created: 2025-11-01
+---
+```
+
+**Standard Template** (recommended - adds tags and priority):
+```yaml
+---
+status: in-progress
+created: 2025-11-01
+tags: [api, feature]
+priority: high
+---
+```
+
+**Enterprise Template** (adds team fields and tracking):
+```yaml
+---
+status: in-progress
+created: 2025-11-01
+tags: [security, compliance]
+priority: critical
+assignee: alice
+reviewer: bob
+issue: JIRA-1234
+epic: security-hardening
+---
+```
+
+**Philosophy**: Start minimal. Add fields only when you feel the pain of not having them.
+
+**Valid Status Values**: `planned`, `in-progress`, `complete`, `archived`  
+**Valid Priority Values**: `low`, `medium`, `high`, `critical`
+
+Use `lspec list` with filters to find specs:
+- `lspec list --status=in-progress` - Show active work
+- `lspec list --priority=high` - Focus on critical items
+- `lspec list --tag=api` - Find related specs
+- Combine filters: `lspec list --status=planned --priority=high --tag=api`
+
+Update spec metadata without editing files:
+- `lspec update <path> --status=complete` - Mark as done (auto-adds completion date)
+- `lspec update <path> --priority=high --tags=api,backend` - Update multiple fields
 
 #### Integrating with Existing Projects
 

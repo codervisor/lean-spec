@@ -1,9 +1,16 @@
-# {name}
+---
+status: planned
+created: {date}
+tags: []
+priority: medium
+assignee: 
+reviewer: 
+related: []
+issue: 
+epic: 
+---
 
-**Status**: 📅 Planned  
-**Created**: {date}  
-**Owner**: @  
-**Stakeholders**: @
+# {name}
 
 ## Overview
 

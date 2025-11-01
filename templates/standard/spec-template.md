@@ -1,7 +1,11 @@
-# {name}
+---
+status: planned
+created: {date}
+tags: []
+priority: medium
+---
 
-**Status**: 📅 Planned  
-**Created**: {date}
+# {name}
 
 ## Overview
 

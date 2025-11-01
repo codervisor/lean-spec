@@ -1,7 +1,9 @@
-# {name}
+---
+status: planned
+created: {date}
+---
 
-**Status**: 📅 Planned  
-**Created**: {date}
+# {name}
 
 ## Goal
 

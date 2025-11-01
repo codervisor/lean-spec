@@ -1,8 +1,12 @@
 ---
-status: planned
-created: 2025-11-01
-tags: [enhancement, spec-management, metadata]
+status: complete
+created: 2025-11-01T00:00:00.000Z
+tags:
+  - enhancement
+  - spec-management
+  - metadata
 priority: medium
+completed: '2025-11-01'
 ---
 
 # structured-frontmatter

@@ -4,6 +4,15 @@ import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
 import { loadConfig, saveConfig, getToday, type LeanSpecConfig } from './config.js';
+import { 
+  parseFrontmatter, 
+  matchesFilter, 
+  getSpecFile,
+  updateFrontmatter,
+  type SpecFilterOptions,
+  type SpecStatus,
+  type SpecPriority
+} from './frontmatter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
@@ -141,7 +150,13 @@ export async function archiveSpec(specPath: string): Promise<void> {
   console.log(chalk.green(`✓ Archived: ${archivePath}`));
 }
 
-export async function listSpecs(showArchived: boolean): Promise<void> {
+export async function listSpecs(options: {
+  showArchived?: boolean;
+  status?: SpecStatus | SpecStatus[];
+  tags?: string[];
+  priority?: SpecPriority | SpecPriority[];
+  assignee?: string;
+} = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);
@@ -158,6 +173,15 @@ export async function listSpecs(showArchived: boolean): Promise<void> {
     return;
   }
 
+  // Build filter options
+  const filter: SpecFilterOptions = {};
+  if (options.status) filter.status = options.status;
+  if (options.tags) filter.tags = options.tags;
+  if (options.priority) filter.priority = options.priority;
+  if (options.assignee) filter.assignee = options.assignee;
+
+  const hasFilters = Object.keys(filter).length > 0;
+
   // List active specs
   const entries = await fs.readdir(specsDir, { withFileTypes: true });
   const dateDirs = entries
@@ -170,22 +194,66 @@ export async function listSpecs(showArchived: boolean): Promise<void> {
     const specs = await fs.readdir(dateDir, { withFileTypes: true });
     const specDirs = specs.filter((s) => s.isDirectory()).sort();
 
-    if (specDirs.length > 0) {
+    const filteredSpecs = [];
+    
+    for (const spec of specDirs) {
+      const specDir = path.join(dateDir, spec.name);
+      const specFile = await getSpecFile(specDir, config.structure.defaultFile);
+      
+      if (!specFile) continue;
+
+      // Parse frontmatter if filtering is requested
+      if (hasFilters) {
+        const frontmatter = await parseFrontmatter(specFile);
+        if (!frontmatter || !matchesFilter(frontmatter, filter)) {
+          continue;
+        }
+        filteredSpecs.push({ name: spec.name, frontmatter });
+      } else {
+        // No filters, just show all
+        const frontmatter = await parseFrontmatter(specFile);
+        filteredSpecs.push({ name: spec.name, frontmatter });
+      }
+    }
+
+    if (filteredSpecs.length > 0) {
       foundActive = true;
       console.log(chalk.cyan(`${dir.name}/`));
-      for (const spec of specDirs) {
-        console.log(`  ${spec.name}/`);
+      for (const spec of filteredSpecs) {
+        let line = `  ${spec.name}/`;
+        
+        // Add metadata if available
+        if (spec.frontmatter) {
+          const meta: string[] = [];
+          meta.push(getStatusEmoji(spec.frontmatter.status));
+          if (spec.frontmatter.priority) {
+            meta.push(getPriorityLabel(spec.frontmatter.priority));
+          }
+          if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
+            meta.push(chalk.gray(`[${spec.frontmatter.tags.join(', ')}]`));
+          }
+          
+          if (meta.length > 0) {
+            line += ` ${meta.join(' ')}`;
+          }
+        }
+        
+        console.log(line);
       }
       console.log('');
     }
   }
 
   if (!foundActive) {
-    console.log('No active specs found. Create one with: lspec create <name>');
+    if (hasFilters) {
+      console.log('No specs match the specified filters.');
+    } else {
+      console.log('No active specs found. Create one with: lspec create <name>');
+    }
   }
 
   // List archived specs
-  if (showArchived) {
+  if (options.showArchived) {
     const archivedPath = path.join(specsDir, 'archived');
     try {
       await fs.access(archivedPath);
@@ -216,6 +284,66 @@ export async function listSpecs(showArchived: boolean): Promise<void> {
   }
 
   console.log('');
+}
+
+export async function updateSpec(
+  specPath: string,
+  updates: {
+    status?: SpecStatus;
+    priority?: SpecPriority;
+    tags?: string[];
+    assignee?: string;
+  }
+): Promise<void> {
+  const config = await loadConfig();
+  const cwd = process.cwd();
+  
+  const resolvedPath = path.resolve(specPath);
+
+  // Check if directory exists
+  try {
+    await fs.access(resolvedPath);
+  } catch {
+    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
+    process.exit(1);
+  }
+
+  // Get spec file
+  const specFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
+  if (!specFile) {
+    console.error(chalk.red(`Error: No spec file found in: ${specPath}`));
+    process.exit(1);
+  }
+
+  // Update frontmatter
+  await updateFrontmatter(specFile, updates);
+
+  console.log(chalk.green(`✓ Updated: ${specPath}`));
+  
+  // Show what was updated
+  const updatedFields = Object.keys(updates).join(', ');
+  console.log(chalk.gray(`  Fields: ${updatedFields}`));
+}
+
+// Helper functions for display
+function getStatusEmoji(status: SpecStatus): string {
+  switch (status) {
+    case 'planned': return chalk.gray('📅');
+    case 'in-progress': return chalk.yellow('🔨');
+    case 'complete': return chalk.green('✅');
+    case 'archived': return chalk.gray('📦');
+    default: return '';
+  }
+}
+
+function getPriorityLabel(priority: SpecPriority): string {
+  switch (priority) {
+    case 'low': return chalk.gray('low');
+    case 'medium': return chalk.blue('med');
+    case 'high': return chalk.yellow('high');
+    case 'critical': return chalk.red('CRIT');
+    default: return '';
+  }
 }
 
 // Detect common system prompt files
