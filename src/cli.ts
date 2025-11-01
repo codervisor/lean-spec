@@ -1,5 +1,11 @@
 import { parseArgs } from 'node:util';
 import { createSpec, archiveSpec, listSpecs, listTemplates, initProject, updateSpec } from './commands.js';
+import { statsCommand } from './commands/stats.js';
+import { boardCommand } from './commands/board.js';
+import { timelineCommand } from './commands/timeline.js';
+import { depsCommand } from './commands/deps.js';
+import { searchCommand } from './commands/search.js';
+import { ganttCommand } from './commands/gantt.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
 
 const USAGE = `lspec - Manage LeanSpec documents
@@ -25,6 +31,33 @@ Commands:
     --assignee <name>                  Set assignee
   templates                            List available templates
 
+PM Visualization Commands:
+  stats [options]                      Show aggregate statistics
+    --tag <tag>                        Filter by tag
+    --assignee <name>                  Filter by assignee
+    --json                             Output as JSON
+  board [options]                      Show Kanban-style board view
+    --show-complete                    Expand complete column
+    --tag <tag>                        Filter by tag
+    --assignee <name>                  Filter by assignee
+  timeline [options]                   Show creation/completion over time
+    --days <n>                         Show last N days (default: 30)
+    --by-tag                           Group by tag
+    --by-assignee                      Group by assignee
+  deps <spec-path> [options]           Show dependency graph for a spec
+    --depth <n>                        Show N levels deep (default: 3)
+    --graph                            ASCII graph visualization
+    --json                             Output as JSON
+  search <query> [options]             Full-text search with metadata filters
+    --status <status>                  Filter by status
+    --tag <tag>                        Filter by tag
+    --priority <priority>              Filter by priority
+    --assignee <name>                  Filter by assignee
+  gantt [options]                      Show timeline with dependencies
+    --weeks <n>                        Show N weeks (default: 4)
+    --show-complete                    Include completed specs
+    --critical-path                    Highlight critical path
+
 Structure: specs/YYYYMMDD/NNN-name/ (folders, not files)
 
 Examples:
@@ -36,6 +69,12 @@ Examples:
   lspec list --priority=high
   lspec update specs/20251031/001-user-export --status=complete
   lspec update specs/20251031/001-user-export --priority=high --tags=api,feature
+  lspec stats
+  lspec board --show-complete
+  lspec timeline --days=90 --by-tag
+  lspec deps specs/20251101/003-pm-visualization-tools
+  lspec search "api" --status=planned --priority=high
+  lspec gantt --weeks=8
   lspec templates
   lspec archive specs/20251031/001-user-export
 `;
@@ -181,6 +220,172 @@ async function main() {
       }
       case 'templates': {
         await listTemplates();
+        break;
+      }
+      case 'stats': {
+        // Parse options
+        const options: { tag?: string; assignee?: string; json?: boolean } = {};
+        
+        for (let i = 1; i < args.length; i++) {
+          const arg = args[i];
+          
+          if (arg.startsWith('--tag=')) {
+            options.tag = arg.split('=')[1];
+          } else if (arg === '--tag' && args[i + 1]) {
+            options.tag = args[i + 1];
+            i++;
+          } else if (arg.startsWith('--assignee=')) {
+            options.assignee = arg.split('=')[1];
+          } else if (arg === '--assignee' && args[i + 1]) {
+            options.assignee = args[i + 1];
+            i++;
+          } else if (arg === '--json') {
+            options.json = true;
+          }
+        }
+        
+        await statsCommand(options);
+        break;
+      }
+      case 'board': {
+        // Parse options
+        const options: { showComplete?: boolean; tag?: string; assignee?: string } = {};
+        
+        for (let i = 1; i < args.length; i++) {
+          const arg = args[i];
+          
+          if (arg === '--show-complete') {
+            options.showComplete = true;
+          } else if (arg.startsWith('--tag=')) {
+            options.tag = arg.split('=')[1];
+          } else if (arg === '--tag' && args[i + 1]) {
+            options.tag = args[i + 1];
+            i++;
+          } else if (arg.startsWith('--assignee=')) {
+            options.assignee = arg.split('=')[1];
+          } else if (arg === '--assignee' && args[i + 1]) {
+            options.assignee = args[i + 1];
+            i++;
+          }
+        }
+        
+        await boardCommand(options);
+        break;
+      }
+      case 'timeline': {
+        // Parse options
+        const options: { days?: number; byTag?: boolean; byAssignee?: boolean } = {};
+        
+        for (let i = 1; i < args.length; i++) {
+          const arg = args[i];
+          
+          if (arg.startsWith('--days=')) {
+            options.days = parseInt(arg.split('=')[1], 10);
+          } else if (arg === '--days' && args[i + 1]) {
+            options.days = parseInt(args[i + 1], 10);
+            i++;
+          } else if (arg === '--by-tag') {
+            options.byTag = true;
+          } else if (arg === '--by-assignee') {
+            options.byAssignee = true;
+          }
+        }
+        
+        await timelineCommand(options);
+        break;
+      }
+      case 'deps': {
+        const specPath = args[1];
+        if (!specPath) {
+          console.error('Error: Spec path required');
+          process.exit(1);
+        }
+        
+        // Parse options
+        const options: { depth?: number; graph?: boolean; json?: boolean } = {};
+        
+        for (let i = 2; i < args.length; i++) {
+          const arg = args[i];
+          
+          if (arg.startsWith('--depth=')) {
+            options.depth = parseInt(arg.split('=')[1], 10);
+          } else if (arg === '--depth' && args[i + 1]) {
+            options.depth = parseInt(args[i + 1], 10);
+            i++;
+          } else if (arg === '--graph') {
+            options.graph = true;
+          } else if (arg === '--json') {
+            options.json = true;
+          }
+        }
+        
+        await depsCommand(specPath, options);
+        break;
+      }
+      case 'search': {
+        const query = args[1];
+        if (!query) {
+          console.error('Error: Search query required');
+          process.exit(1);
+        }
+        
+        // Parse options
+        const options: {
+          status?: SpecStatus;
+          tag?: string;
+          priority?: SpecPriority;
+          assignee?: string;
+        } = {};
+        
+        for (let i = 2; i < args.length; i++) {
+          const arg = args[i];
+          
+          if (arg.startsWith('--status=')) {
+            options.status = arg.split('=')[1] as SpecStatus;
+          } else if (arg === '--status' && args[i + 1]) {
+            options.status = args[i + 1] as SpecStatus;
+            i++;
+          } else if (arg.startsWith('--tag=')) {
+            options.tag = arg.split('=')[1];
+          } else if (arg === '--tag' && args[i + 1]) {
+            options.tag = args[i + 1];
+            i++;
+          } else if (arg.startsWith('--priority=')) {
+            options.priority = arg.split('=')[1] as SpecPriority;
+          } else if (arg === '--priority' && args[i + 1]) {
+            options.priority = args[i + 1] as SpecPriority;
+            i++;
+          } else if (arg.startsWith('--assignee=')) {
+            options.assignee = arg.split('=')[1];
+          } else if (arg === '--assignee' && args[i + 1]) {
+            options.assignee = args[i + 1];
+            i++;
+          }
+        }
+        
+        await searchCommand(query, options);
+        break;
+      }
+      case 'gantt': {
+        // Parse options
+        const options: { weeks?: number; showComplete?: boolean; criticalPath?: boolean } = {};
+        
+        for (let i = 1; i < args.length; i++) {
+          const arg = args[i];
+          
+          if (arg.startsWith('--weeks=')) {
+            options.weeks = parseInt(arg.split('=')[1], 10);
+          } else if (arg === '--weeks' && args[i + 1]) {
+            options.weeks = parseInt(args[i + 1], 10);
+            i++;
+          } else if (arg === '--show-complete') {
+            options.showComplete = true;
+          } else if (arg === '--critical-path') {
+            options.criticalPath = true;
+          }
+        }
+        
+        await ganttCommand(options);
         break;
       }
       default:

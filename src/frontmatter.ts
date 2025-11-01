@@ -30,6 +30,7 @@ export interface SpecFrontmatter {
   pr?: string;
   epic?: string;
   breaking?: boolean;
+  due?: string; // YYYY-MM-DD format
 
   // Allow any additional fields (for extensibility)
   [key: string]: unknown;
