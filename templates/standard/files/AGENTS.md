@@ -23,12 +23,53 @@ Skip specs for:
 - Trivial changes
 - Self-explanatory refactors
 
+## Discovery Commands
+
+Before starting work, understand project context:
+
+- `lspec stats` - See work distribution across specs
+- `lspec board` - View specs organized by status
+- `lspec list --tag=<tag>` - Find specs by tag (e.g., `--tag=api`)
+- `lspec search "<query>"` - Full-text search across specs
+- `lspec deps <spec>` - Check dependencies before starting work
+
+These commands help you understand what exists, what's in progress, and what depends on what.
+
+## Spec Frontmatter
+
+When creating or updating specs, include YAML frontmatter at the top:
+
+```yaml
+---
+status: draft|planned|in-progress|complete|blocked|cancelled
+created: YYYY-MM-DD
+tags: [tag1, tag2]  # helps with discovery
+priority: low|medium|high  # helps with planning
+assignee: username  # for team coordination
+---
+```
+
+**Core fields:**
+- `status` and `created` are required
+- `tags` help with discovery and organization
+- `priority` helps teams plan work
+- `assignee` shows who's working on what
+
+**Update status with:**
+```bash
+lspec update <spec> --status in-progress --assignee yourname
+# or edit frontmatter directly
+```
+
 ## Workflow
 
-1. Check `specs/` for existing relevant specs
-2. If creating new feature, consider creating spec first
-3. Update specs as you learn (living documentation)
-4. Archive completed specs: `lspec archive specs/YYYYMMDD/NNN-name`
+1. **Discover context** - Run `lspec stats` or `lspec board` to see current state
+2. **Search existing specs** - Use `lspec search` or `lspec list` to find relevant work
+3. **Check dependencies** - Run `lspec deps <spec>` if working on existing spec
+4. **Create or update spec** - Add frontmatter with required fields and helpful metadata
+5. **Implement changes** - Keep spec in sync as you learn
+6. **Update status** - Mark progress: `draft` → `in-progress` → `complete`
+7. **Archive when done** - `lspec archive <spec>` moves to archive
 
 ## Quality Standards
 
@@ -36,6 +77,7 @@ Skip specs for:
 - Tests cover critical paths
 - No unnecessary complexity
 - Documentation where needed (not everywhere)
+- Specs stay in sync with implementation
 
 ---
 

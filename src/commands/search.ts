@@ -1,6 +1,10 @@
+import React from 'react';
+import { render } from 'ink';
 import chalk from 'chalk';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
+import { SpecList } from '../components/SpecList.js';
+import { withSpinner } from '../utils/ui.js';
 
 export async function searchCommand(query: string, options: {
   status?: SpecStatus;
@@ -15,12 +19,15 @@ export async function searchCommand(query: string, options: {
   if (options.priority) filter.priority = options.priority;
   if (options.assignee) filter.assignee = options.assignee;
 
-  // Load all specs with content
-  const specs = await loadAllSpecs({
-    includeArchived: true,
-    includeContent: true,
-    filter,
-  });
+  // Load all specs with content and spinner
+  const specs = await withSpinner(
+    'Searching specs...',
+    () => loadAllSpecs({
+      includeArchived: true,
+      includeContent: true,
+      filter,
+    })
+  );
 
   if (specs.length === 0) {
     console.log('No specs found matching filters.');
@@ -64,8 +71,8 @@ export async function searchCommand(query: string, options: {
   }
 
   // Display results
-  console.log('');
   if (results.length === 0) {
+    console.log('');
     console.log(chalk.yellow(`🔍 No specs found matching "${query}"`));
     
     // Show active filters
@@ -77,53 +84,59 @@ export async function searchCommand(query: string, options: {
       if (options.assignee) filters.push(`assignee=${options.assignee}`);
       console.log(chalk.gray(`With filters: ${filters.join(', ')}`));
     }
-  } else {
-    console.log(chalk.green(`🔍 Found ${results.length} spec${results.length === 1 ? '' : 's'} matching "${query}"`));
+    console.log('');
+    return;
+  }
+
+  // Show summary header
+  console.log('');
+  console.log(chalk.green(`🔍 Found ${results.length} spec${results.length === 1 ? '' : 's'} matching "${query}"`));
+  
+  // Show active filters
+  if (Object.keys(filter).length > 0) {
+    const filters: string[] = [];
+    if (options.status) filters.push(`status=${options.status}`);
+    if (options.tag) filters.push(`tag=${options.tag}`);
+    if (options.priority) filters.push(`priority=${options.priority}`);
+    if (options.assignee) filters.push(`assignee=${options.assignee}`);
+    console.log(chalk.gray(`With filters: ${filters.join(', ')}`));
+  }
+  console.log('');
+
+  // Display each result with matches
+  for (const result of results) {
+    const { spec, matches } = result;
     
-    // Show active filters
-    if (Object.keys(filter).length > 0) {
-      const filters: string[] = [];
-      if (options.status) filters.push(`status=${options.status}`);
-      if (options.tag) filters.push(`tag=${options.tag}`);
-      if (options.priority) filters.push(`priority=${options.priority}`);
-      if (options.assignee) filters.push(`assignee=${options.assignee}`);
-      console.log(chalk.gray(`With filters: ${filters.join(', ')}`));
+    // Spec header
+    console.log(chalk.cyan(`${spec.frontmatter.status === 'in-progress' ? '🔨' : spec.frontmatter.status === 'complete' ? '✅' : '📅'} ${spec.path}`));
+    
+    // Metadata
+    const meta: string[] = [];
+    if (spec.frontmatter.priority) {
+      const priorityEmoji = spec.frontmatter.priority === 'critical' ? '🔴' : 
+                           spec.frontmatter.priority === 'high' ? '🟡' :
+                           spec.frontmatter.priority === 'medium' ? '🟠' : '🟢';
+      meta.push(`${priorityEmoji} ${spec.frontmatter.priority}`);
+    }
+    if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
+      meta.push(`[${spec.frontmatter.tags.join(', ')}]`);
+    }
+    if (meta.length > 0) {
+      console.log(chalk.gray(`  ${meta.join(' • ')}`));
+    }
+    
+    // Show first few matches (limit to 3 per spec)
+    const maxMatches = 3;
+    for (let i = 0; i < Math.min(matches.length, maxMatches); i++) {
+      console.log(`  ${chalk.gray('Match:')} ${matches[i].trim()}`);
+    }
+    
+    if (matches.length > maxMatches) {
+      console.log(chalk.gray(`  ... and ${matches.length - maxMatches} more match${matches.length - maxMatches === 1 ? '' : 'es'}`));
     }
     
     console.log('');
-
-    for (const result of results) {
-      const { spec, matches } = result;
-      
-      // Spec header
-      console.log(chalk.cyan(spec.path));
-      
-      // Metadata
-      const meta: string[] = [];
-      meta.push(`Status: ${spec.frontmatter.status}`);
-      if (spec.frontmatter.priority) {
-        meta.push(`Priority: ${spec.frontmatter.priority}`);
-      }
-      if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
-        meta.push(`Tags: [${spec.frontmatter.tags.join(', ')}]`);
-      }
-      console.log(chalk.gray(`  ${meta.join('  ')}`));
-      
-      // Show first few matches (limit to 3 per spec)
-      const maxMatches = 3;
-      for (let i = 0; i < Math.min(matches.length, maxMatches); i++) {
-        console.log(`  Match: "${matches[i]}"`);
-      }
-      
-      if (matches.length > maxMatches) {
-        console.log(chalk.gray(`  ... and ${matches.length - maxMatches} more match${matches.length - maxMatches === 1 ? '' : 'es'}`));
-      }
-      
-      console.log('');
-    }
   }
-  
-  console.log('');
 }
 
 function highlightMatch(text: string, query: string): string {

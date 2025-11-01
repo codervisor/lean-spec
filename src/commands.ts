@@ -161,13 +161,10 @@ export async function listSpecs(options: {
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);
   
-  console.log('');
-  console.log(chalk.green('=== Specs ==='));
-  console.log('');
-
   try {
     await fs.access(specsDir);
   } catch {
+    console.log('');
     console.log('No specs directory found. Initialize with: lspec init');
     console.log('');
     return;
@@ -180,107 +177,71 @@ export async function listSpecs(options: {
   if (options.priority) filter.priority = options.priority;
   if (options.assignee) filter.assignee = options.assignee;
 
-  const hasFilters = Object.keys(filter).length > 0;
+  // Use spinner for loading
+  const { withSpinner } = await import('./utils/ui.js');
+  const { loadAllSpecs } = await import('./spec-loader.js');
+  
+  const specs = await withSpinner(
+    'Loading specs...',
+    () => loadAllSpecs({
+      includeArchived: options.showArchived || false,
+      filter,
+    })
+  );
 
-  // List active specs
-  const entries = await fs.readdir(specsDir, { withFileTypes: true });
-  const dateDirs = entries
-    .filter((e) => e.isDirectory() && e.name !== 'archived')
-    .sort((a, b) => b.name.localeCompare(a.name)); // Reverse chronological
+  console.log('');
+  console.log(chalk.green('=== Specs ==='));
+  console.log('');
 
-  let foundActive = false;
-  for (const dir of dateDirs) {
-    const dateDir = path.join(specsDir, dir.name);
-    const specs = await fs.readdir(dateDir, { withFileTypes: true });
-    const specDirs = specs.filter((s) => s.isDirectory()).sort();
-
-    const filteredSpecs = [];
-    
-    for (const spec of specDirs) {
-      const specDir = path.join(dateDir, spec.name);
-      const specFile = await getSpecFile(specDir, config.structure.defaultFile);
-      
-      if (!specFile) continue;
-
-      // Parse frontmatter if filtering is requested
-      if (hasFilters) {
-        const frontmatter = await parseFrontmatter(specFile);
-        if (!frontmatter || !matchesFilter(frontmatter, filter)) {
-          continue;
-        }
-        filteredSpecs.push({ name: spec.name, frontmatter });
-      } else {
-        // No filters, just show all
-        const frontmatter = await parseFrontmatter(specFile);
-        filteredSpecs.push({ name: spec.name, frontmatter });
-      }
-    }
-
-    if (filteredSpecs.length > 0) {
-      foundActive = true;
-      console.log(chalk.cyan(`${dir.name}/`));
-      for (const spec of filteredSpecs) {
-        let line = `  ${spec.name}/`;
-        
-        // Add metadata if available
-        if (spec.frontmatter) {
-          const meta: string[] = [];
-          meta.push(getStatusEmoji(spec.frontmatter.status));
-          if (spec.frontmatter.priority) {
-            meta.push(getPriorityLabel(spec.frontmatter.priority));
-          }
-          if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
-            meta.push(chalk.gray(`[${spec.frontmatter.tags.join(', ')}]`));
-          }
-          
-          if (meta.length > 0) {
-            line += ` ${meta.join(' ')}`;
-          }
-        }
-        
-        console.log(line);
-      }
-      console.log('');
-    }
-  }
-
-  if (!foundActive) {
-    if (hasFilters) {
+  if (specs.length === 0) {
+    if (Object.keys(filter).length > 0) {
       console.log('No specs match the specified filters.');
     } else {
-      console.log('No active specs found. Create one with: lspec create <name>');
+      console.log('No specs found. Create one with: lspec create <name>');
     }
+    console.log('');
+    return;
   }
 
-  // List archived specs
-  if (options.showArchived) {
-    const archivedPath = path.join(specsDir, 'archived');
-    try {
-      await fs.access(archivedPath);
-      console.log(chalk.yellow('=== Archived ==='));
-      console.log('');
-
-      const archivedEntries = await fs.readdir(archivedPath, { withFileTypes: true });
-      const archivedDirs = archivedEntries
-        .filter((e) => e.isDirectory())
-        .sort((a, b) => b.name.localeCompare(a.name));
-
-      for (const dir of archivedDirs) {
-        const dateDir = path.join(archivedPath, dir.name);
-        const specs = await fs.readdir(dateDir, { withFileTypes: true });
-        const specDirs = specs.filter((s) => s.isDirectory()).sort();
-
-        if (specDirs.length > 0) {
-          console.log(chalk.cyan(`${dir.name}/`));
-          for (const spec of specDirs) {
-            console.log(`  ${spec.name}/`);
-          }
-          console.log('');
-        }
-      }
-    } catch {
-      // No archived directory
+  // Group specs by date directory
+  const byDate = new Map<string, typeof specs>();
+  for (const spec of specs) {
+    const dateMatch = spec.path.match(/^(\d{8})\//);
+    const dateKey = dateMatch ? dateMatch[1] : 'unknown';
+    if (!byDate.has(dateKey)) {
+      byDate.set(dateKey, []);
     }
+    byDate.get(dateKey)!.push(spec);
+  }
+
+  // Display grouped by date (newest first)
+  const sortedDates = Array.from(byDate.keys()).sort((a, b) => b.localeCompare(a));
+  
+  for (const date of sortedDates) {
+    const dateSpecs = byDate.get(date)!;
+    console.log(chalk.cyan(`${date}/`));
+    
+    for (const spec of dateSpecs) {
+      const specName = spec.path.replace(/^\d{8}\//, '').replace(/\/$/, '');
+      let line = `  ${specName}/`;
+      
+      // Add metadata
+      const meta: string[] = [];
+      meta.push(getStatusEmoji(spec.frontmatter.status));
+      if (spec.frontmatter.priority) {
+        meta.push(getPriorityLabel(spec.frontmatter.priority));
+      }
+      if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
+        meta.push(chalk.gray(`[${spec.frontmatter.tags.join(', ')}]`));
+      }
+      
+      if (meta.length > 0) {
+        line += ` ${meta.join(' ')}`;
+      }
+      
+      console.log(line);
+    }
+    console.log('');
   }
 
   console.log('');

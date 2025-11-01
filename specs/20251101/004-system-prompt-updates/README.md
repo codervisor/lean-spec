@@ -1,6 +1,6 @@
 ---
-status: planned
-created: 2025-11-01
+status: complete
+created: 2025-11-01T00:00:00.000Z
 tags:
   - documentation
   - ai-agents
@@ -9,11 +9,12 @@ priority: medium
 depends_on:
   - 20251101/002-structured-frontmatter
   - 20251101/003-pm-visualization-tools
+completed: '2025-11-01'
 ---
 
 # system-prompt-updates
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: documentation, ai-agents, templates
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: documentation, ai-agents, templates
 
 
 ## Overview

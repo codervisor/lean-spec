@@ -11,20 +11,67 @@ Enterprise-grade development with security and compliance requirements.
 3. **Follow LeanSpec** - Lean doesn't mean skipping governance
 4. **Document decisions** - Especially security and compliance choices
 
-## Security Standards
+## Discovery Commands
 
-- No hardcoded secrets or credentials
-- Input validation on all external data
-- Secure authentication/authorization
-- Follow principle of least privilege
-- Log security-relevant events
+Before starting work, understand project context and dependencies:
 
-## Compliance Requirements
+- `lspec stats` - See work distribution across specs
+- `lspec board` - View specs organized by status
+- `lspec list --tag=<tag>` - Find specs by tag (e.g., `--tag=security`)
+- `lspec search "<query>"` - Full-text search across specs
+- `lspec deps <spec>` - Check dependencies before starting work
+- `lspec gantt` - View project timeline and milestones
 
-- PII handling follows data protection policies
-- Audit trails for sensitive operations
-- Change management process for production
-- Code review required before merge
+These commands help you understand what exists, what's in progress, and what depends on what.
+
+## Spec Frontmatter
+
+When creating or updating specs, include YAML frontmatter with all relevant fields:
+
+```yaml
+---
+status: draft|planned|in-progress|complete|blocked|cancelled
+created: YYYY-MM-DD
+tags: [security, api, compliance]  # for discovery
+priority: low|medium|high|critical
+assignee: username
+reviewer: reviewer-username  # required for review
+issue: JIRA-123  # link to issue tracker
+epic: EPIC-456  # link to epic
+compliance: [SOC2, GDPR, HIPAA]  # applicable standards
+depends_on:
+  - path/to/other/spec
+---
+```
+
+**Required fields:**
+- `status`, `created` - basic tracking
+- `tags`, `priority` - planning and discovery
+- `assignee`, `reviewer` - accountability
+- `compliance` - regulatory requirements (if applicable)
+
+**Integration fields:**
+- `issue`, `epic` - link to external systems
+- `depends_on` - explicit dependencies
+
+**Update with:**
+```bash
+lspec update <spec> --status in-progress --assignee yourname
+# or edit frontmatter directly
+```
+
+## Security & Compliance in Frontmatter
+
+Tag specs with relevant compliance standards:
+```yaml
+tags: [security, api, pii]
+compliance: [SOC2, GDPR]
+```
+
+This helps with:
+- Compliance audits and reporting
+- Security review prioritization
+- Regulatory requirement tracking
 
 ## When Specs Are Required
 
@@ -42,12 +89,25 @@ Optional for:
 
 ## Approval Workflow
 
-1. Create spec with security/compliance sections
-2. Technical review
-3. Security team review (if applicable)
-4. Stakeholder sign-off
-5. Implementation with tests
-6. Final review before deployment
+1. **Discover context** - Run `lspec stats`, `lspec board`, `lspec deps`
+2. **Create spec** - Include all required frontmatter fields
+3. **Technical review** - Assign reviewer in frontmatter
+4. **Security team review** - For security/compliance-tagged specs
+5. **Stakeholder sign-off** - Update status to `planned`
+6. **Implementation** - Update status to `in-progress`, keep spec in sync
+7. **Final review** - Before deployment
+8. **Complete & archive** - Mark `complete`, then archive
+
+## Workflow
+
+1. **Discover context** - Run `lspec stats`, `lspec board`, or `lspec gantt`
+2. **Search existing specs** - Use `lspec search` or `lspec list --tag=<relevant>`
+3. **Check dependencies** - Run `lspec deps <spec>` to understand dependencies
+4. **Create or update spec** - Add complete frontmatter with compliance tags
+5. **Get reviews** - Assign reviewer, tag for security review if needed
+6. **Implement changes** - Keep spec in sync, update status appropriately
+7. **Update status** - Mark progress through workflow states
+8. **Archive when done** - `lspec archive <spec>` after completion
 
 ## Quality Standards
 
@@ -55,6 +115,8 @@ Optional for:
 - Tests include security scenarios
 - Documentation complete
 - Compliance checklist completed
+- Code is clear and maintainable
+- Specs stay in sync with implementation
 
 ---
 
