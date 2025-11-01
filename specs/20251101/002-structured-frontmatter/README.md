@@ -210,6 +210,14 @@ breaking: true
 Only build these if users ask for them:
 
 - `lspec stats` - "5 in-progress, 12 complete" summary
-- Dependency visualization (if `depends_on` fields get used)
-- Export to JSON/CSV for external tools
-- Integration hooks for issue trackers (if teams need it)
+- `lspec board` - Kanban-style view by status (planned | in-progress | complete)
+- `lspec gantt` - Timeline view with dependencies and due dates
+- `lspec timeline` - Visualize spec creation/completion over time
+- `lspec deps <spec>` - Show dependency graph (depends_on, blocks visualization)
+- `lspec search` - Full-text search with metadata filters
+- Export formats: JSON, CSV, markdown table for reporting
+- Integration hooks: webhook on status change, sync to Jira/Linear
+- AI suggestions: auto-tag based on content, suggest related specs
+- Metrics: cycle time (created → complete), blocked time tracking
+
+**Vision**: With structured metadata, LeanSpec can evolve from a simple file tool into a powerful project visibility system while staying true to its lean, file-first philosophy.
