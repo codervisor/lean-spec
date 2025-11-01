@@ -106,6 +106,16 @@ Each template is a complete working model with:
 - Supporting files (CONTRIBUTING.md, checklists, etc.)
 - Project-specific config
 
+#### Integrating with Existing Projects
+
+If you already have `AGENTS.md`, `.cursorrules`, or other system prompts, `lspec init` will detect them and offer three options:
+
+1. **Merge** - Appends LeanSpec guidance to your existing `AGENTS.md` (preserves your content)
+2. **Backup** - Saves existing files as `.backup` and creates fresh ones
+3. **Skip** - Only adds `.lspec` config and `specs/` directory, keeps your files untouched
+
+This makes it easy to adopt LeanSpec incrementally without disrupting your existing AI agent setup.
+
 ### Available Templates
 
 - **solo-dev** - Quick setup for solo developers (default)
