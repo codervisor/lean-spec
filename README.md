@@ -124,6 +124,10 @@ LeanSpec uses YAML frontmatter for structured metadata. Each template includes d
 status: planned
 created: 2025-11-01
 ---
+
+# My Feature
+
+> **Status**: 📅 Planned · **Created**: 2025-11-01
 ```
 
 **Standard Template** (recommended - adds tags and priority):
@@ -134,6 +138,10 @@ created: 2025-11-01
 tags: [api, feature]
 priority: high
 ---
+
+# My Feature
+
+> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-01 · **Tags**: api, feature
 ```
 
 **Enterprise Template** (adds team fields and tracking):
@@ -148,7 +156,17 @@ reviewer: bob
 issue: JIRA-1234
 epic: security-hardening
 ---
+
+# My Feature
+
+> **Status**: 🔨 In progress · **Priority**: Critical · **Created**: 2025-11-01 · **Tags**: security, compliance  
+> **Assignee**: alice · **Reviewer**: bob
 ```
+
+**Key Features**:
+- **Dual Format**: Machine-readable YAML frontmatter + human-readable visual badges
+- **Auto-sync**: Visual badges automatically update when metadata changes
+- **Status Emojis**: 📅 Planned, 🔨 In progress, ✅ Complete, 📦 Archived
 
 **Philosophy**: Start minimal. Add fields only when you feel the pain of not having them.
 

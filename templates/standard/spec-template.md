@@ -7,6 +7,8 @@ priority: medium
 
 # {name}
 
+> **Status**: 📅 Planned · **Priority**: Medium · **Created**: {date}
+
 ## Overview
 
 <!-- What are we solving? Why now? -->

@@ -1,7 +1,14 @@
+---
+status: complete
+created: 2025-10-31
+tags: [typescript, cli, migration]
+priority: high
+completed: 2025-10-31
+---
+
 # typescript-cli-migration
 
-**Created**: 2025-10-31  
-**Status**: Complete
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-10-31 · **Tags**: typescript, cli, migration
 
 ## Goal
 

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import matter from 'gray-matter';
+import dayjs from 'dayjs';
 
 // Valid status values
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
@@ -118,16 +119,78 @@ export async function updateFrontmatter(
 
   // Auto-update timestamps if fields exist
   if (updates.status === 'complete' && !newData.completed) {
-    newData.completed = new Date().toISOString().split('T')[0];
+    newData.completed = dayjs().format('YYYY-MM-DD');
   }
 
   if ('updated' in parsed.data) {
-    newData.updated = new Date().toISOString().split('T')[0];
+    newData.updated = dayjs().format('YYYY-MM-DD');
   }
 
+  // Update visual metadata badges in content
+  let updatedContent = parsed.content;
+  updatedContent = updateVisualMetadata(updatedContent, newData as SpecFrontmatter);
+
   // Stringify back to file
-  const newContent = matter.stringify(parsed.content, newData);
+  const newContent = matter.stringify(updatedContent, newData);
   await fs.writeFile(filePath, newContent, 'utf-8');
+}
+
+// Update visual metadata badges in content
+function updateVisualMetadata(content: string, frontmatter: SpecFrontmatter): string {
+  const statusEmoji = getStatusEmojiPlain(frontmatter.status);
+  const statusLabel = frontmatter.status.charAt(0).toUpperCase() + frontmatter.status.slice(1).replace('-', ' ');
+  
+  // Parse created date with dayjs - handles all formats consistently
+  const created = dayjs(frontmatter.created).format('YYYY-MM-DD');
+  
+  // Build metadata line
+  let metadataLine = `> **Status**: ${statusEmoji} ${statusLabel}`;
+  
+  if (frontmatter.priority) {
+    const priorityLabel = frontmatter.priority.charAt(0).toUpperCase() + frontmatter.priority.slice(1);
+    metadataLine += ` · **Priority**: ${priorityLabel}`;
+  }
+  
+  metadataLine += ` · **Created**: ${created}`;
+  
+  if (frontmatter.tags && frontmatter.tags.length > 0) {
+    metadataLine += ` · **Tags**: ${frontmatter.tags.join(', ')}`;
+  }
+  
+  // For enterprise template with assignee/reviewer
+  let secondLine = '';
+  if (frontmatter.assignee || frontmatter.reviewer) {
+    const assignee = frontmatter.assignee || 'TBD';
+    const reviewer = frontmatter.reviewer || 'TBD';
+    secondLine = `\n> **Assignee**: ${assignee} · **Reviewer**: ${reviewer}`;
+  }
+  
+  // Replace existing metadata block or add after title
+  const metadataPattern = /^>\s+\*\*Status\*\*:.*(?:\n>\s+\*\*Assignee\*\*:.*)?/m;
+  
+  if (metadataPattern.test(content)) {
+    // Replace existing metadata
+    return content.replace(metadataPattern, metadataLine + secondLine);
+  } else {
+    // Add after title (# title)
+    const titleMatch = content.match(/^#\s+.+$/m);
+    if (titleMatch) {
+      const insertPos = titleMatch.index! + titleMatch[0].length;
+      return content.slice(0, insertPos) + '\n\n' + metadataLine + secondLine + '\n' + content.slice(insertPos);
+    }
+  }
+  
+  return content;
+}
+
+function getStatusEmojiPlain(status: string): string {
+  switch (status) {
+    case 'planned': return '📅';
+    case 'in-progress': return '🔨';
+    case 'complete': return '✅';
+    case 'archived': return '📦';
+    default: return '📄';
+  }
 }
 
 // Get spec file path from spec directory

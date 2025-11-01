@@ -1,4 +1,15 @@
+---
+status: complete
+created: 2025-10-31
+tags: [init, cli, templates]
+priority: high
+completed: 2025-10-31
+---
+
 # init-system-redesign
+
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-10-31 · **Tags**: init, cli, templates
+
 
 **Status**: ✅ Complete  
 **Created**: 2025-10-31  

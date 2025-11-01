@@ -12,6 +12,9 @@ epic:
 
 # {name}
 
+> **Status**: 📅 Planned · **Priority**: Medium · **Created**: {date}  
+> **Assignee**: TBD · **Reviewer**: TBD
+
 ## Overview
 
 <!-- What business problem? Why now? Expected impact? -->

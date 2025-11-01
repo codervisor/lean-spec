@@ -1,12 +1,20 @@
 ---
 status: planned
 created: 2025-11-01
-tags: [enhancement, cli, visualization, pm-tools]
+tags:
+  - enhancement
+  - cli
+  - visualization
+  - pm-tools
 priority: medium
-depends_on: [20251101/002-structured-frontmatter]
+depends_on:
+  - 20251101/002-structured-frontmatter
 ---
 
 # pm-visualization-tools
+
+> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: enhancement, cli, visualization, pm-tools
+
 
 ## Overview
 
