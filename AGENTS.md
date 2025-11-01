@@ -1,71 +1,42 @@
 # AI Agent Instructions
 
-## Project: lean-spec
+## Project: LeanSpec
 
-Lightweight spec methodology for AI-powered development. **Practice what we preach—keep it lean.**
+Lightweight spec methodology for AI-powered development.
 
 ## Core Rules
 
-1. **Read README.md first** - Understand the methodology
-2. **Follow LeanSpec principles** - Clarity over documentation, essential over exhaustive
-3. **Keep it minimal** - If it doesn't add clarity, cut it
-4. **Make it practical** - Everything must be immediately usable
+1. **Read README.md first** - Understand project context
+2. **Check specs/** - Review existing specs before starting
+3. **Follow LeanSpec principles** - Clarity over documentation
+4. **Keep it minimal** - If it doesn't add clarity, cut it
 
-## Project Structure
+## When to Use Specs
 
-```
-/
-├── README.md              # Main docs
-├── AGENTS.md              # This file
-├── src/                  # TypeScript CLI source
-│   ├── cli.ts
-│   └── commands.ts
-├── templates/
-│   └── spec.md           # Minimal template
-├── specs/                # Date-based: YYYYMMDD/NNN-name.md
-│   └── archived/         # Old specs
-└── examples/             # Working examples for users
-```
+- Features that affect multiple parts of the system
+- Breaking changes or significant refactors
+- Design decisions that need team alignment
+- Complex features that benefit from upfront thinking
 
-## Common Tasks
+Skip specs for:
+- Bug fixes
+- Trivial changes
+- Self-explanatory refactors
 
-### Adding Features
-- Spec first: `lspec create feature-name`
-- Keep specs under 50 lines
-- Update when you learn, not before
+## Workflow
 
-### Updating Docs
-- Prioritize README.md as source of truth
-- Remove redundancy aggressively
-- Use examples over explanations
+1. Check `specs/` for existing relevant specs
+2. If creating new feature, consider creating spec first
+3. Update specs as you learn (living documentation)
+4. Archive completed specs: `lspec archive specs/YYYYMMDD/NNN-name`
 
-### Enhancing CLI
-- Keep TypeScript code simple
-- Minimal dependencies
-- Test all commands
-- CLI is TS, methodology is language-agnostic
+## Quality Standards
 
-### Adding Examples
-- Must be complete and working
-- Include README with clear use case
-- Keep it minimal
-
-## Quality Check
-
-Before committing:
-- [ ] Is this the minimum needed?
-- [ ] Can someone use it immediately?
-- [ ] Does it follow our own methodology?
-- [ ] Have I tested it?
-
-## What to Avoid
-
-- Long explanations (show, don't tell)
-- Multiple sections saying the same thing
-- "While we're here" scope creep
-- Templates with too many fields
-- Over-engineering simple tools
+- Code is clear and maintainable
+- Tests cover critical paths
+- No unnecessary complexity
+- Documentation where needed (not everywhere)
 
 ---
 
-**Dogfood rule**: If this file feels too long, cut more.
+**Remember**: LeanSpec is a mindset. Adapt these guidelines to what actually helps.

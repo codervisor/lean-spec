@@ -230,7 +230,8 @@ async function handleExistingFiles(
   action: 'merge' | 'backup' | 'skip',
   existingFiles: string[],
   templateDir: string,
-  cwd: string
+  cwd: string,
+  variables: Record<string, string> = {}
 ): Promise<void> {
   for (const file of existingFiles) {
     const filePath = path.join(cwd, file);
@@ -247,7 +248,12 @@ async function handleExistingFiles(
     if (action === 'merge' && file === 'AGENTS.md') {
       // Append LeanSpec section to existing AGENTS.md
       const existing = await fs.readFile(filePath, 'utf-8');
-      const template = await fs.readFile(templateFilePath, 'utf-8');
+      let template = await fs.readFile(templateFilePath, 'utf-8');
+      
+      // Replace variables in template
+      for (const [key, value] of Object.entries(variables)) {
+        template = template.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+      }
 
       const merged = `${existing}
 
@@ -265,8 +271,15 @@ ${template.split('\n').slice(1).join('\n')}`;
       await fs.rename(filePath, backupPath);
       console.log(chalk.yellow(`✓ Backed up ${file} → ${file}.backup`));
 
-      // Copy template file
-      await fs.copyFile(templateFilePath, filePath);
+      // Copy template file with variable substitution
+      let content = await fs.readFile(templateFilePath, 'utf-8');
+      
+      // Replace variables in content
+      for (const [key, value] of Object.entries(variables)) {
+        content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+      }
+      
+      await fs.writeFile(filePath, content, 'utf-8');
       console.log(chalk.green(`✓ Created new ${file}`));
     }
     // If skip, do nothing with this file
@@ -379,17 +392,23 @@ export async function initProject(): Promise<void> {
       ],
     });
 
-    await handleExistingFiles(action, existingFiles, templateDir, cwd);
+    // Get project name for variable substitution
+    const projectName = await getProjectName(cwd);
+    
+    await handleExistingFiles(action, existingFiles, templateDir, cwd, { project_name: projectName });
 
     if (action === 'skip') {
       skipFiles = existingFiles;
     }
   }
 
+  // Get project name for variable substitution
+  const projectName = await getProjectName(cwd);
+
   // Copy template files (excluding those we're skipping)
   const filesDir = path.join(templateDir, 'files');
   try {
-    await copyDirectory(filesDir, cwd, skipFiles);
+    await copyDirectory(filesDir, cwd, skipFiles, { project_name: projectName });
     console.log(chalk.green('✓ Initialized project structure'));
   } catch (error) {
     console.error(chalk.red('Error copying template files:'), error);
@@ -406,8 +425,25 @@ export async function initProject(): Promise<void> {
   console.log('');
 }
 
-// Helper to recursively copy directory
-async function copyDirectory(src: string, dest: string, skipFiles: string[] = []): Promise<void> {
+// Get project name from package.json or directory name
+async function getProjectName(cwd: string): Promise<string> {
+  try {
+    const packageJsonPath = path.join(cwd, 'package.json');
+    const content = await fs.readFile(packageJsonPath, 'utf-8');
+    const pkg = JSON.parse(content);
+    if (pkg.name) {
+      return pkg.name;
+    }
+  } catch {
+    // package.json not found or invalid
+  }
+  
+  // Fallback to directory name
+  return path.basename(cwd);
+}
+
+// Helper to recursively copy directory with variable substitution
+async function copyDirectory(src: string, dest: string, skipFiles: string[] = [], variables: Record<string, string> = {}): Promise<void> {
   await fs.mkdir(dest, { recursive: true });
 
   const entries = await fs.readdir(src, { withFileTypes: true });
@@ -422,15 +458,22 @@ async function copyDirectory(src: string, dest: string, skipFiles: string[] = []
     }
 
     if (entry.isDirectory()) {
-      await copyDirectory(srcPath, destPath, skipFiles);
+      await copyDirectory(srcPath, destPath, skipFiles, variables);
     } else {
       // Only copy if file doesn't exist
       try {
         await fs.access(destPath);
         // File exists, skip it
       } catch {
-        // File doesn't exist, copy it
-        await fs.copyFile(srcPath, destPath);
+        // File doesn't exist, copy it with variable substitution
+        let content = await fs.readFile(srcPath, 'utf-8');
+        
+        // Replace variables in content
+        for (const [key, value] of Object.entries(variables)) {
+          content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+        }
+        
+        await fs.writeFile(destPath, content, 'utf-8');
       }
     }
   }

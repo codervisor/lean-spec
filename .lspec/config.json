@@ -1,0 +1,13 @@
+{
+  "template": "standard",
+  "specsDir": "specs",
+  "structure": {
+    "pattern": "{date}/{seq}-{name}/",
+    "dateFormat": "YYYYMMDD",
+    "sequenceDigits": 3,
+    "defaultFile": "README.md"
+  },
+  "features": {
+    "aiAgents": true
+  }
+}
