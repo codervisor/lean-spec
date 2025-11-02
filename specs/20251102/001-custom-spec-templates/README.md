@@ -408,7 +408,6 @@ This only works if users can actually adapt the system. Moving templates to `.ls
 **Learning from other tools:**
 - **Next.js**: `eject` is available but discouraged (creates maintenance burden)
 - **Create React App**: Same - eject is one-way, creates complexity
-- **ESLint/Prettier**: Configs in project - users have full control ✅
-- **Tailwind**: Config in project - users customize freely ✅
+- **Prettier/Tailwind**: Configs in project - users have full control ✅
 
-We should follow the ESLint/Tailwind model: sensible defaults, full customization in user's project.
+We should follow the Prettier/Tailwind model: sensible defaults, full customization in user's project.

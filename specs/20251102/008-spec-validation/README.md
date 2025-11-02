@@ -338,6 +338,5 @@ fi
 ```
 
 **References:**
-- ESLint: Similar validation approach for code
 - Markdownlint: Markdown linting tool
 - JSON Schema: Validation schema standard

@@ -32,21 +32,36 @@ pnpm build
 
 ## Testing
 
-All code changes should include tests. We have:
+All code changes should include tests. We have comprehensive test coverage:
+
+- **61 tests** across 4 test files
 - Unit tests for individual functions
 - Integration tests for workflows
 - Test helpers for common patterns
 
-See [docs/TESTING.md](../docs/TESTING.md) for details.
+See [docs/testing.md](docs/testing.md) for details.
+
+```bash
+# Run tests in watch mode
+pnpm test
+
+# Run tests once (CI mode)
+pnpm test:run
+
+# Run with coverage
+pnpm test:coverage
+
+# Run with UI
+pnpm test:ui
+```
 
 ## Code Style
 
 We use:
 - TypeScript for type safety
-- ESLint for linting
 - Prettier for formatting
 
-Run `pnpm lint` and `pnpm format` before committing.
+Run `pnpm format` before committing.
 
 ## Philosophy
 
@@ -58,16 +73,24 @@ Keep changes aligned with LeanSpec principles:
 ## Areas for Contribution
 
 ### High Priority
-- Additional CLI commands (better search, dependencies, etc.)
-- Template improvements
-- Test coverage for advanced features
+- Test coverage for visualization commands (board, stats, timeline, etc.)
+- Performance optimizations for large spec directories
 - Documentation improvements
+- Additional project templates
+
+### Implemented Features
+- ✅ Core CLI commands (create, list, update, archive)
+- ✅ YAML frontmatter with validation
+- ✅ Template system with minimal/standard/enterprise presets
+- ✅ Visualization tools (board, stats, timeline, deps, search, gantt, files)
+- ✅ Comprehensive test suite (61 tests)
 
 ### Future Ideas
 - VS Code extension
 - GitHub Action for CI integration
-- More templates (Python, Go, etc.)
-- Spec validation tools
+- More language-specific templates (Python, Go, Rust, etc.)
+- Spec validation and linting tools
+- Export to other formats (Markdown reports, HTML dashboards)
 
 ## Questions?
 

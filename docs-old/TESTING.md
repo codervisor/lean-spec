@@ -24,7 +24,8 @@ The LeanSpec project has comprehensive test coverage for all basic specs managem
 
 - **Total Tests**: 61
 - **Test Files**: 4
-- **Coverage**: Core commands, frontmatter, spec loading, and integration workflows
+- **Coverage**: Core commands, frontmatter parsing, spec loading, and integration workflows
+- **Execution Time**: Typically < 1 second
 
 ### 🧪 Test Files
 
@@ -89,6 +90,8 @@ Tests are designed to run in CI environments:
 ## Next Steps
 
 For detailed test documentation, see [testing-details.md](testing-details.md).
+
+For visualization commands (board, stats, timeline, deps, search, gantt, files), see the main [README.md](../README.md#visualization--project-management).
 
 To add new tests:
 1. Create test file with `.test.ts` suffix
