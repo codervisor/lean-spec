@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2025-11-02
 tags: [documentation, migration, docusaurus, vercel]
 priority: high
@@ -7,7 +7,7 @@ priority: high
 
 # Documentation Migration: Docusaurus + Vercel
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, migration, docusaurus, vercel
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, migration, docusaurus, vercel
 
 ## Overview
 
@@ -533,3 +533,79 @@ export function SpecExample({ title, children }) {
 - [Docusaurus Migration Guide](https://docusaurus.io/docs/migration/v2)
 - [Example: Jest Docs](https://jestjs.io/) - Great Docusaurus example
 - [Example: Redwood Docs](https://redwoodjs.com/) - Another excellent example
+
+---
+
+## Implementation Notes
+
+**Completed:** 2025-11-02
+
+### What Was Done
+
+1. **Setup Phase**
+   - Initialized Docusaurus 3.9.2 with TypeScript in `docs-site/` directory
+   - Configured `docusaurus.config.ts` with LeanSpec branding, URL (lean-spec.dev), and navigation
+   - Set up three sidebars: Guide, Reference, and AI Integration
+   - Created `vercel.json` for Vercel deployment configuration
+
+2. **Content Migration**
+   - Migrated all documentation from VitePress to Docusaurus:
+     - Guide: 11 documents (overview, getting started, philosophy, etc.)
+     - Reference: 3 documents (CLI, config, frontmatter)
+     - AI Integration: 5 documents (setup, best practices, etc.)
+   - Added Docusaurus-compatible frontmatter to all documents (id, title, sidebar_position)
+   - Fixed internal links to use `/docs/` prefix for Docusaurus routing
+   - Escaped curly braces in variables.md to prevent MDX parsing errors
+   - Copied static assets (logo.svg) to `docs-site/static/img/`
+   - Created welcome blog post
+
+3. **Configuration Changes**
+   - Updated root `package.json`:
+     - Changed docs scripts to point to Docusaurus
+     - Updated homepage URL to `lean-spec.dev`
+     - Removed VitePress dependency
+   - Updated `README.md` with new documentation URL
+   - Updated `.gitignore` to exclude Docusaurus build artifacts
+
+4. **Cleanup**
+   - Archived old VitePress docs to `docs-vitepress-old/`
+   - Removed `.github/workflows/docs.yml` (GitHub Pages deployment)
+   - Added archive notice to old docs directory
+
+5. **Verification**
+   - Build tested successfully: `npm run build` in docs-site
+   - Local preview verified: `npm run serve` in docs-site
+   - All internal links validated
+   - No broken links or build errors
+
+### Next Steps for Deployment
+
+The Docusaurus site is ready for Vercel deployment:
+
+1. **Connect Repository to Vercel:**
+   - Import the `codervisor/lean-spec` repository
+   - Framework Preset: Docusaurus
+   - Root Directory: `docs-site`
+   - Build Command: `npm run build`
+   - Output Directory: `build`
+
+2. **Configure Custom Domain:**
+   - Add `lean-spec.dev` in Vercel project settings
+   - Update DNS records as instructed by Vercel
+   - Vercel will automatically provision SSL certificate
+
+3. **Optional Enhancements (Future):**
+   - Apply for Algolia DocSearch (better search than local)
+   - Enable Vercel Analytics
+   - Add versioning when needed
+   - Internationalization if required
+
+### Files Changed
+
+- Created: `docs-site/` (full Docusaurus project)
+- Created: `vercel.json` (Vercel configuration)
+- Modified: `package.json` (updated docs scripts, homepage, removed VitePress)
+- Modified: `README.md` (updated docs URL)
+- Modified: `.gitignore` (updated for Docusaurus)
+- Renamed: `docs/` → `docs-vitepress-old/` (archived)
+- Removed: `.github/workflows/docs.yml` (GitHub Pages workflow)

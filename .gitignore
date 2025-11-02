@@ -3,8 +3,7 @@ dist/
 *.log
 .DS_Store
 coverage/
-docs/.vitepress/dist
-docs/.vitepress/cache
+docs-vitepress-old/
 docs-site/node_modules/
 docs-site/build/
 docs-site/.docusaurus/
