@@ -104,25 +104,41 @@ program
   .option('--tag <tag...>', 'Filter by tag (can specify multiple)')
   .option('--priority <priority>', 'Filter by priority (low, medium, high, critical)')
   .option('--assignee <name>', 'Filter by assignee')
+  .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
   .action(async (options: {
     archived?: boolean;
     status?: SpecStatus;
     tag?: string[];
     priority?: SpecPriority;
     assignee?: string;
+    field?: string[];
   }) => {
+    // Parse custom field filters from --field options
+    const customFields: Record<string, unknown> = {};
+    if (options.field) {
+      for (const field of options.field) {
+        const [key, ...valueParts] = field.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('='); // Handle values with '=' in them
+          customFields[key.trim()] = value.trim();
+        }
+      }
+    }
+    
     const listOptions: {
       showArchived?: boolean;
       status?: SpecStatus;
       tags?: string[];
       priority?: SpecPriority;
       assignee?: string;
+      customFields?: Record<string, unknown>;
     } = {
       showArchived: options.archived,
       status: options.status,
       tags: options.tag,
       priority: options.priority,
       assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
     };
     await listSpecs(listOptions);
   });
@@ -298,13 +314,33 @@ program
   .option('--tag <tag>', 'Filter by tag')
   .option('--priority <priority>', 'Filter by priority')
   .option('--assignee <name>', 'Filter by assignee')
+  .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
   .action(async (query: string, options: {
     status?: SpecStatus;
     tag?: string;
     priority?: SpecPriority;
     assignee?: string;
+    field?: string[];
   }) => {
-    await searchCommand(query, options);
+    // Parse custom field filters from --field options
+    const customFields: Record<string, unknown> = {};
+    if (options.field) {
+      for (const field of options.field) {
+        const [key, ...valueParts] = field.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('='); // Handle values with '=' in them
+          customFields[key.trim()] = value.trim();
+        }
+      }
+    }
+    
+    await searchCommand(query, {
+      status: options.status,
+      tag: options.tag,
+      priority: options.priority,
+      assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+    });
   });
 
 // files command

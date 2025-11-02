@@ -13,6 +13,7 @@ export async function listSpecs(options: {
   tags?: string[];
   priority?: SpecPriority | SpecPriority[];
   assignee?: string;
+  customFields?: Record<string, unknown>;
 } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -33,6 +34,7 @@ export async function listSpecs(options: {
   if (options.tags) filter.tags = options.tags;
   if (options.priority) filter.priority = options.priority;
   if (options.assignee) filter.assignee = options.assignee;
+  if (options.customFields) filter.customFields = options.customFields;
 
   const specs = await withSpinner(
     'Loading specs...',
