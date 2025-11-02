@@ -96,7 +96,9 @@ export function resolveVariables(
   // Custom variables from config
   if (context.customVariables) {
     for (const [key, value] of Object.entries(context.customVariables)) {
-      const pattern = new RegExp(`\\{${key}\\}`, 'g');
+      // Escape special regex characters in key to prevent RegExp injection
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`\\{${escapedKey}\\}`, 'g');
       result = result.replace(pattern, value);
     }
   }

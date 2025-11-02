@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import matter from 'gray-matter';
 import { loadConfig, getToday } from '../config.js';
 import { getNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
@@ -76,8 +77,7 @@ export async function createSpec(name: string, options: {
     // Update frontmatter with provided metadata and custom fields
     if (options.tags || options.priority || options.assignee || options.customFields) {
       // Parse existing frontmatter using gray-matter
-      const matter = await import('gray-matter');
-      const parsed = matter.default(content);
+      const parsed = matter(content);
       
       // Add tags if provided
       if (options.tags && options.tags.length > 0) {
@@ -102,7 +102,7 @@ export async function createSpec(name: string, options: {
       }
       
       // Stringify back with updated frontmatter
-      content = matter.default.stringify(parsed.content, parsed.data);
+      content = matter.stringify(parsed.content, parsed.data);
     }
     
     // Add description to Overview section if provided

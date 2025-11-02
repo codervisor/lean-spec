@@ -18,6 +18,7 @@ import {
   ganttCommand,
   filesCommand,
 } from './commands/index.js';
+import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
 
 const program = new Command();
@@ -56,16 +57,7 @@ program
     field?: string[];
   }) => {
     // Parse custom fields from --field options
-    const customFields: Record<string, unknown> = {};
-    if (options.field) {
-      for (const field of options.field) {
-        const [key, ...valueParts] = field.split('=');
-        if (key && valueParts.length > 0) {
-          const value = valueParts.join('='); // Handle values with '=' in them
-          customFields[key.trim()] = value.trim();
-        }
-      }
-    }
+    const customFields = parseCustomFieldOptions(options.field);
     
     const createOptions: {
       title?: string;
@@ -114,16 +106,7 @@ program
     field?: string[];
   }) => {
     // Parse custom field filters from --field options
-    const customFields: Record<string, unknown> = {};
-    if (options.field) {
-      for (const field of options.field) {
-        const [key, ...valueParts] = field.split('=');
-        if (key && valueParts.length > 0) {
-          const value = valueParts.join('='); // Handle values with '=' in them
-          customFields[key.trim()] = value.trim();
-        }
-      }
-    }
+    const customFields = parseCustomFieldOptions(options.field);
     
     const listOptions: {
       showArchived?: boolean;
@@ -160,16 +143,7 @@ program
     field?: string[];
   }) => {
     // Parse custom fields from --field options
-    const customFields: Record<string, unknown> = {};
-    if (options.field) {
-      for (const field of options.field) {
-        const [key, ...valueParts] = field.split('=');
-        if (key && valueParts.length > 0) {
-          const value = valueParts.join('='); // Handle values with '=' in them
-          customFields[key.trim()] = value.trim();
-        }
-      }
-    }
+    const customFields = parseCustomFieldOptions(options.field);
     
     const updates: {
       status?: SpecStatus;
@@ -323,16 +297,7 @@ program
     field?: string[];
   }) => {
     // Parse custom field filters from --field options
-    const customFields: Record<string, unknown> = {};
-    if (options.field) {
-      for (const field of options.field) {
-        const [key, ...valueParts] = field.split('=');
-        if (key && valueParts.length > 0) {
-          const value = valueParts.join('='); // Handle values with '=' in them
-          customFields[key.trim()] = value.trim();
-        }
-      }
-    }
+    const customFields = parseCustomFieldOptions(options.field);
     
     await searchCommand(query, {
       status: options.status,
