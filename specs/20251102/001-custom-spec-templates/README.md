@@ -177,6 +177,8 @@ async function resolveTemplate(
       return templatePath;
     } catch {
       console.error(chalk.red(`Template not found: ${templateName}`));
+      console.error(chalk.gray(`Looking for: ${templatePath}`));
+      console.error(chalk.gray(`Available templates: ${Object.keys(config.templates || {}).join(', ')}`));
       process.exit(1);
     }
   }
@@ -189,9 +191,11 @@ async function resolveTemplate(
     await fs.access(defaultPath);
     return defaultPath;
   } catch {
-    // 3. Fallback to package template (for backward compatibility)
-    console.log(chalk.yellow('No project templates found, using package template'));
-    return path.join(TEMPLATES_DIR, 'standard', 'spec-template.md');
+    // Error - templates should exist after init
+    console.error(chalk.red('No templates found!'));
+    console.error(chalk.gray('Expected: .lspec/templates/spec-template.md'));
+    console.error(chalk.yellow('Run: lspec init'));
+    process.exit(1);
   }
 }
 ```
@@ -282,9 +286,9 @@ epic: {epic}
 ### Phase 1: Core Template System (Week 1)
 - [ ] Create `.lspec/templates/` directory on init
 - [ ] Copy chosen template to `.lspec/templates/spec-template.md`
-- [ ] Update `create.ts` to use project templates
+- [ ] Update `create.ts` to use project templates (remove package fallback)
 - [ ] Implement template resolution logic
-- [ ] Add backward compatibility fallback
+- [ ] Update `init.ts` to set up templates directory
 
 ### Phase 2: Template Management (Week 1)
 - [ ] Implement `lspec templates list` command
@@ -309,20 +313,16 @@ epic: {epic}
 - [ ] Apply variables during template rendering
 - [ ] Document all available variables
 
-### Phase 5: Migration & Docs (Week 2)
-- [ ] Create migration guide for existing projects
-- [ ] Update README with customization examples
+### Phase 5: Documentation & Dogfooding (Week 2)
+- [ ] Update README.md with customization examples
 - [ ] Update AGENTS.md with template customization workflow
-- [ ] Add templates documentation page
-- [ ] Create example custom templates
-
 ## Test Cases
 
 ### Template Resolution
 - [ ] Uses project template when exists
-- [ ] Falls back to package template when missing
+- [ ] Errors when template missing (no fallback)
 - [ ] Resolves --template flag correctly
-- [ ] Errors gracefully when template not found
+- [ ] Errors gracefully with helpful message when template not found
 
 ### Template Management
 - [ ] `templates list` shows all project templates
@@ -344,30 +344,26 @@ epic: {epic}
 - [ ] Resolves git variables correctly
 - [ ] Handles missing variables gracefully
 
-### Backward Compatibility
-- [ ] Existing projects without .lspec/templates/ still work
-- [ ] Old config format continues to work
-- [ ] Package templates accessible as fallback
+### Init Process
+- [ ] Creates .lspec/templates/ directory
+- [ ] Copies chosen template to spec-template.md
+- [ ] Sets up config with templates section
+- [ ] Works with merge/backup/skip for AGENTS.md
 
-## Migration Strategy
+## Breaking Changes
 
-**For existing projects:**
+**This is a breaking change** - but since lean-spec is new and only dogfooding itself, this is acceptable.
 
-```bash
-# Auto-migration on first command after upgrade
-$ lspec create my-feature
+**What breaks:**
+- Projects initialized with old version will have no `.lspec/templates/`
+- `lspec create` will fail with clear error message
+- Solution: Run `lspec init` again or manually create templates directory
 
-⚠ LeanSpec templates have moved to .lspec/templates/
-Would you like to migrate? (Y/n)
-
-✓ Created .lspec/templates/
-✓ Copied standard template to .lspec/templates/spec-template.md
-✓ Updated .lspec/config.json
-
-You now have full control over your templates!
-Edit .lspec/templates/spec-template.md to customize.
-
-Continuing with: lspec create my-feature
+**Migration for lean-spec itself:**
+1. Create `.lspec/templates/` directory
+2. Copy current package template to `.lspec/templates/spec-template.md`
+3. Update config to include templates section
+4. Test creating new specstinuing with: lspec create my-feature
 ```
 
 **Manual migration:**
@@ -383,12 +379,9 @@ lspec templates migrate
 - Visual template editor
 - Template versioning system
 - Hot-reloading of templates
+- Backward compatibility with pre-templates projects
 
-These can be added later based on user feedback.
-
-## Success Metrics
-
-- ✅ Users can customize spec templates immediately after init
+These can be added later based on user feedback.ly after init
 - ✅ Users can add unlimited custom templates
 - ✅ Users can define custom frontmatter fields
 - ✅ Users can define custom variables
