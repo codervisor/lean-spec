@@ -1,15 +1,16 @@
 ---
-status: in-progress
+status: complete
 created: 2025-11-02T00:00:00.000Z
 tags:
   - docs
   - ux
 priority: high
+completed: '2025-11-02'
 ---
 
 # Simplify README.md to be more lean
 
-> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: docs, ux
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-02 · **Tags**: docs, ux
 
 ## The Market Problem
 
