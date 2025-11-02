@@ -9,6 +9,9 @@ priority: medium
 
 > **Status**: 📅 Planned · **Priority**: Medium · **Created**: {date}
 
+**Project**: {project}  
+**Team**: {team}
+
 ## Overview
 
 <!-- What are we solving? Why now? -->

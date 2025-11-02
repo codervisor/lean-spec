@@ -183,6 +183,90 @@ Update spec metadata without editing files:
 - `lspec update <path> --status=complete` - Mark as done (auto-adds completion date)
 - `lspec update <path> --priority=high --tags=api,backend` - Update multiple fields
 
+### Customization: Custom Fields & Variables
+
+LeanSpec supports powerful customization through custom fields and variables, allowing you to adapt specs to your team's specific needs.
+
+#### Custom Frontmatter Fields
+
+Define custom fields in `.lspec/config.json` with type validation:
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "estimate": "string",
+      "reviewer": "string"
+    }
+  }
+}
+```
+
+**Supported types**: `string`, `number`, `boolean`, `array`
+
+Use custom fields in commands:
+
+```bash
+# Create spec with custom fields
+lspec create user-auth --field epic=PROJ-123 --field sprint=42
+
+# Update custom fields
+lspec update my-spec --field reviewer=alice --field estimate=large
+
+# Filter by custom fields
+lspec list --field epic=PROJ-123
+lspec search "API" --field sprint=42
+```
+
+Custom fields are validated and type-coerced automatically. For example, `sprint=42` is stored as a number, while `epic=PROJ-123` is stored as a string.
+
+#### Variable Substitution
+
+Use variables in your templates for dynamic content generation:
+
+**Built-in variables:**
+- `{name}` - Spec name
+- `{date}` - Creation date (ISO format)
+- `{project_name}` - From package.json
+- `{author}` - From git config user.name
+- `{git_user}` - Git username
+- `{git_email}` - Git email
+- `{git_repo}` - Repository name
+
+**Custom variables** (define in `.lspec/config.json`):
+
+```json
+{
+  "variables": {
+    "team": "Platform Engineering",
+    "company": "Acme Corp",
+    "default_reviewer": "alice"
+  }
+}
+```
+
+**Example template** (`.lspec/templates/spec-template.md`):
+
+```markdown
+---
+status: planned
+created: {date}
+---
+
+# {name}
+
+**Team**: {team}  
+**Project**: {project_name}  
+**Author**: {author}
+
+## Overview
+...
+```
+
+When you create a spec, all variables are automatically resolved from your config, package.json, and git settings.
+
 #### Integrating with Existing Projects
 
 If you already have `AGENTS.md`, `.cursorrules`, or other system prompts, `lspec init` will detect them and offer three options:

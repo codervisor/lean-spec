@@ -44,7 +44,7 @@ When creating or updating specs, include YAML frontmatter at the top:
 status: draft|planned|in-progress|complete|blocked|cancelled
 created: YYYY-MM-DD
 tags: [tag1, tag2]  # optional but helpful
-priority: low|medium|high  # optional
+priority: low|medium|high|critical  # optional
 ---
 ```
 
@@ -58,6 +58,81 @@ priority: low|medium|high  # optional
 lspec update <spec> --status in-progress
 # or edit frontmatter directly
 ```
+
+## Custom Fields & Variables
+
+LeanSpec supports custom frontmatter fields and template variables for team-specific needs.
+
+### Custom Frontmatter Fields
+
+Define custom fields in `.lspec/config.json`:
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "estimate": "string",
+      "reviewer": "string",
+      "issue": "string"
+    }
+  }
+}
+```
+
+**Usage:**
+```bash
+# Create with custom fields
+lspec create auth-system --field epic=PROJ-123 --field sprint=42
+
+# Update custom fields
+lspec update my-spec --field reviewer=alice --field estimate=large
+
+# Filter by custom fields
+lspec list --field epic=PROJ-123
+lspec search "database" --field sprint=42
+```
+
+### Template Variables
+
+Use variables in `.lspec/templates/spec-template.md`:
+
+**Built-in variables:**
+- `{name}` - Spec name
+- `{date}` - Creation date
+- `{project_name}` - From package.json
+- `{author}`, `{git_user}`, `{git_email}`, `{git_repo}` - From git config
+
+**Custom variables** (define in config):
+```json
+{
+  "variables": {
+    "team": "Platform Team",
+    "company": "Acme Corp",
+    "default_reviewer": "alice"
+  }
+}
+```
+
+**Example template:**
+```markdown
+---
+status: planned
+created: {date}
+---
+
+# {name}
+
+**Team**: {team}  
+**Project**: {project_name}  
+**Author**: {author}
+
+## Overview
+...
+```
+
+Variables are automatically resolved when creating specs.
 
 ## Workflow
 
