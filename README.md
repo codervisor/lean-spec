@@ -4,6 +4,8 @@ A lightweight, agile Spec-Driven Development (SDD) methodology and adaptive work
 
 > **LeanSpec is not just a document—it's an adaptive workflow, SOP (Standard Operating Procedure), and living process for AI-powered development teams.**
 
+📚 **[Read the full documentation →](https://codervisor.github.io/lean-spec/)**
+
 ## The Problem
 
 Traditional software specifications often suffer from:

@@ -15,7 +15,10 @@
     "test": "pnpm test:run",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "keywords": [
     "spec",
@@ -54,6 +57,7 @@
     "prettier": "^3.1.1",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.6"
   },
   "dependencies": {
