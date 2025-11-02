@@ -1,137 +1,250 @@
 ---
-status: planned
+status: in-progress
 created: 2025-11-02
-tags: [documentation, website, feature]
+tags: [documentation, website, vitepress]
 priority: high
 ---
 
 # Documentation Website
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-02
+> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, website, vitepress
 
 ## Overview
 
-LeanSpec needs a dedicated documentation website to provide better onboarding, searchable guides, and comprehensive references for users. Currently, all documentation lives in markdown files within the repository, which makes it harder for new users to discover features and best practices.
+Create a modern, user-friendly documentation website for LeanSpec using VitePress. The current README.md is comprehensive but difficult to navigate for new users. A dedicated documentation site will improve discoverability, provide better navigation, and create a professional presence for the project.
 
-**Goals:**
-- Improve discoverability and user onboarding
-- Provide searchable, well-organized documentation
-- Showcase LeanSpec's visualization tools with interactive examples
-- Support multiple documentation versions as the project evolves
+**Why Now:**
+- Project is ready for external users (v0.1.0)
+- README.md has grown too long (~400 lines)
+- Need better organization for growing documentation
+- Preparing for npm publication
+- Better SEO and discoverability
 
-**Why now?**
-- Project has 19 specs and growing adoption
-- Multiple features (board, timeline, custom fields, templates) need better explanation
-- Users need a central place to explore capabilities before installing
+**What Success Looks Like:**
+- Clean, modern documentation site hosted on GitHub Pages
+- Clear navigation and structure
+- Mobile-friendly responsive design
+- Fast page loads
+- Easy to maintain and update
+- Searchable content
+- All existing documentation content migrated
 
 ## Design
 
-### Technology Stack
-- **Framework**: Docusaurus - React-based with rich plugin ecosystem and built-in versioning
-- **Hosting**: Vercel - automatic deployments, edge network, excellent DX
-- **Domain**: docs.leanspec.dev (or subdomain of main site)
+### Technology Choice: VitePress
+
+**Why VitePress:**
+- Modern, fast, Vue-powered static site generator
+- Designed specifically for documentation
+- Minimal configuration
+- Built-in search
+- Mobile responsive out of the box
+- Easy deployment to GitHub Pages
+- Markdown-based (matches our existing content)
+- Active development and community support
+
+**Alternatives Considered:**
+- Docusaurus: Too heavy for our needs
+- GitBook: Requires external hosting
+- MkDocs: Python dependency
+- Jekyll: Older technology
 
 ### Site Structure
 
 ```
-/
-├── Getting Started
-│   ├── Installation
-│   ├── Quick Start
-│   └── Your First Spec
-├── Core Concepts
-│   ├── The LeanSpec Mindset
-│   ├── Spec Structure
-│   └── Frontmatter & Metadata
-├── CLI Reference
-│   ├── Commands Overview
-│   ├── Visualization Tools (board, stats, timeline, gantt)
-│   └── Template Management
-├── Customization
-│   ├── Custom Fields
-│   ├── Variables
-│   └── Templates
-├── AI Integration
-│   ├── AGENTS.md Setup
-│   ├── System Prompts
-│   └── Best Practices
-├── Examples & Recipes
-│   ├── Solo Developer Setup
-│   ├── Team Workflows
-│   └── Enterprise Integration
-└── API Reference (if applicable)
+docs/
+├── .vitepress/
+│   ├── config.ts          # VitePress configuration
+│   └── theme/             # Custom theme (if needed)
+├── index.md               # Homepage
+├── guide/
+│   ├── index.md          # Getting Started
+│   ├── installation.md   # Installation guide
+│   ├── quick-start.md    # Quick start tutorial
+│   ├── concepts.md       # Core concepts
+│   └── templates.md      # Template system
+├── reference/
+│   ├── cli.md            # CLI commands
+│   ├── frontmatter.md    # Frontmatter fields
+│   ├── config.md         # Configuration
+│   └── api.md            # API (if applicable)
+├── ai-integration/
+│   ├── index.md          # AI agent integration
+│   ├── setup.md          # Setup guide
+│   └── best-practices.md # Best practices
+└── examples/
+    ├── solo-dev.md       # Solo developer examples
+    ├── team.md           # Team examples
+    └── enterprise.md     # Enterprise examples
 ```
 
-### Key Features
-- **Search**: Full-text search across all documentation
-- **Version Switcher**: Support for different LeanSpec versions
-- **Interactive Demos**: Embedded examples of board view, timeline, etc.
-- **Dark Mode**: Match user preference
-- **Copy-Paste Friendly**: Easy code snippet copying
-- **Mobile Responsive**: Works well on all devices
+### Content Migration Plan
 
-### Content Strategy
-- Migrate existing README.md content as foundation
-- Extract examples from specs/ for real-world use cases
-- Add visual guides for visualization commands
-- Include troubleshooting and FAQ sections
-- Link to GitHub for code examples and contributions
+1. **Homepage** (from README intro)
+   - Hero section with tagline
+   - Key features
+   - Quick links to major sections
+   - Visual appeal
 
-## Plan
+2. **Getting Started** (from README Quick Start)
+   - Installation instructions
+   - First spec creation
+   - Basic commands
 
-- [ ] Initialize Docusaurus project
-- [ ] Set up documentation site structure and build config
-- [ ] Configure Vercel deployment
-- [ ] Migrate existing README.md content to structured pages
-- [ ] Create CLI reference documentation (auto-generated from commands)
-- [ ] Write customization guides (custom fields, variables, templates)
-- [ ] Add interactive examples and screenshots
-- [ ] Set up search functionality
-- [ ] Configure deployment pipeline (GitHub Actions)
-- [ ] Set up domain and DNS (if needed)
-- [ ] Add analytics (optional, privacy-respecting)
-- [ ] Create contribution guide for documentation updates
-- [ ] Launch and announce
+3. **Core Concepts** (from README Philosophy)
+   - LeanSpec principles
+   - When to use
+   - Spec structure
 
-## Test
+4. **CLI Reference** (from README commands)
+   - All commands documented
+   - Examples for each
+   - Options and flags
 
-- [ ] All internal links resolve correctly
-- [ ] Search returns relevant results for common queries
-- [ ] Code examples are executable and accurate
-- [ ] Site loads quickly (< 2s initial load)
-- [ ] Mobile responsive on iOS and Android
-- [ ] Dark/light mode toggle works
-- [ ] Version switcher shows correct content per version
-- [ ] Deploy pipeline successfully builds and publishes
-- [ ] All CLI commands documented and up-to-date
-- [ ] Examples match current LeanSpec behavior
-## Notes
+5. **AI Integration** (from README AI section)
+   - AGENTS.md integration
+   - System prompts
+   - Workflow setup
 
-### Technology Decisions
+6. **Templates** (from README templates)
+   - Template overview
+   - Customization
+   - Variables
 
-**Docusaurus** ✅
-- React-based, highly customizable
-- Rich plugin ecosystem (search, analytics, etc.)
-- Versioning built-in - crucial as project evolves
-- Strong community and Meta backing
-- MDX support for interactive components
+7. **API/Development** (from docs/)
+   - Testing guide
+   - Contributing
+   - Architecture
 
-**Vercel** ✅
-- Automatic Git deployments
-- Preview deployments for PRs
-- Edge network with global CDN
-- Zero-config for most frameworks
-- Free tier perfect for documentation sites
-- ⚠️ Slightly heavier than VitePress
+### GitHub Pages Deployment
 
-### Open Questions
-- Should we include video tutorials or stick to text/screenshots?
-- Do we need a playground/sandbox for trying LeanSpec commands?
-- Should we have a blog section for updates and best practices?
-- How do we handle documentation for templates (standard, enterprise, etc.)?
+- Build site to `docs/.vitepress/dist/`
+- Configure GitHub Actions for automatic deployment
+- Use `gh-pages` branch or GitHub Actions artifact
+- Custom domain support (future)
 
-### Future Enhancements
-- Interactive CLI simulator (try commands in browser)
-- VS Code extension documentation (if/when built)
-- GitHub Action workflow examples
-- Integration guides for popular project management tools
+## Implementation Plan
+
+### Phase 1: Setup (Day 1)
+- [x] Create spec
+- [x] Install VitePress as dev dependency
+- [x] Initialize VitePress in `docs/` directory
+- [x] Configure basic VitePress settings
+- [x] Set up local development workflow
+
+### Phase 2: Content Migration (Day 1-2)
+- [x] Create homepage with hero section
+- [x] Migrate getting started content
+- [x] Migrate CLI reference
+- [x] Migrate AI integration guide
+- [x] Migrate template documentation
+- [x] Add code examples
+
+### Phase 3: Polish & Enhancement (Day 2)
+- [x] Configure search
+- [x] Add navigation menu
+- [x] Add sidebar for each section
+- [x] Responsive design testing
+- [x] Add favicon and branding
+
+### Phase 4: Deployment (Day 2)
+- [x] Configure GitHub Pages
+- [x] Set up deployment workflow
+- [x] Test production build
+- [x] Update main README with docs link
+- [x] Verify all links work
+
+## Technical Details
+
+### VitePress Configuration
+
+Key configuration options:
+```typescript
+// docs/.vitepress/config.ts
+export default {
+  title: 'LeanSpec',
+  description: 'Lightweight spec methodology for AI-powered development',
+  themeConfig: {
+    nav: [...],
+    sidebar: {...},
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/codervisor/lean-spec' }
+    ],
+    search: {
+      provider: 'local'
+    }
+  }
+}
+```
+
+### Build Commands
+
+```json
+// package.json additions
+{
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  }
+}
+```
+
+### GitHub Actions Workflow
+
+Create `.github/workflows/docs.yml`:
+```yaml
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm run docs:build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/.vitepress/dist
+```
+
+## Non-Goals
+
+- Custom design system (use VitePress defaults)
+- Complex interactive features
+- Backend/API documentation (CLI tool only)
+- Versioned documentation (single version for now)
+- Multiple language support
+
+## Success Metrics
+
+- Documentation site live on GitHub Pages
+- All README content accessible via site
+- Search functionality working
+- Mobile responsive
+- Build time < 30 seconds
+- Page load time < 2 seconds
+
+## Open Questions
+
+- [ ] Should we keep detailed README.md or make it minimal with link to docs?
+  - **Decision**: Keep README comprehensive but add prominent docs link at top
+- [ ] Custom domain needed?
+  - **Decision**: Not initially, use github.io domain
+- [ ] Dark mode preference?
+  - **Decision**: VitePress default (auto-detect system preference)
+
+## References
+
+- [VitePress Documentation](https://vitepress.dev/)
+- [VitePress GitHub](https://github.com/vuejs/vitepress)
+- [GitHub Pages Documentation](https://docs.github.com/en/pages)
