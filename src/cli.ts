@@ -45,6 +45,7 @@ program
   .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
   .option('--assignee <name>', 'Set assignee')
   .option('--template <template>', 'Use a specific template')
+  .option('--field <name=value...>', 'Set custom field (can specify multiple)')
   .action(async (name: string, options: {
     title?: string;
     description?: string;
@@ -52,7 +53,20 @@ program
     priority?: SpecPriority;
     assignee?: string;
     template?: string;
+    field?: string[];
   }) => {
+    // Parse custom fields from --field options
+    const customFields: Record<string, unknown> = {};
+    if (options.field) {
+      for (const field of options.field) {
+        const [key, ...valueParts] = field.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('='); // Handle values with '=' in them
+          customFields[key.trim()] = value.trim();
+        }
+      }
+    }
+    
     const createOptions: {
       title?: string;
       description?: string;
@@ -60,6 +74,7 @@ program
       priority?: SpecPriority;
       assignee?: string;
       template?: string;
+      customFields?: Record<string, unknown>;
     } = {
       title: options.title,
       description: options.description,
@@ -67,6 +82,7 @@ program
       priority: options.priority,
       assignee: options.assignee,
       template: options.template,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
     };
     await createSpec(name, createOptions);
   });
@@ -119,22 +135,38 @@ program
   .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
   .option('--tags <tags>', 'Set tags (comma-separated)')
   .option('--assignee <name>', 'Set assignee')
+  .option('--field <name=value...>', 'Set custom field (can specify multiple)')
   .action(async (specPath: string, options: {
     status?: SpecStatus;
     priority?: SpecPriority;
     tags?: string;
     assignee?: string;
+    field?: string[];
   }) => {
+    // Parse custom fields from --field options
+    const customFields: Record<string, unknown> = {};
+    if (options.field) {
+      for (const field of options.field) {
+        const [key, ...valueParts] = field.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('='); // Handle values with '=' in them
+          customFields[key.trim()] = value.trim();
+        }
+      }
+    }
+    
     const updates: {
       status?: SpecStatus;
       priority?: SpecPriority;
       tags?: string[];
       assignee?: string;
+      customFields?: Record<string, unknown>;
     } = {
       status: options.status,
       priority: options.priority,
       tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
       assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
     };
     
     // Filter out undefined values
@@ -145,7 +177,7 @@ program
     });
     
     if (Object.keys(updates).length === 0) {
-      console.error('Error: At least one update option required (--status, --priority, --tags, --assignee)');
+      console.error('Error: At least one update option required (--status, --priority, --tags, --assignee, --field)');
       process.exit(1);
     }
     

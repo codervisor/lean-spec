@@ -19,6 +19,12 @@ export interface LeanSpecConfig {
     approvals?: boolean;
     apiDocs?: boolean;
   };
+  frontmatter?: {
+    required?: string[];
+    optional?: string[];
+    custom?: Record<string, 'string' | 'number' | 'boolean' | 'array'>;
+  };
+  variables?: Record<string, string>;
 }
 
 const DEFAULT_CONFIG: LeanSpecConfig = {
