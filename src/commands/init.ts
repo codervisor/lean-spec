@@ -12,7 +12,7 @@ import {
 } from '../utils/template-helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', 'templates');
+const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 
 export async function initProject(): Promise<void> {
   const cwd = process.cwd();
@@ -86,6 +86,32 @@ export async function initProject(): Promise<void> {
     console.error(chalk.red(`Error: Template not found: ${templateName}`));
     process.exit(1);
   }
+
+  // Create .lspec/templates/ directory
+  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  try {
+    await fs.mkdir(templatesDir, { recursive: true });
+  } catch (error) {
+    console.error(chalk.red('Error creating templates directory:'), error);
+    process.exit(1);
+  }
+  
+  // Copy chosen template to .lspec/templates/spec-template.md
+  const templateSpecPath = path.join(templateDir, 'spec-template.md');
+  const targetSpecPath = path.join(templatesDir, 'spec-template.md');
+  try {
+    await fs.copyFile(templateSpecPath, targetSpecPath);
+    console.log(chalk.green('✓ Created .lspec/templates/spec-template.md'));
+  } catch (error) {
+    console.error(chalk.red('Error copying template:'), error);
+    process.exit(1);
+  }
+  
+  // Update config to use new template structure
+  templateConfig.template = 'spec-template.md';
+  templateConfig.templates = {
+    default: 'spec-template.md',
+  };
 
   // Save config
   await saveConfig(templateConfig, cwd);

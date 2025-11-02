@@ -1,17 +1,18 @@
 ---
-status: planned
-created: 2025-11-01
+status: complete
+created: 2025-11-01T00:00:00.000Z
 tags:
   - enhancement
   - cli
   - specs
   - organization
 priority: medium
+completed: '2025-11-02'
 ---
 
 # Sub-Spec Files Management
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: enhancement, cli, specs, organization
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: enhancement, cli, specs, organization
 
 ## Overview
 

@@ -1,13 +1,9 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { loadConfig, getToday } from '../config.js';
 import { getNextSeq } from '../utils/path-helpers.js';
 import type { SpecPriority } from '../frontmatter.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', 'templates');
 
 export async function createSpec(name: string, options: { 
   title?: string; 
@@ -15,6 +11,7 @@ export async function createSpec(name: string, options: {
   tags?: string[];
   priority?: SpecPriority;
   assignee?: string;
+  template?: string;
 } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -41,8 +38,28 @@ export async function createSpec(name: string, options: {
   // Create spec directory
   await fs.mkdir(specDir, { recursive: true });
 
-  // Load spec template from configured template
-  const templatePath = path.join(TEMPLATES_DIR, config.template, 'spec-template.md');
+  // Resolve template path from .lspec/templates/
+  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  let templateName: string;
+  
+  // Determine which template to use
+  if (options.template) {
+    // User specified a template
+    if (config.templates?.[options.template]) {
+      templateName = config.templates[options.template];
+    } else {
+      console.error(chalk.red(`Template not found: ${options.template}`));
+      console.error(chalk.gray(`Available templates: ${Object.keys(config.templates || {}).join(', ')}`));
+      process.exit(1);
+    }
+  } else {
+    // Use default template
+    templateName = config.template || 'spec-template.md';
+  }
+  
+  const templatePath = path.join(templatesDir, templateName);
+
+  // Load spec template from .lspec/templates/
   let content: string;
   
   try {
@@ -89,35 +106,11 @@ export async function createSpec(name: string, options: {
         `## Overview\n\n${options.description}`
       );
     }
-  } catch {
-    // Fallback to basic template if template file not found
-    const title = options.title || name;
-    const overview = options.description || '<!-- What problem does this solve? Why now? -->';
-    
-    content = `# ${title}
-
-**Status**: 📅 Planned  
-**Created**: ${new Date().toISOString().split('T')[0]}
-
-## Goal
-
-${overview}
-
-## Key Points
-
-- 
-- 
-- 
-
-## Non-Goals
-
-- 
-- 
-
-## Notes
-
-<!-- Decisions, constraints, open questions -->
-`;
+  } catch (error) {
+    console.error(chalk.red('Error: Template not found!'));
+    console.error(chalk.gray(`Expected: ${templatePath}`));
+    console.error(chalk.yellow('Run: lspec init'));
+    process.exit(1);
   }
 
   await fs.writeFile(specFile, content, 'utf-8');
