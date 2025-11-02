@@ -17,9 +17,9 @@ Clean, scannable structure following LeanSpec principles.
 ```
 docs/
 ├── README.md                    # Documentation index
-├── TESTING.md                   # Quick testing guide
+├── testing.md                   # Quick testing guide
 ├── testing-details.md           # Detailed test docs
-└── ORGANIZATION.md              # This file
+└── organization.md              # This file
 ```
 
 **Purpose**: Technical documentation for contributors and developers.
@@ -64,7 +64,7 @@ specs/
 **Set up AI agents** → [AGENTS.md](../AGENTS.md)  
 **Contribute code** → [CONTRIBUTING.md](../CONTRIBUTING.md)  
 **Run tests** → [docs/testing.md](testing.md)  
-**See test results** → [specs/20251101/008-test-results/](../specs/20251101/008-test-results/)  
+**See visualization tools** → [README.md#visualization--project-management](../README.md#visualization--project-management)  
 **Learn from examples** → [examples/](../examples/)  
 **Choose a template** → [templates/](../templates/)
 
@@ -93,12 +93,11 @@ specs/
 ├── AGENTS.md              ← AI integration  
 ├── CONTRIBUTING.md        ← Contributor guide at root
 ├── docs/                  ← Technical reference docs
-│   ├── TESTING.md
-│   └── testing-details.md
+│   ├── README.md
+│   ├── testing.md
+│   ├── testing-details.md
+│   └── organization.md
 └── specs/                 ← Living documentation
-    └── 20251101/
-        └── 008-test-results/  ← Test implementation spec
-            └── TEST_SUMMARY.md
 ```
 
-**Result**: Cleaner root, test results as a spec (dogfooding!), better organization.
+**Result**: Cleaner root, better separation of concerns, improved discoverability.

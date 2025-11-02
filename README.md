@@ -82,22 +82,25 @@ lspec init
 # Create your first spec (creates specs/YYYYMMDD/NNN-name/ folder)
 lspec create my-feature
 
-# List all specs
-lspec list
-
-# Filter specs by status, tags, or priority
-lspec list --status=in-progress
-lspec list --tag=api --priority=high
-
-# Update spec metadata
+# Core Commands
+lspec list                           # List all specs
+lspec list --status=in-progress      # Filter by status
+lspec list --tag=api --priority=high # Filter by tag and priority
 lspec update specs/20251031/001-my-feature --status=complete
-lspec update specs/20251031/001-my-feature --priority=high --tags=api,backend
-
-# List available templates
-lspec templates
-
-# Archive old specs
 lspec archive specs/20251031/001-my-feature
+
+# Visualization & Discovery Commands
+lspec board                          # Kanban-style board view
+lspec stats                          # Aggregate statistics
+lspec search "user authentication"   # Full-text search
+lspec deps specs/20251031/001-my-feature   # Show dependencies
+lspec timeline                       # Creation/completion over time
+lspec gantt                          # Timeline with dependencies
+lspec files specs/20251031/001-my-feature  # List spec files
+
+# Template Management
+lspec templates                      # List available templates
+lspec templates show standard        # View template details
 ```
 
 ### Initialize Your Project
@@ -182,6 +185,66 @@ Use `lspec list` with filters to find specs:
 Update spec metadata without editing files:
 - `lspec update <path> --status=complete` - Mark as done (auto-adds completion date)
 - `lspec update <path> --priority=high --tags=api,backend` - Update multiple fields
+
+## Visualization & Project Management
+
+LeanSpec includes powerful visualization and analysis tools for project management:
+
+### Board View
+```bash
+lspec board                    # Kanban-style board
+lspec board --show-complete    # Include completed items
+lspec board --tag=api          # Filter by tag
+lspec board --assignee=alice   # Filter by assignee
+```
+
+### Statistics
+```bash
+lspec stats                    # Overall statistics
+lspec stats --tag=backend      # Stats for specific tag
+lspec stats --assignee=bob     # Stats by assignee
+lspec stats --json             # JSON output for scripts
+```
+
+### Timeline View
+```bash
+lspec timeline                 # Last 30 days
+lspec timeline --days=90       # Custom time range
+lspec timeline --by-tag        # Group by tag
+lspec timeline --by-assignee   # Group by assignee
+```
+
+### Dependency Analysis
+```bash
+lspec deps <spec-path>         # Show dependencies
+lspec deps <spec-path> --depth=5   # Show N levels deep
+lspec deps <spec-path> --graph     # ASCII graph visualization
+lspec deps <spec-path> --json      # JSON output
+```
+
+### Full-Text Search
+```bash
+lspec search "authentication"              # Search all specs
+lspec search "API" --status=in-progress   # With filters
+lspec search "security" --tag=backend --priority=high
+```
+
+### Gantt Chart
+```bash
+lspec gantt                        # Timeline view
+lspec gantt --weeks=8              # Show 8 weeks
+lspec gantt --show-complete        # Include completed
+lspec gantt --critical-path        # Highlight critical path
+```
+
+### File Management
+```bash
+lspec files <spec-path>            # List spec files
+lspec files <spec-path> --tree     # Tree structure
+lspec files <spec-path> --type=docs    # Filter by type
+```
+
+These tools help you understand project status, identify bottlenecks, and make data-driven decisions.
 
 #### Integrating with Existing Projects
 
