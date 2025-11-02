@@ -40,7 +40,7 @@ lean-spec/
 
 ## Testing
 
-LeanSpec uses Vitest for testing. For comprehensive testing documentation, see the [Testing Guide](https://github.com/codervisor/lean-spec/blob/main/docs-old/TESTING.md) (link to old docs).
+LeanSpec uses Vitest for testing.
 
 ### Running Tests
 
@@ -132,9 +132,3 @@ Documentation source is in `docs/` directory.
 ## Contributing
 
 See [Contributing Guide](/contributing) for detailed contribution guidelines.
-
----
-
-**See also:**
-- [Testing Details](https://github.com/codervisor/lean-spec/blob/main/docs-old/testing-details.md)
-- [Project Organization](https://github.com/codervisor/lean-spec/blob/main/docs-old/ORGANIZATION.md)

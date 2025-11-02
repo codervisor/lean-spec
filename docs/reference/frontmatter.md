@@ -2,9 +2,7 @@
 
 Complete reference for LeanSpec frontmatter fields.
 
-See the [Frontmatter Guide](/guide/frontmatter) for usage examples and best practices.
-
-This page provides a quick reference of all available fields.
+This page provides a quick reference of all available fields. For usage examples and best practices, see the main frontmatter documentation.
 
 ## Required Fields
 
