@@ -1,10 +1,10 @@
 # LeanSpec
 
-> Lightweight, flexible Spec-Driven Development (SDD) for modern AI-powered development.
+> A lightweight, flexible Spec-Driven Development (SDD) methodology for modern AI-powered development.
 
 ## The Problem
 
-**AI coding agents need clear context. Traditional SDD tools fail them.**
+**AI coding agents need clear context. Traditional SDD approaches fail them.**
 
 Ever tried giving an AI agent a specification to implement, only to find:
 - 🤦 **Context overload** - 30-page documents blow up the AI's context window
@@ -20,11 +20,11 @@ You need **SDD that's clear enough for AI to act on, lean enough for humans to m
 
 **[Spec-Driven Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) for the AI era: Clarity without overhead. Structure that adapts, not constrains.**
 
-In AI-powered development, SDD isn't just for humans—it's how you guide AI coding agents. LeanSpec gives both humans and AI the context they need:
+In AI-powered development, SDD isn't just for humans—it's how you guide AI coding agents. LeanSpec is a methodology that gives both humans and AI the context they need:
 - 🎯 **Write only what matters** - Clear intent AI can act on, not 50 pages of noise
-- 🤖 **AI-native from day one** - Integrates with Cursor, GitHub Copilot, Aider, and custom agents
-- 📈 **Scale naturally** - Solo dev → Small team → Enterprise, same tool
-- 🔧 **Real workflow tools** - Boards, timelines, dependency tracking—manage AI + human work together
+- 🤖 **AI-native from day one** - Works with Cursor, GitHub Copilot, Aider, and custom agents
+- 📈 **Scale naturally** - Solo dev → Small team → Enterprise, same approach
+- 🔧 **Built-in workflow support** - Boards, timelines, dependency tracking—manage AI + human work together
 - 🎨 **Your structure** - Custom fields, flexible templates, adapt to any workflow
 
 ### Adaptive by Design
@@ -44,14 +44,14 @@ created: 2025-11-01
 + reviewer: bob
 ```
 
-Add complexity only when you feel the pain. Never rewrite your specifications to change tools.
+Add complexity only when you feel the pain. Never rewrite your specifications to change approach.
 
 ### Who Uses LeanSpec
 
 ✅ **AI-powered development teams** - Give your agents clear context without overwhelming their context window  
-✅ **Developers using Cursor, Copilot, Aider** - SDD that integrates with your AI workflow  
-✅ **Teams outgrowing simple markdown docs** - Need structure without heavyweight tools  
-✅ **Startups scaling from solo to team** - One tool that grows with you  
+✅ **Developers using Cursor, Copilot, Aider** - SDD that works with your AI workflow  
+✅ **Teams outgrowing simple markdown docs** - Need structure without heavyweight frameworks  
+✅ **Startups scaling from solo to team** - One approach that grows with you  
 ✅ **Anyone frustrated with verbose SDD** - Write less, accomplish more
 
 ## Quick Start
@@ -76,13 +76,13 @@ lspec update <spec> --status=complete
 
 **Templates available**: minimal, standard (recommended), enterprise, api-first
 
-## Key Features
+## Core Principles & Features
 
 - **Flexible structure** - Adapt SDD to your workflow, not vice versa
 - **Custom fields** - Add sprints, epics, reviewers—whatever your team needs
-- **Visualization tools** - Board, timeline, Gantt, dependency analysis
+- **Built-in visualization** - Board, timeline, Gantt, dependency analysis
 - **AI-native** - Built for human + AI development teams (see `AGENTS.md`)
-- **Integration support** - Merge with existing `.cursorrules`, `AGENTS.md`, etc.
+- **Portable specs** - Plain markdown that works with any workflow
 
 ## When to Use LeanSpec
 
@@ -110,7 +110,7 @@ lspec update <spec> --status=complete
 - **[AI Agent Setup](AGENTS.md)** - Configure for AI-powered development
 
 ### 🔍 For Researchers
-- **[Comparisons](docs/COMPARISONS.md)** - Deep dive: LeanSpec vs BMAD, SpecKit, Kiro, OpenSpec
+- **[Comparisons](docs/COMPARISONS.md)** - How LeanSpec compares to BMAD, SpecKit, Kiro, OpenSpec, Agent OS
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 - **[Examples](examples/)** - Real-world usage examples
 

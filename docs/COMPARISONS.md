@@ -1,6 +1,6 @@
-# LeanSpec vs Other SDD Tools
+# LeanSpec vs Other SDD Approaches
 
-An honest comparison of LeanSpec with other Spec-Driven Development tools.
+An honest comparison of LeanSpec with other Spec-Driven Development tools and methodologies.
 
 ## Quick Comparison Matrix
 
@@ -632,7 +632,7 @@ A: No. It works great for human-only teams too. AI integration is a bonus, not a
 - You want Kiro-compatible workflow (cc-sdd)
 - You need comprehensive multi-agent orchestration (Agent OS)
 
-The market needs a tool that's both lean and flexible. That's LeanSpec.
+The market needs a methodology that's both lean and flexible. That's LeanSpec.
 
 ---
 

@@ -1,6 +1,6 @@
 # LeanSpec Documentation
 
-Complete documentation for LeanSpec - the lightweight, flexible spec tool.
+Complete documentation for LeanSpec - a lightweight, flexible spec-driven development methodology.
 
 ## Getting Started
 
@@ -21,7 +21,7 @@ Start here if you're new:
 - **[AI Agent Setup](../AGENTS.md)** - Configure for AI-powered development
 
 ### Comparisons
-- **[LeanSpec vs Other Tools](COMPARISONS.md)** - Detailed comparison with BMAD, SpecKit, Kiro, OpenSpec
+- **[LeanSpec vs Other Approaches](COMPARISONS.md)** - How LeanSpec compares to BMAD, SpecKit, Kiro, OpenSpec, Agent OS
 
 ## For Contributors
 
@@ -82,7 +82,7 @@ lean-spec/
 ### "I want to understand LeanSpec"
 → Start with [Main README](../README.md), then [Philosophy](PHILOSOPHY.md)
 
-### "I want to compare LeanSpec with other tools"
+### "I want to compare LeanSpec with other approaches"
 → See [Comparisons](COMPARISONS.md)
 
 ### "I want to add LeanSpec to my project"
