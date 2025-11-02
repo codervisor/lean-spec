@@ -10,7 +10,7 @@
 
 - **[Testing Guide](testing.md)** - How to run tests and add new tests
 - **[Testing Details](testing-details.md)** - In-depth test documentation
-- **[Test Results](../specs/20251101/008-test-results/)** - Test suite implementation spec
+- **[Organization](organization.md)** - Documentation structure and principles
 
 ## Examples
 
@@ -23,10 +23,12 @@
 lean-spec/
 ├── README.md              # Main documentation (start here!)
 ├── AGENTS.md             # AI agent workflow instructions
+├── CONTRIBUTING.md       # Contribution guidelines
 ├── docs/                 # Additional documentation
-│   ├── TESTING.md       # Testing guide for developers
-│   ├── TEST_SUMMARY.md  # Test coverage report
-│   └── testing-details.md # Detailed test docs
+│   ├── README.md        # This file - documentation index
+│   ├── testing.md       # Testing guide for developers
+│   ├── testing-details.md # Detailed test docs
+│   └── organization.md  # Documentation structure
 ├── examples/            # Usage examples
 ├── templates/           # Project templates
 └── src/                # Source code
@@ -38,12 +40,13 @@ lean-spec/
 ### For Users
 - [Installation & Quick Start](../README.md#quick-start)
 - [Initialize Your Project](../README.md#initialize-your-project)
+- [Visualization & PM Tools](../README.md#visualization--project-management)
 - [Available Templates](../README.md#available-templates)
 - [Philosophy & Principles](../README.md#philosophy)
 
 ### For Developers
-- [Running Tests](testing.md#quick-start)
-- [Test Implementation Spec](../specs/20251101/008-test-results/)
+- [Running Tests](testing.md)
+- [Test Details](testing-details.md)
 - [Contributing Guidelines](../CONTRIBUTING.md)
 
 ### For AI Integration
