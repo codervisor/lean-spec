@@ -3,7 +3,13 @@ export { createSpec } from './create.js';
 export { archiveSpec } from './archive.js';
 export { listSpecs } from './list.js';
 export { updateSpec } from './update.js';
-export { listTemplates } from './templates.js';
+export {
+  listTemplates,
+  showTemplate,
+  addTemplate,
+  removeTemplate,
+  copyTemplate,
+} from './templates.js';
 export { initProject } from './init.js';
 
 // Visualization and analysis commands
