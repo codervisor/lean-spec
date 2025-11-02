@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { createSpec, archiveSpec, listSpecs, updateSpec } from './commands.js';
+import { createSpec, archiveSpec, listSpecs, updateSpec } from './commands/index.js';
 import { parseFrontmatter } from './frontmatter.js';
 import {
   createTestEnvironment,

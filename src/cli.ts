@@ -1,11 +1,18 @@
 import { Command } from 'commander';
-import { createSpec, archiveSpec, listSpecs, listTemplates, initProject, updateSpec } from './commands.js';
-import { statsCommand } from './commands/stats.js';
-import { boardCommand } from './commands/board.js';
-import { timelineCommand } from './commands/timeline.js';
-import { depsCommand } from './commands/deps.js';
-import { searchCommand } from './commands/search.js';
-import { ganttCommand } from './commands/gantt.js';
+import {
+  createSpec,
+  archiveSpec,
+  listSpecs,
+  updateSpec,
+  listTemplates,
+  initProject,
+  statsCommand,
+  boardCommand,
+  timelineCommand,
+  depsCommand,
+  searchCommand,
+  ganttCommand,
+} from './commands/index.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
 
 const program = new Command();

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as path from 'node:path';
-import { createSpec, updateSpec, archiveSpec } from './commands.js';
+import { createSpec, updateSpec, archiveSpec } from './commands/index.js';
 import { loadAllSpecs, getSpec } from './spec-loader.js';
 import { parseFrontmatter } from './frontmatter.js';
 import {
