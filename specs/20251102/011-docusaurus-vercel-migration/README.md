@@ -1,5 +1,5 @@
 ---
-status: complete
+status: in-progress
 created: 2025-11-02
 tags: [documentation, migration, docusaurus, vercel]
 priority: high
@@ -7,7 +7,7 @@ priority: high
 
 # Documentation Migration: Docusaurus + Vercel
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, migration, docusaurus, vercel
+> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, migration, docusaurus, vercel
 
 ## Overview
 

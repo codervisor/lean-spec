@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd docs-site && npm run build",
+  "buildCommand": "pnpm -F docs-site build",
   "outputDirectory": "docs-site/build",
   "framework": "docusaurus",
   "rewrites": [
