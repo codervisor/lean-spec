@@ -5,6 +5,10 @@ import {
   listSpecs,
   updateSpec,
   listTemplates,
+  showTemplate,
+  addTemplate,
+  removeTemplate,
+  copyTemplate,
   initProject,
   statsCommand,
   boardCommand,
@@ -39,12 +43,14 @@ program
   .option('--tags <tags>', 'Set tags (comma-separated)')
   .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
   .option('--assignee <name>', 'Set assignee')
+  .option('--template <template>', 'Use a specific template')
   .action(async (name: string, options: {
     title?: string;
     description?: string;
     tags?: string;
     priority?: SpecPriority;
     assignee?: string;
+    template?: string;
   }) => {
     const createOptions: {
       title?: string;
@@ -52,12 +58,14 @@ program
       tags?: string[];
       priority?: SpecPriority;
       assignee?: string;
+      template?: string;
     } = {
       title: options.title,
       description: options.description,
       tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
       priority: options.priority,
       assignee: options.assignee,
+      template: options.template,
     };
     await createSpec(name, createOptions);
   });
@@ -143,10 +151,48 @@ program
     await updateSpec(specPath, updates);
   });
 
-// templates command
-program
+// templates command and subcommands
+const templatesCmd = program
   .command('templates')
+  .description('Manage spec templates');
+
+templatesCmd
+  .command('list')
   .description('List available templates')
+  .action(async () => {
+    await listTemplates();
+  });
+
+templatesCmd
+  .command('show <name>')
+  .description('Show template content')
+  .action(async (name: string) => {
+    await showTemplate(name);
+  });
+
+templatesCmd
+  .command('add <name> <file>')
+  .description('Register a template')
+  .action(async (name: string, file: string) => {
+    await addTemplate(name, file);
+  });
+
+templatesCmd
+  .command('remove <name>')
+  .description('Unregister a template')
+  .action(async (name: string) => {
+    await removeTemplate(name);
+  });
+
+templatesCmd
+  .command('copy <source> <target>')
+  .description('Copy a template to create a new one')
+  .action(async (source: string, target: string) => {
+    await copyTemplate(source, target);
+  });
+
+// Default action for templates (list)
+templatesCmd
   .action(async () => {
     await listTemplates();
   });

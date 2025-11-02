@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 export interface LeanSpecConfig {
   template: string;
+  templates?: Record<string, string>; // Maps template name to filename
   specsDir: string;
   structure: {
     pattern: string;
@@ -21,7 +22,10 @@ export interface LeanSpecConfig {
 }
 
 const DEFAULT_CONFIG: LeanSpecConfig = {
-  template: 'standard',
+  template: 'spec-template.md',
+  templates: {
+    default: 'spec-template.md',
+  },
   specsDir: 'specs',
   structure: {
     pattern: '{date}/{seq}-{name}/',

@@ -33,7 +33,10 @@ export async function initTestProject(
   config: Partial<LeanSpecConfig> = {}
 ): Promise<void> {
   const defaultConfig: LeanSpecConfig = {
-    template: 'standard',
+    template: 'spec-template.md',
+    templates: {
+      default: 'spec-template.md',
+    },
     specsDir: 'specs',
     structure: {
       pattern: '{date}/{seq}-{name}/',
@@ -52,6 +55,45 @@ export async function initTestProject(
   // Create .lspec directory
   const configDir = path.join(tmpDir, '.lspec');
   await fs.mkdir(configDir, { recursive: true });
+
+  // Create .lspec/templates directory
+  const templatesDir = path.join(configDir, 'templates');
+  await fs.mkdir(templatesDir, { recursive: true });
+
+  // Create a default template
+  const templatePath = path.join(templatesDir, 'spec-template.md');
+  const templateContent = `---
+status: planned
+created: {date}
+tags: []
+priority: medium
+---
+
+# {name}
+
+> **Status**: 📅 Planned · **Created**: {date}
+
+## Overview
+
+<!-- What are we solving? Why now? -->
+
+## Design
+
+<!-- Key decisions and approach -->
+
+## Implementation
+
+<!-- How we'll build it -->
+
+## Testing
+
+<!-- How we'll verify it works -->
+
+## Notes
+
+<!-- Additional context -->
+`;
+  await fs.writeFile(templatePath, templateContent, 'utf-8');
 
   // Write config file
   const configPath = path.join(configDir, 'config.json');
