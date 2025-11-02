@@ -1,8 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import matter from 'gray-matter';
 import { loadConfig, getToday } from '../config.js';
 import { getNextSeq } from '../utils/path-helpers.js';
+import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
 import type { SpecPriority } from '../frontmatter.js';
 
 export async function createSpec(name: string, options: { 
@@ -12,6 +14,7 @@ export async function createSpec(name: string, options: {
   priority?: SpecPriority;
   assignee?: string;
   template?: string;
+  customFields?: Record<string, unknown>;
 } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -67,36 +70,39 @@ export async function createSpec(name: string, options: {
     const date = new Date().toISOString().split('T')[0];
     const title = options.title || name;
     
-    content = template
-      .replace(/{name}/g, title)
-      .replace(/{date}/g, date);
+    // Build variable context and resolve all variables in template
+    const varContext = await buildVariableContext(config, { name: title, date });
+    content = resolveVariables(template, varContext);
     
-    // Update frontmatter with provided metadata
-    if (options.tags || options.priority || options.assignee) {
-      // Parse existing frontmatter
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-      if (frontmatterMatch) {
-        let frontmatter = frontmatterMatch[1];
-        
-        // Add tags if provided
-        if (options.tags && options.tags.length > 0) {
-          // Replace empty tags array
-          frontmatter = frontmatter.replace(/tags: \[\]/, `tags: [${options.tags.join(', ')}]`);
-        }
-        
-        // Add priority if provided
-        if (options.priority) {
-          frontmatter = frontmatter.replace(/priority: medium/, `priority: ${options.priority}`);
-        }
-        
-        // Add assignee if provided
-        if (options.assignee) {
-          // Add assignee field after priority
-          frontmatter = frontmatter.replace(/(priority: \w+)/, `$1\nassignee: ${options.assignee}`);
-        }
-        
-        content = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontmatter}\n---`);
+    // Update frontmatter with provided metadata and custom fields
+    if (options.tags || options.priority || options.assignee || options.customFields) {
+      // Parse existing frontmatter using gray-matter
+      const parsed = matter(content);
+      
+      // Add tags if provided
+      if (options.tags && options.tags.length > 0) {
+        parsed.data.tags = options.tags;
       }
+      
+      // Add priority if provided
+      if (options.priority) {
+        parsed.data.priority = options.priority;
+      }
+      
+      // Add assignee if provided
+      if (options.assignee) {
+        parsed.data.assignee = options.assignee;
+      }
+      
+      // Add custom fields if provided
+      if (options.customFields) {
+        for (const [key, value] of Object.entries(options.customFields)) {
+          parsed.data[key] = value;
+        }
+      }
+      
+      // Stringify back with updated frontmatter
+      content = matter.stringify(parsed.content, parsed.data);
     }
     
     // Add description to Overview section if provided

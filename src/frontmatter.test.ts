@@ -6,6 +6,8 @@ import {
   updateFrontmatter,
   matchesFilter,
   getSpecFile,
+  validateCustomField,
+  validateCustomFields,
   type SpecFrontmatter,
   type SpecFilterOptions,
 } from './frontmatter.js';
@@ -14,6 +16,7 @@ import {
   createTestSpec,
   type TestContext,
 } from './test-helpers.js';
+import type { LeanSpecConfig } from './config.js';
 
 describe('parseFrontmatter', () => {
   let ctx: TestContext;
@@ -468,5 +471,150 @@ describe('getSpecFile', () => {
 
     const result = await getSpecFile(specDir, 'SPEC.md');
     expect(result).toBe(specFile);
+  });
+});
+
+describe('validateCustomField', () => {
+  it('should validate string type', () => {
+    const result = validateCustomField('test', 'string');
+    expect(result.valid).toBe(true);
+    expect(result.coerced).toBe('test');
+  });
+
+  it('should coerce to string', () => {
+    const result = validateCustomField(123, 'string');
+    expect(result.valid).toBe(true);
+    expect(result.coerced).toBe('123');
+  });
+
+  it('should validate number type', () => {
+    const result = validateCustomField(42, 'number');
+    expect(result.valid).toBe(true);
+    expect(result.coerced).toBe(42);
+  });
+
+  it('should coerce to number', () => {
+    const result = validateCustomField('42', 'number');
+    expect(result.valid).toBe(true);
+    expect(result.coerced).toBe(42);
+  });
+
+  it('should fail to coerce invalid number', () => {
+    const result = validateCustomField('not-a-number', 'number');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('should validate boolean type', () => {
+    const result = validateCustomField(true, 'boolean');
+    expect(result.valid).toBe(true);
+    expect(result.coerced).toBe(true);
+  });
+
+  it('should coerce string to boolean', () => {
+    expect(validateCustomField('true', 'boolean').coerced).toBe(true);
+    expect(validateCustomField('yes', 'boolean').coerced).toBe(true);
+    expect(validateCustomField('1', 'boolean').coerced).toBe(true);
+    expect(validateCustomField('false', 'boolean').coerced).toBe(false);
+    expect(validateCustomField('no', 'boolean').coerced).toBe(false);
+    expect(validateCustomField('0', 'boolean').coerced).toBe(false);
+  });
+
+  it('should fail to coerce invalid boolean', () => {
+    const result = validateCustomField('maybe', 'boolean');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('should validate array type', () => {
+    const result = validateCustomField(['a', 'b'], 'array');
+    expect(result.valid).toBe(true);
+    expect(result.coerced).toEqual(['a', 'b']);
+  });
+
+  it('should fail non-array for array type', () => {
+    const result = validateCustomField('not-an-array', 'array');
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+});
+
+describe('validateCustomFields', () => {
+  it('should validate and coerce custom fields from config', () => {
+    const frontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+      sprint: '42',
+      estimate: 'large',
+    };
+
+    const config: LeanSpecConfig = {
+      template: 'spec-template.md',
+      specsDir: 'specs',
+      structure: {
+        pattern: '{date}/{seq}-{name}/',
+        dateFormat: 'YYYYMMDD',
+        sequenceDigits: 3,
+        defaultFile: 'README.md',
+      },
+      frontmatter: {
+        custom: {
+          sprint: 'number',
+          estimate: 'string',
+        },
+      },
+    };
+
+    const validated = validateCustomFields(frontmatter, config);
+    expect(validated.sprint).toBe(42); // Coerced to number
+    expect(validated.estimate).toBe('large');
+  });
+
+  it('should work without custom fields in config', () => {
+    const frontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+    };
+
+    const config: LeanSpecConfig = {
+      template: 'spec-template.md',
+      specsDir: 'specs',
+      structure: {
+        pattern: '{date}/{seq}-{name}/',
+        dateFormat: 'YYYYMMDD',
+        sequenceDigits: 3,
+        defaultFile: 'README.md',
+      },
+    };
+
+    const validated = validateCustomFields(frontmatter, config);
+    expect(validated).toEqual(frontmatter);
+  });
+
+  it('should handle missing custom fields gracefully', () => {
+    const frontmatter = {
+      status: 'planned',
+      created: '2024-11-01',
+    };
+
+    const config: LeanSpecConfig = {
+      template: 'spec-template.md',
+      specsDir: 'specs',
+      structure: {
+        pattern: '{date}/{seq}-{name}/',
+        dateFormat: 'YYYYMMDD',
+        sequenceDigits: 3,
+        defaultFile: 'README.md',
+      },
+      frontmatter: {
+        custom: {
+          sprint: 'number',
+          estimate: 'string',
+        },
+      },
+    };
+
+    const validated = validateCustomFields(frontmatter, config);
+    expect(validated).toEqual(frontmatter);
   });
 });

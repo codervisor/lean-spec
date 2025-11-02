@@ -18,6 +18,7 @@ import {
   ganttCommand,
   filesCommand,
 } from './commands/index.js';
+import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
 
 const program = new Command();
@@ -45,6 +46,7 @@ program
   .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
   .option('--assignee <name>', 'Set assignee')
   .option('--template <template>', 'Use a specific template')
+  .option('--field <name=value...>', 'Set custom field (can specify multiple)')
   .action(async (name: string, options: {
     title?: string;
     description?: string;
@@ -52,7 +54,11 @@ program
     priority?: SpecPriority;
     assignee?: string;
     template?: string;
+    field?: string[];
   }) => {
+    // Parse custom fields from --field options
+    const customFields = parseCustomFieldOptions(options.field);
+    
     const createOptions: {
       title?: string;
       description?: string;
@@ -60,6 +66,7 @@ program
       priority?: SpecPriority;
       assignee?: string;
       template?: string;
+      customFields?: Record<string, unknown>;
     } = {
       title: options.title,
       description: options.description,
@@ -67,6 +74,7 @@ program
       priority: options.priority,
       assignee: options.assignee,
       template: options.template,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
     };
     await createSpec(name, createOptions);
   });
@@ -88,25 +96,32 @@ program
   .option('--tag <tag...>', 'Filter by tag (can specify multiple)')
   .option('--priority <priority>', 'Filter by priority (low, medium, high, critical)')
   .option('--assignee <name>', 'Filter by assignee')
+  .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
   .action(async (options: {
     archived?: boolean;
     status?: SpecStatus;
     tag?: string[];
     priority?: SpecPriority;
     assignee?: string;
+    field?: string[];
   }) => {
+    // Parse custom field filters from --field options
+    const customFields = parseCustomFieldOptions(options.field);
+    
     const listOptions: {
       showArchived?: boolean;
       status?: SpecStatus;
       tags?: string[];
       priority?: SpecPriority;
       assignee?: string;
+      customFields?: Record<string, unknown>;
     } = {
       showArchived: options.archived,
       status: options.status,
       tags: options.tag,
       priority: options.priority,
       assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
     };
     await listSpecs(listOptions);
   });
@@ -119,22 +134,29 @@ program
   .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
   .option('--tags <tags>', 'Set tags (comma-separated)')
   .option('--assignee <name>', 'Set assignee')
+  .option('--field <name=value...>', 'Set custom field (can specify multiple)')
   .action(async (specPath: string, options: {
     status?: SpecStatus;
     priority?: SpecPriority;
     tags?: string;
     assignee?: string;
+    field?: string[];
   }) => {
+    // Parse custom fields from --field options
+    const customFields = parseCustomFieldOptions(options.field);
+    
     const updates: {
       status?: SpecStatus;
       priority?: SpecPriority;
       tags?: string[];
       assignee?: string;
+      customFields?: Record<string, unknown>;
     } = {
       status: options.status,
       priority: options.priority,
       tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
       assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
     };
     
     // Filter out undefined values
@@ -145,7 +167,7 @@ program
     });
     
     if (Object.keys(updates).length === 0) {
-      console.error('Error: At least one update option required (--status, --priority, --tags, --assignee)');
+      console.error('Error: At least one update option required (--status, --priority, --tags, --assignee, --field)');
       process.exit(1);
     }
     
@@ -266,13 +288,24 @@ program
   .option('--tag <tag>', 'Filter by tag')
   .option('--priority <priority>', 'Filter by priority')
   .option('--assignee <name>', 'Filter by assignee')
+  .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
   .action(async (query: string, options: {
     status?: SpecStatus;
     tag?: string;
     priority?: SpecPriority;
     assignee?: string;
+    field?: string[];
   }) => {
-    await searchCommand(query, options);
+    // Parse custom field filters from --field options
+    const customFields = parseCustomFieldOptions(options.field);
+    
+    await searchCommand(query, {
+      status: options.status,
+      tag: options.tag,
+      priority: options.priority,
+      assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+    });
   });
 
 // files command

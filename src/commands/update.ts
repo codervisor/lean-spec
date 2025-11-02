@@ -12,6 +12,7 @@ export async function updateSpec(
     priority?: SpecPriority;
     tags?: string[];
     assignee?: string;
+    customFields?: Record<string, unknown>;
   }
 ): Promise<void> {
   const config = await loadConfig();
@@ -33,12 +34,22 @@ export async function updateSpec(
     process.exit(1);
   }
 
+  // Merge custom fields into updates object
+  const allUpdates = { ...updates };
+  if (updates.customFields) {
+    Object.assign(allUpdates, updates.customFields);
+    delete allUpdates.customFields;
+  }
+
   // Update frontmatter
-  await updateFrontmatter(specFile, updates);
+  await updateFrontmatter(specFile, allUpdates);
 
   console.log(chalk.green(`✓ Updated: ${path.relative(cwd, resolvedPath)}`));
   
   // Show what was updated
-  const updatedFields = Object.keys(updates).join(', ');
-  console.log(chalk.gray(`  Fields: ${updatedFields}`));
+  const updatedFields = Object.keys(updates).filter(k => k !== 'customFields');
+  if (updates.customFields) {
+    updatedFields.push(...Object.keys(updates.customFields));
+  }
+  console.log(chalk.gray(`  Fields: ${updatedFields.join(', ')}`));
 }

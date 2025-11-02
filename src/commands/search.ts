@@ -11,6 +11,7 @@ export async function searchCommand(query: string, options: {
   tag?: string;
   priority?: SpecPriority;
   assignee?: string;
+  customFields?: Record<string, unknown>;
 }): Promise<void> {
   // Build filter
   const filter: SpecFilterOptions = {};
@@ -18,6 +19,7 @@ export async function searchCommand(query: string, options: {
   if (options.tag) filter.tags = [options.tag];
   if (options.priority) filter.priority = options.priority;
   if (options.assignee) filter.assignee = options.assignee;
+  if (options.customFields) filter.customFields = options.customFields;
 
   // Load all specs with content and spinner
   const specs = await withSpinner(

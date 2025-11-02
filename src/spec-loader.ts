@@ -112,7 +112,7 @@ export async function loadAllSpecs(options: {
 
       if (!specFile) continue;
 
-      const frontmatter = await parseFrontmatter(specFile);
+      const frontmatter = await parseFrontmatter(specFile, config);
       if (!frontmatter) continue;
 
       // Apply filter if provided
@@ -167,7 +167,7 @@ export async function loadAllSpecs(options: {
 
           if (!specFile) continue;
 
-          const frontmatter = await parseFrontmatter(specFile);
+          const frontmatter = await parseFrontmatter(specFile, config);
           if (!frontmatter) continue;
 
           // Apply filter if provided
@@ -231,7 +231,7 @@ export async function getSpec(specPath: string): Promise<SpecInfo | null> {
   const specFile = await getSpecFile(fullPath, config.structure.defaultFile);
   if (!specFile) return null;
 
-  const frontmatter = await parseFrontmatter(specFile);
+  const frontmatter = await parseFrontmatter(specFile, config);
   if (!frontmatter) return null;
 
   const content = await fs.readFile(specFile, 'utf-8');

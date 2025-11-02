@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import matter from 'gray-matter';
 import dayjs from 'dayjs';
+import type { LeanSpecConfig } from './config.js';
 
 // Valid status values
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
@@ -36,8 +37,88 @@ export interface SpecFrontmatter {
   [key: string]: unknown;
 }
 
+/**
+ * Validate and coerce custom field types
+ */
+export function validateCustomField(
+  value: unknown,
+  expectedType: 'string' | 'number' | 'boolean' | 'array'
+): { valid: boolean; coerced?: unknown; error?: string } {
+  switch (expectedType) {
+    case 'string':
+      if (typeof value === 'string') {
+        return { valid: true, coerced: value };
+      }
+      // Coerce to string
+      return { valid: true, coerced: String(value) };
+    
+    case 'number':
+      if (typeof value === 'number') {
+        return { valid: true, coerced: value };
+      }
+      // Try to coerce to number
+      const num = Number(value);
+      if (!isNaN(num)) {
+        return { valid: true, coerced: num };
+      }
+      return { valid: false, error: `Cannot convert '${value}' to number` };
+    
+    case 'boolean':
+      if (typeof value === 'boolean') {
+        return { valid: true, coerced: value };
+      }
+      // Coerce string to boolean
+      if (value === 'true' || value === 'yes' || value === '1') {
+        return { valid: true, coerced: true };
+      }
+      if (value === 'false' || value === 'no' || value === '0') {
+        return { valid: true, coerced: false };
+      }
+      return { valid: false, error: `Cannot convert '${value}' to boolean` };
+    
+    case 'array':
+      if (Array.isArray(value)) {
+        return { valid: true, coerced: value };
+      }
+      return { valid: false, error: `Expected array but got ${typeof value}` };
+    
+    default:
+      return { valid: false, error: `Unknown type: ${expectedType}` };
+  }
+}
+
+/**
+ * Validate custom fields according to config
+ */
+export function validateCustomFields(
+  frontmatter: Record<string, unknown>,
+  config?: LeanSpecConfig
+): Record<string, unknown> {
+  if (!config?.frontmatter?.custom) {
+    return frontmatter;
+  }
+  
+  const result = { ...frontmatter };
+  
+  for (const [fieldName, expectedType] of Object.entries(config.frontmatter.custom)) {
+    if (fieldName in result) {
+      const validation = validateCustomField(result[fieldName], expectedType);
+      if (validation.valid) {
+        result[fieldName] = validation.coerced;
+      } else {
+        console.warn(`Warning: Invalid custom field '${fieldName}': ${validation.error}`);
+      }
+    }
+  }
+  
+  return result;
+}
+
 // Parse frontmatter from a spec file
-export async function parseFrontmatter(filePath: string): Promise<SpecFrontmatter | null> {
+export async function parseFrontmatter(
+  filePath: string,
+  config?: LeanSpecConfig
+): Promise<SpecFrontmatter | null> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     const parsed = matter(content);
@@ -75,14 +156,22 @@ export async function parseFrontmatter(filePath: string): Promise<SpecFrontmatte
     // Warn about unknown fields (informational only)
     const knownFields = [
       'status', 'created', 'tags', 'priority', 'related', 'depends_on',
-      'updated', 'completed', 'assignee', 'reviewer', 'issue', 'pr', 'epic', 'breaking'
+      'updated', 'completed', 'assignee', 'reviewer', 'issue', 'pr', 'epic', 'breaking', 'due'
     ];
-    const unknownFields = Object.keys(parsed.data).filter(k => !knownFields.includes(k));
+    
+    // Add custom fields from config to known fields
+    const customFields = config?.frontmatter?.custom ? Object.keys(config.frontmatter.custom) : [];
+    const allKnownFields = [...knownFields, ...customFields];
+    
+    const unknownFields = Object.keys(parsed.data).filter(k => !allKnownFields.includes(k));
     if (unknownFields.length > 0) {
       console.warn(`Info: Unknown fields in ${filePath}: ${unknownFields.join(', ')}`);
     }
+    
+    // Validate and coerce custom fields
+    const validatedData = validateCustomFields(parsed.data, config);
 
-    return parsed.data as SpecFrontmatter;
+    return validatedData as SpecFrontmatter;
   } catch (error) {
     console.error(`Error parsing frontmatter from ${filePath}:`, error);
     return null;
@@ -212,6 +301,7 @@ export interface SpecFilterOptions {
   tags?: string[];
   priority?: SpecPriority | SpecPriority[];
   assignee?: string;
+  customFields?: Record<string, unknown>;
 }
 
 export function matchesFilter(frontmatter: SpecFrontmatter, filter: SpecFilterOptions): boolean {
@@ -246,6 +336,15 @@ export function matchesFilter(frontmatter: SpecFrontmatter, filter: SpecFilterOp
   if (filter.assignee) {
     if (frontmatter.assignee !== filter.assignee) {
       return false;
+    }
+  }
+  
+  // Custom fields filter
+  if (filter.customFields) {
+    for (const [key, value] of Object.entries(filter.customFields)) {
+      if (frontmatter[key] !== value) {
+        return false;
+      }
     }
   }
 
