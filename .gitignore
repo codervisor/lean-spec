@@ -5,3 +5,6 @@ dist/
 coverage/
 docs/.vitepress/dist
 docs/.vitepress/cache
+docs-site/node_modules/
+docs-site/build/
+docs-site/.docusaurus/
