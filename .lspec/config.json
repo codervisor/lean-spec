@@ -1,5 +1,8 @@
 {
-  "template": "standard",
+  "template": "spec-template.md",
+  "templates": {
+    "default": "spec-template.md"
+  },
   "specsDir": "specs",
   "structure": {
     "pattern": "{date}/{seq}-{name}/",
