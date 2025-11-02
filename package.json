@@ -27,6 +27,22 @@
   ],
   "author": "codervisor",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "homepage": "https://github.com/codervisor/lean-spec#readme",
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "templates/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/react": "^19.2.2",
