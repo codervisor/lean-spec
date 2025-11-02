@@ -11,12 +11,74 @@ export interface SpecInfo {
   date: string; // Date folder like "20251101"
   frontmatter: SpecFrontmatter;
   content?: string; // Full file content (optional, for search)
+  subFiles?: SubFileInfo[]; // Sub-documents and assets
+}
+
+export interface SubFileInfo {
+  name: string; // e.g., "TESTING.md" or "diagram.png"
+  path: string; // Absolute path to the file
+  size: number; // File size in bytes
+  type: 'document' | 'asset'; // Classification based on file type
+  content?: string; // Optional content for documents
+}
+
+// Load sub-files for a spec (all files except README.md)
+export async function loadSubFiles(
+  specDir: string,
+  options: { includeContent?: boolean } = {}
+): Promise<SubFileInfo[]> {
+  const subFiles: SubFileInfo[] = [];
+
+  try {
+    const entries = await fs.readdir(specDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      // Skip README.md (main spec file)
+      if (entry.name === 'README.md') continue;
+
+      // Skip directories for now (could be assets folder)
+      if (entry.isDirectory()) continue;
+
+      const filePath = path.join(specDir, entry.name);
+      const stat = await fs.stat(filePath);
+
+      // Determine type based on extension
+      const ext = path.extname(entry.name).toLowerCase();
+      const isDocument = ext === '.md';
+
+      const subFile: SubFileInfo = {
+        name: entry.name,
+        path: filePath,
+        size: stat.size,
+        type: isDocument ? 'document' : 'asset',
+      };
+
+      // Load content for documents if requested
+      if (isDocument && options.includeContent) {
+        subFile.content = await fs.readFile(filePath, 'utf-8');
+      }
+
+      subFiles.push(subFile);
+    }
+  } catch {
+    // Directory doesn't exist or can't be read
+    return [];
+  }
+
+  // Sort: documents first, then alphabetically
+  return subFiles.sort((a, b) => {
+    if (a.type !== b.type) {
+      return a.type === 'document' ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 // Load all specs from the specs directory
 export async function loadAllSpecs(options: {
   includeArchived?: boolean;
   includeContent?: boolean;
+  includeSubFiles?: boolean;
   filter?: SpecFilterOptions;
 } = {}): Promise<SpecInfo[]> {
   const config = await loadConfig();
@@ -71,6 +133,13 @@ export async function loadAllSpecs(options: {
         specInfo.content = await fs.readFile(specFile, 'utf-8');
       }
 
+      // Load sub-files if requested
+      if (options.includeSubFiles) {
+        specInfo.subFiles = await loadSubFiles(specDir, {
+          includeContent: options.includeContent,
+        });
+      }
+
       specs.push(specInfo);
     }
   }
@@ -117,6 +186,13 @@ export async function loadAllSpecs(options: {
           // Load content if requested
           if (options.includeContent) {
             specInfo.content = await fs.readFile(specFile, 'utf-8');
+          }
+
+          // Load sub-files if requested
+          if (options.includeSubFiles) {
+            specInfo.subFiles = await loadSubFiles(specDir, {
+              includeContent: options.includeContent,
+            });
           }
 
           specs.push(specInfo);

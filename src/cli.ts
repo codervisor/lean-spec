@@ -16,6 +16,7 @@ import {
   depsCommand,
   searchCommand,
   ganttCommand,
+  filesCommand,
 } from './commands/index.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
 
@@ -272,6 +273,19 @@ program
     assignee?: string;
   }) => {
     await searchCommand(query, options);
+  });
+
+// files command
+program
+  .command('files <spec-path>')
+  .description('List files in a spec')
+  .option('--type <type>', 'Filter by type: docs, assets')
+  .option('--tree', 'Show tree structure')
+  .action(async (specPath: string, options: {
+    type?: 'docs' | 'assets';
+    tree?: boolean;
+  }) => {
+    await filesCommand(specPath, options);
   });
 
 // gantt command
