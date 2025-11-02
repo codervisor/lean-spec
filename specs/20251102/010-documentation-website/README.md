@@ -1,13 +1,16 @@
 ---
-status: in-progress
+status: complete
 created: 2025-11-02
 tags: [documentation, website, vitepress]
 priority: high
+superseded-by: specs/20251102/011-docusaurus-vercel-migration
 ---
 
 # Documentation Website
 
-> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, website, vitepress
+> **Status**: ✅ Complete (superseded) · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, website, vitepress
+
+**⚠️ Note**: This spec has been completed but the implementation is being replaced. See [specs/20251102/011-docusaurus-vercel-migration](../011-docusaurus-vercel-migration/README.md) for the new direction using Docusaurus + Vercel instead of VitePress + GitHub Pages.
 
 ## Overview
 
