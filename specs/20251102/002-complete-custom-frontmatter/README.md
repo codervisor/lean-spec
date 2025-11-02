@@ -1,13 +1,17 @@
 ---
-status: planned
-created: 2025-11-02
-tags: [enhancement, frontmatter, customization]
+status: in-progress
+created: 2025-11-02T00:00:00.000Z
+tags:
+  - enhancement
+  - frontmatter
+  - customization
 priority: high
+milestone: v0.2.0
 ---
 
 # complete-custom-frontmatter
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-02
+> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: enhancement, frontmatter, customization
 
 ## Overview
 
