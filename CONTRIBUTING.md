@@ -43,10 +43,9 @@ See [docs/TESTING.md](../docs/TESTING.md) for details.
 
 We use:
 - TypeScript for type safety
-- ESLint for linting
 - Prettier for formatting
 
-Run `pnpm lint` and `pnpm format` before committing.
+Run `pnpm format` before committing.
 
 ## Philosophy
 

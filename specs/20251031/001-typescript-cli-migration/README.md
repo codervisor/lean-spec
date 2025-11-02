@@ -18,7 +18,7 @@ Migrate lean-spec CLI from bash script to TypeScript/pnpm while keeping the meth
 
 - CLI commands: `create`, `archive`, `list` with same UX
 - Date-based structure: `specs/YYYYMMDD/NNN-name.md`
-- Modern TS tooling: tsup, ESLint, Prettier
+- Modern TS tooling: tsup, Prettier
 - Minimal dependencies: only `chalk` for colors
 - Fast build with pnpm
 

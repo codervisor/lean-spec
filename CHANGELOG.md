@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 62 passing tests with comprehensive coverage
 - Integration tests for all commands
 - TypeScript with strict mode
-- ESLint and Prettier configuration
+- Prettier configuration
 
 ### Documentation
 - Complete README with examples and API reference
