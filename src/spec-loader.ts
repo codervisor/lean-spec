@@ -60,8 +60,9 @@ export async function loadSubFiles(
 
       subFiles.push(subFile);
     }
-  } catch {
-    // Directory doesn't exist or can't be read
+  } catch (error) {
+    // Directory doesn't exist or can't be read - return empty array
+    // This is expected for specs without sub-files
     return [];
   }
 

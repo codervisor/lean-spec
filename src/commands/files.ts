@@ -21,7 +21,7 @@ export async function filesCommand(
   if (!resolvedPath) {
     console.error(chalk.red(`Spec not found: ${specPath}`));
     console.error(
-      chalk.gray('Tried: ' + specPath + ', specs/' + specPath + ', and searching in date directories')
+      chalk.gray('Try using the full path or spec name (e.g., 001-my-spec)')
     );
     process.exit(1);
   }

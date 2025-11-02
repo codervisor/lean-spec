@@ -89,13 +89,23 @@ export async function initProject(): Promise<void> {
 
   // Create .lspec/templates/ directory
   const templatesDir = path.join(cwd, '.lspec', 'templates');
-  await fs.mkdir(templatesDir, { recursive: true });
+  try {
+    await fs.mkdir(templatesDir, { recursive: true });
+  } catch (error) {
+    console.error(chalk.red('Error creating templates directory:'), error);
+    process.exit(1);
+  }
   
   // Copy chosen template to .lspec/templates/spec-template.md
   const templateSpecPath = path.join(templateDir, 'spec-template.md');
   const targetSpecPath = path.join(templatesDir, 'spec-template.md');
-  await fs.copyFile(templateSpecPath, targetSpecPath);
-  console.log(chalk.green('✓ Created .lspec/templates/spec-template.md'));
+  try {
+    await fs.copyFile(templateSpecPath, targetSpecPath);
+    console.log(chalk.green('✓ Created .lspec/templates/spec-template.md'));
+  } catch (error) {
+    console.error(chalk.red('Error copying template:'), error);
+    process.exit(1);
+  }
   
   // Update config to use new template structure
   templateConfig.template = 'spec-template.md';
