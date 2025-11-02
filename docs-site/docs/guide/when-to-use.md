@@ -1,0 +1,288 @@
+---
+id: 'when-to-use'
+title: 'When to Use'
+sidebar_position: 6
+---
+# When to Use LeanSpec
+
+LeanSpec is a powerful methodology, but it's not always the right tool for every situation. This guide helps you decide when to use LeanSpec and when to look elsewhere.
+
+## Perfect for LeanSpec
+
+### ✅ New Features or Components
+
+**When:**
+- Building a new feature from scratch
+- Adding a significant component to existing system
+- Need to align team on approach
+
+**Why it works:**
+- Captures intent before diving into code
+- Reduces rework from misunderstandings
+- Provides clear direction for implementation
+
+**Example:** Adding user authentication to your app
+
+### ✅ API Designs
+
+**When:**
+- Designing new APIs or endpoints
+- Changing existing API contracts
+- Need to coordinate frontend/backend teams
+
+**Why it works:**
+- Documents contracts clearly
+- Prevents integration issues
+- Easy to reference during development
+
+**Example:** REST API for user management
+
+### ✅ Architecture Decisions
+
+**When:**
+- Choosing between architectural approaches
+- Making decisions that affect multiple teams
+- Need shared understanding of system design
+
+**Why it works:**
+- Makes trade-offs explicit
+- Creates shared context
+- Documents rationale for future reference
+
+**Example:** Choosing microservices vs. monolith
+
+### ✅ Quick Alignment
+
+**When:**
+- Need fast consensus on direction
+- Want to avoid lengthy meetings
+- Multiple stakeholders need to understand
+
+**Why it works:**
+- Faster than meetings or long documents
+- Everyone reads the same thing
+- Easy to iterate and refine
+
+**Example:** Sprint planning for new feature
+
+### ✅ AI-Powered Development
+
+**When:**
+- Working with AI coding agents
+- Need clear context for AI implementation
+- Want AI to understand requirements
+
+**Why it works:**
+- AI agents parse specs effectively
+- Reduces misinterpretation
+- Specs guide AI to correct solutions
+
+**Example:** Having GitHub Copilot implement a feature
+
+### ✅ Cross-Team Coordination
+
+**When:**
+- Features span multiple teams
+- Need to coordinate timing and interfaces
+- Want to avoid integration problems
+
+**Why it works:**
+- Single source of truth
+- Clear ownership boundaries
+- Explicit dependencies
+
+**Example:** Feature requiring mobile, backend, and ops changes
+
+## Not Ideal for LeanSpec
+
+### ❌ Detailed API Reference Documentation
+
+**What to use instead:** Code comments + auto-generated docs (Swagger, JSDoc, etc.)
+
+**Why:**
+- Reference docs need to be comprehensive
+- Generated docs stay in sync with code
+- LeanSpec is for design, not reference
+
+**Example:** Complete API documentation for 50 endpoints
+
+### ❌ Step-by-Step User Manuals
+
+**What to use instead:** Dedicated user documentation tools
+
+**Why:**
+- User docs require different audience and format
+- Screenshots, videos, interactive tutorials
+- LeanSpec is for development teams, not end users
+
+**Example:** How to configure software settings
+
+### ❌ Compliance Requirements with Specific Formats
+
+**What to use instead:** Whatever format compliance demands
+
+**Why:**
+- Compliance is non-negotiable
+- Required formats may not be lean
+- Use LeanSpec internally, compliance docs externally
+
+**Example:** SOC 2 audit documentation
+
+### ❌ Trivial Bug Fixes
+
+**What to use instead:** Just fix it and commit
+
+**Why:**
+- Overhead exceeds value
+- Code change is self-documenting
+- Creating spec wastes time
+
+**Example:** Fixing typo in error message
+
+### ❌ Experimental Prototypes
+
+**What to use instead:** Code first, document if it works
+
+**Why:**
+- High uncertainty, likely to throw away
+- Learning by doing is faster
+- Spec becomes outdated immediately
+
+**Example:** Testing feasibility of new algorithm
+
+### ❌ Obvious Refactors
+
+**What to use instead:** Make the change with good commit messages
+
+**Why:**
+- Intent is clear from the change itself
+- No ambiguity about what needs to happen
+- Spec adds no value
+
+**Example:** Renaming variables for clarity
+
+## Decision Framework
+
+Still not sure? Use this decision tree:
+
+```
+Is this a significant change affecting multiple parts of the system?
+├─ No → Skip LeanSpec, just do it
+└─ Yes → Continue
+
+Will this require coordination between multiple people?
+├─ No → Consider if spec would help future you
+└─ Yes → Continue
+
+Is there ambiguity about requirements or approach?
+├─ No → Maybe skip, or write brief spec
+└─ Yes → Definitely use LeanSpec
+
+Are you working with AI coding agents?
+├─ Yes → Use LeanSpec for clear context
+└─ No → Continue
+
+Would writing this take more than 15 minutes?
+├─ Yes → Reconsider if it's truly lean
+└─ No → Write the spec!
+```
+
+## Start Lean, Add More if Needed
+
+When in doubt, start minimal and add detail only if needed:
+
+**Phase 1: Minimal Spec (5-10 minutes)**
+- What problem are we solving?
+- What are the key scenarios?
+- What does "done" look like?
+
+If that's enough, stop there.
+
+**Phase 2: Add Technical Details (if needed)**
+- What's the technical approach?
+- What are the constraints?
+- What are the dependencies?
+
+**Phase 3: Add Coordination Details (if needed)**
+- Who owns what?
+- What's the timeline?
+- What are the milestones?
+
+Don't write Phase 2 if Phase 1 is sufficient. Don't write Phase 3 if Phases 1-2 are sufficient.
+
+## Team Considerations
+
+### Solo Developers
+
+- Use for features you'll forget about in a month
+- Use to document decisions for future you
+- Skip for obvious changes
+
+### Small Teams (2-5 people)
+
+- Use for features spanning multiple people
+- Use when alignment is needed
+- Skip when everyone knows what to do
+
+### Large Teams (>5 people)
+
+- Use for most significant features
+- Use for cross-team coordination
+- Skip only for truly trivial changes
+
+### Enterprise Organizations
+
+- Use for features affecting multiple teams
+- Use for architectural decisions
+- Use for compliance-adjacent work (but not the compliance docs themselves)
+- Template heavily to reduce overhead
+
+## When It Feels Like Too Much
+
+If writing specs feels burdensome:
+
+1. **Make them shorter** - Cut everything that doesn't add clarity
+2. **Use templates** - Pre-fill common sections
+3. **Time-box it** - Spend max 30 minutes on a spec
+4. **Raise the bar** - Only spec bigger features
+5. **Get AI help** - Have AI draft initial specs
+
+The goal is **reduced burden**, not added process.
+
+## Success Stories
+
+### When It Works Well
+
+"We spent 20 minutes on a spec, saved 3 days of rework." - Startup CTO
+
+"AI agents implement features correctly the first time now." - Solo dev
+
+"No more confusion about what we're building." - Team lead
+
+### When It Doesn't Work
+
+"Specs became 10-page documents nobody read." - Solution: Make them shorter
+
+"We spec everything, even typo fixes." - Solution: Raise the bar
+
+"Specs are outdated as soon as we write them." - Solution: Update as you go
+
+## The Bottom Line
+
+LeanSpec is most valuable when:
+- There's meaningful complexity or ambiguity
+- Multiple people need to be aligned
+- You're working with AI agents
+- The cost of misunderstanding is high
+
+Skip LeanSpec when:
+- The change is trivial or obvious
+- You're the only person involved
+- The work is exploratory or experimental
+- Compliance requires a specific format
+
+**When in doubt, err on the side of lean.**
+
+---
+
+**Next**: Learn about [Templates](/docs/guide/templates) to customize your workflow, or explore [AI Integration](/docs/ai-integration/) for AI-powered development.

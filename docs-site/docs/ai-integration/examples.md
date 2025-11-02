@@ -1,0 +1,315 @@
+---
+id: 'examples'
+title: 'Examples'
+sidebar_position: 5
+---
+# Examples
+
+Real-world patterns and examples for AI integration with LeanSpec.
+
+## Example 1: New Feature Implementation
+
+### Spec: User Profile API
+
+```markdown
+---
+status: in-progress
+created: 2025-11-02
+tags: [api, backend]
+priority: high
+---
+
+# User Profile API
+
+## Goal
+
+Enable mobile app to fetch and update user profiles.
+
+## Key Scenarios
+
+1. GET /api/users/:id → returns user profile
+2. PATCH /api/users/:id → updates user profile
+3. Unauthorized request → 401 error
+
+## Acceptance Criteria
+
+- [ ] GET endpoint returns profile with id, name, email, avatar
+- [ ] PATCH endpoint accepts name and avatar updates
+- [ ] Email cannot be changed via this endpoint
+- [ ] JWT authentication required
+- [ ] Returns 404 for non-existent users
+- [ ] Returns 403 if user tries to update someone else's profile
+
+## API Examples
+
+GET /api/users/123:
+\`\`\`json
+{
+  "id": "123",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "avatar": "https://example.com/avatars/123.jpg"
+}
+\`\`\`
+
+PATCH /api/users/123:
+\`\`\`json
+{
+  "name": "Jane Doe",
+  "avatar": "https://example.com/avatars/456.jpg"
+}
+\`\`\`
+
+## Technical Approach
+
+- Express.js routes
+- PostgreSQL for storage
+- JWT middleware for auth
+- Multer for avatar uploads
+
+## Non-Goals
+
+- Email updates (separate verification flow)
+- Password changes (separate endpoint)
+- Profile deletion (admin-only)
+```
+
+### AI Prompt
+
+```
+Read specs/20251102/002-user-profile-api/README.md and implement 
+the user profile API endpoints described there.
+```
+
+### Result
+
+AI implements correctly with proper authentication, validation, and error handling.
+
+## Example 2: Bug Fix with Context
+
+### Prompt
+
+```
+There's a bug where users can update other users' profiles. 
+Check specs/20251102/002-user-profile-api for the security requirement
+and fix the issue.
+```
+
+### What AI Does
+
+1. Reads spec
+2. Finds: "Returns 403 if user tries to update someone else's profile"
+3. Adds authorization check
+4. Tests the fix
+
+## Example 3: Refactoring with Spec
+
+### Original Code
+
+```typescript
+// No spec, unclear intent
+app.post('/login', (req, res) => {
+  // 100 lines of mixed concerns
+});
+```
+
+### Create Spec
+
+```markdown
+## Goal
+
+Extract authentication logic into reusable service.
+
+## Acceptance Criteria
+
+- [ ] AuthService handles password verification
+- [ ] AuthService generates JWT tokens
+- [ ] Route handler remains thin (< 20 lines)
+- [ ] Existing tests still pass
+- [ ] No behavior changes
+```
+
+### AI Prompt
+
+```
+Refactor the login endpoint according to specs/20251102/003-auth-refactor.
+Extract business logic to AuthService.
+```
+
+### Result
+
+Clean separation of concerns, maintainable code.
+
+## Example 4: Collaborative Spec Writing
+
+### Developer Creates Rough Spec
+
+```markdown
+# Search Feature
+
+Need to add search to the app.
+
+Users should be able to search for products.
+```
+
+### AI Reviews and Asks
+
+```
+I see you want to add search. Can you clarify:
+
+1. What fields should be searchable? (name, description, SKU?)
+2. Should it be full-text or exact match?
+3. Any filtering needed (price range, categories)?
+4. Pagination requirements?
+5. Expected response time limits?
+```
+
+### Developer Refines
+
+```markdown
+# Product Search API
+
+## Goal
+
+Enable users to find products by name or description.
+
+## Key Scenarios
+
+1. Search "laptop" → returns matching products
+2. Search with no results → empty array
+3. Search with filters → filtered results
+
+## Acceptance Criteria
+
+- [ ] Searches product name and description
+- [ ] Case-insensitive matching
+- [ ] Returns top 20 results
+- [ ] Supports pagination (page, limit)
+- [ ] Response time < 500ms
+- [ ] Can filter by category and price range
+
+## API Example
+
+GET /api/products/search?q=laptop&category=electronics&minPrice=500:
+\`\`\`json
+{
+  "results": [...],
+  "total": 45,
+  "page": 1,
+  "limit": 20
+}
+\`\`\`
+```
+
+### AI Implements
+
+Correct implementation with proper indexing and performance.
+
+## Example 5: Multi-Spec Feature
+
+Complex feature spanning multiple specs:
+
+1. `001-user-auth` - Authentication system
+2. `002-user-profile` - Profile management
+3. `003-avatar-upload` - File uploads
+4. `004-email-verification` - Email verification
+
+### AI Prompt
+
+```
+We need to implement the user management system. Please review these specs:
+
+- specs/20251102/001-user-auth
+- specs/20251102/002-user-profile
+- specs/20251102/003-avatar-upload
+- specs/20251102/004-email-verification
+
+Start with 001-user-auth, then proceed in order. Ask questions if 
+anything is unclear.
+```
+
+AI implements systematically, one spec at a time.
+
+## Example 6: Living Documentation
+
+### Week 1: Initial Spec
+
+```markdown
+## Technical Approach
+
+- Use MongoDB for storage
+```
+
+### Week 2: During Implementation
+
+Discovery: MongoDB doesn't fit our needs well.
+
+```markdown
+## Technical Approach
+
+- ~~Use MongoDB for storage~~ 
+- Use PostgreSQL for storage (better for relational data)
+
+### Why Changed
+
+MongoDB's lack of transactions caused issues with user/profile relationship.
+PostgreSQL provides ACID guarantees we need.
+```
+
+### Result
+
+Spec remains accurate and documents decision rationale.
+
+## Example 7: Template-Based Generation
+
+### Create Template
+
+`.lspec/templates/api-endpoint.md`:
+
+```markdown
+# {name}
+
+## Endpoint
+
+{method} {endpoint}
+
+## Request
+
+\`\`\`json
+{request_example}
+\`\`\`
+
+## Response
+
+\`\`\`json
+{response_example}
+\`\`\`
+
+## Acceptance Criteria
+
+- [ ] Returns {success_code} on success
+- [ ] Validates request body
+- [ ] Requires authentication
+- [ ] Handles errors appropriately
+```
+
+### AI Uses Template
+
+```
+Create a new API spec using the api-endpoint template for 
+creating a new blog post.
+```
+
+AI generates properly structured spec.
+
+## Key Takeaways
+
+1. **Be Specific**: Concrete examples prevent misinterpretation
+2. **Iterate**: Specs improve through AI feedback
+3. **Reference**: Always point AI to relevant specs
+4. **Update**: Keep specs current as learning happens
+5. **Organize**: Multiple specs for complex features
+
+---
+
+**Ready to start?** Go to the [Setup Guide](/docs/ai-integration/setup) to begin integrating LeanSpec with your AI agents.
