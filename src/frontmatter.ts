@@ -301,6 +301,7 @@ export interface SpecFilterOptions {
   tags?: string[];
   priority?: SpecPriority | SpecPriority[];
   assignee?: string;
+  customFields?: Record<string, unknown>;
 }
 
 export function matchesFilter(frontmatter: SpecFrontmatter, filter: SpecFilterOptions): boolean {
@@ -335,6 +336,15 @@ export function matchesFilter(frontmatter: SpecFrontmatter, filter: SpecFilterOp
   if (filter.assignee) {
     if (frontmatter.assignee !== filter.assignee) {
       return false;
+    }
+  }
+  
+  // Custom fields filter
+  if (filter.customFields) {
+    for (const [key, value] of Object.entries(filter.customFields)) {
+      if (frontmatter[key] !== value) {
+        return false;
+      }
     }
   }
 
