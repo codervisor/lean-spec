@@ -2,7 +2,7 @@
 
 > A lightweight, flexible Spec-Driven Development (SDD) methodology for modern AI-powered development.
 
-📚 **[Read the full documentation →](https://codervisor.github.io/lean-spec/)**
+📚 **[Read the full documentation →](https://lean-spec.dev)**
 
 ## The Problem
 

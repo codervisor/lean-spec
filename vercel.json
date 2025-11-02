@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd docs-site && npm run build",
+  "outputDirectory": "docs-site/build",
+  "framework": "docusaurus",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

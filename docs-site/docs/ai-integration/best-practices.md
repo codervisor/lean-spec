@@ -1,0 +1,200 @@
+---
+id: 'best-practices'
+title: 'Best Practices'
+sidebar_position: 4
+---
+# Best Practices
+
+Tips and patterns for effective AI integration with LeanSpec.
+
+## Writing Specs for AI
+
+### Be Explicit and Concrete
+
+❌ **Vague:**
+```markdown
+Implement secure authentication
+```
+
+✅ **Specific:**
+```markdown
+Implement JWT authentication with:
+- bcrypt password hashing (min 10 rounds)
+- 24-hour token expiry
+- Rate limiting (5 attempts/min per IP)
+```
+
+### Provide Examples
+
+AI agents understand examples better than abstract descriptions.
+
+```markdown
+## API Response Example
+
+\`\`\`json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": "2025-11-03T06:00:00Z",
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com"
+  }
+}
+\`\`\`
+```
+
+### Use Acceptance Criteria
+
+Make criteria testable and specific:
+
+✅ **Good Criteria:**
+- [ ] POST /api/auth/login returns 200 with JWT on success
+- [ ] Invalid credentials return 401 with error message
+- [ ] Passwords are hashed with bcrypt, min 10 rounds
+- [ ] Rate limit: max 5 attempts per minute per IP
+
+### Define Boundaries
+
+Use Non-Goals to prevent scope creep:
+
+```markdown
+## Non-Goals
+
+- Social login (Google, GitHub) - separate epic
+- Password reset - separate spec
+- 2FA - not needed for MVP
+- Remember me functionality - future enhancement
+```
+
+## Repository Organization
+
+### Make Specs Discoverable
+
+```
+your-project/
+├── AGENTS.md           ← AI reads this first
+├── README.md           ← Project overview
+├── specs/              ← All specs here
+│   └── 20251102/
+│       └── 001-feature/
+│           └── README.md
+```
+
+### Link Specs in Code
+
+```typescript
+// Implements: specs/20251102/001-user-auth
+export class AuthService {
+  // ...
+}
+```
+
+### Reference Specs in PRs
+
+```markdown
+## Description
+
+Implements user authentication system.
+
+See: specs/20251102/001-user-auth
+
+## Changes
+
+- Add AuthService
+- Add login endpoint
+- Add JWT middleware
+```
+
+## AI Agent Workflow
+
+### Pattern 1: Spec-First
+
+1. Write spec with requirements
+2. AI implements from spec
+3. Update spec with learnings
+4. Mark complete and archive
+
+### Pattern 2: Iterative Refinement
+
+1. Write rough spec
+2. AI asks clarifying questions
+3. Refine spec based on questions
+4. AI implements refined version
+5. Update spec during implementation
+
+### Pattern 3: AI-Assisted Spec Writing
+
+1. Describe feature to AI
+2. AI generates initial spec
+3. Review and refine
+4. AI implements from refined spec
+
+## Common Pitfalls
+
+### Too Vague
+
+**Problem:** AI makes wrong assumptions.
+
+**Solution:** Add concrete examples and specific requirements.
+
+### Too Detailed
+
+**Problem:** Spec becomes unreadable documentation.
+
+**Solution:** Focus on what, not how. Let AI decide implementation details.
+
+### Outdated Specs
+
+**Problem:** Code and specs diverge.
+
+**Solution:** Update specs during implementation. Make it part of definition of done.
+
+### No Boundaries
+
+**Problem:** AI adds features not requested.
+
+**Solution:** Use Non-Goals section explicitly.
+
+## Measuring Success
+
+Track these metrics:
+
+**Positive Signs:**
+- AI implements correctly first time
+- Fewer clarification questions
+- Faster feature completion
+- Specs stay accurate
+- Team alignment improves
+
+**Warning Signs:**
+- Frequent AI misinterpretation
+- Constant back-and-forth
+- Specs become outdated
+- Implementation diverges
+- Team confusion
+
+## Tips
+
+::: tip Start Simple
+Begin with basic specs. Add complexity only when needed.
+:::
+
+::: tip Update as You Go
+Keep specs current during development, not after.
+:::
+
+::: tip Use Templates
+Create templates for common feature types.
+:::
+
+::: tip Be Consistent
+Use same terminology in specs and code.
+:::
+
+::: tip Test AI Understanding
+Ask AI to explain spec back to you. Clarify misunderstandings.
+:::
+
+---
+
+**Next**: See real-world [Examples](/docs/ai-integration/examples) or review the [Setup Guide](/docs/ai-integration/setup).

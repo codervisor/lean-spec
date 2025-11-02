@@ -15,9 +15,9 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:dev": "cd docs-site && npm start",
+    "docs:build": "cd docs-site && npm run build",
+    "docs:serve": "cd docs-site && npm run serve"
   },
   "keywords": [
     "spec",
@@ -33,7 +33,7 @@
     "type": "git",
     "url": "https://github.com/codervisor/lean-spec.git"
   },
-  "homepage": "https://github.com/codervisor/lean-spec#readme",
+  "homepage": "https://lean-spec.dev",
   "bugs": {
     "url": "https://github.com/codervisor/lean-spec/issues"
   },
@@ -53,7 +53,6 @@
     "prettier": "^3.1.1",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
-    "vitepress": "^1.6.4",
     "vitest": "^4.0.6"
   },
   "dependencies": {
