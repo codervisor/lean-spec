@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import matter from 'gray-matter';
+import yaml from 'js-yaml';
 import dayjs from 'dayjs';
 import type { LeanSpecConfig } from './config.js';
 
@@ -154,7 +155,11 @@ export async function parseFrontmatter(
 ): Promise<SpecFrontmatter | null> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
-    const parsed = matter(content);
+    const parsed = matter(content, {
+      engines: {
+        yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+      }
+    });
 
     if (!parsed.data || Object.keys(parsed.data).length === 0) {
       // No frontmatter found, try fallback to inline fields
@@ -238,7 +243,11 @@ export async function updateFrontmatter(
   updates: Partial<SpecFrontmatter>
 ): Promise<void> {
   const content = await fs.readFile(filePath, 'utf-8');
-  const parsed = matter(content);
+  const parsed = matter(content, {
+    engines: {
+      yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+    }
+  });
 
   // Merge updates with existing data
   const newData = { ...parsed.data, ...updates };

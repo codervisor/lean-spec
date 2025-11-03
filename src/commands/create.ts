@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import matter from 'gray-matter';
+import yaml from 'js-yaml';
 import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
 import { getGlobalNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
@@ -111,7 +112,11 @@ export async function createSpec(name: string, options: {
     // Update frontmatter with provided metadata and custom fields
     if (options.tags || options.priority || options.assignee || options.customFields) {
       // Parse existing frontmatter using gray-matter
-      const parsed = matter(content);
+      const parsed = matter(content, {
+        engines: {
+          yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+        }
+      });
       
       // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
       normalizeDateFields(parsed.data);
