@@ -67,6 +67,23 @@ describe('sanitizeUserInput', () => {
     expect(sanitizeUserInput('')).toBe('');
   });
 
+  it('should handle null gracefully', () => {
+    // @ts-expect-error - testing runtime behavior with invalid input
+    expect(sanitizeUserInput(null)).toBe('');
+  });
+
+  it('should handle undefined gracefully', () => {
+    // @ts-expect-error - testing runtime behavior with invalid input
+    expect(sanitizeUserInput(undefined)).toBe('');
+  });
+
+  it('should handle non-string types gracefully', () => {
+    // @ts-expect-error - testing runtime behavior with invalid input
+    expect(sanitizeUserInput(123)).toBe('');
+    // @ts-expect-error - testing runtime behavior with invalid input
+    expect(sanitizeUserInput({})).toBe('');
+  });
+
   it('should handle special characters', () => {
     const input = '!@#$%^&*()_+-=[]{}|;:",.<>?/';
     const sanitized = sanitizeUserInput(input);
@@ -129,14 +146,14 @@ describe('Safe output functions', () => {
   });
 
   describe('safeLog', () => {
-    it('should log template without user content', () => {
+    it('should log message', () => {
       safeLog('Test message');
       expect(consoleLogSpy).toHaveBeenCalledWith('Test message');
     });
 
-    it('should sanitize user content when provided', () => {
-      safeLog('Message:', '\x1b[31mMalicious\x1b[0m');
-      expect(consoleLogSpy).toHaveBeenCalledWith('Message:', 'Malicious');
+    it('should sanitize user content in message', () => {
+      safeLog('Message: \x1b[31mMalicious\x1b[0m');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Message: Malicious');
     });
   });
 

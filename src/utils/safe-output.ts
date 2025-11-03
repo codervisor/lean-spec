@@ -14,6 +14,11 @@ import stripAnsi from 'strip-ansi';
  * @returns Sanitized string safe for display
  */
 export function sanitizeUserInput(input: string): string {
+  // Handle non-string or falsy values explicitly
+  if (typeof input !== 'string') {
+    return '';
+  }
+  
   if (!input) {
     return '';
   }
@@ -44,19 +49,13 @@ export function stripAnsiCodes(text: string): string {
 }
 
 /**
- * Safely logs a message with chalk formatting.
- * User-provided portions should be passed through `userContent` to be sanitized.
+ * Safely logs a message with optional user content.
  * 
- * @param template - The chalk-formatted template string
- * @param userContent - Optional user-provided content to sanitize before display
+ * @param message - The message to log (can include user content that will be sanitized)
  */
-export function safeLog(template: string, userContent?: string): void {
-  if (userContent !== undefined) {
-    const sanitized = sanitizeUserInput(userContent);
-    console.log(template, sanitized);
-  } else {
-    console.log(template);
-  }
+export function safeLog(message: string): void {
+  // Sanitize the entire message to handle any user content within it
+  console.log(sanitizeUserInput(message));
 }
 
 /**
