@@ -267,7 +267,7 @@ function renderTimelineBar(
     result += chalk.yellow(FILLED_BAR_CHAR.repeat(halfLength));
     result += chalk.dim(EMPTY_BAR_CHAR.repeat(barLength - halfLength));
   } else {
-    // Planned - empty bar
+    // Planned - light shade bar
     result += chalk.dim(EMPTY_BAR_CHAR.repeat(barLength));
   }
   
