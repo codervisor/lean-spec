@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { loadConfig } from '../config.js';
 import { loadAllSpecs } from '../spec-loader.js';
 import { createSpecDirPattern } from '../utils/path-helpers.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 /**
  * Check for sequence conflicts in specs
@@ -59,7 +60,7 @@ export async function checkSpecs(options: {
       for (const [seq, paths] of conflicts) {
         console.log(chalk.red(`  Sequence ${String(seq).padStart(config.structure.sequenceDigits, '0')}:`));
         for (const p of paths) {
-          console.log(chalk.gray(`    - ${p}`));
+          console.log(chalk.gray(`    - ${sanitizeUserInput(p)}`));
         }
         console.log('');
       }

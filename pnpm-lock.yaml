@@ -59,6 +59,9 @@ importers:
       react:
         specifier: ^19.2.0
         version: 19.2.0
+      strip-ansi:
+        specifier: ^7.1.2
+        version: 7.1.2
     devDependencies:
       '@types/node':
         specifier: ^20.10.0

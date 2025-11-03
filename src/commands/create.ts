@@ -8,6 +8,7 @@ import { buildVariableContext, resolveVariables } from '../utils/variable-resolv
 import type { SpecPriority } from '../frontmatter.js';
 import { normalizeDateFields } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 export async function createSpec(name: string, options: { 
   title?: string; 
@@ -65,7 +66,7 @@ export async function createSpec(name: string, options: {
   // Check if directory exists
   try {
     await fs.access(specDir);
-    console.log(chalk.yellow(`Warning: Spec already exists: ${specDir}`));
+    console.log(chalk.yellow(`Warning: Spec already exists: ${sanitizeUserInput(specDir)}`));
     process.exit(1);
   } catch {
     // Directory doesn't exist, continue
@@ -157,8 +158,8 @@ export async function createSpec(name: string, options: {
 
   await fs.writeFile(specFile, content, 'utf-8');
 
-  console.log(chalk.green(`✓ Created: ${specDir}/`));
-  console.log(chalk.gray(`  Edit: ${specFile}`));
+  console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
+  console.log(chalk.gray(`  Edit: ${sanitizeUserInput(specFile)}`));
   
   // Auto-check for conflicts after creation
   await autoCheckIfEnabled();

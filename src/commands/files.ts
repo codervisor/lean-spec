@@ -5,6 +5,7 @@ import { getSpec, loadSubFiles } from '../spec-loader.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import { loadConfig } from '../config.js';
 import { autoCheckIfEnabled } from './check.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 export async function filesCommand(
   specPath: string,
@@ -23,7 +24,7 @@ export async function filesCommand(
   // Resolve spec path
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   if (!resolvedPath) {
-    console.error(chalk.red(`Spec not found: ${specPath}`));
+    console.error(chalk.red(`Spec not found: ${sanitizeUserInput(specPath)}`));
     console.error(
       chalk.gray('Try using the full path or spec name (e.g., 001-my-spec)')
     );
@@ -33,7 +34,7 @@ export async function filesCommand(
   // Load spec info
   const spec = await getSpec(resolvedPath);
   if (!spec) {
-    console.error(chalk.red(`Could not load spec: ${specPath}`));
+    console.error(chalk.red(`Could not load spec: ${sanitizeUserInput(specPath)}`));
     process.exit(1);
   }
 
@@ -41,7 +42,7 @@ export async function filesCommand(
   const subFiles = await loadSubFiles(spec.fullPath);
 
   console.log('');
-  console.log(chalk.cyan(`📄 Files in ${spec.name}`));
+  console.log(chalk.cyan(`📄 Files in ${sanitizeUserInput(spec.name)}`));
   console.log('');
 
   // Show README.md (required)
@@ -73,7 +74,7 @@ export async function filesCommand(
     console.log(chalk.cyan('Documents:'));
     for (const file of documents) {
       const size = formatSize(file.size);
-      console.log(chalk.cyan(`  ✓ ${file.name.padEnd(20)} (${size})`));
+      console.log(chalk.cyan(`  ✓ ${sanitizeUserInput(file.name).padEnd(20)} (${size})`));
     }
     console.log('');
   }
@@ -82,7 +83,7 @@ export async function filesCommand(
     console.log(chalk.yellow('Assets:'));
     for (const file of assets) {
       const size = formatSize(file.size);
-      console.log(chalk.yellow(`  ✓ ${file.name.padEnd(20)} (${size})`));
+      console.log(chalk.yellow(`  ✓ ${sanitizeUserInput(file.name).padEnd(20)} (${size})`));
     }
     console.log('');
   }

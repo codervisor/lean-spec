@@ -4,6 +4,7 @@ import type { SpecInfo } from '../spec-loader.js';
 import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; colorFn: (s: string) => string }> = {
   planned: { emoji: '⏳', label: 'Planned', colorFn: chalk.cyan },
@@ -145,16 +146,16 @@ function renderColumn(
         // Build spec line with metadata
         let assigneeStr = '';
         if (spec.frontmatter.assignee) {
-          assigneeStr = ' ' + chalk.cyan(`@${spec.frontmatter.assignee}`);
+          assigneeStr = ' ' + chalk.cyan(`@${sanitizeUserInput(spec.frontmatter.assignee)}`);
         }
         
         let tagsStr = '';
         if (spec.frontmatter.tags?.length) {
-          const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
+          const tagStr = spec.frontmatter.tags.map(tag => `#${sanitizeUserInput(tag)}`).join(' ');
           tagsStr = ' ' + chalk.dim(chalk.magenta(tagStr));
         }
 
-        console.log(`    ${chalk.cyan(spec.path)}${assigneeStr}${tagsStr}`);
+        console.log(`    ${chalk.cyan(sanitizeUserInput(spec.path))}${assigneeStr}${tagsStr}`);
       }
     }
 
