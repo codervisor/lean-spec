@@ -12,6 +12,12 @@ export async function timelineCommand(options: {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
   
+  // Helper to create bars
+  const createBar = (count: number, maxCount: number, width: number, char: string = '━') => {
+    const barLen = Math.round((count / maxCount) * width);
+    return char.repeat(barLen);
+  };
+  
   const days = options.days || 30;
   
   // Load all specs (including archived for completion history)
@@ -65,33 +71,31 @@ export async function timelineCommand(options: {
   const sortedDates = Array.from(allDates).sort();
 
   if (sortedDates.length > 0) {
-    console.log(chalk.bold(`Activity (Last ${days} Days):`));
+    console.log(chalk.bold(`📅 Activity (Last ${days} Days)`));
     console.log('');
     
-    // Column headers
-    const dateWidth = 12;
-    const barWidth = 15;
-    const numWidth = 3;
-    const colWidth = barWidth + numWidth;
+    // Column headers - aligned with stats.ts
+    const labelWidth = 15;
+    const barWidth = 20;
+    const specsWidth = 3;
+    const colWidth = barWidth + specsWidth;
     
-    console.log(`  ${'Date'.padEnd(dateWidth)}  ${chalk.cyan('Created'.padEnd(colWidth))}  ${chalk.green('Completed'.padEnd(colWidth))}`);
-    console.log(`  ${chalk.dim('─'.repeat(dateWidth))}  ${chalk.dim('─'.repeat(colWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
+    console.log(`  ${'Date'.padEnd(labelWidth)}  ${chalk.cyan('Created'.padEnd(colWidth))}  ${chalk.green('Completed'.padEnd(colWidth))}`);
+    console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(colWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
+    
+    const maxCount = Math.max(...Object.values(createdByDate), ...Object.values(completedByDate));
     
     for (const date of sortedDates) {
       const created = createdByDate[date] || 0;
       const completed = completedByDate[date] || 0;
       
-      const maxCount = Math.max(...Object.values(createdByDate), ...Object.values(completedByDate));
-      const createdBarWidth = Math.round((created / maxCount) * barWidth);
-      const completedBarWidth = Math.round((completed / maxCount) * barWidth);
+      const createdBar = createBar(created, maxCount, barWidth);
+      const completedBar = createBar(completed, maxCount, barWidth);
       
-      const createdBar = '━'.repeat(createdBarWidth);
-      const completedBar = '━'.repeat(completedBarWidth);
+      const createdCol = `${createdBar.padEnd(barWidth)}${created.toString().padStart(specsWidth)}`;
+      const completedCol = `${completedBar.padEnd(barWidth)}${completed.toString().padStart(specsWidth)}`;
       
-      const createdCol = `${createdBar.padEnd(barWidth)}${created.toString().padStart(numWidth)}`;
-      const completedCol = `${completedBar.padEnd(barWidth)}${completed.toString().padStart(numWidth)}`;
-      
-      console.log(`  ${chalk.dim(date.padEnd(dateWidth))}  ${chalk.cyan(createdCol)}  ${chalk.green(completedCol)}`);
+      console.log(`  ${chalk.dim(date.padEnd(labelWidth))}  ${chalk.cyan(createdCol)}  ${chalk.green(completedCol)}`);
     }
     console.log('');
   }
@@ -106,21 +110,22 @@ export async function timelineCommand(options: {
     .slice(0, 6); // Last 6 months
 
   if (sortedMonths.length > 0) {
-    console.log(chalk.bold('Monthly Overview:'));
+    console.log(chalk.bold('📊 Monthly Overview'));
     console.log('');
     
-    const monthWidth = 12;
+    // Aligned with stats.ts
+    const labelWidth = 15;
     const barWidth = 20;
-    const numWidth = 3;
+    const specsWidth = 3;
+    const colWidth = barWidth + specsWidth;
     
-    console.log(`  ${'Month'.padEnd(monthWidth)}  ${chalk.magenta('Specs'.padEnd(barWidth + numWidth))}`);
-    console.log(`  ${chalk.dim('─'.repeat(monthWidth))}  ${chalk.dim('─'.repeat(barWidth + numWidth))}`);
+    console.log(`  ${'Month'.padEnd(labelWidth)}  ${chalk.magenta('Specs'.padEnd(colWidth))}`);
+    console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
     
-    const maxMonthCount = Math.max(...sortedMonths.map(([, count]) => count));
+    const maxCount = Math.max(...sortedMonths.map(([, count]) => count));
     for (const [month, count] of sortedMonths) {
-      const barLen = Math.round((count / maxMonthCount) * barWidth);
-      const bar = '━'.repeat(barLen);
-      console.log(`  ${month.padEnd(monthWidth)}  ${chalk.magenta(bar.padEnd(barWidth))}${chalk.magenta(count.toString().padStart(numWidth))}`);
+      const bar = createBar(count, maxCount, barWidth);
+      console.log(`  ${month.padEnd(labelWidth)}  ${chalk.magenta(bar.padEnd(barWidth))}${chalk.magenta(count.toString().padStart(specsWidth))}`);
     }
     console.log('');
   }
@@ -138,16 +143,17 @@ export async function timelineCommand(options: {
     return completed.isAfter(today.subtract(30, 'day'));
   }).length;
 
-  console.log(chalk.bold('Completion Rate:'));
+  console.log(chalk.bold('✅ Completion Rate'));
   console.log('');
   
-  const labelWidth = 13;
-  const countWidth = 3;
+  // Aligned with stats.ts
+  const labelWidth = 15;
+  const valueWidth = 5;
   
-  console.log(`  ${'Period'.padEnd(labelWidth)}  ${'Count'.padEnd(countWidth)}`);
-  console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(countWidth))}`);
-  console.log(`  ${'Last 7 days'.padEnd(labelWidth)}  ${chalk.green(last7Days.toString().padStart(countWidth))}`);
-  console.log(`  ${'Last 30 days'.padEnd(labelWidth)}  ${chalk.green(last30Days.toString().padStart(countWidth))}`);
+  console.log(`  ${'Period'.padEnd(labelWidth)}  ${'Specs'.padStart(valueWidth)}`);
+  console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(valueWidth))}`);
+  console.log(`  ${'Last 7 days'.padEnd(labelWidth)}  ${chalk.green(last7Days.toString().padStart(valueWidth))}`);
+  console.log(`  ${'Last 30 days'.padEnd(labelWidth)}  ${chalk.green(last30Days.toString().padStart(valueWidth))}`);
   console.log('');
 
   // By tag breakdown (if requested)
@@ -178,7 +184,7 @@ export async function timelineCommand(options: {
       .slice(0, 10);
     
     if (sortedTags.length > 0) {
-      console.log(chalk.bold('By Tag:'));
+      console.log(chalk.bold('🏷️  By Tag'));
       for (const [tag, stats] of sortedTags) {
         console.log(`  ${chalk.dim('#')}${tag.padEnd(20)} ${chalk.cyan(stats.created)} created · ${chalk.green(stats.completed)} completed`);
       }
@@ -214,7 +220,7 @@ export async function timelineCommand(options: {
       .sort((a, b) => b[1].created - a[1].created);
     
     if (sortedAssignees.length > 0) {
-      console.log(chalk.bold('By Assignee:'));
+      console.log(chalk.bold('👤 By Assignee'));
       for (const [assignee, stats] of sortedAssignees) {
         console.log(`  ${chalk.dim('@')}${assignee.padEnd(20)} ${chalk.cyan(stats.created)} created · ${chalk.green(stats.completed)} completed`);
       }
