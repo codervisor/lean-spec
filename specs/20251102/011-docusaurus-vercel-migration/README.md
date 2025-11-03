@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2025-11-02
 tags: [documentation, migration, docusaurus, vercel]
 priority: high
@@ -7,7 +7,9 @@ priority: high
 
 # Documentation Migration: Docusaurus + Vercel
 
-> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, migration, docusaurus, vercel
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-02 · **Tags**: documentation, migration, docusaurus, vercel
+
+**🎉 Live at: https://www.lean-spec.dev**
 
 ## Overview
 
@@ -114,7 +116,7 @@ const config: Config = {
   tagline: 'Lightweight spec methodology for AI-powered development',
   favicon: 'img/favicon.ico',
   
-  url: 'https://lean-spec.dev', // Custom domain
+  url: 'https://www.lean-spec.dev', // Custom domain
   baseUrl: '/',
   
   organizationName: 'codervisor',
@@ -234,7 +236,7 @@ export default config;
 
 **Environment Variables** (in Vercel Dashboard):
 - `NODE_VERSION`: 18
-- `DOCUSAURUS_URL`: https://lean-spec.dev
+- `DOCUSAURUS_URL`: https://www.lean-spec.dev
 - `ALGOLIA_APP_ID`: (for search)
 - `ALGOLIA_API_KEY`: (for search)
 
@@ -405,7 +407,7 @@ export default function Home(): JSX.Element {
    - Output Directory: `build`
 3. **Enable Preview Deployments** for all branches
 4. **Configure Domain**:
-   - Add custom domain: `lean-spec.dev`
+   - Add custom domain: `www.lean-spec.dev` (primary) with `lean-spec.dev` redirect
    - Vercel handles SSL automatically
 
 ### Enhanced Features
@@ -516,12 +518,12 @@ export function SpecExample({ title, children }) {
 
 ## Open Questions
 
-- [ ] **Custom Domain**: Use `lean-spec.dev` (primary) or add `www.lean-spec.dev` redirect?
-  - **Decision**: Use `lean-spec.dev` as primary, configure `www` redirect in Vercel
-- [ ] **Keep Old Docs**: Archive `docs/` or delete entirely?
-  - **Recommendation**: Move to `docs-old/` temporarily, delete after 1 month
-- [ ] **Blog Usage**: Use blog for changelogs or keep CHANGELOG.md?
-  - **Recommendation**: Keep CHANGELOG.md, use blog for announcements/tutorials
+- [x] **Custom Domain**: Use `lean-spec.dev` (primary) or add `www.lean-spec.dev` redirect?
+  - **Decision**: Using `www.lean-spec.dev` as primary, with `lean-spec.dev` redirect configured in Vercel ✅
+- [x] **Keep Old Docs**: Archive `docs/` or delete entirely?
+  - **Decision**: Moved to `docs-vitepress-old/` with archive notice ✅
+- [x] **Blog Usage**: Use blog for changelogs or keep CHANGELOG.md?
+  - **Decision**: Keeping CHANGELOG.md, blog for announcements/tutorials ✅
 - [ ] **Algolia DocSearch**: Apply immediately or wait?
   - **Recommendation**: Apply immediately (free for OSS, takes 1-2 weeks approval)
 
@@ -538,13 +540,14 @@ export function SpecExample({ title, children }) {
 
 ## Implementation Notes
 
-**Completed:** 2025-11-02
+**Completed:** 2025-11-03
+**Deployed:** 2025-11-03 at https://www.lean-spec.dev
 
 ### What Was Done
 
 1. **Setup Phase**
    - Initialized Docusaurus 3.9.2 with TypeScript in `docs-site/` directory
-   - Configured `docusaurus.config.ts` with LeanSpec branding, URL (lean-spec.dev), and navigation
+   - Configured `docusaurus.config.ts` with LeanSpec branding, URL (www.lean-spec.dev), and navigation
    - Set up three sidebars: Guide, Reference, and AI Integration
    - Created `vercel.json` for Vercel deployment configuration
 
@@ -562,7 +565,7 @@ export function SpecExample({ title, children }) {
 3. **Configuration Changes**
    - Updated root `package.json`:
      - Changed docs scripts to point to Docusaurus
-     - Updated homepage URL to `lean-spec.dev`
+     - Updated homepage URL to `www.lean-spec.dev`
      - Removed VitePress dependency
    - Updated `README.md` with new documentation URL
    - Updated `.gitignore` to exclude Docusaurus build artifacts
@@ -578,27 +581,25 @@ export function SpecExample({ title, children }) {
    - All internal links validated
    - No broken links or build errors
 
-### Next Steps for Deployment
+### Deployment Completed
 
-The Docusaurus site is ready for Vercel deployment:
+✅ **Site deployed successfully on Vercel:** https://www.lean-spec.dev
 
-1. **Connect Repository to Vercel:**
-   - Import the `codervisor/lean-spec` repository
-   - Framework Preset: Docusaurus
-   - Root Directory: `docs-site`
-   - Build Command: `npm run build`
-   - Output Directory: `build`
+**Deployment Configuration:**
+- Repository: `codervisor/lean-spec` connected to Vercel
+- Framework Preset: Docusaurus
+- Root Directory: `docs-site`
+- Build Command: `npm run build`
+- Output Directory: `build`
+- Custom Domain: `www.lean-spec.dev` (primary) with `lean-spec.dev` redirect
+- SSL Certificate: Automatically provisioned and active
+- Preview Deployments: Enabled for all branches
 
-2. **Configure Custom Domain:**
-   - Add `lean-spec.dev` in Vercel project settings
-   - Update DNS records as instructed by Vercel
-   - Vercel will automatically provision SSL certificate
-
-3. **Optional Enhancements (Future):**
-   - Apply for Algolia DocSearch (better search than local)
-   - Enable Vercel Analytics
-   - Add versioning when needed
-   - Internationalization if required
+**Future Enhancements (Optional):**
+- Apply for Algolia DocSearch (better search than local)
+- Enable Vercel Analytics
+- Add versioning when needed
+- Internationalization if required
 
 ### Files Changed
 
