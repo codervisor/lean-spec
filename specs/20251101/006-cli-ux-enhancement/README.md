@@ -1,6 +1,6 @@
 ---
 status: complete
-created: 2025-11-01T00:00:00.000Z
+created: '2025-11-01'
 tags:
   - cli
   - ux

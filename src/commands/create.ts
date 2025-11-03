@@ -6,6 +6,7 @@ import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
 import { getGlobalNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
 import type { SpecPriority } from '../frontmatter.js';
+import { normalizeDateFields } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
 
 export async function createSpec(name: string, options: { 
@@ -110,6 +111,9 @@ export async function createSpec(name: string, options: {
     if (options.tags || options.priority || options.assignee || options.customFields) {
       // Parse existing frontmatter using gray-matter
       const parsed = matter(content);
+      
+      // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
+      normalizeDateFields(parsed.data);
       
       // Add tags if provided
       if (options.tags && options.tags.length > 0) {

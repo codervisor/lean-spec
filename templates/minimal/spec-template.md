@@ -1,6 +1,6 @@
 ---
 status: planned
-created: {date}
+created: '{date}'
 ---
 
 # {name}

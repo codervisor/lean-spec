@@ -38,6 +38,20 @@ export interface SpecFrontmatter {
 }
 
 /**
+ * Convert Date objects to YYYY-MM-DD string format
+ * (gray-matter auto-parses YYYY-MM-DD strings as Date objects)
+ */
+export function normalizeDateFields(data: Record<string, unknown>): void {
+  const dateFields = ['created', 'completed', 'updated', 'due'];
+  
+  for (const field of dateFields) {
+    if (data[field] instanceof Date) {
+      data[field] = (data[field] as Date).toISOString().split('T')[0];
+    }
+  }
+}
+
+/**
  * Validate and coerce custom field types
  */
 export function validateCustomField(
@@ -206,6 +220,9 @@ export async function updateFrontmatter(
 
   // Merge updates with existing data
   const newData = { ...parsed.data, ...updates };
+
+  // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
+  normalizeDateFields(newData);
 
   // Auto-update timestamps if fields exist
   if (updates.status === 'complete' && !newData.completed) {
