@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { getSpec, loadSubFiles } from '../spec-loader.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import { loadConfig } from '../config.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function filesCommand(
   specPath: string,
@@ -12,6 +13,9 @@ export async function filesCommand(
     tree?: boolean;
   } = {}
 ): Promise<void> {
+  // Auto-check for conflicts before display
+  await autoCheckIfEnabled();
+  
   const config = await loadConfig();
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);

@@ -6,6 +6,7 @@ import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
 import { getGlobalNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
 import type { SpecPriority } from '../frontmatter.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function createSpec(name: string, options: { 
   title?: string; 
@@ -15,6 +16,7 @@ export async function createSpec(name: string, options: {
   assignee?: string;
   template?: string;
   customFields?: Record<string, unknown>;
+  noPrefix?: boolean;
 } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -31,9 +33,11 @@ export async function createSpec(name: string, options: {
   
   if (config.structure.pattern === 'flat') {
     // Flat pattern: optional prefix on folder name
-    const prefix = config.structure.prefix 
-      ? resolvePrefix(config.structure.prefix, config.structure.dateFormat)
-      : '';
+    const prefix = options.noPrefix 
+      ? ''
+      : config.structure.prefix 
+        ? resolvePrefix(config.structure.prefix, config.structure.dateFormat)
+        : '';
     specRelativePath = `${prefix}${seq}-${name}`;
   } else if (config.structure.pattern === 'custom') {
     // Custom pattern: extract group from extractor string
@@ -151,4 +155,7 @@ export async function createSpec(name: string, options: {
 
   console.log(chalk.green(`✓ Created: ${specDir}/`));
   console.log(chalk.gray(`  Edit: ${specFile}`));
+  
+  // Auto-check for conflicts after creation
+  await autoCheckIfEnabled();
 }

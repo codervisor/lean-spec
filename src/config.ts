@@ -5,6 +5,7 @@ export interface LeanSpecConfig {
   template: string;
   templates?: Record<string, string>; // Maps template name to filename
   specsDir: string;
+  autoCheck?: boolean; // Enable/disable auto-check for sequence conflicts (default: true)
   structure: {
     pattern: 'flat' | 'custom' | string; // 'flat' or 'custom', or legacy pattern string
     dateFormat: string;
@@ -38,6 +39,7 @@ const DEFAULT_CONFIG: LeanSpecConfig = {
   specsDir: 'specs',
   structure: {
     pattern: 'flat', // Default to flat for new projects
+    prefix: '{YYYYMMDD}-', // Add date prefix by default to prevent conflicts
     dateFormat: 'YYYYMMDD',
     sequenceDigits: 3,
     defaultFile: 'README.md',

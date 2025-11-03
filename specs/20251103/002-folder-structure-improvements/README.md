@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2025-11-03
 tags: [core, ux, multi-user]
 priority: high

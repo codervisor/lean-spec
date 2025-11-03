@@ -5,6 +5,7 @@ import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
 import { SpecList } from '../components/SpecList.js';
 import { withSpinner } from '../utils/ui.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function searchCommand(query: string, options: {
   status?: SpecStatus;
@@ -13,6 +14,9 @@ export async function searchCommand(query: string, options: {
   assignee?: string;
   customFields?: Record<string, unknown>;
 }): Promise<void> {
+  // Auto-check for conflicts before search
+  await autoCheckIfEnabled();
+  
   // Build filter
   const filter: SpecFilterOptions = {};
   if (options.status) filter.status = options.status;

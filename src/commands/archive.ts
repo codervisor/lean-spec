@@ -3,8 +3,12 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 import { loadConfig } from '../config.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function archiveSpec(specPath: string): Promise<void> {
+  // Auto-check for conflicts before archive
+  await autoCheckIfEnabled();
+  
   const config = await loadConfig();
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);

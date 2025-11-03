@@ -4,6 +4,7 @@ import { loadConfig } from '../config.js';
 import { getSpecFile, updateFrontmatter } from '../frontmatter.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import type { SpecStatus, SpecPriority } from '../frontmatter.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function updateSpec(
   specPath: string,
@@ -15,6 +16,9 @@ export async function updateSpec(
     customFields?: Record<string, unknown>;
   }
 ): Promise<void> {
+  // Auto-check for conflicts before update
+  await autoCheckIfEnabled();
+  
   const config = await loadConfig();
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);
