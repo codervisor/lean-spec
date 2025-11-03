@@ -15,6 +15,7 @@ export interface VariableContext {
   projectName?: string;
   gitInfo?: GitInfo;
   customVariables?: Record<string, string>;
+  frontmatter?: Record<string, unknown>;
 }
 
 /**
@@ -64,6 +65,58 @@ export async function getProjectName(cwd: string = process.cwd()): Promise<strin
 }
 
 /**
+ * Format status for display (with emoji and label)
+ */
+function formatStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    'planned': '📅 Planned',
+    'in-progress': '⚡ In progress',
+    'complete': '✅ Complete',
+    'archived': '📦 Archived',
+  };
+  return statusMap[status] || status;
+}
+
+/**
+ * Format priority for display (capitalize)
+ */
+function formatPriority(priority: string): string {
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
+/**
+ * Format a frontmatter value for display in template body
+ */
+function formatFrontmatterValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  
+  // Handle special formatting for status
+  if (key === 'status' && typeof value === 'string') {
+    return formatStatus(value);
+  }
+  
+  // Handle special formatting for priority
+  if (key === 'priority' && typeof value === 'string') {
+    return formatPriority(value);
+  }
+  
+  // Handle arrays (e.g., tags)
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  
+  // Handle objects - convert to JSON string
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  
+  // Convert everything else to string
+  return String(value);
+}
+
+/**
  * Resolve variables in a string
  */
 export function resolveVariables(
@@ -100,6 +153,17 @@ export function resolveVariables(
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const pattern = new RegExp(`\\{${escapedKey}\\}`, 'g');
       result = result.replace(pattern, value);
+    }
+  }
+  
+  // Frontmatter field variables
+  if (context.frontmatter) {
+    for (const [key, value] of Object.entries(context.frontmatter)) {
+      const formattedValue = formatFrontmatterValue(key, value);
+      // Escape special regex characters in key to prevent RegExp injection
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`\\{${escapedKey}\\}`, 'g');
+      result = result.replace(pattern, formattedValue);
     }
   }
   

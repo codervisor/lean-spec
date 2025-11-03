@@ -146,6 +146,121 @@ describe('resolveVariables', () => {
     const result = resolveVariables(template, context);
     expect(result).toBe('test is called test');
   });
+
+  it('should replace frontmatter variables', () => {
+    const template = 'Status: {status}, Priority: {priority}';
+    const context: VariableContext = {
+      frontmatter: {
+        status: 'planned',
+        priority: 'high',
+      },
+    };
+    
+    const result = resolveVariables(template, context);
+    expect(result).toBe('Status: 📅 Planned, Priority: High');
+  });
+
+  it('should format status with emoji', () => {
+    const template = '{status}';
+    const tests = [
+      { status: 'planned', expected: '📅 Planned' },
+      { status: 'in-progress', expected: '⚡ In progress' },
+      { status: 'complete', expected: '✅ Complete' },
+      { status: 'archived', expected: '📦 Archived' },
+    ];
+    
+    tests.forEach(({ status, expected }) => {
+      const context: VariableContext = {
+        frontmatter: { status },
+      };
+      const result = resolveVariables(template, context);
+      expect(result).toBe(expected);
+    });
+  });
+
+  it('should format priority with capitalization', () => {
+    const template = '{priority}';
+    const tests = [
+      { priority: 'low', expected: 'Low' },
+      { priority: 'medium', expected: 'Medium' },
+      { priority: 'high', expected: 'High' },
+      { priority: 'critical', expected: 'Critical' },
+    ];
+    
+    tests.forEach(({ priority, expected }) => {
+      const context: VariableContext = {
+        frontmatter: { priority },
+      };
+      const result = resolveVariables(template, context);
+      expect(result).toBe(expected);
+    });
+  });
+
+  it('should format array fields as comma-separated', () => {
+    const template = 'Tags: {tags}';
+    const context: VariableContext = {
+      frontmatter: {
+        tags: ['api', 'backend', 'feature'],
+      },
+    };
+    
+    const result = resolveVariables(template, context);
+    expect(result).toBe('Tags: api, backend, feature');
+  });
+
+  it('should handle empty arrays', () => {
+    const template = 'Tags: {tags}';
+    const context: VariableContext = {
+      frontmatter: {
+        tags: [],
+      },
+    };
+    
+    const result = resolveVariables(template, context);
+    expect(result).toBe('Tags: ');
+  });
+
+  it('should handle custom frontmatter fields', () => {
+    const template = 'Epic: {epic}, Sprint: {sprint}';
+    const context: VariableContext = {
+      frontmatter: {
+        epic: 'PROJ-123',
+        sprint: 42,
+      },
+    };
+    
+    const result = resolveVariables(template, context);
+    expect(result).toBe('Epic: PROJ-123, Sprint: 42');
+  });
+
+  it('should handle empty string fields', () => {
+    const template = 'Assignee: {assignee}';
+    const context: VariableContext = {
+      frontmatter: {
+        assignee: '',
+      },
+    };
+    
+    const result = resolveVariables(template, context);
+    expect(result).toBe('Assignee: ');
+  });
+
+  it('should combine built-in, custom, and frontmatter variables', () => {
+    const template = '{name} - Status: {status}, Priority: {priority}, Team: {team}';
+    const context: VariableContext = {
+      name: 'my-feature',
+      customVariables: {
+        team: 'Engineering',
+      },
+      frontmatter: {
+        status: 'in-progress',
+        priority: 'high',
+      },
+    };
+    
+    const result = resolveVariables(template, context);
+    expect(result).toBe('my-feature - Status: ⚡ In progress, Priority: High, Team: Engineering');
+  });
 });
 
 describe('buildVariableContext', () => {

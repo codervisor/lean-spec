@@ -12,8 +12,8 @@ epic:
 
 # {name}
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: {date}  
-> **Assignee**: TBD · **Reviewer**: TBD
+> **Status**: {status} · **Priority**: {priority} · **Created**: {date}  
+> **Assignee**: {assignee} · **Reviewer**: {reviewer}
 
 ## Overview
 
