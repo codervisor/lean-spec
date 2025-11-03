@@ -15,7 +15,7 @@ echo ""
 
 # Test 1: Server starts without errors
 echo "🔍 Test 1: Server startup"
-node bin/mcp-server.js 2>&1 &
+timeout 5 node bin/mcp-server.js 2>&1 &
 SERVER_PID=$!
 sleep 2
 
