@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { loadConfig } from '../config.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import { autoCheckIfEnabled } from './check.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 export async function archiveSpec(specPath: string): Promise<void> {
   // Auto-check for conflicts before archive
@@ -17,7 +18,7 @@ export async function archiveSpec(specPath: string): Promise<void> {
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   
   if (!resolvedPath) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
+    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
     process.exit(1);
   }
 
@@ -30,5 +31,5 @@ export async function archiveSpec(specPath: string): Promise<void> {
 
   await fs.rename(resolvedPath, archivePath);
 
-  console.log(chalk.green(`✓ Archived: ${archivePath}`));
+  console.log(chalk.green(`✓ Archived: ${sanitizeUserInput(archivePath)}`));
 }
