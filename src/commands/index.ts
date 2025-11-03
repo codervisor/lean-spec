@@ -3,6 +3,7 @@ export { createSpec } from './create.js';
 export { archiveSpec } from './archive.js';
 export { listSpecs } from './list.js';
 export { updateSpec } from './update.js';
+export { checkSpecs } from './check.js';
 export {
   listTemplates,
   showTemplate,

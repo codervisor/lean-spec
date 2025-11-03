@@ -127,7 +127,17 @@ export async function loadAllSpecs(options: {
               
               // Extract date from path or frontmatter
               const dateMatch = entryRelativePath.match(/(\d{8})/);
-              const date = dateMatch ? dateMatch[1] : (frontmatter.created || '');
+              let date: string;
+              
+              if (dateMatch) {
+                date = dateMatch[1];
+              } else if (typeof frontmatter.created === 'string') {
+                date = frontmatter.created;
+              } else if (frontmatter.created) {
+                date = frontmatter.created.toString();
+              } else {
+                date = '';
+              }
               
               const specInfo: SpecInfo = {
                 path: entryRelativePath,

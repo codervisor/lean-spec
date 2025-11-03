@@ -1,12 +1,16 @@
 import chalk from 'chalk';
 import dayjs from 'dayjs';
 import { loadAllSpecs, type SpecInfo } from '../spec-loader.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function ganttCommand(options: {
   weeks?: number;
   showComplete?: boolean;
   criticalPath?: boolean;
 }): Promise<void> {
+  // Auto-check for conflicts before display
+  await autoCheckIfEnabled();
+  
   const weeks = options.weeks || 4;
   
   // Load all specs
