@@ -11,8 +11,8 @@ Full tracking with epics, sprints, and reviewers:
   "template": "spec-template.md",
   "specsDir": "specs",
   "structure": {
-    "pattern": "{date}/{seq}-{name}/",
-    "dateFormat": "YYYYMMDD",
+    "pattern": "flat",
+    "prefix": "",  // No prefix - just global numbering
     "sequenceDigits": 3,
     "defaultFile": "README.md"
   },
@@ -54,8 +54,8 @@ Focus on sprint planning:
   "template": "spec-template.md",
   "specsDir": "specs",
   "structure": {
-    "pattern": "{date}/{seq}-{name}/",
-    "dateFormat": "YYYYMMDD",
+    "pattern": "flat",
+    "prefix": "",
     "sequenceDigits": 3,
     "defaultFile": "README.md"
   },
@@ -94,8 +94,8 @@ Minimal tracking with issue references:
   "template": "spec-template.md",
   "specsDir": "specs",
   "structure": {
-    "pattern": "{date}/{seq}-{name}/",
-    "dateFormat": "YYYYMMDD",
+    "pattern": "flat",
+    "prefix": "",
     "sequenceDigits": 3,
     "defaultFile": "README.md"
   },
@@ -133,8 +133,8 @@ Bare minimum with just custom tags:
   "template": "spec-template.md",
   "specsDir": "specs",
   "structure": {
-    "pattern": "{date}/{seq}-{name}/",
-    "dateFormat": "YYYYMMDD",
+    "pattern": "flat",
+    "prefix": "",
     "sequenceDigits": 3,
     "defaultFile": "README.md"
   },
@@ -155,8 +155,8 @@ Track API versions and endpoints:
   "template": "spec-template.md",
   "specsDir": "specs",
   "structure": {
-    "pattern": "{date}/{seq}-{name}/",
-    "dateFormat": "YYYYMMDD",
+    "pattern": "flat",
+    "prefix": "",
     "sequenceDigits": 3,
     "defaultFile": "README.md"
   },

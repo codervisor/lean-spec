@@ -11,7 +11,7 @@ export interface LeanSpecConfig {
     dateFormat: string;
     sequenceDigits: number;
     defaultFile: string;
-    prefix?: string; // For flat pattern: "{YYYYMMDD}-" or "spec-" (optional)
+    prefix?: string; // For flat pattern: "{YYYYMMDD}-" or "spec-" (optional, default: empty for global numbering)
     groupExtractor?: string; // For custom pattern: "{YYYYMMDD}" or "milestone-{milestone}"
     groupFallback?: string; // Fallback folder if field missing (only for non-date extractors)
   };
@@ -39,7 +39,7 @@ const DEFAULT_CONFIG: LeanSpecConfig = {
   specsDir: 'specs',
   structure: {
     pattern: 'flat', // Default to flat for new projects
-    prefix: '{YYYYMMDD}-', // Add date prefix by default to prevent conflicts
+    prefix: '', // No prefix by default - global sequence numbers only
     dateFormat: 'YYYYMMDD',
     sequenceDigits: 3,
     defaultFile: 'README.md',

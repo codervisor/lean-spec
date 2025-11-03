@@ -83,7 +83,7 @@ lspec update <spec> --status=complete
 LeanSpec supports multiple folder organization patterns to match your workflow:
 
 ### Flat Pattern (Default - Recommended)
-Simple, single-level organization. Perfect for small teams and solo developers.
+Simple, single-level organization with **global sequence numbers**. Perfect for small teams and solo developers.
 
 ```bash
 specs/
@@ -98,10 +98,16 @@ specs/
 {
   "structure": {
     "pattern": "flat",
+    "prefix": "",  // Empty by default - global numbering
     "sequenceDigits": 3
   }
 }
 ```
+
+**Key features:**
+- ✅ **Global unique sequence numbers** - 001, 002, 003... across entire project
+- ✅ **Simple references** - Just say "spec 011" or "specs/011-feature"
+- ✅ **Easy to navigate** - No date folders to dig through
 
 **Optional prefix for chronological sorting:**
 ```json
@@ -115,7 +121,7 @@ specs/
 ```
 
 ### Custom Pattern - Date-Based Grouping
-Group specifications by date, month, or year.
+Group specifications by date, month, or year. **Note**: Sequence numbers are still globally unique across all date folders.
 
 ```bash
 specs/
@@ -123,7 +129,8 @@ specs/
 │   ├── 001-typescript-cli/
 │   └── 002-template-system/
 ├── 20251103/
-│   └── 003-flexible-folder/
+│   ├── 003-feature-c/    # ← Global sequence continues
+│   └── 004-another/      # ← Next global number
 └── archived/
 ```
 
@@ -137,6 +144,8 @@ specs/
   }
 }
 ```
+
+**Note**: Sequence numbers remain globally unique. Date folders are for organization only.
 
 ### Custom Pattern - Field-Based Grouping
 Group by milestone, sprint, release, or any custom field.
@@ -182,8 +191,8 @@ lspec create unassigned
 ```
 
 **Key Features:**
-- ✅ **Global unique sequence numbers** - `001`, `002`, `003` across all folders
-- ✅ **Flexible references** - Find specs by number, name, or path
+- ✅ **Global unique sequence numbers** - `001`, `002`, `003` across entire project (all folders)
+- ✅ **Flexible references** - Find specs by number alone: `lspec update 024 --status=complete`
 - ✅ **Flat archive** - All patterns archive to `specs/archived/` (flat structure)
 - ✅ **Zero breaking changes** - Existing projects maintain their structure
 

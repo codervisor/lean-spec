@@ -38,9 +38,11 @@ lspec create user-authentication
 You should see output like:
 
 ```
-✓ Created: specs/20251102/001-user-authentication/
-  Edit: specs/20251102/001-user-authentication/README.md
+✓ Created: specs/001-user-authentication/
+  Edit: specs/001-user-authentication/README.md
 ```
+
+**Note**: The default structure is flat with global sequence numbers. Each spec gets a unique number (001, 002, 003...) regardless of when it was created.
 
 ## Step 3: Edit the Spec
 
@@ -48,9 +50,9 @@ Open the created `README.md` file in your editor:
 
 ```bash
 # Use your preferred editor
-code specs/20251102/001-user-authentication/README.md
+code specs/001-user-authentication/README.md
 # or
-vim specs/20251102/001-user-authentication/README.md
+vim specs/001-user-authentication/README.md
 ```
 
 You'll see a template like this:
@@ -158,7 +160,7 @@ Output:
 ```
 === Specs ===
 
-📅 specs/20251102/001-user-authentication
+📅 specs/001-user-authentication
    Created: 2025-11-02 · Priority: high · Tags: security, api
 ```
 
@@ -194,20 +196,24 @@ lspec list --status=planned --priority=high --tag=api
 As you start working on the feature, update its status:
 
 ```bash
-lspec update specs/20251102/001-user-authentication --status=in-progress
+# Update by number (easiest)
+lspec update 001 --status=in-progress
+
+# Or by path
+lspec update specs/001-user-authentication --status=in-progress
 ```
 
 You can also update other fields:
 
 ```bash
 # Update priority
-lspec update specs/20251102/001-user-authentication --priority=critical
+lspec update 001 --priority=critical
 
 # Add or update tags
-lspec update specs/20251102/001-user-authentication --tags=security,api,mvp
+lspec update 001 --tags=security,api,mvp
 
 # Update multiple fields at once
-lspec update specs/20251102/001-user-authentication --status=in-progress --priority=critical
+lspec update 001 --status=in-progress --priority=critical
 ```
 
 ## Step 6: Create More Specs
@@ -226,23 +232,25 @@ Now list them:
 lspec list
 ```
 
-You'll see all specs organized by date:
+You'll see all specs organized with global numbering:
 
 ```
 === Specs ===
 
-📅 specs/20251102/001-user-authentication
+📅 specs/001-user-authentication
    Created: 2025-11-02 · Priority: high · Tags: security, api
 
-📅 specs/20251102/002-password-reset
+📅 specs/002-password-reset
    Created: 2025-11-02
 
-📅 specs/20251102/003-user-profile-api
+📅 specs/003-user-profile-api
    Created: 2025-11-02
 
-📅 specs/20251102/004-rate-limiting
+📅 specs/004-rate-limiting
    Created: 2025-11-02
 ```
+
+**Key point**: Notice how each spec has a globally unique number (001, 002, 003, 004) that increments across all specs.
 
 ## Step 7: Search Specs
 
@@ -259,11 +267,11 @@ lspec search "password"
 Once you've completed a spec, archive it:
 
 ```bash
-lspec update specs/20251102/001-user-authentication --status=complete
-lspec archive specs/20251102/001-user-authentication
+lspec update 001 --status=complete
+lspec archive 001
 ```
 
-This moves the spec to `archive/YYYYMMDD/` to keep your active workspace clean.
+This moves the spec to `specs/archived/` to keep your active workspace clean.
 
 ## Advanced: Custom Fields
 

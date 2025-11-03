@@ -72,15 +72,17 @@ lspec create user-auth --field epic=PROJ-123 --field sprint=42
 
 **Output:**
 ```
-✓ Created: specs/20251102/001-user-authentication/
-  Edit: specs/20251102/001-user-authentication/README.md
+✓ Created: specs/001-user-authentication/
+  Edit: specs/001-user-authentication/README.md
 ```
 
 **Behavior:**
-- Creates `specs/YYYYMMDD/NNN-name/` directory
+- Creates `specs/NNN-name/` directory (flat structure with global numbering)
 - Generates `README.md` from template
-- Assigns sequential number (NNN) for the date
+- Assigns sequential number (NNN) globally across all specs
 - Sets frontmatter with metadata
+
+**Note**: Default is flat structure. For date-based grouping, configure `pattern: "custom"` in `.lspec/config.json`.
 
 ---
 

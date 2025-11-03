@@ -14,16 +14,19 @@ priority: high
 
 ## Overview
 
-Migrate the default folder structure from date-based grouping (`{date}/{seq}-{name}/`) to a flat structure (`{seq}-{name}/`). This simplifies the spec organization for most projects while maintaining date-based grouping as an optional pattern for those who need it.
+Migrate the default folder structure from date-based grouping (`{date}/{seq}-{name}/`) to a **flat structure with global numbering** (`{seq}-{name}/`). This simplifies the spec organization for most projects while maintaining date-based grouping as an optional pattern for those who need it.
 
 **Why now?**
 - Current date-based folders add unnecessary complexity for small/medium projects
 - Most users don't need date-based organization
-- Flat structure is simpler to navigate and reference
+- **Flat structure with global numbering is simpler** to navigate and reference
+- Easier to reference specs by number alone (e.g., "spec 024" instead of "specs/20251103/024")
 - Other patterns (custom grouping) already available via config
 
 **Current structure**: `specs/20251103/024-flat-structure-migration/`  
 **Target structure**: `specs/024-flat-structure-migration/`
+
+**Key change**: Global unique sequence numbers (001, 002, 003...) across the entire project, not per-date folder.
 
 ## Design
 
@@ -34,11 +37,21 @@ Migrate the default folder structure from date-based grouping (`{date}/{seq}-{na
 {
   "structure": {
     "pattern": "flat",
-    "prefix": "",  // No prefix by default
+    "prefix": "",  // No prefix by default - just global sequence numbers
     "sequenceDigits": 3,
     "defaultFile": "README.md"
   }
 }
+```
+
+**Example folder structure:**
+```
+specs/
+├── 001-typescript-cli-migration/
+├── 002-template-system-redesign/
+├── 024-flat-structure-migration/
+├── 025-next-feature/
+└── archived/
 ```
 
 **Migration paths:**
@@ -108,10 +121,12 @@ lspec init --pattern flat --force
 - [ ] Update README.md with flat structure examples
 - [ ] Update AGENTS.md with new default structure
 - [ ] Update documentation website
+- [ ] Update examples/configs to use flat structure
 - [ ] Add migration notice to CHANGELOG.md
 - [ ] Test new project creation
 - [ ] Test existing project compatibility
 - [ ] Verify spec loading works for both patterns
+- [ ] **Decision needed**: Migrate lean-spec's own specs to flat structure or keep as example of date-based grouping?
 
 ## Test
 
@@ -119,6 +134,7 @@ lspec init --pattern flat --force
 - [ ] `lspec init` creates `specs/` (no date folder)
 - [ ] `lspec create test` creates `specs/001-test/`
 - [ ] Next spec is `specs/002-another/`
+- [ ] Sequence numbers are globally unique across entire project
 
 ### Existing Projects
 - [ ] Projects with date folders continue working
