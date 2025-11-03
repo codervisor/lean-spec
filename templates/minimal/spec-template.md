@@ -5,7 +5,7 @@ created: '{date}'
 
 # {name}
 
-> **Status**: 📅 Planned · **Created**: {date}
+> **Status**: {status} · **Created**: {date}
 
 ## Goal
 

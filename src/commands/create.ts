@@ -109,43 +109,48 @@ export async function createSpec(name: string, options: {
     const varContext = await buildVariableContext(config, { name: title, date });
     content = resolveVariables(template, varContext);
     
-    // Update frontmatter with provided metadata and custom fields
-    if (options.tags || options.priority || options.assignee || options.customFields) {
-      // Parse existing frontmatter using gray-matter
-      const parsed = matter(content, {
-        engines: {
-          yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
-        }
-      });
-      
-      // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
-      normalizeDateFields(parsed.data);
-      
-      // Add tags if provided
-      if (options.tags && options.tags.length > 0) {
-        parsed.data.tags = options.tags;
+    // Parse frontmatter to get the resolved values (always needed for variable resolution)
+    // Even with no custom options, we need to parse frontmatter to resolve variables like
+    // {status}, {priority} in the body content with their default values from the template
+    const parsed = matter(content, {
+      engines: {
+        yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
       }
-      
-      // Add priority if provided
-      if (options.priority) {
-        parsed.data.priority = options.priority;
-      }
-      
-      // Add assignee if provided
-      if (options.assignee) {
-        parsed.data.assignee = options.assignee;
-      }
-      
-      // Add custom fields if provided
-      if (options.customFields) {
-        for (const [key, value] of Object.entries(options.customFields)) {
-          parsed.data[key] = value;
-        }
-      }
-      
-      // Stringify back with updated frontmatter
-      content = matter.stringify(parsed.content, parsed.data);
+    });
+    
+    // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
+    normalizeDateFields(parsed.data);
+    
+    // Update frontmatter with provided metadata and custom fields (if any)
+    if (options.tags && options.tags.length > 0) {
+      parsed.data.tags = options.tags;
     }
+    
+    if (options.priority) {
+      parsed.data.priority = options.priority;
+    }
+    
+    if (options.assignee) {
+      parsed.data.assignee = options.assignee;
+    }
+    
+    if (options.customFields) {
+      for (const [key, value] of Object.entries(options.customFields)) {
+        parsed.data[key] = value;
+      }
+    }
+    
+    // Resolve frontmatter variables in the body content
+    // This ensures that variables like {status}, {priority}, {tags} in the body
+    // are replaced with the actual frontmatter values
+    const contextWithFrontmatter = {
+      ...varContext,
+      frontmatter: parsed.data,
+    };
+    parsed.content = resolveVariables(parsed.content, contextWithFrontmatter);
+    
+    // Stringify back with updated frontmatter and resolved body content
+    content = matter.stringify(parsed.content, parsed.data);
     
     // Add description to Overview section if provided
     if (options.description) {
