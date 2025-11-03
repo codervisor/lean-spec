@@ -10,7 +10,7 @@ import type { SpecFrontmatter } from '../frontmatter.js';
 import { spawn } from 'node:child_process';
 
 // Configure marked for terminal output
-marked.use(markedTerminal() as any);
+marked.use(markedTerminal() as Parameters<typeof marked.use>[0]);
 
 interface SpecContent {
   frontmatter: SpecFrontmatter;
@@ -60,7 +60,10 @@ export async function readSpecContent(
   
   // Skip frontmatter if present
   if (lines[0] === '---') {
-    contentStartIndex = lines.findIndex((line, i) => i > 0 && line === '---') + 1;
+    const closingIndex = lines.findIndex((line, i) => i > 0 && line === '---');
+    if (closingIndex > 0) {
+      contentStartIndex = closingIndex + 1;
+    }
   }
   
   const content = lines.slice(contentStartIndex).join('\n').trim();
@@ -290,7 +293,8 @@ export async function openCommand(
 
   // Don't wait for editor to close for GUI editors
   const guiEditors = ['open', 'start', 'xdg-open', 'code', 'atom', 'subl'];
-  if (guiEditors.includes(editor.split(' ')[0])) {
+  const editorCommand = editor.trim().split(' ')[0];
+  if (editorCommand && guiEditors.includes(editorCommand)) {
     // Detach and don't wait
     child.unref();
   } else {
