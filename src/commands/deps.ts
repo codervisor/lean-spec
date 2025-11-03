@@ -1,11 +1,15 @@
 import chalk from 'chalk';
 import { getSpec, loadAllSpecs, type SpecInfo } from '../spec-loader.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function depsCommand(specPath: string, options: {
   depth?: number;
   graph?: boolean;
   json?: boolean;
 }): Promise<void> {
+  // Auto-check for conflicts before display
+  await autoCheckIfEnabled();
+  
   const spec = await getSpec(specPath);
   
   if (!spec) {
