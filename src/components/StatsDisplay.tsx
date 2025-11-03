@@ -98,12 +98,12 @@ export const StatsDisplay: React.FC<StatsProps> = ({ specs, filter }) => {
         <Panel title="📊 Status Distribution" border="rounded" padding={0} width={70}>
           <Box flexDirection="column">
             <Box>
-              <Text>📅 {'Planned'.padEnd(13)}</Text>
+              <Text>📋 {'Planned'.padEnd(13)}</Text>
               {createBar(statusCounts.planned, 'cyan')}
               <Text color="cyan"> {statusCounts.planned}</Text>
             </Box>
             <Box>
-              <Text>🔨 {'In Progress'.padEnd(13)}</Text>
+              <Text>⚡ {'In Progress'.padEnd(13)}</Text>
               {createBar(statusCounts['in-progress'], 'yellow')}
               <Text color="yellow"> {statusCounts['in-progress']}</Text>
             </Box>
@@ -135,23 +135,23 @@ export const StatsDisplay: React.FC<StatsProps> = ({ specs, filter }) => {
               )}
               {priorityCounts.high > 0 && (
                 <Box>
-                  <Text>🟡 {'High'.padEnd(13)}</Text>
+                  <Text>🟠 {'High'.padEnd(13)}</Text>
                   {createBar(priorityCounts.high, 'yellow')}
                   <Text color="yellow"> {priorityCounts.high}</Text>
                 </Box>
               )}
               {priorityCounts.medium > 0 && (
                 <Box>
-                  <Text>🟠 {'Medium'.padEnd(13)}</Text>
-                  {createBar(priorityCounts.medium, 'blue')}
-                  <Text color="blue"> {priorityCounts.medium}</Text>
+                  <Text>🟡 {'Medium'.padEnd(13)}</Text>
+                  {createBar(priorityCounts.medium, 'yellow')}
+                  <Text color="yellow"> {priorityCounts.medium}</Text>
                 </Box>
               )}
               {priorityCounts.low > 0 && (
                 <Box>
                   <Text>🟢 {'Low'.padEnd(13)}</Text>
-                  {createBar(priorityCounts.low, 'gray')}
-                  <Text dimColor> {priorityCounts.low}</Text>
+                  {createBar(priorityCounts.low, 'green')}
+                  <Text color="green"> {priorityCounts.low}</Text>
                 </Box>
               )}
             </Box>

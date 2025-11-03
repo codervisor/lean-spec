@@ -1,8 +1,9 @@
 ---
-status: planned
+status: complete
 created: 2025-11-03
 tags: [ui, visualization, pm-tools]
 priority: medium
+completed: 2025-11-03
 ---
 
 # visualization-improvements

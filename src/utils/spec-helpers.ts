@@ -6,8 +6,8 @@ import type { SpecStatus, SpecPriority } from '../frontmatter.js';
  */
 export function getStatusEmoji(status: SpecStatus): string {
   switch (status) {
-    case 'planned': return chalk.gray('📅');
-    case 'in-progress': return chalk.yellow('🔨');
+    case 'planned': return chalk.cyan('📋');
+    case 'in-progress': return chalk.yellow('⚡');
     case 'complete': return chalk.green('✅');
     case 'archived': return chalk.gray('📦');
     default: return '';
@@ -19,9 +19,9 @@ export function getStatusEmoji(status: SpecStatus): string {
  */
 export function getPriorityLabel(priority: SpecPriority): string {
   switch (priority) {
-    case 'low': return chalk.gray('low');
-    case 'medium': return chalk.blue('med');
-    case 'high': return chalk.yellow('high');
+    case 'low': return chalk.green('low');
+    case 'medium': return chalk.yellow('med');
+    case 'high': return chalk.hex('#FFA500')('high');
     case 'critical': return chalk.red('CRIT');
     default: return '';
   }

@@ -14,8 +14,8 @@ interface BoardProps {
 }
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; color: string }> = {
-  planned: { emoji: '📅', label: 'Planned', color: 'cyan' },
-  'in-progress': { emoji: '🔨', label: 'In Progress', color: 'yellow' },
+  planned: { emoji: '📋', label: 'Planned', color: 'cyan' },
+  'in-progress': { emoji: '⚡', label: 'In Progress', color: 'yellow' },
   complete: { emoji: '✅', label: 'Complete', color: 'green' },
   archived: { emoji: '📦', label: 'Archived', color: 'gray' },
 };
@@ -70,8 +70,8 @@ const Column: React.FC<ColumnProps> = ({ title, emoji, specs, expanded, color })
               if (spec.frontmatter.priority) {
                 const priorityEmoji = {
                   critical: '🔴',
-                  high: '🟡',
-                  medium: '🟠',
+                  high: '🟠',
+                  medium: '🟡',
                   low: '🟢',
                 }[spec.frontmatter.priority];
                 parts.push(`${priorityEmoji} ${spec.frontmatter.priority}`);

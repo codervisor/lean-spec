@@ -10,8 +10,8 @@ interface SpecListProps {
 }
 
 const STATUS_EMOJI: Record<string, string> = {
-  planned: '📅',
-  'in-progress': '🔨',
+  planned: '📋',
+  'in-progress': '⚡',
   complete: '✅',
   archived: '📦',
   draft: '📝',
@@ -21,8 +21,8 @@ const STATUS_EMOJI: Record<string, string> = {
 
 const PRIORITY_EMOJI: Record<string, string> = {
   critical: '🔴',
-  high: '🟡',
-  medium: '🟠',
+  high: '🟠',
+  medium: '🟡',
   low: '🟢',
 };
 
