@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import Gradient from 'ink-gradient';
 import type { SpecInfo } from '../spec-loader.js';
 import { getStatusEmoji, getPriorityEmoji } from './ui/StatusBadge.js';
 
@@ -32,10 +31,8 @@ export const SpecListView: React.FC<SpecListProps> = ({ specs, filter }) => {
   if (specs.length === 0) {
     return (
       <Box flexDirection="column">
-        <Box marginBottom={1}>
-          <Gradient name="rainbow">
-            <Text bold>📄 Spec List</Text>
-          </Gradient>
+        <Box>
+          <Text bold color="cyan">📄 Spec List</Text>
         </Box>
         
         <Box>
@@ -52,15 +49,13 @@ export const SpecListView: React.FC<SpecListProps> = ({ specs, filter }) => {
   return (
     <Box flexDirection="column">
       {/* Title */}
-      <Box marginBottom={1}>
-        <Gradient name="rainbow">
-          <Text bold>📄 Spec List</Text>
-        </Gradient>
+      <Box>
+        <Text bold color="cyan">📄 Spec List</Text>
       </Box>
 
       {/* Filter info */}
       {filter && Object.keys(filter).length > 0 && (
-        <Box marginBottom={1}>
+        <Box>
           <Text dimColor>
             Filtered by:{' '}
             {filter.status && `status=${filter.status} `}
@@ -78,7 +73,7 @@ export const SpecListView: React.FC<SpecListProps> = ({ specs, filter }) => {
         return (
           <Box key={date} flexDirection="column" marginBottom={dateIdx < sortedDates.length - 1 ? 1 : 0}>
             {/* Date header */}
-            <Box marginBottom={1}>
+            <Box>
               <Text color="cyan" bold>📂 {date}/</Text>
             </Box>
 
@@ -86,51 +81,61 @@ export const SpecListView: React.FC<SpecListProps> = ({ specs, filter }) => {
             <Box flexDirection="column" paddingLeft={2}>
               {dateSpecs.map((spec, specIdx) => {
                 const specName = spec.path.replace(/^\d{8}\//, '').replace(/\/$/, '');
+                const isLast = specIdx === dateSpecs.length - 1;
                 
                 return (
-                  <Box key={spec.path} flexDirection="column" marginBottom={specIdx < dateSpecs.length - 1 ? 1 : 0}>
+                  <Box key={spec.path} flexDirection="column">
                     {/* Spec name line */}
                     <Box>
-                      <Text color="green">├─ </Text>
+                      <Text color="green">{isLast ? '└─' : '├─'} </Text>
                       <Text bold>{specName}/</Text>
                     </Box>
 
                     {/* Metadata line */}
-                    <Box paddingLeft={3}>
-                      {/* Status */}
-                      <Text>{getStatusEmoji(spec.frontmatter.status)} </Text>
+                    <Box>
+                      <Text color="green">{isLast ? '  ' : '│ '}</Text>
+                      <Text paddingLeft={1}>
+                        {/* Status */}
+                        {getStatusEmoji(spec.frontmatter.status)} 
                       
-                      {/* Priority */}
-                      {spec.frontmatter.priority && (
-                        <Text>
-                          {getPriorityEmoji(spec.frontmatter.priority)}{' '}
-                          <Text color={
-                            spec.frontmatter.priority === 'critical' ? 'red' :
-                            spec.frontmatter.priority === 'high' ? 'yellow' :
-                            spec.frontmatter.priority === 'medium' ? 'blue' :
-                            'gray'
-                          }>
-                            {spec.frontmatter.priority}
+                        {/* Priority */}
+                        {spec.frontmatter.priority && (
+                          <>
+                            {getPriorityEmoji(spec.frontmatter.priority)}{' '}
+                            <Text color={
+                              spec.frontmatter.priority === 'critical' ? 'red' :
+                              spec.frontmatter.priority === 'high' ? 'yellow' :
+                              spec.frontmatter.priority === 'medium' ? 'blue' :
+                              'gray'
+                            }>
+                              {spec.frontmatter.priority}
+                            </Text>
+                            <Text dimColor> · </Text>
+                          </>
+                        )}
+
+                        {/* Tags */}
+                        {spec.frontmatter.tags && spec.frontmatter.tags.length > 0 && (
+                          <Text dimColor>
+                            [{spec.frontmatter.tags.map(tag => `#${tag}`).join(' ')}]
                           </Text>
-                          <Text dimColor> · </Text>
-                        </Text>
-                      )}
+                        )}
 
-                      {/* Tags */}
-                      {spec.frontmatter.tags && spec.frontmatter.tags.length > 0 && (
-                        <Text dimColor>
-                          [{spec.frontmatter.tags.map(tag => `#${tag}`).join(' ')}]
-                        </Text>
-                      )}
-
-                      {/* Assignee */}
-                      {spec.frontmatter.assignee && (
-                        <Text>
-                          <Text dimColor> · </Text>
-                          <Text color="magenta">@{spec.frontmatter.assignee}</Text>
-                        </Text>
-                      )}
+                        {/* Assignee */}
+                        {spec.frontmatter.assignee && (
+                          <>
+                            <Text dimColor> · </Text>
+                            <Text color="magenta">@{spec.frontmatter.assignee}</Text>
+                          </>
+                        )}
+                      </Text>
                     </Box>
+                    {/* Separator line between specs */}
+                    {!isLast && (
+                      <Box>
+                        <Text color="green">│</Text>
+                      </Box>
+                    )}
                   </Box>
                 );
               })}
