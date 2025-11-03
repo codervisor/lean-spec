@@ -64,6 +64,7 @@ export async function ganttCommand(options: {
   }
 
   // Group specs by priority
+  const DEFAULT_PRIORITY = 'medium';
   const specsByPriority: Record<string, SpecInfo[]> = {
     critical: [],
     high: [],
@@ -72,11 +73,11 @@ export async function ganttCommand(options: {
   };
 
   for (const spec of relevantSpecs) {
-    const priority = spec.frontmatter.priority || 'medium';
+    const priority = spec.frontmatter.priority || DEFAULT_PRIORITY;
     if (specsByPriority[priority]) {
       specsByPriority[priority].push(spec);
     } else {
-      specsByPriority.medium.push(spec);
+      specsByPriority[DEFAULT_PRIORITY].push(spec);
     }
   }
 
@@ -187,6 +188,9 @@ function formatSpecName(spec: SpecInfo): string {
 
   // Format: {emoji} {name}
   // Total width should be exactly SPEC_COLUMN_WIDTH
+  // Note: We assume emoji width is 1 for consistent terminal display
+  // Some terminals may display emojis as 2 chars wide, but this is handled
+  // by the terminal itself and doesn't affect our string length calculations
   const prefix = `${emoji} `;
   const prefixLen = 2; // emoji (1) + space (1)
   const maxNameLen = SPEC_COLUMN_WIDTH - prefixLen;
@@ -265,7 +269,7 @@ function renderTimelineBar(
     result += chalk.dim('░'.repeat(barLength));
   }
 
-  // Trailing space
+  // Trailing space to ensure consistent width
   const trailingSpace = timelineColumnWidth - (barStart + barLength);
   if (trailingSpace > 0) {
     result += ' '.repeat(trailingSpace);
