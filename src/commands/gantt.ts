@@ -193,7 +193,7 @@ function renderSpecRow(
   // Format: {emoji} {spec-name} (must be exactly SPEC_COLUMN_WIDTH chars)
   const emoji = statusConfig.emoji;
   const maxNameLength = SPEC_COLUMN_WIDTH - 2; // 2 chars for emoji + space
-  let specName = spec.path;
+  let specName = spec.name; // Use spec.name instead of spec.path
   
   // Truncate name if too long
   if (specName.length > maxNameLength) {
