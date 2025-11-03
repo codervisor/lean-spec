@@ -241,6 +241,16 @@ async function getBoardData(): Promise<BoardData> {
 }
 
 /**
+ * Regex pattern for detecting spec references in content.
+ * Matches patterns like:
+ * - "spec: 001-feature"
+ * - "specs: 023-something"
+ * - "depends on: 042-dependency"
+ * The pattern expects at least 3 digits followed by optional hyphens and word characters.
+ */
+const SPEC_REFERENCE_REGEX = /(?:spec[s]?[:\s]+|depends on[:\s]+)([0-9]{3,}[-\w]+)/gi;
+
+/**
  * Get spec dependencies
  */
 async function getDepsData(specPath: string): Promise<{
@@ -252,10 +262,9 @@ async function getDepsData(specPath: string): Promise<{
   
   // Simple dependency parsing - looks for references to other specs
   const dependencies: string[] = [];
-  const specRefRegex = /(?:spec[s]?[:\s]+|depends on[:\s]+)([0-9]{3,}[-\w]+)/gi;
   let match;
   
-  while ((match = specRefRegex.exec(content)) !== null) {
+  while ((match = SPEC_REFERENCE_REGEX.exec(content)) !== null) {
     dependencies.push(match[1]);
   }
 
@@ -390,9 +399,9 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
+      const originalLog = console.log;
       try {
         // Capture output
-        const originalLog = console.log;
         let capturedOutput = '';
         console.log = (...args: any[]) => {
           capturedOutput += args.join(' ') + '\n';
@@ -406,8 +415,6 @@ async function createMcpServer(): Promise<McpServer> {
           assignee: input.assignee,
           template: input.template,
         });
-
-        console.log = originalLog;
 
         const output = {
           success: true,
@@ -429,6 +436,8 @@ async function createMcpServer(): Promise<McpServer> {
           content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
+      } finally {
+        console.log = originalLog;
       }
     }
   );
@@ -452,9 +461,9 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
+      const originalLog = console.log;
       try {
         // Capture output
-        const originalLog = console.log;
         let capturedOutput = '';
         console.log = (...args: any[]) => {
           capturedOutput += args.join(' ') + '\n';
@@ -466,8 +475,6 @@ async function createMcpServer(): Promise<McpServer> {
           tags: input.tags,
           assignee: input.assignee,
         });
-
-        console.log = originalLog;
 
         const output = {
           success: true,
@@ -487,6 +494,8 @@ async function createMcpServer(): Promise<McpServer> {
           content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
+      } finally {
+        console.log = originalLog;
       }
     }
   );
@@ -755,11 +764,6 @@ async function main() {
     console.error('Failed to start LeanSpec MCP Server:', error);
     process.exit(1);
   }
-}
-
-// Start the server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
 }
 
 export { createMcpServer };
