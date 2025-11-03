@@ -3,7 +3,6 @@ import { render } from 'ink';
 import chalk from 'chalk';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
-import { SpecList } from '../components/SpecList.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 
