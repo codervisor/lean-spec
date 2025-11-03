@@ -18,11 +18,8 @@ export async function archiveSpec(specPath: string): Promise<void> {
     process.exit(1);
   }
 
-  // Get parent directory (date folder)
-  const parentDir = path.dirname(resolvedPath);
-  const dateFolder = path.basename(parentDir);
-  const archiveDir = path.join(specsDir, 'archived', dateFolder);
-
+  // Archive to flat structure in specs/archived/ regardless of original pattern
+  const archiveDir = path.join(specsDir, 'archived');
   await fs.mkdir(archiveDir, { recursive: true });
 
   const specName = path.basename(resolvedPath);

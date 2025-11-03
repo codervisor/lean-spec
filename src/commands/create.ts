@@ -2,8 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import matter from 'gray-matter';
-import { loadConfig, getToday } from '../config.js';
-import { getNextSeq } from '../utils/path-helpers.js';
+import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
+import { getGlobalNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
 import type { SpecPriority } from '../frontmatter.js';
 
@@ -18,15 +18,43 @@ export async function createSpec(name: string, options: {
 } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
-  
-  const today = getToday(config.structure.dateFormat);
   const specsDir = path.join(cwd, config.specsDir);
-  const dateDir = path.join(specsDir, today);
 
-  await fs.mkdir(dateDir, { recursive: true });
+  // Ensure specs directory exists
+  await fs.mkdir(specsDir, { recursive: true });
 
-  const seq = await getNextSeq(dateDir, config.structure.sequenceDigits);
-  const specDir = path.join(dateDir, `${seq}-${name}`);
+  // Get global next sequence number
+  const seq = await getGlobalNextSeq(specsDir, config.structure.sequenceDigits);
+  
+  // Resolve the spec path based on pattern
+  let specRelativePath: string;
+  
+  if (config.structure.pattern === 'flat') {
+    // Flat pattern: optional prefix on folder name
+    const prefix = config.structure.prefix 
+      ? resolvePrefix(config.structure.prefix, config.structure.dateFormat)
+      : '';
+    specRelativePath = `${prefix}${seq}-${name}`;
+  } else if (config.structure.pattern === 'custom') {
+    // Custom pattern: extract group from extractor string
+    if (!config.structure.groupExtractor) {
+      throw new Error('Custom pattern requires structure.groupExtractor in config');
+    }
+    
+    const group = extractGroup(
+      config.structure.groupExtractor,
+      config.structure.dateFormat,
+      options.customFields,
+      config.structure.groupFallback
+    );
+    
+    specRelativePath = `${group}/${seq}-${name}`;
+  } else {
+    // Unknown pattern
+    throw new Error(`Unknown pattern: ${config.structure.pattern}`);
+  }
+
+  const specDir = path.join(specsDir, specRelativePath);
   const specFile = path.join(specDir, config.structure.defaultFile);
 
   // Check if directory exists

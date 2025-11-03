@@ -125,8 +125,8 @@ describe('archiveSpec', () => {
 
     await archiveSpec(specDir);
 
-    // Check spec was moved to archived
-    const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', date, specName);
+    // Check spec was moved to archived (flat structure)
+    const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', specName);
     expect(await dirExists(archivedPath)).toBe(true);
     expect(await dirExists(specDir)).toBe(false);
   });
@@ -149,7 +149,7 @@ describe('archiveSpec', () => {
 
     await archiveSpec(specDir);
 
-    const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', date, specName);
+    const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', specName);
     const archivedContent = await readSpecFile(archivedPath);
 
     expect(archivedContent).toBe(originalContent);

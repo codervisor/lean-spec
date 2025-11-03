@@ -2,7 +2,56 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 /**
- * Get next sequence number for a date directory
+ * Get next global sequence number across entire specs directory
+ */
+export async function getGlobalNextSeq(specsDir: string, digits: number): Promise<string> {
+  try {
+    // Recursively find all spec directories with sequence numbers
+    const seqNumbers: number[] = [];
+    
+    async function scanDirectory(dir: string): Promise<void> {
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          
+          // Check if this is a spec directory (NNN-name format)
+          const match = entry.name.match(/^(\d{2,3})-/);
+          if (match) {
+            const seqNum = parseInt(match[1], 10);
+            if (!isNaN(seqNum) && seqNum > 0) {
+              seqNumbers.push(seqNum);
+            }
+          }
+          
+          // Skip archived directory to avoid confusion
+          if (entry.name === 'archived') continue;
+          
+          // Recursively scan subdirectories (for custom pattern grouping)
+          const subDir = path.join(dir, entry.name);
+          await scanDirectory(subDir);
+        }
+      } catch {
+        // Directory doesn't exist or can't be read
+      }
+    }
+    
+    await scanDirectory(specsDir);
+    
+    if (seqNumbers.length === 0) {
+      return '1'.padStart(digits, '0');
+    }
+    
+    const maxSeq = Math.max(...seqNumbers);
+    return String(maxSeq + 1).padStart(digits, '0');
+  } catch {
+    return '1'.padStart(digits, '0');
+  }
+}
+
+/**
+ * Get next sequence number for a date directory (legacy, kept for backward compatibility)
  */
 export async function getNextSeq(dateDir: string, digits: number): Promise<string> {
   try {
@@ -28,7 +77,8 @@ export async function getNextSeq(dateDir: string, digits: number): Promise<strin
  * 1. Absolute path as given
  * 2. Relative to current directory
  * 3. Relative to specs directory
- * 4. Search by spec name in date directories
+ * 4. Search by spec name in all subdirectories (flat or grouped)
+ * 5. Search by sequence number only
  */
 export async function resolveSpecPath(
   specPath: string,
@@ -63,24 +113,88 @@ export async function resolveSpecPath(
     // Continue to next method
   }
 
-  // Last resort: search for spec name in date directories
-  const specName = specPath.replace(/^.*\//, ''); // Get last part
-  try {
-    const entries = await fs.readdir(specsDir, { withFileTypes: true });
-    const dateDirs = entries.filter(e => e.isDirectory() && e.name !== 'archived');
-
-    for (const dateDir of dateDirs) {
-      const testPath = path.join(specsDir, dateDir.name, specName);
-      try {
-        await fs.access(testPath);
-        return testPath;
-      } catch {
-        // Keep searching
-      }
-    }
-  } catch {
-    // Specs dir doesn't exist
+  // Search by sequence number only (e.g., "5" or "005")
+  const seqMatch = specPath.match(/^0*(\d+)$/);
+  if (seqMatch) {
+    const seqNum = parseInt(seqMatch[1], 10);
+    const result = await searchBySequence(specsDir, seqNum);
+    if (result) return result;
   }
 
-  return null;
+  // Last resort: search for spec name in all subdirectories
+  const specName = specPath.replace(/^.*\//, ''); // Get last part
+  const result = await searchInAllDirectories(specsDir, specName);
+  return result;
+}
+
+/**
+ * Search for a spec by sequence number across all directories
+ */
+async function searchBySequence(specsDir: string, seqNum: number): Promise<string | null> {
+  async function scanDirectory(dir: string): Promise<string | null> {
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        
+        // Check if this matches the sequence number
+        const match = entry.name.match(/^(\d{2,3})-/);
+        if (match) {
+          const entrySeq = parseInt(match[1], 10);
+          if (entrySeq === seqNum) {
+            return path.join(dir, entry.name);
+          }
+        }
+        
+        // Skip archived directory in main search
+        if (entry.name === 'archived') continue;
+        
+        // Recursively search subdirectories
+        const subDir = path.join(dir, entry.name);
+        const result = await scanDirectory(subDir);
+        if (result) return result;
+      }
+    } catch {
+      // Directory doesn't exist or can't be read
+    }
+    
+    return null;
+  }
+  
+  return scanDirectory(specsDir);
+}
+
+/**
+ * Search for a spec by name in all subdirectories
+ */
+async function searchInAllDirectories(specsDir: string, specName: string): Promise<string | null> {
+  async function scanDirectory(dir: string): Promise<string | null> {
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        
+        // Check if this matches the spec name
+        if (entry.name === specName) {
+          return path.join(dir, entry.name);
+        }
+        
+        // Skip archived directory in main search
+        if (entry.name === 'archived') continue;
+        
+        // Recursively search subdirectories
+        const subDir = path.join(dir, entry.name);
+        const result = await scanDirectory(subDir);
+        if (result) return result;
+      }
+    } catch {
+      // Directory doesn't exist or can't be read
+    }
+    
+    return null;
+  }
+  
+  return scanDirectory(specsDir);
 }
