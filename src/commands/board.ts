@@ -7,7 +7,7 @@ import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; colorFn: (s: string) => string }> = {
-  planned: { emoji: '⏳', label: 'Planned', colorFn: chalk.cyan },
+  planned: { emoji: '📅', label: 'Planned', colorFn: chalk.cyan },
   'in-progress': { emoji: '⚡', label: 'In Progress', colorFn: chalk.yellow },
   complete: { emoji: '✅', label: 'Complete', colorFn: chalk.green },
   archived: { emoji: '📦', label: 'Archived', colorFn: chalk.dim },
@@ -151,8 +151,12 @@ function renderColumn(
         
         let tagsStr = '';
         if (spec.frontmatter.tags?.length) {
-          const tagStr = spec.frontmatter.tags.map(tag => `#${sanitizeUserInput(tag)}`).join(' ');
-          tagsStr = ' ' + chalk.dim(chalk.magenta(tagStr));
+          // Defensive check: ensure tags is an array
+          const tags = Array.isArray(spec.frontmatter.tags) ? spec.frontmatter.tags : [];
+          if (tags.length > 0) {
+            const tagStr = tags.map(tag => `#${sanitizeUserInput(tag)}`).join(' ');
+            tagsStr = ' ' + chalk.dim(chalk.magenta(tagStr));
+          }
         }
 
         console.log(`    ${chalk.cyan(sanitizeUserInput(spec.path))}${assigneeStr}${tagsStr}`);

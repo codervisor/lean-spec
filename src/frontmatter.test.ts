@@ -162,6 +162,50 @@ tags: [test]
     expect(frontmatter?.created).toBeDefined();
     expect(frontmatter?.tags).toEqual(['test']);
   });
+
+  it('should normalize tags from JSON string to array', async () => {
+    const specFile = path.join(ctx.tmpDir, 'json-tags.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: 2024-11-01
+tags: '["integration","mcp","ai"]'
+---
+
+# Test
+`,
+      'utf-8'
+    );
+
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    expect(frontmatter).not.toBeNull();
+    expect(frontmatter?.tags).toEqual(['integration', 'mcp', 'ai']);
+    expect(Array.isArray(frontmatter?.tags)).toBe(true);
+  });
+
+  it('should normalize tags from comma-separated string to array', async () => {
+    const specFile = path.join(ctx.tmpDir, 'csv-tags.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: 2024-11-01
+tags: 'api, backend, database'
+---
+
+# Test
+`,
+      'utf-8'
+    );
+
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    expect(frontmatter).not.toBeNull();
+    expect(frontmatter?.tags).toEqual(['api', 'backend', 'database']);
+    expect(Array.isArray(frontmatter?.tags)).toBe(true);
+  });
 });
 
 describe('updateFrontmatter', () => {
