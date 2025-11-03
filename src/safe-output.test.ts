@@ -132,8 +132,8 @@ describe('stripAnsiCodes', () => {
 });
 
 describe('Safe output functions', () => {
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let consoleLogSpy: ReturnType<typeof vi.spyOn<Console, 'log'>>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn<Console, 'error'>>;
 
   beforeEach(() => {
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
