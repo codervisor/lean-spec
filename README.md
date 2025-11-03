@@ -202,6 +202,7 @@ lspec create unassigned
 - **Custom fields** - Add sprints, epics, reviewers—whatever your team needs
 - **Built-in visualization** - Board, timeline, Gantt, dependency analysis
 - **AI-native** - Built for human + AI development teams (see `AGENTS.md`)
+- **MCP Server** - Native integration with Claude Desktop and other AI assistants via [Model Context Protocol](docs/MCP-SERVER.md)
 - **Portable specs** - Plain markdown that works with any workflow
 
 ## When to Use LeanSpec
@@ -228,6 +229,7 @@ lspec create unassigned
 ### 🚀 Getting Started
 - **[Integration Guide](docs/INTEGRATION.md)** - Add LeanSpec to existing projects
 - **[AI Agent Setup](AGENTS.md)** - Configure for AI-powered development
+- **[MCP Server Setup](docs/MCP-SERVER.md)** - Connect to Claude Desktop and other AI assistants
 
 ### 🔍 For Researchers
 - **[Comparisons](docs/COMPARISONS.md)** - How LeanSpec compares to BMAD, SpecKit, Kiro, OpenSpec, Agent OS
