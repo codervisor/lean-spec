@@ -80,7 +80,17 @@ export async function boardCommand(options: {
 
   // Render columns
   renderColumn(STATUS_CONFIG.planned.label, STATUS_CONFIG.planned.emoji, columns.planned, true, STATUS_CONFIG.planned.colorFn);
+  
+  // Separator between status sections
+  console.log(chalk.dim('━'.repeat(70)));
+  console.log('');
+  
   renderColumn(STATUS_CONFIG['in-progress'].label, STATUS_CONFIG['in-progress'].emoji, columns['in-progress'], true, STATUS_CONFIG['in-progress'].colorFn);
+  
+  // Separator between status sections
+  console.log(chalk.dim('━'.repeat(70)));
+  console.log('');
+  
   renderColumn(STATUS_CONFIG.complete.label, STATUS_CONFIG.complete.emoji, columns.complete, options.showComplete || false, STATUS_CONFIG.complete.colorFn);
 }
 
@@ -91,71 +101,71 @@ function renderColumn(
   expanded: boolean,
   colorFn: (s: string) => string
 ): void {
-  const width = 60;
-  const count = specs.length;
-  const header = `${emoji} ${title} (${count})`;
-  
-  // Ensure consistent box width
-  const boxContent = width + 4; // +4 for padding and borders (│ + space + space + │)
+  // Column header
+  console.log(colorFn(chalk.bold(`${emoji} ${title} (${specs.length})`)));
+  console.log('');
 
-  // Top border
-  console.log(colorFn(`┌─ ${chalk.bold(header)} ${('─').repeat(Math.max(0, width - header.length - 2))}┐`));
-
-  // Content
   if (expanded && specs.length > 0) {
-    for (let i = 0; i < specs.length; i++) {
-      const spec = specs[i];
-      
-      // Spec name - truncate if needed
-      const specNameDisplay = spec.path.length > width - 4 ? spec.path.substring(0, width - 5) + '…' : spec.path;
-      const namePadding = width - specNameDisplay.length;
-      console.log(`│ ${chalk.bold.cyan(specNameDisplay)}${' '.repeat(namePadding)} │`);
+    // Group specs by priority
+    const priorityGroups: Record<string, SpecInfo[]> = {
+      critical: [],
+      high: [],
+      medium: [],
+      low: [],
+      none: []
+    };
 
-      // Metadata line with tags, priority, and assignee
-      const metaParts: string[] = [];
-      
-      if (spec.frontmatter.tags?.length) {
-        const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
-        metaParts.push(chalk.magenta(tagStr));
-      }
-      
-      if (spec.frontmatter.priority) {
-        const badge = PRIORITY_BADGES[spec.frontmatter.priority];
-        const priorityStr = `${badge.emoji} ${spec.frontmatter.priority}`;
-        metaParts.push(badge.colorFn(priorityStr));
-      }
-      
-      if (spec.frontmatter.assignee) {
-        metaParts.push(chalk.cyan(`@${spec.frontmatter.assignee}`));
-      }
-      
-      if (metaParts.length > 0) {
-        const metaJoined = metaParts.join(' · ');
-        // Calculate visible length (without ANSI codes)
-        const visibleLength = stripAnsi(metaJoined).length;
-        const metaDisplay = visibleLength > width - 4 ? stripAnsi(metaJoined).substring(0, width - 5) + '…' : metaJoined;
-        const metaPadding = width - stripAnsi(metaDisplay).length;
-        console.log(`│ ${metaDisplay}${' '.repeat(Math.max(0, metaPadding))} │`);
-      }
+    for (const spec of specs) {
+      const priority = spec.frontmatter.priority || 'none';
+      priorityGroups[priority].push(spec);
+    }
 
-      // Divider between specs
-      if (i < specs.length - 1) {
-        console.log(`├${('─').repeat(width + 2)}┤`);
+    // Render each priority group
+    const priorityOrder: Array<keyof typeof priorityGroups> = ['critical', 'high', 'medium', 'low', 'none'];
+    let firstGroup = true;
+
+    for (const priority of priorityOrder) {
+      const groupSpecs = priorityGroups[priority];
+      if (groupSpecs.length === 0) continue;
+
+      // Add spacing between groups
+      if (!firstGroup) {
+        console.log('');
+      }
+      firstGroup = false;
+
+      // Priority group header - minimal, modern style
+      const priorityLabel = priority === 'none' ? 'No Priority' : priority.charAt(0).toUpperCase() + priority.slice(1);
+      const priorityEmoji = priority === 'none' ? '⚪' : PRIORITY_BADGES[priority as SpecPriority].emoji;
+      const priorityColor = priority === 'none' ? chalk.dim : PRIORITY_BADGES[priority as SpecPriority].colorFn;
+      
+      console.log(`  ${priorityColor(`${priorityEmoji} ${chalk.bold(priorityLabel)} ${chalk.dim(`(${groupSpecs.length})`)}`)}`);;
+
+      for (const spec of groupSpecs) {
+        // Build spec line with metadata
+        let assigneeStr = '';
+        if (spec.frontmatter.assignee) {
+          assigneeStr = ' ' + chalk.cyan(`@${spec.frontmatter.assignee}`);
+        }
+        
+        let tagsStr = '';
+        if (spec.frontmatter.tags?.length) {
+          const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
+          tagsStr = ' ' + chalk.dim(chalk.magenta(tagStr));
+        }
+
+        console.log(`    ${chalk.cyan(spec.path)}${assigneeStr}${tagsStr}`);
       }
     }
-  } else if (!expanded && specs.length > 0) {
-    const message = '(collapsed, use --show-complete to expand)';
-    const padding = width - message.length;
-    console.log(`│ ${chalk.dim(message)}${' '.repeat(padding)} │`);
-  } else {
-    const message = '(empty)';
-    const padding = width - message.length;
-    console.log(`│ ${chalk.dim(message)}${' '.repeat(padding)} │`);
-  }
 
-  // Bottom border
-  console.log(`└${('─').repeat(width + 2)}┘`);
-  console.log('');
+    console.log('');
+  } else if (!expanded && specs.length > 0) {
+    console.log(`  ${chalk.dim('(collapsed, use --show-complete to expand)')}`);
+    console.log('');
+  } else {
+    console.log(`  ${chalk.dim('(empty)')}`);
+    console.log('');
+  }
 }
 
 // Helper function to strip ANSI codes for accurate length calculation
