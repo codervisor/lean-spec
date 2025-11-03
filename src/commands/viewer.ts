@@ -174,7 +174,7 @@ export async function showCommand(
   output.push('');
   
   // Render markdown content
-  const rendered = marked(spec.content);
+  const rendered = await marked(spec.content);
   output.push(rendered);
   
   const finalOutput = output.join('\n');

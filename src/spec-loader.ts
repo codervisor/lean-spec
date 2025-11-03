@@ -134,7 +134,7 @@ export async function loadAllSpecs(options: {
               } else if (typeof frontmatter.created === 'string') {
                 date = frontmatter.created;
               } else if (frontmatter.created) {
-                date = frontmatter.created.toString();
+                date = String(frontmatter.created);
               } else {
                 date = '';
               }
