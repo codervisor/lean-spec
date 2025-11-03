@@ -109,7 +109,9 @@ export async function createSpec(name: string, options: {
     const varContext = await buildVariableContext(config, { name: title, date });
     content = resolveVariables(template, varContext);
     
-    // Parse frontmatter to get the resolved values
+    // Parse frontmatter to get the resolved values (always needed for variable resolution)
+    // Even with no custom options, we need to parse frontmatter to resolve variables like
+    // {status}, {priority} in the body content with their default values from the template
     const parsed = matter(content, {
       engines: {
         yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
@@ -119,7 +121,7 @@ export async function createSpec(name: string, options: {
     // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
     normalizeDateFields(parsed.data);
     
-    // Update frontmatter with provided metadata and custom fields
+    // Update frontmatter with provided metadata and custom fields (if any)
     if (options.tags && options.tags.length > 0) {
       parsed.data.tags = options.tags;
     }
