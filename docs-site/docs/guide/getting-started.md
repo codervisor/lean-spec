@@ -107,7 +107,7 @@ your-project/
 └── ... (your project files)
 ```
 
-**Note**: Default structure is flat with global numbering (`001-name/`, `002-name/`). For date-based grouping, see [Folder Patterns](/docs/guide/folder-patterns).
+**Note**: Default structure is flat with global numbering (`001-name/`, `002-name/`). For date-based grouping, configure the `structure.pattern` in `.lspec/config.json`.
 
 ## Integrating with Existing Projects
 
