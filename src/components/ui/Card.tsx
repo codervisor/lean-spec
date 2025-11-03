@@ -89,16 +89,19 @@ export const Card: React.FC<CardProps> = ({
       {/* Metadata */}
       {metadata.length > 0 && (
         <>
-          {metadata.map((item, idx) => (
-            <Text key={idx}>
-              <Text color={borderColor}>{vertical}</Text>
-              <Text dimColor>
-                {' '}{item.label}: <Text color={item.color}>{item.value}</Text>
-                {' '.repeat(Math.max(0, width - 6 - item.label.length - item.value.length))}
+          {metadata.map((item, idx) => {
+            const valueStr = String(item.value);
+            return (
+              <Text key={idx}>
+                <Text color={borderColor}>{vertical}</Text>
+                <Text dimColor>
+                  {' '}{item.label}: <Text color={item.color}>{item.value}</Text>
+                  {' '.repeat(Math.max(0, width - 6 - item.label.length - valueStr.length))}
+                </Text>
+                <Text color={borderColor}>{vertical}</Text>
               </Text>
-              <Text color={borderColor}>{vertical}</Text>
-            </Text>
-          ))}
+            );
+          })}
         </>
       )}
 

@@ -30,9 +30,7 @@ export const KeyValueList: React.FC<KeyValueListProps> = ({
             </Text>
             <Text>{separator}</Text>
             <Text color={item.valueColor}>
-              {typeof item.value === 'string' || typeof item.value === 'number'
-                ? item.value
-                : item.value}
+              {item.value}
             </Text>
           </Box>
         );
