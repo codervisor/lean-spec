@@ -9,6 +9,11 @@ import { autoCheckIfEnabled } from './check.js';
 // Column width constants (aligned with stats.ts and timeline.ts)
 const SPEC_COLUMN_WIDTH = 43;  // Includes status emoji + 1 space + spec name
 const COLUMN_SEPARATOR = '  '; // 2 spaces between columns
+const SPEC_INDENT = '  '; // 2 spaces for spec indentation within priority groups
+
+// Timeline bar characters
+const FILLED_BAR_CHAR = '█';
+const EMPTY_BAR_CHAR = '░';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; color: string }> = {
   planned: { emoji: '📋', color: 'gray' },
@@ -200,7 +205,7 @@ function renderSpecRow(
     specName = specName.substring(0, maxNameLength - 1) + '…';
   }
   
-  const specColumn = `  ${emoji} ${specName}`.padEnd(SPEC_COLUMN_WIDTH);
+  const specColumn = `${SPEC_INDENT}${emoji} ${specName}`.padEnd(SPEC_COLUMN_WIDTH);
   
   // Build timeline column
   let timelineColumn: string;
@@ -251,15 +256,15 @@ function renderTimelineBar(
   
   // Bar content based on status
   if (spec.frontmatter.status === 'complete') {
-    result += chalk.green('█'.repeat(barLength));
+    result += chalk.green(FILLED_BAR_CHAR.repeat(barLength));
   } else if (spec.frontmatter.status === 'in-progress') {
     // Half-filled bar
     const halfLength = Math.floor(barLength / 2);
-    result += chalk.yellow('█'.repeat(halfLength));
-    result += chalk.dim('░'.repeat(barLength - halfLength));
+    result += chalk.yellow(FILLED_BAR_CHAR.repeat(halfLength));
+    result += chalk.dim(EMPTY_BAR_CHAR.repeat(barLength - halfLength));
   } else {
     // Planned - empty bar
-    result += chalk.dim('░'.repeat(barLength));
+    result += chalk.dim(EMPTY_BAR_CHAR.repeat(barLength));
   }
   
   // Trailing space
