@@ -93,8 +93,8 @@ export async function statsCommand(options: {
   // Common layout constants
   const labelWidth = 15;
   const barWidth = 20;
-  const countWidth = 3;
-  const colWidth = barWidth + countWidth;
+  const specsWidth = 3;
+  const colWidth = barWidth + specsWidth;
 
   // Helper to create bars
   const createBar = (count: number, maxCount: number, char: string = '━') => {
@@ -109,7 +109,7 @@ export async function statsCommand(options: {
   
   const valueWidth = 5;
   
-  console.log(`  ${'Metric'.padEnd(labelWidth)}  ${'Count'.padStart(valueWidth)}`);
+  console.log(`  ${'Metric'.padEnd(labelWidth)}  ${'Specs'.padStart(valueWidth)}`);
   console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(valueWidth))}`);
   console.log(`  ${'Total Specs'.padEnd(labelWidth)}  ${chalk.green(specs.length.toString().padStart(valueWidth))}`);
   console.log(`  ${'With Priority'.padEnd(labelWidth)}  ${chalk.cyan(totalWithPriority.toString().padStart(valueWidth))}`);
@@ -122,12 +122,12 @@ export async function statsCommand(options: {
 
   const maxStatusCount = Math.max(...Object.values(statusCounts));
 
-  console.log(`  ${'Status'.padEnd(labelWidth)}  ${chalk.cyan('Count'.padEnd(colWidth))}`);
+  console.log(`  ${'Status'.padEnd(labelWidth)}  ${chalk.cyan('Specs'.padEnd(colWidth))}`);
   console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
-  console.log(`  📋 ${'Planned'.padEnd(labelWidth - 3)}  ${chalk.cyan(createBar(statusCounts.planned, maxStatusCount).padEnd(barWidth))}${chalk.cyan(statusCounts.planned.toString().padStart(countWidth))}`);
-  console.log(`  ⚡ ${'In Progress'.padEnd(labelWidth - 3)}  ${chalk.yellow(createBar(statusCounts['in-progress'], maxStatusCount).padEnd(barWidth))}${chalk.yellow(statusCounts['in-progress'].toString().padStart(countWidth))}`);
-  console.log(`  ✅ ${'Complete'.padEnd(labelWidth - 3)}  ${chalk.green(createBar(statusCounts.complete, maxStatusCount).padEnd(barWidth))}${chalk.green(statusCounts.complete.toString().padStart(countWidth))}`);
-  console.log(`  📦 ${'Archived'.padEnd(labelWidth - 3)}  ${chalk.dim(createBar(statusCounts.archived, maxStatusCount).padEnd(barWidth))}${chalk.dim(statusCounts.archived.toString().padStart(countWidth))}`);
+  console.log(`  📋 ${'Planned'.padEnd(labelWidth - 3)}  ${chalk.cyan(createBar(statusCounts.planned, maxStatusCount).padEnd(barWidth))}${chalk.cyan(statusCounts.planned.toString().padStart(specsWidth))}`);
+  console.log(`  ⚡ ${'In Progress'.padEnd(labelWidth - 3)}  ${chalk.yellow(createBar(statusCounts['in-progress'], maxStatusCount).padEnd(barWidth))}${chalk.yellow(statusCounts['in-progress'].toString().padStart(specsWidth))}`);
+  console.log(`  ✅ ${'Complete'.padEnd(labelWidth - 3)}  ${chalk.green(createBar(statusCounts.complete, maxStatusCount).padEnd(barWidth))}${chalk.green(statusCounts.complete.toString().padStart(specsWidth))}`);
+  console.log(`  📦 ${'Archived'.padEnd(labelWidth - 3)}  ${chalk.dim(createBar(statusCounts.archived, maxStatusCount).padEnd(barWidth))}${chalk.dim(statusCounts.archived.toString().padStart(specsWidth))}`);
   console.log('');
 
   // Priority Breakdown
@@ -137,20 +137,20 @@ export async function statsCommand(options: {
 
     const maxPriorityCount = Math.max(...Object.values(priorityCounts).filter(c => c > 0));
 
-    console.log(`  ${'Priority'.padEnd(labelWidth)}  ${chalk.cyan('Count'.padEnd(colWidth))}`);
+    console.log(`  ${'Priority'.padEnd(labelWidth)}  ${chalk.cyan('Specs'.padEnd(colWidth))}`);
     console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
 
     if (priorityCounts.critical > 0) {
-      console.log(`  🔴 ${'Critical'.padEnd(labelWidth - 3)}  ${chalk.red(createBar(priorityCounts.critical, maxPriorityCount).padEnd(barWidth))}${chalk.red(priorityCounts.critical.toString().padStart(countWidth))}`);
+      console.log(`  🔴 ${'Critical'.padEnd(labelWidth - 3)}  ${chalk.red(createBar(priorityCounts.critical, maxPriorityCount).padEnd(barWidth))}${chalk.red(priorityCounts.critical.toString().padStart(specsWidth))}`);
     }
     if (priorityCounts.high > 0) {
-      console.log(`  🟠 ${'High'.padEnd(labelWidth - 3)}  ${chalk.hex('#FFA500')(createBar(priorityCounts.high, maxPriorityCount).padEnd(barWidth))}${chalk.hex('#FFA500')(priorityCounts.high.toString().padStart(countWidth))}`);
+      console.log(`  🟠 ${'High'.padEnd(labelWidth - 3)}  ${chalk.hex('#FFA500')(createBar(priorityCounts.high, maxPriorityCount).padEnd(barWidth))}${chalk.hex('#FFA500')(priorityCounts.high.toString().padStart(specsWidth))}`);
     }
     if (priorityCounts.medium > 0) {
-      console.log(`  🟡 ${'Medium'.padEnd(labelWidth - 3)}  ${chalk.yellow(createBar(priorityCounts.medium, maxPriorityCount).padEnd(barWidth))}${chalk.yellow(priorityCounts.medium.toString().padStart(countWidth))}`);
+      console.log(`  🟡 ${'Medium'.padEnd(labelWidth - 3)}  ${chalk.yellow(createBar(priorityCounts.medium, maxPriorityCount).padEnd(barWidth))}${chalk.yellow(priorityCounts.medium.toString().padStart(specsWidth))}`);
     }
     if (priorityCounts.low > 0) {
-      console.log(`  🟢 ${'Low'.padEnd(labelWidth - 3)}  ${chalk.green(createBar(priorityCounts.low, maxPriorityCount).padEnd(barWidth))}${chalk.green(priorityCounts.low.toString().padStart(countWidth))}`);
+      console.log(`  🟢 ${'Low'.padEnd(labelWidth - 3)}  ${chalk.green(createBar(priorityCounts.low, maxPriorityCount).padEnd(barWidth))}${chalk.green(priorityCounts.low.toString().padStart(specsWidth))}`);
     }
     console.log('');
   }
@@ -166,13 +166,13 @@ export async function statsCommand(options: {
 
     const maxTagCount = Math.max(...topTags.map(([, count]) => count));
 
-    console.log(`  ${'Tag'.padEnd(labelWidth)}  ${chalk.magenta('Count'.padEnd(colWidth))}`);
+    console.log(`  ${'Tag'.padEnd(labelWidth)}  ${chalk.magenta('Specs'.padEnd(colWidth))}`);
     console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
 
     for (const [tag, count] of topTags) {
       const truncatedTag = tag.length > labelWidth ? tag.substring(0, labelWidth - 1) + '…' : tag;
       const bar = createBar(count, maxTagCount);
-      console.log(`  ${truncatedTag.padEnd(labelWidth)}  ${chalk.magenta(bar.padEnd(barWidth))}${chalk.magenta(count.toString().padStart(countWidth))}`);
+      console.log(`  ${truncatedTag.padEnd(labelWidth)}  ${chalk.magenta(bar.padEnd(barWidth))}${chalk.magenta(count.toString().padStart(specsWidth))}`);
     }
     console.log('');
   }
