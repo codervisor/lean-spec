@@ -2,10 +2,10 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 /**
- * Create a regex pattern to match spec directories with any number of sequence digits
+ * Create a regex pattern to match spec directories with sequence numbers
  * Handles optional date prefixes like 20251103-001-name
  */
-function createSpecDirPattern(): RegExp {
+export function createSpecDirPattern(): RegExp {
   // Match spec directories, handling optional date prefix
   // Patterns:
   // - 001-name (simple sequence)
@@ -13,6 +13,7 @@ function createSpecDirPattern(): RegExp {
   // - spec-001-name (custom prefix + sequence)
   // We look for: optional-prefix + NNN + dash + name
   // The sequence is 2-4 digits (to avoid matching 8-digit dates as sequences)
+  // Requires dash followed by letter to ensure this is a spec directory name
   return /(?:^|\D)(\d{2,4})-[a-z]/i;
 }
 

@@ -2,6 +2,7 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 import { loadConfig } from '../config.js';
 import { loadAllSpecs } from '../spec-loader.js';
+import { createSpecDirPattern } from '../utils/path-helpers.js';
 
 /**
  * Check for sequence conflicts in specs
@@ -17,13 +18,13 @@ export async function checkSpecs(options: {
   // Find all specs with sequence numbers
   const specs = await loadAllSpecs();
   const sequenceMap = new Map<number, string[]>();
+  const specPattern = createSpecDirPattern();
   
   for (const spec of specs) {
     // Extract sequence number from spec name
     const specName = path.basename(spec.path);
-    // Match sequence: 2-4 digits preceded by start or non-digit, followed by dash and letter
-    // This handles: 001-name, 20251103-001-name, spec-001-name
-    const match = specName.match(/(?:^|\D)(\d{2,4})-[a-z]/i);
+    // Use the same pattern as path-helpers to ensure consistency
+    const match = specName.match(specPattern);
     
     if (match) {
       const seq = parseInt(match[1], 10);

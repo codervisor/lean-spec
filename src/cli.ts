@@ -187,8 +187,9 @@ program
   .action(async (options: {
     quiet?: boolean;
   }) => {
-    const hasConflicts = await checkSpecs(options);
-    process.exit(hasConflicts ? 0 : 1);
+    const hasNoConflicts = await checkSpecs(options);
+    // Exit with 0 (success) if no conflicts, 1 (error) if conflicts found
+    process.exit(hasNoConflicts ? 0 : 1);
   });
 
 // templates command and subcommands
