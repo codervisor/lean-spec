@@ -345,3 +345,227 @@ describe('listSpecs', () => {
     await expect(listSpecs()).resolves.toBeUndefined();
   });
 });
+
+describe('Flexible Folder Structure', () => {
+  let ctx: TestContext;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    ctx = await createTestEnvironment();
+    originalCwd = process.cwd();
+    process.chdir(ctx.tmpDir);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await ctx.cleanup();
+  });
+
+  describe('Flat Pattern', () => {
+    beforeEach(async () => {
+      // Initialize with flat pattern
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: 'flat',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+        },
+      });
+    });
+
+    it('should create specs in flat structure', async () => {
+      await createSpec('first-feature');
+      await createSpec('second-feature');
+
+      const specsDir = path.join(ctx.tmpDir, 'specs');
+      const entries = await fs.readdir(specsDir, { withFileTypes: true });
+      const specs = entries.filter(e => e.isDirectory() && e.name !== 'archived');
+
+      expect(specs).toHaveLength(2);
+      expect(specs[0].name).toBe('001-first-feature');
+      expect(specs[1].name).toBe('002-second-feature');
+    });
+
+    it('should use global sequence numbers in flat pattern', async () => {
+      await createSpec('spec-a');
+      await createSpec('spec-b');
+      await createSpec('spec-c');
+
+      const spec1 = path.join(ctx.tmpDir, 'specs', '001-spec-a');
+      const spec2 = path.join(ctx.tmpDir, 'specs', '002-spec-b');
+      const spec3 = path.join(ctx.tmpDir, 'specs', '003-spec-c');
+
+      expect(await dirExists(spec1)).toBe(true);
+      expect(await dirExists(spec2)).toBe(true);
+      expect(await dirExists(spec3)).toBe(true);
+    });
+
+    it('should support optional date prefix in flat pattern', async () => {
+      // Re-initialize with date prefix
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: 'flat',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+          prefix: '{YYYYMMDD}-',
+        },
+      });
+
+      await createSpec('prefixed-spec');
+
+      const specsDir = path.join(ctx.tmpDir, 'specs');
+      const entries = await fs.readdir(specsDir, { withFileTypes: true });
+      const specs = entries.filter(e => e.isDirectory() && e.name !== 'archived');
+
+      expect(specs).toHaveLength(1);
+      expect(specs[0].name).toMatch(/^\d{8}-001-prefixed-spec$/);
+    });
+
+    it('should support custom prefix in flat pattern', async () => {
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: 'flat',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+          prefix: 'spec-',
+        },
+      });
+
+      await createSpec('custom-prefix');
+
+      const specsDir = path.join(ctx.tmpDir, 'specs');
+      const entries = await fs.readdir(specsDir, { withFileTypes: true });
+      const specs = entries.filter(e => e.isDirectory() && e.name !== 'archived');
+
+      expect(specs).toHaveLength(1);
+      expect(specs[0].name).toBe('spec-001-custom-prefix');
+    });
+  });
+
+  describe('Custom Pattern with Date Grouping', () => {
+    beforeEach(async () => {
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: 'custom',
+          groupExtractor: '{YYYYMMDD}',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+        },
+      });
+    });
+
+    it('should create specs in date-based folders', async () => {
+      await createSpec('dated-spec');
+
+      const today = getTestDate();
+      const specDir = path.join(ctx.tmpDir, 'specs', today, '001-dated-spec');
+
+      expect(await dirExists(specDir)).toBe(true);
+    });
+
+    it('should use global sequence numbers across date folders', async () => {
+      await createSpec('spec-1');
+      await createSpec('spec-2');
+
+      const today = getTestDate();
+      const spec1 = path.join(ctx.tmpDir, 'specs', today, '001-spec-1');
+      const spec2 = path.join(ctx.tmpDir, 'specs', today, '002-spec-2');
+
+      expect(await dirExists(spec1)).toBe(true);
+      expect(await dirExists(spec2)).toBe(true);
+    });
+
+    it('should support YYYY-MM date format', async () => {
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: 'custom',
+          groupExtractor: '{YYYY-MM}',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+        },
+      });
+
+      await createSpec('monthly-spec');
+
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const specDir = path.join(ctx.tmpDir, 'specs', yearMonth, '001-monthly-spec');
+
+      expect(await dirExists(specDir)).toBe(true);
+    });
+  });
+
+  describe('Custom Pattern with Field Grouping', () => {
+    beforeEach(async () => {
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: 'custom',
+          groupExtractor: 'milestone-{milestone}',
+          groupFallback: 'backlog',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+        },
+        frontmatter: {
+          custom: {
+            milestone: 'string',
+          },
+        },
+      });
+    });
+
+    it('should create specs in milestone-based folders', async () => {
+      await createSpec('feature-a', { customFields: { milestone: '1' } });
+      await createSpec('feature-b', { customFields: { milestone: '1' } });
+      await createSpec('feature-c', { customFields: { milestone: '2' } });
+
+      const spec1 = path.join(ctx.tmpDir, 'specs', 'milestone-1', '001-feature-a');
+      const spec2 = path.join(ctx.tmpDir, 'specs', 'milestone-1', '002-feature-b');
+      const spec3 = path.join(ctx.tmpDir, 'specs', 'milestone-2', '003-feature-c');
+
+      expect(await dirExists(spec1)).toBe(true);
+      expect(await dirExists(spec2)).toBe(true);
+      expect(await dirExists(spec3)).toBe(true);
+    });
+
+    it('should use fallback folder when field is missing', async () => {
+      await createSpec('unassigned-feature');
+
+      const specDir = path.join(ctx.tmpDir, 'specs', 'backlog', '001-unassigned-feature');
+      expect(await dirExists(specDir)).toBe(true);
+    });
+
+    it('should use global sequence numbers across milestone folders', async () => {
+      await createSpec('m1-spec', { customFields: { milestone: '1' } });
+      await createSpec('m2-spec', { customFields: { milestone: '2' } });
+      await createSpec('m1-spec-2', { customFields: { milestone: '1' } });
+
+      const spec1 = path.join(ctx.tmpDir, 'specs', 'milestone-1', '001-m1-spec');
+      const spec2 = path.join(ctx.tmpDir, 'specs', 'milestone-2', '002-m2-spec');
+      const spec3 = path.join(ctx.tmpDir, 'specs', 'milestone-1', '003-m1-spec-2');
+
+      expect(await dirExists(spec1)).toBe(true);
+      expect(await dirExists(spec2)).toBe(true);
+      expect(await dirExists(spec3)).toBe(true);
+    });
+  });
+
+  describe('Pattern Migration and Compatibility', () => {
+    it('should convert legacy pattern to custom', async () => {
+      await initTestProject(ctx.tmpDir, {
+        structure: {
+          pattern: '{date}/{seq}-{name}/',
+          dateFormat: 'YYYYMMDD',
+          sequenceDigits: 3,
+          defaultFile: 'README.md',
+        },
+      });
+
+      await createSpec('legacy-spec');
+
+      const today = getTestDate();
+      const specDir = path.join(ctx.tmpDir, 'specs', today, '001-legacy-spec');
+
+      expect(await dirExists(specDir)).toBe(true);
+    });
+  });
+});

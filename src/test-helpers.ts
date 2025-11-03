@@ -50,7 +50,16 @@ export async function initTestProject(
     },
   };
 
-  const finalConfig = { ...defaultConfig, ...config };
+  // Deep merge config, especially structure
+  const finalConfig: LeanSpecConfig = {
+    ...defaultConfig,
+    ...config,
+    structure: {
+      ...defaultConfig.structure,
+      ...config.structure,
+    },
+    frontmatter: config.frontmatter || defaultConfig.frontmatter,
+  };
 
   // Create .lspec directory
   const configDir = path.join(tmpDir, '.lspec');
