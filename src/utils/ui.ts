@@ -1,5 +1,6 @@
 import ora, { Ora } from 'ora';
 import chalk from 'chalk';
+import { sanitizeUserInput } from './safe-output.js';
 
 /**
  * Show a spinner while executing an async operation
@@ -33,6 +34,7 @@ export function createSpinner(text: string): Ora {
 
 /**
  * Display a success message
+ * Note: If message contains user input, it should be pre-sanitized or passed separately
  */
 export function success(message: string): void {
   console.log(chalk.green(`✓ ${message}`));
@@ -40,6 +42,7 @@ export function success(message: string): void {
 
 /**
  * Display an error message
+ * Note: If message contains user input, it should be pre-sanitized or passed separately
  */
 export function error(message: string): void {
   console.error(chalk.red(`✗ ${message}`));
@@ -47,6 +50,7 @@ export function error(message: string): void {
 
 /**
  * Display a warning message
+ * Note: If message contains user input, it should be pre-sanitized or passed separately
  */
 export function warning(message: string): void {
   console.log(chalk.yellow(`⚠ ${message}`));
@@ -54,6 +58,7 @@ export function warning(message: string): void {
 
 /**
  * Display an info message
+ * Note: If message contains user input, it should be pre-sanitized or passed separately
  */
 export function info(message: string): void {
   console.log(chalk.blue(`ℹ ${message}`));
@@ -61,6 +66,7 @@ export function info(message: string): void {
 
 /**
  * Display a heading
+ * Note: If text contains user input, it should be pre-sanitized or passed separately
  */
 export function heading(text: string): void {
   console.log('');
@@ -70,6 +76,7 @@ export function heading(text: string): void {
 
 /**
  * Display a subheading
+ * Note: If text contains user input, it should be pre-sanitized or passed separately
  */
 export function subheading(text: string): void {
   console.log(chalk.cyan.bold(text));
@@ -77,7 +84,14 @@ export function subheading(text: string): void {
 
 /**
  * Display a hint/tip
+ * Note: If message contains user input, it should be pre-sanitized or passed separately
  */
 export function hint(message: string): void {
   console.log(chalk.gray(`💡 Tip: ${message}`));
 }
+
+/**
+ * Helper to sanitize user input before display
+ * This is exported for convenience when building messages that include user input
+ */
+export { sanitizeUserInput };
