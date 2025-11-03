@@ -323,3 +323,107 @@ describe('Integration: Date-based organization', () => {
     expect(specs[2].name).toBe('003-feature-c');
   });
 });
+
+describe('Integration: Created date format preservation (Bug #030)', () => {
+  let ctx: TestContext;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    ctx = await createTestEnvironment();
+    originalCwd = process.cwd();
+    process.chdir(ctx.tmpDir);
+    await initTestProject(ctx.tmpDir);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await ctx.cleanup();
+  });
+
+  it('should preserve created date as YYYY-MM-DD format after create', async () => {
+    // Create spec with no options
+    await createSpec('test-spec-plain');
+    
+    const todayFolder = getTestDate(); // YYYYMMDD format for folder
+    const todayDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format for created field
+    let specFile = path.join(ctx.tmpDir, 'specs', todayFolder, '001-test-spec-plain', 'README.md');
+    let frontmatter = await parseFrontmatter(specFile);
+    
+    // Verify created field is in YYYY-MM-DD format (not ISO string)
+    expect(frontmatter?.created).toBe(todayDate);
+    expect(frontmatter?.created).not.toContain('T');
+    expect(frontmatter?.created).not.toContain('Z');
+    expect(frontmatter?.created).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('should preserve created date format when creating with tags', async () => {
+    await createSpec('test-spec-with-tags', {
+      tags: ['api', 'backend'],
+    });
+    
+    const todayFolder = getTestDate();
+    const todayDate = new Date().toISOString().split('T')[0];
+    const specFile = path.join(ctx.tmpDir, 'specs', todayFolder, '001-test-spec-with-tags', 'README.md');
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    // Verify created field remains YYYY-MM-DD even after frontmatter updates
+    expect(frontmatter?.created).toBe(todayDate);
+    expect(frontmatter?.created).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(frontmatter?.tags).toEqual(['api', 'backend']);
+  });
+
+  it('should preserve created date format when creating with priority and custom fields', async () => {
+    await createSpec('test-spec-with-fields', {
+      priority: 'high',
+      customFields: { epic: 'PROJ-123', sprint: 42 },
+    });
+    
+    const todayFolder = getTestDate();
+    const todayDate = new Date().toISOString().split('T')[0];
+    const specFile = path.join(ctx.tmpDir, 'specs', todayFolder, '001-test-spec-with-fields', 'README.md');
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    // Verify created field format is preserved
+    expect(frontmatter?.created).toBe(todayDate);
+    expect(frontmatter?.created).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(frontmatter?.priority).toBe('high');
+  });
+
+  it('should preserve created date format when updating spec status', async () => {
+    await createSpec('test-spec-update');
+    
+    const todayFolder = getTestDate();
+    const todayDate = new Date().toISOString().split('T')[0];
+    const specName = '001-test-spec-update';
+    
+    // Update the spec status
+    await updateSpec(specName, { status: 'in-progress' });
+    
+    const specFile = path.join(ctx.tmpDir, 'specs', todayFolder, specName, 'README.md');
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    // Verify created date format is still YYYY-MM-DD after update
+    expect(frontmatter?.created).toBe(todayDate);
+    expect(frontmatter?.created).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(frontmatter?.status).toBe('in-progress');
+  });
+
+  it('should preserve created date format when adding tags to existing spec', async () => {
+    await createSpec('test-spec-add-tags');
+    
+    const todayFolder = getTestDate();
+    const todayDate = new Date().toISOString().split('T')[0];
+    const specName = '001-test-spec-add-tags';
+    
+    // Add tags to the spec
+    await updateSpec(specName, { tags: ['feature', 'frontend'] });
+    
+    const specFile = path.join(ctx.tmpDir, 'specs', todayFolder, specName, 'README.md');
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    // Verify created date format is preserved after adding tags
+    expect(frontmatter?.created).toBe(todayDate);
+    expect(frontmatter?.created).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(frontmatter?.tags).toEqual(['feature', 'frontend']);
+  });
+});
