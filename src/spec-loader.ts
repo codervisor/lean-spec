@@ -95,114 +95,86 @@ export async function loadAllSpecs(options: {
     return [];
   }
 
-  // Load active specs
-  const entries = await fs.readdir(specsDir, { withFileTypes: true });
-  const dateDirs = entries
-    .filter((e) => e.isDirectory() && e.name !== 'archived')
-    .sort((a, b) => b.name.localeCompare(a.name)); // Reverse chronological
-
-  for (const dir of dateDirs) {
-    const dateDir = path.join(specsDir, dir.name);
-    const specEntries = await fs.readdir(dateDir, { withFileTypes: true });
-    const specDirs = specEntries.filter((s) => s.isDirectory());
-
-    for (const spec of specDirs) {
-      const specDir = path.join(dateDir, spec.name);
-      const specFile = await getSpecFile(specDir, config.structure.defaultFile);
-
-      if (!specFile) continue;
-
-      const frontmatter = await parseFrontmatter(specFile, config);
-      if (!frontmatter) continue;
-
-      // Apply filter if provided
-      if (options.filter && !matchesFilter(frontmatter, options.filter)) {
-        continue;
+  // Recursively load all specs from the directory structure
+  async function loadSpecsFromDir(dir: string, relativePath: string = ''): Promise<void> {
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        
+        // Skip archived directory in main scan (handle separately)
+        if (entry.name === 'archived' && relativePath === '') continue;
+        
+        const entryPath = path.join(dir, entry.name);
+        const entryRelativePath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+        
+        // Check if this is a spec directory (NNN-name format)
+        if (/^\d{2,3}-.+/.test(entry.name)) {
+          const specFile = await getSpecFile(entryPath, config.structure.defaultFile);
+          
+          if (specFile) {
+            const frontmatter = await parseFrontmatter(specFile, config);
+            
+            if (frontmatter) {
+              // Apply filter if provided
+              if (options.filter && !matchesFilter(frontmatter, options.filter)) {
+                continue;
+              }
+              
+              // Extract date from path or frontmatter
+              const dateMatch = entryRelativePath.match(/(\d{8})/);
+              const date = dateMatch ? dateMatch[1] : (frontmatter.created || '');
+              
+              const specInfo: SpecInfo = {
+                path: entryRelativePath,
+                fullPath: entryPath,
+                filePath: specFile,
+                name: entry.name,
+                date: date,
+                frontmatter,
+              };
+              
+              // Load content if requested
+              if (options.includeContent) {
+                specInfo.content = await fs.readFile(specFile, 'utf-8');
+              }
+              
+              // Load sub-files if requested
+              if (options.includeSubFiles) {
+                specInfo.subFiles = await loadSubFiles(entryPath, {
+                  includeContent: options.includeContent,
+                });
+              }
+              
+              specs.push(specInfo);
+            }
+          }
+        } else {
+          // Not a spec directory, scan recursively for nested structure
+          await loadSpecsFromDir(entryPath, entryRelativePath);
+        }
       }
-
-      const specInfo: SpecInfo = {
-        path: `${dir.name}/${spec.name}`,
-        fullPath: specDir,
-        filePath: specFile,
-        name: spec.name,
-        date: dir.name,
-        frontmatter,
-      };
-
-      // Load content if requested
-      if (options.includeContent) {
-        specInfo.content = await fs.readFile(specFile, 'utf-8');
-      }
-
-      // Load sub-files if requested
-      if (options.includeSubFiles) {
-        specInfo.subFiles = await loadSubFiles(specDir, {
-          includeContent: options.includeContent,
-        });
-      }
-
-      specs.push(specInfo);
+    } catch {
+      // Directory doesn't exist or can't be read
     }
   }
+  
+  // Load active specs
+  await loadSpecsFromDir(specsDir);
 
   // Load archived specs if requested
   if (options.includeArchived) {
     const archivedPath = path.join(specsDir, 'archived');
-    try {
-      await fs.access(archivedPath);
-
-      const archivedEntries = await fs.readdir(archivedPath, { withFileTypes: true });
-      const archivedDirs = archivedEntries
-        .filter((e) => e.isDirectory())
-        .sort((a, b) => b.name.localeCompare(a.name));
-
-      for (const dir of archivedDirs) {
-        const dateDir = path.join(archivedPath, dir.name);
-        const specEntries = await fs.readdir(dateDir, { withFileTypes: true });
-        const specDirs = specEntries.filter((s) => s.isDirectory());
-
-        for (const spec of specDirs) {
-          const specDir = path.join(dateDir, spec.name);
-          const specFile = await getSpecFile(specDir, config.structure.defaultFile);
-
-          if (!specFile) continue;
-
-          const frontmatter = await parseFrontmatter(specFile, config);
-          if (!frontmatter) continue;
-
-          // Apply filter if provided
-          if (options.filter && !matchesFilter(frontmatter, options.filter)) {
-            continue;
-          }
-
-          const specInfo: SpecInfo = {
-            path: `archived/${dir.name}/${spec.name}`,
-            fullPath: specDir,
-            filePath: specFile,
-            name: spec.name,
-            date: dir.name,
-            frontmatter,
-          };
-
-          // Load content if requested
-          if (options.includeContent) {
-            specInfo.content = await fs.readFile(specFile, 'utf-8');
-          }
-
-          // Load sub-files if requested
-          if (options.includeSubFiles) {
-            specInfo.subFiles = await loadSubFiles(specDir, {
-              includeContent: options.includeContent,
-            });
-          }
-
-          specs.push(specInfo);
-        }
-      }
-    } catch {
-      // No archived directory
-    }
+    await loadSpecsFromDir(archivedPath, 'archived');
   }
+
+  // Sort specs by date (reverse chronological) and then by name
+  specs.sort((a, b) => {
+    const dateCompare = b.date.localeCompare(a.date);
+    if (dateCompare !== 0) return dateCompare;
+    return a.name.localeCompare(b.name);
+  });
 
   return specs;
 }
