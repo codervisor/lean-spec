@@ -63,9 +63,13 @@ export const Panel: React.FC<PanelProps> = ({
 
       {/* Content */}
       <Box flexDirection="column">
-        <Box paddingX={padding} paddingY={padding}>
-          {children}
-        </Box>
+        {padding > 0 ? (
+          <Box paddingX={padding} paddingY={padding}>
+            {children}
+          </Box>
+        ) : (
+          children
+        )}
       </Box>
 
       {/* Bottom border */}
