@@ -16,7 +16,7 @@ const FILLED_BAR_CHAR = '█';
 const EMPTY_BAR_CHAR = '░';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; color: string }> = {
-  planned: { emoji: '📋', color: 'gray' },
+  planned: { emoji: '📅', color: 'gray' },
   'in-progress': { emoji: '⚡', color: 'yellow' },
   complete: { emoji: '✅', color: 'green' },
   archived: { emoji: '📦', color: 'gray' },
@@ -159,16 +159,20 @@ export async function ganttCommand(options: {
   
   for (const priority of priorities) {
     const specsInGroup = sortSpecs(groupedSpecs[priority]);
+    
+    // Skip empty priority groups
+    if (specsInGroup.length === 0) {
+      continue;
+    }
+    
     const config = PRIORITY_CONFIG[priority];
     
-    // Always show priority header with count
+    // Show priority header with count
     console.log(config.colorFn(`${config.emoji} ${config.label} (${specsInGroup.length})`));
     
     // Display specs in this priority group
-    if (specsInGroup.length > 0) {
-      for (const spec of specsInGroup) {
-        renderSpecRow(spec, startDate, endDate, weeks, today);
-      }
+    for (const spec of specsInGroup) {
+      renderSpecRow(spec, startDate, endDate, weeks, today);
     }
     
     console.log('');
