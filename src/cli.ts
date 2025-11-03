@@ -18,6 +18,10 @@ import {
   searchCommand,
   ganttCommand,
   filesCommand,
+  showCommand,
+  viewCommand,
+  readCommand,
+  openCommand,
 } from './commands/index.js';
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
@@ -352,6 +356,67 @@ program
     criticalPath?: boolean;
   }) => {
     await ganttCommand(options);
+  });
+
+// show command
+program
+  .command('show <spec-path>')
+  .description('Display spec with rendered markdown')
+  .option('--no-pager', 'Disable pagination')
+  .option('--no-color', 'Disable colors')
+  .action(async (specPath: string, options: {
+    pager?: boolean;
+    color?: boolean;
+  }) => {
+    await showCommand(specPath, {
+      noPager: options.pager === false,
+      noColor: options.color === false,
+    });
+  });
+
+// view command (alias for show)
+program
+  .command('view <spec-path>')
+  .description('Display spec with rendered markdown (alias for show)')
+  .option('--no-pager', 'Disable pagination')
+  .option('--no-color', 'Disable colors')
+  .action(async (specPath: string, options: {
+    pager?: boolean;
+    color?: boolean;
+  }) => {
+    await viewCommand(specPath, {
+      noPager: options.pager === false,
+      noColor: options.color === false,
+    });
+  });
+
+// read command
+program
+  .command('read <spec-path>')
+  .description('Output raw spec content (for piping/scripting)')
+  .option('--format <format>', 'Output format: markdown (default), json')
+  .option('--frontmatter-only', 'Only output frontmatter as JSON')
+  .action(async (specPath: string, options: {
+    format?: 'markdown' | 'json';
+    frontmatterOnly?: boolean;
+  }) => {
+    await readCommand(specPath, {
+      format: options.format,
+      frontmatterOnly: options.frontmatterOnly,
+    });
+  });
+
+// open command
+program
+  .command('open <spec-path>')
+  .description('Open spec in editor')
+  .option('--editor <editor>', 'Specify editor command')
+  .action(async (specPath: string, options: {
+    editor?: string;
+  }) => {
+    await openCommand(specPath, {
+      editor: options.editor,
+    });
   });
 
 // Parse and execute
