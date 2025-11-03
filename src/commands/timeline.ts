@@ -2,12 +2,16 @@ import chalk from 'chalk';
 import dayjs from 'dayjs';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecFilterOptions } from '../frontmatter.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function timelineCommand(options: {
   days?: number;
   byTag?: boolean;
   byAssignee?: boolean;
 }): Promise<void> {
+  // Auto-check for conflicts before display
+  await autoCheckIfEnabled();
+  
   const days = options.days || 30;
   
   // Load all specs (including archived for completion history)

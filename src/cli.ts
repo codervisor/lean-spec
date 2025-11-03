@@ -4,6 +4,7 @@ import {
   archiveSpec,
   listSpecs,
   updateSpec,
+  checkSpecs,
   listTemplates,
   showTemplate,
   addTemplate,
@@ -47,6 +48,7 @@ program
   .option('--assignee <name>', 'Set assignee')
   .option('--template <template>', 'Use a specific template')
   .option('--field <name=value...>', 'Set custom field (can specify multiple)')
+  .option('--no-prefix', 'Skip date prefix even if configured')
   .action(async (name: string, options: {
     title?: string;
     description?: string;
@@ -55,6 +57,7 @@ program
     assignee?: string;
     template?: string;
     field?: string[];
+    prefix?: boolean;
   }) => {
     // Parse custom fields from --field options
     const customFields = parseCustomFieldOptions(options.field);
@@ -67,6 +70,7 @@ program
       assignee?: string;
       template?: string;
       customFields?: Record<string, unknown>;
+      noPrefix?: boolean;
     } = {
       title: options.title,
       description: options.description,
@@ -75,6 +79,7 @@ program
       assignee: options.assignee,
       template: options.template,
       customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+      noPrefix: options.prefix === false,
     };
     await createSpec(name, createOptions);
   });
@@ -172,6 +177,18 @@ program
     }
     
     await updateSpec(specPath, updates);
+  });
+
+// check command
+program
+  .command('check')
+  .description('Check for sequence conflicts')
+  .option('-q, --quiet', 'Brief output')
+  .action(async (options: {
+    quiet?: boolean;
+  }) => {
+    const hasConflicts = await checkSpecs(options);
+    process.exit(hasConflicts ? 0 : 1);
   });
 
 // templates command and subcommands

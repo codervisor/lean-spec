@@ -6,6 +6,7 @@ import { withSpinner } from '../utils/ui.js';
 import { loadAllSpecs } from '../spec-loader.js';
 import { getStatusEmoji, getPriorityLabel } from '../utils/spec-helpers.js';
 import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function listSpecs(options: {
   showArchived?: boolean;
@@ -15,6 +16,9 @@ export async function listSpecs(options: {
   assignee?: string;
   customFields?: Record<string, unknown>;
 } = {}): Promise<void> {
+  // Auto-check for conflicts before listing
+  await autoCheckIfEnabled();
+  
   const config = await loadConfig();
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);

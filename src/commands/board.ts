@@ -4,12 +4,16 @@ import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecFilterOptions } from '../frontmatter.js';
 import { Board } from '../components/Board.js';
 import { withSpinner } from '../utils/ui.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function boardCommand(options: {
   showComplete?: boolean;
   tag?: string;
   assignee?: string;
 }): Promise<void> {
+  // Auto-check for conflicts before display
+  await autoCheckIfEnabled();
+  
   // Build filter
   const filter: SpecFilterOptions = {};
   if (options.tag) {

@@ -4,12 +4,16 @@ import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
 import { StatsDisplay } from '../components/StatsDisplay.js';
 import { withSpinner } from '../utils/ui.js';
+import { autoCheckIfEnabled } from './check.js';
 
 export async function statsCommand(options: {
   tag?: string;
   assignee?: string;
   json?: boolean;
 }): Promise<void> {
+  // Auto-check for conflicts before stats
+  await autoCheckIfEnabled();
+  
   // Build filter
   const filter: SpecFilterOptions = {};
   if (options.tag) {
