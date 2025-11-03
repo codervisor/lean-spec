@@ -1,13 +1,18 @@
 ---
-status: planned
+status: complete
 created: '2025-11-03'
-tags: [bug, templates, frontmatter, enhancement]
+tags:
+  - bug
+  - templates
+  - frontmatter
+  - enhancement
 priority: high
+completed: '2025-11-03'
 ---
 
 # Template Variable Synchronization
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-03
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-03 · **Tags**: bug, templates, frontmatter, enhancement
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -134,3 +139,54 @@ More robust, consistent with existing variable system, enables richer templates.
 **Alternative considered**: Use a more sophisticated template engine (Handlebars, Nunjucks), but that adds dependencies and complexity for a simple use case
 
 **Timeline**: Should be implemented before v1.0 release to avoid breaking template changes later
+
+---
+
+## Implementation Complete ✅
+
+**Implemented on**: 2025-11-03
+
+### What Was Built
+
+Implemented Solution 1 (frontmatter variables in variable resolver) as recommended in the design.
+
+**Key Changes:**
+
+1. **Extended `VariableContext`** to include `frontmatter` field
+2. **Added formatting helpers** for special field types:
+   - `formatStatus()` - Maps status values to emoji + label (e.g., "planned" → "📅 Planned")
+   - `formatPriority()` - Capitalizes priority values (e.g., "high" → "High")  
+   - `formatFrontmatterValue()` - Generic formatter handling arrays, objects, and primitives
+3. **Updated `resolveVariables()`** to process frontmatter field variables after built-in and custom variables
+4. **Refactored `create.ts`** to:
+   - Always parse frontmatter after initial template variable resolution
+   - Apply frontmatter variable resolution to body content
+   - Ensures `{status}`, `{priority}`, `{tags}`, etc. in templates are replaced with actual values
+5. **Updated all templates** (standard, minimal, enterprise) to use variables instead of hardcoded values
+
+### Test Coverage
+
+- ✅ Added 8 new unit tests for frontmatter variable resolution
+- ✅ All 165 tests passing
+- ✅ Manual testing confirms correct behavior with `--priority`, `--tags`, `--assignee` flags
+
+### Usage Examples
+
+```bash
+# Create spec with high priority - body shows "Priority: High"
+lspec create my-feature --priority high
+
+# Create spec with tags - frontmatter and body stay in sync
+lspec create api-feature --tags api,backend
+
+# Enterprise template with assignee
+lspec create project --assignee alice
+```
+
+### Benefits Delivered
+
+✅ Frontmatter and body content now stay synchronized  
+✅ No manual editing required after spec creation  
+✅ Works with all built-in templates  
+✅ Extensible to custom frontmatter fields  
+✅ Maintains backward compatibility
