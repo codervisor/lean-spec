@@ -6,7 +6,7 @@ import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; colorFn: (s: string) => string }> = {
-  planned: { emoji: '⏳', label: 'Planned', colorFn: chalk.cyan },
+  planned: { emoji: '📅', label: 'Planned', colorFn: chalk.cyan },
   'in-progress': { emoji: '⚡', label: 'In Progress', colorFn: chalk.yellow },
   complete: { emoji: '✅', label: 'Complete', colorFn: chalk.green },
   archived: { emoji: '📦', label: 'Archived', colorFn: chalk.dim },
