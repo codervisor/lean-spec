@@ -367,6 +367,7 @@ describe('Flexible Folder Structure', () => {
       await initTestProject(ctx.tmpDir, {
         structure: {
           pattern: 'flat',
+          dateFormat: 'YYYYMMDD',
           sequenceDigits: 3,
           defaultFile: 'README.md',
         },
@@ -405,6 +406,7 @@ describe('Flexible Folder Structure', () => {
       await initTestProject(ctx.tmpDir, {
         structure: {
           pattern: 'flat',
+          dateFormat: 'YYYYMMDD',
           sequenceDigits: 3,
           defaultFile: 'README.md',
           prefix: '{YYYYMMDD}-',
@@ -425,6 +427,7 @@ describe('Flexible Folder Structure', () => {
       await initTestProject(ctx.tmpDir, {
         structure: {
           pattern: 'flat',
+          dateFormat: 'YYYYMMDD',
           sequenceDigits: 3,
           defaultFile: 'README.md',
           prefix: 'spec-',
@@ -447,6 +450,7 @@ describe('Flexible Folder Structure', () => {
       await initTestProject(ctx.tmpDir, {
         structure: {
           pattern: 'custom',
+          dateFormat: 'YYYYMMDD',
           groupExtractor: '{YYYYMMDD}',
           sequenceDigits: 3,
           defaultFile: 'README.md',
@@ -479,6 +483,7 @@ describe('Flexible Folder Structure', () => {
       await initTestProject(ctx.tmpDir, {
         structure: {
           pattern: 'custom',
+          dateFormat: 'YYYY-MM',
           groupExtractor: '{YYYY-MM}',
           sequenceDigits: 3,
           defaultFile: 'README.md',
@@ -500,6 +505,7 @@ describe('Flexible Folder Structure', () => {
       await initTestProject(ctx.tmpDir, {
         structure: {
           pattern: 'custom',
+          dateFormat: 'YYYYMMDD',
           groupExtractor: 'milestone-{milestone}',
           groupFallback: 'backlog',
           sequenceDigits: 3,

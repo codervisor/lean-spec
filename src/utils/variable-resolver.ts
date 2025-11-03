@@ -123,7 +123,7 @@ export async function buildVariableContext(
   };
   
   // Load project name
-  context.projectName = await getProjectName();
+  context.projectName = (await getProjectName()) || undefined;
   
   // Load git info
   context.gitInfo = await getGitInfo() || undefined;
