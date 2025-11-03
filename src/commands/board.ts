@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecInfo } from '../spec-loader.js';
-import type { SpecFilterOptions, SpecStatus } from '../frontmatter.js';
+import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 
@@ -10,6 +10,13 @@ const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; colorFn:
   'in-progress': { emoji: '⚡', label: 'In Progress', colorFn: chalk.yellow },
   complete: { emoji: '✅', label: 'Complete', colorFn: chalk.green },
   archived: { emoji: '📦', label: 'Archived', colorFn: chalk.dim },
+};
+
+const PRIORITY_BADGES: Record<SpecPriority, { emoji: string; colorFn: (s: string) => string }> = {
+  critical: { emoji: '🔴', colorFn: chalk.red },
+  high: { emoji: '🟠', colorFn: chalk.hex('#FFA500') },
+  medium: { emoji: '🟡', colorFn: chalk.yellow },
+  low: { emoji: '🟢', colorFn: chalk.green },
 };
 
 export async function boardCommand(options: {
@@ -39,7 +46,7 @@ export async function boardCommand(options: {
   );
 
   if (specs.length === 0) {
-    console.log('No specs found.');
+    console.log(chalk.dim('No specs found.'));
     return;
   }
 
@@ -84,72 +91,74 @@ function renderColumn(
   expanded: boolean,
   colorFn: (s: string) => string
 ): void {
-  const width = 68;
+  const width = 60;
   const count = specs.length;
   const header = `${emoji} ${title} (${count})`;
-  const padding = Math.max(0, width - header.length - 4);
+  
+  // Ensure consistent box width
+  const boxContent = width + 4; // +4 for padding and borders (│ + space + space + │)
 
-  const topLeft = '╭';
-  const topRight = '╮';
-  const bottomLeft = '╰';
-  const bottomRight = '╯';
-  const horizontal = '─';
-  const vertical = '│';
-
-  // Top border with title
-  console.log(`${topLeft}${horizontal} ${colorFn(chalk.bold(header))} ${horizontal.repeat(padding)}${topRight}`);
+  // Top border
+  console.log(colorFn(`┌─ ${chalk.bold(header)} ${('─').repeat(Math.max(0, width - header.length - 2))}┐`));
 
   // Content
   if (expanded && specs.length > 0) {
     for (let i = 0; i < specs.length; i++) {
       const spec = specs[i];
       
-      // Spec name
-      console.log(`${vertical} ${chalk.bold.cyan(spec.path.padEnd(width))} ${vertical}`);
+      // Spec name - truncate if needed
+      const specNameDisplay = spec.path.length > width - 4 ? spec.path.substring(0, width - 5) + '…' : spec.path;
+      const namePadding = width - specNameDisplay.length;
+      console.log(`│ ${chalk.bold.cyan(specNameDisplay)}${' '.repeat(namePadding)} │`);
 
-      // Metadata line with tags and priority
-      if (spec.frontmatter.tags?.length || spec.frontmatter.priority || spec.frontmatter.assignee) {
-        const parts: string[] = [];
-        
-        if (spec.frontmatter.tags?.length) {
-          const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
-          parts.push(tagStr);
-        }
-        
-        if (spec.frontmatter.priority) {
-          const priorityEmoji = {
-            critical: '🔴',
-            high: '🟠',
-            medium: '🟡',
-            low: '🟢',
-          }[spec.frontmatter.priority];
-          parts.push(`${priorityEmoji} ${spec.frontmatter.priority}`);
-        }
-        
-        if (spec.frontmatter.assignee) {
-          parts.push(`@${spec.frontmatter.assignee}`);
-        }
-        
-        const metaText = parts.join(' · ');
-        const paddingNeeded = Math.max(0, width - metaText.length);
-        
-        console.log(`${vertical} ${chalk.dim(metaText)}${' '.repeat(paddingNeeded)} ${vertical}`);
+      // Metadata line with tags, priority, and assignee
+      const metaParts: string[] = [];
+      
+      if (spec.frontmatter.tags?.length) {
+        const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
+        metaParts.push(chalk.magenta(tagStr));
+      }
+      
+      if (spec.frontmatter.priority) {
+        const badge = PRIORITY_BADGES[spec.frontmatter.priority];
+        const priorityStr = `${badge.emoji} ${spec.frontmatter.priority}`;
+        metaParts.push(badge.colorFn(priorityStr));
+      }
+      
+      if (spec.frontmatter.assignee) {
+        metaParts.push(chalk.cyan(`@${spec.frontmatter.assignee}`));
+      }
+      
+      if (metaParts.length > 0) {
+        const metaJoined = metaParts.join(' · ');
+        // Calculate visible length (without ANSI codes)
+        const visibleLength = stripAnsi(metaJoined).length;
+        const metaDisplay = visibleLength > width - 4 ? stripAnsi(metaJoined).substring(0, width - 5) + '…' : metaJoined;
+        const metaPadding = width - stripAnsi(metaDisplay).length;
+        console.log(`│ ${metaDisplay}${' '.repeat(Math.max(0, metaPadding))} │`);
       }
 
-      // Spacing between specs
+      // Divider between specs
       if (i < specs.length - 1) {
-        console.log(`${vertical}${' '.repeat(width + 2)}${vertical}`);
+        console.log(`├${('─').repeat(width + 2)}┤`);
       }
     }
   } else if (!expanded && specs.length > 0) {
     const message = '(collapsed, use --show-complete to expand)';
-    console.log(`${vertical} ${chalk.dim(message)}${' '.repeat(Math.max(0, width - message.length))} ${vertical}`);
+    const padding = width - message.length;
+    console.log(`│ ${chalk.dim(message)}${' '.repeat(padding)} │`);
   } else {
-    const message = '(no specs)';
-    console.log(`${vertical} ${chalk.dim(message)}${' '.repeat(Math.max(0, width - message.length))} ${vertical}`);
+    const message = '(empty)';
+    const padding = width - message.length;
+    console.log(`│ ${chalk.dim(message)}${' '.repeat(padding)} │`);
   }
 
   // Bottom border
-  console.log(`${bottomLeft}${horizontal.repeat(width + 2)}${bottomRight}`);
+  console.log(`└${('─').repeat(width + 2)}┘`);
   console.log('');
+}
+
+// Helper function to strip ANSI codes for accurate length calculation
+function stripAnsi(str: string): string {
+  return str.replace(/\u001b\[\d+m/g, '');
 }

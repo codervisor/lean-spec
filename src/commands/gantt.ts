@@ -45,20 +45,17 @@ export async function ganttCommand(options: {
 
   // Filter relevant specs
   const relevantSpecs = specs.filter(spec => {
+    // Hide completed specs unless explicitly requested
     if (!options.showComplete && spec.frontmatter.status === 'complete') {
       return false;
     }
-    return (
-      spec.frontmatter.due ||
-      spec.frontmatter.depends_on ||
-      spec.frontmatter.status === 'in-progress' ||
-      spec.frontmatter.status === 'complete'
-    );
+    // Show all non-archived specs (planned, in-progress, complete with flag)
+    return spec.frontmatter.status !== 'archived';
   });
 
   if (relevantSpecs.length === 0) {
-    console.log(chalk.dim('No specs found with due dates or dependencies.'));
-    console.log(chalk.dim('Tip: Add a "due: YYYY-MM-DD" field to frontmatter to use gantt view.'));
+    console.log(chalk.dim('No active specs found.'));
+    console.log(chalk.dim('Tip: Use --show-complete to include completed specs.'));
     return;
   }
 
@@ -106,7 +103,7 @@ export async function ganttCommand(options: {
   console.log(`${chalk.green('■')} Complete   ${chalk.yellow('■')} In Progress   ${chalk.dim('□')} Planned   ${chalk.red('▸')} Due Date   ${chalk.blue('○')} Today`);
   console.log('');
 
-  // Timeline header
+  // Timeline header - each week is 8 chars wide
   const headerParts: string[] = [];
   for (let i = 0; i < weeks; i++) {
     const date = startDate.add(i, 'week');
@@ -119,7 +116,13 @@ export async function ganttCommand(options: {
     }
   }
   console.log(headerParts.join(''));
-  console.log(chalk.dim('|' + '--------|'.repeat(weeks)));
+  
+  // Separator line - matches header spacing exactly (8 chars per week)
+  const separatorParts: string[] = [];
+  for (let i = 0; i < weeks; i++) {
+    separatorParts.push('────────'); // 8 horizontal lines
+  }
+  console.log(chalk.dim(separatorParts.join('')));
   console.log('');
 
   // Display each spec
@@ -173,7 +176,7 @@ function renderSpecTimeline(
 
   // Timeline bar
   const bar = renderTimelineBar(spec, startDate, endDate, weeks, today);
-  console.log('  ' + bar);
+  console.log(bar);
 
   // Metadata
   const metaParts: string[] = [chalk.dim(`  ${statusConfig.emoji} ${spec.frontmatter.status}`)];
