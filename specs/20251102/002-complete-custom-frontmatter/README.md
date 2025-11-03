@@ -1,6 +1,6 @@
 ---
 status: in-progress
-created: 2025-11-02T00:00:00.000Z
+created: '2025-11-02'
 tags:
   - enhancement
   - frontmatter

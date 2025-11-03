@@ -111,6 +111,11 @@ export async function createSpec(name: string, options: {
       // Parse existing frontmatter using gray-matter
       const parsed = matter(content);
       
+      // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
+      if (parsed.data.created instanceof Date) {
+        parsed.data.created = parsed.data.created.toISOString().split('T')[0];
+      }
+      
       // Add tags if provided
       if (options.tags && options.tags.length > 0) {
         parsed.data.tags = options.tags;

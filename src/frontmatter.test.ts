@@ -618,3 +618,83 @@ describe('validateCustomFields', () => {
     expect(validated).toEqual(frontmatter);
   });
 });
+
+describe('Date Format Handling', () => {
+  let ctx: TestContext;
+
+  beforeEach(async () => {
+    ctx = await createTestEnvironment();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  it('should maintain date as string format (YYYY-MM-DD) after updates', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: '2025-11-03'
+tags: []
+priority: medium
+---
+
+# Test Spec
+
+Content here.
+`,
+      'utf-8'
+    );
+
+    // Update with tags - this triggers gray-matter parse/stringify cycle
+    await updateFrontmatter(specFile, {
+      tags: ['test', 'bug-fix'],
+    });
+
+    // Read back and check the date format
+    const content = await fs.readFile(specFile, 'utf-8');
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    // Date should remain as simple YYYY-MM-DD string, not ISO format
+    expect(frontmatter?.created).toBe('2025-11-03');
+    expect(typeof frontmatter?.created).toBe('string');
+    
+    // Verify in raw content that it's not the ISO format with timestamp
+    expect(content).not.toContain('2025-11-03T00:00:00.000Z');
+    expect(content).toContain("created: '2025-11-03'");
+  });
+
+  it('should convert Date objects to YYYY-MM-DD strings during updates', async () => {
+    const specFile = path.join(ctx.tmpDir, 'test.md');
+    
+    // Simulate a case where gray-matter parses unquoted date as Date object
+    await fs.writeFile(
+      specFile,
+      `---
+status: planned
+created: 2025-11-03
+---
+
+# Test Spec
+`,
+      'utf-8'
+    );
+
+    // Update - this should trigger our safeguard
+    await updateFrontmatter(specFile, {
+      status: 'in-progress',
+    });
+
+    // Read back and verify date is now a proper string
+    const content = await fs.readFile(specFile, 'utf-8');
+    const frontmatter = await parseFrontmatter(specFile);
+    
+    expect(typeof frontmatter?.created).toBe('string');
+    expect(frontmatter?.created).toBe('2025-11-03');
+    
+    // Should NOT contain ISO timestamp format
+    expect(content).not.toContain('T00:00:00.000Z');
+  });
+});

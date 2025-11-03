@@ -207,6 +207,20 @@ export async function updateFrontmatter(
   // Merge updates with existing data
   const newData = { ...parsed.data, ...updates };
 
+  // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
+  if (newData.created instanceof Date) {
+    newData.created = newData.created.toISOString().split('T')[0];
+  }
+  if (newData.completed instanceof Date) {
+    newData.completed = newData.completed.toISOString().split('T')[0];
+  }
+  if (newData.updated instanceof Date) {
+    newData.updated = newData.updated.toISOString().split('T')[0];
+  }
+  if (newData.due instanceof Date) {
+    newData.due = newData.due.toISOString().split('T')[0];
+  }
+
   // Auto-update timestamps if fields exist
   if (updates.status === 'complete' && !newData.completed) {
     newData.completed = dayjs().format('YYYY-MM-DD');
