@@ -3,11 +3,26 @@ status: complete
 created: 2025-11-03
 tags: [core, ux, multi-user]
 priority: high
+updated: 2025-11-03
 ---
 
 # Folder Structure: Polish & Multi-User Support
 
 > Polish the flexible folder structure implementation and add simple conflict warnings for multi-user workflows
+
+## Status Update (2025-11-03)
+
+✅ **Critical items completed:**
+- Date prefix default implementation
+- `lspec check` command with conflict detection
+- Auto-check integration across all spec-reading commands
+
+📋 **Minor polish issues tracked separately:**
+- [005-pattern-aware-list-grouping](../005-pattern-aware-list-grouping/) - Fix list.ts date grouping
+- [006-template-config-updates](../006-template-config-updates/) - Update template configs
+- [012-init-pattern-selection](../012-init-pattern-selection/) - Add pattern selection to init wizard
+
+This spec focused on solving the critical multi-user conflict issue. The minor polish items are now tracked individually for cleaner organization and focused work.
 
 ## Problem
 
