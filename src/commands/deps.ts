@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { getSpec, loadAllSpecs, type SpecInfo } from '../spec-loader.js';
 import { autoCheckIfEnabled } from './check.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 export async function depsCommand(specPath: string, options: {
   depth?: number;
@@ -13,7 +14,7 @@ export async function depsCommand(specPath: string, options: {
   const spec = await getSpec(specPath);
   
   if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
+    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
     process.exit(1);
   }
 
@@ -44,7 +45,7 @@ export async function depsCommand(specPath: string, options: {
 
   // Display dependencies
   console.log('');
-  console.log(chalk.green(`📦 Dependencies for ${chalk.cyan(spec.path)}`));
+  console.log(chalk.green(`📦 Dependencies for ${chalk.cyan(sanitizeUserInput(spec.path))}`));
   console.log('');
 
   // Depends On section
@@ -52,7 +53,7 @@ export async function depsCommand(specPath: string, options: {
   if (dependsOn.length > 0) {
     for (const dep of dependsOn) {
       const status = getStatusIndicator(dep.frontmatter.status);
-      console.log(`  → ${dep.path} ${status}`);
+      console.log(`  → ${sanitizeUserInput(dep.path)} ${status}`);
     }
   } else {
     console.log(chalk.gray('  (none)'));
@@ -64,7 +65,7 @@ export async function depsCommand(specPath: string, options: {
   if (blocks.length > 0) {
     for (const blocked of blocks) {
       const status = getStatusIndicator(blocked.frontmatter.status);
-      console.log(`  ← ${blocked.path} ${status}`);
+      console.log(`  ← ${sanitizeUserInput(blocked.path)} ${status}`);
     }
   } else {
     console.log(chalk.gray('  (none)'));
@@ -76,7 +77,7 @@ export async function depsCommand(specPath: string, options: {
     console.log(chalk.bold('Related:'));
     for (const rel of related) {
       const status = getStatusIndicator(rel.frontmatter.status);
-      console.log(`  ⟷ ${rel.path} ${status}`);
+      console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
     }
     console.log('');
   }

@@ -7,7 +7,7 @@ priority: medium
 
 # {name}
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: {date}
+> **Status**: {status} · **Priority**: {priority} · **Created**: {date}
 
 ## Overview
 

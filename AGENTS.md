@@ -144,6 +144,29 @@ Variables are automatically resolved when creating specs.
 6. **Update status** - Mark progress: `draft` → `in-progress` → `complete`
 7. **Archive when done** - `lspec archive <spec>` moves to archive
 
+## Folder Structure
+
+**Default (v0.2.0+)**: Flat structure with global sequence numbers
+```
+specs/
+├── 001-typescript-cli-migration/
+├── 002-template-system-redesign/
+├── 024-flat-structure-migration/
+└── archived/
+```
+
+**Legacy (v0.1.x)**: Date-based grouping (still supported via config)
+```
+specs/
+├── 20251031/
+│   ├── 001-feature-a/
+│   └── 002-feature-b/
+└── 20251103/
+    └── 003-feature-c/  # Global sequence continues
+```
+
+**Note**: Sequence numbers are globally unique across the entire project, regardless of folder organization. See `.lspec/config.json` for current structure.
+
 ## Quality Standards
 
 - Code is clear and maintainable

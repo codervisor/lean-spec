@@ -100,12 +100,14 @@ your-project/
 │   └── templates/          # Custom spec templates (optional)
 │       └── spec-template.md
 ├── specs/                  # All your specs live here
-│   └── YYYYMMDD/          # Date-organized folders
-│       └── NNN-name/      # Sequential spec folders
-│           └── README.md  # The actual spec
+│   ├── 001-first-feature/  # Flat structure with global numbering
+│   ├── 002-second-feature/
+│   └── archived/           # Completed specs
 ├── AGENTS.md              # AI agent integration guidance
 └── ... (your project files)
 ```
+
+**Note**: Default structure is flat with global numbering (`001-name/`, `002-name/`). For date-based grouping, configure the `structure.pattern` in `.lspec/config.json`.
 
 ## Integrating with Existing Projects
 
@@ -145,7 +147,7 @@ lspec create my-feature
 ```
 
 This creates:
-- `specs/20251102/001-my-feature/` folder (date-based organization)
+- `specs/001-my-feature/` folder (flat structure with global numbering)
 - `README.md` inside with your template content
 - Frontmatter with default metadata
 
@@ -162,11 +164,12 @@ lspec create feature-name
 # List all specs
 lspec list
 
-# Update spec metadata
-lspec update specs/20251102/001-my-feature --status=in-progress
+# Update spec metadata (by number or path)
+lspec update 001 --status=in-progress
+lspec update specs/001-my-feature --status=in-progress
 
 # Archive completed specs
-lspec archive specs/20251102/001-my-feature
+lspec archive 001
 ```
 
 For a complete command reference, see [CLI Commands](/docs/reference/cli).

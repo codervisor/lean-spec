@@ -2,26 +2,31 @@ import chalk from 'chalk';
 import dayjs from 'dayjs';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecInfo } from '../spec-loader.js';
-import type { SpecStatus } from '../frontmatter.js';
+import type { SpecStatus, SpecPriority } from '../frontmatter.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 
-// Column width constants for consistent alignment
-const SPEC_COLUMN_WIDTH = 43;
-const COLUMN_SEPARATOR = '  ';
+// Column width constants (aligned with stats.ts and timeline.ts)
+const SPEC_COLUMN_WIDTH = 43;  // Includes status emoji + 1 space + spec name
+const COLUMN_SEPARATOR = '  '; // 2 spaces between columns
+const SPEC_INDENT = '  '; // 2 spaces for spec indentation within priority groups
+
+// Timeline bar characters
+const FILLED_BAR_CHAR = '█';
+const EMPTY_BAR_CHAR = '░';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; color: string }> = {
-  planned: { emoji: '📋', color: 'gray' },
+  planned: { emoji: '📅', color: 'gray' },
   'in-progress': { emoji: '⚡', color: 'yellow' },
   complete: { emoji: '✅', color: 'green' },
   archived: { emoji: '📦', color: 'gray' },
 };
 
-const PRIORITY_CONFIG = {
-  critical: { emoji: '🔴', text: 'CRITICAL', color: chalk.red },
-  high: { emoji: '🟠', text: 'HIGH', color: chalk.hex('#FFA500') },
-  medium: { emoji: '🟡', text: 'MEDIUM', color: chalk.yellow },
-  low: { emoji: '🟢', text: 'LOW', color: chalk.green },
+const PRIORITY_CONFIG: Record<SpecPriority, { emoji: string; label: string; colorFn: (s: string) => string }> = {
+  critical: { emoji: '🔴', label: 'CRITICAL', colorFn: chalk.red },
+  high: { emoji: '🟠', label: 'HIGH', colorFn: chalk.hex('#FFA500') },
+  medium: { emoji: '🟡', label: 'MEDIUM', colorFn: chalk.yellow },
+  low: { emoji: '🟢', label: 'LOW', colorFn: chalk.green },
 };
 
 export async function ganttCommand(options: {
@@ -31,13 +36,14 @@ export async function ganttCommand(options: {
 }): Promise<void> {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
-
+  
   const weeks = options.weeks || 4;
   const timelineColumnWidth = weeks * 8; // 8 chars per week
-
+  
   // Load all specs with spinner
-  const specs = await withSpinner('Loading specs...', () =>
-    loadAllSpecs({
+  const specs = await withSpinner(
+    'Loading specs...',
+    () => loadAllSpecs({
       includeArchived: false,
     })
   );
@@ -48,7 +54,7 @@ export async function ganttCommand(options: {
   }
 
   // Filter relevant specs
-  const relevantSpecs = specs.filter((spec) => {
+  const relevantSpecs = specs.filter(spec => {
     // Hide completed specs unless explicitly requested
     if (!options.showComplete && spec.frontmatter.status === 'complete') {
       return false;
@@ -64,99 +70,111 @@ export async function ganttCommand(options: {
   }
 
   // Group specs by priority
-  const DEFAULT_PRIORITY = 'medium';
-  const specsByPriority: Record<string, SpecInfo[]> = {
+  const groupedSpecs: Record<SpecPriority, SpecInfo[]> = {
     critical: [],
     high: [],
     medium: [],
     low: [],
   };
-
+  
+  const noPrioritySpecs: SpecInfo[] = [];
+  
   for (const spec of relevantSpecs) {
-    const priority = spec.frontmatter.priority || DEFAULT_PRIORITY;
-    if (specsByPriority[priority]) {
-      specsByPriority[priority].push(spec);
+    if (spec.frontmatter.priority && spec.frontmatter.priority in groupedSpecs) {
+      groupedSpecs[spec.frontmatter.priority].push(spec);
     } else {
-      specsByPriority[DEFAULT_PRIORITY].push(spec);
+      noPrioritySpecs.push(spec);
     }
   }
-
-  // Sort specs within each priority group by due date, then status
-  for (const priority in specsByPriority) {
-    specsByPriority[priority].sort((a, b) => {
-      // Due dates first
+  
+  // Sort specs within each group by status (in-progress first), then by due date
+  const sortSpecs = (specs: SpecInfo[]) => {
+    return [...specs].sort((a, b) => {
+      const statusOrder = { 'in-progress': 0, 'planned': 1, 'complete': 2 };
+      const aOrder = statusOrder[a.frontmatter.status as keyof typeof statusOrder] ?? 3;
+      const bOrder = statusOrder[b.frontmatter.status as keyof typeof statusOrder] ?? 3;
+      
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      
       if (a.frontmatter.due && !b.frontmatter.due) return -1;
       if (!a.frontmatter.due && b.frontmatter.due) return 1;
       if (a.frontmatter.due && b.frontmatter.due) {
         return dayjs(a.frontmatter.due).diff(dayjs(b.frontmatter.due));
       }
-
-      // Then by status
-      const statusOrder = { 'in-progress': 0, planned: 1, complete: 2 };
-      return (
-        (statusOrder[a.frontmatter.status as keyof typeof statusOrder] || 3) -
-        (statusOrder[b.frontmatter.status as keyof typeof statusOrder] || 3)
-      );
+      
+      return 0;
     });
-  }
+  };
 
-  // Calculate date range - start from today
+  // Calculate date range (start from today)
   const today = dayjs();
   const startDate = today.startOf('week');
   const endDate = startDate.add(weeks, 'week');
 
   // Calculate stats
-  const inProgress = relevantSpecs.filter((s) => s.frontmatter.status === 'in-progress').length;
-  const planned = relevantSpecs.filter((s) => s.frontmatter.status === 'planned').length;
-  const overdue = relevantSpecs.filter(
-    (s) =>
-      s.frontmatter.due &&
-      dayjs(s.frontmatter.due).isBefore(today) &&
-      s.frontmatter.status !== 'complete'
+  const inProgress = relevantSpecs.filter(s => s.frontmatter.status === 'in-progress').length;
+  const planned = relevantSpecs.filter(s => s.frontmatter.status === 'planned').length;
+  const overdue = relevantSpecs.filter(s => 
+    s.frontmatter.due && 
+    dayjs(s.frontmatter.due).isBefore(today) && 
+    s.frontmatter.status !== 'complete'
   ).length;
 
   // Display header
-  console.log(
-    chalk.bold.cyan(`📅 Gantt Chart (${weeks} weeks from ${startDate.format('MMM D, YYYY')})`)
-  );
+  console.log(chalk.bold.cyan(`📅 Gantt Chart (${weeks} weeks from ${startDate.format('MMM D, YYYY')})`));
   console.log('');
 
   // Column headers
-  console.log(`${'Spec'.padEnd(SPEC_COLUMN_WIDTH)}${COLUMN_SEPARATOR}Timeline`);
-
-  // Build timeline header with dates
-  const timelineHeader: string[] = [];
+  const specHeader = 'Spec'.padEnd(SPEC_COLUMN_WIDTH);
+  const timelineHeader = 'Timeline';
+  console.log(specHeader + COLUMN_SEPARATOR + timelineHeader);
+  
+  // Calendar dates in timeline header (right-aligned to column)
+  const calendarDates: string[] = [];
   for (let i = 0; i < weeks; i++) {
     const date = startDate.add(i, 'week');
     const dateStr = date.format('MMM D').padEnd(8);
-    timelineHeader.push(dateStr);
+    calendarDates.push(dateStr);
   }
-  const separator = '─'.repeat(SPEC_COLUMN_WIDTH);
+  const dateRow = ' '.repeat(SPEC_COLUMN_WIDTH) + COLUMN_SEPARATOR + calendarDates.join('');
+  console.log(chalk.dim(dateRow));
+  
+  // Separator line
+  const specSeparator = '─'.repeat(SPEC_COLUMN_WIDTH);
   const timelineSeparator = '─'.repeat(timelineColumnWidth);
-  console.log(`${separator}${COLUMN_SEPARATOR}${timelineHeader.join('')}`);
-  console.log(`${separator}${COLUMN_SEPARATOR}${timelineSeparator}`);
-
-  // Add "Today" marker line
-  const todayPos = getTodayPosition(startDate, today, weeks);
-  if (todayPos >= 0 && todayPos < timelineColumnWidth) {
-    const todayLine = ' '.repeat(todayPos) + '│ Today';
-    console.log(`${' '.repeat(SPEC_COLUMN_WIDTH)}${COLUMN_SEPARATOR}${todayLine}`);
+  console.log(chalk.dim(specSeparator + COLUMN_SEPARATOR + timelineSeparator));
+  
+  // Today marker (aligned to current week)
+  const todayWeekOffset = today.diff(startDate, 'week');
+  const todayMarkerPos = todayWeekOffset * 8;
+  let todayMarker = ' '.repeat(SPEC_COLUMN_WIDTH) + COLUMN_SEPARATOR;
+  if (todayMarkerPos >= 0 && todayMarkerPos < timelineColumnWidth) {
+    todayMarker += ' '.repeat(todayMarkerPos) + '│ Today';
   }
+  console.log(chalk.dim(todayMarker));
   console.log('');
 
-  // Display specs grouped by priority
-  for (const [priority, prioritySpecs] of Object.entries(specsByPriority)) {
-    if (prioritySpecs.length === 0) continue;
-
-    const config = PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG];
-    console.log(
-      config.color(`${config.emoji} ${config.text.toUpperCase()} (${prioritySpecs.length})`)
-    );
-
-    for (const spec of prioritySpecs) {
-      renderSpecRow(spec, startDate, weeks, today, timelineColumnWidth);
+  // Display priority groups
+  const priorities: SpecPriority[] = ['critical', 'high', 'medium', 'low'];
+  
+  for (const priority of priorities) {
+    const specsInGroup = sortSpecs(groupedSpecs[priority]);
+    
+    // Skip empty priority groups
+    if (specsInGroup.length === 0) {
+      continue;
     }
-
+    
+    const config = PRIORITY_CONFIG[priority];
+    
+    // Show priority header with count
+    console.log(config.colorFn(`${config.emoji} ${config.label} (${specsInGroup.length})`));
+    
+    // Display specs in this priority group
+    for (const spec of specsInGroup) {
+      renderSpecRow(spec, startDate, endDate, weeks, today);
+    }
+    
     console.log('');
   }
 
@@ -165,115 +183,99 @@ export async function ganttCommand(options: {
   if (inProgress > 0) summaryParts.push(`${inProgress} in-progress`);
   if (planned > 0) summaryParts.push(`${planned} planned`);
   if (overdue > 0) summaryParts.push(chalk.red(`${overdue} overdue`));
-
+  
   console.log(chalk.bold('Summary: ') + summaryParts.join(' · '));
-
-  // Add helpful tip about due dates
-  const specsWithoutDueDate = relevantSpecs.filter((s) => !s.frontmatter.due).length;
-  if (specsWithoutDueDate > 0) {
-    console.log(chalk.dim(`💡 Tip: Add "due: YYYY-MM-DD" to frontmatter for timeline planning`));
-  }
-}
-
-function getTodayPosition(startDate: dayjs.Dayjs, today: dayjs.Dayjs, weeks: number): number {
-  const charsPerWeek = 8;
-  const daysFromStart = today.diff(startDate, 'day');
-  return Math.floor((daysFromStart / 7) * charsPerWeek);
-}
-
-function formatSpecName(spec: SpecInfo): string {
-  const statusConfig = STATUS_CONFIG[spec.frontmatter.status];
-  const emoji = statusConfig.emoji;
-  const name = spec.path;
-
-  // Format: {emoji} {name}
-  // Total width should be exactly SPEC_COLUMN_WIDTH
-  // Note: We assume emoji width is 1 for consistent terminal display
-  // Some terminals may display emojis as 2 chars wide, but this is handled
-  // by the terminal itself and doesn't affect our string length calculations
-  const prefix = `${emoji} `;
-  const prefixLen = 2; // emoji (1) + space (1)
-  const maxNameLen = SPEC_COLUMN_WIDTH - prefixLen;
-
-  let displayName = name;
-  if (name.length > maxNameLen) {
-    displayName = name.substring(0, maxNameLen - 1) + '…';
-  }
-
-  const formatted = `${prefix}${displayName}`;
-  return formatted.padEnd(SPEC_COLUMN_WIDTH);
+  console.log(chalk.dim('💡 Tip: Add "due: YYYY-MM-DD" to frontmatter for timeline planning'));
 }
 
 function renderSpecRow(
   spec: SpecInfo,
   startDate: dayjs.Dayjs,
+  endDate: dayjs.Dayjs,
   weeks: number,
-  today: dayjs.Dayjs,
-  timelineColumnWidth: number
+  today: dayjs.Dayjs
 ): void {
-  const specName = formatSpecName(spec);
-  const timelineBar = renderTimelineBar(spec, startDate, weeks, today, timelineColumnWidth);
-
-  // Render with 2 spaces indentation for specs under priority groups
-  console.log(`  ${specName}${COLUMN_SEPARATOR}${timelineBar}`);
+  const statusConfig = STATUS_CONFIG[spec.frontmatter.status];
+  const timelineColumnWidth = weeks * 8;
+  
+  // Format spec name with status emoji
+  // Format: {emoji} {spec-name} (must be exactly SPEC_COLUMN_WIDTH chars)
+  const emoji = statusConfig.emoji;
+  const maxNameLength = SPEC_COLUMN_WIDTH - 2; // 2 chars for emoji + space
+  let specName = spec.name; // Use spec.name instead of spec.path
+  
+  // Truncate name if too long
+  if (specName.length > maxNameLength) {
+    specName = specName.substring(0, maxNameLength - 1) + '…';
+  }
+  
+  const specColumn = `${SPEC_INDENT}${emoji} ${specName}`.padEnd(SPEC_COLUMN_WIDTH);
+  
+  // Build timeline column
+  let timelineColumn: string;
+  
+  if (!spec.frontmatter.due) {
+    // No due date set
+    timelineColumn = chalk.dim('(no due date set)');
+  } else {
+    // Render timeline bar
+    timelineColumn = renderTimelineBar(spec, startDate, endDate, weeks, today);
+  }
+  
+  console.log(specColumn + COLUMN_SEPARATOR + timelineColumn);
 }
 
 function renderTimelineBar(
   spec: SpecInfo,
   startDate: dayjs.Dayjs,
+  endDate: dayjs.Dayjs,
   weeks: number,
-  today: dayjs.Dayjs,
-  timelineColumnWidth: number
+  today: dayjs.Dayjs
 ): string {
   const charsPerWeek = 8;
-
-  // If spec has no due date, show placeholder text
-  if (!spec.frontmatter.due) {
-    return chalk.dim('(no due date set)');
-  }
-
-  const due = dayjs(spec.frontmatter.due);
-
-  // Calculate bar position - bars now start from today, not creation date
-  const specStart = today;
-  const specEnd = due;
-
+  const totalChars = weeks * charsPerWeek;
+  
+  const due = dayjs(spec.frontmatter.due!);
+  const specStart = today; // Start from today, not creation date
+  
+  // Calculate bar position
   const startDaysFromStart = specStart.diff(startDate, 'day');
-  const endDaysFromStart = specEnd.diff(startDate, 'day');
-
-  const startPos = Math.floor((startDaysFromStart / 7) * charsPerWeek);
-  const endPos = Math.floor((endDaysFromStart / 7) * charsPerWeek);
-
+  const dueDaysFromStart = due.diff(startDate, 'day');
+  
+  const startPos = Math.max(0, Math.floor((startDaysFromStart / 7) * charsPerWeek));
+  const duePos = Math.floor((dueDaysFromStart / 7) * charsPerWeek);
+  
+  // Clamp to visible range
   const barStart = Math.max(0, startPos);
-  const barEnd = Math.min(timelineColumnWidth, endPos);
-  const barLength = Math.max(1, barEnd - barStart);
-
+  const barEnd = Math.min(totalChars, Math.max(barStart, duePos));
+  const barLength = Math.max(0, barEnd - barStart);
+  
   // Build bar string
   let result = '';
-
+  
   // Leading space
   if (barStart > 0) {
     result += ' '.repeat(barStart);
   }
-
+  
   // Bar content based on status
   if (spec.frontmatter.status === 'complete') {
-    result += chalk.green('█'.repeat(barLength));
+    result += chalk.green(FILLED_BAR_CHAR.repeat(barLength));
   } else if (spec.frontmatter.status === 'in-progress') {
-    // Half-filled for in-progress
+    // Half-filled bar
     const halfLength = Math.floor(barLength / 2);
-    result += chalk.yellow('█'.repeat(halfLength));
-    result += chalk.dim('░'.repeat(barLength - halfLength));
+    result += chalk.yellow(FILLED_BAR_CHAR.repeat(halfLength));
+    result += chalk.dim(EMPTY_BAR_CHAR.repeat(barLength - halfLength));
   } else {
-    // Light shade for planned
-    result += chalk.dim('░'.repeat(barLength));
+    // Planned - light shade bar
+    result += chalk.dim(EMPTY_BAR_CHAR.repeat(barLength));
   }
-
-  // Trailing space to ensure consistent width
-  const trailingSpace = timelineColumnWidth - (barStart + barLength);
+  
+  // Trailing space
+  const trailingSpace = totalChars - barEnd;
   if (trailingSpace > 0) {
     result += ' '.repeat(trailingSpace);
   }
-
+  
   return result;
 }

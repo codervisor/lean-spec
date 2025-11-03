@@ -3,9 +3,9 @@ import { render } from 'ink';
 import chalk from 'chalk';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
-import { SpecList } from '../components/SpecList.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
+import { sanitizeUserInput } from '../utils/ui.js';
 
 export async function searchCommand(query: string, options: {
   status?: SpecStatus;
@@ -79,15 +79,15 @@ export async function searchCommand(query: string, options: {
   // Display results
   if (results.length === 0) {
     console.log('');
-    console.log(chalk.yellow(`🔍 No specs found matching "${query}"`));
+    console.log(chalk.yellow(`🔍 No specs found matching "${sanitizeUserInput(query)}"`));
     
     // Show active filters
     if (Object.keys(filter).length > 0) {
       const filters: string[] = [];
-      if (options.status) filters.push(`status=${options.status}`);
-      if (options.tag) filters.push(`tag=${options.tag}`);
-      if (options.priority) filters.push(`priority=${options.priority}`);
-      if (options.assignee) filters.push(`assignee=${options.assignee}`);
+      if (options.status) filters.push(`status=${sanitizeUserInput(options.status)}`);
+      if (options.tag) filters.push(`tag=${sanitizeUserInput(options.tag)}`);
+      if (options.priority) filters.push(`priority=${sanitizeUserInput(options.priority)}`);
+      if (options.assignee) filters.push(`assignee=${sanitizeUserInput(options.assignee)}`);
       console.log(chalk.gray(`With filters: ${filters.join(', ')}`));
     }
     console.log('');
@@ -96,15 +96,15 @@ export async function searchCommand(query: string, options: {
 
   // Show summary header
   console.log('');
-  console.log(chalk.green(`🔍 Found ${results.length} spec${results.length === 1 ? '' : 's'} matching "${query}"`));
+  console.log(chalk.green(`🔍 Found ${results.length} spec${results.length === 1 ? '' : 's'} matching "${sanitizeUserInput(query)}"`));
   
   // Show active filters
   if (Object.keys(filter).length > 0) {
     const filters: string[] = [];
-    if (options.status) filters.push(`status=${options.status}`);
-    if (options.tag) filters.push(`tag=${options.tag}`);
-    if (options.priority) filters.push(`priority=${options.priority}`);
-    if (options.assignee) filters.push(`assignee=${options.assignee}`);
+    if (options.status) filters.push(`status=${sanitizeUserInput(options.status)}`);
+    if (options.tag) filters.push(`tag=${sanitizeUserInput(options.tag)}`);
+    if (options.priority) filters.push(`priority=${sanitizeUserInput(options.priority)}`);
+    if (options.assignee) filters.push(`assignee=${sanitizeUserInput(options.assignee)}`);
     console.log(chalk.gray(`With filters: ${filters.join(', ')}`));
   }
   console.log('');
@@ -114,7 +114,7 @@ export async function searchCommand(query: string, options: {
     const { spec, matches } = result;
     
     // Spec header
-    console.log(chalk.cyan(`${spec.frontmatter.status === 'in-progress' ? '🔨' : spec.frontmatter.status === 'complete' ? '✅' : '📅'} ${spec.path}`));
+    console.log(chalk.cyan(`${spec.frontmatter.status === 'in-progress' ? '🔨' : spec.frontmatter.status === 'complete' ? '✅' : '📅'} ${sanitizeUserInput(spec.path)}`));
     
     // Metadata
     const meta: string[] = [];
@@ -122,10 +122,10 @@ export async function searchCommand(query: string, options: {
       const priorityEmoji = spec.frontmatter.priority === 'critical' ? '🔴' : 
                            spec.frontmatter.priority === 'high' ? '🟡' :
                            spec.frontmatter.priority === 'medium' ? '🟠' : '🟢';
-      meta.push(`${priorityEmoji} ${spec.frontmatter.priority}`);
+      meta.push(`${priorityEmoji} ${sanitizeUserInput(spec.frontmatter.priority)}`);
     }
     if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
-      meta.push(`[${spec.frontmatter.tags.join(', ')}]`);
+      meta.push(`[${spec.frontmatter.tags.map(tag => sanitizeUserInput(tag)).join(', ')}]`);
     }
     if (meta.length > 0) {
       console.log(chalk.gray(`  ${meta.join(' • ')}`));
