@@ -126,7 +126,7 @@ lspec init --pattern flat --force
 - [ ] Test new project creation
 - [ ] Test existing project compatibility
 - [ ] Verify spec loading works for both patterns
-- [ ] **Decision needed**: Migrate lean-spec's own specs to flat structure or keep as example of date-based grouping?
+- [ ] Migrate lean-spec's own specs to flat structure?
 
 ## Test
 
