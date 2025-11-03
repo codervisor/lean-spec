@@ -1,13 +1,18 @@
 ---
-status: planned
+status: complete
 created: '2025-11-03'
-tags: ["cli","enhancement","ux","viewer"]
+tags:
+  - cli
+  - enhancement
+  - ux
+  - viewer
 priority: high
+completed: '2025-11-03'
 ---
 
 # Spec Viewer Commands
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-03
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-03 · **Tags**: cli, enhancement, ux, viewer
 
 **Project**: lean-spec  
 **Team**: Core Development
