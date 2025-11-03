@@ -1,15 +1,16 @@
 ---
-status: planned
-created: 2025-11-03T00:00:00.000Z
+status: complete
+created: '2025-11-03'
 tags:
   - bug
   - frontmatter
 priority: high
+completed: '2025-11-03'
 ---
 
 # created-date-format-bug
 
-> **Status**: 📋 Planned · **Priority**: High · **Created**: 2025-11-03 · **Tags**: bug, frontmatter
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-03 · **Tags**: bug, frontmatter
 
 **Project**: lean-spec  
 **Team**: Core Development
