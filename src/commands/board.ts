@@ -150,8 +150,12 @@ function renderColumn(
         
         let tagsStr = '';
         if (spec.frontmatter.tags?.length) {
-          const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
-          tagsStr = ' ' + chalk.dim(chalk.magenta(tagStr));
+          // Defensive check: ensure tags is an array
+          const tags = Array.isArray(spec.frontmatter.tags) ? spec.frontmatter.tags : [];
+          if (tags.length > 0) {
+            const tagStr = tags.map(tag => `#${tag}`).join(' ');
+            tagsStr = ' ' + chalk.dim(chalk.magenta(tagStr));
+          }
         }
 
         console.log(`    ${chalk.cyan(spec.path)}${assigneeStr}${tagsStr}`);

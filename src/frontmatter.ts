@@ -52,6 +52,25 @@ export function normalizeDateFields(data: Record<string, unknown>): void {
 }
 
 /**
+ * Normalize tags field - parse JSON strings into arrays
+ * Handles cases where AI accidentally creates tags as '["..",".."]' strings
+ */
+export function normalizeTagsField(data: Record<string, unknown>): void {
+  if (data.tags && typeof data.tags === 'string') {
+    try {
+      // Try to parse as JSON array
+      const parsed = JSON.parse(data.tags as string);
+      if (Array.isArray(parsed)) {
+        data.tags = parsed;
+      }
+    } catch {
+      // If not valid JSON, treat as comma-separated string
+      data.tags = (data.tags as string).split(',').map(t => t.trim());
+    }
+  }
+}
+
+/**
  * Validate and coerce custom field types
  */
 export function validateCustomField(
@@ -167,6 +186,9 @@ export async function parseFrontmatter(
       }
     }
 
+    // Normalize tags field (parse JSON strings to arrays)
+    normalizeTagsField(parsed.data);
+    
     // Warn about unknown fields (informational only)
     const knownFields = [
       'status', 'created', 'tags', 'priority', 'related', 'depends_on',

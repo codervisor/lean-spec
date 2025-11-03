@@ -115,7 +115,7 @@ export const SpecListView: React.FC<SpecListProps> = ({ specs, filter }) => {
                         )}
 
                         {/* Tags */}
-                        {spec.frontmatter.tags && spec.frontmatter.tags.length > 0 && (
+                        {spec.frontmatter.tags && Array.isArray(spec.frontmatter.tags) && spec.frontmatter.tags.length > 0 && (
                           <Text dimColor>
                             [{spec.frontmatter.tags.map(tag => `#${tag}`).join(' ')}]
                           </Text>
