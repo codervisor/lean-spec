@@ -245,3 +245,32 @@ specs/
 - ✅ Easier references - just "spec 038" instead of "specs/20251103/024"
 - ✅ Globally unique numbering - no conflicts
 - ✅ All tools work perfectly with flat structure
+
+## Post-Migration Fix
+
+### Issue: `lspec list` Rendering Problem
+
+After migrating to flat structure, `lspec list` had a rendering issue where all specs were grouped under `📂 unknown/` instead of being displayed properly.
+
+**Root cause**: The `SpecListView` component was hardcoded to group specs by date pattern (`/^(\d{8})\//`), which doesn't work with flat structure paths like `001-feature-a/`.
+
+**Fix**: Updated `src/components/SpecListView.tsx` to be pattern-aware:
+- Detects if config uses date-based grouping (`pattern: 'custom'` with `{YYYY}` in `groupExtractor`)
+- **Flat structure**: Displays all specs in a simple list (no date grouping)
+- **Date-based structure**: Uses original date-grouped rendering
+
+**Changes**:
+1. Pass `config` to `SpecListView` component
+2. Split rendering into two views:
+   - `FlatView` - Simple list for flat structure
+   - `DateGroupedView` - Original date-grouped view for custom patterns
+3. Pattern detection logic chooses the appropriate view
+
+**Test results**:
+- ✅ Flat structure renders correctly (no `unknown/` grouping)
+- ✅ Date-based structure still works (backwards compatible)
+- ✅ All 152 tests passing
+
+**Files changed**:
+- `src/commands/list.ts` - Pass config to component
+- `src/components/SpecListView.tsx` - Pattern-aware rendering logic

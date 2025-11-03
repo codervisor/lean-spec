@@ -61,6 +61,7 @@ export async function listSpecs(options: {
     React.createElement(SpecListView, {
       specs,
       filter: Object.keys(filterInfo).length > 0 ? filterInfo : undefined,
+      config,
     })
   );
 }
