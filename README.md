@@ -121,7 +121,7 @@ specs/
 ```
 
 ### Custom Pattern - Date-Based Grouping
-Group specifications by date, month, or year. **Note**: Sequence numbers are still globally unique across all date folders.
+Group specifications by date, month, or year. Useful for projects with high spec volume or time-based releases. **Note**: Sequence numbers are globally unique across all date folders.
 
 ```bash
 specs/
@@ -145,7 +145,7 @@ specs/
 }
 ```
 
-**Note**: Sequence numbers remain globally unique. Date folders are for organization only.
+**Migration note**: This was the default in v0.1.x. Existing projects maintain this structure. New projects default to flat. See [Migration Guide](docs/MIGRATION.md).
 
 ### Custom Pattern - Field-Based Grouping
 Group by milestone, sprint, release, or any custom field.
