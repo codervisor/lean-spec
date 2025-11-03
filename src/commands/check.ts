@@ -21,8 +21,9 @@ export async function checkSpecs(options: {
   for (const spec of specs) {
     // Extract sequence number from spec name
     const specName = path.basename(spec.path);
-    // Match any prefix followed by digits and dash (e.g., "001-", "20251103-001-")
-    const match = specName.match(/(\d+)-[^/]+$/);
+    // Match sequence: 2-4 digits preceded by start or non-digit, followed by dash and letter
+    // This handles: 001-name, 20251103-001-name, spec-001-name
+    const match = specName.match(/(?:^|\D)(\d{2,4})-[a-z]/i);
     
     if (match) {
       const seq = parseInt(match[1], 10);
