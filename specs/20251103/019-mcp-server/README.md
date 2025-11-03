@@ -1,7 +1,7 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: '["integration","mcp","ai"]'
+tags: ["integration","mcp","ai"]
 priority: high
 ---
 

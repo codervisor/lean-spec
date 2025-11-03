@@ -62,7 +62,7 @@ const Column: React.FC<ColumnProps> = ({ title, emoji, specs, expanded, color })
             {(spec.frontmatter.tags?.length || spec.frontmatter.priority || spec.frontmatter.assignee) && (() => {
               const parts: string[] = [];
               
-              if (spec.frontmatter.tags?.length) {
+              if (spec.frontmatter.tags?.length && Array.isArray(spec.frontmatter.tags)) {
                 const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
                 parts.push(tagStr);
               }

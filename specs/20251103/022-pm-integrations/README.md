@@ -1,7 +1,7 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: '["integration","pm","github","jira","ado"]'
+tags: ["integration","pm","github","jira","ado"]
 priority: high
 ---
 

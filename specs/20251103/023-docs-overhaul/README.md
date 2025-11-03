@@ -1,7 +1,7 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: '["docs","maintenance","clarity"]'
+tags: ["docs","maintenance","clarity"]
 priority: medium
 ---
 
