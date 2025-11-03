@@ -95,6 +95,9 @@ export async function loadAllSpecs(options: {
     return [];
   }
 
+  // Pattern to match spec directories (2 or more digits followed by dash)
+  const specPattern = /^(\d{2,})-/;
+
   // Recursively load all specs from the directory structure
   async function loadSpecsFromDir(dir: string, relativePath: string = ''): Promise<void> {
     try {
@@ -110,7 +113,7 @@ export async function loadAllSpecs(options: {
         const entryRelativePath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
         
         // Check if this is a spec directory (NNN-name format)
-        if (/^\d{2,3}-.+/.test(entry.name)) {
+        if (specPattern.test(entry.name)) {
           const specFile = await getSpecFile(entryPath, config.structure.defaultFile);
           
           if (specFile) {

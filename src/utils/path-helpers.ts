@@ -2,12 +2,21 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 /**
+ * Create a regex pattern to match spec directories with any number of sequence digits
+ */
+function createSpecDirPattern(): RegExp {
+  // Match directories with 2 or more digits followed by a dash
+  return /^(\d{2,})-/;
+}
+
+/**
  * Get next global sequence number across entire specs directory
  */
 export async function getGlobalNextSeq(specsDir: string, digits: number): Promise<string> {
   try {
     // Recursively find all spec directories with sequence numbers
     const seqNumbers: number[] = [];
+    const specPattern = createSpecDirPattern();
     
     async function scanDirectory(dir: string): Promise<void> {
       try {
@@ -17,7 +26,7 @@ export async function getGlobalNextSeq(specsDir: string, digits: number): Promis
           if (!entry.isDirectory()) continue;
           
           // Check if this is a spec directory (NNN-name format)
-          const match = entry.name.match(/^(\d{2,3})-/);
+          const match = entry.name.match(specPattern);
           if (match) {
             const seqNum = parseInt(match[1], 10);
             if (!isNaN(seqNum) && seqNum > 0) {
@@ -55,10 +64,14 @@ export async function getGlobalNextSeq(specsDir: string, digits: number): Promis
  */
 export async function getNextSeq(dateDir: string, digits: number): Promise<string> {
   try {
+    const specPattern = createSpecDirPattern();
     const entries = await fs.readdir(dateDir, { withFileTypes: true });
     const seqNumbers = entries
-      .filter((e) => e.isDirectory() && /^\d{2,3}-.+/.test(e.name))
-      .map((e) => parseInt(e.name.split('-')[0], 10))
+      .filter((e) => e.isDirectory() && specPattern.test(e.name))
+      .map((e) => {
+        const match = e.name.match(specPattern);
+        return match ? parseInt(match[1], 10) : NaN;
+      })
       .filter((n) => !isNaN(n));
 
     if (seqNumbers.length === 0) {
@@ -131,6 +144,8 @@ export async function resolveSpecPath(
  * Search for a spec by sequence number across all directories
  */
 async function searchBySequence(specsDir: string, seqNum: number): Promise<string | null> {
+  const specPattern = createSpecDirPattern();
+  
   async function scanDirectory(dir: string): Promise<string | null> {
     try {
       const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -139,7 +154,7 @@ async function searchBySequence(specsDir: string, seqNum: number): Promise<strin
         if (!entry.isDirectory()) continue;
         
         // Check if this matches the sequence number
-        const match = entry.name.match(/^(\d{2,3})-/);
+        const match = entry.name.match(specPattern);
         if (match) {
           const entrySeq = parseInt(match[1], 10);
           if (entrySeq === seqNum) {
