@@ -69,9 +69,9 @@ describe('Integration: Full spec lifecycle', () => {
     // Step 4: Archive the completed spec
     await archiveSpec(specDir);
 
-    // Verify spec was archived
+    // Verify spec was archived (flat structure in specs/archived/)
     expect(await dirExists(specDir)).toBe(false);
-    const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', today, `001-${specName}`);
+    const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', `001-${specName}`);
     expect(await dirExists(archivedPath)).toBe(true);
 
     // Verify active specs list is empty

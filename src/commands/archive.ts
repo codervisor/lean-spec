@@ -2,27 +2,23 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import { loadConfig } from '../config.js';
+import { resolveSpecPath } from '../utils/path-helpers.js';
 
 export async function archiveSpec(specPath: string): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);
   
-  const resolvedPath = path.resolve(specPath);
-
-  // Check if directory exists
-  try {
-    await fs.access(resolvedPath);
-  } catch {
+  // Resolve the spec path using the helper
+  const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+  
+  if (!resolvedPath) {
     console.error(chalk.red(`Error: Spec not found: ${specPath}`));
     process.exit(1);
   }
 
-  // Get parent directory (date folder)
-  const parentDir = path.dirname(resolvedPath);
-  const dateFolder = path.basename(parentDir);
-  const archiveDir = path.join(specsDir, 'archived', dateFolder);
-
+  // Archive to flat structure in specs/archived/ regardless of original pattern
+  const archiveDir = path.join(specsDir, 'archived');
   await fs.mkdir(archiveDir, { recursive: true });
 
   const specName = path.basename(resolvedPath);

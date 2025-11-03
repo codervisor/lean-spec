@@ -78,6 +78,115 @@ lspec update <spec> --status=complete
 
 **Templates available**: minimal, standard (recommended), enterprise, api-first
 
+## Flexible Folder Structure
+
+LeanSpec supports multiple folder organization patterns to match your workflow:
+
+### Flat Pattern (Default - Recommended)
+Simple, single-level organization. Perfect for small teams and solo developers.
+
+```bash
+specs/
+├── 001-typescript-cli-migration/
+├── 002-template-system-redesign/
+├── 011-docusaurus-vercel-migration/
+└── archived/
+```
+
+**Configuration:**
+```json
+{
+  "structure": {
+    "pattern": "flat",
+    "sequenceDigits": 3
+  }
+}
+```
+
+**Optional prefix for chronological sorting:**
+```json
+{
+  "structure": {
+    "pattern": "flat",
+    "sequenceDigits": 3,
+    "prefix": "{YYYYMMDD}-"  // Results in: 20251103-001-feature/
+  }
+}
+```
+
+### Custom Pattern - Date-Based Grouping
+Group specifications by date, month, or year.
+
+```bash
+specs/
+├── 20251031/
+│   ├── 001-typescript-cli/
+│   └── 002-template-system/
+├── 20251103/
+│   └── 003-flexible-folder/
+└── archived/
+```
+
+**Configuration:**
+```json
+{
+  "structure": {
+    "pattern": "custom",
+    "groupExtractor": "{YYYYMMDD}",  // or "{YYYY-MM}" for monthly
+    "sequenceDigits": 3
+  }
+}
+```
+
+### Custom Pattern - Field-Based Grouping
+Group by milestone, sprint, release, or any custom field.
+
+```bash
+specs/
+├── milestone-1/
+│   ├── 001-feature-a/
+│   └── 002-feature-b/
+├── milestone-2/
+│   └── 003-feature-c/
+├── backlog/  # Fallback for specs without milestone
+└── archived/
+```
+
+**Configuration:**
+```json
+{
+  "structure": {
+    "pattern": "custom",
+    "groupExtractor": "milestone-{milestone}",
+    "groupFallback": "backlog",
+    "sequenceDigits": 3
+  },
+  "frontmatter": {
+    "custom": {
+      "milestone": "string"
+    }
+  }
+}
+```
+
+**Creating specs:**
+```bash
+lspec create feature-a --field milestone=1
+# → specs/milestone-1/001-feature-a/
+
+lspec create feature-b --field milestone=1
+# → specs/milestone-1/002-feature-b/
+
+lspec create unassigned
+# → specs/backlog/003-unassigned/  (uses fallback)
+```
+
+**Key Features:**
+- ✅ **Global unique sequence numbers** - `001`, `002`, `003` across all folders
+- ✅ **Flexible references** - Find specs by number, name, or path
+- ✅ **Flat archive** - All patterns archive to `specs/archived/` (flat structure)
+- ✅ **Zero breaking changes** - Existing projects maintain their structure
+
 ## Core Principles & Features
 
 - **Flexible structure** - Adapt SDD to your workflow, not vice versa
