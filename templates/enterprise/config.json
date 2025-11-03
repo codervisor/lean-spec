@@ -5,8 +5,8 @@
     "template": "enterprise",
     "specsDir": "specs",
     "structure": {
-      "pattern": "custom",
-      "groupExtractor": "{YYYYMMDD}",
+      "pattern": "flat",
+      "prefix": "",
       "dateFormat": "YYYYMMDD",
       "sequenceDigits": 3,
       "defaultFile": "README.md"
