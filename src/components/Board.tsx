@@ -1,7 +1,9 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import Gradient from 'ink-gradient';
 import type { SpecInfo } from '../spec-loader.js';
 import type { SpecStatus } from '../frontmatter.js';
+import { Card } from './ui/Card.js';
 
 interface BoardProps {
   specs: SpecInfo[];
@@ -13,7 +15,7 @@ interface BoardProps {
 }
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; color: string }> = {
-  planned: { emoji: '📅', label: 'Planned', color: 'gray' },
+  planned: { emoji: '📅', label: 'Planned', color: 'cyan' },
   'in-progress': { emoji: '🔨', label: 'In Progress', color: 'yellow' },
   complete: { emoji: '✅', label: 'Complete', color: 'green' },
   archived: { emoji: '📦', label: 'Archived', color: 'gray' },
@@ -28,66 +30,88 @@ interface ColumnProps {
 }
 
 const Column: React.FC<ColumnProps> = ({ title, emoji, specs, expanded, color }) => {
-  const width = 60;
+  const width = 68;
   const count = specs.length;
   const header = `${emoji} ${title} (${count})`;
   const padding = Math.max(0, width - header.length - 4);
 
+  const isRounded = true;
+  const topLeft = '╭';
+  const topRight = '╮';
+  const bottomLeft = '╰';
+  const bottomRight = '╯';
+  const horizontal = '─';
+  const vertical = '│';
+
   return (
     <Box flexDirection="column" marginBottom={1}>
-      {/* Top border */}
-      <Text>┌─ {header} {'─'.repeat(padding)}┐</Text>
+      {/* Top border with title */}
+      <Text>
+        {topLeft}{horizontal} <Text bold color={color}>{header}</Text> {horizontal.repeat(padding)}{topRight}
+      </Text>
 
       {/* Content */}
       {expanded && specs.length > 0 ? (
         specs.map((spec, index) => (
           <Box key={spec.path} flexDirection="column">
+            {/* Spec name with better formatting */}
             <Text>
-              │ <Text color="cyan">{spec.path.padEnd(width - 2)}</Text>│
+              {vertical} <Text color="cyan" bold>{spec.path.padEnd(width - 2)}</Text>{vertical}
             </Text>
 
-            {/* Metadata line */}
+            {/* Metadata line with tags and priority */}
             {(spec.frontmatter.tags?.length || spec.frontmatter.priority || spec.frontmatter.assignee) && (() => {
               const parts: string[] = [];
+              
               if (spec.frontmatter.tags?.length) {
-                parts.push(`[${spec.frontmatter.tags.join(', ')}]`);
+                const tagStr = spec.frontmatter.tags.map(tag => `#${tag}`).join(' ');
+                parts.push(tagStr);
               }
+              
               if (spec.frontmatter.priority) {
-                parts.push(`priority: ${spec.frontmatter.priority}`);
+                const priorityEmoji = {
+                  critical: '🔴',
+                  high: '🟡',
+                  medium: '🟠',
+                  low: '🟢',
+                }[spec.frontmatter.priority];
+                parts.push(`${priorityEmoji} ${spec.frontmatter.priority}`);
               }
+              
               if (spec.frontmatter.assignee) {
-                parts.push(`assignee: ${spec.frontmatter.assignee}`);
+                parts.push(`@${spec.frontmatter.assignee}`);
               }
-              const metaText = parts.join(' ');
+              
+              const metaText = parts.join(' · ');
               const paddingNeeded = Math.max(0, width - 2 - metaText.length);
               
               return (
                 <Text>
-                  │ <Text dimColor>{metaText}</Text>{' '.repeat(paddingNeeded)}│
+                  {vertical} <Text dimColor>{metaText}</Text>{' '.repeat(paddingNeeded)}{vertical}
                 </Text>
               );
             })()}
 
             {/* Spacing between specs */}
             {index < specs.length - 1 && (
-              <Text>│ {' '.repeat(width - 2)}│</Text>
+              <Text>{vertical} {' '.repeat(width - 2)}{vertical}</Text>
             )}
           </Box>
         ))
       ) : !expanded && specs.length > 0 ? (
         <Text>
-          │ <Text dimColor>(collapsed, use --show-complete to expand)</Text>
-          {' '.repeat(Math.max(0, width - 47))}│
+          {vertical} <Text dimColor>(collapsed, use --show-complete to expand)</Text>
+          {' '.repeat(Math.max(0, width - 47))}{vertical}
         </Text>
       ) : (
         <Text>
-          │ <Text dimColor>(no specs)</Text>
-          {' '.repeat(Math.max(0, width - 13))}│
+          {vertical} <Text dimColor>(no specs)</Text>
+          {' '.repeat(Math.max(0, width - 13))}{vertical}
         </Text>
       )}
 
       {/* Bottom border */}
-      <Text>└{'─'.repeat(width)}┘</Text>
+      <Text>{bottomLeft}{horizontal.repeat(width)}{bottomRight}</Text>
     </Box>
   );
 };
@@ -111,8 +135,11 @@ export const Board: React.FC<BoardProps> = ({ specs, showComplete, filter }) => 
 
   return (
     <Box flexDirection="column">
+      {/* Title with gradient */}
       <Box marginBottom={1}>
-        <Text bold color="green">📋 Spec Board</Text>
+        <Gradient name="rainbow">
+          <Text bold>📋 Spec Kanban Board</Text>
+        </Gradient>
       </Box>
 
       {/* Filter info */}

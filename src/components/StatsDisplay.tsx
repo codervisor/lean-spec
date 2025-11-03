@@ -1,7 +1,10 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import Gradient from 'ink-gradient';
 import type { SpecInfo } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority } from '../frontmatter.js';
+import { Panel } from './ui/Panel.js';
+import { KeyValueList } from './ui/KeyValueList.js';
 
 interface StatsProps {
   specs: SpecInfo[];
@@ -53,10 +56,21 @@ export const StatsDisplay: React.FC<StatsProps> = ({ specs, filter }) => {
 
   const totalWithPriority = Object.values(priorityCounts).reduce((sum, count) => sum + count, 0);
 
+  // Create a bar chart for status distribution
+  const maxCount = Math.max(...Object.values(statusCounts));
+  const barWidth = 40;
+  const createBar = (count: number, color: string) => {
+    const width = Math.round((count / maxCount) * barWidth);
+    return <Text color={color}>{'━'.repeat(width)}</Text>;
+  };
+
   return (
     <Box flexDirection="column">
+      {/* Title with gradient */}
       <Box marginBottom={1}>
-        <Text bold color="green">📊 Spec Statistics</Text>
+        <Gradient name="rainbow">
+          <Text bold>📊 Spec Statistics Dashboard</Text>
+        </Gradient>
       </Box>
 
       {/* Filter info */}
@@ -70,50 +84,100 @@ export const StatsDisplay: React.FC<StatsProps> = ({ specs, filter }) => {
         </Box>
       )}
 
-      {/* Status breakdown */}
-      <Box flexDirection="column" marginBottom={1}>
-        <Text bold>Status:</Text>
-        <Text>  📅 Planned:      <Text color="cyan">{statusCounts.planned.toString().padStart(3)}</Text></Text>
-        <Text>  🔨 In Progress:  <Text color="yellow">{statusCounts['in-progress'].toString().padStart(3)}</Text></Text>
-        <Text>  ✅ Complete:     <Text color="green">{statusCounts.complete.toString().padStart(3)}</Text></Text>
-        <Text>  📦 Archived:     <Text dimColor>{statusCounts.archived.toString().padStart(3)}</Text></Text>
+      {/* Overview Panel */}
+      <Panel title="📈 Overview" border="rounded" padding={1} width={70}>
+        <KeyValueList
+          items={[
+            { key: 'Total Specs', value: specs.length.toString(), valueColor: 'green' },
+            { key: 'With Priority', value: totalWithPriority.toString(), valueColor: 'cyan' },
+            { key: 'Unique Tags', value: Object.keys(tagCounts).length.toString(), valueColor: 'magenta' },
+          ]}
+          keyWidth={20}
+        />
+      </Panel>
+
+      {/* Status Panel with Bar Charts */}
+      <Box marginTop={1}>
+        <Panel title="📊 Status Distribution" border="rounded" padding={1} width={70}>
+          <Box flexDirection="column">
+            <Box marginBottom={1}>
+              <Text>📅 Planned      </Text>
+              {createBar(statusCounts.planned, 'cyan')}
+              <Text color="cyan"> {statusCounts.planned}</Text>
+            </Box>
+            <Box marginBottom={1}>
+              <Text>🔨 In Progress  </Text>
+              {createBar(statusCounts['in-progress'], 'yellow')}
+              <Text color="yellow"> {statusCounts['in-progress']}</Text>
+            </Box>
+            <Box marginBottom={1}>
+              <Text>✅ Complete     </Text>
+              {createBar(statusCounts.complete, 'green')}
+              <Text color="green"> {statusCounts.complete}</Text>
+            </Box>
+            <Box>
+              <Text>📦 Archived     </Text>
+              {createBar(statusCounts.archived, 'gray')}
+              <Text dimColor> {statusCounts.archived}</Text>
+            </Box>
+          </Box>
+        </Panel>
       </Box>
 
-      {/* Priority breakdown */}
+      {/* Priority Panel */}
       {totalWithPriority > 0 && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text bold>Priority:</Text>
-          {priorityCounts.critical > 0 && (
-            <Text>  🔴 Critical:     <Text color="red">{priorityCounts.critical.toString().padStart(3)}</Text></Text>
-          )}
-          {priorityCounts.high > 0 && (
-            <Text>  🟡 High:         <Text color="yellow">{priorityCounts.high.toString().padStart(3)}</Text></Text>
-          )}
-          {priorityCounts.medium > 0 && (
-            <Text>  🟠 Medium:       <Text color="blue">{priorityCounts.medium.toString().padStart(3)}</Text></Text>
-          )}
-          {priorityCounts.low > 0 && (
-            <Text>  🟢 Low:          <Text dimColor>{priorityCounts.low.toString().padStart(3)}</Text></Text>
-          )}
+        <Box marginTop={1}>
+          <Panel title="🎯 Priority Breakdown" border="rounded" padding={1} width={70}>
+            <Box flexDirection="column">
+              {priorityCounts.critical > 0 && (
+                <Box marginBottom={1}>
+                  <Text>🔴 Critical  </Text>
+                  {createBar(priorityCounts.critical, 'red')}
+                  <Text color="red"> {priorityCounts.critical}</Text>
+                </Box>
+              )}
+              {priorityCounts.high > 0 && (
+                <Box marginBottom={1}>
+                  <Text>🟡 High      </Text>
+                  {createBar(priorityCounts.high, 'yellow')}
+                  <Text color="yellow"> {priorityCounts.high}</Text>
+                </Box>
+              )}
+              {priorityCounts.medium > 0 && (
+                <Box marginBottom={1}>
+                  <Text>🟠 Medium    </Text>
+                  {createBar(priorityCounts.medium, 'blue')}
+                  <Text color="blue"> {priorityCounts.medium}</Text>
+                </Box>
+              )}
+              {priorityCounts.low > 0 && (
+                <Box>
+                  <Text>🟢 Low       </Text>
+                  {createBar(priorityCounts.low, 'gray')}
+                  <Text dimColor> {priorityCounts.low}</Text>
+                </Box>
+              )}
+            </Box>
+          </Panel>
         </Box>
       )}
 
-      {/* Top tags */}
+      {/* Top Tags Panel */}
       {topTags.length > 0 && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text bold>Tags (top {topTags.length}):</Text>
-          {topTags.map(([tag, count]) => (
-            <Text key={tag}>
-              {'  '}{tag.padEnd(20)} <Text color="cyan">{count.toString().padStart(3)}</Text>
-            </Text>
-          ))}
+        <Box marginTop={1}>
+          <Panel title="🏷️  Popular Tags" border="rounded" padding={1} width={70}>
+            <Box flexDirection="column">
+              {topTags.map(([tag, count], idx) => (
+                <Box key={tag} marginBottom={idx < topTags.length - 1 ? 1 : 0}>
+                  <Text>{tag.padEnd(20)}</Text>
+                  {createBar(count, 'magenta')}
+                  <Text color="magenta"> {count}</Text>
+                </Box>
+              ))}
+            </Box>
+          </Panel>
         </Box>
       )}
-
-      {/* Total */}
-      <Box>
-        <Text bold>Total Specs: <Text color="green">{specs.length.toString()}</Text></Text>
-      </Box>
     </Box>
   );
 };
