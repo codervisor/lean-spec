@@ -46,10 +46,14 @@ export async function dashboardCommand(options: {
   }> = [];
 
   for (const spec of specs) {
-    statusCounts[spec.frontmatter.status]++;
+    const status = spec.frontmatter.status;
+    if (status && status in statusCounts) {
+      statusCounts[status]++;
+    }
 
-    if (spec.frontmatter.priority) {
-      priorityCounts[spec.frontmatter.priority]++;
+    const priority = spec.frontmatter.priority;
+    if (priority && priority in priorityCounts) {
+      priorityCounts[priority]++;
     }
 
     if (spec.frontmatter.tags) {

@@ -132,7 +132,9 @@ export function calculateVelocityMetrics(specs: SpecInfo[]): VelocityMetrics {
     : 0;
 
   const medianCycleTime = cycleTimes.length > 0
-    ? cycleTimes[Math.floor(cycleTimes.length / 2)]
+    ? cycleTimes.length % 2 === 0
+      ? (cycleTimes[cycleTimes.length / 2 - 1] + cycleTimes[cycleTimes.length / 2]) / 2
+      : cycleTimes[Math.floor(cycleTimes.length / 2)]
     : 0;
 
   const p90CycleTime = cycleTimes.length > 0
@@ -159,16 +161,16 @@ export function calculateVelocityMetrics(specs: SpecInfo[]): VelocityMetrics {
   // Calculate throughput
   const throughputWeek = calculateThroughput(specs, 7);
   const throughputMonth = calculateThroughput(specs, 30);
-  const throughputPrevWeek = calculateThroughput(
-    specs.filter((s) => {
-      const completedAt = s.frontmatter.completed_at || s.frontmatter.completed;
-      if (!completedAt) return false;
-      const completed = dayjs(completedAt);
-      return completed.isBefore(dayjs().subtract(7, 'day')) &&
-             completed.isAfter(dayjs().subtract(14, 'day'));
-    }),
-    7
-  );
+  
+  // Calculate throughput for previous week for trend
+  const prevWeekStart = dayjs().subtract(14, 'day');
+  const prevWeekEnd = dayjs().subtract(7, 'day');
+  const throughputPrevWeek = specs.filter((s) => {
+    const completedAt = s.frontmatter.completed_at || s.frontmatter.completed;
+    if (!completedAt) return false;
+    const completed = dayjs(completedAt);
+    return completed.isAfter(prevWeekStart) && completed.isBefore(prevWeekEnd);
+  }).length;
 
   const throughputTrend: 'up' | 'down' | 'stable' =
     throughputWeek > throughputPrevWeek ? 'up' :

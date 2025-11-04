@@ -62,10 +62,16 @@ export async function analyticsCommand(options: {
   const tagCounts: Record<string, number> = {};
 
   for (const spec of specs) {
-    statusCounts[spec.frontmatter.status]++;
-    if (spec.frontmatter.priority) {
-      priorityCounts[spec.frontmatter.priority]++;
+    const status = spec.frontmatter.status;
+    if (status && status in statusCounts) {
+      statusCounts[status]++;
     }
+    
+    const priority = spec.frontmatter.priority;
+    if (priority && priority in priorityCounts) {
+      priorityCounts[priority]++;
+    }
+    
     if (spec.frontmatter.tags) {
       for (const tag of spec.frontmatter.tags) {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
