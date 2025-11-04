@@ -176,9 +176,7 @@ export async function viewCommand(
   const spec = await readSpecContent(specPath, process.cwd());
   
   if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    console.error(chalk.gray('Try: lspec list'));
-    process.exit(1);
+    throw new Error(`Spec not found: ${specPath}. Try: lspec list`);
   }
 
   // Handle JSON output
@@ -225,16 +223,14 @@ export async function openCommand(
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   
   if (!resolvedPath) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${specPath}`);
   }
 
   // Get the spec file
   const specFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
   
   if (!specFile) {
-    console.error(chalk.red(`Error: Spec file not found in: ${resolvedPath}`));
-    process.exit(1);
+    throw new Error(`Spec file not found in: ${resolvedPath}`);
   }
 
   // Determine editor
@@ -259,26 +255,31 @@ export async function openCommand(
 
   console.log(chalk.gray(`Opening ${specFile} with ${editor}...`));
 
-  // Spawn editor process
+  // Spawn editor process - wrap in promise to handle errors properly
   const child = spawn(editor, [specFile], {
     stdio: 'inherit',
     shell: true,
-  });
-
-  child.on('error', (error) => {
-    console.error(chalk.red(`Error opening editor: ${error.message}`));
-    process.exit(1);
   });
 
   // Don't wait for editor to close for GUI editors
   const guiEditors = ['open', 'start', 'xdg-open', 'code', 'atom', 'subl'];
   const editorCommand = editor.trim().split(' ')[0];
   if (editorCommand && guiEditors.includes(editorCommand)) {
-    // Detach and don't wait
-    child.unref();
+    // For GUI editors, handle spawn errors but don't wait for close
+    return new Promise<void>((resolve, reject) => {
+      child.on('error', (error) => {
+        reject(new Error(`Error opening editor: ${error.message}`));
+      });
+      // Resolve immediately after spawn for GUI editors
+      child.unref();
+      resolve();
+    });
   } else {
     // Wait for terminal editors
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+      child.on('error', (error) => {
+        reject(new Error(`Error opening editor: ${error.message}`));
+      });
       child.on('close', (code) => {
         if (code === 0) {
           resolve();
