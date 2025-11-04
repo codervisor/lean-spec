@@ -1,0 +1,10 @@
+{
+	"servers": {
+		"lspec-mcp": {
+			"type": "stdio",
+			"command": "lspec-mcp",
+			"args": []
+		}
+	},
+	"inputs": []
+}
