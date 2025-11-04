@@ -81,6 +81,8 @@ export async function loadAllSpecs(options: {
   includeContent?: boolean;
   includeSubFiles?: boolean;
   filter?: SpecFilterOptions;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 } = {}): Promise<SpecInfo[]> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -182,11 +184,54 @@ export async function loadAllSpecs(options: {
     await loadSpecsFromDir(archivedPath, 'archived');
   }
 
-  // Sort specs by date (reverse chronological) and then by name
+  // Sort specs based on options (default: id desc)
+  const sortBy = options.sortBy || 'id';
+  const sortOrder = options.sortOrder || 'desc';
+  
   specs.sort((a, b) => {
-    const dateCompare = b.date.localeCompare(a.date);
-    if (dateCompare !== 0) return dateCompare;
-    return a.name.localeCompare(b.name);
+    let comparison = 0;
+    
+    switch (sortBy) {
+      case 'id':
+      case 'number': { // Keep 'number' for backwards compatibility
+        // Extract leading digits from spec name
+        const aNum = parseInt(a.name.match(/^(\d+)/)?.[1] || '0', 10);
+        const bNum = parseInt(b.name.match(/^(\d+)/)?.[1] || '0', 10);
+        comparison = aNum - bNum;
+        break;
+      }
+      case 'created': {
+        // Sort by created date from frontmatter
+        const aDate = String(a.frontmatter.created || '');
+        const bDate = String(b.frontmatter.created || '');
+        comparison = aDate.localeCompare(bDate);
+        break;
+      }
+      case 'name': {
+        comparison = a.name.localeCompare(b.name);
+        break;
+      }
+      case 'status': {
+        comparison = a.frontmatter.status.localeCompare(b.frontmatter.status);
+        break;
+      }
+      case 'priority': {
+        // Priority order: critical > high > medium > low > (none)
+        const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+        const aPriority = a.frontmatter.priority ? priorityOrder[a.frontmatter.priority] : 0;
+        const bPriority = b.frontmatter.priority ? priorityOrder[b.frontmatter.priority] : 0;
+        comparison = aPriority - bPriority;
+        break;
+      }
+      default:
+        // Default to created date
+        const aDate = String(a.frontmatter.created || '');
+        const bDate = String(b.frontmatter.created || '');
+        comparison = aDate.localeCompare(bDate);
+    }
+    
+    // Apply sort order
+    return sortOrder === 'desc' ? -comparison : comparison;
   });
 
   return specs;

@@ -17,7 +17,7 @@ const EMPTY_BAR_CHAR = '░';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; color: string }> = {
   planned: { emoji: '📅', color: 'gray' },
-  'in-progress': { emoji: '⚡', color: 'yellow' },
+  'in-progress': { emoji: '⏳', color: 'yellow' },
   complete: { emoji: '✅', color: 'green' },
   archived: { emoji: '📦', color: 'gray' },
 };

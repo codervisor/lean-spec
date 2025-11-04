@@ -106,6 +106,8 @@ program
   .option('--priority <priority>', 'Filter by priority (low, medium, high, critical)')
   .option('--assignee <name>', 'Filter by assignee')
   .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
+  .option('--sort <field>', 'Sort by field (id, created, name, status, priority)', 'id')
+  .option('--order <order>', 'Sort order (asc, desc)', 'desc')
   .action(async (options: {
     archived?: boolean;
     status?: SpecStatus;
@@ -113,6 +115,8 @@ program
     priority?: SpecPriority;
     assignee?: string;
     field?: string[];
+    sort?: string;
+    order?: string;
   }) => {
     // Parse custom field filters from --field options
     const customFields = parseCustomFieldOptions(options.field);
@@ -124,6 +128,8 @@ program
       priority?: SpecPriority;
       assignee?: string;
       customFields?: Record<string, unknown>;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
     } = {
       showArchived: options.archived,
       status: options.status,
@@ -131,6 +137,8 @@ program
       priority: options.priority,
       assignee: options.assignee,
       customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+      sortBy: options.sort || 'id',
+      sortOrder: (options.order as 'asc' | 'desc') || 'desc',
     };
     await listSpecs(listOptions);
   });

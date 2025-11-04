@@ -125,7 +125,7 @@ export async function statsCommand(options: {
   console.log(`  ${'Status'.padEnd(labelWidth)}  ${chalk.cyan('Specs'.padEnd(colWidth))}`);
   console.log(`  ${chalk.dim('─'.repeat(labelWidth))}  ${chalk.dim('─'.repeat(colWidth))}`);
   console.log(`  📋 ${'Planned'.padEnd(labelWidth - 3)}  ${chalk.cyan(createBar(statusCounts.planned, maxStatusCount).padEnd(barWidth))}${chalk.cyan(statusCounts.planned.toString().padStart(specsWidth))}`);
-  console.log(`  ⚡ ${'In Progress'.padEnd(labelWidth - 3)}  ${chalk.yellow(createBar(statusCounts['in-progress'], maxStatusCount).padEnd(barWidth))}${chalk.yellow(statusCounts['in-progress'].toString().padStart(specsWidth))}`);
+  console.log(`  ⏳ ${'In Progress'.padEnd(labelWidth - 3)}  ${chalk.yellow(createBar(statusCounts['in-progress'], maxStatusCount).padEnd(barWidth))}${chalk.yellow(statusCounts['in-progress'].toString().padStart(specsWidth))}`);
   console.log(`  ✅ ${'Complete'.padEnd(labelWidth - 3)}  ${chalk.green(createBar(statusCounts.complete, maxStatusCount).padEnd(barWidth))}${chalk.green(statusCounts.complete.toString().padStart(specsWidth))}`);
   console.log(`  📦 ${'Archived'.padEnd(labelWidth - 3)}  ${chalk.dim(createBar(statusCounts.archived, maxStatusCount).padEnd(barWidth))}${chalk.dim(statusCounts.archived.toString().padStart(specsWidth))}`);
   console.log('');

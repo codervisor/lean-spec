@@ -17,7 +17,7 @@ const PRIORITY_BADGES: Record<SpecPriority, { emoji: string; colorFn: (s: string
 
 const STATUS_EMOJI: Record<SpecStatus, string> = {
   planned: '📅',
-  'in-progress': '⚡',
+  'in-progress': '⏳',
   complete: '✅',
   archived: '📦',
 };
@@ -29,6 +29,8 @@ export async function listSpecs(options: {
   priority?: SpecPriority | SpecPriority[];
   assignee?: string;
   customFields?: Record<string, unknown>;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 } = {}): Promise<void> {
   // Auto-check for conflicts before listing
   await autoCheckIfEnabled();
@@ -59,6 +61,8 @@ export async function listSpecs(options: {
     () => loadAllSpecs({
       includeArchived: options.showArchived || false,
       filter,
+      sortBy: options.sortBy || 'id',
+      sortOrder: options.sortOrder || 'desc',
     })
   );
 

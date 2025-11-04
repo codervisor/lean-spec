@@ -324,7 +324,7 @@ function updateVisualMetadata(content: string, frontmatter: SpecFrontmatter): st
 function getStatusEmojiPlain(status: string): string {
   switch (status) {
     case 'planned': return '🗓️';
-    case 'in-progress': return '⚡';
+    case 'in-progress': return '⏳';
     case 'complete': return '✅';
     case 'archived': return '📦';
     default: return '📄';

@@ -70,7 +70,7 @@ export async function getProjectName(cwd: string = process.cwd()): Promise<strin
 function formatStatus(status: string): string {
   const statusMap: Record<string, string> = {
     'planned': '📅 Planned',
-    'in-progress': '⚡ In progress',
+    'in-progress': '⏳ In progress',
     'complete': '✅ Complete',
     'archived': '📦 Archived',
   };

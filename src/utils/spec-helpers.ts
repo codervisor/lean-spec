@@ -7,7 +7,7 @@ import type { SpecStatus, SpecPriority } from '../frontmatter.js';
 export function getStatusEmoji(status: SpecStatus): string {
   switch (status) {
     case 'planned': return chalk.cyan('📋');
-    case 'in-progress': return chalk.yellow('⚡');
+    case 'in-progress': return chalk.yellow('⏳');
     case 'complete': return chalk.green('✅');
     case 'archived': return chalk.gray('📦');
     default: return '';

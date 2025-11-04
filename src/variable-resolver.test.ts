@@ -164,7 +164,7 @@ describe('resolveVariables', () => {
     const template = '{status}';
     const tests = [
       { status: 'planned', expected: '📅 Planned' },
-      { status: 'in-progress', expected: '⚡ In progress' },
+      { status: 'in-progress', expected: '⏳ In progress' },
       { status: 'complete', expected: '✅ Complete' },
       { status: 'archived', expected: '📦 Archived' },
     ];
@@ -259,7 +259,7 @@ describe('resolveVariables', () => {
     };
     
     const result = resolveVariables(template, context);
-    expect(result).toBe('my-feature - Status: ⚡ In progress, Priority: High, Team: Engineering');
+    expect(result).toBe('my-feature - Status: ⏳ In progress, Priority: High, Team: Engineering');
   });
 });
 
