@@ -67,10 +67,16 @@ export async function createSpec(name: string, options: {
   // Check if directory exists
   try {
     await fs.access(specDir);
-    console.log(chalk.yellow(`Warning: Spec already exists: ${sanitizeUserInput(specDir)}`));
-    process.exit(1);
-  } catch {
-    // Directory doesn't exist, continue
+    // If we get here, directory exists
+    throw new Error(`Spec already exists: ${sanitizeUserInput(specDir)}`);
+  } catch (error: any) {
+    // If error is ENOENT, directory doesn't exist - that's good, continue
+    if (error.code === 'ENOENT') {
+      // Directory doesn't exist, continue
+    } else {
+      // Some other error or the "already exists" error we threw
+      throw error;
+    }
   }
 
   // Create spec directory
@@ -86,9 +92,8 @@ export async function createSpec(name: string, options: {
     if (config.templates?.[options.template]) {
       templateName = config.templates[options.template];
     } else {
-      console.error(chalk.red(`Template not found: ${options.template}`));
-      console.error(chalk.gray(`Available templates: ${Object.keys(config.templates || {}).join(', ')}`));
-      process.exit(1);
+      const available = Object.keys(config.templates || {}).join(', ');
+      throw new Error(`Template not found: ${options.template}. Available templates: ${available}`);
     }
   } else {
     // Use default template
@@ -160,10 +165,7 @@ export async function createSpec(name: string, options: {
       );
     }
   } catch (error) {
-    console.error(chalk.red('Error: Template not found!'));
-    console.error(chalk.gray(`Expected: ${templatePath}`));
-    console.error(chalk.yellow('Run: lspec init'));
-    process.exit(1);
+    throw new Error(`Template not found: ${templatePath}. Run: lspec init`);
   }
 
   await fs.writeFile(specFile, content, 'utf-8');

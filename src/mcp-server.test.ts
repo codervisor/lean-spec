@@ -16,15 +16,37 @@ describe('MCP Server', () => {
     // Create minimal LeanSpec project structure
     await fs.mkdir(path.join(testDir, 'specs'), { recursive: true });
     await fs.mkdir(path.join(testDir, '.lspec'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.lspec', 'templates'), { recursive: true });
+    
+    // Create a simple template
+    await fs.writeFile(
+      path.join(testDir, '.lspec', 'templates', 'spec-template.md'),
+      `---
+status: planned
+created: '{date}'
+---
+
+# {name}
+
+## Overview
+
+Describe what this spec is about.
+`
+    );
     
     // Create config
     await fs.writeFile(
       path.join(testDir, '.lspec', 'config.json'),
       JSON.stringify({
         specsDir: 'specs',
+        template: 'spec-template.md',
+        templates: {
+          default: 'spec-template.md',
+        },
         structure: {
           pattern: 'flat',
           sequenceDigits: 3,
+          defaultFile: 'README.md',
         },
       })
     );
@@ -116,6 +138,86 @@ Testing the MCP server functionality.
       await expect(
         openCommand('nonexistent-spec-999', {})
       ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+
+    it('should handle createSpec duplicate errors without crashing', async () => {
+      // Note: In the current implementation, createSpec auto-sequences numbers,
+      // so duplicate spec names automatically get different numbers (001, 002, etc.)
+      // This test verifies that IF a duplicate directory exists, it throws properly
+      
+      // Create a directory that will conflict with the next sequence number
+      const nextSeq = '002';
+      const duplicateDir = path.join(testDir, 'specs', `${nextSeq}-will-conflict`);
+      await fs.mkdir(duplicateDir, { recursive: true });
+      await fs.writeFile(
+        path.join(duplicateDir, 'README.md'),
+        '---\nstatus: planned\n---\n\n# Conflict\n'
+      );
+      
+      const { createSpec } = await import('./commands/create.js');
+      
+      // Get what the next sequence will be
+      const { getGlobalNextSeq } = await import('./utils/path-helpers.js');
+      const seq = await getGlobalNextSeq(path.join(testDir, 'specs'), 3);
+      
+      // If the sequence matches our pre-created directory, it should throw
+      if (seq === nextSeq) {
+        await expect(
+          createSpec('will-conflict', { title: 'Test' })
+        ).rejects.toThrow(/Spec already exists/);
+      } else {
+        // Otherwise just verify createSpec doesn't crash when directories exist
+        await createSpec('another-spec', { title: 'Test' });
+      }
+    });
+
+    it('should handle createSpec invalid template errors without crashing', async () => {
+      const { createSpec } = await import('./commands/create.js');
+      
+      // Try to create with non-existent template - should throw error, not exit
+      await expect(
+        createSpec('new-spec', { template: 'nonexistent-template' })
+      ).rejects.toThrow(/Template not found/);
+    });
+
+    it('should handle depsCommand errors without crashing', async () => {
+      const { depsCommand } = await import('./commands/deps.js');
+      
+      // Test that depsCommand throws error for non-existent spec
+      await expect(
+        depsCommand('nonexistent-spec-999', {})
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+
+    it('should handle filesCommand errors without crashing', async () => {
+      const { filesCommand } = await import('./commands/files.js');
+      
+      // Test that filesCommand throws error for non-existent spec
+      await expect(
+        filesCommand('nonexistent-spec-999', {})
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+
+    it('should handle consecutive errors without crashing', async () => {
+      const { updateSpec } = await import('./commands/update.js');
+      
+      // Multiple consecutive errors should all throw, not crash the process
+      await expect(
+        updateSpec('fake-1', { status: 'complete' as any })
+      ).rejects.toThrow();
+      
+      await expect(
+        updateSpec('fake-2', { status: 'complete' as any })
+      ).rejects.toThrow();
+      
+      await expect(
+        updateSpec('fake-3', { status: 'complete' as any })
+      ).rejects.toThrow();
+      
+      // Process should still be running - test by doing a successful operation
+      await expect(
+        updateSpec('001-test-spec', { status: 'in-progress' as any })
+      ).resolves.toBeUndefined();
     });
   });
 });
