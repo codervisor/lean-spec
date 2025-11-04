@@ -60,11 +60,26 @@ $ lspec init
 
 ## Plan
 
+**Status (2025-11-04):** Ready to implement - part of Phase 2 UX improvements for v0.2.0
+
 - [ ] Add pattern selection to init wizard
 - [ ] Update init command to handle pattern choice
 - [ ] Add pattern override logic
 - [ ] Update documentation
 - [ ] Add tests for pattern selection
+
+**Implementation Notes:**
+- Straightforward UX enhancement to init flow
+- Improves onboarding by eliminating manual config edits
+- Part of spec 043 launch preparation
+- Estimated: 3-4 hours implementation
+- No blocking dependencies
+
+**Testing Priority:**
+- Pattern selection UI is intuitive
+- Selected pattern correctly overrides template default
+- Custom pattern validation works
+- Backward compatibility maintained
 
 ## Test
 

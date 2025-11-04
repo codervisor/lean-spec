@@ -5,6 +5,7 @@ import {
   listSpecs,
   updateSpec,
   checkSpecs,
+  backfillTimestamps,
   listTemplates,
   showTemplate,
   addTemplate,
@@ -41,6 +42,7 @@ Command Groups:
     list                          List all specs
     update <spec-path>            Update spec metadata
     archive <spec-path>           Move spec to archived/
+    backfill [specs...]           Backfill timestamps from git history
     
   Viewing & Navigation:
     view <spec-path>              View spec content
@@ -64,6 +66,7 @@ Examples:
   $ lspec create my-feature --priority high
   $ lspec list --status in-progress
   $ lspec view 042
+  $ lspec backfill --dry-run
   $ lspec board --tag backend
   $ lspec search "authentication"
 `);
@@ -74,6 +77,31 @@ program
   .description('Move spec to archived/')
   .action(async (specPath: string) => {
     await archiveSpec(specPath);
+  });
+
+// backfill command
+program
+  .command('backfill [specs...]')
+  .description('Backfill timestamps from git history')
+  .option('--dry-run', 'Show what would be updated without making changes')
+  .option('--force', 'Overwrite existing timestamp values')
+  .option('--assignee', 'Include assignee from first commit author')
+  .option('--transitions', 'Include full status transition history')
+  .option('--all', 'Include all optional fields (assignee + transitions)')
+  .action(async (specs: string[] | undefined, options: {
+    dryRun?: boolean;
+    force?: boolean;
+    assignee?: boolean;
+    transitions?: boolean;
+    all?: boolean;
+  }) => {
+    await backfillTimestamps({
+      dryRun: options.dryRun,
+      force: options.force,
+      includeAssignee: options.assignee || options.all,
+      includeTransitions: options.transitions || options.all,
+      specs: specs && specs.length > 0 ? specs : undefined,
+    });
   });
 
 // board command

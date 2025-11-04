@@ -47,11 +47,27 @@ Make `lspec list` respect the configured folder pattern:
 
 ## Plan
 
+**Status (2025-11-04):** Ready to implement - part of Phase 2 UX improvements for v0.2.0
+
 - [ ] Extract grouping logic from `list.ts`
 - [ ] Add pattern detection utility
 - [ ] Implement adaptive grouping
 - [ ] Add tests for flat/date/custom patterns
 - [ ] Update documentation
+
+**Implementation Notes:**
+- Makes list command respect configured folder patterns
+- Fixes hardcoded date grouping assumption
+- Improves UX for users with flat or custom patterns
+- Part of spec 043 launch preparation
+- Estimated: 2-3 hours implementation
+- Works with spec 026 (pattern selection during init)
+
+**Technical Approach:**
+1. Read `folderPattern` from `.lspec/config.json`
+2. Detect if pattern contains `{YYYYMMDD}/` for date grouping
+3. Apply appropriate grouping strategy in list output
+4. Maintain backward compatibility
 
 ## Test
 
