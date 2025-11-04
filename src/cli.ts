@@ -31,6 +31,43 @@ program
   .description('Manage LeanSpec documents')
   .version('0.1.0');
 
+// Add custom help text with grouped commands
+program.addHelpText('after', `
+Command Groups:
+  
+  Core Commands:
+    init                          Initialize LeanSpec in current directory
+    create <name>                 Create new spec in folder structure
+    list                          List all specs
+    update <spec-path>            Update spec metadata
+    archive <spec-path>           Move spec to archived/
+    
+  Viewing & Navigation:
+    view <spec-path>              View spec content
+    open <spec-path>              Open spec in editor
+    search <query>                Full-text search with metadata filters
+    files <spec-path>             List files in a spec
+    
+  Project & Analytics:
+    board                         Show Kanban-style board view
+    stats                         Show aggregate statistics
+    timeline                      Show creation/completion over time
+    gantt                         Show timeline with dependencies
+    deps <spec-path>              Show dependency graph for a spec
+    
+  Maintenance:
+    check                         Check for sequence conflicts
+    templates                     Manage spec templates
+
+Examples:
+  $ lspec init
+  $ lspec create my-feature --priority high
+  $ lspec list --status in-progress
+  $ lspec view 042
+  $ lspec board --tag backend
+  $ lspec search "authentication"
+`);
+
 // archive command
 program
   .command('archive <spec-path>')
