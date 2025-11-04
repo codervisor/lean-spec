@@ -39,11 +39,21 @@ export async function updateSpec(
     process.exit(1);
   }
 
-  // Merge custom fields into updates object
-  const allUpdates = { ...updates };
+  // Merge custom fields into updates object, filtering out undefined values
+  const allUpdates: Record<string, unknown> = {};
+  
+  // Only add defined values
+  if (updates.status !== undefined) allUpdates.status = updates.status;
+  if (updates.priority !== undefined) allUpdates.priority = updates.priority;
+  if (updates.tags !== undefined) allUpdates.tags = updates.tags;
+  if (updates.assignee !== undefined) allUpdates.assignee = updates.assignee;
+  
   if (updates.customFields) {
-    Object.assign(allUpdates, updates.customFields);
-    delete allUpdates.customFields;
+    Object.entries(updates.customFields).forEach(([key, value]) => {
+      if (value !== undefined) {
+        allUpdates[key] = value;
+      }
+    });
   }
 
   // Update frontmatter

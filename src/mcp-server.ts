@@ -469,12 +469,14 @@ async function createMcpServer(): Promise<McpServer> {
           capturedOutput += args.join(' ') + '\n';
         };
 
-        await updateSpec(input.specPath, {
-          status: input.status as SpecStatus | undefined,
-          priority: input.priority as SpecPriority | undefined,
-          tags: input.tags,
-          assignee: input.assignee,
-        });
+        // Filter out undefined values to prevent YAML serialization errors
+        const updates: Record<string, unknown> = {};
+        if (input.status !== undefined) updates.status = input.status as SpecStatus;
+        if (input.priority !== undefined) updates.priority = input.priority as SpecPriority;
+        if (input.tags !== undefined) updates.tags = input.tags;
+        if (input.assignee !== undefined) updates.assignee = input.assignee;
+
+        await updateSpec(input.specPath, updates);
 
         const output = {
           success: true,
