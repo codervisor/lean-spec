@@ -5,19 +5,15 @@ import dayjs from 'dayjs';
 
 describe('calculateHealth', () => {
   it('should calculate health score of 100% for all complete specs', () => {
-    const specs: SpecInfo[] = [
+    const specs = [
       {
         path: 'spec-001',
         frontmatter: { status: 'complete', created: '2025-01-01', priority: 'high' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
       {
         path: 'spec-002',
         frontmatter: { status: 'complete', created: '2025-01-01', priority: 'medium' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
     const health = calculateHealth(specs);
@@ -27,19 +23,15 @@ describe('calculateHealth', () => {
   });
 
   it('should calculate health score of 0% for all planned specs', () => {
-    const specs: SpecInfo[] = [
+    const specs = [
       {
         path: 'spec-001',
         frontmatter: { status: 'planned', created: '2025-01-01', priority: 'high' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
       {
         path: 'spec-002',
         frontmatter: { status: 'planned', created: '2025-01-01', priority: 'medium' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
     const health = calculateHealth(specs);
@@ -49,34 +41,26 @@ describe('calculateHealth', () => {
   });
 
   it('should weight critical specs higher than low priority', () => {
-    const specsWithCritical: SpecInfo[] = [
+    const specsWithCritical = [
       {
         path: 'spec-001',
         frontmatter: { status: 'complete', created: '2025-01-01', priority: 'critical' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
       {
         path: 'spec-002',
         frontmatter: { status: 'planned', created: '2025-01-01', priority: 'low' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
-    const specsWithLow: SpecInfo[] = [
+    const specsWithLow = [
       {
         path: 'spec-001',
         frontmatter: { status: 'planned', created: '2025-01-01', priority: 'critical' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
       {
         path: 'spec-002',
         frontmatter: { status: 'complete', created: '2025-01-01', priority: 'low' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
     const healthWithCritical = calculateHealth(specsWithCritical);
@@ -91,7 +75,7 @@ describe('calculateHealth', () => {
 
   it('should detect critical overdue specs', () => {
     const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-    const specs: SpecInfo[] = [
+    const specs = [
       {
         path: 'spec-001',
         frontmatter: { 
@@ -100,9 +84,7 @@ describe('calculateHealth', () => {
           priority: 'critical',
           due: yesterday,
         },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
     const health = calculateHealth(specs);
@@ -111,7 +93,7 @@ describe('calculateHealth', () => {
 
   it('should detect long-running WIP specs', () => {
     const tenDaysAgo = dayjs().subtract(10, 'day').format('YYYY-MM-DD');
-    const specs: SpecInfo[] = [
+    const specs = [
       {
         path: 'spec-001',
         frontmatter: { 
@@ -119,9 +101,7 @@ describe('calculateHealth', () => {
           created: '2025-01-01',
           updated: tenDaysAgo,
         },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
     const health = calculateHealth(specs);
@@ -129,19 +109,15 @@ describe('calculateHealth', () => {
   });
 
   it('should exclude archived specs from health calculation', () => {
-    const specs: SpecInfo[] = [
+    const specs = [
       {
         path: 'spec-001',
         frontmatter: { status: 'complete', created: '2025-01-01' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
       {
         path: 'spec-002',
         frontmatter: { status: 'archived', created: '2025-01-01' },
-        readme: '',
-        yamlSource: '',
-      },
+      } as SpecInfo,
     ];
 
     const health = calculateHealth(specs);
