@@ -576,7 +576,8 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Read individual specification content by path or name',
     },
     async (uri, { specPath }) => {
-      const { spec, content } = await readSpecData(specPath);
+      const pathString = Array.isArray(specPath) ? specPath[0] : specPath;
+      const { spec, content } = await readSpecData(pathString);
       return {
         contents: [
           {
