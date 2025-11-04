@@ -270,25 +270,31 @@ export async function openCommand(
 
   console.log(chalk.gray(`Opening ${specFile} with ${editor}...`));
 
-  // Spawn editor process
+  // Spawn editor process - wrap in promise to handle errors properly
   const child = spawn(editor, [specFile], {
     stdio: 'inherit',
     shell: true,
-  });
-
-  child.on('error', (error) => {
-    throw new Error(`Error opening editor: ${error.message}`);
   });
 
   // Don't wait for editor to close for GUI editors
   const guiEditors = ['open', 'start', 'xdg-open', 'code', 'atom', 'subl'];
   const editorCommand = editor.trim().split(' ')[0];
   if (editorCommand && guiEditors.includes(editorCommand)) {
-    // Detach and don't wait
-    child.unref();
+    // For GUI editors, handle spawn errors but don't wait for close
+    return new Promise<void>((resolve, reject) => {
+      child.on('error', (error) => {
+        reject(new Error(`Error opening editor: ${error.message}`));
+      });
+      // Resolve immediately after spawn for GUI editors
+      child.unref();
+      resolve();
+    });
   } else {
     // Wait for terminal editors
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+      child.on('error', (error) => {
+        reject(new Error(`Error opening editor: ${error.message}`));
+      });
       child.on('close', (code) => {
         if (code === 0) {
           resolve();
