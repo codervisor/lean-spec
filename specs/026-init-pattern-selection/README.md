@@ -2,7 +2,9 @@
 status: planned
 created: 2025-11-03
 tags: [ux, init]
-priority: medium
+priority: high
+related:
+  - 043-official-launch-02
 ---
 
 # Init Pattern Selection

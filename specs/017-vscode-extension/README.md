@@ -1,8 +1,8 @@
 ---
 status: planned
-created: 2025-11-02
-tags: [feature, ide, vscode]
-priority: medium
+created: '2025-11-02'
+tags: ["feature","ide","vscode"]
+priority: low
 ---
 
 # vscode-extension

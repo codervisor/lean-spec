@@ -1,8 +1,10 @@
 ---
 status: planned
-created: 2025-11-02
-tags: [quality, validation, cli]
-priority: medium
+created: '2025-11-02'
+tags: ["quality","validation","cli"]
+priority: high
+related:
+  - 043-official-launch-02
 ---
 
 # spec-validation

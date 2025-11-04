@@ -2,7 +2,9 @@
 status: planned
 created: '2025-11-03'
 tags: ["docs","maintenance","clarity"]
-priority: medium
+priority: high
+related:
+  - 043-official-launch-02
 ---
 
 # Documentation Overhaul & Simplification

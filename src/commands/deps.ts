@@ -43,6 +43,7 @@ export async function depsCommand(specPath: string, options: {
   const dependsOn = findDependencies(spec, specMap);
   const blocks = findBlocking(spec, allSpecs);
   const related = findRelated(spec, specMap);
+  const relatedBy = findRelatedBy(spec, allSpecs);
 
   // Output as JSON if requested
   if (options.json) {
@@ -51,6 +52,7 @@ export async function depsCommand(specPath: string, options: {
       dependsOn: dependsOn.map(s => ({ path: s.path, status: s.frontmatter.status })),
       blocks: blocks.map(s => ({ path: s.path, status: s.frontmatter.status })),
       related: related.map(s => ({ path: s.path, status: s.frontmatter.status })),
+      relatedBy: relatedBy.map(s => ({ path: s.path, status: s.frontmatter.status })),
       chain: buildDependencyChain(spec, specMap, options.depth || 3),
     };
     console.log(JSON.stringify(data, null, 2));
@@ -90,6 +92,16 @@ export async function depsCommand(specPath: string, options: {
   if (related.length > 0) {
     console.log(chalk.bold('Related:'));
     for (const rel of related) {
+      const status = getStatusIndicator(rel.frontmatter.status);
+      console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
+    }
+    console.log('');
+  }
+
+  // Related By section (incoming related links)
+  if (relatedBy.length > 0) {
+    console.log(chalk.bold('Related By:'));
+    for (const rel of relatedBy) {
       const status = getStatusIndicator(rel.frontmatter.status);
       console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
     }
@@ -171,6 +183,25 @@ function findRelated(spec: SpecInfo, specMap: Map<string, SpecInfo>): SpecInfo[]
   }
   
   return related;
+}
+
+function findRelatedBy(spec: SpecInfo, allSpecs: SpecInfo[]): SpecInfo[] {
+  const relatedBy: SpecInfo[] = [];
+  
+  for (const other of allSpecs) {
+    if (other.path === spec.path) continue;
+    
+    if (other.frontmatter.related) {
+      for (const relPath of other.frontmatter.related) {
+        if (relPath === spec.path || spec.path.includes(relPath)) {
+          relatedBy.push(other);
+          break;
+        }
+      }
+    }
+  }
+  
+  return relatedBy;
 }
 
 function buildDependencyChain(

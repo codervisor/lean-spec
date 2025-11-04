@@ -18,7 +18,8 @@
     "custom": {
       "issue": "string",
       "pr": "string",
-      "milestone": "string"
+      "milestone": "string",
+      "superseded-by": "string"
     }
   },
   "variables": {
