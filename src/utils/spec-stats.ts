@@ -27,7 +27,10 @@ export function countSpecsByStatusAndPriority(specs: SpecInfo[]): {
   const tagCounts: Record<string, number> = {};
 
   for (const spec of specs) {
-    const status = spec.frontmatter.status;
+    // Specs in archived/ folder should be counted as archived, regardless of frontmatter status
+    const isInArchivedFolder = spec.path.startsWith('archived/');
+    const status = isInArchivedFolder ? 'archived' : spec.frontmatter.status;
+    
     if (status && status in statusCounts) {
       statusCounts[status]++;
     }
