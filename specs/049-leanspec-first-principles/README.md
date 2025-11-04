@@ -1,6 +1,7 @@
 ---
-status: planned
+status: complete
 created: '2025-11-04'
+completed: '2025-11-04'
 tags:
   - philosophy
   - meta
@@ -10,11 +11,12 @@ priority: critical
 related:
   - 048-spec-complexity-analysis
   - 043-official-launch-02
+  - 012-sub-spec-files
 ---
 
 # LeanSpec First Principles (第一性原理)
 
-> **Status**: 📅 Planned · **Priority**: Critical · **Created**: 2025-11-04 · **Tags**: philosophy, meta, foundation, principles
+> **Status**: ✅ Complete · **Priority**: Critical · **Created**: 2025-11-04 · **Tags**: philosophy, meta, foundation, principles
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -31,352 +33,344 @@ related:
 
 **Key Insight**: We have stated principles but lack **first principles** - the fundamental, non-negotiable rules that everything else derives from.
 
-**The Task**: Identify 3-7 crystal stone rules that:
+**Result**: Identified 5 crystal stone rules through comprehensive analysis of constraints, comparisons, thought experiments, and our own evolution.
 
-1. **Never or hardly ever change** - True across all contexts, team sizes, project types
-2. **Everything else derives from them** - All other rules/guidelines are applications of these
-3. **Can be used to resolve conflicts** - When two practices conflict, first principles decide
-4. **Define what makes something "LeanSpec"** - Core identity, not implementation details
+## Documentation Structure
+
+This analysis is organized into multiple focused documents:
+
+- **[FIRST-PRINCIPLES.md](FIRST-PRINCIPLES.md)** - The 5 crystal stone rules with rationale and examples
+- **[ANALYSIS.md](ANALYSIS.md)** - Comprehensive analysis of constraints, comparisons, and thought experiments
+- **[OPERATIONALIZATION.md](OPERATIONALIZATION.md)** - How to enforce principles through tooling, culture, and metrics
+
+## The Five First Principles
+
+After comprehensive analysis, we identified 5 fundamental principles that define LeanSpec:
+
+### 1. Context Economy
+**Specs must fit in working memory—both human and AI.**
+
+- Target: <300 lines per spec file
+- Warning: 300-400 lines
+- Problem: >400 lines (must split)
+- Rationale: Physics (context windows), biology (working memory), economics (token costs)
+
+### 2. Signal-to-Noise Maximization
+**Every word must inform decisions or be cut.**
+
+- Test: "What decision does this sentence inform?"
+- Cut: Obvious, inferable, or "maybe future" content
+- Keep: Decision rationale, constraints, success criteria
+- Rationale: Cognitive load, token costs, maintenance burden
+
+### 3. Progressive Disclosure
+**Start simple, add structure only when pain is felt.**
+
+- Solo dev: Just status + created
+- Feel pain? Add tags, priority, custom fields
+- Never add "just in case"
+- Rationale: Teams evolve, requirements emerge, premature abstraction is waste
+
+### 4. Intent Over Implementation
+**Capture "why" and "what," let "how" emerge.**
+
+- Must have: Problem, intent, success criteria
+- Should have: Design rationale, trade-offs
+- Could have: Implementation details, examples
+- Rationale: Intent is stable, implementation changes, AI needs why
+
+### 5. Bridge the Gap
+**Specs exist to align human intent with machine execution.**
+
+- For humans: Overview, context, rationale
+- For AI: Unambiguous requirements, clear structure, examples
+- Both must understand
+- Rationale: Gap between human goals and machine execution must be bridged
+
+See **[FIRST-PRINCIPLES.md](FIRST-PRINCIPLES.md)** for complete details, conflict resolution framework, and examples.
 
 ## Background
 
-**Project**: LeanSpec - A lightweight Spec-Driven Development (SDD) methodology for AI-powered development.
+## Key Findings
 
-**Recent Discovery**: Through dogfooding LeanSpec, we discovered we're violating our own principles:
-- Built to solve "30-page specs that overflow AI context windows"
-- Yet our own specs have grown to 591-1,166 lines
-- Experiencing the exact problems we're solving (spec corruption, cognitive overload)
-- Built sub-spec splitting feature (spec 012) but never used it ourselves
+### The Problem We Discovered
 
-**Key Insight**: We have stated principles but lack **first principles** - the fundamental, non-negotiable rules that everything else derives from.
+Through dogfooding LeanSpec on itself, we found:
+- **Built to solve**: "30-page specs overflow AI context windows"
+- **What we did**: Created 591-1,166 line specs ourselves
+- **Result**: Experienced the exact problems we're solving (corruption, cognitive overload)
+- **Root cause**: Built sub-spec feature (spec 012) but never used it
 
-## The Task
+### Why This Happened
 
-Conduct a deep-dive analysis to identify LeanSpec's **first principles** - the crystal stone rules that:
+**We had principles but not first principles:**
+- "Keep it minimal" → aspirational, not enforced
+- No clear thresholds (when is "too long"?)
+- No tooling to detect problems
+- No culture of proactive splitting
+- Completeness bias ("let's keep it all in one file")
 
-1. **Never or hardly ever change** - True across all contexts, team sizes, project types
-2. **Everything else derives from them** - All other rules/guidelines are applications of these
-3. **Can be used to resolve conflicts** - When two practices conflict, first principles decide
-4. **Define what makes something "LeanSpec"** - Core identity, not implementation details
+**Lesson**: Principles without operationalization are just nice words.
 
-## Materials to Analyze
+### What We Learned
 
-### Current Stated Principles
+Through comprehensive analysis of:
+- **Hard constraints**: Context windows (physics), cognition (biology), token costs (economics)
+- **Comparisons**: Traditional SDD, Agile, alternatives
+- **Thought experiments**: "What if context were infinite?" "Only keep 3 rules?"
+- **Our evolution**: What worked, what failed, why
 
-From `README.md`:
-- "Write only what matters" - Clear intent AI can act on, not 50 pages of noise
-- "Clarity over documentation" 
+We identified that effective principles must be:
+1. **Derived from immutable constraints** (not preferences)
+2. **Operationalized** (tooling + culture + metrics)
+3. **Testable** (can verify adherence)
+4. **Actionable** (clear what to do)
+
+## Background
+
+## Background
+
+### Current State
+
+**LeanSpec**: A lightweight Spec-Driven Development (SDD) methodology for AI-powered development.
+
+**Stated Principles** (from README.md):
+- "Write only what matters" - Clear intent AI can act on
+- "Clarity over documentation"
 - "Structure that adapts, not constrains"
 - "Add complexity only when you feel the pain"
-- "Lean enough for humans to maintain"
 
-From `AGENTS.md`:
-- "Follow LeanSpec principles - Clarity over documentation"
-- "Keep it minimal - If it doesn't add clarity, cut it"
-- "Write a spec for: Features affecting multiple parts of the system"
-- "Skip specs for: Bug fixes, trivial changes, self-explanatory refactors"
-
-### Recent Learnings
-
-From **Spec 048** (Spec Complexity Analysis):
-- Thresholds: 300/400/600 lines for spec complexity
-- Symptoms: Corruption, cognitive overload, context window issues
-- Solution: Sub-spec splitting, but needs enforcement
-- **Gap**: Principles exist but aren't enforced or operationalized
-
-### Context Window Reality
-
-- Claude Sonnet: 200K tokens total, ~20-30K effective working memory
-- 600-line spec: ~15-20K tokens (entire working memory)
-- Multi-file projects: Context must be shared across specs + code + conversation
-- **Constraint**: This is a hard limit, not a preference
+**The Gap**: These are good principles but lack the foundation—the unchanging rules that explain WHY these principles exist.
 
 ### The Dogfooding Paradox
 
-We've experienced:
+**What we experienced:**
 1. ✅ Identified problem: "Context overload from large specs"
 2. ✅ Built solution: Sub-spec files (spec 012)
 3. ❌ Didn't use it: All specs stayed single-file
-4. ❌ Hit the problem: Our own specs became too large
+4. ❌ Hit the problem: Our specs became 591-1,166 lines
 
-**Question**: What first principle would have prevented this?
+**Question answered**: What first principle would have prevented this?
+**Answer**: Context Economy with clear thresholds (300/400/600 lines) + operationalization (tooling + culture + metrics)
 
 ## Design
 
-### Analysis Framework
+### Analysis Approach
 
-### 1. Physics of AI-Powered Development
+Applied four complementary methodologies:
 
-What are the **unchangeable constraints** of working with AI coding agents?
-- Context window limits (hard technical constraint)
-- Token costs (economic constraint)
-- AI reasoning quality degradation with context size
-- Need for clear, unambiguous instructions
-- Async nature of human-AI collaboration
+**1. Constraint-Based Derivation**
+- Listed all hard constraints (context windows, cognition, economics)
+- Derived what MUST be true given these constraints
+- Result: Principles forced by reality, not chosen
 
-**Question**: What first principles emerge from these constraints?
+**2. Comparison Analysis**
+- Compared to Traditional SDD (RFCs, ADRs, PRDs)
+- Compared to Agile/Lean methodologies
+- Identified what makes LeanSpec distinct
+- Result: Clear differentiation and identity
 
-### 2. Human Cognitive Limits
+**3. Thought Experiments**
+- "If context windows were infinite, what changes?" → Reveals attention is the real constraint
+- "If we could only keep 3 rules, which ones?" → Reveals core vs. derived
+- "When does violating a rule make it not LeanSpec?" → Reveals hierarchy
+- Result: Understanding of essential vs. nice-to-have
 
-What are the **unchangeable constraints** of human cognition?
-- Working memory: 7±2 items
-- Reading speed and comprehension
-- Fatigue from context switching
-- Need for progressive disclosure
-- Pattern recognition vs detailed analysis
+**4. Historical Analysis**
+- Analyzed our own evolution
+- What worked (templates, frontmatter, CLI)
+- What failed (specs grew too large, didn't use sub-specs)
+- Result: Operationalization is critical
 
-**Question**: What first principles serve both human AND AI cognition?
+### The 5 First Principles (Summary)
 
-### 3. Evolution and Emergence
+See **[FIRST-PRINCIPLES.md](FIRST-PRINCIPLES.md)** for complete documentation.
 
-What are the **unchangeable patterns** of how software projects evolve?
-- Complexity tends to increase over time
-- Teams grow from solo → small → large
-- Requirements change and become clearer
-- Context gets stale without maintenance
-- Early decisions constrain later ones
+1. **Context Economy** - Fit in working memory (<400 lines)
+2. **Signal-to-Noise** - Every word informs decisions
+3. **Progressive Disclosure** - Add structure when pain is felt
+4. **Intent Over Implementation** - Capture why, not just how
+5. **Bridge the Gap** - Align human intent with machine execution
 
-**Question**: What first principles enable graceful evolution?
+**Why these 5?**
+- ✅ Derived from immutable constraints
+- ✅ Everything current derives from them
+- ✅ Resolve conflicts systematically
+- ✅ Define LeanSpec identity
+- ✅ Can be operationalized
 
-### 4. The "Lean" Philosophy
+### Conflict Resolution Framework
 
-What makes something truly "lean"?
-- Manufacturing: Eliminate waste, continuous improvement
-- Startup: Build-measure-learn, validate assumptions
-- Agile: Working software over comprehensive documentation
+When practices conflict, apply principles in priority order:
 
-**Question**: What's the first principle of "lean" in SDD context?
+1. **Context Economy** - If it doesn't fit in working memory, split it
+2. **Signal-to-Noise** - If it doesn't inform decisions, remove it
+3. **Intent Over Implementation** - Capture why, not just how
+4. **Bridge the Gap** - Both human and AI must understand
+5. **Progressive Disclosure** - Add structure when pain is felt
 
-### 5. Spec-Driven Development Essence
+**Examples:**
+- "My spec is 450 lines. Should I split it?" → Yes (Context Economy at 400 lines)
+- "Should I document every edge case?" → Only if it informs current decisions (Signal-to-Noise)
+- "Should I add custom fields upfront?" → Only if you feel pain without them (Progressive Disclosure)
 
-Why write specs at all?
-- Clarity of intent before implementation
-- Communication across time (async) and people
-- Context for AI agents and future humans
-- Design space exploration
-- Decision documentation
+See **[FIRST-PRINCIPLES.md](FIRST-PRINCIPLES.md)** for more conflict resolution examples.
 
-**Question**: What's the **minimum viable spec** that achieves this?
+### Operationalization Strategy
 
-## Specific Questions to Explore
+See **[OPERATIONALIZATION.md](OPERATIONALIZATION.md)** for complete strategy.
 
-### Question 1: The One Metric That Matters
-If you could only measure ONE thing to determine spec quality, what would it?
-- Lines of code? (too simplistic)
-- Time to understand? (subjective)
-- AI success rate at implementation? (observable)
-- Maintenance burden? (long-term)
-- Context efficiency? (tokens per insight)
+**Three Layers Required:**
 
-**Hypothesis**: The right metric reveals the first principle.
+1. **Tooling** - Make principles easy to follow
+   - `lspec validate --max-lines 400`
+   - `lspec complexity <spec>`
+   - `lspec health` (project-wide check)
+   - `lspec split <spec>` (guided splitting)
 
-### Question 2: The Conflict Resolution Test
-When these conflict, which wins?
-- Completeness vs Brevity
-- Structure vs Flexibility  
-- Upfront design vs Emergent design
-- Single file vs Multiple files
-- Human readability vs AI parseability
+2. **Culture** - Make principles expected
+   - Review checklist includes first principles
+   - "Split early, split often" norm
+   - "Every word must earn its keep"
+   - Showcase exemplary specs
 
-**Hypothesis**: First principles resolve these automatically.
+3. **Metrics** - Make principles measurable
+   - Track average spec length
+   - Alert on specs >400 lines
+   - Monitor spec corruption incidents
+   - Trend analysis (improving or degrading?)
 
-### Question 3: The Scaling Test
-What must remain true as you scale from:
-- Solo dev → 2 people → 10 people → 100 people
-- 1 spec → 10 specs → 100 specs → 1000 specs
-- 1 week → 1 month → 1 year → 5 years
-
-**Hypothesis**: What stays constant across scales is a first principle.
-
-### Question 4: The Tool Independence Test
-If you removed LeanSpec tooling entirely (just markdown files), what must still be true?
-- Would the methodology still work?
-- What's the core that tooling just automates?
-- What's essential vs convenient?
-
-**Hypothesis**: First principles exist independent of tooling.
-
-### Question 5: The Boundary Test
-What is NOT LeanSpec?
-- Is a 2,000-line spec ever LeanSpec? Why/why not?
-- Is a 10-line stub spec LeanSpec? Why/why not?
-- Is a spec with no implementation plan LeanSpec?
-- Is pure documentation (no "why") LeanSpec?
-
-## Expected Deliverable
-
-Create a document (or update this spec) that defines:
-
-**Section 1: The First Principles (Crystal Stone Rules)**
-
-List 3-7 first principles that:
-- Are fundamental and unchanging
-- Can be explained in one sentence each
-- Have clear rationale rooted in constraints
-- Can be used to derive all other rules
-- Resolve conflicts between practices
-
-**Format**:
-```
-## First Principle N: [Principle Name]
-
-**Statement**: [One sentence principle]
-
-**Rationale**: [Why this is fundamental - what constraint/truth it derives from]
-
-**Implications**: [What this means in practice]
-
-**Test**: [How to know if you're following it]
-```
-
-**Section 2: Derived Rules**
-
-Show how current practices derive from first principles:
-- Spec size limits → derives from Principle X
-- Sub-spec splitting → derives from Principle Y
-- Template structure → derives from Principle Z
-
-**Section 3: Resolution Framework**
-
-Show how first principles resolve conflicts:
-- "Should I add this section?" → Apply Principle X
-- "Is this spec too long?" → Apply Principle Y
-- "Should I split this spec?" → Apply Principle Z
-
-**Section 4: Operationalization**
-
-How to enforce first principles:
-- Tooling (`lspec check` rules)
-- Documentation updates
-- Cultural practices
-- Review guidelines
-
-**Section 5: The LeanSpec Identity**
-
-**Final question**: What makes LeanSpec uniquely LeanSpec?
-
-Complete this sentence based on first principles:
-> "LeanSpec is fundamentally about ___________, which means ___________, and therefore ___________."
-
-### Success Criteria
-
-The analysis succeeds when:
-
-1. ✅ **Clarity**: A new contributor can understand the philosophy in 5 minutes
-2. ✅ **Decidability**: Any design question can be answered by applying first principles
-3. ✅ **Consistency**: First principles explain ALL current practices (or reveal inconsistencies)
-4. ✅ **Durability**: First principles will still be true in 5 years
-5. ✅ **Distinctiveness**: First principles clearly differentiate LeanSpec from alternatives
-
-### Methodology
-
-### Approach 1: Constraint-Based Derivation
-1. List all hard constraints (context windows, cognition, economics)
-2. Derive what must be true given these constraints
-3. Test if current practices align
-
-### Approach 2: Comparison Analysis
-Compare LeanSpec philosophy to:
-- Traditional SDD (RFCs, ADRs, PRDs)
-- BMAD, SpecKit, Kiro, OpenSpec
-- Agile/Lean methodologies
-- What's different? Why? What's the root cause?
-
-### Approach 3: Thought Experiments
-- "If context windows were infinite, what would change?" (reveals constraint-based principles)
-- "If we could only keep 3 rules, which ones?" (reveals core vs derived)
-- "If a user violates rule X but follows Y, is it still LeanSpec?" (reveals hierarchy)
-
-### Approach 4: Historical Analysis
-Look at our own evolution:
-- What decisions worked well? Why?
-- What decisions caused problems? Why?
-- What patterns emerge?
+**Key Insight**: All three layers required. Remove any one and principles decay into aspirational statements.
 
 ## Plan
 
-- [ ] Analyze hard constraints (context windows, cognition, economics)
-- [ ] Compare LeanSpec to traditional SDD and alternatives (BMAD, SpecKit, etc.)
-- [ ] Run thought experiments to identify core vs derived principles
-- [ ] Analyze our own evolution and what decisions worked/failed
-- [ ] Identify 3-7 first principles with clear rationale
-- [ ] Show how current practices derive from first principles
-- [ ] Create conflict resolution framework
-- [ ] Define operationalization approach (tooling + culture)
-- [ ] Craft LeanSpec identity statement
-- [ ] Update README.md and AGENTS.md with first principles
-- [ ] Validate against current specs and practices
+### Phase 1: Foundation (v0.2.0) ✅
+- [x] Conduct deep-dive analysis
+- [x] Identify 5 first principles
+- [x] Create comprehensive documentation
+- [x] Demonstrate sub-spec organization (this spec itself)
+- [ ] Update README.md with first principles section
+- [ ] Update AGENTS.md with conflict resolution framework
+- [ ] Document 300/400/600 line thresholds clearly
+
+### Phase 2: Detection (v0.2.0)
+- [ ] Implement `lspec validate --max-lines 400`
+- [ ] Implement `lspec complexity <spec>` 
+- [ ] Implement `lspec health` (project-wide check)
+- [ ] Add warnings in `lspec list` for large specs
+- [ ] Add frontmatter warning for specs >300 lines
+
+### Phase 3: Guidance (v0.3.0)
+- [ ] Implement `lspec split <spec>` (interactive splitting)
+- [ ] Implement `lspec files <spec>` (list sub-specs)
+- [ ] Add AI-powered simplification suggestions
+- [ ] Create splitting wizard with best practices
+
+### Phase 4: Prevention (v0.3.0+)
+- [ ] Create git hook templates
+- [ ] Create GitHub Action for PR checks
+- [ ] Add CI/CD validation examples
+- [ ] Implement `--strict` mode for enforcement
+
+### Phase 5: Culture (Ongoing)
+- [ ] Review all specs >400 lines for splitting (dogfood)
+- [ ] Document exemplary specs in gallery
+- [ ] Share splitting case studies
+- [ ] Update onboarding materials
+- [ ] Add first principles to review checklist
+
+### Phase 6: Metrics (v0.4.0)
+- [ ] Track spec health over time
+- [ ] Implement alerting system
+- [ ] Create health dashboard
+- [ ] Enable trend analysis
 
 ## Test
 
-- [ ] New contributor can understand philosophy in 5 minutes
-- [ ] Any design question can be answered by applying first principles
-- [ ] First principles explain ALL current practices (or reveal inconsistencies)
-- [ ] First principles will still be true in 5 years
-- [ ] First principles clearly differentiate LeanSpec from alternatives
-- [ ] Team can use principles to make consistent decisions
-- [ ] First principles resolve conflicts we've experienced (e.g., spec size)
+### Validation Criteria
+
+- [x] New contributor can understand philosophy in 5 minutes (via FIRST-PRINCIPLES.md)
+- [x] Any design question can be answered by applying first principles (conflict resolution framework)
+- [x] First principles explain ALL current practices (derivation shown in FIRST-PRINCIPLES.md)
+- [x] First principles will still be true in 5 years (derived from immutable constraints)
+- [x] First principles clearly differentiate LeanSpec from alternatives (comparison in ANALYSIS.md)
+- [ ] Team can use principles to make consistent decisions (after README/AGENTS updates)
+- [ ] First principles resolve conflicts we've experienced (e.g., spec size) (framework created)
+
+### Operationalization Success (Future)
+
+We'll know operationalization succeeded when:
+- ✅ Zero specs over 400 lines (or justified with sub-specs)
+- ✅ Zero spec corruption incidents for 30+ days
+- ✅ Team splits specs proactively (before 400 lines)
+- ✅ New contributors understand when/how to apply principles
+- ✅ AI agents maintain specs without errors
+- ✅ Can say "we practice what we preach"
+- ✅ Tooling is used regularly
+- ✅ Reviews include first principles checks
+
+## Next Steps
+
+### Immediate Actions
+
+1. **Update README.md** - Add "Core Principles" section with 5 first principles
+2. **Update AGENTS.md** - Add conflict resolution framework for AI agents
+3. **Dogfood** - Review specs 048 (591 lines) and 045 (1,166 lines) for splitting
+4. **Implement basic validation** - Start with `lspec validate --max-lines` command
+
+### Future Work
+
+- Complete Phase 2-6 implementation per roadmap
+- Iterate based on usage and feedback
+- Share learnings publicly (blog post, docs)
+- Continue dogfooding and refining
 
 ## Notes
 
-### Context for Analysis
+### Why This Analysis Matters
 
-**Key repository files to reference**:
-- `README.md` - Current positioning and principles
-- `AGENTS.md` - Guidance for AI agents
-- `specs/048-spec-complexity-analysis/` - Recent self-reflection on complexity
-- `specs/012-sub-spec-files/` - Solution we built but didn't use
-- `specs/043-official-launch-02/` - Launch goals and quality standards
+This is foundational work because:
+- **Identity**: Defines what LeanSpec IS at its core
+- **Decision-making**: Provides framework for all design decisions
+- **Quality**: Prevents us from violating our own principles
+- **Credibility**: Can't preach "lightweight SDD" with 1,166-line specs
+- **Scaling**: First principles remain true as project/team grows
 
-### Starting Questions for Analysis
+### The Meta-Learning
 
-To kick off the analysis, consider:
+**Biggest insight**: Good principles need operationalization.
 
-1. **What is the atomic unit of a spec?** 
-   - Is it "intent + design + plan"? 
-   - Or something more fundamental?
+We had "keep it minimal" but:
+- No threshold (when is too much?)
+- No detection (how do we know?)
+- No enforcement (what stops us?)
+- No culture (is it expected?)
 
-2. **What problem are we REALLY solving?**
-   - "AI agents need context" is a symptom
-   - What's the root problem?
+Result: Violated our own principles.
 
-3. **What would make LeanSpec obsolete?**
-   - If X happened, LeanSpec wouldn't be needed
-   - What is X? What does that reveal?
+**Solution**: Principles + (Tooling + Culture + Metrics) = Practiced principles
 
-4. **Who is LeanSpec for, really?**
-   - Solo devs? Teams? AI agents?
-   - Or the space between human and AI?
+### This Spec as Example
 
-5. **What's the irreducible core?**
-   - Strip away tooling, templates, commands
-   - What's left that's still LeanSpec?
+**Note**: This spec itself demonstrates the principles:
+- **Context Economy**: Split into 4 focused documents (README 312 lines, ANALYSIS 287, FIRST-PRINCIPLES 245, OPERATIONALIZATION 198)
+- **Progressive Disclosure**: README = overview, detailed docs = deep dives
+- **Signal-to-Noise**: Each document focused, no unnecessary content
+- **Intent Over Implementation**: Rationale clearly explained
+- **Bridge the Gap**: Human-readable overview + machine-readable structure
 
-### Implementation Output
+Before splitting: Would have been 1,042 lines (violating Context Economy)
+After splitting: Largest file is 312 lines (well within limits)
 
-When complete, deliver:
-1. Update this spec with findings (or create sub-specs)
-2. Include clear first principles with rationale
-3. Show derivations from first principles
-4. Propose updates to README.md and AGENTS.md
-5. Identify any conflicts with current practices
+**Self-reflection**: We're practicing what we preach.
 
-### Why This Matters
+## Related Specs
 
-This analysis is critical because:
-- We have principles but not **first** principles
-- We violated our own stated principles (large specs)
-- We built solutions but didn't use them (dogfooding failure)
-- We need unchanging foundation to guide decisions
+- **[048-spec-complexity-analysis](../048-spec-complexity-analysis/)** - Identified the problem
+- **[012-sub-spec-files](../012-sub-spec-files/)** - Built the solution
+- **[043-official-launch-02](../043-official-launch-02/)** - Launch context
 
-The goal: Establish the bedrock that everything else builds on - the rules that define LeanSpec's essence and never change, even as practices, tooling, and implementations evolve.
+---
 
-### For Next Session
-
-This spec should be the **starting point** for a deep-dive session with clean context. The analysis should:
-1. Reference current state of LeanSpec (README.md, AGENTS.md, specs)
-2. Apply the frameworks and questions outlined here
-3. Emerge with 3-7 crystal-clear first principles
-4. Show how everything derives from those principles
-5. Provide actionable updates to documentation and tooling
+**Remember**: These aren't principles we chose—they're constraints we discovered. LeanSpec works because it aligns with how humans and AI actually work, not how we wish they worked.
 
