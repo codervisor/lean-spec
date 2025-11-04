@@ -170,10 +170,7 @@ async function searchBySequence(specsDir: string, seqNum: number): Promise<strin
           }
         }
         
-        // Skip archived directory in main search
-        if (entry.name === 'archived') continue;
-        
-        // Recursively search subdirectories
+        // Recursively search subdirectories (including archived)
         const subDir = path.join(dir, entry.name);
         const result = await scanDirectory(subDir);
         if (result) return result;
@@ -204,10 +201,7 @@ async function searchInAllDirectories(specsDir: string, specName: string): Promi
           return path.join(dir, entry.name);
         }
         
-        // Skip archived directory in main search
-        if (entry.name === 'archived') continue;
-        
-        // Recursively search subdirectories
+        // Recursively search subdirectories (including archived)
         const subDir = path.join(dir, entry.name);
         const result = await scanDirectory(subDir);
         if (result) return result;
