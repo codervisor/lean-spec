@@ -52,14 +52,14 @@ function specToData(spec: any): SpecData {
   return {
     name: spec.name,
     path: spec.path,
-    status: spec.status,
-    created: spec.created,
-    title: spec.title,
-    tags: spec.tags,
-    priority: spec.priority,
-    assignee: spec.assignee,
-    description: spec.description,
-    customFields: spec.customFields,
+    status: spec.frontmatter.status,
+    created: spec.frontmatter.created,
+    title: spec.frontmatter.title,
+    tags: spec.frontmatter.tags,
+    priority: spec.frontmatter.priority,
+    assignee: spec.frontmatter.assignee,
+    description: spec.frontmatter.description,
+    customFields: spec.frontmatter.custom,
   };
 }
 
@@ -192,12 +192,12 @@ async function getStatsData(): Promise<StatsData> {
   const byTag: Record<string, number> = {};
 
   for (const spec of specs) {
-    byStatus[spec.status] = (byStatus[spec.status] || 0) + 1;
-    if (spec.priority) {
-      byPriority[spec.priority] = (byPriority[spec.priority] || 0) + 1;
+    byStatus[spec.frontmatter.status] = (byStatus[spec.frontmatter.status] || 0) + 1;
+    if (spec.frontmatter.priority) {
+      byPriority[spec.frontmatter.priority] = (byPriority[spec.frontmatter.priority] || 0) + 1;
     }
-    if (spec.tags) {
-      for (const tag of spec.tags) {
+    if (spec.frontmatter.tags) {
+      for (const tag of spec.frontmatter.tags) {
         byTag[tag] = (byTag[tag] || 0) + 1;
       }
     }
@@ -234,7 +234,7 @@ async function getBoardData(): Promise<BoardData> {
   };
 
   for (const spec of specs) {
-    columns[spec.status].push(specToData(spec));
+    columns[spec.frontmatter.status].push(specToData(spec));
   }
 
   return { columns };
