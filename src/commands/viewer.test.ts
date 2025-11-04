@@ -8,7 +8,7 @@ import {
   getTestDate,
   type TestContext,
 } from '../test-helpers.js';
-import { showCommand, readCommand, viewCommand, openCommand, readSpecContent } from './viewer.js';
+import { viewCommand, openCommand, readSpecContent } from './viewer.js';
 
 describe('Viewer Commands', () => {
   let testCtx: TestContext;
@@ -161,7 +161,7 @@ Short content here.`
     });
   });
 
-  describe('showCommand', () => {
+  describe('viewCommand', () => {
     it('should display spec with formatted output', async () => {
       // Capture console output
       const logs: string[] = [];
@@ -169,7 +169,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await showCommand('001-test-spec', { noColor: false });
+        await viewCommand('001-test-spec', { noColor: false });
 
         const output = logs.join('\n');
         expect(output).toContain('001-test-spec');
@@ -188,7 +188,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await showCommand('002');
+        await viewCommand('002');
 
         const output = logs.join('\n');
         expect(output).toContain('002-another-spec');
@@ -209,41 +209,21 @@ Short content here.`
 
       try {
         await expect(
-          showCommand('999-nonexistent')
+          viewCommand('999-nonexistent')
         ).rejects.toThrow();
         expect(exitCode).toBe(1);
       } finally {
         process.exit = originalExit;
       }
     });
-  });
 
-  describe('viewCommand', () => {
-    it('should work as alias for showCommand', async () => {
+    it('should output raw markdown with --raw flag', async () => {
       const logs: string[] = [];
       const originalLog = console.log;
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('001-test-spec', {});
-
-        const output = logs.join('\n');
-        expect(output).toContain('001-test-spec');
-        expect(output).toContain('planned');
-      } finally {
-        console.log = originalLog;
-      }
-    });
-  });
-
-  describe('readCommand', () => {
-    it('should output raw markdown by default', async () => {
-      const logs: string[] = [];
-      const originalLog = console.log;
-      console.log = (...args: unknown[]) => logs.push(args.join(' '));
-
-      try {
-        await readCommand('001-test-spec', {});
+        await viewCommand('001-test-spec', { raw: true });
 
         const output = logs.join('\n');
         expect(output).toContain('---');
@@ -254,13 +234,13 @@ Short content here.`
       }
     });
 
-    it('should output JSON format when requested', async () => {
+    it('should output JSON format with --json flag', async () => {
       const logs: string[] = [];
       const originalLog = console.log;
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await readCommand('001-test-spec', { format: 'json' });
+        await viewCommand('001-test-spec', { json: true });
 
         const output = logs.join('\n');
         const parsed = JSON.parse(output);
@@ -274,33 +254,13 @@ Short content here.`
       }
     });
 
-    it('should output only frontmatter when requested', async () => {
+    it('should work with spec number in JSON format', async () => {
       const logs: string[] = [];
       const originalLog = console.log;
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await readCommand('001-test-spec', { frontmatterOnly: true });
-
-        const output = logs.join('\n');
-        const parsed = JSON.parse(output);
-        
-        expect(parsed.status).toBe('planned');
-        expect(parsed.priority).toBe('high');
-        expect(parsed.tags).toEqual(['test', 'demo']);
-        expect(parsed.content).toBeUndefined();
-      } finally {
-        console.log = originalLog;
-      }
-    });
-
-    it('should work with spec number', async () => {
-      const logs: string[] = [];
-      const originalLog = console.log;
-      console.log = (...args: unknown[]) => logs.push(args.join(' '));
-
-      try {
-        await readCommand('2', { format: 'json' });
+        await viewCommand('2', { json: true });
 
         const output = logs.join('\n');
         const parsed = JSON.parse(output);
@@ -309,24 +269,6 @@ Short content here.`
         expect(parsed.frontmatter.status).toBe('in-progress');
       } finally {
         console.log = originalLog;
-      }
-    });
-
-    it('should exit with error for non-existent spec', async () => {
-      const originalExit = process.exit;
-      let exitCode: number | undefined;
-      process.exit = ((code?: number) => {
-        exitCode = code;
-        throw new Error(`Process exit: ${code}`);
-      }) as never;
-
-      try {
-        await expect(
-          readCommand('999-nonexistent', {})
-        ).rejects.toThrow();
-        expect(exitCode).toBe(1);
-      } finally {
-        process.exit = originalExit;
       }
     });
   });

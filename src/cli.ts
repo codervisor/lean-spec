@@ -18,9 +18,7 @@ import {
   searchCommand,
   ganttCommand,
   filesCommand,
-  showCommand,
   viewCommand,
-  readCommand,
   openCommand,
 } from './commands/index.js';
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
@@ -366,21 +364,7 @@ program
     await ganttCommand(options);
   });
 
-// show command (deprecated)
-program
-  .command('show <spec-path>')
-  .description('[DEPRECATED] Use: lspec view <spec-path>')
-  .option('--no-color', 'Disable colors')
-  .action(async (specPath: string, options: {
-    color?: boolean;
-  }) => {
-    console.warn('\x1b[33m⚠️  "lspec show" is deprecated. Use: lspec view <spec-path>\x1b[0m');
-    await showCommand(specPath, {
-      noColor: options.color === false,
-    });
-  });
-
-// view command (unified viewer)
+// view command (primary viewer)
 program
   .command('view <spec-path>')
   .description('View spec content')
@@ -392,37 +376,10 @@ program
     json?: boolean;
     color?: boolean;
   }) => {
-    if (options.json) {
-      await readCommand(specPath, { format: 'json' });
-    } else if (options.raw) {
-      await readCommand(specPath, { format: 'markdown' });
-    } else {
-      await viewCommand(specPath, {
-        noColor: options.color === false,
-      });
-    }
-  });
-
-// read command (deprecated)
-program
-  .command('read <spec-path>')
-  .description('[DEPRECATED] Use: lspec view <spec-path> --raw')
-  .option('--format <format>', 'Output format: markdown (default), json')
-  .option('--frontmatter-only', 'Only output frontmatter as JSON')
-  .action(async (specPath: string, options: {
-    format?: 'markdown' | 'json';
-    frontmatterOnly?: boolean;
-  }) => {
-    if (options.frontmatterOnly) {
-      console.warn('\x1b[33m⚠️  "lspec read --frontmatter-only" is deprecated. Use: lspec view <spec-path> --json\x1b[0m');
-    } else if (options.format === 'json') {
-      console.warn('\x1b[33m⚠️  "lspec read --format=json" is deprecated. Use: lspec view <spec-path> --json\x1b[0m');
-    } else {
-      console.warn('\x1b[33m⚠️  "lspec read" is deprecated. Use: lspec view <spec-path> --raw\x1b[0m');
-    }
-    await readCommand(specPath, {
-      format: options.format,
-      frontmatterOnly: options.frontmatterOnly,
+    await viewCommand(specPath, {
+      raw: options.raw,
+      json: options.json,
+      noColor: options.color === false,
     });
   });
 

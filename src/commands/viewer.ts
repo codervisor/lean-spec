@@ -162,12 +162,14 @@ function displayFormattedSpec(spec: SpecContent): string {
 }
 
 /**
- * lspec show <spec-name>
- * Display spec with rendered markdown
+ * lspec view <spec-name>
+ * Display spec with rendered markdown, or output raw/json
  */
-export async function showCommand(
+export async function viewCommand(
   specPath: string,
   options: {
+    raw?: boolean;
+    json?: boolean;
     noColor?: boolean;
   } = {}
 ): Promise<void> {
@@ -179,38 +181,8 @@ export async function showCommand(
     process.exit(1);
   }
 
-  // Display formatted header and frontmatter
-  console.log(displayFormattedSpec(spec));
-  
-  // Render markdown content
-  const rendered = await marked(spec.content);
-  console.log(rendered);
-}
-
-/**
- * lspec read <spec-name>
- * Output raw markdown or JSON
- */
-export async function readCommand(
-  specPath: string,
-  options: {
-    format?: 'markdown' | 'json';
-    frontmatterOnly?: boolean;
-  } = {}
-): Promise<void> {
-  const spec = await readSpecContent(specPath, process.cwd());
-  
-  if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    process.exit(1);
-  }
-
-  if (options.frontmatterOnly) {
-    console.log(JSON.stringify(spec.frontmatter, null, 2));
-    return;
-  }
-
-  if (options.format === 'json') {
+  // Handle JSON output
+  if (options.json) {
     const jsonOutput = {
       name: spec.name,
       path: spec.path,
@@ -218,9 +190,21 @@ export async function readCommand(
       content: spec.content,
     };
     console.log(JSON.stringify(jsonOutput, null, 2));
-  } else {
-    console.log(spec.rawContent);
+    return;
   }
+
+  // Handle raw markdown output
+  if (options.raw) {
+    console.log(spec.rawContent);
+    return;
+  }
+
+  // Default: Display formatted header and frontmatter
+  console.log(displayFormattedSpec(spec));
+  
+  // Render markdown content
+  const rendered = await marked(spec.content);
+  console.log(rendered);
 }
 
 /**
@@ -306,13 +290,3 @@ export async function openCommand(
   }
 }
 
-/**
- * lspec view <spec-name>
- * Alias for show command
- */
-export async function viewCommand(
-  specPath: string,
-  options: Parameters<typeof showCommand>[1]
-): Promise<void> {
-  return showCommand(specPath, options);
-}
