@@ -118,6 +118,7 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 ### Phase 2: Polish & UX (Week 3-5)
 
 **User Experience Improvements:**
+- [ ] Implement spec 045: Unified dashboard (merge vis commands)
 - [ ] Implement spec 026: Init pattern selection (interactive setup)
 - [ ] Implement spec 024: Pattern-aware list grouping (clearer output)
 - [ ] Consider spec 025: Template config updates (polish)
@@ -362,6 +363,7 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 **Blocking specs for v0.2.0:**
 - Spec 042: MCP error handling (MUST fix)
 - Spec 037: Docs overhaul (SHOULD do)
+- Spec 045: Unified dashboard (HIGH priority for UX)
 
 **Nice-to-have specs:**
 - Spec 026: Init pattern selection
