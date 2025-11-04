@@ -24,18 +24,13 @@ export async function filesCommand(
   // Resolve spec path
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   if (!resolvedPath) {
-    console.error(chalk.red(`Spec not found: ${sanitizeUserInput(specPath)}`));
-    console.error(
-      chalk.gray('Try using the full path or spec name (e.g., 001-my-spec)')
-    );
-    process.exit(1);
+    throw new Error(`Spec not found: ${sanitizeUserInput(specPath)}. Try using the full path or spec name (e.g., 001-my-spec)`);
   }
 
   // Load spec info
   const spec = await getSpec(resolvedPath);
   if (!spec) {
-    console.error(chalk.red(`Could not load spec: ${sanitizeUserInput(specPath)}`));
-    process.exit(1);
+    throw new Error(`Could not load spec: ${sanitizeUserInput(specPath)}`);
   }
 
   // Load sub-files

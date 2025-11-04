@@ -21,15 +21,13 @@ export async function depsCommand(specPath: string, options: {
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   
   if (!resolvedPath) {
-    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${sanitizeUserInput(specPath)}`);
   }
   
   const spec = await getSpec(resolvedPath);
   
   if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${sanitizeUserInput(specPath)}`);
   }
 
   // Load all specs to resolve dependencies
