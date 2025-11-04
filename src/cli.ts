@@ -31,12 +31,44 @@ program
   .description('Manage LeanSpec documents')
   .version('0.1.0');
 
-// init command
+// archive command
 program
-  .command('init')
-  .description('Initialize LeanSpec in current directory')
-  .action(async () => {
-    await initProject();
+  .command('archive <spec-path>')
+  .description('Move spec to archived/')
+  .action(async (specPath: string) => {
+    await archiveSpec(specPath);
+  });
+
+// board command
+program
+  .command('board')
+    .description('Show Kanban-style board view with project completion summary')
+  .option('--complete', 'Include complete specs (default: hidden)')
+  .option('--simple', 'Hide completion summary (kanban only)')
+  .option('--completion-only', 'Show only completion summary (no kanban)')
+  .option('--tag <tag>', 'Filter by tag')
+  .option('--assignee <name>', 'Filter by assignee')
+  .action(async (options: {
+    showComplete?: boolean;
+    simple?: boolean;
+    completionOnly?: boolean;
+    tag?: string;
+    assignee?: string;
+  }) => {
+    await boardCommand(options);
+  });
+
+// check command
+program
+  .command('check')
+  .description('Check for sequence conflicts')
+  .option('-q, --quiet', 'Brief output')
+  .action(async (options: {
+    quiet?: boolean;
+  }) => {
+    const hasNoConflicts = await checkSpecs(options);
+    // Exit with 0 (success) if no conflicts, 1 (error) if conflicts found
+    process.exit(hasNoConflicts ? 0 : 1);
   });
 
 // create command
@@ -86,12 +118,55 @@ program
     await createSpec(name, createOptions);
   });
 
-// archive command
+// deps command
 program
-  .command('archive <spec-path>')
-  .description('Move spec to archived/')
-  .action(async (specPath: string) => {
-    await archiveSpec(specPath);
+  .command('deps <spec-path>')
+  .description('Show dependency graph for a spec')
+  .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
+  .option('--graph', 'ASCII graph visualization')
+  .option('--json', 'Output as JSON')
+  .action(async (specPath: string, options: {
+    depth?: number;
+    graph?: boolean;
+    json?: boolean;
+  }) => {
+    await depsCommand(specPath, options);
+  });
+
+// files command
+program
+  .command('files <spec-path>')
+  .description('List files in a spec')
+  .option('--type <type>', 'Filter by type: docs, assets')
+  .option('--tree', 'Show tree structure')
+  .action(async (specPath: string, options: {
+    type?: 'docs' | 'assets';
+    tree?: boolean;
+  }) => {
+    await filesCommand(specPath, options);
+  });
+
+// gantt command
+program
+  .command('gantt')
+  .description('Show timeline with dependencies')
+  .option('--weeks <n>', 'Show N weeks (default: 4)', parseInt)
+  .option('--show-complete', 'Include completed specs')
+  .option('--critical-path', 'Highlight critical path')
+  .action(async (options: {
+    weeks?: number;
+    showComplete?: boolean;
+    criticalPath?: boolean;
+  }) => {
+    await ganttCommand(options);
+  });
+
+// init command
+program
+  .command('init')
+  .description('Initialize LeanSpec in current directory')
+  .action(async () => {
+    await initProject();
   });
 
 // list command
@@ -139,6 +214,134 @@ program
       sortOrder: (options.order as 'asc' | 'desc') || 'desc',
     };
     await listSpecs(listOptions);
+  });
+
+// open command
+program
+  .command('open <spec-path>')
+  .description('Open spec in editor')
+  .option('--editor <editor>', 'Specify editor command')
+  .action(async (specPath: string, options: {
+    editor?: string;
+  }) => {
+    try {
+      await openCommand(specPath, {
+        editor: options.editor,
+      });
+    } catch (error) {
+      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+// search command
+program
+  .command('search <query>')
+  .description('Full-text search with metadata filters')
+  .option('--status <status>', 'Filter by status')
+  .option('--tag <tag>', 'Filter by tag')
+  .option('--priority <priority>', 'Filter by priority')
+  .option('--assignee <name>', 'Filter by assignee')
+  .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
+  .action(async (query: string, options: {
+    status?: SpecStatus;
+    tag?: string;
+    priority?: SpecPriority;
+    assignee?: string;
+    field?: string[];
+  }) => {
+    // Parse custom field filters from --field options
+    const customFields = parseCustomFieldOptions(options.field);
+    
+    await searchCommand(query, {
+      status: options.status,
+      tag: options.tag,
+      priority: options.priority,
+      assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+    });
+  });
+
+// stats command
+program
+  .command('stats')
+  .description('Show aggregate statistics (default: simplified view)')
+  .option('--tag <tag>', 'Filter by tag')
+  .option('--assignee <name>', 'Filter by assignee')
+  .option('--full', 'Show full detailed analytics (all sections)')
+  .option('--timeline', 'Show only timeline section')
+  .option('--velocity', 'Show only velocity section')
+  .option('--json', 'Output as JSON')
+  .action(async (options: {
+    tag?: string;
+    assignee?: string;
+    full?: boolean;
+    timeline?: boolean;
+    velocity?: boolean;
+    json?: boolean;
+  }) => {
+    await statsCommand(options);
+  });
+
+// templates command and subcommands
+const templatesCmd = program
+  .command('templates')
+  .description('Manage spec templates');
+
+templatesCmd
+  .command('list')
+  .description('List available templates')
+  .action(async () => {
+    await listTemplates();
+  });
+
+templatesCmd
+  .command('show <name>')
+  .description('Show template content')
+  .action(async (name: string) => {
+    await showTemplate(name);
+  });
+
+templatesCmd
+  .command('add <name> <file>')
+  .description('Register a template')
+  .action(async (name: string, file: string) => {
+    await addTemplate(name, file);
+  });
+
+templatesCmd
+  .command('remove <name>')
+  .description('Unregister a template')
+  .action(async (name: string) => {
+    await removeTemplate(name);
+  });
+
+templatesCmd
+  .command('copy <source> <target>')
+  .description('Copy a template to create a new one')
+  .action(async (source: string, target: string) => {
+    await copyTemplate(source, target);
+  });
+
+// Default action for templates (list)
+templatesCmd
+  .action(async () => {
+    await listTemplates();
+  });
+
+// timeline command
+program
+  .command('timeline')
+  .description('Show creation/completion over time')
+  .option('--days <n>', 'Show last N days (default: 30)', parseInt)
+  .option('--by-tag', 'Group by tag')
+  .option('--by-assignee', 'Group by assignee')
+  .action(async (options: {
+    days?: number;
+    byTag?: boolean;
+    byAssignee?: boolean;
+  }) => {
+    await timelineCommand(options);
   });
 
 // update command
@@ -189,191 +392,6 @@ program
     await updateSpec(specPath, updates);
   });
 
-// check command
-program
-  .command('check')
-  .description('Check for sequence conflicts')
-  .option('-q, --quiet', 'Brief output')
-  .action(async (options: {
-    quiet?: boolean;
-  }) => {
-    const hasNoConflicts = await checkSpecs(options);
-    // Exit with 0 (success) if no conflicts, 1 (error) if conflicts found
-    process.exit(hasNoConflicts ? 0 : 1);
-  });
-
-// templates command and subcommands
-const templatesCmd = program
-  .command('templates')
-  .description('Manage spec templates');
-
-templatesCmd
-  .command('list')
-  .description('List available templates')
-  .action(async () => {
-    await listTemplates();
-  });
-
-templatesCmd
-  .command('show <name>')
-  .description('Show template content')
-  .action(async (name: string) => {
-    await showTemplate(name);
-  });
-
-templatesCmd
-  .command('add <name> <file>')
-  .description('Register a template')
-  .action(async (name: string, file: string) => {
-    await addTemplate(name, file);
-  });
-
-templatesCmd
-  .command('remove <name>')
-  .description('Unregister a template')
-  .action(async (name: string) => {
-    await removeTemplate(name);
-  });
-
-templatesCmd
-  .command('copy <source> <target>')
-  .description('Copy a template to create a new one')
-  .action(async (source: string, target: string) => {
-    await copyTemplate(source, target);
-  });
-
-// Default action for templates (list)
-templatesCmd
-  .action(async () => {
-    await listTemplates();
-  });
-
-// stats command
-program
-  .command('stats')
-  .description('Show aggregate statistics (default: simplified view)')
-  .option('--tag <tag>', 'Filter by tag')
-  .option('--assignee <name>', 'Filter by assignee')
-  .option('--full', 'Show full detailed analytics (all sections)')
-  .option('--timeline', 'Show only timeline section')
-  .option('--velocity', 'Show only velocity section')
-  .option('--json', 'Output as JSON')
-  .action(async (options: {
-    tag?: string;
-    assignee?: string;
-    full?: boolean;
-    timeline?: boolean;
-    velocity?: boolean;
-    json?: boolean;
-  }) => {
-    await statsCommand(options);
-  });
-
-// board command
-program
-  .command('board')
-    .description('Show Kanban-style board view with project completion summary')
-  .option('--complete', 'Include complete specs (default: hidden)')
-  .option('--simple', 'Hide completion summary (kanban only)')
-  .option('--completion-only', 'Show only completion summary (no kanban)')
-  .option('--tag <tag>', 'Filter by tag')
-  .option('--assignee <name>', 'Filter by assignee')
-  .action(async (options: {
-    showComplete?: boolean;
-    simple?: boolean;
-    completionOnly?: boolean;
-    tag?: string;
-    assignee?: string;
-  }) => {
-    await boardCommand(options);
-  });
-
-// timeline command
-program
-  .command('timeline')
-  .description('Show creation/completion over time')
-  .option('--days <n>', 'Show last N days (default: 30)', parseInt)
-  .option('--by-tag', 'Group by tag')
-  .option('--by-assignee', 'Group by assignee')
-  .action(async (options: {
-    days?: number;
-    byTag?: boolean;
-    byAssignee?: boolean;
-  }) => {
-    await timelineCommand(options);
-  });
-
-// deps command
-program
-  .command('deps <spec-path>')
-  .description('Show dependency graph for a spec')
-  .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
-  .option('--graph', 'ASCII graph visualization')
-  .option('--json', 'Output as JSON')
-  .action(async (specPath: string, options: {
-    depth?: number;
-    graph?: boolean;
-    json?: boolean;
-  }) => {
-    await depsCommand(specPath, options);
-  });
-
-// search command
-program
-  .command('search <query>')
-  .description('Full-text search with metadata filters')
-  .option('--status <status>', 'Filter by status')
-  .option('--tag <tag>', 'Filter by tag')
-  .option('--priority <priority>', 'Filter by priority')
-  .option('--assignee <name>', 'Filter by assignee')
-  .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
-  .action(async (query: string, options: {
-    status?: SpecStatus;
-    tag?: string;
-    priority?: SpecPriority;
-    assignee?: string;
-    field?: string[];
-  }) => {
-    // Parse custom field filters from --field options
-    const customFields = parseCustomFieldOptions(options.field);
-    
-    await searchCommand(query, {
-      status: options.status,
-      tag: options.tag,
-      priority: options.priority,
-      assignee: options.assignee,
-      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
-    });
-  });
-
-// files command
-program
-  .command('files <spec-path>')
-  .description('List files in a spec')
-  .option('--type <type>', 'Filter by type: docs, assets')
-  .option('--tree', 'Show tree structure')
-  .action(async (specPath: string, options: {
-    type?: 'docs' | 'assets';
-    tree?: boolean;
-  }) => {
-    await filesCommand(specPath, options);
-  });
-
-// gantt command
-program
-  .command('gantt')
-  .description('Show timeline with dependencies')
-  .option('--weeks <n>', 'Show N weeks (default: 4)', parseInt)
-  .option('--show-complete', 'Include completed specs')
-  .option('--critical-path', 'Highlight critical path')
-  .action(async (options: {
-    weeks?: number;
-    showComplete?: boolean;
-    criticalPath?: boolean;
-  }) => {
-    await ganttCommand(options);
-  });
-
 // view command (primary viewer)
 program
   .command('view <spec-path>')
@@ -391,24 +409,6 @@ program
         raw: options.raw,
         json: options.json,
         noColor: options.color === false,
-      });
-    } catch (error) {
-      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
-
-// open command
-program
-  .command('open <spec-path>')
-  .description('Open spec in editor')
-  .option('--editor <editor>', 'Specify editor command')
-  .action(async (specPath: string, options: {
-    editor?: string;
-  }) => {
-    try {
-      await openCommand(specPath, {
-        editor: options.editor,
       });
     } catch (error) {
       console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
