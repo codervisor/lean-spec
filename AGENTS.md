@@ -36,6 +36,11 @@ Skip specs for:
 - `lspec view <spec> --json` - Get structured JSON
 - `lspec open <spec>` - Open spec in editor
 
+**Project Overview:**
+- `lspec board` - Kanban view with project health summary
+- `lspec stats` - Quick project metrics and insights
+- `lspec stats --full` - Detailed analytics (all sections)
+
 **Working with specs:**
 - `lspec create <name>` - Create a new spec
 - `lspec update <spec> --status <status>` - Update spec status

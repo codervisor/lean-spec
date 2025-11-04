@@ -20,8 +20,6 @@ import {
   filesCommand,
   viewCommand,
   openCommand,
-  analyticsCommand,
-  dashboardCommand,
 } from './commands/index.js';
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
@@ -253,13 +251,19 @@ templatesCmd
 // stats command
 program
   .command('stats')
-  .description('Show aggregate statistics')
+  .description('Show aggregate statistics (default: simplified view)')
   .option('--tag <tag>', 'Filter by tag')
   .option('--assignee <name>', 'Filter by assignee')
+  .option('--full', 'Show full detailed analytics (all sections)')
+  .option('--timeline', 'Show only timeline section')
+  .option('--velocity', 'Show only velocity section')
   .option('--json', 'Output as JSON')
   .action(async (options: {
     tag?: string;
     assignee?: string;
+    full?: boolean;
+    timeline?: boolean;
+    velocity?: boolean;
     json?: boolean;
   }) => {
     await statsCommand(options);
@@ -268,12 +272,16 @@ program
 // board command
 program
   .command('board')
-  .description('Show Kanban-style board view')
+  .description('Show Kanban-style board view with project health')
   .option('--show-complete', 'Expand complete column')
+  .option('--simple', 'Hide health summary (kanban only)')
+  .option('--health-only', 'Show only health summary (no kanban)')
   .option('--tag <tag>', 'Filter by tag')
   .option('--assignee <name>', 'Filter by assignee')
   .action(async (options: {
     showComplete?: boolean;
+    simple?: boolean;
+    healthOnly?: boolean;
     tag?: string;
     assignee?: string;
   }) => {
@@ -364,38 +372,6 @@ program
     criticalPath?: boolean;
   }) => {
     await ganttCommand(options);
-  });
-
-// analytics command (unified stats + timeline + velocity)
-program
-  .command('analytics')
-  .description('Show comprehensive analytics (stats + timeline + velocity)')
-  .option('--tag <tag>', 'Filter by tag')
-  .option('--assignee <name>', 'Filter by assignee')
-  .option('--stats', 'Show only statistics section')
-  .option('--timeline', 'Show only timeline section')
-  .option('--velocity', 'Show only velocity metrics')
-  .option('--json', 'Output as JSON')
-  .action(async (options: {
-    tag?: string;
-    assignee?: string;
-    stats?: boolean;
-    timeline?: boolean;
-    velocity?: boolean;
-    json?: boolean;
-  }) => {
-    await analyticsCommand(options);
-  });
-
-// dashboard command (comprehensive project overview)
-program
-  .command('dashboard')
-  .description('Show project dashboard with key metrics')
-  .option('--json', 'Output as JSON')
-  .action(async (options: {
-    json?: boolean;
-  }) => {
-    await dashboardCommand(options);
   });
 
 // view command (primary viewer)

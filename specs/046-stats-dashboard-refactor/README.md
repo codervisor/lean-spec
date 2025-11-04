@@ -1,16 +1,25 @@
 ---
-status: planned
+status: complete
 created: '2025-11-04'
 tags:
   - ux
   - refactor
   - v0.2.0
 priority: high
+created_at: '2025-11-04T00:00:00Z'
+updated_at: '2025-11-04T13:10:54.267Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-04T13:09:35.107Z'
+  - status: complete
+    at: '2025-11-04T13:10:54.267Z'
+completed_at: '2025-11-04T13:10:54.267Z'
+completed: '2025-11-04'
 ---
 
 # Stats & Dashboard Reorganization
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-04
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: ux, refactor, v0.2.0
 
 **Project**: lean-spec  
 **Team**: Core Development
