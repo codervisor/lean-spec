@@ -377,14 +377,16 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_read
+  // Tool: lspec_view
   server.registerTool(
-    'lspec_read',
+    'lspec_view',
     {
-      title: 'Read Spec',
-      description: 'Read the full content of a specification',
+      title: 'View Spec',
+      description: 'View the full content of a specification (formatted, raw markdown, or JSON)',
       inputSchema: {
         specPath: z.string(),
+        raw: z.boolean().optional().describe('Output raw markdown instead of formatted'),
+        json: z.boolean().optional().describe('Output as JSON instead of formatted'),
       },
       outputSchema: {
         spec: z.any(),
@@ -394,12 +396,30 @@ async function createMcpServer(): Promise<McpServer> {
     async (input) => {
       try {
         const result = await readSpecData(input.specPath);
+        
+        // If json flag is set, return structured data
+        if (input.json) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            structuredContent: result,
+          };
+        }
+        
+        // If raw flag is set, return raw markdown
+        if (input.raw) {
+          const rawMarkdown = `---\nstatus: ${result.spec.status}\ncreated: ${result.spec.created}\n${result.spec.priority ? `priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `tags:\n${result.spec.tags.map(t => `  - ${t}`).join('\n')}\n` : ''}${result.spec.assignee ? `assignee: ${result.spec.assignee}\n` : ''}---\n\n${result.content}`;
+          return {
+            content: [{ type: 'text', text: rawMarkdown }],
+          };
+        }
+        
+        // Default: formatted output
+        const formatted = `# ${result.spec.name}\n\nStatus: ${result.spec.status}\nCreated: ${result.spec.created}\n${result.spec.priority ? `Priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `Tags: ${result.spec.tags.join(', ')}\n` : ''}${result.spec.assignee ? `Assignee: ${result.spec.assignee}\n` : ''}\n\n${result.content}`;
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          structuredContent: result,
+          content: [{ type: 'text', text: formatted }],
         };
       } catch (error) {
-        const errorMessage = formatErrorMessage('Error reading spec', error);
+        const errorMessage = formatErrorMessage('Error viewing spec', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,

@@ -1,13 +1,13 @@
 ---
-status: planned
+status: {status}
 created: '{date}'
 tags: []
-priority: medium
+priority: {priority}
 ---
 
 # {name}
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: {date}
+> **Status**: {status} · **Priority**: {priority} · **Created**: {date}
 
 **Project**: {project}  
 **Team**: {team}

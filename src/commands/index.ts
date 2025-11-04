@@ -23,4 +23,4 @@ export { timelineCommand } from './timeline.js';
 export { ganttCommand } from './gantt.js';
 
 // Viewer commands
-export { showCommand, viewCommand, readCommand, openCommand } from './viewer.js';
+export { viewCommand, openCommand } from './viewer.js';
