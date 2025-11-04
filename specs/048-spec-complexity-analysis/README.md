@@ -11,11 +11,13 @@ related:
   - 018-spec-validation
   - 012-sub-spec-files
   - 043-official-launch-02
+created_at: '2025-11-04T00:00:00Z'
+updated_at: '2025-11-04T16:03:35.331Z'
 ---
 
 # When Specs Become Too Complex: A Self-Reflective Analysis
 
-> **Status**: ⏳ In Progress · **Priority**: Critical · **Created**: 2025-11-04 · **Tags**: philosophy, quality, lean-principle, meta
+> **Status**: ⏳ In progress · **Priority**: Critical · **Created**: 2025-11-04 · **Tags**: philosophy, quality, lean-principle, meta
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -415,11 +417,11 @@ lspec open 018 --files    # Opens all sub-specs
 - [x] Analyze current state and identify problems
 - [x] Define complexity thresholds (300/400/600 lines)
 - [x] Create decision tree for when to split
-- [ ] Document in AGENTS.md
-- [ ] Update templates with splitting hints
+- [x] Document in AGENTS.md
+- [x] Update templates with splitting hints
 - [ ] Share with team for feedback
 
-**Status**: In progress (this spec documents the guidelines)
+**Status**: Complete (Phase 1 tasks finished)
 
 ### Phase 2: Add Basic Detection
 - [ ] Add line count detection to `lspec check`
