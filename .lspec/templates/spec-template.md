@@ -1,8 +1,8 @@
 ---
-status: {status}
+status: planned
 created: '{date}'
 tags: []
-priority: {priority}
+priority: medium
 ---
 
 # {name}
