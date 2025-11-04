@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-04'
 tags:
   - bug
@@ -7,6 +7,8 @@ tags:
   - stability
   - error-handling
 priority: critical
+related:
+  - 043-official-launch-02
 ---
 
 # MCP Server Should Not Exit on Tool Errors

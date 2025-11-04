@@ -2,7 +2,7 @@
 status: planned
 created: '2025-11-03'
 tags: ["vscode","copilot","ai","ux"]
-priority: high
+priority: medium
 ---
 
 # GitHub Copilot Chat Slash Commands & Prompts

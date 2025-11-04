@@ -4,7 +4,9 @@ created: '2025-11-03'
 tags:
   - ux
   - polish
-priority: medium
+priority: high
+related:
+  - 043-official-launch-02
 ---
 
 # Pattern-Aware List Grouping
