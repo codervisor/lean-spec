@@ -47,6 +47,14 @@ type BoardData = {
 };
 
 /**
+ * Helper function to format error messages
+ */
+function formatErrorMessage(prefix: string, error: unknown): string {
+  const errorMsg = error instanceof Error ? error.message : String(error);
+  return `${prefix}: ${errorMsg}`;
+}
+
+/**
  * Helper function to convert spec info to serializable format
  */
 function specToData(spec: any): SpecData {
@@ -321,7 +329,7 @@ async function createMcpServer(): Promise<McpServer> {
           structuredContent: output,
         };
       } catch (error) {
-        const errorMessage = `Error listing specs: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = formatErrorMessage('Error listing specs', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
@@ -360,7 +368,7 @@ async function createMcpServer(): Promise<McpServer> {
           structuredContent: output,
         };
       } catch (error) {
-        const errorMessage = `Error searching specs: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = formatErrorMessage('Error searching specs', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
@@ -391,7 +399,7 @@ async function createMcpServer(): Promise<McpServer> {
           structuredContent: result,
         };
       } catch (error) {
-        const errorMessage = `Error reading spec: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = formatErrorMessage('Error reading spec', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
@@ -453,7 +461,7 @@ async function createMcpServer(): Promise<McpServer> {
         const output = {
           success: false,
           path: '',
-          message: `Error creating spec: ${error instanceof Error ? error.message : String(error)}`,
+          message: formatErrorMessage('Error creating spec', error),
         };
         return {
           content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
@@ -513,7 +521,7 @@ async function createMcpServer(): Promise<McpServer> {
       } catch (error) {
         const output = {
           success: false,
-          message: `Error updating spec: ${error instanceof Error ? error.message : String(error)}`,
+          message: formatErrorMessage('Error updating spec', error),
         };
         return {
           content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
@@ -545,7 +553,7 @@ async function createMcpServer(): Promise<McpServer> {
           structuredContent: output,
         };
       } catch (error) {
-        const errorMessage = `Error getting stats: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = formatErrorMessage('Error getting stats', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
@@ -574,7 +582,7 @@ async function createMcpServer(): Promise<McpServer> {
           structuredContent: output,
         };
       } catch (error) {
-        const errorMessage = `Error getting board: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = formatErrorMessage('Error getting board', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
@@ -605,7 +613,7 @@ async function createMcpServer(): Promise<McpServer> {
           structuredContent: output,
         };
       } catch (error) {
-        const errorMessage = `Error getting dependencies: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = formatErrorMessage('Error getting dependencies', error);
         return {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
@@ -638,7 +646,7 @@ async function createMcpServer(): Promise<McpServer> {
           ],
         };
       } catch (error) {
-        throw new Error(`Failed to read spec resource: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(formatErrorMessage('Failed to read spec resource', error));
       }
     }
   );
@@ -672,7 +680,7 @@ async function createMcpServer(): Promise<McpServer> {
           ],
         };
       } catch (error) {
-        throw new Error(`Failed to get board resource: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(formatErrorMessage('Failed to get board resource', error));
       }
     }
   );
@@ -730,7 +738,7 @@ ${stats.recentlyUpdated.map(s => `- ${s.name} (${s.status})`).join('\n') || '(no
           ],
         };
       } catch (error) {
-        throw new Error(`Failed to get stats resource: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(formatErrorMessage('Failed to get stats resource', error));
       }
     }
   );
