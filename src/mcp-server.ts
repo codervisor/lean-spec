@@ -306,19 +306,27 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const specs = await listSpecsData({
-        status: input.status as SpecStatus | undefined,
-        tags: input.tags,
-        priority: input.priority as SpecPriority | undefined,
-        assignee: input.assignee,
-        includeArchived: input.includeArchived,
-      });
+      try {
+        const specs = await listSpecsData({
+          status: input.status as SpecStatus | undefined,
+          tags: input.tags,
+          priority: input.priority as SpecPriority | undefined,
+          assignee: input.assignee,
+          includeArchived: input.includeArchived,
+        });
 
-      const output = { specs };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+        const output = { specs };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = `Error listing specs: ${error instanceof Error ? error.message : String(error)}`;
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -339,17 +347,25 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const results = await searchSpecsData(input.query, {
-        status: input.status as SpecStatus | undefined,
-        tags: input.tags,
-        priority: input.priority as SpecPriority | undefined,
-      });
+      try {
+        const results = await searchSpecsData(input.query, {
+          status: input.status as SpecStatus | undefined,
+          tags: input.tags,
+          priority: input.priority as SpecPriority | undefined,
+        });
 
-      const output = { results };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+        const output = { results };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = `Error searching specs: ${error instanceof Error ? error.message : String(error)}`;
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -368,11 +384,19 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const result = await readSpecData(input.specPath);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        structuredContent: result,
-      };
+      try {
+        const result = await readSpecData(input.specPath);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          structuredContent: result,
+        };
+      } catch (error) {
+        const errorMessage = `Error reading spec: ${error instanceof Error ? error.message : String(error)}`;
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -513,12 +537,20 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async () => {
-      const stats = await getStatsData();
-      const output = { stats };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+      try {
+        const stats = await getStatsData();
+        const output = { stats };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = `Error getting stats: ${error instanceof Error ? error.message : String(error)}`;
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -534,12 +566,20 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async () => {
-      const board = await getBoardData();
-      const output = { board };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+      try {
+        const board = await getBoardData();
+        const output = { board };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = `Error getting board: ${error instanceof Error ? error.message : String(error)}`;
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -557,12 +597,20 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const deps = await getDepsData(input.specPath);
-      const output = { dependencies: deps };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+      try {
+        const deps = await getDepsData(input.specPath);
+        const output = { dependencies: deps };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = `Error getting dependencies: ${error instanceof Error ? error.message : String(error)}`;
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -577,17 +625,21 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Read individual specification content by path or name',
     },
     async (uri, { specPath }) => {
-      const pathString = Array.isArray(specPath) ? specPath[0] : specPath;
-      const { spec, content } = await readSpecData(pathString);
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text: `# ${spec.name}\n\nStatus: ${spec.status}\nCreated: ${spec.created}\n${spec.priority ? `Priority: ${spec.priority}\n` : ''}${spec.tags ? `Tags: ${spec.tags.join(', ')}\n` : ''}\n\n${content}`,
-            mimeType: 'text/markdown',
-          },
-        ],
-      };
+      try {
+        const pathString = Array.isArray(specPath) ? specPath[0] : specPath;
+        const { spec, content } = await readSpecData(pathString);
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text: `# ${spec.name}\n\nStatus: ${spec.status}\nCreated: ${spec.created}\n${spec.priority ? `Priority: ${spec.priority}\n` : ''}${spec.tags ? `Tags: ${spec.tags.join(', ')}\n` : ''}\n\n${content}`,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      } catch (error) {
+        throw new Error(`Failed to read spec resource: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   );
 
@@ -600,24 +652,28 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Current Kanban board state organized by status',
     },
     async (uri) => {
-      const board = await getBoardData();
-      const text = Object.entries(board.columns)
-        .map(([status, specs]) => {
-          const header = `## ${status.toUpperCase()} (${specs.length})`;
-          const items = specs.map(s => `- ${s.name} ${s.priority ? `[${s.priority}]` : ''}`).join('\n');
-          return `${header}\n${items || '(empty)'}`;
-        })
-        .join('\n\n');
+      try {
+        const board = await getBoardData();
+        const text = Object.entries(board.columns)
+          .map(([status, specs]) => {
+            const header = `## ${status.toUpperCase()} (${specs.length})`;
+            const items = specs.map(s => `- ${s.name} ${s.priority ? `[${s.priority}]` : ''}`).join('\n');
+            return `${header}\n${items || '(empty)'}`;
+          })
+          .join('\n\n');
 
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text,
-            mimeType: 'text/markdown',
-          },
-        ],
-      };
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      } catch (error) {
+        throw new Error(`Failed to get board resource: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   );
 
@@ -630,24 +686,25 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Overview of project statistics',
     },
     async (uri) => {
-      const stats = await getStatsData();
-      
-      const statusSection = Object.entries(stats.byStatus)
-        .map(([status, count]) => `- ${status}: ${count}`)
-        .join('\n');
-      
-      const prioritySection = Object.entries(stats.byPriority)
-        .filter(([_, count]) => count > 0)
-        .map(([priority, count]) => `- ${priority}: ${count}`)
-        .join('\n');
-      
-      const tagSection = Object.entries(stats.byTag)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([tag, count]) => `- ${tag}: ${count}`)
-        .join('\n');
+      try {
+        const stats = await getStatsData();
+        
+        const statusSection = Object.entries(stats.byStatus)
+          .map(([status, count]) => `- ${status}: ${count}`)
+          .join('\n');
+        
+        const prioritySection = Object.entries(stats.byPriority)
+          .filter(([_, count]) => count > 0)
+          .map(([priority, count]) => `- ${priority}: ${count}`)
+          .join('\n');
+        
+        const tagSection = Object.entries(stats.byTag)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([tag, count]) => `- ${tag}: ${count}`)
+          .join('\n');
 
-      const text = `# Project Statistics
+        const text = `# Project Statistics
 
 ## Total Specs: ${stats.total}
 
@@ -663,15 +720,18 @@ ${tagSection || '(none)'}
 ## Recently Updated
 ${stats.recentlyUpdated.map(s => `- ${s.name} (${s.status})`).join('\n') || '(none)'}`;
 
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text,
-            mimeType: 'text/markdown',
-          },
-        ],
-      };
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      } catch (error) {
+        throw new Error(`Failed to get stats resource: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   );
 

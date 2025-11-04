@@ -199,22 +199,10 @@ Short content here.`
       }
     });
 
-    it('should exit with error for non-existent spec', async () => {
-      const originalExit = process.exit;
-      let exitCode: number | undefined;
-      process.exit = ((code?: number) => {
-        exitCode = code;
-        throw new Error(`Process exit: ${code}`);
-      }) as never;
-
-      try {
-        await expect(
-          showCommand('999-nonexistent')
-        ).rejects.toThrow();
-        expect(exitCode).toBe(1);
-      } finally {
-        process.exit = originalExit;
-      }
+    it('should throw error for non-existent spec', async () => {
+      await expect(
+        showCommand('999-nonexistent')
+      ).rejects.toThrow('Spec not found: 999-nonexistent');
     });
   });
 
@@ -312,22 +300,10 @@ Short content here.`
       }
     });
 
-    it('should exit with error for non-existent spec', async () => {
-      const originalExit = process.exit;
-      let exitCode: number | undefined;
-      process.exit = ((code?: number) => {
-        exitCode = code;
-        throw new Error(`Process exit: ${code}`);
-      }) as never;
-
-      try {
-        await expect(
-          readCommand('999-nonexistent', {})
-        ).rejects.toThrow();
-        expect(exitCode).toBe(1);
-      } finally {
-        process.exit = originalExit;
-      }
+    it('should throw error for non-existent spec', async () => {
+      await expect(
+        readCommand('999-nonexistent', {})
+      ).rejects.toThrow('Spec not found: 999-nonexistent');
     });
   });
 
@@ -345,22 +321,10 @@ Short content here.`
       expect(resolved).toContain('001-test-spec');
     });
 
-    it('should exit with error for non-existent spec', async () => {
-      const originalExit = process.exit;
-      let exitCode: number | undefined;
-      process.exit = ((code?: number) => {
-        exitCode = code;
-        throw new Error(`Process exit: ${code}`);
-      }) as never;
-
-      try {
-        await expect(
-          openCommand('999-nonexistent', { editor: 'echo' })
-        ).rejects.toThrow();
-        expect(exitCode).toBe(1);
-      } finally {
-        process.exit = originalExit;
-      }
+    it('should throw error for non-existent spec', async () => {
+      await expect(
+        openCommand('999-nonexistent', { editor: 'echo' })
+      ).rejects.toThrow('Spec not found: 999-nonexistent');
     });
   });
 });

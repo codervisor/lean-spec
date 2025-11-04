@@ -27,16 +27,13 @@ export async function updateSpec(
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
 
   if (!resolvedPath) {
-    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
-    console.error(chalk.gray(`Tried: ${sanitizeUserInput(specPath)}, specs/${sanitizeUserInput(specPath)}, and searching in date directories`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${sanitizeUserInput(specPath)}. Tried: ${sanitizeUserInput(specPath)}, specs/${sanitizeUserInput(specPath)}, and searching in date directories`);
   }
 
   // Get spec file
   const specFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
   if (!specFile) {
-    console.error(chalk.red(`Error: No spec file found in: ${sanitizeUserInput(specPath)}`));
-    process.exit(1);
+    throw new Error(`No spec file found in: ${sanitizeUserInput(specPath)}`);
   }
 
   // Merge custom fields into updates object, filtering out undefined values

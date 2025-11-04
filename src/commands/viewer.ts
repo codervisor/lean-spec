@@ -174,9 +174,7 @@ export async function showCommand(
   const spec = await readSpecContent(specPath, process.cwd());
   
   if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    console.error(chalk.gray('Try: lspec list'));
-    process.exit(1);
+    throw new Error(`Spec not found: ${specPath}. Try: lspec list`);
   }
 
   // Display formatted header and frontmatter
@@ -201,8 +199,7 @@ export async function readCommand(
   const spec = await readSpecContent(specPath, process.cwd());
   
   if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${specPath}`);
   }
 
   if (options.frontmatterOnly) {
@@ -241,16 +238,14 @@ export async function openCommand(
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   
   if (!resolvedPath) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${specPath}`);
   }
 
   // Get the spec file
   const specFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
   
   if (!specFile) {
-    console.error(chalk.red(`Error: Spec file not found in: ${resolvedPath}`));
-    process.exit(1);
+    throw new Error(`Spec file not found in: ${resolvedPath}`);
   }
 
   // Determine editor
@@ -282,8 +277,7 @@ export async function openCommand(
   });
 
   child.on('error', (error) => {
-    console.error(chalk.red(`Error opening editor: ${error.message}`));
-    process.exit(1);
+    throw new Error(`Error opening editor: ${error.message}`);
   });
 
   // Don't wait for editor to close for GUI editors
