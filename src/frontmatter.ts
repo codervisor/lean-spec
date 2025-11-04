@@ -11,6 +11,12 @@ export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 // Valid priority values
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
 
+// Status transition record
+export interface StatusTransition {
+  status: SpecStatus;
+  at: string; // ISO 8601 timestamp
+}
+
 // Core frontmatter fields
 export interface SpecFrontmatter {
   // Required fields
@@ -34,6 +40,12 @@ export interface SpecFrontmatter {
   breaking?: boolean;
   due?: string; // YYYY-MM-DD format
 
+  // Timestamp fields (for velocity tracking)
+  created_at?: string; // ISO 8601 timestamp
+  updated_at?: string; // ISO 8601 timestamp
+  completed_at?: string; // ISO 8601 timestamp
+  transitions?: StatusTransition[]; // Status change history
+
   // Allow any additional fields (for extensibility)
   [key: string]: unknown;
 }
@@ -49,6 +61,56 @@ export function normalizeDateFields(data: Record<string, unknown>): void {
     if (data[field] instanceof Date) {
       data[field] = (data[field] as Date).toISOString().split('T')[0];
     }
+  }
+}
+
+/**
+ * Enrich frontmatter with timestamps for velocity tracking
+ * Auto-generates timestamps when missing and tracks status transitions
+ */
+export function enrichWithTimestamps(
+  data: Record<string, unknown>,
+  previousData?: Record<string, unknown>
+): void {
+  const now = new Date().toISOString();
+
+  // Set created_at if missing (infer from created date or use now)
+  if (!data.created_at) {
+    if (data.created && typeof data.created === 'string') {
+      // Infer from date field (use midnight UTC)
+      data.created_at = `${data.created}T00:00:00Z`;
+    } else {
+      data.created_at = now;
+    }
+  }
+
+  // Update updated_at on any change (if previousData exists)
+  if (previousData) {
+    data.updated_at = now;
+  }
+
+  // Set completed_at when status changes to complete
+  if (
+    data.status === 'complete' &&
+    previousData?.status !== 'complete' &&
+    !data.completed_at
+  ) {
+    data.completed_at = now;
+    // Also set the completed date field
+    if (!data.completed) {
+      data.completed = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  // Track status transition (optional)
+  if (previousData && data.status !== previousData.status) {
+    if (!Array.isArray(data.transitions)) {
+      data.transitions = [];
+    }
+    (data.transitions as StatusTransition[]).push({
+      status: data.status as SpecStatus,
+      at: now,
+    });
   }
 }
 
@@ -197,7 +259,8 @@ export async function parseFrontmatter(
     // Warn about unknown fields (informational only)
     const knownFields = [
       'status', 'created', 'tags', 'priority', 'related', 'depends_on',
-      'updated', 'completed', 'assignee', 'reviewer', 'issue', 'pr', 'epic', 'breaking', 'due'
+      'updated', 'completed', 'assignee', 'reviewer', 'issue', 'pr', 'epic', 'breaking', 'due',
+      'created_at', 'updated_at', 'completed_at', 'transitions'
     ];
     
     // Add custom fields from config to known fields
@@ -249,13 +312,19 @@ export async function updateFrontmatter(
     }
   });
 
+  // Store previous data for timestamp enrichment
+  const previousData = { ...parsed.data };
+
   // Merge updates with existing data
   const newData = { ...parsed.data, ...updates };
 
   // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
   normalizeDateFields(newData);
 
-  // Auto-update timestamps if fields exist
+  // Enrich with timestamps
+  enrichWithTimestamps(newData, previousData);
+
+  // Auto-update timestamps if fields exist (legacy behavior)
   if (updates.status === 'complete' && !newData.completed) {
     newData.completed = dayjs().format('YYYY-MM-DD');
   }
