@@ -169,7 +169,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await showCommand('001-test-spec', { noPager: true, noColor: false });
+        await showCommand('001-test-spec', { noColor: false });
 
         const output = logs.join('\n');
         expect(output).toContain('001-test-spec');
@@ -188,7 +188,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await showCommand('002', { noPager: true });
+        await showCommand('002');
 
         const output = logs.join('\n');
         expect(output).toContain('002-another-spec');
@@ -209,7 +209,7 @@ Short content here.`
 
       try {
         await expect(
-          showCommand('999-nonexistent', { noPager: true })
+          showCommand('999-nonexistent')
         ).rejects.toThrow();
         expect(exitCode).toBe(1);
       } finally {
@@ -225,7 +225,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('001-test-spec', { noPager: true });
+        await viewCommand('001-test-spec', {});
 
         const output = logs.join('\n');
         expect(output).toContain('001-test-spec');

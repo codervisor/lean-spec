@@ -366,48 +366,60 @@ program
     await ganttCommand(options);
   });
 
-// show command
+// show command (deprecated)
 program
   .command('show <spec-path>')
-  .description('Display spec with rendered markdown')
-  .option('--no-pager', 'Disable pagination')
+  .description('[DEPRECATED] Use: lspec view <spec-path>')
   .option('--no-color', 'Disable colors')
   .action(async (specPath: string, options: {
-    pager?: boolean;
     color?: boolean;
   }) => {
+    console.warn('\x1b[33m⚠️  "lspec show" is deprecated. Use: lspec view <spec-path>\x1b[0m');
     await showCommand(specPath, {
-      noPager: options.pager === false,
       noColor: options.color === false,
     });
   });
 
-// view command (alias for show)
+// view command (unified viewer)
 program
   .command('view <spec-path>')
-  .description('Display spec with rendered markdown (alias for show)')
-  .option('--no-pager', 'Disable pagination')
+  .description('View spec content')
+  .option('--raw', 'Output raw markdown (for piping/scripting)')
+  .option('--json', 'Output as JSON')
   .option('--no-color', 'Disable colors')
   .action(async (specPath: string, options: {
-    pager?: boolean;
+    raw?: boolean;
+    json?: boolean;
     color?: boolean;
   }) => {
-    await viewCommand(specPath, {
-      noPager: options.pager === false,
-      noColor: options.color === false,
-    });
+    if (options.json) {
+      await readCommand(specPath, { format: 'json' });
+    } else if (options.raw) {
+      await readCommand(specPath, { format: 'markdown' });
+    } else {
+      await viewCommand(specPath, {
+        noColor: options.color === false,
+      });
+    }
   });
 
-// read command
+// read command (deprecated)
 program
   .command('read <spec-path>')
-  .description('Output raw spec content (for piping/scripting)')
+  .description('[DEPRECATED] Use: lspec view <spec-path> --raw')
   .option('--format <format>', 'Output format: markdown (default), json')
   .option('--frontmatter-only', 'Only output frontmatter as JSON')
   .action(async (specPath: string, options: {
     format?: 'markdown' | 'json';
     frontmatterOnly?: boolean;
   }) => {
+    if (options.frontmatterOnly) {
+      console.warn('\x1b[33m⚠️  "lspec read --frontmatter-only" is deprecated. Use: lspec view <spec-path> --json\x1b[0m');
+    } else if (options.format === 'json') {
+      console.warn('\x1b[33m⚠️  "lspec read --format=json" is deprecated. Use: lspec view <spec-path> --json\x1b[0m');
+    } else {
+      console.warn('\x1b[33m⚠️  "lspec read" is deprecated. Use: lspec view <spec-path> --raw\x1b[0m');
+    }
     await readCommand(specPath, {
       format: options.format,
       frontmatterOnly: options.frontmatterOnly,

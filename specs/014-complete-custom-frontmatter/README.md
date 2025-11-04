@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-02'
 tags:
   - enhancement
@@ -7,11 +7,12 @@ tags:
   - customization
 priority: high
 milestone: v0.2.0
+completed: '2025-11-04'
 ---
 
 # complete-custom-frontmatter
 
-> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: enhancement, frontmatter, customization
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-02 · **Tags**: enhancement, frontmatter, customization
 
 ## Overview
 
