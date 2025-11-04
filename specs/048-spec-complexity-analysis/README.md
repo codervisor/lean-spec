@@ -433,17 +433,18 @@ lspec open 018 --files    # Opens all sub-specs
 **Scope**: v0.3.0 (after launch)
 
 ### Phase 3: Refactor Spec 018
-- [ ] Create sub-spec files structure
-- [ ] Move validation rules to VALIDATION-RULES.md
-- [ ] Move CLI design to CLI-DESIGN.md
-- [ ] Move configuration to CONFIGURATION.md
-- [ ] Move implementation to IMPLEMENTATION.md
-- [ ] Move testing to TESTING.md
-- [ ] Update README.md as entry point with links
-- [ ] Verify all cross-references work
-- [ ] Test that AI can navigate split structure
+- [x] Create sub-spec files structure
+- [x] Move validation rules to VALIDATION-RULES.md
+- [x] Move CLI design to CLI-DESIGN.md
+- [x] Move configuration to CONFIGURATION.md
+- [x] Move implementation to IMPLEMENTATION.md
+- [x] Move testing to TESTING.md
+- [x] Update README.md as entry point with links
+- [x] Verify all cross-references work
+- [x] Test that AI can navigate split structure
 
 **Scope**: Before v0.2.0 launch (demonstrates dogfooding)
+**Status**: ✅ Complete - Spec 018 successfully split into focused sub-specs
 
 ### Phase 4: Review Other Large Specs
 - [ ] Spec 045 (unified-dashboard): Should it be multiple specs?
