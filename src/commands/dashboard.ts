@@ -5,6 +5,7 @@ import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { calculateVelocityMetrics } from '../utils/velocity.js';
 import { countSpecsByStatusAndPriority } from '../utils/spec-stats.js';
+import { getPriorityBadge } from '../utils/badge-helpers.js';
 
 export async function dashboardCommand(options: {
   json?: boolean;
@@ -213,15 +214,7 @@ export async function dashboardCommand(options: {
     console.log('');
 
     for (const spec of inProgressSpecs.slice(0, 5)) {
-      const priorityBadge = spec.priority
-        ? spec.priority === 'critical'
-          ? chalk.red('🔴')
-          : spec.priority === 'high'
-            ? chalk.hex('#FFA500')('🟠')
-            : spec.priority === 'medium'
-              ? chalk.yellow('🟡')
-              : chalk.green('🟢')
-        : '';
+      const priorityBadge = getPriorityBadge(spec.priority);
 
       const assigneeBadge = spec.assignee
         ? chalk.dim(`@${spec.assignee}`)

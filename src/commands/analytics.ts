@@ -40,7 +40,9 @@ export async function analyticsCommand(options: {
     return;
   }
 
-  // Determine what to show (default: all sections)
+  // Determine what sections to show
+  // Default behavior (no flags): show all three sections
+  // With specific flags: show only requested sections
   const showStats = options.stats || (!options.timeline && !options.velocity);
   const showTimeline = options.timeline || (!options.stats && !options.velocity);
   const showVelocity = options.velocity || (!options.stats && !options.timeline);

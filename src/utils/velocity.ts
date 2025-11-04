@@ -138,7 +138,7 @@ export function calculateVelocityMetrics(specs: SpecInfo[]): VelocityMetrics {
     : 0;
 
   const p90CycleTime = cycleTimes.length > 0
-    ? cycleTimes[Math.floor(cycleTimes.length * 0.9)]
+    ? cycleTimes[Math.min(Math.floor(cycleTimes.length * 0.9), cycleTimes.length - 1)]
     : 0;
 
   // Calculate lead times (if transition data available)
