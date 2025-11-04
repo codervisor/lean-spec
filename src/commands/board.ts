@@ -41,11 +41,11 @@ export async function boardCommand(options: {
     filter.assignee = options.assignee;
   }
 
-  // Load all specs with spinner (exclude archived, they go in their own archive view)
+  // Load all specs with spinner (include archived for accurate metrics, but don't display in columns)
   const specs = await withSpinner(
     'Loading specs...',
     () => loadAllSpecs({
-      includeArchived: false,
+      includeArchived: true,
       filter,
     })
   );
@@ -55,7 +55,7 @@ export async function boardCommand(options: {
     return;
   }
 
-  // Group specs by status
+  // Group specs by status (we loaded archived for metrics, but don't show them in board columns)
   const columns: Record<SpecStatus, SpecInfo[]> = {
     planned: [],
     'in-progress': [],
@@ -68,7 +68,11 @@ export async function boardCommand(options: {
     const status = columns[spec.frontmatter.status] !== undefined 
       ? spec.frontmatter.status 
       : 'planned';
-    columns[status].push(spec);
+    
+    // Only add to columns if not archived (archived specs are included in metrics but not displayed)
+    if (status !== 'archived') {
+      columns[status].push(spec);
+    }
   }
 
   // Display header

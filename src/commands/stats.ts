@@ -124,6 +124,9 @@ export async function statsCommand(options: {
     console.log(`  📅 ${'Planned'.padEnd(labelWidth)}  ${chalk.cyan(createBar(statusCounts.planned, maxStatusCount))}  ${chalk.cyan(statusCounts.planned)}`);
     console.log(`  ⏳ ${'In Progress'.padEnd(labelWidth)}  ${chalk.yellow(createBar(statusCounts['in-progress'], maxStatusCount))}  ${chalk.yellow(statusCounts['in-progress'])}`);
     console.log(`  ✅ ${'Complete'.padEnd(labelWidth)}  ${chalk.green(createBar(statusCounts.complete, maxStatusCount))}  ${chalk.green(statusCounts.complete)}`);
+    if (statusCounts.archived > 0) {
+      console.log(`  📦 ${'Archived'.padEnd(labelWidth)}  ${chalk.dim(createBar(statusCounts.archived, maxStatusCount))}  ${chalk.dim(statusCounts.archived)}`);
+    }
     console.log('');
 
     // Priority Focus (only critical/high with issues)

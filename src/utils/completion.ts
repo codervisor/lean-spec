@@ -54,8 +54,12 @@ export function calculateCompletion(specs: SpecInfo[]): CompletionMetrics {
   const criticalIssues: string[] = [];
   const warnings: string[] = [];
   
-  // Filter out archived specs
-  const activeAndCompleteSpecs = specs.filter(s => s.frontmatter.status !== 'archived');
+  // Filter out archived specs (by path or status)
+  // Specs in archived/ folder may have status: complete, so check path too
+  const activeAndCompleteSpecs = specs.filter(s => 
+    s.frontmatter.status !== 'archived' && 
+    !s.path.startsWith('archived/')
+  );
   
   for (const spec of activeAndCompleteSpecs) {
     // Detect critical issues
@@ -69,11 +73,15 @@ export function calculateCompletion(specs: SpecInfo[]): CompletionMetrics {
     }
   }
   
-  // Count active and complete specs (excluding archived)
+  // Count active and complete specs (excluding archived by path and status)
   const activeSpecs = specs.filter(
-    s => s.frontmatter.status === 'planned' || s.frontmatter.status === 'in-progress'
+    s => (s.frontmatter.status === 'planned' || s.frontmatter.status === 'in-progress') &&
+         !s.path.startsWith('archived/')
   );
-  const completeSpecs = specs.filter(s => s.frontmatter.status === 'complete');
+  const completeSpecs = specs.filter(s => 
+    s.frontmatter.status === 'complete' && 
+    !s.path.startsWith('archived/')
+  );
   
   // Calculate simple completion rate (avoid division by zero)
   const totalSpecs = activeAndCompleteSpecs.length;
