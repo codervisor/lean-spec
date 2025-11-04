@@ -169,7 +169,7 @@ export function calculateVelocityMetrics(specs: SpecInfo[]): VelocityMetrics {
     const completedAt = s.frontmatter.completed_at || s.frontmatter.completed;
     if (!completedAt) return false;
     const completed = dayjs(completedAt);
-    return completed.isAfter(prevWeekStart) && completed.isBefore(prevWeekEnd);
+    return completed.isAfter(prevWeekStart) && !completed.isAfter(prevWeekEnd);
   }).length;
 
   const throughputTrend: 'up' | 'down' | 'stable' =
