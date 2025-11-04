@@ -85,4 +85,41 @@ Testing the MCP server functionality.
       expect(server).toBeDefined();
     });
   });
+
+  describe('Error Handling', () => {
+    it('should handle updateSpec errors without crashing', async () => {
+      const { updateSpec } = await import('./commands/update.js');
+      
+      // Test that updateSpec throws error for non-existent spec
+      await expect(
+        updateSpec('nonexistent-spec-999', { status: 'complete' as any })
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+
+    it('should handle archiveSpec errors without crashing', async () => {
+      const { archiveSpec } = await import('./commands/archive.js');
+      
+      // Test that archiveSpec throws error for non-existent spec
+      await expect(
+        archiveSpec('nonexistent-spec-999')
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+
+    it('should handle viewer command errors without crashing', async () => {
+      const { showCommand, readCommand, openCommand } = await import('./commands/viewer.js');
+      
+      // Test that viewer commands throw errors for non-existent specs
+      await expect(
+        showCommand('nonexistent-spec-999')
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+
+      await expect(
+        readCommand('nonexistent-spec-999', {})
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+
+      await expect(
+        openCommand('nonexistent-spec-999', {})
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+  });
 });
