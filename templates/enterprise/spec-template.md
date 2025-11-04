@@ -43,6 +43,11 @@ epic:
 
 <!-- Break into phases if needed -->
 
+<!-- 💡 TIP: If your plan has >6 phases or this spec approaches 
+     400 lines, consider using sub-spec files:
+     - IMPLEMENTATION.md for detailed implementation
+     - See spec 012-sub-spec-files for guidance on splitting -->
+
 - [ ] Task 1 - @owner
 - [ ] Task 2 - @owner
 - [ ] Task 3 - @owner

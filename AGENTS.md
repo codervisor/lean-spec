@@ -61,6 +61,53 @@ Skip specs for:
 - Tests cover critical paths
 - Specs stay in sync with implementation
 
+## Spec Complexity Guidelines
+
+### Keep Specs Lean
+
+**Single File vs Sub-Specs:**
+
+Keep as **single file** when:
+- Under 300 lines
+- Can be read/understood in 5-10 minutes
+- Single, focused concern
+- Implementation plan <6 phases
+
+Consider **splitting** when:
+- Over 400 lines
+- Multiple distinct concerns (design + config + testing + examples)
+- AI tools corrupt the spec during edits
+- Updates frequently cause inconsistencies
+- Implementation has >6 phases
+
+### Line Count Thresholds
+
+- **<300 lines**: ✅ Ideal, keep as single file
+- **300-400 lines**: ⚠️ Warning zone, consider simplifying or splitting
+- **>400 lines**: 🔴 Strong candidate for splitting
+- **>600 lines**: 🔴 Almost certainly should be split
+
+### Warning Signs
+
+Your spec might be too complex if:
+- ⚠️ It takes >10 minutes to read through
+- ⚠️ You can't summarize it in 2 paragraphs
+- ⚠️ Recent edits caused corruption
+- ⚠️ You're scrolling endlessly to find information
+- ⚠️ Implementation plan has >8 phases
+
+**Action**: Split using sub-specs (see spec 012-sub-spec-files), don't just keep growing the file.
+
+### How to Split (See spec 012-sub-spec-files)
+
+Use sub-spec files for complex features:
+- `README.md`: Overview, decision, high-level design
+- `DESIGN.md`: Detailed design and architecture
+- `IMPLEMENTATION.md`: Implementation plan with phases
+- `TESTING.md`: Test strategy and cases
+- `CONFIGURATION.md`: Config examples and schemas
+- `{CONCERN}.md`: Other specific concerns (API, MIGRATION, etc.)
+
 ---
 
 **Remember**: LeanSpec is a mindset, not a rulebook. Use `lspec --help` to discover features as needed.
