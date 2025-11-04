@@ -742,3 +742,96 @@ created: 2025-11-03
     expect(content).not.toContain('T00:00:00.000Z');
   });
 });
+
+describe('enrichWithTimestamps', () => {
+  it('should add created_at timestamp when missing', async () => {
+    const { enrichWithTimestamps } = await import('./frontmatter.js');
+    
+    const data: Record<string, unknown> = {
+      status: 'planned',
+      created: '2025-11-01',
+    };
+
+    enrichWithTimestamps(data);
+
+    expect(data.created_at).toBeDefined();
+    expect(typeof data.created_at).toBe('string');
+    expect(data.created_at).toContain('2025-11-01');
+  });
+
+  it('should add updated_at when previousData provided', async () => {
+    const { enrichWithTimestamps } = await import('./frontmatter.js');
+    
+    const previousData: Record<string, unknown> = {
+      status: 'planned',
+      created: '2025-11-01',
+    };
+
+    const data: Record<string, unknown> = {
+      status: 'in-progress',
+      created: '2025-11-01',
+    };
+
+    enrichWithTimestamps(data, previousData);
+
+    expect(data.updated_at).toBeDefined();
+    expect(typeof data.updated_at).toBe('string');
+  });
+
+  it('should add completed_at when status changes to complete', async () => {
+    const { enrichWithTimestamps } = await import('./frontmatter.js');
+    
+    const previousData: Record<string, unknown> = {
+      status: 'in-progress',
+      created: '2025-11-01',
+    };
+
+    const data: Record<string, unknown> = {
+      status: 'complete',
+      created: '2025-11-01',
+    };
+
+    enrichWithTimestamps(data, previousData);
+
+    expect(data.completed_at).toBeDefined();
+    expect(typeof data.completed_at).toBe('string');
+    expect(data.completed).toBeDefined(); // Also sets date field
+  });
+
+  it('should track status transitions', async () => {
+    const { enrichWithTimestamps } = await import('./frontmatter.js');
+    
+    const previousData: Record<string, unknown> = {
+      status: 'planned',
+      created: '2025-11-01',
+    };
+
+    const data: Record<string, unknown> = {
+      status: 'in-progress',
+      created: '2025-11-01',
+    };
+
+    enrichWithTimestamps(data, previousData);
+
+    expect(data.transitions).toBeDefined();
+    expect(Array.isArray(data.transitions)).toBe(true);
+    const transitions = data.transitions as Array<{ status: string; at: string }>;
+    expect(transitions.length).toBe(1);
+    expect(transitions[0].status).toBe('in-progress');
+  });
+
+  it('should not overwrite existing timestamps', async () => {
+    const { enrichWithTimestamps } = await import('./frontmatter.js');
+    
+    const existingTimestamp = '2025-11-01T12:00:00Z';
+    const data: Record<string, unknown> = {
+      status: 'planned',
+      created: '2025-11-01',
+      created_at: existingTimestamp,
+    };
+
+    enrichWithTimestamps(data);
+
+    expect(data.created_at).toBe(existingTimestamp);
+  });
+});
