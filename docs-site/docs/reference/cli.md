@@ -277,6 +277,129 @@ lspec archive specs/20251102/001-user-auth
 
 ---
 
+### `lspec view`
+
+View spec content.
+
+```bash
+lspec view <spec-path> [options]
+```
+
+**Arguments:**
+- `<spec-path>` - Path to spec (required)
+
+**Options:**
+- `--raw` - Output raw markdown (for piping/scripting)
+- `--json` - Output as JSON
+- `--no-color` - Disable colors
+
+**Examples:**
+
+```bash
+# View formatted spec
+lspec view 001-user-authentication
+
+# Get raw markdown (for scripting)
+lspec view 001-user-auth --raw | grep "TODO"
+
+# Get structured JSON
+lspec view 001-user-auth --json | jq '.frontmatter.status'
+```
+
+**Default Output (formatted):**
+```
+━━━ 001-user-authentication ━━━
+
+📅 Status: planned
+🟡 Priority: high
+📆 Created: 2025-11-02
+🏷️  Tags: #security #api
+
+────────────────────────────────────────────────────────────
+
+# User Authentication
+
+## Overview
+...
+```
+
+**Raw Output (`--raw`):**
+```markdown
+---
+status: planned
+priority: high
+created: 2025-11-02
+tags:
+  - security
+  - api
+---
+
+# User Authentication
+
+## Overview
+...
+```
+
+**JSON Output (`--json`):**
+```json
+{
+  "name": "001-user-authentication",
+  "path": "specs/001-user-authentication",
+  "frontmatter": {
+    "status": "planned",
+    "priority": "high",
+    "created": "2025-11-02",
+    "tags": ["security", "api"]
+  },
+  "content": "# User Authentication\n\n## Overview\n..."
+}
+```
+
+**Use Cases:**
+- **Default**: Human-readable spec viewing
+- **`--raw`**: Piping to other tools, AI context, version control diffs
+- **`--json`**: Programmatic access, CI/CD, integrations
+
+---
+
+### `lspec open`
+
+Open spec in editor.
+
+```bash
+lspec open <spec-path> [options]
+```
+
+**Arguments:**
+- `<spec-path>` - Path to spec (required)
+
+**Options:**
+- `--editor <editor>` - Specify editor command
+
+**Examples:**
+
+```bash
+# Open in default editor
+lspec open 001-user-authentication
+
+# Open in specific editor
+lspec open 001-user-auth --editor=code
+lspec open 001-user-auth --editor=vim
+```
+
+**Editor Selection:**
+1. `--editor` flag if provided
+2. `$VISUAL` environment variable
+3. `$EDITOR` environment variable
+4. System default (`open` on macOS, `xdg-open` on Linux, `start` on Windows)
+
+**Behavior:**
+- Opens the spec's `README.md` file
+- GUI editors (VS Code, Atom) don't block terminal
+- Terminal editors (vim, nano) block until closed
+
+---
+
 ### `lspec templates`
 
 List available project templates.

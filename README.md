@@ -71,11 +71,13 @@ lspec create my-feature
 # Core commands
 lspec list                    # See all specifications
 lspec view <spec>             # View a specification
+lspec view <spec> --raw       # Get raw markdown (for scripting)
+lspec view <spec> --json      # Get structured JSON
+lspec open <spec>             # Open in editor
 lspec board                   # Kanban view
 lspec stats                   # Project statistics
 lspec search "query"          # Find specifications
 lspec update <spec> --status=complete
-lspec open <spec>             # Edit in your editor
 ```
 
 **Templates available**: minimal, standard (recommended), enterprise, api-first

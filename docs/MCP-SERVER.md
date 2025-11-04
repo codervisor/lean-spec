@@ -9,7 +9,7 @@ The MCP server exposes these tools to AI assistants:
 
 - **lspec_list** - List all specifications with optional filtering
 - **lspec_search** - Full-text search across specifications
-- **lspec_read** - Read complete specification content
+- **lspec_view** - View specification content (formatted, raw markdown, or JSON)
 - **lspec_create** - Create new specifications
 - **lspec_update** - Update specification metadata (status, priority, tags, etc.)
 - **lspec_stats** - Get project statistics
@@ -107,7 +107,12 @@ Search for all specs related to "authentication"
 
 ### Read a specification
 ```
-Read the spec for "001-user-authentication"
+View the spec for "001-user-authentication"
+```
+
+or for raw markdown:
+```
+View the spec for "001-user-authentication" in raw format
 ```
 
 ### Create a new specification
