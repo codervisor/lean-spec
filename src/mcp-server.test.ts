@@ -106,15 +106,11 @@ Testing the MCP server functionality.
     });
 
     it('should handle viewer command errors without crashing', async () => {
-      const { showCommand, readCommand, openCommand } = await import('./commands/viewer.js');
+      const { viewCommand, openCommand } = await import('./commands/viewer.js');
       
       // Test that viewer commands throw errors for non-existent specs
       await expect(
-        showCommand('nonexistent-spec-999')
-      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
-
-      await expect(
-        readCommand('nonexistent-spec-999', {})
+        viewCommand('nonexistent-spec-999', {})
       ).rejects.toThrow('Spec not found: nonexistent-spec-999');
 
       await expect(
