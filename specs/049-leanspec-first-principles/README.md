@@ -203,8 +203,6 @@ What is NOT LeanSpec?
 - Is a spec with no implementation plan LeanSpec?
 - Is pure documentation (no "why") LeanSpec?
 
-### Expected Output Structureies reveal first principles.
-
 ## Expected Deliverable
 
 Create a document (or update this spec) that defines:
@@ -297,14 +295,14 @@ Look at our own evolution:
 
 ## Plan
 
-**Key repository files to reference**:nts (context windows, cognition, economics)
+- [ ] Analyze hard constraints (context windows, cognition, economics)
 - [ ] Compare LeanSpec to traditional SDD and alternatives (BMAD, SpecKit, etc.)
 - [ ] Run thought experiments to identify core vs derived principles
 - [ ] Analyze our own evolution and what decisions worked/failed
 - [ ] Identify 3-7 first principles with clear rationale
 - [ ] Show how current practices derive from first principles
 - [ ] Create conflict resolution framework
-### Starting Questions for Analysisnalization approach (tooling + culture)
+- [ ] Define operationalization approach (tooling + culture)
 - [ ] Craft LeanSpec identity statement
 - [ ] Update README.md and AGENTS.md with first principles
 - [ ] Validate against current specs and practices
@@ -323,12 +321,38 @@ Look at our own evolution:
 
 ### Context for Analysis
 
-In the LeanSpec repository:
+**Key repository files to reference**:
 - `README.md` - Current positioning and principles
 - `AGENTS.md` - Guidance for AI agents
 - `specs/048-spec-complexity-analysis/` - Recent self-reflection on complexity
 - `specs/012-sub-spec-files/` - Solution we built but didn't use
-### Implementation Outputicial-launch-02/` - Launch goals and quality standards
+- `specs/043-official-launch-02/` - Launch goals and quality standards
+
+### Starting Questions for Analysis
+
+To kick off the analysis, consider:
+
+1. **What is the atomic unit of a spec?** 
+   - Is it "intent + design + plan"? 
+   - Or something more fundamental?
+
+2. **What problem are we REALLY solving?**
+   - "AI agents need context" is a symptom
+   - What's the root problem?
+
+3. **What would make LeanSpec obsolete?**
+   - If X happened, LeanSpec wouldn't be needed
+   - What is X? What does that reveal?
+
+4. **Who is LeanSpec for, really?**
+   - Solo devs? Teams? AI agents?
+   - Or the space between human and AI?
+
+5. **What's the irreducible core?**
+   - Strip away tooling, templates, commands
+   - What's left that's still LeanSpec?
+
+### Implementation Output
 
 When complete, deliver:
 1. Update this spec with findings (or create sub-specs)
@@ -338,7 +362,7 @@ When complete, deliver:
 5. Identify any conflicts with current practices
 
 ### Why This Matters
-2. **What problem are we REALLY solving?**
+
 This analysis is critical because:
 - We have principles but not **first** principles
 - We violated our own stated principles (large specs)
@@ -354,4 +378,5 @@ This spec should be the **starting point** for a deep-dive session with clean co
 2. Apply the frameworks and questions outlined here
 3. Emerge with 3-7 crystal-clear first principles
 4. Show how everything derives from those principles
-5. Provide actionable updates to documentation and tooling: `specs/049-leanspec-first-principles/README.md`
+5. Provide actionable updates to documentation and tooling
+
