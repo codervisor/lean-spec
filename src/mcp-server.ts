@@ -9,11 +9,12 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { loadAllSpecs } from './spec-loader.js';
+import { loadAllSpecs, getSpec } from './spec-loader.js';
 import { loadConfig } from './config.js';
 import { createSpec, listSpecs, updateSpec, archiveSpec } from './commands/index.js';
 import { parseFrontmatter } from './frontmatter.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from './frontmatter.js';
+import { resolveSpecPath } from './utils/path-helpers.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -145,25 +146,23 @@ async function readSpecData(specPath: string): Promise<{ spec: SpecData; content
   const cwd = process.cwd();
   const specsDir = path.join(cwd, config.specsDir);
   
-  const specs = await loadAllSpecs({
-    includeArchived: true,
-    includeContent: true,
-  });
-
-  // Find spec by partial path match
-  const spec = specs.find(s => 
-    s.path.includes(specPath) || 
-    s.name.includes(specPath) ||
-    s.path.endsWith(specPath)
-  );
-
-  if (!spec) {
+  // Use resolveSpecPath to handle numbers like "14" or "014"
+  const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+  
+  if (!resolvedPath) {
+    throw new Error(`Spec not found: ${specPath}`);
+  }
+  
+  // Get the spec using the resolved path
+  const specInfo = await getSpec(resolvedPath);
+  
+  if (!specInfo) {
     throw new Error(`Spec not found: ${specPath}`);
   }
 
   return {
-    spec: specToData(spec),
-    content: spec.content || '',
+    spec: specToData(specInfo),
+    content: specInfo.content || '',
   };
 }
 

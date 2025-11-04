@@ -1,11 +1,16 @@
 ---
 status: planned
-created: 2025-11-03
-tags: [ux, polish]
+created: '2025-11-03'
+tags:
+  - ux
+  - polish
 priority: medium
 ---
 
 # Pattern-Aware List Grouping
+
+> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-03 · **Tags**: ux, polish
+
 
 > Make `lspec list` adapt to flat vs date-grouped folder patterns
 

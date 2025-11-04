@@ -2,6 +2,9 @@ import chalk from 'chalk';
 import { getSpec, loadAllSpecs, type SpecInfo } from '../spec-loader.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
+import { resolveSpecPath } from '../utils/path-helpers.js';
+import { loadConfig } from '../config.js';
+import * as path from 'node:path';
 
 export async function depsCommand(specPath: string, options: {
   depth?: number;
@@ -11,7 +14,18 @@ export async function depsCommand(specPath: string, options: {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
   
-  const spec = await getSpec(specPath);
+  // Resolve spec path (handles numbers like "14" or "014")
+  const config = await loadConfig();
+  const cwd = process.cwd();
+  const specsDir = path.join(cwd, config.specsDir);
+  const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+  
+  if (!resolvedPath) {
+    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
+    process.exit(1);
+  }
+  
+  const spec = await getSpec(resolvedPath);
   
   if (!spec) {
     console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
