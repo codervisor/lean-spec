@@ -1,16 +1,17 @@
 ---
-status: planned
+status: complete
 created: '2025-11-04'
 tags:
   - bug
   - mcp
   - frontmatter
 priority: high
+completed: '2025-11-04'
 ---
 
 # Fix MCP Server Frontmatter Parsing
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-04
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: bug, mcp, frontmatter
 
 **Project**: lean-spec  
 **Team**: Core Development
