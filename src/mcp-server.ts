@@ -384,7 +384,7 @@ async function createMcpServer(): Promise<McpServer> {
       title: 'View Spec',
       description: 'View the full content of a specification (formatted, raw markdown, or JSON)',
       inputSchema: {
-        specPath: z.string(),
+        specPath: z.string().describe('The spec to view. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
         raw: z.boolean().optional().describe('Output raw markdown instead of formatted'),
         json: z.boolean().optional().describe('Output as JSON instead of formatted'),
       },
@@ -435,7 +435,7 @@ async function createMcpServer(): Promise<McpServer> {
       title: 'Create Spec',
       description: 'Create a new specification',
       inputSchema: {
-        name: z.string(),
+        name: z.string().describe('The spec name/slug only (e.g., "unified-dashboard"). Do NOT include sequence numbers like "045-". The system automatically prepends the next sequence number.'),
         title: z.string().optional(),
         description: z.string().optional(),
         tags: z.array(z.string()).optional(),
@@ -500,7 +500,7 @@ async function createMcpServer(): Promise<McpServer> {
       title: 'Update Spec',
       description: 'Update specification metadata (status, priority, tags, etc.)',
       inputSchema: {
-        specPath: z.string(),
+        specPath: z.string().describe('The spec to update. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
         status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional(),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
         tags: z.array(z.string()).optional(),
@@ -618,7 +618,7 @@ async function createMcpServer(): Promise<McpServer> {
       title: 'Get Dependencies',
       description: 'Show dependencies and dependents for a specification',
       inputSchema: {
-        specPath: z.string(),
+        specPath: z.string().describe('The spec to analyze. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
       },
       outputSchema: {
         dependencies: z.any(),
