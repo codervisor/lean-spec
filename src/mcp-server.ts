@@ -296,18 +296,18 @@ async function createMcpServer(): Promise<McpServer> {
 
   // ===== TOOLS =====
 
-  // Tool: lspec_list
+  // Tool: list
   server.registerTool(
-    'lspec_list',
+    'list',
     {
       title: 'List Specs',
-      description: 'List all specifications with optional filtering by status, tags, priority, or assignee',
+      description: 'List all specifications with optional filtering. Use this to get an overview of the project, find specs by status/priority, or discover what specs exist. Returns basic metadata for each spec.',
       inputSchema: {
-        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional(),
-        tags: z.array(z.string()).optional(),
-        priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-        assignee: z.string().optional(),
-        includeArchived: z.boolean().optional(),
+        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Filter by spec status. Use to find specs in a specific state.'),
+        tags: z.array(z.string()).optional().describe('Filter by tags (e.g., ["api", "frontend"]). Only specs with ALL specified tags will be returned.'),
+        priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Filter by priority level. Use to find urgent or important specs.'),
+        assignee: z.string().optional().describe('Filter by assignee name. Use to find specs assigned to a specific person.'),
+        includeArchived: z.boolean().optional().describe('Include archived specs in results (default: false). Set to true to see completed/archived work.'),
       },
       outputSchema: {
         specs: z.array(z.any()),
@@ -338,17 +338,17 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_search
+  // Tool: search
   server.registerTool(
-    'lspec_search',
+    'search',
     {
       title: 'Search Specs',
-      description: 'Full-text search across all specifications',
+      description: 'Full-text search across all specification content. Use this when you need to find specs by keyword, topic, or concept. Returns matching specs with relevant excerpts.',
       inputSchema: {
-        query: z.string(),
-        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional(),
-        tags: z.array(z.string()).optional(),
-        priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+        query: z.string().describe('Search term or phrase to find in spec content. Searches across titles, descriptions, and body text.'),
+        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Limit search to specs with this status.'),
+        tags: z.array(z.string()).optional().describe('Limit search to specs with these tags.'),
+        priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Limit search to specs with this priority.'),
       },
       outputSchema: {
         results: z.array(z.any()),
@@ -377,12 +377,12 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_view
+  // Tool: view
   server.registerTool(
-    'lspec_view',
+    'view',
     {
       title: 'View Spec',
-      description: 'View the full content of a specification (formatted, raw markdown, or JSON)',
+      description: 'Read the complete content of a specification. Use this to understand spec details, review design decisions, or check implementation status. Returns metadata and full content.',
       inputSchema: {
         specPath: z.string().describe('The spec to view. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
         raw: z.boolean().optional().describe('Output raw markdown instead of formatted'),
@@ -428,20 +428,20 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_create
+  // Tool: create
   server.registerTool(
-    'lspec_create',
+    'create',
     {
       title: 'Create Spec',
-      description: 'Create a new specification',
+      description: 'Create a new specification for a feature, design, or project. Use this when starting new work that needs documentation. The system auto-generates the sequence number.',
       inputSchema: {
         name: z.string().describe('The spec name/slug only (e.g., "unified-dashboard"). Do NOT include sequence numbers like "045-". The system automatically prepends the next sequence number.'),
-        title: z.string().optional(),
-        description: z.string().optional(),
-        tags: z.array(z.string()).optional(),
-        priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-        assignee: z.string().optional(),
-        template: z.string().optional(),
+        title: z.string().optional().describe('Human-readable title for the spec. If omitted, the name is used as the title.'),
+        description: z.string().optional().describe('Initial description text to add to the Overview section.'),
+        tags: z.array(z.string()).optional().describe('Tags to categorize the spec (e.g., ["api", "frontend", "v2.0"]).'),
+        priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Priority level for the spec. Defaults to "medium" if not specified.'),
+        assignee: z.string().optional().describe('Person responsible for this spec.'),
+        template: z.string().optional().describe('Template name to use (e.g., "minimal", "enterprise"). Uses default template if omitted.'),
       },
       outputSchema: {
         success: z.boolean(),
@@ -493,18 +493,18 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_update
+  // Tool: update
   server.registerTool(
-    'lspec_update',
+    'update',
     {
       title: 'Update Spec',
-      description: 'Update specification metadata (status, priority, tags, etc.)',
+      description: 'Update specification metadata (status, priority, tags, assignee). Use this to track progress, change priorities, or reassign work. Does NOT modify the spec content itself.',
       inputSchema: {
         specPath: z.string().describe('The spec to update. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
-        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional(),
-        priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-        tags: z.array(z.string()).optional(),
-        assignee: z.string().optional(),
+        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Update the spec status. Use "in-progress" when work starts, "complete" when done.'),
+        priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Update the priority level.'),
+        tags: z.array(z.string()).optional().describe('Replace tags entirely with this new array. To add/remove individual tags, read first then update.'),
+        assignee: z.string().optional().describe('Update who is responsible for this spec.'),
       },
       outputSchema: {
         success: z.boolean(),
@@ -553,12 +553,12 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_stats
+  // Tool: stats
   server.registerTool(
-    'lspec_stats',
+    'stats',
     {
       title: 'Get Statistics',
-      description: 'Get project statistics including counts by status, priority, and tags',
+      description: 'Get project statistics and metrics. Use this to understand project health, workload distribution, or get a high-level overview. Returns counts by status, priority, tags, and recent activity.',
       inputSchema: {},
       outputSchema: {
         stats: z.any(),
@@ -582,12 +582,12 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_board
+  // Tool: board
   server.registerTool(
-    'lspec_board',
+    'board',
     {
       title: 'Get Kanban Board',
-      description: 'Get Kanban board view organized by status columns',
+      description: 'Get Kanban board view of all specs organized by status. Use this to visualize workflow, see what\'s in progress, or identify bottlenecks. Returns specs grouped into planned/in-progress/complete/archived columns.',
       inputSchema: {},
       outputSchema: {
         board: z.any(),
@@ -611,12 +611,12 @@ async function createMcpServer(): Promise<McpServer> {
     }
   );
 
-  // Tool: lspec_deps
+  // Tool: deps
   server.registerTool(
-    'lspec_deps',
+    'deps',
     {
       title: 'Get Dependencies',
-      description: 'Show dependencies and dependents for a specification',
+      description: 'Analyze spec dependencies and relationships. Use this to understand which specs depend on or are referenced by a given spec. Helps identify impact of changes and work order.',
       inputSchema: {
         specPath: z.string().describe('The spec to analyze. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
       },
@@ -806,7 +806,7 @@ ${stats.recentlyUpdated.map(s => `- ${s.name} (${s.status})`).join('\n') || '(no
           role: 'user',
           content: {
             type: 'text',
-            text: `Update the status of spec "${specPath}" to "${newStatus}". Use the lspec_update tool to make this change.`,
+            text: `Update the status of spec "${specPath}" to "${newStatus}". Use the update tool to make this change.`,
           },
         },
       ],

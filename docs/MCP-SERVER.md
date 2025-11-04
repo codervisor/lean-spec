@@ -7,14 +7,14 @@ The LeanSpec MCP (Model Context Protocol) server enables AI assistants like Clau
 ### Tools
 The MCP server exposes these tools to AI assistants:
 
-- **lspec_list** - List all specifications with optional filtering
-- **lspec_search** - Full-text search across specifications
-- **lspec_view** - View specification content (formatted, raw markdown, or JSON)
-- **lspec_create** - Create new specifications
-- **lspec_update** - Update specification metadata (status, priority, tags, etc.)
-- **lspec_stats** - Get project statistics
-- **lspec_board** - Get Kanban board view
-- **lspec_deps** - Show specification dependencies
+- **list** - List all specifications with optional filtering
+- **search** - Full-text search across specifications
+- **view** - View specification content (formatted, raw markdown, or JSON)
+- **create** - Create new specifications
+- **update** - Update specification metadata (status, priority, tags, etc.)
+- **stats** - Get project statistics
+- **board** - Get Kanban board view
+- **deps** - Show specification dependencies
 
 ### Resources
 Browseable content accessible to AI assistants:
