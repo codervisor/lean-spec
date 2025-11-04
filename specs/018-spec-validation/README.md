@@ -202,6 +202,10 @@ lspec validate --fix
 
 ## Plan
 
+**Status (2025-11-04):** Planned - part of Phase 2 feature work for v0.2.0 launch
+
+**Implementation Priority:** HIGH - Critical for quality gates and CI/CD integration
+
 ### Phase 1: Core Validation Framework
 - [ ] Create `validate.ts` command
 - [ ] Implement validation result data structure
@@ -210,13 +214,17 @@ lspec validate --fix
 - [ ] Implement JSON output formatter
 - [ ] Add exit code handling
 
-### Phase 2: Frontmatter Validation
+**Notes:** Foundation for all validation capabilities. Essential for spec 043 quality gates.
+
+### Phase 2: Frontmatter Validation (HIGHEST PRIORITY)
 - [ ] Validate required fields present
 - [ ] Validate status values
 - [ ] Validate priority values
 - [ ] Validate date formats
 - [ ] Validate tags format
 - [ ] Validate custom fields (if defined in config)
+
+**Notes:** Most critical for catching common mistakes. Enables pre-commit hooks.
 
 ### Phase 3: Structure Validation
 - [ ] Check README.md exists
@@ -225,20 +233,26 @@ lspec validate --fix
 - [ ] Validate required sections present
 - [ ] Check for empty sections
 
-### Phase 4: Content Validation
+**Notes:** Ensures spec consistency across team.
+
+### Phase 4: Content Validation (OPTIONAL for v0.2.0)
 - [ ] Minimum content length check
 - [ ] Detect TODO/FIXME in complete specs
 - [ ] Validate internal links
 - [ ] Check for placeholder text
 
-### Phase 5: Staleness Detection
+**Notes:** Nice to have, can defer to v0.3.0 if time-constrained.
+
+### Phase 5: Staleness Detection (OPTIONAL for v0.2.0)
 - [ ] Calculate spec age (created date)
 - [ ] Calculate last update (git or file mtime)
 - [ ] Warn on in-progress specs > 30 days
 - [ ] Warn on no updates > 90 days
 - [ ] Warn on planned specs > 60 days
 
-### Phase 6: Auto-Fix
+**Notes:** Useful for maintenance, lower priority for launch.
+
+### Phase 6: Auto-Fix (OPTIONAL for v0.2.0)
 - [ ] Implement --fix flag
 - [ ] Add missing frontmatter fields
 - [ ] Format dates to ISO 8601
@@ -246,12 +260,21 @@ lspec validate --fix
 - [ ] Update visual badges
 - [ ] Report what was fixed
 
+**Notes:** Great UX feature, can defer to post-launch iteration.
+
 ### Phase 7: Integration & Polish
 - [ ] Add tests for all validation rules
 - [ ] Update README with validate command
 - [ ] Update AGENTS.md to mention validation
 - [ ] Create pre-commit hook example
 - [ ] Document in CI/CD guide
+
+**Launch Strategy (2025-11-04):**
+- **MUST HAVE:** Phases 1-2 (core framework + frontmatter validation)
+- **SHOULD HAVE:** Phase 3 (structure validation)
+- **NICE TO HAVE:** Phases 4-6 (content, staleness, auto-fix)
+- **v0.2.0 Scope:** Aim for Phases 1-3, ship lean and iterate
+- **Post-v0.2.0:** Add advanced features based on user feedback
 
 ## Test
 

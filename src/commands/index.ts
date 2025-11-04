@@ -4,6 +4,7 @@ export { archiveSpec } from './archive.js';
 export { listSpecs } from './list.js';
 export { updateSpec } from './update.js';
 export { checkSpecs } from './check.js';
+export { backfillTimestamps } from './backfill.js';
 export {
   listTemplates,
   showTemplate,

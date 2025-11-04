@@ -166,11 +166,18 @@ relationships:
 
 ## Plan
 
-### Phase 1: Update `deps` Command UX
+### Phase 1: Update `deps` Command UX ⏳ READY TO IMPLEMENT
 - [ ] Merge "Related" and "Related By" into single "Related Specs" section
 - [ ] Show relationships bidirectionally without distinction
 - [ ] Update help text and examples
 - [ ] Test with launch specs (042, 037, 043, etc.)
+
+**Implementation Notes (2025-11-04):**
+- Current `deps` command shows "Related" and "Related By" separately
+- Bidirectional approach is intuitive and reduces maintenance
+- Low risk, high value UX improvement
+- Estimated: 2-4 hours implementation
+- Can implement independently, no blocking dependencies
 
 ### Phase 2: Update Documentation
 - [ ] Update AGENTS.md to explain relationship model

@@ -75,6 +75,8 @@ Audit and simplify all LeanSpec documentation to eliminate unnecessary complexit
 
 ## Plan
 
+**Status (2025-11-04):** Ready to start - part of Phase 2 for v0.2.0 launch
+
 - [ ] Audit README.md for redundancy and verbosity
 - [ ] Review AGENTS.md for outdated or unnecessary instructions
 - [ ] Check CONTRIBUTING.md for overkill guidelines
@@ -87,6 +89,16 @@ Audit and simplify all LeanSpec documentation to eliminate unnecessary complexit
 - [ ] Test first-time user experience with simplified docs
 - [ ] Get feedback from fresh users (if possible)
 - [ ] Archive removed content for reference
+
+**Implementation Priority:**
+- 🔴 HIGH: README.md simplification (first impression matters)
+- 🔴 HIGH: AGENTS.md accuracy (AI integration is core feature)
+- 🟡 MEDIUM: Docs site consolidation
+- 🟢 LOW: Code comment cleanup
+
+**Related Work:**
+- Spec 043: Official Launch v0.2.0 - docs quality is critical for launch
+- Clear docs support adoption and reduce support burden
 
 ## Test
 
