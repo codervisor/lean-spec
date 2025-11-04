@@ -5,6 +5,7 @@ import type { SpecFilterOptions } from '../frontmatter.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { calculateVelocityMetrics } from '../utils/velocity.js';
+import { countSpecsByStatusAndPriority } from '../utils/spec-stats.js';
 
 export async function analyticsCommand(options: {
   tag?: string;
@@ -45,39 +46,7 @@ export async function analyticsCommand(options: {
   const showVelocity = options.velocity || (!options.stats && !options.timeline);
 
   // Calculate all metrics upfront
-  const statusCounts = {
-    planned: 0,
-    'in-progress': 0,
-    complete: 0,
-    archived: 0,
-  };
-
-  const priorityCounts = {
-    low: 0,
-    medium: 0,
-    high: 0,
-    critical: 0,
-  };
-
-  const tagCounts: Record<string, number> = {};
-
-  for (const spec of specs) {
-    const status = spec.frontmatter.status;
-    if (status && status in statusCounts) {
-      statusCounts[status]++;
-    }
-    
-    const priority = spec.frontmatter.priority;
-    if (priority && priority in priorityCounts) {
-      priorityCounts[priority]++;
-    }
-    
-    if (spec.frontmatter.tags) {
-      for (const tag of spec.frontmatter.tags) {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      }
-    }
-  }
+  const { statusCounts, priorityCounts, tagCounts } = countSpecsByStatusAndPriority(specs);
 
   // Calculate velocity metrics
   const velocityMetrics = calculateVelocityMetrics(specs);

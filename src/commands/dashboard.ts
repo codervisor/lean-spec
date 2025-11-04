@@ -4,6 +4,7 @@ import { loadAllSpecs } from '../spec-loader.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { calculateVelocityMetrics } from '../utils/velocity.js';
+import { countSpecsByStatusAndPriority } from '../utils/spec-stats.js';
 
 export async function dashboardCommand(options: {
   json?: boolean;
@@ -22,21 +23,8 @@ export async function dashboardCommand(options: {
   }
 
   // Calculate metrics
-  const statusCounts = {
-    planned: 0,
-    'in-progress': 0,
-    complete: 0,
-    archived: 0,
-  };
+  const { statusCounts, priorityCounts, tagCounts } = countSpecsByStatusAndPriority(specs);
 
-  const priorityCounts = {
-    low: 0,
-    medium: 0,
-    high: 0,
-    critical: 0,
-  };
-
-  const tagCounts: Record<string, number> = {};
   const inProgressSpecs: Array<{
     path: string;
     priority?: string;
@@ -46,22 +34,6 @@ export async function dashboardCommand(options: {
   }> = [];
 
   for (const spec of specs) {
-    const status = spec.frontmatter.status;
-    if (status && status in statusCounts) {
-      statusCounts[status]++;
-    }
-
-    const priority = spec.frontmatter.priority;
-    if (priority && priority in priorityCounts) {
-      priorityCounts[priority]++;
-    }
-
-    if (spec.frontmatter.tags) {
-      for (const tag of spec.frontmatter.tags) {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      }
-    }
-
     // Track in-progress specs
     if (spec.frontmatter.status === 'in-progress') {
       const createdAt = spec.frontmatter.created_at || spec.frontmatter.created;
