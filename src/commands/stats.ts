@@ -129,39 +129,49 @@ export async function statsCommand(options: {
     // Priority Focus (only critical/high with issues)
     const criticalCount = priorityCounts.critical || 0;
     const highCount = priorityCounts.high || 0;
-    const criticalInProgress = specs.filter(s => s.frontmatter.priority === 'critical' && s.frontmatter.status === 'in-progress').length;
-    const highInProgress = specs.filter(s => s.frontmatter.priority === 'high' && s.frontmatter.status === 'in-progress').length;
     
     if (criticalCount > 0 || highCount > 0) {
       console.log(chalk.bold('🎯 Priority Focus'));
       console.log('');
       
       if (criticalCount > 0) {
-        const overdueCount = specs.filter(s => 
+        const criticalPlanned = specs.filter(s => s.frontmatter.priority === 'critical' && s.frontmatter.status === 'planned').length;
+        const criticalInProgress = specs.filter(s => s.frontmatter.priority === 'critical' && s.frontmatter.status === 'in-progress').length;
+        const criticalComplete = specs.filter(s => s.frontmatter.priority === 'critical' && s.frontmatter.status === 'complete').length;
+        const criticalOverdue = specs.filter(s => 
           s.frontmatter.priority === 'critical' && 
           s.frontmatter.due && 
           dayjs(s.frontmatter.due).isBefore(dayjs(), 'day') &&
           s.frontmatter.status !== 'complete'
         ).length;
         
-        const statusText = overdueCount > 0 ? chalk.red(`${overdueCount} overdue!`) : 
-                          criticalInProgress > 0 ? `${criticalInProgress} in-progress` : '';
+        const parts = [];
+        if (criticalPlanned > 0) parts.push(chalk.dim(`${criticalPlanned} planned`));
+        if (criticalInProgress > 0) parts.push(`${criticalInProgress} in-progress`);
+        if (criticalComplete > 0) parts.push(chalk.green(`${criticalComplete} complete`));
+        if (criticalOverdue > 0) parts.push(chalk.red(`${criticalOverdue} overdue!`));
         
-        console.log(`  🔴 Critical      ${chalk.red(criticalCount)} specs${statusText ? ` (${statusText})` : ''}`);
+        console.log(`  🔴 Critical      ${chalk.red(criticalCount)} specs${parts.length > 0 ? ` (${parts.join(', ')})` : ''}`);
       }
       
       if (highCount > 0) {
-        const overdueCount = specs.filter(s => 
+        const highPlanned = specs.filter(s => s.frontmatter.priority === 'high' && s.frontmatter.status === 'planned').length;
+        const highInProgress = specs.filter(s => s.frontmatter.priority === 'high' && s.frontmatter.status === 'in-progress').length;
+        const highComplete = specs.filter(s => s.frontmatter.priority === 'high' && s.frontmatter.status === 'complete').length;
+        const highOverdue = specs.filter(s => 
           s.frontmatter.priority === 'high' && 
           s.frontmatter.due && 
           dayjs(s.frontmatter.due).isBefore(dayjs(), 'day') &&
           s.frontmatter.status !== 'complete'
         ).length;
         
-        const statusText = overdueCount > 0 ? chalk.yellow(`${overdueCount} overdue`) : 
-                          highInProgress > 0 ? `${highInProgress} in-progress` : '';
+        const parts = [];
+        if (highPlanned > 0) parts.push(chalk.dim(`${highPlanned} planned`));
+        if (highInProgress > 0) parts.push(`${highInProgress} in-progress`);
+        if (highComplete > 0) parts.push(chalk.green(`${highComplete} complete`));
+        if (highOverdue > 0) parts.push(chalk.yellow(`${highOverdue} overdue`));
         
-        console.log(`  🟠 High          ${chalk.hex('#FFA500')(highCount)} specs${statusText ? ` (${statusText})` : ''}`);
+        console.log(`  🟠 High          ${chalk.hex('#FFA500')(highCount)} specs${parts.length > 0 ? ` (${parts.join(', ')})` : ''}`);
       }
       
       console.log('');
