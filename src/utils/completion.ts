@@ -1,33 +1,13 @@
 import dayjs from 'dayjs';
 import type { SpecInfo } from '../spec-loader.js';
-import type { SpecPriority } from '../frontmatter.js';
 
-export interface HealthMetrics {
-  score: number; // 0-100
+export interface CompletionMetrics {
+  score: number; // 0-100 (simple completion rate: complete/total * 100)
   totalSpecs: number;
   activeSpecs: number;
   completeSpecs: number;
   criticalIssues: string[];
   warnings: string[];
-}
-
-/**
- * Get priority weight for health score calculation
- * critical=4, high=3, medium=2, low=1, none=1
- */
-function priorityWeight(priority?: SpecPriority): number {
-  switch (priority) {
-    case 'critical':
-      return 4;
-    case 'high':
-      return 3;
-    case 'medium':
-      return 2;
-    case 'low':
-      return 1;
-    default:
-      return 1;
-  }
 }
 
 /**
@@ -67,34 +47,17 @@ function isLongRunning(spec: SpecInfo): boolean {
 }
 
 /**
- * Calculate health metrics for a set of specs
- * Health score is weighted by priority:
- * - Critical specs count 4x
- * - High specs count 3x
- * - Medium specs count 2x
- * - Low/none specs count 1x
- * 
- * Score = (weighted_complete / weighted_total) * 100
+ * Calculate completion metrics for a set of specs
+ * Score is simple completion rate: (complete / total) * 100
  */
-export function calculateHealth(specs: SpecInfo[]): HealthMetrics {
-  let totalWeight = 0;
-  let completeWeight = 0;
+export function calculateCompletion(specs: SpecInfo[]): CompletionMetrics {
   const criticalIssues: string[] = [];
   const warnings: string[] = [];
   
-  for (const spec of specs) {
-    // Skip archived specs in health calculation
-    if (spec.frontmatter.status === 'archived') {
-      continue;
-    }
-    
-    const weight = priorityWeight(spec.frontmatter.priority);
-    totalWeight += weight;
-    
-    if (spec.frontmatter.status === 'complete') {
-      completeWeight += weight;
-    }
-    
+  // Filter out archived specs
+  const activeAndCompleteSpecs = specs.filter(s => s.frontmatter.status !== 'archived');
+  
+  for (const spec of activeAndCompleteSpecs) {
     // Detect critical issues
     if (isCriticalOverdue(spec)) {
       criticalIssues.push(spec.path);
@@ -106,18 +69,19 @@ export function calculateHealth(specs: SpecInfo[]): HealthMetrics {
     }
   }
   
-  // Calculate score (avoid division by zero)
-  const score = totalWeight > 0 ? Math.round((completeWeight / totalWeight) * 100) : 0;
-  
   // Count active and complete specs (excluding archived)
   const activeSpecs = specs.filter(
     s => s.frontmatter.status === 'planned' || s.frontmatter.status === 'in-progress'
   );
   const completeSpecs = specs.filter(s => s.frontmatter.status === 'complete');
   
+  // Calculate simple completion rate (avoid division by zero)
+  const totalSpecs = activeAndCompleteSpecs.length;
+  const score = totalSpecs > 0 ? Math.round((completeSpecs.length / totalSpecs) * 100) : 0;
+  
   return {
     score,
-    totalSpecs: specs.filter(s => s.frontmatter.status !== 'archived').length,
+    totalSpecs,
     activeSpecs: activeSpecs.length,
     completeSpecs: completeSpecs.length,
     criticalIssues,
@@ -126,9 +90,9 @@ export function calculateHealth(specs: SpecInfo[]): HealthMetrics {
 }
 
 /**
- * Get a health status indicator based on score
+ * Get a completion status indicator based on score
  */
-export function getHealthStatus(score: number): { emoji: string; label: string; color: string } {
+export function getCompletionStatus(score: number): { emoji: string; label: string; color: string } {
   if (score >= 70) {
     return { emoji: '✓', label: 'Good', color: 'green' };
   } else if (score >= 40) {

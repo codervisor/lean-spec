@@ -127,7 +127,7 @@ lspec dashboard              # REMOVED → use `lspec board`
 
 **Key Changes:**
 - **Focus on actionable insights** - What needs attention?
-- **Health score** - Single number (% complete, weighted by priority)
+- **Health score** - Simple completion rate (% complete)
 - **Priority focus** - Only show priorities that matter (critical/high with issues)
 - **Needs attention** - Top 3-5 actionable items
 - **Velocity summary** - Key metrics only (not full breakdown)
@@ -190,7 +190,7 @@ Show top 5 items, then "and N more need attention"
 
 **Health Summary Box Shows:**
 - **Totals** - Quick counts
-- **Health score** - Weighted % complete
+- **Health score** - Simple % complete
 - **Alerts** - Critical issues needing attention
 - **Velocity snapshot** - Key metrics only
 
@@ -251,10 +251,9 @@ export interface HealthMetrics {
 }
 
 export function calculateHealth(specs: SpecInfo[]): HealthMetrics {
-  // Weight: critical=4, high=3, medium=2, low=1
-  // Score = weighted_complete / weighted_total * 100
+  // Simple: completion_rate = complete / total * 100
   
-  let totalWeight = 0;
+  let completeCount = 0;
   let completeWeight = 0;
   const criticalIssues: string[] = [];
   const warnings: string[] = [];
@@ -368,7 +367,7 @@ export function generateInsights(specs: SpecInfo[]): Insight[] {
 
 **Step 2.1: Add health calculations**
 - [ ] Create `utils/health.ts` with health score logic
-- [ ] Implement weighted completion calculation
+- [ ] Implement simple completion calculation
 - [ ] Add critical issue detection
 - [ ] Add warning detection (long-running WIP)
 
@@ -481,7 +480,7 @@ export function generateInsights(specs: SpecInfo[]): Insight[] {
 - [ ] Box renders correctly (Unicode characters)
 
 **Health score accuracy:**
-- [ ] Weighted by priority (critical counts more)
+- [ ] Simple completion rate (not weighted)
 - [ ] 0% when no specs complete
 - [ ] 100% when all complete
 - [ ] Reflects project health intuitively
@@ -552,26 +551,21 @@ export function generateInsights(specs: SpecInfo[]): Insight[] {
 
 ### Health Score Formula
 
-**Weighted by priority:**
+**Simple completion rate:**
 ```
-critical = 4 points
-high     = 3 points
-medium   = 2 points
-low      = 1 points
-none     = 1 point
-
-health = (complete_weight / total_weight) * 100
+completion_rate = (complete_specs / total_specs) * 100
 ```
 
-**Why weighted?**
-- Completing critical specs matters more than low priority
-- Reflects actual project progress
-- Incentivizes finishing important work first
+**Why simple?**
+- Easy to understand at a glance
+- No complex weighting logic
+- Clear, transparent calculation
+- Follows LeanSpec minimalist philosophy
 
-**Alternative**: Unweighted (simple count)
-- Easier to understand
-- But doesn't reflect priority importance
-- **Decision**: Use weighted (more meaningful)
+**Alternative**: Weighted by priority
+- More complex calculation
+- Harder to understand intuitively
+- **Decision**: Use simple (clarity over sophistication)
 
 ### Default Stats Output Philosophy
 
@@ -657,11 +651,11 @@ health = (complete_weight / total_weight) * 100
 - Make board the only command
 - Flags for different views (--stats, --kanban, --health)
 - ❌ Rejected: Overloads board concept, reduces clarity
+
 **Option C: Remove both analytics and dashboard** (This spec's approach)
 - Merge analytics → stats (enhanced)
 - Remove dashboard → use enhanced board
 - Direct removal (no deprecation)
-- ✅ Selected: Best balance of simplicity and functionality
 - ✅ Selected: Best balance of simplicity and functionality
 
 **Option D: Status quo (keep all 3)**

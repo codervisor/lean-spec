@@ -5,7 +5,7 @@ import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
-import { calculateHealth, getHealthStatus } from '../utils/health.js';
+import { calculateCompletion, getCompletionStatus } from '../utils/completion.js';
 import { calculateVelocityMetrics } from '../utils/velocity.js';
 
 const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; colorFn: (s: string) => string }> = {
@@ -25,7 +25,7 @@ const PRIORITY_BADGES: Record<SpecPriority, { emoji: string; colorFn: (s: string
 export async function boardCommand(options: {
   showComplete?: boolean;
   simple?: boolean;
-  healthOnly?: boolean;
+  completionOnly?: boolean;
   tag?: string;
   assignee?: string;
 }): Promise<void> {
@@ -83,11 +83,11 @@ export async function boardCommand(options: {
   }
   console.log('');
 
-  // Show health summary unless --simple flag is set
+  // Show completion summary unless --simple flag is set
   if (!options.simple) {
-    const healthMetrics = calculateHealth(specs);
+    const completionMetrics = calculateCompletion(specs);
     const velocityMetrics = calculateVelocityMetrics(specs);
-    const healthStatus = getHealthStatus(healthMetrics.score);
+    const completionStatus = getCompletionStatus(completionMetrics.score);
     
     // Health summary box
     const boxWidth = 62;
@@ -106,26 +106,22 @@ export async function boardCommand(options: {
     const headerLine = chalk.bold('  Project Overview');
     console.log(chalk.dim('║') + padLine(headerLine) + chalk.dim('║'));
     
-    // Simple completion percentage (not weighted)
-    const simplePercentage = healthMetrics.totalSpecs > 0 
-      ? Math.round((healthMetrics.completeSpecs / healthMetrics.totalSpecs) * 100)
-      : 0;
-    
-    const percentageColor = simplePercentage >= 70 ? chalk.green : 
-                           simplePercentage >= 40 ? chalk.yellow : 
+    // Completion rate percentage
+    const percentageColor = completionMetrics.score >= 70 ? chalk.green : 
+                           completionMetrics.score >= 40 ? chalk.yellow : 
                            chalk.red;
     
-    const line1 = `  ${healthMetrics.totalSpecs} total · ${healthMetrics.activeSpecs} active · ${healthMetrics.completeSpecs} complete ${percentageColor('(' + simplePercentage + '%)')}`;
+    const line1 = `  ${completionMetrics.totalSpecs} total · ${completionMetrics.activeSpecs} active · ${completionMetrics.completeSpecs} complete ${percentageColor('(' + completionMetrics.score + '%)')}`;
     console.log(chalk.dim('║') + padLine(line1) + chalk.dim('║'));
     
     // Alerts line
-    if (healthMetrics.criticalIssues.length > 0 || healthMetrics.warnings.length > 0) {
+    if (completionMetrics.criticalIssues.length > 0 || completionMetrics.warnings.length > 0) {
       const alerts: string[] = [];
-      if (healthMetrics.criticalIssues.length > 0) {
-        alerts.push(`${healthMetrics.criticalIssues.length} critical overdue`);
+      if (completionMetrics.criticalIssues.length > 0) {
+        alerts.push(`${completionMetrics.criticalIssues.length} critical overdue`);
       }
-      if (healthMetrics.warnings.length > 0) {
-        alerts.push(`${healthMetrics.warnings.length} specs WIP > 7 days`);
+      if (completionMetrics.warnings.length > 0) {
+        alerts.push(`${completionMetrics.warnings.length} specs WIP > 7 days`);
       }
       const alertLine = `  ${chalk.yellow('⚠️  ' + alerts.join(' · '))}`;
       console.log(chalk.dim('║') + padLine(alertLine) + chalk.dim('║'));
@@ -137,14 +133,12 @@ export async function boardCommand(options: {
     
     console.log(chalk.dim(bottomBorder));
     console.log('');
-    
-    // If --health-only, stop here
-    if (options.healthOnly) {
+
+    // If --completion-only, stop here
+    if (options.completionOnly) {
       return;
     }
-  }
-
-  // Render columns
+  }  // Render columns
   renderColumn(STATUS_CONFIG.planned.label, STATUS_CONFIG.planned.emoji, columns.planned, true, STATUS_CONFIG.planned.colorFn);
   
   // Separator between status sections

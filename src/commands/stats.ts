@@ -6,7 +6,7 @@ import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { calculateVelocityMetrics } from '../utils/velocity.js';
 import { countSpecsByStatusAndPriority } from '../utils/spec-stats.js';
-import { calculateHealth, getHealthStatus } from '../utils/health.js';
+import { calculateCompletion, getCompletionStatus } from '../utils/completion.js';
 import { generateInsights, getSpecInsightDetails } from '../utils/insights.js';
 
 export async function statsCommand(options: {
@@ -56,7 +56,7 @@ export async function statsCommand(options: {
   // Calculate all metrics upfront
   const { statusCounts, priorityCounts, tagCounts } = countSpecsByStatusAndPriority(specs);
   const velocityMetrics = calculateVelocityMetrics(specs);
-  const healthMetrics = calculateHealth(specs);
+  const completionMetrics = calculateCompletion(specs);
   const insights = generateInsights(specs);
 
   // JSON output
@@ -66,7 +66,7 @@ export async function statsCommand(options: {
       status: statusCounts,
       priority: priorityCounts,
       tags: tagCounts,
-      health: healthMetrics,
+      completion: completionMetrics,
       velocity: velocityMetrics,
       insights: insights,
       filter,
@@ -92,19 +92,19 @@ export async function statsCommand(options: {
   // SIMPLIFIED VIEW (Default)
   // ============================================================
   if (showSimplified) {
-    // Overview with health score
+    // Overview with completion rate
     console.log(chalk.bold('📈 Overview'));
     console.log('');
     
-    const healthStatus = getHealthStatus(healthMetrics.score);
-    const healthColor = healthStatus.color === 'green' ? chalk.green : 
-                       healthStatus.color === 'yellow' ? chalk.yellow : 
-                       chalk.red;
+    const completionStatus = getCompletionStatus(completionMetrics.score);
+    const completionColor = completionStatus.color === 'green' ? chalk.green : 
+                           completionStatus.color === 'yellow' ? chalk.yellow : 
+                           chalk.red;
     
-    console.log(`  Total Specs           ${chalk.cyan(healthMetrics.totalSpecs)}`);
-    console.log(`  Active (Planned+WIP)  ${chalk.yellow(healthMetrics.activeSpecs)}`);
-    console.log(`  Complete              ${chalk.green(healthMetrics.completeSpecs)}`);
-    console.log(`  Health Score          ${healthColor(`${healthMetrics.score}% ${healthStatus.emoji}`)}`);
+    console.log(`  Total Specs           ${chalk.cyan(completionMetrics.totalSpecs)}`);
+    console.log(`  Active (Planned+WIP)  ${chalk.yellow(completionMetrics.activeSpecs)}`);
+    console.log(`  Complete              ${chalk.green(completionMetrics.completeSpecs)}`);
+    console.log(`  Completion Rate       ${completionColor(`${completionMetrics.score}% ${completionStatus.emoji}`)}`);
     console.log('');
 
     // Status (simplified)
@@ -192,13 +192,13 @@ export async function statsCommand(options: {
       }
       
       console.log('');
-    } else if (healthMetrics.activeSpecs === 0 && healthMetrics.completeSpecs > 0) {
+    } else if (completionMetrics.activeSpecs === 0 && completionMetrics.completeSpecs > 0) {
       // Celebrate completion!
       console.log(chalk.bold.green('🎉 All Specs Complete!'));
       console.log('');
       console.log(`  ${chalk.dim('Great work! All active specs are complete.')}`);
       console.log('');
-    } else if (healthMetrics.activeSpecs > 0) {
+    } else if (completionMetrics.activeSpecs > 0) {
       // Positive message
       console.log(chalk.bold.green('✨ All Clear!'));
       console.log('');

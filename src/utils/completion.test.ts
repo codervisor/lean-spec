@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { calculateHealth, getHealthStatus } from './health.js';
+import { calculateCompletion, getCompletionStatus } from './completion.js';
 import type { SpecInfo } from '../spec-loader.js';
 import dayjs from 'dayjs';
 
-describe('calculateHealth', () => {
-  it('should calculate health score of 100% for all complete specs', () => {
+describe('calculateCompletion', () => {
+  it('should calculate completion score of 100% for all complete specs', () => {
     const specs = [
       {
         path: 'spec-001',
@@ -16,13 +16,13 @@ describe('calculateHealth', () => {
       } as SpecInfo,
     ];
 
-    const health = calculateHealth(specs);
-    expect(health.score).toBe(100);
-    expect(health.completeSpecs).toBe(2);
-    expect(health.activeSpecs).toBe(0);
+    const completion = calculateCompletion(specs);
+    expect(completion.score).toBe(100);
+    expect(completion.completeSpecs).toBe(2);
+    expect(completion.activeSpecs).toBe(0);
   });
 
-  it('should calculate health score of 0% for all planned specs', () => {
+  it('should calculate completion score of 0% for all planned specs', () => {
     const specs = [
       {
         path: 'spec-001',
@@ -34,14 +34,14 @@ describe('calculateHealth', () => {
       } as SpecInfo,
     ];
 
-    const health = calculateHealth(specs);
-    expect(health.score).toBe(0);
-    expect(health.completeSpecs).toBe(0);
-    expect(health.activeSpecs).toBe(2);
+    const completion = calculateCompletion(specs);
+    expect(completion.score).toBe(0);
+    expect(completion.completeSpecs).toBe(0);
+    expect(completion.activeSpecs).toBe(2);
   });
 
-  it('should weight critical specs higher than low priority', () => {
-    const specsWithCritical = [
+  it('should calculate simple completion rate regardless of priority', () => {
+    const specs = [
       {
         path: 'spec-001',
         frontmatter: { status: 'complete', created: '2025-01-01', priority: 'critical' },
@@ -50,27 +50,22 @@ describe('calculateHealth', () => {
         path: 'spec-002',
         frontmatter: { status: 'planned', created: '2025-01-01', priority: 'low' },
       } as SpecInfo,
-    ];
-
-    const specsWithLow = [
       {
-        path: 'spec-001',
-        frontmatter: { status: 'planned', created: '2025-01-01', priority: 'critical' },
+        path: 'spec-003',
+        frontmatter: { status: 'complete', created: '2025-01-01', priority: 'high' },
       } as SpecInfo,
       {
-        path: 'spec-002',
-        frontmatter: { status: 'complete', created: '2025-01-01', priority: 'low' },
+        path: 'spec-004',
+        frontmatter: { status: 'in-progress', created: '2025-01-01', priority: 'medium' },
       } as SpecInfo,
     ];
 
-    const healthWithCritical = calculateHealth(specsWithCritical);
-    const healthWithLow = calculateHealth(specsWithLow);
-
-    // Critical complete (4 points) + low planned (0 points) = 4/5 = 80%
-    expect(healthWithCritical.score).toBe(80);
+    const completion = calculateCompletion(specs);
     
-    // Critical planned (0 points) + low complete (1 point) = 1/5 = 20%
-    expect(healthWithLow.score).toBe(20);
+    // Simple: 2 complete out of 4 total = 50%
+    expect(completion.score).toBe(50);
+    expect(completion.completeSpecs).toBe(2);
+    expect(completion.totalSpecs).toBe(4);
   });
 
   it('should detect critical overdue specs', () => {
@@ -87,8 +82,8 @@ describe('calculateHealth', () => {
       } as SpecInfo,
     ];
 
-    const health = calculateHealth(specs);
-    expect(health.criticalIssues).toContain('spec-001');
+    const completion = calculateCompletion(specs);
+    expect(completion.criticalIssues).toContain('spec-001');
   });
 
   it('should detect long-running WIP specs', () => {
@@ -104,11 +99,11 @@ describe('calculateHealth', () => {
       } as SpecInfo,
     ];
 
-    const health = calculateHealth(specs);
-    expect(health.warnings).toContain('spec-001');
+    const completion = calculateCompletion(specs);
+    expect(completion.warnings).toContain('spec-001');
   });
 
-  it('should exclude archived specs from health calculation', () => {
+  it('should exclude archived specs from completion calculation', () => {
     const specs = [
       {
         path: 'spec-001',
@@ -120,29 +115,29 @@ describe('calculateHealth', () => {
       } as SpecInfo,
     ];
 
-    const health = calculateHealth(specs);
-    expect(health.totalSpecs).toBe(1); // Only non-archived
-    expect(health.score).toBe(100); // 1 complete out of 1 total
+    const completion = calculateCompletion(specs);
+    expect(completion.totalSpecs).toBe(1); // Only non-archived
+    expect(completion.score).toBe(100); // 1 complete out of 1 total
   });
 });
 
-describe('getHealthStatus', () => {
+describe('getCompletionStatus', () => {
   it('should return Good for score >= 70', () => {
-    const status = getHealthStatus(75);
+    const status = getCompletionStatus(75);
     expect(status.label).toBe('Good');
     expect(status.emoji).toBe('✓');
     expect(status.color).toBe('green');
   });
 
   it('should return Fair for score 40-69', () => {
-    const status = getHealthStatus(50);
+    const status = getCompletionStatus(50);
     expect(status.label).toBe('Fair');
     expect(status.emoji).toBe('⚠');
     expect(status.color).toBe('yellow');
   });
 
   it('should return Needs Attention for score < 40', () => {
-    const status = getHealthStatus(30);
+    const status = getCompletionStatus(30);
     expect(status.label).toBe('Needs Attention');
     expect(status.emoji).toBe('✗');
     expect(status.color).toBe('red');

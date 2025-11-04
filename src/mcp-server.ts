@@ -558,7 +558,7 @@ async function createMcpServer(): Promise<McpServer> {
     'stats',
     {
       title: 'Get Statistics',
-      description: 'Get project statistics and metrics. Use this to understand project health, workload distribution, or get a high-level overview. Returns counts by status, priority, tags, and recent activity.',
+      description: 'Get project statistics and metrics. Use this to understand project completion, workload distribution, or get a high-level overview. Returns counts by status, priority, tags, and recent activity.',
       inputSchema: {},
       outputSchema: {
         stats: z.any(),

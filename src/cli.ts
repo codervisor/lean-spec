@@ -272,16 +272,16 @@ program
 // board command
 program
   .command('board')
-  .description('Show Kanban-style board view with project health')
-  .option('--show-complete', 'Expand complete column')
-  .option('--simple', 'Hide health summary (kanban only)')
-  .option('--health-only', 'Show only health summary (no kanban)')
+    .description('Show Kanban-style board view with project completion summary')
+  .option('--complete', 'Include complete specs (default: hidden)')
+  .option('--simple', 'Hide completion summary (kanban only)')
+  .option('--completion-only', 'Show only completion summary (no kanban)')
   .option('--tag <tag>', 'Filter by tag')
   .option('--assignee <name>', 'Filter by assignee')
   .action(async (options: {
     showComplete?: boolean;
     simple?: boolean;
-    healthOnly?: boolean;
+    completionOnly?: boolean;
     tag?: string;
     assignee?: string;
   }) => {
