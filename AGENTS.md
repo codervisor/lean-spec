@@ -96,9 +96,9 @@ Your spec might be too complex if:
 - ⚠️ You're scrolling endlessly to find information
 - ⚠️ Implementation plan has >8 phases
 
-**Action**: Split using sub-specs (see spec 012), don't just keep growing the file.
+**Action**: Split using sub-specs (see spec 012-sub-spec-files), don't just keep growing the file.
 
-### How to Split (See spec 012)
+### How to Split (See spec 012-sub-spec-files)
 
 Use sub-spec files for complex features:
 - `README.md`: Overview, decision, high-level design

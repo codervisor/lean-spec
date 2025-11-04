@@ -24,7 +24,7 @@ priority: medium
 <!-- 💡 TIP: If your plan has >6 phases or this spec approaches 
      400 lines, consider using sub-spec files:
      - IMPLEMENTATION.md for detailed implementation
-     - See spec 012 for guidance on splitting -->
+     - See spec 012-sub-spec-files for guidance on splitting -->
 
 - [ ] Task 1
 - [ ] Task 2
