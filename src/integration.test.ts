@@ -316,7 +316,7 @@ describe('Integration: Date-based organization', () => {
     expect(await dirExists(path.join(todayDir, '003-feature-c'))).toBe(true);
 
     // Verify specs are returned in correct order
-    const specs = await loadAllSpecs();
+    const specs = await loadAllSpecs({ sortOrder: 'asc' });
     expect(specs).toHaveLength(3);
     expect(specs[0].name).toBe('001-feature-a');
     expect(specs[1].name).toBe('002-feature-b');

@@ -34,7 +34,7 @@ describe('loadAllSpecs', () => {
       created: '2024-11-01',
     });
 
-    const specs = await loadAllSpecs();
+    const specs = await loadAllSpecs({ sortOrder: 'asc' });
 
     expect(specs).toHaveLength(2);
     expect(specs[0].name).toBe('001-feature-a');
@@ -177,7 +177,7 @@ describe('loadAllSpecs', () => {
       created: '2024-10-15',
     });
 
-    const specs = await loadAllSpecs();
+    const specs = await loadAllSpecs({ sortBy: 'created', sortOrder: 'desc' });
 
     expect(specs).toHaveLength(3);
     expect(specs[0].date).toBe('20241101');
