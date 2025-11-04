@@ -47,6 +47,14 @@ type BoardData = {
 };
 
 /**
+ * Helper function to format error messages
+ */
+function formatErrorMessage(prefix: string, error: unknown): string {
+  const errorMsg = error instanceof Error ? error.message : String(error);
+  return `${prefix}: ${errorMsg}`;
+}
+
+/**
  * Helper function to convert spec info to serializable format
  */
 function specToData(spec: any): SpecData {
@@ -306,19 +314,27 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const specs = await listSpecsData({
-        status: input.status as SpecStatus | undefined,
-        tags: input.tags,
-        priority: input.priority as SpecPriority | undefined,
-        assignee: input.assignee,
-        includeArchived: input.includeArchived,
-      });
+      try {
+        const specs = await listSpecsData({
+          status: input.status as SpecStatus | undefined,
+          tags: input.tags,
+          priority: input.priority as SpecPriority | undefined,
+          assignee: input.assignee,
+          includeArchived: input.includeArchived,
+        });
 
-      const output = { specs };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+        const output = { specs };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error listing specs', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -339,17 +355,25 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const results = await searchSpecsData(input.query, {
-        status: input.status as SpecStatus | undefined,
-        tags: input.tags,
-        priority: input.priority as SpecPriority | undefined,
-      });
+      try {
+        const results = await searchSpecsData(input.query, {
+          status: input.status as SpecStatus | undefined,
+          tags: input.tags,
+          priority: input.priority as SpecPriority | undefined,
+        });
 
-      const output = { results };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+        const output = { results };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error searching specs', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -370,29 +394,37 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const result = await readSpecData(input.specPath);
-      
-      // If json flag is set, return structured data
-      if (input.json) {
+      try {
+        const result = await readSpecData(input.specPath);
+        
+        // If json flag is set, return structured data
+        if (input.json) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            structuredContent: result,
+          };
+        }
+        
+        // If raw flag is set, return raw markdown
+        if (input.raw) {
+          const rawMarkdown = `---\nstatus: ${result.spec.status}\ncreated: ${result.spec.created}\n${result.spec.priority ? `priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `tags:\n${result.spec.tags.map(t => `  - ${t}`).join('\n')}\n` : ''}${result.spec.assignee ? `assignee: ${result.spec.assignee}\n` : ''}---\n\n${result.content}`;
+          return {
+            content: [{ type: 'text', text: rawMarkdown }],
+          };
+        }
+        
+        // Default: formatted output
+        const formatted = `# ${result.spec.name}\n\nStatus: ${result.spec.status}\nCreated: ${result.spec.created}\n${result.spec.priority ? `Priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `Tags: ${result.spec.tags.join(', ')}\n` : ''}${result.spec.assignee ? `Assignee: ${result.spec.assignee}\n` : ''}\n\n${result.content}`;
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          structuredContent: result,
+          content: [{ type: 'text', text: formatted }],
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error viewing spec', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
         };
       }
-      
-      // If raw flag is set, return raw markdown
-      if (input.raw) {
-        const rawMarkdown = `---\nstatus: ${result.spec.status}\ncreated: ${result.spec.created}\n${result.spec.priority ? `priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `tags:\n${result.spec.tags.map(t => `  - ${t}`).join('\n')}\n` : ''}${result.spec.assignee ? `assignee: ${result.spec.assignee}\n` : ''}---\n\n${result.content}`;
-        return {
-          content: [{ type: 'text', text: rawMarkdown }],
-        };
-      }
-      
-      // Default: formatted output
-      const formatted = `# ${result.spec.name}\n\nStatus: ${result.spec.status}\nCreated: ${result.spec.created}\n${result.spec.priority ? `Priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `Tags: ${result.spec.tags.join(', ')}\n` : ''}${result.spec.assignee ? `Assignee: ${result.spec.assignee}\n` : ''}\n\n${result.content}`;
-      return {
-        content: [{ type: 'text', text: formatted }],
-      };
     }
   );
 
@@ -449,7 +481,7 @@ async function createMcpServer(): Promise<McpServer> {
         const output = {
           success: false,
           path: '',
-          message: `Error creating spec: ${error instanceof Error ? error.message : String(error)}`,
+          message: formatErrorMessage('Error creating spec', error),
         };
         return {
           content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
@@ -509,7 +541,7 @@ async function createMcpServer(): Promise<McpServer> {
       } catch (error) {
         const output = {
           success: false,
-          message: `Error updating spec: ${error instanceof Error ? error.message : String(error)}`,
+          message: formatErrorMessage('Error updating spec', error),
         };
         return {
           content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
@@ -533,12 +565,20 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async () => {
-      const stats = await getStatsData();
-      const output = { stats };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+      try {
+        const stats = await getStatsData();
+        const output = { stats };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error getting stats', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -554,12 +594,20 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async () => {
-      const board = await getBoardData();
-      const output = { board };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+      try {
+        const board = await getBoardData();
+        const output = { board };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error getting board', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -577,12 +625,20 @@ async function createMcpServer(): Promise<McpServer> {
       },
     },
     async (input) => {
-      const deps = await getDepsData(input.specPath);
-      const output = { dependencies: deps };
-      return {
-        content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-        structuredContent: output,
-      };
+      try {
+        const deps = await getDepsData(input.specPath);
+        const output = { dependencies: deps };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error getting dependencies', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -597,17 +653,21 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Read individual specification content by path or name',
     },
     async (uri, { specPath }) => {
-      const pathString = Array.isArray(specPath) ? specPath[0] : specPath;
-      const { spec, content } = await readSpecData(pathString);
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text: `# ${spec.name}\n\nStatus: ${spec.status}\nCreated: ${spec.created}\n${spec.priority ? `Priority: ${spec.priority}\n` : ''}${spec.tags ? `Tags: ${spec.tags.join(', ')}\n` : ''}\n\n${content}`,
-            mimeType: 'text/markdown',
-          },
-        ],
-      };
+      try {
+        const pathString = Array.isArray(specPath) ? specPath[0] : specPath;
+        const { spec, content } = await readSpecData(pathString);
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text: `# ${spec.name}\n\nStatus: ${spec.status}\nCreated: ${spec.created}\n${spec.priority ? `Priority: ${spec.priority}\n` : ''}${spec.tags ? `Tags: ${spec.tags.join(', ')}\n` : ''}\n\n${content}`,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      } catch (error) {
+        throw new Error(formatErrorMessage('Failed to read spec resource', error));
+      }
     }
   );
 
@@ -620,24 +680,28 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Current Kanban board state organized by status',
     },
     async (uri) => {
-      const board = await getBoardData();
-      const text = Object.entries(board.columns)
-        .map(([status, specs]) => {
-          const header = `## ${status.toUpperCase()} (${specs.length})`;
-          const items = specs.map(s => `- ${s.name} ${s.priority ? `[${s.priority}]` : ''}`).join('\n');
-          return `${header}\n${items || '(empty)'}`;
-        })
-        .join('\n\n');
+      try {
+        const board = await getBoardData();
+        const text = Object.entries(board.columns)
+          .map(([status, specs]) => {
+            const header = `## ${status.toUpperCase()} (${specs.length})`;
+            const items = specs.map(s => `- ${s.name} ${s.priority ? `[${s.priority}]` : ''}`).join('\n');
+            return `${header}\n${items || '(empty)'}`;
+          })
+          .join('\n\n');
 
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text,
-            mimeType: 'text/markdown',
-          },
-        ],
-      };
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      } catch (error) {
+        throw new Error(formatErrorMessage('Failed to get board resource', error));
+      }
     }
   );
 
@@ -650,24 +714,25 @@ async function createMcpServer(): Promise<McpServer> {
       description: 'Overview of project statistics',
     },
     async (uri) => {
-      const stats = await getStatsData();
-      
-      const statusSection = Object.entries(stats.byStatus)
-        .map(([status, count]) => `- ${status}: ${count}`)
-        .join('\n');
-      
-      const prioritySection = Object.entries(stats.byPriority)
-        .filter(([_, count]) => count > 0)
-        .map(([priority, count]) => `- ${priority}: ${count}`)
-        .join('\n');
-      
-      const tagSection = Object.entries(stats.byTag)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([tag, count]) => `- ${tag}: ${count}`)
-        .join('\n');
+      try {
+        const stats = await getStatsData();
+        
+        const statusSection = Object.entries(stats.byStatus)
+          .map(([status, count]) => `- ${status}: ${count}`)
+          .join('\n');
+        
+        const prioritySection = Object.entries(stats.byPriority)
+          .filter(([_, count]) => count > 0)
+          .map(([priority, count]) => `- ${priority}: ${count}`)
+          .join('\n');
+        
+        const tagSection = Object.entries(stats.byTag)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([tag, count]) => `- ${tag}: ${count}`)
+          .join('\n');
 
-      const text = `# Project Statistics
+        const text = `# Project Statistics
 
 ## Total Specs: ${stats.total}
 
@@ -683,15 +748,18 @@ ${tagSection || '(none)'}
 ## Recently Updated
 ${stats.recentlyUpdated.map(s => `- ${s.name} (${s.status})`).join('\n') || '(none)'}`;
 
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text,
-            mimeType: 'text/markdown',
-          },
-        ],
-      };
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text,
+              mimeType: 'text/markdown',
+            },
+          ],
+        };
+      } catch (error) {
+        throw new Error(formatErrorMessage('Failed to get stats resource', error));
+      }
     }
   );
 

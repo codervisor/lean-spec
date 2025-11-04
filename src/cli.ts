@@ -376,11 +376,16 @@ program
     json?: boolean;
     color?: boolean;
   }) => {
-    await viewCommand(specPath, {
-      raw: options.raw,
-      json: options.json,
-      noColor: options.color === false,
-    });
+    try {
+      await viewCommand(specPath, {
+        raw: options.raw,
+        json: options.json,
+        noColor: options.color === false,
+      });
+    } catch (error) {
+      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
   });
 
 // open command
@@ -391,9 +396,14 @@ program
   .action(async (specPath: string, options: {
     editor?: string;
   }) => {
-    await openCommand(specPath, {
-      editor: options.editor,
-    });
+    try {
+      await openCommand(specPath, {
+        editor: options.editor,
+      });
+    } catch (error) {
+      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
   });
 
 // Parse and execute

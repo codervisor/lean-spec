@@ -18,8 +18,7 @@ export async function archiveSpec(specPath: string): Promise<void> {
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
   
   if (!resolvedPath) {
-    console.error(chalk.red(`Error: Spec not found: ${sanitizeUserInput(specPath)}`));
-    process.exit(1);
+    throw new Error(`Spec not found: ${sanitizeUserInput(specPath)}`);
   }
 
   // Archive to flat structure in specs/archived/ regardless of original pattern
