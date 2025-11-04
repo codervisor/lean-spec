@@ -30,6 +30,12 @@ Skip specs for:
 - `lspec list` - See all specs
 - `lspec search "<query>"` - Find relevant specs
 
+**Viewing specs:**
+- `lspec view <spec>` - View a spec (formatted)
+- `lspec view <spec> --raw` - Get raw markdown (for parsing)
+- `lspec view <spec> --json` - Get structured JSON
+- `lspec open <spec>` - Edit spec in your editor
+
 **Working with specs:**
 - `lspec create <name>` - Create a new spec
 - `lspec update <spec> --status <status>` - Update spec status

@@ -142,27 +142,9 @@ function formatFrontmatter(frontmatter: SpecFrontmatter): string {
 }
 
 /**
- * lspec show <spec-name>
- * Display spec with rendered markdown
+ * Display spec with formatted output
  */
-export async function showCommand(
-  specPath: string,
-  options: {
-    noPager?: boolean;
-    noColor?: boolean;
-  } = {}
-): Promise<void> {
-  const cwd = process.cwd();
-  
-  const spec = await readSpecContent(specPath, cwd);
-  
-  if (!spec) {
-    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
-    console.error(chalk.gray('Try: lspec list'));
-    process.exit(1);
-  }
-
-  // Build output
+function displayFormattedSpec(spec: SpecContent): string {
   const output: string[] = [];
   
   // Header
@@ -176,14 +158,33 @@ export async function showCommand(
   output.push(chalk.gray('─'.repeat(60)));
   output.push('');
   
+  return output.join('\n');
+}
+
+/**
+ * lspec show <spec-name>
+ * Display spec with rendered markdown
+ */
+export async function showCommand(
+  specPath: string,
+  options: {
+    noColor?: boolean;
+  } = {}
+): Promise<void> {
+  const spec = await readSpecContent(specPath, process.cwd());
+  
+  if (!spec) {
+    console.error(chalk.red(`Error: Spec not found: ${specPath}`));
+    console.error(chalk.gray('Try: lspec list'));
+    process.exit(1);
+  }
+
+  // Display formatted header and frontmatter
+  console.log(displayFormattedSpec(spec));
+  
   // Render markdown content
   const rendered = await marked(spec.content);
-  output.push(rendered);
-  
-  const finalOutput = output.join('\n');
-  
-  // Output to console (pagination could be added here)
-  console.log(finalOutput);
+  console.log(rendered);
 }
 
 /**
@@ -197,10 +198,7 @@ export async function readCommand(
     frontmatterOnly?: boolean;
   } = {}
 ): Promise<void> {
-  const cwd = process.cwd();
-  const format = options.format || 'markdown';
-  
-  const spec = await readSpecContent(specPath, cwd);
+  const spec = await readSpecContent(specPath, process.cwd());
   
   if (!spec) {
     console.error(chalk.red(`Error: Spec not found: ${specPath}`));
@@ -208,13 +206,11 @@ export async function readCommand(
   }
 
   if (options.frontmatterOnly) {
-    // Output frontmatter as JSON
     console.log(JSON.stringify(spec.frontmatter, null, 2));
     return;
   }
 
-  if (format === 'json') {
-    // Output as structured JSON
+  if (options.format === 'json') {
     const jsonOutput = {
       name: spec.name,
       path: spec.path,
@@ -223,7 +219,6 @@ export async function readCommand(
     };
     console.log(JSON.stringify(jsonOutput, null, 2));
   } else {
-    // Output raw markdown (default)
     console.log(spec.rawContent);
   }
 }
