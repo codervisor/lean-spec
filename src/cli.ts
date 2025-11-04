@@ -18,9 +18,7 @@ import {
   searchCommand,
   ganttCommand,
   filesCommand,
-  showCommand,
   viewCommand,
-  readCommand,
   openCommand,
 } from './commands/index.js';
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
@@ -93,12 +91,7 @@ program
   .command('archive <spec-path>')
   .description('Move spec to archived/')
   .action(async (specPath: string) => {
-    try {
-      await archiveSpec(specPath);
-    } catch (error) {
-      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
+    await archiveSpec(specPath);
   });
 
 // list command
@@ -164,41 +157,36 @@ program
     assignee?: string;
     field?: string[];
   }) => {
-    try {
-      // Parse custom fields from --field options
-      const customFields = parseCustomFieldOptions(options.field);
-      
-      const updates: {
-        status?: SpecStatus;
-        priority?: SpecPriority;
-        tags?: string[];
-        assignee?: string;
-        customFields?: Record<string, unknown>;
-      } = {
-        status: options.status,
-        priority: options.priority,
-        tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
-        assignee: options.assignee,
-        customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
-      };
-      
-      // Filter out undefined values
-      Object.keys(updates).forEach(key => {
-        if (updates[key as keyof typeof updates] === undefined) {
-          delete updates[key as keyof typeof updates];
-        }
-      });
-      
-      if (Object.keys(updates).length === 0) {
-        console.error('Error: At least one update option required (--status, --priority, --tags, --assignee, --field)');
-        process.exit(1);
+    // Parse custom fields from --field options
+    const customFields = parseCustomFieldOptions(options.field);
+    
+    const updates: {
+      status?: SpecStatus;
+      priority?: SpecPriority;
+      tags?: string[];
+      assignee?: string;
+      customFields?: Record<string, unknown>;
+    } = {
+      status: options.status,
+      priority: options.priority,
+      tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
+      assignee: options.assignee,
+      customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+    };
+    
+    // Filter out undefined values
+    Object.keys(updates).forEach(key => {
+      if (updates[key as keyof typeof updates] === undefined) {
+        delete updates[key as keyof typeof updates];
       }
-      
-      await updateSpec(specPath, updates);
-    } catch (error) {
-      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
+    });
+    
+    if (Object.keys(updates).length === 0) {
+      console.error('Error: At least one update option required (--status, --priority, --tags, --assignee, --field)');
       process.exit(1);
     }
+    
+    await updateSpec(specPath, updates);
   });
 
 // check command
@@ -376,26 +364,7 @@ program
     await ganttCommand(options);
   });
 
-// show command (deprecated)
-program
-  .command('show <spec-path>')
-  .description('[DEPRECATED] Use: lspec view <spec-path>')
-  .option('--no-color', 'Disable colors')
-  .action(async (specPath: string, options: {
-    color?: boolean;
-  }) => {
-    try {
-      console.warn('\x1b[33m⚠️  "lspec show" is deprecated. Use: lspec view <spec-path>\x1b[0m');
-      await showCommand(specPath, {
-        noColor: options.color === false,
-      });
-    } catch (error) {
-      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
-
-// view command (unified viewer)
+// view command (primary viewer)
 program
   .command('view <spec-path>')
   .description('View spec content')
@@ -408,42 +377,10 @@ program
     color?: boolean;
   }) => {
     try {
-      if (options.json) {
-        await readCommand(specPath, { format: 'json' });
-      } else if (options.raw) {
-        await readCommand(specPath, { format: 'markdown' });
-      } else {
-        await viewCommand(specPath, {
-          noColor: options.color === false,
-        });
-      }
-    } catch (error) {
-      console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
-      process.exit(1);
-    }
-  });
-
-// read command (deprecated)
-program
-  .command('read <spec-path>')
-  .description('[DEPRECATED] Use: lspec view <spec-path> --raw')
-  .option('--format <format>', 'Output format: markdown (default), json')
-  .option('--frontmatter-only', 'Only output frontmatter as JSON')
-  .action(async (specPath: string, options: {
-    format?: 'markdown' | 'json';
-    frontmatterOnly?: boolean;
-  }) => {
-    try {
-      if (options.frontmatterOnly) {
-        console.warn('\x1b[33m⚠️  "lspec read --frontmatter-only" is deprecated. Use: lspec view <spec-path> --json\x1b[0m');
-      } else if (options.format === 'json') {
-        console.warn('\x1b[33m⚠️  "lspec read --format=json" is deprecated. Use: lspec view <spec-path> --json\x1b[0m');
-      } else {
-        console.warn('\x1b[33m⚠️  "lspec read" is deprecated. Use: lspec view <spec-path> --raw\x1b[0m');
-      }
-      await readCommand(specPath, {
-        format: options.format,
-        frontmatterOnly: options.frontmatterOnly,
+      await viewCommand(specPath, {
+        raw: options.raw,
+        json: options.json,
+        noColor: options.color === false,
       });
     } catch (error) {
       console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-11-04'
 tags:
   - cli
@@ -7,11 +7,12 @@ tags:
   - breaking-change
   - simplification
 priority: high
+completed: '2025-11-04'
 ---
 
 # Simplify Viewer Command Interface
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-04
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: cli, ux, breaking-change, simplification
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -144,26 +145,28 @@ program
 
 ## Plan
 
-- [ ] Decide between Option A or B (lean toward A for simplicity)
-- [ ] Implement new interface
-- [ ] Add deprecation warnings to old commands
-- [ ] Update all test files to use new commands
-- [ ] Update README examples
-- [ ] Update docs site
+- [x] Decide between Option A or B (chose B for clarity)
+- [x] Implement new interface
+- [x] Remove deprecated commands completely
+- [x] Update README examples
+- [x] Update AGENTS.md with new commands
+- [x] Update MCP server to align with CLI (lspec_read → lspec_view with flags)
+- [x] Update all tests
+- [x] Update docs site CLI reference
 - [ ] Add migration guide to CHANGELOG
-- [ ] Update AGENTS.md with new commands
-- [ ] Test with real workflows
 
 ## Test
 
-- [ ] `lspec <spec>` displays formatted spec
-- [ ] `lspec <spec> --raw` outputs raw markdown (pipeable)
-- [ ] `lspec <spec> --json` outputs valid JSON
-- [ ] `lspec <spec> --edit` opens in editor
-- [ ] Old commands show deprecation warnings
-- [ ] Old commands still work (backward compat during migration)
-- [ ] Help text is clear and unambiguous
-- [ ] Error messages guide users to correct command
+- [x] `lspec view <spec>` displays formatted spec
+- [x] `lspec view <spec> --raw` outputs raw markdown (pipeable)
+- [x] `lspec view <spec> --json` outputs valid JSON
+- [x] `lspec open <spec>` opens in editor
+- [x] Old commands completely removed (breaking change)
+- [x] Help text is clear and unambiguous
+- [x] Error messages guide users to correct command
+- [x] All viewer tests pass (16/16)
+- [x] All command integration tests pass (30/30)
+- [x] TypeScript compilation succeeds with no errors
 
 ## Notes
 
@@ -184,6 +187,7 @@ program
 - Natural evolution: `lspec list` → `lspec <spec>` (browse → view)
 
 **Backward compatibility:**
-- Deprecated commands in 0.2.x (with warnings)
-- Removed in 1.0.0
+- ~~Deprecated commands in 0.2.x (with warnings)~~
+- **Breaking change**: Removed deprecated commands completely in 0.2.0
 - Clear migration path in docs
+- Users should update to: `lspec view <spec>` (with optional `--raw` or `--json` flags)

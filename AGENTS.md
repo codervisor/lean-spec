@@ -34,7 +34,7 @@ Skip specs for:
 - `lspec view <spec>` - View a spec (formatted)
 - `lspec view <spec> --raw` - Get raw markdown (for parsing)
 - `lspec view <spec> --json` - Get structured JSON
-- `lspec open <spec>` - Edit spec in your editor
+- `lspec open <spec>` - Open spec in editor
 
 **Working with specs:**
 - `lspec create <name>` - Create a new spec
