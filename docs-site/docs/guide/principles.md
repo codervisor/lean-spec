@@ -1,11 +1,17 @@
 ---
 id: 'principles'
 title: 'Agile Principles'
-sidebar_position: 5
+sidebar_position: 4
 ---
 # Agile Principles
 
-LeanSpec is built on six core principles that guide how specifications should be created and maintained.
+LeanSpec is built on six agile principles that guide how specifications should be created and maintained.
+
+:::info First Principles vs. Agile Principles
+**[First Principles](/docs/guide/first-principles)** are the foundational constraints (Context Economy, Signal-to-Noise, etc.) that define what LeanSpec IS.
+
+**Agile Principles** (this page) are practical guidelines for HOW to write good specs day-to-day. They derive from the first principles but are more actionable.
+:::
 
 ## 🎯 Clarity over Documentation
 

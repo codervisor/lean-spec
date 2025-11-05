@@ -1,0 +1,303 @@
+---
+id: 'first-principles'
+title: 'First Principles'
+sidebar_position: 2
+---
+# First Principles
+
+> "These aren't principles we chose—they're constraints we discovered."
+
+LeanSpec is built on **5 first principles** that define what it is at its core. These principles were derived from immutable constraints (context windows, human cognition, token costs) and guide all design decisions.
+
+## Why First Principles Matter
+
+First principles are the foundation from which everything else derives. Unlike practices or features that may change, these principles:
+
+- ✅ Remain true regardless of team size or project complexity
+- ✅ Resolve conflicts when practices contradict
+- ✅ Guide decisions when no explicit rule exists
+- ✅ Define what makes LeanSpec "LeanSpec"
+
+## The Five First Principles
+
+### 1. Context Economy 🧠
+**Specs must fit in working memory—both human and AI.**
+
+**The Constraint:**
+- Human working memory: ~7 items, 5-10 minute attention span
+- AI context windows: Limited tokens, expensive to process
+- Physics + Biology + Economics = Hard limit
+
+**In Practice:**
+- **Target**: &lt;300 lines per spec file
+- **Warning**: 300-400 lines (consider simplifying)
+- **Problem**: &gt;400 lines (must split)
+
+**The Test:**
+> "Can this be read and understood in 5-10 minutes?"
+
+If no, it violates Context Economy and should be split.
+
+**Why This Is #1:**
+Nothing else matters if the spec doesn't fit in working memory. You can have perfect Signal-to-Noise, but if the spec is 800 lines, nobody will read it.
+
+**Example:**
+```markdown
+❌ Bad: 650-line spec covering feature, testing, config, examples
+✅ Good: 250-line README + 150-line TESTING.md + 100-line CONFIG.md
+```
+
+### 2. Signal-to-Noise Maximization 📡
+**Every word must inform decisions or be cut.**
+
+**The Constraint:**
+- Token costs money (AI processing)
+- Cognitive load is real (human reading)
+- Maintenance burden compounds (keeping docs current)
+
+**In Practice:**
+Test every sentence: "What decision does this inform?"
+- If answer is clear → keep it
+- If answer is "none" or "maybe future" → cut it
+
+**The Test:**
+> "What decision does this sentence inform?"
+
+**Examples:**
+
+❌ **Low Signal-to-Noise:**
+```markdown
+The user authentication system, which will be implemented using 
+industry-standard security practices and methodologies, will provide 
+a secure mechanism for users to authenticate themselves against the 
+system using their credentials...
+```
+
+✅ **High Signal-to-Noise:**
+```markdown
+Users log in with email/password. System validates against database 
+and returns JWT token (24h expiry).
+```
+
+**When to Add Detail:**
+- Explains a trade-off decision
+- Clarifies a constraint
+- Defines success criteria
+- Shows a critical example
+
+**When to Cut:**
+- Obvious to your audience
+- Easily discovered elsewhere
+- Might change before implementation
+- "Nice to know" vs. "need to know"
+
+### 3. Intent Over Implementation 🎯
+**Capture "why" and "what," let "how" emerge.**
+
+**The Constraint:**
+- Intent is stable, implementation changes
+- AI needs "why" to make good decisions
+- Developers need context, not prescriptions
+
+**In Practice:**
+- **Must have**: Problem, intent, success criteria
+- **Should have**: Design rationale, trade-offs
+- **Could have**: Implementation details, examples
+
+**The Test:**
+> "Is the rationale clear? Can someone make good decisions without me?"
+
+**Example:**
+```markdown
+❌ Bad (Just Implementation):
+Use Redis for caching. Configure 1GB max memory with LRU eviction.
+
+✅ Good (Intent + Implementation):
+**Intent**: Sub-100ms API response for dashboard.
+**Constraint**: 10k+ users querying same data repeatedly.
+**Approach**: Redis cache with LRU eviction (reduces DB load 90%).
+**Trade-off**: Added complexity vs. performance requirement.
+```
+
+The second explains WHY Redis, WHY 100ms matters, and what trade-off we're making.
+
+### 4. Bridge the Gap 🌉
+**Specs exist to align human intent with machine execution.**
+
+**The Constraint:**
+- Humans think in goals and context
+- Machines need clear, unambiguous instructions
+- The gap between them must be bridged
+
+**In Practice:**
+- **For humans**: Overview, context, rationale
+- **For AI**: Clear structure, requirements, examples
+- **Both need**: Natural language + structured data
+
+**The Test:**
+> "Can both human and AI parse and reason about this?"
+
+**Example:**
+```markdown
+✅ Good (Bridges the Gap):
+## Goal
+Reduce API latency to &lt;100ms for dashboard (currently 2-3 seconds).
+
+## Why It Matters
+Users abandon after 3 seconds. We're losing 40% of traffic.
+
+## Technical Approach
+- Cache dashboard data in Redis (TTL: 5 minutes)
+- Lazy-load widgets instead of blocking on all data
+- Use CDN for static assets
+
+## Success Criteria
+- [ ] Dashboard loads in &lt;100ms (measured at p95)
+- [ ] Cache hit rate &gt;80%
+- [ ] Zero cache-related bugs after 2 weeks
+```
+
+**Human sees**: Why it matters, the goal, the approach
+**AI sees**: Clear requirements, success criteria, technical approach
+
+### 5. Progressive Disclosure 📈
+**Start simple, add structure only when pain is felt.**
+
+**The Constraint:**
+- Teams evolve over time
+- Requirements emerge, don't exist upfront
+- Premature abstraction is waste
+
+**In Practice:**
+
+**Day 1 (Solo dev):**
+```yaml
+status: planned
+created: 2025-11-01
+```
+
+**Week 2 (Small team):**
+```yaml
+status: in-progress
+created: 2025-11-01
+tags: [api, backend]
+priority: high
+```
+
+**Month 3 (Enterprise):**
+```yaml
+status: in-progress
+created: 2025-11-01
+tags: [api, backend]
+priority: high
+assignee: alice
+epic: PROJ-123
+sprint: sprint-10
+reviewer: bob
+```
+
+**The Test:**
+> "Do we feel pain without this feature?"
+
+If no, don't add it yet.
+
+**Why This Works:**
+You never need to rewrite your specs. Just add fields as you need them.
+
+## Conflict Resolution Framework
+
+When practices conflict, apply principles in **priority order**:
+
+1. **Context Economy** - If it doesn't fit in working memory, split it
+2. **Signal-to-Noise** - If it doesn't inform decisions, remove it
+3. **Intent Over Implementation** - Capture why, not just how
+4. **Bridge the Gap** - Both human and AI must understand
+5. **Progressive Disclosure** - Add structure when pain is felt
+
+### Real-World Examples
+
+**Q: "Should I split this 450-line spec?"**
+→ **Yes** (Context Economy at 400 lines overrides completeness)
+
+**Q: "Should I document every edge case?"**
+→ **Only if it informs current decisions** (Signal-to-Noise test)
+
+**Q: "Should I add custom fields upfront?"**
+→ **Only if you feel pain without them** (Progressive Disclosure)
+
+**Q: "Should I keep implementation details in spec?"**
+→ **Only if rationale/constraints matter** (Intent Over Implementation)
+
+**Q: "This spec is complex but under 350 lines, split it?"**
+→ **No** (Under Context Economy threshold, no split needed)
+
+**Q: "Which is more important: Complete documentation or staying under 400 lines?"**
+→ **Staying under 400 lines** (Context Economy is #1 principle)
+
+## How These Principles Shaped LeanSpec
+
+### Context Economy → Line Thresholds
+- 300-line target, 400-line hard limit
+- Sub-spec support (spec 012)
+- Warning systems in tooling
+
+### Signal-to-Noise → Flexible Templates
+- No required fields except `status` and `created`
+- Templates as starting points, not rigid formats
+- "Add what you need, cut what you don't"
+
+### Progressive Disclosure → Custom Fields
+- Start minimal, grow naturally
+- No rewrite required as team scales
+- Custom fields per-project, not forced
+
+### Intent Over Implementation → Frontmatter + Narrative
+- Structured metadata (what/when/who)
+- Natural language narrative (why/how/trade-offs)
+- Examples show, don't just tell
+
+### Bridge the Gap → AI-Native Design
+- Human-readable markdown
+- Machine-parseable frontmatter + structure
+- CLI outputs JSON for AI agents
+- MCP server for Claude Desktop
+
+## Validation: Are You Following the Principles?
+
+### Self-Check Questions
+
+**Context Economy:**
+- [ ] Can someone read this spec in 5-10 minutes?
+- [ ] Is each spec file under 400 lines?
+- [ ] If not, is it split into focused sub-specs?
+
+**Signal-to-Noise:**
+- [ ] Does every sentence inform a decision?
+- [ ] Can I explain what decision each section enables?
+- [ ] Have I cut "nice to know" vs. "need to know"?
+
+**Intent Over Implementation:**
+- [ ] Is the "why" clear?
+- [ ] Are trade-offs explained?
+- [ ] Can someone make good decisions without me?
+
+**Bridge the Gap:**
+- [ ] Can both humans and AI understand this?
+- [ ] Is there clear structure + natural language?
+- [ ] Are examples included where needed?
+
+**Progressive Disclosure:**
+- [ ] Did I add only what I need now?
+- [ ] Am I solving current pain, not future "what ifs"?
+- [ ] Can this grow naturally without rewriting?
+
+## Related Resources
+
+- **[Philosophy](/docs/guide/philosophy)** - The LeanSpec mindset and approach
+- **[Agile Principles](/docs/guide/principles)** - Six agile principles for writing specs
+- **[When to Use](/docs/guide/when-to-use)** - When to apply LeanSpec effectively
+- **[Spec 049](https://github.com/codervisor/lean-spec/tree/main/specs/049-leanspec-first-principles)** - Deep dive into first principles analysis
+
+---
+
+**Remember**: These aren't principles we chose—they're constraints we discovered. LeanSpec works because it aligns with how humans and AI actually work, not how we wish they worked.
