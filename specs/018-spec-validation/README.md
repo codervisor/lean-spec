@@ -188,40 +188,56 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 
-**Current Phase:** Phase 1b ✅ Complete → Ready for Phase 2
+**Current Phase:** Phase 3 ✅ Complete → Ready for Phase 3.5 (or v0.2.0 launch)
 
-**✅ Completed (Phase 1a & 1b):**
+**✅ Completed (Phases 1a, 1b, 2, 3):**
 - ✅ Validation framework architecture
-- ✅ `LineCountValidator` with warning/error thresholds (300 line warning, 400 line error)
-- ✅ `lspec validate` command with `--max-lines` flag
-- ✅ `FrontmatterValidator` for comprehensive frontmatter validation
+- ✅ **Phase 1a:** `LineCountValidator` with warning/error thresholds (300 line warning, 400 line error)
+- ✅ **Phase 1a:** `lspec validate` command with `--max-lines` flag
+- ✅ **Phase 1b:** `FrontmatterValidator` for comprehensive frontmatter validation
   - Required fields (status, created)
   - Valid status/priority values  
   - Date format validation (ISO 8601)
   - Tags format validation
-- ✅ Integration tests (44 tests passing)
+- ✅ **Phase 2:** `StructureValidator` for spec structure validation
+  - H1 title presence
+  - Required sections (Overview, Design)
+  - Empty section detection (with subsection handling)
+  - Duplicate section header detection
+- ✅ **Phase 3:** `CorruptionValidator` for file corruption detection
+  - Unclosed code block detection
+  - JSON/YAML syntax validation in code blocks
+  - Duplicate content block detection (merge artifacts)
+  - Unclosed markdown formatting (bold, italic)
+- ✅ **360 total tests passing** (17 structure + 19 corruption + others)
 - ✅ Documentation and CLI integration
-- ✅ Tested with real repository specs (25 specs validated successfully)
+- ✅ Tested with real repository specs (found 11 real issues!)
 
 **📊 Current Validation Results:**
 ```bash
 $ lspec validate
-Results: 25 specs validated, 3 error(s), 6 warning(s)
-- Line count errors: 3 specs exceed 400 lines
-- Line count warnings: 6 specs between 300-400 lines
-- Frontmatter: All 25 specs passed
+Results: 25 specs validated, 11 error(s), 19 warning(s)
+
+Errors found:
+- Line count: 3 specs exceed 400 lines
+- Structure: 2 specs with duplicate section headers
+- Corruption: 6 specs with issues (unclosed formatting, invalid YAML)
+
+Warnings:
+- Line count: 6 specs between 300-400 lines
+- Corruption: 13 specs with duplicate content (informational)
+
+All specs: ✅ Frontmatter passed
 ```
 
 **🎯 Next Steps:**
-- Phase 2: Structure validation (README.md exists, required sections, duplicate headers)
-- Phase 3: Corruption detection (malformed code blocks, broken YAML/JSON)
-- Phase 3.5: Sub-spec validation (enforces spec 012 conventions)
-- Phase 4: Content validation (TODO/FIXME detection, placeholder text)
+- Phase 3.5: Sub-spec validation (optional - enforces spec 012 conventions)
+- Phase 4: Content validation (optional - TODO/FIXME detection)
+- Phase 5: Staleness detection (optional - identify abandoned specs)
+- Phase 6: Auto-fix capability (optional - fix common issues)
 
-**⏱️ Estimated Effort (Remaining):**
-- Phases 2-3.5 (High Priority): 6-7 days
-- Phases 4-6 (Optional): 5-6 additional days
-- Complete (All phases): 11-13 days total
+**✨ Ready for v0.2.0 Launch:**
+Core validation is complete and working! Phases 1-3 deliver the essential quality checks. Additional phases can be implemented based on user feedback.
 
 ## Quick Links
 
