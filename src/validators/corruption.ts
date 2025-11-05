@@ -4,20 +4,14 @@
  * Focus on visually apparent corruption that breaks rendering:
  * - Unclosed code blocks (breaks syntax highlighting)
  * - Unclosed formatting in actual content (not code blocks)
+ * - Duplicate content blocks (merge artifacts, failed edits)
  * 
  * Intentionally excludes:
  * - YAML/JSON validation (code examples often show invalid syntax)
- * - Duplicate content detection (too noisy, not actual corruption)
  */
 
 import type { ValidationRule, ValidationResult, ValidationError, ValidationWarning } from '../utils/validation-framework.js';
 import type { SpecInfo } from '../spec-loader.js';
-
-export interface CorruptionOptions {
-  // Enable/disable specific checks
-  checkCodeBlocks?: boolean;
-  checkMarkdownStructure?: boolean;
-}
 
 /**
  * Represents a code block range in the document
@@ -25,6 +19,16 @@ export interface CorruptionOptions {
 interface CodeBlockRange {
   start: number;  // Line number (1-indexed)
   end: number;    // Line number (1-indexed)
+}
+
+export interface CorruptionOptions {
+  // Enable/disable specific checks
+  checkCodeBlocks?: boolean;
+  checkMarkdownStructure?: boolean;
+  checkDuplicateContent?: boolean;
+  // Duplicate detection tuning (reduced false positives)
+  duplicateBlockSize?: number;      // Lines to match (default: 5, was 3)
+  duplicateMinLength?: number;      // Min chars (default: 100, was 50)
 }
 
 export class CorruptionValidator implements ValidationRule {
@@ -37,6 +41,9 @@ export class CorruptionValidator implements ValidationRule {
     this.options = {
       checkCodeBlocks: options.checkCodeBlocks ?? true,
       checkMarkdownStructure: options.checkMarkdownStructure ?? true,
+      checkDuplicateContent: options.checkDuplicateContent ?? true,
+      duplicateBlockSize: options.duplicateBlockSize ?? 5,
+      duplicateMinLength: options.duplicateMinLength ?? 100,
     };
   }
 
@@ -57,6 +64,12 @@ export class CorruptionValidator implements ValidationRule {
     if (this.options.checkMarkdownStructure) {
       const markdownErrors = this.validateMarkdownStructure(content, codeBlockRanges);
       errors.push(...markdownErrors);
+    }
+
+    // Check for duplicate content (but exclude code blocks)
+    if (this.options.checkDuplicateContent) {
+      const duplicateWarnings = this.detectDuplicateContent(content, codeBlockRanges);
+      warnings.push(...duplicateWarnings);
     }
 
     return {
@@ -151,6 +164,54 @@ export class CorruptionValidator implements ValidationRule {
     }
 
     return errors;
+  }
+
+  /**
+   * Detect duplicate content blocks (excluding code blocks)
+   * Improved tuning to reduce false positives
+   * 
+   * Changes from original:
+   * - Block size: 5 lines (was 3) - reduces matching of small common patterns
+   * - Min length: 100 chars (was 50) - requires substantial duplication
+   * - Excludes code blocks - prevents false positives from code examples
+   */
+  private detectDuplicateContent(content: string, codeBlockRanges: CodeBlockRange[]): ValidationWarning[] {
+    const warnings: ValidationWarning[] = [];
+    
+    // Get content outside code blocks
+    const contentOutsideCodeBlocks = this.getContentOutsideCodeBlocks(content, codeBlockRanges);
+    const lines = contentOutsideCodeBlocks.split('\n');
+    
+    // Look for significant duplicate blocks
+    const blockSize = this.options.duplicateBlockSize!;
+    const minLength = this.options.duplicateMinLength!;
+    const blocks = new Map<string, number[]>();
+
+    for (let i = 0; i <= lines.length - blockSize; i++) {
+      const block = lines.slice(i, i + blockSize)
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        .join('\n');
+
+      if (block.length >= minLength) { // Only check substantial blocks
+        if (!blocks.has(block)) {
+          blocks.set(block, []);
+        }
+        blocks.get(block)!.push(i + 1);
+      }
+    }
+
+    // Report blocks that appear multiple times
+    for (const [block, lineNumbers] of blocks.entries()) {
+      if (lineNumbers.length > 1) {
+        warnings.push({
+          message: `Duplicate content block found at lines: ${lineNumbers.join(', ')}`,
+          suggestion: 'Check for merge artifacts or failed edits',
+        });
+      }
+    }
+
+    return warnings;
   }
 
   /**
