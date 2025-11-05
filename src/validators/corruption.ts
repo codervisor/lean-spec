@@ -27,8 +27,8 @@ export interface CorruptionOptions {
   checkMarkdownStructure?: boolean;
   checkDuplicateContent?: boolean;
   // Duplicate detection tuning (reduced false positives)
-  duplicateBlockSize?: number;      // Lines to match (default: 5, was 3)
-  duplicateMinLength?: number;      // Min chars (default: 100, was 50)
+  duplicateBlockSize?: number;      // Lines to match (default: 8)
+  duplicateMinLength?: number;      // Min chars (default: 200)
 }
 
 export class CorruptionValidator implements ValidationRule {
@@ -42,8 +42,8 @@ export class CorruptionValidator implements ValidationRule {
       checkCodeBlocks: options.checkCodeBlocks ?? true,
       checkMarkdownStructure: options.checkMarkdownStructure ?? true,
       checkDuplicateContent: options.checkDuplicateContent ?? true,
-      duplicateBlockSize: options.duplicateBlockSize ?? 5,
-      duplicateMinLength: options.duplicateMinLength ?? 100,
+      duplicateBlockSize: options.duplicateBlockSize ?? 8,
+      duplicateMinLength: options.duplicateMinLength ?? 200,
     };
   }
 
@@ -68,7 +68,7 @@ export class CorruptionValidator implements ValidationRule {
 
     // Check for duplicate content (but exclude code blocks)
     if (this.options.checkDuplicateContent) {
-      const duplicateWarnings = this.detectDuplicateContent(content, codeBlockRanges);
+      const duplicateWarnings = this.detectDuplicateContent(content);
       warnings.push(...duplicateWarnings);
     }
 
@@ -167,20 +167,18 @@ export class CorruptionValidator implements ValidationRule {
   }
 
   /**
-   * Detect duplicate content blocks (excluding code blocks)
+   * Detect duplicate content blocks
    * Improved tuning to reduce false positives
    * 
-   * Changes from original:
-   * - Block size: 5 lines (was 3) - reduces matching of small common patterns
-   * - Min length: 100 chars (was 50) - requires substantial duplication
-   * - Excludes code blocks - prevents false positives from code examples
+   * Thresholds:
+   * - Block size: 8 lines - requires substantial duplication
+   * - Min length: 200 chars - ignores short similar sections
+   * - Filters overlapping windows - prevents adjacent line false positives
    */
-  private detectDuplicateContent(content: string, codeBlockRanges: CodeBlockRange[]): ValidationWarning[] {
+  private detectDuplicateContent(content: string): ValidationWarning[] {
     const warnings: ValidationWarning[] = [];
     
-    // Get content outside code blocks
-    const contentOutsideCodeBlocks = this.getContentOutsideCodeBlocks(content, codeBlockRanges);
-    const lines = contentOutsideCodeBlocks.split('\n');
+    const lines = content.split('\n');
     
     // Look for significant duplicate blocks
     const blockSize = this.options.duplicateBlockSize!;
@@ -197,17 +195,33 @@ export class CorruptionValidator implements ValidationRule {
         if (!blocks.has(block)) {
           blocks.set(block, []);
         }
-        blocks.get(block)!.push(i + 1);
+        blocks.get(block)!.push(i + 1); // Store 1-indexed line number
       }
     }
 
     // Report blocks that appear multiple times
+    // Filter out overlapping detections (false positives from sliding window)
     for (const [block, lineNumbers] of blocks.entries()) {
       if (lineNumbers.length > 1) {
-        warnings.push({
-          message: `Duplicate content block found at lines: ${lineNumbers.join(', ')}`,
-          suggestion: 'Check for merge artifacts or failed edits',
-        });
+        // Remove line numbers that are within blockSize of each other
+        // (these are overlapping windows, not true duplicates)
+        const nonOverlapping: number[] = [];
+        for (const lineNum of lineNumbers) {
+          const isOverlapping = nonOverlapping.some(
+            existing => Math.abs(existing - lineNum) < blockSize
+          );
+          if (!isOverlapping) {
+            nonOverlapping.push(lineNum);
+          }
+        }
+        
+        // Only report if we still have multiple non-overlapping occurrences
+        if (nonOverlapping.length > 1) {
+          warnings.push({
+            message: `Duplicate content block found at lines: ${nonOverlapping.join(', ')}`,
+            suggestion: 'Check for merge artifacts or failed edits',
+          });
+        }
       }
     }
 

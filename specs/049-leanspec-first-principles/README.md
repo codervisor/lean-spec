@@ -126,10 +126,6 @@ We identified that effective principles must be:
 3. **Testable** (can verify adherence)
 4. **Actionable** (clear what to do)
 
-## Background
-
-## Background
-
 ### Current State
 
 **LeanSpec**: A lightweight Spec-Driven Development (SDD) methodology for AI-powered development.
