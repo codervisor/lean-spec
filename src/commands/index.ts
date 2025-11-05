@@ -14,6 +14,7 @@ export {
 } from './templates.js';
 export { initProject } from './init.js';
 export { filesCommand } from './files.js';
+export { validateCommand } from './validate.js';
 
 // Visualization and analysis commands
 export { boardCommand } from './board.js';
