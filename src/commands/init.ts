@@ -123,14 +123,18 @@ export async function initProject(): Promise<void> {
     // Custom pattern with date grouping
     templateConfig.structure.pattern = 'custom';
     templateConfig.structure.groupExtractor = '{YYYYMMDD}';
-    delete templateConfig.structure.prefix;
+    templateConfig.structure.prefix = undefined;
   } else if (patternChoice === 'date-prefix') {
     // Flat pattern with date prefix
     templateConfig.structure.pattern = 'flat';
     templateConfig.structure.prefix = '{YYYYMMDD}-';
   } else if (patternChoice === 'custom') {
-    // TODO: Implement custom pattern input
-    console.log(chalk.yellow('Custom patterns coming soon. Using simple for now.'));
+    // Custom pattern not yet implemented - fall back to simple
+    console.log('');
+    console.log(chalk.yellow('⚠ Custom pattern input is not yet implemented.'));
+    console.log(chalk.gray('  You can manually edit .lspec/config.json after initialization.'));
+    console.log(chalk.gray('  Using simple pattern for now.'));
+    console.log('');
     templateConfig.structure.pattern = 'flat';
     templateConfig.structure.prefix = '';
   }
