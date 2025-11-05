@@ -29,9 +29,9 @@ First principles are the foundation from which everything else derives. Unlike p
 - Physics + Biology + Economics = Hard limit
 
 **In Practice:**
-- **Target**: <300 lines per spec file
+- **Target**: &lt;300 lines per spec file
 - **Warning**: 300-400 lines (consider simplifying)
-- **Problem**: >400 lines (must split)
+- **Problem**: &gt;400 lines (must split)
 
 **The Test:**
 > "Can this be read and understood in 5-10 minutes?"
@@ -141,7 +141,7 @@ The second explains WHY Redis, WHY 100ms matters, and what trade-off we're makin
 ```markdown
 ✅ Good (Bridges the Gap):
 ## Goal
-Reduce API latency to <100ms for dashboard (currently 2-3 seconds).
+Reduce API latency to &lt;100ms for dashboard (currently 2-3 seconds).
 
 ## Why It Matters
 Users abandon after 3 seconds. We're losing 40% of traffic.
@@ -152,8 +152,8 @@ Users abandon after 3 seconds. We're losing 40% of traffic.
 - Use CDN for static assets
 
 ## Success Criteria
-- [ ] Dashboard loads in <100ms (measured at p95)
-- [ ] Cache hit rate >80%
+- [ ] Dashboard loads in &lt;100ms (measured at p95)
+- [ ] Cache hit rate &gt;80%
 - [ ] Zero cache-related bugs after 2 weeks
 ```
 
