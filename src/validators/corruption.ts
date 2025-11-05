@@ -218,7 +218,11 @@ export class CorruptionValidator implements ValidationRule {
 
     // Check for unclosed formatting
     const boldMatches = content.match(/\*\*/g) || [];
-    const italicMatches = content.match(/(?<!\*)\*(?!\*)/g) || [];
+    
+    // For italic, count single asterisks that are not part of bold
+    // Split by ** first, then count * in the remaining text
+    const withoutBold = content.split('**').join('');
+    const italicMatches = withoutBold.match(/\*/g) || [];
     
     if (boldMatches.length % 2 !== 0) {
       errors.push({
