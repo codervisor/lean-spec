@@ -131,30 +131,48 @@ Enforces **Context Economy** principle - specs must fit in working memory (human
 - Example: "## Plan" appearing twice in same spec
 
 **Code Block Validation:**
-- All code blocks properly closed
+- All code blocks properly closed (unclosed blocks break syntax highlighting)
 - Matching number of opening ``` and closing ```
-- Check for incomplete code blocks
+- This is the #1 indicator of corruption humans notice visually
 
-**JSON/YAML Validation:**
-- JSON blocks in code fences are valid JSON
-- YAML blocks in code fences are valid YAML
-- Frontmatter YAML is well-formed
-- No incomplete or truncated JSON/YAML
+**Formatting Validation:**
+- Unclosed bold formatting (**) in actual content
+- Unclosed italic formatting (*) in actual content
+- Excludes code blocks, inline code, and list markers from checks
+- Only validates markdown content outside code fences
 
-**Content Fragments:**
-- Detect duplicated content blocks
-- Find remnants from failed edits
-- Identify partial duplicates (merge artifacts)
+**Duplicate Content Detection:**
+- Detects duplicated content blocks (5+ consecutive lines, 100+ chars)
+- Excludes code blocks to prevent false positives from code examples
+- Tuned to reduce noise: was 3 lines/50 chars (too sensitive)
+- Helps find merge artifacts and failed edits
+- Warnings only (not errors) as some duplication is intentional
+
+**Intentionally Excluded:**
+- ❌ JSON/YAML validation in code blocks (examples often show invalid syntax)
+- ❌ Table and list structure validation (too noisy, not actual corruption)
 
 **Sub-Spec Duplication:**
 - Detect if same content appears in multiple sub-specs
 - Warn about significant content overlap between files
 - Helps identify when content should be consolidated
 
-**Markdown Structure:**
-- Lists are properly formed
-- Tables are valid markdown
-- No unclosed formatting (bold, italic, etc.)
+### Corruption Detection Philosophy
+
+**Focus on visually apparent corruption:**
+- What breaks rendering (unclosed code blocks, unclosed formatting)
+- What humans actually notice when reading specs
+- Not semantic issues or style preferences
+
+**Why we exclude certain checks:**
+- JSON/YAML in code blocks: Examples intentionally show invalid syntax
+- Duplicate content detection: Many false positives from boilerplate/templates
+- Table/list validation: Too noisy, rarely indicates actual corruption
+
+**Tuning for signal-to-noise:**
+- Originally: 3 lines, 50 chars → 13 duplicate warnings across all specs
+- Improved: 5 lines, 100 chars, exclude code blocks → More targeted detection
+- Goal: Only flag genuine corruption, not common patterns
 
 ## Staleness Detection
 
