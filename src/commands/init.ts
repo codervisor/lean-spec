@@ -87,6 +87,54 @@ export async function initProject(): Promise<void> {
     process.exit(1);
   }
 
+  // Pattern selection (for all setup modes)
+  const patternChoice = await select({
+    message: 'Select folder pattern:',
+    choices: [
+      {
+        name: 'Simple: 001-my-spec/',
+        value: 'simple',
+        description: 'Global sequential numbering (recommended)',
+      },
+      {
+        name: 'Date-grouped: 20251105/001-my-spec/',
+        value: 'date-grouped',
+        description: 'Group specs by creation date (good for teams)',
+      },
+      {
+        name: 'Flat with date: 20251105-001-my-spec/',
+        value: 'date-prefix',
+        description: 'Date prefix with global numbering',
+      },
+      {
+        name: 'Custom pattern',
+        value: 'custom',
+        description: 'Enter your own pattern',
+      },
+    ],
+  });
+
+  // Apply pattern choice to config
+  if (patternChoice === 'simple') {
+    // Default: flat pattern with no prefix
+    templateConfig.structure.pattern = 'flat';
+    templateConfig.structure.prefix = '';
+  } else if (patternChoice === 'date-grouped') {
+    // Custom pattern with date grouping
+    templateConfig.structure.pattern = 'custom';
+    templateConfig.structure.groupExtractor = '{YYYYMMDD}';
+    delete templateConfig.structure.prefix;
+  } else if (patternChoice === 'date-prefix') {
+    // Flat pattern with date prefix
+    templateConfig.structure.pattern = 'flat';
+    templateConfig.structure.prefix = '{YYYYMMDD}-';
+  } else if (patternChoice === 'custom') {
+    // TODO: Implement custom pattern input
+    console.log(chalk.yellow('Custom patterns coming soon. Using simple for now.'));
+    templateConfig.structure.pattern = 'flat';
+    templateConfig.structure.prefix = '';
+  }
+
   // Create .lspec/templates/ directory
   const templatesDir = path.join(cwd, '.lspec', 'templates');
   try {
