@@ -1,6 +1,8 @@
 # Configuration
 
-Configuration options for the expanded `lspec check` command.
+Configuration options for the `lspec validate` command.
+
+**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
 
 ## Configuration File Location
 
@@ -8,8 +10,8 @@ Configuration is stored in `.lspec/config.json`:
 
 ```json
 {
-  "check": {
-    // Check mode configuration
+  "validate": {
+    // Validation configuration
   }
 }
 ```
@@ -18,10 +20,9 @@ Configuration is stored in `.lspec/config.json`:
 
 ```json
 {
-  "check": {
+  "validate": {
     "mode": "comprehensive",
-    "autoCheck": true,
-    "autoCheckMode": "sequences-only",
+    "autoValidate": false,
     "rules": {
       "frontmatter": {
         "required": ["status", "created"],
@@ -72,17 +73,13 @@ Configuration is stored in `.lspec/config.json`:
 ```
 
 **Options:**
-- `mode`: Default check mode when running `lspec check`
-  - `"comprehensive"` - All checks (default in v0.3.0+)
-  - `"sequences-only"` - Sequences only (backwards compatible)
+- `mode`: Default validation mode when running `lspec validate`
+  - `"comprehensive"` - All validations (default in v0.3.0+)
+  - `"basic"` - Line count only (current v0.2.0 behavior)
 
-- `autoCheck`: Enable automatic checking on spec operations
-  - `true` - Auto-check after create/update
-  - `false` - Manual checking only
-
-- `autoCheckMode`: Which checks run automatically
-  - `"sequences-only"` - Fast, lightweight (recommended)
-  - `"comprehensive"` - All checks (slower but thorough)
+- `autoValidate`: Enable automatic validation on spec operations (future)
+  - `false` - Manual validation only (current default)
+  - `true` - Auto-validate after create/update
 
 ### Frontmatter Rules
 
@@ -335,8 +332,8 @@ Different templates can have different rules:
 Example:
 ```bash
 # Command-line flag overrides config
-lspec check --no-staleness
-# Even if config has staleness enabled
+lspec validate --max-lines 500
+# Even if config has different default
 ```
 
 ## Default Configuration

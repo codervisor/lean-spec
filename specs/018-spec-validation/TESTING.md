@@ -1,6 +1,8 @@
 # Testing Strategy
 
-Comprehensive test plan for the expanded `lspec check` command.
+Comprehensive test plan for the `lspec validate` command.
+
+**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
 
 ## Test Categories
 
@@ -205,17 +207,17 @@ Comprehensive test plan for the expanded `lspec check` command.
 - [ ] Template-specific rules work
 
 **Backwards Compatibility:**
-- [ ] Current `lspec check` behavior preserved
-- [ ] Auto-check still works
-- [ ] Exit codes unchanged
-- [ ] Output format compatible
+- [ ] `lspec check` (sequence conflicts) behavior unchanged
+- [ ] `lspec validate` doesn't interfere with check command
+- [ ] Exit codes follow standard pattern
+- [ ] Output format is consistent
 
 ### 8. Performance Tests
 
 **Speed:**
-- [ ] Checks 10 specs in < 100ms
-- [ ] Checks 100 specs in < 1s
-- [ ] Parallel checking improves performance
+- [ ] Validates 10 specs in < 100ms
+- [ ] Validates 100 specs in < 1s
+- [ ] Parallel validation improves performance
 
 **Memory:**
 - [ ] Memory usage stays reasonable

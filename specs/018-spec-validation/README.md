@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-02'
 tags:
   - quality
@@ -11,35 +11,42 @@ priority: critical
 related:
   - 043-official-launch-02
 created_at: '2025-11-02T00:00:00Z'
-updated_at: '2025-11-05T05:03:54.949Z'
+updated_at: '2025-11-05T13:35:26.669Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-05T13:35:26.669Z'
 ---
 
-# Comprehensive Spec Checking (Expand lspec check)
+# Comprehensive Spec Validation
 
-> **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-11-02 · **Tags**: quality, validation, cli, first-principles, v0.2.0
+> **Status**: ⏳ In progress · **Priority**: Critical · **Created**: 2025-11-02 · **Tags**: quality, validation, cli, first-principles, v0.2.0
 
 ## Overview
 
-Expand the existing `lspec check` command to be a comprehensive validation tool that checks specs for quality issues including structure, frontmatter, content, sequence conflicts, and **file corruption**.
+Provide comprehensive validation tooling that checks specs for quality issues including structure, frontmatter, content, sequence conflicts, and **file corruption**.
 
 **Current State:**
-- ✅ `lspec check` exists but only checks sequence conflicts
-- ❌ No way to validate spec content/frontmatter programmatically
-- ❌ Easy to create specs with invalid frontmatter
+- ✅ `lspec check` exists - checks sequence conflicts only
+- ✅ `lspec validate` exists - basic validation framework with line count checking
+- ⏳ Need comprehensive validation rules (frontmatter, structure, corruption)
 - ❌ No enforcement of required fields
 - ❌ No way to detect stale specs
 - ❌ **No detection of file corruption/malformed content**
 
-**Proposed Change:**
-Make `lspec check` the unified validation command with flags to control what gets checked:
+**Implementation Approach:**
+Both `lspec check` and `lspec validate` exist as separate commands:
 
 ```bash
-lspec check                    # Check everything (sequences, frontmatter, structure)
-lspec check --sequences        # Only sequence conflicts (current behavior)
-lspec check --frontmatter      # Only frontmatter validation
-lspec check --structure        # Only structure validation
-lspec check --corruption       # Only file corruption detection
-lspec check --no-sequences     # Skip sequence checking
+# Current commands
+lspec check                    # Check for sequence conflicts
+lspec validate [specs...]      # Validate specs for quality issues
+lspec validate --max-lines 500 # Custom line limit
+
+# Planned enhancements
+lspec validate --frontmatter   # Frontmatter validation
+lspec validate --structure     # Structure validation
+lspec validate --corruption    # File corruption detection
+lspec validate --all           # All validation rules
 ```
 
 **Use Cases:**
@@ -53,16 +60,18 @@ lspec check --no-sequences     # Skip sequence checking
 
 **What Success Looks Like:**
 ```bash
-$ lspec check
-Checking specs...
+$ lspec validate --all
+Validating specs...
 
-Sequences:
-  ✓ No sequence conflicts detected
+Line Count:
+  ✓ 043-official-launch-02 (387 lines)
+  ⚠ 048-spec-complexity-analysis (356 lines - approaching limit)
+  ✗ 018-spec-validation (455 lines - exceeds limit!)
+     → Consider splitting into sub-specs (see spec 012)
 
 Frontmatter:
   ✗ 1 spec has invalid frontmatter:
     - specs/043-official-launch-02/README.md
-      • Missing required field: created
       • Invalid status: "wip" (expected: planned, in-progress, complete, archived)
 
 Structure:
@@ -73,9 +82,8 @@ Corruption:
     - specs/018-spec-validation/README.md
       • Duplicate sections found: "Auto-Fix Capability" (line 245, 320)
       • Malformed code block (line 67-68)
-      • Incomplete JSON (line 156)
 
-Results: 10/12 passed
+Results: 10/13 passed, 1 warning, 3 failed
 ```
 
 ## Design
@@ -121,28 +129,38 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 ## Design Decision
 
-**Why Expand `check` Instead of Adding `validate`?**
+**Implementation Note:** The original design proposed expanding `lspec check` into a unified validation command. However, the implementation created a separate `lspec validate` command instead, keeping both commands focused:
 
-1. **Simpler mental model:** One command for all quality checks
-2. **Backwards compatible:** Can preserve current behavior with flags
-3. **More intuitive:** `lspec check` naturally means "check for issues"
-4. **Avoids confusion:** No need to remember multiple commands
-5. **Better UX:** Flags control what gets checked
+- **`lspec check`** - Fast sequence conflict detection
+- **`lspec validate`** - Comprehensive quality validation
+
+**Rationale for Separate Commands:**
+
+1. **Clear separation of concerns:** Sequence checking is fast and targeted; validation is comprehensive
+2. **Performance:** Users can run quick checks without full validation overhead
+3. **Backwards compatible:** Existing `lspec check` behavior unchanged
+4. **Incremental adoption:** Can add validation rules without affecting check command
+5. **Clearer intent:** `validate` explicitly signals quality checking
+
+**Trade-offs:**
+- Two commands to remember (but both are intuitive)
+- More CLI surface area
+- Better performance and flexibility
 
 ## Evolution
 
-| Version | Behavior |
-|---------|----------|
-| v0.1.0 - v0.2.0 | `lspec check` = sequence conflicts only |
-| v0.3.0+ | `lspec check` = comprehensive (all checks by default) |
-| v0.3.0+ | `lspec check --sequences` = backwards compatible (sequences only) |
+| Version | Commands Available |
+|---------|--------------------|
+| v0.1.0 | `lspec check` (sequence conflicts only) |
+| v0.2.0+ | `lspec check` (sequences) + `lspec validate` (line counts) |
+| v0.3.0+ | Both commands with comprehensive validation rules |
 
 ## Launch Strategy
 
-**v0.2.0 Scope:**
-- Keep current behavior (sequences only)
-- Document expansion plan
-- Lay groundwork for v0.3.0
+**v0.2.0 Scope (Current):**
+- ✅ `lspec check` for sequence conflicts
+- ✅ `lspec validate` with basic framework and line count validation
+- ⏳ Expand validation rules in upcoming phases
 
 **v0.3.0 Scope:**
 - **MUST HAVE:** Framework + frontmatter + structure validation
@@ -159,11 +177,22 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 
-**Current Phase:** Planning (spec 048 refactor demonstrates sub-spec approach)
+**Current Phase:** Phase 1a Complete (Basic framework + line count validation)
 
-**Estimated Effort:**
-- Minimum viable (Phases 1-4): 9-10 days
-- Complete (All phases): 15-18 days
+**Completed:**
+- ✅ Validation framework architecture
+- ✅ `LineCountValidator` with warning/error thresholds
+- ✅ `lspec validate` command with `--max-lines` flag
+- ✅ Integration tests and documentation
+
+**Next Steps:**
+- Phase 1b: Frontmatter validation
+- Phase 2: Structure validation
+- Phase 3: Corruption detection
+
+**Estimated Effort (Remaining):**
+- Phases 1b-4: 7-8 days
+- Complete (All phases): 13-15 days
 
 ## Quick Links
 
@@ -191,14 +220,17 @@ This addresses real pain points we've experienced:
 
 **Integration:**
 ```bash
-# CI/CD
-lspec check --strict --format=json
+# CI/CD - Quick sequence check
+lspec check
 
-# Pre-commit hook
-lspec check --sequences --corruption
+# CI/CD - Comprehensive validation
+lspec validate --all --format=json
+
+# Pre-commit hook - Fast validation
+lspec validate --max-lines 400
 
 # Manual comprehensive check
-lspec check --fix
+lspec validate --all --fix
 ```
 
 **References:**

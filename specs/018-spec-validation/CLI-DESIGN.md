@@ -1,85 +1,86 @@
 # CLI Design
 
-Command-line interface for the expanded `lspec check` command.
+Command-line interface for the `lspec validate` command.
+
+**Note:** This spec originally proposed expanding `lspec check`, but the implementation created a separate `lspec validate` command for comprehensive quality validation, while keeping `lspec check` focused on sequence conflicts.
 
 ## Basic Usage
 
 ```bash
-# Check everything (default: all validations)
-lspec check
+# Validate everything (default: all validations)
+lspec validate
 
-# Check specific aspects
-lspec check --sequences          # Only sequence conflicts
-lspec check --frontmatter        # Only frontmatter validation
-lspec check --structure          # Only structure validation
-lspec check --content            # Only content validation
-lspec check --corruption         # Only corruption detection
-lspec check --staleness          # Only staleness detection
+# Validate specific aspects
+lspec validate --frontmatter        # Only frontmatter validation
+lspec validate --structure          # Only structure validation
+lspec validate --content            # Only content validation
+lspec validate --corruption         # Only corruption detection
+lspec validate --staleness          # Only staleness detection
 
-# Combine checks
-lspec check --frontmatter --structure
+# Combine validations
+lspec validate --frontmatter --structure
 
 # Skip certain checks
-lspec check --no-sequences       # Skip sequence conflict check
-lspec check --no-staleness       # Skip staleness warnings
+lspec validate --no-staleness       # Skip staleness warnings
 
-# Check specific spec
-lspec check specs/043-official-launch-02
+# Validate specific spec(s)
+lspec validate specs/043-official-launch-02
+lspec validate 043 048 018          # Multiple specs
 
-# Filter which specs to check
-lspec check --status=in-progress
-lspec check --tag=api
+# Filter which specs to validate
+lspec validate --status=in-progress
+lspec validate --tag=api
+
+# Note: For sequence conflicts, use `lspec check` (separate command)
 ```
 
 ## Output Options
 
 ```bash
 # Output formatting
-lspec check --format=json        # JSON output for CI
-lspec check --quiet              # Brief output (errors only)
-lspec check --verbose            # Detailed output with explanations
+lspec validate --format=json        # JSON output for CI
+lspec validate --quiet              # Brief output (errors only)
+lspec validate --verbose            # Detailed output with explanations
 
 # Behavior options
-lspec check --strict             # Fail on warnings (not just errors)
-lspec check --fix                # Auto-fix issues where possible
+lspec validate --strict             # Fail on warnings (not just errors)
+lspec validate --fix                # Auto-fix issues where possible
 ```
 
-## Backwards Compatibility
+## Command Evolution
 
-### Current Behavior (v0.1.x - v0.2.0)
+### Current Implementation (v0.2.0+)
+
+Two separate commands with distinct purposes:
 
 ```bash
-lspec check          # Only checks sequence conflicts
-lspec check --quiet  # Brief sequence conflict output
+lspec check               # Fast sequence conflict detection
+lspec validate            # Comprehensive quality validation
+lspec validate [specs...] # Validate specific specs
 ```
 
-### New Behavior (v0.3.0+)
+### Planned Enhancements (v0.3.0+)
+
+Expand `lspec validate` with additional validation rules:
 
 ```bash
-lspec check               # Checks everything (comprehensive)
-lspec check --sequences   # Only sequence conflicts (explicit)
-lspec check --quiet       # Brief output for all checks
+lspec validate --all           # All validation rules
+lspec validate --frontmatter   # Frontmatter validation
+lspec validate --structure     # Structure validation
+lspec validate --corruption    # Corruption detection
 ```
-
-### Migration Strategy
-
-1. **v0.2.0**: Keep current behavior, document upcoming changes
-2. **v0.3.0**: Default to comprehensive checking
-3. **Config option**: `checkMode: 'sequences-only' | 'comprehensive'`
-
-For backwards compatibility:
-- Auto-check context → sequences only (preserve fast behavior)
-- Explicit invocation → all checks (new comprehensive behavior)
 
 ## Console Output Format
 
 ### Default Output
 
 ```
-📋 Checking specs...
+📋 Validating specs...
 
-Sequences:
-  ✓ No conflicts detected
+Line Count:
+  ✓ 10 specs within limits
+  ⚠ 1 spec approaching limit (300-400 lines)
+  ✗ 1 spec exceeds limit (>400 lines)
 
 Frontmatter:
   ✗ 1 spec has errors:
@@ -90,7 +91,7 @@ Frontmatter:
 Structure:
   ✗ 1 spec has errors:
     - specs/044-spec-relationships-clarity/
-      • Missing required section: Test
+      • Missing required section: ## Testing
 
 Corruption:
   ✗ 1 spec corrupted:
@@ -104,7 +105,9 @@ Content:
     - specs/043-official-launch-02/
       ⚠ In progress for 45 days
 
-Results: 1/3 passed, 1 warning, 2 errors
+Results: 8/12 passed, 2 warnings, 4 errors
+
+Note: For sequence conflicts, run `lspec check`
 ```
 
 ### Quiet Output
@@ -116,13 +119,15 @@ Results: 1/3 passed, 1 warning, 2 errors
 ### Verbose Output
 
 ```
-📋 Checking specs...
+📋 Validating specs...
 
-Sequences:
-  ✓ No conflicts detected
+Line Count:
+  ✓ 10 specs within limits
   
-  Checked 12 specs in specs/
-  No duplicate sequence numbers found
+  Checked 12 specs total
+  - 10 specs under 300 lines (ideal)
+  - 1 spec 300-400 lines (warning zone)
+  - 1 spec over 400 lines (should split)
 
 Frontmatter:
   ✗ 1 spec has errors:
@@ -197,12 +202,12 @@ For CI/CD integration:
 - `2` - Warnings found (only in --strict mode)
 - `3` - Command error (invalid arguments, etc.)
 
-Exit codes remain backwards compatible with current `lspec check`.
+**Note:** `lspec check` (sequence conflicts) uses same exit code pattern.
 
 ## Auto-Fix Mode
 
 ```bash
-lspec check --fix
+lspec validate --fix
 ```
 
 **What Gets Fixed:**
@@ -241,19 +246,19 @@ Results: Auto-fixed 3/5 issues
 
 ```bash
 # By status
-lspec check --status=in-progress
-lspec check --status=planned,in-progress
+lspec validate --status=in-progress
+lspec validate --status=planned,in-progress
 
 # By tag
-lspec check --tag=api
-lspec check --tag=quality,validation
+lspec validate --tag=api
+lspec validate --tag=quality,validation
 
 # By priority
-lspec check --priority=high,critical
+lspec validate --priority=high,critical
 
 # By path pattern
-lspec check specs/2025*
-lspec check specs/archived/
+lspec validate specs/2025*
+lspec validate specs/archived/
 ```
 
 ## CI/CD Integration
@@ -263,14 +268,14 @@ lspec check specs/archived/
 ```yaml
 - name: Check spec quality
   run: |
-    lspec check --format=json --strict > check-results.json
+    lspec validate --format=json --strict > validate-results.json
   continue-on-error: true
 
 - name: Comment PR with results
   uses: actions/github-script@v6
   with:
     script: |
-      const results = require('./check-results.json');
+      const results = require('./validate-results.json');
       // Post comment with results
 ```
 
@@ -280,13 +285,13 @@ lspec check specs/archived/
 #!/bin/sh
 # .git/hooks/pre-commit
 
-# Run comprehensive checks
-lspec check --format=json > /dev/null 2>&1
+# Run comprehensive validation
+lspec validate --format=json > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
   echo "❌ Spec quality checks failed!"
-  echo "Run 'lspec check' to see details"
-  echo "Run 'lspec check --fix' to auto-fix issues"
+  echo "Run 'lspec validate' to see details"
+  echo "Run 'lspec validate --fix' to auto-fix issues"
   exit 1
 fi
 
@@ -295,20 +300,28 @@ echo "✓ All spec quality checks passed"
 
 ## Design Decisions
 
-### Why Expand `check` Instead of New `validate` Command?
+### Why Separate `validate` Command (Implementation Choice)
 
-1. **Simpler mental model**: One command for all quality checks
-2. **Backwards compatible**: Preserve current behavior with flags
-3. **More intuitive**: `lspec check` naturally means "check for issues"
-4. **Avoids confusion**: No need to remember multiple commands
-5. **Better UX**: Flags control what gets checked
+The original spec proposed expanding `lspec check`, but the implementation created a separate `lspec validate` command:
+
+**Rationale:**
+1. **Separation of concerns**: Sequence checking is fast/targeted; validation is comprehensive
+2. **Performance**: Users can run quick sequence checks without validation overhead
+3. **Backwards compatible**: Existing `lspec check` behavior unchanged
+4. **Incremental adoption**: Can add validation rules without affecting check command
+5. **Clearer intent**: `validate` explicitly signals quality checking vs. `check` for conflicts
+
+**Trade-offs:**
+- Two commands to remember (but both are intuitive)
+- More CLI surface area
+- Better performance and flexibility
 
 ### Flag Design Philosophy
 
-- **Positive flags**: Enable specific checks (`--frontmatter`)
-- **Negative flags**: Disable checks (`--no-sequences`)
-- **Default**: Comprehensive (all checks) when no flags specified
-- **Backwards compat**: `--sequences` alone = sequences-only mode
+- **Positive flags**: Enable specific validations (`--frontmatter`, `--structure`)
+- **Negative flags**: Disable validations (`--no-staleness`)
+- **Default**: All available validations when no flags specified
+- **Specificity**: Can validate individual specs or filter by status/tags
 
 ### Performance Considerations
 
