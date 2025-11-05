@@ -6,11 +6,11 @@
 
 ## Status
 
-**Overall Status:** In Progress - Core validation (Phases 1-3) COMPLETE ✅
+**Overall Status:** In Progress - Core validation (Phases 1-3.5) COMPLETE ✅
 
 **Priority:** HIGH - Critical for quality gates and prevents spec corruption
 
-**Ready for v0.2.0:** Yes! Core validation working, finding real issues, 360 tests passing.
+**Ready for v0.2.0:** Yes! Core validation working, finding real issues, 370 tests passing.
 
 ## Phase 1a: Basic Validation Framework (✅ COMPLETE)
 
@@ -111,27 +111,33 @@
 
 **Actual Effort:** 1 day (ahead of 3-day estimate)
 
-## Phase 3.5: Sub-Spec Validation (NEW - HIGH PRIORITY)
+## Phase 3.5: Sub-Spec Validation (✅ COMPLETE)
 
 **Goal:** Validate sub-spec files per spec 012 conventions
 
-**Tasks:**
-- [ ] Create sub-spec validator module
-- [ ] Check sub-spec naming conventions
-- [ ] Validate README.md references all sub-specs
-- [ ] Check line counts per sub-spec file (<400 lines)
-- [ ] Detect orphaned sub-spec files
-- [ ] Validate cross-document references
-- [ ] Check for content duplication across sub-specs
-- [ ] Integrate with `lspec validate --sub-specs` flag
+**Completed Tasks:**
+- [x] Create sub-spec validator module (`src/validators/sub-spec.ts`)
+- [x] Check sub-spec naming conventions (uppercase .md files)
+- [x] Validate README.md references all sub-specs
+- [x] Check line counts per sub-spec file (<400 lines)
+- [x] Detect orphaned sub-spec files (not linked from README)
+- [x] Validate cross-document references
+- [x] Add comprehensive unit tests (16 tests passing)
+- [x] Integrate with `lspec validate` command
+- [ ] Check for content duplication across sub-specs (deferred - complex analysis)
 
 **Notes:** 
-- Complements spec 012 (sub-spec files management)
-- Important as teams adopt multi-file specs
-- Enforces Context Economy principle per file
-- Leverages existing `loadSubFiles()` infrastructure
+- Complements spec 012 (sub-spec files management) ✓
+- Important as teams adopt multi-file specs ✓
+- Enforces Context Economy principle per file ✓
+- Leverages existing `loadSubFiles()` infrastructure ✓
+- Found real issues in repository:
+  - spec 049: ANALYSIS.md (428 lines), OPERATIONALIZATION.md (415 lines)
+  - spec 018: CONFIGURATION.md (443 lines)
 
-**Estimated Effort:** 2 days
+**Phase Completed:** November 2025
+
+**Actual Effort:** 0.5 days (ahead of 2-day estimate)
 
 ## Phase 4: Content Validation (OPTIONAL for v0.3.0)
 
