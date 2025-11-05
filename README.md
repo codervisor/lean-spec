@@ -48,6 +48,44 @@ created: 2025-11-01
 
 Add complexity only when you feel the pain. Never rewrite your specifications to change approach.
 
+## Core Principles
+
+LeanSpec is built on 5 first principles that define what it is:
+
+### 1. Context Economy - Specs must fit in working memory
+**Target <300 lines, warning 300-400, split >400**
+
+- **Why**: Physics (context windows) + Biology (attention span) + Economics (token costs)
+- **Result**: Specs that humans and AI can actually read and understand
+
+### 2. Signal-to-Noise Maximization - Every word must inform decisions
+**Test: "What decision does this sentence inform?"**
+
+- **Why**: Token costs, cognitive load, maintenance burden
+- **Result**: Specs that are dense with value, not bloated with noise
+
+### 3. Progressive Disclosure - Add structure only when pain is felt
+**Start: Just status + created → Scale: Add fields as team/complexity grows**
+
+- **Why**: Premature abstraction is waste
+- **Result**: Specs grow naturally with your needs, not upfront complexity
+
+### 4. Intent Over Implementation - Capture "why" and "what," let "how" emerge
+**Must: Problem, intent, success criteria → Optional: Implementation details**
+
+- **Why**: Intent is stable, implementation changes
+- **Result**: Specs that guide decisions, not prescribe solutions
+
+### 5. Bridge the Gap - Align human intent with machine execution
+**For humans: Context, rationale → For AI: Clear requirements, structure**
+
+- **Why**: Gap between goals and execution must be bridged
+- **Result**: Specs both humans and AI can act on
+
+**These aren't principles we chose—they're constraints we discovered.** LeanSpec works because it aligns with how humans and AI actually work, not how we wish they worked.
+
+📖 [Learn more in spec 049 →](./specs/049-leanspec-first-principles/) | [First Principles Guide →](https://www.lean-spec.dev/docs/guide/first-principles)
+
 ### Who Uses LeanSpec
 
 ✅ **AI-powered development teams** - Give your agents clear context without overwhelming their context window  
@@ -200,7 +238,7 @@ lspec create unassigned
 - ✅ **Flat archive** - All patterns archive to `specs/archived/` (flat structure)
 - ✅ **Zero breaking changes** - Existing projects maintain their structure
 
-## Core Principles & Features
+## Key Features
 
 - **Flexible structure** - Adapt SDD to your workflow, not vice versa
 - **Custom fields** - Add sprints, epics, reviewers—whatever your team needs
