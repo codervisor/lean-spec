@@ -5,6 +5,7 @@
  * Phase 1b: Frontmatter validation
  * Phase 2: Structure validation
  * Phase 3: Corruption detection
+ * Phase 3.5: Sub-spec validation
  */
 
 import * as fs from 'node:fs/promises';
@@ -17,6 +18,7 @@ import { LineCountValidator } from '../validators/line-count.js';
 import { FrontmatterValidator } from '../validators/frontmatter.js';
 import { StructureValidator } from '../validators/structure.js';
 import { CorruptionValidator } from '../validators/corruption.js';
+import { SubSpecValidator } from '../validators/sub-spec.js';
 import type { ValidationRule, ValidationResult } from '../utils/validation-framework.js';
 
 export interface ValidateOptions {
@@ -74,6 +76,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
     new FrontmatterValidator(),
     new StructureValidator(),
     new CorruptionValidator(),
+    new SubSpecValidator({ maxLines: options.maxLines }),
   ];
 
   // Run validation
@@ -261,6 +264,58 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
     const errorResults = corruptionResults.filter(r => !r.result.passed);
     const warningResults = corruptionResults.filter(r => r.result.passed && r.result.warnings.length > 0);
     const passResults = corruptionResults.filter(r => r.result.passed && r.result.warnings.length === 0);
+
+    // Show errors
+    if (errorResults.length > 0) {
+      hasErrors = true;
+      console.log(chalk.red(`  ✗ ${errorResults.length} spec(s) with errors:`));
+      for (const { spec, result } of errorResults) {
+        const specName = path.basename(spec.path);
+        console.log(chalk.gray(`    - ${specName}`));
+        for (const error of result.errors) {
+          console.log(chalk.gray(`      • ${error.message}`));
+          if (error.suggestion) {
+            console.log(chalk.gray(`        → ${error.suggestion}`));
+          }
+        }
+      }
+    }
+
+    // Show warnings
+    if (warningResults.length > 0) {
+      totalWarningCount += warningResults.length;
+      console.log(chalk.yellow(`  ⚠ ${warningResults.length} spec(s) with warnings:`));
+      for (const { spec, result } of warningResults) {
+        const specName = path.basename(spec.path);
+        console.log(chalk.gray(`    - ${specName}`));
+        for (const warning of result.warnings) {
+          console.log(chalk.gray(`      • ${warning.message}`));
+          if (warning.suggestion) {
+            console.log(chalk.gray(`        → ${warning.suggestion}`));
+          }
+        }
+      }
+    }
+
+    // Show summary of passing specs
+    if (passResults.length > 0 && (errorResults.length > 0 || warningResults.length > 0)) {
+      totalPassCount += passResults.length;
+      console.log(chalk.green(`  ✓ ${passResults.length} spec(s) passed`));
+    } else if (passResults.length > 0) {
+      totalPassCount += passResults.length;
+      console.log(chalk.green(`  ✓ All ${passResults.length} spec(s) passed`));
+    }
+    console.log('');
+  }
+
+  // Display Sub-Specs results
+  const subSpecResults = resultsByValidator.get('sub-specs') || [];
+  if (subSpecResults.length > 0) {
+    console.log(chalk.bold('Sub-Specs:'));
+    
+    const errorResults = subSpecResults.filter(r => !r.result.passed);
+    const warningResults = subSpecResults.filter(r => r.result.passed && r.result.warnings.length > 0);
+    const passResults = subSpecResults.filter(r => r.result.passed && r.result.warnings.length === 0);
 
     // Show errors
     if (errorResults.length > 0) {
