@@ -116,6 +116,9 @@ lspec board                   # Kanban view
 lspec stats                   # Project statistics
 lspec search "query"          # Find specifications
 lspec update <spec> --status=complete
+lspec validate                # Validate specs for quality issues
+lspec validate <spec>         # Validate specific spec
+lspec validate --max-lines 500  # Custom line limit
 ```
 
 **Templates available**: minimal, standard (recommended), enterprise, api-first
