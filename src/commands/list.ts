@@ -7,6 +7,7 @@ import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecInfo } from '../spec-loader.js';
 import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
+import { detectPatternType } from '../utils/pattern-detection.js';
 
 const PRIORITY_BADGES: Record<SpecPriority, { emoji: string; colorFn: (s: string) => string }> = {
   critical: { emoji: '🔴', colorFn: chalk.red },
@@ -92,13 +93,11 @@ export async function listSpecs(options: {
   }
   console.log('');
 
-  // Detect if we should use custom grouping
-  const useCustomGrouping = 
-    config.structure.pattern === 'custom' && 
-    config.structure.groupExtractor;
+  // Detect pattern type and decide whether to group specs
+  const patternInfo = detectPatternType(config);
 
-  if (useCustomGrouping) {
-    renderGroupedList(specs, config.structure.groupExtractor!);
+  if (patternInfo.shouldGroup && patternInfo.groupExtractor) {
+    renderGroupedList(specs, patternInfo.groupExtractor);
   } else {
     renderFlatList(specs);
   }
