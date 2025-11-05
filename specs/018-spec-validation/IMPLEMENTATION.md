@@ -1,6 +1,8 @@
 # Implementation Plan
 
-8-phase implementation plan for expanding `lspec check` into a comprehensive validation tool.
+8-phase implementation plan for the `lspec validate` command.
+
+**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command to keep sequence checking and quality validation as separate concerns.
 
 ## Status
 
@@ -8,27 +10,26 @@
 
 **Priority:** HIGH - Critical for quality gates and prevents spec corruption
 
-## Phase 1: Refactor Existing Check Command
+## Phase 1a: Basic Validation Framework (✅ COMPLETE)
 
-**Goal:** Create modular framework for multiple check types
+**Goal:** Create modular framework for validation rules
 
-**Tasks:**
-- [ ] Refactor `check.ts` to support multiple check types
-- [ ] Create modular check framework (pluggable validators)
-- [ ] Implement check result data structure
-- [ ] Update console output formatter for multiple check types
-- [ ] Implement JSON output formatter
-- [ ] Add flag parsing for --sequences, --frontmatter, --corruption, etc.
-- [ ] Maintain backwards compatibility with current behavior
+**Completed Tasks:**
+- [x] Created validation framework architecture
+- [x] Implemented `ValidationRule` interface
+- [x] Created `LineCountValidator` with warning/error thresholds
+- [x] Implemented `lspec validate` command with `--max-lines` flag
+- [x] Added integration tests
+- [x] Documented in README
 
 **Notes:** 
-- Build on existing `check` command rather than creating new command
-- Preserve auto-check behavior
-- Create foundation for adding new check types easily
+- Built as separate `validate` command (not expansion of `check`)
+- Framework allows easy addition of new validators
+- Already in production use
 
-**Estimated Effort:** 2-3 days
+**Phase Completed:** November 2025
 
-## Phase 2: Frontmatter Validation (HIGHEST PRIORITY)
+## Phase 1b: Frontmatter Validation (NEXT)
 
 **Goal:** Validate spec frontmatter for required fields and valid values
 
@@ -40,7 +41,7 @@
 - [ ] Validate date formats
 - [ ] Validate tags format
 - [ ] Validate custom fields (if defined in config)
-- [ ] Integrate into `lspec check --frontmatter`
+- [ ] Integrate with `lspec validate --frontmatter` flag
 
 **Notes:** 
 - Most critical for catching common mistakes
@@ -49,7 +50,7 @@
 
 **Estimated Effort:** 2 days
 
-## Phase 3: Structure Validation
+## Phase 2: Structure Validation
 
 **Goal:** Ensure specs follow structural conventions
 
@@ -61,7 +62,7 @@
 - [ ] Validate required sections present
 - [ ] Check for empty sections
 - [ ] Detect duplicate section headers
-- [ ] Integrate into `lspec check --structure`
+- [ ] Integrate with `lspec validate --structure` flag
 
 **Notes:** 
 - Ensures spec consistency across team
@@ -70,7 +71,7 @@
 
 **Estimated Effort:** 2 days
 
-## Phase 4: Corruption Detection (NEW - HIGH PRIORITY)
+## Phase 3: Corruption Detection (HIGH PRIORITY)
 
 **Goal:** Detect file corruption from failed edits
 
@@ -82,7 +83,7 @@
 - [ ] Detect content fragments (partial duplicates)
 - [ ] Validate markdown structure (lists, tables)
 - [ ] Detect malformed frontmatter
-- [ ] Integrate into `lspec check --corruption`
+- [ ] Integrate with `lspec validate --corruption` flag
 
 **Notes:** 
 - Addresses real pain point we've experienced
@@ -91,7 +92,7 @@
 
 **Estimated Effort:** 3 days
 
-## Phase 5: Content Validation (OPTIONAL for v0.2.0)
+## Phase 4: Content Validation (OPTIONAL for v0.3.0)
 
 **Goal:** Validate spec content quality
 
@@ -100,7 +101,7 @@
 - [ ] Detect TODO/FIXME in complete specs
 - [ ] Validate internal links
 - [ ] Check for placeholder text
-- [ ] Integrate into `lspec check --content`
+- [ ] Integrate with `lspec validate --content` flag
 
 **Notes:** 
 - Nice to have, can defer to v0.3.0 if time-constrained
@@ -109,7 +110,7 @@
 
 **Estimated Effort:** 1-2 days
 
-## Phase 6: Staleness Detection (OPTIONAL for v0.2.0)
+## Phase 5: Staleness Detection (OPTIONAL for v0.3.0)
 
 **Goal:** Identify stale or abandoned specs
 
@@ -119,7 +120,7 @@
 - [ ] Warn on in-progress specs > 30 days
 - [ ] Warn on no updates > 90 days
 - [ ] Warn on planned specs > 60 days
-- [ ] Integrate into `lspec check --staleness`
+- [ ] Integrate with `lspec validate --staleness` flag
 
 **Notes:** 
 - Useful for maintenance
@@ -128,12 +129,12 @@
 
 **Estimated Effort:** 2 days
 
-## Phase 7: Auto-Fix (OPTIONAL for v0.2.0)
+## Phase 6: Auto-Fix (OPTIONAL for v0.3.0)
 
 **Goal:** Automatically fix common issues
 
 **Tasks:**
-- [ ] Implement --fix flag
+- [ ] Implement --fix flag for `lspec validate`
 - [ ] Add missing frontmatter fields
 - [ ] Format dates to ISO 8601
 - [ ] Sort frontmatter fields
@@ -238,25 +239,26 @@ See [TESTING.md](./TESTING.md) for detailed test plan.
 
 ### For Existing Projects
 
-1. **Run initial check:**
+1. **Run initial validation:**
    ```bash
-   lspec check --no-strict
+   lspec validate --max-lines 400
    ```
 
 2. **Review and fix issues:**
    ```bash
-   lspec check --fix
-   lspec check  # Verify fixes
+   lspec validate --fix  # When auto-fix is available
+   lspec validate        # Verify fixes
    ```
 
 3. **Enable in CI:**
    ```yaml
-   - run: lspec check --strict --format=json
+   - run: lspec validate --strict --format=json
    ```
 
 4. **Add pre-commit hook:**
    ```bash
-   lspec check --sequences --corruption
+   lspec check           # Sequence conflicts
+   lspec validate        # Quality validation
    ```
 
 ### For New Projects

@@ -1,6 +1,8 @@
 # Validation Rules
 
-This document details what gets validated by `lspec check` and the specific rules for each validation type.
+This document details what gets validated by `lspec validate` and the specific rules for each validation type.
+
+**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
 
 ## Frontmatter Validation
 
