@@ -113,17 +113,26 @@ created: ${date}
     });
 
     it('should pass for ISO 8601 timestamp formats', () => {
-      const content = `---
+      const timestamps = [
+        '2025-11-05T00:00:00Z',
+        '2025-11-05T00:00:00.123Z',
+        '2025-11-05T00:00:00.1Z',
+        '2025-11-05T00:00:00+00:00',
+        '2025-11-05T00:00:00-05:00',
+      ];
+
+      for (const timestamp of timestamps) {
+        const content = `---
 status: planned
-created: 2025-11-05T00:00:00Z
+created: ${timestamp}
 ---
 
 # Test
 `;
-      const result = validator.validate(mockSpec, content);
-      
-      expect(result.passed).toBe(true);
-      expect(result.errors).toHaveLength(0);
+        const result = validator.validate(mockSpec, content);
+        expect(result.passed).toBe(true);
+        expect(result.errors).toHaveLength(0);
+      }
     });
 
     it('should pass for tags as array', () => {
