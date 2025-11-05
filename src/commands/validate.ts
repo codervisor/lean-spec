@@ -21,6 +21,7 @@ export interface ValidateOptions {
 interface ValidationResultWithSpec {
   spec: SpecInfo;
   result: ValidationResult;
+  content: string; // Store content to avoid duplicate reads
 }
 
 /**
@@ -32,11 +33,11 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
   // Load specs to validate
   let specs: SpecInfo[];
   if (options.specs && options.specs.length > 0) {
-    // Validate specific specs
+    // Validate specific specs - load all specs once and filter
+    const allSpecs = await loadAllSpecs();
     specs = [];
     for (const specPath of options.specs) {
-      const loadedSpecs = await loadAllSpecs();
-      const spec = loadedSpecs.find(s => 
+      const spec = allSpecs.find(s => 
         s.path.includes(specPath) || 
         path.basename(s.path).includes(specPath)
       );
@@ -71,7 +72,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
   const results: ValidationResultWithSpec[] = [];
   
   for (const spec of specs) {
-    // Read spec content
+    // Read spec content once
     let content: string;
     try {
       content = await fs.readFile(spec.filePath, 'utf-8');
@@ -83,7 +84,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
     // Run all validators
     for (const validator of validators) {
       const result = await validator.validate(spec, content);
-      results.push({ spec, result });
+      results.push({ spec, result, content }); // Store content with result
     }
   }
 
@@ -94,9 +95,8 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
 
   console.log(chalk.bold('Line Count:'));
   
-  for (const { spec, result } of results) {
+  for (const { spec, result, content } of results) {
     const specName = path.basename(spec.path);
-    const content = await fs.readFile(spec.filePath, 'utf-8');
     const lineCount = content.split('\n').length;
 
     if (!result.passed) {
