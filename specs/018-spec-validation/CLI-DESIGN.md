@@ -6,10 +6,27 @@ Command-line interface for the `lspec validate` command.
 
 ## Basic Usage
 
+### Current Implementation (v0.2.0)
+
 ```bash
-# Validate everything (default: all validations)
+# Validate all specs (runs: line count + frontmatter)
 lspec validate
 
+# Validate specific specs
+lspec validate 018
+lspec validate 043 048 018          # Multiple specs
+
+# Custom line limit
+lspec validate --max-lines 500
+lspec validate 018 --max-lines 300
+
+# For sequence conflicts (separate command)
+lspec check
+```
+
+### Planned Enhancements (v0.3.0+)
+
+```bash
 # Validate specific aspects
 lspec validate --frontmatter        # Only frontmatter validation
 lspec validate --structure          # Only structure validation
@@ -25,15 +42,9 @@ lspec validate --sub-specs --structure  # Check sub-specs and main structure
 # Skip certain checks
 lspec validate --no-staleness       # Skip staleness warnings
 
-# Validate specific spec(s)
-lspec validate specs/043-official-launch-02
-lspec validate 043 048 018          # Multiple specs
-
 # Filter which specs to validate
 lspec validate --status=in-progress
 lspec validate --tag=api
-
-# Note: For sequence conflicts, use `lspec check` (separate command)
 ```
 
 ## Output Options
@@ -74,7 +85,33 @@ lspec validate --corruption    # Corruption detection
 
 ## Console Output Format
 
-### Default Output
+### Current Output (v0.2.0)
+
+**Actual output format:**
+```
+Validating specs...
+
+Line Count:
+  ✓ 018-spec-validation (255 lines)
+  ⚠ 051-docs-system-prompt-principles (340 lines - approaching limit)
+     → Consider simplification or splitting
+  ✗ 048-spec-complexity-analysis (601 lines - exceeds limit!)
+     → Spec exceeds 400 lines (601 lines)
+     → Consider splitting into sub-specs using spec 012 pattern
+
+Frontmatter:
+  ✓ All 25 spec(s) passed
+
+Results: 25 specs validated, 3 error(s), 6 warning(s)
+```
+
+**Features:**
+- Groups results by validator type (Line Count, Frontmatter, etc.)
+- Clear pass/warn/error indicators (✓ ⚠ ✗)
+- Actionable suggestions for each issue
+- Summary with counts
+
+### Planned Output (v0.3.0+)
 
 ```
 📋 Validating specs...

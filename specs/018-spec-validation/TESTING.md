@@ -6,43 +6,56 @@ Comprehensive test plan for the `lspec validate` command.
 
 ## Test Categories
 
-### 1. Frontmatter Validation Tests
+### 1. Frontmatter Validation Tests ✅
+
+**Status: Phase 1b Complete - 27 tests passing**
 
 **Missing Required Fields:**
-- [ ] Detects missing `status` field
-- [ ] Detects missing `created` field
-- [ ] Passes when all required fields present
-- [ ] Detects missing custom required fields (if configured)
+- [x] Detects missing `status` field ✅
+- [x] Detects missing `created` field ✅
+- [x] Passes when all required fields present ✅
+- [x] Detects when no frontmatter exists ✅
+- [ ] Detects missing custom required fields (if configured) - future
 
 **Invalid Status Values:**
-- [ ] Detects invalid status "wip"
-- [ ] Detects invalid status "draft"
-- [ ] Detects invalid status "done"
-- [ ] Passes valid status "planned"
-- [ ] Passes valid status "in-progress"
-- [ ] Passes valid status "complete"
-- [ ] Passes valid status "archived"
+- [x] Detects invalid status "wip" ✅
+- [x] Detects invalid status values (any non-standard) ✅
+- [x] Passes valid status "planned" ✅
+- [x] Passes valid status "in-progress" ✅
+- [x] Passes valid status "complete" ✅
+- [x] Passes valid status "archived" ✅
+- [x] Coerces non-string status to string and validates ✅
 
 **Invalid Priority Values:**
-- [ ] Detects invalid priority "urgent"
-- [ ] Detects invalid priority "p1"
-- [ ] Passes valid priority "low"
-- [ ] Passes valid priority "medium"
-- [ ] Passes valid priority "high"
-- [ ] Passes valid priority "critical"
-- [ ] Passes when priority is optional and missing
+- [x] Detects invalid priority "urgent" ✅
+- [x] Detects invalid priority values (any non-standard) ✅
+- [x] Passes valid priority "low" ✅
+- [x] Passes valid priority "medium" ✅
+- [x] Passes valid priority "high" ✅
+- [x] Passes valid priority "critical" ✅
+- [x] Passes when priority is optional and missing ✅
+- [x] Coerces non-string priority to string and validates ✅
 
 **Date Format Validation:**
-- [ ] Detects invalid date "2025/11/04"
-- [ ] Detects invalid date "Nov 4, 2025"
-- [ ] Detects invalid date "11-04-2025"
-- [ ] Passes valid date "2025-11-04"
-- [ ] Passes valid ISO timestamp
+- [x] Detects invalid date formats (11/05/2025, etc.) ✅
+- [x] Detects invalid date values (2025-99-99) ✅
+- [x] Passes valid date "2025-11-04" ✅
+- [x] Passes valid ISO timestamps (with timezone, milliseconds) ✅
+- [x] Warns for invalid optional date fields (e.g., updated) ✅
+- [x] Fails for non-string/non-date created field ✅
 
 **Tags Validation:**
-- [ ] Detects tags as string instead of array
-- [ ] Detects tags with invalid format
-- [ ] Passes valid tags array
+- [x] Detects tags as string instead of array ✅
+- [x] Accepts tags with various types (YAML parsing) ✅
+- [x] Passes valid tags array ✅
+- [x] Passes empty tags array ✅
+
+**YAML Parsing:**
+- [x] Detects malformed YAML frontmatter ✅
+
+**Custom Configuration:**
+- [x] Respects custom valid statuses (configurable) ✅
+- [x] Validator metadata (name, description) ✅
 
 ### 2. Structure Validation Tests
 
