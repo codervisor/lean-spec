@@ -123,6 +123,7 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 - [ ] Spec 018: Spec validation - 🔴 CRITICAL
 - [x] Spec 045: Unified dashboard - ✅ COMPLETE
 - [x] Spec 046: Stats refactor - ✅ COMPLETE
+- [ ] Spec 052: Branding assets - 🟡 IN PROGRESS
 
 **High Priority:**
 - [x] Spec 026: Init pattern selection - ✅ COMPLETE

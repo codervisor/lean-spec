@@ -1,8 +1,16 @@
 # LeanSpec
 
-> A lightweight, flexible Spec-Driven Development (SDD) methodology for modern AI-powered development.
+<p align="center">
+  <img src="docs-site/static/img/logo-with-bg.svg" alt="LeanSpec Logo" width="120" height="120">
+</p>
 
-📚 **[Read the full documentation →](https://www.lean-spec.dev)**
+<p align="center">
+  <strong>A lightweight, flexible Spec-Driven Development (SDD) methodology for modern AI-powered development.</strong>
+</p>
+
+<p align="center">
+  📚 <a href="https://www.lean-spec.dev"><strong>Read the full documentation →</strong></a>
+</p>
 
 ## The Problem
 

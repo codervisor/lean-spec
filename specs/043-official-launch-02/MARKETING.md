@@ -2,6 +2,29 @@
 
 Positioning, messaging, channels, and content strategy for v0.2.0 launch.
 
+## Brand Identity
+
+**Logo:** Version 3 of Concept D (Bracket Style)
+- Minimalist bracket frame with "LS" monogram
+- Represents: Context window/boundary (specs must fit), code-like aesthetic
+- Works at all sizes (16px to full-size)
+- Color variants: Dark (#1a1a2e), Light (white), Accent (#00d9ff)
+- SVG format for scalability
+
+**Design Rationale:**
+- Brackets visually represent "bounded context" (Context Economy principle)
+- Minimal, technical aesthetic matches first-principles philosophy
+- LS monogram is simple and memorable
+- Scales perfectly from favicons to headers
+
+**Brand Assets Needed:**
+- [ ] Export logo as SVG, PNG (16px, 32px, 64px, 128px, 512px)
+- [ ] Create favicon (16x16, 32x32)
+- [ ] Update docs site with logo in header
+- [ ] Add logo to README.md
+- [ ] Create social media assets (Twitter card, OG image)
+- [ ] GitHub social preview image (1280x640)
+
 ## Marketing Positioning
 
 **Tagline:** "First-Principles Spec-Driven Development for AI-powered teams"
@@ -99,6 +122,12 @@ Positioning, messaging, channels, and content strategy for v0.2.0 launch.
 ## Marketing Content Checklist
 
 ### Pre-Launch
+- [ ] **Branding & Assets**
+  - [ ] Export logo in all required formats (SVG, PNG sizes)
+  - [ ] Create favicon files
+  - [ ] Update docs site with logo
+  - [ ] Add logo to README.md
+  - [ ] Create social media assets (Twitter card, OG image, GitHub preview)
 - [ ] Write launch blog post
 - [ ] Create demo video showing principle validation
 - [ ] Record GIF demos: spec creation, validation, complexity checks

@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Light background for contrast -->
+  <rect width="120" height="120" fill="#ffffff" rx="8"/>
   <!-- Left bracket -->
   <path d="M 35 15 L 20 15 L 20 105 L 35 105" 
         fill="none" stroke="#1a1a2e" stroke-width="6" stroke-linecap="round"/>

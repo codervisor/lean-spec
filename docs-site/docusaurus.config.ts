@@ -78,7 +78,8 @@ const config: Config = {
       title: 'LeanSpec',
       logo: {
         alt: 'LeanSpec Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo-with-bg.svg',
+        srcDark: 'img/logo-dark-bg.svg',
       },
       items: [
         {
