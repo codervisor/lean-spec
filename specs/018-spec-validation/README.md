@@ -229,7 +229,6 @@ See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 - ✅ Tested with real repository specs
 
 **📊 Current Validation Results (2025-11-05):**
-**📊 Current Validation Results (2025-11-05):**
 ```bash
 $ lspec validate
 Results: 25 specs validated, 5 error(s), 6 warning(s)
