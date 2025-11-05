@@ -16,7 +16,11 @@ export interface PatternInfo {
  * Analyze the configured pattern and determine how specs should be displayed
  * 
  * @param config - The LeanSpec configuration
- * @returns Pattern information for rendering decisions
+ * @returns {PatternInfo} Object containing:
+ *   - type: Pattern type ('flat', 'date-grouped', 'custom-grouped')
+ *   - shouldGroup: Whether specs should be displayed in groups
+ *   - groupExtractor: Optional group extraction pattern
+ *   - isDateBased: Optional flag indicating if grouping is date-based
  */
 export function detectPatternType(config: LeanSpecConfig): PatternInfo {
   const { pattern, groupExtractor } = config.structure;
@@ -32,7 +36,8 @@ export function detectPatternType(config: LeanSpecConfig): PatternInfo {
   // Case 2: Custom pattern with grouping
   if (pattern === 'custom' && groupExtractor) {
     // Detect if it's date-based grouping
-    const isDateBased = /\{YYYY/.test(groupExtractor);
+    // Matches any date format in braces: {YYYYMMDD}, {YYYY-MM-DD}, {YYYY-MM}, {YYYY}, etc.
+    const isDateBased = /\{YYYY[^}]*\}/.test(groupExtractor);
     
     return {
       type: isDateBased ? 'date-grouped' : 'custom-grouped',
