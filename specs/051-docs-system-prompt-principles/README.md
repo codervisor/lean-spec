@@ -238,13 +238,13 @@ These aren't principles we chose—they're constraints we discovered.
 ### Phase 4: Validation (Week 2)
 **Goal**: Verify principles are clear and actionable
 
-- [ ] Test with new contributors (can they apply principles?)
-- [ ] Test AI agent decision-making (consistent with principles?)
-- [ ] Gather feedback on clarity/usefulness
-- [ ] Measure: Time to understand philosophy
-- [ ] Iterate based on feedback
+- [ ] Self-validation: Create test scenarios and apply framework
+- [ ] AI agent testing: Simulate conflicts, verify principle-based decisions
+- [ ] Fresh-eyes test: Read docs with "beginner mindset"
+- [ ] Dog-fooding: Use principles in next spec work
+- [ ] Optional: Share with early users (Discord, GitHub discussions) if available
 
-**Success**: New users/AI make principle-aligned decisions
+**Success**: Principles enable consistent decision-making (demonstrated through test scenarios)
 
 ## Test
 
@@ -265,10 +265,11 @@ Test scenarios where AI must apply principles:
 
 ### User Understanding
 
-- [ ] New contributor can list 5 principles from memory after reading README
-- [ ] User can explain why LeanSpec has 400-line threshold (Context Economy)
-- [ ] User can decide when to split spec using principles
-- [ ] User can explain LeanSpec philosophy to teammate
+Test by simulating new user scenarios:
+- [ ] Reading README: Can extract 5 principles without searching
+- [ ] Given question "Why 400-line limit?": Docs clearly explain Context Economy
+- [ ] Decision scenario: "450-line spec" → Framework leads to "split" decision
+- [ ] Can write 2-paragraph philosophy summary from docs alone
 
 ### Quality Checks
 
@@ -284,17 +285,17 @@ Test scenarios where AI must apply principles:
 - Conflict resolution framework in AGENTS.md
 - Examples annotated with principles
 - Links between related docs
+**User/AI Capability** (validated through scenarios):
+- Principles discoverable in <5 minutes of reading
+- AI agents make principle-consistent decisions in test cases
+- Conflict scenarios resolve systematically using framework
+- Docs enable self-service philosophy understanding
 
-**User/AI Capability**:
-- New users understand philosophy in <5 minutes
-- AI agents make principle-consistent decisions
-- Conflicts resolved systematically (not ad-hoc)
-- Users can explain "why" for LeanSpec design decisions
-
-**Adoption**:
-- First principles referenced in issues/PRs
-- Community discussions use principle language
-- New features justified by principles
+**Internal Quality** (measurable now):
+- First principles referenced in new spec work
+- Design decisions justified by principles
+- Team uses principle language in planning
+- Philosophy serves as filter for feature requestses
 - Users share philosophy with others
 
 ## Notes
