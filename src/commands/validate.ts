@@ -2,6 +2,7 @@
  * Validate command - validates specs for quality issues
  * 
  * Phase 1a: Basic framework + line count validation
+ * Phase 1b: Frontmatter validation
  */
 
 import * as fs from 'node:fs/promises';
@@ -11,6 +12,7 @@ import { loadConfig } from '../config.js';
 import { loadAllSpecs, type SpecInfo } from '../spec-loader.js';
 import { withSpinner } from '../utils/ui.js';
 import { LineCountValidator } from '../validators/line-count.js';
+import { FrontmatterValidator } from '../validators/frontmatter.js';
 import type { ValidationRule, ValidationResult } from '../utils/validation-framework.js';
 
 export interface ValidateOptions {
@@ -20,6 +22,7 @@ export interface ValidateOptions {
 
 interface ValidationResultWithSpec {
   spec: SpecInfo;
+  validatorName: string;
   result: ValidationResult;
   content: string; // Store content to avoid duplicate reads
 }
@@ -64,6 +67,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
   // Initialize validators
   const validators: ValidationRule[] = [
     new LineCountValidator({ maxLines: options.maxLines }),
+    new FrontmatterValidator(),
   ];
 
   // Run validation
@@ -84,52 +88,123 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
     // Run all validators
     for (const validator of validators) {
       const result = await validator.validate(spec, content);
-      results.push({ spec, result, content }); // Store content with result
+      results.push({ 
+        spec, 
+        validatorName: validator.name,
+        result, 
+        content,
+      });
     }
   }
 
   // Display results grouped by validator
   let hasErrors = false;
-  let warningCount = 0;
-  let passCount = 0;
+  let totalWarningCount = 0;
+  let totalPassCount = 0;
 
-  console.log(chalk.bold('Line Count:'));
-  
-  for (const { spec, result, content } of results) {
-    const specName = path.basename(spec.path);
-    const lineCount = content.split('\n').length;
+  // Group results by validator
+  const resultsByValidator = new Map<string, ValidationResultWithSpec[]>();
+  for (const result of results) {
+    if (!resultsByValidator.has(result.validatorName)) {
+      resultsByValidator.set(result.validatorName, []);
+    }
+    resultsByValidator.get(result.validatorName)!.push(result);
+  }
 
-    if (!result.passed) {
+  // Display Line Count results
+  const lineCountResults = resultsByValidator.get('max-lines') || [];
+  if (lineCountResults.length > 0) {
+    console.log(chalk.bold('Line Count:'));
+    
+    for (const { spec, result, content } of lineCountResults) {
+      const specName = path.basename(spec.path);
+      const lineCount = content.split('\n').length;
+
+      if (!result.passed) {
+        hasErrors = true;
+        console.log(chalk.red(`  ✗ ${specName} (${lineCount} lines - exceeds limit!)`));
+        for (const error of result.errors) {
+          console.log(chalk.gray(`     → ${error.message}`));
+          if (error.suggestion) {
+            console.log(chalk.gray(`     → ${error.suggestion}`));
+          }
+        }
+      } else if (result.warnings.length > 0) {
+        totalWarningCount++;
+        console.log(chalk.yellow(`  ⚠ ${specName} (${lineCount} lines - approaching limit)`));
+        for (const warning of result.warnings) {
+          console.log(chalk.gray(`     → ${warning.suggestion || warning.message}`));
+        }
+      } else {
+        totalPassCount++;
+        console.log(chalk.green(`  ✓ ${specName} (${lineCount} lines)`));
+      }
+    }
+    console.log('');
+  }
+
+  // Display Frontmatter results
+  const frontmatterResults = resultsByValidator.get('frontmatter') || [];
+  if (frontmatterResults.length > 0) {
+    console.log(chalk.bold('Frontmatter:'));
+    
+    const errorResults = frontmatterResults.filter(r => !r.result.passed);
+    const warningResults = frontmatterResults.filter(r => r.result.passed && r.result.warnings.length > 0);
+    const passResults = frontmatterResults.filter(r => r.result.passed && r.result.warnings.length === 0);
+
+    // Show errors
+    if (errorResults.length > 0) {
       hasErrors = true;
-      console.log(chalk.red(`  ✗ ${specName} (${lineCount} lines - exceeds limit!)`));
-      for (const error of result.errors) {
-        console.log(chalk.gray(`     → ${error.message}`));
-        if (error.suggestion) {
-          console.log(chalk.gray(`     → ${error.suggestion}`));
+      console.log(chalk.red(`  ✗ ${errorResults.length} spec(s) with errors:`));
+      for (const { spec, result } of errorResults) {
+        const specName = path.basename(spec.path);
+        console.log(chalk.gray(`    - ${specName}`));
+        for (const error of result.errors) {
+          console.log(chalk.gray(`      • ${error.message}`));
+          if (error.suggestion) {
+            console.log(chalk.gray(`        → ${error.suggestion}`));
+          }
         }
       }
-    } else if (result.warnings.length > 0) {
-      warningCount++;
-      console.log(chalk.yellow(`  ⚠ ${specName} (${lineCount} lines - approaching limit)`));
-      for (const warning of result.warnings) {
-        console.log(chalk.gray(`     → ${warning.suggestion || warning.message}`));
-      }
-    } else {
-      passCount++;
-      console.log(chalk.green(`  ✓ ${specName} (${lineCount} lines)`));
     }
+
+    // Show warnings
+    if (warningResults.length > 0) {
+      totalWarningCount += warningResults.length;
+      console.log(chalk.yellow(`  ⚠ ${warningResults.length} spec(s) with warnings:`));
+      for (const { spec, result } of warningResults) {
+        const specName = path.basename(spec.path);
+        console.log(chalk.gray(`    - ${specName}`));
+        for (const warning of result.warnings) {
+          console.log(chalk.gray(`      • ${warning.message}`));
+          if (warning.suggestion) {
+            console.log(chalk.gray(`        → ${warning.suggestion}`));
+          }
+        }
+      }
+    }
+
+    // Show summary of passing specs
+    if (passResults.length > 0 && (errorResults.length > 0 || warningResults.length > 0)) {
+      totalPassCount += passResults.length;
+      console.log(chalk.green(`  ✓ ${passResults.length} spec(s) passed`));
+    } else if (passResults.length > 0) {
+      totalPassCount += passResults.length;
+      console.log(chalk.green(`  ✓ All ${passResults.length} spec(s) passed`));
+    }
+    console.log('');
   }
 
   // Summary
-  console.log('');
+  const totalSpecs = specs.length;
   const errorCount = results.filter(r => !r.result.passed).length;
   
   if (hasErrors) {
-    console.log(chalk.red(`Results: ${passCount} passed, ${warningCount} warning(s), ${errorCount} failed`));
-  } else if (warningCount > 0) {
-    console.log(chalk.yellow(`Results: ${passCount} passed, ${warningCount} warning(s), 0 failed`));
+    console.log(chalk.red(`Results: ${totalSpecs} specs validated, ${errorCount} error(s), ${totalWarningCount} warning(s)`));
+  } else if (totalWarningCount > 0) {
+    console.log(chalk.yellow(`Results: ${totalSpecs} specs validated, 0 errors, ${totalWarningCount} warning(s)`));
   } else {
-    console.log(chalk.green(`Results: ${passCount} passed, 0 warnings, 0 failed`));
+    console.log(chalk.green(`Results: ${totalSpecs} specs validated, all passed`));
   }
 
   return !hasErrors;

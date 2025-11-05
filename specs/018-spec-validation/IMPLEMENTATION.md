@@ -29,28 +29,35 @@
 
 **Phase Completed:** November 2025
 
-## Phase 1b: Frontmatter Validation (NEXT)
+## Phase 1b: Frontmatter Validation (✅ COMPLETE)
 
 **Goal:** Validate spec frontmatter for required fields and valid values
 
-**Tasks:**
-- [ ] Create frontmatter validator module
-- [ ] Validate required fields present
-- [ ] Validate status values
-- [ ] Validate priority values
-- [ ] Validate date formats
-- [ ] Validate tags format
-- [ ] Validate custom fields (if defined in config)
-- [ ] Integrate with `lspec validate --frontmatter` flag
+**Completed Tasks:**
+- [x] Create frontmatter validator module (`src/validators/frontmatter.ts`)
+- [x] Validate required fields present (status, created)
+- [x] Validate status values (planned, in-progress, complete, archived)
+- [x] Validate priority values (low, medium, high, critical)
+- [x] Validate date formats (ISO 8601: YYYY-MM-DD or full timestamp)
+- [x] Validate tags format (must be array)
+- [x] Add comprehensive unit tests (27 tests passing)
+- [x] Integrate with `lspec validate` command
+- [ ] Validate custom fields (if defined in config) - deferred to future phase
+- [ ] Add `--frontmatter` flag for selective validation - deferred to future phase
 
 **Notes:** 
-- Most critical for catching common mistakes
-- Enables comprehensive pre-commit hooks
-- Prevents invalid specs from being created
+- Most critical for catching common mistakes ✓
+- Enables comprehensive pre-commit hooks ✓
+- Prevents invalid specs from being created ✓
+- Pragmatic approach: coerces types where reasonable
+- Clear error messages with actionable suggestions
+- Tested against real repository specs: all passing
 
-**Estimated Effort:** 2 days
+**Phase Completed:** November 2025
 
-## Phase 2: Structure Validation
+**Actual Effort:** 1 day (ahead of 2-day estimate)
+
+## Phase 2: Structure Validation (NEXT)
 
 **Goal:** Ensure specs follow structural conventions
 
