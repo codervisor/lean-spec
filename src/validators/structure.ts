@@ -112,14 +112,28 @@ export class StructureValidator implements ValidationRule {
   }
 
   /**
-   * Extract all headings from markdown content
+   * Extract all headings from markdown content (excluding code blocks)
    */
   private extractHeadings(content: string): Array<{ level: number; text: string; line: number }> {
     const headings: Array<{ level: number; text: string; line: number }> = [];
     const lines = content.split('\n');
     
+    let inCodeBlock = false;
+    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      
+      // Track code block boundaries
+      if (line.trim().startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        continue;
+      }
+      
+      // Skip lines inside code blocks
+      if (inCodeBlock) {
+        continue;
+      }
+      
       const match = line.match(/^(#{1,6})\s+(.+)$/);
       if (match) {
         headings.push({

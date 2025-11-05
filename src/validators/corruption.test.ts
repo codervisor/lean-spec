@@ -428,6 +428,123 @@ This has **unclosed bold formatting.
     });
   });
 
+  describe('Duplicate content detection', () => {
+    it('should not flag overlapping windows as duplicates', () => {
+      // This tests the bug fix: sliding window creates overlapping blocks
+      // that share 4 out of 5 lines, causing false positives
+      const content = `---
+status: planned
+created: '2025-11-05'
+---
+
+# Test Spec
+
+## Overview
+
+Line 1 of normal content
+Line 2 of normal content
+Line 3 of normal content
+Line 4 of normal content
+Line 5 of normal content
+Line 6 of normal content
+Line 7 of normal content
+
+More content here.
+`;
+      const spec = createSpecInfo('overlapping-windows');
+      const result = validator.validate(spec, content);
+      
+      expect(result.passed).toBe(true);
+      // Should not report adjacent lines as duplicates (e.g., lines 12, 13)
+      expect(result.warnings.length).toBe(0);
+    });
+
+    it('should detect actual duplicate blocks separated by distance', () => {
+      const content = `---
+status: planned
+created: '2025-11-05'
+---
+
+# Test Spec
+
+## Section One
+
+This is a very long paragraph with substantial content that should not be duplicated anywhere in the document.
+It contains multiple lines and meaningful text specifically for testing purposes and validation.
+We need at least 200 characters to trigger the duplicate detection logic with current thresholds.
+This ensures we only catch real duplicates, not short common phrases or similar patterns.
+Line five adds more content to meet the character requirement for duplicate detection.
+Line six continues with unique text to ensure the block is long enough.
+Line seven adds even more content to guarantee we exceed the minimum length threshold.
+Line eight completes our substantial block of duplicated content for testing purposes.
+
+## Middle Section
+
+Some different content in the middle to separate the duplicates.
+This provides distance between the duplicate blocks.
+It has completely different text that won't match.
+More unique content here.
+
+## Section Two
+
+This is a very long paragraph with substantial content that should not be duplicated anywhere in the document.
+It contains multiple lines and meaningful text specifically for testing purposes and validation.
+We need at least 200 characters to trigger the duplicate detection logic with current thresholds.
+This ensures we only catch real duplicates, not short common phrases or similar patterns.
+Line five adds more content to meet the character requirement for duplicate detection.
+Line six continues with unique text to ensure the block is long enough.
+Line seven adds even more content to guarantee we exceed the minimum length threshold.
+Line eight completes our substantial block of duplicated content for testing purposes.
+`;
+      const spec = createSpecInfo('real-duplicates');
+      const result = validator.validate(spec, content);
+      
+      expect(result.passed).toBe(true); // Duplicates are warnings, not errors
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.warnings.some(w => w.message.includes('Duplicate content block'))).toBe(true);
+    });
+
+    it('should detect duplicates in code blocks', () => {
+      const content = `---
+status: planned
+created: '2025-11-05'
+---
+
+# Test Spec
+
+\`\`\`typescript
+This is a very long paragraph with substantial content that should not be duplicated anywhere.
+It contains multiple lines and meaningful text specifically for testing purposes and validation.
+We need at least 200 characters to trigger the duplicate detection logic with current thresholds.
+This ensures we only catch real duplicates, not short common phrases or similar patterns.
+Line five adds more content to meet the character requirement for duplicate detection.
+Line six continues with unique text to ensure the block is long enough.
+Line seven adds even more content to guarantee we exceed the minimum length threshold.
+Line eight completes our substantial block of duplicated content for testing purposes.
+\`\`\`
+
+Some content between.
+
+\`\`\`typescript
+This is a very long paragraph with substantial content that should not be duplicated anywhere.
+It contains multiple lines and meaningful text specifically for testing purposes and validation.
+We need at least 200 characters to trigger the duplicate detection logic with current thresholds.
+This ensures we only catch real duplicates, not short common phrases or similar patterns.
+Line five adds more content to meet the character requirement for duplicate detection.
+Line six continues with unique text to ensure the block is long enough.
+Line seven adds even more content to guarantee we exceed the minimum length threshold.
+Line eight completes our substantial block of duplicated content for testing purposes.
+\`\`\`
+`;
+      const spec = createSpecInfo('duplicates-in-code');
+      const result = validator.validate(spec, content);
+      
+      expect(result.passed).toBe(true); // Duplicates are warnings, not errors
+      expect(result.warnings.length).toBeGreaterThan(0); // Should warn about code block duplicates
+      expect(result.warnings.some(w => w.message.includes('Duplicate content block'))).toBe(true);
+    });
+  });
+
   describe('Real-world corruption scenarios', () => {
     it('should detect multiple corruption issues in one spec', () => {
       const content = `---
