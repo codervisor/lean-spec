@@ -27,13 +27,12 @@ describe('CorruptionValidator', () => {
    */
   function createSpecInfo(name: string): SpecInfo {
     return {
-      id: name,
-      path: path.join(tempDir, name),
+      path: name,
+      fullPath: path.join(tempDir, name),
       filePath: path.join(tempDir, name, 'README.md'),
-      title: name,
-      status: 'planned',
-      created: '2025-11-05',
-      metadata: {
+      name: name,
+      date: '20251105',
+      frontmatter: {
         status: 'planned',
         created: '2025-11-05',
       },
@@ -115,7 +114,9 @@ More text.
     });
   });
 
-  describe('JSON/YAML validation', () => {
+  // NOTE: JSON/YAML validation removed - code examples often intentionally show invalid syntax
+  // This was causing too many false positives (examples vs real content)
+  describe.skip('JSON/YAML validation (REMOVED)', () => {
     it('should pass for valid JSON blocks', () => {
       const content = `---
 status: planned
@@ -243,7 +244,9 @@ const x = { this is not valid JS but we don't check it }
     });
   });
 
-  describe('Duplicate content detection', () => {
+  // NOTE: Duplicate content detection removed - too noisy, not actual corruption
+  // Most "duplicates" were boilerplate, templates, or similar code examples
+  describe.skip('Duplicate content detection (REMOVED)', () => {
     it('should warn about duplicate content blocks', () => {
       const content = `---
 status: planned
@@ -407,8 +410,8 @@ unclosed code block
       expect(result.passed).toBe(true); // No error because check is disabled
     });
 
-    it('should skip JSON/YAML checks when disabled', () => {
-      const validator = new CorruptionValidator({ checkJsonYaml: false });
+    it('should skip markdown structure checks when disabled', () => {
+      const validator = new CorruptionValidator({ checkMarkdownStructure: false });
       const content = `---
 status: planned
 created: '2025-11-05'
@@ -416,11 +419,9 @@ created: '2025-11-05'
 
 # Test Spec
 
-\`\`\`json
-{ invalid json }
-\`\`\`
+This has **unclosed bold formatting.
 `;
-      const spec = createSpecInfo('disabled-json-check');
+      const spec = createSpecInfo('disabled-markdown-check');
       const result = validator.validate(spec, content);
       
       expect(result.passed).toBe(true);
@@ -440,24 +441,9 @@ created: '2025-11-05'
 
 This section has **unclosed bold.
 
-\`\`\`json
-{
-  "broken": "json"
-  "missing": "comma"
-}
-\`\`\`
-
 ## Design
 
-Some repeated content that appears multiple times in the document.
-This is substantial enough to be detected as duplication.
-It should trigger a warning about potential merge conflicts.
-
-## Implementation
-
-Some repeated content that appears multiple times in the document.
-This is substantial enough to be detected as duplication.
-It should trigger a warning about potential merge conflicts.
+Some content here.
 
 \`\`\`typescript
 const code = "that is never closed
@@ -467,7 +453,7 @@ const code = "that is never closed
       
       expect(result.passed).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.warnings.length).toBeGreaterThan(0);
+      // Note: No warnings anymore (removed duplicate detection and JSON/YAML validation)
     });
   });
 });

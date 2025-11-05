@@ -1,23 +1,30 @@
 /**
  * Corruption validator - detects file corruption from failed edits
  * 
- * Phase 3: Corruption Detection
- * - Validates code blocks are properly closed
- * - Checks JSON/YAML blocks are complete and parseable
- * - Detects duplicate content blocks
- * - Validates markdown structure (lists, tables)
+ * Focus on visually apparent corruption that breaks rendering:
+ * - Unclosed code blocks (breaks syntax highlighting)
+ * - Unclosed formatting in actual content (not code blocks)
+ * 
+ * Intentionally excludes:
+ * - YAML/JSON validation (code examples often show invalid syntax)
+ * - Duplicate content detection (too noisy, not actual corruption)
  */
 
 import type { ValidationRule, ValidationResult, ValidationError, ValidationWarning } from '../utils/validation-framework.js';
 import type { SpecInfo } from '../spec-loader.js';
-import yaml from 'js-yaml';
 
 export interface CorruptionOptions {
   // Enable/disable specific checks
   checkCodeBlocks?: boolean;
-  checkJsonYaml?: boolean;
-  checkDuplicateContent?: boolean;
   checkMarkdownStructure?: boolean;
+}
+
+/**
+ * Represents a code block range in the document
+ */
+interface CodeBlockRange {
+  start: number;  // Line number (1-indexed)
+  end: number;    // Line number (1-indexed)
 }
 
 export class CorruptionValidator implements ValidationRule {
@@ -29,8 +36,6 @@ export class CorruptionValidator implements ValidationRule {
   constructor(options: CorruptionOptions = {}) {
     this.options = {
       checkCodeBlocks: options.checkCodeBlocks ?? true,
-      checkJsonYaml: options.checkJsonYaml ?? true,
-      checkDuplicateContent: options.checkDuplicateContent ?? true,
       checkMarkdownStructure: options.checkMarkdownStructure ?? true,
     };
   }
@@ -39,27 +44,18 @@ export class CorruptionValidator implements ValidationRule {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
 
-    // Check code blocks
+    // Parse code block ranges once for reuse
+    const codeBlockRanges = this.parseCodeBlockRanges(content);
+
+    // Check code blocks (unclosed blocks)
     if (this.options.checkCodeBlocks) {
       const codeBlockErrors = this.validateCodeBlocks(content);
       errors.push(...codeBlockErrors);
     }
 
-    // Check JSON/YAML blocks
-    if (this.options.checkJsonYaml) {
-      const jsonYamlErrors = this.validateJsonYamlBlocks(content);
-      errors.push(...jsonYamlErrors);
-    }
-
-    // Check for duplicate content blocks
-    if (this.options.checkDuplicateContent) {
-      const duplicateWarnings = this.detectDuplicateContent(content);
-      warnings.push(...duplicateWarnings);
-    }
-
-    // Check markdown structure
+    // Check markdown structure (but exclude code blocks)
     if (this.options.checkMarkdownStructure) {
-      const markdownErrors = this.validateMarkdownStructure(content);
+      const markdownErrors = this.validateMarkdownStructure(content, codeBlockRanges);
       errors.push(...markdownErrors);
     }
 
@@ -71,7 +67,60 @@ export class CorruptionValidator implements ValidationRule {
   }
 
   /**
+   * Parse all code block ranges in the document
+   * Returns array of {start, end} line numbers (1-indexed)
+   */
+  private parseCodeBlockRanges(content: string): CodeBlockRange[] {
+    const ranges: CodeBlockRange[] = [];
+    const lines = content.split('\n');
+    
+    let inCodeBlock = false;
+    let blockStart = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim().startsWith('```')) {
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          blockStart = i + 1; // 1-indexed
+        } else {
+          ranges.push({
+            start: blockStart,
+            end: i + 1 // 1-indexed, inclusive
+          });
+          inCodeBlock = false;
+          blockStart = -1;
+        }
+      }
+    }
+
+    return ranges;
+  }
+
+  /**
+   * Check if a line number is inside a code block
+   */
+  private isInCodeBlock(lineNumber: number, codeBlockRanges: CodeBlockRange[]): boolean {
+    return codeBlockRanges.some(
+      range => lineNumber >= range.start && lineNumber <= range.end
+    );
+  }
+
+  /**
+   * Get content outside code blocks for analysis
+   */
+  private getContentOutsideCodeBlocks(content: string, codeBlockRanges: CodeBlockRange[]): string {
+    const lines = content.split('\n');
+    const filteredLines = lines.filter((_, index) => {
+      const lineNumber = index + 1; // 1-indexed
+      return !this.isInCodeBlock(lineNumber, codeBlockRanges);
+    });
+    return filteredLines.join('\n');
+  }
+
+  /**
    * Validate code blocks are properly closed
+   * This is the #1 indicator of corruption - causes visible syntax highlighting issues
    */
   private validateCodeBlocks(content: string): ValidationError[] {
     const errors: ValidationError[] = [];
@@ -105,176 +154,51 @@ export class CorruptionValidator implements ValidationRule {
   }
 
   /**
-   * Validate JSON/YAML blocks in code fences
+   * Validate markdown structure (excluding code blocks)
+   * Only checks actual content for formatting issues
    */
-  private validateJsonYamlBlocks(content: string): ValidationError[] {
+  private validateMarkdownStructure(content: string, codeBlockRanges: CodeBlockRange[]): ValidationError[] {
     const errors: ValidationError[] = [];
-    const lines = content.split('\n');
-    
-    let inCodeBlock = false;
-    let codeBlockLang = '';
-    let codeBlockContent: string[] = [];
-    let codeBlockStartLine = -1;
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    // Get content outside code blocks
+    const contentOutsideCodeBlocks = this.getContentOutsideCodeBlocks(content, codeBlockRanges);
+
+    // Remove list markers first (before checking asterisks)
+    const lines = contentOutsideCodeBlocks.split('\n');
+    const linesWithoutListMarkers = lines.map(line => {
       const trimmed = line.trim();
-
-      if (trimmed.startsWith('```')) {
-        if (!inCodeBlock) {
-          // Starting a code block
-          inCodeBlock = true;
-          codeBlockLang = trimmed.slice(3).trim().toLowerCase();
-          codeBlockContent = [];
-          codeBlockStartLine = i + 1;
-        } else {
-          // Ending a code block - validate if it's JSON or YAML
-          if (codeBlockLang === 'json' || codeBlockLang === 'jsonc') {
-            const jsonContent = codeBlockContent.join('\n');
-            if (jsonContent.trim()) {
-              try {
-                // Remove comments for jsonc
-                const cleanJson = codeBlockLang === 'jsonc' 
-                  ? jsonContent.replace(/\/\/.*$/gm, '')
-                  : jsonContent;
-                JSON.parse(cleanJson);
-              } catch (error) {
-                errors.push({
-                  message: `Invalid JSON in code block at line ${codeBlockStartLine}`,
-                  suggestion: error instanceof Error ? error.message : 'Check JSON syntax',
-                });
-              }
-            }
-          } else if (codeBlockLang === 'yaml' || codeBlockLang === 'yml') {
-            const yamlContent = codeBlockContent.join('\n');
-            if (yamlContent.trim()) {
-              try {
-                yaml.load(yamlContent);
-              } catch (error) {
-                errors.push({
-                  message: `Invalid YAML in code block at line ${codeBlockStartLine}`,
-                  suggestion: error instanceof Error ? error.message : 'Check YAML syntax',
-                });
-              }
-            }
-          }
-
-          inCodeBlock = false;
-          codeBlockLang = '';
-          codeBlockContent = [];
-        }
-      } else if (inCodeBlock) {
-        codeBlockContent.push(line);
+      // Replace list markers: "- item" or "* item" or "+ item"
+      if (trimmed.match(/^[-*+]\s/)) {
+        return line.replace(/^(\s*)([-*+]\s)/, '$1  '); // Replace marker with spaces
       }
-    }
+      return line;
+    });
+    let contentWithoutListMarkers = linesWithoutListMarkers.join('\n');
 
-    return errors;
-  }
-
-  /**
-   * Detect duplicate content blocks (potential merge artifacts)
-   */
-  private detectDuplicateContent(content: string): ValidationWarning[] {
-    const warnings: ValidationWarning[] = [];
-    const lines = content.split('\n');
-    
-    // Look for significant duplicate blocks (3+ consecutive lines)
-    const blockSize = 3;
-    const blocks = new Map<string, number[]>();
-
-    for (let i = 0; i <= lines.length - blockSize; i++) {
-      const block = lines.slice(i, i + blockSize)
-        .map(l => l.trim())
-        .filter(l => l.length > 0)
-        .join('\n');
-
-      if (block.length > 50) { // Only check substantial blocks
-        if (!blocks.has(block)) {
-          blocks.set(block, []);
-        }
-        blocks.get(block)!.push(i + 1);
-      }
-    }
-
-    // Report blocks that appear multiple times
-    for (const [block, lineNumbers] of blocks.entries()) {
-      if (lineNumbers.length > 1) {
-        warnings.push({
-          message: `Duplicate content block found at lines: ${lineNumbers.join(', ')}`,
-          suggestion: 'Check for merge artifacts or failed edits',
-        });
-      }
-    }
-
-    return warnings;
-  }
-
-  /**
-   * Validate markdown structure
-   */
-  private validateMarkdownStructure(content: string): ValidationError[] {
-    const errors: ValidationError[] = [];
-    const lines = content.split('\n');
+    // Also remove inline code (backticks) which might contain asterisks
+    // Replace `code` with empty string to exclude from asterisk counting
+    contentWithoutListMarkers = contentWithoutListMarkers.replace(/`[^`]*`/g, '');
 
     // Check for unclosed formatting
-    const boldMatches = content.match(/\*\*/g) || [];
+    const boldMatches = contentWithoutListMarkers.match(/\*\*/g) || [];
     
     // For italic, count single asterisks that are not part of bold
     // Split by ** first, then count * in the remaining text
-    const withoutBold = content.split('**').join('');
+    const withoutBold = contentWithoutListMarkers.split('**').join('');
     const italicMatches = withoutBold.match(/\*/g) || [];
     
     if (boldMatches.length % 2 !== 0) {
       errors.push({
         message: 'Unclosed bold formatting (**)',
-        suggestion: 'Check for missing closing **',
+        suggestion: 'Check for missing closing ** in markdown content (not code blocks)',
       });
     }
 
     if (italicMatches.length % 2 !== 0) {
       errors.push({
         message: 'Unclosed italic formatting (*)',
-        suggestion: 'Check for missing closing *',
+        suggestion: 'Check for missing closing * in markdown content (not code blocks)',
       });
-    }
-
-    // Check for malformed tables
-    let inTable = false;
-    let tableStartLine = -1;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      if (line.includes('|')) {
-        if (!inTable) {
-          inTable = true;
-          tableStartLine = i + 1;
-        }
-        
-        // Check if it looks like a table row
-        if (line.length > 0 && !line.startsWith('|') && !line.endsWith('|')) {
-          // Could be a partial table row - this is just informational, not critical
-          // Don't add error for now as it's too noisy
-        }
-      } else if (inTable && line.length > 0) {
-        // Exited table
-        inTable = false;
-      }
-    }
-
-    // Check for malformed lists
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmed = line.trim();
-      
-      // Check for list items with weird indentation
-      if (trimmed.match(/^[-*+]\s/) && line.length > 0) {
-        const leadingSpaces = line.match(/^ */)?.[0].length || 0;
-        if (leadingSpaces > 0 && leadingSpaces % 2 !== 0) {
-          // Odd indentation (not multiple of 2) - informational only
-          // Don't add error for now as it's too noisy
-        }
-      }
     }
 
     return errors;
