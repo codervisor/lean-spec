@@ -1,13 +1,20 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: ["vscode","copilot","ai","ux"]
+tags:
+  - vscode
+  - copilot
+  - ai
+  - ux
+  - v0.2.0-optional
 priority: medium
+created_at: '2025-11-03T00:00:00Z'
+updated_at: '2025-11-05T05:03:54.950Z'
 ---
 
 # GitHub Copilot Chat Slash Commands & Prompts
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-03
+> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-03 · **Tags**: vscode, copilot, ai, ux, v0.2.0-optional
 
 **Project**: lean-spec  
 **Team**: Core Development

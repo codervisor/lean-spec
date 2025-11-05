@@ -1,15 +1,22 @@
 ---
 status: planned
 created: '2025-11-02'
-tags: ["quality","validation","cli"]
-priority: high
+tags:
+  - quality
+  - validation
+  - cli
+  - first-principles
+  - v0.2.0
+priority: critical
 related:
   - 043-official-launch-02
+created_at: '2025-11-02T00:00:00Z'
+updated_at: '2025-11-05T05:03:54.949Z'
 ---
 
 # Comprehensive Spec Checking (Expand lspec check)
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-02
+> **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-11-02 · **Tags**: quality, validation, cli, first-principles, v0.2.0
 
 ## Overview
 

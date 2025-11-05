@@ -7,15 +7,18 @@ tags:
   - first-principles
   - system-prompt
   - philosophy
-priority: high
+  - v0.2.0
+priority: critical
 related:
   - 049-leanspec-first-principles
   - 050-tool-redesign-first-principles
+created_at: '2025-11-05T00:00:00Z'
+updated_at: '2025-11-05T05:03:54.922Z'
 ---
 
 # Update System Prompt and Docs with First Principles
 
-> **Status**: 📋 Planned · **Priority**: High · **Created**: 2025-11-05 · **Tags**: documentation, ai-agents, first-principles, system-prompt, philosophy
+> **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-11-05 · **Tags**: documentation, ai-agents, first-principles, system-prompt, philosophy, v0.2.0
 
 **Project**: lean-spec  
 **Team**: Core Development

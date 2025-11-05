@@ -1,15 +1,21 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: ["docs","maintenance","clarity"]
-priority: high
+tags:
+  - docs
+  - maintenance
+  - clarity
+  - merged-into-051
+priority: low
 related:
   - 043-official-launch-02
+created_at: '2025-11-03T00:00:00Z'
+updated_at: '2025-11-05T05:04:02.384Z'
 ---
 
 # Documentation Overhaul & Simplification
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-03
+> **Status**: 🗓️ Planned · **Priority**: Low · **Created**: 2025-11-03 · **Tags**: docs, maintenance, clarity, merged-into-051
 
 **Project**: lean-spec  
 **Team**: Core Development

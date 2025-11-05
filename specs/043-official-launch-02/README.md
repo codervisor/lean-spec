@@ -26,37 +26,54 @@ Launch LeanSpec v0.2.0 as the **official public release**, treating v0.1.0 as an
 - Allows us to ship critical fixes and polish before "official" launch
 - Semantic versioning: 0.2.0 signals stability improvements over 0.1.0
 
-**Launch Goals:**
-1. **Rock-solid stability** - Zero critical bugs, 100% test pass rate
-2. **Best-in-class UX** - <5 min from install to first spec
-3. **Clear positioning** - "SDD for AI-powered development"
-4. **Strong launch momentum** - Marketing, community, adoption metrics
+**Launch Goals (UPDATED - First Principles Focus):**
+1. **Practice what we preach** - Demonstrate 5 first principles (spec 049) through implementation
+2. **Operationalize principles** - Ship tooling that prevents principle violations (validation, complexity checks)
+3. **Rock-solid stability** - Zero critical bugs, 100% test pass rate
+4. **Clear philosophy** - Users and AI agents understand "why" not just "what"
+5. **Strong launch momentum** - Marketing emphasizes first-principles thinking
+
+**Key Shift from Original Plan:**
+- Discovered first principles (spec 049) fundamentally reframes v0.2.0 priorities
+- Focus: Foundation & operationalization over feature accumulation
+- Defer major redesign work (spec 050) to v0.3.0 to keep release lean and principle-aligned
 
 ## Design
 
 ### Release Strategy
 
-**Three-Phase Rollout:**
+**Three-Phase Rollout (REVISED - First Principles Focus):**
 
-**Phase 1: Stabilization (Week 1-2)**
-- Fix all failing tests
-- Resolve MCP error handling bug (spec 042)
-- Documentation cleanup and simplification (spec 037)
-- Manual QA of all CLI commands
-- **Outcome**: v0.2.0-beta.1 for internal testing
+**Phase 1: Foundation (Week 1-2)**
+- **Goal**: Operationalize first principles through tooling and documentation
+- Fix all failing tests (git-timestamps blocking)
+- Complete spec 048 (complexity analysis) - foundational insight that led to principles
+- **NEW PRIORITY**: Implement spec 051 (update AGENTS.md, README with first principles)
+- **NEW PRIORITY**: Start spec 018 (basic validation: `--max-lines` check)
+- **Outcome**: Foundation for principle-driven development in place
 
-**Phase 2: Polish & Features (Week 3-5)**
-- Init pattern selection (spec 026)
-- Pattern-aware list grouping (spec 024)
-- Spec validation (spec 018)
-- Optional: Start Copilot integration (spec 034)
-- **Outcome**: v0.2.0-rc.1 for beta testers
+**Phase 2: Operationalization (Week 3-4)**
+- **Goal**: Complete detection/enforcement layer + core UX improvements
+- Complete spec 018 (full validation with complexity checks)
+- Implement spec 024 (pattern-aware list grouping) - Context Economy in output
+- Implement spec 026 (init pattern selection) - Progressive Disclosure in onboarding
+- Dogfood: Review and split any specs >400 lines (practice what we preach)
+- **Outcome**: Tools enforce principles, UX demonstrates principles
 
-**Phase 3: Launch (Week 6)**
-- Final QA and bug fixes
-- Marketing content creation
-- Community outreach
-- **Outcome**: v0.2.0 official release
+**Phase 3: Launch Preparation (Week 5-6)**
+- **Goal**: Polish, validation, launch execution
+- Implement spec 044 (spec relationships clarity) - Bridge the Gap
+- Complete spec 035 (live specs showcase) if ready for launch content
+- Beta testing with principle validation checklist
+- Marketing content emphasizing first-principles philosophy
+- **Outcome**: v0.2.0 official release with clear philosophical foundation
+
+**What Changed from Original Plan:**
+- Elevated principle operationalization (specs 051, 018) to Phase 1 critical path
+- Deferred major redesign (spec 050: CLI/MCP redesign) to v0.3.0 (too large for v0.2.0 scope)
+- Merged docs work: spec 037 absorbed into spec 051 (avoid duplication, Signal-to-Noise principle)
+- Spec 034 (Copilot slash commands) demoted to optional/v0.3.0 (not principle-critical)
+- Added explicit dogfooding checkpoint: split large specs before launch
 
 ### Version Positioning
 
@@ -93,85 +110,113 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 
 ## Plan
 
-### Phase 1: Critical Fixes (Week 1-2) ✅ MOSTLY COMPLETE
+### Phase 1: Foundation (Week 1-2) - REVISED PRIORITIES
 
-**Blocking Issues:**
-- [x] Fix 3 failing tests in `spec-loader.test.ts` (date assertions) - ✅ RESOLVED
-- [x] Implement spec 042: MCP error handling (prevent server crashes) - ✅ COMPLETE
-- [ ] Fix 11 failing tests in git-timestamps module (backfill feature) - 🔴 BLOCKING
+**🔴 BLOCKING: Test Stability**
+- [ ] Fix 11 failing tests in git-timestamps module (backfill feature) - 🔴 CRITICAL BLOCKER
 - [ ] Run full regression testing on all CLI commands
 - [ ] Verify MCP server stability across error scenarios
-- [ ] Fix any discovered bugs from testing
+- [x] Fix 3 failing tests in `spec-loader.test.ts` (date assertions) - ✅ RESOLVED
+- [x] Implement spec 042: MCP error handling (prevent server crashes) - ✅ COMPLETE
 
-**Current Status (2025-11-04):**
-- Test suite: **244/255 passing (95.7%)** - down from 98.4%
-- New failures in `git-timestamps` module from spec 047 implementation
+**Current Status (2025-11-05):**
+- Test suite: **244/255 passing (95.7%)** - 11 failures blocking
 - Core CLI commands working: no TypeScript/lint errors
 - MCP server stable after spec 042 fixes
 
-**Documentation:**
-- [ ] Start spec 037: Documentation overhaul - 📋 PLANNED, ready to start
-- [ ] Simplify README (remove redundancy)
-- [ ] Audit AGENTS.md for accuracy
+**🟡 CRITICAL: First Principles Operationalization**
+- [ ] Complete spec 048: Complexity analysis - ✅ MARKED COMPLETE (foundational insight)
+- [ ] **NEW**: Implement spec 051: Update AGENTS.md + README with first principles framework
+  - Add conflict resolution framework for AI agents
+  - Document 5 principles in README "Core Principles" section
+  - Update AGENTS.md with decision-making guidance
+- [ ] **NEW**: Start spec 018: Basic validation implementation
+  - Implement `lspec validate --max-lines 400` command
+  - Add warnings for specs approaching 300 lines
+  - Foundation for full operationalization layer
+
+**🟢 Documentation Quality:**
+- [x] AGENTS.md accuracy verified
+- [x] README reflects current features
 - [ ] Review all docs for broken links
 - [ ] Ensure code examples work
+- **NOTE**: Spec 037 (docs overhaul) merged into spec 051 to avoid duplication
 
-**Quality Checks:**
+**Quality Gates:**
 - [x] TypeScript builds without errors - ✅ CLEAN
 - [x] No console.error/console.log in production - ✅ CLEAN
 - [x] Lint passes cleanly - ✅ PASSING
-- [ ] Bundle size acceptable (<5MB)
+- [ ] All tests passing (255/255) - 🔴 BLOCKING
 
-### Phase 2: Polish & UX (Week 3-5) ⏳ STARTING
+**Outcome**: Foundation for principle-driven development + test stability
 
-**User Experience Improvements:**
-- [x] Implement spec 045: Unified dashboard (merge vis commands) - ✅ COMPLETE
-- [x] Implement spec 046: Stats dashboard refactor - ✅ COMPLETE
-- [ ] Implement spec 026: Init pattern selection (interactive setup) - 📋 READY TO START
-- [ ] Implement spec 024: Pattern-aware list grouping (clearer output) - 📋 READY TO START
-- [ ] Consider spec 025: Template config updates (polish)
+### Phase 2: Operationalization (Week 3-4) - REFOCUSED
+
+**🔴 Complete Detection Layer (First Principles):**
+- [ ] Complete spec 018: Full validation implementation
+  - Add `lspec complexity <spec>` command
+  - Add `lspec health` project-wide check
+  - Implement frontmatter warnings for large specs
+  - Result: Tools enforce Context Economy principle
+
+**🟡 Core UX Improvements (Aligned with Principles):**
+- [ ] Implement spec 024: Pattern-aware list grouping
+  - Why: Context Economy - reduces cognitive load in output
+- [ ] Implement spec 026: Init pattern selection (interactive setup)
+  - Why: Progressive Disclosure - guides new users
 - [ ] Review and improve error messages
-- [ ] Add helpful hints to common failure scenarios
+  - Why: Bridge the Gap - clear communication
 
-**Feature Work:**
-- [ ] Implement spec 018: Spec validation (schema checking) - 📋 PLANNED, critical for quality
-- [ ] Optional: Begin spec 034: Copilot slash commands (if time allows)
-- [ ] Review and prioritize any new user-requested features
+**🟢 Dogfooding Checkpoint:**
+- [ ] Review all specs for Context Economy violations (>400 lines)
+- [ ] Split any large specs using sub-spec pattern (spec 012)
+- [ ] Document splitting decisions and rationale
+- [ ] **Goal**: Practice what we preach before launch
 
 **Testing:**
 - [ ] Beta testing with 3-5 external users
+- [ ] Test principle-based decision making with AI agents
 - [ ] Collect feedback on onboarding experience
-- [ ] Iterate on pain points discovered
 - [ ] Performance testing (large spec repos)
 
-**Progress Notes (2025-11-04):**
-- ✅ Dashboard consolidation complete (specs 045, 046)
-- 🔴 Blocked by git-timestamps test failures - must fix before proceeding
-- Ready to implement UX improvements once blocking issues resolved
+**Deferred from Original Plan:**
+- ❌ Spec 034: Copilot slash commands → Optional, moved to v0.3.0 scope
+- ❌ Spec 050: Tool redesign → Too large, deferred to v0.3.0
+- ❌ Spec 025: Template config updates → Low priority polish
 
-### Phase 3: Launch Preparation (Week 6)
+**Outcome**: Complete operationalization layer + validated UX improvements
+
+### Phase 3: Launch Preparation (Week 5-6) - UPDATED
+
+**Final Features:**
+- [ ] Implement spec 044: Spec relationships clarity
+  - Why: Bridge the Gap - understand dependencies
+- [ ] Complete spec 035: Live specs showcase (if ready)
+  - Launch content demonstrating dogfooding
 
 **Release Engineering:**
 - [ ] Bump version to 0.2.0 in package.json
 - [ ] Write comprehensive CHANGELOG for v0.2.0
+  - Emphasize first principles foundation
+  - Highlight operationalization features (validation, complexity)
 - [ ] Update all version references in docs
 - [ ] Create GitHub release with release notes
 - [ ] Publish to npm registry
 - [ ] Test npm install flow
 
-**Marketing Content:**
-- [ ] Write launch blog post
-- [ ] Create demo video (3-5 min walkthrough)
-- [ ] Record GIF demos for key features
-- [ ] Prepare social media posts (Twitter, LinkedIn, Reddit)
-- [ ] Write comparison guides (vs BMAD, SpecKit, Kiro)
-- [ ] Create Product Hunt submission
+**Marketing Content (First Principles Focus):**
+- [ ] Write launch blog post: "LeanSpec: First Principles for AI-Powered Development"
+- [ ] Create demo video showing principle validation in action
+- [ ] Record GIF demos: spec creation, validation, complexity checks
+- [ ] Prepare social media posts emphasizing philosophy
+- [ ] Write comparison guides showing principle differentiation
+- [ ] Create Product Hunt submission with first-principles angle
 
 **Community Building:**
 - [ ] Set up GitHub Discussions
 - [ ] Create issue templates
-- [ ] Write CONTRIBUTING.md enhancements
-- [ ] Prepare FAQ document
+- [ ] Enhance CONTRIBUTING.md with first principles guidance
+- [ ] Prepare FAQ: "Why these constraints?"
 - [ ] Set up analytics tracking
 - [ ] Plan community support strategy
 
@@ -309,21 +354,28 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 - Better to nail the basics first
 - Can iterate based on user demand
 
-### Marketing Positioning
+### Marketing Positioning (UPDATED - First Principles Focus)
 
-**Tagline:** "Spec-Driven Development for AI-powered teams"
+**Tagline:** "First-Principles Spec-Driven Development for AI-powered teams"
 
-**Key Messages:**
-1. **Lightweight SDD** - Not 50-page docs, just what AI needs
-2. **AI-native** - Built for human + AI collaboration
-3. **Adaptive** - Starts simple, scales to enterprise
-4. **Your workflow** - Integrates with existing tools
+**Key Messages (Revised):**
+1. **First Principles Foundation** - Built on 5 immutable constraints (physics, biology, economics)
+2. **Operationalized Philosophy** - Tools that enforce principles, not just document them
+3. **AI-native** - Built for human + AI collaboration from the ground up
+4. **Practice what we preach** - Dogfooded extensively, specs demonstrate principles
+
+**Differentiation:**
+- **vs Traditional SDD**: We optimize for context windows and token costs (first principles, not convention)
+- **vs Agile**: We capture intent for AI execution (Bridge the Gap principle)
+- **vs "No docs"**: We document what matters (Signal-to-Noise principle)
+- **vs Heavyweight tools**: We stay lean by design (Context Economy principle)
 
 **Target Audience (Priority Order):**
-1. Solo developers using Cursor/Copilot/Claude
+1. Solo developers using Cursor/Copilot/Claude (need lightweight SDD)
 2. Small teams (2-5 devs) adopting AI pair programming
-3. Startups scaling from solo to team
+3. Startups scaling from solo to team (Progressive Disclosure)
 4. Engineering teams frustrated with heavyweight SDD
+5. First-principles thinkers curious about principled design
 
 ### Launch Channels
 
@@ -362,38 +414,52 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 - Mitigation: Responsive support, rapid iteration
 - Approach: View feedback as learning opportunity
 
-### Success Definition
+### Success Definition (REVISED)
 
 **v0.2.0 is successful if:**
-1. ✅ Establishes LeanSpec as a serious, stable tool
-2. ✅ Attracts 1,000+ early adopters
-3. ✅ Generates positive community sentiment
-4. ✅ Provides solid foundation for future growth
-5. ✅ Validates product-market fit for AI-powered dev teams
+1. ✅ **Practice what we preach** - All specs follow first principles (no specs >400 lines without sub-specs)
+2. ✅ **Operationalized principles** - Validation tooling shipped and working
+3. ✅ **Philosophy is clear** - Users/AI understand "why" from docs
+4. ✅ Establishes LeanSpec as a serious, stable tool
+5. ✅ Attracts 1,000+ early adopters who "get" the philosophy
+6. ✅ Generates positive community sentiment around first-principles thinking
+7. ✅ Validates product-market fit for AI-powered dev teams
 
-### Dependencies
+### Dependencies (UPDATED)
 
-**Blocking specs for v0.2.0:**
-- Spec 042: MCP error handling (MUST fix)
-- Spec 037: Docs overhaul (SHOULD do)
-- Spec 045: Unified dashboard (HIGH priority for UX)
+**🔴 Critical Path for v0.2.0:**
+- [x] Spec 042: MCP error handling - ✅ COMPLETE
+- [x] Spec 048: Complexity analysis - ✅ COMPLETE (foundational insight)
+- [ ] Spec 051: Docs + AGENTS.md with first principles - 🔴 CRITICAL (NEW)
+- [ ] Spec 018: Spec validation - 🔴 CRITICAL (ELEVATED)
+- [x] Spec 045: Unified dashboard - ✅ COMPLETE
+- [x] Spec 046: Stats refactor - ✅ COMPLETE
 
-**Nice-to-have specs:**
-- Spec 026: Init pattern selection
-- Spec 024: Pattern-aware list grouping
-- Spec 018: Spec validation
+**🟡 High Priority for v0.2.0:**
+- [ ] Spec 026: Init pattern selection (Progressive Disclosure)
+- [ ] Spec 024: Pattern-aware list grouping (Context Economy)
+- [ ] Spec 044: Spec relationships clarity (Bridge the Gap)
+- [ ] Dogfooding checkpoint: Split large specs
 
-**Deferred to post-v0.2.0:**
-- Spec 034: Copilot slash commands
+**🟢 Nice-to-have for v0.2.0:**
+- [ ] Spec 035: Live specs showcase (launch content)
+- Spec 037: Docs overhaul - ❌ MERGED INTO SPEC 051
+
+**⚪ Deferred to v0.3.0:**
+- Spec 050: Tool redesign (too large, complex)
+- Spec 034: Copilot slash commands (optional)
 - Spec 036: PM integrations
 - Spec 016: GitHub Action
 - Spec 017: VS Code extension
+- Spec 025: Template config updates
 
-### Timeline
+**Key Change**: Elevated principle operationalization (051, 018) to critical path, deferred major redesign (050) to maintain lean scope.
 
-**Week 1-2:** Stabilization (tests, bugs, docs)  
-**Week 3-5:** Polish (UX, validation, beta testing)  
-**Week 6:** Launch prep and execution  
+### Timeline (REVISED)
+
+**Week 1-2:** Foundation (tests, principles docs, basic validation)  
+**Week 3-4:** Operationalization (full validation, core UX, dogfooding)  
+**Week 5-6:** Launch prep and execution  
 **Week 7+:** Community support and iteration
 
 **Target launch date:** ~Mid-December 2025 (6 weeks from now)

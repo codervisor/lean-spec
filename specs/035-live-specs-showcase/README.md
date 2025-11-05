@@ -1,13 +1,19 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: ["docs","dogfooding","web"]
+tags:
+  - docs
+  - dogfooding
+  - web
+  - v0.2.0-launch
 priority: medium
+created_at: '2025-11-03T00:00:00Z'
+updated_at: '2025-11-05T05:04:02.385Z'
 ---
 
 # Live Specs Showcase on Documentation Site
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-03
+> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-03 · **Tags**: docs, dogfooding, web, v0.2.0-launch
 
 **Project**: lean-spec  
 **Team**: Core Development

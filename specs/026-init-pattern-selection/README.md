@@ -1,13 +1,21 @@
 ---
 status: planned
-created: 2025-11-03
-tags: [ux, init]
+created: '2025-11-03'
+tags:
+  - ux
+  - init
+  - v0.2.0
 priority: high
 related:
   - 043-official-launch-02
+created_at: '2025-11-03T00:00:00Z'
+updated_at: '2025-11-05T05:04:02.383Z'
 ---
 
 # Init Pattern Selection
+
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-03 · **Tags**: ux, init, v0.2.0
+
 
 > Let users choose folder pattern during `lspec init`
 

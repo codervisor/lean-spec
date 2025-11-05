@@ -1,15 +1,22 @@
 ---
 status: planned
 created: '2025-11-04'
-tags: ["ux", "clarity", "frontmatter", "relationships"]
+tags:
+  - ux
+  - clarity
+  - frontmatter
+  - relationships
+  - v0.2.0
 priority: high
 related:
   - 043-official-launch-02
+created_at: '2025-11-04T00:00:00Z'
+updated_at: '2025-11-05T05:04:02.384Z'
 ---
 
 # Clarify Spec Relationship Model
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-04
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-04 · **Tags**: ux, clarity, frontmatter, relationships, v0.2.0
 
 **Project**: lean-spec  
 **Team**: Core Development
