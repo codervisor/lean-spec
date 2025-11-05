@@ -12,7 +12,7 @@ related:
   - 043-official-launch-02
   - 012-sub-spec-files
 created_at: '2025-11-02T00:00:00Z'
-updated_at: '2025-11-05T15:30:48.507Z'
+updated_at: '2025-11-05T16:00:17.669Z'
 transitions:
   - status: in-progress
     at: '2025-11-05T13:35:26.669Z'
@@ -193,9 +193,9 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 
-**Current Phase:** Phase 3 ✅ Complete → Ready for Phase 3.5 (or v0.2.0 launch)
+**Current Phase:** Phase 3.5 ✅ Complete → Ready for v0.2.0 launch
 
-**✅ Completed (Phases 1a, 1b, 2, 3):**
+**✅ Completed (Phases 1a, 1b, 2, 3, 3.5):**
 - ✅ Validation framework architecture
 - ✅ **Phase 1a:** `LineCountValidator` with warning/error thresholds (300 line warning, 400 line error)
 - ✅ **Phase 1a:** `lspec validate` command with `--max-lines` flag
@@ -210,7 +210,6 @@ See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
   - Empty section detection (with subsection handling)
   - Duplicate section header detection
 - ✅ **Phase 3:** `CorruptionValidator` for file corruption detection
-- ✅ **Phase 3:** `CorruptionValidator` for file corruption detection
   - Unclosed code block detection (visible syntax highlighting issues)
   - Unclosed markdown formatting (bold, italic) in actual content
   - Duplicate content block detection with improved tuning (8 lines, 200 chars)
@@ -224,7 +223,13 @@ See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
   - **Bug fix:** Fixed sliding window algorithm causing adjacent line false positives
   - **Threshold increase:** 5/100 → 8/200 (block size/min chars) for less sensitivity
   - **Reverted code block filtering:** Now includes code blocks in duplicate detection
-- ✅ **360+ total tests passing** (structure + corruption + frontmatter)
+- ✅ **Phase 3.5:** `SubSpecValidator` for sub-spec file validation
+  - Sub-spec naming conventions (uppercase .md files)
+  - README.md references all sub-specs (orphan detection)
+  - Line count validation per sub-spec file (<400 lines)
+  - Cross-document reference validation
+  - Found real issues: 3 sub-specs exceeding limits in 2 specs
+- ✅ **370 total tests passing** (16 sub-spec + 354 existing)
 - ✅ Documentation and CLI integration
 - ✅ Tested with real repository specs
 
@@ -235,23 +240,22 @@ Results: 25 specs validated, 5 error(s), 6 warning(s)
 
 Errors found:
 - Line count: 3 specs exceed 400 lines (048, 046, 045)
-- Structure: 2 specs with duplicate section headers (049, 048)
+- Sub-specs: 3 sub-spec files exceed 400 lines (049: 2 files, 018: 1 file)
 - Corruption: ✅ 0 errors (bug fixed, thresholds tuned!)
 
 Warnings:
 - Line count: 6 specs between 300-400 lines (approaching limit)
 - Corruption: ✅ 0 warnings (improved from 31 false positives!)
 
-All specs: ✅ Frontmatter passed, ✅ Corruption detection accurate
+All specs: ✅ Frontmatter passed, ✅ Structure passed, ✅ Sub-spec validation working
 ```
-**🎯 Next Steps:**
-- Phase 3.5: Sub-spec validation (optional - enforces spec 012 conventions)
+**🎯 Next Steps (Optional):**
 - Phase 4: Content validation (optional - TODO/FIXME detection)
 - Phase 5: Staleness detection (optional - identify abandoned specs)
 - Phase 6: Auto-fix capability (optional - fix common issues)
 
 **✨ Ready for v0.2.0 Launch:**
-Core validation is complete and working! Phases 1-3 deliver the essential quality checks. Additional phases can be implemented based on user feedback.
+Core validation is complete and working! Phases 1-3.5 deliver the essential quality checks including sub-spec validation. Additional phases can be implemented based on user feedback.
 
 ## Quick Links
 
