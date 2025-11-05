@@ -9,6 +9,13 @@ import * as os from 'node:os';
 import { SubSpecValidator } from './sub-spec.js';
 import type { SpecInfo } from '../spec-loader.js';
 
+// Test constants - aligned with validator defaults
+const DEFAULT_MAX_LINES = 400;
+const DEFAULT_WARNING_THRESHOLD = 300;
+const UNDER_THRESHOLD_LINES = DEFAULT_WARNING_THRESHOLD - 50; // 250 lines
+const IN_WARNING_RANGE_LINES = DEFAULT_WARNING_THRESHOLD + 50; // 350 lines
+const OVER_LIMIT_LINES = DEFAULT_MAX_LINES + 50; // 450 lines
+
 describe('SubSpecValidator', () => {
   let tmpDir: string;
   let validator: SubSpecValidator;
@@ -117,8 +124,8 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with 250 lines
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(248);
+      // Create a sub-spec with UNDER_THRESHOLD_LINES (250 lines)
+      const designContent = '# Design\n\n' + 'Line content\n'.repeat(UNDER_THRESHOLD_LINES - 2);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
@@ -144,8 +151,8 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with 350 lines
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(348);
+      // Create a sub-spec with IN_WARNING_RANGE_LINES (350 lines)
+      const designContent = '# Design\n\n' + 'Line content\n'.repeat(IN_WARNING_RANGE_LINES - 2);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
@@ -171,8 +178,8 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with 450 lines
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(448);
+      // Create a sub-spec with OVER_LIMIT_LINES (450 lines)
+      const designContent = '# Design\n\n' + 'Line content\n'.repeat(OVER_LIMIT_LINES - 2);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
@@ -184,7 +191,12 @@ created: '2025-11-01'
     });
 
     it('should respect custom line limits', async () => {
-      const customValidator = new SubSpecValidator({ maxLines: 200, warningThreshold: 150 });
+      const customMaxLines = 200;
+      const customWarningThreshold = 150;
+      const customValidator = new SubSpecValidator({ 
+        maxLines: customMaxLines, 
+        warningThreshold: customWarningThreshold 
+      });
       const specDir = path.join(tmpDir, 'test-spec');
       await fs.mkdir(specDir, { recursive: true });
 
@@ -199,8 +211,9 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with 180 lines (warning for custom threshold)
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(178);
+      // Create a sub-spec in warning range for custom threshold (180 lines)
+      const customWarningLines = customWarningThreshold + 30;
+      const designContent = '# Design\n\n' + 'Line content\n'.repeat(customWarningLines - 2);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
@@ -437,8 +450,8 @@ Only links [Testing](./TESTING.md)
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Lowercase filename (warning)
-      const designContent = '# Design\n\n' + 'Line\n'.repeat(450); // Over 400 lines (error)
+      // Lowercase filename (warning) + Over limit (error)
+      const designContent = '# Design\n\n' + 'Line\n'.repeat(OVER_LIMIT_LINES);
       await fs.writeFile(path.join(specDir, 'design.md'), designContent);
 
       // Not linked (warning)
