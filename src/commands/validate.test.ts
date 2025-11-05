@@ -70,7 +70,15 @@ created: "2025-11-05"
 
 # Small Spec
 
-${Array(195).fill('Content line').join('\n')}
+## Overview
+
+Some overview content.
+
+## Design
+
+Some design content.
+
+${Array(185).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
@@ -92,7 +100,15 @@ created: "2025-11-05"
 
 # Medium Spec
 
-${Array(345).fill('Content line').join('\n')}
+## Overview
+
+Some overview content.
+
+## Design
+
+Some design content.
+
+${Array(335).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
@@ -114,7 +130,15 @@ created: "2025-11-05"
 
 # Large Spec
 
-${Array(445).fill('Content line').join('\n')}
+## Overview
+
+Some overview content.
+
+## Design
+
+Some design content.
+
+${Array(435).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
@@ -136,7 +160,15 @@ created: "2025-11-05"
 
 # Spec
 
-${Array(445).fill('Content line').join('\n')}
+## Overview
+
+Some overview content.
+
+## Design
+
+Some design content.
+
+${Array(435).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
@@ -158,8 +190,8 @@ ${Array(445).fill('Content line').join('\n')}
     await fs.mkdir(spec1Dir, { recursive: true });
     await fs.writeFile(
       path.join(spec1Dir, 'README.md'),
-      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Good Spec\n\n' +
-      Array(195).fill('line').join('\n'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Good Spec\n\n## Overview\n\nContent.\n\n## Design\n\nMore content.\n\n' +
+      Array(185).fill('line').join('\n'),
       'utf-8'
     );
 
@@ -167,8 +199,8 @@ ${Array(445).fill('Content line').join('\n')}
     await fs.mkdir(spec2Dir, { recursive: true });
     await fs.writeFile(
       path.join(spec2Dir, 'README.md'),
-      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Bad Spec\n\n' +
-      Array(445).fill('line').join('\n'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Bad Spec\n\n## Overview\n\nContent.\n\n## Design\n\nMore content.\n\n' +
+      Array(435).fill('line').join('\n'),
       'utf-8'
     );
 
@@ -292,9 +324,15 @@ tags:
 
 # Valid Spec
 
-This spec has valid frontmatter.
+## Overview
 
-${Array(100).fill('Content line').join('\n')}
+This spec has valid frontmatter and structure.
+
+## Design
+
+Design content here.
+
+${Array(90).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
