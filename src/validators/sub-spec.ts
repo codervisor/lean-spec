@@ -166,7 +166,8 @@ export class SubSpecValidator implements ValidationRule {
       }
 
       // Find all markdown links in the content with optional ./ prefix
-      const linkRegex = /\[([^\]]+)\]\((?:\.\/)?([\w-]+\.md)\)/g;
+      // Match any characters except closing paren to support various filename patterns
+      const linkRegex = /\[([^\]]+)\]\((?:\.\/)?(([^)]+)\.md)\)/g;
       let match;
 
       while ((match = linkRegex.exec(subSpec.content)) !== null) {
