@@ -28,11 +28,13 @@ Provide comprehensive validation tooling that checks specs for quality issues in
 
 **Current State:**
 - ✅ `lspec check` exists - checks sequence conflicts only
-- ✅ `lspec validate` exists - basic validation framework with line count checking
-- ⏳ Need comprehensive validation rules (frontmatter, structure, corruption)
-- ❌ No enforcement of required fields
-- ❌ No way to detect stale specs
-- ❌ **No detection of file corruption/malformed content**
+- ✅ `lspec validate` exists - comprehensive validation framework
+- ✅ **Line count validation** - warns at 300 lines, errors at 400+ lines
+- ✅ **Frontmatter validation** - enforces required fields and valid values
+- ⏳ Structure validation (next phase)
+- ⏳ Corruption detection (high priority)
+- ❌ No way to detect stale specs (optional, future phase)
+- ❌ No auto-fix capability (optional, future phase)
 
 **Implementation Approach:**
 Both `lspec check` and `lspec validate` exist as separate commands:
@@ -186,28 +188,40 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 
-**Current Phase:** Phase 1b Complete (Frontmatter validation)
+**Current Phase:** Phase 1b ✅ Complete → Ready for Phase 2
 
-**Completed:**
+**✅ Completed (Phase 1a & 1b):**
 - ✅ Validation framework architecture
-- ✅ `LineCountValidator` with warning/error thresholds
+- ✅ `LineCountValidator` with warning/error thresholds (300 line warning, 400 line error)
 - ✅ `lspec validate` command with `--max-lines` flag
 - ✅ `FrontmatterValidator` for comprehensive frontmatter validation
   - Required fields (status, created)
-  - Valid status/priority values
+  - Valid status/priority values  
   - Date format validation (ISO 8601)
   - Tags format validation
-- ✅ Integration tests and documentation
-- ✅ Tested with real repository specs
+- ✅ Integration tests (44 tests passing)
+- ✅ Documentation and CLI integration
+- ✅ Tested with real repository specs (25 specs validated successfully)
 
-**Next Steps:**
-- Phase 2: Structure validation (README.md exists, required sections, etc.)
-- Phase 3: Corruption detection (duplicate sections, malformed code blocks)
-- Phase 4: Content validation (minimum length, TODO/FIXME detection)
+**📊 Current Validation Results:**
+```bash
+$ lspec validate
+Results: 25 specs validated, 3 error(s), 6 warning(s)
+- Line count errors: 3 specs exceed 400 lines
+- Line count warnings: 6 specs between 300-400 lines
+- Frontmatter: All 25 specs passed
+```
 
-**Estimated Effort (Remaining):**
-- Phases 2-4: 6-7 days
-- Complete (All phases): 11-13 days
+**🎯 Next Steps:**
+- Phase 2: Structure validation (README.md exists, required sections, duplicate headers)
+- Phase 3: Corruption detection (malformed code blocks, broken YAML/JSON)
+- Phase 3.5: Sub-spec validation (enforces spec 012 conventions)
+- Phase 4: Content validation (TODO/FIXME detection, placeholder text)
+
+**⏱️ Estimated Effort (Remaining):**
+- Phases 2-3.5 (High Priority): 6-7 days
+- Phases 4-6 (Optional): 5-6 additional days
+- Complete (All phases): 11-13 days total
 
 ## Quick Links
 

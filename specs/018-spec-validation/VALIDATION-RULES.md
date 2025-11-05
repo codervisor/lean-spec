@@ -4,7 +4,39 @@ This document details what gets validated by `lspec validate` and the specific r
 
 **Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
 
-## Frontmatter Validation
+## Implementation Status
+
+- ✅ **Line Count Validation** - Phase 1a Complete
+- ✅ **Frontmatter Validation** - Phase 1b Complete
+- ⏳ **Structure Validation** - Phase 2 (Planned)
+- ⏳ **Corruption Detection** - Phase 3 (High Priority)
+- ⏳ **Sub-Spec Validation** - Phase 3.5 (High Priority)
+- ⏳ **Content Validation** - Phase 4 (Optional)
+- ⏳ **Staleness Detection** - Phase 5 (Optional)
+
+---
+
+## Line Count Validation ✅
+
+**Status:** Implemented in Phase 1a
+
+**Thresholds:**
+- **Warning**: 300-400 lines (approaching limit)
+- **Error**: >400 lines (exceeds limit)
+- **Configurable**: `--max-lines` flag to customize limit
+
+**Rationale:**
+Enforces **Context Economy** principle - specs must fit in working memory (human and AI). Files >400 lines become difficult to read, edit, and maintain.
+
+**Suggestions:**
+- Warns: "Consider simplification or splitting"
+- Errors: "Consider splitting into sub-specs using spec 012 pattern"
+
+---
+
+## Frontmatter Validation ✅
+
+**Status:** Implemented in Phase 1b (27 tests passing)
 
 **Required Fields:**
 - `status` - Must be present
