@@ -126,6 +126,8 @@ LeanSpec embraces:
 
 Ready to get started? Head over to the [Getting Started](/docs/guide/getting-started) guide to install LeanSpec and create your first spec.
 
-Want to understand the core principles? Check out [Agile Principles](/docs/guide/principles).
+Want to understand the foundational constraints? Start with [First Principles](/docs/guide/first-principles) to see why LeanSpec is designed the way it is.
+
+Need practical writing guidance? Check out [Agile Principles](/docs/guide/principles) for day-to-day spec writing tips.
 
 Working with AI coding agents? See [AI Integration](/docs/ai-integration/) for setup guidance.

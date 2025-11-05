@@ -1,7 +1,7 @@
 ---
 id: 'philosophy'
 title: 'Philosophy'
-sidebar_position: 4
+sidebar_position: 3
 ---
 # Philosophy
 
@@ -9,11 +9,15 @@ sidebar_position: 4
 
 LeanSpec is a **mindset and methodology**—not just a format or tool. It embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs.
 
+:::tip Start Here
+New to LeanSpec? Start with **[First Principles](/docs/guide/first-principles)** to understand the foundational constraints that define what LeanSpec is. Then come back here to understand the philosophy and mindset.
+:::
+
 ## The Core Philosophy
 
 A one-page spec that everyone (including AI coding agents) understands beats a fifty-page document that nobody reads.
 
-LeanSpec is built on four foundational beliefs:
+LeanSpec is built on **[5 first principles](/docs/guide/first-principles)** (Context Economy, Signal-to-Noise, Intent Over Implementation, Bridge the Gap, Progressive Disclosure) and four philosophical beliefs:
 
 ### 1. Documentation is a Means, Not an End
 
@@ -205,4 +209,4 @@ If your specs help people (and AI agents) build better software faster, you're d
 
 ---
 
-**Next**: Learn about the [Agile Principles](/docs/guide/principles) that guide LeanSpec, or explore [When to Use](/docs/guide/when-to-use) LeanSpec effectively.
+**Next**: Learn about the **[First Principles](/docs/guide/first-principles)** that define LeanSpec's foundation, explore the **[Agile Principles](/docs/guide/principles)** for writing specs, or discover **[When to Use](/docs/guide/when-to-use)** LeanSpec effectively.
