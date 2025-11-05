@@ -40,8 +40,9 @@ export async function depsCommand(specPath: string, options: {
   // Find dependencies
   const dependsOn = findDependencies(spec, specMap);
   const blocks = findBlocking(spec, allSpecs);
-  const related = findRelated(spec, specMap);
-  const relatedBy = findRelatedBy(spec, allSpecs);
+  
+  // Find related specs bidirectionally (merge both directions)
+  const relatedSpecs = findAllRelated(spec, specMap, allSpecs);
 
   // Output as JSON if requested
   if (options.json) {
@@ -49,8 +50,7 @@ export async function depsCommand(specPath: string, options: {
       spec: spec.path,
       dependsOn: dependsOn.map(s => ({ path: s.path, status: s.frontmatter.status })),
       blocks: blocks.map(s => ({ path: s.path, status: s.frontmatter.status })),
-      related: related.map(s => ({ path: s.path, status: s.frontmatter.status })),
-      relatedBy: relatedBy.map(s => ({ path: s.path, status: s.frontmatter.status })),
+      related: relatedSpecs.map(s => ({ path: s.path, status: s.frontmatter.status })),
       chain: buildDependencyChain(spec, specMap, options.depth || 3),
     };
     console.log(JSON.stringify(data, null, 2));
@@ -86,20 +86,10 @@ export async function depsCommand(specPath: string, options: {
   }
   console.log('');
 
-  // Related section
-  if (related.length > 0) {
-    console.log(chalk.bold('Related:'));
-    for (const rel of related) {
-      const status = getStatusIndicator(rel.frontmatter.status);
-      console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
-    }
-    console.log('');
-  }
-
-  // Related By section (incoming related links)
-  if (relatedBy.length > 0) {
-    console.log(chalk.bold('Related By:'));
-    for (const rel of relatedBy) {
+  // Related Specs section (bidirectional)
+  if (relatedSpecs.length > 0) {
+    console.log(chalk.bold('Related Specs:'));
+    for (const rel of relatedSpecs) {
       const status = getStatusIndicator(rel.frontmatter.status);
       console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
     }
@@ -200,6 +190,32 @@ function findRelatedBy(spec: SpecInfo, allSpecs: SpecInfo[]): SpecInfo[] {
   }
   
   return relatedBy;
+}
+
+/**
+ * Find all related specs bidirectionally - combines specs that this spec
+ * relates to AND specs that relate to this spec, deduplicated.
+ */
+function findAllRelated(
+  spec: SpecInfo, 
+  specMap: Map<string, SpecInfo>, 
+  allSpecs: SpecInfo[]
+): SpecInfo[] {
+  const outgoing = findRelated(spec, specMap);
+  const incoming = findRelatedBy(spec, allSpecs);
+  
+  // Merge and deduplicate by path
+  const seenPaths = new Set<string>();
+  const merged: SpecInfo[] = [];
+  
+  for (const s of [...outgoing, ...incoming]) {
+    if (!seenPaths.has(s.path)) {
+      seenPaths.add(s.path);
+      merged.push(s);
+    }
+  }
+  
+  return merged;
 }
 
 function buildDependencyChain(
