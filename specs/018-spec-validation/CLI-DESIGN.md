@@ -16,9 +16,11 @@ lspec validate --structure          # Only structure validation
 lspec validate --content            # Only content validation
 lspec validate --corruption         # Only corruption detection
 lspec validate --staleness          # Only staleness detection
+lspec validate --sub-specs          # Only sub-spec validation
 
 # Combine validations
 lspec validate --frontmatter --structure
+lspec validate --sub-specs --structure  # Check sub-specs and main structure
 
 # Skip certain checks
 lspec validate --no-staleness       # Skip staleness warnings
@@ -92,6 +94,13 @@ Structure:
   ✗ 1 spec has errors:
     - specs/044-spec-relationships-clarity/
       • Missing required section: ## Testing
+
+Sub-Specs:
+  ⚠ 2 warnings:
+    - specs/018-spec-validation/
+      ⚠ Sub-spec TESTING.md (421 lines) exceeds 400 line limit
+      ⚠ Orphaned sub-spec: DEPRECATED.md (not linked from README.md)
+  ✓ All other specs with sub-specs are valid
 
 Corruption:
   ✗ 1 spec corrupted:
@@ -216,12 +225,15 @@ lspec validate --fix
 - Duplicate sections (removes duplicates, keeps first)
 - Unclosed code blocks (closes them)
 - Visual badges (updates from frontmatter)
+- Missing sub-spec references in README.md (adds links)
 
 **What Doesn't Get Fixed:**
 - Invalid status values (requires decision)
 - Empty sections (requires content)
 - Broken links (requires investigation)
 - Complex corruption (requires judgment)
+- Sub-specs exceeding line limits (requires manual splitting)
+- Orphaned sub-specs (requires decision to keep or remove)
 
 **Output:**
 ```

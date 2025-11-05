@@ -92,6 +92,28 @@
 
 **Estimated Effort:** 3 days
 
+## Phase 3.5: Sub-Spec Validation (NEW - HIGH PRIORITY)
+
+**Goal:** Validate sub-spec files per spec 012 conventions
+
+**Tasks:**
+- [ ] Create sub-spec validator module
+- [ ] Check sub-spec naming conventions
+- [ ] Validate README.md references all sub-specs
+- [ ] Check line counts per sub-spec file (<400 lines)
+- [ ] Detect orphaned sub-spec files
+- [ ] Validate cross-document references
+- [ ] Check for content duplication across sub-specs
+- [ ] Integrate with `lspec validate --sub-specs` flag
+
+**Notes:** 
+- Complements spec 012 (sub-spec files management)
+- Important as teams adopt multi-file specs
+- Enforces Context Economy principle per file
+- Leverages existing `loadSubFiles()` infrastructure
+
+**Estimated Effort:** 2 days
+
 ## Phase 4: Content Validation (OPTIONAL for v0.3.0)
 
 **Goal:** Validate spec content quality
@@ -175,6 +197,7 @@
 
 ### v0.2.0 Scope
 - **MUST HAVE:** Phases 1-3 (refactored framework + frontmatter + structure validation)
+- **HIGHLY RECOMMENDED:** Phase 3.5 (sub-spec validation - enforces spec 012)
 - **HIGHLY RECOMMENDED:** Phase 4 (corruption detection - addresses real pain point)
 - **SHOULD HAVE:** Phase 7 (auto-fix, at least for corruption issues)
 - **NICE TO HAVE:** Phases 5-6 (content, staleness)
@@ -192,15 +215,16 @@
 
 ## Total Estimated Effort
 
-**Minimum (Phases 1-4):** 9-10 days
-**Complete (All phases):** 15-18 days
+**Minimum (Phases 1-3.5):** 11-12 days
+**Complete (All phases):** 17-20 days
 
 ## Dependencies
 
 - Existing `check` command (sequence conflicts)
 - Frontmatter parsing infrastructure
-- Spec loading system
+- Spec loading system (with `loadSubFiles()` support)
 - Config system
+- Spec 012 conventions (sub-spec file organization)
 
 ## Risks & Mitigation
 

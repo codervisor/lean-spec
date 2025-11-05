@@ -10,6 +10,7 @@ tags:
 priority: critical
 related:
   - 043-official-launch-02
+  - 012-sub-spec-files
 created_at: '2025-11-02T00:00:00Z'
 updated_at: '2025-11-05T13:35:26.669Z'
 transitions:
@@ -46,6 +47,7 @@ lspec validate --max-lines 500 # Custom line limit
 lspec validate --frontmatter   # Frontmatter validation
 lspec validate --structure     # Structure validation
 lspec validate --corruption    # File corruption detection
+lspec validate --sub-specs     # Sub-spec validation (spec 012)
 lspec validate --all           # All validation rules
 ```
 
@@ -57,6 +59,7 @@ lspec validate --all           # All validation rules
 5. Enforcing team conventions (required fields, valid values)
 6. Quality gates for spec completion
 7. **Detecting corrupted specs from failed edits**
+8. **Validating sub-spec organization per spec 012**
 
 **What Success Looks Like:**
 ```bash
@@ -76,6 +79,12 @@ Frontmatter:
 
 Structure:
   ✓ All specs have valid structure
+
+Sub-Specs:
+  ⚠ 1 spec has warnings:
+    - specs/018-spec-validation/README.md
+      ⚠ Sub-spec TESTING.md (421 lines) exceeds 400 line limit
+      ⚠ Orphaned sub-spec: DEPRECATED.md (not linked from README.md)
 
 Corruption:
   ✗ 1 spec has corruption issues:

@@ -44,6 +44,42 @@ This document details what gets validated by `lspec validate` and the specific r
 - No empty required sections (content beyond just comment)
 - No duplicate section headers at same level
 
+## Sub-Spec Validation
+
+**File Naming Conventions (from spec 012):**
+- Sub-spec files should follow recommended naming patterns
+- Standard names: `DESIGN.md`, `IMPLEMENTATION.md`, `TESTING.md`, `API.md`, `ARCHITECTURE.md`, `MIGRATION.md`, `CONFIGURATION.md`, etc.
+- Custom names allowed but should be descriptive (e.g., `PHASE1.md`, `RESEARCH.md`)
+- Assets should be in `assets/` subdirectory
+
+**README.md Integration:**
+- Main `README.md` should reference all sub-spec files
+- Links can be in any section (Overview, Design, etc.)
+- Missing links to sub-specs generate warnings
+- Example: `[Testing Strategy](TESTING.md)` or `See [DESIGN.md](DESIGN.md)`
+
+**Line Count Per Sub-Spec (Context Economy):**
+- Each sub-spec file should be < 400 lines (error threshold)
+- Warning at 300 lines (same as main spec)
+- Rationale: Context Economy applies to each file independently
+- Sub-specs exist to split complexity - they shouldn't become bloated
+
+**Orphan Detection:**
+- Detect sub-spec markdown files not referenced from README.md
+- Warn about orphaned sub-specs (may be deprecated)
+- Exception: README.md itself is never orphaned
+- Assets (.png, .svg, etc.) are checked separately
+
+**Cross-Document Validation:**
+- Validate internal links between sub-specs work correctly
+- Check relative paths are correct
+- Detect circular references (if spec A links to B, B to C, C to A)
+
+**Sub-Spec Structure:**
+- Each sub-spec should have clear heading structure
+- Should include backlink to main spec (recommended)
+- Example: `> Part of spec: [018-spec-validation](README.md)`
+
 ## Content Validation
 
 **Minimum Requirements:**
@@ -77,6 +113,11 @@ This document details what gets validated by `lspec validate` and the specific r
 - Detect duplicated content blocks
 - Find remnants from failed edits
 - Identify partial duplicates (merge artifacts)
+
+**Sub-Spec Duplication:**
+- Detect if same content appears in multiple sub-specs
+- Warn about significant content overlap between files
+- Helps identify when content should be consolidated
 
 **Markdown Structure:**
 - Lists are properly formed
@@ -116,6 +157,11 @@ This document details what gets validated by `lspec validate` and the specific r
 - Add missing required sections (as comments)
 - Remove duplicate sections (keep first occurrence)
 - Close unclosed code blocks (where unambiguous)
+
+**Sub-Specs:**
+- Add missing links to sub-specs in README.md
+- Generate suggested backlinks for sub-specs
+- Create "Documentation Structure" section if missing (when sub-specs exist)
 
 ### Non-Fixable Issues
 
@@ -180,6 +226,23 @@ Rules can be customized in `.lspec/config.json`:
         "inProgressMaxDays": 30,
         "noUpdateMaxDays": 90,
         "plannedMaxDays": 60
+      },
+      "subSpecs": {
+        "validateNaming": true,
+        "requireReferences": true,
+        "detectOrphans": true,
+        "maxLinesPerFile": 400,
+        "warnLinesPerFile": 300,
+        "validateCrossReferences": true,
+        "standardNames": [
+          "DESIGN.md",
+          "IMPLEMENTATION.md",
+          "TESTING.md",
+          "API.md",
+          "ARCHITECTURE.md",
+          "MIGRATION.md",
+          "CONFIGURATION.md"
+        ]
       }
     }
   }
