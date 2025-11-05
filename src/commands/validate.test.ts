@@ -226,4 +226,79 @@ ${Array(spec.lines - 10).fill('line').join('\n')}
     const result = await validateCommand({ specs: ['999-nonexistent'] });
     expect(result).toBe(false);
   });
+
+  it('should detect frontmatter errors', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create a spec with invalid frontmatter
+    const specDir = path.join(specsDir, '001-invalid-spec');
+    await fs.mkdir(specDir, { recursive: true });
+    const content = `---
+status: wip
+created: invalid-date
+priority: urgent
+---
+
+# Invalid Spec
+
+This spec has multiple frontmatter issues.
+`;
+    await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
+
+    const result = await validateCommand();
+    expect(result).toBe(false); // Should fail due to frontmatter errors
+  });
+
+  it('should skip specs with missing required frontmatter fields during loading', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create a spec without required fields - it won't be loaded by spec-loader
+    const specDir = path.join(specsDir, '001-no-frontmatter');
+    await fs.mkdir(specDir, { recursive: true });
+    const content = `---
+tags:
+  - test
+---
+
+# No Required Fields
+
+Missing status and created fields - spec-loader will skip this.
+`;
+    await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
+
+    // The spec-loader filters out specs with missing required fields
+    // so no specs will be found, and validation returns true (nothing to validate)
+    const result = await validateCommand();
+    expect(result).toBe(true); // No specs found = success
+  });
+
+  it('should pass for specs with valid frontmatter', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create a spec with valid frontmatter
+    const specDir = path.join(specsDir, '001-valid-spec');
+    await fs.mkdir(specDir, { recursive: true });
+    const content = `---
+status: in-progress
+created: "2025-11-05"
+priority: high
+tags:
+  - api
+  - feature
+---
+
+# Valid Spec
+
+This spec has valid frontmatter.
+
+${Array(100).fill('Content line').join('\n')}
+`;
+    await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
+
+    const result = await validateCommand();
+    expect(result).toBe(true); // Should pass
+  });
 });

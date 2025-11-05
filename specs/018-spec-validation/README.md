@@ -12,7 +12,7 @@ related:
   - 043-official-launch-02
   - 012-sub-spec-files
 created_at: '2025-11-02T00:00:00Z'
-updated_at: '2025-11-05T13:35:26.669Z'
+updated_at: '2025-11-05T14:03:23.163Z'
 transitions:
   - status: in-progress
     at: '2025-11-05T13:35:26.669Z'
@@ -186,22 +186,28 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 
-**Current Phase:** Phase 1a Complete (Basic framework + line count validation)
+**Current Phase:** Phase 1b Complete (Frontmatter validation)
 
 **Completed:**
 - ✅ Validation framework architecture
 - ✅ `LineCountValidator` with warning/error thresholds
 - ✅ `lspec validate` command with `--max-lines` flag
+- ✅ `FrontmatterValidator` for comprehensive frontmatter validation
+  - Required fields (status, created)
+  - Valid status/priority values
+  - Date format validation (ISO 8601)
+  - Tags format validation
 - ✅ Integration tests and documentation
+- ✅ Tested with real repository specs
 
 **Next Steps:**
-- Phase 1b: Frontmatter validation
-- Phase 2: Structure validation
-- Phase 3: Corruption detection
+- Phase 2: Structure validation (README.md exists, required sections, etc.)
+- Phase 3: Corruption detection (duplicate sections, malformed code blocks)
+- Phase 4: Content validation (minimum length, TODO/FIXME detection)
 
 **Estimated Effort (Remaining):**
-- Phases 1b-4: 7-8 days
-- Complete (All phases): 13-15 days
+- Phases 2-4: 6-7 days
+- Complete (All phases): 11-13 days
 
 ## Quick Links
 
