@@ -164,7 +164,8 @@ export class FrontmatterValidator implements ValidationRule {
     }
 
     // Check for ISO 8601 date format (YYYY-MM-DD) or full timestamp
-    const isoDateRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/;
+    // Be lenient: accept YYYY-MM-DD or timestamps with/without milliseconds and timezone
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})?)?$/;
     if (!isoDateRegex.test(value)) {
       return {
         valid: false,
