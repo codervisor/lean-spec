@@ -11,7 +11,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { loadAllSpecs, getSpec } from './spec-loader.js';
 import { loadConfig } from './config.js';
-import { createSpec, listSpecs, updateSpec, archiveSpec } from './commands/index.js';
+import { createSpec, listSpecs, updateSpec, archiveSpec, checkSpecs, validateCommand, backfillTimestamps, filesCommand } from './commands/index.js';
 import { parseFrontmatter } from './frontmatter.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from './frontmatter.js';
 import { resolveSpecPath } from './utils/path-helpers.js';
@@ -640,6 +640,286 @@ async function createMcpServer(): Promise<McpServer> {
           content: [{ type: 'text', text: errorMessage }],
           isError: true,
         };
+      }
+    }
+  );
+
+  // Tool: archive
+  server.registerTool(
+    'archive',
+    {
+      title: 'Archive Spec',
+      description: 'Move a specification to the archived/ directory. Use this when a spec is complete or no longer active. The spec will be moved but not deleted.',
+      inputSchema: {
+        specPath: z.string().describe('The spec to archive. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
+      },
+      outputSchema: {
+        success: z.boolean(),
+        message: z.string(),
+      },
+    },
+    async (input) => {
+      const originalLog = console.log;
+      try {
+        let capturedOutput = '';
+        console.log = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+
+        await archiveSpec(input.specPath);
+
+        const output = {
+          success: true,
+          message: `Spec archived successfully`,
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const output = {
+          success: false,
+          message: formatErrorMessage('Error archiving spec', error),
+        };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } finally {
+        console.log = originalLog;
+      }
+    }
+  );
+
+  // Tool: files
+  server.registerTool(
+    'files',
+    {
+      title: 'List Spec Files',
+      description: 'List all files in a specification directory. Use this to explore sub-specs, assets, or supplementary documentation in complex specs.',
+      inputSchema: {
+        specPath: z.string().describe('The spec to list files for. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
+        type: z.enum(['docs', 'assets']).optional().describe('Filter by file type: "docs" for markdown files, "assets" for images/diagrams.'),
+      },
+      outputSchema: {
+        files: z.array(z.any()),
+      },
+    },
+    async (input) => {
+      const originalLog = console.log;
+      const originalError = console.error;
+      try {
+        let capturedOutput = '';
+        console.log = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+        console.error = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+
+        await filesCommand(input.specPath, {
+          type: input.type as 'docs' | 'assets' | undefined,
+          tree: false,
+        });
+
+        // Parse the captured output to extract file list
+        const lines = capturedOutput.split('\n').filter(l => l.trim());
+        const files = lines
+          .filter(l => l.includes('├──') || l.includes('└──') || l.match(/^\s*[-•]/))
+          .map(l => l.replace(/[├└│─•-]\s*/g, '').trim());
+
+        const output = { files };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error listing files', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      } finally {
+        console.log = originalLog;
+        console.error = originalError;
+      }
+    }
+  );
+
+  // Tool: check
+  server.registerTool(
+    'check',
+    {
+      title: 'Check Sequence Conflicts',
+      description: 'Check for sequence number conflicts in the specs directory. Use this to detect duplicate sequence numbers or naming issues. Returns list of conflicts if any.',
+      inputSchema: {},
+      outputSchema: {
+        hasConflicts: z.boolean(),
+        conflicts: z.array(z.any()).optional(),
+        message: z.string(),
+      },
+    },
+    async () => {
+      const originalLog = console.log;
+      const originalError = console.error;
+      try {
+        let capturedOutput = '';
+        console.log = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+        console.error = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+
+        const hasNoConflicts = await checkSpecs({ quiet: false });
+
+        const output = {
+          hasConflicts: !hasNoConflicts,
+          message: hasNoConflicts ? 'No sequence conflicts found' : 'Sequence conflicts detected',
+          conflicts: !hasNoConflicts ? capturedOutput.split('\n').filter(l => l.trim()) : undefined,
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error checking specs', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      } finally {
+        console.log = originalLog;
+        console.error = originalError;
+      }
+    }
+  );
+
+  // Tool: validate
+  server.registerTool(
+    'validate',
+    {
+      title: 'Validate Specs',
+      description: 'Validate specifications for quality issues like excessive length, missing sections, or complexity problems. Use this before committing changes or for project health checks.',
+      inputSchema: {
+        specs: z.array(z.string()).optional().describe('Specific specs to validate. If omitted, validates all specs in the project.'),
+        maxLines: z.number().optional().describe('Custom line limit for complexity checks (default: 400 lines).'),
+      },
+      outputSchema: {
+        passed: z.boolean(),
+        issues: z.array(z.any()).optional(),
+        message: z.string(),
+      },
+    },
+    async (input) => {
+      const originalLog = console.log;
+      const originalError = console.error;
+      try {
+        let capturedOutput = '';
+        console.log = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+        console.error = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+
+        const passed = await validateCommand({
+          maxLines: input.maxLines,
+          specs: input.specs,
+        });
+
+        const output = {
+          passed,
+          message: passed ? 'All specs passed validation' : 'Some specs have validation issues',
+          issues: !passed ? capturedOutput.split('\n').filter(l => l.trim()) : undefined,
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error validating specs', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      } finally {
+        console.log = originalLog;
+        console.error = originalError;
+      }
+    }
+  );
+
+  // Tool: backfill
+  server.registerTool(
+    'backfill',
+    {
+      title: 'Backfill Timestamps',
+      description: 'Backfill missing timestamps and metadata from git history. Use this to populate created/completed dates, assignees, or status transitions for specs that lack this data.',
+      inputSchema: {
+        specs: z.array(z.string()).optional().describe('Specific specs to backfill. If omitted, processes all specs.'),
+        dryRun: z.boolean().optional().describe('Preview changes without applying them (default: false).'),
+        force: z.boolean().optional().describe('Overwrite existing timestamp values (default: false).'),
+        includeAssignee: z.boolean().optional().describe('Backfill assignee from first commit author (default: false).'),
+        includeTransitions: z.boolean().optional().describe('Include full status transition history (default: false).'),
+      },
+      outputSchema: {
+        success: z.boolean(),
+        updated: z.array(z.string()).optional(),
+        message: z.string(),
+      },
+    },
+    async (input) => {
+      const originalLog = console.log;
+      const originalError = console.error;
+      try {
+        let capturedOutput = '';
+        console.log = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+        console.error = (...args: any[]) => {
+          capturedOutput += args.join(' ') + '\n';
+        };
+
+        await backfillTimestamps({
+          specs: input.specs,
+          dryRun: input.dryRun,
+          force: input.force,
+          includeAssignee: input.includeAssignee,
+          includeTransitions: input.includeTransitions,
+        });
+
+        // Parse output to extract updated specs
+        const updated = capturedOutput
+          .split('\n')
+          .filter(l => l.includes('Updated:') || l.includes('✓'))
+          .map(l => l.replace(/.*Updated:\s*/, '').replace(/✓\s*/, '').trim())
+          .filter(Boolean);
+
+        const output = {
+          success: true,
+          updated: updated.length > 0 ? updated : undefined,
+          message: input.dryRun 
+            ? `Dry run complete. ${updated.length} specs would be updated`
+            : `Backfill complete. ${updated.length} specs updated`,
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          structuredContent: output,
+        };
+      } catch (error) {
+        const errorMessage = formatErrorMessage('Error backfilling timestamps', error);
+        return {
+          content: [{ type: 'text', text: errorMessage }],
+          isError: true,
+        };
+      } finally {
+        console.log = originalLog;
+        console.error = originalError;
       }
     }
   );

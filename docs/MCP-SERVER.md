@@ -12,9 +12,14 @@ The MCP server exposes these tools to AI assistants:
 - **view** - View specification content (formatted, raw markdown, or JSON)
 - **create** - Create new specifications
 - **update** - Update specification metadata (status, priority, tags, etc.)
+- **archive** - Move specifications to archived/ directory
 - **stats** - Get project statistics
 - **board** - Get Kanban board view
 - **deps** - Show specification dependencies
+- **files** - List files in a spec (for exploring sub-specs and assets)
+- **check** - Check for sequence number conflicts
+- **validate** - Validate specs for quality issues (line count, complexity)
+- **backfill** - Backfill timestamps and metadata from git history
 
 ### Resources
 Browseable content accessible to AI assistants:
@@ -175,6 +180,41 @@ Show me the project statistics
 ### View Kanban board
 ```
 Show me the current Kanban board
+```
+
+### Archive a specification
+```
+Archive the spec "024-flat-structure-migration"
+```
+
+### List files in a spec
+```
+Show me all files in spec 045
+```
+
+### Check for conflicts
+```
+Check for sequence number conflicts
+```
+
+### Validate specs
+```
+Validate all specs for quality issues
+```
+
+or for specific specs:
+```
+Validate specs 018 and 045 with a max line limit of 500
+```
+
+### Backfill timestamps
+```
+Backfill missing timestamps from git history
+```
+
+or with a dry run:
+```
+Show me what would be backfilled without making changes
 ```
 
 ## Troubleshooting
