@@ -339,4 +339,89 @@ ${Array(90).fill('Content line').join('\n')}
     const result = await validateCommand();
     expect(result).toBe(true); // Should pass
   });
+
+  it('should support verbose flag to show passing specs', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create two specs - one passing, one with warning
+    const spec1Dir = path.join(specsDir, '001-good-spec');
+    await fs.mkdir(spec1Dir, { recursive: true });
+    await fs.writeFile(
+      path.join(spec1Dir, 'README.md'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Good Spec\n\n## Overview\n\nContent.\n\n' +
+      Array(90).fill('line').join('\n'),
+      'utf-8'
+    );
+
+    const spec2Dir = path.join(specsDir, '002-warn-spec');
+    await fs.mkdir(spec2Dir, { recursive: true });
+    await fs.writeFile(
+      path.join(spec2Dir, 'README.md'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Warn Spec\n\n## Overview\n\nContent.\n\n' +
+      Array(290).fill('line').join('\n'),
+      'utf-8'
+    );
+
+    // With verbose flag, should pass and output should include passing specs
+    const result = await validateCommand({ verbose: true });
+    expect(result).toBe(true);
+  });
+
+  it('should support quiet flag to suppress warnings', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create a spec with warning
+    const specDir = path.join(specsDir, '001-warn-spec');
+    await fs.mkdir(specDir, { recursive: true });
+    await fs.writeFile(
+      path.join(specDir, 'README.md'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Warn Spec\n\n## Overview\n\nContent.\n\n' +
+      Array(290).fill('line').join('\n'),
+      'utf-8'
+    );
+
+    // With quiet flag, warnings are suppressed, should still pass
+    const result = await validateCommand({ quiet: true });
+    expect(result).toBe(true);
+  });
+
+  it('should support rule filter to show only specific rule violations', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create a spec with line count warning
+    const specDir = path.join(specsDir, '001-warn-spec');
+    await fs.mkdir(specDir, { recursive: true });
+    await fs.writeFile(
+      path.join(specDir, 'README.md'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Warn Spec\n\n## Overview\n\nContent.\n\n' +
+      Array(290).fill('line').join('\n'),
+      'utf-8'
+    );
+
+    // Filter by max-lines rule
+    const result = await validateCommand({ rule: 'max-lines' });
+    expect(result).toBe(true); // Should pass (only warnings)
+  });
+
+  it('should support json format output', async () => {
+    const specsDir = path.join(tmpDir, 'specs');
+    await fs.mkdir(specsDir, { recursive: true });
+    
+    // Create a spec with error
+    const specDir = path.join(specsDir, '001-bad-spec');
+    await fs.mkdir(specDir, { recursive: true });
+    await fs.writeFile(
+      path.join(specDir, 'README.md'),
+      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Bad Spec\n\n## Overview\n\nContent.\n\n' +
+      Array(435).fill('line').join('\n'),
+      'utf-8'
+    );
+
+    // With json format, should output JSON (still fail due to error)
+    const result = await validateCommand({ format: 'json' });
+    expect(result).toBe(false);
+  });
 });
