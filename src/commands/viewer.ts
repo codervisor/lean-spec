@@ -73,6 +73,11 @@ export async function readSpecContent(
     }
   }
 
+  // Ensure targetFile is not null before proceeding
+  if (!targetFile) {
+    return null;
+  }
+
   // Read file content
   const rawContent = await fs.readFile(targetFile, 'utf-8');
   const fileName = path.basename(targetFile);
