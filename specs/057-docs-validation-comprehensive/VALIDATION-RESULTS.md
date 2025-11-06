@@ -12,7 +12,15 @@ This document contains systematic validation of all LeanSpec documentation again
 - Template files (`templates/`)
 - Configuration schemas (`config.ts`, `frontmatter.ts`)
 
-**Status**: 🚧 In Progress
+**Status**: 🚧 In Progress (Primary validation complete, testing phase next)
+
+**Issues Found**: 11 critical/medium issues documented
+
+**Most Critical Findings:**
+1. **Configuration structure completely out of sync** - Documentation shows wrong field structure
+2. **Invalid status values in docs** - Documents `blocked` and `cancelled` which don't exist
+3. **Missing CLI options** - Many commands missing documented options
+4. **Init prompts documented but not validated** - Need to verify actual prompts match
 
 ---
 
@@ -248,6 +256,121 @@ This document contains systematic validation of all LeanSpec documentation again
 - **Severity**: **CRITICAL** - Users will be confused
 - **Fix**: Update example config to match actual structure
 - **Verification**: Test that shown config actually works
+
+---
+
+## Summary of Issues
+
+### By Severity
+
+**Critical (5 issues):**
+- Issue #1: Missing CLI options in `lspec create`
+- Issue #2: Invalid status values in `lspec list` docs
+- Issue #4: Invalid status values in frontmatter reference
+- Issue #5: Status icons for non-existent statuses
+- Issue #10: Configuration structure completely out of sync
+
+**Medium (5 issues):**
+- Issue #3: Missing validation needed for list options
+- Issue #7: Missing CLI options for `lspec list`
+- Issue #8: Missing CLI options for `lspec search`
+- Issue #9: Missing CLI options for `lspec update`
+- Issue #11: Getting started config example wrong
+
+**Minor (1 issue):**
+- Issue #6: Inconsistent status icon (⏳ vs 🔨)
+
+### By File
+
+**`docs-site/docs/reference/cli.mdx`** (6 issues):
+- Issues #1, #2, #3, #7, #8, #9
+
+**`docs-site/docs/reference/frontmatter.mdx`** (2 issues):
+- Issues #4, #5
+
+**`docs-site/docs/reference/config.mdx`** (1 issue):
+- Issue #10
+
+**`docs-site/docs/guide/getting-started.mdx`** (1 issue):
+- Issue #11
+
+**`docs-site/docs/guide/variables.mdx`** (1 issue):
+- Issue #6
+
+### Validation Coverage
+
+**Validated:**
+- ✅ CLI command help output vs documentation
+- ✅ Status schema (StatusSchema type)
+- ✅ Priority schema (PrioritySchema type)
+- ✅ Configuration structure (LeanSpecConfig interface)
+- ✅ Variable resolution system
+- ✅ Template files existence and structure
+- ✅ Frontmatter field definitions
+
+**Still Need Validation:**
+- ⏳ Init flow interactive prompts
+- ⏳ Code examples (bash commands)
+- ⏳ YAML/JSON examples (syntax validation)
+- ⏳ Link validation (internal references)
+- ⏳ AI integration setup accuracy
+- ⏳ Custom fields filtering behavior
+- ⏳ Variable substitution in practice
+
+---
+
+## Recommendations
+
+### High Priority Fixes
+
+1. **Fix Status Schema** - Remove `blocked` and `cancelled` everywhere
+   - Files: `cli.mdx`, `frontmatter.mdx`
+   - Change to: `planned`, `in-progress`, `complete`, `archived`
+
+2. **Rewrite Configuration Reference** - Match actual structure
+   - File: `config.mdx`
+   - Must include: `template`, `templates`, `structure`, `features`, `autoCheck`
+   - Remove: `archiveDir`, `templateFile` (wrong field names)
+
+3. **Add Missing CLI Options** - Document all available options
+   - Files: `cli.mdx`
+   - Commands: `create`, `list`, `search`, `update`
+
+4. **Standardize Status Icons** - Use consistent icons
+   - Decide: ⏳ or 🔨 for in-progress
+   - Update all documentation to match source code
+
+### Medium Priority
+
+5. **Validate Code Examples** - Test all bash commands
+6. **Validate Init Prompts** - Match actual interactive flow
+7. **Fix Getting Started Config** - Show correct structure
+
+### Testing Plan
+
+**Phase 1: Unit Testing**
+- Test each CLI command with all options
+- Verify config file loading with various structures
+- Test variable substitution
+
+**Phase 2: Integration Testing**
+- Run `lspec init` and verify prompts
+- Create specs with various options
+- Test filtering and searching
+
+**Phase 3: Example Testing**
+- Run every bash command in documentation
+- Validate every YAML/JSON example
+- Test every configuration snippet
+
+---
+
+## Next Steps
+
+1. **Complete validation** - Finish remaining areas
+2. **Create fix PR** - Address all critical issues
+3. **Test fixes** - Verify all corrections work
+4. **Update spec 057** - Mark as complete
 
 ---
 
