@@ -756,7 +756,8 @@ describe('enrichWithTimestamps', () => {
 
     expect(data.created_at).toBeDefined();
     expect(typeof data.created_at).toBe('string');
-    expect(data.created_at).toContain('2025-11-01');
+    // Should be a full ISO timestamp with time, not just midnight
+    expect(data.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });
 
   it('should add updated_at when previousData provided', async () => {

@@ -26,43 +26,48 @@ completed: '2025-11-04'
 
 ## Overview
 
-**Problem**: The current command naming and information hierarchy doesn't align well with user needs:
+Simplify and consolidate analytics/dashboard commands to create focused, PM-friendly overview tools.
 
-1. **"Analytics" is too verbose** - "Stats" is more concise and intuitive for quick metrics
-2. **Stats shows too much by default** - PMs and daily users need a quick glance, not a full report
-3. **Smart insights are siloed** - Velocity + smart insights should be unified under stats
-4. **Board lacks context** - The most important entry point should show key project health metrics
-5. **Dashboard is redundant** - With improved stats + board, dashboard becomes unnecessary
+### The Problem
 
-**Why Now?**
+Current command structure doesn't align with user needs:
+
+1. **"Analytics" is too verbose** - "Stats" is more concise and intuitive
+2. **Stats shows too much by default** - Users need quick glance, not full report
+3. **Smart insights are siloed** - Velocity + insights should be unified
+4. **Board lacks context** - Primary entry point should show health metrics
+5. **Dashboard is redundant** - Overlaps with improved stats + board
+
+### Why Now?
+
 - v0.2.0 launch needs polished, focused UX
-- Feedback shows users want faster overview (current commands are too detailed)
-- Board is the primary workflow entry point - should be more useful
-- Consolidating commands reduces cognitive overhead
+- User feedback: current commands too detailed for daily check-ins
+- Board is primary workflow entry point - should be more useful
+- Reducing command sprawl lowers cognitive overhead
 
-**Current State:**
+### Solution
+
+**Before:**
 ```bash
-lspec analytics              # Too verbose name, shows everything
-lspec analytics --stats      # Subset of analytics
-lspec analytics --velocity   # Subset of analytics
+lspec analytics              # Too verbose, shows everything
 lspec dashboard              # Separate overview command
 lspec board                  # Kanban only, no context
-lspec stats                  # Old basic stats command
+lspec stats                  # Old basic stats
 ```
 
-**Desired State:**
+**After:**
 ```bash
-lspec stats                  # Essential metrics only (default: PM-friendly)
-lspec stats --full           # Full detailed analytics (all sections)
+lspec stats                  # Essential metrics (PM-friendly default)
+lspec stats --full           # Full detailed analytics
 lspec stats --velocity       # Focus on velocity metrics
 lspec stats --timeline       # Focus on timeline/activity
 
-lspec board                  # Kanban + project health summary at top
+lspec board                  # Kanban + project health summary
 lspec board --simple         # Original kanban-only view
 
-# Removed (v0.2.0):
-lspec analytics              # REMOVED → use `lspec stats`
-lspec dashboard              # REMOVED → use `lspec board`
+# REMOVED in v0.2.0:
+lspec analytics              # → use `lspec stats`
+lspec dashboard              # → use `lspec board`
 ```
 
 ## Design

@@ -154,6 +154,10 @@ export async function createSpec(name: string, options: {
     };
     parsed.content = resolveVariables(parsed.content, contextWithFrontmatter);
     
+    // Enrich with timestamps (created_at, etc.)
+    const { enrichWithTimestamps } = await import('../frontmatter.js');
+    enrichWithTimestamps(parsed.data);
+    
     // Stringify back with updated frontmatter and resolved body content
     content = matter.stringify(parsed.content, parsed.data);
     

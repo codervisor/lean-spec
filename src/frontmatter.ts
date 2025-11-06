@@ -74,14 +74,10 @@ export function enrichWithTimestamps(
 ): void {
   const now = new Date().toISOString();
 
-  // Set created_at if missing (infer from created date or use now)
+  // Set created_at if missing - always use current timestamp
+  // Do NOT infer from created date field since that's just YYYY-MM-DD without time
   if (!data.created_at) {
-    if (data.created && typeof data.created === 'string') {
-      // Infer from date field (use midnight UTC)
-      data.created_at = `${data.created}T00:00:00Z`;
-    } else {
-      data.created_at = now;
-    }
+    data.created_at = now;
   }
 
   // Update updated_at on any change (if previousData exists)
