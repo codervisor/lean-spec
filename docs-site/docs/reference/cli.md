@@ -148,11 +148,14 @@ lspec list --field epic=PROJ-123
 Update spec metadata.
 
 ```bash
-lspec update <path> [options]
+lspec update <spec> [options]
 ```
 
 **Arguments:**
-- `<path>` - Path to spec (required)
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
 
 **Options:**
 - `--status <status>` - Update status
@@ -163,20 +166,20 @@ lspec update <path> [options]
 **Examples:**
 
 ```bash
-# Update status
-lspec update specs/20251102/001-user-auth --status=in-progress
+# Update status (using spec number)
+lspec update 1 --status=in-progress
 
-# Update priority
-lspec update specs/20251102/001-user-auth --priority=critical
+# Update priority (using spec name)
+lspec update user-auth --priority=critical
 
 # Update tags
-lspec update specs/20251102/001-user-auth --tags=security,api,mvp
+lspec update 001-user-auth --tags=security,api,mvp
 
 # Update custom fields
-lspec update specs/20251102/001-user-auth --field epic=PROJ-123
+lspec update 1 --field epic=PROJ-123
 
 # Update multiple fields
-lspec update specs/20251102/001-user-auth --status=complete --priority=high
+lspec update 1 --status=complete --priority=high
 ```
 
 **Output:**
@@ -246,16 +249,23 @@ Found 2 specs matching "authentication":
 Archive completed specs.
 
 ```bash
-lspec archive <path>
+lspec archive <spec>
 ```
 
 **Arguments:**
-- `<path>` - Path to spec (required)
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
 
 **Examples:**
 
 ```bash
-lspec archive specs/20251102/001-user-auth
+# Archive by spec number
+lspec archive 1
+
+# Archive by name
+lspec archive user-auth
 ```
 
 **Output:**
@@ -282,11 +292,14 @@ lspec archive specs/20251102/001-user-auth
 View spec content.
 
 ```bash
-lspec view <spec-path> [options]
+lspec view <spec> [options]
 ```
 
 **Arguments:**
-- `<spec-path>` - Path to spec (required)
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
 
 **Options:**
 - `--raw` - Output raw markdown (for piping/scripting)
@@ -367,11 +380,14 @@ tags:
 Open spec in editor.
 
 ```bash
-lspec open <spec-path> [options]
+lspec open <spec> [options]
 ```
 
 **Arguments:**
-- `<spec-path>` - Path to spec (required)
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
 
 **Options:**
 - `--editor <editor>` - Specify editor command
@@ -484,29 +500,38 @@ lspec board
 Show dependencies for a spec (coming soon).
 
 ```bash
-lspec deps <path>
+lspec deps <spec>
 ```
+
+**Arguments:**
+- `<spec>` - Spec identifier. Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
 
 **Note:** This feature is planned but not yet implemented.
 
 ---
 
-## Path Formats
+## Spec Identifiers
 
-All commands that accept a `<path>` argument support multiple formats:
+All commands that accept a `<spec>` argument support flexible formats:
 
 ```bash
-# Full path
+# Spec number (with or without padding)
+42
+042
+
+# Spec name
+unified-dashboard
+
+# Full folder name
+045-unified-dashboard
+
+# With old date-based structure (still supported)
 specs/20251102/001-user-auth
-
-# Relative path
 20251102/001-user-auth
-
-# Just the folder name
 001-user-auth
-
-# Spec name (if unique)
-user-auth
 ```
 
 LeanSpec will find the spec regardless of which format you use.

@@ -42,22 +42,22 @@ Command Groups:
     init                          Initialize LeanSpec in current directory
     create <name>                 Create new spec in folder structure
     list                          List all specs
-    update <spec-path>            Update spec metadata
-    archive <spec-path>           Move spec to archived/
+    update <spec>                 Update spec metadata
+    archive <spec>                Move spec to archived/
     backfill [specs...]           Backfill timestamps from git history
     
   Viewing & Navigation:
-    view <spec-path>              View spec content
-    open <spec-path>              Open spec in editor
+    view <spec>                   View spec content
+    open <spec>                   Open spec in editor
     search <query>                Full-text search with metadata filters
-    files <spec-path>             List files in a spec
+    files <spec>                  List files in a spec
     
   Project & Analytics:
     board                         Show Kanban-style board view
     stats                         Show aggregate statistics
     timeline                      Show creation/completion over time
     gantt                         Show timeline with dependencies
-    deps <spec-path>              Show dependency graph for a spec
+    deps <spec>                   Show dependency graph for a spec
     
   Maintenance:
     check                         Check for sequence conflicts
@@ -81,7 +81,7 @@ Examples:
 
 // archive command
 program
-  .command('archive <spec-path>')
+  .command('archive <spec>')
   .description('Move spec to archived/')
   .action(async (specPath: string) => {
     await archiveSpec(specPath);
@@ -209,7 +209,7 @@ program
 
 // deps command
 program
-  .command('deps <spec-path>')
+  .command('deps <spec>')
   .description('Show dependency graph for a spec. Related specs (⟷) are shown bidirectionally, depends_on (→) are directional.')
   .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
   .option('--graph', 'ASCII graph visualization')
@@ -224,7 +224,7 @@ program
 
 // files command
 program
-  .command('files <spec-path>')
+  .command('files <spec>')
   .description('List files in a spec')
   .option('--type <type>', 'Filter by type: docs, assets')
   .option('--tree', 'Show tree structure')
@@ -307,7 +307,7 @@ program
 
 // open command
 program
-  .command('open <spec-path>')
+  .command('open <spec>')
   .description('Open spec in editor')
   .option('--editor <editor>', 'Specify editor command')
   .action(async (specPath: string, options: {
@@ -435,7 +435,7 @@ program
 
 // update command
 program
-  .command('update <spec-path>')
+  .command('update <spec>')
   .description('Update spec metadata')
   .option('--status <status>', 'Set status (planned, in-progress, complete, archived)')
   .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
@@ -483,7 +483,7 @@ program
 
 // view command (primary viewer)
 program
-  .command('view <spec-path>')
+  .command('view <spec>')
   .description('View spec content')
   .option('--raw', 'Output raw markdown (for piping/scripting)')
   .option('--json', 'Output as JSON')
