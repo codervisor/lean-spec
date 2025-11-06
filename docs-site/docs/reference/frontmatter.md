@@ -50,6 +50,44 @@ tags: [api, security, mvp]
 **Values:** `low` | `medium` | `high` | `critical`  
 **Description:** Importance level
 
+### related
+
+**Type:** `array`  
+**Description:** Related specs (bidirectional soft reference)
+
+Specs listed here are shown bidirectionally in `lspec deps`. If spec A has `related: [B]`, both A and B will show the relationship.
+
+**Example:**
+```yaml
+related: [042-mcp-error-handling, 037-docs-overhaul]
+```
+
+**Symbol:** ⟷ (bidirectional arrow)
+
+**Use when:**
+- Specs cover related topics or features
+- Work is coordinated but not blocking
+- Context is helpful but not required
+
+### depends_on
+
+**Type:** `array`  
+**Description:** Hard dependencies (directional blocking)
+
+Spec cannot start until dependencies complete. Shows directionally in `lspec deps`.
+
+**Example:**
+```yaml
+depends_on: [018-spec-validation]
+```
+
+**Symbol:** → (depends on) or ← (blocks)
+
+**Use when:**
+- Spec truly cannot start until another completes
+- There's a clear dependency chain
+- Work must be done in specific order
+
 ### completed
 
 **Type:** `string`  

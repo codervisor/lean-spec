@@ -210,7 +210,7 @@ program
 // deps command
 program
   .command('deps <spec-path>')
-  .description('Show dependency graph for a spec')
+  .description('Show dependency graph for a spec. Related specs (⟷) are shown bidirectionally, depends_on (→) are directional.')
   .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
   .option('--graph', 'ASCII graph visualization')
   .option('--json', 'Output as JSON')
