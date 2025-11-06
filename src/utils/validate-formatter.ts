@@ -7,6 +7,7 @@
 import chalk from 'chalk';
 import type { ValidationResult } from './validation-framework.js';
 import type { SpecInfo } from '../spec-loader.js';
+import { formatStatusBadge, formatPriorityBadge } from './colors.js';
 
 export interface ValidationIssue {
   severity: 'error' | 'warning';
@@ -14,11 +15,13 @@ export interface ValidationIssue {
   suggestion?: string;
   ruleName: string;
   filePath: string; // Full path to the spec file or sub-spec file
+  spec?: SpecInfo; // Reference to spec for metadata display
 }
 
 export interface FileValidationResult {
   filePath: string; // Display path (relative to specs directory)
   issues: ValidationIssue[];
+  spec?: SpecInfo; // Reference to spec for metadata display
 }
 
 export interface FormatOptions {
@@ -39,18 +42,18 @@ export function groupIssuesByFile(
     content: string;
   }>
 ): FileValidationResult[] {
-  const fileMap = new Map<string, ValidationIssue[]>();
+  const fileMap = new Map<string, { issues: ValidationIssue[], spec?: SpecInfo }>();
 
   // Helper function to add issue to fileMap
-  const addIssue = (filePath: string, issue: ValidationIssue) => {
+  const addIssue = (filePath: string, issue: ValidationIssue, spec: SpecInfo) => {
     if (!fileMap.has(filePath)) {
-      fileMap.set(filePath, []);
+      fileMap.set(filePath, { issues: [], spec });
     }
-    fileMap.get(filePath)!.push(issue);
+    fileMap.get(filePath)!.issues.push(issue);
   };
 
   for (const { spec, validatorName, result } of results) {
-    // Process errors
+    // Process errors - they are associated with the main spec file
     for (const error of result.errors) {
       addIssue(spec.filePath, {
         severity: 'error',
@@ -58,10 +61,11 @@ export function groupIssuesByFile(
         suggestion: error.suggestion,
         ruleName: validatorName,
         filePath: spec.filePath,
-      });
+        spec,
+      }, spec);
     }
 
-    // Process warnings
+    // Process warnings - they are associated with the main spec file
     for (const warning of result.warnings) {
       addIssue(spec.filePath, {
         severity: 'warning',
@@ -69,24 +73,30 @@ export function groupIssuesByFile(
         suggestion: warning.suggestion,
         ruleName: validatorName,
         filePath: spec.filePath,
-      });
+        spec,
+      }, spec);
     }
   }
 
   // Convert map to array and sort
   const fileResults: FileValidationResult[] = [];
-  for (const [filePath, issues] of fileMap.entries()) {
+  for (const [filePath, data] of fileMap.entries()) {
     // Sort issues: errors first, then warnings
-    issues.sort((a, b) => {
+    data.issues.sort((a, b) => {
       if (a.severity === b.severity) return 0;
       return a.severity === 'error' ? -1 : 1;
     });
 
-    fileResults.push({ filePath, issues });
+    fileResults.push({ filePath, issues: data.issues, spec: data.spec });
   }
 
-  // Sort files by path
-  fileResults.sort((a, b) => a.filePath.localeCompare(b.filePath));
+  // Sort files by spec name (natural order)
+  fileResults.sort((a, b) => {
+    if (a.spec && b.spec) {
+      return a.spec.name.localeCompare(b.spec.name);
+    }
+    return a.filePath.localeCompare(b.filePath);
+  });
 
   return fileResults;
 }
@@ -118,7 +128,23 @@ export function formatFileIssues(fileResult: FileValidationResult, specsDir: str
   // Display path (relative to current working directory or specs directory)
   const relativePath = normalizeFilePath(fileResult.filePath);
   
-  lines.push(chalk.cyan.underline(relativePath));
+  // Check if this is a main spec file (ends with README.md)
+  const isMainSpec = relativePath.endsWith('README.md');
+  
+  if (isMainSpec && fileResult.spec) {
+    // For main spec: Show spec name with metadata
+    const specName = fileResult.spec.name;
+    const status = fileResult.spec.frontmatter.status;
+    const priority = fileResult.spec.frontmatter.priority || 'medium';
+    
+    const statusBadge = formatStatusBadge(status);
+    const priorityBadge = formatPriorityBadge(priority);
+    
+    lines.push(chalk.bold.cyan(`${specName} ${statusBadge} ${priorityBadge}`));
+  } else {
+    // For sub-specs: Show relative path
+    lines.push(chalk.cyan.underline(relativePath));
+  }
 
   // Format each issue with aligned columns
   for (const issue of fileResult.issues) {
@@ -260,9 +286,22 @@ export function formatValidationResults(
   // Header
   lines.push(chalk.bold(`\nValidating ${specs.length} specs...\n`));
 
+  // Track previous spec to add separators
+  let previousSpecName: string | undefined;
+
   // File issues
   for (const fileResult of displayResults) {
+    // Add separator between different specs
+    if (fileResult.spec && previousSpecName && fileResult.spec.name !== previousSpecName) {
+      lines.push(chalk.gray('─'.repeat(80)));
+      lines.push('');
+    }
+    
     lines.push(formatFileIssues(fileResult, specsDir));
+    
+    if (fileResult.spec) {
+      previousSpecName = fileResult.spec.name;
+    }
   }
 
   // Summary

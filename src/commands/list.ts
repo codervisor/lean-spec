@@ -8,20 +8,7 @@ import type { SpecInfo } from '../spec-loader.js';
 import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
 import { detectPatternType } from '../utils/pattern-detection.js';
-
-const PRIORITY_BADGES: Record<SpecPriority, { emoji: string; colorFn: (s: string) => string }> = {
-  critical: { emoji: '🔴', colorFn: chalk.red },
-  high: { emoji: '🟠', colorFn: chalk.hex('#FFA500') },
-  medium: { emoji: '🟡', colorFn: chalk.yellow },
-  low: { emoji: '🟢', colorFn: chalk.green },
-};
-
-const STATUS_EMOJI: Record<SpecStatus, string> = {
-  planned: '📅',
-  'in-progress': '⏳',
-  complete: '✅',
-  archived: '📦',
-};
+import { PRIORITY_CONFIG, getStatusEmoji, getPriorityEmoji } from '../utils/colors.js';
 
 export async function listSpecs(options: {
   showArchived?: boolean;
@@ -109,8 +96,8 @@ export async function listSpecs(options: {
 function renderFlatList(specs: SpecInfo[]): void {
   // Simple flat list - no grouping
   for (const spec of specs) {
-    const statusEmoji = STATUS_EMOJI[spec.frontmatter.status] || '📄';
-    const priorityEmoji = spec.frontmatter.priority ? PRIORITY_BADGES[spec.frontmatter.priority].emoji : '';
+    const statusEmoji = getStatusEmoji(spec.frontmatter.status);
+    const priorityEmoji = getPriorityEmoji(spec.frontmatter.priority);
     
     let assigneeStr = '';
     if (spec.frontmatter.assignee) {
@@ -181,8 +168,8 @@ function renderGroupedList(specs: SpecInfo[], groupExtractor: string): void {
 
     // Render specs in this group - simple flat list
     for (const spec of groupSpecs) {
-      const statusEmoji = STATUS_EMOJI[spec.frontmatter.status] || '📄';
-      const priorityEmoji = spec.frontmatter.priority ? PRIORITY_BADGES[spec.frontmatter.priority].emoji : '';
+      const statusEmoji = getStatusEmoji(spec.frontmatter.status);
+      const priorityEmoji = getPriorityEmoji(spec.frontmatter.priority);
       
       // Remove group prefix from display path
       const displayPath = spec.path.includes('/') 
