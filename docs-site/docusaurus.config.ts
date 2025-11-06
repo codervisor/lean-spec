@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'LeanSpec',
   tagline: 'Lightweight spec methodology for AI-powered development',
-  favicon: 'img/favicon.ico',
+  favicon: 'favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
