@@ -4,8 +4,7 @@
   "description": "Lightweight spec methodology for AI-powered development",
   "type": "module",
   "bin": {
-    "lspec": "./bin/lspec.js",
-    "lspec-mcp": "./bin/mcp-server.js"
+    "lspec": "./bin/lspec.js"
   },
   "scripts": {
     "build": "tsup",

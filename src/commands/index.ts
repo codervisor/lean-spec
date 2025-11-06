@@ -26,3 +26,6 @@ export { ganttCommand } from './gantt.js';
 
 // Viewer commands
 export { viewCommand, openCommand } from './viewer.js';
+
+// Server commands
+export { mcpCommand } from './mcp.js';

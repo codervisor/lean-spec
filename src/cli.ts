@@ -22,6 +22,7 @@ import {
   viewCommand,
   openCommand,
   validateCommand,
+  mcpCommand,
 } from './commands/index.js';
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
@@ -62,6 +63,9 @@ Command Groups:
     check                         Check for sequence conflicts
     validate [specs...]           Validate specs for quality issues
     templates                     Manage spec templates
+  
+  Server:
+    mcp                           Start MCP server for AI assistants
 
 Examples:
   $ lspec init
@@ -499,6 +503,14 @@ program
       console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
+  });
+
+// mcp command
+program
+  .command('mcp')
+  .description('Start MCP server for AI assistants (Claude Desktop, Cline, etc.)')
+  .action(async () => {
+    await mcpCommand();
   });
 
 // Parse and execute

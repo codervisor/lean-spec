@@ -1,16 +1,14 @@
-#!/usr/bin/env node
-
 /**
- * LeanSpec MCP Server Entry Point
+ * MCP Server Command
  * 
- * This script starts the MCP server using stdio transport for
- * communication with MCP clients like Claude Desktop.
+ * Starts the LeanSpec MCP (Model Context Protocol) server for integration
+ * with AI assistants like Claude Desktop, Cline, and other MCP clients.
  */
 
-import { createMcpServer } from '../dist/mcp-server.js';
+import { createMcpServer } from '../mcp-server.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-async function main() {
+export async function mcpCommand(): Promise<void> {
   try {
     const server = await createMcpServer();
     const transport = new StdioServerTransport();
@@ -23,5 +21,3 @@ async function main() {
     process.exit(1);
   }
 }
-
-main();

@@ -40,6 +40,31 @@ npm install -g lean-spec
 
 ## Configuration
 
+### VS Code (GitHub Copilot)
+
+1. Open VS Code settings (JSON):
+   - Press `Cmd/Ctrl + Shift + P`
+   - Type "Preferences: Open User Settings (JSON)"
+   - Or directly edit `~/.vscode/settings.json`
+
+2. Add the LeanSpec MCP server configuration:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+The `${workspaceFolder}` variable automatically uses your current workspace root. For a specific project path, replace it with the absolute path.
+
+> **Note:** Using `npx` ensures you're always using the latest version and works without global installation. The `-y` flag automatically confirms the installation prompt.
+
 ### Claude Desktop
 
 1. Open your Claude Desktop configuration file:
@@ -53,8 +78,8 @@ npm install -g lean-spec
 {
   "mcpServers": {
     "lean-spec": {
-      "command": "lspec-mcp",
-      "args": [],
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
       "cwd": "/path/to/your/lspec/project"
     }
   }
@@ -71,14 +96,30 @@ You can configure multiple LeanSpec projects:
 {
   "mcpServers": {
     "lean-spec-projectA": {
-      "command": "lspec-mcp",
-      "args": [],
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
       "cwd": "/path/to/projectA"
     },
     "lean-spec-projectB": {
-      "command": "lspec-mcp",
-      "args": [],
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
       "cwd": "/path/to/projectB"
+    }
+  }
+}
+```
+
+### Alternative: Using Global Installation
+
+If you have LeanSpec installed globally (`npm install -g lean-spec`), you can use:
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "lspec",
+      "args": ["mcp"],
+      "cwd": "/path/to/your/lspec/project"
     }
   }
 }
@@ -87,7 +128,7 @@ You can configure multiple LeanSpec projects:
 ### Other MCP Clients
 
 For other MCP-compatible clients, configure them to run:
-- **Command**: `lspec-mcp` (or full path to the binary)
+- **Command**: `npx -y lean-spec mcp` (recommended) or `lspec mcp` (if globally installed)
 - **Working Directory**: Your LeanSpec project root
 - **Transport**: stdio
 
@@ -119,12 +160,13 @@ View the spec for "001-user-authentication" in raw format
 ```
 Create a new spec called "api-redesign" with high priority and tags "api, backend"
 ```
+## Troubleshooting
 
-### Update specification status
-```
-Update spec "024-flat-structure-migration" to in-progress status
-```
-
+### Server won't start
+- Verify the `cwd` path in your configuration points to a valid LeanSpec project (has `.lspec/config.json`)
+- If using `npx`, ensure you have internet access for the first run
+- If using global installation, check that `lspec` is in your PATH
+- Try running `npx -y lean-spec mcp` or `lspec mcp` directly from your project directory
 ### Get project statistics
 ```
 Show me the project statistics
@@ -139,8 +181,8 @@ Show me the current Kanban board
 
 ### Server won't start
 - Verify the `cwd` path in your configuration points to a valid LeanSpec project (has `.lspec/config.json`)
-- Check that `lspec-mcp` is in your PATH
-- Try running `lspec-mcp` directly from your project directory
+- Check that `lspec` is in your PATH
+- Try running `lspec mcp` directly from your project directory
 
 ### Tools not appearing
 - Restart your MCP client after configuration changes
@@ -152,20 +194,22 @@ Show me the current Kanban board
 - Check file permissions on the specs directory
 
 ## Development
-
 ### Testing the MCP Server
 
 You can test the MCP server using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 
 ```bash
-npx @modelcontextprotocol/inspector lspec-mcp
+npx @modelcontextprotocol/inspector npx -y lean-spec mcp
 ```
 
-Or directly:
+Or test directly from your project:
 
 ```bash
 cd /path/to/your/lspec/project
-node /path/to/lean-spec/bin/mcp-server.js
+npx -y lean-spec mcp
+# or if installed globally:
+lspec mcp
+```ec mcp
 ```
 
 ## Security Considerations
