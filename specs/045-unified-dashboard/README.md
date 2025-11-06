@@ -27,8 +27,6 @@ transitions:
 
 ## Overview
 
-## Overview
-
 Consolidate analytics/visualization commands and create a comprehensive dashboard view for LeanSpec.
 
 ### What We're Building

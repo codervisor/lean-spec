@@ -37,11 +37,13 @@ related:
 
 ## Documentation Structure
 
-This analysis is organized into multiple focused documents:
+This analysis is organized into multiple focused documents (split for Context Economy):
 
 - **[FIRST-PRINCIPLES.md](FIRST-PRINCIPLES.md)** - The 5 crystal stone rules with rationale and examples
-- **[ANALYSIS.md](ANALYSIS.md)** - Comprehensive analysis of constraints, comparisons, and thought experiments
-- **[OPERATIONALIZATION.md](OPERATIONALIZATION.md)** - How to enforce principles through tooling, culture, and metrics
+- **[ANALYSIS-CONSTRAINTS.md](ANALYSIS-CONSTRAINTS.md)** - Hard constraints analysis (physics, cognition, economics)
+- **[ANALYSIS-COMPARISONS.md](ANALYSIS-COMPARISONS.md)** - Comparisons to alternatives and thought experiments
+- **[OPERATIONALIZATION-TOOLS.md](OPERATIONALIZATION-TOOLS.md)** - Detection, guidance, and prevention tooling
+- **[OPERATIONALIZATION-ROADMAP.md](OPERATIONALIZATION-ROADMAP.md)** - Implementation roadmap and success criteria
 
 ## The Five First Principles
 

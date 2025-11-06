@@ -204,6 +204,10 @@ Blocks:
 - Code is clear and maintainable
 - Tests cover critical paths
 - Specs stay in sync with implementation
+- **Always validate before completing work:**
+  - Run `npx lspec validate` to check spec structure and frontmatter
+  - Run `cd docs-site && npm run build` to ensure documentation site builds successfully
+  - Fix any validation errors or build failures before marking work complete
 
 ## Spec Complexity Guidelines
 

@@ -2,21 +2,23 @@
 
 Configuration options for the `lspec validate` command.
 
-**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
+> See [CONFIGURATION-EXAMPLES.md](./CONFIGURATION-EXAMPLES.md) for practical examples
 
-## Configuration File Location
+## Configuration File
 
 Configuration is stored in `.lspec/config.json`:
 
 ```json
 {
   "validate": {
-    // Validation configuration
-  }
+    "mode": "comprehensive",
+    "rules": { /* rule configuration */ }
+  },
+  "ignorePaths": ["archived/**"]
 }
 ```
 
-## Complete Configuration Schema
+## Complete Schema
 
 ```json
 {
@@ -52,40 +54,31 @@ Configuration is stored in `.lspec/config.json`:
       }
     }
   },
-  "ignorePaths": [
-    "archived/**"
-  ]
+  "ignorePaths": ["archived/**"]
 }
 ```
 
 ## Configuration Options
 
-### Check Mode
+### Validation Mode
 
 ```json
 {
-  "check": {
-    "mode": "comprehensive",  // or "sequences-only"
-    "autoCheck": true,
-    "autoCheckMode": "sequences-only"
+  "validate": {
+    "mode": "comprehensive"  // or "quick"
   }
 }
 ```
 
-**Options:**
-- `mode`: Default validation mode when running `lspec validate`
-  - `"comprehensive"` - All validations (default in v0.3.0+)
-  - `"basic"` - Line count only (current v0.2.0 behavior)
-
-- `autoValidate`: Enable automatic validation on spec operations (future)
-  - `false` - Manual validation only (current default)
-  - `true` - Auto-validate after create/update
+**Modes:**
+- `"comprehensive"` - All validations (default)
+- `"quick"` - Basic checks only (faster)
 
 ### Frontmatter Rules
 
 ```json
 {
-  "check": {
+  "validate": {
     "rules": {
       "frontmatter": {
         "required": ["status", "created"],
@@ -98,28 +91,15 @@ Configuration is stored in `.lspec/config.json`:
 ```
 
 **Options:**
-- `required`: Array of required frontmatter fields
-- `allowedStatus`: Valid values for `status` field
-- `allowedPriority`: Valid values for `priority` field (if present)
-
-**Example - Custom Status Values:**
-```json
-{
-  "check": {
-    "rules": {
-      "frontmatter": {
-        "allowedStatus": ["draft", "review", "approved", "archived"]
-      }
-    }
-  }
-}
-```
+- `required` - Required frontmatter fields (array of strings)
+- `allowedStatus` - Valid status values (array of strings)
+- `allowedPriority` - Valid priority values (array of strings)
 
 ### Structure Rules
 
 ```json
 {
-  "check": {
+  "validate": {
     "rules": {
       "structure": {
         "requireReadme": true,
@@ -132,29 +112,15 @@ Configuration is stored in `.lspec/config.json`:
 ```
 
 **Options:**
-- `requireReadme`: Spec must have README.md
-- `requiredSections`: Array of section names that must exist
-- `forbidEmptySections`: Empty sections are invalid
-
-**Example - Minimal Structure:**
-```json
-{
-  "check": {
-    "rules": {
-      "structure": {
-        "requiredSections": ["Overview"],
-        "forbidEmptySections": false
-      }
-    }
-  }
-}
-```
+- `requireReadme` - Spec must have README.md (boolean)
+- `requiredSections` - Section headers that must exist (array of strings)
+- `forbidEmptySections` - Empty sections are invalid (boolean)
 
 ### Content Rules
 
 ```json
 {
-  "check": {
+  "validate": {
     "rules": {
       "content": {
         "minLength": 100,
@@ -167,30 +133,15 @@ Configuration is stored in `.lspec/config.json`:
 ```
 
 **Options:**
-- `minLength`: Minimum character count for spec
-- `forbidTodoInComplete`: No TODO/FIXME in complete specs
-- `validateLinks`: Check internal links are valid
+- `minLength` - Minimum character count (number)
+- `forbidTodoInComplete` - No TODO/FIXME in complete specs (boolean)
+- `validateLinks` - Check internal links are valid (boolean)
 
-**Example - Relaxed Content Rules:**
-```json
-{
-  "check": {
-    "rules": {
-      "content": {
-        "minLength": 50,
-        "forbidTodoInComplete": false,
-        "validateLinks": false
-      }
-    }
-  }
-}
-```
-
-### Corruption Detection Rules
+### Corruption Detection
 
 ```json
 {
-  "check": {
+  "validate": {
     "rules": {
       "corruption": {
         "detectDuplicateSections": true,
@@ -204,16 +155,16 @@ Configuration is stored in `.lspec/config.json`:
 ```
 
 **Options:**
-- `detectDuplicateSections`: Find duplicate section headers
-- `validateCodeBlocks`: Check code blocks are properly closed
-- `validateJsonYaml`: Validate JSON/YAML syntax
-- `detectFragments`: Find duplicated content fragments
+- `detectDuplicateSections` - Find duplicate section headers (boolean)
+- `validateCodeBlocks` - Check code blocks are properly closed (boolean)
+- `validateJsonYaml` - Validate JSON/YAML syntax (boolean)
+- `detectFragments` - Find duplicated content fragments (boolean)
 
 ### Staleness Rules
 
 ```json
 {
-  "check": {
+  "validate": {
     "rules": {
       "staleness": {
         "inProgressMaxDays": 30,
@@ -226,24 +177,9 @@ Configuration is stored in `.lspec/config.json`:
 ```
 
 **Options:**
-- `inProgressMaxDays`: Days before warning on in-progress specs
-- `noUpdateMaxDays`: Days before warning on stale specs
-- `plannedMaxDays`: Days before warning on old planned specs
-
-**Example - Stricter Staleness:**
-```json
-{
-  "check": {
-    "rules": {
-      "staleness": {
-        "inProgressMaxDays": 14,
-        "noUpdateMaxDays": 30,
-        "plannedMaxDays": 30
-      }
-    }
-  }
-}
-```
+- `inProgressMaxDays` - Days before warning on in-progress specs (number)
+- `noUpdateMaxDays` - Days before warning on stale specs (number)
+- `plannedMaxDays` - Days before warning on old planned specs (number)
 
 ## Ignore Paths
 
@@ -252,105 +188,41 @@ Configuration is stored in `.lspec/config.json`:
   "ignorePaths": [
     "archived/**",
     "experiments/**",
-    "old/**"
+    "drafts/**"
   ]
 }
 ```
 
-**Glob patterns** to exclude from checking:
+Glob patterns to exclude from validation:
 - `archived/**` - Ignore all archived specs
 - `**/OLD_*.md` - Ignore files starting with OLD_
 - `experiments/` - Ignore entire directory
-
-## Template-Specific Rules
-
-Different templates can have different rules:
-
-```json
-{
-  "check": {
-    "templates": {
-      "minimal": {
-        "rules": {
-          "structure": {
-            "requiredSections": ["Goal"]
-          }
-        }
-      },
-      "standard": {
-        "rules": {
-          "structure": {
-            "requiredSections": ["Overview", "Design", "Plan"]
-          }
-        }
-      },
-      "enterprise": {
-        "rules": {
-          "structure": {
-            "requiredSections": ["Overview", "Research", "Design", "Plan", "Test", "Risks"]
-          },
-          "frontmatter": {
-            "required": ["status", "created", "assignee", "reviewer"]
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-## Custom Validation Rules (Future)
-
-```json
-{
-  "check": {
-    "custom": [
-      {
-        "name": "require-epic",
-        "rule": "frontmatter.epic != null",
-        "message": "All specs must have an epic",
-        "severity": "error"
-      },
-      {
-        "name": "tag-convention",
-        "rule": "frontmatter.tags.every(t => t.match(/^[a-z-]+$/))",
-        "message": "Tags must be lowercase with hyphens",
-        "severity": "warning"
-      }
-    ]
-  }
-}
-```
 
 ## Configuration Precedence
 
 1. **Command-line flags** (highest priority)
 2. **Project config** (`.lspec/config.json`)
-3. **Template defaults**
-4. **Built-in defaults** (lowest priority)
+3. **Built-in defaults** (lowest priority)
 
 Example:
 ```bash
-# Command-line flag overrides config
-lspec validate --max-lines 500
-# Even if config has different default
+# CLI flag overrides config
+lspec validate --mode quick
 ```
 
 ## Default Configuration
 
-If no configuration file exists, these defaults are used:
+If no configuration file exists:
 
 ```json
 {
-  "check": {
+  "validate": {
     "mode": "comprehensive",
-    "autoCheck": true,
-    "autoCheckMode": "sequences-only",
+    "autoValidate": false,
     "rules": {
       "frontmatter": {
         "required": ["status", "created"],
-        "allowedStatus": ["planned", "in-progress", "complete", "archived"],
-        "allowedPriority": ["low", "medium", "high", "critical"]
+        "allowedStatus": ["planned", "in-progress", "complete", "archived"]
       },
       "structure": {
         "requireReadme": true,
@@ -365,78 +237,49 @@ If no configuration file exists, these defaults are used:
       "corruption": {
         "detectDuplicateSections": true,
         "validateCodeBlocks": true,
-        "validateJsonYaml": true,
-        "detectFragments": true
+        "validateJsonYaml": false,
+        "detectFragments": false
       },
       "staleness": {
-        "inProgressMaxDays": 30,
-        "noUpdateMaxDays": 90,
-        "plannedMaxDays": 60
+        "inProgressMaxDays": 90,
+        "noUpdateMaxDays": 180,
+        "plannedMaxDays": 120
       }
     }
-  }
+  },
+  "ignorePaths": []
 }
 ```
 
-## Configuration Examples
+## Quick Reference
 
-### Strict Mode (CI/CD)
+### Common Configurations
 
+**Strict (CI/CD):**
 ```json
 {
-  "check": {
+  "validate": {
     "mode": "comprehensive",
     "rules": {
-      "frontmatter": {
-        "required": ["status", "created", "priority"],
-        "allowedStatus": ["planned", "in-progress", "complete", "archived"]
-      },
-      "structure": {
-        "requiredSections": ["Overview", "Design", "Plan", "Test"],
-        "forbidEmptySections": true
-      },
-      "content": {
-        "minLength": 200,
-        "forbidTodoInComplete": true,
-        "validateLinks": true
-      }
+      "content": { "minLength": 200, "forbidTodoInComplete": true },
+      "structure": { "forbidEmptySections": true },
+      "staleness": { "inProgressMaxDays": 14 }
     }
   }
 }
 ```
 
-### Relaxed Mode (Early Development)
-
+**Relaxed (Development):**
 ```json
 {
-  "check": {
-    "mode": "sequences-only",
+  "validate": {
+    "mode": "quick",
     "rules": {
-      "frontmatter": {
-        "required": ["status"]
-      },
-      "structure": {
-        "requiredSections": []
-      }
+      "content": { "minLength": 50 },
+      "staleness": { "inProgressMaxDays": 90 }
     }
   }
 }
 ```
 
-### Custom Workflow
-
-```json
-{
-  "check": {
-    "rules": {
-      "frontmatter": {
-        "required": ["status", "created", "team", "sprint"],
-        "allowedStatus": ["backlog", "sprint", "review", "done"]
-      },
-      "structure": {
-        "requiredSections": ["Problem", "Solution", "Acceptance Criteria"]
-      }
-    }
-  }
-}
-```
+See [CONFIGURATION-EXAMPLES.md](./CONFIGURATION-EXAMPLES.md) for more examples.
