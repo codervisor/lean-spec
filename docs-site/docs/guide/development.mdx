@@ -35,12 +35,13 @@ lean-spec/
 ├── src/              # TypeScript source code
 │   ├── cli.ts       # Main CLI
 │   ├── commands/    # Command implementations
-│   ├── lib/         # Core library code
-│   └── types/       # TypeScript types
-├── templates/        # Project templates
-├── docs/            # Documentation (VitePress)
+│   ├── components/  # Reusable components
+│   ├── utils/       # Utility functions
+│   └── validators/  # Validation logic
+├── templates/        # Project templates (minimal, standard, enterprise)
+├── docs-site/       # Documentation site (Docusaurus)
 ├── specs/           # Project specs (dogfooding)
-└── tests/           # Test files
+└── tests/           # Test files (co-located with source)
 ```
 
 ## Testing
@@ -110,20 +111,23 @@ npm run format
 
 ## Documentation
 
-The documentation site is built with VitePress.
+The documentation site is built with Docusaurus.
 
 ```bash
+# Navigate to docs site
+cd docs-site
+
 # Dev server (hot reload)
-npm run docs:dev
+npm start
 
 # Build docs
-npm run docs:build
+npm run build
 
 # Preview built docs
-npm run docs:preview
+npm run serve
 ```
 
-Documentation source is in `docs/` directory.
+Documentation source is in `docs-site/docs/` directory.
 
 ## Release Process
 
@@ -136,4 +140,4 @@ Documentation source is in `docs/` directory.
 
 ## Contributing
 
-See [Contributing Guidehttps://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md for detailed contribution guidelines.
+See [Contributing Guide](https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md) for detailed contribution guidelines.
