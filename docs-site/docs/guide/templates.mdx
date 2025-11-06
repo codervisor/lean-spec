@@ -17,17 +17,17 @@ Templates are complete working models that include:
 
 ## Available Templates
 
-### Solo Dev
+### Minimal
 
-Quick setup for solo developers (default).
+Bare essentials - just folder structure, no extras.
 
-**Best for:** Individual developers, side projects, MVP development
+**Best for:** Quick prototypes, personal projects, when you want absolute simplicity
 
 **Includes:**
-- Minimal configuration
-- Simple spec structure (status, created date only)
-- Basic AGENTS.md
-- Focus on speed and simplicity
+- Minimal frontmatter (status, created only)
+- Lightweight structure
+- No AGENTS.md or extra files
+- Focus on speed
 
 **Example frontmatter:**
 ```yaml
@@ -37,45 +37,58 @@ created: 2025-11-02
 ---
 ```
 
-### Team
+**Sections:**
+- Goal
+- Key Points
+- Non-Goals
+- Notes
 
-Small team collaboration with workflow guides.
+### Standard
 
-**Best for:** Teams of 2-10 people, startups, small product teams
+Recommended for most projects - includes AGENTS.md and solid structure.
+
+**Best for:** Solo developers, small teams (2-5 people), most projects
 
 **Includes:**
 - Status, tags, priority fields
-- Team workflow guidance
-- Code review checklist
-- CONTRIBUTING.md
+- AGENTS.md for AI integration
+- Overview, Design, Plan, Test sections
+- Sub-spec guidance for complex features
 
 **Example frontmatter:**
 ```yaml
 ---
-status: in-progress
+status: planned
 created: 2025-11-02
 tags: [api, feature]
 priority: high
 ---
 ```
 
+**Sections:**
+- Overview
+- Design
+- Plan (with sub-spec guidance)
+- Test
+- Notes
+
 ### Enterprise
 
-Enterprise-grade with governance & compliance.
+Governance with approvals and compliance.
 
-**Best for:** Large organizations, regulated industries, complex projects
+**Best for:** Large organizations, regulated industries, teams >10 people
 
 **Includes:**
-- Full metadata (assignee, reviewer, issue, epic)
-- Approval workflow
-- Compliance checklist
-- Integration with JIRA/Linear
-- Audit trail
+- Full metadata (assignee, reviewer, issue, epic, related)
+- Research and Dependencies sections
+- Security & Compliance checklist
+- Risk assessment
+- Rollout planning
 
 **Example frontmatter:**
 ```yaml
 ---
-status: in-progress
+status: planned
 created: 2025-11-02
 tags: [security, compliance]
 priority: critical
@@ -83,31 +96,19 @@ assignee: alice
 reviewer: bob
 issue: JIRA-1234
 epic: security-hardening
+related: [042, 043]
 ---
 ```
 
-### API First
-
-API-driven development with endpoint specs.
-
-**Best for:** API-focused projects, microservices, backend teams
-
-**Includes:**
-- API endpoint templates
-- Request/response examples
-- OpenAPI integration
-- Contract testing guidance
-
-**Example frontmatter:**
-```yaml
----
-status: planned
-created: 2025-11-02
-tags: [api, rest]
-priority: high
-endpoint: POST /api/users
----
-```
+**Sections:**
+- Overview
+- Research
+- Design (with Dependencies, Security & Compliance)
+- Plan (with owners)
+- Test
+- Risks
+- Rollout
+- Notes
 
 ## Choosing a Template
 
