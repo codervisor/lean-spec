@@ -76,6 +76,8 @@ Examples:
   $ lspec board --tag backend
   $ lspec search "authentication"
   $ lspec validate
+  $ lspec validate --verbose
+  $ lspec validate --quiet --rule max-lines
   $ lspec validate 018 --max-lines 500
 `);
 
