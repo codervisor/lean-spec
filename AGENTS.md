@@ -107,9 +107,11 @@ Skip specs for:
 
 **Viewing specs:**
 - `lspec view <spec>` - View a spec (formatted)
+- `lspec view <spec>/DESIGN.md` - View sub-spec file (DESIGN.md, TESTING.md, etc.)
 - `lspec view <spec> --raw` - Get raw markdown (for parsing)
 - `lspec view <spec> --json` - Get structured JSON
 - `lspec open <spec>` - Open spec in editor
+- `lspec files <spec>` - List all files in a spec (including sub-specs)
 
 **Project Overview:**
 - `lspec board` - Kanban view with project health summary

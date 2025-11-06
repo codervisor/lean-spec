@@ -22,6 +22,7 @@ interface SpecContent {
 
 /**
  * Read and parse a spec by path/name/number
+ * Supports sub-spec files like: "045/DESIGN.md" or "045-dashboard/TESTING.md"
  */
 export async function readSpecContent(
   specPath: string,
@@ -30,36 +31,83 @@ export async function readSpecContent(
   const config = await loadConfig(cwd);
   const specsDir = path.join(cwd, config.specsDir);
 
-  // Resolve the spec path
-  const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+  // Check if specPath includes a sub-file (e.g., "045/DESIGN.md" or "045-dashboard/TESTING.md")
+  let resolvedPath: string | null = null;
+  let targetFile: string | null = null;
   
-  if (!resolvedPath) {
-    return null;
+  // Split path to check for sub-file
+  const pathParts = specPath.split('/').filter(p => p);
+  
+  if (pathParts.length > 1 && pathParts[pathParts.length - 1].endsWith('.md')) {
+    // Last part looks like a file, try to resolve the directory
+    const specPart = pathParts.slice(0, -1).join('/');
+    const filePart = pathParts[pathParts.length - 1];
+    
+    resolvedPath = await resolveSpecPath(specPart, cwd, specsDir);
+    if (resolvedPath) {
+      targetFile = path.join(resolvedPath, filePart);
+      
+      // Verify the sub-file exists
+      try {
+        await fs.access(targetFile);
+      } catch {
+        // Sub-file doesn't exist
+        return null;
+      }
+    }
   }
-
-  // Get the spec file
-  const specFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
   
-  if (!specFile) {
-    return null;
+  // If no sub-file detected or resolution failed, try normal spec resolution
+  if (!resolvedPath) {
+    resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+    
+    if (!resolvedPath) {
+      return null;
+    }
+
+    // Get the default spec file (README.md)
+    targetFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
+    
+    if (!targetFile) {
+      return null;
+    }
   }
 
   // Read file content
-  const rawContent = await fs.readFile(specFile, 'utf-8');
+  const rawContent = await fs.readFile(targetFile, 'utf-8');
+  const fileName = path.basename(targetFile);
+  const isSubSpec = fileName !== config.structure.defaultFile;
 
-  // Parse frontmatter
-  const frontmatter = await parseFrontmatter(specFile, config);
+  // Parse frontmatter (only exists in main spec file)
+  let frontmatter: SpecFrontmatter | null = null;
   
-  if (!frontmatter) {
-    return null;
+  if (!isSubSpec) {
+    frontmatter = await parseFrontmatter(targetFile, config);
+    if (!frontmatter) {
+      return null;
+    }
+  } else {
+    // Sub-spec files don't have frontmatter, load from main spec
+    const mainSpecFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
+    if (mainSpecFile) {
+      frontmatter = await parseFrontmatter(mainSpecFile, config);
+    }
+    
+    // If we still can't get frontmatter, create a minimal one
+    if (!frontmatter) {
+      frontmatter = {
+        status: 'planned',
+        created: new Date().toISOString().split('T')[0],
+      };
+    }
   }
 
-  // Extract content without frontmatter
+  // Extract content without frontmatter (if present)
   const lines = rawContent.split('\n');
   let contentStartIndex = 0;
   
-  // Skip frontmatter if present
-  if (lines[0] === '---') {
+  // Skip frontmatter if present (only in main spec)
+  if (!isSubSpec && lines[0] === '---') {
     const closingIndex = lines.findIndex((line, i) => i > 0 && line === '---');
     if (closingIndex > 0) {
       contentStartIndex = closingIndex + 1;
@@ -67,14 +115,15 @@ export async function readSpecContent(
   }
   
   const content = lines.slice(contentStartIndex).join('\n').trim();
-  const name = path.basename(resolvedPath);
+  const specName = path.basename(resolvedPath);
+  const displayName = isSubSpec ? `${specName}/${fileName}` : specName;
 
   return {
     frontmatter,
     content,
     rawContent,
     path: resolvedPath,
-    name,
+    name: displayName,
   };
 }
 
@@ -219,19 +268,48 @@ export async function openCommand(
   const config = await loadConfig(cwd);
   const specsDir = path.join(cwd, config.specsDir);
 
-  // Resolve the spec path
-  const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+  // Check if specPath includes a sub-file
+  let resolvedPath: string | null = null;
+  let targetFile: string | null = null;
   
+  const pathParts = specPath.split('/').filter(p => p);
+  
+  if (pathParts.length > 1 && pathParts[pathParts.length - 1].endsWith('.md')) {
+    // Last part looks like a file
+    const specPart = pathParts.slice(0, -1).join('/');
+    const filePart = pathParts[pathParts.length - 1];
+    
+    resolvedPath = await resolveSpecPath(specPart, cwd, specsDir);
+    if (resolvedPath) {
+      targetFile = path.join(resolvedPath, filePart);
+      
+      // Verify the sub-file exists
+      try {
+        await fs.access(targetFile);
+      } catch {
+        targetFile = null;
+      }
+    }
+  }
+  
+  // If no sub-file detected, use default file
   if (!resolvedPath) {
-    throw new Error(`Spec not found: ${specPath}`);
-  }
+    resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);
+    
+    if (!resolvedPath) {
+      throw new Error(`Spec not found: ${specPath}`);
+    }
 
-  // Get the spec file
-  const specFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
-  
-  if (!specFile) {
-    throw new Error(`Spec file not found in: ${resolvedPath}`);
+    targetFile = await getSpecFile(resolvedPath, config.structure.defaultFile);
+    
+    if (!targetFile) {
+      throw new Error(`Spec file not found in: ${resolvedPath}`);
+    }
+  } else if (!targetFile) {
+    throw new Error(`Sub-spec file not found: ${specPath}`);
   }
+  
+  const specFile = targetFile;
 
   // Determine editor
   let editor = options.editor;
@@ -253,10 +331,10 @@ export async function openCommand(
     }
   }
 
-  console.log(chalk.gray(`Opening ${specFile} with ${editor}...`));
+  console.log(chalk.gray(`Opening ${targetFile} with ${editor}...`));
 
   // Spawn editor process - wrap in promise to handle errors properly
-  const child = spawn(editor, [specFile], {
+  const child = spawn(editor, [targetFile], {
     stdio: 'inherit',
     shell: true,
   });

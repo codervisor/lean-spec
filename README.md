@@ -117,12 +117,14 @@ lspec create my-feature
 # Core commands
 lspec list                    # See all specifications
 lspec view <spec>             # View a specification
+lspec view <spec>/DESIGN.md   # View sub-spec file (e.g., DESIGN.md, TESTING.md)
 lspec view <spec> --raw       # Get raw markdown (for scripting)
 lspec view <spec> --json      # Get structured JSON
 lspec open <spec>             # Open in editor
 lspec board                   # Kanban view
 lspec stats                   # Project statistics
 lspec search "query"          # Find specifications
+lspec files <spec>            # List all files in a spec (including sub-specs)
 lspec update <spec> --status=complete
 lspec validate                # Validate specs for quality issues
 lspec validate <spec>         # Validate specific spec

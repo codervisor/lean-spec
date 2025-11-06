@@ -261,6 +261,159 @@ Short content here.`
     });
   });
 
+  describe('Sub-spec viewing', () => {
+    beforeEach(async () => {
+      // Create a spec with sub-files
+      const date = getTestDate();
+      const specDir = path.join(testCtx.tmpDir, 'specs', date, '003-multi-doc-spec');
+      await fs.mkdir(specDir, { recursive: true });
+      
+      // Create main README.md
+      await fs.writeFile(
+        path.join(specDir, 'README.md'),
+        `---
+status: in-progress
+created: '2025-11-03'
+priority: medium
+tags: [multi-doc, test]
+---
+
+# Multi-Doc Spec
+
+## Overview
+
+This spec has multiple documents.
+
+See [DESIGN.md](DESIGN.md) for design details.
+`
+      );
+      
+      // Create DESIGN.md sub-file
+      await fs.writeFile(
+        path.join(specDir, 'DESIGN.md'),
+        `# Design Document
+
+## Architecture
+
+This is the detailed design for the multi-doc spec.
+
+## Components
+
+- Component A
+- Component B
+`
+      );
+      
+      // Create TESTING.md sub-file
+      await fs.writeFile(
+        path.join(specDir, 'TESTING.md'),
+        `# Testing Strategy
+
+## Unit Tests
+
+Test all components thoroughly.
+
+## Integration Tests
+
+Test the full system.
+`
+      );
+    });
+
+    it('should view main spec (README.md) by default', async () => {
+      const content = await readSpecContent('003-multi-doc-spec', testCtx.tmpDir);
+      
+      expect(content).toBeTruthy();
+      expect(content?.name).toBe('003-multi-doc-spec');
+      expect(content?.frontmatter.status).toBe('in-progress');
+      expect(content?.content).toContain('Multi-Doc Spec');
+    });
+
+    it('should view sub-spec file with path', async () => {
+      const content = await readSpecContent('003-multi-doc-spec/DESIGN.md', testCtx.tmpDir);
+      
+      expect(content).toBeTruthy();
+      expect(content?.name).toBe('003-multi-doc-spec/DESIGN.md');
+      expect(content?.content).toContain('Design Document');
+      expect(content?.content).toContain('Architecture');
+      expect(content?.frontmatter.status).toBe('in-progress'); // Inherited from main spec
+    });
+
+    it('should view another sub-spec file', async () => {
+      const content = await readSpecContent('003-multi-doc-spec/TESTING.md', testCtx.tmpDir);
+      
+      expect(content).toBeTruthy();
+      expect(content?.name).toBe('003-multi-doc-spec/TESTING.md');
+      expect(content?.content).toContain('Testing Strategy');
+      expect(content?.content).toContain('Unit Tests');
+    });
+
+    it('should return null for non-existent sub-spec', async () => {
+      const content = await readSpecContent('003-multi-doc-spec/NONEXISTENT.md', testCtx.tmpDir);
+      expect(content).toBeNull();
+    });
+
+    it('should view sub-spec using sequence number', async () => {
+      const content = await readSpecContent('003/DESIGN.md', testCtx.tmpDir);
+      
+      expect(content).toBeTruthy();
+      expect(content?.name).toBe('003-multi-doc-spec/DESIGN.md');
+      expect(content?.content).toContain('Design Document');
+    });
+
+    it('should render sub-spec with viewCommand', async () => {
+      const originalLog = console.log;
+      const logs: string[] = [];
+      console.log = (...args: any[]) => logs.push(args.join(' '));
+
+      try {
+        await viewCommand('003-multi-doc-spec/DESIGN.md', { noColor: false });
+
+        const output = logs.join('\\n');
+        expect(output).toContain('003-multi-doc-spec/DESIGN.md');
+        expect(output).toContain('Design Document');
+      } finally {
+        console.log = originalLog;
+      }
+    });
+
+    it('should output sub-spec as raw markdown', async () => {
+      const originalLog = console.log;
+      const logs: string[] = [];
+      console.log = (...args: any[]) => logs.push(args.join(' '));
+
+      try {
+        await viewCommand('003/TESTING.md', { raw: true });
+
+        const output = logs.join('\\n');
+        expect(output).toContain('# Testing Strategy');
+        expect(output).toContain('Unit Tests');
+        expect(output).not.toContain('---'); // No frontmatter in sub-spec
+      } finally {
+        console.log = originalLog;
+      }
+    });
+
+    it('should output sub-spec as JSON', async () => {
+      const originalLog = console.log;
+      const logs: string[] = [];
+      console.log = (...args: any[]) => logs.push(args.join(' '));
+
+      try {
+        await viewCommand('003/DESIGN.md', { json: true });
+
+        const output = logs.join('\\n');
+        const parsed = JSON.parse(output);
+        
+        expect(parsed.name).toBe('003-multi-doc-spec/DESIGN.md');
+        expect(parsed.content).toContain('Design Document');
+        expect(parsed.frontmatter.status).toBe('in-progress');
+      } finally {
+        console.log = originalLog;
+      }
+    });
+  });
+
   describe('openCommand', () => {
     it('should resolve spec path and prepare to open', async () => {
       // This test verifies that the spec path resolves correctly
