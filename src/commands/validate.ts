@@ -20,10 +20,15 @@ import { StructureValidator } from '../validators/structure.js';
 import { CorruptionValidator } from '../validators/corruption.js';
 import { SubSpecValidator } from '../validators/sub-spec.js';
 import type { ValidationRule, ValidationResult } from '../utils/validation-framework.js';
+import { formatValidationResults, type FormatOptions } from '../utils/validate-formatter.js';
 
 export interface ValidateOptions {
   maxLines?: number;  // Custom line limit (default: 400)
   specs?: string[];   // Specific specs to validate, or all if not provided
+  verbose?: boolean;  // Show passing specs
+  quiet?: boolean;    // Suppress warnings, only show errors
+  format?: 'default' | 'json' | 'compact';  // Output format
+  rule?: string;      // Filter by specific rule name
 }
 
 interface ValidationResultWithSpec {
@@ -80,8 +85,6 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
   ];
 
   // Run validation
-  console.log(chalk.bold('\nValidating specs...\n'));
-
   const results: ValidationResultWithSpec[] = [];
   
   for (const spec of specs) {
@@ -106,327 +109,18 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
     }
   }
 
-  // Display results grouped by validator
-  let hasErrors = false;
-  let totalWarningCount = 0;
-  let totalPassCount = 0;
+  // Format and display results using new formatter
+  const formatOptions: FormatOptions = {
+    verbose: options.verbose,
+    quiet: options.quiet,
+    format: options.format,
+    rule: options.rule,
+  };
 
-  // Group results by validator
-  const resultsByValidator = new Map<string, ValidationResultWithSpec[]>();
-  for (const result of results) {
-    if (!resultsByValidator.has(result.validatorName)) {
-      resultsByValidator.set(result.validatorName, []);
-    }
-    resultsByValidator.get(result.validatorName)!.push(result);
-  }
+  const output = formatValidationResults(results, specs, config.specsDir, formatOptions);
+  console.log(output);
 
-  // Display Line Count results (includes sub-spec line counts inline)
-  const lineCountResults = resultsByValidator.get('max-lines') || [];
-  const subSpecResults = resultsByValidator.get('sub-specs') || [];
-  
-  if (lineCountResults.length > 0) {
-    console.log(chalk.bold('Line Count:'));
-    
-    for (const { spec, result, content } of lineCountResults) {
-      const specName = path.basename(spec.path);
-      const lineCount = content.split('\n').length;
-
-      if (!result.passed) {
-        hasErrors = true;
-        console.log(chalk.red(`  ✗ ${specName} (${lineCount} lines - exceeds limit!)`));
-        for (const error of result.errors) {
-          console.log(chalk.gray(`     → ${error.message}`));
-          if (error.suggestion) {
-            console.log(chalk.gray(`     → ${error.suggestion}`));
-          }
-        }
-      } else if (result.warnings.length > 0) {
-        totalWarningCount++;
-        console.log(chalk.yellow(`  ⚠ ${specName} (${lineCount} lines - approaching limit)`));
-        for (const warning of result.warnings) {
-          console.log(chalk.gray(`     → ${warning.suggestion || warning.message}`));
-        }
-      } else {
-        totalPassCount++;
-        console.log(chalk.green(`  ✓ ${specName} (${lineCount} lines)`));
-      }
-      
-      // Show sub-spec line count issues inline with parent spec
-      const subSpecResult = subSpecResults.find(r => r.spec.path === spec.path);
-      if (subSpecResult && (!subSpecResult.result.passed || subSpecResult.result.warnings.length > 0)) {
-        const subSpecErrors = subSpecResult.result.errors.filter(e => e.message.startsWith('Sub-spec ') && e.message.includes('exceeds'));
-        const subSpecWarnings = subSpecResult.result.warnings.filter(w => w.message.startsWith('Sub-spec ') && w.message.includes('approaching'));
-        
-        for (const error of subSpecErrors) {
-          hasErrors = true;
-          console.log(chalk.red(`     ✗ ${error.message}`));
-          if (error.suggestion) {
-            console.log(chalk.gray(`        → ${error.suggestion}`));
-          }
-        }
-        
-        for (const warning of subSpecWarnings) {
-          totalWarningCount++;
-          console.log(chalk.yellow(`     ⚠ ${warning.message}`));
-          if (warning.suggestion) {
-            console.log(chalk.gray(`        → ${warning.suggestion}`));
-          }
-        }
-      }
-    }
-    console.log('');
-  }
-
-  // Display Frontmatter results
-  const frontmatterResults = resultsByValidator.get('frontmatter') || [];
-  if (frontmatterResults.length > 0) {
-    console.log(chalk.bold('Frontmatter:'));
-    
-    const errorResults = frontmatterResults.filter(r => !r.result.passed);
-    const warningResults = frontmatterResults.filter(r => r.result.passed && r.result.warnings.length > 0);
-    const passResults = frontmatterResults.filter(r => r.result.passed && r.result.warnings.length === 0);
-
-    // Show errors
-    if (errorResults.length > 0) {
-      hasErrors = true;
-      console.log(chalk.red(`  ✗ ${errorResults.length} spec(s) with errors:`));
-      for (const { spec, result } of errorResults) {
-        const specName = path.basename(spec.path);
-        console.log(chalk.gray(`    - ${specName}`));
-        for (const error of result.errors) {
-          console.log(chalk.gray(`      • ${error.message}`));
-          if (error.suggestion) {
-            console.log(chalk.gray(`        → ${error.suggestion}`));
-          }
-        }
-      }
-    }
-
-    // Show warnings
-    if (warningResults.length > 0) {
-      totalWarningCount += warningResults.length;
-      console.log(chalk.yellow(`  ⚠ ${warningResults.length} spec(s) with warnings:`));
-      for (const { spec, result } of warningResults) {
-        const specName = path.basename(spec.path);
-        console.log(chalk.gray(`    - ${specName}`));
-        for (const warning of result.warnings) {
-          console.log(chalk.gray(`      • ${warning.message}`));
-          if (warning.suggestion) {
-            console.log(chalk.gray(`        → ${warning.suggestion}`));
-          }
-        }
-      }
-    }
-
-    // Show summary of passing specs
-    if (passResults.length > 0 && (errorResults.length > 0 || warningResults.length > 0)) {
-      totalPassCount += passResults.length;
-      console.log(chalk.green(`  ✓ ${passResults.length} spec(s) passed`));
-    } else if (passResults.length > 0) {
-      totalPassCount += passResults.length;
-      console.log(chalk.green(`  ✓ All ${passResults.length} spec(s) passed`));
-    }
-    console.log('');
-  }
-
-  // Display Structure results
-  const structureResults = resultsByValidator.get('structure') || [];
-  if (structureResults.length > 0) {
-    console.log(chalk.bold('Structure:'));
-    
-    const errorResults = structureResults.filter(r => !r.result.passed);
-    const warningResults = structureResults.filter(r => r.result.passed && r.result.warnings.length > 0);
-    const passResults = structureResults.filter(r => r.result.passed && r.result.warnings.length === 0);
-
-    // Show errors
-    if (errorResults.length > 0) {
-      hasErrors = true;
-      console.log(chalk.red(`  ✗ ${errorResults.length} spec(s) with errors:`));
-      for (const { spec, result } of errorResults) {
-        const specName = path.basename(spec.path);
-        console.log(chalk.gray(`    - ${specName}`));
-        for (const error of result.errors) {
-          console.log(chalk.gray(`      • ${error.message}`));
-          if (error.suggestion) {
-            console.log(chalk.gray(`        → ${error.suggestion}`));
-          }
-        }
-      }
-    }
-
-    // Show warnings
-    if (warningResults.length > 0) {
-      totalWarningCount += warningResults.length;
-      console.log(chalk.yellow(`  ⚠ ${warningResults.length} spec(s) with warnings:`));
-      for (const { spec, result } of warningResults) {
-        const specName = path.basename(spec.path);
-        console.log(chalk.gray(`    - ${specName}`));
-        for (const warning of result.warnings) {
-          console.log(chalk.gray(`      • ${warning.message}`));
-          if (warning.suggestion) {
-            console.log(chalk.gray(`        → ${warning.suggestion}`));
-          }
-        }
-      }
-    }
-
-    // Show summary of passing specs
-    if (passResults.length > 0 && (errorResults.length > 0 || warningResults.length > 0)) {
-      totalPassCount += passResults.length;
-      console.log(chalk.green(`  ✓ ${passResults.length} spec(s) passed`));
-    } else if (passResults.length > 0) {
-      totalPassCount += passResults.length;
-      console.log(chalk.green(`  ✓ All ${passResults.length} spec(s) passed`));
-    }
-    console.log('');
-  }
-
-  // Display Corruption results
-  const corruptionResults = resultsByValidator.get('corruption') || [];
-  if (corruptionResults.length > 0) {
-    console.log(chalk.bold('Corruption:'));
-    
-    const errorResults = corruptionResults.filter(r => !r.result.passed);
-    const warningResults = corruptionResults.filter(r => r.result.passed && r.result.warnings.length > 0);
-    const passResults = corruptionResults.filter(r => r.result.passed && r.result.warnings.length === 0);
-
-    // Show errors
-    if (errorResults.length > 0) {
-      hasErrors = true;
-      console.log(chalk.red(`  ✗ ${errorResults.length} spec(s) with errors:`));
-      for (const { spec, result } of errorResults) {
-        const specName = path.basename(spec.path);
-        console.log(chalk.gray(`    - ${specName}`));
-        for (const error of result.errors) {
-          console.log(chalk.gray(`      • ${error.message}`));
-          if (error.suggestion) {
-            console.log(chalk.gray(`        → ${error.suggestion}`));
-          }
-        }
-      }
-    }
-
-    // Show warnings
-    if (warningResults.length > 0) {
-      totalWarningCount += warningResults.length;
-      console.log(chalk.yellow(`  ⚠ ${warningResults.length} spec(s) with warnings:`));
-      for (const { spec, result } of warningResults) {
-        const specName = path.basename(spec.path);
-        console.log(chalk.gray(`    - ${specName}`));
-        for (const warning of result.warnings) {
-          console.log(chalk.gray(`      • ${warning.message}`));
-          if (warning.suggestion) {
-            console.log(chalk.gray(`        → ${warning.suggestion}`));
-          }
-        }
-      }
-    }
-
-    // Show summary of passing specs
-    if (passResults.length > 0 && (errorResults.length > 0 || warningResults.length > 0)) {
-      totalPassCount += passResults.length;
-      console.log(chalk.green(`  ✓ ${passResults.length} spec(s) passed`));
-    } else if (passResults.length > 0) {
-      totalPassCount += passResults.length;
-      console.log(chalk.green(`  ✓ All ${passResults.length} spec(s) passed`));
-    }
-    console.log('');
-  }
-
-  // Display Sub-Specs results (non-line-count issues only, line counts shown inline above)
-  if (subSpecResults.length > 0) {
-    // Filter to show only non-line-count issues (orphaned files, naming conventions, etc.)
-    const errorResults = subSpecResults.filter(r => {
-      const nonLineCountErrors = r.result.errors.filter(e => 
-        !e.message.startsWith('Sub-spec ') || !e.message.includes('exceeds')
-      );
-      return nonLineCountErrors.length > 0;
-    });
-    const warningResults = subSpecResults.filter(r => {
-      const nonLineCountWarnings = r.result.warnings.filter(w => 
-        !w.message.startsWith('Sub-spec ') || !w.message.includes('approaching')
-      );
-      return r.result.passed && nonLineCountWarnings.length > 0;
-    });
-    const passResults = subSpecResults.filter(r => {
-      const nonLineCountErrors = r.result.errors.filter(e => 
-        !e.message.startsWith('Sub-spec ') || !e.message.includes('exceeds')
-      );
-      const nonLineCountWarnings = r.result.warnings.filter(w => 
-        !w.message.startsWith('Sub-spec ') || !w.message.includes('approaching')
-      );
-      return nonLineCountErrors.length === 0 && nonLineCountWarnings.length === 0;
-    });
-
-    // Only show section if there are non-line-count issues
-    if (errorResults.length > 0 || warningResults.length > 0) {
-      console.log(chalk.bold('Sub-Specs:'));
-      
-      // Show errors (orphaned files, naming issues, etc.)
-      if (errorResults.length > 0) {
-        hasErrors = true;
-        console.log(chalk.red(`  ✗ ${errorResults.length} spec(s) with errors:`));
-        for (const { spec, result } of errorResults) {
-          const specName = path.basename(spec.path);
-          const nonLineCountErrors = result.errors.filter(e => 
-            !e.message.startsWith('Sub-spec ') || !e.message.includes('exceeds')
-          );
-          if (nonLineCountErrors.length > 0) {
-            console.log(chalk.gray(`    - ${specName}`));
-            for (const error of nonLineCountErrors) {
-              console.log(chalk.gray(`      • ${error.message}`));
-              if (error.suggestion) {
-                console.log(chalk.gray(`        → ${error.suggestion}`));
-              }
-            }
-          }
-        }
-      }
-
-      // Show warnings
-      if (warningResults.length > 0) {
-        totalWarningCount += warningResults.length;
-        console.log(chalk.yellow(`  ⚠ ${warningResults.length} spec(s) with warnings:`));
-        for (const { spec, result } of warningResults) {
-          const specName = path.basename(spec.path);
-          const nonLineCountWarnings = result.warnings.filter(w => 
-            !w.message.startsWith('Sub-spec ') || !w.message.includes('approaching')
-          );
-          if (nonLineCountWarnings.length > 0) {
-            console.log(chalk.gray(`    - ${specName}`));
-            for (const warning of nonLineCountWarnings) {
-              console.log(chalk.gray(`      • ${warning.message}`));
-              if (warning.suggestion) {
-                console.log(chalk.gray(`        → ${warning.suggestion}`));
-              }
-            }
-          }
-        }
-      }
-
-      // Show summary of passing specs
-      if (passResults.length > 0 && (errorResults.length > 0 || warningResults.length > 0)) {
-        totalPassCount += passResults.length;
-        console.log(chalk.green(`  ✓ ${passResults.length} spec(s) passed`));
-      } else if (passResults.length > 0) {
-        totalPassCount += passResults.length;
-        console.log(chalk.green(`  ✓ All ${passResults.length} spec(s) passed`));
-      }
-      console.log('');
-    }
-  }
-
-  // Summary
-  const totalSpecs = specs.length;
-  const errorCount = results.filter(r => !r.result.passed).length;
-  
-  if (hasErrors) {
-    console.log(chalk.red(`Results: ${totalSpecs} specs validated, ${errorCount} error(s), ${totalWarningCount} warning(s)`));
-  } else if (totalWarningCount > 0) {
-    console.log(chalk.yellow(`Results: ${totalSpecs} specs validated, 0 errors, ${totalWarningCount} warning(s)`));
-  } else {
-    console.log(chalk.green(`Results: ${totalSpecs} specs validated, all passed`));
-  }
-
+  // Determine if validation passed (any errors = failed)
+  const hasErrors = results.some(r => !r.result.passed);
   return !hasErrors;
 }
