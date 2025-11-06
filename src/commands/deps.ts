@@ -5,6 +5,7 @@ import { sanitizeUserInput } from '../utils/ui.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import { loadConfig } from '../config.js';
 import * as path from 'node:path';
+import { getStatusIndicator } from '../utils/colors.js';
 
 export async function depsCommand(specPath: string, options: {
   depth?: number;
@@ -266,15 +267,5 @@ function displayChain(node: DependencyNode, level: number): void {
     for (const nestedDep of dep.dependencies) {
       displayChain(nestedDep, level + 2);
     }
-  }
-}
-
-function getStatusIndicator(status: string): string {
-  switch (status) {
-    case 'planned': return chalk.gray('[planned]');
-    case 'in-progress': return chalk.yellow('[in-progress]');
-    case 'complete': return chalk.green('✓');
-    case 'archived': return chalk.gray('[archived]');
-    default: return '';
   }
 }

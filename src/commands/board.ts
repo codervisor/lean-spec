@@ -7,20 +7,7 @@ import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 import { calculateCompletion, getCompletionStatus } from '../utils/completion.js';
 import { calculateVelocityMetrics } from '../utils/velocity.js';
-
-const STATUS_CONFIG: Record<SpecStatus, { emoji: string; label: string; colorFn: (s: string) => string }> = {
-  planned: { emoji: '📅', label: 'Planned', colorFn: chalk.cyan },
-  'in-progress': { emoji: '⏳', label: 'In Progress', colorFn: chalk.yellow },
-  complete: { emoji: '✅', label: 'Complete', colorFn: chalk.green },
-  archived: { emoji: '📦', label: 'Archived', colorFn: chalk.dim },
-};
-
-const PRIORITY_BADGES: Record<SpecPriority, { emoji: string; colorFn: (s: string) => string }> = {
-  critical: { emoji: '🔴', colorFn: chalk.red },
-  high: { emoji: '🟠', colorFn: chalk.hex('#FFA500') },
-  medium: { emoji: '🟡', colorFn: chalk.yellow },
-  low: { emoji: '🟢', colorFn: chalk.green },
-};
+import { STATUS_CONFIG, PRIORITY_CONFIG } from '../utils/colors.js';
 
 export async function boardCommand(options: {
   showComplete?: boolean;
@@ -200,8 +187,8 @@ function renderColumn(
 
       // Priority group header - minimal, modern style
       const priorityLabel = priority === 'none' ? 'No Priority' : priority.charAt(0).toUpperCase() + priority.slice(1);
-      const priorityEmoji = priority === 'none' ? '⚪' : PRIORITY_BADGES[priority as SpecPriority].emoji;
-      const priorityColor = priority === 'none' ? chalk.dim : PRIORITY_BADGES[priority as SpecPriority].colorFn;
+      const priorityEmoji = priority === 'none' ? '⚪' : PRIORITY_CONFIG[priority as SpecPriority].emoji;
+      const priorityColor = priority === 'none' ? chalk.dim : PRIORITY_CONFIG[priority as SpecPriority].colorFn;
       
       console.log(`  ${priorityColor(`${priorityEmoji} ${chalk.bold(priorityLabel)} ${chalk.dim(`(${groupSpecs.length})`)}`)}`);;
 
