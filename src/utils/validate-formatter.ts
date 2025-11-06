@@ -41,39 +41,35 @@ export function groupIssuesByFile(
 ): FileValidationResult[] {
   const fileMap = new Map<string, ValidationIssue[]>();
 
+  // Helper function to add issue to fileMap
+  const addIssue = (filePath: string, issue: ValidationIssue) => {
+    if (!fileMap.has(filePath)) {
+      fileMap.set(filePath, []);
+    }
+    fileMap.get(filePath)!.push(issue);
+  };
+
   for (const { spec, validatorName, result } of results) {
     // Process errors
     for (const error of result.errors) {
-      const issue: ValidationIssue = {
+      addIssue(spec.filePath, {
         severity: 'error',
         message: error.message,
         suggestion: error.suggestion,
         ruleName: validatorName,
         filePath: spec.filePath,
-      };
-
-      const filePath = spec.filePath;
-      if (!fileMap.has(filePath)) {
-        fileMap.set(filePath, []);
-      }
-      fileMap.get(filePath)!.push(issue);
+      });
     }
 
     // Process warnings
     for (const warning of result.warnings) {
-      const issue: ValidationIssue = {
+      addIssue(spec.filePath, {
         severity: 'warning',
         message: warning.message,
         suggestion: warning.suggestion,
         ruleName: validatorName,
         filePath: spec.filePath,
-      };
-
-      const filePath = spec.filePath;
-      if (!fileMap.has(filePath)) {
-        fileMap.set(filePath, []);
-      }
-      fileMap.get(filePath)!.push(issue);
+      });
     }
   }
 
@@ -96,24 +92,31 @@ export function groupIssuesByFile(
 }
 
 /**
+ * Normalize file path to be relative to current working directory
+ */
+function normalizeFilePath(filePath: string): string {
+  const cwd = process.cwd();
+  
+  if (filePath.startsWith(cwd)) {
+    // Remove cwd prefix and leading slash
+    return filePath.substring(cwd.length + 1);
+  } else if (filePath.includes('/specs/')) {
+    // Extract from /specs/ onwards
+    const specsIndex = filePath.indexOf('/specs/');
+    return filePath.substring(specsIndex + 1);
+  }
+  
+  return filePath;
+}
+
+/**
  * Format issues for a single file (ESLint-style)
  */
 export function formatFileIssues(fileResult: FileValidationResult, specsDir: string): string {
   const lines: string[] = [];
   
   // Display path (relative to current working directory or specs directory)
-  // Try to make path relative to cwd for better readability
-  const cwd = process.cwd();
-  let relativePath = fileResult.filePath;
-  
-  if (fileResult.filePath.startsWith(cwd)) {
-    // Remove cwd prefix and leading slash
-    relativePath = fileResult.filePath.substring(cwd.length + 1);
-  } else if (fileResult.filePath.includes('/specs/')) {
-    // Extract from /specs/ onwards
-    const specsIndex = fileResult.filePath.indexOf('/specs/');
-    relativePath = fileResult.filePath.substring(specsIndex + 1);
-  }
+  const relativePath = normalizeFilePath(fileResult.filePath);
   
   lines.push(chalk.cyan.underline(relativePath));
 
@@ -166,17 +169,8 @@ export function formatPassingSpecs(specs: SpecInfo[], specsDir: string): string 
   const lines: string[] = [];
   lines.push(chalk.green.bold(`\n✓ ${specs.length} specs passed:`));
   
-  const cwd = process.cwd();
   for (const spec of specs) {
-    let relativePath = spec.filePath;
-    
-    if (spec.filePath.startsWith(cwd)) {
-      relativePath = spec.filePath.substring(cwd.length + 1);
-    } else if (spec.filePath.includes('/specs/')) {
-      const specsIndex = spec.filePath.indexOf('/specs/');
-      relativePath = spec.filePath.substring(specsIndex + 1);
-    }
-    
+    const relativePath = normalizeFilePath(spec.filePath);
     lines.push(chalk.gray(`  ${relativePath}`));
   }
   
