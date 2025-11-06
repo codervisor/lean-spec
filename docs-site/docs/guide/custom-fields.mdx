@@ -48,7 +48,7 @@ lspec create user-auth --field epic=PROJ-123 --field sprint=42
 
 **When updating specs:**
 ```bash
-lspec update specs/20251102/001-feature --field reviewer=alice --field estimate=large
+lspec update 001 --field reviewer=alice --field estimate=large
 ```
 
 **When filtering:**
@@ -310,7 +310,7 @@ If you add custom fields to existing specs:
 
 ```bash
 # Update existing specs manually or with a script
-lspec update specs/20251102/001-feature --field epic=PROJ-123
+lspec update 001 --field epic=PROJ-123
 
 # Or edit frontmatter directly in each README.md
 ```
