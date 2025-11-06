@@ -120,15 +120,15 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 - [x] Spec 042: MCP error handling - ✅ COMPLETE
 - [x] Spec 048: Complexity analysis - ✅ COMPLETE
 - [x] Spec 051: Docs + AGENTS.md with first principles - ✅ COMPLETE
-- [ ] Spec 018: Spec validation - 🔴 CRITICAL
+- [x] Spec 018: Spec validation - ✅ COMPLETE
 - [x] Spec 045: Unified dashboard - ✅ COMPLETE
 - [x] Spec 046: Stats refactor - ✅ COMPLETE
-- [ ] Spec 052: Branding assets - 🟡 IN PROGRESS
+- [x] Spec 052: Branding assets - ✅ COMPLETE
 
 **High Priority:**
 - [x] Spec 026: Init pattern selection - ✅ COMPLETE
 - [x] Spec 024: Pattern-aware list grouping - ✅ COMPLETE
-- [ ] Spec 044: Spec relationships clarity
+- [x] Spec 044: Spec relationships clarity - ✅ COMPLETE
 - [ ] Dogfooding checkpoint: Split large specs
 
 **Nice-to-have:**

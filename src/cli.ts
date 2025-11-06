@@ -484,7 +484,7 @@ program
 // view command (primary viewer)
 program
   .command('view <spec>')
-  .description('View spec content')
+  .description('View spec content (supports sub-specs like "045/DESIGN.md")')
   .option('--raw', 'Output raw markdown (for piping/scripting)')
   .option('--json', 'Output as JSON')
   .option('--no-color', 'Disable colors')

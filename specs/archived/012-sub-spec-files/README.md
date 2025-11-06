@@ -14,6 +14,29 @@ completed: '2025-11-02'
 
 > **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-01 · **Tags**: enhancement, cli, specs, organization
 
+## Implementation Status
+
+**Phase 1 (Core Support) - ✅ Implemented (2025-11-06)**
+- ✅ `loadSubFiles()` function implemented in `spec-loader.ts`
+- ✅ `lspec files <spec>` command implemented
+- ✅ `lspec view <spec>/SUBFILE.md` - View sub-spec files directly
+- ✅ `lspec open <spec>/SUBFILE.md` - Open sub-spec files in editor
+- ✅ Sub-spec viewing with all output modes (formatted, --raw, --json)
+- ✅ Full test coverage for sub-spec viewing
+- ✅ Documentation updated (README.md, AGENTS.md, CLI help)
+
+**Not Yet Implemented:**
+- ⏸️ Phase 2: Enhanced `lspec create` with `--files` option
+- ⏸️ Phase 3: `lspec validate` link checker
+- ⏸️ Phase 4: `lspec merge` command
+
+**Key Feature:** You can now view and open sub-spec files using paths like:
+```bash
+lspec view 045/IMPLEMENTATION.md
+lspec view my-spec/TESTING.md --raw
+lspec open 012/DESIGN.md
+```
+
 ## Overview
 
 Enable specs to contain multiple organized documents beyond just `README.md`. As specs grow in complexity, teams need to split content into focused sub-documents while maintaining discoverability and structure.

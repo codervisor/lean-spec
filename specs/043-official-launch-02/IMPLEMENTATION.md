@@ -30,7 +30,7 @@ Detailed implementation phases for v0.2.0 launch.
 ### Documentation Quality
 - [x] AGENTS.md accuracy verified - ✅ COMPLETE
 - [x] README reflects current features - ✅ COMPLETE
-- [ ] Review all docs for broken links - ⏳ TODO
+- [x] Review all docs for broken links - ✅ AUTOMATIC (Docusaurus configured with `onBrokenLinks: 'throw'` - build fails on broken links)
 - [ ] Ensure code examples work - ⏳ TODO
 - **NOTE**: Spec 037 (docs overhaul) merged into spec 051 to avoid duplication
 
