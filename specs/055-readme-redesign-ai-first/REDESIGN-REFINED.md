@@ -366,10 +366,10 @@ MCP-native specs. Structured input format agents can parse reliably.
 **LeanSpec is built using LeanSpec.** Every feature, refactor, and design decision has a spec. All specs follow the first principles—under 300 lines, AI-readable, actively maintained.
 
 **Real velocity from zero to official launch:**
-- 54 specs written, all <300 lines (avg 287)
-- 0 specs over 400 lines (Context Economy enforced)
-- Built from scratch to production in **6 days**: CLI, MCP server, docs site, 10+ major features
-- Entire project spec'd and implemented with AI agents—this is the velocity LeanSpec enables
+- **6 days** from first commit to production
+- Full-featured CLI, MCP server, documentation site
+- 54 specs written and implemented—all with AI agents
+- Derived first principles from practicing LeanSpec 
 
 We dogfood our own methodology. Specs that fit in AI context enable the velocity we promise.
 
