@@ -119,8 +119,75 @@ Skip specs for:
 **Working with specs:**
 - `lspec create <name>` - Create a new spec
 - `lspec update <spec> --status <status>` - Update spec status
+- `lspec deps <spec>` - Show dependencies and relationships
 
 **When in doubt:** Run `lspec --help` or `lspec <command> --help` to discover available commands and options.
+
+## Understanding Spec Relationships
+
+LeanSpec has two types of relationships between specs:
+
+### `related` - Bidirectional Soft Reference
+**Meaning**: Informational relationship between specs (they're related/connected)
+**Behavior**: Automatically shown from both sides
+**Symbol**: ⟷ (bidirectional arrow)
+
+**Example:**
+```yaml
+# Spec 042
+related: [043]
+
+# Spec 043 doesn't need to list 042
+```
+
+Both `lspec deps 042` and `lspec deps 043` will show the relationship:
+```bash
+$ lspec deps 042
+Related Specs:
+  ⟷ 043-official-launch-02 [in-progress]
+
+$ lspec deps 043  
+Related Specs:
+  ⟷ 042-mcp-error-handling [complete]  # Automatically shown!
+```
+
+**Use when:**
+- Specs cover related topics or features
+- Work is coordinated but not blocking
+- Context is helpful but not required
+
+### `depends_on` - Directional Blocking Dependency
+**Meaning**: Hard dependency - spec cannot start until dependencies complete
+**Behavior**: Directional only (shows differently from each side)
+**Symbol**: → (depends on) and ← (blocks)
+
+**Example:**
+```yaml
+# Spec A
+depends_on: [spec-b]
+```
+
+```bash
+$ lspec deps spec-a
+Depends On:
+  → spec-b [in-progress]  # A depends on B
+
+$ lspec deps spec-b
+Blocks:
+  ← spec-a [planned]  # B blocks A
+```
+
+**Use when:**
+- Spec truly cannot start until another completes
+- There's a clear dependency chain
+- Work must be done in specific order
+
+### Best Practices
+
+1. **Use `related` by default** - It's simpler and matches most use cases
+2. **Reserve `depends_on` for true blocking dependencies** - When work order matters
+3. **Update once, show everywhere** - `related` only needs to be in one spec
+4. **Check dependencies** - Run `lspec deps <spec>` to see all relationships
 
 ## SDD Workflow
 
