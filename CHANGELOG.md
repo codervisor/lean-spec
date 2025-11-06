@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+**BREAKING: `lspec validate` output format redesigned** (spec 054)
+- Output now follows mainstream lint tool conventions (ESLint, TypeScript, Prettier)
+- File-centric grouping: All issues for a spec are shown together
+- Quiet success by default: Only specs with issues are shown, passing specs are summarized
+- ESLint-style format: Aligned columns with `severity  message  rule-name`
+- Relative paths shown instead of absolute paths
+- Exit codes remain unchanged: 0 for success/warnings, 1 for errors
+
+### Added
+
+**`lspec validate` new flags:**
+- `--verbose`: Show all passing specs (restores detailed output)
+- `--quiet`: Suppress warnings, only show errors
+- `--format json`: Output results as JSON for CI integration
+- `--rule <name>`: Filter issues by specific rule (e.g., `max-lines`, `frontmatter`)
+
+**Migration Guide:**
+- If you prefer the old verbose output, use `lspec validate --verbose`
+- The new default shows only specs with issues for better signal-to-noise ratio
+- Exit codes are unchanged, so CI pipelines should work without modification
+- JSON format is available for custom parsing: `lspec validate --format json`
+
 ## [0.1.0] - 2025-11-02
 
 ### Added

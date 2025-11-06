@@ -76,6 +76,8 @@ Examples:
   $ lspec board --tag backend
   $ lspec search "authentication"
   $ lspec validate
+  $ lspec validate --verbose
+  $ lspec validate --quiet --rule max-lines
   $ lspec validate 018 --max-lines 500
 `);
 
@@ -149,12 +151,24 @@ program
   .command('validate [specs...]')
   .description('Validate specs for quality issues')
   .option('--max-lines <number>', 'Custom line limit (default: 400)', parseInt)
+  .option('--verbose', 'Show passing specs')
+  .option('--quiet', 'Suppress warnings, only show errors')
+  .option('--format <format>', 'Output format: default, json, compact', 'default')
+  .option('--rule <rule>', 'Filter by specific rule name (e.g., max-lines, frontmatter)')
   .action(async (specs: string[] | undefined, options: {
     maxLines?: number;
+    verbose?: boolean;
+    quiet?: boolean;
+    format?: 'default' | 'json' | 'compact';
+    rule?: string;
   }) => {
     const passed = await validateCommand({
       maxLines: options.maxLines,
       specs: specs && specs.length > 0 ? specs : undefined,
+      verbose: options.verbose,
+      quiet: options.quiet,
+      format: options.format,
+      rule: options.rule,
     });
     // Exit with 0 (success) if all passed, 1 (error) if any failed
     process.exit(passed ? 0 : 1);
