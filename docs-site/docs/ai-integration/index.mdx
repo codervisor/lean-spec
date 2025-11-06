@@ -88,9 +88,10 @@ your-project/
 ├── AGENTS.md              # AI agent instructions
 ├── README.md              # Project overview
 ├── specs/                 # All specs here
-│   └── YYYYMMDD/
-│       └── NNN-name/
-│           └── README.md  # The spec
+│   ├── 001-feature-name/  # Flat structure (default)
+│   │   └── README.md      # The spec
+│   ├── 002-another-feature/
+│   └── archived/
 ├── .lspec/
 │   └── config.json       # LeanSpec config
 └── ... (code)
@@ -107,15 +108,17 @@ your-project/
 Include spec paths in your prompts to AI agents:
 
 ```
-Implement the feature described in specs/20251102/001-user-auth/README.md
+Implement the feature described in specs/001-user-auth/README.md
 ```
 
 Or reference multiple specs:
 
 ```
-Check specs/20251102/001-user-auth and specs/20251102/002-api-gateway 
+Check specs/001-user-auth and specs/002-api-gateway 
 before implementing the login endpoint.
 ```
+
+**Tip**: With default flat structure. If using date-grouping, paths would be `specs/YYYYMMDD/NNN-name/`.
 
 ## Setting Up AI Integration
 
@@ -153,7 +156,7 @@ Write a clear, focused spec following LeanSpec principles.
 Prompt your AI agent:
 
 ```
-Read the spec in specs/20251102/001-user-authentication/README.md
+Read the spec in specs/001-user-authentication/README.md
 and implement the login endpoint.
 ```
 
@@ -197,7 +200,7 @@ Align spec terminology with code. Makes it easier for AI to map concepts.
 :::
 
 :::tip Reference Specs in Code
-Add comments linking code to specs: `// Implements: specs/20251102/001-user-auth`
+Add comments linking code to specs: `// Implements: specs/001-user-auth`
 :::
 
 :::tip Test AI Understanding

@@ -25,7 +25,7 @@ Step-by-step guide to integrating LeanSpec with AI coding agents.
 
 4. **Test with AI Agent**
    
-   Prompt your AI: "Read specs/20251102/001-my-feature/README.md and implement it"
+   Prompt your AI: "Read specs/001-my-feature/README.md and implement it"
 
 That's it! You're ready to go.
 
@@ -127,10 +127,14 @@ your-project/
 │   └── templates/
 │       └── spec-template.md
 ├── specs/
-│   └── (date-organized specs)
+│   ├── 001-first-feature/     # Flat structure (default)
+│   ├── 002-second-feature/
+│   └── archived/
 ├── AGENTS.md
 └── ... (your code)
 ```
+
+**Note**: Default structure is flat with global numbering. For date-grouped organization (`YYYYMMDD/NNN-name/`), configure `structure.pattern` in `.lspec/config.json`.
 
 ### Step 6: Create Your First Spec
 
@@ -140,8 +144,10 @@ lspec create user-authentication
 
 This creates:
 ```
-specs/20251102/001-user-authentication/README.md
+specs/001-user-authentication/README.md
 ```
+
+**Note**: With default flat structure. If you configured date-grouping, it would be `specs/YYYYMMDD/001-user-authentication/README.md`.
 
 ### Step 7: Write the Spec
 
@@ -192,7 +198,7 @@ Enable secure user login with JWT tokens.
 Tell your AI agent about the spec:
 
 ```
-Read specs/20251102/001-user-authentication/README.md and implement 
+Read specs/001-user-authentication/README.md and implement 
 the user authentication system described there.
 ```
 
@@ -203,16 +209,18 @@ As the AI implements:
 1. Update spec with learnings
 2. Add clarifications based on AI questions
 3. Keep spec in sync with code
-4. Update status: `lspec update specs/20251102/001-user-authentication --status=in-progress`
+4. Update status: `lspec update 001 --status=in-progress`
 
 ### Step 10: Complete and Archive
 
 When done:
 
 ```bash
-lspec update specs/20251102/001-user-authentication --status=complete
-lspec archive specs/20251102/001-user-authentication
+lspec update 001 --status=complete
+lspec archive 001
 ```
+
+**Tip**: You can use spec number (001), name (user-authentication), or full path.
 
 ## Verification
 
@@ -248,7 +256,7 @@ AI should discover and read your specs.
 ### 4. Test AI Implementation
 
 ```
-Implement the feature described in specs/20251102/001-test-spec
+Implement the feature described in specs/001-test-spec
 ```
 
 AI should read and implement according to spec.

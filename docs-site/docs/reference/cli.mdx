@@ -127,12 +127,14 @@ lspec list --field epic=PROJ-123
 ```
 === Specs ===
 
-📅 specs/20251102/001-user-authentication
+📅 specs/001-user-authentication
    Created: 2025-11-02 · Priority: high · Tags: security, api
 
-🔨 specs/20251102/002-password-reset
+🔨 specs/002-password-reset
    Created: 2025-11-02 · Priority: medium
 ```
+
+**Note**: Output shows flat structure (default). With date-grouping configured, paths would be `specs/YYYYMMDD/NNN-name/`.
 
 **Status Icons:**
 - 📅 Planned
@@ -184,7 +186,7 @@ lspec update 1 --status=complete --priority=high
 
 **Output:**
 ```
-✓ Updated: specs/20251102/001-user-auth
+✓ Updated: specs/001-user-auth
   Fields: status, priority
 ```
 
@@ -227,11 +229,11 @@ lspec search "password" --field epic=PROJ-123
 ```
 Found 2 specs matching "authentication":
 
-📅 specs/20251102/001-user-authentication
+📅 specs/001-user-authentication
    Created: 2025-11-02
    Matches in: Overview, Key Scenarios
 
-🔨 specs/20251102/003-two-factor-auth
+🔨 specs/003-two-factor-auth
    Created: 2025-11-02
    Matches in: Technical Approach
 ```
@@ -270,12 +272,12 @@ lspec archive user-auth
 
 **Output:**
 ```
-✓ Archived: specs/20251102/001-user-auth
-  Moved to: archive/20251102/001-user-auth
+✓ Archived: specs/001-user-auth
+  Moved to: specs/archived/001-user-auth
 ```
 
 **Behavior:**
-- Moves spec from `specs/` to `archive/`
+- Moves spec from `specs/` to `specs/archived/`
 - Preserves directory structure
 - Keeps all metadata
 - Spec no longer appears in `lspec list` by default
@@ -428,10 +430,9 @@ lspec templates
 ```
 === Available Templates ===
 
-solo-dev       Quick setup for solo developers (default)
-team           Small team collaboration with workflow guides  
-enterprise     Enterprise-grade with governance & compliance
-api-first      API-driven development with endpoint specs
+minimal        Just folder structure, no extras
+standard       Recommended - includes AGENTS.md (default)
+enterprise     Governance with approvals and compliance
 
 Use: lspec init
 Then choose "Choose a template" option
