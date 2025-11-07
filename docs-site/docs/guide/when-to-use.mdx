@@ -5,290 +5,178 @@ sidebar_position: 3
 ---
 # When to Use LeanSpec
 
-> "A one-page spec that gets read beats a fifty-page document that doesn't."
+> "In AI-powered development, specs bridge human intent to machine execution."
 
-You now understand [what LeanSpec is](/docs/guide/understanding) and [the practical patterns for AI-executable specs](/docs/guide/ai-executable-patterns). This guide helps you decide **when** to apply LeanSpec—and when not to.
+This guide helps you decide **when** to write a spec—and when not to. The core question: **Does a spec add value in the human-AI development loop?**
 
-LeanSpec is powerful, but it's not always the right tool. This is about judgment, not rules.
+If you're new to LeanSpec, start with [Understanding LeanSpec](/docs/guide/understanding) for the foundational concepts.
 
-## Perfect for LeanSpec
+## The Core Decision
 
-### ✅ New Features or Components
+LeanSpec is designed for **AI-powered SDD**. Write a spec when it helps **bridge human intent to machine execution**. Skip it when the gap is already clear.
 
-**When:**
-- Building a new feature from scratch
-- Adding a significant component to existing system
-- Need to align team on approach
+### Write a Spec When...
 
-**Why it works:**
-- Captures intent before diving into code
-- Reduces rework from misunderstandings
-- Provides clear direction for implementation
+**🎯 Intent needs clarification:**
+- Multiple valid interpretations exist
+- Trade-offs or constraints aren't obvious
+- "Why" matters as much as "what"
+- Decisions need to be documented
 
-**Example:** Adding user authentication to your app
+**🤖 AI will implement:**
+- AI agent needs executable context
+- Success criteria must be explicit
+- Constraints aren't inferable from code
+- Implementation paths need to be narrowed
 
-### ✅ API Designs
+**🏗️ Work is significant:**
+- Touches multiple parts of the system
+- Architectural or structural changes
+- Breaking changes or major refactors
+- Cross-system dependencies
 
-**When:**
-- Designing new APIs or endpoints
-- Changing existing API contracts
-- Need to coordinate frontend/backend teams
+**📚 Knowledge needs capture:**
+- Research findings and trade-offs
+- Technical exploration or experiments
+- Retrospectives (what worked, what didn't)
+- Decisions for future reference
 
-**Why it works:**
-- Documents contracts clearly
-- Prevents integration issues
-- Easy to reference during development
+**Examples:**
+- New feature with AI implementation
+- API design affecting multiple consumers
+- Architecture decision (microservices vs monolith)
+- Significant refactoring (not trivial renames)
+- Research spike documenting findings
+- Retrospective capturing learnings
 
-**Example:** REST API for user management
+### Skip the Spec When...
 
-### ✅ Architecture Decisions
+**✂️ Intent is self-evident:**
+- Obvious bug fixes (clear cause, clear fix)
+- Trivial refactoring (rename, extract function, format)
+- Well-documented in code/comments already
+- Change is purely mechanical
 
-**When:**
-- Choosing between architectural approaches
-- Making decisions that affect multiple teams
-- Need shared understanding of system design
-
-**Why it works:**
-- Makes trade-offs explicit
-- Creates shared context
-- Documents rationale for future reference
-
-**Example:** Choosing microservices vs. monolith
-
-### ✅ Quick Alignment
-
-**When:**
-- Need fast consensus on direction
-- Want to avoid lengthy meetings
-- Multiple stakeholders need to understand
-
-**Why it works:**
-- Faster than meetings or long documents
-- Everyone reads the same thing
-- Easy to iterate and refine
-
-**Example:** Sprint planning for new feature
-
-### ✅ AI-Powered Development
-
-**When:**
-- Working with AI coding agents
-- Need clear context for AI implementation
-- Want AI to understand requirements
-
-**Why it works:**
-- AI agents parse specs effectively
-- Reduces misinterpretation
-- Specs guide AI to correct solutions
-
-**Example:** Having GitHub Copilot implement a feature
-
-### ✅ Cross-Team Coordination
-
-**When:**
-- Features span multiple teams
-- Need to coordinate timing and interfaces
-- Want to avoid integration problems
-
-**Why it works:**
-- Single source of truth
-- Clear ownership boundaries
-- Explicit dependencies
-
-**Example:** Feature requiring mobile, backend, and ops changes
-
-## Not Ideal for LeanSpec
-
-### ❌ Detailed API Reference Documentation
-
-**What to use instead:** Code comments + auto-generated docs (Swagger, JSDoc, etc.)
-
-**Why:**
-- Reference docs need to be comprehensive
-- Generated docs stay in sync with code
-- LeanSpec is for design, not reference
-
-**Example:** Complete API documentation for 50 endpoints
-
-### ❌ Step-by-Step User Manuals
-
-**What to use instead:** Dedicated user documentation tools
-
-**Why:**
-- User docs require different audience and format
-- Screenshots, videos, interactive tutorials
-- LeanSpec is for development teams, not end users
-
-**Example:** How to configure software settings
-
-### ❌ Compliance Requirements with Specific Formats
-
-**What to use instead:** Whatever format compliance demands
-
-**Why:**
-- Compliance is non-negotiable
-- Required formats may not be lean
-- Use LeanSpec internally, compliance docs externally
-
-**Example:** SOC 2 audit documentation
-
-### ❌ Trivial Bug Fixes
-
-**What to use instead:** Just fix it and commit
-
-**Why:**
-- Overhead exceeds value
-- Code change is self-documenting
-- Creating spec wastes time
-
-**Example:** Fixing typo in error message
-
-### ❌ Experimental Prototypes
-
-**What to use instead:** Code first, document if it works
-
-**Why:**
+**🔬 Work is exploratory:**
+- Rapid prototyping to discover requirements
+- Experimenting with multiple approaches
 - High uncertainty, likely to throw away
 - Learning by doing is faster
-- Spec becomes outdated immediately
 
-**Example:** Testing feasibility of new algorithm
+*Note: Write a spec after prototyping to capture learnings*
 
-### ❌ Obvious Refactors
+**📄 Wrong tool for the job:**
+- API reference docs (use auto-generated docs)
+- User manuals (use dedicated tools)
+- Compliance docs with specific formats (use required format)
+- Dependency updates (standard version bumps)
 
-**What to use instead:** Make the change with good commit messages
-
-**Why:**
-- Intent is clear from the change itself
-- No ambiguity about what needs to happen
-- Spec adds no value
-
-**Example:** Renaming variables for clarity
+**Examples:**
+- One-line bug fix
+- Simple rename or code formatting
+- Standard dependency version bump
+- Experimental prototype (document after if it works)
 
 ## Decision Framework
 
-Still not sure? Use this decision tree:
+**The Core Question:**
+> "Will a spec help bridge human intent to machine execution, or is the gap already clear?"
 
-```
-Is this a significant change affecting multiple parts of the system?
-├─ No → Skip LeanSpec, just do it
-└─ Yes → Continue
-
-Will this require coordination between multiple people?
-├─ No → Consider if spec would help future you
-└─ Yes → Continue
-
-Is there ambiguity about requirements or approach?
-├─ No → Maybe skip, or write brief spec
-└─ Yes → Definitely use LeanSpec
-
-Are you working with AI coding agents?
-├─ Yes → Use LeanSpec for clear context
-└─ No → Continue
-
-Would writing this take more than 15 minutes?
-├─ Yes → Reconsider if it's truly lean
-└─ No → Write the spec!
+```mermaid
+flowchart TD
+    Start[Starting work] --> Q1{Is the intent<br/>already clear?}
+    Q1 -->|Yes - It's obvious| Skip[Just code it<br/>No spec needed]
+    Q1 -->|No - Needs clarity| Q2{Can you explain it<br/>in <300 lines?}
+    Q2 -->|No - Too complex| Break[Break into<br/>smaller specs]
+    Q2 -->|Yes - Fits working memory| Q3{Will AI agent<br/>implement this?}
+    Q3 -->|Yes| Write1[Write spec<br/>AI needs context]
+    Q3 -->|Maybe/No| Q4{Will you forget<br/>the why in 2 weeks?}
+    Q4 -->|No - Self-evident| Consider[Code + comments<br/>might be enough]
+    Q4 -->|Yes - Complex rationale| Write2[Write spec<br/>Capture intent]
+    
+    style Skip fill:#94a3b8,stroke:#64748b,color:#fff
+    style Break fill:#f59e0b,stroke:#d97706,color:#fff
+    style Write1 fill:#16a34a,stroke:#15803d,color:#fff
+    style Write2 fill:#16a34a,stroke:#15803d,color:#fff
+    style Consider fill:#ea580c,stroke:#c2410c,color:#fff
 ```
 
-## Start Lean, Add More if Needed
+### Quick Reference
 
-When in doubt, start minimal and add detail only if needed:
+**Write a spec when any of these are true:**
+- 🤖 AI agent will implement
+- 🎯 Multiple valid interpretations exist
+- 🏗️ Touches multiple parts of the system
+- 📚 Decisions need future reference
+- 🔄 Significant refactoring or architectural change
+- 🔬 Research findings or retrospectives to capture
 
-**Phase 1: Minimal Spec (5-10 minutes)**
-- What problem are we solving?
-- What are the key scenarios?
-- What does "done" look like?
+**Skip the spec when all of these are true:**
+- ✂️ Intent is self-evident
+- 🎨 Change is trivial or mechanical
+- 📝 Already well-documented in code
+- ⚡ Rapid prototyping (document after if it works)
 
-If that's enough, stop there.
+**Key insight:** In AI-powered SDD, specs aren't about coordination—they're about **context**. The question isn't "Do we need to align?" but "Does AI need explicit context to execute correctly?"
 
-**Phase 2: Add Technical Details (if needed)**
-- What's the technical approach?
-- What are the constraints?
-- What are the dependencies?
+## Common Scenarios
 
-**Phase 3: Add Coordination Details (if needed)**
-- Who owns what?
-- What's the timeline?
-- What are the milestones?
+### Solo Development
+**When to spec:**
+- Features you'll forget in a month
+- Complex decisions for future you
+- AI-implemented features
 
-Don't write Phase 2 if Phase 1 is sufficient. Don't write Phase 3 if Phases 1-2 are sufficient.
+**When to skip:**
+- Obvious changes
+- Self-documenting code
+- Experiments you'll likely discard
 
-## Team Considerations
+### Team Development
+**When to spec:**
+- Work spanning multiple people
+- Architectural decisions
+- Breaking changes or refactors
+- AI-powered implementation
 
-### Solo Developers
+**When to skip:**
+- Everyone already knows what to do
+- Trivial changes
+- Quick experiments
 
-- Use for features you'll forget about in a month
-- Use to document decisions for future you
-- Skip for obvious changes
+### AI-Powered Development
+**When to spec:**
+- Always when AI agent implements
+- Complex intent or constraints
+- Multiple implementation paths
+- Success criteria need explicit definition
 
-### Small Teams (2-5 people)
-
-- Use for features spanning multiple people
-- Use when alignment is needed
-- Skip when everyone knows what to do
-
-### Large Teams (>5 people)
-
-- Use for most significant features
-- Use for cross-team coordination
-- Skip only for truly trivial changes
-
-### Enterprise Organizations
-
-- Use for features affecting multiple teams
-- Use for architectural decisions
-- Use for compliance-adjacent work (but not the compliance docs themselves)
-- Template heavily to reduce overhead
-
-## When It Feels Like Too Much
-
-If writing specs feels burdensome:
-
-1. **Make them shorter** - Cut everything that doesn't add clarity
-2. **Use templates** - Pre-fill common sections
-3. **Time-box it** - Spend max 30 minutes on a spec
-4. **Raise the bar** - Only spec bigger features
-5. **Get AI help** - Have AI draft initial specs
-
-The goal is **reduced burden**, not added process.
-
-## Success Stories
-
-### When It Works Well
-
-"We spent 20 minutes on a spec, saved 3 days of rework." - Startup CTO
-
-"AI agents implement features correctly the first time now." - Solo dev
-
-"No more confusion about what we're building." - Team lead
-
-### When It Doesn't Work
-
-"Specs became 10-page documents nobody read." - Solution: Make them shorter
-
-"We spec everything, even typo fixes." - Solution: Raise the bar
-
-"Specs are outdated as soon as we write them." - Solution: Update as you go
+**When to skip:**
+- AI can infer from existing patterns
+- Change is purely mechanical
+- Intent is crystal clear from code
 
 ## The Bottom Line
 
-LeanSpec is most valuable when:
-- There's meaningful complexity or ambiguity
-- Multiple people need to be aligned
-- You're working with AI agents
-- The cost of misunderstanding is high
+**Write a spec when:**
+- Intent isn't obvious (ambiguity, complexity, trade-offs)
+- AI agent will implement (needs executable context)
+- Work is significant (cross-system, architectural)
+- Knowledge needs capture (research, retrospectives, decisions)
 
-Skip LeanSpec when:
-- The change is trivial or obvious
-- You're the only person involved
-- The work is exploratory or experimental
-- Compliance requires a specific format
+**Skip the spec when:**
+- Intent is self-evident (obvious bug fix, trivial refactor)
+- Work is exploratory (rapid prototyping, experiments)
+- Wrong tool (API reference, user manuals, compliance docs)
 
-**When in doubt, err on the side of lean.**
+**When in doubt:**
+- Ask: "Does this bridge human intent to machine execution?"
+- If yes → Write it (keep it \<300 lines)
+- If no → Skip it or use code/comments
+- Apply [First Principles](/docs/guide/understanding) to guide judgment
 
-Remember the [first principles](/docs/guide/understanding): Context Economy, Signal-to-Noise, Intent Over Implementation, Bridge the Gap, Progressive Disclosure. These guide your judgment.
+**Remember:** Specs serve the human-AI development loop. If a spec doesn't add value there, it's overhead.
 
 ---
 
-**Next**: Explore [Templates](/docs/guide/templates) to customize your workflow, or learn about [AI Integration](/docs/guide/ai/) for AI-powered development.
+**Next:** Learn [How to Write Specs](/docs/guide/ai-executable-patterns) using the 12 Patterns for AI-Executable Specs, or explore [Templates](/docs/guide/templates) to get started quickly.
