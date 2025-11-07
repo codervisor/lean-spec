@@ -258,6 +258,83 @@ When practices conflict, apply principles in **priority order**:
 
 ---
 
+## Mental Models for AI Co-Creation
+
+When AI assists in writing specs (not just implementing from them), three mental models guide how specs fit into your workflow:
+
+### Spec-as-Checkpoint (Primary Model)
+
+**What it is:** Formalize intent at key decision points in the development conversation.
+
+**Workflow:**
+1. **Converse with AI** - Explore options, clarify requirements, iterate on design
+2. **Recognize checkpoint** - When design is clear enough to formalize
+3. **Crystallize into spec** - AI drafts initial spec, human refines
+4. **Continue from spec** - Spec becomes contract for implementation
+
+**When to use:**
+- After clarifying complex design with AI
+- Before starting multi-phase implementation
+- When ready to commit to an approach
+- To capture decisions before moving forward
+
+**Example:** You discuss API design with AI for 15 minutes, clarify constraints and trade-offs, then formalize the agreed design as a spec before implementation begins.
+
+### Spec-as-Artifact (Formal Documentation)
+
+**What it is:** Durable documentation that persists beyond the immediate work.
+
+**Purpose:**
+- Reference for future modifications
+- Onboarding for new team members
+- Compliance and audit trails
+- Institutional knowledge capture
+
+**When to use:**
+- Architectural decisions affecting multiple systems
+- Features requiring regulatory documentation
+- Complex designs others will extend
+- Work that needs future reference
+
+**Example:** A payment processing spec that documents security decisions, PCI compliance approach, and integration patterns for future developers.
+
+### Spec-as-Context (Living Documentation)
+
+**What it is:** Evolving context that grows alongside implementation.
+
+**Characteristics:**
+- Updated iteratively as understanding grows
+- Reflects current reality, not just initial plans
+- Bridges ongoing human-AI collaboration
+- Captures learnings and refinements
+
+**When to use:**
+- SDD-style iterative development
+- Complex features with emergent requirements
+- Long-running work with multiple iterations
+- When spec serves as living project memory
+
+**Example:** A refactoring spec that evolves as you discover new patterns, documents decisions as you make them, and captures what worked vs. what didn't.
+
+---
+
+### Choosing Your Mental Model
+
+Most specs move through these phases:
+
+1. **Start as Checkpoint** - Formalize conversation into spec
+2. **Evolve as Context** - Update as implementation teaches you things
+3. **End as Artifact** - Archive as reference documentation
+
+**The key insight:** These aren't separate approaches—they're stages in a spec's lifecycle. Start simple (checkpoint), evolve naturally (context), finish as documentation (artifact).
+
+**For AI-assisted authoring:**
+- AI helps draft the checkpoint (structure your thoughts)
+- AI helps maintain context (update as you learn)
+- Humans ensure artifact quality (refine for clarity)
+
+---
+
 ## The LeanSpec Mindset
 
 Understanding the principles is just the beginning. To practice LeanSpec effectively, adopt these mental models:
@@ -446,11 +523,32 @@ When working with AI coding agents, LeanSpec becomes an SOP (Standard Operating 
 - **Agent instructions** (how to interpret and apply specs)
 
 The methodology provides a framework for AI agents to:
-1. Understand project context quickly
-2. Know what needs to be built
-3. Recognize boundaries and constraints
-4. Generate appropriate code
-5. Update specs as work progresses
+1. **Draft initial specs** from human intent and conversation
+2. Understand project context quickly
+3. Know what needs to be built
+4. Recognize boundaries and constraints
+5. Generate appropriate code
+6. Update specs as work progresses
+
+### AI-Assisted Spec Authoring
+
+AI can help write specs, not just implement from them. This creates a collaborative workflow:
+
+**Human provides:**
+- Intent and context ("Why are we doing this?")
+- Constraints and trade-offs ("What limits exist?")
+- Success criteria ("How do we know it's done?")
+- Refinement and editing (enforce LeanSpec principles)
+
+**AI provides:**
+- Initial structure and draft
+- Expansion of brief notes into sections
+- Examples and test cases
+- Formatting and organization
+
+**Result:** Faster spec creation that still maintains human judgment on what matters. AI handles structure, humans ensure clarity and intent.
+
+**Critical:** First principles matter MORE in AI-assisted authoring. Without human review, AI tends toward verbosity (violating Signal-to-Noise) and implementation focus (violating Intent Over Implementation). Your role is to ensure specs remain lean and purposeful.
 
 ---
 
