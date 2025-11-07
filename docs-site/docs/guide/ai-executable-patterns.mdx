@@ -1,65 +1,48 @@
 ---
 id: ai-executable-patterns
-title: The 12 Patterns for AI-Executable Specs
+title: Writing Specs AI Can Execute
 sidebar_position: 2
 ---
 
-> "Specs become leverage when both humans and autonomous agents can act on them without translation."
+Good specs work for both humans and AI agents. These 12 patterns help you write specs that are clear, actionable, and free of ambiguity.
 
-LeanSpec's innovation in the AI era is that a spec is not just a coordination artifact—it is an executable blueprint. These 12 patterns translate the core constraints and first principles into practical techniques that make specs reliably actionable by AI coding agents.
+Each pattern connects back to the first principles: Context Economy (fit in working memory), Signal-to-Noise (every word matters), Intent Over Implementation (capture why), Bridge the Gap (humans + AI understand), and Progressive Disclosure (add complexity when needed).
 
-## Layer Context
 
-Before applying patterns, remember the layered model:
-- **Constraints** (discovered): Physics (context windows), Biology (working memory), Economics (token/time costs)
-- **First Principles** (derived): Context Economy, Signal-to-Noise, Intent Over Implementation, Bridge the Gap, Progressive Disclosure
-- **Patterns** (applied): The tools below that operationalize principles for execution
+## 1. Use Consistent Structure
 
-Each pattern lists: What it is, Why it matters for AI, How to apply, and a Quick Example.
+Keep the same section order in every spec: `## Problem`, `## Solution`, `## Success Criteria`, and optionally `## Trade-offs`.
 
----
+Consistent structure helps both humans and AI parse specs quickly. When every spec follows the same pattern, there's no guessing where to find information.
 
-## 1. Structure as Signal
- 
-**What**: Use a stable top-level section sequence: `## Problem`, `## Solution` (or Approach), `## Success Criteria`, optional `## Trade-offs`.
-
-**Why (AI)**: Predictable anchors reduce parsing ambiguity and token waste.
-
-**How**: Keep section headers exact; avoid creative synonyms that fragment training.
-
-**Example**:
 ```markdown
 ## Problem
-User onboarding time is high (avg 14m) due to multi-step form.
+User onboarding takes 14 minutes on average due to a multi-step form.
+
 ## Solution
-Compress flow into 2 screens; defer profile enrichment.
+Compress the flow into 2 screens and defer profile enrichment to after signup.
+
 ## Success Criteria
-Reduce avg onboarding to <5m; NPS +10; completion rate >92%.
+- Average onboarding time < 5 minutes
+- NPS increases by 10 points
+- Completion rate > 92%
 ```
 
-## 2. Examples Over Abstraction
- 
-**What**: Prefer concrete payloads, CLI invocations, state transitions over descriptive prose.
+## 2. Show Examples, Not Just Descriptions
 
-**Why (AI)**: Few-shot learning: examples reduce hallucination risk.
+Concrete examples beat abstract descriptions. Show actual API calls, CLI commands, and data formats instead of describing them in prose.
 
-**How**: For every described API/process, add at least one minimal working example.
+AI models learn from examples. Real payloads and invocations reduce hallucination and make specs immediately actionable.
 
-**Example**:
 ```json
 POST /api/invite {"email":"ceo@example.com","role":"admin"}
 → 201 {"id":"usr_123","status":"pending"}
 ```
 
-## 3. Explicit Boundaries
- 
-**What**: State what is intentionally out of scope.
+## 3. State What's Out of Scope
 
-**Why (AI)**: Prevents speculative implementation and scope creep.
+Explicitly list what you're NOT building. This prevents scope creep and keeps AI agents from implementing features you don't want.
 
-**How**: Add a `Out of Scope` bullet list under Solution or separate section.
-
-**Example**:
 ```markdown
 Out of Scope:
 - Mobile app parity
@@ -67,15 +50,12 @@ Out of Scope:
 - Advanced analytics dashboard
 ```
 
-## 4. Success Criteria First
- 
-**What**: Define measurable completion before listing implementation ideas.
+## 4. Define Success Before Implementation
 
-**Why (AI)**: Guides agent planning; prevents optimizing the wrong dimension.
+Write measurable completion criteria before describing how to build something. This guides implementation toward the right goals.
 
-**How**: Use 3–5 crisp, testable criteria (latency target, adoption %, error rate).
+Use 3-5 testable criteria with specific numbers or thresholds.
 
-**Example**:
 ```markdown
 ## Success Criteria
 - P95 ingestion latency < 2s
@@ -83,26 +63,18 @@ Out of Scope:
 - Errors logged with correlated trace IDs
 ```
 
-## 5. Intent Over Steps
- 
-**What**: Capture rationale and objectives, not micro task lists.
+## 5. Capture Intent, Not Step-by-Step Instructions
 
-**Why (AI)**: Intent persists across iteration; steps shift with constraints.
+Explain why you're making design choices, not just what to build. Intent stays stable even when implementation details change.
 
-**How**: Explain trade-offs; avoid over-specifying internal function names.
+Avoid micro-managing with detailed task lists or function names. Focus on the reasoning.
 
-**Example**:
-> We choose eventual consistency to favor ingestion throughput; strict ordering is not a requirement.
+> We choose eventual consistency to favor ingestion throughput. Strict ordering is not a requirement for this use case.
 
-## 6. Parseable Metadata
- 
-**What**: Use frontmatter for machine-readable fields (status, priority, tags, relationships).
+## 6. Use Frontmatter for Metadata
 
-**Why (AI)**: Enables tooling to query, prioritize, and sequence work.
+Machine-readable frontmatter (status, priority, tags, dependencies) enables tooling to query, filter, and sequence work automatically.
 
-**How**: Keep system-managed fields untouched; add relationships (`depends_on`, `related`) explicitly.
-
-**Example**:
 ```yaml
 ---
 status: in-progress
@@ -112,40 +84,29 @@ depends_on: [052-branding-assets]
 ---
 ```
 
-## 7. Natural Language Body
- 
-**What**: Write clear prose for human comprehension; avoid cryptic shorthand.
+## 7. Write in Plain Language
 
-**Why (AI)**: LLMs trained on natural language perform better with clear exposition.
+Clear prose is easier for both humans and AI to understand. Use short paragraphs (≤4 sentences), active voice, and eliminate filler words.
 
-**How**: Short paragraphs (≤4 sentences), active voice, eliminate filler.
-
-**Example**:
 > The current batch processor retries indefinitely. This hides systemic failures and inflates cost. We will cap retries to 5 and emit structured error events.
 
-## 8. Concrete Over Theoretical
- 
-**What**: Prefer real data slices and actual edge cases encountered.
+## 8. Use Real Examples Over Synthetic Ones
 
-**Why (AI)**: Ground truth lowers hallucination and mismatched assumption risk.
+Real data from logs, tests, or production is better than made-up examples. Ground truth reduces hallucination risk.
 
-**How**: Source examples from logs/tests; mark synthetic cases explicitly.
+When you do use synthetic examples, label them clearly.
 
-**Example**:
 ```text
-Edge Case (Real): User deleted org mid invoice generation → orphan invoice.
-Edge Case (Synthetic): Simulated 10K concurrent signups for rate limiter.
+Edge Case (Real): User deleted org mid-invoice generation → orphan invoice
+Edge Case (Synthetic): Simulated 10K concurrent signups for rate limiter
 ```
 
-## 9. Constraints as Guardrails
- 
-**What**: Explicitly document hard limits (SLA, memory ceiling, cutoff dates).
+## 9. Document Constraints Explicitly
 
-**Why (AI)**: Prevents over-engineering and keeps solutions within viable bounds.
+Hard limits (SLAs, memory caps, deadlines) need to be visible. This prevents over-engineering and keeps solutions viable.
 
-**How**: Add a `Constraints` subsection before design deep-dives.
+Add a `Constraints` section before diving into design details.
 
-**Example**:
 ```markdown
 Constraints:
 - Memory cap: 256MB per lambda invocation
@@ -153,84 +114,79 @@ Constraints:
 - Migration window closes 2025-12-15
 ```
 
-## 10. Iteration Markers
- 
-**What**: Use clear placeholders (`TBD`, `OPEN QUESTION`, `PUNT`) instead of leaving ambiguity.
+## 10. Mark Unknowns Clearly
 
-**Why (AI)**: Signals incomplete areas to avoid false certainty.
+Use uppercase markers (`TBD`, `OPEN QUESTION`, `PUNT`) for incomplete areas instead of leaving them ambiguous.
 
-**How**: Uppercase markers; resolve or track before completion status change.
+This signals to AI agents where uncertainty exists and prevents false confidence.
 
-**Example**:
 ```markdown
 OPEN QUESTION: Do we stream partial results or wait for full batch?
-TBD: Rate limiting strategy for partner tier.
+TBD: Rate limiting strategy for partner tier
 ```
 
-## 11. Learning Capture
- 
-**What**: Update spec reflecting what was actually built (delta reconciliation).
+## 11. Update Specs After Implementation
 
-**Why (AI)**: Maintains single source; future agents rely on current truth.
+When you build something, update the spec to reflect what you actually did. Document deltas between the plan and reality.
 
-**How**: After implementation, adjust Solution & Trade-offs; never leave divergences implicit.
+This keeps specs as the single source of truth. Future AI agents rely on current information, not stale plans.
 
-**Example**:
 > IMPLEMENTATION DELTA: Dropped Redis cache layer—Postgres query tuned to 14ms P95, cache unnecessary.
 
-## 12. Single Source of Truth
- 
-**What**: Spec mirrors reality; no stale duplication in wikis/docs.
+## 12. Maintain Single Source of Truth
 
-**Why (AI)**: Reduces conflicting inputs and tool misalignment.
+The spec should be the authoritative reference. Don't duplicate information in wikis, docs, or comments.
 
-**How**: Link outward, do not copy; archive superseded specs instead of editing silently.
+Link to other resources instead of copying. Archive superseded specs instead of quietly editing them.
 
-**Example**:
 > Archived: 033-cache-layer-design replaced by current ingestion spec.
 
----
 
-## Applying the Patterns Together
-1. Start with Problem & Success Criteria (Patterns 1 & 4)
-2. Add constraints and boundaries (Patterns 3 & 9)
-3. Provide examples early (Patterns 2 & 8)
-4. Capture intent and rationale (Pattern 5)
-5. Use iteration markers while velocity is high (Pattern 10)
-6. Reconcile learning before marking complete (Pattern 11) → ensures Pattern 12
+## Applying the Patterns
 
-## Cross-Mapping to First Principles
-| Pattern | Principle(s) Reinforced |
-|---------|-------------------------|
-| 1       | Context Economy, Signal-to-Noise |
-| 2       | Bridge the Gap, Signal-to-Noise |
-| 3       | Progressive Disclosure |
-| 4       | Intent Over Implementation, Context Economy |
-| 5       | Intent Over Implementation |
-| 6       | Bridge the Gap, Progressive Disclosure |
-| 7       | Bridge the Gap |
-| 8       | Signal-to-Noise |
-| 9       | Context Economy |
-| 10      | Progressive Disclosure |
-| 11      | Intent Over Implementation |
-| 12      | Signal-to-Noise, Bridge the Gap |
+Start every spec with these steps:
 
-## Quick Checklist
+1. **Problem & Success Criteria** - Define what you're solving and how you'll know it's done (Patterns 1 & 4)
+2. **Constraints & Boundaries** - Document hard limits and what's out of scope (Patterns 3 & 9)
+3. **Examples** - Add concrete examples early, before abstract descriptions (Patterns 2 & 8)
+4. **Intent & Rationale** - Explain why you're making design choices (Pattern 5)
+5. **Mark Unknowns** - Use TBD/OPEN QUESTION while iterating (Pattern 10)
+6. **Reconcile Reality** - Update the spec after implementation to match what you built (Pattern 11)
+
+This workflow ensures specs stay lean, clear, and in sync with reality (Pattern 12).
+
+## Pattern Quick Reference
+
+| Pattern | First Principle |
+|---------|----------------|
+| 1. Consistent Structure | Context Economy, Signal-to-Noise |
+| 2. Show Examples | Bridge the Gap, Signal-to-Noise |
+| 3. Out of Scope | Progressive Disclosure |
+| 4. Success First | Intent Over Implementation, Context Economy |
+| 5. Capture Intent | Intent Over Implementation |
+| 6. Frontmatter Metadata | Bridge the Gap, Progressive Disclosure |
+| 7. Plain Language | Bridge the Gap |
+| 8. Real Examples | Signal-to-Noise |
+| 9. Document Constraints | Context Economy |
+| 10. Mark Unknowns | Progressive Disclosure |
+| 11. Update After Build | Intent Over Implementation |
+| 12. Single Source | Signal-to-Noise, Bridge the Gap |
+
+## Checklist Before Marking Complete
+
 - [ ] Problem stated before solution
-- [ ] Success criteria measurable
+- [ ] Success criteria are measurable
 - [ ] At least one real example per API/process
-- [ ] Boundaries & constraints explicit
-- [ ] No stale TBDs at completion
-- [ ] Spec updated post-implementation deltas
+- [ ] Boundaries and constraints documented
+- [ ] All TBDs resolved or tracked
+- [ ] Spec updated to reflect implementation
 
-## Frequently Misapplied
-| Anti-Pattern | Why It Fails | Fix |
-|--------------|--------------|-----|
-| Giant task list masquerading as solution | Loses intent & adaptability | Replace with rationale paragraphs |
-| Absent success criteria | Hard to validate or prioritize | Define 3–5 quantifiable targets |
-| Abstract pseudo-examples | Increases hallucination risk | Use real payloads/logs |
-| Hidden constraints (only in code) | Promotes over-build | Surface them under Constraints |
-| Stale divergence from implementation | Misleads future agents | Reconcile immediately after build |
+## Common Mistakes
 
-## Next Steps
-Move on to `When to Use` for judgment guidance, or revisit `Understanding LeanSpec` if patterns feel mechanical—grounding in constraints clarifies trade-offs.
+| Problem | Why It Fails | Fix |
+|---------|-------------|-----|
+| Task list instead of rationale | Loses intent, hard to adapt | Explain why, not just what |
+| No success criteria | Can't validate or prioritize | Add 3-5 measurable targets |
+| Abstract examples | AI hallucinates details | Use real payloads from logs/tests |
+| Hidden constraints | Over-engineering | Surface limits in Constraints section |
+| Stale after implementation | Misleads future work | Update immediately after building |
