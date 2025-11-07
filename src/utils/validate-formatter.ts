@@ -92,7 +92,7 @@ export function groupIssuesByFile(
 
   // Sort files by spec name (natural order)
   fileResults.sort((a, b) => {
-    if (a.spec && b.spec) {
+    if (a.spec?.name && b.spec?.name) {
       return a.spec.name.localeCompare(b.spec.name);
     }
     return a.filePath.localeCompare(b.filePath);

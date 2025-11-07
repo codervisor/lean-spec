@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-11-07
+
 ### Changed
 
 **BREAKING: `lspec validate` output format redesigned** (spec 054)
@@ -30,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The new default shows only specs with issues for better signal-to-noise ratio
 - Exit codes are unchanged, so CI pipelines should work without modification
 - JSON format is available for custom parsing: `lspec validate --format json`
+
+### Fixed
+- Fixed potential crash in validate formatter when spec name is missing
 
 ## [0.1.0] - 2025-11-02
 
@@ -83,4 +88,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.1.1]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.1
 [0.1.0]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.0
