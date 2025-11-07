@@ -118,6 +118,9 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 **Phase 2: ✅ COMPLETE** - Validation, UX improvements, branding all shipped
 **Phase 3: 🟡 READY TO START** - Dogfooding checkpoint next, then launch prep
 
+**Blocking Issue for Launch:**
+- ⚠️ **Spec 061 (AI-assisted spec writing)** - Fundamentally changes how we position LeanSpec and "When to Use" docs. Must be resolved before launch messaging.
+
 ## Dependencies
 
 **Critical Path:**
@@ -134,6 +137,7 @@ v1.0.0 (Future)     → Feature-complete milestone with enterprise features
 - [x] Spec 024: Pattern-aware list grouping - ✅ COMPLETE
 - [x] Spec 044: Spec relationships clarity - ✅ COMPLETE
 - [x] Spec 056: Docs site accuracy audit - ✅ COMPLETE
+- [ ] **Spec 061: AI-assisted spec writing** - 🔥 CRITICAL (blocks launch positioning)
 - [ ] Dogfooding checkpoint: Split large specs
 
 **Nice-to-have:**
