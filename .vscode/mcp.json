@@ -2,8 +2,8 @@
 	"servers": {
 		"lean-spec": {
 			"type": "stdio",
-			"command": "lspec-mcp",
-			"args": []
+			"command": "lspec",
+			"args": ["mcp"]
 		}
 	},
 	"inputs": []

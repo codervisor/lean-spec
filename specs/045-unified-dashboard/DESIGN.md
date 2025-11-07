@@ -174,7 +174,11 @@ Velocity Trend
 - Compare to targets (configurable in .lspec/config.json)
 - Show trends (last 4 weeks)
 
-## Part 2: Comprehensive Dashboard Command
+## Part 2: Dashboard Command (NOT IMPLEMENTED)
+
+> **Decision**: Dashboard command was not implemented. Enhanced `stats` and `board` commands provide the needed functionality without adding CLI complexity.
+
+### Original Design (for reference):
 
 ### Command
 `lspec` (no args) or `lspec dashboard`
