@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-07'
 tags:
   - ai
@@ -7,14 +7,21 @@ tags:
   - docs
 priority: high
 created_at: '2025-11-07T15:44:34.381Z'
+updated_at: '2025-11-07T15:51:24.539Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-07T15:51:24.539Z'
 ---
 
 # AI-Assisted Spec Writing
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-07
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-07 · **Tags**: ai, philosophy, docs
 
 **Project**: lean-spec  
-**Team**: Core Development
+**Team**: Core Development  
+**Related**: [043-official-launch-02](../043-official-launch-02/) - Blocks v0.2.0 launch
+
+**⚠️ CRITICAL FOR 0.2.0 LAUNCH** - Must resolve before finalizing positioning and "When to Use" docs.
 
 ## Overview
 
