@@ -129,68 +129,53 @@ bottlenecks, and team velocity.
 
 ---
 
-## ✨ Key Features
+## Built on First Principles
 
-<table>
-<tr>
-<td width="33%" valign="top">
+LeanSpec isn't arbitrary rules—it's derived from fundamental constraints of working with AI.
 
-### 🎯 Context Economy
-Specs fit in working memory (<300 lines). Both humans and AI can actually read them.
+### 🧠 Context Economy
+**Specs <300 lines → Fit in working memory**
 
-</td>
-<td width="33%" valign="top">
+- **Physics**: AI context windows are bounded (~20K effective tokens)
+- **Biology**: Human working memory is limited (7±2 items)
+- **Economics**: Large contexts cost more time and money
+- **Result**: Keep specs under 300 lines, split complex features
 
-### 📈 Progressive Growth
-Start minimal. Add fields as you need them. No upfront complexity.
+### ✂️ Signal-to-Noise Maximization
+**Every word informs decisions → Or it's cut**
 
-```yaml
-# Day 1
-status: planned
+- Every sentence must answer: "What decision does this inform?"
+- Cut obvious statements, inferable content, speculation
+- Keep decision rationale, constraints, success criteria
+- **Result**: Dense, actionable specs that respect reader attention
 
-# Month 3
-+ tags: [api]
-+ priority: high
-+ assignee: alice
-```
+### 📈 Progressive Disclosure
+**Add structure only when you feel pain → Start simple**
 
-</td>
-<td width="33%" valign="top">
+- Solo dev: Just `status` + `created`
+- Small team: Add `tags` + `priority`
+- Enterprise: Add custom fields as needed
+- **Result**: Structure adapts to team, not the other way around
 
-### 🤖 AI-Native
-Works with Cursor, Copilot, Aider, Claude via MCP. Clear specs = better code.
+### 🎯 Intent Over Implementation
+**Capture "why" → Let "how" emerge**
 
-</td>
-</tr>
-</table>
+- Must have: Problem, intent, success criteria
+- Should have: Design rationale, trade-offs
+- Could have: Implementation details (these change)
+- **Result**: Specs stay relevant as code evolves
 
-### Built-in Workflow Tools
+### 🌉 Bridge the Gap
+**Both humans AND AI must understand → Clear structure + natural language**
 
-```bash
-$ lspec board
-┌─────────────────────────────────────────────┐
-│  📋 PLANNED    🚧 IN PROGRESS   ✅ COMPLETE │
-│  • api-v2     • user-auth      • cli-tool  │
-│  • dashboard  • db-migration   • docs-site │
-└─────────────────────────────────────────────┘
-
-$ lspec stats
-�� Project Health: 23 specs • 8 complete • 12 in-progress • 3 planned
-```
+- For humans: Overview, context, rationale
+- For AI: Unambiguous requirements, structured metadata
+- Both can parse and reason about specs
+- **Result**: True human-AI collaboration
 
 ---
 
-## Core Principles
-
-LeanSpec is built on 5 first principles:
-
-1. **Context Economy** - Specs fit in working memory (<300 lines)
-2. **Signal-to-Noise** - Every word informs decisions
-3. **Progressive Disclosure** - Add complexity only when needed
-4. **Intent Over Implementation** - Capture "why," let "how" emerge
-5. **Bridge the Gap** - Both humans and AI must understand
-
-These aren't principles we chose—they're constraints we discovered. LeanSpec works because it aligns with how humans and AI actually work.
+**These aren't preferences—they're constraints.** Physics (context windows), biology (working memory), and economics (token costs) dictate what works.
 
 📖 [Deep dive: First Principles Guide →](https://www.lean-spec.dev/docs/guide/first-principles)
 
