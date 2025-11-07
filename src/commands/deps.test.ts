@@ -178,9 +178,8 @@ describe('depsCommand - Bidirectional Relationships', () => {
 
     console.log = originalLog;
 
-    // Should have all three sections
+    // Should have Depends On and Related Specs sections (but NOT Required By, since no spec depends on spec-a)
     expect(output.find(line => line.includes('Depends On:'))).toBeDefined();
-    expect(output.find(line => line.includes('Required By:'))).toBeDefined();
     expect(output.find(line => line.includes('Related Specs:'))).toBeDefined();
 
     // Spec C in Depends On
