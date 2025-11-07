@@ -193,6 +193,104 @@ Documentation: https://docs.acme.com
 
 ## Advanced Examples
 
+### Creating Specs with Custom Fields
+
+**Basic custom field usage:**
+```bash
+lspec create user-authentication \
+  --field epic=AUTH-2024 \
+  --field sprint=5 \
+  --field estimate=3d \
+  --field reviewer=bob
+```
+
+**With all options:**
+```bash
+lspec create payment-integration \
+  --title "Stripe Payment Integration" \
+  --description "Integrate Stripe for subscription payments" \
+  --tags backend,payment,api \
+  --priority high \
+  --assignee alice \
+  --field epic=PAYMENT-2024 \
+  --field sprint=6 \
+  --field estimate=5d \
+  --field jira_id=PROJ-123 \
+  --field points=8
+```
+
+**Updating custom fields:**
+```bash
+# Update custom fields only
+lspec update 001-user-authentication \
+  --field sprint=6 \
+  --field estimate=2d
+
+# Update standard and custom fields together
+lspec update 001-user-authentication \
+  --status in-progress \
+  --priority high \
+  --field sprint=6
+```
+
+**Filtering by custom fields:**
+```bash
+# Filter by epic
+lspec list --field epic=AUTH-2024
+
+# Filter by sprint
+lspec list --field sprint=5
+
+# Combine with standard filters
+lspec list --status in-progress --field sprint=6
+
+# Multiple custom fields
+lspec list --field epic=AUTH-2024 --field sprint=6
+
+# Search with custom field filter
+lspec search "authentication" --field epic=AUTH-2024
+```
+
+### Agile Team Setup
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "story_points": "number",
+      "jira_id": "string",
+      "team": "string"
+    }
+  },
+  "variables": {
+    "team": "Backend Squad",
+    "default_reviewer": "tech-lead",
+    "sprint_duration": "2 weeks"
+  }
+}
+```
+
+### Open Source Project
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "issue": "string",
+      "pr": "string",
+      "breaking": "boolean",
+      "version": "string"
+    }
+  },
+  "variables": {
+    "project": "open-source-tool",
+    "maintainer": "community"
+  }
+}
+```
+
 ### Enterprise Template
 
 ```json
