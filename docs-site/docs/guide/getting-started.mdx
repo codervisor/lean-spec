@@ -124,8 +124,15 @@ The `.lspec/config.json` file controls LeanSpec behavior:
 
 ```json
 {
+  "template": "spec-template.md",
   "specsDir": "specs",
-  "templateFile": ".lspec/templates/spec-template.md",
+  "structure": {
+    "pattern": "flat",
+    "prefix": "",
+    "dateFormat": "YYYYMMDD",
+    "sequenceDigits": 3,
+    "defaultFile": "README.md"
+  },
   "frontmatter": {
     "required": ["status", "created"],
     "optional": ["tags", "priority", "assignee", "reviewer"],
