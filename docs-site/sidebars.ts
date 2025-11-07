@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Core Concepts',
-      items: ['guide/first-principles', 'guide/philosophy', 'guide/principles', 'guide/when-to-use'],
+      items: ['guide/understanding', 'guide/writing-specs', 'guide/when-to-use'],
     },
     {
       type: 'category',

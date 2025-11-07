@@ -1,17 +1,19 @@
 ---
-id: 'principles'
-title: 'Agile Principles'
-sidebar_position: 3
+id: 'writing-specs'
+title: 'Writing Specs'
+sidebar_position: 2
 ---
-# Agile Principles
+# Writing Specs
 
-LeanSpec is built on six agile principles that guide how specifications should be created and maintained.
+> "Done is better than perfect. Good enough today beats perfect never."
 
-:::info First Principles vs. Agile Principles
-**[First Principles](/docs/guide/first-principles)** are the foundational constraints (Context Economy, Signal-to-Noise, etc.) that define what LeanSpec IS.
+Now that you understand [what LeanSpec is](/docs/guide/understanding), this guide shows you **how to write specs day-to-day**. These are practical techniques that flow from the first principles.
 
-**Agile Principles** (this page) are practical guidelines for HOW to write good specs day-to-day. They derive from the first principles but are more actionable.
-:::
+## Six Core Practices
+
+These practices guide daily spec writing. When they conflict, use your judgment—the goal is **effective communication**, not dogmatic adherence to rules.
+
+---
 
 ## 🎯 Clarity over Documentation
 
@@ -260,9 +262,9 @@ See [detailed API docs] for complete reference.
 
 ---
 
-## Applying the Principles
+## Applying the Practices
 
-These principles work together:
+These practices work together as a workflow:
 
 1. **Start Fast**: Write a quick draft (Speed over Perfection)
 2. **Stay Focused**: Cover key scenarios only (Essential over Exhaustive)
@@ -271,8 +273,176 @@ These principles work together:
 5. **Get Feedback**: Share and discuss (Collaboration over Specification)
 6. **Iterate**: Update as you learn (Living Guide over Frozen Contract)
 
-When these principles conflict, use your judgment. The goal is **effective communication**, not dogmatic adherence to rules.
+### Daily Workflow
+
+**Morning: Planning a new feature**
+1. Open `lspec create feature-name`
+2. Spend 30 minutes writing:
+   - What problem are we solving?
+   - What are 3-5 key scenarios?
+   - What does "done" look like?
+3. Share with team, get feedback
+4. Start implementation
+
+**During Implementation:**
+- Update spec when you discover new constraints
+- Add notes about decisions made
+- Keep spec reflecting current reality
+
+**After Completion:**
+- Final update to match what was built
+- Mark status as complete
+- Archive if appropriate
 
 ---
 
-**Next**: Learn [When to Use](/docs/guide/when-to-use) LeanSpec for maximum effectiveness, or explore the [Template System](/docs/guide/templates).
+## Common Patterns
+
+### The Minimal Spec (5 minutes)
+
+For small features or quick alignment:
+
+```markdown
+---
+status: planned
+created: 2025-11-07
+---
+
+# Feature Name
+
+## Goal
+One sentence: what we're building and why.
+
+## Key Scenarios
+1. Happy path
+2. Main error case
+3. Edge case if critical
+
+## Done When
+- [ ] Criterion 1
+- [ ] Criterion 2
+```
+
+### The Standard Spec (30 minutes)
+
+For most features:
+
+```markdown
+---
+status: planned
+created: 2025-11-07
+priority: high
+tags: [api, backend]
+---
+
+# Feature Name
+
+## Problem
+What problem are we solving? Why now?
+
+## Solution
+High-level approach (2-3 paragraphs)
+
+## Key Scenarios
+1. Scenario 1
+2. Scenario 2
+3. Scenario 3
+
+## Technical Approach
+- Key decisions
+- Important constraints
+- Trade-offs made
+
+## Success Criteria
+- [ ] Measurable outcome 1
+- [ ] Measurable outcome 2
+```
+
+### The Complex Spec (2 hours + sub-specs)
+
+For features requiring coordination:
+
+```
+specs/042-feature-name/
+  README.md          # Overview, decision, high-level design
+  DESIGN.md          # Detailed architecture
+  IMPLEMENTATION.md  # Phase-by-phase plan
+  TESTING.md         # Test strategy
+```
+
+See [spec 012](https://github.com/codervisor/lean-spec/tree/main/specs/012-sub-spec-files) for sub-spec structure.
+
+---
+
+## When You're Stuck
+
+### "I don't know where to start"
+
+Start with three questions:
+1. What problem are we solving?
+2. What are the key scenarios?
+3. What does "done" look like?
+
+Everything else can come later.
+
+### "This is getting too long"
+
+Ask yourself:
+- What can I cut without losing clarity?
+- What can I move to a sub-spec?
+- What can I link to instead of explaining?
+- Am I documenting or communicating?
+
+Target: Can someone read this in 5-10 minutes?
+
+### "I'm not sure if this is enough"
+
+Ship it and find out. Better to start lean and add detail than to over-document upfront.
+
+Ask: "Can someone start working from this?" If yes, it's enough.
+
+---
+
+## Quality Checklist
+
+Before sharing a spec, check:
+
+**Clarity:**
+- [ ] Can someone unfamiliar understand the goal?
+- [ ] Are examples provided for complex concepts?
+- [ ] Is jargon explained or avoided?
+
+**Focus:**
+- [ ] Are only essential scenarios covered?
+- [ ] Is every section necessary?
+- [ ] Can this be read in 5-10 minutes?
+
+**Actionability:**
+- [ ] Is the success criteria clear?
+- [ ] Can work begin immediately?
+- [ ] Are constraints and trade-offs explained?
+
+**Format:**
+- [ ] Is it scannable (headings, bullets, whitespace)?
+- [ ] Are code examples included where helpful?
+- [ ] Is the structure consistent with team templates?
+
+---
+
+## The Bottom Line
+
+Good specs aren't perfect—they're **useful**.
+
+They help people understand what to build, why it matters, and when it's done. Everything else is optional.
+
+Focus on:
+- **Speed**: Get it out quickly
+- **Clarity**: Make it easy to understand
+- **Focus**: Cover what matters
+- **Evolution**: Update as you learn
+
+If your spec enables effective action, it's a good spec.
+
+---
+
+**Next**: Learn [When to Use](/docs/guide/when-to-use) LeanSpec for maximum effectiveness, or explore [Templates](/docs/guide/templates) to customize your workflow.
