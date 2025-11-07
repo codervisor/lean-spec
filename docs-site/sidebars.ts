@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Core Concepts',
-      items: ['guide/understanding', 'guide/writing-specs', 'guide/when-to-use'],
+      items: ['guide/understanding', 'guide/ai-executable-patterns', 'guide/when-to-use'],
     },
     {
       type: 'category',
