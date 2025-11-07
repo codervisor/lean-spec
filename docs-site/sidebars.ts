@@ -39,7 +39,6 @@ const sidebars: SidebarsConfig = {
       label: 'Workflow',
       items: ['guide/board-stats', 'guide/dependencies', 'guide/validation'],
     },
-    'guide/migration',
     'roadmap',
   ],
   referenceSidebar: [

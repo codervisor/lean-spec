@@ -20,9 +20,13 @@ Each pattern lists: What it is, Why it matters for AI, How to apply, and a Quick
 ---
 
 ## 1. Structure as Signal
+ 
 **What**: Use a stable top-level section sequence: `## Problem`, `## Solution` (or Approach), `## Success Criteria`, optional `## Trade-offs`.
+
 **Why (AI)**: Predictable anchors reduce parsing ambiguity and token waste.
+
 **How**: Keep section headers exact; avoid creative synonyms that fragment training.
+
 **Example**:
 ```markdown
 ## Problem
@@ -34,9 +38,13 @@ Reduce avg onboarding to <5m; NPS +10; completion rate >92%.
 ```
 
 ## 2. Examples Over Abstraction
+ 
 **What**: Prefer concrete payloads, CLI invocations, state transitions over descriptive prose.
+
 **Why (AI)**: Few-shot learning: examples reduce hallucination risk.
+
 **How**: For every described API/process, add at least one minimal working example.
+
 **Example**:
 ```json
 POST /api/invite {"email":"ceo@example.com","role":"admin"}
@@ -44,9 +52,13 @@ POST /api/invite {"email":"ceo@example.com","role":"admin"}
 ```
 
 ## 3. Explicit Boundaries
+ 
 **What**: State what is intentionally out of scope.
+
 **Why (AI)**: Prevents speculative implementation and scope creep.
+
 **How**: Add a `Out of Scope` bullet list under Solution or separate section.
+
 **Example**:
 ```markdown
 Out of Scope:
@@ -56,9 +68,13 @@ Out of Scope:
 ```
 
 ## 4. Success Criteria First
+ 
 **What**: Define measurable completion before listing implementation ideas.
+
 **Why (AI)**: Guides agent planning; prevents optimizing the wrong dimension.
+
 **How**: Use 3–5 crisp, testable criteria (latency target, adoption %, error rate).
+
 **Example**:
 ```markdown
 ## Success Criteria
@@ -68,16 +84,24 @@ Out of Scope:
 ```
 
 ## 5. Intent Over Steps
+ 
 **What**: Capture rationale and objectives, not micro task lists.
+
 **Why (AI)**: Intent persists across iteration; steps shift with constraints.
+
 **How**: Explain trade-offs; avoid over-specifying internal function names.
+
 **Example**:
 > We choose eventual consistency to favor ingestion throughput; strict ordering is not a requirement.
 
 ## 6. Parseable Metadata
+ 
 **What**: Use frontmatter for machine-readable fields (status, priority, tags, relationships).
+
 **Why (AI)**: Enables tooling to query, prioritize, and sequence work.
+
 **How**: Keep system-managed fields untouched; add relationships (`depends_on`, `related`) explicitly.
+
 **Example**:
 ```yaml
 ---
@@ -89,16 +113,24 @@ depends_on: [052-branding-assets]
 ```
 
 ## 7. Natural Language Body
+ 
 **What**: Write clear prose for human comprehension; avoid cryptic shorthand.
+
 **Why (AI)**: LLMs trained on natural language perform better with clear exposition.
+
 **How**: Short paragraphs (≤4 sentences), active voice, eliminate filler.
+
 **Example**:
 > The current batch processor retries indefinitely. This hides systemic failures and inflates cost. We will cap retries to 5 and emit structured error events.
 
 ## 8. Concrete Over Theoretical
+ 
 **What**: Prefer real data slices and actual edge cases encountered.
+
 **Why (AI)**: Ground truth lowers hallucination and mismatched assumption risk.
+
 **How**: Source examples from logs/tests; mark synthetic cases explicitly.
+
 **Example**:
 ```text
 Edge Case (Real): User deleted org mid invoice generation → orphan invoice.
@@ -106,9 +138,13 @@ Edge Case (Synthetic): Simulated 10K concurrent signups for rate limiter.
 ```
 
 ## 9. Constraints as Guardrails
+ 
 **What**: Explicitly document hard limits (SLA, memory ceiling, cutoff dates).
+
 **Why (AI)**: Prevents over-engineering and keeps solutions within viable bounds.
+
 **How**: Add a `Constraints` subsection before design deep-dives.
+
 **Example**:
 ```markdown
 Constraints:
@@ -118,9 +154,13 @@ Constraints:
 ```
 
 ## 10. Iteration Markers
+ 
 **What**: Use clear placeholders (`TBD`, `OPEN QUESTION`, `PUNT`) instead of leaving ambiguity.
+
 **Why (AI)**: Signals incomplete areas to avoid false certainty.
+
 **How**: Uppercase markers; resolve or track before completion status change.
+
 **Example**:
 ```markdown
 OPEN QUESTION: Do we stream partial results or wait for full batch?
@@ -128,16 +168,24 @@ TBD: Rate limiting strategy for partner tier.
 ```
 
 ## 11. Learning Capture
+ 
 **What**: Update spec reflecting what was actually built (delta reconciliation).
+
 **Why (AI)**: Maintains single source; future agents rely on current truth.
+
 **How**: After implementation, adjust Solution & Trade-offs; never leave divergences implicit.
+
 **Example**:
 > IMPLEMENTATION DELTA: Dropped Redis cache layer—Postgres query tuned to 14ms P95, cache unnecessary.
 
 ## 12. Single Source of Truth
+ 
 **What**: Spec mirrors reality; no stale duplication in wikis/docs.
+
 **Why (AI)**: Reduces conflicting inputs and tool misalignment.
+
 **How**: Link outward, do not copy; archive superseded specs instead of editing silently.
+
 **Example**:
 > Archived: 033-cache-layer-design replaced by current ingestion spec.
 
