@@ -198,6 +198,56 @@ Testing the MCP server functionality.
       ).rejects.toThrow('Spec not found: nonexistent-spec-999');
     });
 
+    it('should support viewing sub-spec files', async () => {
+      const { readSpecContent } = await import('./commands/viewer.js');
+      
+      // Create a spec with sub-spec files
+      const specDir = path.join(testDir, 'specs', '002-multi-doc-spec');
+      await fs.mkdir(specDir, { recursive: true });
+      
+      // Create main README.md
+      await fs.writeFile(
+        path.join(specDir, 'README.md'),
+        `---
+status: in-progress
+created: '2025-11-07'
+priority: medium
+tags: ["test"]
+---
+
+# Multi-Doc Spec
+
+See [DESIGN.md](DESIGN.md) for details.
+`
+      );
+      
+      // Create DESIGN.md sub-spec
+      await fs.writeFile(
+        path.join(specDir, 'DESIGN.md'),
+        `# Design Document
+
+This is the design document.
+
+## Architecture
+
+Details here.
+`
+      );
+      
+      // Test viewing sub-spec file
+      const content = await readSpecContent('002/DESIGN.md', testDir);
+      expect(content).toBeDefined();
+      expect(content?.name).toBe('002-multi-doc-spec/DESIGN.md');
+      expect(content?.content).toContain('Design Document');
+      expect(content?.content).toContain('Architecture');
+      
+      // Test viewing main spec still works
+      const mainContent = await readSpecContent('002', testDir);
+      expect(mainContent).toBeDefined();
+      expect(mainContent?.name).toBe('002-multi-doc-spec');
+      expect(mainContent?.content).toContain('Multi-Doc Spec');
+    });
+
     it('should handle consecutive errors without crashing', async () => {
       const { updateSpec } = await import('./commands/update.js');
       
