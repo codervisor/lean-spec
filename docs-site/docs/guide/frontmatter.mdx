@@ -34,8 +34,7 @@ Current state of the spec.
 - `planned` - Not started yet
 - `in-progress` - Currently being worked on
 - `complete` - Work is finished
-- `blocked` - Waiting on something
-- `cancelled` - Work was abandoned
+- `archived` - Work is archived
 
 **Example:**
 ```yaml
@@ -141,15 +140,14 @@ See [Custom Fields](/docs/guide/custom-fields) for details.
 LeanSpec auto-generates visual badges from frontmatter:
 
 ```markdown
-> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: api, security
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-02 · **Tags**: api, security
 ```
 
 **Status icons:**
 - 📅 Planned
-- 🔨 In progress
+- ⏳ In progress
 - ✅ Complete
-- 🚫 Blocked
-- ❌ Cancelled
+- 📦 Archived
 
 These badges are automatically updated when you use `lspec update`.
 
@@ -170,7 +168,7 @@ sprint: 42
 
 # User Authentication API
 
-> **Status**: 🔨 In progress · **Priority**: High · **Created**: 2025-11-02  
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-02  
 > **Tags**: api, authentication, security · **Assignee**: alice · **Reviewer**: bob
 
 [Spec content...]
