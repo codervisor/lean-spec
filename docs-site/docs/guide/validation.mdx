@@ -1,0 +1,359 @@
+---
+id: 'validation'
+title: 'Validation'
+sidebar_position: 12
+---
+# Validation
+
+Ensure spec quality with LeanSpec's built-in validation.
+
+## Overview
+
+The `validate` command checks specs against quality standards defined by the [First Principles](/docs/guide/first-principles), particularly **Context Economy** (specs must fit in working memory).
+
+## Validate Command
+
+Check specs for quality issues:
+
+```bash
+lspec validate
+```
+
+Validates all specs by default. Check specific specs:
+
+```bash
+lspec validate <spec-1> <spec-2>
+```
+
+## Quality Checks
+
+### Line Count Analysis
+
+Based on **Context Economy** principle:
+
+- **✅ Ideal**: &lt;300 lines - Fits comfortably in working memory
+- **⚠️ Warning**: 300-400 lines - Consider simplifying or splitting
+- **🔴 Error**: &gt;400 lines - Must split into sub-specs
+
+**Rationale**: 
+- Human attention span: 5-10 minutes
+- AI context windows: Limited and expensive
+- Physics + Biology + Economics = Hard limit
+
+### Sub-Spec Validation
+
+Checks sub-spec files (DESIGN.md, TESTING.md, IMPLEMENTATION.md, etc.):
+
+- Each sub-spec also follows line limits
+- Total spec size (main + sub-specs) tracked
+- Recommends splitting if any file exceeds threshold
+
+### Frontmatter Validation
+
+Ensures required fields are present and valid:
+
+**Required Fields:**
+- `status`: Must be valid (planned, in-progress, complete, etc.)
+- `priority`: Must be valid (high, medium, low, none)
+- `created`: Valid date format
+
+**Optional Fields (validated if present):**
+- `tags`: Proper format
+- `depends_on`, `related`: Valid spec references
+- Custom fields: Proper types
+
+### Structure Validation
+
+Checks spec organization:
+
+- README.md exists (main spec file)
+- Sub-specs follow naming conventions
+- No orphaned or duplicate content
+
+## Validation Output
+
+### Clean Validation
+
+```bash
+$ lspec validate
+
+✅ All specs valid!
+
+Summary:
+  • 45 specs checked
+  • 0 errors
+  • 0 warnings
+```
+
+### With Warnings
+
+```bash
+$ lspec validate
+
+⚠️  Warnings found:
+
+058-docs-overview-polish/README.md
+  ⚠️  Line count: 385 lines (approaching limit)
+  → Consider: Simplifying or splitting into sub-specs
+
+Summary:
+  • 45 specs checked
+  • 0 errors
+  • 1 warning
+```
+
+### With Errors
+
+```bash
+$ lspec validate
+
+❌ Errors found:
+
+042-complex-spec/README.md
+  🔴 Line count: 487 lines (exceeds limit)
+  → Action: Split into sub-specs (see spec 012)
+
+043-broken-spec/README.md
+  🔴 Invalid status: 'in_progress' (should be 'in-progress')
+  🔴 Missing required field: 'created'
+
+Summary:
+  • 45 specs checked
+  • 3 errors
+  • 0 warnings
+```
+
+## Custom Validation Options
+
+### Set Custom Thresholds
+
+```bash
+# Stricter threshold
+lspec validate --max-lines 250
+
+# More lenient threshold
+lspec validate --max-lines 500
+```
+
+### Validate Specific Aspects
+
+```bash
+# Only check line counts
+lspec validate --check lines
+
+# Only check frontmatter
+lspec validate --check frontmatter
+
+# Only check structure
+lspec validate --check structure
+```
+
+## Complexity Analysis
+
+Validation detects complexity issues:
+
+### Line Count Distribution
+
+```
+Spec Complexity Report:
+
+&lt;200 lines:  ████████████████████ 30 specs (67%)
+200-300:     ████████ 10 specs (22%)
+300-400:     ███ 4 specs (9%)
+&gt;400 lines:  ▓ 1 spec (2%) ⚠️
+
+Recommendation: Split 042-complex-spec
+```
+
+### Sub-Spec Analysis
+
+```
+042-complex-spec:
+  README.md:           487 lines 🔴
+  DESIGN.md:          245 lines ✅
+  IMPLEMENTATION.md:  312 lines ⚠️
+  Total:            1,044 lines
+
+Recommendation:
+  • Split README.md into multiple sub-specs
+  • Consider splitting IMPLEMENTATION.md
+```
+
+## Fixing Validation Issues
+
+### Line Count Violations
+
+**Problem**: Spec exceeds 400 lines
+
+**Solution**: Split using sub-specs (see [spec 012](https://github.com/codervisor/lean-spec/tree/main/specs/012-sub-spec-files))
+
+```markdown
+# Before: Single 500-line spec
+README.md (500 lines) 🔴
+
+# After: Split into focused sub-specs
+README.md (200 lines) ✅ - Overview, decision, summary
+DESIGN.md (150 lines) ✅ - Detailed design
+IMPLEMENTATION.md (150 lines) ✅ - Implementation plan
+```
+
+### Invalid Frontmatter
+
+**Problem**: Invalid or missing frontmatter fields
+
+**Solution**: Use `lspec update` to fix:
+
+```bash
+# Fix status
+lspec update <spec> --status in-progress
+
+# Fix priority
+lspec update <spec> --priority high
+
+# Fix tags
+lspec update <spec> --tags feature,api
+```
+
+### Structure Issues
+
+**Problem**: Missing README.md or malformed sub-specs
+
+**Solution**: 
+- Ensure README.md exists as main spec file
+- Follow sub-spec naming: DESIGN.md, TESTING.md, etc.
+- Use proper frontmatter in all files
+
+## Workflows
+
+### Pre-Commit Check
+
+Run before committing:
+
+```bash
+lspec validate
+```
+
+Fix any errors before committing changes.
+
+### CI/CD Integration
+
+Add to your CI pipeline:
+
+```yaml
+# .github/workflows/validate.yml
+name: Validate Specs
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g lean-spec
+      - run: lspec validate
+```
+
+### Regular Review
+
+Weekly spec health check:
+
+```bash
+# Check overall health
+lspec validate
+
+# Detailed analysis
+lspec stats --full
+
+# Review large specs
+lspec validate --max-lines 300
+```
+
+## Best Practices
+
+1. **Validate early** - Before committing
+2. **Fix warnings promptly** - Don't let them accumulate
+3. **Split at 400 lines** - Use sub-specs for complex features
+4. **Automate** - Add to CI/CD pipeline
+5. **Regular reviews** - Weekly health checks
+
+## Understanding Results
+
+### When to Split
+
+Split when:
+- ✅ Spec exceeds 400 lines (Context Economy violation)
+- ✅ Multiple distinct concerns (different topics)
+- ✅ Spec takes &gt;10 minutes to read
+- ✅ Frequent editing causes confusion
+
+Don't split when:
+- ❌ Under 300 lines and focused
+- ❌ Single cohesive concept
+- ❌ Quick to read and understand
+
+### When to Simplify
+
+Simplify when:
+- Excessive detail for simple feature
+- Repeated information
+- Low signal-to-noise ratio
+- Future speculation
+
+### When to Accept Warnings
+
+Sometimes warnings are acceptable:
+- Temporarily high during active development
+- Complex feature needing comprehensive detail
+- Splitting would reduce clarity
+
+Always re-evaluate later.
+
+## Tips
+
+- Run validation before commits
+- Use `--max-lines` for stricter checks during reviews
+- Combine with `lspec stats` for overall project health
+- Address errors immediately, warnings within sprint
+- Automate in CI/CD for team consistency
+
+## Example Validation Report
+
+```bash
+$ lspec validate
+
+🔍 Validating 45 specs...
+
+✅ Passed (43 specs)
+  • 040-api-design: 245 lines ✅
+  • 041-testing-strategy: 198 lines ✅
+  • 043-launch-plan: 287 lines ✅
+  ...
+
+⚠️  Warnings (1 spec)
+  • 058-docs-restructure: 385 lines
+    → Approaching limit, consider simplifying
+
+🔴 Errors (1 spec)
+  • 042-complex-feature: 487 lines
+    → Exceeds limit, must split into sub-specs
+    → Recommendation: Create DESIGN.md and IMPLEMENTATION.md
+
+Summary:
+  • Total: 45 specs
+  • Passed: 43 (96%)
+  • Warnings: 1 (2%)
+  • Errors: 1 (2%)
+
+Action Required:
+  → Fix errors before merging
+  → Review warnings this sprint
+```
+
+## Learning More
+
+- **[First Principles](/docs/guide/first-principles)** - Understanding Context Economy
+- **[Sub-Spec Files](https://github.com/codervisor/lean-spec/tree/main/specs/012-sub-spec-files)** - How to split large specs
+- **[Board & Stats](/docs/guide/board-stats)** - Project health monitoring
+- **[CLI Reference](/docs/reference/cli)** - Complete command documentation
