@@ -26,6 +26,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Working with AI',
+      items: ['guide/ai/index', 'guide/ai/setup', 'guide/ai/agents-md', 'guide/ai/best-practices', 'guide/ai/examples'],
+    },
+    {
+      type: 'category',
       label: 'Features',
       items: ['guide/templates', 'guide/frontmatter', 'guide/custom-fields', 'guide/variables'],
     },
@@ -35,13 +40,6 @@ const sidebars: SidebarsConfig = {
     'reference/cli',
     'reference/config',
     'reference/frontmatter',
-  ],
-  aiSidebar: [
-    'ai-integration/index',
-    'ai-integration/setup',
-    'ai-integration/agents-md',
-    'ai-integration/best-practices',
-    'ai-integration/examples',
   ],
 };
 

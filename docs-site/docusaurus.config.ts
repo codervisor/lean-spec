@@ -94,12 +94,6 @@ const config: Config = {
           position: 'left',
           label: 'Reference',
         },
-        {
-          type: 'docSidebar',
-          sidebarId: 'aiSidebar',
-          position: 'left',
-          label: 'AI Integration',
-        },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/codervisor/lean-spec',
@@ -124,7 +118,7 @@ const config: Config = {
             },
             {
               label: 'AI Integration',
-              to: '/docs/ai-integration',
+              to: '/docs/guide/ai',
             },
           ],
         },
