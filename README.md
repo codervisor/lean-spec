@@ -31,7 +31,7 @@ Specs under 300 lines. Intent-focused. Machine-readable. Adapts to your workflow
 <p align="center">
   <a href="#quick-start-5-minutes"><strong>Quick Start (5 Minutes) →</strong></a> •
   <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a> •
-  <a href="https://www.lean-spec.dev/docs/examples"><strong>Examples</strong></a>
+  <a href="https://www.lean-spec.dev/docs/guide/ai-executable-patterns"><strong>Examples</strong></a>
 </p>
 
 ---
@@ -177,7 +177,7 @@ LeanSpec isn't arbitrary rules—it's derived from fundamental constraints of wo
 
 **These aren't preferences—they're constraints.** Physics (context windows), biology (working memory), and economics (token costs) dictate what works.
 
-📖 [Deep dive: First Principles Guide →](https://www.lean-spec.dev/docs/guide/first-principles)
+📖 [Deep dive: First Principles Guide →](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles)
 
 ---
 
@@ -317,9 +317,9 @@ lspec update user-authentication --status in-progress
 - You drive, AI executes
 
 **Next steps:**
-- 📘 [Full CLI Reference](https://www.lean-spec.dev/docs/cli-reference) - All commands
-- 🎨 [Choose a Template](https://www.lean-spec.dev/docs/templates) - Minimal, standard, or enterprise
-- 🤖 [AI Agent Setup](AGENTS.md) - Configure Cursor, Claude, Aider
+- 📘 [Full CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands
+- 🎨 [Choose a Template](https://www.lean-spec.dev/docs/guide/templates) - Minimal, standard, or enterprise
+- 🤖 [AI Agent Setup](AGENTS.md) - Configure AI coding tools
 
 ---
 
@@ -387,24 +387,24 @@ We dogfood our own methodology. Specs that fit in AI context enable the velocity
 ## Learn More
 
 ### 📚 Documentation
-- [Getting Started Guide](https://www.lean-spec.dev/docs/getting-started) - Complete setup walkthrough
-- [First Principles](https://www.lean-spec.dev/docs/guide/first-principles) - The philosophy behind LeanSpec
-- [CLI Reference](https://www.lean-spec.dev/docs/cli-reference) - All commands with examples
+- [Getting Started Guide](https://www.lean-spec.dev/docs/guide/getting-started) - Complete setup walkthrough
+- [First Principles](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles) - The philosophy behind LeanSpec
+- [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands with examples
 
 ### 🛠️ Integrations
 - [AI Agent Configuration](AGENTS.md) - Cursor, Copilot, Aider setup
 - [MCP Server](docs/MCP-SERVER.md) - Claude Desktop integration
-- [VS Code Extension](https://www.lean-spec.dev/docs/tools/vscode) - Enhanced editor support
+- [VS Code Extension](https://www.lean-spec.dev/docs/roadmap#vs-code-extension) - Enhanced editor support (planned)
 
 ### 🎓 Guides
 - [Custom Fields](https://www.lean-spec.dev/docs/guide/custom-fields) - Adapt to your workflow
-- [Sub-Specs](https://www.lean-spec.dev/docs/guide/sub-specs) - Manage complex features
-- [Folder Structure](https://www.lean-spec.dev/docs/guide/folder-structure) - Organize your specs
+- [Templates](https://www.lean-spec.dev/docs/guide/templates) - Choose the right structure
+- [Frontmatter](https://www.lean-spec.dev/docs/guide/frontmatter) - Metadata and organization
 
 ### 🤝 Community
 - [GitHub Issues](https://github.com/codervisor/lean-spec/issues) - Report bugs or request features
 - [Contributing Guide](CONTRIBUTING.md) - Join the project
-- [Examples](https://www.lean-spec.dev/docs/examples) - Real-world usage patterns
+- [AI-Executable Patterns](https://www.lean-spec.dev/docs/guide/ai-executable-patterns) - Real-world usage patterns
 
 ---
 
