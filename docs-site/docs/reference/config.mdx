@@ -15,19 +15,61 @@ LeanSpec configuration is stored in `.lspec/config.json` in your project root.
 
 ```json
 {
-  "specsDir": "specs",
-  "archiveDir": "archive",
-  "templateFile": ".lspec/templates/spec-template.md",
-  "frontmatter": {
-    "required": ["status", "created"],
-    "optional": ["tags", "priority"],
-    "custom": {}
+  "template": "spec-template.md",
+  "templates": {
+    "default": "spec-template.md"
   },
-  "variables": {}
+  "specsDir": "specs",
+  "structure": {
+    "pattern": "flat",
+    "prefix": "",
+    "dateFormat": "YYYYMMDD",
+    "sequenceDigits": 3,
+    "defaultFile": "README.md"
+  },
+  "features": {
+    "aiAgents": true,
+    "examples": true
+  }
 }
 ```
 
 ## Configuration Options
+
+### template
+
+Primary template file to use for new specs.
+
+**Type:** `string`  
+**Default:** `"spec-template.md"`
+
+Path to the template file within `.lspec/templates/` directory.
+
+```json
+{
+  "template": "my-custom-template.md"
+}
+```
+
+### templates
+
+Map of named templates for different spec types.
+
+**Type:** `object`  
+**Default:** `{ "default": "spec-template.md" }`
+
+Allows you to define multiple templates that users can select from during `lspec create` or `lspec init`.
+
+```json
+{
+  "templates": {
+    "default": "spec-template.md",
+    "minimal": "minimal-template.md",
+    "feature": "feature-template.md",
+    "bug": "bug-template.md"
+  }
+}
+```
 
 ### specsDir
 
@@ -42,41 +84,225 @@ Directory where active specs are stored.
 }
 ```
 
-### archiveDir
+### autoCheck
 
-Directory where archived specs are moved.
+Enable/disable automatic sequence conflict checking.
 
-**Type:** `string`  
-**Default:** `"archive"`
+**Type:** `boolean`  
+**Default:** `true`
 
-```json
-{
-  "archiveDir": "archived-specs"
-}
-```
-
-### templateFile
-
-Path to spec template file.
-
-**Type:** `string`  
-**Default:** `".lspec/templates/spec-template.md"`
+When enabled, LeanSpec automatically checks for sequence number conflicts during spec creation and warns if duplicates exist.
 
 ```json
 {
-  "templateFile": ".lspec/my-custom-template.md"
+  "autoCheck": false
 }
 ```
+
+### structure
+
+Configuration for spec folder structure and naming.
+
+**Type:** `object`
+
+#### structure.pattern
+
+Folder structure pattern.
+
+**Type:** `string`  
+**Values:** `"flat"` | `"custom"` | legacy pattern string  
+**Default:** `"flat"`
+
+- `"flat"`: Specs are organized in a flat structure (e.g., `specs/001-name/`)
+- `"custom"`: Custom grouping using `groupExtractor` field
+
+```json
+{
+  "structure": {
+    "pattern": "flat"
+  }
+}
+```
+
+#### structure.prefix
+
+Prefix for spec folders in flat pattern.
+
+**Type:** `string` (optional)  
+**Default:** `""` (empty, uses global sequence numbers)
+
+Common values:
+- `""` - Global numbering (e.g., `001-name/`, `002-name/`)
+- `"{YYYYMMDD}-"` - Date-prefixed (e.g., `20251107-001-name/`)
+- `"spec-"` - Custom prefix (e.g., `spec-001-name/`)
+
+```json
+{
+  "structure": {
+    "pattern": "flat",
+    "prefix": "{YYYYMMDD}-"
+  }
+}
+```
+
+#### structure.dateFormat
+
+Date format for date-based patterns.
+
+**Type:** `string`  
+**Default:** `"YYYYMMDD"`
+
+Supported formats: `"YYYYMMDD"`, `"YYYY-MM-DD"`, `"YYYY-MM"`, `"YYYY/MM"`, `"YYYY"`, `"MM"`
+
+```json
+{
+  "structure": {
+    "dateFormat": "YYYY-MM-DD"
+  }
+}
+```
+
+#### structure.sequenceDigits
+
+Number of digits for sequence numbers.
+
+**Type:** `number`  
+**Default:** `3`
+
+- `3` → `001`, `002`, `003`
+- `4` → `0001`, `0002`, `0003`
+
+```json
+{
+  "structure": {
+    "sequenceDigits": 4
+  }
+}
+```
+
+#### structure.defaultFile
+
+Default filename within each spec folder.
+
+**Type:** `string`  
+**Default:** `"README.md"`
+
+```json
+{
+  "structure": {
+    "defaultFile": "spec.md"
+  }
+}
+```
+
+#### structure.groupExtractor
+
+Field extractor for custom grouping pattern.
+
+**Type:** `string` (optional)  
+**Example:** `"{YYYYMMDD}"` or `"milestone-{milestone}"`
+
+Used when `pattern` is `"custom"` to dynamically group specs by frontmatter fields.
+
+```json
+{
+  "structure": {
+    "pattern": "custom",
+    "groupExtractor": "milestone-{milestone}"
+  }
+}
+```
+
+#### structure.groupFallback
+
+Fallback folder when groupExtractor field is missing.
+
+**Type:** `string` (optional)
+
+Only used for non-date extractors. When the frontmatter field is missing, specs are placed in this fallback folder.
+
+```json
+{
+  "structure": {
+    "pattern": "custom",
+    "groupExtractor": "milestone-{milestone}",
+    "groupFallback": "unassigned"
+  }
+}
+```
+
+### features
+
+Feature flags for optional functionality.
+
+**Type:** `object`
+
+```json
+{
+  "features": {
+    "aiAgents": true,
+    "examples": true,
+    "collaboration": false,
+    "compliance": false,
+    "approvals": false,
+    "apiDocs": false
+  }
+}
+```
+
+#### features.aiAgents
+
+Enable AI agent integration (creates AGENTS.md file).
+
+**Type:** `boolean`  
+**Default:** `true`
+
+#### features.examples
+
+Enable example content in templates.
+
+**Type:** `boolean`  
+**Default:** `true`
+
+#### features.collaboration
+
+Enable collaboration features (assignee, reviewer fields).
+
+**Type:** `boolean`  
+**Default:** `false`
+
+#### features.compliance
+
+Enable compliance tracking fields.
+
+**Type:** `boolean`  
+**Default:** `false`
+
+#### features.approvals
+
+Enable approval workflow fields.
+
+**Type:** `boolean`  
+**Default:** `false`
+
+#### features.apiDocs
+
+Enable API documentation sections in templates.
+
+**Type:** `boolean`  
+**Default:** `false`
 
 ### frontmatter
 
-Configuration for spec frontmatter fields.
+Configuration for spec frontmatter fields validation.
+
+**Type:** `object` (optional)
 
 #### frontmatter.required
 
 Fields that must be present in every spec.
 
-**Type:** `string[]`  
+**Type:** `string[]` (optional)  
 **Default:** `["status", "created"]`
 
 ```json
@@ -91,7 +317,7 @@ Fields that must be present in every spec.
 
 Fields that may be present but aren't required.
 
-**Type:** `string[]`  
+**Type:** `string[]` (optional)  
 **Default:** `["tags", "priority"]`
 
 ```json
@@ -106,10 +332,10 @@ Fields that may be present but aren't required.
 
 Custom fields with type definitions.
 
-**Type:** `object`  
+**Type:** `object` (optional)  
 **Default:** `{}`
 
-**Supported types:** `string`, `number`, `boolean`, `array`
+**Supported types:** `"string"`, `"number"`, `"boolean"`, `"array"`
 
 ```json
 {
@@ -128,8 +354,10 @@ Custom fields with type definitions.
 
 Custom variables for template substitution.
 
-**Type:** `object`  
+**Type:** `object` (optional)  
 **Default:** `{}`
+
+Variables can be used in templates using `{variable_name}` syntax.
 
 ```json
 {
@@ -145,10 +373,26 @@ Custom variables for template substitution.
 
 ```json
 {
+  "template": "enterprise-template.md",
+  "templates": {
+    "default": "spec-template.md",
+    "minimal": "minimal-template.md",
+    "feature": "feature-template.md"
+  },
   "specsDir": "docs/specs",
-  "archiveDir": "docs/archive",
-  "templateFile": ".lspec/templates/enterprise-template.md",
-  
+  "autoCheck": true,
+  "structure": {
+    "pattern": "flat",
+    "prefix": "{YYYYMMDD}-",
+    "dateFormat": "YYYYMMDD",
+    "sequenceDigits": 3,
+    "defaultFile": "README.md"
+  },
+  "features": {
+    "aiAgents": true,
+    "examples": true,
+    "collaboration": true
+  },
   "frontmatter": {
     "required": ["status", "created", "assignee"],
     "optional": ["tags", "priority", "reviewer"],
@@ -161,7 +405,6 @@ Custom variables for template substitution.
       "teams": "array"
     }
   },
-  
   "variables": {
     "company": "Acme Corp",
     "team": "Platform Engineering",
@@ -172,18 +415,14 @@ Custom variables for template substitution.
 }
 ```
 
-## Environment-Specific Configuration
-
-Currently not supported. All configuration is in `.lspec/config.json`.
-
 ## Validation
 
 LeanSpec validates configuration on load:
 
-- Required fields must be defined
-- Custom field types must be valid
-- Template file must exist
-- Directory paths are created if missing
+- Required structure fields must be valid
+- Custom field types must be valid (`string`, `number`, `boolean`, `array`)
+- Template files must exist in `.lspec/templates/`
+- Spec directory is created if missing
 
 Invalid configuration will show an error with details.
 

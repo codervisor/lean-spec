@@ -52,10 +52,14 @@ lspec create <name> [options]
 - `<name>` - Spec name (required)
 
 **Options:**
-- `--status <status>` - Set initial status (default: `planned`)
-- `--priority <priority>` - Set priority (`low`, `medium`, `high`, `critical`)
+- `--title <title>` - Set custom title
+- `--description <desc>` - Set initial description
 - `--tags <tags>` - Comma-separated tags
-- `--field <key=value>` - Set custom field (can be used multiple times)
+- `--priority <priority>` - Set priority (`low`, `medium`, `high`, `critical`)
+- `--assignee <name>` - Set assignee
+- `--template <template>` - Use a specific template
+- `--field <name=value>` - Set custom field (can be used multiple times)
+- `--no-prefix` - Skip date prefix even if configured
 
 **Examples:**
 
@@ -95,10 +99,14 @@ lspec list [options]
 ```
 
 **Options:**
-- `--status <status>` - Filter by status
-- `--priority <priority>` - Filter by priority
-- `--tag <tag>` - Filter by tag
-- `--field <key=value>` - Filter by custom field
+- `--archived` - Include archived specs
+- `--status <status>` - Filter by status (`planned`, `in-progress`, `complete`, `archived`)
+- `--priority <priority>` - Filter by priority (`low`, `medium`, `high`, `critical`)
+- `--tag <tag>` - Filter by tag (can specify multiple)
+- `--assignee <name>` - Filter by assignee
+- `--field <name=value>` - Filter by custom field (can specify multiple)
+- `--sort <field>` - Sort by field (`id`, `created`, `name`, `status`, `priority`) (default: `id`)
+- `--order <order>` - Sort order (`asc`, `desc`) (default: `desc`)
 
 **Examples:**
 
@@ -138,10 +146,9 @@ lspec list --field epic=PROJ-123
 
 **Status Icons:**
 - 📅 Planned
-- 🔨 In progress
+- ⏳ In progress
 - ✅ Complete
-- 🚫 Blocked
-- ❌ Cancelled
+- 📦 Archived
 
 ---
 
@@ -160,10 +167,11 @@ lspec update <spec> [options]
   - Full folder: `045-unified-dashboard`
 
 **Options:**
-- `--status <status>` - Update status
-- `--priority <priority>` - Update priority
-- `--tags <tags>` - Update tags (replaces existing)
-- `--field <key=value>` - Update custom field (can be used multiple times)
+- `--status <status>` - Update status (`planned`, `in-progress`, `complete`, `archived`)
+- `--priority <priority>` - Update priority (`low`, `medium`, `high`, `critical`)
+- `--tags <tags>` - Update tags (comma-separated, replaces existing)
+- `--assignee <name>` - Set assignee
+- `--field <name=value>` - Update custom field (can be used multiple times)
 
 **Examples:**
 
@@ -210,8 +218,10 @@ lspec search <query> [options]
 
 **Options:**
 - `--status <status>` - Filter results by status
+- `--priority <priority>` - Filter results by priority
 - `--tag <tag>` - Filter results by tag
-- `--field <key=value>` - Filter results by custom field
+- `--assignee <name>` - Filter results by assignee
+- `--field <name=value>` - Filter results by custom field (can specify multiple)
 
 **Examples:**
 
