@@ -58,26 +58,36 @@ But the key is the **mindset**: focus on clarity, keep it lean, make it living d
 
 AI coding agents work best with clear, concise specifications that balance context with brevity—exactly what the LeanSpec mindset promotes.
 
-## How It Works
+## What You Get
 
-LeanSpec provides a simple CLI tool to help you:
+**Core CLI** - Lightweight spec management from your terminal:
+- Create, organize, and search specs with simple commands
+- Track project health with Kanban board (`lspec board`) and analytics (`lspec stats`)
+- Validate specs for quality and complexity (`lspec validate`)
+- Understand dependencies between specs (`lspec deps`)
+- [Full CLI reference →](/docs/reference/cli)
 
-1. **Initialize** your project with templates tailored to your workflow
-2. **Create** specs in a structured, date-organized format
-3. **Manage** spec metadata (status, priority, tags) easily
-4. **Search** and filter specs to find what you need
-5. **Archive** completed work to keep your workspace clean
+**MCP Server** - Native AI assistant integration:
+- Works with Claude Desktop, Cline, and other MCP-compatible tools
+- Your specs are available directly in AI chat context
+- AI agents can read, search, and understand your specs
+- [Setup guide →](/docs/ai-integration/setup)
 
-The tool handles organization and discovery while you focus on content.
+**Templates & Customization**:
+- Three templates: minimal, standard, enterprise
+- Custom fields adapt to your workflow
+- Progressive structure that grows with your team
+
+Want to see what's coming next? Check out our [roadmap](/docs/roadmap) for planned features like VS Code extensions, GitHub Actions, and more.
 
 ## A Simple Example
 
-Here's what a minimal LeanSpec might look like:
+Here's an example structure (adapt sections to your needs):
 
 ```markdown
 ---
 status: in-progress
-created: 2025-11-02
+created: 2025-11-07
 tags: [api, feature]
 priority: high
 ---
