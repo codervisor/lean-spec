@@ -63,29 +63,34 @@ export async function depsCommand(specPath: string, options: {
   console.log(chalk.green(`📦 Dependencies for ${chalk.cyan(sanitizeUserInput(spec.path))}`));
   console.log('');
 
+  // Check if there are any relationships at all
+  const hasAnyRelationships = dependsOn.length > 0 || blocks.length > 0 || relatedSpecs.length > 0;
+  
+  if (!hasAnyRelationships) {
+    console.log(chalk.gray('  No dependencies or relationships'));
+    console.log('');
+    return;
+  }
+
   // Depends On section
-  console.log(chalk.bold('Depends On:'));
   if (dependsOn.length > 0) {
+    console.log(chalk.bold('Depends On:'));
     for (const dep of dependsOn) {
       const status = getStatusIndicator(dep.frontmatter.status);
       console.log(`  → ${sanitizeUserInput(dep.path)} ${status}`);
     }
-  } else {
-    console.log(chalk.gray('  (none)'));
+    console.log('');
   }
-  console.log('');
 
   // Required By section
-  console.log(chalk.bold('Required By:'));
   if (blocks.length > 0) {
+    console.log(chalk.bold('Required By:'));
     for (const blocked of blocks) {
       const status = getStatusIndicator(blocked.frontmatter.status);
       console.log(`  ← ${sanitizeUserInput(blocked.path)} ${status}`);
     }
-  } else {
-    console.log(chalk.gray('  (none)'));
+    console.log('');
   }
-  console.log('');
 
   // Related Specs section (bidirectional)
   if (relatedSpecs.length > 0) {
