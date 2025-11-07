@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Core Concepts',
-      items: ['guide/philosophy', 'guide/principles', 'guide/when-to-use'],
+      items: ['guide/first-principles', 'guide/philosophy', 'guide/principles', 'guide/when-to-use'],
     },
     {
       type: 'category',
@@ -34,12 +34,19 @@ const sidebars: SidebarsConfig = {
       label: 'Features',
       items: ['guide/templates', 'guide/frontmatter', 'guide/custom-fields', 'guide/variables'],
     },
+    {
+      type: 'category',
+      label: 'Workflow',
+      items: ['guide/board-stats', 'guide/dependencies', 'guide/validation'],
+    },
+    'guide/migration',
     'roadmap',
   ],
   referenceSidebar: [
     'reference/cli',
     'reference/config',
     'reference/frontmatter',
+    'reference/mcp-server',
   ],
 };
 
