@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
       label: 'Features',
       items: ['guide/templates', 'guide/frontmatter', 'guide/custom-fields', 'guide/variables'],
     },
+    'roadmap',
   ],
   referenceSidebar: [
     'reference/cli',
