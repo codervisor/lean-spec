@@ -1,14 +1,18 @@
 ---
-status: complete
+status: in-progress
 created: '2025-11-07'
 tags:
   - documentation
   - quality
-  - polish
-priority: medium
+  - restructure
+  - first-principles
+priority: high
 related:
   - '056'
   - '057'
+  - '049'
+depends_on:
+  - '049'
 created_at: '2025-11-07T01:53:09.673Z'
 updated_at: '2025-11-07T02:19:49.555Z'
 transitions:
@@ -16,203 +20,261 @@ transitions:
     at: '2025-11-07T02:17:43.534Z'
   - status: complete
     at: '2025-11-07T02:19:49.555Z'
+  - status: in-progress
+    at: '2025-11-07T08:00:00.000Z'
 completed_at: '2025-11-07T02:19:49.555Z'
 completed: '2025-11-07'
 ---
 
-# Docs-Site Overview Polish
+# Docs-Site Comprehensive Restructure
 
-> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-07 · **Tags**: documentation, quality, polish
+> **Status**: 🚧 In Progress · **Priority**: High · **Created**: 2025-11-07 · **Tags**: documentation, quality, restructure, first-principles
 
 **Project**: lean-spec  
 **Team**: Core Development
 
 ## Overview
 
-Polish the docs-site overview page (`docs-site/docs/guide/index.mdx`) to address minor completeness and clarity issues found during validation.
+**Comprehensive docs-site restructure** to align with LeanSpec First Principles (spec 049) and fix structural issues.
 
-**Current State**: Overview is accurate and well-written, but has 3 minor issues:
-1. Feature list incomplete (missing board, stats, deps, validate, etc.)
-2. Example structure doesn't match actual templates
-3. Example date is cosmetic (minor)
+**Scope Changed**: Originally minor polish, now major restructure based on findings:
+1. ❌ **AI Integration as separate tab** - Wrong! AI is core to LeanSpec, not optional add-on
+2. ❌ **Core Concepts outdated** - Doesn't align with First Principles (spec 049)
+3. ❌ **`docs/` folder not integrated** - Valuable content (MCP, migration, examples) not in docs-site
+4. ❌ **Navigation structure suboptimal** - Doesn't reflect actual workflow
 
-**Why Now**: Part of v0.2.0 launch polish (spec 043). These are the last documentation issues before launch.
+**Why Now**: 
+- Part of v0.2.0 launch (spec 043) - must be right before launch
+- Spec 049 established First Principles - docs must reflect them
+- Current structure treats AI as optional when it's fundamental
+- Duplicate content in `docs/` folder causes confusion
 
-**Scope**: Minor fixes only - the page fundamentally works, just needs polish.
+**Result**: Cohesive, principle-driven documentation that reflects LeanSpec's AI-native identity.
 
-## Issues Found
+## Problems Identified
 
-### Issue #1: Feature Section Needs Restructuring (High Priority)
+**See [ANALYSIS.md](./ANALYSIS.md) for detailed problem analysis.**
 
-**Location**: "How It Works" section
+**Summary of Key Issues**:
 
-**Problem**: Section lists 5 CLI capabilities but:
-1. Missing **MCP server** - major feature for AI integration!
-2. Missing other key commands: `board`, `stats`, `deps`, `validate`, etc.
-3. These are CLI commands, but framed as "what LeanSpec provides" (confusing scope)
-4. No mention of roadmap/vision (VS Code extension, GitHub Action, PM integrations, etc.)
+1. **AI Integration Structure is Wrong** (Critical)
+   - Separate "AI Integration" tab treats AI as optional
+   - Should be integrated into Guide as "Working with AI"
+   - Contradicts AI-native identity
 
-**Analysis**: The README.md does this better - it has a "Features" section that groups implementation features:
-- 🤖 AI-Native Integration (MCP, Copilot, Claude, Cursor)
-- 📊 Workflow Visibility (`board`, `stats`)
-- 🎨 Progressive Structure (custom fields, adaptable)
-- ⚡ Actually Maintainable (short specs, CLI tools, AI-friendly)
+2. **Core Concepts Missing First Principles** (Critical)
+   - Spec 049 established 5 First Principles (Context Economy, Signal-to-Noise, etc.)
+   - Current docs don't have First Principles doc
+   - Philosophy appears arbitrary without showing foundation
 
-**Proposed Solution**: Two-part approach
+3. **`docs/` Folder Not Integrated** (High Priority)
+   - Valuable content exists outside docs-site (MCP-SERVER.md, MIGRATION.md, examples)
+   - Causes confusion and duplication
+   - Need single source of truth
 
-**Part A: Improve Overview Page**
+4. **Navigation Doesn't Reflect Workflow** (Medium Priority)
+   - No workflow section (board, stats, deps, validate)
+   - Features and workflow mixed
+   - Doesn't show progression: Concepts → Setup → Workflow → Reference
 
-Replace "How It Works" with better grouping:
+## Design
 
-```markdown
-## What You Get
+**See [DESIGN.md](./DESIGN.md) for complete design documentation.**
 
-**Core CLI** - Lightweight spec management from terminal:
-- Create, organize, and search specs
-- Track project health with Kanban board and analytics
-- Validate specs for quality and complexity
-- [Full CLI reference →](/docs/reference/cli)
+**See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed implementation specifications** (content templates, migration steps, code examples).
 
-**MCP Server** - Native AI assistant integration:
-- Works with Claude Desktop, Cline, and MCP-compatible tools
-- Specs available directly in AI chat context
-- [Setup guide →](/docs/ai-integration/setup)
+### Navigation Structure (Summary)
 
-**Templates & Customization**:
-- Three templates: minimal, standard, enterprise
-- Custom fields adapt to your workflow
-- Progressive structure grows with your team
+**New Structure**:
+```
+Guide/
+  Introduction/ (Overview, Getting Started, Examples)
+  Core Concepts/ (First Principles, Philosophy, When to Use)
+  Working with AI/ (Setup, Best Practices, Examples)
+  Features/ (Templates, Custom Fields, Variables)
+  Workflow/ (Board & Stats, Dependencies, Validation)
+  Migration
+  
+Reference/
+  CLI Commands
+  Configuration
+  Frontmatter Schema
+  MCP Server API
+  
+Roadmap
 ```
 
-**Part B: Create Dedicated Roadmap Page**
+**Key Changes**:
+1. ✅ AI Integration moved into Guide as "Working with AI"
+2. ✅ First Principles added (from spec 049)
+3. ✅ Workflow section added (board, stats, deps, validate)
+4. ✅ MCP Server API in Reference
+5. ✅ Single AI tab removed
 
-Create new page: `docs-site/docs/roadmap.mdx`
+### Content Updates (Summary)
 
-This is a better approach because:
-- ✅ Keeps overview focused on "what is LeanSpec" and "what you get today"
-- ✅ Roadmap deserves its own page with more detail
-- ✅ Can link from overview: "See our [roadmap](/docs/roadmap) for upcoming features"
-- ✅ Roadmap page can pull from actual specs (dogfooding!)
-- ✅ Easier to maintain as features ship and roadmap evolves
-- ✅ More transparent (links to actual GitHub specs)
-
-**Roadmap Page Structure**:
-```markdown
-# Roadmap
-
-LeanSpec is actively developed. Here's what's coming next—with links to 
-the actual specs we're using to build them. (We dogfood LeanSpec!)
-
-## In Development (v0.2.0)
-[Features currently in progress]
-
-## Planned Near-Term (v0.3.0)
-**VS Code Extension** ([spec 017](github link))
-**GitHub Action** ([spec 016](github link))
-**Copilot Chat Integration** ([spec 034](github link))
-
-## Planned Long-Term
-**PM Integrations** ([spec 036](github link))
-**Tool Redesign** ([spec 050](github link))
-
-## Completed
-[Archive of shipped features with links to specs]
-```
-
-### Issue #2: Example Structure vs Templates (Minor Priority)
-
-**Location**: "A Simple Example" section
-
-**Current Text**:
-```markdown
-Here's what a minimal LeanSpec might look like:
-
-[example with Goal, Key Scenarios, Acceptance Criteria, etc.]
-```
-
-**Problem**: Example structure doesn't match actual templates:
-- **Minimal template**: Goal, Key Points, Non-Goals, Notes
-- **Standard template**: Overview, Design, Plan, Test, Notes
-- **Example**: Goal, Key Scenarios, Acceptance Criteria, Technical Contracts, Non-Goals
-
-**Proposed Fix**: Add clarifying note
-```markdown
-Here's an example structure (adapt sections to your needs):
-
-[example...]
-```
-
-**Rationale**: Example is illustrative of flexibility, not prescriptive. Just needs to be clearer about that.
-
-### Issue #3: Example Date (Trivial)
-
-**Location**: Same example
-
-**Current**: `created: 2025-11-02`
-
-**Problem**: Date is in the past (cosmetic only)
-
-**Fix**: Change to `created: 2025-11-07` or use `{date}` variable
+1. **Add First Principles doc** - Extract from spec 049, adapt for docs-site
+2. **Update Philosophy** - Show derivation from First Principles
+3. **Migrate AI content** - Move ai-integration/ into guide/
+4. **Consolidate `docs/`** - Merge MCP-SERVER.md, MIGRATION.md, examples into docs-site
+5. **Create Workflow docs** - New guides for board, stats, deps, validate
+6. **Update Overview** - Better feature grouping, prominently feature MCP
 
 ## Plan
 
-- [ ] Fix Issue #1 - Restructure "How It Works" section
-  - [ ] Replace with "What You Get" section
-  - [ ] Add MCP server prominence
-  - [ ] Group CLI by use case (not individual commands)
-  - [ ] Add link to new roadmap page
-- [ ] Create new roadmap page (`docs-site/docs/roadmap.mdx`)
-  - [ ] Pull features from planned specs (017, 016, 034, 036, etc.)
-  - [ ] Link to actual GitHub specs (dogfooding!)
-  - [ ] Group by timeframe: In Development / Near-Term / Long-Term / Completed
-  - [ ] Add to sidebar navigation
-- [ ] Fix Issue #2 - Add clarifying note to example
-- [ ] Fix Issue #3 - Update example date to current
-- [ ] Build docs-site to verify no errors
-- [ ] Review both pages (overview + roadmap)
+### Phase 1: Navigation & Structure (Foundation)
+- [ ] Update `sidebars.ts` with new structure
+  - [ ] Move AI Integration content into guideSidebar
+  - [ ] Add Core Concepts with first-principles
+  - [ ] Add Workflow section
+  - [ ] Add MCP Server to Reference
+  - [ ] Remove aiSidebar
+- [ ] Test navigation build (ensure no broken links)
+
+### Phase 2: Core Concepts (Critical Content)
+- [ ] Create `docs-site/docs/guide/first-principles.mdx`
+  - [ ] Extract content from spec 049 (FIRST-PRINCIPLES.md)
+  - [ ] Adapt for docs-site format (Docusaurus)
+  - [ ] Add clear examples and conflict resolution framework
+- [ ] Update `docs-site/docs/guide/philosophy.mdx`
+  - [ ] Add intro linking to First Principles
+  - [ ] Show how philosophy derives from principles
+  - [ ] Update Core Philosophy section with derivation
+- [ ] Update `docs-site/docs/guide/principles.mdx`
+  - [ ] Add note: "Agile Principles derive from First Principles"
+  - [ ] Link to First Principles doc
+
+### Phase 3: Working with AI (Move from Separate Tab)
+- [ ] Rename/move AI integration content into Guide
+  - [ ] `ai-integration/index.mdx` → `guide/ai-setup.mdx`
+  - [ ] `ai-integration/setup.mdx` → merge into `guide/ai-setup.mdx`
+  - [ ] `ai-integration/best-practices.mdx` → `guide/ai-best-practices.mdx`
+  - [ ] `ai-integration/examples.mdx` → `guide/ai-examples.mdx`
+  - [ ] `ai-integration/agents-md.mdx` → incorporate into `guide/ai-setup.mdx`
+- [ ] Update internal links (all references to `/docs/ai-integration/` → `/docs/guide/`)
+- [ ] Delete old `docs-site/docs/ai-integration/` directory
+
+### Phase 4: Migrate `docs/` Content (Consolidation)
+- [ ] Create `docs-site/docs/reference/mcp-server.mdx`
+  - [ ] Migrate content from `docs/MCP-SERVER.md`
+  - [ ] Enhance with comprehensive setup, troubleshooting, security
+  - [ ] Format for Docusaurus
+- [ ] Create `docs-site/docs/guide/migration.mdx`
+  - [ ] Migrate content from `docs/MIGRATION.md`
+  - [ ] Add to Guide section
+- [ ] Enhance `docs-site/docs/guide/custom-fields.mdx`
+  - [ ] Incorporate examples from `docs/examples/CUSTOM-FIELDS-GUIDE.md`
+  - [ ] Add config examples from `docs/examples/`
+- [ ] Deprecate `docs/` folder
+  - [ ] Create `docs/README.md` with redirect message
+  - [ ] Keep folder but mark as deprecated
+
+### Phase 5: Workflow Section (New Content)
+- [ ] Create `docs-site/docs/guide/board-stats.mdx`
+  - [ ] Document board and stats commands
+  - [ ] Show project visibility workflows
+- [ ] Create `docs-site/docs/guide/dependencies.mdx`
+  - [ ] Document deps command
+  - [ ] Explain `related` vs `depends_on`
+  - [ ] Show relationship patterns
+- [ ] Create `docs-site/docs/guide/validation.mdx`
+  - [ ] Document validate command
+  - [ ] Explain complexity analysis
+  - [ ] Show quality workflows
+
+### Phase 6: Overview Updates (Original Scope)
+- [ ] Update `docs-site/docs/guide/index.mdx`
+  - [ ] Replace "How It Works" with "What You Get"
+  - [ ] Prominently feature MCP server
+  - [ ] Group features: CLI, MCP, Templates
+  - [ ] Update example to match actual templates
+  - [ ] Fix example date
+  - [ ] Link to roadmap page
+
+### Phase 7: Testing & Validation
+- [ ] Build docs-site: `cd docs-site && npm run build`
+- [ ] Verify no broken links
+- [ ] Check all internal references updated
+- [ ] Review navigation flow
+- [ ] Test search functionality
+- [ ] Validate on mobile/desktop
+
+### Phase 8: Cleanup & Polish
+- [ ] Update README.md if needed (ensure it matches docs-site)
+- [ ] Update AGENTS.md with new doc structure
+- [ ] Archive or remove redundant content
+- [ ] Add migration notes to CHANGELOG.md
 
 ## Test
 
 **Success Criteria**:
-- [ ] MCP server is prominently featured in overview (it's a key differentiator!)
-- [ ] Features grouped logically in overview (CLI, MCP, Templates)
-- [ ] CLI commands grouped by use case, not listed individually
-- [ ] Dedicated roadmap page exists with clear timeframes
-- [ ] Roadmap links to actual GitHub specs (transparency + dogfooding)
-- [ ] Roadmap added to sidebar navigation
-- [ ] Example structure is clearly illustrative, not prescriptive
-- [ ] Docs-site builds without errors
-- [ ] Both pages guide users effectively
 
-**Validation**:
+### Navigation & Structure
+- [ ] AI Integration moved into Guide as "Working with AI"
+- [ ] First Principles doc exists and is prominent
+- [ ] Workflow section exists (board-stats, dependencies, validation)
+- [ ] MCP Server reference complete and comprehensive
+- [ ] No separate AI Integration tab
+- [ ] Sidebar navigation logical and intuitive
+
+### Content Quality
+- [ ] First Principles clearly explained with examples
+- [ ] Philosophy shows derivation from First Principles
+- [ ] All `docs/` content integrated into docs-site
+- [ ] MCP Server docs comprehensive (setup, troubleshooting, security)
+- [ ] Migration guide complete
+- [ ] Custom fields examples included
+
+### Completeness
+- [ ] MCP server prominently featured in overview
+- [ ] Features grouped logically (CLI, MCP, Templates)
+- [ ] Workflow docs complete (board, stats, deps, validate)
+- [ ] All internal links updated (no `/docs/ai-integration/` references)
+- [ ] `docs/` folder deprecated with redirect message
+
+### Technical
+- [ ] Docs-site builds without errors: `cd docs-site && npm run build`
+- [ ] No broken links
+- [ ] Search functionality works
+- [ ] Mobile/desktop rendering correct
+- [ ] All images/assets load
+
+### Alignment
+- [ ] Docs reflect First Principles (spec 049)
+- [ ] AI-native identity clear throughout
+- [ ] README.md consistent with docs-site
+- [ ] AGENTS.md reflects new structure
+
+**Validation Commands**:
 ```bash
+# Build docs-site
 cd docs-site && npm run build
+
+# Validate specs
+cd .. && npx lspec validate
+
+# Check for broken links (if link checker installed)
+# npm run check-links
 ```
 
 ## Notes
 
-**Why a Dedicated Roadmap Page is Better**:
-1. **Focus**: Keeps overview focused on "what is LeanSpec" today
-2. **Detail**: Roadmap can be more comprehensive without cluttering overview
-3. **Maintenance**: Easier to update as features ship and priorities change
-4. **Transparency**: Can link directly to GitHub specs (dogfooding!)
-5. **Discoverability**: Searchable, linkable, shareable
-6. **Navigation**: Natural place in sidebar (after Guide, before Reference)
+**See [NOTES.md](./NOTES.md) for implementation notes, decisions, and lessons learned.**
 
-**Roadmap Page Benefits**:
-- Pull from actual planned specs (017, 016, 034, 036, 050, etc.)
-- Show timeframes: In Development → Near-Term → Long-Term
-- Archive completed features (show velocity and accomplishments)
-- Link to GitHub issues/specs for full transparency
-- Updates automatically as specs move to in-progress/complete
-
-**From Validation** (spec 057):
-- Overall assessment: 🟢 Good Quality
-- These are completeness issues, not accuracy issues
-- Page does its job well but missing key features (MCP!) and vision
-- Adding roadmap page + improving overview will complete the picture
+**Key Points**:
+- Scope expanded from minor polish to comprehensive restructure
+- User feedback + First Principles (spec 049) drove changes
+- AI Integration → Working with AI (AI is core, not optional)
+- Single source of truth (docs-site), deprecate `docs/` folder
+- Estimated effort: 8-12 hours over 1-2 days
 
 **Related Specs**:
-- Spec 056: Initial docs audit (fixed major issues)
-- Spec 057: Comprehensive validation (found these issues)
-- Spec 043: v0.2.0 launch (parent context)
+- **Spec 049**: LeanSpec First Principles (foundation for this work)
+- **Spec 056**: Initial docs audit (fixed major issues)
+- **Spec 057**: Comprehensive validation (found these issues)
+- **Spec 043**: v0.2.0 launch (parent context, this blocks launch)
+
+---
+
+**Status**: 🚧 In Progress (scope expanded from minor polish to comprehensive restructure)  
+**Next Steps**: Execute Phase 1 (Navigation & Structure)

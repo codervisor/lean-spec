@@ -215,7 +215,7 @@ function renderColumn(
 
     console.log('');
   } else if (!expanded && specs.length > 0) {
-    console.log(`  ${chalk.dim('(collapsed, use --show-complete to expand)')}`);
+    console.log(`  ${chalk.dim('(collapsed, use --complete to expand)')}`);
     console.log('');
   } else {
     console.log(`  ${chalk.dim('(empty)')}`);
