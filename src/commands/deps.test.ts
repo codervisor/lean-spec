@@ -143,8 +143,8 @@ describe('depsCommand - Bidirectional Relationships', () => {
 
     console.log = originalLog;
 
-    // Spec B should show A in Blocks section (directional inverse)
-    const blocksSection = outputB.find(line => line.includes('Blocks:'));
+    // Spec B should show A in Required By section (directional inverse)
+    const blocksSection = outputB.find(line => line.includes('Required By:'));
     expect(blocksSection).toBeDefined();
     const specALine = outputB.find(line => line.includes('001-spec-a'));
     expect(specALine).toBeDefined();
@@ -180,7 +180,7 @@ describe('depsCommand - Bidirectional Relationships', () => {
 
     // Should have all three sections
     expect(output.find(line => line.includes('Depends On:'))).toBeDefined();
-    expect(output.find(line => line.includes('Blocks:'))).toBeDefined();
+    expect(output.find(line => line.includes('Required By:'))).toBeDefined();
     expect(output.find(line => line.includes('Related Specs:'))).toBeDefined();
 
     // Spec C in Depends On

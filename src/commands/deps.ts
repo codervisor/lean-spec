@@ -75,8 +75,8 @@ export async function depsCommand(specPath: string, options: {
   }
   console.log('');
 
-  // Blocks section
-  console.log(chalk.bold('Blocks:'));
+  // Required By section
+  console.log(chalk.bold('Required By:'));
   if (blocks.length > 0) {
     for (const blocked of blocks) {
       const status = getStatusIndicator(blocked.frontmatter.status);

@@ -86,6 +86,8 @@ When practices conflict, apply principles in priority order:
 3. **Use `lspec --help`** - When unsure about commands, check the built-in help
 4. **Follow LeanSpec principles** - Clarity over documentation
 5. **Keep it minimal** - If it doesn't add clarity, cut it
+6. **Use `lspec update` for status changes** - Never manually edit `status` or `transitions` fields in frontmatter. These are system-managed fields. Always use `lspec update <spec> --status <status>` to ensure proper tracking and metadata updates.
+7. **Never use nested code blocks** - Markdown doesn't support code blocks within code blocks. If you need to show code examples in documentation, use indentation or describe the structure instead of nesting backticks.
 
 ## When to Use Specs
 
@@ -120,7 +122,9 @@ Skip specs for:
 
 **Working with specs:**
 - `lspec create <name>` - Create a new spec
-- `lspec update <spec> --status <status>` - Update spec status
+- `lspec update <spec> --status <status>` - Update spec status (REQUIRED - never edit status/transitions manually)
+- `lspec update <spec> --priority <priority>` - Update spec priority
+- `lspec update <spec> --tags <tag1,tag2>` - Update spec tags
 - `lspec deps <spec>` - Show dependencies and relationships
 
 **When in doubt:** Run `lspec --help` or `lspec <command> --help` to discover available commands and options.
@@ -175,8 +179,8 @@ Depends On:
   → spec-b [in-progress]  # A depends on B
 
 $ lspec deps spec-b
-Blocks:
-  ← spec-a [planned]  # B blocks A
+Required By:
+  ← spec-a [planned]  # B is required by A
 ```
 
 **Use when:**
@@ -189,13 +193,15 @@ Blocks:
 1. **Use `related` by default** - It's simpler and matches most use cases
 2. **Reserve `depends_on` for true blocking dependencies** - When work order matters
 3. **Update once, show everywhere** - `related` only needs to be in one spec
-4. **Check dependencies** - Run `lspec deps <spec>` to see all relationships
-
 ## SDD Workflow
 
 1. **Discover** - Check existing specs with `lspec list`
 2. **Plan** - Create spec with `lspec create <name>` when needed
 3. **Implement** - Write code, keep spec in sync as you learn
+4. **Update** - Mark progress with `lspec update <spec> --status <status>` (NEVER edit frontmatter directly)
+5. **Complete** - Mark complete with `lspec update <spec> --status complete`
+
+**Important**: Always use `lspec update` commands to change spec metadata. The `status`, `transitions`, `updated_at`, `completed_at`, and related timestamp fields are system-managed and should never be manually edited.you learn
 4. **Update** - Mark progress with status updates
 5. **Complete** - Archive or mark complete when done
 

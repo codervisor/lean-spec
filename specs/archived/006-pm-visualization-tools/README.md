@@ -167,7 +167,7 @@ Show dependency graph for a specific spec.
 Depends On:
   → 20251101/002-structured-frontmatter [in-progress]
 
-Blocks:
+Required By:
   (none)
 
 Related:
