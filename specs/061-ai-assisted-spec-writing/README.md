@@ -218,10 +218,10 @@ Workflow becomes:
 - [ ] Review all docs for consistency
 
 ### Phase 3: New Content (If Needed)
-- [ ] Consider dedicated "Writing Specs with AI" page
-- [ ] Add examples of AI-drafted specs
-- [ ] Document best practices for prompting
-- [ ] Create templates for AI-assisted workflows
+- [x] Created dedicated "Writing Specs with AI" page (docs-site/docs/guide/ai/writing-specs.mdx)
+- [x] Added examples of AI-drafted specs and workflows
+- [x] Documented best practices for prompting (Do's and Don'ts)
+- [x] Created workflow templates (5-step process, common patterns)
 
 ### Phase 4: Validation
 - [ ] Dogfood: Use AI to draft/refine specs
@@ -230,16 +230,23 @@ Workflow becomes:
 
 ## Test
 
-**Validation Criteria:**
+**Validation Criteria (Phases 1-3):**
 
-- [ ] Docs clearly explain when to formalize intent as spec vs. just converse with AI
-- [ ] First principles still make sense in AI-assisted context
-- [ ] New mental models are clear and actionable
-- [ ] No contradictions between old/new framing
-- [ ] Examples demonstrate AI-assisted workflow
-- [ ] Community understands and can apply guidance
+- [x] Docs clearly explain when to formalize intent as spec vs. just converse with AI (when-to-use.mdx updated)
+- [x] First principles still make sense in AI-assisted context (understanding.mdx confirms they're reinforced, not replaced)
+- [x] New mental models are clear and actionable (Spec-as-Checkpoint, Artifact, Context defined)
+- [x] No contradictions between old/new framing (consistent messaging across all updated docs)
+- [x] Examples demonstrate AI-assisted workflow (writing-specs.mdx has 5-step workflow + patterns)
+- [ ] Community understands and can apply guidance (deferred to Phase 4: user feedback)
 
-**Success Signals:**
+**Additional Validation:**
+- [x] Docs build successfully (verified with `npm run build`)
+- [x] Spec structure validated (no new errors from our changes)
+- [x] All three target docs updated (when-to-use.mdx, understanding.mdx, ai/index.mdx)
+- [x] New dedicated page created (ai/writing-specs.mdx)
+- [x] Sidebar navigation updated (added to "Working with AI" section)
+
+**Success Signals (To be measured in Phase 4):**
 - Users know when to use specs vs. conversation
 - AI-drafted specs follow LeanSpec principles
 - Methodology remains coherent and practical
