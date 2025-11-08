@@ -7,554 +7,240 @@ sidebar_position: 1
 
 > "The best spec is the one that gets read, understood, and acted upon—by humans and AI alike."
 
-LeanSpec is a **mindset and methodology** for writing specifications that actually get used. It's built on constraints we discovered (not principles we chose) and embraces agile thinking: start small, iterate based on feedback, and focus on outcomes over outputs.
+LeanSpec is a **mindset and methodology** for writing specifications that actually get used in AI-powered development. It's built on immutable constraints (physics, biology, economics) and designed to bridge human intent with machine execution.
 
-## Why LeanSpec Exists
+## What is LeanSpec?
 
-Traditional specs fail for predictable reasons:
-- **Too long** → Nobody reads them
-- **Too detailed** → They become outdated quickly
-- **Too rigid** → They can't adapt as understanding grows
-- **Too formal** → They discourage collaboration
+LeanSpec is:
+- **A constraint-based methodology** for writing specs that fit in working memory
+- **A bridge** between human intent and AI agent execution
+- **A context engineering practice** for managing AI working memory
+- **A persistent memory layer** for AI agents across sessions
+- **An agile approach** to specification: start small, iterate, focus on outcomes
 
-These aren't process failures—they're **constraint violations**. LeanSpec works because it aligns with how humans and AI actually work, not how we wish they worked.
+LeanSpec provides:
+- CLI tooling for creating and managing specs
+- Structured frontmatter for project management (status, tags, dependencies)
+- MCP server integration for AI agent access
+- Sub-spec files for managing complexity
+- Validation and project health tracking
 
-## The Constraints We Discovered
+## The Problem LeanSpec Solves
 
-LeanSpec is built on three immutable constraints:
+### Traditional Specs Fail
 
-### 1. Physics: Context Windows Are Limited
-- AI models have finite token limits
-- Processing long documents costs money
-- Large context increases error rates
+Traditional specifications fail for predictable reasons:
+- **Too long** → Nobody reads them (violates working memory limits)
+- **Too detailed** → They become outdated quickly (maintenance burden)
+- **Too rigid** → They can't adapt as understanding grows (premature structure)
+- **Too formal** → They discourage collaboration (friction over value)
 
-### 2. Biology: Working Memory Is Small
-- Humans can hold ~7 items in working memory
-- Attention spans are 5-10 minutes for focused reading
-- Cognitive load compounds with complexity
+These aren't process failures—they're **constraint violations**. 
 
-### 3. Economics: Time & Tokens Cost Money
-- Token costs accumulate quickly
-- Engineer time is expensive
-- Maintenance burden grows with document size
+### The AI-Powered Development Gap
 
-**These constraints are unchangeable.** LeanSpec doesn't fight them—it works within them.
+In AI-assisted development, a new challenge emerges:
+- **Human thinks in goals and context** ("Make the dashboard fast")
+- **AI needs clear, unambiguous instructions** ("Cache with Redis, <100ms p95")
+- **The gap must be bridged** or AI hallucinates, misunderstands, or asks repeatedly
 
-## The Five First Principles
+**Traditional documentation doesn't bridge this gap** because it's either:
+- Too vague for AI execution (high-level strategy docs)
+- Too detailed for human reading (comprehensive API references)
+- Not structured for AI retrieval (prose without examples/criteria)
 
-From these constraints, five first principles emerge. They define what LeanSpec IS at its core:
+### Why Existing Solutions Fall Short
 
-### 1. Context Economy 🧠
-**Specs must fit in working memory—both human and AI.**
+**Why not just use tickets/issues?**
+- Too brief for complex features (no rationale, constraints, or trade-offs)
+- No persistent memory for AI agents (each session starts fresh)
+- Hard to maintain context across multiple issues
 
-**In Practice:**
-- **Target**: &lt;300 lines per spec file
-- **Warning**: 300-400 lines (consider simplifying)
-- **Problem**: &gt;400 lines (must split)
+**Why not comprehensive documentation?**
+- Too long to fit in AI context windows (>10k lines common)
+- Too formal and exhaustive (violates Signal-to-Noise)
+- Maintenance burden scales with size (becomes outdated)
 
-**The Test:**
-> "Can this be read and understood in 5-10 minutes?"
+**Why not just chat with AI?**
+- Context is ephemeral (lost between sessions)
+- No persistent record of decisions
+- Can't scale to team collaboration
+- Requires re-explaining context repeatedly
 
-If no, it violates Context Economy.
+## The LeanSpec Solution
 
-**Example:**
-```markdown
-❌ Bad: 650-line spec covering feature, testing, config, examples
-✅ Good: 250-line README + 150-line TESTING.md + 100-line CONFIG.md
-```
+LeanSpec works because it aligns with how humans and AI actually work:
 
-**Why This Is #1:**
-Nothing else matters if the spec doesn't fit in working memory. Perfect signal-to-noise in an 800-line spec is still useless.
+### 1. Respects Fundamental Constraints
 
----
+Based on three immutable constraints:
+- **Physics**: Context windows are limited (even with 1M+ tokens)
+- **Biology**: Working memory is small (~7 items, 5-10 min attention)
+- **Economics**: Time and tokens cost money
 
-### 2. Signal-to-Noise Maximization 📡
-**Every word must inform decisions or be cut.**
+→ **Context Economy**: Specs must fit in working memory (<400 lines)
 
-**The Constraint:**
-- Token costs money (AI processing)
-- Cognitive load is real (human reading)
-- Maintenance burden compounds (keeping docs current)
+### 2. Bridges Human and AI Understanding
 
-**The Test:**
-> "What decision does this sentence inform?"
+Specs written for both audiences:
+- **For humans**: Clear problem, rationale, trade-offs (why it matters)
+- **For AI**: Structured requirements, examples, success criteria (what to build)
+- **Both get**: Natural language + structured data they can parse
 
-If the answer is "none" or "maybe future," cut it.
+→ **Bridge the Gap**: Align human intent with machine execution
+
+### 3. Serves as Persistent Memory
+
+Specs function as semantic memory for AI agents:
+- Decisions and rationale persist across sessions
+- MCP server enables reliable retrieval
+- Cross-references create knowledge graph
+- Updates keep memory current
+
+→ **AI Agent Memory**: Context that survives beyond chat sessions
+
+### 4. Applies Context Engineering
+
+Manages AI working memory proactively:
+- Partition (split into sub-specs when >400 lines)
+- Compact (remove redundancy)
+- Compress (summarize completed phases)
+- Isolate (separate unrelated concerns)
+
+→ **Context Engineering**: Prevent context failures before they happen
+
+### 5. Embraces Progressive Disclosure
+
+Start simple, add structure only when pain is felt:
+- Solo dev: Just status + created date
+- Small team: Add tags, priority
+- Enterprise: Add assignee, epic, sprint
+
+→ **Progressive Disclosure**: No premature abstraction
+
+## When to Use LeanSpec
+
+LeanSpec is designed for **AI-powered SDD (Spec-Driven Development)**. Write a spec when it helps **bridge human intent to machine execution**. Skip it when the gap is already clear.
+
+### Write a Spec When...
+
+**🎯 Intent needs clarification:**
+- Multiple valid interpretations exist
+- Trade-offs or constraints aren't obvious
+- "Why" matters as much as "what"
+- Decisions need to be documented
+
+**🤖 AI will implement:**
+- AI agent needs executable context
+- Success criteria must be explicit
+- Constraints aren't inferable from code
+- Implementation paths need to be narrowed
+
+**🏗️ Work is significant:**
+- Touches multiple parts of the system
+- Architectural or structural changes
+- Breaking changes or major refactors
+- Cross-system dependencies
+
+**📚 Knowledge needs capture:**
+- Research findings and trade-offs
+- Technical exploration or experiments
+- Retrospectives (what worked, what didn't)
+- Decisions for future reference
 
 **Examples:**
-
-❌ **Low Signal-to-Noise:**
-```markdown
-The user authentication system, which will be implemented using 
-industry-standard security practices and methodologies, will provide 
-a secure mechanism for users to authenticate themselves...
-```
-
-✅ **High Signal-to-Noise:**
-```markdown
-Users log in with email/password. System validates against database 
-and returns JWT token (24h expiry).
-```
-
-**When to Add Detail:**
-- Explains a trade-off decision
-- Clarifies a constraint
-- Defines success criteria
-- Shows a critical example
-
-**When to Cut:**
-- Obvious to your audience
-- Easily discovered elsewhere
-- Might change before implementation
-- "Nice to know" vs. "need to know"
-
----
-
-### 3. Intent Over Implementation 🎯
-**Capture "why" and "what," let "how" emerge.**
-
-**The Constraint:**
-- Intent is stable, implementation changes
-- AI needs "why" to make good decisions
-- Developers need context, not prescriptions
-
-**In Practice:**
-- **Must have**: Problem, intent, success criteria
-- **Should have**: Design rationale, trade-offs
-- **Could have**: Implementation details, examples
-
-**The Test:**
-> "Is the rationale clear? Can someone make good decisions without me?"
-
-**Example:**
-```markdown
-❌ Bad (Just Implementation):
-Use Redis for caching. Configure 1GB max memory with LRU eviction.
-
-✅ Good (Intent + Implementation):
-**Intent**: Sub-100ms API response for dashboard.
-**Constraint**: 10k+ users querying same data repeatedly.
-**Approach**: Redis cache with LRU eviction (reduces DB load 90%).
-**Trade-off**: Added complexity vs. performance requirement.
-```
-
-The second explains WHY Redis, WHY 100ms matters, and what trade-off we're making.
-
----
-
-### 4. Bridge the Gap 🌉
-**Specs exist to align human intent with machine execution.**
-
-**The Constraint:**
-- Humans think in goals and context
-- Machines need clear, unambiguous instructions
-- The gap between them must be bridged
-
-**In Practice:**
-- **For humans**: Overview, context, rationale
-- **For AI**: Clear structure, requirements, examples
-- **Both need**: Natural language + structured data
-
-**The Test:**
-> "Can both human and AI parse and reason about this?"
-
-**Example:**
-```markdown
-✅ Good (Bridges the Gap):
-## Goal
-Reduce API latency to &lt;100ms for dashboard (currently 2-3 seconds).
-
-## Why It Matters
-Users abandon after 3 seconds. We're losing 40% of traffic.
-
-## Technical Approach
-- Cache dashboard data in Redis (TTL: 5 minutes)
-- Lazy-load widgets instead of blocking on all data
-- Use CDN for static assets
-
-## Success Criteria
-- [ ] Dashboard loads in &lt;100ms (measured at p95)
-- [ ] Cache hit rate &gt;80%
-- [ ] Zero cache-related bugs after 2 weeks
-```
-
-**Human sees**: Why it matters, the goal, the approach  
-**AI sees**: Clear requirements, success criteria, technical approach
-
----
-
-### 5. Progressive Disclosure 📈
-**Start simple, add structure only when pain is felt.**
-
-**The Constraint:**
-- Teams evolve over time
-- Requirements emerge, don't exist upfront
-- Premature abstraction is waste
-
-**In Practice:**
-
-**Day 1 (Solo dev):**
-```yaml
-status: planned
-created: 2025-11-01
-```
-
-**Week 2 (Small team):**
-```yaml
-status: in-progress
-created: 2025-11-01
-tags: [api, backend]
-priority: high
-```
-
-**Month 3 (Enterprise):**
-```yaml
-status: in-progress
-created: 2025-11-01
-tags: [api, backend]
-priority: high
-assignee: alice
-epic: PROJ-123
-sprint: sprint-10
-reviewer: bob
-```
-
-**The Test:**
-> "Do we feel pain without this feature?"
-
-If no, don't add it yet.
-
-**Why This Works:**
-You never need to rewrite your specs. Just add fields as you need them.
-
----
-
-## Conflict Resolution Framework
-
-When practices conflict, apply principles in **priority order**:
-
-1. **Context Economy** - If it doesn't fit in working memory, split it
-2. **Signal-to-Noise** - If it doesn't inform decisions, remove it
-3. **Intent Over Implementation** - Capture why, not just how
-4. **Bridge the Gap** - Both human and AI must understand
-5. **Progressive Disclosure** - Add structure when pain is felt
-
-### Real-World Examples
-
-**Q: "Should I split this 450-line spec?"**  
-→ **Yes** (Context Economy at 400 lines overrides completeness)
-
-**Q: "Should I document every edge case?"**  
-→ **Only if it informs current decisions** (Signal-to-Noise test)
-
-**Q: "Should I add custom fields upfront?"**  
-→ **Only if you feel pain without them** (Progressive Disclosure)
-
-**Q: "Should I keep implementation details in spec?"**  
-→ **Only if rationale/constraints matter** (Intent Over Implementation)
-
-**Q: "Which is more important: Complete documentation or staying under 400 lines?"**  
-→ **Staying under 400 lines** (Context Economy is #1 principle)
-
----
-
-## Mental Models for AI Co-Creation
-
-When AI assists in writing specs (not just implementing from them), three mental models guide how specs fit into your workflow:
-
-### Spec-as-Checkpoint (Primary Model)
-
-**What it is:** Formalize intent at key decision points in the development conversation.
-
-**Workflow:**
-1. **Converse with AI** - Explore options, clarify requirements, iterate on design
-2. **Recognize checkpoint** - When design is clear enough to formalize
-3. **Crystallize into spec** - AI drafts initial spec, human refines
-4. **Continue from spec** - Spec becomes contract for implementation
-
-**When to use:**
-- After clarifying complex design with AI
-- Before starting multi-phase implementation
-- When ready to commit to an approach
-- To capture decisions before moving forward
-
-**Example:** You discuss API design with AI for 15 minutes, clarify constraints and trade-offs, then formalize the agreed design as a spec before implementation begins.
-
-### Spec-as-Artifact (Formal Documentation)
-
-**What it is:** Durable documentation that persists beyond the immediate work.
-
-**Purpose:**
-- Reference for future modifications
-- Onboarding for new team members
-- Compliance and audit trails
-- Institutional knowledge capture
-
-**When to use:**
-- Architectural decisions affecting multiple systems
-- Features requiring regulatory documentation
-- Complex designs others will extend
-- Work that needs future reference
-
-**Example:** A payment processing spec that documents security decisions, PCI compliance approach, and integration patterns for future developers.
-
-### Spec-as-Context (Living Documentation)
-
-**What it is:** Evolving context that grows alongside implementation.
-
-**Characteristics:**
-- Updated iteratively as understanding grows
-- Reflects current reality, not just initial plans
-- Bridges ongoing human-AI collaboration
-- Captures learnings and refinements
-
-**When to use:**
-- SDD-style iterative development
-- Complex features with emergent requirements
-- Long-running work with multiple iterations
-- When spec serves as living project memory
-
-**Example:** A refactoring spec that evolves as you discover new patterns, documents decisions as you make them, and captures what worked vs. what didn't.
-
----
-
-### Choosing Your Mental Model
-
-Most specs move through these phases:
-
-1. **Start as Checkpoint** - Formalize conversation into spec
-2. **Evolve as Context** - Update as implementation teaches you things
-3. **End as Artifact** - Archive as reference documentation
-
-**The key insight:** These aren't separate approaches—they're stages in a spec's lifecycle. Start simple (checkpoint), evolve naturally (context), finish as documentation (artifact).
-
-**For AI-assisted authoring:**
-- AI helps draft the checkpoint (structure your thoughts)
-- AI helps maintain context (update as you learn)
-- Humans ensure artifact quality (refine for clarity)
-
----
-
-## The LeanSpec Mindset
-
-Understanding the principles is just the beginning. To practice LeanSpec effectively, adopt these mental models:
-
-### Start with Why
-
-Every spec should answer: "Why does this work exist?"
-
-- What problem are we solving?
-- Why is it important?
-- Why now?
-
-Without clear answers, the work may not be worth doing.
-
-### Embrace "Good Enough"
-
-Perfectionism is the enemy of lean specifications.
-
-- Ship a "good enough" spec quickly
-- Get feedback from real work
-- Refine based on what you learn
-- Iterate continuously
-
-A perfect spec that's never written is worthless. An imperfect spec that gets work moving is valuable.
-
-### Question Every Word
-
-Before writing anything, ask: "Does this add clarity?"
-
-If not, don't write it.
-
-- Verbose explanations → brief, clear statements
-- Exhaustive edge cases → critical scenarios only
-- Academic formality → conversational clarity
-- Comprehensive references → essential links
-
-### Think Living Document
-
-Specs are not contracts carved in stone. They're living guides that evolve.
-
-- Update specs as you learn
-- Capture decisions as you make them
-- Reflect reality, not just plans
-- Archive when work is complete
-
-A spec that's out of date is worse than no spec at all.
-
-### Design for Scanning
-
-People (and AI agents) scan before they read.
-
-Structure specs for quick comprehension:
-- Use clear headings
-- Keep sections short
-- Use bullet points
-- Highlight key information
-- Add visual elements (emojis, badges) where helpful
-
-If someone can't understand your spec in 2 minutes, it's probably too long.
-
----
-
-## Core Beliefs
-
-The LeanSpec approach is guided by four beliefs:
-
-### 1. Documentation is a Means, Not an End
-
-The goal isn't to create comprehensive documentation. The goal is to **enable effective action**.
-
-- Specs exist to facilitate understanding and decision-making
-- If nobody reads or uses a spec, it has failed—regardless of how thorough it is
-- Value delivered to users > documentation completeness
-
-### 2. Context Beats Comprehensiveness
-
-Capturing **why** something matters is more valuable than exhaustively documenting **what** it is.
-
-- Understanding the problem is more important than detailing the solution
-- The "why" rarely changes, but the "how" evolves constantly
-- Context enables good decisions; exhaustive details become outdated quickly
-
-### 3. Specs Should Reduce Burden, Not Create It
-
-Traditional specs often become a burden (too long to read, too complex to maintain, too rigid to adapt).
-
-LeanSpec specs should:
-- Take minutes to read
-- Be easy to keep current
-- Evolve with the project
-- Invite collaboration
-
-### 4. AI Changes Everything
-
-In the era of AI-assisted development, specs serve a dual purpose:
-- **Human Communication**: Align team understanding
-- **AI Context**: Provide clear direction for AI coding agents
-
-AI agents benefit from the same qualities humans do: clear, concise writing with concrete examples, explicit boundaries, and testable criteria.
-
----
-
-## Success Criteria
-
-How do you know if you're practicing LeanSpec effectively?
-
-### Self-Check Questions
-
-**Context Economy:**
-- [ ] Can someone read this spec in 5-10 minutes?
-- [ ] Is each spec file under 400 lines?
-- [ ] If not, is it split into focused sub-specs?
-
-**Signal-to-Noise:**
-- [ ] Does every sentence inform a decision?
-- [ ] Can I explain what decision each section enables?
-- [ ] Have I cut "nice to know" vs. "need to know"?
-
-**Intent Over Implementation:**
-- [ ] Is the "why" clear?
-- [ ] Are trade-offs explained?
-- [ ] Can someone make good decisions without me?
-
-**Bridge the Gap:**
-- [ ] Can both humans and AI understand this?
-- [ ] Is there clear structure + natural language?
-- [ ] Are examples included where needed?
-
-**Progressive Disclosure:**
-- [ ] Did I add only what I need now?
-- [ ] Am I solving current pain, not future "what ifs"?
-- [ ] Can this grow naturally without rewriting?
-
-### Your Specs Are Successful If:
-
-✅ **They get read** - People actually read them (all the way through)  
-✅ **They get used** - They inform actual development work  
-✅ **They stay current** - They're updated as the project evolves  
-✅ **They enable autonomy** - Developers can work without constant clarification  
-✅ **They facilitate AI** - AI agents can implement features from them  
-✅ **They age well** - They remain useful even after implementation
-
-### Your Specs Are Failing If:
-
-❌ People say "TL;DR" (too long; didn't read)  
-❌ Developers ignore them and ask for clarification  
-❌ They become outdated quickly  
-❌ They generate more questions than answers  
-❌ AI agents misinterpret them  
-❌ They're never referenced after initial review
-
----
-
-## Balancing Lean and Complete
-
-The goal isn't to write as little as possible. The goal is to write **as much as necessary**.
-
-Some features are complex and require detailed specs. That's okay. The question isn't "How short can I make this?" but rather "What's essential for understanding?"
-
-### When to Add More Detail
-
-Add detail when:
-- Complexity demands it
-- Ambiguity would cause problems
-- Coordination across teams is needed
-- Technical constraints are critical
-- Failure has high consequences
-
-### When to Cut Detail
-
-Cut detail when:
-- It's obvious to your audience
-- It's easily discovered elsewhere
-- It might change before work begins
-- It's tangential to the core goal
-- It's implementation detail for later
-
----
-
-## For AI-Powered Development
-
-When working with AI coding agents, LeanSpec becomes an SOP (Standard Operating Procedure) that integrates with:
-
-- **System prompts** (like `AGENTS.md`)
-- **Context engineering** (repository structure, naming conventions)
-- **Agent instructions** (how to interpret and apply specs)
-
-The methodology provides a framework for AI agents to:
-1. **Draft initial specs** from human intent and conversation
-2. Understand project context quickly
-3. Know what needs to be built
-4. Recognize boundaries and constraints
-5. Generate appropriate code
-6. Update specs as work progresses
-
-### AI-Assisted Spec Authoring
-
-AI can help write specs, not just implement from them. This creates a collaborative workflow:
-
-**Human provides:**
-- Intent and context ("Why are we doing this?")
-- Constraints and trade-offs ("What limits exist?")
-- Success criteria ("How do we know it's done?")
-- Refinement and editing (enforce LeanSpec principles)
-
-**AI provides:**
-- Initial structure and draft
-- Expansion of brief notes into sections
-- Examples and test cases
-- Formatting and organization
-
-**Result:** Faster spec creation that still maintains human judgment on what matters. AI handles structure, humans ensure clarity and intent.
-
-**Critical:** First principles matter MORE in AI-assisted authoring. Without human review, AI tends toward verbosity (violating Signal-to-Noise) and implementation focus (violating Intent Over Implementation). Your role is to ensure specs remain lean and purposeful.
+- New feature with AI implementation
+- API design affecting multiple consumers
+- Architecture decision (microservices vs monolith)
+- Significant refactoring (not trivial renames)
+- Research spike documenting findings
+
+### Skip the Spec When...
+
+**✂️ Intent is self-evident:**
+- Obvious bug fixes (clear cause, clear fix)
+- Trivial refactoring (rename, extract function, format)
+- Well-documented in code/comments already
+- Change is purely mechanical
+
+**🔬 Work is exploratory:**
+- Rapid prototyping to discover requirements
+- Experimenting with multiple approaches
+- High uncertainty, likely to throw away
+- Learning by doing is faster
+
+*Note: Write a spec after prototyping to capture learnings*
+
+**📄 Wrong tool for the job:**
+- API reference docs (use auto-generated docs)
+- User manuals (use dedicated tools)
+- Compliance docs with specific formats (use required format)
+- Dependency updates (standard version bumps)
+
+**Examples:**
+- One-line bug fix
+- Simple rename or code formatting
+- Standard dependency version bump
+- Experimental prototype (document after if it works)
+
+### The Core Question
+
+> "Will a spec help bridge human intent to machine execution, or is the gap already clear?"
+
+**If yes** → Write it (keep it <300 lines)  
+**If no** → Skip it or use code/comments
+
+Apply [First Principles](/docs/guide/first-principles) to guide judgment.
+
+## How LeanSpec Works in Practice
+
+### The SDD Workflow
+
+1. **Discover** - Check existing specs with `lspec list`
+2. **Plan** - Create spec with `lspec create <name>` when needed
+3. **Implement** - Write code, keep spec in sync as you learn
+4. **Update** - Mark progress with `lspec update <spec> --status <status>`
+5. **Complete** - Mark complete when done, archive if finished
+
+### For Solo Development
+- Start minimal (just status + created date)
+- Add structure as needs emerge
+- Use specs for complex features you'll forget
+- Let AI agents implement from specs
+
+### For Team Development
+- Specs provide shared understanding
+- Dependencies track coordination needs
+- Board view shows project health
+- MCP enables AI collaboration across team
+
+### For AI-Powered Development
+
+Specs serve dual purposes:
+- **Human-AI bridge**: Translate intent into executable context
+- **AI memory**: Persist decisions and rationale across sessions
+
+**AI can help write specs:**
+- Human provides intent, constraints, success criteria
+- AI drafts structure, examples, formatting
+- Human refines for clarity and lean principles
+
+**AI implements from specs:**
+- Clear requirements reduce hallucination
+- Examples show expected patterns
+- Success criteria define "done"
+- Constraints prevent wrong paths
 
 ---
 
 ## The Bottom Line
 
-LeanSpec is a **mindset**, not a format.
+**LeanSpec is a mindset**, not a format.
+
+It works because it aligns with reality:
+- Context windows are limited (physics)
+- Working memory is small (biology)
+- Time costs money (economics)
 
 Focus on:
 - **Why** over what
@@ -562,10 +248,23 @@ Focus on:
 - **Action** over documentation
 - **Evolution** over perfection
 
-These aren't principles we chose—they're constraints we discovered. LeanSpec works because it aligns with reality: context windows are limited, working memory is small, and time costs money.
-
-If your specs help people (and AI agents) build better software faster, you're doing LeanSpec right.
+**Success metric**: If your specs help people (and AI agents) build better software faster, you're doing LeanSpec right.
 
 ---
 
-**Next**: Learn practical day-to-day techniques in **[Writing Specs AI Can Execute](/docs/guide/ai-executable-patterns)**, or jump to **[When to Use](/docs/guide/when-to-use)** to understand when LeanSpec is the right tool.
+## Learn More
+
+**Core Concepts (WHY):**
+- [First Principles](/docs/guide/first-principles) - The 5 foundational principles
+- [Context Engineering](/docs/guide/context-engineering) - Managing AI working memory
+- [AI Agent Memory](/docs/guide/ai-agent-memory) - Specs as persistent memory
+- [Philosophy & Mindset](/docs/guide/philosophy) - Mental models and beliefs
+
+**Getting Started (HOW):**
+- [Getting Started](/docs/guide/getting-started) - Install and create your first spec
+- [Creating & Managing Specs](/docs/guide/usage/essential-usage/creating-managing) - Basic operations
+- [Writing Specs AI Can Execute](/docs/guide/usage/ai-assisted/ai-executable-patterns) - 12 practical patterns
+
+**Reference:**
+- [CLI Reference](/docs/reference/cli) - Complete command documentation
+- [MCP Server](/docs/reference/mcp-server) - AI agent integration
