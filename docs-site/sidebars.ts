@@ -22,22 +22,56 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Core Concepts',
-      items: ['guide/understanding', 'guide/ai-executable-patterns', 'guide/when-to-use'],
+      items: [
+        'guide/understanding',
+        'guide/first-principles',
+        'guide/context-engineering',
+        'guide/ai-agent-memory',
+        'guide/philosophy',
+      ],
     },
     {
       type: 'category',
-      label: 'Working with AI',
-      items: ['guide/ai/index', 'guide/ai/writing-specs', 'guide/ai/setup', 'guide/ai/agents-md', 'guide/ai/best-practices', 'guide/ai/examples'],
-    },
-    {
-      type: 'category',
-      label: 'Features',
-      items: ['guide/templates', 'guide/frontmatter', 'guide/custom-fields', 'guide/variables'],
-    },
-    {
-      type: 'category',
-      label: 'Workflow',
-      items: ['guide/board-stats', 'guide/dependencies', 'guide/validation'],
+      label: 'Usage',
+      items: [
+        {
+          type: 'category',
+          label: 'Essential Usage',
+          items: [
+            'guide/usage/essential-usage/creating-managing',
+            'guide/usage/essential-usage/finding-specs',
+            'guide/usage/essential-usage/spec-structure',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Project Management',
+          items: [
+            'guide/usage/project-management/board-stats',
+            'guide/usage/project-management/dependencies',
+            'guide/usage/project-management/validation',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Advanced Features',
+          items: [
+            'guide/usage/advanced-features/templates',
+            'guide/usage/advanced-features/custom-fields',
+            'guide/usage/advanced-features/variables',
+            'guide/usage/advanced-features/frontmatter',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'AI-Assisted Workflows',
+          items: [
+            'guide/usage/ai-assisted/ai-executable-patterns',
+            'guide/usage/ai-assisted/agent-configuration',
+            'guide/usage/ai-assisted/mcp-integration',
+          ],
+        },
+      ],
     },
     'roadmap',
   ],
