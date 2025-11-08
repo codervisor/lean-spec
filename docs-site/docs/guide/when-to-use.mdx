@@ -77,6 +77,75 @@ LeanSpec is designed for **AI-powered SDD**. Write a spec when it helps **bridge
 - Standard dependency version bump
 - Experimental prototype (document after if it works)
 
+## When AI Assists in Writing Specs
+
+**The Shift:** AI can now help **draft** specs, not just implement from them. This doesn't change *when* to write specs, but it does change *how* you approach the decision.
+
+### The Core Question Evolves
+
+**Traditional:** "Will AI need this context to execute?"  
+**AI-Assisted:** "When does formalizing intent as a spec add value over direct conversation?"
+
+### Write a Spec When Formalization Adds Value
+
+**✅ Intent needs to persist:**
+- Multiple stakeholders need to reference the decision
+- Future you (or others) will need the context
+- Onboarding new team members
+- Building institutional knowledge
+
+**✅ Conversation has clarified the approach:**
+- You've iterated with AI to refine the design
+- Trade-offs and constraints are now clear
+- Ready to checkpoint before implementation
+- Want to formalize what you've learned
+
+**✅ Structure prevents drift:**
+- Problem is complex enough that conversation alone would wander
+- Multiple implementation phases need coordination
+- Dependencies across features or systems
+- Audit trail or compliance required
+
+**✅ Multiple people need alignment:**
+- Can't have everyone chat individually with AI
+- Team needs shared understanding of the approach
+- Cross-functional coordination required
+- Stakeholder review and approval needed
+
+### Skip the Spec When Conversation Suffices
+
+**❌ Still discovering what to build:**
+- High uncertainty about requirements
+- Rapid iteration and exploration needed
+- Conversation is faster than formalization
+- Likely to throw away early attempts
+
+**❌ Quick, unambiguous feature:**
+- AI can understand from brief conversation
+- No complexity or trade-offs to document
+- Implementation is straightforward
+- Won't need future reference
+
+**❌ AI can draft and implement directly:**
+- Context is already clear in codebase
+- Standard patterns can be followed
+- No novel decisions to capture
+- One-off work with no reuse
+
+### AI-Assisted Workflow
+
+The typical flow when AI helps write specs:
+
+1. **Converse with AI** - Discuss intent, explore options, clarify requirements
+2. **Decide to formalize** - When conversation has clarified enough to checkpoint
+3. **AI drafts spec** - AI creates initial spec following LeanSpec principles
+4. **Human refines** - Review, cut verbosity, ensure clarity and intent
+5. **Spec becomes contract** - Checkpoint agreement before implementation
+6. **AI implements** - AI builds from refined spec
+7. **Update as needed** - Keep spec in sync with learnings
+
+**Key Insight:** AI-assisted authoring makes specs **easier to create**, but doesn't change **when they're valuable**. The decision is still: *"Does formalization add value over conversation?"*
+
 ## Decision Framework
 
 **The Core Question:**
@@ -145,16 +214,29 @@ flowchart TD
 - Quick experiments
 
 ### AI-Powered Development
+
 **When to spec:**
-- Always when AI agent implements
-- Complex intent or constraints
-- Multiple implementation paths
+- AI agent implements complex features
+- Intent or constraints need clarification
+- Multiple implementation paths exist
 - Success criteria need explicit definition
+- **NEW:** Conversation with AI has clarified the approach (checkpoint it)
+- **NEW:** Multiple stakeholders need alignment (can't all chat with AI)
 
 **When to skip:**
 - AI can infer from existing patterns
 - Change is purely mechanical
 - Intent is crystal clear from code
+- **NEW:** Still exploring with AI (keep conversing, formalize later)
+
+**AI-Assisted Authoring:**
+When AI helps draft specs, use it to:
+- Quickly create initial structure from your intent
+- Expand brief notes into full sections
+- Generate examples and test cases
+- Format and organize your thoughts
+
+But remember: **Human review is critical**. AI can be verbose and miss the "why." Your job is to refine, cut noise, and ensure LeanSpec principles are followed.
 
 ## The Bottom Line
 

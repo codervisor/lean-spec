@@ -24,13 +24,23 @@ AI coding agents work best with clear, concise specifications that balance conte
 
 ## How AI Agents Use Specs
 
-When properly integrated, AI agents use LeanSpec specs to:
+When properly integrated, AI agents use LeanSpec specs in two ways:
 
+### AI as Implementer (Traditional)
 1. **Understand Context** - Quickly grasp what needs to be built and why
 2. **Generate Code** - Implement features according to spec requirements
 3. **Make Decisions** - Choose appropriate approaches based on constraints
 4. **Ask Questions** - Identify ambiguities and request clarification
 5. **Update Documentation** - Keep specs current as code evolves
+
+### AI as Co-Author (New)
+1. **Draft Specs** - Create initial spec structure from human intent
+2. **Expand Sections** - Turn brief notes into full descriptions
+3. **Generate Examples** - Create test cases and usage examples
+4. **Format Content** - Organize and structure information
+5. **Iterate with Human** - Refine based on feedback and refinement
+
+**The Shift:** AI doesn't just consume specs—it helps create them. This makes specs more accessible while maintaining quality through human review.
 
 ## Integration Methods
 
@@ -189,6 +199,24 @@ Use "Non-Goals" sections to prevent scope creep. AI agents will respect explicit
 Testable criteria give AI agents clear targets. Make them specific and measurable.
 :::
 
+### For AI-Assisted Authoring
+
+:::tip Let AI Draft, Human Refine
+AI is great at structure and expansion, but tends toward verbosity. Use AI to create initial drafts, then ruthlessly edit for clarity and conciseness.
+:::
+
+:::tip Prompt for Intent, Not Implementation
+When asking AI to draft specs, focus prompts on "why" and "what," not "how." Example: "Draft a spec for API rate limiting to prevent abuse" not "Draft a spec using Redis with sliding window algorithm."
+:::
+
+:::tip Review Against First Principles
+After AI drafts a spec, check it against LeanSpec principles: Is it under 400 lines? Does every sentence inform a decision? Is the "why" clear? Is there unnecessary verbosity?
+:::
+
+:::tip Iterate Through Conversation
+Don't accept the first AI draft. Converse, refine, ask for specific sections to be rewritten. "Make the Overview section more concise" or "Expand the Trade-offs section with more detail."
+:::
+
 ### For AI Integration
 
 :::tip Keep AGENTS.md Current
@@ -209,28 +237,63 @@ Periodically ask AI to explain specs back to you. Clarify confusing parts.
 
 ## Common Patterns
 
-### Pattern 1: Spec-First Development
+### Pattern 1: AI-Assisted Spec Writing (New)
+
+**The collaborative authoring workflow:**
+
+1. **Converse with AI** - Discuss intent, explore options, clarify requirements
+2. **Ask AI to draft spec** - "Create a LeanSpec spec for [feature]"
+3. **Review and refine** - Cut verbosity, ensure intent is clear, verify LeanSpec principles
+4. **Checkpoint agreement** - Spec becomes contract before implementation
+5. **AI implements** - AI builds from refined spec
+6. **Update iteratively** - Keep spec in sync with learnings
+
+**When to use:**
+- Complex features that benefit from structured thinking
+- When conversation has clarified the approach
+- Multiple stakeholders need alignment
+- Decisions need documentation
+
+**Key practices:**
+- Keep AI prompts focused on intent and constraints
+- Review AI output critically (AI tends toward verbosity)
+- Ensure "why" is captured, not just "what"
+- Use LeanSpec principles as editing criteria
+
+**Example prompt:**
+```
+I need to add rate limiting to our API. We've discussed:
+- 100 requests/minute per user
+- 1000 requests/hour per IP
+- Redis for tracking
+- 429 status on limit exceeded
+
+Draft a LeanSpec spec capturing this design. Keep it under 300 lines, 
+focus on intent and trade-offs, not implementation details.
+```
+
+### Pattern 2: Spec-First Development
 
 1. Write spec with clear requirements
 2. Have AI implement from spec
 3. Update spec with learnings
 4. Archive when complete
 
-### Pattern 2: Collaborative Refinement
+### Pattern 3: Collaborative Refinement
 
 1. Write rough spec
 2. AI asks clarifying questions
 3. Refine spec based on questions
 4. AI implements refined version
 
-### Pattern 3: Reverse Spec Writing
+### Pattern 4: Reverse Spec Writing
 
 1. AI implements feature
 2. Write spec documenting what was built
 3. Use spec for future modifications
 4. Keep spec updated
 
-### Pattern 4: Template-Driven Generation
+### Pattern 5: Template-Driven Generation
 
 1. Create detailed spec templates
 2. AI fills in template for new features
