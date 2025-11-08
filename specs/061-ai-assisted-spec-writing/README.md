@@ -60,43 +60,81 @@ This fundamentally changes:
 - Skip when conversational iteration is faster
 - But... what adds value? When is structure better than chat?
 
-**Hypothesis:**
-Specs still add value when:
+**✅ ANSWER:**
+The core value proposition doesn't change—**specs add value when persistence and structure matter**. However, the decision criteria expand:
+
+**Write a spec when (EXPANDED):**
 - ✅ Intent needs to persist (reference, onboarding, decisions)
 - ✅ Multiple stakeholders need alignment (can't all chat with AI)
 - ✅ Compliance/audit trail required
 - ✅ Complex enough that conversation would drift
+- ✅ **NEW:** Conversation has clarified intent enough to formalize
+- ✅ **NEW:** Multiple iterations with AI have refined the approach
+
+**Skip the spec when:**
 - ❌ Quick feature, no ambiguity (AI can draft + implement directly)
 - ❌ Exploratory work (conversation is better for discovery)
+- ❌ **NEW:** Still discovering what to build (keep conversing)
+
+**Key Insight:** AI-assisted authoring makes specs MORE accessible (easier to create), but doesn't change WHEN they're needed. The decision point is still: **"Does formalization add value?"**
 
 ### 2. Does This Change First Principles?
 
-**Context Economy** - Still applies (specs must fit working memory)
-**Signal-to-Noise** - Maybe changes? AI can expand brief prompts into full specs
-**Intent Over Implementation** - Still critical, maybe MORE so (AI fills implementation)
-**Bridge the Gap** - Shifts: spec is now human→AI→human artifact, not just human→AI
-**Progressive Disclosure** - AI might help with this (draft minimal, expand as needed)
+**✅ ANSWER:** First principles remain valid, but their application evolves:
+
+**Context Economy** - **Still critical.** AI can help keep specs concise by drafting minimal versions. But AI can also be verbose—human review ensures economy.
+
+**Signal-to-Noise** - **Still critical.** AI might expand prompts verbosely. Human refinement cuts noise. The test remains: "What decision does this inform?"
+
+**Intent Over Implementation** - **EVEN MORE critical.** When AI drafts specs AND implements, capturing "why" is essential. AI needs intent to make good decisions at both stages.
+
+**Bridge the Gap** - **Evolution, not change.** Specs still bridge human intent to machine execution. But now the bridge is co-created: Human intent → AI draft spec → Human refine → AI implement.
+
+**Progressive Disclosure** - **AI can accelerate this.** AI can draft minimal specs, then expand specific sections on request. Human decides what complexity to add.
+
+**Conclusion:** First principles are reinforced, not replaced. AI-assisted authoring makes them MORE important because AI can violate them (verbosity, implementation focus) without human guidance.
 
 ### 3. Does This Change Success Criteria?
 
 **Current:** Good spec = AI can implement correctly
 **New:** Good spec = AI can draft it + AI can implement from it + Humans understand it
 
-This is actually a HIGHER bar.
+**✅ ANSWER:** Success criteria expand, but don't fundamentally change:
+
+**A good spec must:**
+1. **Fit in working memory** (Context Economy)
+2. **Inform decisions** (Signal-to-Noise)
+3. **Capture intent** (Intent Over Implementation)
+4. **Bridge human-AI understanding** (Bridge the Gap)
+5. **Grow naturally** (Progressive Disclosure)
+6. **Be maintainable** by humans AND AI
+7. **Support both authoring and implementation** workflows
+
+**This IS a higher bar**, but it's achievable because:
+- AI handles first drafts (reduces authoring burden)
+- Humans refine for clarity (ensures quality)
+- LeanSpec principles guide both (maintain standards)
 
 ### 4. What's the New Mental Model?
 
-**Option A: Spec-as-Checkpoint**
+**✅ ANSWER:** All three models are valid, depending on context. We adopt **Spec-as-Checkpoint** as the primary mental model, with the others as variations:
+
+**Primary: Spec-as-Checkpoint** (Most Common)
 - Conversation with AI → Crystallize into spec → Continue from spec
 - Spec = formalized agreement/checkpoint in ongoing work
+- **Use when:** Intent has been clarified through conversation and needs to be captured before implementation
 
-**Option B: Spec-as-Artifact**
+**Variation 1: Spec-as-Artifact** (Formal Projects)
 - Spec = durable output of human-AI collaboration
 - Can be referenced, shared, evolved over time
+- **Use when:** Work needs documentation for compliance, onboarding, or long-term reference
 
-**Option C: Spec-as-Context**
+**Variation 2: Spec-as-Context** (Living Documentation)
 - Spec = structured context for AI + humans
 - Still bridges intent to execution, but co-created
+- **Use when:** Spec evolves alongside implementation (SDD-style iterative refinement)
+
+**Key Insight:** These are phases, not separate approaches. Most specs start as checkpoints, evolve as context, and end as artifacts.
 
 ## Design
 
@@ -169,9 +207,9 @@ Workflow becomes:
 
 ### Phase 1: Research & Define (This Spec)
 - [x] Identify the question
-- [ ] Answer key questions (above)
-- [ ] Define new mental model
-- [ ] Validate with team/community
+- [x] Answer key questions (above)
+- [x] Define new mental model (Spec-as-Checkpoint primary, with variations)
+- [ ] Validate with team/community (deferred to post-implementation feedback)
 
 ### Phase 2: Update Core Docs
 - [ ] Update "When to Use" with AI-assisted context
@@ -180,10 +218,10 @@ Workflow becomes:
 - [ ] Review all docs for consistency
 
 ### Phase 3: New Content (If Needed)
-- [ ] Consider dedicated "Writing Specs with AI" page
-- [ ] Add examples of AI-drafted specs
-- [ ] Document best practices for prompting
-- [ ] Create templates for AI-assisted workflows
+- [x] Created dedicated "Writing Specs with AI" page (docs-site/docs/guide/ai/writing-specs.mdx)
+- [x] Added examples of AI-drafted specs and workflows
+- [x] Documented best practices for prompting (Do's and Don'ts)
+- [x] Created workflow templates (5-step process, common patterns)
 
 ### Phase 4: Validation
 - [ ] Dogfood: Use AI to draft/refine specs
@@ -192,16 +230,23 @@ Workflow becomes:
 
 ## Test
 
-**Validation Criteria:**
+**Validation Criteria (Phases 1-3):**
 
-- [ ] Docs clearly explain when to formalize intent as spec vs. just converse with AI
-- [ ] First principles still make sense in AI-assisted context
-- [ ] New mental models are clear and actionable
-- [ ] No contradictions between old/new framing
-- [ ] Examples demonstrate AI-assisted workflow
-- [ ] Community understands and can apply guidance
+- [x] Docs clearly explain when to formalize intent as spec vs. just converse with AI (when-to-use.mdx updated)
+- [x] First principles still make sense in AI-assisted context (understanding.mdx confirms they're reinforced, not replaced)
+- [x] New mental models are clear and actionable (Spec-as-Checkpoint, Artifact, Context defined)
+- [x] No contradictions between old/new framing (consistent messaging across all updated docs)
+- [x] Examples demonstrate AI-assisted workflow (writing-specs.mdx has 5-step workflow + patterns)
+- [ ] Community understands and can apply guidance (deferred to Phase 4: user feedback)
 
-**Success Signals:**
+**Additional Validation:**
+- [x] Docs build successfully (verified with `npm run build`)
+- [x] Spec structure validated (no new errors from our changes)
+- [x] All three target docs updated (when-to-use.mdx, understanding.mdx, ai/index.mdx)
+- [x] New dedicated page created (ai/writing-specs.mdx)
+- [x] Sidebar navigation updated (added to "Working with AI" section)
+
+**Success Signals (To be measured in Phase 4):**
 - Users know when to use specs vs. conversation
 - AI-drafted specs follow LeanSpec principles
 - Methodology remains coherent and practical
