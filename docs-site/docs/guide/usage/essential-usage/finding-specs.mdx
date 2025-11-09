@@ -1,0 +1,341 @@
+---
+id: 'finding-specs'
+title: 'Finding Specs'
+sidebar_position: 2
+---
+# Finding Specs
+
+Learn how to discover and navigate specs using search, list commands, and the MCP server for AI agent access.
+
+## Quick Discovery
+
+### List All Specs
+
+```bash
+# Show all specs
+lspec list
+```
+
+Output:
+```
+📋 Specs (18 total)
+
+┌─────┬────────────────────────┬──────────────┬──────────┐
+│ ID  │ Name                   │ Status       │ Priority │
+├─────┼────────────────────────┼──────────────┼──────────┤
+│ 042 │ auth-refactor          │ in-progress  │ high     │
+│ 043 │ api-redesign           │ planned      │ medium   │
+│ 044 │ dashboard-performance  │ complete     │ low      │
+└─────┴────────────────────────┴──────────────┴──────────┘
+```
+
+### Filter by Status
+
+```bash
+# Show only in-progress specs
+lspec list --status in-progress
+
+# Show blocked specs
+lspec list --status blocked
+
+# Show completed specs
+lspec list --status complete
+```
+
+### Filter by Tag
+
+```bash
+# Show specs with specific tag
+lspec list --tag api
+
+# Show specs with multiple tags (OR)
+lspec list --tag api,backend
+```
+
+### Filter by Priority
+
+```bash
+# High priority specs
+lspec list --priority high
+
+# Low priority specs
+lspec list --priority low
+```
+
+## Search by Content
+
+### Basic Search
+
+```bash
+# Search all spec content
+lspec search "authentication"
+```
+
+Searches across:
+- Spec titles and descriptions
+- All README.md content
+- Sub-spec files (DESIGN.md, TESTING.md, etc.)
+- Frontmatter fields
+
+### Search with Filters
+
+```bash
+# Search in specific status
+lspec search "API" --status in-progress
+
+# Search with tag filter
+lspec search "cache" --tag performance
+
+# Combine multiple filters
+lspec search "refactor" --status planned --tag backend --priority high
+```
+
+### Case-Insensitive Search
+
+Search is case-insensitive by default:
+```bash
+lspec search "api"      # Matches "API", "api", "Api"
+lspec search "JWT"      # Matches "jwt", "JWT", "Jwt"
+```
+
+## Visual Navigation
+
+### Kanban Board
+
+```bash
+lspec board
+```
+
+Shows specs grouped by status:
+```
+┌─────────── PLANNED ───────────┬──── IN-PROGRESS ────┬──── COMPLETE ────┐
+│ 043 api-redesign [medium]     │ 042 auth-refactor   │ 044 dashboard    │
+│ 045 notification-system [low] │ 046 db-migration    │ 047 monitoring   │
+└───────────────────────────────┴─────────────────────┴──────────────────┘
+
+Project Health: 🟢 Healthy
+- 2 in progress, 5 planned, 3 complete
+- 0 blocked specs
+```
+
+**See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
+
+### Dependency View
+
+```bash
+# Show dependencies for a spec
+lspec deps 042
+```
+
+Output:
+```
+Dependency Graph for 042-auth-refactor
+
+Depends On:
+  → 041-jwt-library [complete]       # Required to start
+
+Required By:
+  ← 043-api-redesign [planned]       # Blocked until 042 done
+  ← 044-dashboard [planned]
+
+Related Specs:
+  ⟷ 045-security-audit [in-progress]  # Coordinated work
+```
+
+Navigate relationships:
+- **Depends On (→)**: What this spec requires before it can start
+- **Required By (←)**: What's blocked waiting for this
+- **Related (⟷)**: Informational connections
+
+**See also**: [Dependencies](/docs/guide/usage/project-management/dependencies)
+
+## AI Agent Access (MCP)
+
+### MCP Server Integration
+
+The LeanSpec MCP server enables AI agents to search and retrieve specs:
+
+```javascript
+// AI agent uses MCP tools
+search_specs("authentication system")
+get_spec("042")
+list_specs({status: "in-progress"})
+```
+
+This powers:
+- **Semantic memory**: AI retrieves past decisions across sessions
+- **Context-aware**: AI finds relevant specs for current task
+- **Cross-reference**: AI follows dependencies automatically
+
+**See also**: [MCP Server Reference](/docs/reference/mcp-server)
+
+### AI Search Workflow
+
+When working with AI agents:
+
+1. **Agent queries**: "Why did we choose PostgreSQL?"
+2. **MCP search**: `search_specs("database decision")`
+3. **Agent retrieves**: Spec 023 with rationale
+4. **Agent answers**: "Per spec 023, PostgreSQL chosen because..."
+
+This eliminates repetitive questions and maintains consistency.
+
+## Advanced Filtering
+
+### Combine Multiple Criteria
+
+```bash
+# High-priority backend work that's blocked
+lspec list --priority high --tag backend --status blocked
+
+# In-progress API work
+lspec list --status in-progress --tag api
+
+# Completed security work
+lspec list --status complete --tag security
+```
+
+### Exclude Archived
+
+By default, archived specs are excluded from `lspec list`:
+
+```bash
+# Default: excludes archived
+lspec list
+
+# Include archived
+lspec list --include-archived
+```
+
+## Project Stats
+
+### Quick Overview
+
+```bash
+lspec stats
+```
+
+Output:
+```
+📊 Project Statistics
+
+Status Distribution:
+  ⏳ In Progress: 2
+  📋 Planned: 5
+  ✅ Complete: 3
+  🔒 Blocked: 0
+
+Priority Breakdown:
+  🔴 High: 3
+  🟠 Medium: 4
+  🟢 Low: 3
+
+Tags:
+  #api: 4 specs
+  #backend: 6 specs
+  #security: 2 specs
+
+Project Health: 🟢 Healthy
+```
+
+**See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
+
+## Common Search Patterns
+
+### Find Work to Start
+
+```bash
+# What's ready to work on?
+lspec list --status planned --priority high
+```
+
+### Check Active Work
+
+```bash
+# What's in progress?
+lspec list --status in-progress
+
+# Who's working on what?
+lspec list --status in-progress
+# (shows assignee if set)
+```
+
+### Review Completed Work
+
+```bash
+# Recently completed
+lspec list --status complete
+
+# Completed work by tag
+lspec list --status complete --tag api
+```
+
+### Unblock Work
+
+```bash
+# What's blocked?
+lspec list --status blocked
+
+# Why is it blocked?
+lspec deps <spec-id>
+# (check dependencies)
+```
+
+## Navigation Tips
+
+**DO:**
+- ✅ Use `lspec board` for visual overview
+- ✅ Use `lspec list` with filters for focused views
+- ✅ Use `lspec search` for content-based discovery
+- ✅ Use `lspec deps` to understand relationships
+- ✅ Let AI agents search via MCP for semantic retrieval
+
+**DON'T:**
+- ❌ Manually grep through specs/ directory
+- ❌ Rely on filesystem naming (use IDs/search instead)
+- ❌ Forget archived specs exist (use --include-archived)
+
+## Keyboard-Driven Workflows
+
+### Quick Discovery Flow
+
+```bash
+# 1. What's the project state?
+lspec board
+
+# 2. What should I work on?
+lspec list --status planned --priority high
+
+# 3. What's this spec about?
+lspec view <spec-id>
+
+# 4. Start working
+lspec update <spec-id> --status in-progress
+lspec open <spec-id>
+```
+
+### Research Flow
+
+```bash
+# 1. Find relevant specs
+lspec search "authentication"
+
+# 2. View promising spec
+lspec view 042
+
+# 3. Check related work
+lspec deps 042
+
+# 4. Read related spec
+lspec view 041
+```
+
+## Next Steps
+
+- [Creating & Managing Specs](/docs/guide/usage/essential-usage/creating-managing) - Basic operations
+- [Spec Structure](/docs/guide/usage/essential-usage/spec-structure) - Understanding spec anatomy
+- [Dependencies](/docs/guide/usage/project-management/dependencies) - Managing relationships
+
+---
+
+**Reference**: [CLI Documentation](/docs/reference/cli) for complete command options

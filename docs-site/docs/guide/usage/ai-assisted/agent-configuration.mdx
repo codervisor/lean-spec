@@ -1,0 +1,355 @@
+---
+id: 'agent-configuration'
+title: 'Agent Configuration'
+sidebar_position: 2
+---
+# Agent Configuration
+
+Configure AI coding agents to work effectively with LeanSpec through AGENTS.md instructions and best practices.
+
+## AGENTS.md Overview
+
+`AGENTS.md` serves as permanent instructions for AI coding agents in your repository. When you run `lspec init`, this file is created with LeanSpec guidance.
+
+**Purpose:**
+- Provide context about your project
+- Define when to use specs
+- Specify workflow and commands
+- Set quality standards
+
+## Complete AGENTS.md Template
+
+```markdown
+# AI Agent Instructions
+
+## Project: [Your Project Name]
+
+[Brief description of what the project does]
+
+## Core Rules
+
+1. **Read README.md first** - Understand project context
+2. **Check specs/** - Review existing specs before starting
+3. **Follow LeanSpec principles** - Clarity over documentation
+4. **Keep it minimal** - If it doesn't add clarity, cut it
+
+## When to Use Specs
+
+Write a spec for:
+- Features affecting multiple parts of the system
+- Breaking changes or significant refactors
+- Design decisions needing team alignment
+
+Skip specs for:
+- Bug fixes
+- Trivial changes
+- Self-explanatory refactors
+
+## Essential Commands
+
+**Discovery:**
+- `lspec list` - See all specs
+- `lspec search "<query>"` - Find relevant specs
+- `lspec board` - Kanban view with project health
+- `lspec stats` - Quick project metrics
+
+**Viewing specs:**
+- `lspec view <spec>` - View a spec (formatted)
+- `lspec view <spec> --raw` - Get raw markdown
+- `lspec view <spec> --json` - Get structured JSON
+- `lspec open <spec>` - Open spec in editor
+- `lspec files <spec>` - List all files in a spec
+
+**Working with specs:**
+- `lspec create <name>` - Create a new spec
+- `lspec update <spec> --status <status>` - Update status
+- `lspec deps <spec>` - Show dependencies
+
+## Spec Frontmatter
+
+When creating or updating specs, include YAML frontmatter:
+
+```yaml
+---
+status: planned|in-progress|blocked|complete|archived
+created: YYYY-MM-DD
+tags: [tag1, tag2]  # optional
+priority: low|medium|high  # optional
+---
+```
+
+**IMPORTANT**: Always use `lspec update` to modify status, priority, tags, and assignee. Never edit frontmatter manually for these system-managed fields.
+
+## SDD Workflow
+
+1. **Discover** - Check existing specs with `lspec list`
+2. **Plan** - Create spec with `lspec create <name>` when needed
+3. **Implement** - Write code, keep spec in sync as you learn
+4. **Update** - Mark progress with `lspec update <spec> --status <status>`
+5. **Complete** - Mark complete when done
+
+## Quality Standards
+
+- Code is clear and maintainable
+- Tests cover critical paths
+- Specs stay in sync with implementation
+- Always validate before completing work:
+  - Run `lspec validate` to check spec structure
+  - Fix any validation errors before marking complete
+
+## [Project-Specific Rules]
+
+[Add your project-specific guidelines here]
+```
+
+## Configuring Different AI Tools
+
+### GitHub Copilot
+
+Copilot automatically reads `AGENTS.md` when files are opened in your editor.
+
+**No additional setup needed.**
+
+### Cursor
+
+Cursor reads `.cursorrules` by default. Options:
+
+**Option 1:** Use AGENTS.md (recommended)
+```bash
+# Cursor also reads AGENTS.md
+# No additional setup
+```
+
+**Option 2:** Link .cursorrules to AGENTS.md
+```bash
+ln -s AGENTS.md .cursorrules
+```
+
+### Windsurf
+
+Add to your Windsurf config:
+
+```json
+{
+  "systemPrompt": "Read and follow instructions in AGENTS.md"
+}
+```
+
+### Claude, ChatGPT, Other Chat Interfaces
+
+Reference AGENTS.md in your initial prompt:
+
+```
+Read the AGENTS.md file in this repository and follow 
+its instructions for working with LeanSpec specs.
+```
+
+## Best Practices for AI-Readable Specs
+
+### 1. Be Explicit and Concrete
+
+❌ **Vague:**
+```markdown
+Implement secure authentication
+```
+
+✅ **Specific:**
+```markdown
+Implement JWT authentication with:
+- bcrypt password hashing (min 10 rounds)
+- 24-hour token expiry
+- Rate limiting (5 attempts/min per IP)
+```
+
+### 2. Provide Examples
+
+AI agents understand examples better than abstract descriptions.
+
+**Good:**
+```markdown
+## API Response Example
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": "2025-11-03T06:00:00Z",
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com"
+  }
+}
+```
+```
+
+### 3. Use Testable Acceptance Criteria
+
+Make criteria specific and verifiable:
+
+✅ **Good Criteria:**
+- [ ] POST /api/auth/login returns 200 with JWT on success
+- [ ] Invalid credentials return 401 with error message
+- [ ] Passwords are hashed with bcrypt, min 10 rounds
+- [ ] Rate limit: max 5 attempts per minute per IP
+
+❌ **Bad Criteria:**
+- [ ] Authentication works
+- [ ] Good security
+- [ ] Fast performance
+
+### 4. Define Boundaries Explicitly
+
+Use "Out of Scope" or "Non-Goals" to prevent scope creep:
+
+```markdown
+## Out of Scope
+
+- Social login (Google, GitHub) - separate epic
+- Password reset - separate spec
+- 2FA - not needed for MVP
+- Remember me functionality - future enhancement
+```
+
+### 5. Show, Don't Just Tell
+
+Include concrete examples of:
+- API requests/responses
+- CLI commands and output
+- Database schemas
+- Configuration files
+- Test cases
+
+### 6. Structure for Scanning
+
+AI agents (and humans) scan before reading:
+
+✅ **Good Structure:**
+```markdown
+## Problem
+[2-3 sentences]
+
+## Solution
+[High-level approach]
+
+### Technical Details
+[Implementation specifics]
+
+## Success Criteria
+- [ ] [Testable outcome]
+```
+
+❌ **Bad Structure:**
+```markdown
+So we need to build this feature and it should do X, Y, Z...
+[wall of text with no structure]
+```
+
+## Repository Organization
+
+### Make Specs Discoverable
+
+```
+your-project/
+├── AGENTS.md           ← AI reads this first
+├── README.md           ← Project overview
+├── specs/              ← All specs here
+│   ├── 001-feature-a/
+│   │   └── README.md
+│   ├── 002-feature-b/
+│   │   ├── README.md
+│   │   ├── DESIGN.md
+│   │   └── TESTING.md
+│   └── archived/       ← Old specs
+├── src/                ← Source code
+└── tests/              ← Tests
+```
+
+### Keep Specs Close to Code
+
+Specs in the repo (not external wiki):
+- ✅ Version controlled
+- ✅ Branch-specific
+- ✅ Easy for AI to find
+- ✅ Searchable
+
+## Verification
+
+### Test AI Understanding
+
+Ask your AI agent:
+
+**Test 1: Can it find specs?**
+```
+List all specs in this repository.
+```
+Expected: Agent uses `lspec list`
+
+**Test 2: Can it read specs?**
+```
+What does spec 001 describe?
+```
+Expected: Agent uses `lspec view 001`
+
+**Test 3: Can it follow workflow?**
+```
+Create a spec for user authentication.
+```
+Expected: Agent uses `lspec create user-authentication`
+
+**Test 4: Can it update status?**
+```
+Mark spec 001 as in-progress.
+```
+Expected: Agent uses `lspec update 001 --status in-progress`
+
+## Common Pitfalls
+
+### 1. Overly Verbose Instructions
+
+❌ **Bad:**
+```markdown
+The AI agent should carefully read all available documentation
+and thoroughly understand the codebase before making any changes.
+It's important to...
+[500 words of general advice]
+```
+
+✅ **Good:**
+```markdown
+1. Read README.md first
+2. Check existing specs with `lspec list`
+3. Follow LeanSpec principles (see AGENTS.md)
+```
+
+### 2. Ambiguous Success Criteria
+
+❌ **Bad:**
+```markdown
+- [ ] Feature works well
+- [ ] Good performance
+- [ ] Users are happy
+```
+
+✅ **Good:**
+```markdown
+- [ ] API response <100ms (p95)
+- [ ] Zero crashes in 1 week
+- [ ] NPS score >8
+```
+
+### 3. Missing Context
+
+Always provide:
+- **Why**: Problem and motivation
+- **What**: Specific requirements
+- **How**: Approach and constraints
+- **When**: Success criteria
+
+## Next Steps
+
+- [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration) - Model Context Protocol setup
+- [Writing Specs AI Can Execute](/docs/guide/usage/ai-assisted/ai-executable-patterns) - 12 practical patterns
+- [Getting Started](/docs/guide/getting-started) - Initial setup guide
+
+---
+
+**Related**: [CLI Reference](/docs/reference/cli) for complete command documentation
