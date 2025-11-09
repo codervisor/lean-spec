@@ -118,7 +118,7 @@ const config: Config = {
             },
             {
               label: 'AI Integration',
-              to: '/docs/guide/ai',
+              to: '/docs/guide/usage/ai-assisted/agent-configuration',
             },
           ],
         },

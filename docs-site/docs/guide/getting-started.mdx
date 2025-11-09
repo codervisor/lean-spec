@@ -170,6 +170,9 @@ lspec create feature-name
 # List all specs
 lspec list
 
+# View a spec
+lspec view 001
+
 # Update spec metadata (by number or path)
 lspec update 001 --status=in-progress
 lspec update specs/001-my-feature --status=in-progress
@@ -180,17 +183,80 @@ lspec archive 001
 
 For a complete command reference, see [CLI Commands](/docs/reference/cli).
 
+## AI Integration (Optional)
+
+LeanSpec works great with AI coding agents. When you ran `lspec init`, it created `AGENTS.md` with instructions for AI agents.
+
+### Quick AI Setup
+
+**For AI to access specs through MCP (recommended):**
+
+1. Install LeanSpec globally (if not already):
+   ```bash
+   npm install -g lean-spec
+   ```
+
+2. Configure your AI tool:
+
+   **VS Code (GitHub Copilot)** - Add to settings.json:
+   ```json
+   {
+     "github.copilot.chat.mcp.servers": {
+       "lean-spec": {
+         "command": "npx",
+         "args": ["-y", "lean-spec", "mcp"],
+         "cwd": "${workspaceFolder}"
+       }
+     }
+   }
+   ```
+
+   **Claude Desktop** - Add to claude_desktop_config.json:
+   ```json
+   {
+     "mcpServers": {
+       "lean-spec": {
+         "command": "npx",
+         "args": ["-y", "lean-spec", "mcp"],
+         "cwd": "/absolute/path/to/your/project"
+       }
+     }
+   }
+   ```
+
+3. Test it:
+   ```
+   Ask your AI: "List all specs in this project"
+   ```
+
+**Without MCP (basic):**
+- AI can still read specs from files
+- Reference AGENTS.md in your prompts: "Follow instructions in AGENTS.md"
+- Manually point AI to spec files when needed
+
+**Learn more**: [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration) for detailed setup and benefits.
+
 ## What's Next?
 
 Now that you have LeanSpec set up, you can:
 
-- Learn about [Templates](/docs/guide/templates) to customize your workflow
-- Explore [AI Integration](/docs/guide/ai/) to set up AI coding agents
-- Understand the [Core Philosophy](/docs/guide/understanding) behind LeanSpec
-- Review [First Principles](/docs/guide/understanding#the-five-first-principles) to understand the foundational constraints
+**Learn the Fundamentals:**
+- [First Principles](/docs/guide/first-principles) - The 5 foundational principles
+- [Understanding LeanSpec](/docs/guide/understanding) - Core concepts and when to use
+- [Context Engineering](/docs/guide/context-engineering) - Managing AI working memory
+
+**Start Using LeanSpec:**
+- [Creating & Managing Specs](/docs/guide/usage/essential-usage/creating-managing) - Basic operations
+- [Finding Specs](/docs/guide/usage/essential-usage/finding-specs) - Search and discovery
+- [Spec Structure](/docs/guide/usage/essential-usage/spec-structure) - Anatomy of a good spec
+
+**AI Integration:**
+- [Agent Configuration](/docs/guide/usage/ai-assisted/agent-configuration) - AGENTS.md setup
+- [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration) - Enable semantic memory
+- [Writing Specs AI Can Execute](/docs/guide/usage/ai-assisted/ai-executable-patterns) - 12 practical patterns
 
 ## Need Help?
 
 - Check out the [CLI Reference](/docs/reference/cli) for detailed command documentation
 - Visit the [GitHub repository](https://github.com/codervisor/lean-spec) to report issues
-- Read [Best Practices](/docs/guide/ai/best-practices) for tips on effective spec writing
+- Read [Philosophy & Mindset](/docs/guide/philosophy) for tips on effective spec writing

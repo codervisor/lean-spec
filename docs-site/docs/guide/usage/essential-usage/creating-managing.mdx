@@ -1,0 +1,341 @@
+---
+id: 'creating-managing'
+title: 'Creating & Managing Specs'
+sidebar_position: 1
+---
+# Creating & Managing Specs
+
+Learn the essential operations for working with LeanSpec specs: creating, updating, viewing, and managing the spec lifecycle.
+
+## Creating a New Spec
+
+### Basic Creation
+
+```bash
+lspec create my-feature
+```
+
+This creates a new spec with:
+- Auto-generated unique ID (e.g., `042-my-feature`)
+- Initialized frontmatter (status: `planned`, created date)
+- Basic spec template in `specs/042-my-feature/README.md`
+
+### Interactive Creation
+
+```bash
+lspec create
+```
+
+Without a name, you'll be prompted interactively for:
+- Spec name
+- Optional description
+- Initial status (defaults to `planned`)
+
+### Advanced Options
+
+```bash
+# Create with initial status
+lspec create my-feature --status in-progress
+
+# Create with tags
+lspec create my-feature --tags api,backend
+
+# Create with priority
+lspec create my-feature --priority high
+```
+
+**See also**: [CLI Reference: create](/docs/reference/cli#create) for all options
+
+## Updating Specs
+
+### Status Updates
+
+**Update spec status** (REQUIRED - never edit frontmatter manually):
+
+```bash
+# Move to in-progress
+lspec update 042 --status in-progress
+
+# Mark as complete
+lspec update 042 --status complete
+
+# Block temporarily
+lspec update 042 --status blocked
+```
+
+**Available statuses**: `planned`, `in-progress`, `blocked`, `complete`, `archived`
+
+### Priority and Tags
+
+```bash
+# Set priority
+lspec update 042 --priority high
+
+# Add/update tags
+lspec update 042 --tags api,backend,refactor
+
+# Assign to someone
+lspec update 042 --assignee alice
+```
+
+**Important**: Always use `lspec update` for system-managed fields. Manual edits will corrupt metadata.
+
+**See also**: [CLI Reference: update](/docs/reference/cli#update)
+
+## Viewing Specs
+
+### Quick View
+
+```bash
+# View spec (formatted for reading)
+lspec view 042
+
+# View sub-spec file
+lspec view 042/DESIGN.md
+```
+
+### Raw Output
+
+```bash
+# Get raw markdown (for parsing)
+lspec view 042 --raw
+
+# Get structured JSON
+lspec view 042 --json
+```
+
+### Open in Editor
+
+```bash
+# Open in default editor
+lspec open 042
+
+# Open specific sub-spec
+lspec open 042/TESTING.md
+```
+
+**See also**: [CLI Reference: view](/docs/reference/cli#view)
+
+## Listing Specs
+
+### View All Specs
+
+```bash
+# List all specs
+lspec list
+
+# List by status
+lspec list --status in-progress
+
+# List by tag
+lspec list --tag api
+```
+
+### Kanban Board View
+
+```bash
+# Visual board view
+lspec board
+```
+
+Shows specs grouped by status with project health metrics.
+
+**See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
+
+## Managing Spec Files
+
+### Sub-Spec Files
+
+For complex specs, split into multiple files:
+
+```bash
+# List all files in a spec
+lspec files 042
+```
+
+Common sub-spec files:
+- `README.md` - Main spec (required)
+- `DESIGN.md` - Detailed design
+- `IMPLEMENTATION.md` - Implementation plan
+- `TESTING.md` - Test strategy
+- `CONFIGURATION.md` - Config examples
+
+**Why?** Keeps each file under 400 lines (Context Economy principle).
+
+**See also**: [CLI Reference: Sub-Spec Files](/docs/reference/cli#sub-spec-files)
+
+### Viewing File List
+
+```bash
+# Show all files in spec
+lspec files 042
+```
+
+Output:
+```
+📄 Files in 042-my-feature
+
+Required:
+  ✓ README.md        (234 lines)  Main spec
+
+Documents:
+  ✓ DESIGN.md        (187 lines)
+  ✓ TESTING.md       (145 lines)
+
+Total: 3 files, 566 lines
+```
+
+## Archiving Specs
+
+When work is complete and you want to move spec out of active view:
+
+```bash
+# Archive completed spec
+lspec update 042 --status archived
+```
+
+Archived specs:
+- Don't appear in default `lspec list`
+- Still searchable
+- Can be unarchived later
+
+## Dependencies and Relationships
+
+### Declaring Dependencies
+
+**Hard dependencies** (blocking):
+```yaml
+# In spec frontmatter (must edit manually for now)
+depends_on:
+  - spec-041  # Must complete before this can start
+```
+
+**Soft relationships** (informational):
+```yaml
+# In spec frontmatter (must edit manually for now)
+related:
+  - spec-043  # Related work, not blocking
+```
+
+### Viewing Dependencies
+
+```bash
+# Show dependency graph
+lspec deps 042
+```
+
+Output:
+```
+Dependency Graph for 042-my-feature
+
+Depends On:
+  → 041-authentication [complete]
+
+Required By:
+  ← 043-dashboard [in-progress]
+
+Related Specs:
+  ⟷ 044-api-refactor [planned]
+```
+
+**See also**: [Dependencies](/docs/guide/usage/project-management/dependencies)
+
+## Validation
+
+Check spec structure and frontmatter:
+
+```bash
+# Validate all specs
+lspec validate
+
+# Validate specific spec
+lspec validate 042
+```
+
+Catches:
+- Invalid frontmatter structure
+- Missing required fields
+- Dependency cycles
+- Line count warnings (>400 lines)
+
+**See also**: [Validation](/docs/guide/usage/project-management/validation)
+
+## Search
+
+Find specs by content, name, or metadata:
+
+```bash
+# Search spec content
+lspec search "authentication"
+
+# Search with filters
+lspec search "API" --status in-progress --tag backend
+```
+
+**See also**: [Finding Specs](/docs/guide/usage/essential-usage/finding-specs)
+
+## Common Workflows
+
+### Starting New Work
+
+```bash
+# 1. Create spec
+lspec create auth-refactor --tags security,backend
+
+# 2. Edit spec (define problem, solution, success criteria)
+lspec open 042
+
+# 3. Move to in-progress when ready
+lspec update 042 --status in-progress
+```
+
+### Completing Work
+
+```bash
+# 1. Mark complete
+lspec update 042 --status complete
+
+# 2. Validate everything still works
+lspec validate
+
+# 3. Optional: Archive if no longer needed
+lspec update 042 --status archived
+```
+
+### Complex Spec Management
+
+```bash
+# 1. Check if spec is getting too large
+lspec view 042 --raw | wc -l
+
+# 2. If >400 lines, split into sub-specs
+# Create DESIGN.md, TESTING.md, etc.
+
+# 3. Verify structure
+lspec files 042
+```
+
+## Best Practices
+
+**DO:**
+- ✅ Use `lspec update` for status/priority/tags (never edit frontmatter)
+- ✅ Keep README.md focused (use sub-specs for detail)
+- ✅ Update status as work progresses
+- ✅ Archive completed specs to reduce clutter
+- ✅ Validate regularly (`lspec validate`)
+
+**DON'T:**
+- ❌ Manually edit system-managed frontmatter (status, priority, tags, assignee, transitions, timestamps)
+- ❌ Let specs grow beyond 400 lines without splitting
+- ❌ Leave specs in stale status
+- ❌ Skip validation before committing
+
+## Next Steps
+
+- [Finding Specs](/docs/guide/usage/essential-usage/finding-specs) - Search and discovery
+- [Spec Structure](/docs/guide/usage/essential-usage/spec-structure) - Understanding spec anatomy
+- [Project Management](/docs/guide/usage/project-management/board-stats) - Board views and health tracking
+
+---
+
+**Reference**: [CLI Documentation](/docs/reference/cli) for complete command reference
