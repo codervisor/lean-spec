@@ -165,7 +165,7 @@ Add visual comparison showing:
 - `specs/20251101/002-api-gateway/`
 - `specs/archived/`
 
-Note: Configure in `.lspec/config.json` with `"pattern": "custom"` + `"groupExtractor": "{YYYYMMDD}"`.
+Note: Configure in `.lean-spec/config.json` with `"pattern": "custom"` + `"groupExtractor": "{YYYYMMDD}"`.
 
 ### Priority 3: Add Structure Configuration Doc
 

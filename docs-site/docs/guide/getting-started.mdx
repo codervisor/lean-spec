@@ -66,7 +66,7 @@ Zero configuration using standard template. Gets you up and running in seconds.
 ```
 
 This creates:
-- `.lspec/config.json` with minimal configuration
+- `.lean-spec/config.json` with minimal configuration
 - `specs/` directory for your specs
 - `AGENTS.md` with AI agent integration guidance (if not present)
 
@@ -94,7 +94,7 @@ After initialization, your project will have:
 
 ```
 your-project/
-├── .lspec/
+├── .lean-spec/
 │   ├── config.json         # LeanSpec configuration
 │   └── templates/          # Custom spec templates (optional)
 │       └── spec-template.md
@@ -106,7 +106,7 @@ your-project/
 └── ... (your project files)
 ```
 
-**Note**: Default structure is flat with global numbering (`001-name/`, `002-name/`). For date-based grouping, configure the `structure.pattern` in `.lspec/config.json`.
+**Note**: Default structure is flat with global numbering (`001-name/`, `002-name/`). For date-based grouping, configure the `structure.pattern` in `.lean-spec/config.json`.
 
 ## Integrating with Existing Projects
 
@@ -114,13 +114,13 @@ If you already have `AGENTS.md`, `.cursorrules`, or other system prompts, `lean-
 
 1. **Merge** - Appends LeanSpec guidance to your existing `AGENTS.md` (preserves your content)
 2. **Backup** - Saves existing files as `.backup` and creates fresh ones
-3. **Skip** - Only adds `.lspec` config and `specs/` directory, keeps your files untouched
+3. **Skip** - Only adds `.lean-spec` config and `specs/` directory, keeps your files untouched
 
 This makes it easy to adopt LeanSpec incrementally without disrupting your existing AI agent setup.
 
-## Configuration File
+## Configuration
 
-The `.lspec/config.json` file controls LeanSpec behavior:
+The `.lean-spec/config.json` file controls LeanSpec behavior:
 
 ```json
 {

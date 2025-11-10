@@ -66,7 +66,7 @@ export async function checkSpecs(options: {
       }
       
       console.log(chalk.cyan('Tip: Use date prefix to prevent conflicts:'));
-      console.log(chalk.gray('  Edit .lspec/config.json → structure.prefix: "{YYYYMMDD}-"'));
+      console.log(chalk.gray('  Edit .lean-spec/config.json → structure.prefix: "{YYYYMMDD}-"'));
       console.log('');
       console.log(chalk.cyan('Or rename folders manually to resolve.'));
       console.log('');

@@ -92,7 +92,7 @@ For users currently on date-based structure who want to migrate:
 
 **Option 1: Keep current structure** (recommended for active projects)
 ```json
-// .lspec/config.json
+// .lean-spec/config.json
 {
   "structure": {
     "pattern": "custom",

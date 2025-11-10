@@ -47,7 +47,7 @@ Publish LeanSpec to npm registry to make it available for global installation an
 - ✅ TypeScript compilation working
 - ✅ tsup building correctly
 - ⚠️ Files field: Specify what to publish (bin/, dist/, templates/)
-- ⚠️ .npmignore: Exclude dev files (src/, coverage/, .lspec/, specs/)
+- ⚠️ .npmignore: Exclude dev files (src/, coverage/, .lean-spec/, specs/)
 
 **Documentation:**
 - ✅ README.md comprehensive
@@ -78,7 +78,7 @@ lean-spec/
 **What NOT to publish:**
 - `src/` (TypeScript source - only dist/)
 - `coverage/` (test coverage reports)
-- `.lspec/` (project's own specs)
+- `.lean-spec/` (project's own specs)
 - `specs/` (development specs)
 - `*.test.ts` files
 - Development configs (vitest.config.ts, tsconfig.json, etc.)
@@ -139,7 +139,7 @@ git push origin v0.1.0
 - [x] Check npm name availability: `npm view lean-spec` ✅ Available
 - [x] Update package.json with repository, homepage, bugs URLs
 - [x] Add `files` field to package.json (include dist, bin, templates)
-- [x] Create .npmignore (exclude src, coverage, specs, .lspec)
+- [x] Create .npmignore (exclude src, coverage, specs, .lean-spec)
 - [x] Create CHANGELOG.md with 0.1.0 entry
 - [x] Verify author and license information
 - [x] Test local installation: `npm link`
@@ -180,7 +180,7 @@ git push origin v0.1.0
 - [x] `npm pack --dry-run` succeeds without errors ✅
 - [x] Package size is reasonable (< 5MB) ✅ 58.6 KB
 - [x] All necessary files are included in tarball ✅
-- [x] No sensitive files included (.env, .lspec/, specs/) ✅
+- [x] No sensitive files included (.env, .lean-spec/, specs/) ✅
 - [x] bin/lspec.js has correct shebang: `#!/usr/bin/env node` ✅
 
 ### Post-Publishing Tests
@@ -237,7 +237,7 @@ The package is fully prepared and tested. Run `npm publish` when ready to releas
 src/
 coverage/
 specs/
-.lspec/
+.lean-spec/
 *.test.ts
 vitest.config.ts
 tsconfig.json

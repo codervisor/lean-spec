@@ -18,7 +18,7 @@ Support `lean-spec init` on projects with existing `AGENTS.md` or system prompts
 
 1. **Merge Mode**: User has `AGENTS.md` → detect, offer to merge LeanSpec section ✅
 2. **Backup Mode**: User chooses not to merge → backup existing, create new ✅
-3. **Skip Mode**: User wants to keep their setup → just add .lspec config and specs/ ✅
+3. **Skip Mode**: User wants to keep their setup → just add .lean-spec config and specs/ ✅
 
 ## Acceptance Criteria
 

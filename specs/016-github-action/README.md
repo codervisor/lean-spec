@@ -190,7 +190,7 @@ inputs:
     required: false
   
   working-directory:
-    description: 'Directory containing .lspec/ (defaults to repo root)'
+    description: 'Directory containing .lean-spec/ (defaults to repo root)'
     default: '.'
 ```
 

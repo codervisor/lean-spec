@@ -128,7 +128,7 @@
 - [ ] `lean-spec` defaults to dashboard
 - [ ] `lean-spec dashboard` explicitly shows dashboard
 - [ ] Dashboard → `lean-spec list` → dashboard (workflow)
-- [ ] Dashboard respects .lspec/config.json
+- [ ] Dashboard respects .lean-spec/config.json
 
 #### Cross-Command Consistency
 - [ ] Dashboard counts match `lean-spec list` counts

@@ -208,7 +208,7 @@ src/
 - [ ] CodeLens actions work
 
 ### Integration Tests
-- [ ] Extension activates in workspace with .lspec/
+- [ ] Extension activates in workspace with .lean-spec/
 - [ ] Works with all templates
 - [ ] Handles spec creation/deletion
 - [ ] File watcher updates on external changes

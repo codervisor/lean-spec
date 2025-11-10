@@ -171,7 +171,7 @@ Velocity Trend
 - Calculate cycle time: `completed_at - created_at`
 - Track stage durations from transitions array
 - Show percentiles (P50, P90, P95) for cycle time distribution
-- Compare to targets (configurable in .lspec/config.json)
+- Compare to targets (configurable in .lean-spec/config.json)
 - Show trends (last 4 weeks)
 
 ## Part 2: Dashboard Command (NOT IMPLEMENTED)
@@ -351,7 +351,7 @@ lean-spec                    # Check dashboard again
 
 ## Velocity Configuration
 
-Add to `.lspec/config.json`:
+Add to `.lean-spec/config.json`:
 
 ```json
 {

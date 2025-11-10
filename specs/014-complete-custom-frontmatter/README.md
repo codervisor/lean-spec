@@ -19,7 +19,7 @@ completed: '2025-11-04'
 Complete the custom frontmatter and variable substitution system outlined in spec 001-custom-spec-templates. The template system foundation is done, but the advanced customization features (custom fields, variables) are not yet implemented.
 
 **Current State:**
-- ✅ Templates moved to `.lspec/templates/`
+- ✅ Templates moved to `.lean-spec/templates/`
 - ✅ Template management commands implemented
 - ❌ Custom frontmatter fields from config not implemented
 - ❌ Variable substitution system not implemented
@@ -32,7 +32,7 @@ This was the core promise of the customization-first redesign. Without these fea
 
 ### 1. Custom Frontmatter Fields
 
-Extend `.lspec/config.json`:
+Extend `.lean-spec/config.json`:
 ```json
 {
   "frontmatter": {

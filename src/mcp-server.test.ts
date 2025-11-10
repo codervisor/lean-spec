@@ -15,12 +15,12 @@ describe('MCP Server', () => {
 
     // Create minimal LeanSpec project structure
     await fs.mkdir(path.join(testDir, 'specs'), { recursive: true });
-    await fs.mkdir(path.join(testDir, '.lspec'), { recursive: true });
-    await fs.mkdir(path.join(testDir, '.lspec', 'templates'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.lean-spec'), { recursive: true });
+    await fs.mkdir(path.join(testDir, '.lean-spec', 'templates'), { recursive: true });
     
     // Create a simple template
     await fs.writeFile(
-      path.join(testDir, '.lspec', 'templates', 'spec-template.md'),
+      path.join(testDir, '.lean-spec', 'templates', 'spec-template.md'),
       `---
 status: planned
 created: '{date}'
@@ -36,7 +36,7 @@ Describe what this spec is about.
     
     // Create config
     await fs.writeFile(
-      path.join(testDir, '.lspec', 'config.json'),
+      path.join(testDir, '.lean-spec', 'config.json'),
       JSON.stringify({
         specsDir: 'specs',
         template: 'spec-template.md',

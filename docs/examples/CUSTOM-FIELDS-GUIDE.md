@@ -4,7 +4,7 @@ This document demonstrates how to use custom frontmatter fields and variable sub
 
 ## Configuration
 
-Add custom fields and variables to your `.lspec/config.json`:
+Add custom fields and variables to your `.lean-spec/config.json`:
 
 ```json
 {
@@ -121,7 +121,7 @@ Variables are automatically substituted when creating specs from templates.
 
 ### Custom Variables:
 
-Define in `.lspec/config.json`:
+Define in `.lean-spec/config.json`:
 
 ```json
 {
@@ -273,7 +273,7 @@ Example with all types:
 
 ### Custom fields not recognized?
 
-Make sure they're defined in `.lspec/config.json` under `frontmatter.custom`.
+Make sure they're defined in `.lean-spec/config.json` under `frontmatter.custom`.
 
 ### Variables not substituting?
 

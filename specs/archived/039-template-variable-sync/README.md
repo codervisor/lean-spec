@@ -104,7 +104,7 @@ More robust, consistent with existing variable system, enables richer templates.
   - [ ] `templates/standard/spec-template.md`
   - [ ] `templates/minimal/spec-template.md`
   - [ ] `templates/enterprise/spec-template.md`
-  - [ ] `.lspec/templates/spec-template.md` (if exists)
+  - [ ] `.lean-spec/templates/spec-template.md` (if exists)
 - [ ] Update docs to document available frontmatter variables
 - [ ] Add tests for frontmatter variable resolution
 - [ ] Test with various field types (string, number, boolean, array)

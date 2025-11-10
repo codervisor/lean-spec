@@ -5,7 +5,7 @@ src/
 # Development files
 coverage/
 specs/
-.lspec/
+.lean-spec/
 examples/
 docs/
 

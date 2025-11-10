@@ -51,7 +51,7 @@ const DEFAULT_CONFIG: LeanSpecConfig = {
 };
 
 export async function loadConfig(cwd: string = process.cwd()): Promise<LeanSpecConfig> {
-  const configPath = path.join(cwd, '.lspec', 'config.json');
+  const configPath = path.join(cwd, '.lean-spec', 'config.json');
 
   try {
     const content = await fs.readFile(configPath, 'utf-8');
@@ -72,7 +72,7 @@ export async function saveConfig(
   config: LeanSpecConfig,
   cwd: string = process.cwd(),
 ): Promise<void> {
-  const configDir = path.join(cwd, '.lspec');
+  const configDir = path.join(cwd, '.lean-spec');
   const configPath = path.join(configDir, 'config.json');
 
   await fs.mkdir(configDir, { recursive: true });

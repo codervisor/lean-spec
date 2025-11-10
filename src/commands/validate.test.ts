@@ -16,7 +16,7 @@ describe('validateCommand', () => {
     process.chdir(tmpDir);
 
     // Initialize basic config
-    await fs.mkdir(path.join(tmpDir, '.lspec', 'templates'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.lean-spec', 'templates'), { recursive: true });
     await saveConfig({
       template: 'spec-template.md',
       templates: { default: 'spec-template.md' },
@@ -45,7 +45,7 @@ created: {date}
 <!-- What are we solving? Why now? -->
 `;
     await fs.writeFile(
-      path.join(tmpDir, '.lspec', 'templates', 'spec-template.md'),
+      path.join(tmpDir, '.lean-spec', 'templates', 'spec-template.md'),
       templateContent,
       'utf-8'
     );

@@ -402,4 +402,4 @@ Cons: Noisy output, hard to spot issues
 - **Auto-fix support:** `lean-spec validate --fix` (aligns with ESLint)
 - **Watch mode:** `lean-spec validate --watch` (continuous validation)
 - **Custom formatters:** Plugin system for CI-specific formats
-- **Rule configuration:** `.lspec/rules.json` to disable/configure rules
+- **Rule configuration:** `.lean-spec/rules.json` to disable/configure rules

@@ -195,7 +195,7 @@ Bare minimum for validation (uses most defaults):
 ### Apply Strict Mode
 
 ```bash
-# Add to .lspec/config.json, then run:
+# Add to .lean-spec/config.json, then run:
 lean-spec validate
 
 # Or override via CLI:
@@ -216,7 +216,7 @@ lean-spec validate --no-links --no-staleness
 
 ```bash
 # Configure custom status values:
-# .lspec/config.json with custom allowedStatus
+# .lean-spec/config.json with custom allowedStatus
 # Then validate normally:
 lean-spec validate
 ```

@@ -5,7 +5,7 @@ import { loadConfig, saveConfig } from '../config.js';
 
 export async function listTemplates(cwd: string = process.cwd()): Promise<void> {
   const config = await loadConfig(cwd);
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
 
   console.log('');
   console.log(chalk.green('=== Project Templates ==='));
@@ -66,7 +66,7 @@ export async function showTemplate(
     process.exit(1);
   }
 
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   const templateFile = config.templates[templateName];
   const templatePath = path.join(templatesDir, templateFile);
 
@@ -90,7 +90,7 @@ export async function addTemplate(
   cwd: string = process.cwd(),
 ): Promise<void> {
   const config = await loadConfig(cwd);
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   const templatePath = path.join(templatesDir, file);
 
   // Check if file exists
@@ -140,7 +140,7 @@ export async function removeTemplate(name: string, cwd: string = process.cwd()):
   await saveConfig(config, cwd);
 
   console.log(chalk.green(`✓ Removed template: ${name}`));
-  console.log(chalk.gray(`  Note: Template file ${file} still exists in .lspec/templates/`));
+  console.log(chalk.gray(`  Note: Template file ${file} still exists in .lean-spec/templates/`));
 }
 
 export async function copyTemplate(
@@ -149,7 +149,7 @@ export async function copyTemplate(
   cwd: string = process.cwd(),
 ): Promise<void> {
   const config = await loadConfig(cwd);
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
 
   // Resolve source template
   let sourceFile: string;

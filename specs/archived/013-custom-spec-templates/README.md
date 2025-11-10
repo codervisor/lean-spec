@@ -20,7 +20,7 @@ completed: '2025-11-02'
 
 **Current Problem**: Templates are locked in the npm package. Users cannot customize spec templates, frontmatter fields, variables, or template directory structure without modifying package files (which are lost on updates).
 
-**Solution**: Invert the architecture - templates live in the user's project (`.lspec/templates/`), not the npm package. Package templates become initialization starters only.
+**Solution**: Invert the architecture - templates live in the user's project (`.lean-spec/templates/`), not the npm package. Package templates become initialization starters only.
 
 ## Current Architecture (Template-Centric) ❌
 
@@ -32,7 +32,7 @@ npm package (read-only)
     └── enterprise/
 
 User's project
-└── .lspec/
+└── .lean-spec/
     └── config.json   # Only stores template name reference
 ```
 
@@ -46,7 +46,7 @@ User's project
 
 ```
 User's project
-└── .lspec/
+└── .lean-spec/
     ├── config.json
     └── templates/
         ├── spec-template.md      # Default (copied from npm on init)
@@ -77,17 +77,17 @@ npm package (initialization only)
 ```bash
 lean-spec init
 # User chooses template: minimal/standard/enterprise
-# Template copied from npm package to .lspec/templates/spec-template.md
+# Template copied from npm package to .lean-spec/templates/spec-template.md
 # User immediately has full control
 ```
 
 **Phase 2: Customization (User's choice)**
 ```bash
 # Edit default template
-vim .lspec/templates/spec-template.md
+vim .lean-spec/templates/spec-template.md
 
 # Add custom templates
-cp .lspec/templates/spec-template.md .lspec/templates/api-spec.md
+cp .lean-spec/templates/spec-template.md .lean-spec/templates/api-spec.md
 # Edit api-spec.md for API-specific structure
 
 # Register in config
@@ -170,7 +170,7 @@ async function resolveTemplate(
   config: LeanSpecConfig, 
   cwd: string
 ): Promise<string> {
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   
   // 1. Check for --template flag
   if (templateName && config.templates?.[templateName]) {
@@ -198,7 +198,7 @@ async function resolveTemplate(
   } catch {
     // Error - templates should exist after init
     console.error(chalk.red('No templates found!'));
-    console.error(chalk.gray('Expected: .lspec/templates/spec-template.md'));
+    console.error(chalk.gray('Expected: .lean-spec/templates/spec-template.md'));
     console.error(chalk.yellow('Run: lean-spec init'));
     process.exit(1);
   }
@@ -289,8 +289,8 @@ epic: {epic}
 ## Implementation Plan
 
 ### Phase 1: Core Template System (Week 1)
-- [ ] Create `.lspec/templates/` directory on init
-- [ ] Copy chosen template to `.lspec/templates/spec-template.md`
+- [ ] Create `.lean-spec/templates/` directory on init
+- [ ] Copy chosen template to `.lean-spec/templates/spec-template.md`
 - [ ] Update `create.ts` to use project templates (remove package fallback)
 - [ ] Implement template resolution logic
 - [ ] Update `init.ts` to set up templates directory
@@ -350,7 +350,7 @@ epic: {epic}
 - [ ] Handles missing variables gracefully
 
 ### Init Process
-- [ ] Creates .lspec/templates/ directory
+- [ ] Creates .lean-spec/templates/ directory
 - [ ] Copies chosen template to spec-template.md
 - [ ] Sets up config with templates section
 - [ ] Works with merge/backup/skip for AGENTS.md
@@ -360,13 +360,13 @@ epic: {epic}
 **This is a breaking change** - but since lean-spec is new and only dogfooding itself, this is acceptable.
 
 **What breaks:**
-- Projects initialized with old version will have no `.lspec/templates/`
+- Projects initialized with old version will have no `.lean-spec/templates/`
 - `lean-spec create` will fail with clear error message
 - Solution: Run `lean-spec init` again or manually create templates directory
 
 **Migration for lean-spec itself:**
-1. Create `.lspec/templates/` directory
-2. Copy current package template to `.lspec/templates/spec-template.md`
+1. Create `.lean-spec/templates/` directory
+2. Copy current package template to `.lean-spec/templates/spec-template.md`
 3. Update config to include templates section
 4. Test creating new specstinuing with: lean-spec create my-feature
 ```
@@ -403,7 +403,7 @@ LeanSpec's entire value proposition is about **giving users control** over their
 
 > "LeanSpec is a mindset. Adapt these guidelines to what actually helps."
 
-This only works if users can actually adapt the system. Moving templates to `.lspec/templates/` makes customization tangible and discoverable.
+This only works if users can actually adapt the system. Moving templates to `.lean-spec/templates/` makes customization tangible and discoverable.
 
 **Learning from other tools:**
 - **Next.js**: `eject` is available but discouraged (creates maintenance burden)

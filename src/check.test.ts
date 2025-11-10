@@ -17,7 +17,7 @@ describe('checkSpecs', () => {
     process.chdir(tmpDir);
 
     // Initialize basic config
-    await fs.mkdir(path.join(tmpDir, '.lspec', 'templates'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.lean-spec', 'templates'), { recursive: true });
     await saveConfig({
       template: 'spec-template.md',
       templates: { default: 'spec-template.md' },
@@ -46,7 +46,7 @@ created: {date}
 <!-- What are we solving? Why now? -->
 `;
     await fs.writeFile(
-      path.join(tmpDir, '.lspec', 'templates', 'spec-template.md'),
+      path.join(tmpDir, '.lean-spec', 'templates', 'spec-template.md'),
       templateContent,
       'utf-8'
     );
@@ -149,7 +149,7 @@ describe('autoCheckIfEnabled', () => {
     originalCwd = process.cwd();
     process.chdir(tmpDir);
 
-    await fs.mkdir(path.join(tmpDir, '.lspec', 'templates'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.lean-spec', 'templates'), { recursive: true });
     const templateContent = `---
 status: planned
 created: {date}
@@ -160,7 +160,7 @@ created: {date}
 ## Overview
 `;
     await fs.writeFile(
-      path.join(tmpDir, '.lspec', 'templates', 'spec-template.md'),
+      path.join(tmpDir, '.lean-spec', 'templates', 'spec-template.md'),
       templateContent,
       'utf-8'
     );
@@ -242,7 +242,7 @@ describe('createSpec with --no-prefix', () => {
     originalCwd = process.cwd();
     process.chdir(tmpDir);
 
-    await fs.mkdir(path.join(tmpDir, '.lspec', 'templates'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.lean-spec', 'templates'), { recursive: true });
     
     const templateContent = `---
 status: planned
@@ -254,7 +254,7 @@ created: {date}
 ## Overview
 `;
     await fs.writeFile(
-      path.join(tmpDir, '.lspec', 'templates', 'spec-template.md'),
+      path.join(tmpDir, '.lean-spec', 'templates', 'spec-template.md'),
       templateContent,
       'utf-8'
     );

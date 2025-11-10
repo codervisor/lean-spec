@@ -61,11 +61,11 @@ export async function initTestProject(
     frontmatter: config.frontmatter || defaultConfig.frontmatter,
   };
 
-  // Create .lspec directory
-  const configDir = path.join(tmpDir, '.lspec');
+  // Create .lean-spec directory
+  const configDir = path.join(tmpDir, '.lean-spec');
   await fs.mkdir(configDir, { recursive: true });
 
-  // Create .lspec/templates directory
+  // Create .lean-spec/templates directory
   const templatesDir = path.join(configDir, 'templates');
   await fs.mkdir(templatesDir, { recursive: true });
 

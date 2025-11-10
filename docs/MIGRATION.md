@@ -42,7 +42,7 @@ specs/
 If you have an active project with many specs, **keep your current structure**:
 
 ```json
-// .lspec/config.json
+// .lean-spec/config.json
 {
   "structure": {
     "pattern": "custom",
@@ -78,7 +78,7 @@ rmdir specs/202* 2>/dev/null || true
 
 **Step 3: Update config**
 ```json
-// .lspec/config.json
+// .lean-spec/config.json
 {
   "structure": {
     "pattern": "flat",
@@ -99,7 +99,7 @@ lspec stats       # Verify counts are correct
 If you want flat structure but prefer chronological sorting:
 
 ```json
-// .lspec/config.json
+// .lean-spec/config.json
 {
   "structure": {
     "pattern": "flat",
@@ -151,7 +151,7 @@ A: Yes! Sequence numbers are globally unique across your entire project, regardl
 If you encounter issues during migration:
 
 1. Check your backup (`specs-backup/`)
-2. Review config with `cat .lspec/config.json`
+2. Review config with `cat .lean-spec/config.json`
 3. Test with `lspec list --verbose`
 4. Open an issue: https://github.com/codervisor/lean-spec/issues
 

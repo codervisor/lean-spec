@@ -19,9 +19,9 @@ export async function initProject(): Promise<void> {
 
   // Check if already initialized
   try {
-    await fs.access(path.join(cwd, '.lspec', 'config.json'));
-    console.log(chalk.yellow('LeanSpec already initialized in this directory.'));
-    console.log(chalk.gray('To reinitialize, delete .lspec/ directory first.'));
+    await fs.access(path.join(cwd, '.lean-spec', 'config.json'));
+    console.log(chalk.yellow('⚠ LeanSpec already initialized in this directory.'));
+    console.log(chalk.gray('To reinitialize, delete .lean-spec/ directory first.'));
     return;
   } catch {
     // Not initialized, continue
@@ -135,15 +135,15 @@ export async function initProject(): Promise<void> {
     // Custom pattern not yet implemented - fall back to simple
     console.log('');
     console.log(chalk.yellow('⚠ Custom pattern input is not yet implemented.'));
-    console.log(chalk.gray('  You can manually edit .lspec/config.json after initialization.'));
+    console.log(chalk.gray('  You can manually edit .lean-spec/config.json after initialization.'));
     console.log(chalk.gray('  Using simple pattern for now.'));
     console.log('');
     templateConfig.structure.pattern = 'flat';
     templateConfig.structure.prefix = '';
   }
 
-  // Create .lspec/templates/ directory
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  // Create .lean-spec/templates/ directory
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   try {
     await fs.mkdir(templatesDir, { recursive: true });
   } catch (error) {
@@ -151,12 +151,12 @@ export async function initProject(): Promise<void> {
     process.exit(1);
   }
   
-  // Copy chosen template to .lspec/templates/spec-template.md
+  // Copy chosen template to .lean-spec/templates/spec-template.md
   const templateSpecPath = path.join(templateDir, 'spec-template.md');
   const targetSpecPath = path.join(templatesDir, 'spec-template.md');
   try {
     await fs.copyFile(templateSpecPath, targetSpecPath);
-    console.log(chalk.green('✓ Created .lspec/templates/spec-template.md'));
+    console.log(chalk.green('✓ Created .lean-spec/templates/spec-template.md'));
   } catch (error) {
     console.error(chalk.red('Error copying template:'), error);
     process.exit(1);
@@ -170,7 +170,7 @@ export async function initProject(): Promise<void> {
 
   // Save config
   await saveConfig(templateConfig, cwd);
-  console.log(chalk.green('✓ Created .lspec/config.json'));
+  console.log(chalk.green('✓ Created .lean-spec/config.json'));
 
   // Check for existing system prompt files
   const existingFiles = await detectExistingSystemPrompts(cwd);
@@ -201,7 +201,7 @@ export async function initProject(): Promise<void> {
         {
           name: 'Keep Existing Only',
           value: 'skip',
-          description: 'Skips AGENTS.md, only adds .lspec config and specs/',
+          description: 'Skips AGENTS.md, only adds .lean-spec config and specs/',
         },
       ],
     });

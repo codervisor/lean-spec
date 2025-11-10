@@ -245,7 +245,7 @@ These require manual intervention:
 
 ## Validation Rules Configuration
 
-Rules can be customized in `.lspec/config.json`:
+Rules can be customized in `.lean-spec/config.json`:
 
 ```json
 {

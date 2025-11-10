@@ -132,14 +132,14 @@ lean-spec init
 
 ## Custom Templates
 
-You can create your own templates in `.lspec/templates/`.
+You can create your own templates in `.lean-spec/templates/`.
 
 ### Creating a Custom Template
 
 1. Create template file:
 ```bash
-mkdir -p .lspec/templates
-touch .lspec/templates/my-template.md
+mkdir -p .lean-spec/templates
+touch .lean-spec/templates/my-template.md
 ```
 
 2. Edit template with placeholders:
@@ -159,7 +159,7 @@ created: {date}
 [Your custom sections...]
 ```
 
-3. Configure in `.lspec/config.json`:
+3. Configure in `.lean-spec/config.json`:
 ```json
 {
   "template": "my-template.md"
@@ -221,7 +221,7 @@ Customize sections to fit your needs.
 
 To change templates mid-project:
 
-1. Update `.lspec/config.json`:
+1. Update `.lean-spec/config.json`:
 ```json
 {
   "template": "new-template.md"
@@ -247,7 +247,7 @@ Not every spec needs every section. Use what adds value, skip what doesn't.
 :::
 
 :::tip Share Templates
-Export your `.lspec/templates/` directory to share with other teams or projects.
+Export your `.lean-spec/templates/` directory to share with other teams or projects.
 :::
 
 ---

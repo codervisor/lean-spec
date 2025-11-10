@@ -168,7 +168,7 @@ Create a new spec called "api-redesign" with high priority and tags "api, backen
 ## Troubleshooting
 
 ### Server won't start
-- Verify the `cwd` path in your configuration points to a valid LeanSpec project (has `.lspec/config.json`)
+- Verify the `cwd` path in your configuration points to a valid LeanSpec project (has `.lean-spec/config.json`)
 - If using `npx`, ensure you have internet access for the first run
 - If using global installation, check that `lspec` is in your PATH
 - Try running `npx -y lean-spec mcp` or `lspec mcp` directly from your project directory
@@ -220,7 +220,7 @@ Show me what would be backfilled without making changes
 ## Troubleshooting
 
 ### Server won't start
-- Verify the `cwd` path in your configuration points to a valid LeanSpec project (has `.lspec/config.json`)
+- Verify the `cwd` path in your configuration points to a valid LeanSpec project (has `.lean-spec/config.json`)
 - Check that `lspec` is in your PATH
 - Try running `lspec mcp` directly from your project directory
 

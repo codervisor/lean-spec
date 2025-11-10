@@ -6,7 +6,7 @@ Configuration options for the `lean-spec validate` command.
 
 ## Configuration File
 
-Configuration is stored in `.lspec/config.json`:
+Configuration is stored in `.lean-spec/config.json`:
 
 ```json
 {
@@ -201,7 +201,7 @@ Glob patterns to exclude from validation:
 ## Configuration Precedence
 
 1. **Command-line flags** (highest priority)
-2. **Project config** (`.lspec/config.json`)
+2. **Project config** (`.lean-spec/config.json`)
 3. **Built-in defaults** (lowest priority)
 
 Example:

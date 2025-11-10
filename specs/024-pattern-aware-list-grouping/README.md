@@ -72,7 +72,7 @@ Make `lean-spec list` respect the configured folder pattern:
 - Works with spec 026 (pattern selection during init)
 
 **Technical Approach:**
-1. Read `folderPattern` from `.lspec/config.json`
+1. Read `folderPattern` from `.lean-spec/config.json`
 2. Detect if pattern contains `{YYYYMMDD}/` for date grouping
 3. Apply appropriate grouping strategy in list output
 4. Maintain backward compatibility

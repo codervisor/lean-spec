@@ -24,7 +24,7 @@ LeanSpec should help projects adopt Spec-Driven Development through `lean-spec i
 - `lean-spec init` command with one interactive question, three paths
 - Templates become full project initialization bundles (not just spec formats)
 - Spec structure uses folders: `specs/YYYYMMDD/NNN-name/README.md` (not flat files)
-- Config system: `.lspec/config.json` for project-specific customization
+- Config system: `.lean-spec/config.json` for project-specific customization
 - Keep it lean: Quick start is zero-friction, customization only when needed
 
 ## Non-Goals
@@ -63,7 +63,7 @@ templates/
 ```
 
 ### Config System
-`.lspec/config.json`:
+`.lean-spec/config.json`:
 ```json
 {
   "template": "solo-dev",
@@ -84,7 +84,7 @@ templates/
 ## Implementation Plan
 
 1. [ ] Add prompts library (@inquirer/prompts or prompts)
-2. [ ] Implement config loader/writer for .lspec/config.json
+2. [ ] Implement config loader/writer for .lean-spec/config.json
 3. [ ] Redesign template structure as project bundles
 4. [ ] Implement init command with three paths
 5. [ ] Update create command to use folder structure + read config

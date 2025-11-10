@@ -28,7 +28,7 @@ When existing files are detected, users choose how to proceed:
 
 **Skip Mode**
 - Leaves existing files completely untouched
-- Only adds `.lspec/` config and `specs/` directory
+- Only adds `.lean-spec/` config and `specs/` directory
 - Best for: Manual integration or using existing setup as-is
 
 ### 3. Intelligent File Copying

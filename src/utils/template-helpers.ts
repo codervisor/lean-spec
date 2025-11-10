@@ -57,7 +57,7 @@ export async function handleExistingFiles(
       }
 
       // Create AI consolidation prompt file
-      const promptPath = path.join(cwd, '.lspec', 'MERGE-AGENTS-PROMPT.md');
+      const promptPath = path.join(cwd, '.lean-spec', 'MERGE-AGENTS-PROMPT.md');
       const aiPrompt = `# AI Prompt: Consolidate AGENTS.md
 
 ## Task
@@ -97,7 +97,7 @@ Create a single consolidated AGENTS.md that:
       console.log(chalk.cyan(`  → ${promptPath}`));
       console.log('');
       console.log(chalk.yellow('📝 Next steps:'));
-      console.log(chalk.gray('  1. Open .lspec/MERGE-AGENTS-PROMPT.md'));
+      console.log(chalk.gray('  1. Open .lean-spec/MERGE-AGENTS-PROMPT.md'));
       console.log(chalk.gray('  2. Send it to your AI coding assistant (GitHub Copilot, Cursor, etc.)'));
       console.log(chalk.gray('  3. Let AI create the consolidated AGENTS.md'));
       console.log(chalk.gray('  4. Review and commit the result'));

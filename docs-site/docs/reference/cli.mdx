@@ -30,8 +30,8 @@ lean-spec init
 3. Configure initial settings
 
 **What it creates:**
-- `.lspec/config.json` - Configuration file
-- `.lspec/templates/` - Custom templates directory
+- `.lean-spec/config.json` - Configuration file
+- `.lean-spec/templates/` - Custom templates directory
 - `specs/` - Specs directory
 - `AGENTS.md` - AI agent integration guidance (if not present)
 
@@ -86,7 +86,7 @@ lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
 - Assigns sequential number (NNN) globally across all specs
 - Sets frontmatter with metadata
 
-**Note**: Default is flat structure. For date-based grouping, configure `pattern: "custom"` in `.lspec/config.json`.
+**Note**: Default is flat structure. For date-based grouping, configure `pattern: "custom"` in `.lean-spec/config.json`.
 
 ---
 
@@ -551,7 +551,7 @@ LeanSpec will find the spec regardless of which format you use.
 
 ## Configuration
 
-Commands respect settings in `.lspec/config.json`:
+Commands respect settings in `.lean-spec/config.json`:
 
 ```json
 {

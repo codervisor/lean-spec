@@ -5,11 +5,11 @@ sidebar_position: 2
 ---
 # Configuration
 
-Complete reference for `.lspec/config.json`.
+Complete reference for `.lean-spec/config.json`.
 
 ## Configuration File
 
-LeanSpec configuration is stored in `.lspec/config.json` in your project root.
+LeanSpec configuration is stored in `.lean-spec/config.json` in your project root.
 
 ## Default Configuration
 
@@ -43,7 +43,7 @@ Primary template file to use for new specs.
 **Type:** `string`  
 **Default:** `"spec-template.md"`
 
-Path to the template file within `.lspec/templates/` directory.
+Path to the template file within `.lean-spec/templates/` directory.
 
 ```json
 {
@@ -421,7 +421,7 @@ LeanSpec validates configuration on load:
 
 - Required structure fields must be valid
 - Custom field types must be valid (`string`, `number`, `boolean`, `array`)
-- Template files must exist in `.lspec/templates/`
+- Template files must exist in `.lean-spec/templates/`
 - Spec directory is created if missing
 
 Invalid configuration will show an error with details.
@@ -430,7 +430,7 @@ Invalid configuration will show an error with details.
 
 When updating configuration:
 
-1. Edit `.lspec/config.json`
+1. Edit `.lean-spec/config.json`
 2. New specs will use new configuration
 3. Existing specs are not automatically updated
 4. Manually update existing specs if needed

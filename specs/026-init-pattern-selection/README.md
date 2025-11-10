@@ -26,7 +26,7 @@ transitions:
 
 ## Overview
 
-Currently when running `lean-spec init`, users can only choose a template (minimal/standard/enterprise). The folder pattern is set by the template and users must manually edit `.lspec/config.json` to change it.
+Currently when running `lean-spec init`, users can only choose a template (minimal/standard/enterprise). The folder pattern is set by the template and users must manually edit `.lean-spec/config.json` to change it.
 
 **Issue:** No way to choose folder pattern during initialization.
 

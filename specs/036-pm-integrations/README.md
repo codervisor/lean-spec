@@ -35,7 +35,7 @@ Enable bidirectional sync between LeanSpec and external project management syste
 
 **Mapping Model:**
 ```yaml
-# .lspec/integrations.yml
+# .lean-spec/integrations.yml
 github:
   enabled: true
   repo: owner/repo

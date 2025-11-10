@@ -213,7 +213,7 @@ This document contains systematic validation of all LeanSpec documentation again
   {
     "specsDir": "specs",
     "archiveDir": "archive",
-    "templateFile": ".lspec/templates/spec-template.md",
+    "templateFile": ".lean-spec/templates/spec-template.md",
     "frontmatter": {...},
     "variables": {}
   }

@@ -82,8 +82,8 @@ export async function createSpec(name: string, options: {
   // Create spec directory
   await fs.mkdir(specDir, { recursive: true });
 
-  // Resolve template path from .lspec/templates/
-  const templatesDir = path.join(cwd, '.lspec', 'templates');
+  // Resolve template path from .lean-spec/templates/
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   let templateName: string;
   
   // Determine which template to use
@@ -102,7 +102,7 @@ export async function createSpec(name: string, options: {
   
   const templatePath = path.join(templatesDir, templateName);
 
-  // Load spec template from .lspec/templates/
+  // Load spec template from .lean-spec/templates/
   let content: string;
   
   try {
