@@ -1,0 +1,46 @@
+{
+  "link.title.Docs": {
+    "message": "文档",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Community": {
+    "message": "社区",
+    "description": "The title of the footer links column with title=Community in the footer"
+  },
+  "link.title.More": {
+    "message": "更多",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.Getting Started": {
+    "message": "快速开始",
+    "description": "The label of footer link with label=Getting Started linking to /docs/guide/getting-started"
+  },
+  "link.item.label.CLI Reference": {
+    "message": "CLI 参考",
+    "description": "The label of footer link with label=CLI Reference linking to /docs/reference/cli"
+  },
+  "link.item.label.AI Integration": {
+    "message": "AI 集成",
+    "description": "The label of footer link with label=AI Integration linking to /docs/guide/usage/ai-assisted/agent-configuration"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/codervisor/lean-spec"
+  },
+  "link.item.label.Issues": {
+    "message": "问题反馈",
+    "description": "The label of footer link with label=Issues linking to https://github.com/codervisor/lean-spec/issues"
+  },
+  "link.item.label.Blog": {
+    "message": "博客",
+    "description": "The label of footer link with label=Blog linking to /blog"
+  },
+  "link.item.label.Contributing": {
+    "message": "参与贡献",
+    "description": "The label of footer link with label=Contributing linking to https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md"
+  },
+  "copyright": {
+    "message": "版权所有 © 2025 codervisor. 使用 Docusaurus 构建。",
+    "description": "The footer copyright"
+  }
+}
