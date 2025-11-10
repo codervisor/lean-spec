@@ -24,7 +24,7 @@ These are the crystal stone rules—the fundamental, unchanging principles that 
 **Operationalization:**
 - Use sub-specs for complex features
 - Split proactively, not reactively
-- Automated checking: `lspec validate --max-lines 400`
+- Automated checking: `lean-spec validate --max-lines 400`
 - CI/CD gates for spec complexity
 
 **How Everything Derives:**
@@ -282,7 +282,7 @@ A specification is LeanSpec if and only if it:
 
 ### Test 5: Operationalizable ✅
 Each principle can be enforced with concrete mechanisms:
-- Tooling: `lspec validate`, `lspec health`, `lspec split`
+- Tooling: `lean-spec validate`, `lean-spec health`, `lean-spec split`
 - Culture: Review checklists, team norms, examples
 - Metrics: Track spec length, complexity, update frequency
 

@@ -30,7 +30,7 @@ import type { SpecStatus, SpecPriority } from './frontmatter.js';
 const program = new Command();
 
 program
-  .name('lspec')
+  .name('lean-spec')
   .description('Manage LeanSpec documents')
   .version('0.1.0');
 
@@ -68,17 +68,17 @@ Command Groups:
     mcp                           Start MCP server for AI assistants
 
 Examples:
-  $ lspec init
-  $ lspec create my-feature --priority high
-  $ lspec list --status in-progress
-  $ lspec view 042
-  $ lspec backfill --dry-run
-  $ lspec board --tag backend
-  $ lspec search "authentication"
-  $ lspec validate
-  $ lspec validate --verbose
-  $ lspec validate --quiet --rule max-lines
-  $ lspec validate 018 --max-lines 500
+  $ lean-spec init
+  $ lean-spec create my-feature --priority high
+  $ lean-spec list --status in-progress
+  $ lean-spec view 042
+  $ lean-spec backfill --dry-run
+  $ lean-spec board --tag backend
+  $ lean-spec search "authentication"
+  $ lean-spec validate
+  $ lean-spec validate --verbose
+  $ lean-spec validate --quiet --rule max-lines
+  $ lean-spec validate 018 --max-lines 500
 `);
 
 // archive command

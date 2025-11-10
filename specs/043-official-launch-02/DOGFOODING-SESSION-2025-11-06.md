@@ -23,7 +23,7 @@ Practice what we preach - split all specs violating Context Economy principle (<
 **Note:** Full split deferred (spec already complete and shipped)
 
 ### 3. **Validation Run** - IDENTIFIED ALL VIOLATIONS
-Ran `npx lspec validate` to identify all Context Economy violations:
+Ran `npx lean-spec validate` to identify all Context Economy violations:
 
 **Specs exceeding 400 lines:**
 - ✅ Spec 045: 1,168 lines → SPLIT into 5 files
@@ -53,7 +53,7 @@ Ran `npx lspec validate` to identify all Context Economy violations:
 - README serves as clear entry point, sub-specs provide depth
 
 **Validation Tool Works:**
-- `lspec validate` caught all violations automatically
+- `lean-spec validate` caught all violations automatically
 - Line count warnings help prevent future bloat
 - Sub-spec validation ensures whole project complies
 

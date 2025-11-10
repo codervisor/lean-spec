@@ -305,10 +305,10 @@ Project visibility and health monitoring with LeanSpec.
 
 ## Board View
 
-The `lspec board` command provides a Kanban-style view of your specs:
+The `lean-spec board` command provides a Kanban-style view of your specs:
 
 ```bash
-lspec board
+lean-spec board
 ```
 
 Shows specs organized by status:
@@ -325,10 +325,10 @@ Shows specs organized by status:
 
 ## Stats
 
-The `lspec stats` command provides project metrics:
+The `lean-spec stats` command provides project metrics:
 
 ```bash
-lspec stats
+lean-spec stats
 ```
 
 Shows:
@@ -346,7 +346,7 @@ Shows:
 ## Workflows
 
 ### Daily Workflow
-1. Run `lspec board` to see current state
+1. Run `lean-spec board` to see current state
 2. Update spec status as you work
 3. Review stats weekly
 
@@ -421,7 +421,7 @@ depends_on: [spec-b]
 View spec relationships:
 
 ```bash
-lspec deps <spec>
+lean-spec deps <spec>
 ```
 
 Shows:
@@ -434,7 +434,7 @@ Shows:
 1. **Use `related` by default** - It's simpler and matches most use cases
 2. **Reserve `depends_on` for true blocking dependencies**
 3. **Update once, show everywhere** - `related` only needs to be in one spec
-4. **Check dependencies** - Run `lspec deps` to see all relationships
+4. **Check dependencies** - Run `lean-spec deps` to see all relationships
 
 ## Patterns
 
@@ -474,13 +474,13 @@ Quality checks and complexity analysis.
 Check specs for quality issues:
 
 ```bash
-lspec validate
+lean-spec validate
 ```
 
 Validates all specs by default. Check specific specs:
 
 ```bash
-lspec validate <spec-1> <spec-2>
+lean-spec validate <spec-1> <spec-2>
 ```
 
 ## Quality Checks
@@ -511,20 +511,20 @@ Validation detects:
 
 ### Pre-Commit Check
 ```bash
-lspec validate
+lean-spec validate
 ```
 
 ### CI/CD Integration
 ```yaml
 # .github/workflows/validate.yml
 - name: Validate Specs
-  run: npx lspec validate
+  run: npx lean-spec validate
 ```
 
 ### Regular Review
 ```bash
 # Weekly spec health check
-lspec validate --max-lines 300
+lean-spec validate --max-lines 300
 ```
 
 ## Best Practices

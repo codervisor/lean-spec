@@ -79,7 +79,7 @@ README must immediately communicate:
 **Structure:**
 1. **Value Proposition Hook** (4-5 lines) - The problem we solve + why we're different
 2. **Quick Proof** (3-4 lines) - One concrete example showing flexibility
-3. **Install & Start** (5-7 lines) - `pnpm install` → `lspec init` → Done
+3. **Install & Start** (5-7 lines) - `pnpm install` → `lean-spec init` → Done
 4. **Core Commands** (5-7 lines) - Most common operations
 5. **Learn More** (2-3 lines) - Links to deeper docs for different audiences
 

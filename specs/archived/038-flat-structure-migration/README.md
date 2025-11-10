@@ -73,7 +73,7 @@ specs/
    - Change `pattern: 'flat'` (already correct)
    - Remove `prefix: '{YYYYMMDD}-'` (set to empty string by default)
 
-2. **Update `lspec init`**:
+2. **Update `lean-spec init`**:
    - New projects get flat structure
    - Remove date folder creation from init command
 
@@ -110,13 +110,13 @@ done
 rmdir specs/202*
 
 # Update config to flat
-lspec init --pattern flat --force
+lean-spec init --pattern flat --force
 ```
 
 ## Plan
 
 - [x] Update `DEFAULT_CONFIG` in `src/config.ts` - remove date prefix
-- [x] Update `lspec init` to use flat structure by default
+- [x] Update `lean-spec init` to use flat structure by default
 - [x] Create migration guide document
 - [x] Update README.md with flat structure examples
 - [x] Update AGENTS.md with new default structure
@@ -131,15 +131,15 @@ lspec init --pattern flat --force
 ## Test
 
 ### New Projects
-- [x] `lspec init` creates `specs/` (no date folder)
-- [x] `lspec create test` creates `specs/001-test/`
+- [x] `lean-spec init` creates `specs/` (no date folder)
+- [x] `lean-spec create test` creates `specs/001-test/`
 - [x] Next spec is `specs/002-another/`
 - [x] Sequence numbers are globally unique across entire project
 
 ### Existing Projects
 - [x] Projects with date folders continue working
 - [x] Config with `custom` pattern and `{YYYYMMDD}` extractor works
-- [x] `lspec list`, `lspec stats`, etc. work with both structures
+- [x] `lean-spec list`, `lean-spec stats`, etc. work with both structures
 
 ### Migration
 - [x] Manual migration steps documented and tested
@@ -208,9 +208,9 @@ Both flat structure (new default) and date-based structure (legacy) work correct
    ```
 
 4. ✅ **Verified migration**
-   - `lspec check` - No conflicts detected
-   - `lspec list` - All 39 specs listed correctly
-   - `lspec stats` - Statistics working properly
+   - `lean-spec check` - No conflicts detected
+   - `lean-spec list` - All 39 specs listed correctly
+   - `lean-spec stats` - Statistics working properly
    - `pnpm test` - All 152 tests passing
 
 ### Before Migration
@@ -248,9 +248,9 @@ specs/
 
 ## Post-Migration Fix
 
-### Issue: `lspec list` Rendering Problem
+### Issue: `lean-spec list` Rendering Problem
 
-After migrating to flat structure, `lspec list` had a rendering issue where all specs were grouped under `📂 unknown/` instead of being displayed properly.
+After migrating to flat structure, `lean-spec list` had a rendering issue where all specs were grouped under `📂 unknown/` instead of being displayed properly.
 
 **Root cause**: The `SpecListView` component was hardcoded to group specs by date pattern (`/^(\d{8})\//`), which doesn't work with flat structure paths like `001-feature-a/`.
 

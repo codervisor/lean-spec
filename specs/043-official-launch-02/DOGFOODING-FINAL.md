@@ -87,7 +87,7 @@
 - README serves as clear entry point to deeper content
 
 ### 2. Validation Tooling Works
-- `npx lspec validate` caught ALL violations automatically
+- `npx lean-spec validate` caught ALL violations automatically
 - No manual auditing needed
 - Line count warnings prevent future bloat
 - Demonstrates our tooling is effective

@@ -41,19 +41,19 @@ Current command structure doesn't align with user needs:
 **Command Changes:**
 ```bash
 # Before
-lspec analytics    # Too verbose
-lspec dashboard    # Separate command  
-lspec board        # Kanban only
+lean-spec analytics    # Too verbose
+lean-spec dashboard    # Separate command  
+lean-spec board        # Kanban only
 
 # After (v0.2.0)
-lspec stats             # Essential metrics (default)
-lspec stats --full      # Full analytics
-lspec board             # Kanban + health summary
-lspec board --simple    # Kanban only
+lean-spec stats             # Essential metrics (default)
+lean-spec stats --full      # Full analytics
+lean-spec board             # Kanban + health summary
+lean-spec board --simple    # Kanban only
 
 # REMOVED:
-lspec analytics    # → use `lspec stats`
-lspec dashboard    # → use `lspec board`
+lean-spec analytics    # → use `lean-spec stats`
+lean-spec dashboard    # → use `lean-spec board`
 ```
 
 ## Key Changes
@@ -93,8 +93,8 @@ Detailed information split for Context Economy:
 ### Breaking Changes
 
 **v0.2.0 removes**:
-- `lspec analytics` → use `lspec stats`
-- `lspec dashboard` → use `lspec board`
+- `lean-spec analytics` → use `lean-spec stats`
+- `lean-spec dashboard` → use `lean-spec board`
 
 Migration path documented in CHANGELOG.
 

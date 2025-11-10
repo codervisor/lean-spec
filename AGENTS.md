@@ -103,32 +103,32 @@ Skip specs for:
 
 ## Essential Commands
 
-**Discovery:**
-- `lspec list` - See all specs
-- `lspec search "<query>"` - Find relevant specs
+**Discovery:
+- `lean-spec list` - See all specs
+- `lean-spec search "<query>"` - Find relevant specs
 
 **Viewing specs:**
-- `lspec view <spec>` - View a spec (formatted)
-- `lspec view <spec>/DESIGN.md` - View sub-spec file (DESIGN.md, TESTING.md, etc.)
-- `lspec view <spec> --raw` - Get raw markdown (for parsing)
-- `lspec view <spec> --json` - Get structured JSON
-- `lspec open <spec>` - Open spec in editor
-- `lspec files <spec>` - List all files in a spec (including sub-specs)
+- `lean-spec view <spec>` - View a spec (formatted)
+- `lean-spec view <spec>/DESIGN.md` - View sub-spec file (DESIGN.md, TESTING.md, etc.)
+- `lean-spec view <spec> --raw` - Get raw markdown (for parsing)
+- `lean-spec view <spec> --json` - Get structured JSON
+- `lean-spec open <spec>` - Open spec in editor
+- `lean-spec files <spec>` - List all files in a spec (including sub-specs)
 
 **Project Overview:**
-- `lspec board` - Kanban view with project health summary
-- `lspec stats` - Quick project metrics and insights
-- `lspec stats --full` - Detailed analytics (all sections)
+- `lean-spec board` - Kanban view with project health summary
+- `lean-spec stats` - Quick project metrics and insights
+- `lean-spec stats --full` - Detailed analytics (all sections)
 
 **Working with specs:**
-- `lspec create <name>` - Create a new spec
-- `lspec update <spec> --status <status>` - Update spec status (REQUIRED - never edit frontmatter manually)
-- `lspec update <spec> --priority <priority>` - Update spec priority (REQUIRED - never edit frontmatter manually)
-- `lspec update <spec> --tags <tag1,tag2>` - Update spec tags (REQUIRED - never edit frontmatter manually)
-- `lspec update <spec> --assignee <name>` - Update spec assignee (REQUIRED - never edit frontmatter manually)
-- `lspec deps <spec>` - Show dependencies and relationships
+- `lean-spec create <name>` - Create a new spec
+- `lean-spec update <spec> --status <status>` - Update spec status (REQUIRED - never edit frontmatter manually)
+- `lean-spec update <spec> --priority <priority>` - Update spec priority (REQUIRED - never edit frontmatter manually)
+- `lean-spec update <spec> --tags <tag1,tag2>` - Update spec tags (REQUIRED - never edit frontmatter manually)
+- `lean-spec update <spec> --assignee <name>` - Update spec assignee (REQUIRED - never edit frontmatter manually)
+- `lean-spec deps <spec>` - Show dependencies and relationships
 
-**When in doubt:** Run `lspec --help` or `lspec <command> --help` to discover available commands and options.
+**When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover available commands and options.
 
 ## Understanding Spec Relationships
 
@@ -147,13 +147,13 @@ related: [043]
 # Spec 043 doesn't need to list 042
 ```
 
-Both `lspec deps 042` and `lspec deps 043` will show the relationship:
+Both `lean-spec deps 042` and `lean-spec deps 043` will show the relationship:
 ```bash
-$ lspec deps 042
+$ lean-spec deps 042
 Related Specs:
   ⟷ 043-official-launch-02 [in-progress]
 
-$ lspec deps 043  
+$ lean-spec deps 043  
 Related Specs:
   ⟷ 042-mcp-error-handling [complete]  # Automatically shown!
 ```
@@ -175,11 +175,11 @@ depends_on: [spec-b]
 ```
 
 ```bash
-$ lspec deps spec-a
+$ lean-spec deps spec-a
 Depends On:
   → spec-b [in-progress]  # A depends on B
 
-$ lspec deps spec-b
+$ lean-spec deps spec-b
 Required By:
   ← spec-a [planned]  # B is required by A
 ```
@@ -195,11 +195,11 @@ Required By:
 2. **Reserve `depends_on` for true blocking dependencies** - When work order matters
 ## SDD Workflow
 
-1. **Discover** - Check existing specs with `lspec list`
-2. **Plan** - Create spec with `lspec create <name>` when needed
+1. **Discover** - Check existing specs with `lean-spec list`
+2. **Plan** - Create spec with `lean-spec create <name>` when needed
 3. **Implement** - Write code, keep spec in sync as you learn
-4. **Update** - Mark progress with `lspec update <spec> --status <status>` (NEVER edit system-managed frontmatter directly)
-5. **Complete** - Mark complete with `lspec update <spec> --status complete`
+4. **Update** - Mark progress with `lean-spec update <spec> --status <status>` (NEVER edit system-managed frontmatter directly)
+5. **Complete** - Mark complete with `lean-spec update <spec> --status complete`
 
 **Critical - Frontmatter Editing Rules**:
 
@@ -210,7 +210,7 @@ Required By:
 
 **Currently MUST manually edit these relationship fields:**
 - `depends_on`, `related` - No CLI command exists yet, edit frontmatter directly
-- Be careful with syntax and use `lspec deps <spec>` to verify relationships
+- Be careful with syntax and use `lean-spec deps <spec>` to verify relationships
 5. **Complete** - Archive or mark complete when done
 
 ## Quality Standards
@@ -219,7 +219,7 @@ Required By:
 - Tests cover critical paths
 - Specs stay in sync with implementation
 - **Always validate before completing work:**
-  - Run `npx lspec validate` to check spec structure and frontmatter
+  - Run `npx lean-spec validate` to check spec structure and frontmatter
   - Run `cd docs-site && npm run build` to ensure documentation site builds successfully
   - Fix any validation errors or build failures before marking work complete
 
@@ -274,4 +274,4 @@ Use sub-spec files for complex features:
 
 ---
 
-**Remember**: LeanSpec is a mindset, not a rulebook. When in doubt, apply the first principles in order: Context Economy → Signal-to-Noise → Intent Over Implementation → Bridge the Gap → Progressive Disclosure. Use `lspec --help` to discover features as needed.
+**Remember**: LeanSpec is a mindset, not a rulebook. When in doubt, apply the first principles in order: Context Economy → Signal-to-Noise → Intent Over Implementation → Bridge the Gap → Progressive Disclosure. Use `lean-spec --help` to discover features as needed.

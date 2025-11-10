@@ -37,7 +37,7 @@
 1. **Dashboard Command** - Decided against creating a separate command
    - Reason: Functionality better distributed across enhanced `stats` and `board` commands
    - Keeps CLI surface area simpler
-   - No `lspec` default to dashboard (keeps help accessible)
+   - No `lean-spec` default to dashboard (keeps help accessible)
    - No separate dashboard.ts file
 
 2. **Timeline Command Deprecation** - Kept as-is
@@ -50,7 +50,7 @@
 ### Why No Dashboard Command?
 
 1. **Simplicity**: Enhanced `stats` and `board` provide comprehensive views without adding another command
-2. **Discoverability**: `lspec --help` remains the entry point (not a dashboard)
+2. **Discoverability**: `lean-spec --help` remains the entry point (not a dashboard)
 3. **Focused Commands**: Each command has a clear, distinct purpose
 4. **No Feature Loss**: All planned dashboard functionality available via stats/board
 
@@ -92,8 +92,8 @@ src/
 Users get:
 - Precise timestamp tracking for all specs
 - Velocity metrics proving SDD effectiveness
-- Enhanced `lspec stats` with multiple view modes
-- Enhanced `lspec board` with velocity insights
+- Enhanced `lean-spec stats` with multiple view modes
+- Enhanced `lean-spec board` with velocity insights
 - Smart insights highlighting what needs attention
 - Completion tracking and project health metrics
 

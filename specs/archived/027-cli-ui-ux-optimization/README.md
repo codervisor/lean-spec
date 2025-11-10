@@ -138,31 +138,31 @@ Build reusable Ink components:
 
 ### Enhanced Commands
 
-**`lspec list`** - Interactive tree view:
+**`lean-spec list`** - Interactive tree view:
 - Group by date with collapsible sections
 - Filter with `j/k` keys, select with space
 - Show inline previews (first line of spec)
 - Responsive columns that adapt to terminal width
 
-**`lspec stats`** - Rich dashboard:
+**`lean-spec stats`** - Rich dashboard:
 - Multiple panels (status, priority, tags, timeline)
 - Bar charts for distribution
 - Sparklines for trends over time
 - Color gradients for visual appeal
 
-**`lspec board`** - Enhanced kanban:
+**`lean-spec board`** - Enhanced kanban:
 - Prettier cards with rounded corners
 - Syntax-highlighted metadata
 - Drag-and-drop to change status (with arrow keys)
 - Live updates if specs change
 
-**`lspec search`** - Rich results:
+**`lean-spec search`** - Rich results:
 - Highlight matching text
 - Context snippets with line numbers
 - Preview pane for selected result
 - Fuzzy matching scores
 
-**`lspec timeline/gantt`** - Visual timeline:
+**`lean-spec timeline/gantt`** - Visual timeline:
 - Rich ASCII chart with colors
 - Milestone markers
 - Dependencies shown with lines/arrows

@@ -33,14 +33,14 @@ transitions:
 **Confusion points:**
 1. **`related` appears bidirectional but isn't** - If spec A has `related: [B]`, the `deps` command shows it from A's perspective but not automatically from B's
 2. **`depends_on` vs `related` unclear** - When should you use which?
-3. **Display confusion** - "Related" vs "Related By" sections in `lspec deps` output
+3. **Display confusion** - "Related" vs "Related By" sections in `lean-spec deps` output
 4. **Symmetry expectations** - Users expect `related` to be symmetric (if A relates to B, then B relates to A)
 
 **Current behavior:**
 ```bash
 # Spec 042 has: related: [043]
-lspec deps 042  # Shows: Related → 043
-lspec deps 043  # Shows: Related By ← 042  (had to add this!)
+lean-spec deps 042  # Shows: Related → 043
+lean-spec deps 043  # Shows: Related By ← 042  (had to add this!)
 ```
 
 **Why this matters:**
@@ -56,7 +56,7 @@ lspec deps 043  # Shows: Related By ← 042  (had to add this!)
 
 **Implementation:**
 - `related` field means "this spec is related to these specs" (one-way declaration)
-- `lspec deps` shows bidirectional view automatically
+- `lean-spec deps` shows bidirectional view automatically
 - Remove "Related" vs "Related By" distinction - just show "Related Specs"
 - Merge both directions into single list
 
@@ -71,11 +71,11 @@ related: []  # Doesn't need to list 042
 
 **Output:**
 ```bash
-lspec deps 042
+lean-spec deps 042
 Related Specs:
   ⟷ 043-official-launch-02 [in-progress]
 
-lspec deps 043
+lean-spec deps 043
 Related Specs:
   ⟷ 042-mcp-error-handling [in-progress]  # Automatically shown!
 ```
@@ -118,9 +118,9 @@ blocks: [spec-id]      # This spec blocks these specs (inverse of depends_on)
 
 **Introduce relationship commands:**
 ```bash
-lspec relate 042 043      # Links both specs bidirectionally
-lspec unrelate 042 043    # Removes from both
-lspec deps 042 --sync     # Auto-sync relationships
+lean-spec relate 042 043      # Links both specs bidirectionally
+lean-spec unrelate 042 043    # Removes from both
+lean-spec deps 042 --sync     # Auto-sync relationships
 ```
 
 **Implementation:**
@@ -198,8 +198,8 @@ relationships:
 - [ ] Document: "related = bidirectional, depends_on = directional blocking"
 
 ### Phase 3: Consider Enhanced Commands (Optional)
-- [ ] Add `lspec relate <spec-a> <spec-b>` convenience command
-- [ ] Add `lspec unrelate <spec-a> <spec-b>` 
+- [ ] Add `lean-spec relate <spec-a> <spec-b>` convenience command
+- [ ] Add `lean-spec unrelate <spec-a> <spec-b>` 
 - [ ] Consider `--sync` flag to auto-update both sides
 - [ ] Defer if not needed for v0.2.0
 
@@ -212,10 +212,10 @@ relationships:
 ## Test
 
 ### Bidirectional Behavior
-- [ ] Spec A has `related: [B]`, `lspec deps A` shows B
-- [ ] `lspec deps B` also shows A (bidirectional)
+- [ ] Spec A has `related: [B]`, `lean-spec deps A` shows B
+- [ ] `lean-spec deps B` also shows A (bidirectional)
 - [ ] Spec C has `depends_on: [D]`, shows directionally only
-- [ ] `lspec deps D` shows "Blocks: C" (inverse)
+- [ ] `lean-spec deps D` shows "Blocks: C" (inverse)
 - [ ] Combined test: A related to B, A depends on C
 
 ### UX Clarity
@@ -246,8 +246,8 @@ relationships:
 related: [043]
 
 // Command output is asymmetric:
-lspec deps 042  // Related: 043
-lspec deps 043  // Related By: 042
+lean-spec deps 042  // Related: 043
+lean-spec deps 043  // Related By: 042
 ```
 
 **The confusion:**
@@ -297,7 +297,7 @@ lspec deps 043  // Related By: 042
 
 ### Open Questions
 
-1. **Should `lspec relate` command auto-edit both specs?**
+1. **Should `lean-spec relate` command auto-edit both specs?**
    - Pro: Maintains consistency
    - Con: More complex, can wait for v0.3.0
 

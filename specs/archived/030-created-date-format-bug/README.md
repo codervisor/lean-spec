@@ -17,7 +17,7 @@ completed: '2025-11-03'
 
 ## Overview
 
-The `lspec create` command creates spec files with a `created` field in the frontmatter. The intended format is `YYYY-MM-DD` (e.g., `2025-11-03`), but after the file is written, the field appears as a full ISO 8601 date string: `2025-11-03T00:00:00.000Z`.
+The `lean-spec create` command creates spec files with a `created` field in the frontmatter. The intended format is `YYYY-MM-DD` (e.g., `2025-11-03`), but after the file is written, the field appears as a full ISO 8601 date string: `2025-11-03T00:00:00.000Z`.
 
 **Root Cause**: 
 - `gray-matter` automatically parses YAML dates into JavaScript `Date` objects
@@ -61,10 +61,10 @@ The `FAILSAFE_SCHEMA` prevents automatic type coercion, keeping dates as strings
 
 ## Test
 
-- [ ] Create a new spec: `lspec create test-spec` - verify `created` field is `YYYY-MM-DD`
-- [ ] Create with tags: `lspec create test-spec --tags=foo` - verify `created` remains `YYYY-MM-DD`
-- [ ] Create with custom fields: `lspec create test-spec --field epic=123` - verify format preserved
-- [ ] Update existing spec: `lspec update test-spec --status=in-progress` - verify dates stay formatted
+- [ ] Create a new spec: `lean-spec create test-spec` - verify `created` field is `YYYY-MM-DD`
+- [ ] Create with tags: `lean-spec create test-spec --tags=foo` - verify `created` remains `YYYY-MM-DD`
+- [ ] Create with custom fields: `lean-spec create test-spec --field epic=123` - verify format preserved
+- [ ] Update existing spec: `lean-spec update test-spec --status=in-progress` - verify dates stay formatted
 - [ ] Run full test suite: `pnpm test` - all existing tests pass
 
 ## Notes
@@ -77,7 +77,7 @@ The `FAILSAFE_SCHEMA` prevents automatic type coercion, keeping dates as strings
 **Reproduction**:
 ```bash
 # This spec itself demonstrates the bug - check the frontmatter above
-lspec create test-spec --tags=demo
+lean-spec create test-spec --tags=demo
 cat specs/*/test-spec/README.md | head -5
 # created: 2025-11-03T00:00:00.000Z  <- BUG
 ```

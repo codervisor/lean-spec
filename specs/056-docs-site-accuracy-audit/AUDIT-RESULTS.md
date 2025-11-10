@@ -114,8 +114,8 @@
 
 ### Command Examples Updated
 ```diff
-- lspec update specs/20251102/001-feature --status=in-progress
-+ lspec update 001 --status=in-progress
+- lean-spec update specs/20251102/001-feature --status=in-progress
++ lean-spec update 001 --status=in-progress
 ```
 
 ## Testing Performed

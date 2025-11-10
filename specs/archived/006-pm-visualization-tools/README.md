@@ -28,15 +28,15 @@ Once specs have structured frontmatter (status, tags, priority, dependencies), w
 ### Commands Overview
 
 ```bash
-lspec stats              # Quick summary stats
-lspec board              # Kanban view by status
-lspec timeline           # Creation/completion over time
-lspec gantt              # Timeline with dependencies
-lspec deps <spec>        # Dependency graph
-lspec search <query>     # Full-text + metadata search
+lean-spec stats              # Quick summary stats
+lean-spec board              # Kanban view by status
+lean-spec timeline           # Creation/completion over time
+lean-spec gantt              # Timeline with dependencies
+lean-spec deps <spec>        # Dependency graph
+lean-spec search <query>     # Full-text + metadata search
 ```
 
-### 1. `lspec stats`
+### 1. `lean-spec stats`
 
 Show aggregate statistics across all specs.
 
@@ -70,7 +70,7 @@ Total Specs: 48
 - `--assignee=alice` - Filter by assignee
 - `--json` - Output as JSON for scripting
 
-### 2. `lspec board`
+### 2. `lean-spec board`
 
 Kanban-style board view grouped by status.
 
@@ -104,7 +104,7 @@ Kanban-style board view grouped by status.
 - `--tag=api` - Filter by tag
 - `--assignee=alice` - Filter by assignee
 
-### 3. `lspec timeline`
+### 3. `lean-spec timeline`
 
 Visualize spec creation and completion over time.
 
@@ -129,7 +129,7 @@ Completion Rate:
 - `--by-tag` - Group by tag
 - `--by-assignee` - Group by assignee
 
-### 4. `lspec gantt`
+### 4. `lean-spec gantt`
 
 Timeline view with dependencies (requires `depends_on` and optional `due` dates).
 
@@ -156,7 +156,7 @@ Nov 1    Nov 8    Nov 15   Nov 22
 - `--show-complete` - Include completed specs
 - `--critical-path` - Highlight critical path
 
-### 5. `lspec deps <spec>`
+### 5. `lean-spec deps <spec>`
 
 Show dependency graph for a specific spec.
 
@@ -184,13 +184,13 @@ Dependency Chain:
 - `--graph` - ASCII graph visualization
 - `--json` - Output as JSON
 
-### 6. `lspec search <query>`
+### 6. `lean-spec search <query>`
 
 Full-text search with metadata filters.
 
 **Output:**
 ```bash
-$ lspec search "api" --status=planned --priority=high
+$ lean-spec search "api" --status=planned --priority=high
 
 🔍 Found 2 specs matching "api"
 
@@ -222,7 +222,7 @@ $ lspec search "api" --status=planned --priority=high
 **Interactive vs Static Mode:**
 - Default commands output static text (fast, scriptable)
 - Add `--interactive` or `-i` flag for TUI mode
-- Example: `lspec board --interactive` launches Ink TUI
+- Example: `lean-spec board --interactive` launches Ink TUI
 
 **Performance:**
 - Cache parsed frontmatter to avoid re-reading files
@@ -237,12 +237,12 @@ $ lspec search "api" --status=planned --priority=high
 
 ## Plan
 
-- [ ] Implement `lspec stats` command
-- [ ] Implement `lspec board` command (static output)
-- [ ] Implement `lspec timeline` command
-- [ ] Implement `lspec deps` command with graph visualization
-- [ ] Implement `lspec gantt` command
-- [ ] Implement `lspec search` command with full-text + metadata
+- [ ] Implement `lean-spec stats` command
+- [ ] Implement `lean-spec board` command (static output)
+- [ ] Implement `lean-spec timeline` command
+- [ ] Implement `lean-spec deps` command with graph visualization
+- [ ] Implement `lean-spec gantt` command
+- [ ] Implement `lean-spec search` command with full-text + metadata
 - [ ] Add caching layer for better performance
 - [ ] Add `--json` and `--markdown` output formats
 - [ ] Implement interactive TUI mode with Ink
@@ -254,12 +254,12 @@ $ lspec search "api" --status=planned --priority=high
 
 ## Test
 
-- [ ] `lspec stats` shows correct counts across all specs
-- [ ] `lspec board` groups specs by status correctly
-- [ ] `lspec timeline` aggregates by date accurately
-- [ ] `lspec deps` resolves dependency chains correctly
-- [ ] `lspec gantt` displays timeline with proper dependencies
-- [ ] `lspec search` finds specs by content and metadata
+- [ ] `lean-spec stats` shows correct counts across all specs
+- [ ] `lean-spec board` groups specs by status correctly
+- [ ] `lean-spec timeline` aggregates by date accurately
+- [ ] `lean-spec deps` resolves dependency chains correctly
+- [ ] `lean-spec gantt` displays timeline with proper dependencies
+- [ ] `lean-spec search` finds specs by content and metadata
 - [ ] Commands work with 100+ specs (performance)
 - [ ] `--json` output is valid and parseable
 - [ ] Color output respects NO_COLOR environment variable
@@ -282,9 +282,9 @@ Many teams avoid heavy PM tools but still need visibility. By building on struct
 ### Progressive Enhancement
 
 Users can adopt these tools gradually:
-1. Start with basic `lspec list`
-2. Add frontmatter → unlock `lspec stats`
-3. Add dependencies → unlock `lspec deps` and `lspec gantt`
+1. Start with basic `lean-spec list`
+2. Add frontmatter → unlock `lean-spec stats`
+3. Add dependencies → unlock `lean-spec deps` and `lean-spec gantt`
 4. Add due dates → unlock timeline planning
 
 ### Inspiration
@@ -301,9 +301,9 @@ Build an interactive board using Ink (React for CLI):
 
 **Command:**
 ```bash
-lspec board --interactive
+lean-spec board --interactive
 # or shorthand
-lspec board -i
+lean-spec board -i
 ```
 
 **TUI Features:**
@@ -354,8 +354,8 @@ lspec board -i
 │ Build powerful PM/project visibility tools...             │
 │                                                           │
 │ Plan:                                                     │
-│ ☐ Implement lspec stats command                          │
-│ ☐ Implement lspec board command                          │
+│ ☐ Implement lean-spec stats command                          │
+│ ☐ Implement lean-spec board command                          │
 │ ...                                                       │
 └──────────────────────────────────────────────────────────┘
 │ s: Change Status  Esc: Back  e: Edit in $EDITOR          │

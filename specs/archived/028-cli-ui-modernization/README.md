@@ -19,7 +19,7 @@ completed: '2025-11-03'
 ## Overview
 
 The current CLI UI has two main issues:
-1. **Output is too scattered** - Components like `lspec stats`, `lspec board`, and `lspec list` have excessive spacing between elements, making the output feel bloated and hard to scan
+1. **Output is too scattered** - Components like `lean-spec stats`, `lean-spec board`, and `lean-spec list` have excessive spacing between elements, making the output feel bloated and hard to scan
 2. **Rainbow gradients feel dated** - The `ink-gradient` rainbow effect on titles doesn't match modern CLI aesthetics (see GitHub CLI, Vercel CLI, etc.)
 
 This impacts user experience by making the tool feel less polished and harder to use efficiently.
@@ -72,17 +72,17 @@ This impacts user experience by making the tool feel less polished and harder to
 - [x] Update `SpecListView.tsx`
 - [x] Fix border alignment issues in Board component
 - [x] Add vertical line separators in SpecListView
-- [x] Modernize `lspec timeline` output
-- [x] Test with `lspec stats`, `lspec board`, `lspec list`
+- [x] Modernize `lean-spec timeline` output
+- [x] Test with `lean-spec stats`, `lean-spec board`, `lean-spec list`
 
 ## Test
 
 Manual verification:
-- [x] Run `lspec stats` - output is compact, colors modern
-- [x] Run `lspec board` - columns are tighter, title not rainbow, borders aligned
-- [x] Run `lspec list` - date groups closer together, clean colors, vertical lines
-- [x] Run `lspec list --tag=cli` - filter info is compact
-- [x] Run `lspec timeline` - modern output with better bars and formatting
+- [x] Run `lean-spec stats` - output is compact, colors modern
+- [x] Run `lean-spec board` - columns are tighter, title not rainbow, borders aligned
+- [x] Run `lean-spec list` - date groups closer together, clean colors, vertical lines
+- [x] Run `lean-spec list --tag=cli` - filter info is compact
+- [x] Run `lean-spec timeline` - modern output with better bars and formatting
 - [x] Overall: Less vertical scrolling required, cleaner aesthetic
 
 Visual quality checks:
@@ -133,7 +133,7 @@ Visual quality checks:
 - String `.padEnd()` works on character count, not visual width
 - This makes it nearly impossible to align text after emojis consistently
 
-**Current issues in `lspec stats`:**
+**Current issues in `lean-spec stats`:**
 1. Status Distribution bars not perfectly aligned despite using `.padEnd(13)`
 2. Priority Breakdown bars not perfectly aligned despite using `.padEnd(13)`
 3. The alignment looks different in different terminals

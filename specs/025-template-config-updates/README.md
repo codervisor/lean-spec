@@ -62,7 +62,7 @@ Each template should have a sensible default `folderPattern`:
 ## Test
 
 - [ ] All templates use new config format
-- [ ] `lspec init` works with each template
+- [ ] `lean-spec init` works with each template
 - [ ] Config merging works correctly
 - [ ] Backward compatibility maintained
 

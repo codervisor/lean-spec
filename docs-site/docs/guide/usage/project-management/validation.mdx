@@ -16,13 +16,13 @@ The `validate` command checks specs against quality standards defined by the [Fi
 Check specs for quality issues:
 
 ```bash
-lspec validate
+lean-spec validate
 ```
 
 Validates all specs by default. Check specific specs:
 
 ```bash
-lspec validate <spec-1> <spec-2>
+lean-spec validate <spec-1> <spec-2>
 ```
 
 ## Quality Checks
@@ -75,7 +75,7 @@ Checks spec organization:
 ### Clean Validation
 
 ```bash
-$ lspec validate
+$ lean-spec validate
 
 ✅ All specs valid!
 
@@ -88,7 +88,7 @@ Summary:
 ### With Warnings
 
 ```bash
-$ lspec validate
+$ lean-spec validate
 
 ⚠️  Warnings found:
 
@@ -105,7 +105,7 @@ Summary:
 ### With Errors
 
 ```bash
-$ lspec validate
+$ lean-spec validate
 
 ❌ Errors found:
 
@@ -129,23 +129,23 @@ Summary:
 
 ```bash
 # Stricter threshold
-lspec validate --max-lines 250
+lean-spec validate --max-lines 250
 
 # More lenient threshold
-lspec validate --max-lines 500
+lean-spec validate --max-lines 500
 ```
 
 ### Validate Specific Aspects
 
 ```bash
 # Only check line counts
-lspec validate --check lines
+lean-spec validate --check lines
 
 # Only check frontmatter
-lspec validate --check frontmatter
+lean-spec validate --check frontmatter
 
 # Only check structure
-lspec validate --check structure
+lean-spec validate --check structure
 ```
 
 ## Complexity Analysis
@@ -201,17 +201,17 @@ IMPLEMENTATION.md (150 lines) ✅ - Implementation plan
 
 **Problem**: Invalid or missing frontmatter fields
 
-**Solution**: Use `lspec update` to fix:
+**Solution**: Use `lean-spec update` to fix:
 
 ```bash
 # Fix status
-lspec update <spec> --status in-progress
+lean-spec update <spec> --status in-progress
 
 # Fix priority
-lspec update <spec> --priority high
+lean-spec update <spec> --priority high
 
 # Fix tags
-lspec update <spec> --tags feature,api
+lean-spec update <spec> --tags feature,api
 ```
 
 ### Structure Issues
@@ -230,7 +230,7 @@ lspec update <spec> --tags feature,api
 Run before committing:
 
 ```bash
-lspec validate
+lean-spec validate
 ```
 
 Fix any errors before committing changes.
@@ -252,7 +252,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - run: npm install -g lean-spec
-      - run: lspec validate
+      - run: lean-spec validate
 ```
 
 ### Regular Review
@@ -261,13 +261,13 @@ Weekly spec health check:
 
 ```bash
 # Check overall health
-lspec validate
+lean-spec validate
 
 # Detailed analysis
-lspec stats --full
+lean-spec stats --full
 
 # Review large specs
-lspec validate --max-lines 300
+lean-spec validate --max-lines 300
 ```
 
 ## Best Practices
@@ -314,14 +314,14 @@ Always re-evaluate later.
 
 - Run validation before commits
 - Use `--max-lines` for stricter checks during reviews
-- Combine with `lspec stats` for overall project health
+- Combine with `lean-spec stats` for overall project health
 - Address errors immediately, warnings within sprint
 - Automate in CI/CD for team consistency
 
 ## Example Validation Report
 
 ```bash
-$ lspec validate
+$ lean-spec validate
 
 🔍 Validating 45 specs...
 

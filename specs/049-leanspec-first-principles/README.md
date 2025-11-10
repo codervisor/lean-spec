@@ -221,10 +221,10 @@ See **[OPERATIONALIZATION.md](OPERATIONALIZATION.md)** for complete strategy.
 **Three Layers Required:**
 
 1. **Tooling** - Make principles easy to follow
-   - `lspec validate --max-lines 400`
-   - `lspec complexity <spec>`
-   - `lspec health` (project-wide check)
-   - `lspec split <spec>` (guided splitting)
+   - `lean-spec validate --max-lines 400`
+   - `lean-spec complexity <spec>`
+   - `lean-spec health` (project-wide check)
+   - `lean-spec split <spec>` (guided splitting)
 
 2. **Culture** - Make principles expected
    - Review checklist includes first principles
@@ -252,15 +252,15 @@ See **[OPERATIONALIZATION.md](OPERATIONALIZATION.md)** for complete strategy.
 - [ ] Document 300/400/600 line thresholds clearly
 
 ### Phase 2: Detection (v0.2.0)
-- [ ] Implement `lspec validate --max-lines 400`
-- [ ] Implement `lspec complexity <spec>` 
-- [ ] Implement `lspec health` (project-wide check)
-- [ ] Add warnings in `lspec list` for large specs
+- [ ] Implement `lean-spec validate --max-lines 400`
+- [ ] Implement `lean-spec complexity <spec>` 
+- [ ] Implement `lean-spec health` (project-wide check)
+- [ ] Add warnings in `lean-spec list` for large specs
 - [ ] Add frontmatter warning for specs >300 lines
 
 ### Phase 3: Guidance (v0.3.0)
-- [ ] Implement `lspec split <spec>` (interactive splitting)
-- [ ] Implement `lspec files <spec>` (list sub-specs)
+- [ ] Implement `lean-spec split <spec>` (interactive splitting)
+- [ ] Implement `lean-spec files <spec>` (list sub-specs)
 - [ ] Add AI-powered simplification suggestions
 - [ ] Create splitting wizard with best practices
 
@@ -314,7 +314,7 @@ We'll know operationalization succeeded when:
 1. **Update README.md** - Add "Core Principles" section with 5 first principles
 2. **Update AGENTS.md** - Add conflict resolution framework for AI agents
 3. **Dogfood** - Review specs 048 (591 lines) and 045 (1,166 lines) for splitting
-4. **Implement basic validation** - Start with `lspec validate --max-lines` command
+4. **Implement basic validation** - Start with `lean-spec validate --max-lines` command
 
 ### Future Work
 

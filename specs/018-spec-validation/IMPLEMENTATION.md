@@ -1,8 +1,8 @@
 # Implementation Plan
 
-8-phase implementation plan for the `lspec validate` command.
+8-phase implementation plan for the `lean-spec validate` command.
 
-**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command to keep sequence checking and quality validation as separate concerns.
+**Note:** This spec originally proposed expanding `lean-spec check`, but the implementation created `lean-spec validate` as a separate command to keep sequence checking and quality validation as separate concerns.
 
 ## Status
 
@@ -20,7 +20,7 @@
 - [x] Created validation framework architecture
 - [x] Implemented `ValidationRule` interface
 - [x] Created `LineCountValidator` with warning/error thresholds
-- [x] Implemented `lspec validate` command with `--max-lines` flag
+- [x] Implemented `lean-spec validate` command with `--max-lines` flag
 - [x] Added integration tests
 - [x] Documented in README
 
@@ -43,7 +43,7 @@
 - [x] Validate date formats (ISO 8601: YYYY-MM-DD or full timestamp)
 - [x] Validate tags format (must be array)
 - [x] Add comprehensive unit tests (27 tests passing)
-- [x] Integrate with `lspec validate` command
+- [x] Integrate with `lean-spec validate` command
 - [ ] Validate custom fields (if defined in config) - deferred to future phase
 - [ ] Add `--frontmatter` flag for selective validation - deferred to future phase
 
@@ -71,7 +71,7 @@
 - [x] Check for empty sections (with proper subsection handling)
 - [x] Detect duplicate section headers
 - [x] Add comprehensive unit tests (17 tests passing)
-- [x] Integrate with `lspec validate` command
+- [x] Integrate with `lean-spec validate` command
 - [x] Test against real repository specs
 
 **Notes:** 
@@ -96,7 +96,7 @@
 - [x] Detect content fragments (partial duplicates / merge artifacts)
 - [x] Validate markdown structure (unclosed formatting)
 - [x] Add comprehensive unit tests (19 tests passing)
-- [x] Integrate with `lspec validate` command
+- [x] Integrate with `lean-spec validate` command
 - [x] Test against real repository specs
 
 **Notes:** 
@@ -123,7 +123,7 @@
 - [x] Detect orphaned sub-spec files (not linked from README)
 - [x] Validate cross-document references
 - [x] Add comprehensive unit tests (16 tests passing)
-- [x] Integrate with `lspec validate` command
+- [x] Integrate with `lean-spec validate` command
 - [ ] Check for content duplication across sub-specs (deferred - complex analysis)
 
 **Notes:** 
@@ -148,7 +148,7 @@
 - [ ] Detect TODO/FIXME in complete specs
 - [ ] Validate internal links
 - [ ] Check for placeholder text
-- [ ] Integrate with `lspec validate --content` flag
+- [ ] Integrate with `lean-spec validate --content` flag
 
 **Notes:** 
 - Nice to have, can defer to v0.3.0 if time-constrained
@@ -167,7 +167,7 @@
 - [ ] Warn on in-progress specs > 30 days
 - [ ] Warn on no updates > 90 days
 - [ ] Warn on planned specs > 60 days
-- [ ] Integrate with `lspec validate --staleness` flag
+- [ ] Integrate with `lean-spec validate --staleness` flag
 
 **Notes:** 
 - Useful for maintenance
@@ -181,7 +181,7 @@
 **Goal:** Automatically fix common issues
 
 **Tasks:**
-- [ ] Implement --fix flag for `lspec validate`
+- [ ] Implement --fix flag for `lean-spec validate`
 - [ ] Add missing frontmatter fields
 - [ ] Format dates to ISO 8601
 - [ ] Sort frontmatter fields
@@ -290,24 +290,24 @@ See [TESTING.md](./TESTING.md) for detailed test plan.
 
 1. **Run initial validation:**
    ```bash
-   lspec validate --max-lines 400
+   lean-spec validate --max-lines 400
    ```
 
 2. **Review and fix issues:**
    ```bash
-   lspec validate --fix  # When auto-fix is available
-   lspec validate        # Verify fixes
+   lean-spec validate --fix  # When auto-fix is available
+   lean-spec validate        # Verify fixes
    ```
 
 3. **Enable in CI:**
    ```yaml
-   - run: lspec validate --strict --format=json
+   - run: lean-spec validate --strict --format=json
    ```
 
 4. **Add pre-commit hook:**
    ```bash
-   lspec check           # Sequence conflicts
-   lspec validate        # Quality validation
+   lean-spec check           # Sequence conflicts
+   lean-spec validate        # Quality validation
    ```
 
 ### For New Projects
@@ -318,7 +318,7 @@ See [TESTING.md](./TESTING.md) for detailed test plan.
 
 ## Alternative Approaches Considered
 
-### Separate `lspec validate` Command
+### Separate `lean-spec validate` Command
 
 **Pros:** 
 - Clear separation of concerns

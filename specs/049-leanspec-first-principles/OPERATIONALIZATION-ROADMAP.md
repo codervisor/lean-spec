@@ -106,10 +106,10 @@ Track:
 **3. Usage Metrics**
 
 Track tool usage:
-- `lspec validate` runs per week
-- `lspec complexity` checks
-- `lspec split` usage
-- `lspec files` navigation
+- `lean-spec validate` runs per week
+- `lean-spec complexity` checks
+- `lean-spec split` usage
+- `lean-spec files` navigation
 
 ### Alerting
 
@@ -169,15 +169,15 @@ Improve based on usage:
 - [ ] Update review checklist
 
 ### Phase 2: Detection (v0.2.0)
-- [ ] Implement `lspec validate --max-lines`
-- [ ] Implement `lspec complexity <spec>`
-- [ ] Implement `lspec health`
-- [ ] Add warnings to `lspec list` for large specs
+- [ ] Implement `lean-spec validate --max-lines`
+- [ ] Implement `lean-spec complexity <spec>`
+- [ ] Implement `lean-spec health`
+- [ ] Add warnings to `lean-spec list` for large specs
 
 ### Phase 3: Guidance (v0.3.0)
-- [ ] Implement `lspec split <spec>` (interactive)
-- [ ] Implement `lspec simplify <spec>` (suggestions)
-- [ ] Implement `lspec files <spec>` (sub-spec nav)
+- [ ] Implement `lean-spec split <spec>` (interactive)
+- [ ] Implement `lean-spec simplify <spec>` (suggestions)
+- [ ] Implement `lean-spec files <spec>` (sub-spec nav)
 - [ ] Add AI-powered complexity analysis
 
 ### Phase 4: Prevention (v0.3.0+)

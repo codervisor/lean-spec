@@ -27,7 +27,7 @@ transitions:
 
 ## Overview
 
-Redesign `lspec validate` output to follow mainstream lint tool conventions (ESLint, TypeScript, Prettier, etc.) for better consistency, clarity, and developer familiarity.
+Redesign `lean-spec validate` output to follow mainstream lint tool conventions (ESLint, TypeScript, Prettier, etc.) for better consistency, clarity, and developer familiarity.
 
 **Current Problems:**
 
@@ -80,7 +80,7 @@ Code style issues found. Run `prettier --write` to fix.
 Show each spec once with all its issues grouped together:
 
 ```bash
-$ lspec validate
+$ lean-spec validate
 
 Validating 25 specs...
 
@@ -170,7 +170,7 @@ Only show specs with issues, summarize clean specs:
 Show passing specs only when requested:
 
 ```bash
-$ lspec validate --verbose
+$ lean-spec validate --verbose
 
 # ... issues shown first ...
 
@@ -254,19 +254,19 @@ If all pass:
 
 ```bash
 # Default: Show only issues, quiet success
-lspec validate
+lean-spec validate
 
 # Show everything including passing specs
-lspec validate --verbose
+lean-spec validate --verbose
 
 # Only errors, no warnings
-lspec validate --quiet
+lean-spec validate --quiet
 
 # JSON for CI integration
-lspec validate --format=json
+lean-spec validate --format=json
 
 # Check only line count issues
-lspec validate --rule=max-lines
+lean-spec validate --rule=max-lines
 ```
 
 ### Implementation Strategy
@@ -334,7 +334,7 @@ lspec validate --rule=max-lines
 - [ ] `--format=json` produces valid JSON output
 - [ ] Exit code 0 for warnings-only, 1 for errors (unchanged)
 - [ ] Snapshot tests for output format stability
-- [ ] Real repository test: `lspec validate` on lean-spec itself
+- [ ] Real repository test: `lean-spec validate` on lean-spec itself
 
 **Success Criteria:**
 
@@ -399,7 +399,7 @@ Cons: Noisy output, hard to spot issues
 
 ### Future Enhancements (Post v0.2.0)
 
-- **Auto-fix support:** `lspec validate --fix` (aligns with ESLint)
-- **Watch mode:** `lspec validate --watch` (continuous validation)
+- **Auto-fix support:** `lean-spec validate --fix` (aligns with ESLint)
+- **Watch mode:** `lean-spec validate --watch` (continuous validation)
 - **Custom formatters:** Plugin system for CI-specific formats
 - **Rule configuration:** `.lspec/rules.json` to disable/configure rules

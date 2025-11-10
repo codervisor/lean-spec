@@ -29,7 +29,7 @@ This page provides a quick reference of all available fields. For usage examples
 **Format:** `YYYY-MM-DD`  
 **Description:** Date when spec was created
 
-Auto-filled by `lspec create`.
+Auto-filled by `lean-spec create`.
 
 ## Optional Fields
 
@@ -54,7 +54,7 @@ tags: [api, security, mvp]
 **Type:** `array`  
 **Description:** Related specs (bidirectional soft reference)
 
-Specs listed here are shown bidirectionally in `lspec deps`. If spec A has `related: [B]`, both A and B will show the relationship.
+Specs listed here are shown bidirectionally in `lean-spec deps`. If spec A has `related: [B]`, both A and B will show the relationship.
 
 **Example:**
 ```yaml
@@ -73,7 +73,7 @@ related: [042-mcp-error-handling, 037-docs-overhaul]
 **Type:** `array`  
 **Description:** Hard dependencies (directional blocking)
 
-Spec cannot start until dependencies complete. Shows directionally in `lspec deps`.
+Spec cannot start until dependencies complete. Shows directionally in `lean-spec deps`.
 
 **Example:**
 ```yaml

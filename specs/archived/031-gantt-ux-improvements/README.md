@@ -15,7 +15,7 @@ completed: '2025-11-03'
 
 ## Overview
 
-The current `lspec gantt` command has significant UX/UI issues that make it confusing and not very useful:
+The current `lean-spec gantt` command has significant UX/UI issues that make it confusing and not very useful:
 
 **Current Problems:**
 
@@ -140,10 +140,10 @@ Summary: 1 in-progress · 7 planned · 0 overdue
 ## Recommendation: Option A + Option B Hybrid
 
 Implement **Option A** as the default view (priority-grouped timeline), and add **flags**:
-- `lspec gantt` - Priority-grouped with timelines (Option A)
-- `lspec gantt --deps` - Dependency-focused view (Option B)
-- `lspec gantt --compact` - Ultra-compact list view
-- `lspec gantt --traditional` - Classic gantt with all metadata (current style)
+- `lean-spec gantt` - Priority-grouped with timelines (Option A)
+- `lean-spec gantt --deps` - Dependency-focused view (Option B)
+- `lean-spec gantt --compact` - Ultra-compact list view
+- `lean-spec gantt --traditional` - Classic gantt with all metadata (current style)
 
 ## Plan
 

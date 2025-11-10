@@ -22,16 +22,16 @@
 ## Part 1: Enhanced Stats Command Tests
 
 ### Backward Compatibility
-- [ ] `lspec stats` outputs same format as before (no breaking changes)
-- [ ] `lspec stats --json` matches existing JSON schema
+- [ ] `lean-spec stats` outputs same format as before (no breaking changes)
+- [ ] `lean-spec stats --json` matches existing JSON schema
 - [ ] All existing filter options work (--tag, --assignee, --priority)
 
 ### New Timeline Integration
-- [ ] `lspec stats --timeline` adds timeline section after stats
-- [ ] `lspec stats --history` shows full historical view
-- [ ] `lspec stats --velocity` shows cycle time analysis
-- [ ] `lspec stats --all` combines everything
-- [ ] Timeline data matches previous `lspec timeline` output
+- [ ] `lean-spec stats --timeline` adds timeline section after stats
+- [ ] `lean-spec stats --history` shows full historical view
+- [ ] `lean-spec stats --velocity` shows cycle time analysis
+- [ ] `lean-spec stats --all` combines everything
+- [ ] Timeline data matches previous `lean-spec timeline` output
 
 ### Velocity Calculations
 - [ ] Cycle time accurate (created_at → completed_at)
@@ -62,7 +62,7 @@
 #### Empty Project
 - [ ] Shows "No specs found" with init hint
 - [ ] No sections rendered (clean state)
-- [ ] Suggests `lspec init` to get started
+- [ ] Suggests `lean-spec init` to get started
 
 #### Small Project (< 10 specs)
 - [ ] All in-progress specs visible
@@ -125,15 +125,15 @@
 ### Integration Tests
 
 #### Command Flow
-- [ ] `lspec` defaults to dashboard
-- [ ] `lspec dashboard` explicitly shows dashboard
-- [ ] Dashboard → `lspec list` → dashboard (workflow)
+- [ ] `lean-spec` defaults to dashboard
+- [ ] `lean-spec dashboard` explicitly shows dashboard
+- [ ] Dashboard → `lean-spec list` → dashboard (workflow)
 - [ ] Dashboard respects .lspec/config.json
 
 #### Cross-Command Consistency
-- [ ] Dashboard counts match `lspec list` counts
-- [ ] Dashboard stats match `lspec stats` output
-- [ ] Dashboard activity matches `lspec stats --timeline`
+- [ ] Dashboard counts match `lean-spec list` counts
+- [ ] Dashboard stats match `lean-spec stats` output
+- [ ] Dashboard activity matches `lean-spec stats --timeline`
 
 ### Visual Tests
 
@@ -157,14 +157,14 @@
 
 ### Regression Tests
 - [ ] Existing commands unaffected (list, board, gantt, deps)
-- [ ] `lspec stats` backward compatible
+- [ ] `lean-spec stats` backward compatible
 - [ ] JSON output schemas unchanged (where applicable)
 - [ ] All existing tests still pass
 
 ## Success Criteria
 
 ### User Experience
-- [ ] New user runs `lspec`, immediately understands project state
+- [ ] New user runs `lean-spec`, immediately understands project state
 - [ ] < 5 seconds to identify what needs attention
 - [ ] Existing users don't notice breaking changes
 - [ ] Smooth migration from timeline to stats --history

@@ -55,11 +55,11 @@ Foundation for velocity metrics:
   - [ ] `velocity.max_wip: 5` (concurrent specs)
 
 ### Part C: Testing
-- [ ] Test `lspec stats` (default behavior unchanged)
-- [ ] Test `lspec stats --timeline` (integrated view)
-- [ ] Test `lspec stats --history` (full timeline)
-- [ ] Test `lspec stats --velocity` (cycle time analysis)
-- [ ] Test `lspec stats --all` (comprehensive)
+- [ ] Test `lean-spec stats` (default behavior unchanged)
+- [ ] Test `lean-spec stats --timeline` (integrated view)
+- [ ] Test `lean-spec stats --history` (full timeline)
+- [ ] Test `lean-spec stats --velocity` (cycle time analysis)
+- [ ] Test `lean-spec stats --all` (comprehensive)
 - [ ] Test velocity calculations with mock data
 - [ ] Test graceful degradation (specs without timestamps)
 - [ ] Verify backward compatibility
@@ -77,8 +77,8 @@ Foundation for velocity metrics:
 - [ ] Add helpful footer with command hints
 
 ### Part B: CLI integration
-- [ ] Make `lspec` (no args) default to dashboard
-- [ ] Add explicit `lspec dashboard` command
+- [ ] Make `lean-spec` (no args) default to dashboard
+- [ ] Add explicit `lean-spec dashboard` command
 - [ ] Support all filter options (--tag, --status, etc.)
 - [ ] Add display options (--compact, --expand-active)
 - [ ] Add JSON output mode (--json)
@@ -123,18 +123,18 @@ Foundation for velocity metrics:
 
 ### AGENTS.md updates
 - [ ] Update AI instructions to use dashboard first
-- [ ] Document `lspec stats --timeline` pattern
+- [ ] Document `lean-spec stats --timeline` pattern
 - [ ] Update command examples
 
 ### Help text
-- [ ] Update `lspec --help` to show dashboard first
-- [ ] Add examples to `lspec dashboard --help`
-- [ ] Update `lspec stats --help` with new flags
+- [ ] Update `lean-spec --help` to show dashboard first
+- [ ] Add examples to `lean-spec dashboard --help`
+- [ ] Update `lean-spec stats --help` with new flags
 
 ## Phase 5: Migration & Deprecation (v0.3.0)
 
 ### Add deprecation warnings
-- [ ] `lspec timeline` → "Use 'lspec stats --history' instead"
+- [ ] `lean-spec timeline` → "Use 'lean-spec stats --history' instead"
 - [ ] Show migration hints in output
 - [ ] Update CHANGELOG with deprecation notice
 

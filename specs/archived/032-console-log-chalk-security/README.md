@@ -29,7 +29,7 @@ completed: '2025-11-03'
 
 **Attack Vector Example**:
 ```
-lspec create "\x1b[0m\x1b[31mFAKE ERROR\x1b[0m"
+lean-spec create "\x1b[0m\x1b[31mFAKE ERROR\x1b[0m"
 ```
 
 ## Design
@@ -86,4 +86,4 @@ lspec create "\x1b[0m\x1b[31mFAKE ERROR\x1b[0m"
 - 40+ instances found across 7 files
 - Most concentrated in `board.ts` (18), `search.ts` (8), `files.ts` (9)
 
-**Severity**: High - This affects all user-facing output and could be exploited in automated environments or CI/CD pipelines where lspec commands process untrusted input.
+**Severity**: High - This affects all user-facing output and could be exploited in automated environments or CI/CD pipelines where lean-spec commands process untrusted input.

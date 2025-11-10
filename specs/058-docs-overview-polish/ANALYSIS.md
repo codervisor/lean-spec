@@ -214,7 +214,7 @@ Roadmap
 ### Automated
 1. Build docs-site without errors
 2. Check for broken links (link checker)
-3. Validate spec structure (`lspec validate`)
+3. Validate spec structure (`lean-spec validate`)
 4. Search functionality still works
 
 ### Manual

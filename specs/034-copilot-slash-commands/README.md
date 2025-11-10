@@ -30,8 +30,8 @@ Add LeanSpec integration directly into VS Code via GitHub Copilot Chat using sla
 **Implementation Options:**
 
 **Option A: Chat Participant** (Recommended)
-- Register `@lspec` chat participant via VS Code extension
-- Natural language interactions: `@lspec what's the status of auth system?`
+- Register `@lean-spec` chat participant via VS Code extension
+- Natural language interactions: `@lean-spec what's the status of auth system?`
 - Context-aware: can reference open files, workspace, current work
 
 **Option B: Slash Commands**
@@ -40,11 +40,11 @@ Add LeanSpec integration directly into VS Code via GitHub Copilot Chat using sla
 - Fallback if participant API has limitations
 
 **Key Features:**
-- `/lspec search <query>` or `@lspec search for authentication specs`
-- `/lspec status` or `@lspec show me what's in progress`
-- `/lspec create` or `@lspec help me create a spec for this feature`
-- `/lspec read <spec>` or `@lspec show me the API redesign spec`
-- `/lspec update <spec> --status <status>` or `@lspec mark auth-system as complete`
+- `/lean-spec search <query>` or `@lean-spec search for authentication specs`
+- `/lean-spec status` or `@lean-spec show me what's in progress`
+- `/lean-spec create` or `@lean-spec help me create a spec for this feature`
+- `/lean-spec read <spec>` or `@lean-spec show me the API redesign spec`
+- `/lean-spec update <spec> --status <status>` or `@lean-spec mark auth-system as complete`
 
 **Context Integration:**
 - Automatically detect related specs based on open files

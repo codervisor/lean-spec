@@ -12,7 +12,7 @@ Get instant visibility into your project's health with LeanSpec's board and stat
 Visual kanban view of your specs:
 
 ```bash
-lspec board
+lean-spec board
 ```
 
 Shows specs organized by status columns:
@@ -34,13 +34,13 @@ Filter the board view:
 
 ```bash
 # Show only high priority specs
-lspec board --priority high
+lean-spec board --priority high
 
 # Show specs with specific tag
-lspec board --tag feature
+lean-spec board --tag feature
 
 # Combine filters
-lspec board --priority high --tag api
+lean-spec board --priority high --tag api
 ```
 
 ## Stats Command
@@ -48,7 +48,7 @@ lspec board --priority high --tag api
 Quick project metrics:
 
 ```bash
-lspec stats
+lean-spec stats
 ```
 
 Shows:
@@ -63,7 +63,7 @@ Shows:
 Get detailed analytics:
 
 ```bash
-lspec stats --full
+lean-spec stats --full
 ```
 
 Provides comprehensive project insights:
@@ -80,39 +80,39 @@ Provides comprehensive project insights:
 
 ```bash
 # Quick project overview
-lspec board
+lean-spec board
 
 # See what's in progress
-lspec board --status in-progress
+lean-spec board --status in-progress
 
 # Check high priority items
-lspec board --priority high
+lean-spec board --priority high
 ```
 
 ### Sprint Planning
 
 ```bash
 # Review project health
-lspec stats --full
+lean-spec stats --full
 
 # See what's ready to start
-lspec board --status planned
+lean-spec board --status planned
 
 # Check capacity
-lspec stats
+lean-spec stats
 ```
 
 ### Weekly Review
 
 ```bash
 # Overall project metrics
-lspec stats --full
+lean-spec stats --full
 
 # Review completed work
-lspec board --status complete
+lean-spec board --status complete
 
 # Identify bottlenecks
-lspec board --status in-progress
+lean-spec board --status in-progress
 ```
 
 ## Project Health Indicators
@@ -133,17 +133,17 @@ The board and stats commands help identify:
 
 ## Best Practices
 
-1. **Check daily** - Start your day with `lspec board`
-2. **Review weekly** - Use `lspec stats --full` for trends
+1. **Check daily** - Start your day with `lean-spec board`
+2. **Review weekly** - Use `lean-spec stats --full` for trends
 3. **Limit WIP** - Keep in-progress specs under control
-4. **Update regularly** - Keep status current with `lspec update`
+4. **Update regularly** - Keep status current with `lean-spec update`
 5. **Use priorities** - Focus on high-priority work first
 
 ## Tips
 
-- Use `lspec board` for visual overview
-- Use `lspec stats` for quick metrics
-- Combine with `lspec deps` to understand dependencies
+- Use `lean-spec board` for visual overview
+- Use `lean-spec stats` for quick metrics
+- Combine with `lean-spec deps` to understand dependencies
 - Export stats for reporting (pipe to file or tools)
 - Use filtering to focus on specific areas
 

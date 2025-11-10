@@ -22,7 +22,7 @@ transitions:
 > **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-03 · **Tags**: ux, polish, v0.2.0
 
 
-> Make `lspec list` adapt to flat vs date-grouped folder patterns
+> Make `lean-spec list` adapt to flat vs date-grouped folder patterns
 
 ## Overview
 
@@ -34,7 +34,7 @@ Currently `list.ts` has hardcoded date grouping logic that assumes the `{YYYYMMD
 
 ## Design
 
-Make `lspec list` respect the configured folder pattern:
+Make `lean-spec list` respect the configured folder pattern:
 
 1. **For date-grouped patterns** (contains `{YYYYMMDD}/`):
    - Group by date as it does now

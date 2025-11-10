@@ -12,7 +12,7 @@ completed: 2025-11-01
 
 ## Goal
 
-Support `lspec init` on projects with existing `AGENTS.md` or system prompts without clobbering their content.
+Support `lean-spec init` on projects with existing `AGENTS.md` or system prompts without clobbering their content.
 
 ## Key Scenarios
 
@@ -26,7 +26,7 @@ Support `lspec init` on projects with existing `AGENTS.md` or system prompts wit
 - [x] Interactive prompt: merge, backup, or skip
 - [x] If merge: append LeanSpec section with clear delimiter
 - [x] If backup: rename to `AGENTS.md.backup`, create new
-- [x] If skip: don't touch existing files, only add lspec structure
+- [x] If skip: don't touch existing files, only add lean-spec structure
 
 ## Implementation
 
@@ -55,7 +55,7 @@ Basic test script created: `test-integration.sh`
 Manual testing:
 ```bash
 cd /tmp/lspec-test-existing
-node /path/to/lspec init
+node /path/to/lean-spec init
 # Choose merge/backup/skip and verify behavior
 ```
 

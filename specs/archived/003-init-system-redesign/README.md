@@ -17,11 +17,11 @@ completed: 2025-10-31
 
 ## Overview
 
-LeanSpec should help projects adopt Spec-Driven Development through `lspec init`. Current system only manages individual specs. We need project initialization that sets up the entire working model: spec structure, AI agent instructions, examples, and customizable conventions.
+LeanSpec should help projects adopt Spec-Driven Development through `lean-spec init`. Current system only manages individual specs. We need project initialization that sets up the entire working model: spec structure, AI agent instructions, examples, and customizable conventions.
 
 ## Objectives
 
-- `lspec init` command with one interactive question, three paths
+- `lean-spec init` command with one interactive question, three paths
 - Templates become full project initialization bundles (not just spec formats)
 - Spec structure uses folders: `specs/YYYYMMDD/NNN-name/README.md` (not flat files)
 - Config system: `.lspec/config.json` for project-specific customization
@@ -38,7 +38,7 @@ LeanSpec should help projects adopt Spec-Driven Development through `lspec init`
 
 ### Init Flow
 ```
-$ lspec init
+$ lean-spec init
 
 ? How would you like to set up?
   > Quick start (recommended)     - solo-dev defaults, immediate
@@ -94,7 +94,7 @@ templates/
 
 ## Success Criteria
 
-- [ ] `lspec init` works with one question, three paths
+- [ ] `lean-spec init` works with one question, three paths
 - [ ] Quick start takes <2 seconds, zero additional input
 - [ ] Templates include full working model (AGENTS.md, examples)
 - [ ] Specs created as folders with README.md

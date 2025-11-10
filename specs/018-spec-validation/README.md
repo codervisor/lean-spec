@@ -30,8 +30,8 @@ completed: '2025-11-06'
 Provide comprehensive validation tooling that checks specs for quality issues including structure, frontmatter, content, sequence conflicts, and **file corruption**.
 
 **Current State:**
-- ✅ `lspec check` exists - checks sequence conflicts only
-- ✅ `lspec validate` exists - comprehensive validation framework
+- ✅ `lean-spec check` exists - checks sequence conflicts only
+- ✅ `lean-spec validate` exists - comprehensive validation framework
 - ✅ **Line count validation** - warns at 300 lines, errors at 400+ lines
 - ✅ **Frontmatter validation** - enforces required fields and valid values
 - ✅ **Structure validation** - duplicate headers, required sections
@@ -40,20 +40,20 @@ Provide comprehensive validation tooling that checks specs for quality issues in
 - ❌ No auto-fix capability (optional, future phase)
 
 **Implementation Approach:**
-Both `lspec check` and `lspec validate` exist as separate commands:
+Both `lean-spec check` and `lean-spec validate` exist as separate commands:
 
 ```bash
 # Current commands
-lspec check                    # Check for sequence conflicts
-lspec validate [specs...]      # Validate specs for quality issues
-lspec validate --max-lines 500 # Custom line limit
+lean-spec check                    # Check for sequence conflicts
+lean-spec validate [specs...]      # Validate specs for quality issues
+lean-spec validate --max-lines 500 # Custom line limit
 
 # Planned enhancements
-lspec validate --frontmatter   # Frontmatter validation
-lspec validate --structure     # Structure validation
-lspec validate --corruption    # File corruption detection
-lspec validate --sub-specs     # Sub-spec validation (spec 012)
-lspec validate --all           # All validation rules
+lean-spec validate --frontmatter   # Frontmatter validation
+lean-spec validate --structure     # Structure validation
+lean-spec validate --corruption    # File corruption detection
+lean-spec validate --sub-specs     # Sub-spec validation (spec 012)
+lean-spec validate --all           # All validation rules
 ```
 
 **Use Cases:**
@@ -68,7 +68,7 @@ lspec validate --all           # All validation rules
 
 **What Success Looks Like:**
 ```bash
-$ lspec validate --all
+$ lean-spec validate --all
 Validating specs...
 
 Line Count:
@@ -148,16 +148,16 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 ## Design Decision
 
-**Implementation Note:** The original design proposed expanding `lspec check` into a unified validation command. However, the implementation created a separate `lspec validate` command instead, keeping both commands focused:
+**Implementation Note:** The original design proposed expanding `lean-spec check` into a unified validation command. However, the implementation created a separate `lean-spec validate` command instead, keeping both commands focused:
 
-- **`lspec check`** - Fast sequence conflict detection
-- **`lspec validate`** - Comprehensive quality validation
+- **`lean-spec check`** - Fast sequence conflict detection
+- **`lean-spec validate`** - Comprehensive quality validation
 
 **Rationale for Separate Commands:**
 
 1. **Clear separation of concerns:** Sequence checking is fast and targeted; validation is comprehensive
 2. **Performance:** Users can run quick checks without full validation overhead
-3. **Backwards compatible:** Existing `lspec check` behavior unchanged
+3. **Backwards compatible:** Existing `lean-spec check` behavior unchanged
 4. **Incremental adoption:** Can add validation rules without affecting check command
 5. **Clearer intent:** `validate` explicitly signals quality checking
 
@@ -170,15 +170,15 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 
 | Version | Commands Available |
 |---------|--------------------|
-| v0.1.0 | `lspec check` (sequence conflicts only) |
-| v0.2.0+ | `lspec check` (sequences) + `lspec validate` (line counts) |
+| v0.1.0 | `lean-spec check` (sequence conflicts only) |
+| v0.2.0+ | `lean-spec check` (sequences) + `lean-spec validate` (line counts) |
 | v0.3.0+ | Both commands with comprehensive validation rules |
 
 ## Launch Strategy
 
 **v0.2.0 Scope (Current):**
-- ✅ `lspec check` for sequence conflicts
-- ✅ `lspec validate` with basic framework and line count validation
+- ✅ `lean-spec check` for sequence conflicts
+- ✅ `lean-spec validate` with basic framework and line count validation
 - ⏳ Expand validation rules in upcoming phases
 
 **v0.3.0 Scope:**
@@ -201,7 +201,7 @@ See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 **✅ Completed (Phases 1a, 1b, 2, 3, 3.5):**
 - ✅ Validation framework architecture
 - ✅ **Phase 1a:** `LineCountValidator` with warning/error thresholds (300 line warning, 400 line error)
-- ✅ **Phase 1a:** `lspec validate` command with `--max-lines` flag
+- ✅ **Phase 1a:** `lean-spec validate` command with `--max-lines` flag
 - ✅ **Phase 1b:** `FrontmatterValidator` for comprehensive frontmatter validation
   - Required fields (status, created)
   - Valid status/priority values  
@@ -238,7 +238,7 @@ See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed plan.
 
 **📊 Current Validation Results (2025-11-05):**
 ```bash
-$ lspec validate
+$ lean-spec validate
 Results: 25 specs validated, 5 error(s), 6 warning(s)
 
 Errors found:
@@ -283,16 +283,16 @@ This addresses real pain points we've experienced:
 **Integration:**
 ```bash
 # CI/CD - Quick sequence check
-lspec check
+lean-spec check
 
 # CI/CD - Comprehensive validation
-lspec validate --all --format=json
+lean-spec validate --all --format=json
 
 # Pre-commit hook - Fast validation
-lspec validate --max-lines 400
+lean-spec validate --max-lines 400
 
 # Manual comprehensive check
-lspec validate --all --fix
+lean-spec validate --all --fix
 ```
 
 **References:**

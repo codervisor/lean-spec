@@ -41,7 +41,7 @@ Publish LeanSpec to npm registry to make it available for global installation an
 - ⚠️ Homepage: Add project homepage
 - ⚠️ Bugs: Add issues URL
 - ⚠️ Author: Verify author info
-- ✅ Bin: `lspec` command defined
+- ✅ Bin: `lean-spec` command defined
 
 **Build Configuration:**
 - ✅ TypeScript compilation working
@@ -159,7 +159,7 @@ git push origin v0.1.0
 - [ ] Publish: `npm publish` (or `npm publish --access public` if scoped)
 - [ ] Verify on npm: https://www.npmjs.com/package/lean-spec
 - [ ] Test installation: `npm install -g lean-spec`
-- [ ] Test CLI works: `lspec --version`
+- [ ] Test CLI works: `lean-spec --version`
 
 ### Phase 4: Git Tagging & Release
 - [ ] Tag release: `git tag v0.1.0`
@@ -185,10 +185,10 @@ git push origin v0.1.0
 
 ### Post-Publishing Tests
 - [x] `npm link` for local testing ✅
-- [x] `lspec --version` shows correct version ✅ 0.1.0
-- [x] `lspec --help` displays help ✅
-- [x] `lspec init` works in fresh directory ✅
-- [x] `lspec create test` creates a spec ✅
+- [x] `lean-spec --version` shows correct version ✅ 0.1.0
+- [x] `lean-spec --help` displays help ✅
+- [x] `lean-spec init` works in fresh directory ✅
+- [x] `lean-spec create test` creates a spec ✅
 - [x] All commands work after global install ✅
 - [ ] `npm install -g lean-spec` works (after publishing)
 - [ ] Works on macOS, Linux (test in CI)

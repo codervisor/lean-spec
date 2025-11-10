@@ -119,8 +119,8 @@ More robust, consistent with existing variable system, enables richer templates.
 - [ ] Missing fields don't break template (empty string or default)
 
 ### Integration
-- [ ] `lspec create test --field priority=high` shows "Priority: high" in body
-- [ ] `lspec create test --field status=in-progress` shows correct status
+- [ ] `lean-spec create test --field priority=high` shows "Priority: high" in body
+- [ ] `lean-spec create test --field status=in-progress` shows correct status
 - [ ] Array fields like tags display correctly
 - [ ] Existing specs without variables still work
 
@@ -174,13 +174,13 @@ Implemented Solution 1 (frontmatter variables in variable resolver) as recommend
 
 ```bash
 # Create spec with high priority - body shows "Priority: High"
-lspec create my-feature --priority high
+lean-spec create my-feature --priority high
 
 # Create spec with tags - frontmatter and body stay in sync
-lspec create api-feature --tags api,backend
+lean-spec create api-feature --tags api,backend
 
 # Enterprise template with assignee
-lspec create project --assignee alice
+lean-spec create project --assignee alice
 ```
 
 ### Benefits Delivered

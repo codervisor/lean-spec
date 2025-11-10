@@ -129,14 +129,14 @@ export function enrichWithTimestamps(
 ## Part 1: Unified Analytics Command
 
 ### Command Structure
-Keep `lspec stats` (backward compatible), enhanced with velocity modes:
+Keep `lean-spec stats` (backward compatible), enhanced with velocity modes:
 
 ```bash
-lspec stats              # Default: current stats (unchanged)
-lspec stats --timeline   # Add timeline section
-lspec stats --history    # Full historical view (current timeline command)
-lspec stats --velocity   # NEW: Cycle time & throughput analysis
-lspec stats --all        # Everything (stats + timeline + velocity)
+lean-spec stats              # Default: current stats (unchanged)
+lean-spec stats --timeline   # Add timeline section
+lean-spec stats --history    # Full historical view (current timeline command)
+lean-spec stats --velocity   # NEW: Cycle time & throughput analysis
+lean-spec stats --all        # Everything (stats + timeline + velocity)
 ```
 
 ### Velocity Section Output
@@ -181,7 +181,7 @@ Velocity Trend
 ### Original Design (for reference):
 
 ### Command
-`lspec` (no args) or `lspec dashboard`
+`lean-spec` (no args) or `lean-spec dashboard`
 
 ### Purpose
 Quick project health overview combining:
@@ -224,7 +224,7 @@ Quick project health overview combining:
   WIP:             5 specs (healthy)
 
 ─────────────────────────────────────────────────────────────
-💡 Commands: lspec list | lspec board | lspec stats --velocity
+💡 Commands: lean-spec list | lean-spec board | lean-spec stats --velocity
 ```
 
 ### Smart Insights
@@ -235,22 +235,22 @@ Quick project health overview combining:
 
 ### Display Options
 ```bash
-lspec                      # Full dashboard
-lspec dashboard            # Explicit
-lspec --compact            # Minimal (just health + attention)
-lspec --expand-active      # Show all in-progress (not just top 5)
-lspec --json               # JSON for tooling
+lean-spec                      # Full dashboard
+lean-spec dashboard            # Explicit
+lean-spec --compact            # Minimal (just health + attention)
+lean-spec --expand-active      # Show all in-progress (not just top 5)
+lean-spec --json               # JSON for tooling
 ```
 
 ### vs. Individual Commands
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `lspec` | Quick overview | Daily standup, "what's happening?" |
-| `lspec list` | Browse/search specs | Find specific spec, apply filters |
-| `lspec board` | Kanban workflow | Sprint planning, status changes |
-| `lspec gantt` | Timeline planning | Schedule work, see deadlines |
-| `lspec stats` | Deep analytics | Metrics review, team performance |
+| `lean-spec` | Quick overview | Daily standup, "what's happening?" |
+| `lean-spec list` | Browse/search specs | Find specific spec, apply filters |
+| `lean-spec board` | Kanban workflow | Sprint planning, status changes |
+| `lean-spec gantt` | Timeline planning | Schedule work, see deadlines |
+| `lean-spec stats` | Deep analytics | Metrics review, team performance |
 
 ## Command Organization Philosophy
 
@@ -265,7 +265,7 @@ lspec --json               # JSON for tooling
 - `timeline` - Redundant with stats (merge in)
 
 ### Dashboard (new - quick overview)
-- `lspec` - Glanceable project health
+- `lean-spec` - Glanceable project health
 - Entry point for daily use
 - Directs to PM commands for detail
 
@@ -324,16 +324,16 @@ Make `stats` the comprehensive analytics command:
 
 Show top 3-5 items max, then "and N more need attention"
 
-## Why `lspec` Should Default to Dashboard
+## Why `lean-spec` Should Default to Dashboard
 
 ### Current behavior
-`lspec` shows help
+`lean-spec` shows help
 
 ### Proposed
-`lspec` shows dashboard
+`lean-spec` shows dashboard
 
 ### Reasoning
-- Help still accessible via `lspec --help`
+- Help still accessible via `lean-spec --help`
 - Dashboard is most frequently needed view
 - Matches modern CLI patterns (gh, git status at root)
 - Better new user experience (show, don't tell)
@@ -342,11 +342,11 @@ Show top 3-5 items max, then "and N more need attention"
 ### User flow
 ```bash
 cd my-project
-lspec                    # Quick overview (dashboard)
+lean-spec                    # Quick overview (dashboard)
 # See something interesting...
-lspec list --tag bug     # Drill down
-lspec board              # Change status
-lspec                    # Check dashboard again
+lean-spec list --tag bug     # Drill down
+lean-spec board              # Change status
+lean-spec                    # Check dashboard again
 ```
 
 ## Velocity Configuration

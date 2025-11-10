@@ -18,18 +18,18 @@
 5. Keep all analytics functionality (just rename command)
 
 **Breaking Change (v0.2.0):**
-- `lspec analytics` removed → use `lspec stats`
+- `lean-spec analytics` removed → use `lean-spec stats`
 - Note in CHANGELOG as breaking change
 - Update all documentation immediately
 
 ### Part 2: Simplify Default Stats Output
 
-**Current Problem**: `lspec stats` shows everything (status, priority, tags, timeline, velocity)
+**Current Problem**: `lean-spec stats` shows everything (status, priority, tags, timeline, velocity)
 - Too much info for quick check-ins
 - Takes time to render
 - Overwhelming for PMs
 
-**New Default Output** (`lspec stats`):
+**New Default Output** (`lean-spec stats`):
 ```
 📊 Spec Stats
 
@@ -57,7 +57,7 @@
   Throughput       2.8/week ↑
   WIP              5 specs
 
-💡 Use `lspec stats --full` for detailed analytics
+💡 Use `lean-spec stats --full` for detailed analytics
 ```
 
 **Key Changes:**
@@ -68,10 +68,10 @@
 - **Velocity summary** - Key metrics only (not full breakdown)
 - **Clear next action** - Prompt for `--full` if they want more
 
-**Full Stats Output** (`lspec stats --full`):
+**Full Stats Output** (`lean-spec stats --full`):
 - Everything from current analytics command
 - Stats + Timeline + Velocity (all sections)
-- Equivalent to current `lspec analytics` output
+- Equivalent to current `lean-spec analytics` output
 
 ### Part 3: Integrate Smart Insights into Stats
 
@@ -130,9 +130,9 @@ Show top 5 items, then "and N more need attention"
 - **Velocity snapshot** - Key metrics only
 
 **Options:**
-- `lspec board` - Default (with health summary)
-- `lspec board --simple` - Original kanban-only view (no health box)
-- `lspec board --health-only` - Just show health box, no kanban
+- `lean-spec board` - Default (with health summary)
+- `lean-spec board --simple` - Original kanban-only view (no health box)
+- `lean-spec board --health-only` - Just show health box, no kanban
 
 **Implementation:**
 - Extract health calculation to `utils/health.ts`
@@ -143,15 +143,15 @@ Show top 5 items, then "and N more need attention"
 
 **Why Remove?**
 - With enhanced board + simplified stats, dashboard is redundant
-- Users can get overview from `lspec board`
-- Detailed analytics from `lspec stats --full`
+- Users can get overview from `lean-spec board`
+- Detailed analytics from `lean-spec stats --full`
 - Reduces command sprawl
 
 **Migration Path:**
 ```
-lspec dashboard              → lspec board
-lspec dashboard --compact    → lspec board --health-only
-lspec dashboard --json       → lspec stats --json
+lean-spec dashboard              → lean-spec board
+lean-spec dashboard --compact    → lean-spec board --health-only
+lean-spec dashboard --json       → lean-spec stats --json
 ```
 
 **Removal Strategy (v0.2.0):**

@@ -50,9 +50,9 @@ Consolidate analytics commands and add velocity tracking to measure SDD effectiv
 
 **Before (v0.1.x):**
 ```bash
-lspec stats      # Basic metrics only
-lspec timeline   # Separate timeline view
-lspec board      # Basic Kanban
+lean-spec stats      # Basic metrics only
+lean-spec timeline   # Separate timeline view
+lean-spec board      # Basic Kanban
 # No velocity tracking
 # No timestamp precision
 ```
@@ -60,16 +60,16 @@ lspec board      # Basic Kanban
 **After (v0.2.0):**
 ```bash
 # Enhanced Stats Command
-lspec stats              # Simplified view with insights
-lspec stats --timeline   # Add timeline section
-lspec stats --velocity   # Cycle time analysis
-lspec stats --full       # Everything combined
+lean-spec stats              # Simplified view with insights
+lean-spec stats --timeline   # Add timeline section
+lean-spec stats --velocity   # Cycle time analysis
+lean-spec stats --full       # Everything combined
 
 # Enhanced Board Command  
-lspec board              # Now includes velocity summary
+lean-spec board              # Now includes velocity summary
 
 # Timeline Command
-lspec timeline           # Still works (not deprecated)
+lean-spec timeline           # Still works (not deprecated)
 
 # Velocity tracking active
 # Precise timestamps in frontmatter
@@ -93,10 +93,10 @@ Comprehensive velocity tracking implemented in `src/utils/velocity.ts`:
 
 ### ✅ 3. Enhanced Stats Command
 Completely redesigned stats command with multiple views:
-- `lspec stats` → New simplified view with insights (default) - **IMPLEMENTED**
-- `lspec stats --timeline` → Add timeline section - **IMPLEMENTED**
-- `lspec stats --velocity` → Show cycle time analysis - **IMPLEMENTED**
-- `lspec stats --full` → Everything combined (old analytics style) - **IMPLEMENTED**
+- `lean-spec stats` → New simplified view with insights (default) - **IMPLEMENTED**
+- `lean-spec stats --timeline` → Add timeline section - **IMPLEMENTED**
+- `lean-spec stats --velocity` → Show cycle time analysis - **IMPLEMENTED**
+- `lean-spec stats --full` → Everything combined (old analytics style) - **IMPLEMENTED**
 - Smart insights and completion tracking - **IMPLEMENTED**
 
 ### ✅ 4. Board Command Enhancements
@@ -116,28 +116,28 @@ Decision: Instead of creating a separate dashboard command, the functionality wa
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `lspec list` | Browse/search specs | Find specific spec, apply filters |
-| `lspec board` | Kanban workflow + velocity | Sprint planning, project health |
-| `lspec stats` | Comprehensive analytics | Deep metrics, velocity analysis |
-| `lspec timeline` | Historical trends | Activity over time |
+| `lean-spec list` | Browse/search specs | Find specific spec, apply filters |
+| `lean-spec board` | Kanban workflow + velocity | Sprint planning, project health |
+| `lean-spec stats` | Comprehensive analytics | Deep metrics, velocity analysis |
+| `lean-spec timeline` | Historical trends | Activity over time |
 
 ### Stats Output Examples
 
 **Simplified view (default):**
 ```bash
-lspec stats
+lean-spec stats
 # Shows: Overview, Status, Priority Focus, Needs Attention, Velocity Summary
 ```
 
 **Velocity analysis:**
 ```bash
-lspec stats --velocity
+lean-spec stats --velocity
 # Shows: Cycle Time, Lead Time, Throughput, WIP metrics
 ```
 
 **Full analytics:**
 ```bash
-lspec stats --full
+lean-spec stats --full
 # Shows: Everything combined (stats + timeline + velocity)
 ```
 
@@ -187,7 +187,7 @@ None - standalone feature for v0.2.0
 ### Design Decisions
 
 **Why no separate dashboard command?**
-- Decided against `lspec` defaulting to dashboard (keeps help accessible)
+- Decided against `lean-spec` defaulting to dashboard (keeps help accessible)
 - Enhanced `stats` and `board` commands provide comprehensive views
 - Simpler CLI surface area (fewer commands to learn)
 - Functionality distributed where it makes most sense

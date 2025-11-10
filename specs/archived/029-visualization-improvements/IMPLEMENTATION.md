@@ -49,9 +49,9 @@ Fixed priority colors to follow intuitive traffic light convention:
 - All existing tests pass (106 tests)
 - No compilation errors
 - **All visualization commands tested and working:**
-  - `lspec board` - Ink-based, new icons/colors ✓
-  - `lspec stats` - Chalk-based (simplified), new icons/colors ✓
-  - `lspec timeline` - Chalk-based (unchanged) ✓
+  - `lean-spec board` - Ink-based, new icons/colors ✓
+  - `lean-spec stats` - Chalk-based (simplified), new icons/colors ✓
+  - `lean-spec timeline` - Chalk-based (unchanged) ✓
 
 ### 5. Stats Command Simplification ✅
 **Issue**: Stats was using complex Ink components (Panel, KeyValueList) which could cause issues
@@ -141,12 +141,12 @@ All tests passing ✓
 
 ### Working Commands:
 ```bash
-lspec board              # ✅ Ink-based, new icons and colors
-lspec stats              # ✅ Chalk-based, new icons/colors, aligned output with headers
-lspec timeline           # ✅ Chalk-based (unchanged)
+lean-spec board              # ✅ Ink-based, new icons and colors
+lean-spec stats              # ✅ Chalk-based, new icons/colors, aligned output with headers
+lean-spec timeline           # ✅ Chalk-based (unchanged)
 ```
 
 ### Broken Command:
 ```bash
-lspec gantt --weeks 6    # ❌ React Date object error
+lean-spec gantt --weeks 6    # ❌ React Date object error
 ```

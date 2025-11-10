@@ -134,9 +134,9 @@ cd docs-site && npm run build
 ```
 
 All examples tested against actual CLI:
-- ✅ `lspec init` prompts match docs
-- ✅ `lspec create` output matches examples
-- ✅ `lspec list` format matches docs
+- ✅ `lean-spec init` prompts match docs
+- ✅ `lean-spec create` output matches examples
+- ✅ `lean-spec list` format matches docs
 - ✅ Folder structure aligns with default config
 
 ## Impact

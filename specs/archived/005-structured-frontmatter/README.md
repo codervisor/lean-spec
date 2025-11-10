@@ -93,8 +93,8 @@ breaking: true
 
 2. **CLI Support**: 
    - Parse frontmatter when listing specs
-   - Common filters: `lspec list --status=in-progress --tag=api --priority=high`
-   - Quick updates: `lspec update <spec> --status=complete`
+   - Common filters: `lean-spec list --status=in-progress --tag=api --priority=high`
+   - Quick updates: `lean-spec update <spec> --status=complete`
    - Validation: warn on unknown fields, validate enum values
 
 3. **Smart Defaults**:
@@ -177,8 +177,8 @@ breaking: true
 - [ ] Add frontmatter parsing library (`gray-matter`)
 - [ ] Update template files: minimal (2 fields), standard (4 fields), enterprise (8-10 fields)
 - [ ] Implement frontmatter parser with validation
-- [ ] Add filtering to `lspec list` (status, tags, priority)
-- [ ] Create `lspec update` command for status changes
+- [ ] Add filtering to `lean-spec list` (status, tags, priority)
+- [ ] Create `lean-spec update` command for status changes
 - [ ] Add smart defaults for optional timestamp fields
 - [ ] Update documentation emphasizing minimalism
 - [ ] Add tests for core fields + graceful handling of extra fields
@@ -186,8 +186,8 @@ breaking: true
 ## Test
 
 - [ ] CLI parses minimal frontmatter (status, created)
-- [ ] Filtering works: `lspec list --status=planned --tag=api`
-- [ ] `lspec update <spec> --status=complete` updates correctly
+- [ ] Filtering works: `lean-spec list --status=planned --tag=api`
+- [ ] `lean-spec update <spec> --status=complete` updates correctly
 - [ ] Old specs without frontmatter still work (fallback)
 - [ ] Templates generate appropriate field sets per tier
 - [ ] Unknown fields generate warnings but don't fail
@@ -215,12 +215,12 @@ breaking: true
 
 Only build these if users ask for them:
 
-- `lspec stats` - "5 in-progress, 12 complete" summary
-- `lspec board` - Kanban-style view by status (planned | in-progress | complete)
-- `lspec gantt` - Timeline view with dependencies and due dates
-- `lspec timeline` - Visualize spec creation/completion over time
-- `lspec deps <spec>` - Show dependency graph (depends_on, blocks visualization)
-- `lspec search` - Full-text search with metadata filters
+- `lean-spec stats` - "5 in-progress, 12 complete" summary
+- `lean-spec board` - Kanban-style view by status (planned | in-progress | complete)
+- `lean-spec gantt` - Timeline view with dependencies and due dates
+- `lean-spec timeline` - Visualize spec creation/completion over time
+- `lean-spec deps <spec>` - Show dependency graph (depends_on, blocks visualization)
+- `lean-spec search` - Full-text search with metadata filters
 - Export formats: JSON, CSV, markdown table for reporting
 - Integration hooks: webhook on status change, sync to Jira/Linear
 - AI suggestions: auto-tag based on content, suggest related specs

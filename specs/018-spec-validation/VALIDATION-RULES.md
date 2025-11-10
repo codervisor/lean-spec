@@ -1,8 +1,8 @@
 # Validation Rules
 
-This document details what gets validated by `lspec validate` and the specific rules for each validation type.
+This document details what gets validated by `lean-spec validate` and the specific rules for each validation type.
 
-**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
+**Note:** This spec originally proposed expanding `lean-spec check`, but the implementation created `lean-spec validate` as a separate command.
 
 ## Implementation Status
 

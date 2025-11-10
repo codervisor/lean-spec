@@ -17,7 +17,7 @@ LeanSpec can be installed globally or as a project dependency.
 npm install -g lean-spec
 ```
 
-This makes the `lspec` command available system-wide.
+This makes the `lean-spec` command available system-wide.
 
 ### Project Installation
 
@@ -32,14 +32,14 @@ pnpm add -D lean-spec
 yarn add -D lean-spec
 ```
 
-For project installation, you'll need to use `npx lspec` or add scripts to your `package.json`.
+For project installation, you'll need to use `npx lean-spec` or add scripts to your `package.json`.
 
 ## Verify Installation
 
 Check that LeanSpec is installed correctly:
 
 ```bash
-lspec --version
+lean-spec --version
 ```
 
 You should see the version number (e.g., `0.1.0`).
@@ -49,7 +49,7 @@ You should see the version number (e.g., `0.1.0`).
 Navigate to your project directory and run:
 
 ```bash
-lspec init
+lean-spec init
 ```
 
 This interactive command will guide you through three setup paths:
@@ -110,7 +110,7 @@ your-project/
 
 ## Integrating with Existing Projects
 
-If you already have `AGENTS.md`, `.cursorrules`, or other system prompts, `lspec init` will detect them and offer three options:
+If you already have `AGENTS.md`, `.cursorrules`, or other system prompts, `lean-spec init` will detect them and offer three options:
 
 1. **Merge** - Appends LeanSpec guidance to your existing `AGENTS.md` (preserves your content)
 2. **Backup** - Saves existing files as `.backup` and creates fresh ones
@@ -149,7 +149,7 @@ You can customize this to fit your workflow. See [Configuration Reference](/docs
 Now you're ready to create your first spec:
 
 ```bash
-lspec create my-feature
+lean-spec create my-feature
 ```
 
 This creates:
@@ -165,20 +165,20 @@ Here are the essential commands to get you started:
 
 ```bash
 # Create a spec
-lspec create feature-name
+lean-spec create feature-name
 
 # List all specs
-lspec list
+lean-spec list
 
 # View a spec
-lspec view 001
+lean-spec view 001
 
 # Update spec metadata (by number or path)
-lspec update 001 --status=in-progress
-lspec update specs/001-my-feature --status=in-progress
+lean-spec update 001 --status=in-progress
+lean-spec update specs/001-my-feature --status=in-progress
 
 # Archive completed specs
-lspec archive 001
+lean-spec archive 001
 ```
 
 For a complete command reference, see [CLI Commands](/docs/reference/cli).

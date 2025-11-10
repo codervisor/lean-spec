@@ -35,7 +35,7 @@ Successfully demonstrated Context Economy principle by splitting large specs tha
 - README serves as clear entry point to deeper content
 
 ### Validation Works
-- `npx lspec validate` caught ALL violations automatically
+- `npx lean-spec validate` caught ALL violations automatically
 - No manual auditing needed
 - Shows our tooling is effective
 

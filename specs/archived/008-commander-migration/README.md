@@ -102,24 +102,24 @@ src/commands/*.ts (unchanged)
 ## Test
 
 ### Integration Tests
-- [ ] `lspec create test-spec` works
-- [ ] `lspec create test-spec --title "Custom"` works
-- [ ] `lspec list` displays all specs
-- [ ] `lspec list --status=in-progress` filters correctly
-- [ ] `lspec list --tag=api --tag=feature` handles multiple tags
-- [ ] `lspec update <path> --status=complete` updates frontmatter
-- [ ] `lspec archive <path>` moves to archived/
-- [ ] `lspec init` prompts and creates structure
-- [ ] `lspec templates` lists available templates
-- [ ] `lspec --help` shows all commands
-- [ ] `lspec create --help` shows command-specific help
+- [ ] `lean-spec create test-spec` works
+- [ ] `lean-spec create test-spec --title "Custom"` works
+- [ ] `lean-spec list` displays all specs
+- [ ] `lean-spec list --status=in-progress` filters correctly
+- [ ] `lean-spec list --tag=api --tag=feature` handles multiple tags
+- [ ] `lean-spec update <path> --status=complete` updates frontmatter
+- [ ] `lean-spec archive <path>` moves to archived/
+- [ ] `lean-spec init` prompts and creates structure
+- [ ] `lean-spec templates` lists available templates
+- [ ] `lean-spec --help` shows all commands
+- [ ] `lean-spec create --help` shows command-specific help
 - [ ] Error messages are clear for invalid commands
 
 ### New Commands
-- [ ] `lspec board` displays kanban view
-- [ ] `lspec board --tag=api` filters correctly
-- [ ] `lspec gantt` displays timeline
-- [ ] `lspec stats` shows metrics
+- [ ] `lean-spec board` displays kanban view
+- [ ] `lean-spec board --tag=api` filters correctly
+- [ ] `lean-spec gantt` displays timeline
+- [ ] `lean-spec stats` shows metrics
 
 ### Edge Cases
 - [ ] Unknown command shows helpful error
@@ -168,7 +168,7 @@ program
 **None expected** - CLI interface remains identical
 
 ### Future Opportunities
-- Command aliases (`lspec ls` → `list`)
+- Command aliases (`lean-spec ls` → `list`)
 - Shell completion scripts
 - Command grouping for help text
 - Plugin system for custom commands

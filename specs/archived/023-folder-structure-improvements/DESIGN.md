@@ -9,22 +9,22 @@
 Auto-check runs automatically in these commands:
 
 **Commands that interact with specs (11 total):**
-1. `lspec create` - After creating spec
-2. `lspec list` - Before showing list
-3. `lspec board` - Before showing board
-4. `lspec update` - Before updating spec
-5. `lspec search` - Before searching
-6. `lspec stats` - Before showing stats
-7. `lspec timeline` - Before showing timeline
-8. `lspec gantt` - Before showing gantt
-9. `lspec deps` - Before showing dependencies
-10. `lspec files` - Before listing files
-11. `lspec archive` - Before archiving
+1. `lean-spec create` - After creating spec
+2. `lean-spec list` - Before showing list
+3. `lean-spec board` - Before showing board
+4. `lean-spec update` - Before updating spec
+5. `lean-spec search` - Before searching
+6. `lean-spec stats` - Before showing stats
+7. `lean-spec timeline` - Before showing timeline
+8. `lean-spec gantt` - Before showing gantt
+9. `lean-spec deps` - Before showing dependencies
+10. `lean-spec files` - Before listing files
+11. `lean-spec archive` - Before archiving
 
 **Commands that skip auto-check:**
-- `lspec init` - No specs exist yet
-- `lspec templates` - Template management only
-- `lspec check` - Already checking conflicts
+- `lean-spec init` - No specs exist yet
+- `lean-spec templates` - Template management only
+- `lean-spec check` - Already checking conflicts
 
 **Integration pattern:**
 ```typescript
@@ -291,7 +291,7 @@ export async function checkSpecs(options: {
       // Brief warning (for auto-check)
       console.log('');
       console.log(chalk.yellow(`⚠️  Conflict warning: ${conflicts.length} sequence conflict(s) detected`));
-      console.log(chalk.gray('Run: lspec check'));
+      console.log(chalk.gray('Run: lean-spec check'));
       console.log('');
     }
   }
@@ -377,7 +377,7 @@ export async function listSpecs(options: {
     await fs.access(specsDir);
   } catch {
     console.log('');
-    console.log('No specs directory found. Initialize with: lspec init');
+    console.log('No specs directory found. Initialize with: lean-spec init');
     console.log('');
     return;
   }

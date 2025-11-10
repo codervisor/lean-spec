@@ -135,7 +135,7 @@ biology (working memory), and economics (token costs).
    ```
 
 2. **Quick Demo GIF/Screenshot**
-   - Show `lspec create → lspec view → lspec board`
+   - Show `lean-spec create → lean-spec view → lean-spec board`
    - 5-10 seconds max
    - Proves it's real and easy
 
@@ -178,9 +178,9 @@ Multiple competing CTAs:
 
 npm install -g lean-spec
 cd your-project
-lspec init
-lspec create my-first-spec
-lspec view my-first-spec
+lean-spec init
+lean-spec create my-first-spec
+lean-spec view my-first-spec
 
 **What you'll discover:**
 ✅ Creating a spec takes <2 minutes

@@ -23,7 +23,7 @@ Detailed implementation phases for v0.2.0 launch.
   - 5 principles documented in README "Core Principles" section
   - Decision-making guidance for AI agents complete
 - [ ] **NEXT: Start spec 018: Basic validation implementation**
-  - Implement `lspec validate --max-lines 400` command
+  - Implement `lean-spec validate --max-lines 400` command
   - Add warnings for specs approaching 300 lines
   - Foundation for full operationalization layer
 
@@ -70,7 +70,7 @@ Detailed implementation phases for v0.2.0 launch.
   - Users choose pattern upfront (no manual config edits)
   - **Why**: Progressive Disclosure - guides new users
 - [x] **Spec 044: Spec relationships clarity** - ✅ COMPLETE
-  - `related` field now truly bidirectional in `lspec deps` output
+  - `related` field now truly bidirectional in `lean-spec deps` output
   - Cleaner UX with single "Related Specs" section
   - **Why**: Bridge the Gap - clear communication
 - [x] **Spec 052: Branding assets** - ✅ COMPLETE

@@ -95,7 +95,7 @@ Velocity is not just a metric—it's the feedback loop that makes SDD a learning
 ```markdown
 ## New: Dashboard Command
 
-Run `lspec` (no arguments) to see a comprehensive project overview!
+Run `lean-spec` (no arguments) to see a comprehensive project overview!
 
 The dashboard combines summary stats, recent activity, and active work
 into a single glanceable view. Perfect for daily standup or checking
@@ -105,22 +105,22 @@ Individual commands (list, board, gantt, stats) remain unchanged.
 
 ## Enhanced: Stats Command
 
-`lspec stats` now supports timeline views:
-- `lspec stats --timeline` - add 14-day activity
-- `lspec stats --history` - full historical view
-- `lspec stats` - current stats only (unchanged)
+`lean-spec stats` now supports timeline views:
+- `lean-spec stats --timeline` - add 14-day activity
+- `lean-spec stats --history` - full historical view
+- `lean-spec stats` - current stats only (unchanged)
 
-The standalone `lspec timeline` command is deprecated and will be
-removed in v0.4.0. Use `lspec stats --history` instead.
+The standalone `lean-spec timeline` command is deprecated and will be
+removed in v0.4.0. Use `lean-spec stats --history` instead.
 ```
 
 ## Alternatives Considered
 
 ### Option A: Separate analytics command
 ```bash
-lspec analytics           # New command
-lspec analytics --stats   # Current stats
-lspec analytics --timeline # Timeline view
+lean-spec analytics           # New command
+lean-spec analytics --stats   # Current stats
+lean-spec analytics --timeline # Timeline view
 ```
 - ✅ Clear namespace
 - ❌ More typing
@@ -128,9 +128,9 @@ lspec analytics --timeline # Timeline view
 
 ### Option B: Enhance stats (This Spec)
 ```bash
-lspec stats               # Current behavior (default)
-lspec stats --timeline    # Add timeline
-lspec stats --history     # Full timeline focus
+lean-spec stats               # Current behavior (default)
+lean-spec stats --timeline    # Add timeline
+lean-spec stats --history     # Full timeline focus
 ```
 - ✅ Backward compatible
 - ✅ Less typing

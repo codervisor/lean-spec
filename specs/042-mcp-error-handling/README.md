@@ -59,7 +59,7 @@ if (!spec) {
 
 // AFTER (returns error to agent)
 if (!spec) {
-  throw new Error(`Spec not found: ${specPath}. Try: lspec list`);
+  throw new Error(`Spec not found: ${specPath}. Try: lean-spec list`);
 }
 ```
 
@@ -98,7 +98,7 @@ export async function showCommand(
   const spec = await readSpecContent(specPath, process.cwd());
   
   if (!spec) {
-    const message = `Spec not found: ${specPath}. Try: lspec list`;
+    const message = `Spec not found: ${specPath}. Try: lean-spec list`;
     if (options.throwErrors) {
       throw new Error(message);  // MCP mode
     } else {
@@ -138,8 +138,8 @@ export async function showCommand(
 
 ### MCP Error Handling Tests
 
-- [ ] Call `lspec_update` with non-existent spec → returns error, server stays alive
-- [ ] Call `lspec_read` with non-existent spec → returns error, server stays alive
+- [ ] Call `lean-spec_update` with non-existent spec → returns error, server stays alive
+- [ ] Call `lean-spec_read` with non-existent spec → returns error, server stays alive
 - [ ] Try to create spec with invalid name → returns error, server stays alive
 - [ ] Multiple consecutive errors → server handles all gracefully
 - [ ] Agent session remains active after tool errors
@@ -155,9 +155,9 @@ export async function showCommand(
 
 ```bash
 # Test MCP via VS Code Copilot
-1. Try to update non-existent spec: @lspec update 999-fake
+1. Try to update non-existent spec: @lean-spec update 999-fake
 2. Verify: Error message appears, chat continues
-3. Try valid command after error: @lspec list
+3. Try valid command after error: @lean-spec list
 4. Verify: Works normally, server didn't crash
 ```
 

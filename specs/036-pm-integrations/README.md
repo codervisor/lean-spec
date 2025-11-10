@@ -67,11 +67,11 @@ github:
 
 **Commands:**
 ```bash
-lspec sync                          # Sync all configured integrations
-lspec sync --system github          # Sync specific system
-lspec link <spec> --github-issue 123 # Link existing spec to issue
-lspec unlink <spec>                 # Remove integration link
-lspec integrations                  # Show current integration status
+lean-spec sync                          # Sync all configured integrations
+lean-spec sync --system github          # Sync specific system
+lean-spec link <spec> --github-issue 123 # Link existing spec to issue
+lean-spec unlink <spec>                 # Remove integration link
+lean-spec integrations                  # Show current integration status
 ```
 
 **Supported Systems (Phase 1):**

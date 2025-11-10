@@ -2,7 +2,7 @@
 
 > Part of spec: [018-spec-validation](README.md)
 
-Configuration examples for different use cases of `lspec validate`.
+Configuration examples for different use cases of `lean-spec validate`.
 
 ## Strict Mode (CI/CD)
 
@@ -196,20 +196,20 @@ Bare minimum for validation (uses most defaults):
 
 ```bash
 # Add to .lspec/config.json, then run:
-lspec validate
+lean-spec validate
 
 # Or override via CLI:
-lspec validate --mode comprehensive
+lean-spec validate --mode comprehensive
 ```
 
 ### Apply Relaxed Mode
 
 ```bash
 # Use during early development:
-lspec validate --mode quick
+lean-spec validate --mode quick
 
 # Or with specific rules disabled:
-lspec validate --no-links --no-staleness
+lean-spec validate --no-links --no-staleness
 ```
 
 ### Custom Workflow
@@ -218,7 +218,7 @@ lspec validate --no-links --no-staleness
 # Configure custom status values:
 # .lspec/config.json with custom allowedStatus
 # Then validate normally:
-lspec validate
+lean-spec validate
 ```
 
 ## Tips
@@ -227,4 +227,4 @@ lspec validate
 2. **Use strict mode in CI** - Catch issues before merge
 3. **Customize for your workflow** - Adapt `allowedStatus` and `requiredSections` to match your process
 4. **Use ignore paths wisely** - Don't validate archived or experimental specs
-5. **Test configuration** - Run `lspec validate --dry-run` to preview changes
+5. **Test configuration** - Run `lean-spec validate --dry-run` to preview changes

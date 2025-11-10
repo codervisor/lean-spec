@@ -130,10 +130,10 @@ README.md: Entry point, links to details
 
 ## Future Tooling
 
-### Detection: `lspec check --complexity`
+### Detection: `lean-spec check --complexity`
 
 ```bash
-$ lspec check --complexity
+$ lean-spec check --complexity
 
 Complexity Analysis:
   ⚠ 3 specs may be too complex:
@@ -155,30 +155,30 @@ Complexity Analysis:
 Recommendations:
   - Review specs over 400 lines
   - Use sub-spec files (spec 012) to split concerns
-  - See: lspec view 012 for guidance
+  - See: lean-spec view 012 for guidance
 ```
 
 ### Guided Splitting (v0.3.0+)
 
 ```bash
 # Analyze spec complexity
-lspec check --complexity
+lean-spec check --complexity
 
 # Guided splitting
-lspec split 018 --interactive
+lean-spec split 018 --interactive
   → Analyzes structure
   → Suggests split strategy
   → Creates sub-spec files
   → Moves content appropriately
 
 # View sub-specs
-lspec view 018            # Shows README.md
-lspec view 018 --all      # Lists all sub-specs
-lspec view 018/DESIGN     # Views specific sub-spec
+lean-spec view 018            # Shows README.md
+lean-spec view 018 --all      # Lists all sub-specs
+lean-spec view 018/DESIGN     # Views specific sub-spec
 
 # Open in editor
-lspec open 018            # Opens README.md
-lspec open 018 --files    # Opens all sub-specs
+lean-spec open 018            # Opens README.md
+lean-spec open 018 --files    # Opens all sub-specs
 ```
 
 ## Warning Signs

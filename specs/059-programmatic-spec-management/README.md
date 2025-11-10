@@ -81,7 +81,7 @@ $ # AI manually rewrites 1,166 lines of spec text
 $ # 10+ minutes of LLM generation, risk of corruption
 
 # Future (fast, programmatic, reliable):
-$ lspec analyze 045 --complexity
+$ lean-spec analyze 045 --complexity
 # Analyzing spec structure...
 # ⚠ Spec exceeds 400 lines (1,166 lines)
 # ⚠ Detected 5 distinct concerns: overview, design, rationale, implementation, testing
@@ -91,7 +91,7 @@ $ lspec analyze 045 --complexity
 # 
 # Would you like to proceed? (Y/n)
 
-$ lspec split 045 --auto-partition
+$ lean-spec split 045 --auto-partition
 # Analyzing markdown structure... ✓
 # Identifying logical boundaries... ✓
 # Creating sub-spec files... ✓
@@ -106,7 +106,7 @@ $ lspec split 045 --auto-partition
 #   IMPLEMENTATION.md (144 lines) - Implementation plan
 #   TESTING.md (182 lines) - Test strategy
 
-$ lspec compact 018 --remove-redundancy
+$ lean-spec compact 018 --remove-redundancy
 # Analyzing for redundancy... ✓
 # Found 3 duplicate sections
 # Found 5 sections inferable from others
@@ -139,10 +139,10 @@ This spec is organized using sub-spec files (practicing what we preach):
 
 | Strategy | Purpose | When to Use | Tool |
 |----------|---------|-------------|------|
-| **Partition** | Split into sub-specs | Spec >400 lines, multiple concerns | `lspec split` |
-| **Compact** | Remove redundancy | Verbose, repetitive content | `lspec compact` |
-| **Compress** | Summarize sections | Historical context, completed phases | `lspec compress` |
-| **Isolate** | Move to separate spec | Unrelated concern, different lifecycle | `lspec isolate` |
+| **Partition** | Split into sub-specs | Spec >400 lines, multiple concerns | `lean-spec split` |
+| **Compact** | Remove redundancy | Verbose, repetitive content | `lean-spec compact` |
+| **Compress** | Summarize sections | Historical context, completed phases | `lean-spec compress` |
+| **Isolate** | Move to separate spec | Unrelated concern, different lifecycle | `lean-spec isolate` |
 
 ### Context Failure Detection
 
@@ -157,19 +157,19 @@ This spec is organized using sub-spec files (practicing what we preach):
 
 ```bash
 # Analyze spec complexity
-lspec analyze <spec> --complexity
-lspec analyze <spec> --redundancy
-lspec analyze <spec> --conflicts
+lean-spec analyze <spec> --complexity
+lean-spec analyze <spec> --redundancy
+lean-spec analyze <spec> --conflicts
 
 # Transform specs
-lspec split <spec> --strategy=partition|concerns|phases
-lspec compact <spec> --remove-redundancy
-lspec compress <spec> --section="Completed Phases"
-lspec isolate <spec> --section="API Design" --new-spec="api-design"
+lean-spec split <spec> --strategy=partition|concerns|phases
+lean-spec compact <spec> --remove-redundancy
+lean-spec compress <spec> --section="Completed Phases"
+lean-spec isolate <spec> --section="API Design" --new-spec="api-design"
 
 # Validate transformations
-lspec validate <spec> --after-transform
-lspec diff <spec> --before-after
+lean-spec validate <spec> --after-transform
+lean-spec diff <spec> --before-after
 ```
 
 ## Status
@@ -218,7 +218,7 @@ This builds on **Context Economy** (Principle #1 from spec 049):
 **Evolution**:
 ```
 v0.1.0: Manual spec writing
-v0.2.0: Detection + warnings (lspec validate)
+v0.2.0: Detection + warnings (lean-spec validate)
 v0.3.0: Programmatic transformation (this spec)
 v0.4.0: Continuous context management (auto-compaction, etc.)
 ```
@@ -232,9 +232,9 @@ v0.4.0: Continuous context management (auto-compaction, etc.)
 - [ ] Core data structures
 
 ### Phase 2: Analysis Tools (v0.3.0-beta) - 1 week
-- [ ] `lspec analyze --complexity`
-- [ ] `lspec analyze --redundancy`
-- [ ] `lspec analyze --conflicts`
+- [ ] `lean-spec analyze --complexity`
+- [ ] `lean-spec analyze --redundancy`
+- [ ] `lean-spec analyze --conflicts`
 - [ ] Visual reports
 
 ### Phase 3: Transformation Engine (v0.3.0-rc) - 2 weeks
@@ -244,10 +244,10 @@ v0.4.0: Continuous context management (auto-compaction, etc.)
 - [ ] Isolation transformer (move to new spec)
 
 ### Phase 4: CLI Commands (v0.3.0) - 1 week
-- [ ] `lspec split` with strategies
-- [ ] `lspec compact` with preview
-- [ ] `lspec compress` with options
-- [ ] `lspec isolate` with validation
+- [ ] `lean-spec split` with strategies
+- [ ] `lean-spec compact` with preview
+- [ ] `lean-spec compress` with options
+- [ ] `lean-spec isolate` with validation
 
 ### Phase 5: Polish & Launch (v0.3.0) - 1 week
 - [ ] Error handling & edge cases

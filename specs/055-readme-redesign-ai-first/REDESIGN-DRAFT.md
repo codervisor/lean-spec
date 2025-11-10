@@ -79,7 +79,7 @@ priority: high
 # Unified Dashboard
 
 ## Overview
-Combine `lspec board` and `lspec stats` into a single, comprehensive
+Combine `lean-spec board` and `lean-spec stats` into a single, comprehensive
 project health view. Give users instant insight into project status,
 bottlenecks, and team velocity.
 
@@ -185,7 +185,7 @@ Clear specs = better code generation. Simple.
 Track progress without leaving the terminal:
 
 ```bash
-$ lspec board
+$ lean-spec board
 ┌──────────────────────────────────┐
 │ 📋 PLANNED │ 🚧 IN PROGRESS │ ✅ DONE │
 │ • api-v2   │ • user-auth    │ • cli  │
@@ -248,16 +248,16 @@ npm install -g lean-spec
 
 # Initialize in your project
 cd your-project
-lspec init
+lean-spec init
 
 # Create your first spec
-lspec create user-authentication
+lean-spec create user-authentication
 
 # View it
-lspec view user-authentication
+lean-spec view user-authentication
 
 # See the Kanban board
-lspec board
+lean-spec board
 ```
 
 **What you'll discover:**

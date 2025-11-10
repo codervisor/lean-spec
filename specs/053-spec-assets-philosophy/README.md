@@ -68,7 +68,7 @@ Logo design process (spec 052):
 
 - [ ] Document asset philosophy in AGENTS.md or new guide
 - [ ] Update spec 012 to include non-markdown asset guidelines
-- [ ] Add `lspec validate` checks for oversized assets
+- [ ] Add `lean-spec validate` checks for oversized assets
 - [ ] Create examples showing good asset management
 - [ ] Add to spec creation templates/guidance
 

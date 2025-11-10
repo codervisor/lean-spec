@@ -613,7 +613,7 @@ export async function runCLI(command: string): Promise<{
   stderr: string;
 }> {
   return new Promise((resolve) => {
-    exec(`npx lspec ${command}`, (error, stdout, stderr) => {
+    exec(`npx lean-spec ${command}`, (error, stdout, stderr) => {
       resolve({
         code: error?.code ?? 0,
         stdout,

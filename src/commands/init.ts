@@ -86,32 +86,36 @@ export async function initProject(): Promise<void> {
     process.exit(1);
   }
 
-  // Pattern selection (for all setup modes)
-  const patternChoice = await select({
-    message: 'Select folder pattern:',
-    choices: [
-      {
-        name: 'Simple: 001-my-spec/',
-        value: 'simple',
-        description: 'Global sequential numbering (recommended)',
-      },
-      {
-        name: 'Date-grouped: 20251105/001-my-spec/',
-        value: 'date-grouped',
-        description: 'Group specs by creation date (good for teams)',
-      },
-      {
-        name: 'Flat with date: 20251105-001-my-spec/',
-        value: 'date-prefix',
-        description: 'Date prefix with global numbering',
-      },
-      {
-        name: 'Custom pattern',
-        value: 'custom',
-        description: 'Enter your own pattern',
-      },
-    ],
-  });
+  // Pattern selection (skip for quick start)
+  let patternChoice = 'simple'; // Default for quick start
+
+  if (setupMode !== 'quick') {
+    patternChoice = await select({
+      message: 'Select folder pattern:',
+      choices: [
+        {
+          name: 'Simple: 001-my-spec/',
+          value: 'simple',
+          description: 'Global sequential numbering (recommended)',
+        },
+        {
+          name: 'Date-grouped: 20251105/001-my-spec/',
+          value: 'date-grouped',
+          description: 'Group specs by creation date (good for teams)',
+        },
+        {
+          name: 'Flat with date: 20251105-001-my-spec/',
+          value: 'date-prefix',
+          description: 'Date prefix with global numbering',
+        },
+        {
+          name: 'Custom pattern',
+          value: 'custom',
+          description: 'Enter your own pattern',
+        },
+      ],
+    });
+  }
 
   // Apply pattern choice to config
   if (patternChoice === 'simple') {

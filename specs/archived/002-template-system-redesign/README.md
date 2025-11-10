@@ -22,7 +22,7 @@ Expand LeanSpec template system to support multiple working styles, team sizes, 
 
 - Template bundles: Each template is a directory containing spec.md + supporting files (AGENTS.md, checklists, etc.)
 - Core templates: default (new structured), minimal (current simple), team, enterprise, api
-- CLI support: `--template` flag for selection, `lspec templates` to list available
+- CLI support: `--template` flag for selection, `lean-spec templates` to list available
 - New default template: Hybrid structure with Overview, Objectives, Design, Implementation Plan, Success Criteria, Non-Goals, Notes, References
 
 ## Non-Goals

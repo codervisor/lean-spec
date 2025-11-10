@@ -43,7 +43,7 @@ updated_at: '2025-11-05T05:03:54.951Z'
 
 ### Current Tool State
 
-**CLI (`lspec` command)**:
+**CLI (`lean-spec` command)**:
 - 15+ commands with inconsistent patterns
 - Some commands do too much (`stats` vs `stats --full`)
 - Error messages vary in helpfulness
@@ -92,40 +92,40 @@ updated_at: '2025-11-05T05:03:54.951Z'
 
 #### Level 1: Discovery (Context Economy)
 ```bash
-lspec                    # Show overview + 3 most common commands
-lspec help               # Show all commands, grouped by purpose
-lspec status             # Project health at-a-glance
+lean-spec                    # Show overview + 3 most common commands
+lean-spec help               # Show all commands, grouped by purpose
+lean-spec status             # Project health at-a-glance
 ```
 
 #### Level 2: Core Operations (Signal-to-Noise)
 ```bash
 # View/Navigate (most common)
-lspec list              # Smart defaults, most relevant first
-lspec view <spec>       # Single spec, optimized display
-lspec search <query>    # Focused search with ranking
+lean-spec list              # Smart defaults, most relevant first
+lean-spec view <spec>       # Single spec, optimized display
+lean-spec search <query>    # Focused search with ranking
 
 # Modify (when needed)
-lspec create <name>     # Guided creation with templates
-lspec update <spec>     # Status/metadata only
-lspec edit <spec>       # Open in editor
+lean-spec create <name>     # Guided creation with templates
+lean-spec update <spec>     # Status/metadata only
+lean-spec edit <spec>       # Open in editor
 
 # Project (occasional)
-lspec board            # Kanban view
-lspec stats            # Key metrics only
+lean-spec board            # Kanban view
+lean-spec stats            # Key metrics only
 ```
 
 #### Level 3: Advanced (Progressive Disclosure)
 ```bash
 # Analysis (when pain is felt)
-lspec validate         # Check first principles adherence  
-lspec complexity       # Detailed complexity analysis
-lspec deps <spec>      # Relationship analysis
-lspec split <spec>     # Guided spec splitting
+lean-spec validate         # Check first principles adherence  
+lean-spec complexity       # Detailed complexity analysis
+lean-spec deps <spec>      # Relationship analysis
+lean-spec split <spec>     # Guided spec splitting
 
 # Power User (specific needs)
-lspec stats --full     # Comprehensive analytics
-lspec export           # Various formats
-lspec init             # Project setup
+lean-spec stats --full     # Comprehensive analytics
+lean-spec export           # Various formats
+lean-spec init             # Project setup
 ```
 
 **Key Changes**:
@@ -170,28 +170,28 @@ health() -> ProjectHealth
 #### Context Economy in Output
 ```bash
 # Bad: Information overload
-lspec list
+lean-spec list
 049-leanspec-first-principles | planned | created: 2025-11-04 | priority: critical | tags: philosophy,meta,foundation,principles | related: 048-spec-complexity-analysis,043-official-launch-02,012-sub-spec-files | 1,042 lines (warning: >400) | last modified: 2 hours ago
 
 # Good: Essential info, detail on demand  
-lspec list
+lean-spec list
 📋 049 leanspec-first-principles (critical)
 ✅ 048 spec-complexity-analysis 
 🔄 047 git-timestamps (in-progress)
 
-lspec list --verbose  # Detail when requested
-lspec view 049        # Full context for specific spec
+lean-spec list --verbose  # Detail when requested
+lean-spec view 049        # Full context for specific spec
 ```
 
 #### Signal-to-Noise in Commands
 ```bash
 # Bad: Ambiguous what it does
-lspec show 049 --with-meta --include-related --format=detailed
+lean-spec show 049 --with-meta --include-related --format=detailed
 
 # Good: Clear intent, smart defaults
-lspec view 049        # Show spec (formatted by default)
-lspec view 049 --raw  # Raw when needed (progressive disclosure)
-lspec view 049 --json # Structured when needed
+lean-spec view 049        # Show spec (formatted by default)
+lean-spec view 049 --raw  # Raw when needed (progressive disclosure)
+lean-spec view 049 --json # Structured when needed
 ```
 
 ### Implementation Strategy

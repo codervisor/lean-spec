@@ -33,12 +33,12 @@ related: [043, 044]
 Both sides see the relationship:
 
 ```bash
-$ lspec deps 042
+$ lean-spec deps 042
 Related Specs:
   ⟷ 043-feature-launch [in-progress]
   ⟷ 044-api-update [planned]
 
-$ lspec deps 043
+$ lean-spec deps 043
 Related Specs:
   ⟷ 042-error-handling [complete]  # Automatically shown!
 ```
@@ -61,11 +61,11 @@ depends_on: [spec-b]
 Shows differently from each side:
 
 ```bash
-$ lspec deps spec-a
+$ lean-spec deps spec-a
 Depends On:
   → spec-b [in-progress]  # A depends on B
 
-$ lspec deps spec-b
+$ lean-spec deps spec-b
 Required By:
   ← spec-a [planned]  # B is required by A
 ```
@@ -80,7 +80,7 @@ Required By:
 View all relationships for a spec:
 
 ```bash
-lspec deps <spec>
+lean-spec deps <spec>
 ```
 
 Shows:
@@ -167,7 +167,7 @@ related: [spec-b]
 Check dependencies:
 
 ```bash
-lspec deps <spec>
+lean-spec deps <spec>
 ```
 
 Ensure all `depends_on` specs are complete before starting.
@@ -178,10 +178,10 @@ Map relationships:
 
 ```bash
 # View related work
-lspec deps feature-spec
+lean-spec deps feature-spec
 
 # Check what's blocked
-lspec board --status planned
+lean-spec board --status planned
 ```
 
 ### Identifying Bottlenecks
@@ -190,7 +190,7 @@ Find specs blocking others:
 
 ```bash
 # Check what depends on this
-lspec deps <in-progress-spec>
+lean-spec deps <in-progress-spec>
 
 # Look for "Required By" items
 ```

@@ -19,7 +19,7 @@ completed: '2025-11-03'
 
 ## Overview
 
-Add new `lspec` commands for viewing and reading spec details with rich rendering capabilities. Users currently need to manually open spec files in their editor or navigate to the specs directory. This spec introduces commands to view spec content directly in the terminal with proper markdown rendering, making it easier to quickly read and reference specs without leaving the command line.
+Add new `lean-spec` commands for viewing and reading spec details with rich rendering capabilities. Users currently need to manually open spec files in their editor or navigate to the specs directory. This spec introduces commands to view spec content directly in the terminal with proper markdown rendering, making it easier to quickly read and reference specs without leaving the command line.
 
 **Why now?** As LeanSpec grows, users need quick ways to view spec content. This is foundational for:
 - MCP server integration (spec 033) - needs to expose spec content to AI agents
@@ -30,12 +30,12 @@ Add new `lspec` commands for viewing and reading spec details with rich renderin
 
 **New Commands:**
 
-### `lspec show <spec-name>`
+### `lean-spec show <spec-name>`
 Display full spec content with rendered markdown in the terminal.
 
 ```bash
-lspec show api-redesign
-lspec show 015-npm-publishing  # Also support spec number
+lean-spec show api-redesign
+lean-spec show 015-npm-publishing  # Also support spec number
 ```
 
 **Features:**
@@ -51,15 +51,15 @@ lspec show 015-npm-publishing  # Also support spec number
 - Auto-detect terminal capabilities (colors, hyperlinks)
 - Handle long content with pagination (optional `--no-pager` flag)
 
-### `lspec view <spec-name>` (alias)
-Shorter alias for `lspec show` for convenience.
+### `lean-spec view <spec-name>` (alias)
+Shorter alias for `lean-spec show` for convenience.
 
-### `lspec read <spec-name>` (raw mode)
+### `lean-spec read <spec-name>` (raw mode)
 Output raw markdown content without rendering (useful for piping, AI consumption, scripting).
 
 ```bash
-lspec read api-redesign
-lspec read 015-npm-publishing | grep "TODO"
+lean-spec read api-redesign
+lean-spec read 015-npm-publishing | grep "TODO"
 ```
 
 **Output Options:**
@@ -67,12 +67,12 @@ lspec read 015-npm-publishing | grep "TODO"
 - `--format=json` - structured JSON with frontmatter and content separated
 - `--frontmatter-only` - only output frontmatter as JSON
 
-### `lspec open <spec-name>`
+### `lean-spec open <spec-name>`
 Open spec in default editor or specified editor.
 
 ```bash
-lspec open api-redesign
-lspec open api-redesign --editor=code  # Open in VS Code
+lean-spec open api-redesign
+lean-spec open api-redesign --editor=code  # Open in VS Code
 ```
 
 **Technical Approach:**
@@ -105,11 +105,11 @@ lspec open api-redesign --editor=code  # Open in VS Code
 ## Plan
 
 - [ ] Add `marked-terminal` dependency
-- [ ] Implement `lspec show` command with markdown rendering
+- [ ] Implement `lean-spec show` command with markdown rendering
 - [ ] Add frontmatter display formatting
-- [ ] Implement `lspec read` command for raw/JSON output
-- [ ] Add `lspec view` alias
-- [ ] Implement `lspec open` command with editor detection
+- [ ] Implement `lean-spec read` command for raw/JSON output
+- [ ] Add `lean-spec view` alias
+- [ ] Implement `lean-spec open` command with editor detection
 - [ ] Add pagination support for long content
 - [ ] Add terminal capability detection (colors, hyperlinks)
 - [ ] Write unit tests for rendering logic
@@ -119,15 +119,15 @@ lspec open api-redesign --editor=code  # Open in VS Code
 
 ## Test
 
-- [ ] `lspec show` renders markdown correctly in terminal
+- [ ] `lean-spec show` renders markdown correctly in terminal
 - [ ] Frontmatter displays with proper formatting
 - [ ] Code blocks have syntax highlighting
 - [ ] Long specs trigger pagination (unless --no-pager)
-- [ ] `lspec read` outputs raw markdown
-- [ ] `lspec read --format=json` outputs valid JSON
-- [ ] `lspec read --frontmatter-only` outputs frontmatter only
-- [ ] `lspec open` opens spec in default editor
-- [ ] `lspec open --editor=<cmd>` uses specified editor
+- [ ] `lean-spec read` outputs raw markdown
+- [ ] `lean-spec read --format=json` outputs valid JSON
+- [ ] `lean-spec read --frontmatter-only` outputs frontmatter only
+- [ ] `lean-spec open` opens spec in default editor
+- [ ] `lean-spec open --editor=<cmd>` uses specified editor
 - [ ] Commands work with spec name, number, or path
 - [ ] Graceful error for non-existent specs
 - [ ] Works in non-interactive terminals (CI)
@@ -155,11 +155,11 @@ lspec open api-redesign --editor=code  # Open in VS Code
 **Future Enhancements:**
 - Interactive mode with search/filter
 - Spec-to-spec navigation (jump to dependencies)
-- Diff mode (`lspec show <spec> --diff`) to see changes
+- Diff mode (`lean-spec show <spec> --diff`) to see changes
 - Export to PDF/HTML for sharing
 
 **MCP Integration Notes:**
-The `lspec read --format=json` output should align with the MCP resource schema:
+The `lean-spec read --format=json` output should align with the MCP resource schema:
 ```json
 {
   "name": "spec-name",

@@ -18,23 +18,23 @@ completed: '2025-11-02'
 
 **Phase 1 (Core Support) - ✅ Implemented (2025-11-06)**
 - ✅ `loadSubFiles()` function implemented in `spec-loader.ts`
-- ✅ `lspec files <spec>` command implemented
-- ✅ `lspec view <spec>/SUBFILE.md` - View sub-spec files directly
-- ✅ `lspec open <spec>/SUBFILE.md` - Open sub-spec files in editor
+- ✅ `lean-spec files <spec>` command implemented
+- ✅ `lean-spec view <spec>/SUBFILE.md` - View sub-spec files directly
+- ✅ `lean-spec open <spec>/SUBFILE.md` - Open sub-spec files in editor
 - ✅ Sub-spec viewing with all output modes (formatted, --raw, --json)
 - ✅ Full test coverage for sub-spec viewing
 - ✅ Documentation updated (README.md, AGENTS.md, CLI help)
 
 **Not Yet Implemented:**
-- ⏸️ Phase 2: Enhanced `lspec create` with `--files` option
-- ⏸️ Phase 3: `lspec validate` link checker
-- ⏸️ Phase 4: `lspec merge` command
+- ⏸️ Phase 2: Enhanced `lean-spec create` with `--files` option
+- ⏸️ Phase 3: `lean-spec validate` link checker
+- ⏸️ Phase 4: `lean-spec merge` command
 
 **Key Feature:** You can now view and open sub-spec files using paths like:
 ```bash
-lspec view 045/IMPLEMENTATION.md
-lspec view my-spec/TESTING.md --raw
-lspec open 012/DESIGN.md
+lean-spec view 045/IMPLEMENTATION.md
+lean-spec view my-spec/TESTING.md --raw
+lean-spec open 012/DESIGN.md
 ```
 
 ## Overview
@@ -155,30 +155,30 @@ This spec is organized into multiple documents:
 
 ### CLI Commands
 
-#### 1. `lspec create` Enhancement
+#### 1. `lean-spec create` Enhancement
 
 Support creating specs with templates that include sub-files:
 
 ```bash
 # Create spec with sub-files from template
-lspec create my-api-spec --template=api
+lean-spec create my-api-spec --template=api
 # Creates: README.md, API.md, SCHEMAS.md, EXAMPLES.md
 
 # Create spec with custom sub-files
-lspec create my-feature --files=TESTING.md,MIGRATION.md
+lean-spec create my-feature --files=TESTING.md,MIGRATION.md
 # Creates: README.md, TESTING.md, MIGRATION.md
 
 # Add sub-file to existing spec
-lspec add specs/20251101/001-my-spec/TESTING.md
+lean-spec add specs/20251101/001-my-spec/TESTING.md
 # Creates TESTING.md with proper template and links
 ```
 
-#### 2. `lspec files` - List Sub-Documents
+#### 2. `lean-spec files` - List Sub-Documents
 
 Show all files in a spec:
 
 ```bash
-$ lspec files specs/20251101/009-sub-spec-files
+$ lean-spec files specs/20251101/009-sub-spec-files
 
 📄 Files in 009-sub-spec-files
 
@@ -203,12 +203,12 @@ Total: 6 files, 61.5 KB
 - `--tree` - Show as tree structure
 - `--json` - Output as JSON
 
-#### 3. `lspec toc` - Generate Table of Contents
+#### 3. `lean-spec toc` - Generate Table of Contents
 
 Auto-generate cross-document table of contents:
 
 ```bash
-$ lspec toc specs/20251101/009-sub-spec-files
+$ lean-spec toc specs/20251101/009-sub-spec-files
 
 # 009-sub-spec-files
 
@@ -238,12 +238,12 @@ $ lspec toc specs/20251101/009-sub-spec-files
 - `--output=TOC.md` - Write to file
 - `--insert` - Insert into README.md
 
-#### 4. `lspec validate` - Check Spec Integrity
+#### 4. `lean-spec validate` - Check Spec Integrity
 
 Validate spec structure and cross-references:
 
 ```bash
-$ lspec validate specs/20251101/009-sub-spec-files
+$ lean-spec validate specs/20251101/009-sub-spec-files
 
 ✓ README.md exists and has valid frontmatter
 ✓ All sub-documents linked from README.md
@@ -267,12 +267,12 @@ $ lspec validate specs/20251101/009-sub-spec-files
 - `--strict` - Fail on warnings
 - `--check-external` - Validate external links too
 
-#### 5. `lspec merge` - Combine Multi-Doc Spec
+#### 5. `lean-spec merge` - Combine Multi-Doc Spec
 
 Merge all documents into single file for sharing:
 
 ```bash
-$ lspec merge specs/20251101/009-sub-spec-files
+$ lean-spec merge specs/20251101/009-sub-spec-files
 
 📦 Merging 009-sub-spec-files...
 
@@ -359,15 +359,15 @@ templates/api-spec/
 **Search Enhancement:**
 ```bash
 # Search across all spec documents
-lspec search "authentication" --all-docs
+lean-spec search "authentication" --all-docs
 
 # Search only in specific sub-document type
-lspec search "test" --in=TESTING.md
+lean-spec search "test" --in=TESTING.md
 ```
 
 **Stats Enhancement:**
 ```bash
-$ lspec stats --verbose
+$ lean-spec stats --verbose
 
 📊 Spec Statistics
 
@@ -454,7 +454,7 @@ specs/20251101/010-user-api-v2/
 **Workflow**:
 ```bash
 # Create from template
-lspec create user-api-v2 --template=api-spec
+lean-spec create user-api-v2 --template=api-spec
 
 # Work on different aspects
 code specs/.../README.md        # High-level design
@@ -462,13 +462,13 @@ code specs/.../ENDPOINTS.md     # Endpoint details
 code specs/.../AUTHENTICATION.md # Auth design
 
 # Validate structure
-lspec validate specs/.../user-api-v2
+lean-spec validate specs/.../user-api-v2
 
 # Generate unified TOC
-lspec toc specs/.../user-api-v2 --insert
+lean-spec toc specs/.../user-api-v2 --insert
 
 # Share with stakeholders
-lspec merge specs/.../user-api-v2 --pdf
+lean-spec merge specs/.../user-api-v2 --pdf
 ```
 
 ### Use Case 2: Complex Feature with Testing
@@ -510,17 +510,17 @@ specs/20251101/012-caching-strategy/
 **Workflow**:
 ```bash
 # Create research spec
-lspec create caching-strategy
+lean-spec create caching-strategy
 
 # Add sub-documents as you research
-lspec add specs/.../caching-strategy/REDIS.md
-lspec add specs/.../caching-strategy/MEMCACHED.md
+lean-spec add specs/.../caching-strategy/REDIS.md
+lean-spec add specs/.../caching-strategy/MEMCACHED.md
 
 # Generate comparison TOC
-lspec toc specs/.../caching-strategy
+lean-spec toc specs/.../caching-strategy
 
 # Validate completeness
-lspec validate specs/.../caching-strategy
+lean-spec validate specs/.../caching-strategy
 ```
 
 ## Implementation Plan
@@ -528,27 +528,27 @@ lspec validate specs/.../caching-strategy
 ### Phase 1: Core Support (v1.0)
 - [ ] Update `SpecInfo` type to include `subFiles`
 - [ ] Implement `loadSubFiles()` function
-- [ ] Add `--include-sub-files` option to `lspec list`
-- [ ] Add `lspec files <spec>` command
+- [ ] Add `--include-sub-files` option to `lean-spec list`
+- [ ] Add `lean-spec files <spec>` command
 - [ ] Update templates to support sub-file definitions
 - [ ] Document naming conventions
 
 ### Phase 2: Creation & Management (v1.1)
-- [ ] Enhance `lspec create` with `--files` option
-- [ ] Add `lspec add <spec>/<file>` command
+- [ ] Enhance `lean-spec create` with `--files` option
+- [ ] Add `lean-spec add <spec>/<file>` command
 - [ ] Create sub-file templates for common types
 - [ ] Add API spec template with sub-files
 - [ ] Update documentation
 
 ### Phase 3: Validation & Tools (v1.2)
-- [ ] Implement `lspec validate` command
+- [ ] Implement `lean-spec validate` command
 - [ ] Add link checker for cross-references
 - [ ] Add orphan file detection
-- [ ] Implement `lspec toc` command
+- [ ] Implement `lean-spec toc` command
 - [ ] Add TOC auto-insertion
 
 ### Phase 4: Advanced Features (v2.0)
-- [ ] Implement `lspec merge` command
+- [ ] Implement `lean-spec merge` command
 - [ ] Add PDF export support (via pandoc)
 - [ ] Enhance search to include all sub-documents
 - [ ] Add stats for sub-file distribution
@@ -564,17 +564,17 @@ lspec validate specs/.../caching-strategy
 - [ ] Empty spec directory returns empty sub-files array
 
 ### Integration Tests
-- [ ] `lspec files` lists all sub-documents correctly
-- [ ] `lspec files --type=docs` filters to markdown only
-- [ ] `lspec files --tree` shows proper hierarchy
-- [ ] `lspec create --files=X,Y` creates all files
-- [ ] `lspec add` creates properly templated file
-- [ ] `lspec validate` detects broken links
-- [ ] `lspec validate` detects orphaned files
-- [ ] `lspec toc` generates correct TOC
-- [ ] `lspec toc --insert` updates README.md correctly
-- [ ] `lspec merge` combines all documents
-- [ ] `lspec search --all-docs` searches sub-files
+- [ ] `lean-spec files` lists all sub-documents correctly
+- [ ] `lean-spec files --type=docs` filters to markdown only
+- [ ] `lean-spec files --tree` shows proper hierarchy
+- [ ] `lean-spec create --files=X,Y` creates all files
+- [ ] `lean-spec add` creates properly templated file
+- [ ] `lean-spec validate` detects broken links
+- [ ] `lean-spec validate` detects orphaned files
+- [ ] `lean-spec toc` generates correct TOC
+- [ ] `lean-spec toc --insert` updates README.md correctly
+- [ ] `lean-spec merge` combines all documents
+- [ ] `lean-spec search --all-docs` searches sub-files
 - [ ] Templates with sub-files create all documents
 
 ### Edge Cases
@@ -633,7 +633,7 @@ lspec validate specs/.../caching-strategy
 
 ### Why Not Automatic TOC in README.md?
 
-**Decision**: Make TOC generation opt-in (`lspec toc --insert`).
+**Decision**: Make TOC generation opt-in (`lean-spec toc --insert`).
 
 **Rationale**:
 - Not all specs need TOC (simple ones don't benefit)
@@ -651,14 +651,14 @@ Specs with informal sub-files (like `SUMMARY.md`) will continue working. New com
 
 **No breaking changes**:
 - Existing specs with only README.md: no change
-- Existing specs with extra files: now discoverable via `lspec files`
+- Existing specs with extra files: now discoverable via `lean-spec files`
 - All existing commands continue working
 
 **Gradual adoption**:
 1. Start using recommended naming conventions
 2. Add links in README.md to sub-documents
-3. Use `lspec validate` to check structure
-4. Use `lspec toc` to auto-generate navigation
+3. Use `lean-spec validate` to check structure
+4. Use `lean-spec toc` to auto-generate navigation
 
 ## Documentation Updates
 
@@ -686,7 +686,7 @@ Specs with informal sub-files (like `SUMMARY.md`) will continue working. New com
    - Sub-files provide detailed content
    - Use validation to detect inconsistencies
 
-3. **Should `lspec search` include sub-files by default?**
+3. **Should `lean-spec search` include sub-files by default?**
    - Yes - search all content by default
    - Add `--main-only` flag to search only README.md
 
@@ -704,7 +704,7 @@ Specs with informal sub-files (like `SUMMARY.md`) will continue working. New com
 
 - 20% of new specs use sub-files within 2 months
 - Zero complaints about backward compatibility
-- `lspec files` command used regularly (top 5 commands)
+- `lean-spec files` command used regularly (top 5 commands)
 - Templates with sub-files are popular choices
 - Documentation receives positive feedback
 

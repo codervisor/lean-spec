@@ -98,7 +98,7 @@ priority: high
 # Unified Dashboard
 
 ## Overview
-Combine `lspec board` and `lspec stats` into a single, comprehensive
+Combine `lean-spec board` and `lean-spec stats` into a single, comprehensive
 project health view. Give users instant insight into project status,
 bottlenecks, and team velocity.
 
@@ -200,7 +200,7 @@ MCP-native specs. Works with any tool that supports Model Context Protocol.
 Track progress without leaving the terminal:
 
 ```bash
-$ lspec board
+$ lean-spec board
 
 📋 Spec Kanban Board
 
@@ -220,7 +220,7 @@ $ lspec board
 ```
 
 ```bash
-$ lspec stats
+$ lean-spec stats
 
 📊 Project Stats
 
@@ -272,7 +272,7 @@ Custom fields fully supported. Adapts to your workflow as you grow.
 ```bash
 npm install -g lean-spec
 cd your-project
-lspec init
+lean-spec init
 ```
 
 ### 2. Work with Your AI Tool
@@ -282,7 +282,7 @@ lspec init
 ```
 👤 You: "Create a spec for user authentication with OAuth2."
 
-🤖 AI: [runs lspec create user-authentication]
+🤖 AI: [runs lean-spec create user-authentication]
       "I've created specs/001-user-authentication/README.md.
       Here's the spec..."
 
@@ -296,19 +296,19 @@ lspec init
 
 ```bash
 # Check project status
-lspec board
+lean-spec board
 
 # View spec with AI-friendly output
-lspec view user-authentication --json
+lean-spec view user-authentication --json
 
 # Update status as you progress
-lspec update user-authentication --status in-progress
+lean-spec update user-authentication --status in-progress
 ```
 
 **The workflow:**
-1. ✅ Ask AI to create spec (it uses `lspec create`)
+1. ✅ Ask AI to create spec (it uses `lean-spec create`)
 2. ✅ AI reads spec and implements (spec fits in context)
-3. ✅ Track with `lspec board` / `lspec stats`
+3. ✅ Track with `lean-spec board` / `lean-spec stats`
 4. ✅ Update status as work progresses
 
 **Why this works:**

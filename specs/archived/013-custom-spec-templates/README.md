@@ -73,9 +73,9 @@ npm package (initialization only)
 
 ### 1. Template Lifecycle
 
-**Phase 1: Initialization (`lspec init`)**
+**Phase 1: Initialization (`lean-spec init`)**
 ```bash
-lspec init
+lean-spec init
 # User chooses template: minimal/standard/enterprise
 # Template copied from npm package to .lspec/templates/spec-template.md
 # User immediately has full control
@@ -91,16 +91,16 @@ cp .lspec/templates/spec-template.md .lspec/templates/api-spec.md
 # Edit api-spec.md for API-specific structure
 
 # Register in config
-lspec templates add api api-spec.md
+lean-spec templates add api api-spec.md
 ```
 
 **Phase 3: Usage**
 ```bash
 # Use default template
-lspec create my-feature
+lean-spec create my-feature
 
 # Use custom template
-lspec create my-api --template=api
+lean-spec create my-api --template=api
 ```
 
 ### 2. Enhanced Config Structure
@@ -143,21 +143,21 @@ lspec create my-api --template=api
 
 ```bash
 # List available templates in project
-lspec templates list
+lean-spec templates list
 
 # Add/register a template
-lspec templates add <name> <file>
-# Example: lspec templates add api api-spec.md
+lean-spec templates add <name> <file>
+# Example: lean-spec templates add api api-spec.md
 
 # Show template content
-lspec templates show <name>
+lean-spec templates show <name>
 
 # Remove template
-lspec templates remove <name>
+lean-spec templates remove <name>
 
 # Copy existing template as starting point
-lspec templates copy <source> <target>
-# Example: lspec templates copy default api-spec
+lean-spec templates copy <source> <target>
+# Example: lean-spec templates copy default api-spec
 ```
 
 ### 4. Template Resolution
@@ -199,7 +199,7 @@ async function resolveTemplate(
     // Error - templates should exist after init
     console.error(chalk.red('No templates found!'));
     console.error(chalk.gray('Expected: .lspec/templates/spec-template.md'));
-    console.error(chalk.yellow('Run: lspec init'));
+    console.error(chalk.yellow('Run: lean-spec init'));
     process.exit(1);
   }
 }
@@ -239,10 +239,10 @@ function parseCustomFrontmatter(
 **Usage:**
 ```bash
 # Create with custom frontmatter
-lspec create my-feature --epic=PLAT-123 --sprint=42
+lean-spec create my-feature --epic=PLAT-123 --sprint=42
 
 # Update custom fields
-lspec update specs/20251102/001-my-feature --epic=PLAT-456
+lean-spec update specs/20251102/001-my-feature --epic=PLAT-456
 ```
 
 ### 6. Variable Substitution System
@@ -296,11 +296,11 @@ epic: {epic}
 - [ ] Update `init.ts` to set up templates directory
 
 ### Phase 2: Template Management (Week 1)
-- [ ] Implement `lspec templates list` command
-- [ ] Implement `lspec templates add <name> <file>` command
-- [ ] Implement `lspec templates show <name>` command
-- [ ] Implement `lspec templates copy <source> <target>` command
-- [ ] Implement `lspec templates remove <name>` command
+- [ ] Implement `lean-spec templates list` command
+- [ ] Implement `lean-spec templates add <name> <file>` command
+- [ ] Implement `lean-spec templates show <name>` command
+- [ ] Implement `lean-spec templates copy <source> <target>` command
+- [ ] Implement `lean-spec templates remove <name>` command
 - [ ] Add `--template` flag to `create` command
 
 ### Phase 3: Custom Frontmatter (Week 2)
@@ -361,19 +361,19 @@ epic: {epic}
 
 **What breaks:**
 - Projects initialized with old version will have no `.lspec/templates/`
-- `lspec create` will fail with clear error message
-- Solution: Run `lspec init` again or manually create templates directory
+- `lean-spec create` will fail with clear error message
+- Solution: Run `lean-spec init` again or manually create templates directory
 
 **Migration for lean-spec itself:**
 1. Create `.lspec/templates/` directory
 2. Copy current package template to `.lspec/templates/spec-template.md`
 3. Update config to include templates section
-4. Test creating new specstinuing with: lspec create my-feature
+4. Test creating new specstinuing with: lean-spec create my-feature
 ```
 
 **Manual migration:**
 ```bash
-lspec templates migrate
+lean-spec templates migrate
 ```
 
 ## Non-Goals (for v1)

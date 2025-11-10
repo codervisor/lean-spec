@@ -257,7 +257,7 @@ Roadmap
 cd docs-site && npm run build
 
 # Validate specs
-cd .. && npx lspec validate
+cd .. && npx lean-spec validate
 
 # Check for broken links (if link checker installed)
 # npm run check-links

@@ -161,9 +161,9 @@
 
 **If we had:**
 1. **Clear threshold**: "300 lines = warning, 400 lines = split"
-2. **Automated detection**: `lspec validate --max-lines 400`
+2. **Automated detection**: `lean-spec validate --max-lines 400`
 3. **Cultural norm**: "Split specs proactively, not reactively"
-4. **Tooling support**: `lspec split <spec>` command
+4. **Tooling support**: `lean-spec split <spec>` command
 
 **First Principle This Reveals:**
 **"Principles need operationalization to be followed."**

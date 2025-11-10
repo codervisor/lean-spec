@@ -6,28 +6,28 @@
 
 ```bash
 # Analysis
-lspec analyze <spec> [options]
+lean-spec analyze <spec> [options]
 
 # Transformations  
-lspec split <spec> [options]
-lspec compact <spec> [options]
-lspec compress <spec> [options]
-lspec isolate <spec> [options]
+lean-spec split <spec> [options]
+lean-spec compact <spec> [options]
+lean-spec compress <spec> [options]
+lean-spec isolate <spec> [options]
 
 # Utilities
-lspec diff <spec> --before-after
-lspec preview <spec> --transformation=<type>
-lspec rollback <spec>
+lean-spec diff <spec> --before-after
+lean-spec preview <spec> --transformation=<type>
+lean-spec rollback <spec>
 ```
 
-## `lspec analyze` - Analyze Spec Complexity
+## `lean-spec analyze` - Analyze Spec Complexity
 
 ### Purpose
 Analyze spec structure and provide recommendations without making changes.
 
 ### Usage
 ```bash
-lspec analyze <spec> [options]
+lean-spec analyze <spec> [options]
 
 Options:
   --complexity      Show complexity metrics
@@ -42,7 +42,7 @@ Options:
 
 **Basic analysis**:
 ```bash
-$ lspec analyze 045
+$ lean-spec analyze 045
 
 📊 Analyzing spec 045-unified-dashboard...
 
@@ -75,7 +75,7 @@ Would you like to see transformation preview? (Y/n)
 
 **Complexity focus**:
 ```bash
-$ lspec analyze 045 --complexity
+$ lean-spec analyze 045 --complexity
 
 Complexity Breakdown:
   Total lines: 1,166
@@ -107,7 +107,7 @@ Suggested actions:
 
 **Redundancy focus**:
 ```bash
-$ lspec analyze 045 --redundancy
+$ lean-spec analyze 045 --redundancy
 
 Redundancy Analysis:
 
@@ -138,7 +138,7 @@ Total potential savings: ~120 lines (10%)
 
 **Conflict detection**:
 ```bash
-$ lspec analyze 045 --conflicts
+$ lean-spec analyze 045 --conflicts
 
 Conflict Analysis:
 
@@ -173,7 +173,7 @@ Recommendations:
 
 **JSON output** (for programmatic use):
 ```bash
-$ lspec analyze 045 --json
+$ lean-spec analyze 045 --json
 
 {
   "spec": "045-unified-dashboard",
@@ -220,14 +220,14 @@ $ lspec analyze 045 --json
 }
 ```
 
-## `lspec split` - Partition into Sub-Specs
+## `lean-spec split` - Partition into Sub-Specs
 
 ### Purpose
 Split oversized spec into focused sub-spec files.
 
 ### Usage
 ```bash
-lspec split <spec> [options]
+lean-spec split <spec> [options]
 
 Options:
   --strategy=<type>        Splitting strategy (default: auto)
@@ -249,7 +249,7 @@ Options:
 
 **Auto split** (recommended):
 ```bash
-$ lspec split 045
+$ lean-spec split 045
 
 🔍 Analyzing spec structure...
 ✓ Detected 5 concerns
@@ -279,7 +279,7 @@ Apply this split? (Y/n) █
 
 **Preview mode**:
 ```bash
-$ lspec split 045 --preview
+$ lean-spec split 045 --preview
 
 Split Plan:
 
@@ -313,7 +313,7 @@ Run without --preview to apply.
 
 **Split by phases**:
 ```bash
-$ lspec split 043 --strategy=phases
+$ lean-spec split 043 --strategy=phases
 
 Phase-based split for multi-phase spec:
 
@@ -332,7 +332,7 @@ Apply? (Y/n)
 
 **Custom/interactive split**:
 ```bash
-$ lspec split 045 --strategy=custom
+$ lean-spec split 045 --strategy=custom
 
 Interactive Split Wizard:
 
@@ -367,14 +367,14 @@ After splitting, automatically validates:
 - ✓ Sub-spec links in README.md
 - ✓ Git-trackable (files committed together)
 
-## `lspec compact` - Remove Redundancy
+## `lean-spec compact` - Remove Redundancy
 
 ### Purpose
 Remove duplicate and redundant content while preserving decisions.
 
 ### Usage
 ```bash
-lspec compact <spec> [options]
+lean-spec compact <spec> [options]
 
 Options:
   --preview              Show changes before applying
@@ -387,7 +387,7 @@ Options:
 
 **Basic compaction**:
 ```bash
-$ lspec compact 018
+$ lean-spec compact 018
 
 🔍 Analyzing redundancy...
 ✓ Found 3 duplicate sections
@@ -418,7 +418,7 @@ Apply compaction? (Y/n)
 
 **Aggressive mode**:
 ```bash
-$ lspec compact 018 --aggressive
+$ lean-spec compact 018 --aggressive
 
 🔍 Aggressive compaction analysis...
 
@@ -439,14 +439,14 @@ Choose mode:
 Selection: █
 ```
 
-## `lspec compress` - Summarize Sections
+## `lean-spec compress` - Summarize Sections
 
 ### Purpose
 Compress completed phases or verbose sections into summaries.
 
 ### Usage
 ```bash
-lspec compress <spec> [options]
+lean-spec compress <spec> [options]
 
 Options:
   --section=<name>       Section to compress
@@ -460,7 +460,7 @@ Options:
 
 **Compress completed phases**:
 ```bash
-$ lspec compress 043 --phases
+$ lean-spec compress 043 --phases
 
 🔍 Identifying completed phases...
 ✓ Found 2 completed phases
@@ -507,7 +507,7 @@ Apply compression? (Y/n)
 
 **Compress specific section**:
 ```bash
-$ lspec compress 045 --section="Research Notes"
+$ lean-spec compress 045 --section="Research Notes"
 
 Section: Research Notes (85 lines)
 Status: Supporting information, not critical to decisions
@@ -529,7 +529,7 @@ Apply? (Y/n)
 
 **AI-powered compression**:
 ```bash
-$ lspec compress 018 --history --ai
+$ lean-spec compress 018 --history --ai
 
 🤖 Using AI to summarize historical sections...
 
@@ -560,14 +560,14 @@ Lost:
 Apply? (Y/n)
 ```
 
-## `lspec isolate` - Extract to New Spec
+## `lean-spec isolate` - Extract to New Spec
 
 ### Purpose
 Move unrelated concern to separate spec.
 
 ### Usage
 ```bash
-lspec isolate <spec> [options]
+lean-spec isolate <spec> [options]
 
 Options:
   --section=<name>       Section to isolate
@@ -580,7 +580,7 @@ Options:
 
 **Isolate section**:
 ```bash
-$ lspec isolate 045 --section="Velocity Algorithm" --new-spec=velocity-algorithm
+$ lean-spec isolate 045 --section="Velocity Algorithm" --new-spec=velocity-algorithm
 
 🔍 Analyzing section "Velocity Algorithm"...
 ✓ Can be isolated (minimal dependencies)
@@ -608,7 +608,7 @@ Apply isolation? (Y/n)
 
 **Interactive mode**:
 ```bash
-$ lspec isolate 045 --interactive
+$ lean-spec isolate 045 --interactive
 
 Select sections to isolate:
   [ ] 1. Overview
@@ -639,10 +639,10 @@ Proceed? (Y/n)
 
 ## Utility Commands
 
-### `lspec diff` - Show Transformation Diff
+### `lean-spec diff` - Show Transformation Diff
 
 ```bash
-$ lspec diff 045 --before-after
+$ lean-spec diff 045 --before-after
 
 Comparing before/after split:
 
@@ -663,20 +663,20 @@ Detailed diff:
 [Git-style diff showing moved/modified content]
 ```
 
-### `lspec preview` - Preview Transformation
+### `lean-spec preview` - Preview Transformation
 
 ```bash
-$ lspec preview 045 --transformation=partition
+$ lean-spec preview 045 --transformation=partition
 
 Transformation: Partition into sub-specs
 
-[Shows same preview as `lspec split --preview`]
+[Shows same preview as `lean-spec split --preview`]
 ```
 
-### `lspec rollback` - Undo Transformation
+### `lean-spec rollback` - Undo Transformation
 
 ```bash
-$ lspec rollback 045
+$ lean-spec rollback 045
 
 Available rollback points:
   1. Split into sub-specs (2 hours ago)
@@ -732,19 +732,19 @@ Available for all commands:
 
 ```bash
 # 1. Analyze first
-$ lspec analyze 045
+$ lean-spec analyze 045
 # Shows: 1,166 lines, 5 concerns, recommend partition
 
 # 2. Preview split
-$ lspec split 045 --preview
+$ lean-spec split 045 --preview
 # Review the plan
 
 # 3. Apply split
-$ lspec split 045
+$ lean-spec split 045
 # Creates 5 files, validates
 
 # 4. Verify
-$ lspec validate 045
+$ lean-spec validate 045
 # All files pass validation
 ```
 
@@ -752,22 +752,22 @@ $ lspec validate 045
 
 ```bash
 # 1. Check redundancy
-$ lspec analyze 018 --redundancy
+$ lean-spec analyze 018 --redundancy
 # Shows: 73 lines of redundancy
 
 # 2. Preview compaction
-$ lspec compact 018 --preview
+$ lean-spec compact 018 --preview
 # Review changes
 
 # 3. Apply compaction
-$ lspec compact 018
+$ lean-spec compact 018
 # Removes redundancy
 
 # 4. Still too large? Split
-$ lspec analyze 018
+$ lean-spec analyze 018
 # Now 518 lines, still >400
 
-$ lspec split 018
+$ lean-spec split 018
 # Split into sub-specs
 ```
 
@@ -777,19 +777,19 @@ $ lspec split 018
 # Spec with many completed phases
 
 # 1. Compress completed phases
-$ lspec compress 043 --phases
+$ lean-spec compress 043 --phases
 # Reduces completed phases to summaries
 
 # 2. Check if compaction needed
-$ lspec analyze 043 --redundancy
+$ lean-spec analyze 043 --redundancy
 # Some redundancy in active phases
 
 # 3. Compact active content
-$ lspec compact 043 --preserve="Phase 3"
+$ lean-spec compact 043 --preserve="Phase 3"
 # Don't compact active phase
 
 # 4. Final validation
-$ lspec validate 043
+$ lean-spec validate 043
 # All good!
 ```
 

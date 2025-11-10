@@ -1,6 +1,6 @@
 # Configuration
 
-Configuration options for the `lspec validate` command.
+Configuration options for the `lean-spec validate` command.
 
 > See [CONFIGURATION-EXAMPLES.md](./CONFIGURATION-EXAMPLES.md) for practical examples
 
@@ -207,7 +207,7 @@ Glob patterns to exclude from validation:
 Example:
 ```bash
 # CLI flag overrides config
-lspec validate --mode quick
+lean-spec validate --mode quick
 ```
 
 ## Default Configuration

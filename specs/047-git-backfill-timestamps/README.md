@@ -57,22 +57,22 @@ Add a utility command to backfill created_at, updated_at, and completed_at times
 
 ```bash
 # Backfill all specs (timestamps only)
-lspec backfill
+lean-spec backfill
 
 # Backfill with additional fields
-lspec backfill --assignee    # Add assignee from git author
-lspec backfill --transitions # Reconstruct full status history
-lspec backfill --all         # All available fields
+lean-spec backfill --assignee    # Add assignee from git author
+lean-spec backfill --transitions # Reconstruct full status history
+lean-spec backfill --all         # All available fields
 
 # Dry run (show what would be updated)
-lspec backfill --dry-run
+lean-spec backfill --dry-run
 
 # Backfill specific spec(s)
-lspec backfill 014 046
-lspec backfill my-feature
+lean-spec backfill 014 046
+lean-spec backfill my-feature
 
 # Force overwrite existing values (rare case)
-lspec backfill --force
+lean-spec backfill --force
 ```
 
 ### Git Analysis Strategy
@@ -240,7 +240,7 @@ async function backfillTimestamps(
 
 **Manual Verification:**
 - [ ] Run on lean-spec's own specs (dogfooding)
-- [ ] Verify `lspec stats` shows velocity data after backfill
+- [ ] Verify `lean-spec stats` shows velocity data after backfill
 - [ ] Check that re-running is safe (idempotent)
 
 **Expected Output (dry-run):**
@@ -291,7 +291,7 @@ Could automatically update `updated_at` on commit via git hooks, but:
 
 ### Future Enhancements
 
-- **Automated backfill on `lspec init`** - Offer to backfill when initializing in existing project
+- **Automated backfill on `lean-spec init`** - Offer to backfill when initializing in existing project
 - **Watch mode** - Continuously sync timestamps from git (via git hooks or daemon)
 - **GitHub API integration** - Backfill `issue`, `pr`, `reviewer` from GitHub metadata
 - **Commit message parsing** - Extract additional metadata from commit messages
@@ -305,8 +305,8 @@ Could automatically update `updated_at` on commit via git hooks, but:
 - ❌ Epic/milestone extraction (requires external PM tools)
 
 **These could be separate features:**
-- `lspec sync-github` - Pull issue/PR metadata from GitHub
-- `lspec import-pm` - Import epic/milestone from Jira/ADO
+- `lean-spec sync-github` - Pull issue/PR metadata from GitHub
+- `lean-spec import-pm` - Import epic/milestone from Jira/ADO
 
 ### Related Specs
 

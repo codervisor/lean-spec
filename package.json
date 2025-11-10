@@ -4,7 +4,7 @@
   "description": "Lightweight spec methodology for AI-powered development",
   "type": "module",
   "bin": {
-    "lspec": "./bin/lspec.js"
+    "lean-spec": "./bin/lean-spec.js"
   },
   "scripts": {
     "build": "tsup",

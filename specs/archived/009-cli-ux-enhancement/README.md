@@ -106,9 +106,9 @@ src/
 ## Test
 
 **Manual Testing**:
-- [ ] `lspec board` shows clean, aligned Kanban board
-- [ ] `lspec stats` displays formatted dashboard with colors
-- [ ] `lspec list` shows well-formatted table with all metadata
+- [ ] `lean-spec board` shows clean, aligned Kanban board
+- [ ] `lean-spec stats` displays formatted dashboard with colors
+- [ ] `lean-spec list` shows well-formatted table with all metadata
 - [ ] Long-running commands show spinners (e.g., when scanning many specs)
 - [ ] Commands feel snappy and responsive
 - [ ] Error messages are clear and helpful
@@ -174,11 +174,11 @@ This spec has no dependencies on other specs, but:
 - ✅ Added spinners to all async operations (spec loading)
 
 **Phase 3: Testing** - All verified
-- ✅ `lspec stats` - Clean table output with emojis and colors
-- ✅ `lspec board` - Professional kanban-style board with proper borders
-- ✅ `lspec board --show-complete` - Expands complete specs
-- ✅ `lspec search "CLI"` - Enhanced search results with metadata
-- ✅ `lspec list --tag=cli` - Fast filtering with spinner feedback
+- ✅ `lean-spec stats` - Clean table output with emojis and colors
+- ✅ `lean-spec board` - Professional kanban-style board with proper borders
+- ✅ `lean-spec board --show-complete` - Expands complete specs
+- ✅ `lean-spec search "CLI"` - Enhanced search results with metadata
+- ✅ `lean-spec list --tag=cli` - Fast filtering with spinner feedback
 
 ### Key Improvements
 

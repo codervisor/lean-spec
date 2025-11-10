@@ -58,7 +58,7 @@ Every component must fit in memory:
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    CLI Layer                        │
-│  lspec analyze | split | compact | compress        │
+│  lean-spec analyze | split | compact | compress        │
 └─────────────────────┬───────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────┐

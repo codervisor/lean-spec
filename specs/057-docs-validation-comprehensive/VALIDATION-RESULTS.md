@@ -9,7 +9,7 @@
 
 This document contains systematic validation of all LeanSpec documentation against:
 - Source code implementation (`src/`)
-- CLI command behavior (`lspec --help`)
+- CLI command behavior (`lean-spec --help`)
 - Template files (`templates/`)
 - Configuration schemas (`config.ts`, `frontmatter.ts`)
 
@@ -56,7 +56,7 @@ This document contains systematic validation of all LeanSpec documentation again
 
 ### Critical Issues
 
-#### Issue #1: Missing CLI options in `lspec create` documentation
+#### Issue #1: Missing CLI options in `lean-spec create` documentation
 
 - **Location**: `docs-site/docs/reference/cli.mdx` (lines 54-58)
 - **Docs say**: 
@@ -77,9 +77,9 @@ This document contains systematic validation of all LeanSpec documentation again
   ```
 - **Severity**: **Critical** - Users are missing important functionality
 - **Fix**: Add missing options to the documentation
-- **Verification**: Run `lspec create --help` and compare to docs
+- **Verification**: Run `lean-spec create --help` and compare to docs
 
-#### Issue #2: Status icon mismatch in `lspec list` output
+#### Issue #2: Status icon mismatch in `lean-spec list` output
 
 - **Location**: `docs-site/docs/reference/cli.mdx` (lines 139-144)
 - **Docs say**:
@@ -102,13 +102,13 @@ This document contains systematic validation of all LeanSpec documentation again
 
 ### Medium Issues
 
-#### Issue #3: Missing validation of `lspec list` filtering options
+#### Issue #3: Missing validation of `lean-spec list` filtering options
 
 - **Location**: `docs-site/docs/reference/cli.mdx` (lines 97-102)
 - **Docs say**: Several filtering options listed
 - **Reality is**: Need to verify all options against actual CLI help output
 - **Severity**: **Medium** - Need to ensure complete accuracy
-- **Fix**: Cross-reference with `lspec list --help` output
+- **Fix**: Cross-reference with `lean-spec list --help` output
 - **Verification**: Command shows:
   ```
   --archived               Include archived specs
@@ -167,39 +167,39 @@ This document contains systematic validation of all LeanSpec documentation again
 - **Fix**: Standardize icons across all documentation
 - **Verification**: Check `variable-resolver.ts` line 70-76
 
-#### Issue #7: Missing CLI options for `lspec list`
+#### Issue #7: Missing CLI options for `lean-spec list`
 
 - **Location**: `docs-site/docs/reference/cli.mdx` (lines 97-102)
 - **Docs say**: Lists filtering options but missing several
-- **Reality is**: According to `lspec list --help`:
+- **Reality is**: According to `lean-spec list --help`:
   - Missing: `--archived` (Include archived specs)
   - Missing: `--sort <field>` (Sort by field)
   - Missing: `--order <order>` (Sort order)
   - Missing: `--assignee <name>` (Filter by assignee)
 - **Severity**: **Medium** - Users missing useful filtering options
 - **Fix**: Add all missing options to documentation
-- **Verification**: Run `lspec list --help`
+- **Verification**: Run `lean-spec list --help`
 
-#### Issue #8: Missing CLI options for `lspec search`
+#### Issue #8: Missing CLI options for `lean-spec search`
 
 - **Location**: `docs-site/docs/reference/cli.mdx` (lines 211-215)
 - **Docs say**: Lists some filtering options
-- **Reality is**: According to `lspec search --help`:
+- **Reality is**: According to `lean-spec search --help`:
   - Missing: `--priority <priority>` (Filter by priority)
   - Missing: `--assignee <name>` (Filter by assignee)
 - **Severity**: **Medium** - Incomplete option documentation
 - **Fix**: Add missing options
-- **Verification**: Run `lspec search --help`
+- **Verification**: Run `lean-spec search --help`
 
-#### Issue #9: Missing CLI options for `lspec update`
+#### Issue #9: Missing CLI options for `lean-spec update`
 
 - **Location**: `docs-site/docs/reference/cli.mdx` (lines 162-167)
 - **Docs say**: Lists update options
-- **Reality is**: According to `lspec update --help`:
+- **Reality is**: According to `lean-spec update --help`:
   - Missing: `--assignee <name>` (Set assignee)
 - **Severity**: **Medium** - Missing documented option
 - **Fix**: Add `--assignee` option to docs
-- **Verification**: Run `lspec update --help`
+- **Verification**: Run `lean-spec update --help`
 
 ---
 
@@ -266,17 +266,17 @@ This document contains systematic validation of all LeanSpec documentation again
 ### By Severity
 
 **Critical (5 issues):**
-- Issue #1: Missing CLI options in `lspec create`
-- Issue #2: Invalid status values in `lspec list` docs
+- Issue #1: Missing CLI options in `lean-spec create`
+- Issue #2: Invalid status values in `lean-spec list` docs
 - Issue #4: Invalid status values in frontmatter reference
 - Issue #5: Status icons for non-existent statuses
 - Issue #10: Configuration structure completely out of sync
 
 **Medium (5 issues):**
 - Issue #3: Missing validation needed for list options
-- Issue #7: Missing CLI options for `lspec list`
-- Issue #8: Missing CLI options for `lspec search`
-- Issue #9: Missing CLI options for `lspec update`
+- Issue #7: Missing CLI options for `lean-spec list`
+- Issue #8: Missing CLI options for `lean-spec search`
+- Issue #9: Missing CLI options for `lean-spec update`
 - Issue #11: Getting started config example wrong
 
 **Minor (1 issue):**
@@ -356,7 +356,7 @@ This document contains systematic validation of all LeanSpec documentation again
 - Test variable substitution
 
 **Phase 2: Integration Testing**
-- Run `lspec init` and verify prompts
+- Run `lean-spec init` and verify prompts
 - Create specs with various options
 - Test filtering and searching
 
@@ -404,10 +404,10 @@ All 11 issues have been successfully fixed in PR #[number]:
 
 2. **docs-site/docs/reference/cli.mdx**
    - Fixed status icons in examples
-   - Added missing options for `lspec create`: `--title`, `--description`, `--assignee`, `--template`, `--no-prefix`
-   - Added missing options for `lspec list`: `--archived`, `--sort`, `--order`, `--assignee`
-   - Added missing options for `lspec search`: `--priority`, `--assignee`
-   - Added missing options for `lspec update`: `--assignee`
+   - Added missing options for `lean-spec create`: `--title`, `--description`, `--assignee`, `--template`, `--no-prefix`
+   - Added missing options for `lean-spec list`: `--archived`, `--sort`, `--order`, `--assignee`
+   - Added missing options for `lean-spec search`: `--priority`, `--assignee`
+   - Added missing options for `lean-spec update`: `--assignee`
    - Updated config example to match actual structure
 
 3. **docs-site/docs/reference/config.mdx**
@@ -438,7 +438,7 @@ All 11 issues have been successfully fixed in PR #[number]:
 ### Verification
 
 - ✅ Documentation site builds successfully
-- ✅ `lspec validate` passes (warnings are pre-existing, unrelated)
+- ✅ `lean-spec validate` passes (warnings are pre-existing, unrelated)
 - ✅ Code review passed with no issues
 - ✅ All examples use correct field names and values
 
@@ -477,7 +477,7 @@ All 11 issues have been successfully fixed in PR #[number]:
 
 **Sources of truth:**
 - `src/` - Source code implementation
-- `lspec --help` - CLI help output
+- `lean-spec --help` - CLI help output
 - `templates/` - Template files
 - Actual command execution - Real behavior
 

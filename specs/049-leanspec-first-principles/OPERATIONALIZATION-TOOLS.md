@@ -25,13 +25,13 @@ Principles without operationalization are just nice words. This document outline
 **1. Complexity Checking**
 ```bash
 # Check if spec exceeds thresholds
-lspec validate --max-lines 400 <spec>
+lean-spec validate --max-lines 400 <spec>
 
 # Check all specs in project
-lspec validate --max-lines 400 --all
+lean-spec validate --max-lines 400 --all
 
 # Get complexity metrics for a spec
-lspec complexity <spec>
+lean-spec complexity <spec>
 # Output:
 # Lines: 423
 # Sections: 12
@@ -43,7 +43,7 @@ lspec complexity <spec>
 **2. Project Health Check**
 ```bash
 # Overall project health
-lspec health
+lean-spec health
 
 # Output:
 # 📊 Project Health Report
@@ -62,7 +62,7 @@ lspec health
 **3. Sub-Spec Navigation**
 ```bash
 # List sub-specs within a spec
-lspec files <spec>
+lean-spec files <spec>
 
 # Output:
 # 📄 049-leanspec-first-principles
@@ -77,7 +77,7 @@ lspec files <spec>
 **1. Splitting Assistance**
 ```bash
 # Interactive splitting guide
-lspec split <spec>
+lean-spec split <spec>
 
 # Guided workflow:
 # 1. Analyze spec structure
@@ -90,7 +90,7 @@ lspec split <spec>
 **2. Simplification Suggestions**
 ```bash
 # AI-powered simplification
-lspec simplify <spec>
+lean-spec simplify <spec>
 
 # Analyzes spec and suggests:
 # - Redundant sections to merge
@@ -102,7 +102,7 @@ lspec simplify <spec>
 **3. Template Recommendations**
 ```bash
 # Suggest appropriate template based on complexity
-lspec template --suggest
+lean-spec template --suggest
 
 # Based on your needs:
 # - Team size: solo
@@ -121,7 +121,7 @@ lspec template --suggest
 
 #!/bin/bash
 # Check for overly complex specs
-lspec validate --max-lines 400 --staged
+lean-spec validate --max-lines 400 --staged
 
 # Warn but don't block (allow with explanation)
 if [ $? -ne 0 ]; then
@@ -151,14 +151,14 @@ jobs:
         run: npm install -g lean-spec
       - name: Validate Spec Complexity
         run: |
-          lspec validate --max-lines 400 --all
-          lspec health --ci
+          lean-spec validate --max-lines 400 --all
+          lean-spec health --ci
 ```
 
 **3. CI/CD Gates**
 ```bash
 # In CI pipeline
-lspec validate --max-lines 400 --all --strict
+lean-spec validate --max-lines 400 --all --strict
 
 # --strict mode:
 # - Fails build if any spec >400 lines

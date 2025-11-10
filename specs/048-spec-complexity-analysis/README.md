@@ -120,7 +120,7 @@ Detailed information split for Context Economy (<400 lines per file):
 - Documented in AGENTS.md
 
 **Phase 2: Add Detection** ✅  
-- Line count detection in `lspec validate`
+- Line count detection in `lean-spec validate`
 - Warnings for specs >400 lines
 - Sub-spec validation
 
@@ -130,8 +130,8 @@ Detailed information split for Context Economy (<400 lines per file):
 - Spec 048 (this spec) split into sub-specs
 
 **Phase 4: Future Enhancements** (v0.3.0+)
-- `lspec split` command for guided splitting
-- `lspec check --complexity` for detailed analysis
+- `lean-spec split` command for guided splitting
+- `lean-spec check --complexity` for detailed analysis
 - Advanced sub-spec navigation
 
 ## Impact

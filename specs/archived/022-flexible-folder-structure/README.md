@@ -33,7 +33,7 @@ priority: high
 **The honest answer: It depends on your file browser usage patterns.**
 
 **If you reference specs primarily through:**
-- ✅ `lspec` commands → Structure doesn't matter (search/filter handles it)
+- ✅ `lean-spec` commands → Structure doesn't matter (search/filter handles it)
 - ✅ IDE search/grep → Structure doesn't matter (tools find it)
 - ✅ GitHub PR links → Structure doesn't matter (direct links)
 
@@ -92,7 +92,7 @@ specs/
 **Pros:**
 - ✅ Simplest mental model (one flat list)
 - ✅ Minimal navigation (no nested folders)
-- ✅ Easy references: `lspec update 11` or just `011-docusaurus-vercel`
+- ✅ Easy references: `lean-spec update 11` or just `011-docusaurus-vercel`
 - ✅ File explorer shows all specs at once
 - ✅ Works like GitHub issues (familiar pattern)
 - ✅ No cognitive overhead deciding "which folder?"
@@ -106,7 +106,7 @@ specs/
 **Best for:**
 - Solo developers
 - Small teams (< 50 specs)
-- Projects using `lspec` commands primarily
+- Projects using `lean-spec` commands primarily
 - Teams who filter/search rather than browse
 - Anyone who wants chronological sorting without folder nesting
 
@@ -259,17 +259,17 @@ milestone: 1  # ← This determines folder
 
 ```bash
 # LeanSpec automatically creates milestone-1/ folder
-lspec create feature-a --field milestone=1
+lean-spec create feature-a --field milestone=1
 # → specs/milestone-1/001-feature-a/
 
-lspec create feature-b --field milestone=1
+lean-spec create feature-b --field milestone=1
 # → specs/milestone-1/002-feature-b/
 
-lspec create feature-c --field milestone=2
+lean-spec create feature-c --field milestone=2
 # → specs/milestone-2/003-feature-c/  # Auto-creates milestone-2/
 
 # Missing field uses fallback
-lspec create docs
+lean-spec create docs
 # → specs/backlog/004-docs/  # Uses groupFallback
 ```
 
@@ -482,7 +482,7 @@ const seq = await getGlobalNextSeq(specsDir, config.structure.sequenceDigits);
 ```
 
 **Why global sequences:**
-- ✅ Unique references: `lspec update 5` is unambiguous
+- ✅ Unique references: `lean-spec update 5` is unambiguous
 - ✅ Simple mental model: Numbers never repeat
 - ✅ Works like GitHub issues/PRs
 - ✅ No confusion when switching patterns
@@ -510,7 +510,7 @@ async function getGlobalNextSeq(specsDir: string, digits: number): Promise<strin
 
 **Config migration:**
 ```typescript
-// On lspec init, detect existing structure
+// On lean-spec init, detect existing structure
 const hasDateDirs = await detectDateDirectories(specsDir);
 
 if (hasDateDirs) {
@@ -526,13 +526,13 @@ Commands should support multiple reference formats:
 
 ```bash
 # By number (works for all patterns)
-lspec update 11 --status complete
+lean-spec update 11 --status complete
 
 # By name (searches across all groups)
-lspec update flexible-folder-structure --status complete
+lean-spec update flexible-folder-structure --status complete
 
 # By full path (explicit)
-lspec update 20251103/001-flexible-folder-structure --status complete
+lean-spec update 20251103/001-flexible-folder-structure --status complete
 ```
 
 Existing `resolveSpecPath()` handles this already!
@@ -564,7 +564,7 @@ Existing `resolveSpecPath()` handles this already!
 
 ### Phase 5: Documentation ⚠️
 - [ ] Update README with pattern examples
-- [ ] Add pattern selection to `lspec init` wizard
+- [ ] Add pattern selection to `lean-spec init` wizard
 - [ ] Document migration guide
 - [x] Update template configs - **Issue: Templates still use legacy format**
 
@@ -612,7 +612,7 @@ Existing `resolveSpecPath()` handles this already!
 - [x] Sequential numbering consistent within each pattern
 - [x] Spec references work across all patterns
 - [x] Migration between patterns doesn't break links
-- [ ] `lspec init` offers pattern selection
+- [ ] `lean-spec init` offers pattern selection
 - [ ] Documentation covers all patterns
 - [x] Zero breaking changes for existing users
 
@@ -665,7 +665,7 @@ Existing `resolveSpecPath()` handles this already!
 
 ### 📋 Remaining Work (Optional Polish)
 
-1. **Pattern selection wizard in `lspec init`**
+1. **Pattern selection wizard in `lean-spec init`**
    - Currently line 72-74 shows TODO for custom setup flow
    - Would improve UX to let users choose pattern during init
 
@@ -726,7 +726,7 @@ Existing `resolveSpecPath()` handles this already!
    - No manual migration required
    - Backward compatible
 
-6. **Display in `lspec list` for flat pattern:**
+6. **Display in `lean-spec list` for flat pattern:**
    - ⚠️ **Partially Resolved**: Currently hardcoded to date grouping
    - **Options considered**:
      - Group by month from frontmatter `created` ✓ (best for chronological view)
@@ -747,7 +747,7 @@ Existing `resolveSpecPath()` handles this already!
 - LeanSpec adapts to YOUR workflow
 
 **User experience:**
-- Easier references: `lspec update 5` vs `lspec update 20251103/001-feature`
+- Easier references: `lean-spec update 5` vs `lean-spec update 20251103/001-feature`
 - Less navigation overhead
 - Familiar pattern (like GitHub issues)
 - Still supports chronological grouping when needed

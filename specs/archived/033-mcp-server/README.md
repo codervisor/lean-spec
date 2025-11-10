@@ -30,14 +30,14 @@ Build a Model Context Protocol (MCP) server for LeanSpec that enables AI assista
 - Reuses existing CLI logic via shared core package
 
 **MCP Tools (exposed to AI):**
-- `lspec_list` - List specs with filtering
-- `lspec_search` - Full-text search across specs
-- `lspec_read` - Read full spec content
-- `lspec_create` - Create new spec
-- `lspec_update` - Update spec frontmatter/status
-- `lspec_stats` - Get project statistics
-- `lspec_board` - Get Kanban board view
-- `lspec_deps` - Show dependencies
+- `lean-spec_list` - List specs with filtering
+- `lean-spec_search` - Full-text search across specs
+- `lean-spec_read` - Read full spec content
+- `lean-spec_create` - Create new spec
+- `lean-spec_update` - Update spec frontmatter/status
+- `lean-spec_stats` - Get project statistics
+- `lean-spec_board` - Get Kanban board view
+- `lean-spec_deps` - Show dependencies
 
 **MCP Resources (browsable by AI):**
 - `spec://<spec-name>` - Individual spec content

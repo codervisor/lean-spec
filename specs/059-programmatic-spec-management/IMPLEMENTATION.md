@@ -116,8 +116,8 @@ export interface ConcernAnalyzer {
 
 #### Day 5: CLI Integration
 ```bash
-$ lspec analyze <spec> --complexity
-$ lspec analyze <spec> --concerns
+$ lean-spec analyze <spec> --complexity
+$ lean-spec analyze <spec> --concerns
 ```
 
 - [ ] Add `analyze` command to CLI
@@ -128,7 +128,7 @@ $ lspec analyze <spec> --concerns
 ### Deliverables
 - ✅ Complexity analyzer
 - ✅ Concern detector
-- ✅ `lspec analyze` command
+- ✅ `lean-spec analyze` command
 - ✅ Comprehensive tests
 
 ## Phase 3: Transformation Engine (Weeks 4-5)
@@ -231,9 +231,9 @@ export class CompressionTransformer implements Transformer {
 
 ### Tasks
 
-#### Day 1-2: `lspec split` command
+#### Day 1-2: `lean-spec split` command
 ```bash
-$ lspec split <spec> [options]
+$ lean-spec split <spec> [options]
 ```
 
 - [ ] Implement command handler
@@ -244,9 +244,9 @@ $ lspec split <spec> [options]
 - [ ] Validate result
 - [ ] Test on multiple specs
 
-#### Day 3: `lspec compact` command
+#### Day 3: `lean-spec compact` command
 ```bash
-$ lspec compact <spec> [options]
+$ lean-spec compact <spec> [options]
 ```
 
 - [ ] Implement command handler
@@ -256,9 +256,9 @@ $ lspec compact <spec> [options]
 - [ ] Validate result
 - [ ] Test on verbose specs
 
-#### Day 4: `lspec compress` command
+#### Day 4: `lean-spec compress` command
 ```bash
-$ lspec compress <spec> [options]
+$ lean-spec compress <spec> [options]
 ```
 
 - [ ] Implement command handler
@@ -270,9 +270,9 @@ $ lspec compress <spec> [options]
 
 #### Day 5: Utilities & Polish
 ```bash
-$ lspec preview <spec> --transformation=<type>
-$ lspec diff <spec> --before-after
-$ lspec rollback <spec>
+$ lean-spec preview <spec> --transformation=<type>
+$ lean-spec diff <spec> --before-after
+$ lean-spec rollback <spec>
 ```
 
 - [ ] Implement preview command
@@ -282,9 +282,9 @@ $ lspec rollback <spec>
 - [ ] Create command examples
 
 ### Deliverables
-- ✅ `lspec split` command
-- ✅ `lspec compact` command
-- ✅ `lspec compress` command
+- ✅ `lean-spec split` command
+- ✅ `lean-spec compact` command
+- ✅ `lean-spec compress` command
 - ✅ Utility commands (preview, diff, rollback)
 - ✅ Help documentation
 - ✅ Example workflows
@@ -367,15 +367,15 @@ $ lspec rollback <spec>
 **End-to-end workflows**:
 ```bash
 # Test: Split oversized spec
-$ lspec split 045
+$ lean-spec split 045
 # Verify: 5 files created, all valid, references updated
 
 # Test: Compact verbose spec
-$ lspec compact 018
+$ lean-spec compact 018
 # Verify: Lines reduced, no info lost
 
 # Test: Compress completed phases
-$ lspec compress 043 --phases
+$ lean-spec compress 043 --phases
 # Verify: Phases summarized, outcomes preserved
 ```
 

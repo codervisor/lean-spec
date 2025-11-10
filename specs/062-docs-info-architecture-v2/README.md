@@ -333,20 +333,20 @@ Usage/
 # Creating & Managing Specs
 
 ## Creating Specs
-- lspec create <name>
+- lean-spec create <name>
 - Template selection
 - Initial structure
 - See [CLI Reference: create](/docs/reference/cli#create)
 
 ## Updating Specs
-- lspec update --status
-- lspec update --priority
-- lspec update --tags
-- lspec update --assignee
+- lean-spec update --status
+- lean-spec update --priority
+- lean-spec update --tags
+- lean-spec update --assignee
 - See [CLI Reference: update](/docs/reference/cli#update)
 
 ## Managing Lifecycle
-- lspec archive
+- lean-spec archive
 - Status transitions
 - See [Frontmatter Reference](/docs/reference/frontmatter)
 ```
@@ -356,19 +356,19 @@ Usage/
 # Finding Specs
 
 ## Listing Specs
-- lspec list (with filters)
+- lean-spec list (with filters)
 - Filtering by status, priority, tags
 - See [CLI Reference: list](/docs/reference/cli#list)
 
 ## Searching
-- lspec search (full-text)
+- lean-spec search (full-text)
 - Search strategies
 - See [CLI Reference: search](/docs/reference/cli#search)
 
 ## Viewing
-- lspec view (formatted)
-- lspec view --raw (markdown)
-- lspec view --json (structured)
+- lean-spec view (formatted)
+- lean-spec view --raw (markdown)
+- lean-spec view --json (structured)
 - See [CLI Reference: view](/docs/reference/cli#view)
 ```
 
@@ -388,7 +388,7 @@ Usage/
 
 ## Metadata Management
 - Never manually edit system-managed fields
-- Use lspec update commands
+- Use lean-spec update commands
 - See [Configuration Reference](/docs/reference/config)
 ```
 
@@ -597,7 +597,7 @@ guideSidebar: [
 cd docs-site && npm run build
 
 # Validate specs
-cd .. && npx lspec validate
+cd .. && npx lean-spec validate
 
 # Check for broken links (if link checker available)
 # npm run check-links

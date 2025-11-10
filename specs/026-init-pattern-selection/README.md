@@ -22,11 +22,11 @@ transitions:
 > **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-03 · **Tags**: ux, init, v0.2.0
 
 
-> Let users choose folder pattern during `lspec init`
+> Let users choose folder pattern during `lean-spec init`
 
 ## Overview
 
-Currently when running `lspec init`, users can only choose a template (minimal/standard/enterprise). The folder pattern is set by the template and users must manually edit `.lspec/config.json` to change it.
+Currently when running `lean-spec init`, users can only choose a template (minimal/standard/enterprise). The folder pattern is set by the template and users must manually edit `.lspec/config.json` to change it.
 
 **Issue:** No way to choose folder pattern during initialization.
 
@@ -34,7 +34,7 @@ Currently when running `lspec init`, users can only choose a template (minimal/s
 
 ## Design
 
-Enhance the `lspec init` wizard to offer pattern choices:
+Enhance the `lean-spec init` wizard to offer pattern choices:
 
 **Current flow:**
 1. Choose template (minimal/standard/enterprise)
@@ -51,7 +51,7 @@ Enhance the `lspec init` wizard to offer pattern choices:
 
 **UI mockup:**
 ```bash
-$ lspec init
+$ lean-spec init
 
 ? Select a template:
   ❯ standard

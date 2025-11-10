@@ -199,9 +199,9 @@ Workflow becomes:
 **No tooling changes needed** - This is purely docs/methodology
 
 **But future opportunities:**
-- `lspec draft "feature description"` - AI drafts spec from prompt
-- `lspec refine <spec>` - AI suggests improvements
-- `lspec validate <spec> --ai-check` - AI validates against first principles
+- `lean-spec draft "feature description"` - AI drafts spec from prompt
+- `lean-spec refine <spec>` - AI suggests improvements
+- `lean-spec validate <spec> --ai-check` - AI validates against first principles
 
 ## Plan
 

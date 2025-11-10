@@ -42,16 +42,16 @@ Add section on using frontmatter when creating specs:
 - Add `tags`, `priority`, `assignee`
 
 **Updating status:**
-- Use `lspec update` command or edit frontmatter directly
+- Use `lean-spec update` command or edit frontmatter directly
 
 #### 2. Discovery Commands
 
 Add section on discovery before starting work:
-- `lspec stats` - See work distribution
-- `lspec board` - View specs by status
-- `lspec list --tag=api` - Find relevant specs
-- `lspec search "topic"` - Full-text search
-- `lspec deps <spec>` - Check dependencies
+- `lean-spec stats` - See work distribution
+- `lean-spec board` - View specs by status
+- `lean-spec list --tag=api` - Find relevant specs
+- `lean-spec search "topic"` - Full-text search
+- `lean-spec deps <spec>` - Check dependencies
 
 #### 3. Workflow Integration
 
@@ -162,7 +162,7 @@ After updates, test with real AI coding assistants:
 
 Consider commands that help AI agents:
 ```bash
-lspec context          # Output formatted for AI context
-lspec summary --ai     # AI-optimized summary format
-lspec related <topic>  # Find related specs for context
+lean-spec context          # Output formatted for AI context
+lean-spec summary --ai     # AI-optimized summary format
+lean-spec related <topic>  # Find related specs for context
 ```

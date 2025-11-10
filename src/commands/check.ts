@@ -74,7 +74,7 @@ export async function checkSpecs(options: {
       // Brief warning (for auto-check)
       console.log('');
       console.log(chalk.yellow(`⚠️  Conflict warning: ${conflicts.length} sequence conflict(s) detected`));
-      console.log(chalk.gray('Run: lspec check'));
+      console.log(chalk.gray('Run: lean-spec check'));
       console.log('');
     }
   }

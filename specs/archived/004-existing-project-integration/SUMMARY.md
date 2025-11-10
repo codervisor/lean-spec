@@ -2,7 +2,7 @@
 
 ## What We Built
 
-Added smart detection and handling for projects that already have `AGENTS.md` or other system prompts when running `lspec init`.
+Added smart detection and handling for projects that already have `AGENTS.md` or other system prompts when running `lean-spec init`.
 
 ## Key Features
 
@@ -68,8 +68,8 @@ The `copyDirectory` function now:
 # Project with existing AGENTS.md
 cd my-existing-project
 
-# Run lspec init
-lspec init
+# Run lean-spec init
+lean-spec init
 
 # Output:
 # Welcome to LeanSpec!

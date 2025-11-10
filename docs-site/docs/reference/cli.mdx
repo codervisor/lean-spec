@@ -16,12 +16,12 @@ Available for all commands:
 
 ## Commands
 
-### `lspec init`
+### `lean-spec init`
 
 Initialize LeanSpec in your project.
 
 ```bash
-lspec init
+lean-spec init
 ```
 
 **Interactive prompts:**
@@ -40,12 +40,12 @@ lspec init
 
 ---
 
-### `lspec create`
+### `lean-spec create`
 
 Create a new spec.
 
 ```bash
-lspec create <name> [options]
+lean-spec create <name> [options]
 ```
 
 **Arguments:**
@@ -65,13 +65,13 @@ lspec create <name> [options]
 
 ```bash
 # Basic spec
-lspec create user-authentication
+lean-spec create user-authentication
 
 # Spec with metadata
-lspec create user-auth --status=planned --priority=high --tags=security,api
+lean-spec create user-auth --status=planned --priority=high --tags=security,api
 
 # Spec with custom fields
-lspec create user-auth --field epic=PROJ-123 --field sprint=42
+lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
 ```
 
 **Output:**
@@ -90,12 +90,12 @@ lspec create user-auth --field epic=PROJ-123 --field sprint=42
 
 ---
 
-### `lspec list`
+### `lean-spec list`
 
 List all specs with optional filtering.
 
 ```bash
-lspec list [options]
+lean-spec list [options]
 ```
 
 **Options:**
@@ -112,23 +112,23 @@ lspec list [options]
 
 ```bash
 # List all specs
-lspec list
+lean-spec list
 
 # Filter by status
-lspec list --status=in-progress
-lspec list --status=planned
+lean-spec list --status=in-progress
+lean-spec list --status=planned
 
 # Filter by priority
-lspec list --priority=high
+lean-spec list --priority=high
 
 # Filter by tag
-lspec list --tag=api
+lean-spec list --tag=api
 
 # Combine filters
-lspec list --status=planned --priority=high --tag=api
+lean-spec list --status=planned --priority=high --tag=api
 
 # Filter by custom field
-lspec list --field epic=PROJ-123
+lean-spec list --field epic=PROJ-123
 ```
 
 **Output:**
@@ -152,12 +152,12 @@ lspec list --field epic=PROJ-123
 
 ---
 
-### `lspec update`
+### `lean-spec update`
 
 Update spec metadata.
 
 ```bash
-lspec update <spec> [options]
+lean-spec update <spec> [options]
 ```
 
 **Arguments:**
@@ -177,19 +177,19 @@ lspec update <spec> [options]
 
 ```bash
 # Update status (using spec number)
-lspec update 1 --status=in-progress
+lean-spec update 1 --status=in-progress
 
 # Update priority (using spec name)
-lspec update user-auth --priority=critical
+lean-spec update user-auth --priority=critical
 
 # Update tags
-lspec update 001-user-auth --tags=security,api,mvp
+lean-spec update 001-user-auth --tags=security,api,mvp
 
 # Update custom fields
-lspec update 1 --field epic=PROJ-123
+lean-spec update 1 --field epic=PROJ-123
 
 # Update multiple fields
-lspec update 1 --status=complete --priority=high
+lean-spec update 1 --status=complete --priority=high
 ```
 
 **Output:**
@@ -205,12 +205,12 @@ lspec update 1 --status=complete --priority=high
 
 ---
 
-### `lspec search`
+### `lean-spec search`
 
 Full-text search across all specs.
 
 ```bash
-lspec search <query> [options]
+lean-spec search <query> [options]
 ```
 
 **Arguments:**
@@ -227,12 +227,12 @@ lspec search <query> [options]
 
 ```bash
 # Basic search
-lspec search "authentication"
+lean-spec search "authentication"
 
 # Search with filters
-lspec search "JWT token" --status=in-progress
-lspec search "API" --tag=security
-lspec search "password" --field epic=PROJ-123
+lean-spec search "JWT token" --status=in-progress
+lean-spec search "API" --tag=security
+lean-spec search "password" --field epic=PROJ-123
 ```
 
 **Output:**
@@ -256,12 +256,12 @@ Found 2 specs matching "authentication":
 
 ---
 
-### `lspec archive`
+### `lean-spec archive`
 
 Archive completed specs.
 
 ```bash
-lspec archive <spec>
+lean-spec archive <spec>
 ```
 
 **Arguments:**
@@ -274,10 +274,10 @@ lspec archive <spec>
 
 ```bash
 # Archive by spec number
-lspec archive 1
+lean-spec archive 1
 
 # Archive by name
-lspec archive user-auth
+lean-spec archive user-auth
 ```
 
 **Output:**
@@ -299,12 +299,12 @@ lspec archive user-auth
 
 ---
 
-### `lspec view`
+### `lean-spec view`
 
 View spec content.
 
 ```bash
-lspec view <spec> [options]
+lean-spec view <spec> [options]
 ```
 
 **Arguments:**
@@ -322,13 +322,13 @@ lspec view <spec> [options]
 
 ```bash
 # View formatted spec
-lspec view 001-user-authentication
+lean-spec view 001-user-authentication
 
 # Get raw markdown (for scripting)
-lspec view 001-user-auth --raw | grep "TODO"
+lean-spec view 001-user-auth --raw | grep "TODO"
 
 # Get structured JSON
-lspec view 001-user-auth --json | jq '.frontmatter.status'
+lean-spec view 001-user-auth --json | jq '.frontmatter.status'
 ```
 
 **Default Output (formatted):**
@@ -387,12 +387,12 @@ tags:
 
 ---
 
-### `lspec open`
+### `lean-spec open`
 
 Open spec in editor.
 
 ```bash
-lspec open <spec> [options]
+lean-spec open <spec> [options]
 ```
 
 **Arguments:**
@@ -408,11 +408,11 @@ lspec open <spec> [options]
 
 ```bash
 # Open in default editor
-lspec open 001-user-authentication
+lean-spec open 001-user-authentication
 
 # Open in specific editor
-lspec open 001-user-auth --editor=code
-lspec open 001-user-auth --editor=vim
+lean-spec open 001-user-auth --editor=code
+lean-spec open 001-user-auth --editor=vim
 ```
 
 **Editor Selection:**
@@ -428,12 +428,12 @@ lspec open 001-user-auth --editor=vim
 
 ---
 
-### `lspec templates`
+### `lean-spec templates`
 
 List available project templates.
 
 ```bash
-lspec templates
+lean-spec templates
 ```
 
 **Output:**
@@ -444,18 +444,18 @@ minimal        Just folder structure, no extras
 standard       Recommended - includes AGENTS.md (default)
 enterprise     Governance with approvals and compliance
 
-Use: lspec init
+Use: lean-spec init
 Then choose "Choose a template" option
 ```
 
 ---
 
-### `lspec stats`
+### `lean-spec stats`
 
 Show statistics about specs.
 
 ```bash
-lspec stats
+lean-spec stats
 ```
 
 **Output:**
@@ -481,12 +481,12 @@ By Tag:
 
 ---
 
-### `lspec board`
+### `lean-spec board`
 
 View specs organized by status (Kanban-style).
 
 ```bash
-lspec board
+lean-spec board
 ```
 
 **Output:**
@@ -506,12 +506,12 @@ lspec board
 
 ---
 
-### `lspec deps`
+### `lean-spec deps`
 
 Show dependencies for a spec (coming soon).
 
 ```bash
-lspec deps <spec>
+lean-spec deps <spec>
 ```
 
 **Arguments:**

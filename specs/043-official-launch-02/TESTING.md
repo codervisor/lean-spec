@@ -14,13 +14,13 @@ Quality gates, testing strategy, and success metrics for v0.2.0 launch.
 
 ### Manual Testing
 - [ ] Install via `npm install -g lean-spec` works
-- [ ] `lspec init` completes successfully
-- [ ] `lspec create` generates valid specs
-- [ ] `lspec list` displays correctly
-- [ ] `lspec search` returns relevant results
-- [ ] `lspec update` modifies specs correctly
-- [ ] `lspec board` renders properly
-- [ ] `lspec stats` shows accurate data
+- [ ] `lean-spec init` completes successfully
+- [ ] `lean-spec create` generates valid specs
+- [ ] `lean-spec list` displays correctly
+- [ ] `lean-spec search` returns relevant results
+- [ ] `lean-spec update` modifies specs correctly
+- [ ] `lean-spec board` renders properly
+- [ ] `lean-spec stats` shows accurate data
 - [ ] MCP server connects and responds without crashes
 
 ### Integration Testing
@@ -85,7 +85,7 @@ Before v0.2.0 launch, verify all specs follow first principles:
 
 ### Context Economy (< 400 lines)
 - [ ] All specs under 400 lines OR split into sub-specs
-- [ ] No warnings from `lspec complexity` (when implemented)
+- [ ] No warnings from `lean-spec complexity` (when implemented)
 - [ ] Each spec readable in <10 minutes
 
 ### Signal-to-Noise (Every word informs decisions)
@@ -114,11 +114,11 @@ Before v0.2.0 launch, verify all specs follow first principles:
 
 Target performance for common operations:
 
-- [ ] `lspec list` < 100ms (for repos with <100 specs)
-- [ ] `lspec search` < 500ms (full-text search)
-- [ ] `lspec view` < 50ms (single spec)
-- [ ] `lspec board` < 200ms (with stats)
-- [ ] `lspec stats` < 300ms (full analytics)
+- [ ] `lean-spec list` < 100ms (for repos with <100 specs)
+- [ ] `lean-spec search` < 500ms (full-text search)
+- [ ] `lean-spec view` < 50ms (single spec)
+- [ ] `lean-spec board` < 200ms (with stats)
+- [ ] `lean-spec stats` < 300ms (full analytics)
 
 Test with various repo sizes:
 - Small: 10 specs

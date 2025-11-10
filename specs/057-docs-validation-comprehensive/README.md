@@ -247,7 +247,7 @@ Spec 056 caught obvious issues (wrong template names). But subtle issues are wor
 3. For each claim/example, verify against:
    - `src/` source code
    - `templates/` actual templates
-   - `lspec --help` actual CLI
+   - `lean-spec --help` actual CLI
 4. Document every mismatch found
 5. Use the validation checklist format
 6. Categorize by severity

@@ -43,18 +43,18 @@
 **Status**: ✅ Commands match implementation
 
 Verified all documented commands exist:
-- ✅ `lspec init`
-- ✅ `lspec create`
-- ✅ `lspec list`
-- ✅ `lspec update`
-- ✅ `lspec search`
-- ✅ `lspec archive`
-- ✅ `lspec view`
-- ✅ `lspec open`
-- ✅ `lspec templates`
-- ✅ `lspec stats`
-- ✅ `lspec board`
-- ✅ `lspec deps`
+- ✅ `lean-spec init`
+- ✅ `lean-spec create`
+- ✅ `lean-spec list`
+- ✅ `lean-spec update`
+- ✅ `lean-spec search`
+- ✅ `lean-spec archive`
+- ✅ `lean-spec view`
+- ✅ `lean-spec open`
+- ✅ `lean-spec templates`
+- ✅ `lean-spec stats`
+- ✅ `lean-spec board`
+- ✅ `lean-spec deps`
 
 **Minor inconsistency**: Documentation shows many examples with date-based structure (`specs/20251102/001-user-auth`), but current default is **flat structure** (`specs/001-user-auth/`).
 

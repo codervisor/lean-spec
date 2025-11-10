@@ -37,10 +37,10 @@ This violates LeanSpec's principle of clarity over convention.
 
 **Option A: Single command with flags (Recommended)**
 ```bash
-lspec <spec>              # Default: formatted view (current "show")
-lspec <spec> --raw        # Raw markdown (current "read")  
-lspec <spec> --json       # JSON output (current "read --format=json")
-lspec <spec> --edit       # Open in editor (current "open")
+lean-spec <spec>              # Default: formatted view (current "show")
+lean-spec <spec> --raw        # Raw markdown (current "read")  
+lean-spec <spec> --json       # JSON output (current "read --format=json")
+lean-spec <spec> --edit       # Open in editor (current "open")
 ```
 
 **Benefits:**
@@ -50,10 +50,10 @@ lspec <spec> --edit       # Open in editor (current "open")
 
 **Option B: Keep minimal commands**
 ```bash
-lspec view <spec>         # Formatted (remove "show", keep only "view")
-lspec view <spec> --raw   # Raw markdown
-lspec view <spec> --json  # JSON output
-lspec open <spec>         # Edit (separate action, keep separate)
+lean-spec view <spec>         # Formatted (remove "show", keep only "view")
+lean-spec view <spec> --raw   # Raw markdown
+lean-spec view <spec> --json  # JSON output
+lean-spec open <spec>         # Edit (separate action, keep separate)
 ```
 
 **Benefits:**
@@ -109,9 +109,9 @@ program
 // Deprecated commands with warnings
 program
   .command('show <spec-path>')
-  .description('[DEPRECATED] Use: lspec <spec-path>')
+  .description('[DEPRECATED] Use: lean-spec <spec-path>')
   .action(async (specPath: string) => {
-    console.warn(chalk.yellow('⚠️  "lspec show" is deprecated. Use: lspec <spec-path>'));
+    console.warn(chalk.yellow('⚠️  "lean-spec show" is deprecated. Use: lean-spec <spec-path>'));
     await showCommand(specPath);
   });
 ```
@@ -150,17 +150,17 @@ program
 - [x] Remove deprecated commands completely
 - [x] Update README examples
 - [x] Update AGENTS.md with new commands
-- [x] Update MCP server to align with CLI (lspec_read → lspec_view with flags)
+- [x] Update MCP server to align with CLI (lean-spec_read → lean-spec_view with flags)
 - [x] Update all tests
 - [x] Update docs site CLI reference
 - [ ] Add migration guide to CHANGELOG
 
 ## Test
 
-- [x] `lspec view <spec>` displays formatted spec
-- [x] `lspec view <spec> --raw` outputs raw markdown (pipeable)
-- [x] `lspec view <spec> --json` outputs valid JSON
-- [x] `lspec open <spec>` opens in editor
+- [x] `lean-spec view <spec>` displays formatted spec
+- [x] `lean-spec view <spec> --raw` outputs raw markdown (pipeable)
+- [x] `lean-spec view <spec> --json` outputs valid JSON
+- [x] `lean-spec open <spec>` opens in editor
 - [x] Old commands completely removed (breaking change)
 - [x] Help text is clear and unambiguous
 - [x] Error messages guide users to correct command
@@ -184,10 +184,10 @@ program
 - Matches `git show`, `docker ps`, etc - where default is formatted, flags modify
 - Clearest mental model: "I want to see spec X, optionally in a different format"
 - Fewest total commands = least cognitive load
-- Natural evolution: `lspec list` → `lspec <spec>` (browse → view)
+- Natural evolution: `lean-spec list` → `lean-spec <spec>` (browse → view)
 
 **Backward compatibility:**
 - ~~Deprecated commands in 0.2.x (with warnings)~~
 - **Breaking change**: Removed deprecated commands completely in 0.2.0
 - Clear migration path in docs
-- Users should update to: `lspec view <spec>` (with optional `--raw` or `--json` flags)
+- Users should update to: `lean-spec view <spec>` (with optional `--raw` or `--json` flags)

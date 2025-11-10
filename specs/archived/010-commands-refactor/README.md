@@ -117,21 +117,21 @@ src/utils/
 ### Verification Checklist
 
 **Core Commands:**
-- [ ] `lspec create test-spec` - Creates new spec
-- [ ] `lspec list` - Lists all specs correctly
-- [ ] `lspec update test-spec --status complete` - Updates spec metadata
-- [ ] `lspec archive test-spec` - Archives spec
+- [ ] `lean-spec create test-spec` - Creates new spec
+- [ ] `lean-spec list` - Lists all specs correctly
+- [ ] `lean-spec update test-spec --status complete` - Updates spec metadata
+- [ ] `lean-spec archive test-spec` - Archives spec
 
 **Init & Templates:**
-- [ ] `lspec init` - Interactive project initialization
-- [ ] `lspec templates` - Lists available templates
-- [ ] `lspec init --template minimal` - Non-interactive init
+- [ ] `lean-spec init` - Interactive project initialization
+- [ ] `lean-spec templates` - Lists available templates
+- [ ] `lean-spec init --template minimal` - Non-interactive init
 
 **Visualization Commands:**
-- [ ] `lspec board` - Displays kanban board
-- [ ] `lspec stats` - Shows statistics
-- [ ] `lspec search "keyword"` - Searches specs
-- [ ] `lspec deps spec-path` - Shows dependencies
+- [ ] `lean-spec board` - Displays kanban board
+- [ ] `lean-spec stats` - Shows statistics
+- [ ] `lean-spec search "keyword"` - Searches specs
+- [ ] `lean-spec deps spec-path` - Shows dependencies
 
 **Build & Performance:**
 - [ ] Build completes in <1 second

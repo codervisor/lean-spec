@@ -1,8 +1,8 @@
 # CLI Design
 
-Command-line interface for the `lspec validate` command.
+Command-line interface for the `lean-spec validate` command.
 
-**Note:** This spec originally proposed expanding `lspec check`, but the implementation created a separate `lspec validate` command for comprehensive quality validation, while keeping `lspec check` focused on sequence conflicts.
+**Note:** This spec originally proposed expanding `lean-spec check`, but the implementation created a separate `lean-spec validate` command for comprehensive quality validation, while keeping `lean-spec check` focused on sequence conflicts.
 
 ## Basic Usage
 
@@ -10,54 +10,54 @@ Command-line interface for the `lspec validate` command.
 
 ```bash
 # Validate all specs (runs: line count + frontmatter)
-lspec validate
+lean-spec validate
 
 # Validate specific specs
-lspec validate 018
-lspec validate 043 048 018          # Multiple specs
+lean-spec validate 018
+lean-spec validate 043 048 018          # Multiple specs
 
 # Custom line limit
-lspec validate --max-lines 500
-lspec validate 018 --max-lines 300
+lean-spec validate --max-lines 500
+lean-spec validate 018 --max-lines 300
 
 # For sequence conflicts (separate command)
-lspec check
+lean-spec check
 ```
 
 ### Planned Enhancements (v0.3.0+)
 
 ```bash
 # Validate specific aspects
-lspec validate --frontmatter        # Only frontmatter validation
-lspec validate --structure          # Only structure validation
-lspec validate --content            # Only content validation
-lspec validate --corruption         # Only corruption detection
-lspec validate --staleness          # Only staleness detection
-lspec validate --sub-specs          # Only sub-spec validation
+lean-spec validate --frontmatter        # Only frontmatter validation
+lean-spec validate --structure          # Only structure validation
+lean-spec validate --content            # Only content validation
+lean-spec validate --corruption         # Only corruption detection
+lean-spec validate --staleness          # Only staleness detection
+lean-spec validate --sub-specs          # Only sub-spec validation
 
 # Combine validations
-lspec validate --frontmatter --structure
-lspec validate --sub-specs --structure  # Check sub-specs and main structure
+lean-spec validate --frontmatter --structure
+lean-spec validate --sub-specs --structure  # Check sub-specs and main structure
 
 # Skip certain checks
-lspec validate --no-staleness       # Skip staleness warnings
+lean-spec validate --no-staleness       # Skip staleness warnings
 
 # Filter which specs to validate
-lspec validate --status=in-progress
-lspec validate --tag=api
+lean-spec validate --status=in-progress
+lean-spec validate --tag=api
 ```
 
 ## Output Options
 
 ```bash
 # Output formatting
-lspec validate --format=json        # JSON output for CI
-lspec validate --quiet              # Brief output (errors only)
-lspec validate --verbose            # Detailed output with explanations
+lean-spec validate --format=json        # JSON output for CI
+lean-spec validate --quiet              # Brief output (errors only)
+lean-spec validate --verbose            # Detailed output with explanations
 
 # Behavior options
-lspec validate --strict             # Fail on warnings (not just errors)
-lspec validate --fix                # Auto-fix issues where possible
+lean-spec validate --strict             # Fail on warnings (not just errors)
+lean-spec validate --fix                # Auto-fix issues where possible
 ```
 
 ## Command Evolution
@@ -67,20 +67,20 @@ lspec validate --fix                # Auto-fix issues where possible
 Two separate commands with distinct purposes:
 
 ```bash
-lspec check               # Fast sequence conflict detection
-lspec validate            # Comprehensive quality validation
-lspec validate [specs...] # Validate specific specs
+lean-spec check               # Fast sequence conflict detection
+lean-spec validate            # Comprehensive quality validation
+lean-spec validate [specs...] # Validate specific specs
 ```
 
 ### Planned Enhancements (v0.3.0+)
 
-Expand `lspec validate` with additional validation rules:
+Expand `lean-spec validate` with additional validation rules:
 
 ```bash
-lspec validate --all           # All validation rules
-lspec validate --frontmatter   # Frontmatter validation
-lspec validate --structure     # Structure validation
-lspec validate --corruption    # Corruption detection
+lean-spec validate --all           # All validation rules
+lean-spec validate --frontmatter   # Frontmatter validation
+lean-spec validate --structure     # Structure validation
+lean-spec validate --corruption    # Corruption detection
 ```
 
 ## Console Output Format
@@ -153,7 +153,7 @@ Content:
 
 Results: 8/12 passed, 2 warnings, 4 errors
 
-Note: For sequence conflicts, run `lspec check`
+Note: For sequence conflicts, run `lean-spec check`
 ```
 
 ### Quiet Output
@@ -248,12 +248,12 @@ For CI/CD integration:
 - `2` - Warnings found (only in --strict mode)
 - `3` - Command error (invalid arguments, etc.)
 
-**Note:** `lspec check` (sequence conflicts) uses same exit code pattern.
+**Note:** `lean-spec check` (sequence conflicts) uses same exit code pattern.
 
 ## Auto-Fix Mode
 
 ```bash
-lspec validate --fix
+lean-spec validate --fix
 ```
 
 **What Gets Fixed:**
@@ -295,19 +295,19 @@ Results: Auto-fixed 3/5 issues
 
 ```bash
 # By status
-lspec validate --status=in-progress
-lspec validate --status=planned,in-progress
+lean-spec validate --status=in-progress
+lean-spec validate --status=planned,in-progress
 
 # By tag
-lspec validate --tag=api
-lspec validate --tag=quality,validation
+lean-spec validate --tag=api
+lean-spec validate --tag=quality,validation
 
 # By priority
-lspec validate --priority=high,critical
+lean-spec validate --priority=high,critical
 
 # By path pattern
-lspec validate specs/2025*
-lspec validate specs/archived/
+lean-spec validate specs/2025*
+lean-spec validate specs/archived/
 ```
 
 ## CI/CD Integration
@@ -317,7 +317,7 @@ lspec validate specs/archived/
 ```yaml
 - name: Check spec quality
   run: |
-    lspec validate --format=json --strict > validate-results.json
+    lean-spec validate --format=json --strict > validate-results.json
   continue-on-error: true
 
 - name: Comment PR with results
@@ -335,12 +335,12 @@ lspec validate specs/archived/
 # .git/hooks/pre-commit
 
 # Run comprehensive validation
-lspec validate --format=json > /dev/null 2>&1
+lean-spec validate --format=json > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
   echo "❌ Spec quality checks failed!"
-  echo "Run 'lspec validate' to see details"
-  echo "Run 'lspec validate --fix' to auto-fix issues"
+  echo "Run 'lean-spec validate' to see details"
+  echo "Run 'lean-spec validate --fix' to auto-fix issues"
   exit 1
 fi
 
@@ -351,12 +351,12 @@ echo "✓ All spec quality checks passed"
 
 ### Why Separate `validate` Command (Implementation Choice)
 
-The original spec proposed expanding `lspec check`, but the implementation created a separate `lspec validate` command:
+The original spec proposed expanding `lean-spec check`, but the implementation created a separate `lean-spec validate` command:
 
 **Rationale:**
 1. **Separation of concerns**: Sequence checking is fast/targeted; validation is comprehensive
 2. **Performance**: Users can run quick sequence checks without validation overhead
-3. **Backwards compatible**: Existing `lspec check` behavior unchanged
+3. **Backwards compatible**: Existing `lean-spec check` behavior unchanged
 4. **Incremental adoption**: Can add validation rules without affecting check command
 5. **Clearer intent**: `validate` explicitly signals quality checking vs. `check` for conflicts
 

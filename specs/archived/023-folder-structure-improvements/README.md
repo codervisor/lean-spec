@@ -14,7 +14,7 @@ updated: 2025-11-03
 
 ✅ **Critical items completed:**
 - Date prefix default implementation
-- `lspec check` command with conflict detection
+- `lean-spec check` command with conflict detection
 - Auto-check integration across all spec-reading commands
 
 📋 **Minor polish issues tracked separately:**
@@ -33,8 +33,8 @@ The flexible folder structure (spec 001) is complete and working, but has issues
 **Current behavior:**
 ```bash
 # User A and User B work on same repo
-User A: lspec create feature-a  # Gets 001-feature-a
-User B: lspec create feature-b  # Also gets 001-feature-b (locally)
+User A: lean-spec create feature-a  # Gets 001-feature-a
+User B: lean-spec create feature-b  # Also gets 001-feature-b (locally)
 
 # Both push to git → merge conflict!
 ```
@@ -45,7 +45,7 @@ User B: lspec create feature-b  # Also gets 001-feature-b (locally)
 
 1. **`list.ts` hardcoded date grouping** - Doesn't adapt to flat or custom patterns
 2. **Template configs use legacy format** - Works but inconsistent
-3. **No pattern selection in `lspec init`** - Must manually edit config
+3. **No pattern selection in `lean-spec init`** - Must manually edit config
 
 ## Proposal
 
@@ -73,10 +73,10 @@ Make `prefix: "{YYYYMMDD}-"` the default for flat pattern:
 
 ### 2. Add Simple Conflict Warning
 
-Add `lspec check` command that warns about duplicate sequences:
+Add `lean-spec check` command that warns about duplicate sequences:
 
 ```bash
-$ lspec check
+$ lean-spec check
 ⚠️  Sequence conflicts detected:
    Sequence 001:
      - specs/001-feature-a/
@@ -88,22 +88,22 @@ Fix manually or use date prefix to prevent conflicts.
 **Auto-check on relevant commands:**
 
 Commands that **should** auto-check (interact with specs):
-- ✅ `lspec create` - Just created a spec (might conflict)
-- ✅ `lspec list` - Browsing specs
-- ✅ `lspec board` - Viewing kanban
-- ✅ `lspec update` - Modifying a spec
-- ✅ `lspec search` - Searching specs
-- ✅ `lspec stats` - Viewing stats
-- ✅ `lspec timeline` - Viewing timeline
-- ✅ `lspec gantt` - Viewing gantt chart
-- ✅ `lspec deps` - Checking dependencies
-- ✅ `lspec files` - Viewing spec files
-- ✅ `lspec archive` - Archiving a spec
+- ✅ `lean-spec create` - Just created a spec (might conflict)
+- ✅ `lean-spec list` - Browsing specs
+- ✅ `lean-spec board` - Viewing kanban
+- ✅ `lean-spec update` - Modifying a spec
+- ✅ `lean-spec search` - Searching specs
+- ✅ `lean-spec stats` - Viewing stats
+- ✅ `lean-spec timeline` - Viewing timeline
+- ✅ `lean-spec gantt` - Viewing gantt chart
+- ✅ `lean-spec deps` - Checking dependencies
+- ✅ `lean-spec files` - Viewing spec files
+- ✅ `lean-spec archive` - Archiving a spec
 
 Commands that **should NOT** auto-check (don't interact with specs):
-- ❌ `lspec init` - Initializing new project (no specs yet)
-- ❌ `lspec templates` - Managing templates only
-- ❌ `lspec check` - Already checking conflicts
+- ❌ `lean-spec init` - Initializing new project (no specs yet)
+- ❌ `lean-spec templates` - Managing templates only
+- ❌ `lean-spec check` - Already checking conflicts
 
 **Behavior:**
 - Non-blocking: Shows warning but doesn't fail
@@ -118,7 +118,7 @@ Commands that **should NOT** auto-check (don't interact with specs):
 
 ### 3. Pattern-Aware List Grouping
 
-Make `lspec list` adapt to the configured pattern (flat vs custom).
+Make `lean-spec list` adapt to the configured pattern (flat vs custom).
 
 ### 4. Update Template Configs
 
@@ -126,7 +126,7 @@ Use new config format consistently across all templates.
 
 ### 5. Pattern Selection in Init
 
-Let users choose pattern during `lspec init`.
+Let users choose pattern during `lean-spec init`.
 
 ## Design
 
@@ -135,7 +135,7 @@ See [DESIGN.md](./DESIGN.md) for implementation details.
 **Summary:**
 1. Update `DEFAULT_CONFIG` to include `prefix: '{YYYYMMDD}-'`
 2. Add `--no-prefix` flag for solo devs who want clean numbers
-3. Implement simple `lspec check` command
+3. Implement simple `lean-spec check` command
 4. Auto-check on all spec-reading commands (11 total)
 5. Make `list` command pattern-aware
 6. Update templates
@@ -145,7 +145,7 @@ See [DESIGN.md](./DESIGN.md) for implementation details.
 
 - [ ] Update default config to use date prefix
 - [ ] Add `--no-prefix` flag to create command
-- [ ] Implement `lspec check` (detect only, no auto-fix)
+- [ ] Implement `lean-spec check` (detect only, no auto-fix)
 - [ ] Add auto-check to: create, list, board, update, search, stats, timeline, gantt, deps, files, archive
 - [ ] Add config option to disable auto-check
 - [ ] Fix list grouping to be pattern-aware
@@ -158,7 +158,7 @@ See [DESIGN.md](./DESIGN.md) for implementation details.
 
 - [ ] Date prefix applied by default
 - [ ] `--no-prefix` works for solo devs
-- [ ] `lspec check` detects duplicate sequences
+- [ ] `lean-spec check` detects duplicate sequences
 - [ ] Auto-check runs on all 11 spec-reading commands
 - [ ] Auto-check is non-blocking (shows warning only)
 - [ ] Auto-check can be disabled via config
@@ -172,7 +172,7 @@ See [DESIGN.md](./DESIGN.md) for implementation details.
 
 - [ ] New projects use date prefix by default (prevents conflicts)
 - [ ] Solo devs can opt out with `--no-prefix`
-- [ ] Conflicts detected via `lspec check`
+- [ ] Conflicts detected via `lean-spec check`
 - [ ] Auto-check warns users in relevant commands
 - [ ] Auto-check is non-blocking and can be disabled
 - [ ] List command adapts to pattern
@@ -206,22 +206,22 @@ Keep it **lean**:
 ### Auto-Check Design
 
 **When to check:**
-- ✅ After `lspec create` - User just created a spec
-- ✅ Before `lspec list` - User browsing specs
-- ✅ Before `lspec board` - User viewing kanban
-- ✅ Before `lspec update` - User modifying spec
-- ✅ Before `lspec search` - User searching specs
-- ✅ Before `lspec stats` - User viewing statistics
-- ✅ Before `lspec timeline` - User viewing timeline
-- ✅ Before `lspec gantt` - User viewing gantt chart
-- ✅ Before `lspec deps` - User checking dependencies
-- ✅ Before `lspec files` - User listing spec files
-- ✅ Before `lspec archive` - User archiving spec
+- ✅ After `lean-spec create` - User just created a spec
+- ✅ Before `lean-spec list` - User browsing specs
+- ✅ Before `lean-spec board` - User viewing kanban
+- ✅ Before `lean-spec update` - User modifying spec
+- ✅ Before `lean-spec search` - User searching specs
+- ✅ Before `lean-spec stats` - User viewing statistics
+- ✅ Before `lean-spec timeline` - User viewing timeline
+- ✅ Before `lean-spec gantt` - User viewing gantt chart
+- ✅ Before `lean-spec deps` - User checking dependencies
+- ✅ Before `lean-spec files` - User listing spec files
+- ✅ Before `lean-spec archive` - User archiving spec
 
 **When NOT to check:**
-- ❌ `lspec init` - No specs exist yet
-- ❌ `lspec templates` - Template management only
-- ❌ `lspec check` - Already checking
+- ❌ `lean-spec init` - No specs exist yet
+- ❌ `lean-spec templates` - Template management only
+- ❌ `lean-spec check` - Already checking
 
 **Rationale:**
 Any command that reads/displays/modifies specs should check for conflicts. This gives users visibility into problems at natural interaction points without being intrusive.
@@ -241,11 +241,11 @@ Any command that reads/displays/modifies specs should check for conflicts. This 
 
 **Example output:**
 ```bash
-$ lspec create feature-c
+$ lean-spec create feature-c
 ✓ Created: specs/001-feature-c/
 
 ⚠️  Conflict warning: Sequence 001 used by multiple specs
-Run: lspec check
+Run: lean-spec check
 ```
 
 ### Backward Compatibility

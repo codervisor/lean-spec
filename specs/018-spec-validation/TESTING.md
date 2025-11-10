@@ -1,8 +1,8 @@
 # Testing Strategy
 
-Comprehensive test plan for the `lspec validate` command.
+Comprehensive test plan for the `lean-spec validate` command.
 
-**Note:** This spec originally proposed expanding `lspec check`, but the implementation created `lspec validate` as a separate command.
+**Note:** This spec originally proposed expanding `lean-spec check`, but the implementation created `lean-spec validate` as a separate command.
 
 ## Test Categories
 
@@ -220,8 +220,8 @@ Comprehensive test plan for the `lspec validate` command.
 - [ ] Template-specific rules work
 
 **Backwards Compatibility:**
-- [ ] `lspec check` (sequence conflicts) behavior unchanged
-- [ ] `lspec validate` doesn't interfere with check command
+- [ ] `lean-spec check` (sequence conflicts) behavior unchanged
+- [ ] `lean-spec validate` doesn't interfere with check command
 - [ ] Exit codes follow standard pattern
 - [ ] Output format is consistent
 
