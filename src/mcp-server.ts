@@ -18,6 +18,16 @@ import type { SpecStatus, SpecPriority, SpecFilterOptions } from './frontmatter.
 import { resolveSpecPath } from './utils/path-helpers.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Get version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf-8')
+);
 
 // Type definitions for better type safety
 type SpecData = {
@@ -291,7 +301,7 @@ async function getDepsData(specPath: string): Promise<{
 async function createMcpServer(): Promise<McpServer> {
   const server = new McpServer({
     name: 'lean-spec',
-    version: '0.1.0',
+    version: packageJson.version,
   });
 
   // ===== TOOLS =====
