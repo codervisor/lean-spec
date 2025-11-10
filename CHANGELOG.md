@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-11-10
+
+### Changed
+
+**BREAKING: Command and directory naming migration**
+- **Command name**: `lspec` → `lean-spec` (full name for clarity and consistency)
+- **Config directory**: `.lspec/` → `.lean-spec/` (matches package and command name)
+- **Binary**: Only `lean-spec` command available (removed `lspec` alias)
+
+**Benefits:**
+- ✅ Consistency: Package name, command, and config directory all use `lean-spec`
+- ✅ Clarity: `npx lean-spec` works immediately (matches npm package name)
+- ✅ Simplicity: Single command to remember, no abbreviations
+
+**Migration Guide for Existing Users:**
+
+1. **Uninstall old version:**
+   ```bash
+   npm uninstall -g lean-spec
+   ```
+
+2. **Install new version:**
+   ```bash
+   npm install -g lean-spec
+   ```
+
+3. **Update existing projects:**
+   ```bash
+   # Rename config directory
+   mv .lspec .lean-spec
+   ```
+
+4. **Update commands:**
+   - Old: `lspec init` → New: `lean-spec init`
+   - Old: `lspec board` → New: `lean-spec board`
+   - Old: `npx lspec` → New: `npx lean-spec`
+
+**All documentation, examples, and specs updated to reflect new naming.**
+
 ## [0.1.1] - 2025-11-07
 
 ### Changed
@@ -88,5 +127,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.1.2]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.2
 [0.1.1]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.1
 [0.1.0]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.0

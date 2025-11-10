@@ -32,7 +32,7 @@ const program = new Command();
 program
   .name('lean-spec')
   .description('Manage LeanSpec documents')
-  .version('0.1.0');
+  .version('0.1.2');
 
 // Add custom help text with grouped commands
 program.addHelpText('after', `
