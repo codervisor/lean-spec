@@ -34,6 +34,11 @@ Specs under 300 lines. Intent-focused. Machine-readable. Adapts to your workflow
   <a href="https://www.lean-spec.dev/docs/guide/ai-executable-patterns"><strong>Examples</strong></a>
 </p>
 
+<p align="center">
+  <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文文档</strong></a> | 
+  <a href="https://www.lean-spec.dev"><strong>English Docs</strong></a>
+</p>
+
 ---
 
 ## The Spec Documentation Problem
