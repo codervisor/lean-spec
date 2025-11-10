@@ -1,0 +1,313 @@
+---
+id: 'mcp-integration'
+title: 'MCP 集成'
+sidebar_position: 3
+---
+# MCP 集成
+
+了解如何使用模型上下文协议（MCP）将 LeanSpec 与 AI 助手集成，以实现无缝规范访问和语义记忆检索。
+
+## 什么是 MCP？
+
+**模型上下文协议（MCP）** 是一个开放标准，使 AI 助手能够访问外部工具和数据源。LeanSpec 的 MCP 服务器让 AI 代理能够：
+
+- **搜索**语义规范（"查找认证决策"）
+- **检索**规范内容直接到对话上下文中
+- **创建/更新**通过自然语言规范
+- **导航**依赖关系和关系自动
+
+## 为什么使用 MCP？
+
+### 在 MCP 之前（手动引用）
+
+```
+人类："读取 specs/042-auth/README.md 中的认证规范"
+
+AI：[读取文件，提供答案]
+
+[下一个会话]
+人类："我们对认证做了什么决定？"
+
+AI："我当前的上下文中没有该信息。"
+```
+
+**问题**：上下文不持久，需要手动文件引用。
+
+### 在 MCP 之后（语义记忆）
+
+```
+人类："我们对认证做了什么决定？"
+
+AI：[通过 MCP 搜索规范："authentication"]
+    [自动检索规范 042]
+    "根据规范 042，我们选择了用于无状态认证的 JWT 令牌..."
+```
+
+**好处**：AI 具有项目决策的持久语义记忆。
+
+## 快速设置
+
+### 1. 安装 LeanSpec
+
+```bash
+npm install -g lean-spec
+```
+
+### 2. 配置您的 AI 工具
+
+选择您的工具：
+
+#### VS Code（GitHub Copilot）
+
+编辑 `~/.vscode/settings.json` 或工作区设置：
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+**提示**：`${workspaceFolder}` 自动检测您的工作区根目录。
+
+#### Claude Desktop
+
+编辑您的 Claude Desktop 配置：
+- **macOS**：`~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**：`%APPDATA%\Claude\claude_desktop_config.json`  
+- **Linux**：`~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "/absolute/path/to/your/project"
+    }
+  }
+}
+```
+
+**重要**：使用绝对路径，而不是 `${workspaceFolder}`。
+
+### 3. 测试集成
+
+询问您的 AI 助手：
+
+```
+List all specs in this project.
+```
+
+预期：AI 使用 MCP 调用 `lean-spec list` 并显示结果。
+
+```
+What does spec 042 describe?
+```
+
+预期：AI 通过 MCP 检索规范 042 并进行总结。
+
+## MCP 启用的功能
+
+### 语义搜索
+
+AI 可以按主题查找规范，而不仅仅是文件名：
+
+```
+人类："我们在哪里记录了缓存策略？"
+
+AI：[通过 MCP 搜索规范："caching strategy"]
+    "规范 038 涵盖了使用 Redis 的缓存..."
+```
+
+### 跨会话记忆
+
+决策在对话中持久：
+
+```
+[第 1 天]
+人类："我们为什么选择 PostgreSQL？"
+AI：[检索规范 023] "选择 PostgreSQL 是为了 ACID 合规性..."
+
+[第 7 天 - 新会话]
+人类："提醒我为什么我们使用 PostgreSQL？"
+AI：[再次检索规范 023] "根据规范 023，PostgreSQL..."
+```
+
+### 自动依赖导航
+
+AI 跟随关系：
+
+```
+人类："在我们开始规范 045 之前需要做什么？"
+
+AI：[通过 MCP 调用 deps 工具]
+    "规范 045 依赖于：
+     - 规范 041（完成）✅
+     - 规范 044（进行中）⏳"
+```
+
+### 项目健康意识
+
+AI 理解项目状态：
+
+```
+人类："项目状态如何？"
+
+AI：[通过 MCP 调用 board 工具]
+    "项目完成度：60%（6/10 个规范完成）
+     - 3 个规范进行中
+     - 7 个计划中
+     - 6 个完成"
+```
+
+## 常见 MCP 工作流程
+
+### 研究过去的决策
+
+```
+人类："我们为什么使用 JWT 而不是会话？"
+
+AI：[search_specs("JWT vs sessions")]
+    [检索规范 042]
+    "规范 042 记录了决策：
+     - 选择 JWT 用于无状态扩展
+     - 避免会话的 Redis 依赖
+     - 权衡：无法立即撤销令牌"
+```
+
+### 开始新工作
+
+```
+人类："为速率限制创建规范"
+
+AI：[通过 MCP 使用 create_spec 工具]
+    "创建了规范 048-rate-limiting。
+     您想让我起草内容吗？"
+```
+
+### 更新工作状态
+
+```
+人类："将规范 045 标记为完成"
+
+AI：[通过 MCP 使用 update_spec 工具]
+    "规范 045 状态已更新为'完成'。
+     于 2025-11-08T15:30:00Z 标记完成"
+```
+
+### 发现相关工作
+
+```
+人类："还有哪些规范与认证相关？"
+
+AI：[search_specs("authentication")]
+    "找到 3 个规范：
+     - 042：JWT 认证（完成）
+     - 043：OAuth 集成（计划中）
+     - 047：会话管理（进行中）"
+```
+
+## 优于手动引用的好处
+
+| 没有 MCP | 有 MCP |
+|---------|--------|
+| "读取 specs/042-auth/README.md" | "我们对认证做了什么决定？" |
+| 跨会话没有记忆 | 持久语义记忆 |
+| 手动文件路径引用 | 按主题语义搜索 |
+| 无法导航依赖 | 自动跟随关系 |
+| 人类查找状态 | AI 了解项目状态 |
+
+## 可用的 MCP 工具
+
+LeanSpec MCP 服务器为 AI 助手提供这些工具：
+
+**发现：**
+- `list` - 列出带过滤器的规范（状态、标签、优先级）
+- `search` - 跨规范全文搜索
+- `deps` - 显示依赖关系和关系
+
+**查看：**
+- `view` - 获取规范内容（格式化、原始或 JSON）
+- `files` - 列出规范中的文件（子规范、资产）
+- `board` - 带项目健康的看板视图
+- `stats` - 项目统计和指标
+
+**修改：**
+- `create` - 创建新规范
+- `update` - 更新状态、优先级、标签、负责人
+- `archive` - 归档已完成的规范
+
+**验证：**
+- `validate` - 检查规范结构和质量
+- `check` - 验证序列号
+
+**查看**：[MCP 服务器参考](/zh-Hans/docs/reference/mcp-server)了解技术细节
+
+## 故障排除
+
+### AI 说"我无法访问规范"
+
+**检查：**
+1. MCP 服务器在设置中配置
+2. `cwd` 指向正确的项目目录
+3. 项目有规范（手动运行 `lean-spec list`）
+4. 配置更改后重新启动 AI 工具
+
+### MCP 命令不工作
+
+**尝试：**
+```bash
+# 直接测试 MCP 服务器
+npx lean-spec mcp
+
+# 验证它启动时没有错误
+```
+
+### AI 找不到规范
+
+**验证：**
+```bash
+# 检查规范存在
+lean-spec list
+
+# 检查搜索工作
+lean-spec search "test query"
+```
+
+## 最佳实践
+
+**做：**
+- ✅ 使用语义查询（"查找认证决策"）
+- ✅ 让 AI 为您搜索规范（不要手动引用文件）
+- ✅ 信任跨会话记忆（AI 会记住）
+- ✅ 询问项目健康（"什么被阻塞了？"）
+
+**不要做：**
+- ❌ 手动将规范内容复制到聊天中
+- ❌ 明确引用文件路径
+- ❌ 重新解释 AI 可以查找的决策
+- ❌ 忘记为新项目配置 MCP
+
+## 安全说明
+
+MCP 服务器：
+- ✅ 仅访问在 `cwd` 中配置的项目目录
+- ✅ 仅公开 LeanSpec 命令（list、search、view 等）
+- ✅ 无法执行任意 shell 命令
+- ✅ 无法访问项目外的文件
+
+## 下一步
+
+- [AI 代理记忆](/zh-Hans/docs/guide/ai-agent-memory) - 理解规范作为语义记忆
+- [代理配置](/zh-Hans/docs/guide/usage/ai-assisted/agent-configuration) - AGENTS.md 设置
+- [MCP 服务器参考](/zh-Hans/docs/reference/mcp-server) - 技术文档
+
+---
+
+**外部资源**：[模型上下文协议](https://modelcontextprotocol.io/) - 官方 MCP 文档

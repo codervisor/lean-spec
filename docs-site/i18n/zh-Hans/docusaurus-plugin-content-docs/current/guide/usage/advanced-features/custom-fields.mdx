@@ -1,0 +1,418 @@
+---
+id: 'custom-fields'
+title: '自定义字段'
+sidebar_position: 9
+---
+# 自定义字段与变量
+
+LeanSpec 通过自定义前置元数据字段和模板变量支持强大的自定义。
+
+## 自定义前置元数据字段
+
+向您的规范添加项目特定的元数据。
+
+### 定义自定义字段
+
+编辑 `.lean-spec/config.json`：
+
+```json
+{
+  "frontmatter": {
+    "required": ["status", "created"],
+    "optional": ["tags", "priority"],
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "estimate": "string",
+      "reviewer": "string",
+      "issue": "string",
+      "team": "string"
+    }
+  }
+}
+```
+
+### 支持的类型
+
+- `string` - 文本值
+- `number` - 数字值（整数或小数）
+- `boolean` - true/false 值
+- `array` - 值列表
+
+### 使用自定义字段
+
+**创建规范时：**
+```bash
+lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
+```
+
+**更新规范时：**
+```bash
+lean-spec update 001 --field reviewer=alice --field estimate=large
+```
+
+**过滤时：**
+```bash
+lean-spec list --field epic=PROJ-123
+lean-spec list --field sprint=42
+lean-spec search "API" --field team=backend
+```
+
+### 示例配置
+
+对于 JIRA/Linear 集成：
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "issue": "string",
+      "epic": "string",
+      "story_points": "number"
+    }
+  }
+}
+```
+
+对于团队工作流程：
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "assignee": "string",
+      "reviewer": "string",
+      "team": "string",
+      "estimate": "string"
+    }
+  }
+}
+```
+
+对于冲刺/迭代：
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "sprint": "number",
+      "quarter": "string",
+      "release": "string"
+    }
+  }
+}
+```
+
+## 模板变量
+
+在您的规范模板中使用变量以获取动态内容。
+
+### 内置变量
+
+自动可用：
+
+- `\{name\}` - 规范名称
+- `\{date\}` - 创建日期（ISO 格式：YYYY-MM-DD）
+- `\{project_name\}` - 来自 package.json 名称字段
+- `\{author\}` - 来自 git config user.name
+- `\{git_user\}` - Git 用户名
+- `\{git_email\}` - Git 电子邮件地址
+- `\{git_repo\}` - 仓库名称
+
+### 自定义变量
+
+在 `.lean-spec/config.json` 中定义：
+
+```json
+{
+  "variables": {
+    "team": "平台工程",
+    "company": "Acme Corp",
+    "default_reviewer": "alice",
+    "docs_url": "https://docs.acme.com"
+  }
+}
+```
+
+### 在模板中使用变量
+
+创建或编辑 `.lean-spec/templates/spec-template.md`：
+
+```markdown
+---
+status: planned
+created: \{date\}
+---
+
+# \{name\}
+
+**团队**：\{team\}  
+**公司**：\{company\}  
+**作者**：\{author\}  
+**项目**：\{project_name\}
+
+## 概述
+
+此规范由 \{author\}（\{git_email\}）于 \{date\} 创建。
+
+有问题，请联系 \{default_reviewer\}。
+
+文档：\{docs_url\}
+
+## 目标
+
+[我们要构建什么以及为什么？]
+```
+
+当您创建规范时，所有变量都会自动解析：
+
+```bash
+lean-spec create user-authentication
+```
+
+结果为：
+
+```markdown
+---
+status: planned
+created: 2025-11-02
+---
+
+# user-authentication
+
+**团队**：平台工程  
+**公司**：Acme Corp  
+**作者**：John Doe  
+**项目**：my-app
+
+## 概述
+
+此规范由 John Doe（john@example.com）于 2025-11-02 创建。
+
+有问题，请联系 alice。
+
+文档：https://docs.acme.com
+```
+
+## 高级示例
+
+### 使用自定义字段创建规范
+
+**基本自定义字段使用：**
+```bash
+lean-spec create user-authentication \
+  --field epic=AUTH-2024 \
+  --field sprint=5 \
+  --field estimate=3d \
+  --field reviewer=bob
+```
+
+**包含所有选项：**
+```bash
+lean-spec create payment-integration \
+  --title "Stripe Payment Integration" \
+  --description "Integrate Stripe for subscription payments" \
+  --tags backend,payment,api \
+  --priority high \
+  --assignee alice \
+  --field epic=PAYMENT-2024 \
+  --field sprint=6 \
+  --field estimate=5d \
+  --field jira_id=PROJ-123 \
+  --field points=8
+```
+
+**更新自定义字段：**
+```bash
+# 仅更新自定义字段
+lean-spec update 001-user-authentication \
+  --field sprint=6 \
+  --field estimate=2d
+
+# 一起更新标准和自定义字段
+lean-spec update 001-user-authentication \
+  --status in-progress \
+  --priority high \
+  --field sprint=6
+```
+
+**按自定义字段过滤：**
+```bash
+# 按史诗过滤
+lean-spec list --field epic=AUTH-2024
+
+# 按冲刺过滤
+lean-spec list --field sprint=5
+
+# 与标准过滤器组合
+lean-spec list --status in-progress --field sprint=6
+
+# 多个自定义字段
+lean-spec list --field epic=AUTH-2024 --field sprint=6
+
+# 使用自定义字段过滤器搜索
+lean-spec search "authentication" --field epic=AUTH-2024
+```
+
+### 敏捷团队设置
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "story_points": "number",
+      "jira_id": "string",
+      "team": "string"
+    }
+  },
+  "variables": {
+    "team": "后端小队",
+    "default_reviewer": "tech-lead",
+    "sprint_duration": "2 weeks"
+  }
+}
+```
+
+### 开源项目
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "issue": "string",
+      "pr": "string",
+      "breaking": "boolean",
+      "version": "string"
+    }
+  },
+  "variables": {
+    "project": "open-source-tool",
+    "maintainer": "community"
+  }
+}
+```
+
+### 企业模板
+
+```json
+{
+  "variables": {
+    "company": "Acme Corp",
+    "team": "平台工程",
+    "compliance_contact": "security@acme.com",
+    "architecture_review": "https://wiki.acme.com/architecture-review"
+  },
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "issue": "string",
+      "assignee": "string",
+      "reviewer": "string",
+      "security_review": "boolean",
+      "architecture_review": "boolean"
+    }
+  }
+}
+```
+
+模板：
+```markdown
+---
+status: planned
+created: \{date\}
+epic: 
+issue: 
+assignee: \{author\}
+reviewer: 
+security_review: false
+architecture_review: false
+---
+
+# \{name\}
+
+**公司**：\{company\}  
+**团队**：\{team\}  
+**作者**：\{author\}
+
+## 合规性
+
+安全联系人：\{compliance_contact\}  
+架构审查流程：\{architecture_review\}
+```
+
+### API 优先模板
+
+```json
+{
+  "variables": {
+    "api_base_url": "https://api.acme.com",
+    "api_version": "v1",
+    "api_docs": "https://docs.acme.com/api"
+  },
+  "frontmatter": {
+    "custom": {
+      "endpoint": "string",
+      "method": "string",
+      "auth_required": "boolean"
+    }
+  }
+}
+```
+
+## 最佳实践
+
+:::tip 从最小开始
+不要预先添加自定义字段。在感到没有它们的痛苦时添加它们。
+:::
+
+:::tip 使用一致的名称
+在整个组织中标准化字段名称。使用 `assignee`，而不是在某些地方使用 `assigned_to`，在其他地方使用 `owner`。
+:::
+
+:::tip 验证字段类型
+LeanSpec 自动验证类型。使用正确的类型以尽早捕获错误。
+:::
+
+:::tip 记录自定义字段
+在 config.json 中添加注释，解释每个自定义字段的用途。
+:::
+
+:::tip 保持变量简单
+变量用于静态值。不要尝试使它们动态或计算。
+:::
+
+## 类型强制转换
+
+LeanSpec 自动将值强制转换为正确的类型：
+
+```bash
+# "42" 转换为数字 42
+lean-spec create feature --field sprint=42
+
+# "true" 转换为布尔值 true
+lean-spec create feature --field needs_review=true
+
+# 数组使用逗号分隔
+lean-spec create feature --field teams=backend,frontend
+```
+
+## 限制
+
+- 变量仅在创建时解析（不动态更新）
+- 自定义字段必须在使用前定义
+- 没有计算或条件变量
+- 自定义字段中没有嵌套对象（仅扁平结构）
+
+## 迁移
+
+如果您向现有规范添加自定义字段：
+
+```bash
+# 手动或使用脚本更新现有规范
+lean-spec update 001 --field epic=PROJ-123
+
+# 或直接在每个 README.md 中编辑前置元数据
+```
+
+---
+
+**下一步**：探索 [AI 集成](/zh-Hans/docs/guide/usage/ai-assisted/agent-configuration)或查看[配置参考](/zh-Hans/docs/reference/config)。
