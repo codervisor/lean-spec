@@ -20,23 +20,56 @@ lean-spec migrate <input-path> --with gemini
 lean-spec migrate <input-path> --dry-run          # Preview without changes
 lean-spec migrate <input-path> --batch-size 10    # Process N docs at a time
 lean-spec migrate <input-path> --skip-validation  # Don't validate after
+lean-spec migrate <input-path> --backfill         # Auto-run backfill after migration
+
+# After migration: Backfill metadata from git history
+lean-spec backfill                # Timestamps only
+lean-spec backfill --assignee     # Include assignee from git author
+lean-spec backfill --all          # All available metadata
+lean-spec backfill --dry-run      # Preview what would be backfilled
 ```
 
 ## Supported Sources
 
-**Any format!** By leveraging AI agents, we support unlimited formats:
-- ADR (Architecture Decision Records)
-- RFC-style documents
-- Linear issues/projects
-- Confluence pages
-- GitHub Issues/Discussions
-- Notion pages
-- Jira tickets
-- Custom markdown specs
-- Google Docs exports
-- Any structured document format
+**Primary Sources** (mainstream SDD tools):
 
-**Why this works**: AI analyzes document structure, extracts intent, and maps to LeanSpec without hard-coded parsers.
+1. **[OpenSpec](https://github.com/Fission-AI/OpenSpec)**
+   - **Source path**: `openspec/specs/` (current state) + `openspec/changes/archive/` (completed changes)
+   - **Folder structure**: Separate directories for specs and changes
+   - **Migration challenge**: Merge specs + completed changes into single `specs/` directory
+   - **File organization**: Each capability in separate folder with spec.md
+
+2. **[GitHub spec-kit](https://github.com/github/spec-kit)**
+   - **Source path**: `.specify/specs/` (note the dot-prefix!)
+   - **Folder structure**: `###-feature-name/` (numbered features)
+   - **Migration challenge**: Already numbered, but has multiple files per feature (spec.md, plan.md, tasks.md, etc.)
+   - **File organization**: Multi-file per feature, consolidate or preserve as sub-specs
+
+3. **Document Collections** - Various folder-based specs
+   - **Source path**: Varies (e.g., `docs/adr/`, `rfcs/`, etc.)
+   - **Folder structure**: Varies widely (ADR: `docs/adr/####-title.md`, RFC: `rfcs/0042-name.md`)
+   - **Migration challenge**: Flat folders → structured `specs/###-name/` hierarchy
+   - **File organization**: Single files → folder-based organization
+
+**External Systems** (cautious approach):
+- **Linear, Jira, Confluence, Notion**: Support **exported documents only**
+- **Rationale**: API integration requires authentication, API keys, rate limiting, and ongoing maintenance
+- **Migration path**: Export to markdown/JSON, then migrate those files
+- **No direct API integration**: Keeps tool simple, secure, and maintenance-free
+
+**Key Migration Tasks:**
+1. **Frontmatter generation** (PRIMARY CHALLENGE): Use `lean-spec backfill` to extract:
+   - `status` - from git history or document content
+   - `priority` - infer from labels/tags or set default
+   - `tags` - extract from existing metadata or directory structure
+   - `created_at`, `updated_at`, `completed_at` - from git commits
+   - `assignee` - from git author with `--assignee` flag
+2. **Folder reorganization** (VARIES BY SOURCE):
+   - **spec-kit**: Already compatible! Keep `specs/###-name/` as-is
+   - **OpenSpec**: Merge `openspec/specs/` + `openspec/changes/archive/` → `specs/###-name/`
+   - **ADR/RFC**: Flat files → folder hierarchy with renumbering
+3. **Content preservation**: Keep as-is (LeanSpec doesn't enforce format)
+4. **System prompts**: Optionally migrate AGENTS.md, .cursorrules for AI continuity
 
 ## Migration Modes
 
@@ -69,8 +102,8 @@ You are helping migrate specification documents to LeanSpec format.
    - Main content sections
    - Relationships to other documents
 
-3. Migrate each document:
-   ```bash
+3. Migrate each document by running these commands:
+   
    # Create spec
    lean-spec create <name>
    
@@ -86,13 +119,11 @@ You are helping migrate specification documents to LeanSpec format.
    # - Plan: Implementation steps (if applicable)
    # - Test: Validation criteria (if applicable)
    # - Notes: Additional context, trade-offs, alternatives
-   ```
 
-4. After migration:
-   ```bash
+4. After migration, run:
+   
    lean-spec validate  # Check for issues
    lean-spec board     # Verify migration
-   ```
 
 **Important Rules:**
 - Preserve decision rationale and context
@@ -298,43 +329,10 @@ $ lean-spec migrate ./docs/empty --with gemini
 - **Conflict resolution**: Detect duplicate names/IDs, prompt user
 - **Partial migration**: Continue on errors, report summary
 
-## How AI Handles Any Format
+## Migration Examples
 
-AI agent analyzes structure and maps intelligently:
-
-**Example - ADR Migration:**
-```markdown
-Source: "0042-use-event-sourcing.md"
-
-AI observes:
-- Title: "Use Event Sourcing"
-- Status: "Accepted" → maps to "complete"
-- Date: 2024-03-15 → created_at
-- Has Context, Decision, Consequences sections
-
-AI executes:
-$ lean-spec create use-event-sourcing
-$ lean-spec update use-event-sourcing --status complete
-$ lean-spec update use-event-sourcing --priority high
-$ lean-spec update use-event-sourcing --tags architecture,database
-[Maps sections: Context→Overview, Decision→Design, Consequences→Notes]
-```
-
-**Example - Linear Issue Migration:**
-```markdown
-Source: Linear JSON export
-
-AI observes:
-- Title, description, status, assignee, labels
-- Status: "In Progress" → maps to "in-progress"
-- Has comments with design discussion
-
-AI executes:
-$ lean-spec create <issue-title>
-$ lean-spec update <name> --status in-progress
-$ lean-spec update <name> --assignee <user>
-$ lean-spec update <name> --tags <labels>
-[Structures: description→Overview, comments→Design/Notes]
-```
-
-**Key advantage**: No hard-coded parsers. AI understands context and intent.
+See [EXAMPLES.md](./EXAMPLES.md) for detailed folder reorganization examples showing:
+- Source folder structure from each tool
+- Target LeanSpec folder structure
+- AI commands to reorganize files
+- What stays the same (content) vs what changes (organization)

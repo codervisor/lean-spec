@@ -147,8 +147,11 @@ Implementation plan and testing strategy for `lean-spec migrate`.
 
 ### Real-World Validation
 
+- [ ] Migrate OpenSpec repository (if publicly available examples exist)
+- [ ] Migrate GitHub spec-kit repository examples
 - [ ] Migrate actual ADR repo from open source project
 - [ ] Migrate actual RFC repo from open source project
+- [ ] Test with exported documents from Linear/Jira (markdown/JSON)
 - [ ] User testing with 3+ beta users
 - [ ] AI-assisted migration accuracy >90%
 - [ ] Test with all 3 AI providers (Copilot, Claude, Gemini)
