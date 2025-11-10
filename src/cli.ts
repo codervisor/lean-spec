@@ -23,6 +23,7 @@ import {
   openCommand,
   validateCommand,
   mcpCommand,
+  migrateCommand,
 } from './commands/index.js';
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
@@ -45,6 +46,7 @@ Command Groups:
     update <spec>                 Update spec metadata
     archive <spec>                Move spec to archived/
     backfill [specs...]           Backfill timestamps from git history
+    migrate <input-path>          Migrate specs from other SDD tools
     
   Viewing & Navigation:
     view <spec>                   View spec content
@@ -73,6 +75,8 @@ Examples:
   $ lean-spec list --status in-progress
   $ lean-spec view 042
   $ lean-spec backfill --dry-run
+  $ lean-spec migrate ./docs/adr
+  $ lean-spec migrate ./docs/rfcs --with copilot
   $ lean-spec board --tag backend
   $ lean-spec search "authentication"
   $ lean-spec validate
@@ -517,6 +521,37 @@ program
       console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
+  });
+
+// migrate command
+program
+  .command('migrate <input-path>')
+  .description('Migrate specs from other SDD tools (ADR, RFC, OpenSpec, spec-kit, etc.)')
+  .option('--with <provider>', 'AI-assisted migration (copilot, claude, gemini)')
+  .option('--dry-run', 'Preview without making changes')
+  .option('--batch-size <n>', 'Process N docs at a time', parseInt)
+  .option('--skip-validation', "Don't validate after migration")
+  .option('--backfill', 'Auto-run backfill after migration')
+  .action(async (inputPath: string, options: {
+    with?: string;
+    dryRun?: boolean;
+    batchSize?: number;
+    skipValidation?: boolean;
+    backfill?: boolean;
+  }) => {
+    // Validate AI provider if specified
+    if (options.with && !['copilot', 'claude', 'gemini'].includes(options.with)) {
+      console.error('\x1b[31m❌ Error:\x1b[0m Invalid AI provider. Use: copilot, claude, or gemini');
+      process.exit(1);
+    }
+    
+    await migrateCommand(inputPath, {
+      aiProvider: options.with as 'copilot' | 'claude' | 'gemini' | undefined,
+      dryRun: options.dryRun,
+      batchSize: options.batchSize,
+      skipValidation: options.skipValidation,
+      backfill: options.backfill,
+    });
   });
 
 // mcp command
