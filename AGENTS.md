@@ -14,9 +14,9 @@ When making spec decisions, apply these principles in priority order:
 - **Target**: <300 lines per spec file
 - **Warning**: 300-400 lines (consider simplifying)
 - **Problem**: >400 lines (must split)
-- **Question**: "Can this be read in 5-10 minutes?"
+- **Question**: "Can this be read in 5-10 minutes? Can you hold the entire structure in your head?"
 - **Action**: Split at 400 lines, warning at 300
-- **Why**: Physics (context windows), biology (working memory), economics (token costs)
+- **Why**: Not about exceeding token limits—it's about **attention and cognitive capacity**. Even within token limits, AI performance degrades with longer context (quality drops beyond 50K tokens despite 200K limits). Humans can't hold >7 concepts in working memory. **Attention is the scarce resource, not storage.**
 
 ### 2. Signal-to-Noise Maximization - Every word informs decisions
 **Every word must inform decisions or be cut.**
@@ -25,7 +25,7 @@ When making spec decisions, apply these principles in priority order:
 - **Cut**: Obvious, inferable, or "maybe future" content
 - **Keep**: Decision rationale, constraints, success criteria
 - **Action**: Remove anything that doesn't answer the test question
-- **Why**: Cognitive load, token costs, maintenance burden
+- **Why**: While Context Economy asks "Can you hold it all?", Signal-to-Noise asks "Is each piece worth holding?" Cognitive load, token costs, and maintenance burden all penalize low-value content.
 
 ### 3. Intent Over Implementation - Capture why, not just how
 **Capture "why" and "what," let "how" emerge.**
