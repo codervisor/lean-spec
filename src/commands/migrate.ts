@@ -281,7 +281,7 @@ async function verifyAITool(provider: 'copilot' | 'claude' | 'gemini'): Promise<
   }
   
   // Check compatibility
-  const compatible = installed && (version === 'unknown' || satisfiesVersion(version, toolDef.minVersion));
+  const compatible = installed && (version === 'unknown' || (version !== undefined && satisfiesVersion(version, toolDef.minVersion)));
   
   return {
     ...toolDef,

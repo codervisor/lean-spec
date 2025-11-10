@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-10'
 tags:
   - cli
@@ -8,11 +8,15 @@ tags:
   - v0.2
 priority: high
 created_at: '2025-11-10T05:35:31.293Z'
+updated_at: '2025-11-10T06:39:58.417Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-10T06:39:58.417Z'
 ---
 
 # Migration from Existing SDD Tools
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-10
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-10 · **Tags**: cli, migration, ai-assisted, v0.2
 
 **Project**: lean-spec  
 **Team**: Core Development
