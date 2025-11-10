@@ -1,0 +1,143 @@
+---
+id: 'development'
+title: '开发'
+sidebar_position: 11
+---
+# 开发
+
+贡献和开发 LeanSpec 的指南。
+
+## 快速开始
+
+```bash
+# 克隆仓库
+git clone https://github.com/codervisor/lean-spec.git
+cd lean-spec
+
+# 安装依赖
+npm install
+
+# 构建
+npm run build
+
+# 运行测试
+npm run test:run
+
+# 开发模式（监视）
+npm run dev
+```
+
+## 项目结构
+
+```
+lean-spec/
+├── bin/              # CLI 入口点
+├── src/              # TypeScript 源代码
+│   ├── cli.ts       # 主 CLI
+│   ├── commands/    # 命令实现
+│   ├── components/  # 可重用组件
+│   ├── utils/       # 实用函数
+│   └── validators/  # 验证逻辑
+├── templates/        # 项目模板（minimal、standard、enterprise）
+├── docs-site/       # 文档站点（Docusaurus）
+├── specs/           # 项目规范（自我实践）
+└── tests/           # 测试文件（与源代码放在一起）
+```
+
+## 测试
+
+LeanSpec 使用 Vitest 进行测试。
+
+### 运行测试
+
+```bash
+# 运行所有测试
+npm run test:run
+
+# 监视模式
+npm test
+
+# 使用 UI
+npm run test:ui
+
+# 覆盖率报告
+npm run test:coverage
+```
+
+### 测试结构
+
+- 单元测试：测试单个函数和模块
+- 集成测试：测试命令工作流程
+- 端到端测试：测试完整的 CLI 场景
+
+### 编写测试
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { createSpec } from '../src/commands/create';
+
+describe('createSpec', () => {
+  it('should create spec with valid name', () => {
+    const result = createSpec('my-feature');
+    expect(result.success).toBe(true);
+  });
+});
+```
+
+## 构建
+
+```bash
+# 生产构建
+npm run build
+
+# 开发监视模式
+npm run dev
+
+# 类型检查
+npm run typecheck
+```
+
+构建输出到 `dist/` 目录。
+
+## 代码质量
+
+```bash
+# 代码检查
+npm run lint
+
+# 格式化
+npm run format
+```
+
+## 文档
+
+文档站点使用 Docusaurus 构建。
+
+```bash
+# 导航到文档站点
+cd docs-site
+
+# 开发服务器（热重载）
+npm start
+
+# 构建文档
+npm run build
+
+# 预览构建的文档
+npm run serve
+```
+
+文档源代码在 `docs-site/docs/` 目录中。
+
+## 发布流程
+
+1. 在 `package.json` 中更新版本
+2. 更新 `CHANGELOG.md`
+3. 提交：`git commit -m "Release v0.x.0"`
+4. 标记：`git tag v0.x.0`
+5. 推送：`git push && git push --tags`
+6. 发布：`npm publish`
+
+## 贡献
+
+详细的贡献指南请参见[贡献指南](https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md)。
