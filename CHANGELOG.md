@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2025-11-10
+
+### Added
+
+**New Commands:**
+- `lean-spec migrate` - Migrate from existing tools (ADRs, RFCs, design docs) with AI assistance
+- `lean-spec archive` - Archive completed specs with automatic frontmatter updates
+- `lean-spec backfill` - Backfill timestamps and metadata from git history
+
+**Documentation Enhancements:**
+- Complete documentation site overhaul with improved information architecture
+- AI-assisted spec writing guide with philosophy and best practices
+- Migration guides for teams coming from ADRs, RFCs, and other tools
+- First principles documentation (Context Economy, Signal-to-Noise, etc.)
+- Comprehensive core concepts guide with practical examples
+
+**Quality & Validation:**
+- Enhanced `lean-spec validate` with complexity analysis
+- Spec relationship clarity with bidirectional `related` and directional `depends_on`
+- Improved frontmatter handling and metadata management
+
+### Changed
+
+**User Experience:**
+- Unified dashboard combining board view with project health metrics
+- Pattern-aware list grouping with visual icons and better organization
+- Improved init flow with pattern selection
+- Enhanced stats dashboard with actionable insights
+- Better MCP error handling and stability
+
+**Documentation:**
+- Restructured docs with clearer navigation and information flow
+- Updated README with AI-first positioning
+- Comprehensive examples and use cases
+- Improved CLI command documentation
+
+### Fixed
+- MCP server stability issues with frontmatter parsing
+- TypeScript type errors in migrate command
+- Documentation accuracy issues across all guides
+- Frontmatter handling edge cases
+
+### Philosophy
+
+This UAT release operationalizes LeanSpec's five first principles:
+1. **Context Economy** - Specs fit in working memory (<400 lines)
+2. **Signal-to-Noise** - Every word informs decisions
+3. **Intent Over Implementation** - Capture why, not just how
+4. **Bridge the Gap** - Both human and AI understand
+5. **Progressive Disclosure** - Add complexity only when needed
+
+**Notable Completed Specs in this Release:**
+- 063: Migration from existing tools
+- 062: Documentation information architecture v2
+- 061: AI-assisted spec writing
+- 060: Core concepts coherence
+- 058: Docs overview polish
+- 057: Docs validation comprehensive
+- 056: Docs site accuracy audit
+- 055: README redesign (AI-first)
+- 054: Validate output (lint-style)
+- 052: Branding assets
+- 051: First principles documentation
+- 049: LeanSpec first principles foundation
+- 048: Spec complexity analysis
+- 047: Git backfill timestamps
+- 046: Stats dashboard refactor
+- 045: Unified dashboard
+- 044: Spec relationships clarity
+
+**Testing:**
+- All 261 tests passing (100% pass rate)
+- Zero critical bugs
+- MCP server stable
+- Documentation site builds cleanly
+
+**Ready for:** UAT testing before official 0.2.0 launch
+
 ## [0.1.2] - 2025-11-10
 
 ### Changed
@@ -127,6 +205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.1.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.3
 [0.1.2]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.2
 [0.1.1]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.1
 [0.1.0]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.0
