@@ -130,12 +130,15 @@ Positioning, messaging, channels, and content strategy for v0.2.0 launch.
   - [x] Create social media assets (social-card.png, social-github.png)
   - [x] Branding guidelines documented (BRANDING.md)
 - [x] Write launch blog post - ✅ DRAFTED (blog/2025-11-10-ai-agent-performance.mdx, 275 lines)
-- [ ] Create demo video showing principle validation
-- [ ] Record GIF demos: spec creation, validation, complexity checks
+- [x] Create demo scripts - ✅ COMPLETE (DEMO-AI-ASSISTED.md with full voiceover)
+- [ ] **Record AI-assisted workflow video (split-screen, 3-5 min)** ← Next priority
+- [ ] Create short GIF demos extracted from main video
 - [ ] Prepare social media posts
-- [ ] Write comparison guides
+- [ ] Write comparison guides (vs Agile, vs No Docs)
 - [ ] Create Product Hunt submission
 - [ ] Prepare Hacker News Show HN post
+
+**Demo Strategy:** Focus on AI-native workflow (MCP integration, semantic memory, natural conversation) rather than CLI commands. Differentiate from traditional spec tools.
 
 ### Launch Day
 - [ ] Publish blog post
