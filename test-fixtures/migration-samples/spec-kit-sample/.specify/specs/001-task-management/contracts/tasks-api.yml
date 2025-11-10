@@ -1,0 +1,191 @@
+# API Contracts: Task Management
+
+## Create Task
+
+```yaml
+openapi: 3.0.0
+paths:
+  /projects/{projectId}/tasks:
+    post:
+      summary: Create a new task
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [todo, in-progress, done, blocked]
+                  default: todo
+                priority:
+                  type: string
+                  enum: [low, medium, high, urgent]
+                  default: medium
+                assigneeId:
+                  type: string
+                  format: uuid
+                dueDate:
+                  type: string
+                  format: date-time
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid request
+        '404':
+          description: Project not found
+```
+
+## List Tasks
+
+```yaml
+paths:
+  /projects/{projectId}/tasks:
+    get:
+      summary: List tasks in a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [todo, in-progress, done, blocked]
+        - name: assigneeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+```
+
+## Schemas
+
+```yaml
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - projectId
+        - title
+        - status
+        - priority
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [todo, in-progress, done, blocked]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        assigneeId:
+          type: string
+          format: uuid
+        dueDate:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        subtasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subtask'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    Subtask:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        completed:
+          type: boolean
+```
