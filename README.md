@@ -136,9 +136,10 @@ LeanSpec isn't arbitrary rules—it's derived from fundamental constraints of wo
 ### 🧠 Context Economy
 **Specs <300 lines → Fit in working memory**
 
-- **Physics**: AI context windows are bounded (~20K effective tokens)
-- **Biology**: Human working memory is limited (7±2 items)
+- **Physics**: AI performance degrades with longer context (quality drops beyond 50K tokens despite 200K limits)
+- **Biology**: Human working memory is limited (7±2 items, 5-10 min attention)
 - **Economics**: Large contexts cost more time and money
+- **Reality**: Attention is the scarce resource, not storage
 - **Result**: Keep specs under 300 lines, split complex features
 
 ### ✂️ Signal-to-Noise Maximization
