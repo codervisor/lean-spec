@@ -45,11 +45,12 @@ export async function initProject(): Promise<void> {
         value: 'template',
         description: 'Pick from: minimal, standard, enterprise',
       },
-      {
-        name: 'Customize everything',
-        value: 'custom',
-        description: 'Full control over structure and settings',
-      },
+      // TODO: Re-enable when custom setup mode is implemented
+      // {
+      //   name: 'Customize everything',
+      //   value: 'custom',
+      //   description: 'Full control over structure and settings',
+      // },
     ],
   });
 
@@ -69,10 +70,8 @@ export async function initProject(): Promise<void> {
         },
       ],
     });
-  } else if (setupMode === 'custom') {
-    // TODO: Implement full customization flow
-    console.log(chalk.yellow('Full customization coming soon. Using standard for now.'));
   }
+  // Note: setupMode === 'custom' branch removed - will be implemented in future
 
   // Load template config
   const templateDir = path.join(TEMPLATES_DIR, templateName);
