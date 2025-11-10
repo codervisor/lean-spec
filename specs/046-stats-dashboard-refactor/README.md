@@ -85,6 +85,8 @@ lean-spec dashboard    # → use `lean-spec board`
 Detailed information split for Context Economy:
 
 - **[DESIGN.md](./DESIGN.md)** - Full command redesign, architecture, health algorithms
+- **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Step-by-step implementation details and execution plan
+- **[TESTING.md](./TESTING.md)** - Test strategy and validation criteria
 
 ## Status
 

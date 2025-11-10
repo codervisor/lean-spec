@@ -17,7 +17,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Introduction',
-      items: ['guide/index', 'guide/getting-started'],
+      items: ['guide/index', 'guide/getting-started', 'guide/migration'],
     },
     {
       type: 'category',

@@ -165,6 +165,9 @@ Detailed information split for Context Economy:
 - **[TESTING.md](./TESTING.md)** - Quality gates, testing strategy, success metrics
 - **[MARKETING.md](./MARKETING.md)** - Positioning, messaging, launch channels, content strategy
 - **[SESSION-2025-11-06.md](./SESSION-2025-11-06.md)** - Session progress notes and next steps
+- **[DOGFOODING-SUMMARY.md](./DOGFOODING-SUMMARY.md)** - Summary of dogfooding sessions and findings
+- **[DOGFOODING-SESSION-2025-11-06.md](./DOGFOODING-SESSION-2025-11-06.md)** - Detailed dogfooding session notes
+- **[DOGFOODING-FINAL.md](./DOGFOODING-FINAL.md)** - Final dogfooding checkpoint and validation
 
 ## Notes
 

@@ -59,6 +59,9 @@ This spec includes detailed analysis and drafts in sub-specs:
   - Before/after comparison, metrics, implementation strategy
 - **[ANALYSIS.md](ANALYSIS.md)** - Index and quick reference
   - Overview document linking to split analysis parts
+- **[CONCERNS-ANALYSIS.md](./CONCERNS-ANALYSIS.md)** - Potential concerns and objections analysis
+- **[DOCS-ALIGNMENT-ANALYSIS.md](./DOCS-ALIGNMENT-ANALYSIS.md)** - Documentation alignment and consistency review
+- **[REDESIGN-REFINED.md](./REDESIGN-REFINED.md)** - Refined redesign incorporating feedback and iterations
 
 ## Design
 

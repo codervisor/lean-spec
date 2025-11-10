@@ -217,27 +217,26 @@ describe('migrate command', () => {
     });
 
     it('should show placeholder message for AI-assisted mode', async () => {
-      // This test would require mocking the AI CLI verification
-      // For now, we test that the AI provider option is accepted
+      // This test verifies that AI provider option is accepted
+      // and placeholder message is shown (no exit since it's not an error)
       const testDir = path.join(ctx.tmpDir, 'test-adr');
       await fs.mkdir(testDir, { recursive: true });
       await fs.writeFile(path.join(testDir, '0001-adr.md'), '# ADR 1');
 
-      // The command should attempt to verify the AI tool
-      // and show an appropriate message
-      const exitSpy = { called: false };
-      const originalExit = process.exit;
-      process.exit = ((() => {
-        exitSpy.called = true;
-        throw new Error('process.exit');
-      }) as any);
+      // Mock console.log to capture output
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = ((...args: any[]) => {
+        logs.push(args.join(' '));
+      }) as any;
 
       try {
-        await migrateCommand(testDir, { aiProvider: 'claude' }).catch(() => {});
-        // Should exit because claude CLI is not installed
-        expect(exitSpy.called).toBe(true);
+        await migrateCommand(testDir, { aiProvider: 'claude' });
+        // Should show placeholder message
+        const output = logs.join('\n');
+        expect(output).toContain('AI-assisted migration is not yet fully implemented');
       } finally {
-        process.exit = originalExit;
+        console.log = originalLog;
       }
     });
   });

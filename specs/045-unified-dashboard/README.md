@@ -149,6 +149,7 @@ Detailed information split for Context Economy (<400 lines per file):
 - **[RATIONALE.md](./RATIONALE.md)** - Why velocity matters, design decisions, alternatives
 - **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Step-by-step implementation plan with phases
 - **[TESTING.md](./TESTING.md)** - Comprehensive test strategy and success criteria
+- **[ACTUAL-IMPLEMENTATION.md](./ACTUAL-IMPLEMENTATION.md)** - Final implementation details and outcomes
 
 ## Success Criteria (Achieved)
 

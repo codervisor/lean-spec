@@ -73,11 +73,17 @@ Code style issues found. Run `prettier --write` to fix.
 
 ## Design
 
-### Output Structure Redesign
+### Summary
 
-**Principle: File-Centric, Severity-First**
+The new validation output follows mainstream lint tool conventions (ESLint, TypeScript, Prettier) with these key improvements:
 
-Show each spec once with all its issues grouped together:
+1. **File-centric grouping** - All issues for a spec shown together (not by validator type)
+2. **Quiet success by default** - Only show specs with issues, summarize passing specs
+3. **Severity-first hierarchy** - Errors shown before warnings within each file
+4. **Aligned column format** - Consistent spacing like ESLint: `<severity> <message> <rule>`
+5. **CLI flags** - `--verbose`, `--quiet`, `--format`, `--rule` for different use cases
+
+**Example output:**
 
 ```bash
 $ lean-spec validate
@@ -87,226 +93,25 @@ Validating 25 specs...
 045-unified-dashboard/README.md
   error    Spec exceeds 400 lines (1169 lines)                   max-lines
   warning  Orphaned sub-spec: IMPLEMENTATION.md                  sub-specs
-           → Add a link to IMPLEMENTATION.md in README.md
-
-045-unified-dashboard/IMPLEMENTATION.md
-  error    Sub-spec exceeds 400 lines (685 lines)                max-lines
-           → Consider splitting or simplifying
-
-046-stats-dashboard-refactor/README.md
-  error    Spec exceeds 400 lines (685 lines)                    max-lines
-           → Consider splitting into sub-specs (see spec 012)
-
-048-spec-complexity-analysis/README.md
-  error    Spec exceeds 400 lines (601 lines)                    max-lines
-           → Consider splitting into sub-specs (see spec 012)
-
-049-leanspec-first-principles/README.md
-  warning  Spec approaching limit (373/400 lines)                max-lines
-           → Consider simplification or splitting
-
-049-leanspec-first-principles/ANALYSIS.md
-  error    Sub-spec exceeds 400 lines (428 lines)                max-lines
-           → Consider further splitting
 
 ✖ 5 errors, 13 warnings (25 specs checked, 19 clean)
-
-Run with --verbose to see passing specs.
 ```
 
-### Key Design Decisions
+### Detailed Specifications
 
-**1. File-Centric Grouping**
+Complete design details are documented in sub-specs:
 
-Group all issues by file path, not by validator type:
-
-```diff
-- Line Count:
--   ✗ 045-unified-dashboard (1169 lines - exceeds limit!)
--   ⚠ 049-leanspec-first-principles (373 lines - approaching limit)
-- 
-- Structure:
--   ✓ All 25 spec(s) passed
-- 
-- Sub-Specs:
--   ⚠ 045-unified-dashboard
--     • Orphaned sub-spec: IMPLEMENTATION.md
-
-+ 045-unified-dashboard/README.md
-+   error    Spec exceeds 400 lines (1169 lines)                   max-lines
-+   warning  Orphaned sub-spec: IMPLEMENTATION.md                  sub-specs
-+
-+ 049-leanspec-first-principles/README.md
-+   warning  Spec approaching limit (373/400 lines)                max-lines
-```
-
-**Rationale:** Matches ESLint/TypeScript. Easier to find issues for a specific spec.
-
-**2. Compact Error Format**
-
-Use aligned columns like ESLint:
-
-```
-<severity>  <message>  <rule-name>
-           <suggestion>
-```
-
-**3. Quiet Success Mode (Default)**
-
-Only show specs with issues, summarize clean specs:
-
-```diff
-- Line Count:
--   ✓ 053-spec-assets-philosophy (98 lines)
--   ✓ 052-branding-assets (129 lines)
--   ✓ 043-official-launch-02 (200 lines)
--   ... (15 more passing specs)
-
-+ ✖ 5 errors, 13 warnings (25 specs checked, 19 clean)
-```
-
-**4. Verbose Mode for Details**
-
-Show passing specs only when requested:
-
-```bash
-$ lean-spec validate --verbose
-
-# ... issues shown first ...
-
-✓ 19 specs passed:
-  014-complete-custom-frontmatter
-  017-vscode-extension
-  024-pattern-aware-list-grouping
-  ...
-```
-
-**5. Severity Hierarchy**
-
-Always show errors before warnings within a file:
-
-```bash
-045-unified-dashboard/README.md
-  error    Spec exceeds 400 lines (1169 lines)      # Error first
-  warning  Orphaned sub-spec: IMPLEMENTATION.md      # Warning second
-```
-
-### Output Format Specification
-
-**Structure:**
-
-```
-<spec-path>/<file>
-  <severity>  <message>  <rule>
-             <suggestion>
-  <severity>  <message>  <rule>
-
-<spec-path>/<file>
-  ...
-
-<summary>
-```
-
-**Alignment:**
-
-```
-<severity>: 7 chars left-aligned  ("error  " or "warning")
-<message>:  50 chars left-aligned (truncate if needed)
-<rule>:     right-aligned after message
-```
-
-**Colors:**
-
-- `error` - Red text
-- `warning` - Yellow text
-- `suggestion` (→ line) - Gray text
-- `summary` - Bold white (errors) or bold yellow (warnings only)
-- File paths - Cyan underlined (like ESLint)
-
-**Summary Format:**
-
-```
-✖ <N> errors, <M> warnings (<total> specs checked, <clean> clean)
-```
-
-If only warnings:
-```
-⚠ <M> warnings (<total> specs checked, <clean> clean)
-```
-
-If all pass:
-```
-✓ All <total> specs passed
-```
-
-### CLI Flags
-
-**New Flags:**
-
-```bash
---verbose     # Show passing specs (default: false)
---quiet       # Suppress all output except errors (no warnings, no summary)
---format      # Output format: 'default' | 'json' | 'compact'
---rule        # Filter by rule name (e.g., --rule=max-lines)
-```
-
-**Examples:**
-
-```bash
-# Default: Show only issues, quiet success
-lean-spec validate
-
-# Show everything including passing specs
-lean-spec validate --verbose
-
-# Only errors, no warnings
-lean-spec validate --quiet
-
-# JSON for CI integration
-lean-spec validate --format=json
-
-# Check only line count issues
-lean-spec validate --rule=max-lines
-```
+- **[OUTPUT-FORMAT-SPEC.md](./OUTPUT-FORMAT-SPEC.md)** - Format structure, alignment rules, CLI flags, examples
+- **[DESIGN-DECISIONS.md](./DESIGN-DECISIONS.md)** - Design rationale, trade-offs, backward compatibility
 
 ### Implementation Strategy
 
-**Phase 1: Refactor Output Logic** (2-3 hours)
-- Extract output formatting into separate module (`src/utils/validate-formatter.ts`)
-- Keep existing validation logic unchanged
-- Implement new file-centric grouping
-
-**Phase 2: Implement New Format** (2-3 hours)
-- Replace current display logic with new formatter
-- Add alignment and color formatting
-- Implement severity-first sorting
-
-**Phase 3: Add Flags** (1-2 hours)
-- Add `--verbose` flag
-- Add `--quiet` flag
-- Add `--format=json` support
-
-**Phase 4: Testing** (2 hours)
-- Update existing tests
-- Add snapshot tests for output format
-- Test with real repository
+**Phase 1:** Refactor output logic (2-3 hours)  
+**Phase 2:** Implement new format (2-3 hours)  
+**Phase 3:** Add CLI flags (1-2 hours)  
+**Phase 4:** Testing (2 hours)  
 
 **Total Effort:** 1-2 days
-
-### Backward Compatibility
-
-**Breaking Changes:**
-
-- Output format completely different (but exit codes unchanged)
-- Default behavior: quiet success (was: show all passing specs)
-
-**Migration:**
-
-1. Release in v0.2.0 with clear CHANGELOG notes
-2. Add migration guide showing old vs new output
-3. Keep `--verbose` as escape hatch for old-style detail
-
-**Rationale:** v0.2.0 is the "official launch" - acceptable time for UX breaking changes.
 
 ## Plan
 
@@ -346,60 +151,25 @@ lean-spec validate --rule=max-lines
 
 ### Why This Matters
 
-**Developer Familiarity:**
-- Developers use ESLint/TypeScript/Prettier daily
-- Familiar format = lower cognitive load
-- Matches expectations from other tools
+**Developer Familiarity:** Matches ESLint/TypeScript/Prettier conventions = lower cognitive load
 
-**Signal-to-Noise:**
-- Current output: 50+ lines for 25 specs (20 passing shown individually)
-- New output: 15-20 lines for same data (only issues + summary)
-- 60% reduction in noise
+**Signal-to-Noise:** 60% reduction in output (15-20 lines vs 50+ lines for 25 specs)
 
-**Actionability:**
-- Clear severity hierarchy (errors first)
-- File-centric grouping (easier to fix spec-by-spec)
-- Concise suggestions (visible, not buried)
-
-### Design Trade-offs
-
-**Considered: Keep Validator Grouping**
-
-```
-Pros: Shows all line count issues together
-Cons: Requires scanning multiple sections per spec
-```
-
-**Decision:** File-centric grouping (like ESLint/TypeScript)
-
-**Rationale:** Developers fix issues file-by-file, not rule-by-rule. Better to show all issues for a file together.
-
-**Considered: Show All Passing Specs**
-
-```
-Pros: Complete transparency
-Cons: Noisy output, hard to spot issues
-```
-
-**Decision:** Quiet success by default, `--verbose` for details
-
-**Rationale:** ESLint/Prettier only show issues. Summary line provides confidence.
+**Actionability:** Clear severity hierarchy, file-centric grouping, visible suggestions
 
 ### Success Metrics
-
-**Qualitative:**
-- Output "feels like" ESLint/TypeScript
-- Issues are immediately obvious
-- Fix suggestions are actionable
 
 **Quantitative:**
 - Output size: 60% reduction for clean runs
 - Time to find issue: <5 seconds (vs 10-15s currently)
+
+**Qualitative:**
+- Output "feels like" ESLint/TypeScript
 - Beta tester feedback: "Looks like ESLint" positive sentiment
 
 ### Future Enhancements (Post v0.2.0)
 
-- **Auto-fix support:** `lean-spec validate --fix` (aligns with ESLint)
-- **Watch mode:** `lean-spec validate --watch` (continuous validation)
+- **Auto-fix:** `lean-spec validate --fix`
+- **Watch mode:** `lean-spec validate --watch`
 - **Custom formatters:** Plugin system for CI-specific formats
 - **Rule configuration:** `.lean-spec/rules.json` to disable/configure rules

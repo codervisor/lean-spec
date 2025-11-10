@@ -1,6 +1,6 @@
 {
   "name": "lean-spec",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Lightweight spec methodology for AI-powered development",
   "type": "module",
   "bin": {
@@ -27,7 +27,7 @@
     "agent",
     "sdd"
   ],
-  "author": "codervisor",
+  "author": "Marvin Zhang",
   "license": "MIT",
   "repository": {
     "type": "git",

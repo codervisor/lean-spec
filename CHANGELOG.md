@@ -7,6 +7,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-11-10
+
+**🎉 Official Public Release - Production Ready**
+
+This is the official v0.2.0 release, treating v0.1.x as alpha versions. LeanSpec is now production-ready for teams and solo developers.
+
+### Highlights
+
+**First Principles Foundation:**
+- Operationalized five first principles with validation tooling
+- Context Economy enforced: Specs under 300 lines, warnings at 400+
+- Signal-to-Noise validation: Every line must inform decisions
+- Complete philosophy documentation guiding methodology
+
+**Quality & Validation:**
+- Comprehensive `lean-spec validate` with complexity analysis
+- Lint-style output format matching ESLint/TypeScript conventions
+- Sub-spec validation and relationship checking
+- Dogfooding complete: All specs follow our own principles
+
+**Documentation Excellence:**
+- 100% accurate documentation site (verified)
+- AI-assisted spec writing guide
+- Clear WHY vs HOW separation in docs
+- Comprehensive migration guides from ADRs/RFCs
+- First principles deeply documented
+
+**Developer Experience:**
+- Unified dashboard (board + stats + health metrics)
+- Pattern-aware list grouping with visual clarity
+- Improved init flow with pattern selection
+- MCP server stability improvements
+- Better error handling throughout
+
+### Added
+
+**New Commands:**
+- `lean-spec migrate` - Migrate from existing tools (ADRs, RFCs, design docs)
+- `lean-spec archive` - Archive completed specs with metadata updates
+- `lean-spec backfill` - Backfill timestamps from git history
+- `lean-spec validate` - Comprehensive spec validation
+
+**Core Features:**
+- First principles validation (Context Economy, Signal-to-Noise, etc.)
+- Complexity analysis for specs and sub-specs
+- Bidirectional `related` and directional `depends_on` relationships
+- Sub-spec file support with validation
+- Pattern-based folder organization
+
+### Changed
+
+**Breaking Changes:**
+- `lean-spec validate` output format now matches lint tools (ESLint-style)
+- Default validation mode is quiet success (use `--verbose` for all details)
+
+**User Experience:**
+- Unified dashboard combining board + stats + health summary
+- Pattern-aware list with visual icons and better grouping
+- Enhanced init flow with template/pattern selection
+- Clearer stats dashboard with actionable insights
+
+### Fixed
+- MCP server error handling and stability
+- Documentation accuracy across all pages
+- Test suite: 402/402 passing (100%)
+- TypeScript/lint: Zero errors
+- Frontmatter parsing edge cases
+
+### Philosophy & Methodology
+
+This release operationalizes LeanSpec's five first principles:
+
+1. **Context Economy** - Fit in working memory (<300 lines target, 400 max)
+2. **Signal-to-Noise Maximization** - Every word informs decisions
+3. **Intent Over Implementation** - Capture why, not just how
+4. **Bridge the Gap** - Both human and AI understand
+5. **Progressive Disclosure** - Add complexity only when pain is felt
+
+**Practice What We Preach:**
+- All specs validated against principles
+- Large specs split using sub-spec pattern
+- Documentation follows progressive disclosure
+- Validation tooling prevents principle violations
+
+### Migration Notes
+
+**From v0.1.x:**
+- Run `lean-spec validate` to check your specs
+- Review any specs >400 lines and consider splitting
+- Update to new validate output format (ESLint-style)
+- No breaking changes to commands or file formats
+
+**From other tools:**
+- Use `lean-spec migrate` for ADRs, RFCs, design docs
+- See documentation for detailed migration guides
+- AI-assisted migration available (Claude, Copilot)
+
+### Acknowledgments
+
+Built with dogfooding: 63 specs written, 28 archived, all following our own principles.
+
 ## [0.1.5] - 2025-11-10
 
 ### Fixed

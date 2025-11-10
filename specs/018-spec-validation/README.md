@@ -133,6 +133,8 @@ This spec has been split into focused sub-documents for clarity and maintainabil
 - Default configuration
 - Configuration examples
 
+📝 **[CONFIGURATION-EXAMPLES.md](./CONFIGURATION-EXAMPLES.md)** - Real-world configuration examples and use cases
+
 🗺️ **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Implementation plan
 - 8-phase implementation plan
 - Priority and scope decisions

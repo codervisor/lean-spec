@@ -139,6 +139,10 @@ All examples tested against actual CLI:
 - ✅ `lean-spec list` format matches docs
 - ✅ Folder structure aligns with default config
 
+## Sub-Specs
+
+- **[AUDIT-RESULTS.md](./AUDIT-RESULTS.md)** - Detailed audit findings and corrections
+
 ## Impact
 
 **Before**: Documentation had 20+ inaccuracies that would break user experience
