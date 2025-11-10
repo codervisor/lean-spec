@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-10'
 tags:
   - docs
@@ -8,11 +8,15 @@ tags:
   - chinese
 priority: medium
 created_at: '2025-11-10T14:32:32.477Z'
+updated_at: '2025-11-10T15:12:07.668Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-10T15:12:07.668Z'
 ---
 
 # Docs Site Chinese (ZH) Translation
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-10
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-10 · **Tags**: docs, i18n, translation, chinese
 
 **Project**: lean-spec  
 **Team**: Core Development
