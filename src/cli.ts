@@ -1,4 +1,7 @@
 import { Command } from 'commander';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import {
   createSpec,
   archiveSpec,
@@ -28,12 +31,19 @@ import {
 import { parseCustomFieldOptions } from './utils/cli-helpers.js';
 import type { SpecStatus, SpecPriority } from './frontmatter.js';
 
+// Get version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf-8')
+);
+
 const program = new Command();
 
 program
   .name('lean-spec')
   .description('Manage LeanSpec documents')
-  .version('0.1.2');
+  .version(packageJson.version);
 
 // Add custom help text with grouped commands
 program.addHelpText('after', `
