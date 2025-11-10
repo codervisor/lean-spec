@@ -20,13 +20,13 @@ Shows specs organized by status columns:
 - 🚧 **In Progress** - Active work
 - ✅ **Complete** - Finished specs
 
-### Project Health Summary
+### Project Completion Summary
 
-The board includes a project health summary:
+The board includes a project completion summary:
 - Total specs count
-- Distribution by status
-- Recent activity
-- Blocked specs (waiting on dependencies)
+- Distribution by status (planned, in-progress, complete)
+- Completion percentage
+- Active work in progress
 
 ### Filtering
 
@@ -123,7 +123,7 @@ The board and stats commands help identify:
 - Too many in-progress specs (focus issues)
 - Old specs without updates (stale work)
 - High percentage of planned specs (execution gap)
-- Specs blocked by dependencies
+- Specs with unmet dependencies (check with `lean-spec deps`)
 
 ### ✅ Healthy Signals
 - Steady completion rate
@@ -161,13 +161,8 @@ The board and stats commands help identify:
   • 043-launch [high] #release
   • 044-api-update [high] #feature
 
-✅ Complete (12)
-  • 042-error-handling [high] #bug-fix
-  • 041-performance [medium] #optimization
-  ...
-
-📈 Project Health: Good
-   Total: 17 specs | Active: 2 | Complete: 71%
+Project Completion: 71% (12/17 specs complete)
+- 2 in progress, 3 planned, 12 complete
 ```
 
 ## Learning More

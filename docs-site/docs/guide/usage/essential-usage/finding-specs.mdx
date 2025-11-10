@@ -35,8 +35,8 @@ Output:
 # Show only in-progress specs
 lean-spec list --status in-progress
 
-# Show blocked specs
-lean-spec list --status blocked
+# Show planned specs
+lean-spec list --status planned
 
 # Show completed specs
 lean-spec list --status complete
@@ -48,8 +48,8 @@ lean-spec list --status complete
 # Show specs with specific tag
 lean-spec list --tag api
 
-# Show specs with multiple tags (OR)
-lean-spec list --tag api,backend
+# Show specs with multiple tags
+lean-spec list --tag api --tag backend
 ```
 
 ### Filter by Priority
@@ -108,14 +108,13 @@ lean-spec board
 
 Shows specs grouped by status:
 ```
-┌─────────── PLANNED ───────────┬──── IN-PROGRESS ────┬──── COMPLETE ────┐
-│ 043 api-redesign [medium]     │ 042 auth-refactor   │ 044 dashboard    │
-│ 045 notification-system [low] │ 046 db-migration    │ 047 monitoring   │
-└───────────────────────────────┴─────────────────────┴──────────────────┘
+┌─────────── PLANNED ───────────┬──── IN-PROGRESS ────┐
+│ 043 api-redesign [medium]     │ 042 auth-refactor   │
+│ 045 notification-system [low] │ 046 db-migration    │
+└───────────────────────────────┴─────────────────────┘
 
-Project Health: 🟢 Healthy
-- 2 in progress, 5 planned, 3 complete
-- 0 blocked specs
+Project Completion: 60% (3/5 specs complete)
+- 2 in progress, 2 planned, 3 complete
 ```
 
 **See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
@@ -185,8 +184,8 @@ This eliminates repetitive questions and maintains consistency.
 ### Combine Multiple Criteria
 
 ```bash
-# High-priority backend work that's blocked
-lean-spec list --priority high --tag backend --status blocked
+# High-priority backend work that's planned
+lean-spec list --priority high --tag backend --status planned
 
 # In-progress API work
 lean-spec list --status in-progress --tag api
@@ -204,7 +203,7 @@ By default, archived specs are excluded from `lean-spec list`:
 lean-spec list
 
 # Include archived
-lean-spec list --include-archived
+lean-spec list --archived
 ```
 
 ## Project Stats
@@ -215,7 +214,7 @@ lean-spec list --include-archived
 lean-spec stats
 ```
 
-Output:
+Output (simplified view by default):
 ```
 📊 Project Statistics
 
@@ -223,19 +222,16 @@ Status Distribution:
   ⏳ In Progress: 2
   📋 Planned: 5
   ✅ Complete: 3
-  🔒 Blocked: 0
 
 Priority Breakdown:
   🔴 High: 3
   🟠 Medium: 4
   🟢 Low: 3
 
-Tags:
+Top Tags:
   #api: 4 specs
   #backend: 6 specs
   #security: 2 specs
-
-Project Health: 🟢 Healthy
 ```
 
 **See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
@@ -270,15 +266,15 @@ lean-spec list --status complete
 lean-spec list --status complete --tag api
 ```
 
-### Unblock Work
+### Check Dependencies
 
 ```bash
-# What's blocked?
-lean-spec list --status blocked
+# What's ready to start?
+lean-spec list --status planned
 
-# Why is it blocked?
+# Check if dependencies are met
 lean-spec deps <spec-id>
-# (check dependencies)
+# (verify required specs are complete)
 ```
 
 ## Navigation Tips
@@ -293,7 +289,7 @@ lean-spec deps <spec-id>
 **DON'T:**
 - ❌ Manually grep through specs/ directory
 - ❌ Rely on filesystem naming (use IDs/search instead)
-- ❌ Forget archived specs exist (use --include-archived)
+- ❌ Forget archived specs exist (use --archived to include them)
 
 ## Keyboard-Driven Workflows
 

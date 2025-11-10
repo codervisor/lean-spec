@@ -102,7 +102,7 @@ lean-spec list [options]
 - `--archived` - Include archived specs
 - `--status <status>` - Filter by status (`planned`, `in-progress`, `complete`, `archived`)
 - `--priority <priority>` - Filter by priority (`low`, `medium`, `high`, `critical`)
-- `--tag <tag>` - Filter by tag (can specify multiple)
+- `--tag <tag>` - Filter by tag (use multiple --tag flags for multiple tags)
 - `--assignee <name>` - Filter by assignee
 - `--field <name=value>` - Filter by custom field (can specify multiple)
 - `--sort <field>` - Sort by field (`id`, `created`, `name`, `status`, `priority`) (default: `id`)
@@ -122,10 +122,13 @@ lean-spec list --status=planned
 lean-spec list --priority=high
 
 # Filter by tag
-lean-spec list --tag=api
+lean-spec list --tag api
+
+# Filter by multiple tags
+lean-spec list --tag api --tag backend
 
 # Combine filters
-lean-spec list --status=planned --priority=high --tag=api
+lean-spec list --status planned --priority high --tag api
 
 # Filter by custom field
 lean-spec list --field epic=PROJ-123
