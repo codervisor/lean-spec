@@ -1,0 +1,34 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.guideSidebar.category.Introduction": {
+    "message": "简介",
+    "description": "The label for category 'Introduction' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Core Concepts": {
+    "message": "核心概念",
+    "description": "The label for category 'Core Concepts' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Usage": {
+    "message": "使用指南",
+    "description": "The label for category 'Usage' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Essential Usage": {
+    "message": "基本用法",
+    "description": "The label for category 'Essential Usage' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Project Management": {
+    "message": "项目管理",
+    "description": "The label for category 'Project Management' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Advanced Features": {
+    "message": "高级功能",
+    "description": "The label for category 'Advanced Features' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.AI-Assisted Workflows": {
+    "message": "AI 辅助工作流",
+    "description": "The label for category 'AI-Assisted Workflows' in sidebar 'guideSidebar'"
+  }
+}
