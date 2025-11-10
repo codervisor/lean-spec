@@ -176,23 +176,28 @@ export async function initProject(): Promise<void> {
     console.log('');
     console.log(chalk.yellow(`Found existing: ${existingFiles.join(', ')}`));
 
-    const action = await select<'merge' | 'backup' | 'skip'>({
-      message: 'How would you like to proceed?',
+    const action = await select<'merge-ai' | 'merge-append' | 'overwrite' | 'skip'>({
+      message: 'How would you like to handle existing AGENTS.md?',
       choices: [
         {
-          name: 'Merge - Add LeanSpec section to existing files',
-          value: 'merge',
-          description: 'Appends LeanSpec guidance to your existing AGENTS.md',
+          name: 'AI-Assisted Merge (recommended)',
+          value: 'merge-ai',
+          description: 'Creates prompt for AI to intelligently consolidate both files',
         },
         {
-          name: 'Backup - Save existing and create new',
-          value: 'backup',
-          description: 'Renames existing files to .backup and creates fresh ones',
+          name: 'Simple Append',
+          value: 'merge-append',
+          description: 'Quickly appends LeanSpec section (may be verbose)',
         },
         {
-          name: 'Skip - Keep existing files as-is',
+          name: 'Replace with LeanSpec',
+          value: 'overwrite',
+          description: 'Backs up existing, creates fresh AGENTS.md from template',
+        },
+        {
+          name: 'Keep Existing Only',
           value: 'skip',
-          description: 'Only adds .lspec config and specs/ directory',
+          description: 'Skips AGENTS.md, only adds .lspec config and specs/',
         },
       ],
     });

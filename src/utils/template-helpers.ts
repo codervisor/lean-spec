@@ -28,7 +28,7 @@ export async function detectExistingSystemPrompts(cwd: string): Promise<string[]
  * Handle existing system prompt files based on user's chosen action
  */
 export async function handleExistingFiles(
-  action: 'merge' | 'backup' | 'skip',
+  action: 'merge-ai' | 'merge-append' | 'overwrite' | 'skip',
   existingFiles: string[],
   templateDir: string,
   cwd: string,
@@ -46,8 +46,64 @@ export async function handleExistingFiles(
       continue;
     }
 
-    if (action === 'merge' && file === 'AGENTS.md') {
-      // Append LeanSpec section to existing AGENTS.md
+    if (action === 'merge-ai' && file === 'AGENTS.md') {
+      // Create consolidation prompt for AI to merge intelligently
+      const existing = await fs.readFile(filePath, 'utf-8');
+      let template = await fs.readFile(templateFilePath, 'utf-8');
+      
+      // Replace variables in template
+      for (const [key, value] of Object.entries(variables)) {
+        template = template.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+      }
+
+      // Create AI consolidation prompt file
+      const promptPath = path.join(cwd, '.lspec', 'MERGE-AGENTS-PROMPT.md');
+      const aiPrompt = `# AI Prompt: Consolidate AGENTS.md
+
+## Task
+Consolidate the existing AGENTS.md with LeanSpec instructions into a single, coherent document.
+
+## Instructions
+1. Read both documents below
+2. Merge them intelligently:
+   - Preserve ALL existing project-specific information (workflows, SOPs, architecture, conventions)
+   - Integrate LeanSpec sections where they fit naturally
+   - Remove redundancy and ensure coherent flow
+   - Keep the tone and style consistent
+3. Replace the existing AGENTS.md with the consolidated version
+
+## Existing AGENTS.md
+\`\`\`markdown
+${existing}
+\`\`\`
+
+## LeanSpec Instructions to Integrate
+\`\`\`markdown
+${template}
+\`\`\`
+
+## Output
+Create a single consolidated AGENTS.md that:
+- Keeps all existing project context and workflows
+- Adds LeanSpec commands and principles where appropriate
+- Maintains clear structure and readability
+- Removes any duplicate or conflicting guidance
+`;
+
+      await fs.mkdir(path.dirname(promptPath), { recursive: true });
+      await fs.writeFile(promptPath, aiPrompt, 'utf-8');
+      
+      console.log(chalk.green(`✓ Created AI consolidation prompt`));
+      console.log(chalk.cyan(`  → ${promptPath}`));
+      console.log('');
+      console.log(chalk.yellow('📝 Next steps:'));
+      console.log(chalk.gray('  1. Open .lspec/MERGE-AGENTS-PROMPT.md'));
+      console.log(chalk.gray('  2. Send it to your AI coding assistant (GitHub Copilot, Cursor, etc.)'));
+      console.log(chalk.gray('  3. Let AI create the consolidated AGENTS.md'));
+      console.log(chalk.gray('  4. Review and commit the result'));
+      console.log('');
+    } else if (action === 'merge-append' && file === 'AGENTS.md') {
+      // Simple append: add LeanSpec section to existing AGENTS.md
       const existing = await fs.readFile(filePath, 'utf-8');
       let template = await fs.readFile(templateFilePath, 'utf-8');
       
@@ -65,9 +121,10 @@ export async function handleExistingFiles(
 ${template.split('\n').slice(1).join('\n')}`;
 
       await fs.writeFile(filePath, merged, 'utf-8');
-      console.log(chalk.green(`✓ Merged LeanSpec section into ${file}`));
-    } else if (action === 'backup') {
-      // Backup existing file
+      console.log(chalk.green(`✓ Appended LeanSpec section to ${file}`));
+      console.log(chalk.yellow('  ⚠ Note: May be verbose. Consider consolidating later.'));
+    } else if (action === 'overwrite') {
+      // Backup existing file and create fresh one
       const backupPath = `${filePath}.backup`;
       await fs.rename(filePath, backupPath);
       console.log(chalk.yellow(`✓ Backed up ${file} → ${file}.backup`));
@@ -82,6 +139,7 @@ ${template.split('\n').slice(1).join('\n')}`;
       
       await fs.writeFile(filePath, content, 'utf-8');
       console.log(chalk.green(`✓ Created new ${file}`));
+      console.log(chalk.gray(`  💡 Your original content is preserved in ${file}.backup`));
     }
     // If skip, do nothing with this file
   }
