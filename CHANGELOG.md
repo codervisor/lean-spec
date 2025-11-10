@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2025-11-10
+
+### Fixed
+- Version now read dynamically from package.json instead of hardcoded in CLI
+- Ensures version consistency across the package
+
 ## [0.1.3] - 2025-11-10
 
 ### Added
@@ -205,6 +211,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.1.4]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.4
 [0.1.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.3
 [0.1.2]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.2
 [0.1.1]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.1

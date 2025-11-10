@@ -1,6 +1,6 @@
 {
   "name": "lean-spec",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Lightweight spec methodology for AI-powered development",
   "type": "module",
   "bin": {
