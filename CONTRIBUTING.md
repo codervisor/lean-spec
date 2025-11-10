@@ -34,12 +34,11 @@ pnpm build
 
 All code changes should include tests. We have comprehensive test coverage:
 
-- **61 tests** across 4 test files
 - Unit tests for individual functions
 - Integration tests for workflows
 - Test helpers for common patterns
 
-See [docs/testing.md](docs/testing.md) for details.
+See existing test files for patterns.
 
 ```bash
 # Run tests in watch mode
@@ -65,32 +64,43 @@ Run `pnpm format` before committing.
 
 ## Philosophy
 
-Keep changes aligned with LeanSpec principles:
-- **Clarity over documentation** - Make code obvious
-- **Essential over exhaustive** - Focus on what matters
-- **Speed over perfection** - Ship and iterate
+Keep changes aligned with LeanSpec first principles (see [specs/049-leanspec-first-principles](specs/049-leanspec-first-principles)):
+
+1. **Context Economy** - Specs must fit in working memory (<400 lines)
+2. **Signal-to-Noise Maximization** - Every word informs decisions
+3. **Intent Over Implementation** - Capture why, not just how
+4. **Bridge the Gap** - Both human and AI must understand
+5. **Progressive Disclosure** - Add complexity when pain is felt
+
+When in doubt: **Clarity over documentation, Essential over exhaustive, Speed over perfection**
 
 ## Areas for Contribution
 
-### High Priority
-- Test coverage for visualization commands (board, stats, timeline, etc.)
-- Performance optimizations for large spec directories
-- Documentation improvements
-- Additional project templates
+### High Priority (v0.3.0)
+- Programmatic spec management tools (spec 059)
+- VS Code extension (spec 017)
+- GitHub Action for CI integration (spec 016)
+- Copilot Chat integration (spec 034)
+- Live specs showcase on docs site (spec 035)
 
-### Implemented Features
-- ✅ Core CLI commands (create, list, update, archive)
-- ✅ YAML frontmatter with validation
-- ✅ Template system with minimal/standard/enterprise presets
-- ✅ Visualization tools (board, stats, timeline, deps, search, gantt, files)
-- ✅ Comprehensive test suite (61 tests)
+### Currently Implemented ✅
+- Core CLI commands (create, list, update, archive, search, deps)
+- YAML frontmatter with validation and custom fields
+- Template system with minimal/standard/enterprise presets
+- Visualization tools (board, stats, timeline, gantt)
+- Spec validation with complexity analysis
+- MCP server for AI agent integration
+- Git-based timestamp backfilling
+- Comprehensive test suite with high coverage
+- First principles documentation
+- Relationship tracking (depends_on, related)
 
-### Future Ideas
-- VS Code extension
-- GitHub Action for CI integration
-- More language-specific templates (Python, Go, Rust, etc.)
-- Spec validation and linting tools
-- Export to other formats (Markdown reports, HTML dashboards)
+### Future Ideas (v0.4.0+)
+- PM system integrations (GitHub Issues, Jira, Azure DevOps) - spec 036
+- Spec coverage reports
+- Additional language-specific templates
+- Export to other formats (PDF, HTML dashboards)
+- Automated spec compaction and transformation
 
 ## Questions?
 
