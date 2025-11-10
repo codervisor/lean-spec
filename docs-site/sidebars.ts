@@ -66,6 +66,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'AI-Assisted Workflows',
           items: [
+            'guide/usage/ai-assisted/writing-specs-with-ai',
             'guide/usage/ai-assisted/ai-executable-patterns',
             'guide/usage/ai-assisted/agent-configuration',
             'guide/usage/ai-assisted/mcp-integration',

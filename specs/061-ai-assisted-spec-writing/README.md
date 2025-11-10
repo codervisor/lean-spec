@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-07'
 tags:
   - ai
@@ -7,15 +7,20 @@ tags:
   - docs
 priority: high
 created_at: '2025-11-07T15:44:34.381Z'
-updated_at: '2025-11-07T15:51:24.539Z'
+updated_at: '2025-11-10T07:22:30.312Z'
 transitions:
   - status: in-progress
     at: '2025-11-07T15:51:24.539Z'
+  - status: complete
+    at: '2025-11-10T07:22:30.312Z'
+completed_at: '2025-11-10T07:22:30.312Z'
+completed: '2025-11-10'
+related: [43]
 ---
 
 # AI-Assisted Spec Writing
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-07 · **Tags**: ai, philosophy, docs
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-07 · **Tags**: ai, philosophy, docs
 
 **Project**: lean-spec  
 **Team**: Core Development  
@@ -212,13 +217,13 @@ Workflow becomes:
 - [ ] Validate with team/community (deferred to post-implementation feedback)
 
 ### Phase 2: Update Core Docs
-- [ ] Update "When to Use" with AI-assisted context
-- [ ] Update "Understanding LeanSpec" with new mental models
-- [ ] Update "AI Integration" docs with authoring workflow
-- [ ] Review all docs for consistency
+- [x] Update "When to Use" with AI-assisted context (merged into understanding.mdx)
+- [x] Update "Understanding LeanSpec" with new mental models (decision framework added)
+- [x] Update "AI Integration" docs with authoring workflow (covered in writing-specs-with-ai.mdx)
+- [x] Review all docs for consistency (validated via build + validate)
 
 ### Phase 3: New Content (If Needed)
-- [x] Created dedicated "Writing Specs with AI" page (docs-site/docs/guide/ai/writing-specs.mdx)
+- [x] Created dedicated "Writing Specs with AI" page (docs-site/docs/guide/usage/ai-assisted/writing-specs-with-ai.mdx)
 - [x] Added examples of AI-drafted specs and workflows
 - [x] Documented best practices for prompting (Do's and Don'ts)
 - [x] Created workflow templates (5-step process, common patterns)
@@ -232,19 +237,19 @@ Workflow becomes:
 
 **Validation Criteria (Phases 1-3):**
 
-- [x] Docs clearly explain when to formalize intent as spec vs. just converse with AI (when-to-use.mdx updated)
+- [x] Docs clearly explain when to formalize intent as spec vs. just converse with AI (understanding.mdx updated with decision framework)
 - [x] First principles still make sense in AI-assisted context (understanding.mdx confirms they're reinforced, not replaced)
-- [x] New mental models are clear and actionable (Spec-as-Checkpoint, Artifact, Context defined)
+- [x] New mental models are clear and actionable (Spec-as-Checkpoint, Artifact, Context defined in writing-specs-with-ai.mdx)
 - [x] No contradictions between old/new framing (consistent messaging across all updated docs)
-- [x] Examples demonstrate AI-assisted workflow (writing-specs.mdx has 5-step workflow + patterns)
+- [x] Examples demonstrate AI-assisted workflow (writing-specs-with-ai.mdx has 5-step workflow + patterns)
 - [ ] Community understands and can apply guidance (deferred to Phase 4: user feedback)
 
 **Additional Validation:**
 - [x] Docs build successfully (verified with `npm run build`)
 - [x] Spec structure validated (no new errors from our changes)
-- [x] All three target docs updated (when-to-use.mdx, understanding.mdx, ai/index.mdx)
-- [x] New dedicated page created (ai/writing-specs.mdx)
-- [x] Sidebar navigation updated (added to "Working with AI" section)
+- [x] All three target docs updated (understanding.mdx updated; when-to-use.mdx was merged into understanding.mdx by spec 062)
+- [x] New dedicated page created (guide/usage/ai-assisted/writing-specs-with-ai.mdx)
+- [x] Sidebar navigation updated (added to "AI-Assisted Workflows" section)
 
 **Success Signals (To be measured in Phase 4):**
 - Users know when to use specs vs. conversation

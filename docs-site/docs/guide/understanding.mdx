@@ -225,6 +225,36 @@ Specs serve dual purposes:
 - AI drafts structure, examples, formatting
 - Human refines for clarity and lean principles
 
+**Three modes of spec creation:**
+1. **Human-written, AI-implemented** - You write spec, AI builds from it
+2. **AI-drafted, human-refined** - AI drafts spec from your intent, you review/refine
+3. **Co-created iteratively** - Build spec together through conversation
+
+All three modes are valid. Choose based on context.
+
+**AI-assisted spec writing decision:**
+
+When AI helps with spec authoring, the decision shifts from *"Will AI need this to execute?"* to:
+
+> **"Does formalizing intent as a spec add value over continued conversation?"**
+
+**Write a spec (with AI assistance) when:**
+- ✅ Intent needs to persist (decisions, reference, onboarding)
+- ✅ Conversation has clarified what to build (~5+ turns)
+- ✅ Multiple stakeholders need alignment
+- ✅ Complexity warrants structure (would drift in chat)
+- ✅ Compliance or audit trail required
+
+**Skip spec, continue conversing when:**
+- ❌ Still discovering what to build (keep exploring)
+- ❌ Quick feature with no ambiguity (implement directly)
+- ❌ One-off prototype or experiment
+- ❌ Context already clear in codebase
+
+**The checkpoint model:** Most specs start as conversation → crystallize into spec when ready → implement from spec. The spec becomes a **formalized checkpoint** in your work.
+
+**Learn more:** [Writing Specs with AI](/docs/guide/usage/ai-assisted/writing-specs-with-ai) covers workflows, patterns, and best practices.
+
 **AI implements from specs:**
 - Clear requirements reduce hallucination
 - Examples show expected patterns
