@@ -22,11 +22,11 @@ Traditional 2,000-line RFCs overflow AI context windows. Your AI agent can't hel
 + LeanSpec: Structure without overhead
 ```
 
-**LeanSpec: A lean SDD methodology for human + AI collaboration.**
+**LeanSpec: Pragmatic spec tooling for human + AI collaboration.**
 
 Specs under 300 lines. Intent-focused. Machine-readable. Adapts to your workflow—from solo dev to enterprise.
 
-*Lean = adaptive and progressive. Tools (CLI/MCP) support the methodology.*
+*Not another rigid methodology. Just lightweight tools for keeping humans and AI aligned.*
 
 <p align="center">
   <a href="#quick-start-5-minutes"><strong>Quick Start (5 Minutes) →</strong></a> •
@@ -36,7 +36,7 @@ Specs under 300 lines. Intent-focused. Machine-readable. Adapts to your workflow
 
 ---
 
-## The SDD Dilemma
+## The Spec Documentation Problem
 
 ### Scenario 1: Context Overflow 🔴
 
@@ -78,6 +78,11 @@ You tried automated code generation tools—powerful but heavyweight. You tried 
 - ✅ Philosophy over process
 
 **LeanSpec = Just the specs.** Markdown files with structure. No ceremony, no overhead.
+
+**No hype, no promises of 70% automation.** Realistic outcome: 10-30% productivity improvement through better human-AI alignment. Specs enhance judgment, they don't replace understanding your codebase.
+
+📖 **[Full comparison with Spec Kit, OpenSpec, Kiro, and more →](https://www.lean-spec.dev/docs/comparison)**  
+📖 **[Limits, trade-offs & what's realistic →](https://www.lean-spec.dev/docs/guide/limits-and-tradeoffs)**
 
 ---
 
@@ -180,9 +185,25 @@ LeanSpec isn't arbitrary rules—it's derived from fundamental constraints of wo
 
 📖 [Deep dive: First Principles Guide →](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles)
 
+### 🧬 Why Human Involvement Is Necessary
+
+**[Rice's Theorem](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail)** (1951) proves that all non-trivial semantic properties of programs are **undecidable**—no algorithm can determine whether arbitrary programs have interesting behavioral characteristics.
+
+**What this means for AI coding:**
+- **AI can't determine "what you want"** (undecidable semantic property)
+- **Specs provide semantic grounding** (humans define intent, AI implements)
+- **Testing is sampling, not proof** (we build confidence, not certainty)
+- **Complete automation is impossible** (mathematically proven)
+
+**LeanSpec's approach:** Humans provide intent through specs, AI amplifies scale through implementation. We work WITH theoretical constraints, not against them.
+
+**This isn't pessimism—it's engineering maturity.** Understanding limits helps us focus on what's genuinely achievable: pragmatic tools that enhance human-AI collaboration rather than promises of autonomous coding.
+
+📖 [Why automated testing will always require human involvement →](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail)
+
 ---
 
-## Features Designed for AI-First Development
+## Practical Features for Human-AI Collaboration
 
 ### 🤖 AI-Native Integration
 
@@ -335,7 +356,7 @@ Not every project needs the same level of structure. Here's when to use what:
 | **LeanSpec** | AI-native specs that fit in context • Human + AI collaboration • Solo to enterprise |
 | **Vibe Coding** | Rapid prototyping • Solo experiments • Trivial features |
 
-**Why LeanSpec?** The only SDD methodology designed from first principles for AI context windows. Specs that both humans and AI can actually use.
+**Why LeanSpec?** Pragmatic tooling designed from first principles (physics, biology, economics, theory). Specs that both humans and AI can actually use. No hype, no impossible promises—just better alignment.
 
 ---
 
