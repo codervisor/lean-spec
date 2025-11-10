@@ -17,7 +17,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Introduction',
-      items: ['guide/index', 'guide/getting-started', 'guide/migration'],
+      items: ['guide/index', 'guide/getting-started', 'comparison', 'guide/migration'],
     },
     {
       type: 'category',
@@ -28,6 +28,7 @@ const sidebars: SidebarsConfig = {
         'guide/context-engineering',
         'guide/ai-agent-memory',
         'guide/philosophy',
+        'guide/limits-and-tradeoffs',
       ],
     },
     {

@@ -1,0 +1,323 @@
+# Why LeanSpec?
+
+## The Quick Answer
+
+**LeanSpec is a lightweight SDD (Spec-Driven Development) framework optimized for velocity through human-AI alignment.**
+
+**Core strengths:**
+- **Lightweight** - Minimal setup, no heavy dependencies
+- **Simplicity** - Start with one file, grow as needed
+- **Agility** - Direct editing, no multi-step workflows
+- **Adaptivity** - Works with any editor, AI tool, team size, or organizational culture
+- **Comprehensive tooling** - CLI, MCP server, validation, visualization
+
+**Why this drives velocity:**
+
+Our first principles (Context Economy, Signal-to-Noise, Intent Over Implementation) lead to:
+- **High human-AI alignment** - Specs fit in context windows, AI understands intent
+- **Low context rot** - Intent-focused specs stay relevant as code evolves
+- **Low cognitive load** - Controlled length (typically under 300 lines), easy to review and maintain
+
+**Result: Better quality → Less rework → Higher velocity.**
+
+### Compared to Other SDD Frameworks
+
+**Tools like [Spec Kit](https://github.com/github/spec-kit) and [OpenSpec](https://github.com/Fission-AI/OpenSpec)** are also SDD frameworks that help structure AI coding workflows.
+
+#### vs. Spec Kit
+
+**[Spec Kit](https://github.com/github/spec-kit)** (by GitHub) provides a structured multi-step workflow: constitution → specify → plan → tasks → implement.
+
+**Spec Kit strengths:**
+- ✅ Structured governance with constitution and principles
+- ✅ Clear multi-step workflow for enterprise teams
+- ✅ Native VS Code integration with quick action buttons in Copilot Chat
+- ✅ Rich slash command integration
+- ✅ Strong focus on quality and testing standards
+
+**Trade-offs:**
+- **Rigid spec format** creates cognitive load for human reviewers
+- **Longer context** (constitution + spec + plan + tasks) may degrade AI performance
+- **Process overhead** with 5 required steps before coding
+- **Multiple files** per feature increase navigation complexity
+- **Prescriptive structure** less adaptable to different team cultures
+
+**Best for**: Enterprise teams needing structured governance and formal planning phases.
+
+**LeanSpec's advantage**: **Lightweight & adaptable**. Flexible structure (single file or sub-specs as needed), under 300 lines for optimal AI/human performance. Progressive disclosure over prescriptive process. No required workflow—adapt to your team's culture.
+
+#### vs. OpenSpec
+
+**[OpenSpec](https://github.com/Fission-AI/OpenSpec)** treats specs as evolving proposals with change tracking, proposal folders, and diff-based workflows.
+
+**OpenSpec strengths:**
+- ✅ Explicit change proposals for team review
+- ✅ Clear separation between current state and proposed changes
+- ✅ Strong for brownfield projects and cross-spec updates
+- ✅ Structured delta format (ADDED/MODIFIED/REMOVED)
+
+**Trade-offs:**
+- **No numbering system** - Harder to reference specs in long-term project management
+- **Rigid workflow** - Proposal → apply → archive steps required
+- **Rigid templates** - Structured delta format may not fit all use cases
+- **Long system prompt** - AGENTS.md >400 lines may cause context rot over time
+- **Slash command dependency** - Requires specific prompt files (openspec-xxx.prompt.md)
+
+**Best for**: Teams wanting formal change proposals with review workflows before merging to spec source of truth.
+
+**LeanSpec's advantage**: **Simplicity & agility**. Numbered specs for easy reference. Direct editing with git version control. No proposals, no change folders, no archive step. Flexible templates. Concise AGENTS.md (under 300 lines). Edit specs like code—commit, push, done.
+
+---
+
+### Compared to AI IDEs with Spec-Driven Development
+
+**[Kiro](https://kiro.dev)** is a full AI IDE with built-in spec-driven development, autonomous agents, and autopilot mode.
+
+**Kiro strengths:**
+- ✅ Integrated spec-driven development experience
+- ✅ Autonomous agents and autopilot modes
+- ✅ Built-in context management and agent hooks
+- ✅ Seamless AI interaction within the editor
+- ✅ Background task automation (tests, docs, etc.)
+
+**Trade-offs:**
+- **IDE lock-in** - Must switch from your current editor
+- **Subscription cost** - $20-40/month for professional use
+- **Learning curve** - New editor, workflows, and keyboard shortcuts
+- **Less control** - Opinionated autopilot behavior
+
+**Best for**: Developers wanting a complete AI-first IDE experience with built-in SDD support and willing to switch editors.
+
+**LeanSpec's advantage**: **Adaptivity & flexibility**. Editor-agnostic—works with any AI tool (Copilot, Claude, Cursor, Windsurf, etc.) and any editor (VS Code, JetBrains, Vim, Emacs). Keep your existing workflow, team culture, and muscle memory. Just add CLI + MCP.
+
+---
+
+### Compared to Document Collections (RFC/ADR)
+
+**RFC (Request for Comments)** and **ADR (Architecture Decision Records)** are traditional approaches for documenting technical decisions and designs.
+
+**Why not use them?**
+- **No tooling**: Manual file management, no visualization, no search
+- **Inconsistent structure**: Each team invents their own format
+- **Hard to navigate**: Flat folders (e.g., `docs/adr/0042-feature.md`) or scattered locations
+- **No AI optimization**: Not designed for AI context windows (often 1000+ lines)
+**When to use them**: When you just need lightweight markdown docs without tooling and don't need AI assistance.
+
+**LeanSpec's advantage**: **Agility & tooling**. CLI/MCP tools for management, consistent structure, AI-optimized (under 300 lines), Kanban board, search, validation, and metadata tracking. RFC/ADR philosophy + modern tooling.
+
+---
+
+### Compared to Project Management Tools
+
+**Traditional PM tools like [Jira](https://www.atlassian.com/software/jira), [Azure DevOps](https://azure.microsoft.com/en-us/products/devops), [Linear](https://linear.app)** are designed for task tracking and team coordination.
+
+**PM tool strengths:**
+- ✅ Excellent for task tracking and sprint planning
+- ✅ Team coordination and visibility
+- ✅ Rich integrations with other tools
+- ✅ Workflow automation and notifications
+
+**Trade-offs for technical specs:**
+- **Higher latency** - Need API/MCP configuration to manage work items programmatically
+- **Extra infrastructure** - Requires authentication, rate limiting, API maintenance
+- **Not markdown** - Rich text editors can't fit in AI context windows
+- **Wrong abstraction** - Optimized for tickets/tasks, not technical specifications
+- **Context switching** - Forces you out of code editor and repository
+- **Not version controlled** - Changes aren't in git alongside code
+
+**Best for**: Project management, sprint planning, bug tracking, team coordination. **Use WITH LeanSpec**, not instead of.
+
+**LeanSpec's advantage**: **Low latency & integration**. Specs live in your repo—zero API overhead. Version controlled with code. CLI + MCP for instant access. Markdown-native for AI tools. Complements PM tools—use Jira for task tracking, LeanSpec for technical specs.
+
+---
+
+### Compared to Vibe Coding
+
+**Vibe coding** (no specs, just chat with AI) is the fastest way to start coding.
+
+**Vibe coding strengths:**
+- ✅ Zero overhead—start coding immediately
+- ✅ Maximum flexibility and speed
+- ✅ Perfect for rapid prototyping
+- ✅ Natural conversational flow
+
+**Trade-offs:**
+- No team alignment or shared source of truth
+- Decisions lost in chat history
+- Hard to onboard new team members
+- AI may hallucinate requirements without written specs
+- No reproducibility or documentation
+
+**Best for**: Solo developers, throwaway prototypes, quick experiments.
+
+**LeanSpec's advantage**: **Minimal structure for maximum agility**. Just enough spec to align team and guide AI, without heavy process. Get 80% of vibe coding speed with 80% of traditional spec benefits. Bridge between chaos and bureaucracy.
+
+---
+
+## Feature Comparison
+
+| Feature | LeanSpec | Spec Kit | OpenSpec | Kiro | PM Tools (Jira) | Vibe Coding |
+|---------|----------|----------|----------|------|-----------------|-------------|
+| **Type** | SDD Framework | SDD Framework | SDD Framework | AI IDE + SDD | Project Mgmt | No Structure |
+| **Spec Structure** | ✅ Flexible | ⚠️ Rigid format | ⚠️ Rigid templates | ✅ Built-in | ❌ Task-based | ❌ None |
+| **AI Optimization** | ✅ Controlled length | ⚠️ Longer context | ⚠️ Long system prompt | ✅ Native | ❌ Rich text | ✅ Chat |
+| **Workflow** | Flexible (see [writing modes](/docs/guide/usage/ai-assisted/writing-specs-with-ai#the-three-modes)) | 5-step process | Proposal→Archive | Autonomous agents | Tickets/sprints | Prompt |
+| **Access Latency** | ✅ Instant (local) | ✅ Instant (local) | ✅ Instant (local) | ✅ IDE-native | ❌ API/MCP config | ✅ Chat |
+| **Numbering** | ✅ Yes | ✅ Yes | ❌ No | ⚠️ IDE-managed | ✅ Ticket IDs | ❌ None |
+| **CLI Tools** | ✅ Full-featured | ✅ Slash commands | ✅ Slash commands | ✅ Built-in | ❌ Web UI | ❌ None |
+| **MCP Server** | ✅ Yes | ❌ No | ❌ No | ⚠️ Varies | ⚠️ Requires config | ❌ No |
+| **Editor** | Any | Any | Any | Locked (Kiro) | Web/any | Any |
+| **Cognitive Load** | ✅ Low | ⚠️ Higher | ⚠️ Higher | ⚠️ New IDE to learn | ⚠️ Varies | ✅ Very Low |
+| **Adaptivity** | ✅ High | ⚠️ Prescriptive | ⚠️ Prescriptive | ⚠️ IDE-locked | ⚠️ Org-specific | ✅ Very High |
+| **Best For** | Teams 1-50+ (scales with PM tools) | Enterprise SDD | Formal proposals | Solo/small teams | Large orgs | Solo prototyping |
+
+---
+
+## When to Choose LeanSpec
+
+### ✅ Choose LeanSpec when you value:
+- **Lightweight** - Minimal setup, no heavy dependencies
+- **Simplicity** - Flexible structure, start with one file
+- **Agility** - Direct editing, no multi-step workflows
+- **Adaptivity** - Works with any editor, AI tool, team culture, or org structure
+- **Low latency** - Local specs, instant access, no API overhead
+- **High velocity** - Low cognitive load + high AI alignment = less rework
+- **Comprehensive tooling** - CLI, MCP, validation, visualization, search
+
+### 🔄 Choose alternatives when you need:
+- **Enterprise governance**: Spec Kit for prescriptive 5-step process with constitution/principles
+- **Formal change proposals**: OpenSpec for proposal → review → archive workflows
+- **Integrated AI IDE**: Kiro for all-in-one SDD + autonomous agents (if willing to switch editors)
+- **Project management**: Jira/Linear/ADO for task tracking (use WITH LeanSpec, not instead)
+- **Maximum speed**: Vibe coding for solo prototypes (no structure)
+
+---
+
+## Philosophy: First Principles Over Process
+
+LeanSpec is built on **5 First Principles** (in priority order):
+
+1. **Context Economy** - Specs must fit in working memory (human + AI)
+   - Target: Controlled length (typically under 300 lines per spec)
+   - Why: Attention is the scarce resource, not storage
+
+2. **Signal-to-Noise Maximization** - Every word must inform decisions
+   - Test: "What decision does this sentence inform?"
+   - Cut: Obvious, inferable, or "maybe future" content
+
+3. **Intent Over Implementation** - Capture why, not just how
+   - Must have: Problem, intent, success criteria
+   - Why: Intent is stable, implementation changes
+
+4. **Bridge the Gap** - Both human and AI must understand
+   - For humans: Overview, context, rationale
+   - For AI: Unambiguous requirements, clear structure
+
+5. **Progressive Disclosure** - Add complexity when pain is felt
+   - Solo dev: Just status + created
+   - Feel pain? Add tags, priority, custom fields
+   - Never add "just in case" features
+
+**These principles guide every decision.** Other tools add features and process upfront. LeanSpec starts minimal and grows only when you feel pain.
+
+---
+
+## Migration from Other Tools
+
+Already using OpenSpec, spec-kit, or ADRs? LeanSpec provides migration tools:
+
+```bash
+# Migrate from any SDD tool
+lean-spec migrate ./path/to/specs
+
+# AI-assisted migration (with Copilot/Claude)
+lean-spec migrate ./path/to/specs --with copilot
+
+# Backfill metadata from git history
+lean-spec backfill
+```
+
+See [Migration Guide](/docs/guide/migration) for details.
+
+---
+
+## Surviving the AI Bubble Correction
+
+A [critical assessment by Robert Matsuoka](https://hyperdev.matsuoka.com/p/is-ai-a-bubble-i-didnt-think-so-until) argues that SDD serves dual purposes: solving real problems BUT also enabling "governance narratives that justify enterprise procurement and disconnected valuations."
+
+**The bubble indicators are real:**
+- AI coding companies command 25-70x ARR (vs dot-com peak of 18x)
+- Tessl raised $125M, delivered only beta registry 10 months later
+- Cursor hit $9.9B valuation in under a year
+- The "70% automation" claim collapses under scrutiny (real-world: 10-30% productivity gains)
+
+**Prediction:** Correction within 18-24 months. Companies burning capital on "technical potential" rather than demonstrating product-market fit will face reckoning.
+
+### Why LeanSpec Is Positioned Differently
+
+**We're NOT:**
+- ❌ Promising 70% automation or autonomous coding
+- ❌ Selling a $125M platform or $10B IDE  
+- ❌ Requiring rigid 5-step workflows
+- ❌ Claiming AI will eliminate senior developers
+- ❌ Raising venture capital with inflated valuations
+
+**We ARE:**
+- ✅ Free, open-source tooling
+- ✅ Pragmatic about when specs help vs hurt
+- ✅ Tool-agnostic (works with any editor/AI)
+- ✅ Addressing real pain: team alignment, context rot, decision documentation
+- ✅ Honest about limits ([Rice's Theorem](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail) proves complete automation is mathematically impossible)
+
+**The survivors** (per Matsuoka): Tools that "enhance rather than replace core capabilities."
+
+**That's our positioning:** Specs enhance judgment, they don't replace understanding your codebase. No autonomous coding promises—just better-informed human-AI collaboration.
+
+### The Theoretical Foundation
+
+**Why human involvement is necessary:** [Rice's Theorem](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail) (1951) proves all non-trivial semantic properties of programs are undecidable—no algorithm can determine whether arbitrary programs have interesting behavioral characteristics.
+
+**What this means:**
+- AI can't algorithmically determine "what you want" (undecidable)
+- Specs provide semantic grounding that makes verification tractable
+- Humans define intent, AI amplifies scale (implementation/testing)
+- Testing is sampling, not proof—we build confidence within theoretical constraints
+
+**LeanSpec's philosophy aligns with Rice's Theorem:** Humans provide intent (specs), AI generates implementations within those constraints. We work WITH fundamental limits, not against them.
+
+### Can Specs Become Theater?
+
+**Yes, when:**
+- Required for procurement but nobody reads them
+- Exhaustive upfront requirements exceed context limits
+- Rigid processes applied to trivial changes
+- Documentation stays static while code evolves
+
+**LeanSpec avoids this by:**
+- Explicit "when NOT to use specs" guidance
+- \<300 line limit prevents context overflow
+- Progressive Disclosure (start simple, add structure only when needed)
+- Focus on intent that ages well, not exhaustive implementation
+
+📖 [Deep dive: Limits, Trade-offs & What's Realistic →](/docs/guide/limits-and-tradeoffs)
+
+---
+
+## The Bottom Line
+
+**LeanSpec is for teams that want:**
+- **High velocity** through low cognitive load and high AI alignment
+- **Adaptivity** to any team culture, org structure, or tooling
+- **Simplicity** without sacrificing comprehensiveness
+- **Low latency** with local, version-controlled specs
+- **Progressive disclosure** - structure that grows with your team
+- **Honest positioning** - no hype, no impossible promises, just pragmatic tools
+
+**Other tools optimize for:**
+- **Structured workflow** (Spec Kit) - Prescriptive multi-step process for enterprise governance
+- **Change governance** (OpenSpec) - Formal proposal → review → archive workflow
+- **Integrated experience** (Kiro) - Full AI IDE with built-in SDD and autonomous agents
+- **Project management** (Jira, Linear) - Task tracking and team coordination (complement LeanSpec)
+- **Maximum speed** (vibe coding) - No structure, no docs, just chat
+
+Choose the tool that fits your team's workflow and needs. Be realistic about what's possible within [theoretical constraints](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail).
