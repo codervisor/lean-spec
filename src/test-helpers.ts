@@ -16,7 +16,7 @@ export interface TestContext {
  * Create a temporary test directory with LeanSpec structure
  */
 export async function createTestEnvironment(): Promise<TestContext> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-test-'));
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-test-'));
 
   const cleanup = async () => {
     await fs.rm(tmpDir, { recursive: true, force: true });

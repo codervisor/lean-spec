@@ -102,13 +102,13 @@ Using `npx` ensures you're always using the latest version and works without glo
     "lean-spec": {
       "command": "npx",
       "args": ["-y", "lean-spec", "mcp"],
-      "cwd": "/path/to/your/lspec/project"
+      "cwd": "/path/to/your/lean-spec/project"
     }
   }
 }
 ```
 
-Replace `/path/to/your/lspec/project` with the absolute path to your LeanSpec project directory.
+Replace `/path/to/your/lean-spec/project` with the absolute path to your LeanSpec project directory.
 
 ### Multiple Projects
 
@@ -141,7 +141,7 @@ If you have LeanSpec installed globally (`npm install -g lean-spec`), you can us
     "lean-spec": {
       "command": "lean-spec",
       "args": ["mcp"],
-      "cwd": "/path/to/your/lspec/project"
+      "cwd": "/path/to/your/lean-spec/project"
     }
   }
 }
@@ -275,7 +275,7 @@ npx @modelcontextprotocol/inspector npx -y lean-spec mcp
 Or test directly from your project:
 
 ```bash
-cd /path/to/your/lspec/project
+cd /path/to/your/lean-spec/project
 npx -y lean-spec mcp
 # or if installed globally:
 lean-spec mcp

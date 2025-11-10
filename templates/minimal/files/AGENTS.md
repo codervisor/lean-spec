@@ -27,10 +27,10 @@ Skip specs for:
 
 Before starting work, understand project context:
 
-- `lspec stats` - See work distribution
-- `lspec board` - View specs by status
-- `lspec search "<query>"` - Find relevant work
-- `lspec list` - List all specs
+- `lean-spec stats` - See work distribution
+- `lean-spec board` - View specs by status
+- `lean-spec search "<query>"` - Find relevant work
+- `lean-spec list` - List all specs
 
 These help you understand what exists and what's in progress.
 
@@ -52,16 +52,16 @@ created: YYYY-MM-DD
 
 **Update status with:**
 ```bash
-lspec update <spec> --status in-progress
+lean-spec update <spec> --status in-progress
 ```
 
 ## Workflow
 
-1. **Check existing work** - Run `lspec board` or `lspec search`
+1. **Check existing work** - Run `lean-spec board` or `lean-spec search`
 2. **Create or update spec** - Add frontmatter with `status` and `created`
 3. **Implement changes** - Keep spec in sync as you learn
 4. **Update status** - Mark progress: `draft` → `in-progress` → `complete`
-5. **Archive when done** - `lspec archive <spec>` moves to archive
+5. **Archive when done** - `lean-spec archive <spec>` moves to archive
 
 ## Quality Standards
 

@@ -9,7 +9,7 @@ Configure AI coding agents to work effectively with LeanSpec through AGENTS.md i
 
 ## AGENTS.md Overview
 
-`AGENTS.md` serves as permanent instructions for AI coding agents in your repository. When you run `lspec init`, this file is created with LeanSpec guidance.
+`AGENTS.md` serves as permanent instructions for AI coding agents in your repository. When you run `lean-spec init`, this file is created with LeanSpec guidance.
 
 **Purpose:**
 - Provide context about your project
@@ -48,22 +48,22 @@ Skip specs for:
 ## Essential Commands
 
 **Discovery:**
-- `lspec list` - See all specs
-- `lspec search "<query>"` - Find relevant specs
-- `lspec board` - Kanban view with project health
-- `lspec stats` - Quick project metrics
+- `lean-spec list` - See all specs
+- `lean-spec search "<query>"` - Find relevant specs
+- `lean-spec board` - Kanban view with project health
+- `lean-spec stats` - Quick project metrics
 
 **Viewing specs:**
-- `lspec view <spec>` - View a spec (formatted)
-- `lspec view <spec> --raw` - Get raw markdown
-- `lspec view <spec> --json` - Get structured JSON
-- `lspec open <spec>` - Open spec in editor
-- `lspec files <spec>` - List all files in a spec
+- `lean-spec view <spec>` - View a spec (formatted)
+- `lean-spec view <spec> --raw` - Get raw markdown
+- `lean-spec view <spec> --json` - Get structured JSON
+- `lean-spec open <spec>` - Open spec in editor
+- `lean-spec files <spec>` - List all files in a spec
 
 **Working with specs:**
-- `lspec create <name>` - Create a new spec
-- `lspec update <spec> --status <status>` - Update status
-- `lspec deps <spec>` - Show dependencies
+- `lean-spec create <name>` - Create a new spec
+- `lean-spec update <spec> --status <status>` - Update status
+- `lean-spec deps <spec>` - Show dependencies
 
 ## Spec Frontmatter
 
@@ -78,14 +78,14 @@ priority: low|medium|high  # optional
 ---
 ```
 
-**IMPORTANT**: Always use `lspec update` to modify status, priority, tags, and assignee. Never edit frontmatter manually for these system-managed fields.
+**IMPORTANT**: Always use `lean-spec update` to modify status, priority, tags, and assignee. Never edit frontmatter manually for these system-managed fields.
 
 ## SDD Workflow
 
-1. **Discover** - Check existing specs with `lspec list`
-2. **Plan** - Create spec with `lspec create <name>` when needed
+1. **Discover** - Check existing specs with `lean-spec list`
+2. **Plan** - Create spec with `lean-spec create <name>` when needed
 3. **Implement** - Write code, keep spec in sync as you learn
-4. **Update** - Mark progress with `lspec update <spec> --status <status>`
+4. **Update** - Mark progress with `lean-spec update <spec> --status <status>`
 5. **Complete** - Mark complete when done
 
 ## Quality Standards
@@ -94,7 +94,7 @@ priority: low|medium|high  # optional
 - Tests cover critical paths
 - Specs stay in sync with implementation
 - Always validate before completing work:
-  - Run `lspec validate` to check spec structure
+  - Run `lean-spec validate` to check spec structure
   - Fix any validation errors before marking complete
 
 ## [Project-Specific Rules]
@@ -281,25 +281,25 @@ Ask your AI agent:
 ```
 List all specs in this repository.
 ```
-Expected: Agent uses `lspec list`
+Expected: Agent uses `lean-spec list`
 
 **Test 2: Can it read specs?**
 ```
 What does spec 001 describe?
 ```
-Expected: Agent uses `lspec view 001`
+Expected: Agent uses `lean-spec view 001`
 
 **Test 3: Can it follow workflow?**
 ```
 Create a spec for user authentication.
 ```
-Expected: Agent uses `lspec create user-authentication`
+Expected: Agent uses `lean-spec create user-authentication`
 
 **Test 4: Can it update status?**
 ```
 Mark spec 001 as in-progress.
 ```
-Expected: Agent uses `lspec update 001 --status in-progress`
+Expected: Agent uses `lean-spec update 001 --status in-progress`
 
 ## Common Pitfalls
 
@@ -316,7 +316,7 @@ It's important to...
 ✅ **Good:**
 ```markdown
 1. Read README.md first
-2. Check existing specs with `lspec list`
+2. Check existing specs with `lean-spec list`
 3. Follow LeanSpec principles (see AGENTS.md)
 ```
 

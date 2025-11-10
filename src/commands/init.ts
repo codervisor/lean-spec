@@ -235,6 +235,6 @@ export async function initProject(): Promise<void> {
   console.log('Next steps:');
   console.log(chalk.gray('  - Review and customize AGENTS.md'));
   console.log(chalk.gray('  - Check out example spec in specs/'));
-  console.log(chalk.gray('  - Create your first spec: lspec create my-feature'));
+  console.log(chalk.gray('  - Create your first spec: lean-spec create my-feature'));
   console.log('');
 }

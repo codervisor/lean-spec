@@ -15,12 +15,12 @@ Enterprise-grade development with security and compliance requirements.
 
 Before starting work, understand project context and dependencies:
 
-- `lspec stats` - See work distribution across specs
-- `lspec board` - View specs organized by status
-- `lspec list --tag=<tag>` - Find specs by tag (e.g., `--tag=security`)
-- `lspec search "<query>"` - Full-text search across specs
-- `lspec deps <spec>` - Check dependencies before starting work
-- `lspec gantt` - View project timeline and milestones
+- `lean-spec stats` - See work distribution across specs
+- `lean-spec board` - View specs organized by status
+- `lean-spec list --tag=<tag>` - Find specs by tag (e.g., `--tag=security`)
+- `lean-spec search "<query>"` - Full-text search across specs
+- `lean-spec deps <spec>` - Check dependencies before starting work
+- `lean-spec gantt` - View project timeline and milestones
 
 These commands help you understand what exists, what's in progress, and what depends on what.
 
@@ -56,7 +56,7 @@ depends_on:
 
 **Update with:**
 ```bash
-lspec update <spec> --status in-progress --assignee yourname
+lean-spec update <spec> --status in-progress --assignee yourname
 # or edit frontmatter directly
 ```
 
@@ -89,7 +89,7 @@ Optional for:
 
 ## Approval Workflow
 
-1. **Discover context** - Run `lspec stats`, `lspec board`, `lspec deps`
+1. **Discover context** - Run `lean-spec stats`, `lean-spec board`, `lean-spec deps`
 2. **Create spec** - Include all required frontmatter fields
 3. **Technical review** - Assign reviewer in frontmatter
 4. **Security team review** - For security/compliance-tagged specs
@@ -100,14 +100,14 @@ Optional for:
 
 ## Workflow
 
-1. **Discover context** - Run `lspec stats`, `lspec board`, or `lspec gantt`
-2. **Search existing specs** - Use `lspec search` or `lspec list --tag=<relevant>`
-3. **Check dependencies** - Run `lspec deps <spec>` to understand dependencies
+1. **Discover context** - Run `lean-spec stats`, `lean-spec board`, or `lean-spec gantt`
+2. **Search existing specs** - Use `lean-spec search` or `lean-spec list --tag=<relevant>`
+3. **Check dependencies** - Run `lean-spec deps <spec>` to understand dependencies
 4. **Create or update spec** - Add complete frontmatter with compliance tags
 5. **Get reviews** - Assign reviewer, tag for security review if needed
 6. **Implement changes** - Keep spec in sync, update status appropriately
 7. **Update status** - Mark progress through workflow states
-8. **Archive when done** - `lspec archive <spec>` after completion
+8. **Archive when done** - `lean-spec archive <spec>` after completion
 
 ## Quality Standards
 

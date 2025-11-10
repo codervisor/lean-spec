@@ -52,7 +52,7 @@ Date when spec was created (ISO 8601 format).
 created: 2025-11-02
 ```
 
-This is auto-filled when you use `lspec create`.
+This is auto-filled when you use `lean-spec create`.
 
 ## Optional Fields
 
@@ -67,7 +67,7 @@ tags: [api, security, mvp]
 
 **Usage:**
 ```bash
-lspec list --tag=api
+lean-spec list --tag=api
 ```
 
 ### priority
@@ -87,7 +87,7 @@ priority: high
 
 **Usage:**
 ```bash
-lspec list --priority=high
+lean-spec list --priority=high
 ```
 
 ### completed
@@ -129,8 +129,8 @@ You can define custom fields in `.lean-spec/config.json`:
 
 **Usage:**
 ```bash
-lspec create feature --field assignee=alice --field sprint=42
-lspec list --field epic=PROJ-123
+lean-spec create feature --field assignee=alice --field sprint=42
+lean-spec list --field epic=PROJ-123
 ```
 
 See [Custom Fields](/docs/guide/usage/advanced-features/custom-fields) for details.
@@ -149,7 +149,7 @@ LeanSpec auto-generates visual badges from frontmatter:
 - ✅ Complete
 - 📦 Archived
 
-These badges are automatically updated when you use `lspec update`.
+These badges are automatically updated when you use `lean-spec update`.
 
 ## Full Example
 
@@ -181,7 +181,7 @@ sprint: 42
 Recommended approach:
 
 ```bash
-lspec update 001 --status=complete --priority=critical
+lean-spec update 001 --status=complete --priority=critical
 ```
 
 This updates both frontmatter and visual badges.
@@ -194,7 +194,7 @@ You can also edit frontmatter directly in the file:
 2. Modify YAML between `---` markers
 3. Save file
 
-Note: Manual edits don't auto-update visual badges. Run `lspec update` to sync.
+Note: Manual edits don't auto-update visual badges. Run `lean-spec update` to sync.
 
 ## Best Practices
 
@@ -207,7 +207,7 @@ Establish tag conventions for your team. Examples: `api`, `ui`, `backend`, `secu
 :::
 
 :::tip Update Status Regularly
-Keep status current. Use `lspec list` to see what's in progress.
+Keep status current. Use `lean-spec list` to see what's in progress.
 :::
 
 :::tip Don't Over-Customize

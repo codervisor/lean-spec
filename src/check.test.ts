@@ -12,7 +12,7 @@ describe('checkSpecs', () => {
 
   beforeEach(async () => {
     // Create temporary directory
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-test-'));
     originalCwd = process.cwd();
     process.chdir(tmpDir);
 
@@ -145,7 +145,7 @@ describe('autoCheckIfEnabled', () => {
   let originalCwd: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-test-'));
     originalCwd = process.cwd();
     process.chdir(tmpDir);
 
@@ -238,7 +238,7 @@ describe('createSpec with --no-prefix', () => {
   let originalCwd: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-test-'));
     originalCwd = process.cwd();
     process.chdir(tmpDir);
 

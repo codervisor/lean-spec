@@ -27,11 +27,11 @@ Skip specs for:
 
 Before starting work, understand project context:
 
-- `lspec stats` - See work distribution across specs
-- `lspec board` - View specs organized by status
-- `lspec list --tag=<tag>` - Find specs by tag (e.g., `--tag=api`)
-- `lspec search "<query>"` - Full-text search across specs
-- `lspec deps <spec>` - Check dependencies before starting work
+- `lean-spec stats` - See work distribution across specs
+- `lean-spec board` - View specs organized by status
+- `lean-spec list --tag=<tag>` - Find specs by tag (e.g., `--tag=api`)
+- `lean-spec search "<query>"` - Full-text search across specs
+- `lean-spec deps <spec>` - Check dependencies before starting work
 
 These commands help you understand what exists, what's in progress, and what depends on what.
 
@@ -57,19 +57,19 @@ assignee: username  # for team coordination
 
 **Update status with:**
 ```bash
-lspec update <spec> --status in-progress --assignee yourname
+lean-spec update <spec> --status in-progress --assignee yourname
 # or edit frontmatter directly
 ```
 
 ## Workflow
 
-1. **Discover context** - Run `lspec stats` or `lspec board` to see current state
-2. **Search existing specs** - Use `lspec search` or `lspec list` to find relevant work
-3. **Check dependencies** - Run `lspec deps <spec>` if working on existing spec
+1. **Discover context** - Run `lean-spec stats` or `lean-spec board` to see current state
+2. **Search existing specs** - Use `lean-spec search` or `lean-spec list` to find relevant work
+3. **Check dependencies** - Run `lean-spec deps <spec>` if working on existing spec
 4. **Create or update spec** - Add frontmatter with required fields and helpful metadata
 5. **Implement changes** - Keep spec in sync as you learn
 6. **Update status** - Mark progress: `draft` → `in-progress` → `complete`
-7. **Archive when done** - `lspec archive <spec>` moves to archive
+7. **Archive when done** - `lean-spec archive <spec>` moves to archive
 
 ## Quality Standards
 

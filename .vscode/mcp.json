@@ -2,7 +2,7 @@
 	"servers": {
 		"lean-spec": {
 			"type": "stdio",
-			"command": "lspec",
+			"command": "lean-spec",
 			"args": ["mcp"]
 		}
 	},

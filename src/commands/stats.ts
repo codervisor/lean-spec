@@ -234,9 +234,9 @@ export async function statsCommand(options: {
     console.log('');
 
     // Prompt for full view
-    console.log(chalk.dim('💡 Use `lspec stats --full` for detailed analytics'));
-    console.log(chalk.dim('   Use `lspec stats --velocity` for velocity breakdown'));
-    console.log(chalk.dim('   Use `lspec stats --timeline` for activity timeline'));
+    console.log(chalk.dim('💡 Use `lean-spec stats --full` for detailed analytics'));
+    console.log(chalk.dim('   Use `lean-spec stats --velocity` for velocity breakdown'));
+    console.log(chalk.dim('   Use `lean-spec stats --timeline` for activity timeline'));
     console.log('');
     
     return;

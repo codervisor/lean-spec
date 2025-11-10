@@ -21,4 +21,4 @@ Keep it lean. Write specs for features that need clarity. Skip them for obvious 
 ## Next Steps
 
 1. Customize AGENTS.md for your project
-2. Create your first spec: `lspec create my-feature`
+2. Create your first spec: `lean-spec create my-feature`

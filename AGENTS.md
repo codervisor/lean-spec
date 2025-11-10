@@ -83,10 +83,10 @@ When practices conflict, apply principles in priority order:
 
 1. **Read README.md first** - Understand project context
 2. **Check specs/** - Review existing specs before starting
-3. **Use `lspec --help`** - When unsure about commands, check the built-in help
+3. **Use `lean-spec --help`** - When unsure about commands, check the built-in help
 4. **Follow LeanSpec principles** - Clarity over documentation
 5. **Keep it minimal** - If it doesn't add clarity, cut it
-6. **NEVER manually edit system-managed frontmatter** - Fields like `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at` are system-managed. Always use `lspec update` or `lspec create` commands. Manual edits will cause metadata corruption and tracking issues. **Exception**: Relationship fields (`depends_on`, `related`) must currently be edited manually as no CLI command exists yet.
+6. **NEVER manually edit system-managed frontmatter** - Fields like `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at` are system-managed. Always use `lean-spec update` or `lean-spec create` commands. Manual edits will cause metadata corruption and tracking issues. **Exception**: Relationship fields (`depends_on`, `related`) must currently be edited manually as no CLI command exists yet.
 7. **Never use nested code blocks** - Markdown doesn't support code blocks within code blocks. If you need to show code examples in documentation, use indentation or describe the structure instead of nesting backticks.
 
 ## When to Use Specs
@@ -204,7 +204,7 @@ Required By:
 **Critical - Frontmatter Editing Rules**:
 
 **NEVER manually edit these system-managed fields:**
-- `status`, `priority`, `tags`, `assignee` - Use `lspec update` commands only
+- `status`, `priority`, `tags`, `assignee` - Use `lean-spec update` commands only
 - `transitions`, `created_at`, `updated_at`, `completed_at` - Automatically managed by the system
 - Manual edits will corrupt metadata, break tracking, and cause validation failures
 

@@ -14,7 +14,7 @@ describe('CorruptionValidator', () => {
   let validator: CorruptionValidator;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-corruption-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-corruption-test-'));
     validator = new CorruptionValidator();
   });
 

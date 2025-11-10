@@ -31,7 +31,7 @@ export async function listSpecs(options: {
     await fs.access(specsDir);
   } catch {
     console.log('');
-    console.log('No specs directory found. Initialize with: lspec init');
+    console.log('No specs directory found. Initialize with: lean-spec init');
     console.log('');
     return;
   }

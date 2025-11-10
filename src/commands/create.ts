@@ -169,7 +169,7 @@ export async function createSpec(name: string, options: {
       );
     }
   } catch (error) {
-    throw new Error(`Template not found: ${templatePath}. Run: lspec init`);
+    throw new Error(`Template not found: ${templatePath}. Run: lean-spec init`);
   }
 
   await fs.writeFile(specFile, content, 'utf-8');

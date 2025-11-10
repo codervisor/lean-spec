@@ -43,19 +43,19 @@ Edit `.lean-spec/config.json`:
 
 **When creating specs:**
 ```bash
-lspec create user-auth --field epic=PROJ-123 --field sprint=42
+lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
 ```
 
 **When updating specs:**
 ```bash
-lspec update 001 --field reviewer=alice --field estimate=large
+lean-spec update 001 --field reviewer=alice --field estimate=large
 ```
 
 **When filtering:**
 ```bash
-lspec list --field epic=PROJ-123
-lspec list --field sprint=42
-lspec search "API" --field team=backend
+lean-spec list --field epic=PROJ-123
+lean-spec list --field sprint=42
+lean-spec search "API" --field team=backend
 ```
 
 ### Example Configuration
@@ -164,7 +164,7 @@ Documentation: {docs_url}
 When you create a spec, all variables are automatically resolved:
 
 ```bash
-lspec create user-authentication
+lean-spec create user-authentication
 ```
 
 Results in:
@@ -197,7 +197,7 @@ Documentation: https://docs.acme.com
 
 **Basic custom field usage:**
 ```bash
-lspec create user-authentication \
+lean-spec create user-authentication \
   --field epic=AUTH-2024 \
   --field sprint=5 \
   --field estimate=3d \
@@ -206,7 +206,7 @@ lspec create user-authentication \
 
 **With all options:**
 ```bash
-lspec create payment-integration \
+lean-spec create payment-integration \
   --title "Stripe Payment Integration" \
   --description "Integrate Stripe for subscription payments" \
   --tags backend,payment,api \
@@ -222,12 +222,12 @@ lspec create payment-integration \
 **Updating custom fields:**
 ```bash
 # Update custom fields only
-lspec update 001-user-authentication \
+lean-spec update 001-user-authentication \
   --field sprint=6 \
   --field estimate=2d
 
 # Update standard and custom fields together
-lspec update 001-user-authentication \
+lean-spec update 001-user-authentication \
   --status in-progress \
   --priority high \
   --field sprint=6
@@ -236,19 +236,19 @@ lspec update 001-user-authentication \
 **Filtering by custom fields:**
 ```bash
 # Filter by epic
-lspec list --field epic=AUTH-2024
+lean-spec list --field epic=AUTH-2024
 
 # Filter by sprint
-lspec list --field sprint=5
+lean-spec list --field sprint=5
 
 # Combine with standard filters
-lspec list --status in-progress --field sprint=6
+lean-spec list --status in-progress --field sprint=6
 
 # Multiple custom fields
-lspec list --field epic=AUTH-2024 --field sprint=6
+lean-spec list --field epic=AUTH-2024 --field sprint=6
 
 # Search with custom field filter
-lspec search "authentication" --field epic=AUTH-2024
+lean-spec search "authentication" --field epic=AUTH-2024
 ```
 
 ### Agile Team Setup
@@ -386,13 +386,13 @@ LeanSpec automatically coerces values to the correct type:
 
 ```bash
 # "42" is converted to number 42
-lspec create feature --field sprint=42
+lean-spec create feature --field sprint=42
 
 # "true" is converted to boolean true
-lspec create feature --field needs_review=true
+lean-spec create feature --field needs_review=true
 
 # Arrays work with comma separation
-lspec create feature --field teams=backend,frontend
+lean-spec create feature --field teams=backend,frontend
 ```
 
 ## Limitations
@@ -408,7 +408,7 @@ If you add custom fields to existing specs:
 
 ```bash
 # Update existing specs manually or with a script
-lspec update 001 --field epic=PROJ-123
+lean-spec update 001 --field epic=PROJ-123
 
 # Or edit frontmatter directly in each README.md
 ```

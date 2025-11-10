@@ -22,4 +22,4 @@ Balance governance with agility. Required checks without bureaucracy. Lean princ
 
 1. Customize AGENTS.md with your security requirements
 2. Update approval workflows for your org
-3. Create first spec: `lspec create my-feature`
+3. Create first spec: `lean-spec create my-feature`

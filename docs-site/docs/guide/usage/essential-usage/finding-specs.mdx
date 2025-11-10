@@ -13,7 +13,7 @@ Learn how to discover and navigate specs using search, list commands, and the MC
 
 ```bash
 # Show all specs
-lspec list
+lean-spec list
 ```
 
 Output:
@@ -33,33 +33,33 @@ Output:
 
 ```bash
 # Show only in-progress specs
-lspec list --status in-progress
+lean-spec list --status in-progress
 
 # Show blocked specs
-lspec list --status blocked
+lean-spec list --status blocked
 
 # Show completed specs
-lspec list --status complete
+lean-spec list --status complete
 ```
 
 ### Filter by Tag
 
 ```bash
 # Show specs with specific tag
-lspec list --tag api
+lean-spec list --tag api
 
 # Show specs with multiple tags (OR)
-lspec list --tag api,backend
+lean-spec list --tag api,backend
 ```
 
 ### Filter by Priority
 
 ```bash
 # High priority specs
-lspec list --priority high
+lean-spec list --priority high
 
 # Low priority specs
-lspec list --priority low
+lean-spec list --priority low
 ```
 
 ## Search by Content
@@ -68,7 +68,7 @@ lspec list --priority low
 
 ```bash
 # Search all spec content
-lspec search "authentication"
+lean-spec search "authentication"
 ```
 
 Searches across:
@@ -81,21 +81,21 @@ Searches across:
 
 ```bash
 # Search in specific status
-lspec search "API" --status in-progress
+lean-spec search "API" --status in-progress
 
 # Search with tag filter
-lspec search "cache" --tag performance
+lean-spec search "cache" --tag performance
 
 # Combine multiple filters
-lspec search "refactor" --status planned --tag backend --priority high
+lean-spec search "refactor" --status planned --tag backend --priority high
 ```
 
 ### Case-Insensitive Search
 
 Search is case-insensitive by default:
 ```bash
-lspec search "api"      # Matches "API", "api", "Api"
-lspec search "JWT"      # Matches "jwt", "JWT", "Jwt"
+lean-spec search "api"      # Matches "API", "api", "Api"
+lean-spec search "JWT"      # Matches "jwt", "JWT", "Jwt"
 ```
 
 ## Visual Navigation
@@ -103,7 +103,7 @@ lspec search "JWT"      # Matches "jwt", "JWT", "Jwt"
 ### Kanban Board
 
 ```bash
-lspec board
+lean-spec board
 ```
 
 Shows specs grouped by status:
@@ -124,7 +124,7 @@ Project Health: 🟢 Healthy
 
 ```bash
 # Show dependencies for a spec
-lspec deps 042
+lean-spec deps 042
 ```
 
 Output:
@@ -186,25 +186,25 @@ This eliminates repetitive questions and maintains consistency.
 
 ```bash
 # High-priority backend work that's blocked
-lspec list --priority high --tag backend --status blocked
+lean-spec list --priority high --tag backend --status blocked
 
 # In-progress API work
-lspec list --status in-progress --tag api
+lean-spec list --status in-progress --tag api
 
 # Completed security work
-lspec list --status complete --tag security
+lean-spec list --status complete --tag security
 ```
 
 ### Exclude Archived
 
-By default, archived specs are excluded from `lspec list`:
+By default, archived specs are excluded from `lean-spec list`:
 
 ```bash
 # Default: excludes archived
-lspec list
+lean-spec list
 
 # Include archived
-lspec list --include-archived
+lean-spec list --include-archived
 ```
 
 ## Project Stats
@@ -212,7 +212,7 @@ lspec list --include-archived
 ### Quick Overview
 
 ```bash
-lspec stats
+lean-spec stats
 ```
 
 Output:
@@ -246,17 +246,17 @@ Project Health: 🟢 Healthy
 
 ```bash
 # What's ready to work on?
-lspec list --status planned --priority high
+lean-spec list --status planned --priority high
 ```
 
 ### Check Active Work
 
 ```bash
 # What's in progress?
-lspec list --status in-progress
+lean-spec list --status in-progress
 
 # Who's working on what?
-lspec list --status in-progress
+lean-spec list --status in-progress
 # (shows assignee if set)
 ```
 
@@ -264,30 +264,30 @@ lspec list --status in-progress
 
 ```bash
 # Recently completed
-lspec list --status complete
+lean-spec list --status complete
 
 # Completed work by tag
-lspec list --status complete --tag api
+lean-spec list --status complete --tag api
 ```
 
 ### Unblock Work
 
 ```bash
 # What's blocked?
-lspec list --status blocked
+lean-spec list --status blocked
 
 # Why is it blocked?
-lspec deps <spec-id>
+lean-spec deps <spec-id>
 # (check dependencies)
 ```
 
 ## Navigation Tips
 
 **DO:**
-- ✅ Use `lspec board` for visual overview
-- ✅ Use `lspec list` with filters for focused views
-- ✅ Use `lspec search` for content-based discovery
-- ✅ Use `lspec deps` to understand relationships
+- ✅ Use `lean-spec board` for visual overview
+- ✅ Use `lean-spec list` with filters for focused views
+- ✅ Use `lean-spec search` for content-based discovery
+- ✅ Use `lean-spec deps` to understand relationships
 - ✅ Let AI agents search via MCP for semantic retrieval
 
 **DON'T:**
@@ -301,33 +301,33 @@ lspec deps <spec-id>
 
 ```bash
 # 1. What's the project state?
-lspec board
+lean-spec board
 
 # 2. What should I work on?
-lspec list --status planned --priority high
+lean-spec list --status planned --priority high
 
 # 3. What's this spec about?
-lspec view <spec-id>
+lean-spec view <spec-id>
 
 # 4. Start working
-lspec update <spec-id> --status in-progress
-lspec open <spec-id>
+lean-spec update <spec-id> --status in-progress
+lean-spec open <spec-id>
 ```
 
 ### Research Flow
 
 ```bash
 # 1. Find relevant specs
-lspec search "authentication"
+lean-spec search "authentication"
 
 # 2. View promising spec
-lspec view 042
+lean-spec view 042
 
 # 3. Check related work
-lspec deps 042
+lean-spec deps 042
 
 # 4. Read related spec
-lspec view 041
+lean-spec view 041
 ```
 
 ## Next Steps

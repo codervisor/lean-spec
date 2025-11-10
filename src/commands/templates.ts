@@ -15,7 +15,7 @@ export async function listTemplates(cwd: string = process.cwd()): Promise<void> 
     await fs.access(templatesDir);
   } catch {
     console.log(chalk.yellow('No templates directory found.'));
-    console.log(chalk.gray('Run: lspec init'));
+    console.log(chalk.gray('Run: lean-spec init'));
     console.log('');
     return;
   }
@@ -50,7 +50,7 @@ export async function listTemplates(cwd: string = process.cwd()): Promise<void> 
   }
 
   console.log('');
-  console.log(chalk.gray('Use templates with: lspec create <name> --template=<template-name>'));
+  console.log(chalk.gray('Use templates with: lean-spec create <name> --template=<template-name>'));
   console.log('');
 }
 
@@ -100,7 +100,7 @@ export async function addTemplate(
     console.error(chalk.red(`Template file not found: ${file}`));
     console.error(chalk.gray(`Expected at: ${templatePath}`));
     console.error(
-      chalk.yellow('Create the file first or use: lspec templates copy <source> <target>'),
+      chalk.yellow('Create the file first or use: lean-spec templates copy <source> <target>'),
     );
     process.exit(1);
   }
@@ -118,7 +118,7 @@ export async function addTemplate(
   await saveConfig(config, cwd);
 
   console.log(chalk.green(`✓ Added template: ${name} → ${file}`));
-  console.log(chalk.gray(`  Use with: lspec create <spec-name> --template=${name}`));
+  console.log(chalk.gray(`  Use with: lean-spec create <spec-name> --template=${name}`));
 }
 
 export async function removeTemplate(name: string, cwd: string = process.cwd()): Promise<void> {
@@ -189,5 +189,5 @@ export async function copyTemplate(
 
   console.log(chalk.green(`✓ Registered template: ${templateName}`));
   console.log(chalk.gray(`  Edit: ${targetPath}`));
-  console.log(chalk.gray(`  Use with: lspec create <spec-name> --template=${templateName}`));
+  console.log(chalk.gray(`  Use with: lean-spec create <spec-name> --template=${templateName}`));
 }

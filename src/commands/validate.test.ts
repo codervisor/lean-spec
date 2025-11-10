@@ -11,7 +11,7 @@ describe('validateCommand', () => {
 
   beforeEach(async () => {
     // Create temporary directory
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-test-'));
     originalCwd = process.cwd();
     process.chdir(tmpDir);
 

@@ -41,7 +41,7 @@ const FlatView: React.FC<{ specs: SpecInfo[]; filter?: SpecListProps['filter'] }
           <Text dimColor>
             {Object.keys(filter || {}).length > 0
               ? 'No specs match the specified filters.'
-              : 'No specs found. Create one with: lspec create <name>'}
+              : 'No specs found. Create one with: lean-spec create <name>'}
           </Text>
         </Box>
       </Box>
@@ -169,7 +169,7 @@ const DateGroupedView: React.FC<{ specs: SpecInfo[]; filter?: SpecListProps['fil
           <Text dimColor>
             {Object.keys(filter || {}).length > 0
               ? 'No specs match the specified filters.'
-              : 'No specs found. Create one with: lspec create <name>'}
+              : 'No specs found. Create one with: lean-spec create <name>'}
           </Text>
         </Box>
       </Box>

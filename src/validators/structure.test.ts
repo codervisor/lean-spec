@@ -14,7 +14,7 @@ describe('StructureValidator', () => {
   let validator: StructureValidator;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-structure-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-structure-test-'));
     validator = new StructureValidator();
   });
 

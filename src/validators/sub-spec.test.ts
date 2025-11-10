@@ -22,7 +22,7 @@ describe('SubSpecValidator', () => {
 
   beforeEach(async () => {
     // Create a temporary directory for test specs
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-sub-spec-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-sub-spec-test-'));
     validator = new SubSpecValidator();
   });
 

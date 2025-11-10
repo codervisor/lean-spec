@@ -43,12 +43,12 @@ jobs:
       - name: Build project
         run: pnpm run build
 
-      - name: Install lspec CLI globally
+      - name: Install lean-spec CLI globally
         run: pnpm link --global
 
-      - name: Verify lspec installation
+      - name: Verify lean-spec installation
         run: |
-          echo "lspec version:"
-          lspec --version
+          echo "lean-spec version:"
+          lean-spec --version
           echo ""
-          echo "lspec is now available globally for Copilot coding agent to use"
+          echo "lean-spec is now available globally for Copilot coding agent to use"

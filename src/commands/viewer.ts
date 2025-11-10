@@ -216,7 +216,7 @@ function displayFormattedSpec(spec: SpecContent): string {
 }
 
 /**
- * lspec view <spec-name>
+ * lean-spec view <spec-name>
  * Display spec with rendered markdown, or output raw/json
  */
 export async function viewCommand(
@@ -230,7 +230,7 @@ export async function viewCommand(
   const spec = await readSpecContent(specPath, process.cwd());
   
   if (!spec) {
-    throw new Error(`Spec not found: ${specPath}. Try: lspec list`);
+    throw new Error(`Spec not found: ${specPath}. Try: lean-spec list`);
   }
 
   // Handle JSON output
@@ -260,7 +260,7 @@ export async function viewCommand(
 }
 
 /**
- * lspec open <spec-name>
+ * lean-spec open <spec-name>
  * Open spec in editor
  */
 export async function openCommand(

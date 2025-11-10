@@ -10,7 +10,7 @@ describe('MCP Server', () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lspec-mcp-test-'));
+    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lean-spec-mcp-test-'));
     process.chdir(testDir);
 
     // Create minimal LeanSpec project structure

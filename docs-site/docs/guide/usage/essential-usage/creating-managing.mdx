@@ -12,7 +12,7 @@ Learn the essential operations for working with LeanSpec specs: creating, updati
 ### Basic Creation
 
 ```bash
-lspec create my-feature
+lean-spec create my-feature
 ```
 
 This creates a new spec with:
@@ -23,7 +23,7 @@ This creates a new spec with:
 ### Interactive Creation
 
 ```bash
-lspec create
+lean-spec create
 ```
 
 Without a name, you'll be prompted interactively for:
@@ -35,13 +35,13 @@ Without a name, you'll be prompted interactively for:
 
 ```bash
 # Create with initial status
-lspec create my-feature --status in-progress
+lean-spec create my-feature --status in-progress
 
 # Create with tags
-lspec create my-feature --tags api,backend
+lean-spec create my-feature --tags api,backend
 
 # Create with priority
-lspec create my-feature --priority high
+lean-spec create my-feature --priority high
 ```
 
 **See also**: [CLI Reference: create](/docs/reference/cli#create) for all options
@@ -54,13 +54,13 @@ lspec create my-feature --priority high
 
 ```bash
 # Move to in-progress
-lspec update 042 --status in-progress
+lean-spec update 042 --status in-progress
 
 # Mark as complete
-lspec update 042 --status complete
+lean-spec update 042 --status complete
 
 # Block temporarily
-lspec update 042 --status blocked
+lean-spec update 042 --status blocked
 ```
 
 **Available statuses**: `planned`, `in-progress`, `blocked`, `complete`, `archived`
@@ -69,16 +69,16 @@ lspec update 042 --status blocked
 
 ```bash
 # Set priority
-lspec update 042 --priority high
+lean-spec update 042 --priority high
 
 # Add/update tags
-lspec update 042 --tags api,backend,refactor
+lean-spec update 042 --tags api,backend,refactor
 
 # Assign to someone
-lspec update 042 --assignee alice
+lean-spec update 042 --assignee alice
 ```
 
-**Important**: Always use `lspec update` for system-managed fields. Manual edits will corrupt metadata.
+**Important**: Always use `lean-spec update` for system-managed fields. Manual edits will corrupt metadata.
 
 **See also**: [CLI Reference: update](/docs/reference/cli#update)
 
@@ -88,30 +88,30 @@ lspec update 042 --assignee alice
 
 ```bash
 # View spec (formatted for reading)
-lspec view 042
+lean-spec view 042
 
 # View sub-spec file
-lspec view 042/DESIGN.md
+lean-spec view 042/DESIGN.md
 ```
 
 ### Raw Output
 
 ```bash
 # Get raw markdown (for parsing)
-lspec view 042 --raw
+lean-spec view 042 --raw
 
 # Get structured JSON
-lspec view 042 --json
+lean-spec view 042 --json
 ```
 
 ### Open in Editor
 
 ```bash
 # Open in default editor
-lspec open 042
+lean-spec open 042
 
 # Open specific sub-spec
-lspec open 042/TESTING.md
+lean-spec open 042/TESTING.md
 ```
 
 **See also**: [CLI Reference: view](/docs/reference/cli#view)
@@ -122,20 +122,20 @@ lspec open 042/TESTING.md
 
 ```bash
 # List all specs
-lspec list
+lean-spec list
 
 # List by status
-lspec list --status in-progress
+lean-spec list --status in-progress
 
 # List by tag
-lspec list --tag api
+lean-spec list --tag api
 ```
 
 ### Kanban Board View
 
 ```bash
 # Visual board view
-lspec board
+lean-spec board
 ```
 
 Shows specs grouped by status with project health metrics.
@@ -150,7 +150,7 @@ For complex specs, split into multiple files:
 
 ```bash
 # List all files in a spec
-lspec files 042
+lean-spec files 042
 ```
 
 Common sub-spec files:
@@ -168,7 +168,7 @@ Common sub-spec files:
 
 ```bash
 # Show all files in spec
-lspec files 042
+lean-spec files 042
 ```
 
 Output:
@@ -191,11 +191,11 @@ When work is complete and you want to move spec out of active view:
 
 ```bash
 # Archive completed spec
-lspec update 042 --status archived
+lean-spec update 042 --status archived
 ```
 
 Archived specs:
-- Don't appear in default `lspec list`
+- Don't appear in default `lean-spec list`
 - Still searchable
 - Can be unarchived later
 
@@ -221,7 +221,7 @@ related:
 
 ```bash
 # Show dependency graph
-lspec deps 042
+lean-spec deps 042
 ```
 
 Output:
@@ -246,10 +246,10 @@ Check spec structure and frontmatter:
 
 ```bash
 # Validate all specs
-lspec validate
+lean-spec validate
 
 # Validate specific spec
-lspec validate 042
+lean-spec validate 042
 ```
 
 Catches:
@@ -266,10 +266,10 @@ Find specs by content, name, or metadata:
 
 ```bash
 # Search spec content
-lspec search "authentication"
+lean-spec search "authentication"
 
 # Search with filters
-lspec search "API" --status in-progress --tag backend
+lean-spec search "API" --status in-progress --tag backend
 ```
 
 **See also**: [Finding Specs](/docs/guide/usage/essential-usage/finding-specs)
@@ -280,49 +280,49 @@ lspec search "API" --status in-progress --tag backend
 
 ```bash
 # 1. Create spec
-lspec create auth-refactor --tags security,backend
+lean-spec create auth-refactor --tags security,backend
 
 # 2. Edit spec (define problem, solution, success criteria)
-lspec open 042
+lean-spec open 042
 
 # 3. Move to in-progress when ready
-lspec update 042 --status in-progress
+lean-spec update 042 --status in-progress
 ```
 
 ### Completing Work
 
 ```bash
 # 1. Mark complete
-lspec update 042 --status complete
+lean-spec update 042 --status complete
 
 # 2. Validate everything still works
-lspec validate
+lean-spec validate
 
 # 3. Optional: Archive if no longer needed
-lspec update 042 --status archived
+lean-spec update 042 --status archived
 ```
 
 ### Complex Spec Management
 
 ```bash
 # 1. Check if spec is getting too large
-lspec view 042 --raw | wc -l
+lean-spec view 042 --raw | wc -l
 
 # 2. If >400 lines, split into sub-specs
 # Create DESIGN.md, TESTING.md, etc.
 
 # 3. Verify structure
-lspec files 042
+lean-spec files 042
 ```
 
 ## Best Practices
 
 **DO:**
-- ✅ Use `lspec update` for status/priority/tags (never edit frontmatter)
+- ✅ Use `lean-spec update` for status/priority/tags (never edit frontmatter)
 - ✅ Keep README.md focused (use sub-specs for detail)
 - ✅ Update status as work progresses
 - ✅ Archive completed specs to reduce clutter
-- ✅ Validate regularly (`lspec validate`)
+- ✅ Validate regularly (`lean-spec validate`)
 
 **DON'T:**
 - ❌ Manually edit system-managed frontmatter (status, priority, tags, assignee, transitions, timestamps)

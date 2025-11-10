@@ -15,4 +15,4 @@ Bare essentials. Just the spec folder structure, nothing else.
 
 ## Next Steps
 
-Create your first spec: `lspec create my-feature`
+Create your first spec: `lean-spec create my-feature`
