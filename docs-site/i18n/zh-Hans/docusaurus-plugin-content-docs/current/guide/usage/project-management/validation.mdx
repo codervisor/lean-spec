@@ -1,0 +1,359 @@
+---
+id: 'validation'
+title: '验证'
+sidebar_position: 12
+---
+# 验证
+
+使用 LeanSpec 的内置验证确保规范质量。
+
+## 概述
+
+`validate` 命令根据[第一原则](/zh-Hans/docs/guide/first-principles)定义的质量标准检查规范，特别是**上下文经济**（规范必须适合工作记忆）。
+
+## 验证命令
+
+检查规范的质量问题：
+
+```bash
+lean-spec validate
+```
+
+默认验证所有规范。检查特定规范：
+
+```bash
+lean-spec validate <spec-1> <spec-2>
+```
+
+## 质量检查
+
+### 行数分析
+
+基于**上下文经济**原则：
+
+- **✅ 理想**：&lt;300 行 - 舒适地适合工作记忆
+- **⚠️ 警告**：300-400 行 - 考虑简化或拆分
+- **🔴 错误**：&gt;400 行 - 必须拆分为子规范
+
+**理由**： 
+- 人类注意力范围：5-10 分钟
+- AI 上下文窗口：有限且昂贵
+- 物理 + 生物 + 经济 = 硬限制
+
+### 子规范验证
+
+检查子规范文件（DESIGN.md、TESTING.md、IMPLEMENTATION.md 等）：
+
+- 每个子规范也遵循行数限制
+- 跟踪总规范大小（主 + 子规范）
+- 如果任何文件超过阈值则建议拆分
+
+### 前置元数据验证
+
+确保必需字段存在且有效：
+
+**必需字段：**
+- `status`：必须有效（planned、in-progress、complete 等）
+- `priority`：必须有效（high、medium、low、none）
+- `created`：有效的日期格式
+
+**可选字段（如果存在则验证）：**
+- `tags`：正确格式
+- `depends_on`、`related`：有效的规范引用
+- 自定义字段：正确的类型
+
+### 结构验证
+
+检查规范组织：
+
+- README.md 存在（主规范文件）
+- 子规范遵循命名约定
+- 没有孤立或重复的内容
+
+## 验证输出
+
+### 干净的验证
+
+```bash
+$ lean-spec validate
+
+✅ 所有规范都有效！
+
+摘要：
+  • 检查了 45 个规范
+  • 0 个错误
+  • 0 个警告
+```
+
+### 带警告
+
+```bash
+$ lean-spec validate
+
+⚠️  发现警告：
+
+058-docs-overview-polish/README.md
+  ⚠️  行数：385 行（接近限制）
+  → 考虑：简化或拆分为子规范
+
+摘要：
+  • 检查了 45 个规范
+  • 0 个错误
+  • 1 个警告
+```
+
+### 带错误
+
+```bash
+$ lean-spec validate
+
+❌ 发现错误：
+
+042-complex-spec/README.md
+  🔴 行数：487 行（超过限制）
+  → 操作：拆分为子规范（见规范 012）
+
+043-broken-spec/README.md
+  🔴 无效状态：'in_progress'（应为 'in-progress'）
+  🔴 缺少必需字段：'created'
+
+摘要：
+  • 检查了 45 个规范
+  • 3 个错误
+  • 0 个警告
+```
+
+## 自定义验证选项
+
+### 设置自定义阈值
+
+```bash
+# 更严格的阈值
+lean-spec validate --max-lines 250
+
+# 更宽松的阈值
+lean-spec validate --max-lines 500
+```
+
+### 验证特定方面
+
+```bash
+# 仅检查行数
+lean-spec validate --check lines
+
+# 仅检查前置元数据
+lean-spec validate --check frontmatter
+
+# 仅检查结构
+lean-spec validate --check structure
+```
+
+## 复杂性分析
+
+验证检测复杂性问题：
+
+### 行数分布
+
+```
+规范复杂性报告：
+
+&lt;200 行：  ████████████████████ 30 个规范（67%）
+200-300：     ████████ 10 个规范（22%）
+300-400：     ███ 4 个规范（9%）
+&gt;400 行：  ▓ 1 个规范（2%）⚠️
+
+建议：拆分 042-complex-spec
+```
+
+### 子规范分析
+
+```
+042-complex-spec：
+  README.md：           487 行 🔴
+  DESIGN.md：          245 行 ✅
+  IMPLEMENTATION.md：  312 行 ⚠️
+  总计：            1,044 行
+
+建议：
+  • 将 README.md 拆分为多个子规范
+  • 考虑拆分 IMPLEMENTATION.md
+```
+
+## 修复验证问题
+
+### 行数违规
+
+**问题**：规范超过 400 行
+
+**解决方案**：使用子规范拆分（见[规范 012](https://github.com/codervisor/lean-spec/tree/main/specs/012-sub-spec-files)）
+
+```markdown
+# 之前：单个 500 行规范
+README.md（500 行）🔴
+
+# 之后：拆分为重点子规范
+README.md（200 行）✅ - 概述、决策、摘要
+DESIGN.md（150 行）✅ - 详细设计
+IMPLEMENTATION.md（150 行）✅ - 实现计划
+```
+
+### 无效的前置元数据
+
+**问题**：无效或缺失的前置元数据字段
+
+**解决方案**：使用 `lean-spec update` 修复：
+
+```bash
+# 修复状态
+lean-spec update <spec> --status in-progress
+
+# 修复优先级
+lean-spec update <spec> --priority high
+
+# 修复标签
+lean-spec update <spec> --tags feature,api
+```
+
+### 结构问题
+
+**问题**：缺少 README.md 或格式错误的子规范
+
+**解决方案**： 
+- 确保 README.md 作为主规范文件存在
+- 遵循子规范命名：DESIGN.md、TESTING.md 等
+- 在所有文件中使用正确的前置元数据
+
+## 工作流程
+
+### 提交前检查
+
+提交前运行：
+
+```bash
+lean-spec validate
+```
+
+在提交更改之前修复任何错误。
+
+### CI/CD 集成
+
+添加到您的 CI 管道：
+
+```yaml
+# .github/workflows/validate.yml
+name: Validate Specs
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g lean-spec
+      - run: lean-spec validate
+```
+
+### 定期审查
+
+每周规范健康检查：
+
+```bash
+# 检查整体健康
+lean-spec validate
+
+# 详细分析
+lean-spec stats --full
+
+# 审查大规范
+lean-spec validate --max-lines 300
+```
+
+## 最佳实践
+
+1. **尽早验证** - 提交前
+2. **及时修复警告** - 不要让它们累积
+3. **在 400 行处拆分** - 对复杂功能使用子规范
+4. **自动化** - 添加到 CI/CD 管道
+5. **定期审查** - 每周健康检查
+
+## 理解结果
+
+### 何时拆分
+
+在以下情况下拆分：
+- ✅ 规范超过 400 行（违反上下文经济）
+- ✅ 多个不同的关注点（不同主题）
+- ✅ 规范需要 &gt;10 分钟阅读
+- ✅ 频繁编辑导致混乱
+
+不要拆分：
+- ❌ 少于 300 行且重点突出
+- ❌ 单一连贯的概念
+- ❌ 快速阅读和理解
+
+### 何时简化
+
+在以下情况下简化：
+- 简单功能的过多细节
+- 重复信息
+- 低信噪比
+- 未来推测
+
+### 何时接受警告
+
+有时警告是可以接受的：
+- 活跃开发期间暂时偏高
+- 需要全面细节的复杂功能
+- 拆分会降低清晰度
+
+始终稍后重新评估。
+
+## 提示
+
+- 提交前运行验证
+- 在审查期间使用 `--max-lines` 进行更严格的检查
+- 与 `lean-spec stats` 结合使用以了解整体项目健康
+- 立即处理错误，在冲刺内处理警告
+- 在 CI/CD 中自动化以保持团队一致性
+
+## 示例验证报告
+
+```bash
+$ lean-spec validate
+
+🔍 验证 45 个规范...
+
+✅ 通过（43 个规范）
+  • 040-api-design：245 行 ✅
+  • 041-testing-strategy：198 行 ✅
+  • 043-launch-plan：287 行 ✅
+  ...
+
+⚠️  警告（1 个规范）
+  • 058-docs-restructure：385 行
+    → 接近限制，考虑简化
+
+🔴 错误（1 个规范）
+  • 042-complex-feature：487 行
+    → 超过限制，必须拆分为子规范
+    → 建议：创建 DESIGN.md 和 IMPLEMENTATION.md
+
+摘要：
+  • 总计：45 个规范
+  • 通过：43（96%）
+  • 警告：1（2%）
+  • 错误：1（2%）
+
+需要操作：
+  → 合并前修复错误
+  → 本冲刺审查警告
+```
+
+## 了解更多
+
+- **[理解 LeanSpec](/zh-Hans/docs/guide/understanding)** - 第一原则和上下文经济
+- **[子规范文件](https://github.com/codervisor/lean-spec/tree/main/specs/012-sub-spec-files)** - 如何拆分大规范
+- **[看板与统计](/zh-Hans/docs/guide/usage/project-management/board-stats)** - 项目健康监控
+- **[CLI 参考](/zh-Hans/docs/reference/cli)** - 完整命令文档
