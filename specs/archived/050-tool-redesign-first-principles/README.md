@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: '2025-11-05'
 tags:
   - architecture
@@ -15,12 +15,15 @@ related:
   - 048-spec-complexity-analysis
   - 043-official-launch-02
 created_at: '2025-11-05T00:00:00Z'
-updated_at: '2025-11-05T05:03:54.951Z'
+updated_at: '2025-11-10T07:50:03.476Z'
+transitions:
+  - status: archived
+    at: '2025-11-10T07:50:03.476Z'
 ---
 
 # Tool Redesign: First Principles Application
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-05 · **Tags**: architecture, cli, mcp, redesign, first-principles, dx, v0.3.0
+> **Status**: 📦 Archived · **Priority**: Medium · **Created**: 2025-11-05 · **Tags**: architecture, cli, mcp, redesign, first-principles, dx, v0.3.0
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -380,3 +383,18 @@ We'll know this succeeded when:
 ---
 
 **Remember**: We're not just building better tools. We're proving that LeanSpec philosophy creates superior user experiences when applied systematically.
+
+---
+
+## Archive Note
+
+**Archived**: 2025-11-10
+
+**Reason**: Spec was too broad and many of its proposed improvements have already been implemented incrementally through other specs:
+- Spec 039: simplify-viewer-commands
+- Spec 045: unified-dashboard  
+- Spec 046: stats-dashboard-refactor
+- Spec 051: docs-system-prompt-principles
+- Spec 049: leanspec-first-principles
+
+**Key Learning**: The 7-week comprehensive redesign plan conflicted with LeanSpec's own "Progressive Disclosure" principle. Better to make incremental improvements as pain is felt rather than big-bang redesigns. The current CLI is already well-organized with grouped commands, and the MCP server functions effectively. This spec itself demonstrates why we should practice what we preach: start simple, add complexity when needed.

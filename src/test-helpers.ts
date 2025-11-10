@@ -1,7 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import matter from 'gray-matter';
+import * as yaml from 'js-yaml';
 import type { LeanSpecConfig } from './config.js';
+import type { SpecFrontmatter } from './frontmatter.js';
 
 /**
  * Test helpers for setting up isolated test environments
@@ -163,6 +166,19 @@ export async function createTestSpec(
 export async function readSpecFile(specDir: string): Promise<string> {
   const specFile = path.join(specDir, 'README.md');
   return await fs.readFile(specFile, 'utf-8');
+}
+
+/**
+ * Read spec frontmatter
+ */
+export async function readSpecFrontmatter(specDir: string): Promise<SpecFrontmatter> {
+  const content = await readSpecFile(specDir);
+  const parsed = matter(content, {
+    engines: {
+      yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+    }
+  });
+  return parsed.data as SpecFrontmatter;
 }
 
 /**

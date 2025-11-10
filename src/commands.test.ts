@@ -8,6 +8,7 @@ import {
   initTestProject,
   createTestSpec,
   readSpecFile,
+  readSpecFrontmatter,
   dirExists,
   getTestDate,
   type TestContext,
@@ -136,23 +137,29 @@ describe('archiveSpec', () => {
     await expect(archiveSpec(nonExistentPath)).rejects.toThrow();
   });
 
-  it('should preserve spec content when archiving', async () => {
+  it('should update metadata when archiving', async () => {
     const date = getTestDate();
     const specName = '001-test-feature';
-    const content = '# Test Feature\n\nTest content';
     const specDir = await createTestSpec(ctx.tmpDir, date, specName, {
       status: 'complete',
       created: '2024-11-01',
-    }, content);
-
-    const originalContent = await readSpecFile(specDir);
+    });
 
     await archiveSpec(specDir);
 
     const archivedPath = path.join(ctx.tmpDir, 'specs', 'archived', specName);
-    const archivedContent = await readSpecFile(archivedPath);
+    const fm = await readSpecFrontmatter(archivedPath);
 
-    expect(archivedContent).toBe(originalContent);
+    // Verify status was updated to archived
+    expect(fm.status).toBe('archived');
+    
+    // Verify updated_at was set
+    expect(fm.updated_at).toBeDefined();
+    
+    // Verify transitions includes the status change
+    expect(fm.transitions).toBeDefined();
+    const archiveTransition = fm.transitions?.find(t => t.status === 'archived');
+    expect(archiveTransition).toBeDefined();
   });
 });
 
