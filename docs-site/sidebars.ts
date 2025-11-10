@@ -76,6 +76,7 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'roadmap',
+    'faq',
   ],
   referenceSidebar: [
     'reference/cli',
