@@ -5,15 +5,15 @@ tags:
   - docs
   - dogfooding
   - web
-  - v0.2.0-launch
-priority: medium
+  - v0.3.0-launch
+priority: high
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-05T05:04:02.385Z'
+updated_at: '2025-11-11T06:41:01.876Z'
 ---
 
 # Live Specs Showcase on Documentation Site
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-03 · **Tags**: docs, dogfooding, web, v0.2.0-launch
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-03 · **Tags**: docs, dogfooding, web, v0.2.0-launch
 
 **Project**: lean-spec  
 **Team**: Core Development
