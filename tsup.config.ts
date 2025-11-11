@@ -1,11 +1,4 @@
 import { defineConfig } from 'tsup';
 
-export default defineConfig({
-  entry: ['src/cli.ts', 'src/mcp-server.ts'],
-  format: ['esm'],
-  dts: false,
-  clean: true,
-  minify: false,
-  sourcemap: true,
-  shims: true,
-});
+// Root tsup config is no longer used - see packages/cli/tsup.config.ts and packages/core/tsup.config.ts
+export default defineConfig({});
