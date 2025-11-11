@@ -22,20 +22,37 @@ export async function getFeaturedProjects() {
 
 // Specs
 export async function getSpecs() {
-  return await db.select().from(schema.specs).orderBy(schema.specs.specNumber);
+  const results = await db.select().from(schema.specs).orderBy(schema.specs.specNumber);
+  return results.map(spec => ({
+    ...spec,
+    tags: spec.tags ? JSON.parse(spec.tags) : null,
+  }));
 }
 
 export async function getSpecById(id: string) {
   const results = await db.select().from(schema.specs).where(eq(schema.specs.id, id)).limit(1);
-  return results[0] || null;
+  if (results.length === 0) return null;
+  const spec = results[0];
+  return {
+    ...spec,
+    tags: spec.tags ? JSON.parse(spec.tags) : null,
+  };
 }
 
 export async function getSpecsByProjectId(projectId: string) {
-  return await db.select().from(schema.specs).where(eq(schema.specs.projectId, projectId)).orderBy(schema.specs.specNumber);
+  const results = await db.select().from(schema.specs).where(eq(schema.specs.projectId, projectId)).orderBy(schema.specs.specNumber);
+  return results.map(spec => ({
+    ...spec,
+    tags: spec.tags ? JSON.parse(spec.tags) : null,
+  }));
 }
 
 export async function getSpecsByStatus(status: 'planned' | 'in-progress' | 'complete' | 'archived') {
-  return await db.select().from(schema.specs).where(eq(schema.specs.status, status)).orderBy(schema.specs.specNumber);
+  const results = await db.select().from(schema.specs).where(eq(schema.specs.status, status)).orderBy(schema.specs.specNumber);
+  return results.map(spec => ({
+    ...spec,
+    tags: spec.tags ? JSON.parse(spec.tags) : null,
+  }));
 }
 
 // Stats
