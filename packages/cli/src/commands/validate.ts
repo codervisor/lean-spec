@@ -19,6 +19,7 @@ import { FrontmatterValidator } from '../validators/frontmatter.js';
 import { StructureValidator } from '../validators/structure.js';
 import { CorruptionValidator } from '../validators/corruption.js';
 import { SubSpecValidator } from '../validators/sub-spec.js';
+import { ComplexityValidator } from '../validators/complexity.js';
 import type { ValidationRule, ValidationResult } from '../utils/validation-framework.js';
 import { formatValidationResults, type FormatOptions } from '../utils/validate-formatter.js';
 
@@ -78,6 +79,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
   // Initialize validators
   const validators: ValidationRule[] = [
     new LineCountValidator({ maxLines: options.maxLines }),
+    new ComplexityValidator({ maxLines: options.maxLines }), // New: multi-dimensional complexity
     new FrontmatterValidator(),
     new StructureValidator(),
     new CorruptionValidator(),
