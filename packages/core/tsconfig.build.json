@@ -23,6 +23,6 @@
     "dist",
     "src/validators/sub-spec.ts",
     "src/validators/corruption.ts"
-  ]
+  ],
   "include": ["src/**/*"]
 }
