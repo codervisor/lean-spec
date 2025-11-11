@@ -1,5 +1,5 @@
 ---
-status: complete
+status: archived
 created: '2025-11-04'
 tags:
   - ux
@@ -11,17 +11,19 @@ priority: high
 related:
   - 043-official-launch-02
 created_at: '2025-11-04T00:00:00Z'
-updated_at: '2025-11-06T06:35:03.913Z'
+updated_at: '2025-11-11T04:26:08.272Z'
 completed_at: '2025-11-06T06:35:03.913Z'
 completed: '2025-11-06'
 transitions:
   - status: complete
     at: '2025-11-06T06:35:03.913Z'
+  - status: archived
+    at: '2025-11-11T04:26:08.272Z'
 ---
 
 # Clarify Spec Relationship Model
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: ux, clarity, frontmatter, relationships, v0.2.0
+> **Status**: 📦 Archived · **Priority**: High · **Created**: 2025-11-04 · **Tags**: ux, clarity, frontmatter, relationships, v0.2.0
 
 **Project**: lean-spec  
 **Team**: Core Development

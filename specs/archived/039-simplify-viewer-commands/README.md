@@ -1,5 +1,5 @@
 ---
-status: complete
+status: archived
 created: '2025-11-04'
 tags:
   - cli
@@ -8,11 +8,16 @@ tags:
   - simplification
 priority: high
 completed: '2025-11-04'
+created_at: '2025-11-11T04:26:08.824Z'
+updated_at: '2025-11-11T04:26:08.824Z'
+transitions:
+  - status: archived
+    at: '2025-11-11T04:26:08.824Z'
 ---
 
 # Simplify Viewer Command Interface
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: cli, ux, breaking-change, simplification
+> **Status**: 📦 Archived · **Priority**: High · **Created**: 2025-11-04 · **Tags**: cli, ux, breaking-change, simplification
 
 **Project**: lean-spec  
 **Team**: Core Development

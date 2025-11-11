@@ -1,5 +1,5 @@
 ---
-status: complete
+status: archived
 created: '2025-11-04'
 tags:
   - bug
@@ -10,11 +10,16 @@ priority: critical
 related:
   - 043-official-launch-02
 completed: '2025-11-04'
+created_at: '2025-11-11T04:26:08.161Z'
+updated_at: '2025-11-11T04:26:08.161Z'
+transitions:
+  - status: archived
+    at: '2025-11-11T04:26:08.161Z'
 ---
 
 # MCP Server Should Not Exit on Tool Errors
 
-> **Status**: ✅ Complete · **Priority**: Critical · **Created**: 2025-11-04 · **Tags**: bug, mcp, stability, error-handling
+> **Status**: 📦 Archived · **Priority**: Critical · **Created**: 2025-11-04 · **Tags**: bug, mcp, stability, error-handling
 
 **Project**: lean-spec  
 **Team**: Core Development
