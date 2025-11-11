@@ -6,7 +6,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "allowImportingTsExtensions": false,
-    "noEmit": false,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -17,7 +16,6 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts"],
   "exclude": [
     "**/*.test.ts", 
     "**/*.spec.ts", 
@@ -26,4 +24,5 @@
     "src/validators/sub-spec.ts",
     "src/validators/corruption.ts"
   ]
+  "include": ["src/**/*"]
 }

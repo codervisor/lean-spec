@@ -31,6 +31,13 @@ export {
   type LineCountOptions,
 } from './validators/line-count.js';
 
+export {
+  ComplexityValidator,
+  type ComplexityOptions,
+  type ComplexityMetrics,
+  type ComplexityScore,
+} from './validators/complexity.js';
+
 // Note: SubSpecValidator requires file system operations
 // It will remain in the CLI package for now
 
