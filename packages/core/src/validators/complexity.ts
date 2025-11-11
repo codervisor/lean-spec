@@ -18,6 +18,8 @@ import type { ValidationRule, ValidationResult, ValidationError, ValidationWarni
 import type { SpecInfo } from '../types/index.js';
 import { estimateTokenCount } from 'tokenx';
 import matter from 'gray-matter';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 export interface ComplexityOptions {
   // Token thresholds (hypothesis values, to be validated)
@@ -79,7 +81,7 @@ export class ComplexityValidator implements ValidationRule {
     const warnings: ValidationWarning[] = [];
 
     // Analyze complexity
-    const metrics = this.analyzeComplexity(content, spec);
+    const metrics = await this.analyzeComplexity(content, spec);
     const score = this.calculateComplexityScore(metrics);
 
     // Primary check: Complexity score
@@ -122,7 +124,7 @@ export class ComplexityValidator implements ValidationRule {
   /**
    * Analyze complexity metrics from spec content
    */
-  private analyzeComplexity(content: string, spec: SpecInfo): ComplexityMetrics {
+  private async analyzeComplexity(content: string, spec: SpecInfo): Promise<ComplexityMetrics> {
     // Parse to separate frontmatter from body
     let body: string;
     try {
@@ -160,14 +162,32 @@ export class ComplexityValidator implements ValidationRule {
     // Estimate tokens
     const tokenCount = estimateTokenCount(content);
 
-    // Detect sub-specs (check if spec directory has multiple .md files)
-    // For now, heuristically detect by checking for references to sub-spec files
-    const hasSubSpecs = /\b(DESIGN|IMPLEMENTATION|TESTING|CONFIGURATION|API|MIGRATION)\.md\b/.test(content);
+    // Detect sub-specs by checking actual files in the spec directory
+    let hasSubSpecs = false;
+    let subSpecCount = 0;
     
-    // Rough count of sub-specs from content references
-    const subSpecMatches = content.match(/\b[A-Z-]+\.md\b/g) || [];
-    const uniqueSubSpecs = new Set(subSpecMatches.filter(m => m !== 'README.md'));
-    const subSpecCount = uniqueSubSpecs.size;
+    try {
+      // Get the directory path (parent of README.md)
+      const specDir = path.dirname(spec.filePath);
+      const files = await fs.readdir(specDir);
+      
+      // Count markdown files excluding README.md
+      // Sub-specs are markdown files other than README.md
+      const mdFiles = files.filter(f => 
+        f.endsWith('.md') && 
+        f !== 'README.md'
+      );
+      
+      hasSubSpecs = mdFiles.length > 0;
+      subSpecCount = mdFiles.length;
+    } catch (error) {
+      // If we can't read the directory, fall back to content-based detection
+      // This preserves backwards compatibility if there are permission issues
+      hasSubSpecs = /\b(DESIGN|IMPLEMENTATION|TESTING|CONFIGURATION|API|MIGRATION)\.md\b/.test(content);
+      const subSpecMatches = content.match(/\b[A-Z-]+\.md\b/g) || [];
+      const uniqueSubSpecs = new Set(subSpecMatches.filter(m => m !== 'README.md'));
+      subSpecCount = uniqueSubSpecs.size;
+    }
 
     // Calculate average section length
     const averageSectionLength = sectionCount > 0 ? Math.round(lineCount / sectionCount) : 0;

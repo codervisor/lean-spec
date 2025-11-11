@@ -343,14 +343,11 @@ Update guidance:
 - Validation output: Explain WHY a spec is complex
 - CLI: Add `lean-spec complexity <spec>` command for detailed analysis
 
+## Research Evidence
+
 ### 1. Token Count is Critical
 
 **Source**: [AI Agent Performance Blog Post](https://www.lean-spec.dev/blog/ai-agent-performance)
-
-- **Finding**: 2,000-line spec costs **6x more** than 300-line spec
-- **Finding**: Quality degradation happens **even within context limits** (not just at 50K)
-- **Key Quote**: "Quality drops beyond 50K tokens despite 200K limits" - but degradation **starts much earlier**
-- **Why**: Attention dilution (N² complexity), context rot, option overload, premature convergence/ai-agent-performance)
 
 - **Finding**: 2,000-line spec costs **6x more** than 300-line spec
 - **Finding**: Quality degradation happens **even within context limits** (not just at 50K)
