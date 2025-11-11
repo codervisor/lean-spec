@@ -19,11 +19,11 @@ tags: [ai, context-engineering, best-practices]
 
 研究结果很清楚：
 
-**Databricks 发现** Llama 3.1 405B 在大约 3.2 万令牌处开始出现质量下降——远低于其理论极限。较小的模型下降得更早。
+**Databricks 发现**[长上下文性能显著下降](https://www.databricks.com/blog/long-context-rag-performance-llms)，即使在理论限制内。较小的模型下降得更早。
 
-**伯克利的函数调用排行榜**证实，当给出更多工具或选项时，所有模型的性能都会下降。更多上下文 = 更多困惑 = 更低准确性。
+**伯克利的[函数调用排行榜](https://gorilla.cs.berkeley.edu/leaderboard.html)** 证实，当给出更多工具或选项时，所有模型的性能都会下降。更多上下文 = 更多困惑 = 更低准确性。
 
-**微软和 Salesforce 的研究**显示，当模型需要跨多个上下文轮次或冲突来源收集信息时，性能下降 39%。
+**研究显示**（[arXiv:2505.06120](https://arxiv.org/pdf/2505.06120)）当模型需要跨多个上下文轮次处理信息或面对增加的复杂性时，性能会显著下降。
 
 ### 为什么会这样
 
@@ -150,11 +150,11 @@ specs/dashboard/TESTING.md         (180 行 - 测试)
 
 我们使用 LeanSpec 本身来构建 LeanSpec——这是对这种方法论是否真正有效的终极测试。
 
-**速度**：从零到生产 6 天
+**速度**：从零到生产 10 天
 - 具有 15+ 命令的功能齐全的 CLI
-- 用于 Claude Desktop 集成的 MCP 服务器
+- 用于 Cursor，GitHub Copilot 集成的 MCP 服务器
 - 带有综合指南的文档网站
-- 编写并实现了 54 个规范，使用 AI 代理
+- 编写并实现了 [60 多个规范](https://github.com/codervisor/lean-spec/tree/main/specs)，使用 AI 代理
 
 **然后我们违反了自己的原则**：一些规范增长到 1,166 行。我们遇到了我们正在解决的确切问题：
 - AI 代理在编辑期间开始破坏规范
@@ -172,11 +172,11 @@ specs/dashboard/TESTING.md         (180 行 - 测试)
 
 当你将上下文工程应用到你的规范时：
 
-✅ **更少的 AI 错误** - 集中的上下文产生准确、一致的输出
-✅ **更快的迭代** - 每次 AI 请求的处理时间更少
-✅ **更低的成本** - 更少的令牌 = 更便宜的 API 调用（2,000→300 行减少可节省 6 倍）
-✅ **更好的理解** - AI 实际遵循你的需求，而不是幻觉
-✅ **人类可维护** - 5-10 分钟内可以阅读的规范与代码保持同步
+- ✅ **更少的 AI 错误** - 集中的上下文产生准确、一致的输出
+- ✅ **更快的迭代** - 每次 AI 请求的处理时间更少
+- ✅ **更低的成本** - 更少的令牌 = 更便宜的 API 调用（2,000→300 行减少可节省 6 倍）
+- ✅ **更好的理解** - AI 实际遵循你的需求，而不是幻觉
+- ✅ **人类可维护** - 5-10 分钟内可以阅读的规范与代码保持同步
 
 ### 适用于你的工具
 
@@ -231,11 +231,11 @@ lean-spec board                 # 所有规范的看板视图
 
 ### 从简单开始，根据需要增长
 
-**个人开发者？**只使用 `status` 和 `created` 字段。保持规范集中。
+**个人开发者？** 只使用 `status` 和 `created` 字段。保持规范集中。
 
-**小团队？**添加 `tags` 和 `priority`。使用 CLI 获得可见性。
+**小团队？** 添加 `tags` 和 `priority`。使用 CLI 获得可见性。
 
-**企业？**添加自定义字段（`epic`、`sprint`、`assignee`）。与你的工作流集成。
+**企业？** 添加自定义字段（`epic`、`sprint`、`assignee`）。与你的工作流集成。
 
 结构适应你的需求——你永远不会"以防万一"添加复杂性。
 
@@ -272,3 +272,10 @@ LeanSpec 是一种用于人类-AI 协作的软件规范上下文工程方法论�
 - GitHub: [github.com/codervisor/lean-spec](https://github.com/codervisor/lean-spec)
 - 文档: [lean-spec.dev](https://lean-spec.dev)
 - 研究: [上下文工程指南](/zh-Hans/docs/guide/context-engineering)
+
+**参考资料**：
+- [Databricks：长上下文 RAG 性能](https://www.databricks.com/blog/long-context-rag-performance-llms)
+- [伯克利函数调用排行榜](https://gorilla.cs.berkeley.edu/leaderboard.html)
+- [GraphRAG：查询聚焦摘要（微软研究院）](https://arxiv.org/abs/2404.16130)
+- [NeedleBench：跨信息密度的 LLM 检索](https://arxiv.org/abs/2407.11963)
+- [上下文窗口性能研究](https://arxiv.org/pdf/2505.06120)
