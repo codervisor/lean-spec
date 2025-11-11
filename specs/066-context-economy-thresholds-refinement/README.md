@@ -146,15 +146,12 @@ type ComplexityMetrics = {
 type ComplexityScore = {
   score: number; // 0-100
   factors: {
-    size: number;        // From line count (0-25)
-    tokens: number;      // From token estimation (0-35) - MOST IMPORTANT
-    density: number;     // From code blocks, tables (0-20)
-    structure: number;   // From section organization (-20 to +20)
-    disclosure: number;  // From sub-specs usage (-30)
+    tokens: number;      // Primary: token-based score (0-60)
+    structure: number;   // Modifier: structure quality (-30 to +20)
   };
   recommendation: 'good' | 'review' | 'split';
   costMultiplier: number; // vs 300-line baseline
-  aiEffectiveness: number; // 0-100% (degrades with tokens)
+  aiEffectiveness: number; // 0-100% (hypothesis to validate)
 };
 ```
 
@@ -165,105 +162,52 @@ type ComplexityScore = {
 // 94% accuracy, 2kB size, zero dependencies
 import { estimateTokenCount } from 'tokenx';
 
-function estimateTokens(content: string): number {
-  // tokenx provides fast, accurate estimation
-  // Handles multi-language support and code/prose automatically
-  return estimateTokenCount(content, {
-    defaultCharsPerToken: 4, // Default for English prose
-  });
-}
-
-// Alternative: Manual estimation if tokenx not available
-function estimateTokensManual(content: string, metrics: ComplexityMetrics): number {
-  const totalChars = content.length;
-  const proseChars = totalChars - metrics.codeBlockChars - metrics.tableChars;
-  
-  // Code: ~3 chars/token (denser)
-  // Prose: ~4 chars/token (average)
-  // Tables: ~5 chars/token (less dense, lots of formatting)
-  const codeTokens = metrics.codeBlockChars / 3;
-  const proseTokens = proseChars / 4;
-  const tableTokens = metrics.tableChars / 5;
-  
-  return Math.ceil(codeTokens + proseTokens + tableTokens);
-}
-
 function calculateComplexityScore(metrics: ComplexityMetrics): ComplexityScore {
-  // Size factor (0-25 points) - reduced weight, line count is proxy
-  // Penalty increases non-linearly as line count grows
-  const sizePenalty = Math.min(25, (metrics.lineCount / 400) * 25);
+  // PRIMARY: Token count (research-backed predictor of AI performance)
+  // Thresholds to be validated empirically - these are hypotheses
+  const tokenScore = 
+    metrics.estimatedTokens < 2000 ? 0 :   // Excellent
+    metrics.estimatedTokens < 3500 ? 20 :  // Good
+    metrics.estimatedTokens < 5000 ? 40 :  // Warning
+    60;                                     // Should split
   
-  // Token factor (0-35 points) - MOST IMPORTANT based on research
-  // Research: Degradation begins early (~5K), accelerates at ~10-20K, severe at ~50K+
-  // Cost scales linearly, but quality degrades non-linearly
-  // Target: <1,500 tokens (minimal impact), <3,000 (acceptable), >5,000 (degradation zone)
-  let tokenPenalty = 0;
-  if (metrics.estimatedTokens < 1500) {
-    tokenPenalty = 0;  // ~375 lines - excellent, minimal degradation
-  } else if (metrics.estimatedTokens < 2000) {
-    tokenPenalty = 10; // ~500 lines - acceptable, slight degradation
-  } else if (metrics.estimatedTokens < 3000) {
-    tokenPenalty = 20; // ~750 lines - warning, noticeable degradation
-  } else if (metrics.estimatedTokens < 5000) {
-    tokenPenalty = 30; // ~1250 lines - significant degradation begins
-  } else {
-    tokenPenalty = 35; // >5000 tokens - severe penalty (degradation zone, high costs)
-  }
+  // MODIFIERS: Structure quality adjusts token-based score
+  // Sub-specs enable progressive disclosure (big win for Context Economy)
+  // Good sectioning enables cognitive chunking (7±2 rule)
+  const structureModifier = 
+    metrics.hasSubSpecs ? -30 :                           // Progressive disclosure bonus
+    (metrics.sectionCount >= 15 && metrics.sectionCount <= 35) ? -15 : // Good chunking
+    (metrics.sectionCount < 8) ? +20 :                    // Too monolithic
+    0;                                                     // Acceptable
   
-  // Density factor (0-20 points) - reduced weight, captured by tokens
-  // More code blocks = higher cognitive load
-  const densityPenalty = Math.min(20, 
-    (metrics.codeBlockCount * 1.5) + 
-    (metrics.tableCount * 1)
-  );
-  
-  // Structure factor (-20 to +20 points)
-  // Good: 15-30 sections (easy to chunk, follows 7±2 rule)
-  // Bad: <10 sections (no structure) or >40 sections (too fragmented)
-  const structureScore = metrics.sectionCount >= 15 && metrics.sectionCount <= 30 
-    ? -20  // Bonus for good structure
-    : metrics.sectionCount < 10 
-      ? +20  // Penalty for poor structure
-      : +10; // Slight penalty for over-fragmentation
-  
-  // Progressive disclosure factor (-30 points bonus)
-  // Has sub-specs = major reduction in cognitive load
-  const disclosureBonus = metrics.hasSubSpecs ? -30 : 0;
-  
-  const totalScore = sizePenalty + tokenPenalty + densityPenalty + structureScore + disclosureBonus;
+  const finalScore = Math.max(0, Math.min(100, tokenScore + structureModifier));
   
   // Calculate cost multiplier (vs 300-line baseline ≈ 1,200 tokens)
   const baselineTokens = 1200;
   const costMultiplier = metrics.estimatedTokens / baselineTokens;
-  // Calculate AI effectiveness (degrades with token count)
-  // Research: 39% avg drop in multi-turn, degradation starts early, non-linear
-  // Note: Severe "50K cliff" is much later, but degradation begins at ~5K tokens
+  
+  // AI effectiveness estimate (to be validated empirically)
+  // Research suggests degradation, but exact thresholds need testing
   let aiEffectiveness = 100;
   if (metrics.estimatedTokens > 10000) {
-    aiEffectiveness = 50; // Severe degradation (approaching research thresholds)
+    aiEffectiveness = 50; // Severe degradation (hypothesis)
   } else if (metrics.estimatedTokens > 5000) {
-    aiEffectiveness = 65; // Significant degradation (measurable quality loss)
-  } else if (metrics.estimatedTokens > 3000) {
-    aiEffectiveness = 75; // Noticeable degradation begins
+    aiEffectiveness = 65; // Significant degradation (hypothesis)
+  } else if (metrics.estimatedTokens > 3500) {
+    aiEffectiveness = 80; // Noticeable degradation (hypothesis)
   } else if (metrics.estimatedTokens > 2000) {
-    aiEffectiveness = 85; // Slight degradation (within acceptable range)
-  } else if (metrics.estimatedTokens > 1500) {
-    aiEffectiveness = 95; // Minimal impact
-  } aiEffectiveness = 95; // Minimal impact
+    aiEffectiveness = 90; // Slight degradation (hypothesis)
   }
   
   return {
-    score: Math.max(0, Math.min(100, totalScore)),
+    score: finalScore,
     factors: {
-      size: sizePenalty,
-      tokens: tokenPenalty,
-      density: densityPenalty,
-      structure: structureScore,
-      disclosure: disclosureBonus,
+      tokens: tokenScore,        // Primary factor
+      structure: structureModifier, // Modifier
     },
     recommendation: 
-      totalScore <= 30 ? 'good' :
-      totalScore <= 60 ? 'review' :
+      finalScore <= 25 ? 'good' :
+      finalScore <= 50 ? 'review' :
       'split',
     costMultiplier: Math.round(costMultiplier * 10) / 10,
     aiEffectiveness: Math.round(aiEffectiveness),
@@ -282,47 +226,32 @@ Instead of hard line limits:
 ### Examples Applied to Current Specs
 
 **Spec 059 (394 lines, ~2,100 tokens, 32 sections, 8 code blocks, 6 sub-specs)**:
-- Size penalty: ~25 (394/400 * 25)
-- Token penalty: 20 (~2,100 tokens, acceptable range)
-- Density penalty: ~12 (8 blocks * 1.5)
-- Structure bonus: -20 (32 sections, well-chunked)
-- Disclosure bonus: -30 (has sub-specs)
-- **Total: 7 points** → ✅ Good | Cost: 1.8x | AI: 85%
+- Token score: 20 (~2,100 tokens)
+- Structure modifier: -30 (has sub-specs)
+- **Total: -10 points** → ✅ Excellent | Cost: 1.8x | AI: 90%
 
 **Spec 016 (315 lines, ~2,400 tokens, 20 sections, 26 code blocks, no sub-specs)**:
-- Size penalty: ~20 (315/400 * 25)
-- Token penalty: 20 (~2,400 tokens, code density)
-- Density penalty: ~20 (26 blocks * 1.5, capped at 20)
-- Structure bonus: -20 (20 sections, acceptable)
-- Disclosure bonus: 0 (no sub-specs)
-- **Total: 40 points** → ⚠️ Review | Cost: 2.0x | AI: 85%
-- **Key insight**: Dense code blocks → high token count despite fewer lines
+- Token score: 20 (~2,400 tokens)
+- Structure modifier: -15 (20 sections, good chunking)
+- **Total: 5 points** → ✅ Good | Cost: 2.0x | AI: 90%
+- **Key insight**: Token count captures code density automatically
 
 **Spec 051 (339 lines, ~1,600 tokens, 28 sections, 4 code blocks, no sub-specs)**:
-- Size penalty: ~21 (339/400 * 25)
-- Token penalty: 10 (~1,600 tokens, efficient prose)
-- Density penalty: ~6 (4 blocks * 1.5)
-- Structure bonus: -20 (28 sections, well-chunked)
-- Disclosure bonus: 0 (no sub-specs)
-- **Total: 17 points** → ✅ Good | Cost: 1.3x | AI: 95%
+- Token score: 0 (~1,600 tokens)
+- Structure modifier: -15 (28 sections, good chunking)
+- **Total: -15 points** → ✅ Excellent | Cost: 1.3x | AI: 100%
 
 **Spec 049 (374 lines, ~1,700 tokens, 38 sections, 0 code blocks, 5 sub-specs)**:
-- Size penalty: ~23 (374/400 * 25)
-- Token penalty: 10 (~1,700 tokens, pure prose)
-- Density penalty: 0 (no code blocks)
-- Structure bonus: -20 (38 sections, well-chunked)
-- Disclosure bonus: -30 (has sub-specs)
-- **Total: -17 points** → ✅ Excellent | Cost: 1.4x | AI: 95%
-- **Key insight**: Sub-specs + good structure = readable despite length
+- Token score: 0 (~1,700 tokens)
+- Structure modifier: -30 (has sub-specs, 38 sections)
+- **Total: -30 points** → ✅ Excellent | Cost: 1.4x | AI: 100%
+- **Key insight**: Sub-specs + good structure = optimal
 
 **Hypothetical: 280 lines, ~1,400 tokens, 5 sections, no code blocks, no sub-specs**:
-- Size penalty: ~18 (280/400 * 25)
-- Token penalty: 0 (~1,400 tokens, good range)
-- Density penalty: 0
-- Structure penalty: +20 (only 5 sections, poor chunking)
-- Disclosure bonus: 0
-- **Total: 38 points** → ⚠️ Review | Cost: 1.2x | AI: 95%
-- **Key insight**: Short but poorly structured still problematic
+- Token score: 0 (~1,400 tokens)
+- Structure modifier: +20 (only 5 sections, poor chunking)
+- **Total: 20 points** → ✅ Good | Cost: 1.2x | AI: 100%
+- **Key insight**: Short with poor structure still acceptable (tokens dominate)
 
 ## Validation Changes Needed
 
@@ -475,33 +404,48 @@ For validation, we use conservative thresholds (5K tokens = severe penalty) to c
 - [x] Investigate current specs
 - [x] Identify complexity factors
 - [x] Propose scoring algorithm
-- [ ] Get feedback on approach
+- [x] Design empirical validation plan
+- [x] Get feedback on approach
 
-### Phase 2: Core Implementation (v0.3.0)
-- [ ] Install `tokenx` package for token estimation
-- [ ] Implement `analyzeComplexity()` function (with tokenx integration)
-- [ ] Implement `calculateComplexityScore()` function
+### Phase 2: Core Implementation (v0.3.0 - Next)
+- [ ] Install `tokenx` for token estimation
+- [ ] Implement simplified `calculateComplexityScore()` function
+- [ ] Use **hypothesis thresholds** (2K/3.5K/5K tokens) initially
 - [ ] Create `ComplexityScoreValidator` class
-- [ ] Add tests for edge cases (including token count accuracy)
+- [ ] Add tests for edge cases
 - [ ] Integrate with existing validation framework
 
 ### Phase 3: CLI Integration (v0.3.0)
 - [ ] Add `lean-spec complexity <spec>` command
-- [ ] Show breakdown of complexity factors (including token count)
+- [ ] Show breakdown: token score, structure modifier
 - [ ] Display cost multiplier and AI effectiveness estimates
-- [ ] Provide actionable suggestions based on scoring
-- [ ] Update `lean-spec validate` output with token metrics
+- [ ] Provide actionable suggestions
+- [ ] Update `lean-spec validate` output
 
-### Phase 4: Documentation & Refinement (v0.3.0)
+### Phase 4: Documentation (v0.3.0)
 - [ ] Update AGENTS.md with complexity guidance
 - [ ] Update README.md with examples
 - [ ] Create "good structure" showcase
-- [ ] Refine scoring weights based on usage
+- [ ] Document that thresholds are hypotheses pending validation
 
-### Phase 5: Advanced Features (v0.4.0)
+### Phase 5: Empirical Validation (Future - v0.4.0+)
+**Deferred until we have:**
+- More real-world usage data from v0.3.0
+- Clear methodology for LLM integration
+- Resources for comprehensive benchmarking
+
+**Tasks when ready:**
+- [ ] Implement benchmark framework (already stubbed in `src/benchmark/`)
+- [ ] Define benchmark tasks for 10+ specs
+- [ ] Run benchmarks to validate thresholds
+- [ ] Refine scoring weights based on data
+- [ ] Publish empirical findings
+
+### Phase 6: Advanced Features (v0.4.0+)
 - [ ] Complexity trends over time
 - [ ] Project-wide complexity dashboard
 - [ ] Automated splitting suggestions
+- [ ] Model-specific thresholds (if empirical data shows need)
 
 ## Implementation Details
 
@@ -626,48 +570,86 @@ try {
 console.log(`Tokens: ${tokenCount} ${isExact ? '(exact)' : '(estimated ±6%)'}`);
 ```
 
+## Empirical Validation Plan (Future Work)
+
+**Status**: Deferred to v0.4.0+ - too early for comprehensive benchmarking
+
+**The Problem**: Current thresholds (2K/3.5K/5K tokens) are hypotheses based on research, not validated on LeanSpec's actual use case.
+
+**The Challenge**: Building a proper benchmark suite requires:
+- Clear methodology for LLM integration and evaluation
+- Significant time investment for framework + test data
+- Real-world usage patterns from v0.3.0 to guide validation
+- Resources for running benchmarks across multiple models
+
+**The Pragmatic Approach**:
+1. **v0.3.0**: Ship complexity scoring with research-based thresholds (good enough to start)
+2. **Collect data**: Gather real-world usage patterns, see which specs trigger warnings
+3. **v0.4.0+**: Build benchmark framework when we have clearer requirements
+
+**Validation Framework Stub** (see `src/benchmark/` for implementation):
+- Type definitions and interfaces ready
+- Complexity analysis functions implemented
+- Benchmark task examples defined
+- LLM integration and statistical analysis deferred
+
+**When ready to validate**, the framework will answer:
+- Does token count predict performance better than line count?
+- Where does degradation actually start? (2K? 3K? 5K?)
+- How much do sub-specs improve AI comprehension?
+- What's the real cost multiplier for large specs?
+
+**For now**: Use hypothesis thresholds, document them as such, refine based on user feedback in v0.3.0.
+
 ## Open Questions
 
-1. **Scoring Weights**: Are the penalty/bonus values correct?
-   - Token penalty weighted as most important (0-35 pts) - validate with real specs
-   - Structure and disclosure bonuses seem right - need user feedback
-   - Need to test on more specs across projects
+1. **Token Thresholds**: Are 2K/3.5K/5K correct?
+   - **Current**: Using research-based hypotheses
+   - **To validate (v0.4.0+)**: Run benchmark suite when methodology is clear
+   - **For now**: Gather user feedback in v0.3.0, adjust if obviously wrong
 
-2. **Section Count Sweet Spot**: Is 15-30 sections the right range?
-   - Cognitive science suggests 7±2 chunks
-   - But specs have nested sections (##, ###, ####)
-   - May need to weight by heading level in future refinement
-3. **Token Threshold Values**: Are 1,500 / 3,000 / 5,000 the right thresholds?
-   - Based on research showing **early degradation** (not the 50K cliff)
-   - 5K tokens = degradation zone begins, not "approaching cliff"
-   - May need adjustment based on real-world usage
-   - Consider model-specific thresholds (Claude vs GPT vs local models)
-   - Should we add intermediate thresholds? (e.g., 10K, 20K for context)
-   - Consider model-specific thresholds (Claude vs GPT vs local models)
+2. **Structure Impact**: How much does it matter?
+   - **Current**: -30 bonus for sub-specs, -15 for good sectioning
+   - **To validate (v0.4.0+)**: Compare monolithic vs sub-spec variants
+   - **For now**: Based on cognitive science (7±2 chunks) and intuition
 
-4. **Backwards Compatibility**: How to handle transition?
-   - Keep line count warnings during v0.3.0?
-   - Phase out gradually in v0.4.0?
-   - Or switch immediately with good messaging?
+3. **Section Count Sweet Spot**: Is 15-35 sections right?
+   - **Current**: Based on cognitive load theory
+   - **To validate (v0.4.0+)**: Test specs with varying section counts
+   - **For now**: Seems reasonable, may adjust based on user feedback
 
-5. **Performance**: Is this too complex to calculate?
-   - tokenx is very fast (2kB, no dependencies)
-   - Need to benchmark on large projects (100+ specs)
-   - Consider caching complexity scores in frontmatter
-   - Only recalculate on file changests
-   - Cache complexity scores?
-   - Only recalculate on file changes?
+4. **Model Differences**: Do thresholds vary by model?
+   - **Current**: Assume similar across Claude/GPT
+   - **To validate (v0.4.0+)**: Test multiple models if data shows divergence
+   - **For now**: Single set of thresholds
+
+5. **Performance**: Can we run this efficiently?
+   - **Current**: tokenx is very fast (2kB, no dependencies)
+   - **To benchmark**: Test on 100+ specs to verify <100ms per spec
+   - **For now**: Should be fine, optimize if issues arise
 
 ## Success Criteria
 
-We'll know this refinement succeeded when:
+### Phase 2-4: Initial Implementation (v0.3.0)
+- ✅ Spec 059 (394 lines, 6 sub-specs) scores well (≤25 points)
+- ✅ Poorly structured specs flagged even if short
+- ✅ Users understand WHY a spec is complex (clear breakdown)
+- ✅ Validation guides toward better structure, not just length reduction
+- ✅ AI agents make informed splitting decisions based on token count + structure
+- ✅ No false negatives: Truly oversized specs (>600 lines) caught
+- ✅ Thresholds documented as hypotheses, not validated facts
 
-- ✅ Spec 059 (394 lines, 6 sub-specs) passes validation without warnings
-- ✅ Dense specs with poor structure get flagged even if <300 lines
-- ✅ Users understand WHY a spec is complex, not just that it's "too long"
-- ✅ Validation guides users toward better structure, not just shorter specs
-- ✅ AI agents make better splitting decisions based on complexity factors
-- ✅ No regression: Truly oversized specs (>600 lines) still get caught
+### Phase 5: Empirical Validation (v0.4.0+ - When Ready)
+- ✅ Token count predicts performance better than line count (R² > 0.7 vs < 0.5)
+- ✅ Degradation thresholds validated within ±500 tokens of hypothesis
+- ✅ Sub-specs show measurable quality improvement (>5% accuracy)
+- ✅ Cost multiplier validated against actual API usage
+- ✅ Multi-turn degradation measured and documented
+
+### User Experience (All Phases)
+- ✅ Complexity scores align with user intuition
+- ✅ Suggestions are actionable and specific
+- ✅ AGENTS.md reflects current best practices (hypothesis-based for v0.3.0)
 
 ## Related Specs
 
@@ -703,18 +685,15 @@ This spec itself demonstrates the principle:
 - Tables and lists make information easy to parse
 - References research with clear citations
 
-**Applying the new scoring to this spec:**
-- Size penalty: ~26 (410/400 * 25)
-- Token penalty: 20 (~2,200 tokens)
-- Density penalty: ~12 (8 code blocks * 1.5)
-- Structure bonus: -20 (28 sections, good chunking)
-- Disclosure bonus: 0 (no sub-specs yet)
-- **Total: 38 points** → ⚠️ Review | Cost: 1.8x | AI: 85%
+**Applying the simplified scoring to this spec:**
+- Token score: 20 (~2,200 tokens, in good range)
+- Structure modifier: -15 (28 sections, good chunking, no sub-specs)
+- **Total: 5 points** → ✅ Good | Cost: 1.8x | AI: 90%
 
-**Recommendation**: This spec is at the threshold. Could benefit from splitting research section into sub-spec.
+**Insight**: Well-structured with clear sections. Could benefit from sub-specs for benchmark details (would get -30 modifier).
 
 Using old rules: "🔴 Error: 410/400 lines - must split!"
-Using new rules: "⚠️ Review: Score 38/100 - well-structured but approaching limits, consider sub-specs for research details"
+Using new rules: "✅ Good: Score 5/100 - well-structured, token count acceptable, consider sub-specs to reach 'excellent'"
 
 ---
 

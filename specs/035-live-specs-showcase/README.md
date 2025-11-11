@@ -9,6 +9,8 @@ tags:
 priority: high
 created_at: '2025-11-03T00:00:00Z'
 updated_at: '2025-11-11T06:41:01.876Z'
+depends_on:
+  - 067-monorepo-core-extraction
 ---
 
 # LeanSpec Web: Fullstack Spec Showcase Platform

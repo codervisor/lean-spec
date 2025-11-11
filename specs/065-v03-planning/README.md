@@ -12,6 +12,7 @@ priority: critical
 created_at: '2025-11-11T06:41:08.335Z'
 depends_on:
   - 059-programmatic-spec-management
+  - 067-monorepo-core-extraction
   - 035-live-specs-showcase
 ---
 

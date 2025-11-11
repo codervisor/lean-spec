@@ -74,6 +74,9 @@ importers:
       strip-ansi:
         specifier: ^7.1.2
         version: 7.1.2
+      tokenx:
+        specifier: ^1.2.1
+        version: 1.2.1
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -6385,6 +6388,9 @@ packages:
   toidentifier@1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
+
+  tokenx@1.2.1:
+    resolution: {integrity: sha512-lVhFIhR2qh3uUyUA8Ype+HGzcokUJbHmRSN1TJKOe4Y26HkawQuLiGkUCkR5LD9dx+Rtp+njrwzPL8AHHYQSYA==}
 
   totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
@@ -14657,6 +14663,8 @@ snapshots:
   to-rotated@1.0.0: {}
 
   toidentifier@1.0.1: {}
+
+  tokenx@1.2.1: {}
 
   totalist@3.0.1: {}
 
