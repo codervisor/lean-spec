@@ -3,6 +3,8 @@ status: planned
 created: '2025-11-02'
 tags: ["feature","ci","automation"]
 priority: low
+depends_on:
+  - 067-monorepo-core-extraction
 ---
 
 # github-action

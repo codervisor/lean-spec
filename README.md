@@ -265,7 +265,7 @@ lean-spec update <spec> --status in-progress
 
 **LeanSpec is built using LeanSpec.** Every feature has a spec. All follow the principles—under 300 lines, AI-readable, actively maintained.
 
-**Velocity:** 6 days from first commit to production. Full CLI, MCP server, and documentation site. 54 specs written and implemented with AI agents.
+**Velocity:** 10 days from first commit to production. Full CLI, MCP server, and documentation site. 60+ specs written and implemented with AI agents.
 
 → [Browse our specs](https://github.com/codervisor/lean-spec/tree/main/specs)
 

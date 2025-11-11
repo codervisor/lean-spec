@@ -3,6 +3,8 @@ status: planned
 created: '2025-11-02'
 tags: ["feature","ide","vscode"]
 priority: low
+depends_on:
+  - 067-monorepo-core-extraction
 ---
 
 # vscode-extension
