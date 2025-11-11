@@ -8,7 +8,9 @@
   <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-  •
+</p>
+
+<p align="center">
   <a href="https://www.lean-spec.dev"><strong>Docs</strong></a>
   •
   <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文</strong></a>
