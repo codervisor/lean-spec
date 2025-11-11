@@ -21,7 +21,7 @@
   },
   "link.item.label.MCP Server": {
     "message": "MCP 服务器",
-    "description": "The label of footer link with label=MCP Server linking to /docs/guide/usage/ai-assisted/mcp-server"
+    "description": "The label of footer link with label=MCP Server linking to /docs/guide/usage/ai-assisted/mcp-integration"
   },
   "link.item.label.AI Integration": {
     "message": "AI 集成",

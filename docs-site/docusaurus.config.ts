@@ -122,7 +122,7 @@ const config: Config = {
             },
             {
               label: 'MCP Server',
-              to: '/docs/guide/usage/ai-assisted/mcp-server',
+              to: '/docs/guide/usage/ai-assisted/mcp-integration',
             },
             {
               label: 'AI Integration',
