@@ -116,6 +116,9 @@ JSON 格式：
   - 概述 (Overview)
   - 理解 LeanSpec (Understanding)
   - 第一原则 (First Principles)
+- 博客文章：
+  - 欢迎使用 LeanSpec (Welcome to LeanSpec)
+  - 为什么大型规范会让你的 AI 代理变笨（以及如何解决）(AI Agent Performance)
 
 #### 🚧 待翻译（优先级高）
 - 上下文工程 (Context Engineering)
@@ -132,7 +135,6 @@ JSON 格式：
 - FAQ
 
 #### 💡 未来考虑
-- 博客文章
 - 比较页面 (Comparison)
 - 开发指南 (Development)
 
