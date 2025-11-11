@@ -34,6 +34,7 @@
     "dayjs": "^1.11.19",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.0",
+    "tokenx": "^1.2.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
