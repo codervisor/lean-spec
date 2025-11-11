@@ -16,6 +16,13 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": [
+    "**/*.test.ts", 
+    "**/*.spec.ts", 
+    "node_modules", 
+    "dist",
+    "src/validators/sub-spec.ts",
+    "src/validators/corruption.ts"
+  ]
+  "include": ["src/**/*"]
 }
