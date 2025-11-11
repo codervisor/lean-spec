@@ -1,36 +1,196 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LeanSpec Web
+
+> Interactive spec showcase platform for browsing and exploring LeanSpec specifications
+
+A fullstack web application built with Next.js 16, showcasing LeanSpec's own specifications in a rich, interactive format. This is the MVP (Phase 1) implementation for spec 035-live-specs-showcase.
+
+## Features
+
+✨ **Core Features (MVP - Phase 1)**:
+- 📊 **Stats Dashboard**: Visual overview of project metrics and completion rates
+- 🔍 **Search & Filtering**: Find specs by title, name, tags, status, or priority
+- 📋 **Spec Browser**: Table view with sortable columns and detailed information
+- 🎯 **Kanban Board**: Visual workflow tracking across all statuses
+- 📝 **Rich Markdown Rendering**: Syntax-highlighted code blocks and GitHub-flavored markdown
+- 🎨 **Modern UI**: Built with shadcn/ui components and Tailwind CSS
+- 🌐 **Navigation**: Clean header with routing between pages
+- ⚡ **Loading States**: Skeleton loaders for better UX
+- 🛡️ **Error Handling**: Custom 404 and error pages
+
+## Tech Stack
+
+- **Framework**: Next.js 16 with App Router
+- **UI**: React 19, Tailwind CSS 4, shadcn/ui components
+- **Database**: SQLite (dev) with Drizzle ORM
+- **Markdown**: react-markdown with syntax highlighting (highlight.js)
+- **Icons**: lucide-react
+- **Testing**: Vitest
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ 
+- pnpm (monorepo package manager)
+
+### Installation
+
+From the monorepo root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install dependencies
+pnpm install
+
+# Navigate to web package
+cd packages/web
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Database Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Generate migrations
+npm run db:generate
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run migrations
+npm run db:migrate
 
-## Learn More
+# Seed database with LeanSpec specs
+npm run db:seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Start dev server (from packages/web)
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## Deploy on Vercel
+### Build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Type check
+npm run typecheck
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+```
+
+### Testing
+
+```bash
+# Run tests once
+npm run test
+
+# Watch mode
+npm run test:watch
+
+# UI mode
+npm run test:ui
+```
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   │   ├── projects/      # Projects endpoints
+│   │   ├── specs/         # Specs endpoints
+│   │   └── stats/         # Statistics endpoint
+│   ├── board/             # Kanban board page
+│   ├── specs/[id]/        # Spec detail page
+│   ├── error.tsx          # Error boundary
+│   ├── loading.tsx        # Global loading state
+│   ├── not-found.tsx      # 404 page
+│   ├── page.tsx           # Home page (server)
+│   └── home-client.tsx    # Home page (client)
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   │   ├── badge.tsx
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── input.tsx
+│   │   └── skeleton.tsx
+│   └── navigation.tsx     # Header navigation
+├── lib/
+│   ├── db/                # Database layer
+│   │   ├── index.ts       # DB connection
+│   │   ├── schema.ts      # Drizzle schema
+│   │   ├── queries.ts     # Data access layer
+│   │   ├── migrate.ts     # Migration runner
+│   │   └── seed.ts        # Database seeding
+│   └── utils.ts           # Utility functions
+└── types/                 # TypeScript types
+```
+
+## Database Schema
+
+- **projects**: GitHub repositories using LeanSpec
+- **specs**: Cached specification content from GitHub
+- **spec_relationships**: Dependencies and relationships between specs
+- **sync_logs**: Audit trail for GitHub sync operations
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Type check with TypeScript |
+| `npm run test` | Run tests once |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:ui` | Run tests with UI |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:migrate` | Run database migrations |
+| `npm run db:studio` | Open Drizzle Studio |
+| `npm run db:seed` | Seed database with specs |
+
+## Roadmap
+
+### ✅ Phase 1: Foundation & MVP (Complete)
+- Core pages and navigation
+- Search and filtering
+- Kanban board view
+- Error handling and loading states
+- Basic testing
+
+### 🚧 Phase 2: GitHub Integration (Upcoming)
+- Multi-project support
+- Automatic GitHub sync
+- Scheduled cron jobs
+- Enhanced error handling
+
+### 📋 Phase 3: Community & Discovery (Future)
+- Public project explorer
+- Full-text search across projects
+- Spec relationship visualization
+- Export to PDF
+
+### 🔮 Phase 4: Advanced Features (Future)
+- GitHub OAuth for private repos
+- Real-time webhooks
+- Version history and diffs
+- Team collaboration features
+
+## Contributing
+
+This is part of the LeanSpec monorepo. See the main README for contribution guidelines.
+
+## License
+
+Same as the LeanSpec project.
+
+## Documentation
+
+For detailed architecture, design decisions, and implementation details, see:
+- [Spec 035 README](../../specs/035-live-specs-showcase/README.md)
+- [Architecture](../../specs/035-live-specs-showcase/ARCHITECTURE.md)
+- [Implementation Plan](../../specs/035-live-specs-showcase/IMPLEMENTATION.md)
+
