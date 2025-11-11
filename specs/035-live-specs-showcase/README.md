@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-03'
 tags:
   - docs
@@ -8,14 +8,17 @@ tags:
   - v0.3.0-launch
 priority: high
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-11T06:41:01.876Z'
+updated_at: '2025-11-11T15:21:48.941Z'
 depends_on:
   - 067-monorepo-core-extraction
+transitions:
+  - status: in-progress
+    at: '2025-11-11T15:21:48.941Z'
 ---
 
 # LeanSpec Web: Fullstack Spec Showcase Platform
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-03 · **Tags**: docs, dogfooding, web, v0.3.0-launch
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-03 · **Tags**: docs, dogfooding, web, v0.3.0-launch
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -84,19 +87,48 @@ This spec is split into detailed sub-specs for maintainability:
 
 **See sub-specs for complete technical details.**
 
-## Plan
+## Progress
 
-### Phase 1: Foundation & MVP (2-3 weeks)
-- [ ] Initialize Next.js project with TypeScript, Tailwind, shadcn/ui
-- [ ] Setup database (Drizzle + PostgreSQL/SQLite)
-- [ ] Create schema and migrations
-- [ ] Build core API routes (projects, specs, stats, sync)
-- [ ] Implement frontend pages (home, browser, detail, board, stats)
-- [ ] Rich markdown rendering with syntax highlighting
-- [ ] Seed with LeanSpec's own specs
+**Current Status**: Phase 1 ~70% Complete (as of 2025-11-11)
+
+### ✅ Completed
+- ✅ Next.js 16 project initialized with TypeScript, Tailwind CSS
+- ✅ SQLite database with Drizzle ORM fully configured
+- ✅ Database schema created (projects, specs, spec_relationships, sync_logs)
+- ✅ Migrations generated and applied
+- ✅ Core database queries implemented (`queries.ts`)
+- ✅ API routes: `/api/specs/[id]`, `/api/projects`, `/api/stats`, `/api/projects/[id]/specs`
+- ✅ Home page with stats dashboard and specs table
+- ✅ Spec detail page with rich markdown rendering
+- ✅ Syntax highlighting (highlight.js) + GitHub-flavored markdown (remarkGfm)
+- ✅ Database seeded with 32 LeanSpec specs
+- ✅ Responsive layout with status/priority badges
+
+### 🚧 In Progress / Remaining for Phase 1
+- [ ] Kanban board view by status
+- [ ] Search and filtering functionality
+- [ ] Integrate shadcn/ui component library (currently using basic Tailwind)
+- [ ] Proper navigation header/layout
+- [ ] Error boundaries and error pages (404, 500)
+- [ ] Loading states and skeleton loaders
+- [ ] Unit tests for database queries
+- [ ] Integration tests for API routes
+- [ ] Update README with proper documentation
 - [ ] Deploy MVP to Vercel
 
-### Phase 2: GitHub Integration (2-3 weeks)
+## Plan
+
+### Phase 1: Foundation & MVP (2-3 weeks) - ~70% Complete
+- [x] Initialize Next.js project with TypeScript, Tailwind, shadcn/ui
+- [x] Setup database (Drizzle + PostgreSQL/SQLite)
+- [x] Create schema and migrations
+- [x] Build core API routes (projects, specs, stats, sync)
+- [x] Implement frontend pages (home, browser, detail, board, stats) - *partial: missing board*
+- [x] Rich markdown rendering with syntax highlighting
+- [x] Seed with LeanSpec's own specs
+- [ ] Deploy MVP to Vercel
+
+### Phase 2: GitHub Integration (2-3 weeks) - Not Started
 - [ ] GitHub API client with Octokit
 - [ ] Repo validation and spec discovery
 - [ ] Sync orchestrator (fetch, parse, store)
@@ -105,7 +137,7 @@ This spec is split into detailed sub-specs for maintainability:
 - [ ] Scheduled sync (cron jobs)
 - [ ] Error handling and logging
 
-### Phase 3: Community & Discovery (2-3 weeks)
+### Phase 3: Community & Discovery (2-3 weeks) - Not Started
 - [ ] Public project explorer
 - [ ] Full-text search across projects
 - [ ] Spec relationship visualization
@@ -113,7 +145,7 @@ This spec is split into detailed sub-specs for maintainability:
 - [ ] Export to PDF
 - [ ] Performance optimization (caching, SEO)
 
-### Phase 4: Advanced Features (Future)
+### Phase 4: Advanced Features (Future) - Not Started
 - [ ] GitHub OAuth for private repos
 - [ ] Real-time webhooks
 - [ ] Version history and diffs
@@ -158,6 +190,42 @@ This spec is split into detailed sub-specs for maintainability:
 - [ ] Color contrast
 
 ## Notes
+
+### Implementation Details
+
+**Database:**
+- SQLite (331KB) with 32 seeded specs from LeanSpec project
+- Tables: `projects`, `specs`, `spec_relationships`, `sync_logs`
+- Drizzle ORM with full relations and cascading deletes
+- Migration: `drizzle/0000_reflective_thena.sql`
+
+**Technology Stack:**
+- Next.js 16.0.1 with App Router
+- React 19.2.0 with Server Components
+- Drizzle ORM 0.38.3 with better-sqlite3
+- react-markdown 9.0.2 + rehype-highlight + remark-gfm
+- Tailwind CSS 4 (shadcn/ui integration pending)
+
+**Package Location:** `packages/web/` (monorepo structure)
+
+### Known Issues
+
+1. **Dependencies** - Need `pnpm install` in packages/web before running
+2. **No Error Handling** - Missing try/catch blocks, error boundaries, error pages
+3. **Basic Styling** - Not yet using shadcn/ui as specified in design
+4. **No Tests** - Zero test coverage currently
+5. **README Outdated** - Still contains Next.js boilerplate
+
+### Next Immediate Steps
+
+1. **Kanban Board** - Create `/board` route with drag-and-drop status columns
+2. **Search/Filter** - Add search input and tag/status/priority filters to home page
+3. **UI Components** - Integrate shadcn/ui for Button, Card, Badge, Input, etc.
+4. **Error Handling** - Add NotFound, ErrorBoundary, and error state handling
+5. **Loading States** - Implement Suspense boundaries and skeleton loaders
+6. **Tests** - Write unit tests for queries.ts and integration tests for API routes
+
+**Estimated time to complete Phase 1 MVP**: 2-3 days
 
 ### Technical Decisions
 
