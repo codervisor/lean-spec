@@ -10,6 +10,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
@@ -42,12 +45,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/ui": "^4.0.6",
     "drizzle-kit": "^0.31.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.6"
   },
   "engines": {
     "node": ">=18"
