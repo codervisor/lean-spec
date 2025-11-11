@@ -242,6 +242,31 @@ Consider **splitting** when:
 - Updates frequently cause inconsistencies (too complex to maintain)
 - Implementation has >6 phases (Intent: breaks down into sub-problems)
 
+### Complexity Validation (Spec 066)
+
+LeanSpec uses **multi-dimensional complexity scoring** that considers:
+
+1. **Token Count** (primary factor):
+   - <2,000 tokens: Excellent
+   - 2,000-3,500 tokens: Good
+   - 3,500-5,000 tokens: Warning (consider simplification)
+   - >5,000 tokens: Should split
+
+2. **Structure Quality** (modifiers):
+   - **Sub-specs present**: -30 bonus (progressive disclosure)
+   - **Good sectioning** (15-35 sections): -15 bonus (cognitive chunking)
+   - **Poor sectioning** (<8 sections): +20 penalty (monolithic)
+
+3. **Line Count** (backstop):
+   - >500 lines: Warning even if well-structured
+   - >400 lines: Strong candidate for splitting
+
+**Why Token Count?** Research shows token count predicts AI performance better than line count. Quality degradation happens even within context limits. Code is denser (~3 chars/token) than prose (~4 chars/token).
+
+**Run validation:** `lean-spec validate` includes complexity scoring automatically.
+
+**Note:** Token thresholds are research-based hypotheses (see spec 066) and may be refined based on empirical data.
+
 ### Line Count Thresholds (Context Economy Enforcement)
 
 - **<300 lines**: ✅ Ideal, keep as single file
@@ -250,6 +275,8 @@ Consider **splitting** when:
 - **>600 lines**: 🔴 Almost certainly should be split
 
 **Rationale**: These thresholds come from Context Economy—the fundamental constraint that specs must fit in working memory (human + AI). Violating this makes specs hard to read, prone to errors, and difficult to maintain.
+
+**However:** A well-structured 400-line spec with sub-specs may pass complexity validation (low token count + good structure), while a poorly-structured 300-line spec may trigger warnings (high density + monolithic structure).
 
 ### Warning Signs
 
