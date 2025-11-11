@@ -702,4 +702,143 @@ Using new rules: "✅ Good: Score 5/100 - well-structured, token count acceptabl
 
 ---
 
-**Status**: Research complete, awaiting feedback before implementation.
+## Implementation Status (2025-11-11)
+
+### ✅ What's Done
+
+**Core Implementation Exists**:
+- `ComplexityValidator` class implemented in `packages/core/src/validators/complexity.ts`
+- Token estimation using `tokenx` package (installed and working)
+- Multi-dimensional scoring algorithm implemented
+- Registered in validation pipeline (`packages/cli/src/commands/validate.ts`)
+- All token thresholds and structure modifiers coded as designed
+
+**Build Status**:
+- `@leanspec/core` package builds successfully
+- `@leanspec/cli` package builds successfully
+- `tokenx` dependency properly installed
+
+### 🐛 Issues Found
+
+**1. Sub-Spec Detection Bug (Critical)**
+- **Problem**: `hasSubSpecs` detected by text pattern matching, not actual file existence
+- **Current Code**: `/\b(DESIGN|IMPLEMENTATION|TESTING|CONFIGURATION|API|MIGRATION)\.md\b/.test(content)`
+- **Issue**: Spec 066 mentions "DESIGN.md" in documentation → gets -30 bonus it doesn't deserve
+- **Impact**: False negatives - specs get structure bonuses for merely documenting sub-specs
+
+**2. Silent Warning Issue**
+- **Problem**: Complexity validator produces no output even when it should warn
+- **Actual Score for Spec 066**:
+  - 706 lines
+  - **7,307 tokens** (very high, >5000 threshold)
+  - 45 sections
+  - Token score: 60
+  - Structure modifier: -30 (false positive due to bug #1)
+  - Final score: 30 → "review" recommendation (should show warning)
+- **Expected**: Warning message displayed
+- **Actual**: No output from complexity validator
+- **Hypothesis**: Warning not being formatted/displayed (need to debug formatter or result handling)
+
+**3. Old Line Count Validator Still Active**
+- **Current Behavior**: Shows "Error: Spec exceeds 400 lines (706 lines)"
+- **Expected**: Complexity validator should be primary, line count as backstop
+- **Decision Needed**: Should old validator be:
+  - Disabled entirely?
+  - Adjusted to only warn at 500+ lines?
+  - Kept as-is for redundancy?
+
+### 🔧 Fixes Needed for Next Session
+
+**Priority 1: Fix Sub-Spec Detection**
+```typescript
+// Current (WRONG):
+const hasSubSpecs = /\b(DESIGN|IMPLEMENTATION|TESTING|CONFIGURATION|API|MIGRATION)\.md\b/.test(content);
+
+// Should be (need to check actual files):
+// Option A: Pass file list to validator
+const hasSubSpecs = subSpecFiles.length > 0;
+
+// Option B: Check spec directory for .md files (requires fs access)
+const files = await fs.readdir(path.dirname(spec.filePath));
+const mdFiles = files.filter(f => f.endsWith('.md') && f !== 'README.md');
+const hasSubSpecs = mdFiles.length > 0;
+```
+
+**Location**: `packages/core/src/validators/complexity.ts`, line ~160
+
+**Priority 2: Debug Silent Warning**
+- Add logging to see if validator is running and producing results
+- Check if `ValidationResult` with warnings is being filtered out
+- Verify formatter (`validate-formatter.ts`) handles complexity validator output
+- Test with simpler spec to isolate issue
+
+**Priority 3: Coordinate Line Count Validator**
+- Decide on line count validator role (keep, adjust, or remove)
+- Update thresholds if keeping (suggest 500/600 instead of 300/400)
+- Document relationship between validators in code comments
+
+### 📊 Test Cases for Validation
+
+**Test with Spec 066** (this spec):
+- Expected: Score 60 (no sub-specs) → "split" recommendation → ERROR
+- Currently: Score 30 (false bonus) → "review" → WARNING (but silent)
+
+**Test with Spec 049** (has 5 sub-specs):
+- 374 lines, ~1,700 tokens, 38 sections, 5 sub-spec files
+- Expected: Score -30 → "excellent" → PASS
+- Should verify this works correctly
+
+**Test with Spec 059** (has 6 sub-specs):
+- 394 lines, ~2,100 tokens, 32 sections, 6 sub-spec files
+- Expected: Score -10 → "excellent" → PASS
+- Should verify this works correctly
+
+### 🎯 Next Steps
+
+1. **Fix sub-spec detection** (30 min):
+   - Modify `analyzeComplexity()` to check actual files
+   - May need to pass spec path or file list to validator
+   - Update tests to verify correct detection
+
+2. **Debug warning output** (20 min):
+   - Add temporary console.log in validator
+   - Rebuild and test
+   - Check if result is being produced but not displayed
+
+3. **Verify full pipeline** (10 min):
+   - Run validation on multiple specs
+   - Confirm token counts and scores match expectations
+   - Validate formatter displays all validator results
+
+4. **Update line count validator** (10 min):
+   - Adjust thresholds to 500/600 or disable
+   - Update messages to reference complexity validator
+   - Document as backstop in comments
+
+5. **Test and document** (20 min):
+   - Validate spec 049, 059, 066 with corrected logic
+   - Update AGENTS.md with complexity guidance
+   - Mark spec 066 as fully implemented
+
+**Estimated Total**: ~90 minutes of focused work
+
+### 💡 Design Questions to Resolve
+
+1. **File Detection Approach**: Should we:
+   - A) Pass file list to validator (cleaner, requires API change)
+   - B) Let validator read directory (simpler, but core needs fs access)
+   - C) Pre-compute in CLI and pass as metadata (best separation of concerns)
+
+2. **Line Count Validator**: Should we:
+   - A) Remove it (complexity validator handles everything)
+   - B) Keep with raised thresholds (500/600) as backstop
+   - C) Keep current thresholds for redundancy
+
+3. **Sections Outside 15-35 Range**: Currently gives 0 modifier. Should we:
+   - A) Keep as-is (only penalize <8 sections)
+   - B) Penalize >35 sections (too fragmented)
+   - C) Use sliding scale instead of fixed ranges
+
+---
+
+**Status**: Implementation exists but has bugs. Ready for debugging and fixing in next session.
