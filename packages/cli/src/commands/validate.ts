@@ -101,13 +101,17 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
 
     // Run all validators
     for (const validator of validators) {
-      const result = await validator.validate(spec, content);
-      results.push({ 
-        spec, 
-        validatorName: validator.name,
-        result, 
-        content,
-      });
+      try {
+        const result = await validator.validate(spec, content);
+        results.push({ 
+          spec, 
+          validatorName: validator.name,
+          result, 
+          content,
+        });
+      } catch (error) {
+        console.error(chalk.yellow(`Warning: Validator ${validator.name} failed:`), error instanceof Error ? error.message : error);
+      }
     }
   }
 
