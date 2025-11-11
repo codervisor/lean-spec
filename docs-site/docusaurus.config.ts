@@ -121,6 +121,10 @@ const config: Config = {
               to: '/docs/reference/cli',
             },
             {
+              label: 'MCP Server',
+              to: '/docs/guide/usage/ai-assisted/mcp-server',
+            },
+            {
               label: 'AI Integration',
               to: '/docs/guide/usage/ai-assisted/agent-configuration',
             },
@@ -137,6 +141,10 @@ const config: Config = {
               label: 'Issues',
               href: 'https://github.com/codervisor/lean-spec/issues',
             },
+            {
+              label: 'Discussions',
+              href: 'https://github.com/codervisor/lean-spec/discussions',
+            },
           ],
         },
         {
@@ -149,6 +157,14 @@ const config: Config = {
             {
               label: 'Contributing',
               href: 'https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md',
+            },
+            {
+              label: 'Changelog',
+              href: 'https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md',
+            },
+            {
+              label: 'npm Package',
+              href: 'https://www.npmjs.com/package/lean-spec',
             },
           ],
         },
