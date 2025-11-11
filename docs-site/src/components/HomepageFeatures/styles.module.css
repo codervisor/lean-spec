@@ -8,4 +8,13 @@
 .featureIcon {
   font-size: 4rem;
   margin-bottom: 1rem;
+  color: var(--ifm-color-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.featureIcon svg {
+  width: 4rem;
+  height: 4rem;
 }

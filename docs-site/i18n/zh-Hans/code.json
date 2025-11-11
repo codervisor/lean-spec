@@ -347,15 +347,15 @@
     "description": "The homepage meta description"
   },
   "homepage.feature.contextEconomy.description": {
-    "message": "规范文档不超过 300 行。5-10 分钟即可读完。完美适配人类工作记忆和 AI 上下文窗口。告别认知过载。",
+    "message": "规范文档适配工作记忆——人类与 AI 皆可。不超过 300 行。5-10 分钟读完。足够清晰可实现，足够简洁易维护。",
     "description": "Context Economy feature description"
   },
   "homepage.feature.progressiveGrowth.description": {
-    "message": "从简单开始。只在感到痛点时才添加字段。从独立开发者到企业级应用——一个系统适配您的需求，而非相反。",
+    "message": "从 README.md 和状态跟踪开始。只在需要时添加结构。从独立开发者到企业级——与团队共同成长，而非超前规划。",
     "description": "Progressive Growth feature description"
   },
   "homepage.feature.aiNative.description": {
-    "message": "无缝集成 Cursor、Copilot、Aider、Claude Desktop（通过 MCP）。清晰的规范意味着 AI 代理能够真正实现您的愿景。",
+    "message": "无缝集成 Cursor、GitHub Copilot、Aider 和 Claude Desktop（通过 MCP）。AI 代理可直接读取、搜索和实现您的规范——无需手动切换上下文。",
     "description": "AI-Native feature description"
   },
   "homepage.feature.contextEconomy.title": {
@@ -363,11 +363,35 @@
     "description": "Context Economy feature title"
   },
   "homepage.feature.progressiveGrowth.title": {
-    "message": "渐进式增长",
+    "message": "简单起步，智能扩展",
     "description": "Progressive Growth feature title"
   },
   "homepage.feature.aiNative.title": {
-    "message": "AI 原生",
+    "message": "AI 原生设计",
     "description": "AI-Native feature title"
+  },
+  "homepage.feature.velocity.title": {
+    "message": "更快交付",
+    "description": "Ship Faster feature title"
+  },
+  "homepage.feature.velocity.description": {
+    "message": "无需繁重流程，无需规范先行的瀑布式开发。边写代码边写规范，在重要时刻记录决策，准备好就发布。",
+    "description": "Ship Faster feature description"
+  },
+  "homepage.feature.agile.title": {
+    "message": "敏捷自适应",
+    "description": "Agile & Adaptive feature title"
+  },
+  "homepage.feature.agile.description": {
+    "message": "随学习调整规范。无需死板的前期规划。捕获新兴见解。响应变化快于传统文档工作流。",
+    "description": "Agile & Adaptive feature description"
+  },
+  "homepage.feature.tooling.title": {
+    "message": "丰富工具生态",
+    "description": "Rich Tooling feature title"
+  },
+  "homepage.feature.tooling.description": {
+    "message": "CLI 自动化工作流。MCP 服务器供 AI 代理使用。VS Code 扩展。GitHub Actions 集成 CI/CD。可扩展可组合的工具链。",
+    "description": "Rich Tooling feature description"
   }
 }

@@ -19,6 +19,10 @@
     "message": "CLI 参考",
     "description": "The label of footer link with label=CLI Reference linking to /docs/reference/cli"
   },
+  "link.item.label.MCP Server": {
+    "message": "MCP 服务器",
+    "description": "The label of footer link with label=MCP Server linking to /docs/guide/usage/ai-assisted/mcp-server"
+  },
   "link.item.label.AI Integration": {
     "message": "AI 集成",
     "description": "The label of footer link with label=AI Integration linking to /docs/guide/usage/ai-assisted/agent-configuration"
@@ -31,6 +35,10 @@
     "message": "问题反馈",
     "description": "The label of footer link with label=Issues linking to https://github.com/codervisor/lean-spec/issues"
   },
+  "link.item.label.Discussions": {
+    "message": "讨论区",
+    "description": "The label of footer link with label=Discussions linking to https://github.com/codervisor/lean-spec/discussions"
+  },
   "link.item.label.Blog": {
     "message": "博客",
     "description": "The label of footer link with label=Blog linking to /blog"
@@ -38,6 +46,14 @@
   "link.item.label.Contributing": {
     "message": "参与贡献",
     "description": "The label of footer link with label=Contributing linking to https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md"
+  },
+  "link.item.label.Changelog": {
+    "message": "更新日志",
+    "description": "The label of footer link with label=Changelog linking to https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md"
+  },
+  "link.item.label.npm Package": {
+    "message": "npm 包",
+    "description": "The label of footer link with label=npm Package linking to https://www.npmjs.com/package/lean-spec"
   },
   "copyright": {
     "message": "版权所有 © 2025 codervisor. 使用 Docusaurus 构建。",
