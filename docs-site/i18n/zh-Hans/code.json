@@ -325,5 +325,49 @@
   "theme.tags.tagsPageTitle": {
     "message": "标签",
     "description": "The title of the tag list page"
+  },
+  "homepage.logo.alt": {
+    "message": "LeanSpec 标志",
+    "description": "Alt text for the LeanSpec logo on homepage"
+  },
+  "homepage.tagline": {
+    "message": "轻量级规范方法论，助力 AI 驱动开发",
+    "description": "The homepage tagline"
+  },
+  "homepage.getStarted": {
+    "message": "快速开始 →",
+    "description": "Get Started button on homepage"
+  },
+  "homepage.metaTagline": {
+    "message": "轻量级规范方法论，助力 AI 驱动开发",
+    "description": "The homepage meta tagline"
+  },
+  "homepage.metaDescription": {
+    "message": "轻量级规范方法论，助力 AI 驱动开发",
+    "description": "The homepage meta description"
+  },
+  "homepage.feature.contextEconomy.description": {
+    "message": "规范文档不超过 300 行。5-10 分钟即可读完。完美适配人类工作记忆和 AI 上下文窗口。告别认知过载。",
+    "description": "Context Economy feature description"
+  },
+  "homepage.feature.progressiveGrowth.description": {
+    "message": "从简单开始。只在感到痛点时才添加字段。从独立开发者到企业级应用——一个系统适配您的需求，而非相反。",
+    "description": "Progressive Growth feature description"
+  },
+  "homepage.feature.aiNative.description": {
+    "message": "无缝集成 Cursor、Copilot、Aider、Claude Desktop（通过 MCP）。清晰的规范意味着 AI 代理能够真正实现您的愿景。",
+    "description": "AI-Native feature description"
+  },
+  "homepage.feature.contextEconomy.title": {
+    "message": "上下文经济",
+    "description": "Context Economy feature title"
+  },
+  "homepage.feature.progressiveGrowth.title": {
+    "message": "渐进式增长",
+    "description": "Progressive Growth feature title"
+  },
+  "homepage.feature.aiNative.title": {
+    "message": "AI 原生",
+    "description": "AI-Native feature title"
   }
 }
