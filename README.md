@@ -8,6 +8,10 @@
   <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  •
+  <a href="https://www.lean-spec.dev"><strong>Docs</strong></a>
+  •
+  <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文</strong></a>
 </p>
 
 ---
@@ -16,84 +20,46 @@
 
 Traditional 2,000-line RFCs overflow AI context windows. Your AI agent can't help because it can't fit the full context.
 
-```diff
-- Heavyweight process (multi-step workflows) → AI context overflow
-- Vibe coding (no specs) → Team misalignment
-+ LeanSpec: Structure without overhead
-```
-
 **LeanSpec: Pragmatic spec tooling for human + AI collaboration.**
 
 Specs under 300 lines. Intent-focused. Machine-readable. Adapts to your workflow—from solo dev to enterprise.
 
-*Not another rigid methodology. Just lightweight tools for keeping humans and AI aligned.*
-
 <p align="center">
-  <a href="#quick-start-5-minutes"><strong>Quick Start (5 Minutes) →</strong></a> •
-  <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a> •
-  <a href="https://www.lean-spec.dev/docs/guide/ai-executable-patterns"><strong>Examples</strong></a>
-</p>
-
-<p align="center">
-  <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文文档</strong></a> | 
-  <a href="https://www.lean-spec.dev"><strong>English Docs</strong></a>
+  <a href="#quick-start-5-minutes"><strong>Quick Start (5 Minutes) →</strong></a>
 </p>
 
 ---
 
-## The Spec Documentation Problem
+## Why LeanSpec?
 
-### Scenario 1: Context Overflow 🔴
+**Context Overflow**: Traditional specs are too large for AI agents. You paste a 2,000-line RFC into Cursor—"Context too large." Back to manual implementation.
 
-You paste a traditional spec into Cursor. **"Context too large."** Your AI agent can't help—it can't fit the full context. Back to manual implementation.
+**Stale Docs**: Nobody maintains specs because updates are painful. They become documentation theater.
 
-### Scenario 2: Stale Documentation 📄
-
-Your team has beautiful specs. None match the current code. Nobody updates them because it's too painful. They're documentation theater.
-
-### Scenario 3: Wrong Tool for the Job ⚖️
-
-You tried automated code generation tools—powerful but heavyweight. You tried vibe coding—fast but team gets misaligned. Where's the **lightweight spec methodology**?
+**Wrong Balance**: Code generation tools are heavyweight. Vibe coding lacks structure. Where's the middle ground?
 
 **LeanSpec solves this:**
-- ✅ Specs fit in AI context windows (<300 lines)
-- ✅ Structured enough for AI agents to understand
-- ✅ Flexible enough to grow with your team
-- ✅ CLI & MCP tools to support the workflow
+- Specs under 300 lines (fits in AI context)
+- Structured for AI agents, flexible for teams
+- CLI & MCP tools for actual workflow support
 
 ---
 
-## How LeanSpec is Different
+## How It's Different
 
-**From Automated Tools (like [Spec Kit](https://github.com/speckai/speckai)):**
-- ❌ No multi-step workflows or slash commands
-- ❌ No code generation or task execution
-- ✅ Just specs for team alignment and AI context
+**Not a code generation tool** - No automated workflows or slash commands. Just specs for alignment and AI context.
 
-**From Lightweight Approaches (vibe coding):**
-- ❌ Not "just chat with AI"
-- ✅ Enough structure for AI agents to act on
-- ✅ Team alignment through shared specs
-- ✅ Maintainable documentation
+**Not "vibe coding"** - Enough structure for AI agents to act on. Team alignment through shared documentation.
 
-**From Change-Tracking Systems (like [OpenSpec](https://github.com/openspec-dev/openspec)):**
-- ❌ No proposals or change folders
-- ❌ No diff-based workflows
-- ✅ Direct spec editing with version control
-- ✅ Philosophy over process
+**Not a change-tracking system** - Direct spec editing with version control. Philosophy over process.
 
-**LeanSpec = Just the specs.** Markdown files with structure. No ceremony, no overhead.
+LeanSpec is markdown files with structure. No ceremony, no overhead. Realistic 10-30% productivity improvement through better human-AI alignment.
 
-**No hype, no promises of 70% automation.** Realistic outcome: 10-30% productivity improvement through better human-AI alignment. Specs enhance judgment, they don't replace understanding your codebase.
-
-📖 **[Full comparison with Spec Kit, OpenSpec, Kiro, and more →](https://www.lean-spec.dev/docs/comparison)**  
-📖 **[Limits, trade-offs & what's realistic →](https://www.lean-spec.dev/docs/guide/limits-and-tradeoffs)**
+📖 [Full comparison & realistic expectations →](https://www.lean-spec.dev/docs/comparison)
 
 ---
 
 ## How It Works
-
-### A Real LeanSpec in Action
 
 Here's an actual spec from this project (287 lines):
 
@@ -108,9 +74,8 @@ priority: high
 # Unified Dashboard
 
 ## Overview
-Combine `lean-spec board` and `lean-spec stats` into a single, comprehensive
-project health view. Give users instant insight into project status,
-bottlenecks, and team velocity.
+Combine `lean-spec board` and `lean-spec stats` into a single
+project health view for instant status insight.
 
 ## Design
 - Board view (Kanban columns)
@@ -130,59 +95,43 @@ bottlenecks, and team velocity.
 - Used daily by team leads
 ```
 
-**Notice:**
-- ✅ Under 300 lines (fits in AI + human working memory)
-- ✅ Intent is clear ("what" and "why")
-- ✅ Implementation details are minimal (not a PRD)
-- ✅ Both human and AI can understand
-- ✅ Structured metadata (status, tags, priority)
+**Key characteristics:**
+- Under 300 lines (fits in AI + human working memory)
+- Intent is clear ("what" and "why")
+- Implementation details are minimal
+- Both human and AI can understand
+- Structured metadata for tooling
 
 ---
 
-## Built on First Principles
+## Core Principles
 
-LeanSpec isn't arbitrary rules—it's derived from fundamental constraints of working with AI.
+LeanSpec is built on fundamental constraints of working with AI:
 
 ### 🧠 Context Economy
-**Specs <300 lines → Fit in working memory**
+**Specs <300 lines fit in working memory**
 
-- **Physics**: AI performance degrades with longer context (quality drops beyond 50K tokens despite 200K limits)
-- **Biology**: Human working memory is limited (7±2 items, 5-10 min attention)
-- **Economics**: Large contexts cost more time and money
-- **Reality**: Attention is the scarce resource, not storage
-- **Result**: Keep specs under 300 lines, split complex features
+AI performance degrades with longer context. Human attention is limited. Keep specs concise so both can process them effectively.
 
 ### ✂️ Signal-to-Noise Maximization
-**Every word informs decisions → Or it's cut**
+**Every word informs decisions**
 
-- Every sentence must answer: "What decision does this inform?"
-- Cut obvious statements, inferable content, speculation
-- Keep decision rationale, constraints, success criteria
-- **Result**: Dense, actionable specs that respect reader attention
+Each sentence must answer: "What decision does this inform?" Cut everything else. Dense, actionable specs respect reader attention.
 
 ### 📈 Progressive Disclosure
-**Add structure only when you feel pain → Start simple**
+**Add structure when you feel pain**
 
-- Solo dev: Just `status` + `created`
-- Small team: Add `tags` + `priority`
-- Enterprise: Add custom fields as needed
-- **Result**: Structure adapts to team, not the other way around
+Solo dev needs just `status`. Teams add `tags` and `priority`. Enterprise adds custom fields. Structure adapts to you, not vice versa.
 
 ### 🎯 Intent Over Implementation
-**Capture "why" → Let "how" emerge**
+**Capture "why", let "how" emerge**
 
-- Must have: Problem, intent, success criteria
-- Should have: Design rationale, trade-offs
-- Could have: Implementation details (these change)
-- **Result**: Specs stay relevant as code evolves
+Document problem, intent, and success criteria. Implementation details change—intent stays stable.
 
 ### 🌉 Bridge the Gap
-**Both humans AND AI must understand → Clear structure + natural language**
+**Both humans AND AI must understand**
 
-- For humans: Overview, context, rationale
-- For AI: Unambiguous requirements, structured metadata
-- Both can parse and reason about specs
-- **Result**: True human-AI collaboration
+Clear structure for AI parsing. Natural language for human reasoning. True human-AI collaboration requires both.
 
 ---
 
@@ -190,40 +139,17 @@ LeanSpec isn't arbitrary rules—it's derived from fundamental constraints of wo
 
 📖 [Deep dive: First Principles Guide →](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles)
 
-### 🧬 Why Human Involvement Is Necessary
-
-**[Rice's Theorem](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail)** (1951) proves that all non-trivial semantic properties of programs are **undecidable**—no algorithm can determine whether arbitrary programs have interesting behavioral characteristics.
-
-**What this means for AI coding:**
-- **AI can't determine "what you want"** (undecidable semantic property)
-- **Specs provide semantic grounding** (humans define intent, AI implements)
-- **Testing is sampling, not proof** (we build confidence, not certainty)
-- **Complete automation is impossible** (mathematically proven)
-
-**LeanSpec's approach:** Humans provide intent through specs, AI amplifies scale through implementation. We work WITH theoretical constraints, not against them.
-
-**This isn't pessimism—it's engineering maturity.** Understanding limits helps us focus on what's genuinely achievable: pragmatic tools that enhance human-AI collaboration rather than promises of autonomous coding.
-
-📖 [Why automated testing will always require human involvement →](https://www.marvinzhang.dev/blog/rices-theorem-why-automated-testing-will-fail)
-
 ---
 
-## Practical Features for Human-AI Collaboration
+## Key Features
 
 ### 🤖 AI-Native Integration
 
-Works seamlessly with popular AI coding tools:
-
-- **GitHub Copilot** - AI pair programmer in VS Code & JetBrains IDEs
-- **Claude Code** - Anthropic's AI coding assistant
-- **OpenAI Codex** - OpenAI's coding agent (CLI, IDE, cloud)
-- **Cursor / Windsurf** - AI-first code editor built on VS Code
-
-MCP-native specs. Works with any tool that supports Model Context Protocol.
+Works with GitHub Copilot, Claude Code, OpenAI Codex, Cursor, and Windsurf. MCP-native specs work with any tool supporting Model Context Protocol.
 
 ### 📊 Workflow Visibility
 
-Track progress without leaving the terminal:
+Track progress from the terminal:
 
 ```bash
 $ lean-spec board
@@ -240,9 +166,6 @@ $ lean-spec board
     • mcp-error-handling
 
 ✅ Complete (14)
-    • stats-dashboard-refactor
-    • git-backfill-timestamps
-    ...
 ```
 
 ```bash
@@ -254,11 +177,9 @@ $ lean-spec stats
   Completion: 52%  |  Avg size: 287 lines
 ```
 
-Simple, focused CLI for spec status and team visibility.
-
 ### 🎨 Progressive Structure
 
-Start simple, add complexity only when you need it:
+Start simple, add complexity when needed:
 
 ```yaml
 # Day 1: Solo dev
@@ -276,18 +197,6 @@ sprint: 2025-Q4-S3
 ```
 
 Custom fields fully supported. Adapts to your workflow as you grow.
-
-### ⚡ Actually Maintainable
-
-**The problem:** Traditional specs get stale because updating them is too painful.
-
-**LeanSpec solution:**
-- **Short specs** - Fits in AI context window for easy updates
-- **CLI tools** - Quick viewing and editing from terminal
-- **AI-friendly format** - Structured markdown AI agents can parse and update
-- **Version control** - Git tracks changes, diffs show what evolved
-
-**Result:** Specs light enough to actually keep in sync with code.
 
 ---
 
@@ -309,8 +218,7 @@ lean-spec init
 👤 You: "Create a spec for user authentication with OAuth2."
 
 🤖 AI: [runs lean-spec create user-authentication]
-      "I've created specs/001-user-authentication/README.md.
-      Here's the spec..."
+      "I've created specs/001-user-authentication/README.md..."
 
 👤 You: "Now implement the OAuth2 flow based on this spec."
 
@@ -321,117 +229,55 @@ lean-spec init
 ### 3. Track Progress
 
 ```bash
-# Check project status
-lean-spec board
-
-# View spec with AI-friendly output
-lean-spec view user-authentication --json
-
-# Update status as you progress
-lean-spec update user-authentication --status in-progress
+lean-spec board              # Check project status
+lean-spec view <spec> --json # AI-friendly output
+lean-spec update <spec> --status in-progress
 ```
 
-**The workflow:**
-1. ✅ Ask AI to create spec (it uses `lean-spec create`)
-2. ✅ AI reads spec and implements (spec fits in context)
-3. ✅ Track with `lean-spec board` / `lean-spec stats`
-4. ✅ Update status as work progresses
-
 **Why this works:**
-- Specs <300 lines → Fit in AI context window
-- Structured format → AI can parse and act on
-- CLI tools → AI knows how to use them
+- Specs <300 lines fit in AI context window
+- Structured format AI can parse and act on
 - You drive, AI executes
 
 **Next steps:**
-- 📘 [Full CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands
-- 🎨 [Choose a Template](https://www.lean-spec.dev/docs/guide/templates) - Minimal, standard, or enterprise
-- 🤖 [AI Agent Setup](AGENTS.md) - Configure AI coding tools
+- [Full CLI Reference](https://www.lean-spec.dev/docs/reference/cli)
+- [Choose a Template](https://www.lean-spec.dev/docs/guide/templates)
+- [AI Agent Setup](AGENTS.md)
 
 ---
 
-## Choose the Right Tool
+## When to Use LeanSpec
 
-Not every project needs the same level of structure. Here's when to use what:
+| Use LeanSpec When: | Skip It When: |
+|---------------------|---------------|
+| Features span multiple files/components | Trivial bug fixes |
+| Architecture decisions need alignment | Self-explanatory refactors |
+| Guiding AI agents on complex features | Quick experiments |
+| Design rationale should be documented | Changes are obvious |
 
-| Use This | When You Need |
-|----------|---------------|
-| **[Spec Kit](https://github.com/speckai/speckai)** | Automated code generation from specs • Multi-step workflows |
-| **[OpenSpec](https://github.com/openspec-dev/openspec)** | Change proposals and delta tracking • Brownfield modifications |
-| **LeanSpec** | AI-native specs that fit in context • Human + AI collaboration • Solo to enterprise |
-| **Vibe Coding** | Rapid prototyping • Solo experiments • Trivial features |
-
-**Why LeanSpec?** Pragmatic tooling designed from first principles (physics, biology, economics, theory). Specs that both humans and AI can actually use. No hype, no impossible promises—just better alignment.
+📖 [Compare with other tools (Spec Kit, OpenSpec, etc.) →](https://www.lean-spec.dev/docs/comparison)
 
 ---
 
-## Who Uses LeanSpec
+## Built With LeanSpec
 
-### AI-First Development Teams
-Give agents clear context without context window overload. Works with Cursor, Copilot, Aider, Claude.
+**LeanSpec is built using LeanSpec.** Every feature has a spec. All follow the principles—under 300 lines, AI-readable, actively maintained.
 
-### Scaling Startups
-One methodology from solo dev → team → enterprise. Add structure progressively as you grow.
-
-### Teams Seeking Balance
-Need structure for alignment and AI context, but heavyweight processes slow you down.
-
-### Developers Building AI Agents
-MCP-native specs. Structured input format agents can parse reliably.
-
----
-
-## We Practice What We Preach
-
-**LeanSpec is built using LeanSpec.** Every feature, refactor, and design decision has a spec. All specs follow the first principles—under 300 lines, AI-readable, actively maintained.
-
-**Real velocity from zero to official launch:**
-- **6 days** from first commit to production
-- Full-featured CLI, MCP server, documentation site
-- 54 specs written and implemented—all with AI agents
-- Derived first principles from practicing LeanSpec 
-
-We dogfood our own methodology. Specs that fit in AI context enable the velocity we promise.
+**Velocity:** 6 days from first commit to production. Full CLI, MCP server, and documentation site. 54 specs written and implemented with AI agents.
 
 → [Browse our specs](https://github.com/codervisor/lean-spec/tree/main/specs)
 
 ---
 
-## When to Use (and Skip) Specs
-
-| Use LeanSpec When: | Skip It When: |
-|---------------------|---------------|
-| ✅ Features span multiple files/components | ❌ Trivial bug fixes |
-| ✅ Architecture decisions need alignment | ❌ Self-explanatory refactors |
-| ✅ Guiding AI agents on complex features | ❌ Pure API reference (use code comments) |
-| ✅ Design rationale should be documented | ❌ Quick experiments |
-| ✅ Team needs to coordinate work | ❌ Changes are obvious |
-
-**Philosophy:** Write specs when they add clarity. Skip them when they don't.
-
----
-
 ## Learn More
 
-### 📚 Documentation
 - [Getting Started Guide](https://www.lean-spec.dev/docs/guide/getting-started) - Complete setup walkthrough
 - [First Principles](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles) - The philosophy behind LeanSpec
 - [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands with examples
-
-### 🛠️ Integrations
 - [AI Agent Configuration](AGENTS.md) - Cursor, Copilot, Aider setup
 - [MCP Server](docs/MCP-SERVER.md) - Claude Desktop integration
-- [VS Code Extension](https://www.lean-spec.dev/docs/roadmap#vs-code-extension) - Enhanced editor support (planned)
-
-### 🎓 Guides
-- [Custom Fields](https://www.lean-spec.dev/docs/guide/custom-fields) - Adapt to your workflow
-- [Templates](https://www.lean-spec.dev/docs/guide/templates) - Choose the right structure
-- [Frontmatter](https://www.lean-spec.dev/docs/guide/frontmatter) - Metadata and organization
-
-### 🤝 Community
 - [GitHub Issues](https://github.com/codervisor/lean-spec/issues) - Report bugs or request features
 - [Contributing Guide](CONTRIBUTING.md) - Join the project
-- [AI-Executable Patterns](https://www.lean-spec.dev/docs/guide/ai-executable-patterns) - Real-world usage patterns
 
 ---
 
