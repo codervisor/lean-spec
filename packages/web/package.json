@@ -1,0 +1,48 @@
+{
+  "name": "@leanspec/web",
+  "version": "0.1.0",
+  "description": "LeanSpec Web: Fullstack spec showcase platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/lib/db/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/lib/db/seed.ts"
+  },
+  "dependencies": {
+    "@leanspec/core": "workspace:*",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "next": "16.0.1",
+    "drizzle-orm": "^0.38.3",
+    "better-sqlite3": "^11.7.0",
+    "react-markdown": "^9.0.2",
+    "remark-gfm": "^4.0.0",
+    "rehype-highlight": "^7.0.1",
+    "dayjs": "^1.11.19",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/better-sqlite3": "^7.6.12",
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1",
+    "drizzle-kit": "^0.31.0",
+    "tsx": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
