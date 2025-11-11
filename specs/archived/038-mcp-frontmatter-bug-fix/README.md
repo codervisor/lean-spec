@@ -1,5 +1,5 @@
 ---
-status: complete
+status: archived
 created: '2025-11-04'
 tags:
   - bug
@@ -7,11 +7,16 @@ tags:
   - frontmatter
 priority: high
 completed: '2025-11-04'
+created_at: '2025-11-11T04:26:08.805Z'
+updated_at: '2025-11-11T04:26:08.805Z'
+transitions:
+  - status: archived
+    at: '2025-11-11T04:26:08.805Z'
 ---
 
 # Fix MCP Server Frontmatter Parsing
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: bug, mcp, frontmatter
+> **Status**: 📦 Archived · **Priority**: High · **Created**: 2025-11-04 · **Tags**: bug, mcp, frontmatter
 
 **Project**: lean-spec  
 **Team**: Core Development

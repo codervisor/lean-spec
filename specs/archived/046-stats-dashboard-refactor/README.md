@@ -1,5 +1,5 @@
 ---
-status: complete
+status: archived
 created: '2025-11-04'
 tags:
   - ux
@@ -7,19 +7,21 @@ tags:
   - v0.2.0
 priority: high
 created_at: '2025-11-04T00:00:00Z'
-updated_at: '2025-11-06T21:35:00Z'
+updated_at: '2025-11-11T04:26:08.942Z'
 transitions:
   - status: in-progress
     at: '2025-11-04T13:09:35.107Z'
   - status: complete
     at: '2025-11-04T13:10:54.267Z'
+  - status: archived
+    at: '2025-11-11T04:26:08.942Z'
 completed_at: '2025-11-04T13:10:54.267Z'
 completed: '2025-11-04'
 ---
 
 # Stats & Dashboard Reorganization
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-04 · **Tags**: ux, refactor, v0.2.0
+> **Status**: 📦 Archived · **Priority**: High · **Created**: 2025-11-04 · **Tags**: ux, refactor, v0.2.0
 
 **Split into sub-specs for Context Economy**
 
