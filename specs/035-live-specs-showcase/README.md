@@ -76,11 +76,123 @@ Build a fullstack web application for browsing and showcasing LeanSpec specifica
 - Version history and diffs
 - Team collaboration features
 
+### UI/UX Enhancement Requirements
+
+**Professional Design System:**
+- shadcn/ui component library fully integrated (Button, Card, Badge, Input, Select, Dialog, Tabs, Tooltip, Dropdown, etc.)
+- Tailwind CSS v4 with consistent design tokens
+- Lucide React icon library for visual clarity
+- Refined spacing scale (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)
+- Professional elevation system (shadow-sm, shadow-md, shadow-lg, shadow-xl)
+- Typography hierarchy (font sizes, weights, line heights)
+- Color refinement with better contrast ratios (WCAG AA compliance)
+- Icons for all status, priority, and content types (visual identification)
+
+**Theme Switching:**
+- Dark/light theme toggle with smooth transitions
+- System preference detection
+- Theme persistence in localStorage
+- next-themes integration
+- Refined dark mode colors (less harsh blacks, better contrast)
+- Theme-aware syntax highlighting for code blocks
+
+**Navigation & Layout:**
+- Sticky header with blur backdrop effect
+- Active page indicators in navigation
+- Breadcrumb navigation for spec pages
+- Mobile-responsive hamburger menu
+- Quick search modal (Cmd+K) with fuzzy search
+- Footer with proper links and branding
+
+**Spec Detail Page Enhancements:**
+- **Timeline & Metadata Display:**
+  - Visual timeline showing spec evolution (created → in-progress → complete)
+  - Timestamp display with relative time ("2 days ago")
+  - Status transitions history with icons
+  - Time-to-completion metrics
+  - Assignee display with avatar
+  - Icons for all metadata fields (status, priority, tags, etc.)
+- **Sub-Spec Navigation & Display:**
+  - Automatic detection of sub-spec files (DESIGN.md, IMPLEMENTATION.md, etc.)
+  - Tab-based navigation for main spec + sub-specs with icons
+  - Sidebar navigation with sub-spec links
+  - Sub-spec table of contents
+  - Proper layout for each sub-spec type
+  - Breadcrumb showing current sub-spec location
+  - Visual indicators for sub-spec relationships
+  - Color-coded icons for different sub-spec types
+  - Visual indicators for sub-spec relationships
+  
+- **Reading Experience:**
+  - Sticky table of contents sidebar
+  - Scroll spy with active section highlighting
+  - Smooth scroll to anchors
+  - Read time estimation
+  - Progress indicator (% of page read)
+  - Font size controls
+  - Print-friendly view
+
+**Interactive Components:**
+- Smooth transitions (150-200ms ease-in-out)
+- Hover states with subtle scale transforms
+- Loading skeletons for async data
+- Empty states with helpful messaging
+- Error boundaries with recovery actions
+- Toast notifications for actions
+- Pagination or infinite scroll for long lists
+**Stats Dashboard:**
+- Cards with gradient backgrounds and icons
+- Mini sparkline charts showing trends
+- Trend indicators (↑ ↓ with percentages)
+- Interactive hover tooltips
+- Responsive grid layout
+- Color-coded icons (FileText, CheckCircle, PlayCircle, Clock)tips
+- Responsive grid layout
+
+**Specs Browser:**
+- Toggle between table/grid/kanban views
+- Advanced filtering sidebar (collapsible)
+- Tag-based filtering with counts
+- Status and priority filters
+- Date range picker for timeline filtering
+- Sort options (date, priority, status, name)
+**Kanban Board:**
+- Color-coded column headers by status
+- Card priority indicators (left border colors)
+- Quick actions on card hover (view, edit status)
+- Drag-and-drop support (future)
+- Compact/expanded card view toggle
+- Column collapse/expand functionality
+- Horizontal scroll on mobile
+- Status icons for visual clarity (Clock, PlayCircle, CheckCircle, Archive)toggle
+- Column collapse/expand functionality
+- Horizontal scroll on mobile
+
+**Accessibility:**
+- WCAG 2.1 AA compliance
+- Keyboard navigation support
+- Screen reader optimized
+- Focus indicators
+- Skip links
+- Alt text for all images
+- Proper heading hierarchy
+- Color contrast validation
+
+**Performance:**
+- Code splitting per route
+- Image optimization (Next.js Image)
+- Lazy loading for heavy components
+- Virtual scrolling for long lists
+- Suspense boundaries
+- Streaming server components
+- Optimistic UI updates
+
 ### Sub-Specifications
 
 This spec is split into detailed sub-specs for maintainability:
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Technology stack, database schema, API design, caching strategy
+- **[UI-UX-DESIGN.md](./UI-UX-DESIGN.md)** - Comprehensive UI/UX design system, theme switching, navigation, accessibility
 - **[GITHUB-INTEGRATION.md](./GITHUB-INTEGRATION.md)** - GitHub sync mechanism, rate limiting, error handling
 - **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Phased implementation plan with timelines
 - **[TASKS.md](./TASKS.md)** - Detailed task-by-task breakdown with code examples (reference document)
@@ -105,15 +217,41 @@ This spec is split into detailed sub-specs for maintainability:
 - ✅ Responsive layout with status/priority badges
 
 ### 🚧 In Progress / Remaining for Phase 1
+
+**Core Functionality:**
 - [ ] Kanban board view by status
 - [ ] Search and filtering functionality
-- [ ] Integrate shadcn/ui component library (currently using basic Tailwind)
-- [ ] Proper navigation header/layout
 - [ ] Error boundaries and error pages (404, 500)
-- [ ] Loading states and skeleton loaders
 - [ ] Unit tests for database queries
 - [ ] Integration tests for API routes
 - [ ] Update README with proper documentation
+
+**UI/UX Enhancements:**
+- [ ] Integrate shadcn/ui component library fully (Button, Card, Input, Select, Dialog, Tabs, etc.)
+- [ ] Theme switching with next-themes (dark/light mode toggle)
+- [ ] Professional design polish:
+  - Consistent spacing and padding
+  - Refined color palette
+  - Typography hierarchy
+  - Shadow and elevation system
+  - Smooth transitions and hover effects
+- [ ] Navigation improvements:
+  - Sticky header with blur backdrop
+  - Active page indicators
+  - Breadcrumb navigation
+  - Mobile hamburger menu
+  - Quick search modal (Cmd+K)
+- [ ] Loading states and skeleton loaders
+- [ ] Timeline display for spec evolution
+- [ ] Sub-spec navigation and display:
+  - Tab-based or sidebar navigation
+  - Automatic sub-spec detection
+  - Table of contents for sub-specs
+  - Proper layout for different sub-spec types
+- [ ] Accessibility audit and fixes (WCAG AA)
+- [ ] Mobile responsive refinements
+
+**Deployment:**
 - [ ] Deploy MVP to Vercel
 
 ## Plan
@@ -212,20 +350,46 @@ This spec is split into detailed sub-specs for maintainability:
 
 1. **Dependencies** - Need `pnpm install` in packages/web before running
 2. **No Error Handling** - Missing try/catch blocks, error boundaries, error pages
-3. **Basic Styling** - Not yet using shadcn/ui as specified in design
-4. **No Tests** - Zero test coverage currently
-5. **README Outdated** - Still contains Next.js boilerplate
+3. **Basic UI Design** - Current issues:
+   - Not using shadcn/ui component library
+   - Inconsistent spacing, padding, alignment
+   - No theme switching (dark/light mode)
+   - Basic navigation without breadcrumbs or active indicators
+   - No sticky header or mobile menu
+   - Poor visual hierarchy and typography
+   - Lack of smooth transitions and micro-interactions
+4. **Poor Spec UX** - Navigation issues:
+   - No timeline showing spec evolution
+   - Sub-specs not properly detected or displayed
+   - Missing table of contents for long specs
+   - No breadcrumb navigation
+   - Difficult to understand spec history and transitions
+5. **No Tests** - Zero test coverage currently
+6. **README Outdated** - Still contains Next.js boilerplate
 
 ### Next Immediate Steps
 
-1. **Kanban Board** - Create `/board` route with drag-and-drop status columns
-2. **Search/Filter** - Add search input and tag/status/priority filters to home page
-3. **UI Components** - Integrate shadcn/ui for Button, Card, Badge, Input, etc.
-4. **Error Handling** - Add NotFound, ErrorBoundary, and error state handling
-5. **Loading States** - Implement Suspense boundaries and skeleton loaders
-6. **Tests** - Write unit tests for queries.ts and integration tests for API routes
+**Priority 1: UI/UX Foundation (2-3 days)**
+1. **Theme Switching** - Install next-themes, add theme toggle to navigation, refine dark mode colors
+2. **Component Library** - Install and configure shadcn/ui components (Button, Card, Badge, Input, Select, Dialog, Tabs, Tooltip)
+3. **Design Polish** - Implement consistent spacing, refined shadows, typography hierarchy, smooth transitions
+4. **Navigation** - Sticky header with blur, breadcrumbs, active indicators, mobile menu
+5. **Loading States** - Skeleton loaders for all async content, Suspense boundaries
 
-**Estimated time to complete Phase 1 MVP**: 2-3 days
+**Priority 2: Core Features (2-3 days)**
+6. **Kanban Board** - Complete `/board` route with color-coded columns, card interactions
+7. **Search/Filter** - Advanced filtering sidebar, tag filters, date range, sort options
+8. **Spec Timeline** - Display spec evolution timeline, status transitions, metadata visualization
+9. **Sub-Spec Navigation** - Tab-based or sidebar navigation for sub-specs, TOC, proper layouts
+10. **Error Handling** - Error boundaries, 404/500 pages, toast notifications
+
+**Priority 3: Testing & Deployment (1-2 days)**
+11. **Tests** - Unit tests for queries.ts, integration tests for API routes
+12. **Accessibility** - Keyboard navigation, screen reader testing, WCAG AA compliance
+13. **Mobile Polish** - Responsive refinements, touch interactions
+14. **Deploy** - Vercel deployment with environment variables
+
+**Estimated time to complete Phase 1 MVP**: 5-8 days
 
 ### Technical Decisions
 

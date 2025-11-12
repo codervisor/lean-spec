@@ -33,9 +33,13 @@ Database (PostgreSQL/SQLite) + GitHub API
 
 **Styling**: Tailwind CSS + shadcn/ui
 - Utility-first CSS framework
-- Pre-built accessible components
-- Consistent design system
-- Easy customization
+- Pre-built accessible components (Button, Card, Badge, Input, Select, Dialog, Tabs, Tooltip, Dropdown, etc.)
+- Consistent design system with design tokens
+- Easy customization with CSS variables
+- Dark/light theme support via next-themes
+- Professional elevation system (shadow-sm, shadow-md, shadow-lg)
+- Responsive design utilities
+- Animation and transition utilities
 
 **Markdown Rendering**: react-markdown or MDX
 - Rich markdown parsing
@@ -48,6 +52,199 @@ Database (PostgreSQL/SQLite) + GitHub API
 - Automatic caching and invalidation
 - Optimistic updates
 - Background refetching
+
+**Theme Management**: next-themes
+- Dark/light/system mode support
+- Automatic theme detection
+- Theme persistence in localStorage
+- No flash on page load
+- CSS variable based theme switching
+
+## UI/UX Design System
+
+### Design Principles
+
+**Professional Quality:**
+- Consistent spacing using 8px grid system (4, 8, 12, 16, 24, 32, 48, 64)
+- Clear visual hierarchy with typography scale
+- Refined color palette with WCAG AA contrast ratios
+- Smooth transitions and micro-interactions
+- Responsive design with mobile-first approach
+
+**User Experience:**
+- Progressive disclosure (don't overwhelm users)
+- Clear feedback for all interactions
+- Accessible by default (keyboard nav, screen readers)
+- Fast loading with skeleton loaders
+- Helpful error messages and empty states
+
+### Component Library
+
+**shadcn/ui Components to Use:**
+```typescript
+// Navigation & Layout
+- NavigationMenu (main nav)
+- Breadcrumb (page location)
+- Separator (visual dividers)
+
+// Interactive
+- Button (primary, secondary, outline, ghost variants)
+- Input (search, filters)
+- Select (dropdowns)
+- Dialog (modals)
+- Dropdown Menu (actions)
+- Tabs (sub-spec navigation)
+- Switch (toggles)
+- Checkbox (bulk selection)
+
+// Display
+- Card (spec cards, stats cards)
+- Badge (status, priority, tags)
+- Avatar (assignees)
+- Tooltip (helpful hints)
+- Skeleton (loading states)
+- Alert (notifications)
+- Progress (completion bars)
+
+// Advanced
+- Command (Cmd+K search)
+- Calendar (date filters)
+- Table (spec listing)
+- Toast (action feedback)
+```
+
+### Typography Hierarchy
+
+```css
+/* Headings */
+h1: 2rem (32px), font-weight: 700, line-height: 1.2
+h2: 1.75rem (28px), font-weight: 600, line-height: 1.3
+h3: 1.5rem (24px), font-weight: 600, line-height: 1.4
+h4: 1.25rem (20px), font-weight: 600, line-height: 1.4
+
+/* Body */
+Large: 1.125rem (18px), font-weight: 400, line-height: 1.6
+Base: 1rem (16px), font-weight: 400, line-height: 1.5
+Small: 0.875rem (14px), font-weight: 400, line-height: 1.5
+XSmall: 0.75rem (12px), font-weight: 400, line-height: 1.4
+
+/* Code */
+Code: 0.875rem (14px), font-family: monospace
+```
+
+### Color System
+
+**Light Mode:**
+```css
+--background: 0 0% 100% (white)
+--foreground: 222.2 84% 4.9% (near-black)
+--primary: 221.2 83.2% 53.3% (blue)
+--secondary: 210 40% 96.1% (light gray)
+--accent: 210 40% 96.1% (light blue-gray)
+--muted: 210 40% 96.1% (subtle background)
+--destructive: 0 84.2% 60.2% (red)
+--border: 214.3 31.8% 91.4% (light border)
+--ring: 221.2 83.2% 53.3% (focus ring)
+```
+
+**Dark Mode:**
+```css
+--background: 222.2 84% 4.9% (dark blue-black)
+--foreground: 210 40% 98% (off-white)
+--primary: 217.2 91.2% 59.8% (lighter blue)
+--secondary: 217.2 32.6% 17.5% (dark gray-blue)
+--accent: 217.2 32.6% 17.5% (dark blue-gray)
+--muted: 217.2 32.6% 17.5% (subtle dark)
+--destructive: 0 62.8% 30.6% (dark red)
+--border: 217.2 32.6% 17.5% (dark border)
+--ring: 224.3 76.3% 48% (focus ring)
+```
+
+**Status Colors:**
+```css
+Complete: 142 76% 36% (green)
+In Progress: 221 83% 53% (blue)
+Planned: 38 92% 50% (orange)
+Archived: 215 16% 47% (gray)
+```
+
+**Priority Colors:**
+```css
+Critical: 0 84% 60% (red)
+High: 38 92% 50% (orange)
+Medium: 221 83% 53% (blue)
+Low: 215 16% 47% (gray)
+```
+
+### Spacing Scale
+
+```css
+xs: 0.25rem (4px)
+sm: 0.5rem (8px)
+md: 0.75rem (12px)
+base: 1rem (16px)
+lg: 1.5rem (24px)
+xl: 2rem (32px)
+2xl: 3rem (48px)
+3xl: 4rem (64px)
+```
+
+### Animation & Transitions
+
+```css
+/* Standard transitions */
+transition: all 150ms ease-in-out
+
+/* Hover effects */
+hover:scale-105 (1.05 scale)
+hover:shadow-lg (elevation increase)
+
+/* Loading states */
+animate-pulse (skeleton loaders)
+animate-spin (spinners)
+
+/* Page transitions */
+fade-in: opacity 200ms ease-in
+slide-in: transform 200ms ease-out
+```
+
+### Spec Detail Page Layout
+
+**Main Layout:**
+```
+┌────────────────────────────────────────────┐
+│ Sticky Header (theme toggle, breadcrumb)  │
+├────────────────────────────────────────────┤
+│ ┌────────┐ ┌──────────────────────────┐   │
+│ │        │ │ Spec Title               │   │
+│ │ TOC    │ │ Timeline (created→done)  │   │
+│ │ Sticky │ │ Metadata (status, etc.)  │   │
+│ │ Scroll │ ├──────────────────────────┤   │
+│ │ Spy    │ │ Tabs: README | DESIGN |  │   │
+│ │        │ │       IMPLEMENTATION     │   │
+│ │        │ ├──────────────────────────┤   │
+│ │        │ │ Markdown Content         │   │
+│ │        │ │ (rich formatting)        │   │
+│ │        │ │                          │   │
+│ └────────┘ └──────────────────────────┘   │
+└────────────────────────────────────────────┘
+```
+
+**Timeline Visualization:**
+```
+Created ─────○─────○─────○───── Completed
+        Nov 3    Nov 5    Nov 11
+        
+Status: planned → in-progress → complete
+Time: 8 days to complete
+```
+
+**Sub-Spec Navigation:**
+- Tab-based (horizontal) for main navigation
+- Sidebar TOC for within-document navigation
+- Breadcrumb: Project / Spec / Sub-spec
+- Smooth transitions between sub-specs
+- Highlight active tab/section
 
 ### Backend
 

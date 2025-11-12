@@ -43,27 +43,43 @@ This document outlines the phased implementation roadmap for LeanSpec Web.
 - `GET /api/stats` - Get statistics
 - `POST /api/sync/[projectId]` - Trigger sync
 
-**Days 3-5: Frontend Pages**
-- Home page (hero, featured projects, stats)
-- Spec browser (list view, filters, search)
-- Spec detail page (metadata, markdown, navigation)
-- Kanban board (status columns)
-- Stats dashboard (charts, metrics)
-- Layout and navigation
+**Days 3-5: Frontend Pages & UI Foundation**
+- Install and configure shadcn/ui components
+- Setup next-themes for dark/light mode
+- Design system implementation (colors, spacing, typography)
+- Home page (hero, featured projects, stats with enhanced design)
+- Spec browser (list view, filters, search with advanced UI)
+- Spec detail page (metadata, markdown, navigation, timeline)
+- Kanban board (status columns with color coding)
+- Stats dashboard (charts, metrics, sparklines)
+- Layout and navigation (sticky header, breadcrumbs, theme toggle)
 
 ### Week 3: Rendering & Polish
 
-**Days 1-2: Markdown Rendering**
+**Days 1-2: Markdown Rendering & Sub-Specs**
 - Setup react-markdown with plugins (GFM, syntax highlighting)
 - Build custom markdown renderer component
-- Implement frontmatter display component
-- Create table of contents generator
+- Implement frontmatter display component with timeline visualization
+- Create table of contents generator with scroll spy
 - Handle internal spec links
+- Sub-spec detection and navigation (tabs or sidebar)
+- Proper layout for different sub-spec types
 
-**Days 3-5: Testing & Deployment**
+**Days 3-4: UI/UX Polish**
+- Smooth transitions and micro-interactions (150-200ms)
+- Hover effects with scale transforms
+- Loading skeletons for all async content
+- Empty states with helpful messaging
+- Error boundaries with recovery actions
+- Toast notifications
+- Theme-aware syntax highlighting
+- Mobile responsive refinements
+- Accessibility improvements (keyboard nav, screen reader)
+
+**Day 5: Testing & Deployment**
 - Unit tests (database queries, utilities)
 - Integration tests (API routes, sync flow)
-- E2E tests with Playwright (browse, search, view)
+- E2E tests with Playwright (browse, search, view, theme toggle)
 - Accessibility audit (WCAG 2.1 AA)
 - Performance optimization
 - Deploy MVP to Vercel
