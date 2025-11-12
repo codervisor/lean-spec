@@ -6,9 +6,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { getSpecById } from '@/lib/db/queries';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +20,7 @@ import { SpecTimeline } from '@/components/spec-timeline';
 import { SpecMetadata } from '@/components/spec-metadata';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
+import { SubSpecTabs } from '@/components/sub-spec-tabs';
 
 export default async function SpecDetailPage({ 
   params 
@@ -116,14 +114,10 @@ export default async function SpecDetailPage({
           {/* Main content - Markdown */}
           <div className="lg:col-span-2">
             <Card className="p-8">
-              <article className="prose prose-slate dark:prose-invert max-w-none">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
-                  {spec.contentMd}
-                </ReactMarkdown>
-              </article>
+              <SubSpecTabs 
+                mainContent={spec.contentMd} 
+                subSpecs={spec.subSpecs || []} 
+              />
             </Card>
           </div>
         </div>

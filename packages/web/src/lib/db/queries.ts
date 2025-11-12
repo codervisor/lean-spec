@@ -5,6 +5,8 @@
 import { db, schema } from './index';
 import { eq, and, inArray, desc } from 'drizzle-orm';
 import type { Project, Spec } from './schema';
+import { detectSubSpecs } from '../sub-specs';
+import { join } from 'path';
 
 // Projects
 export async function getProjects() {
@@ -33,9 +35,15 @@ export async function getSpecById(id: string) {
   const results = await db.select().from(schema.specs).where(eq(schema.specs.id, id)).limit(1);
   if (results.length === 0) return null;
   const spec = results[0];
+  
+  // Detect sub-specs from filesystem
+  const specDirPath = join(process.cwd(), '../../specs', spec.filePath.replace('/README.md', '').replace('specs/', ''));
+  const subSpecs = detectSubSpecs(specDirPath);
+  
   return {
     ...spec,
     tags: spec.tags ? JSON.parse(spec.tags) : null,
+    subSpecs,
   };
 }
 

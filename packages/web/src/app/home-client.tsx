@@ -5,7 +5,17 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Search, FileText, CheckCircle2, PlayCircle, Clock, TrendingUp } from 'lucide-react';
+import { StatusBadge } from '@/components/status-badge';
+import { PriorityBadge } from '@/components/priority-badge';
+import { cn } from '@/lib/utils';
 
 interface Spec {
   id: string;
@@ -60,41 +70,67 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Specs</CardTitle>
+          {/* Total Specs */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+            <CardHeader className="relative pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Specs</CardTitle>
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">{stats.totalSpecs}</div>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">{stats.totalSpecs}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
+          {/* Completed */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
+            <CardHeader className="relative pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{stats.completionRate}%</div>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">
+                {stats.specsByStatus.find(s => s.status === 'complete')?.count || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <span className="text-green-600">{stats.completionRate}%</span>
+                completion rate
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+          {/* In Progress */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+            <CardHeader className="relative pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+                <PlayCircle className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">
                 {stats.specsByStatus.find(s => s.status === 'in-progress')?.count || 0}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Planned</CardTitle>
+          {/* Planned */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
+            <CardHeader className="relative pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Planned</CardTitle>
+                <Clock className="h-5 w-5 text-orange-600" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">
                 {stats.specsByStatus.find(s => s.status === 'planned')?.count || 0}
               </div>
             </CardContent>
@@ -120,29 +156,31 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             </div>
             
             <div className="flex gap-2">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="planned">Planned</option>
-                <option value="in-progress">In Progress</option>
-                <option value="complete">Complete</option>
-                <option value="archived">Archived</option>
-              </select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="planned">Planned</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="complete">Complete</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-              >
-                <option value="all">All Priority</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -185,22 +223,10 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
                       <div className="text-sm">{spec.title || spec.specName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={
-                        spec.status === 'complete' ? 'default' :
-                        spec.status === 'in-progress' ? 'secondary' :
-                        'outline'
-                      }>
-                        {spec.status}
-                      </Badge>
+                      <StatusBadge status={spec.status || 'planned'} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={
-                        spec.priority === 'critical' ? 'destructive' :
-                        spec.priority === 'high' ? 'secondary' :
-                        'outline'
-                      }>
-                        {spec.priority || 'medium'}
-                      </Badge>
+                      <PriorityBadge priority={spec.priority || 'medium'} />
                     </td>
                   </tr>
                 ))}

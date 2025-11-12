@@ -74,6 +74,21 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-150 ease-in-out;
+}
+
+/* Remove transition from transform for better performance */
+*:where([class*="transform"], [class*="scale"], [class*="translate"]) {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+/* Disable transitions for theme changes to prevent flash */
+html.changing-theme * {
+  @apply !transition-none;
+}
+
 /* Syntax highlighting - Light mode (GitHub style) */
 .hljs {
   background: hsl(210 40% 98%);
