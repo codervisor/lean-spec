@@ -8,7 +8,6 @@ import { getSpecById } from '@/lib/db/queries';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github.css';
 
 export default async function SpecDetailPage({ 
   params 
