@@ -19,7 +19,6 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
-import { Separator } from '@/components/ui/separator';
 import { SpecTimeline } from '@/components/spec-timeline';
 import { SpecMetadata } from '@/components/spec-metadata';
 import { StatusBadge } from '@/components/status-badge';
