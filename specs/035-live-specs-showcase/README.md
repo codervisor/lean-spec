@@ -280,6 +280,7 @@ This spec is split into detailed sub-specs for maintainability:
 - [ ] **Spec Detail - No Sticky Left Info** - Metadata/info area should be sticky on left side
 - [ ] **Spec Detail - No Sticky Header** - Header should stick on scroll for navigation
 - [ ] **Spec Detail - Poor Frontmatter Display** - Frontmatter metadata display is very bad, needs redesign
+- [ ] **Missing Logo & Favicon** - No logo beside "LeanSpec" in top left header, no favicon for browser tab
 - [ ] **Dark Theme Typography Issues** - Bold text (e.g., "Recent Improvements (2025-11-05):") has wrong color in dark theme
 - [ ] **Dark Theme Strong Tags** - Similar color issues with `<strong>` elements throughout
 
