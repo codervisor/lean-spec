@@ -201,7 +201,9 @@ This spec is split into detailed sub-specs for maintainability:
 
 ## Progress
 
-**Current Status**: Phase 1 ~70% Complete (revised 2025-11-12 after UI/UX improvements)
+**Current Status**: Phase 1 ~40% Complete (revised 2025-11-13 after realistic assessment)
+
+**Reality Check (2025-11-13)**: Previous 70% estimate was overly optimistic. While foundational work is solid, many core pages and features are incomplete or have significant UX issues.
 
 **✅ Major UI/UX Improvements Completed (2025-11-12)**:
 
@@ -268,13 +270,23 @@ This spec is split into detailed sub-specs for maintainability:
 - ✅ Breadcrumb navigation (basic implementation)
 - ✅ Timeline component (basic implementation)
 
-### 🚧 In Progress / Remaining for Phase 1
+### 🚧 Critical Issues & Missing Features (2025-11-13)
+
+**Major UX/UI Problems - Must Fix:**
+- [ ] **Color Scheme Issue** - Planned (orange) and In-Progress (blue) colors are backwards - swap them
+- [ ] **Stats Page Incomplete** - Major page with missing/incomplete sections
+- [ ] **Spec Detail Page - No Sidebar for Spec Navigation** - Missing sidebar to quickly switch between different specs (not TOC)
+- [ ] **Sub-Spec Navigation Poor Design** - Current tab design doesn't make sense, needs complete redesign
+- [ ] **Spec Detail - No Sticky Left Info** - Metadata/info area should be sticky on left side
+- [ ] **Spec Detail - No Sticky Header** - Header should stick on scroll for navigation
+- [ ] **Spec Detail - Poor Frontmatter Display** - Frontmatter metadata display is very bad, needs redesign
+- [ ] **Dark Theme Typography Issues** - Bold text (e.g., "Recent Improvements (2025-11-05):") has wrong color in dark theme
+- [ ] **Dark Theme Strong Tags** - Similar color issues with `<strong>` elements throughout
 
 **High Priority - Still Needed:**
 - [ ] **Quick Search Modal (Cmd+K)** - Fuzzy search with keyboard shortcuts
 - [ ] **Loading Skeletons** - Add Suspense boundaries and skeleton loaders for async content
 - [ ] **Enhanced Empty States** - More helpful messaging with actions (currently basic)
-- [ ] **Metadata Display Enhancement** - Add assignee avatars, better organization
 - [ ] **Toast Notifications** - System for user feedback (create/update/delete actions)
 
 **Core Functionality:**
@@ -440,36 +452,48 @@ This spec is split into detailed sub-specs for maintainability:
 
 **Remaining Work**: Quick search (Cmd+K), loading skeletons, toast notifications, testing, deployment.
 
-### Next Immediate Steps (Updated 2025-11-12)
+### Next Immediate Steps (Updated 2025-11-13)
 
-**Priority 1: Final Polish & Missing Features (2-3 days)**
-1. **Quick Search Modal (Cmd+K)** - Implement keyboard-triggered search with fuzzy matching
-2. **Loading States** - Add Suspense boundaries and skeleton components
-3. **Enhanced Empty States** - Better messaging with icons and helpful actions
-4. **Toast Notifications** - User feedback system for actions
-5. **Metadata Polish** - Add assignee avatars (mock if no data), improve layout
+**Priority 0: Fix Critical UX Issues (3-5 days) - MUST DO FIRST**
+1. **Swap Planned/In-Progress Colors** - Orange should be in-progress, blue should be planned
+2. **Fix Dark Theme Typography** - Bold/strong text colors in dark mode
+3. **Complete Stats Page** - Fill in missing sections and features
+4. **Redesign Spec Detail Page**:
+   - Add sidebar for quick navigation between different specs (not a TOC)
+   - Add sticky left sidebar with metadata + info
+   - Add sticky header for navigation
+   - Completely redesign frontmatter display (current is very bad)
+5. **Redesign Sub-Spec Navigation** - Current design doesn't make sense, needs better UX
+
+**Priority 1: Remaining Features (2-3 days)**
+6. **Quick Search Modal (Cmd+K)** - Implement keyboard-triggered search with fuzzy matching
+7. **Loading States** - Add Suspense boundaries and skeleton components
+8. **Enhanced Empty States** - Better messaging with icons and helpful actions
+9. **Toast Notifications** - User feedback system for actions
 
 **Priority 2: Testing & Quality (1-2 days)**
-6. **Error Handling** - Proper error boundaries, 404/500 pages with good design
-7. **Accessibility Audit** - WCAG AA compliance check, keyboard navigation
-8. **Mobile Testing** - Test on real devices, polish responsive behavior
-9. **Unit Tests** - Basic coverage for queries and critical paths
+10. **Error Handling** - Proper error boundaries, 404/500 pages with good design
+11. **Accessibility Audit** - WCAG AA compliance check, keyboard navigation
+12. **Mobile Testing** - Test on real devices, polish responsive behavior
+13. **Unit Tests** - Basic coverage for queries and critical paths
 
 **Priority 3: Documentation & Deployment (1 day)**
-10. **README Update** - Replace boilerplate with actual project docs
-11. **Deploy to Vercel** - Production deployment with environment variables
+14. **README Update** - Replace boilerplate with actual project docs
+15. **Deploy to Vercel** - Production deployment with environment variables
 
-**Estimated time to complete Phase 1**: 4-6 days
+**Estimated time to complete Phase 1**: 2-3 weeks (revised from 4-6 days based on realistic assessment)
 
 **Definition of Done for Phase 1:**
-- ✅ Professional UI/UX matching spec requirements (ACHIEVED 2025-11-12)
 - ✅ Icon system throughout (ACHIEVED 2025-11-12)
-- ✅ Color-coded status/priority (ACHIEVED 2025-11-12)
-- ✅ Sub-spec navigation working (ACHIEVED 2025-11-12)
 - ✅ Timeline with icons and relative time (ACHIEVED 2025-11-12)
 - ✅ Blur backdrop and smooth transitions (ACHIEVED 2025-11-12)
-- ⏳ Quick search (Cmd+K) - IN PROGRESS
-- ⏳ Loading states everywhere - IN PROGRESS
+- ❌ Professional UI/UX matching spec requirements - NEEDS MAJOR FIXES (color swap, spec detail redesign, stats completion)
+- ❌ Color-coded status/priority - WRONG COLORS (planned/in-progress swapped)
+- ❌ Sub-spec navigation working - POOR DESIGN, needs complete rework
+- ❌ Spec detail page design - MISSING sticky sidebar, sticky header, proper frontmatter display
+- ❌ Dark theme typography - Bold/strong text has wrong colors
+- ⏳ Quick search (Cmd+K) - TODO
+- ⏳ Loading states everywhere - TODO
 - ⏳ No major accessibility issues - TESTING NEEDED
 - ⏳ Basic test coverage (>50%) - TODO
 - ⏳ Deployed and viewable - TODO
