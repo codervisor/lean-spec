@@ -106,11 +106,11 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
 
           {/* In Progress */}
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-br from-orange-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
-                <PlayCircle className="h-5 w-5 text-blue-600" />
+                <PlayCircle className="h-5 w-5 text-orange-600" />
               </div>
             </CardHeader>
             <CardContent className="relative">
@@ -122,11 +122,11 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
 
           {/* Planned */}
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-br from-orange-500/10 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Planned</CardTitle>
-                <Clock className="h-5 w-5 text-orange-600" />
+                <Clock className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
             <CardContent className="relative">

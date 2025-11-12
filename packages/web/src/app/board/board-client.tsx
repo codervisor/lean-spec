@@ -28,16 +28,16 @@ export function BoardClient({ initialSpecs }: BoardClientProps) {
     'planned': {
       icon: Clock,
       title: 'Planned',
-      colorClass: 'text-orange-600 dark:text-orange-400',
-      bgClass: 'bg-orange-50 dark:bg-orange-900/20',
-      borderClass: 'border-orange-200 dark:border-orange-800'
+      colorClass: 'text-blue-600 dark:text-blue-400',
+      bgClass: 'bg-blue-50 dark:bg-blue-900/20',
+      borderClass: 'border-blue-200 dark:border-blue-800'
     },
     'in-progress': {
       icon: PlayCircle,
       title: 'In Progress',
-      colorClass: 'text-blue-600 dark:text-blue-400',
-      bgClass: 'bg-blue-50 dark:bg-blue-900/20',
-      borderClass: 'border-blue-200 dark:border-blue-800'
+      colorClass: 'text-orange-600 dark:text-orange-400',
+      bgClass: 'bg-orange-50 dark:bg-orange-900/20',
+      borderClass: 'border-orange-200 dark:border-orange-800'
     },
     'complete': {
       icon: CheckCircle2,
