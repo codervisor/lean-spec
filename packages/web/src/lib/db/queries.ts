@@ -32,7 +32,18 @@ export async function getSpecs() {
 }
 
 export async function getSpecById(id: string) {
-  const results = await db.select().from(schema.specs).where(eq(schema.specs.id, id)).limit(1);
+  // Support both uuid and spec number (e.g., "035" or "35")
+  let results;
+  
+  // Check if id is numeric (spec number)
+  const specNum = parseInt(id, 10);
+  if (!isNaN(specNum)) {
+    results = await db.select().from(schema.specs).where(eq(schema.specs.specNumber, specNum)).limit(1);
+  } else {
+    // Fallback to uuid lookup
+    results = await db.select().from(schema.specs).where(eq(schema.specs.id, id)).limit(1);
+  }
+  
   if (results.length === 0) return null;
   const spec = results[0];
   

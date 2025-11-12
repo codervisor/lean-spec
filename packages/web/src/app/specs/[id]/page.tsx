@@ -41,7 +41,7 @@ export default async function SpecDetailPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Breadcrumb Navigation */}
-      <div className="border-b bg-muted/50">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-muted/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <Breadcrumb>
             <BreadcrumbList>
@@ -64,7 +64,7 @@ export default async function SpecDetailPage({
       </div>
 
       {/* Header */}
-      <header className="border-b bg-card">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-card">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
           {/* Back button */}
           <Link href="/">

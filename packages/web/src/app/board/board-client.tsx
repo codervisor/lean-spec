@@ -79,7 +79,7 @@ export function BoardClient({ initialSpecs }: BoardClientProps) {
             return (
               <div key={column.status} className="flex flex-col">
                 <div className={cn(
-                  "mb-4 p-3 rounded-lg border-2",
+                  "sticky top-14 z-40 mb-4 p-3 rounded-lg border-2 bg-background",
                   column.config.bgClass,
                   column.config.borderClass
                 )}>
@@ -108,12 +108,13 @@ export function BoardClient({ initialSpecs }: BoardClientProps) {
                       <Card 
                         key={spec.id} 
                         className={cn(
-                          "hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4",
+                          "hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer border-gray-200 dark:border-gray-800",
                           borderColor
                         )}
+                        onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
                       >
                         <CardHeader className="pb-3">
-                          <Link href={`/specs/${spec.id}`}>
+                          <Link href={`/specs/${spec.specNumber || spec.id}`}>
                             <CardTitle className="text-sm font-medium hover:text-primary transition-colors">
                               {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
                             </CardTitle>
@@ -148,7 +149,7 @@ export function BoardClient({ initialSpecs }: BoardClientProps) {
                   })}
 
                   {column.specs.length === 0 && (
-                    <Card className="border-dashed">
+                    <Card className="border-dashed border-gray-300 dark:border-gray-700">
                       <CardContent className="py-8 text-center">
                         <Icon className={cn("mx-auto h-8 w-8 mb-2", column.config.colorClass, "opacity-50")} />
                         <p className="text-sm text-muted-foreground">No {column.config.title.toLowerCase()} specs</p>

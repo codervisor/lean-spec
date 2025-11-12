@@ -23,7 +23,7 @@ function parseSpecDirectory(dirPath: string): ParsedSpec | null {
   try {
     const readmePath = join(dirPath, 'README.md');
     const content = readFileSync(readmePath, 'utf-8');
-    const { data: frontmatter } = matter(content);
+    const { data: frontmatter, content: markdownContent } = matter(content);
     
     // Extract spec number and name from directory name
     const dirName = dirPath.split('/').pop() || '';
@@ -35,7 +35,7 @@ function parseSpecDirectory(dirPath: string): ParsedSpec | null {
       number: specNumber,
       name: specName,
       frontmatter: frontmatter as Record<string, any>,
-      content,
+      content: markdownContent, // Use the parsed content without frontmatter
       filePath: `specs/${dirName}/README.md`,
     };
   } catch (error) {

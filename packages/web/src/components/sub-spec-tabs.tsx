@@ -9,15 +9,26 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { cn } from '@/lib/utils';
-import type { LucideIcon } from 'lucide-react';
+import { FileText, Palette, Code, TestTube, CheckSquare, Wrench, Map, GitBranch } from 'lucide-react';
 
 export interface SubSpec {
   name: string;
   file: string;
-  icon: LucideIcon;
+  iconName: string;
   color: string;
   content: string;
 }
+
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  FileText,
+  Palette,
+  Code,
+  TestTube,
+  CheckSquare,
+  Wrench,
+  Map,
+  GitBranch,
+};
 
 interface SubSpecTabsProps {
   mainContent: string;
@@ -30,7 +41,7 @@ export function SubSpecTabs({ mainContent, subSpecs }: SubSpecTabsProps) {
   // If no sub-specs, just render main content
   if (subSpecs.length === 0) {
     return (
-      <article className="prose prose-slate dark:prose-invert max-w-none">
+      <article className="prose max-w-none">
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
@@ -49,14 +60,14 @@ export function SubSpecTabs({ mainContent, subSpecs }: SubSpecTabsProps) {
           Overview
         </TabsTrigger>
         {subSpecs.map((subSpec) => {
-          const Icon = subSpec.icon;
+          const Icon = ICON_MAP[subSpec.iconName];
           return (
             <TabsTrigger 
               key={subSpec.file} 
               value={subSpec.name.toLowerCase()}
               className="flex items-center gap-2"
             >
-              <Icon className={cn("h-4 w-4", subSpec.color)} />
+              {Icon && <Icon className={cn("h-4 w-4", subSpec.color)} />}
               {subSpec.name}
             </TabsTrigger>
           );
@@ -64,7 +75,7 @@ export function SubSpecTabs({ mainContent, subSpecs }: SubSpecTabsProps) {
       </TabsList>
       
       <TabsContent value="readme" className="mt-6">
-        <article className="prose prose-slate dark:prose-invert max-w-none">
+        <article className="prose max-w-none">
           <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
@@ -76,7 +87,7 @@ export function SubSpecTabs({ mainContent, subSpecs }: SubSpecTabsProps) {
       
       {subSpecs.map((subSpec) => (
         <TabsContent key={subSpec.file} value={subSpec.name.toLowerCase()} className="mt-6">
-          <article className="prose prose-slate dark:prose-invert max-w-none">
+          <article className="prose max-w-none">
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}

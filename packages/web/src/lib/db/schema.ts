@@ -3,7 +3,7 @@
  * Using Drizzle ORM with SQLite (development) / PostgreSQL (production)
  */
 
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // Projects table - GitHub repositories using LeanSpec
@@ -45,7 +45,10 @@ export const specs = sqliteTable('specs', {
   filePath: text('file_path').notNull(), // Path in repo
   githubUrl: text('github_url'), // Direct GitHub file link
   syncedAt: integer('synced_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  // Unique constraint on projectId + specNumber (prevent duplicates within a project)
+  uniqueSpecNumber: uniqueIndex('unique_spec_number').on(table.projectId, table.specNumber),
+}));
 
 // Spec relationships table - Tracks dependencies between specs
 export const specRelationships = sqliteTable('spec_relationships', {

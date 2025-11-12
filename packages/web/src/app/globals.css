@@ -86,7 +86,7 @@ body {
 
 /* Disable transitions for theme changes to prevent flash */
 html.changing-theme * {
-  @apply !transition-none;
+  @apply transition-none!;
 }
 
 /* Syntax highlighting - Light mode (GitHub style) */
@@ -165,5 +165,196 @@ html.changing-theme * {
 .dark .hljs-section,
 .dark .hljs-selector-id {
   color: hsl(217 91% 70%);
+}
+
+/* Prose styling for markdown content */
+.prose {
+  max-width: none;
+  color: hsl(222.2 84% 4.9%);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+  color: hsl(222.2 84% 4.9%);
+  scroll-margin-top: 5rem;
+}
+
+.prose h1 { 
+  font-size: 2.25em; 
+  margin-top: 0;
+  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+  padding-bottom: 0.3em;
+}
+.prose h2 { 
+  font-size: 1.875em;
+  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+  padding-bottom: 0.3em;
+}
+.prose h3 { font-size: 1.5em; }
+.prose h4 { font-size: 1.25em; }
+.prose h5 { font-size: 1.125em; }
+.prose h6 { font-size: 1em; }
+
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  line-height: 1.75;
+}
+
+.prose a {
+  color: hsl(221 83% 53%);
+  text-decoration: underline;
+  text-decoration-color: hsl(221 83% 53% / 0.3);
+  transition: all 0.2s;
+}
+
+.prose a:hover {
+  text-decoration-color: hsl(221 83% 53%);
+  color: hsl(221 83% 43%);
+}
+
+.prose :not(pre) > code {
+  background: hsl(210 40% 96%);
+  color: hsl(338 70% 45%);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.prose pre {
+  margin: 1.5em 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+}
+
+.prose pre code {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0;
+  font-size: 0.875em;
+  line-height: 1.7;
+  color: inherit;
+  font-weight: 400;
+  display: block;
+}
+
+.prose ul, .prose ol {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  padding-left: 1.625em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose blockquote {
+  border-left: 4px solid hsl(221 83% 53%);
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  margin: 1.5em 0;
+  background: hsl(210 40% 98%);
+  border-radius: 0 0.25rem 0.25rem 0;
+  color: hsl(215.4 16.3% 36.9%);
+}
+
+.prose blockquote p {
+  margin: 0.5em 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+}
+
+.prose th, .prose td {
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  padding: 0.5em 1em;
+  text-align: left;
+}
+
+.prose th {
+  background: hsl(210 40% 96%);
+  font-weight: 600;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid hsl(214.3 31.8% 91.4%);
+  margin: 2em 0;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5em 0;
+}
+
+/* Dark mode prose styling */
+.dark .prose {
+  color: hsl(210 40% 98%);
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: hsl(210 40% 98%);
+}
+
+.dark .prose h1,
+.dark .prose h2 {
+  border-bottom-color: hsl(217.2 32.6% 17.5%);
+}
+
+.dark .prose a {
+  color: hsl(217 91% 70%);
+  text-decoration-color: hsl(217 91% 70% / 0.3);
+}
+
+.dark .prose a:hover {
+  text-decoration-color: hsl(217 91% 70%);
+  color: hsl(217 91% 80%);
+}
+
+.dark .prose :not(pre) > code {
+  background: hsl(217.2 32.6% 17.5%);
+  color: hsl(338 70% 75%);
+}
+
+.dark .prose pre {
+  border-color: hsl(217.2 32.6% 17.5%);
+}
+
+.dark .prose blockquote {
+  border-left-color: hsl(217 91% 70%);
+  background: hsl(217.2 32.6% 12%);
+  color: hsl(215 20% 75%);
+}
+
+.dark .prose th, .dark .prose td {
+  border-color: hsl(217.2 32.6% 17.5%);
+}
+
+.dark .prose th {
+  background: hsl(217.2 32.6% 17.5%);
+}
+
+.dark .prose hr {
+  border-top-color: hsl(217.2 32.6% 17.5%);
 }
 
