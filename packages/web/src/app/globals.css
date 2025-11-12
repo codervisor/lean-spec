@@ -73,3 +73,82 @@
 body {
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+/* Syntax highlighting - Light mode (GitHub style) */
+.hljs {
+  background: hsl(210 40% 98%);
+  color: hsl(222.2 84% 4.9%);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: hsl(215 16% 47%);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: hsl(338 70% 45%);
+  font-weight: 600;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: hsl(221 83% 53%);
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: hsl(142 76% 36%);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: hsl(221 83% 53%);
+  font-weight: 600;
+}
+
+/* Syntax highlighting - Dark mode */
+.dark .hljs {
+  background: hsl(217.2 32.6% 17.5%);
+  color: hsl(210 40% 98%);
+}
+
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: hsl(215 20% 65%);
+}
+
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-subst {
+  color: hsl(338 70% 65%);
+}
+
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-tag .hljs-attr {
+  color: hsl(217 91% 70%);
+}
+
+.dark .hljs-string,
+.dark .hljs-doctag {
+  color: hsl(142 76% 56%);
+}
+
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-selector-id {
+  color: hsl(217 91% 70%);
+}
+

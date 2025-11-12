@@ -1,14 +1,28 @@
 /**
- * Spec detail page with markdown rendering
+ * Spec detail page with markdown rendering and enhanced UI
  */
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { getSpecById } from '@/lib/db/queries';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github.css';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
+import { SpecTimeline } from '@/components/spec-timeline';
+import { SpecMetadata } from '@/components/spec-metadata';
+import { StatusBadge } from '@/components/status-badge';
+import { PriorityBadge } from '@/components/priority-badge';
 
 export default async function SpecDetailPage({ 
   params 
@@ -24,69 +38,95 @@ export default async function SpecDetailPage({
 
   // Parse tags if stored as JSON string
   const tags = spec.tags ? (typeof spec.tags === 'string' ? JSON.parse(spec.tags) : spec.tags) : [];
+  const specWithTags = { ...spec, tags };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm mb-4 inline-block">
-            ← Back to Specs
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {spec.specNumber && `#${spec.specNumber} - `}{spec.title || spec.specName}
-          </h1>
-          
-          {/* Metadata */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${
-              spec.status === 'complete' ? 'bg-green-100 text-green-800' :
-              spec.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-              spec.status === 'planned' ? 'bg-gray-100 text-gray-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
-              {spec.status}
-            </span>
-            <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${
-              spec.priority === 'critical' ? 'bg-red-100 text-red-800' :
-              spec.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-              spec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {spec.priority || 'medium'} priority
-            </span>
-            {tags.map((tag: string) => (
-              <span key={tag} className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-50 text-blue-700">
-                #{tag}
-              </span>
-            ))}
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Breadcrumb Navigation */}
+      <div className="border-b bg-muted/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Specs</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>
+                  {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+      </div>
 
-          {spec.githubUrl && (
-            <div className="mt-4">
-              <a 
-                href={spec.githubUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                View on GitHub →
-              </a>
+      {/* Header */}
+      <header className="border-b bg-card">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+          {/* Back button */}
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Specs
+            </Button>
+          </Link>
+
+          {/* Title and badges */}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {spec.specNumber && (
+                <span className="text-muted-foreground">#{spec.specNumber} </span>
+              )}
+              {spec.title || spec.specName}
+            </h1>
+            
+            <div className="flex flex-wrap gap-2 mt-3">
+              <StatusBadge status={spec.status || 'planned'} />
+              <PriorityBadge priority={spec.priority || 'medium'} />
             </div>
-          )}
+          </div>
         </div>
       </header>
 
-      {/* Content */}
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <article className="bg-white rounded-lg shadow p-8 prose prose-slate max-w-none">
-          <ReactMarkdown 
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-          >
-            {spec.contentMd}
-          </ReactMarkdown>
-        </article>
+      {/* Main content */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left sidebar - Metadata */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Timeline */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-2">Timeline</h3>
+              <SpecTimeline
+                createdAt={spec.createdAt}
+                updatedAt={spec.updatedAt}
+                completedAt={spec.completedAt}
+                status={spec.status || 'planned'}
+              />
+            </Card>
+
+            {/* Metadata */}
+            <SpecMetadata spec={specWithTags} />
+          </div>
+
+          {/* Main content - Markdown */}
+          <div className="lg:col-span-2">
+            <Card className="p-8">
+              <article className="prose prose-slate dark:prose-invert max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                >
+                  {spec.contentMd}
+                </ReactMarkdown>
+              </article>
+            </Card>
+          </div>
+        </div>
       </main>
     </div>
   );
