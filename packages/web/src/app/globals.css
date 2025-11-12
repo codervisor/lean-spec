@@ -381,8 +381,20 @@ html.changing-theme * {
   margin: 1.5em 0;
 }
 
+.prose strong,
+.prose b {
+  font-weight: 600;
+  color: hsl(222.2 84% 4.9%);
+}
+
 /* Dark mode prose styling */
 .dark .prose {
+  color: hsl(210 40% 98%);
+}
+
+.dark .prose strong,
+.dark .prose b {
+  font-weight: 600;
   color: hsl(210 40% 98%);
 }
 
