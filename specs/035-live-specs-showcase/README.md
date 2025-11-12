@@ -80,7 +80,7 @@ Build a fullstack web application for browsing and showcasing LeanSpec specifica
 
 **Professional Design System:**
 - shadcn/ui component library fully integrated (Button, Card, Badge, Input, Select, Dialog, Tabs, Tooltip, Dropdown, etc.)
-- Tailwind CSS v4 with consistent design tokens
+- Tailwind CSS v3 with consistent design tokens (v4 was causing compatibility issues with shadcn/ui)
 - Lucide React icon library for visual clarity
 - Refined spacing scale (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)
 - Professional elevation system (shadow-sm, shadow-md, shadow-lg, shadow-xl)
@@ -381,7 +381,7 @@ This spec is split into detailed sub-specs for maintainability:
 - React 19.2.0 with Server Components
 - Drizzle ORM 0.38.3 with better-sqlite3
 - react-markdown 9.0.2 + rehype-highlight + remark-gfm
-- Tailwind CSS 4 (shadcn/ui integration pending)
+- Tailwind CSS v3 (downgraded from v4 for shadcn/ui compatibility)
 
 **Package Location:** `packages/web/` (monorepo structure)
 
@@ -492,6 +492,14 @@ This spec is split into detailed sub-specs for maintainability:
 - **GitHub**: Source of truth (reliable, versioned, authoritative)
 - **Database**: Performance layer (fast queries, search, caching)
 - Best of both: Reliability + Speed + Decoupling from API limits
+
+**Why Tailwind CSS v3 instead of v4?**
+- **Decision made**: 2025-11-13 - Downgrade from v4 to v3
+- **Reason**: Tailwind v4 is still in beta/alpha and causing compatibility issues with shadcn/ui
+- **Impact**: shadcn/ui components are designed for Tailwind v3, using v4 breaks styling
+- **Trade-off**: Lose latest features (native CSS variables, improved performance) but gain stability
+- **Migration path**: Can upgrade to v4 once it's stable and shadcn/ui officially supports it
+- **Current state**: Using Tailwind CSS v3.4.x with PostCSS configuration
 
 **Caching Strategy:**
 - Database caches parsed specs (primary cache)
