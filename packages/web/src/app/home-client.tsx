@@ -207,14 +207,15 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {filteredSpecs.map((spec) => (
-                <tr key={spec.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}>
+                <tr 
+                  key={spec.id} 
+                  className="group hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      href={`/specs/${spec.specNumber || spec.id}`}
-                      className="text-primary hover:underline font-medium"
-                    >
+                    <span className="text-primary group-hover:underline font-medium">
                       {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
-                    </Link>
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm">{spec.title || spec.specName}</div>

@@ -7,6 +7,7 @@ import matter from 'gray-matter';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { eq } from 'drizzle-orm';
 
 // Path to specs directory (relative to monorepo root)
 const SPECS_DIR = join(process.cwd(), '../../specs');
@@ -68,6 +69,18 @@ function getAllSpecs(): ParsedSpec[] {
 
 async function seed() {
   console.log('Seeding database with LeanSpec specs...');
+  
+  // Clear existing data for LeanSpec project (idempotent seed)
+  console.log('Clearing existing LeanSpec data...');
+  const existingProjects = await db
+    .select()
+    .from(schema.projects)
+    .where(eq(schema.projects.githubRepo, 'lean-spec'));
+  
+  for (const project of existingProjects) {
+    // Cascade delete will remove associated specs
+    await db.delete(schema.projects).where(eq(schema.projects.id, project.id));
+  }
   
   // Create LeanSpec project
   const projectId = randomUUID();
