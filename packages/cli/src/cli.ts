@@ -400,6 +400,17 @@ program
     await statsCommand(options);
   });
 
+// analyze command - for spec 059
+program
+  .command('analyze <spec>')
+  .description('Analyze spec complexity and structure (spec 059)')
+  .option('--json', 'Output as JSON for AI agents')
+  .option('--verbose', 'Include detailed section breakdown')
+  .action(async (specPath: string, options: { json?: boolean; verbose?: boolean }) => {
+    const { analyzeCommand } = await import('./commands/index.js');
+    await analyzeCommand(specPath, options);
+  });
+
 // tokens command
 program
   .command('tokens [spec]')

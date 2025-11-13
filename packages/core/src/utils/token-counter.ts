@@ -65,6 +65,14 @@ export class TokenCounter {
   }
 
   /**
+   * Count tokens in content (convenience method for analyze command)
+   * Alias for countString - provided for clarity in command usage
+   */
+  async countTokensInContent(content: string): Promise<number> {
+    return this.countString(content);
+  }
+
+  /**
    * Count tokens in a single file
    */
   async countFile(filePath: string, options: TokenCounterOptions = {}): Promise<TokenCount> {
