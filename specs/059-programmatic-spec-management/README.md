@@ -87,11 +87,11 @@ $ # 10+ minutes of LLM generation, risk of corruption
 # Future (fast, programmatic, reliable):
 $ lean-spec analyze 045 --complexity
 # Analyzing spec structure...
-# ⚠ Spec exceeds 400 lines (1,166 lines)
+# ⚠ Spec exceeds 3,500 tokens (4,800 tokens)
 # ⚠ Detected 5 distinct concerns: overview, design, rationale, implementation, testing
 # 
 # Recommended strategy: PARTITION into sub-specs
-# Estimated split: 5 files, largest ~380 lines
+# Estimated split: 5 files, largest ~1,500 tokens
 # 
 # Would you like to proceed? (Y/n)
 
@@ -104,11 +104,11 @@ $ lean-spec split 045 --auto-partition
 # Validating result... ✓
 # 
 # Split complete:
-#   README.md (203 lines) - Overview + decision
-#   DESIGN.md (378 lines) - Detailed design
-#   RATIONALE.md (146 lines) - Trade-offs
-#   IMPLEMENTATION.md (144 lines) - Implementation plan
-#   TESTING.md (182 lines) - Test strategy
+#   README.md (830 tokens, 203 lines) - Overview + decision
+#   DESIGN.md (1,500 tokens, 378 lines) - Detailed design
+#   RATIONALE.md (590 tokens, 146 lines) - Trade-offs
+#   IMPLEMENTATION.md (580 tokens, 144 lines) - Implementation plan
+#   TESTING.md (740 tokens, 182 lines) - Test strategy
 
 $ lean-spec compact 018 --remove-redundancy
 # Analyzing for redundancy... ✓
@@ -116,8 +116,8 @@ $ lean-spec compact 018 --remove-redundancy
 # Found 5 sections inferable from others
 # 
 # Compaction preview:
-#   Before: 591 lines
-#   After: 420 lines (29% reduction)
+#   Before: 2,400 tokens (591 lines)
+#   After: 1,700 tokens (420 lines) - 29% reduction
 #   Preserved: All decision-making content
 #   Removed: Redundant examples, obvious explanations
 # 
@@ -135,7 +135,7 @@ This spec is organized using sub-spec files (practicing what we preach):
 - **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Phased plan: parser → analyzer → transformers → commands
 - **[TESTING.md](./TESTING.md)** - Test strategy: unit tests, integration tests, golden tests
 
-**Note**: Several sub-specs currently exceed 400 lines (411-799 lines). This demonstrates the exact problem we're solving - comprehensive technical documentation naturally grows beyond working memory limits. The tools we're building will make it trivial to further split these sub-specs programmatically.
+**Note**: Several sub-specs currently exceed optimal token counts (2,996-4,799 tokens). This demonstrates the exact problem we're solving - comprehensive technical documentation naturally grows beyond working memory limits. The tools we're building will make it trivial to further split these sub-specs programmatically.
 
 ## Quick Reference
 
@@ -143,7 +143,7 @@ This spec is organized using sub-spec files (practicing what we preach):
 
 | Strategy | Purpose | When to Use | Tool |
 |----------|---------|-------------|------|
-| **Partition** | Split into sub-specs | Spec >400 lines, multiple concerns | `lean-spec split` |
+| **Partition** | Split into sub-specs | Spec >3,500 tokens, multiple concerns | `lean-spec split` |
 | **Compact** | Remove redundancy | Verbose, repetitive content | `lean-spec compact` |
 | **Compress** | Summarize sections | Historical context, completed phases | `lean-spec compress` |
 | **Isolate** | Move to separate spec | Unrelated concern, different lifecycle | `lean-spec isolate` |
@@ -153,7 +153,7 @@ This spec is organized using sub-spec files (practicing what we preach):
 | Failure Mode | Symptom | Detection | Mitigation |
 |--------------|---------|-----------|------------|
 | **Poisoning** | AI references non-existent content | Validate references | Remove corrupted sections |
-| **Distraction** | AI ignores training, repeats spec | Track spec length | Split at 400 lines |
+| **Distraction** | AI ignores training, repeats spec | Track spec token count | Split at 3,500 tokens |
 | **Confusion** | AI uses irrelevant context | Identify superfluous sections | Compact/remove noise |
 | **Clash** | AI contradicts itself | Detect conflicting statements | Resolve or isolate |
 
@@ -216,7 +216,7 @@ Code: [applies transformation in 0.3s, not 10 min]
 
 This builds on **Context Economy** (Principle #1 from spec 049):
 - Specs must fit in working memory
-- <300 lines ideal, >400 lines violation
+- <2,000 tokens excellent, >3,500 tokens warning, >5,000 tokens should split
 - But splitting shouldn't require 10 minutes of LLM text generation
 
 **Evolution**:
@@ -266,7 +266,7 @@ v0.4.0: Continuous context management (auto-compaction, etc.)
 ### Validation Criteria
 
 **Performance**:
-- [ ] Split 1,166-line spec in <1 second (vs 10+ minutes manual)
+- [ ] Split 4,800-token spec in <1 second (vs 10+ minutes manual)
 - [ ] Parse/analyze 100 specs in <2 seconds
 - [ ] Zero text corruption (programmatic = deterministic)
 
@@ -306,7 +306,7 @@ v0.4.0: Continuous context management (auto-compaction, etc.)
 
 **Speed**:
 - 100x faster than LLM text generation
-- <1s to split any spec <2000 lines
+- <1s to split any spec <8,000 tokens
 - <2s to analyze entire project
 
 **Quality**:
@@ -324,7 +324,7 @@ v0.4.0: Continuous context management (auto-compaction, etc.)
 - "Can experiment with splits freely"
 
 **Impact**:
-- Enables proactive splitting at 300 lines
+- Enables proactive splitting at 3,500 tokens (warning threshold)
 - Removes friction from Context Economy
 - Makes LeanSpec principles easier to follow
 - Dogfooding our own methodology effectively

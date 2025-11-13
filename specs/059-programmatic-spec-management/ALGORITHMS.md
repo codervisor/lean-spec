@@ -787,7 +787,9 @@ async function* analyzeAllSpecs(
 
 // Usage:
 for await (const result of analyzeAllSpecs('./specs')) {
-  console.log(`Analyzed ${result.spec}: ${result.complexity.score}/100`);
+  const status = result.complexity.tokenCount > 5000 ? '🔴 ERROR' :
+                 result.complexity.tokenCount > 3500 ? '⚠️  WARN' : '✅ OK';
+  console.log(`${status} ${result.spec}: ${result.complexity.tokenCount} tokens`);
 }
 ```
 

@@ -79,19 +79,22 @@ describe('MarkdownParser', () => {
 ```typescript
 describe('ComplexityAnalyzer', () => {
   it('should detect lines exceeding limit', () => {
-    const spec = createSpec({ lineCount: 450 });
+    const spec = createSpec({ tokenCount: 1800 });
     const result = analyzer.analyze(spec);
     
     expect(result.exceedsLimit).toBe(true);
-    expect(result.lineCount).toBe(450);
+    expect(result.tokenCount).toBe(1800);
   });
   
-  it('should calculate complexity score', () => {
-    const simple = createSpec({ lineCount: 100, sections: 5 });
-    const complex = createSpec({ lineCount: 800, sections: 50, nesting: 5 });
+  it('should validate token thresholds correctly', () => {
+    const simple = createSpec({ tokenCount: 400, sections: 5 });
+    const complex = createSpec({ tokenCount: 8000, sections: 50, nesting: 5 });
     
-    const simpleScore = analyzer.analyze(simple).score;
-    const complexScore = analyzer.analyze(complex).score;
+    const simpleResult = analyzer.analyze(simple);
+    const complexResult = analyzer.analyze(complex);
+    
+    expect(simpleResult.exceedsTokenLimit).toBe(false);
+    expect(complexResult.exceedsTokenLimit).toBe(true);
     
     expect(complexScore).toBeGreaterThan(simpleScore);
   });
@@ -217,7 +220,7 @@ describe('CompactionTransformer', () => {
     expect(resultRationale).toEqual(originalRationale);
   });
   
-  it('should reduce line count', () => {
+  it('should reduce token count', () => {
     const spec = loadFixture('verbose-spec.md');
     const originalLines = countLines(spec);
     
@@ -299,7 +302,7 @@ describe('CLI Integration', () => {
     const result = await runCLI('analyze 045 --json');
     const data = JSON.parse(result.stdout);
     
-    expect(data.complexity.lineCount).toBeGreaterThan(400);
+    expect(data.complexity.tokenCount).toBeGreaterThan(3500);
     expect(data.concerns).toHaveLength(5);
   });
   
@@ -381,8 +384,8 @@ describe('Transformation Workflows', () => {
     // 4. All files should be under limit
     const files = await listFiles(spec);
     for (const file of files) {
-      const lines = await getLineCount(file);
-      expect(lines).toBeLessThanOrEqual(400);
+      const tokens = await getTokenCount(file);
+      expect(tokens).toBeLessThanOrEqual(3500);
     }
   });
 });
@@ -471,7 +474,7 @@ $ npm run transform:split -- tests/golden/split-045/input.md \
 ```typescript
 describe('Performance', () => {
   it('should parse large spec in <50ms', async () => {
-    const largeSpec = createSpec({ lineCount: 2000 });
+    const largeSpec = createSpec({ tokenCount: 8000 });
     
     const start = performance.now();
     const ast = parser.parse(largeSpec);
@@ -530,7 +533,7 @@ describe('E2E: Real-world usage', () => {
     
     // 3. Validate (should warn)
     const validation = await runCLI('validate 060');
-    expect(validation.stderr).toContain('exceeds 400 lines');
+    expect(validation.stderr).toContain('exceeds 5,000 tokens');
     
     // 4. Analyze
     const analysis = await runCLI('analyze 060 --json');
@@ -558,7 +561,7 @@ describe('E2E: Real-world usage', () => {
     
     // Phase 3: Compact to 280 lines
     await runCLI('compact test-evolution --force');
-    const postCompact = await getLineCount('test-evolution');
+    const postCompact = await getTokenCount('test-evolution');
     expect(postCompact).toBeLessThan(300);
     
     // Phase 4: Grows to 500 lines (exceeds limit)
@@ -570,8 +573,8 @@ describe('E2E: Real-world usage', () => {
     // Phase 6: All sub-specs under limit
     const files = await listFiles('test-evolution');
     for (const file of files) {
-      const lines = await getLineCount(file);
-      expect(lines).toBeLessThanOrEqual(400);
+      const tokens = await getTokenCount(file);
+      expect(tokens).toBeLessThanOrEqual(3500);
     }
   });
 });
@@ -585,7 +588,7 @@ describe('E2E: Real-world usage', () => {
 // tests/helpers.ts
 
 export function createSpec(options: {
-  lineCount?: number;
+  tokenCount?: number;
   sections?: number;
   nesting?: number;
 }): string {

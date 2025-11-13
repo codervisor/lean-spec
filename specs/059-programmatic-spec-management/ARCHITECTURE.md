@@ -438,12 +438,14 @@ interface ComplexityMetrics {
   codeBlockCount: number;
   referenceCount: number;
   
-  // Thresholds
-  exceedsLimit: boolean;  // >400 lines
-  approachingLimit: boolean;  // >300 lines
+  // Token thresholds (primary metric)
+  tokenCount: number;
+  exceedsTokenLimit: boolean;  // >5,000 tokens
+  approachingTokenLimit: boolean;  // >3,500 tokens
   
-  // Complexity score (0-100)
-  score: number;
+  // Line count (backstop)
+  lineCount: number;
+  veryLong: boolean;  // >500 lines
 }
 
 interface RedundancyReport {
