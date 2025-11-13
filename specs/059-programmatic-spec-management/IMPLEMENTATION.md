@@ -95,10 +95,11 @@ export interface ComplexityAnalyzer {
 }
 ```
 
-- [ ] Implement line count analysis
+- [ ] Implement token count analysis (using tiktoken)
 - [ ] Calculate nesting depth
 - [ ] Count sections, code blocks, references
-- [ ] Compute complexity score (0-100)
+- [ ] Validate against token thresholds (2K/3.5K/5K)
+- [ ] Check structure quality (sub-specs, sectioning)
 - [ ] Test on existing specs
 
 #### Day 3-4: Concern Detection
@@ -315,7 +316,7 @@ $ lean-spec rollback <spec>
 - [ ] Target: <1s for any single spec
 
 #### Day 3-4: Dogfooding
-- [ ] Run on all specs >300 lines
+- [ ] Run on all specs >3,000 tokens
 - [ ] Fix any issues discovered
 - [ ] Document learnings
 - [ ] Create case studies (before/after)
@@ -430,7 +431,8 @@ describe('Performance', () => {
 
 ### Phase 2 (Analysis)
 - ✅ Correctly identify concerns in 90%+ of specs
-- ✅ Complexity scores match manual assessment
+- ✅ Token thresholds match validation expectations
+- ✅ Structure checks provide actionable feedback
 - ✅ JSON output mode works for automation
 
 ### Phase 3 (Transformation)

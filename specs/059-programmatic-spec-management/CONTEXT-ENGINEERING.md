@@ -33,11 +33,11 @@ Based on [LangChain's synthesis](https://blog.langchain.com/context-engineering-
 
 **LeanSpec Application**:
 ```markdown
-# Instead of one 1,166-line spec:
-specs/045/README.md          (203 lines - overview)
-specs/045/DESIGN.md          (378 lines - design)
-specs/045/IMPLEMENTATION.md  (144 lines - plan)
-specs/045/TESTING.md         (182 lines - tests)
+# Instead of one 4,800-token spec:
+specs/045/README.md          (~830 tokens - overview)
+specs/045/DESIGN.md          (~1,500 tokens - design)
+specs/045/IMPLEMENTATION.md  (~580 tokens - plan)
+specs/045/TESTING.md         (~740 tokens - tests)
 
 # AI loads only what it needs for current task
 ```
@@ -48,14 +48,14 @@ specs/045/TESTING.md         (182 lines - tests)
 - **Progressive disclosure** (overview → details)
 
 **When to Use**:
-- ✅ Spec >400 lines
-- ✅ Multiple distinct concerns (design + testing + config)
-- ✅ Different concerns accessed independently
+- ✓ Spec >3,500 tokens (warning threshold)
+- ✓ Multiple distinct concerns (design + testing + config)
+- ✓ Different concerns accessed independently
 
 **Benefits**:
-- ✅ Each file <400 lines (fits in working memory)
-- ✅ Reduce irrelevant context (only load needed sections)
-- ✅ Parallel work (edit DESIGN without affecting TESTING)
+- ✓ Each file <3,500 tokens (fits in working memory)
+- ✓ Reduce irrelevant context (only load needed sections)
+- ✓ Parallel work (edit DESIGN without affecting TESTING)
 
 ### 2. Compaction (Remove Redundancy)
 
@@ -149,14 +149,14 @@ specs/045-unified-dashboard/README.md
   - Health scoring system
   - Chart library evaluation
   - API design for metrics endpoint
-  [1,166 lines covering 5 distinct concerns]
+  [4,800 tokens covering 5 distinct concerns]
 
 # After isolation (multiple specs):
 specs/045-unified-dashboard/       # Dashboard UI
 specs/060-velocity-algorithm/      # Velocity tracking
 specs/061-health-scoring/          # Health metrics
 specs/062-metrics-api/             # API endpoint
-  [Each spec <400 lines, independent lifecycle]
+  [Each spec <3,500 tokens, independent lifecycle]
 ```
 
 **Mechanisms**:
@@ -165,10 +165,10 @@ specs/062-metrics-api/             # API endpoint
 - **Spec creation** (move to new spec with cross-references)
 
 **When to Use**:
-- ✅ Multiple concerns with different lifecycles
-- ✅ Sections could be standalone features
-- ✅ Parts updated by different people/teams
-- ✅ Spec still >400 lines after partitioning
+- ✓ Multiple concerns with different lifecycles
+- ✓ Sections could be standalone features
+- ✓ Parts updated by different people/teams
+- ✓ Spec still >3,500 tokens after partitioning
 
 **Benefits**:
 - ✅ Independent evolution (velocity algorithm changes ≠ dashboard changes)
@@ -228,14 +228,14 @@ At >100k tokens: Repeated past moves instead of new strategy
 ```
 
 **Detection**:
-- ✅ Monitor spec line count (>400 = warning)
-- ✅ Track AI repetitive behavior
-- ✅ Measure task completion degradation
+- ✓ Monitor spec token count (>3,500 = warning, >5,000 = error)
+- ✓ Track AI repetitive behavior
+- ✓ Measure task completion degradation
 
 **Mitigation**:
-- ✅ Split at 400 lines (Context Economy)
-- ✅ Compress historical sections
-- ✅ Partition by concern
+- ✓ Split at 3,500 tokens (Context Economy warning)
+- ✓ Compress historical sections
+- ✓ Partition by concern
 
 **Research**: Databricks found degradation starts ~32k tokens for Llama 3.1 405b, earlier for smaller models
 
@@ -309,25 +309,25 @@ ALL models perform worse with >1 tool
 
 | Situation | Primary Strategy | Secondary | Why |
 |-----------|-----------------|-----------|-----|
-| Spec >400 lines, multiple concerns | Partition | Compaction | Separate concerns, remove redundancy in each |
+| Spec >3,500 tokens, multiple concerns | Partition | Compaction | Separate concerns, remove redundancy in each |
 | Spec verbose but single concern | Compaction | Compression | Remove redundancy, summarize if still too long |
 | Historical phases bloating spec | Compression | - | Keep outcomes, drop details |
 | Unrelated concerns in same spec | Isolation | Partition | Move to separate spec, then partition if needed |
-| Spec approaching 400 lines | Compaction | - | Proactive cleanup before hitting limit |
+| Spec approaching 3,500 tokens | Compaction | - | Proactive cleanup before hitting warning threshold |
 
 ### Combining Strategies
 
 Often multiple strategies apply:
 
-**Example: Spec 045 (1,166 lines)**:
+**Example: Spec 045 (4,800 tokens)**:
 1. **Partition**: Split into README + DESIGN + IMPLEMENTATION + TESTING (primary)
 2. **Compaction**: Remove redundancy within each file (secondary)
 3. **Compression**: Summarize research phase (already complete)
 4. **Isolation**: Consider moving velocity algorithm to separate spec (future)
 
 **Result**: 
-- Before: 1,166 lines (3x limit)
-- After: Largest file 378 lines (within limit)
+- Before: 4,800 tokens (approaching 5K limit)
+- After: Largest file ~1,500 tokens (well within limits)
 
 ## Implementation Priorities
 
@@ -350,9 +350,10 @@ Often multiple strategies apply:
 ### Quantitative Metrics
 
 **Partition effectiveness**:
-- Spec count with >400 lines: Target 0
-- Average spec size: Target <250 lines
-- Largest sub-spec file: Target <400 lines
+- Spec count with >5,000 tokens: Target 0
+- Spec count with >3,500 tokens: Target <10%
+- Average spec size: Target <2,000 tokens
+- Largest sub-spec file: Target <3,500 tokens
 
 **Compaction effectiveness**:
 - Redundancy ratio: Lines removed / lines total

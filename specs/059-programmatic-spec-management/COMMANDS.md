@@ -20,6 +20,8 @@ lean-spec preview <spec> --transformation=<type>
 lean-spec rollback <spec>
 ```
 
+**Implementation Note**: The transformation commands (`split`, `compact`, `compress`, `isolate`) require sophisticated analysis of spec structure, semantic understanding of content relationships, and intelligent decision-making about what to keep/move/remove. **AI/LLM assistance is recommended** for high-quality results. Non-AI implementations would be limited to basic pattern matching and may produce suboptimal results or require extensive manual review.
+
 ## `lean-spec analyze` - Analyze Spec Complexity
 
 ### Purpose
@@ -46,28 +48,34 @@ $ lean-spec analyze 045
 
 📊 Analyzing spec 045-unified-dashboard...
 
-Complexity Metrics:
-  Lines: 1,166 (CRITICAL - 3x limit)
+Token Count: 4,800 tokens (⚠️  WARNING - approaching 5,000 limit)
+  • Optimal: <2,000 tokens (100% AI performance)
+  • Good: 2,000-3,500 tokens (95% AI performance)
+  • Warning: 3,500-5,000 tokens (85% AI performance)
+  • Should split: >5,000 tokens (70% AI performance)
+
+Supporting Context:
+  Lines: 1,166 (for reference only)
   Sections: 58
   Max nesting: 4 levels
   Code blocks: 23
   References: 47
-  Complexity score: 87/100 (High)
 
 Concerns Detected (5):
-  1. Overview & Decision (150 lines)
-  2. Design & Architecture (378 lines)
-  3. Rationale & Trade-offs (146 lines)
-  4. Implementation Plan (144 lines)
-  5. Testing Strategy (182 lines)
+  1. Overview & Decision (600 tokens / 150 lines, 13%)
+  2. Design & Architecture (1,512 tokens / 378 lines, 32%)
+  3. Rationale & Trade-offs (584 tokens / 146 lines, 12%)
+  4. Implementation Plan (576 tokens / 144 lines, 12%)
+  5. Testing Strategy (728 tokens / 182 lines, 15%) / 182 lines, 15%)
 
 Recommendations:
   ✅ PRIMARY: Partition into sub-specs (Context Economy)
-     Impact: 1,166 → 5 files, largest ~380 lines
+     Impact: 4,800 tokens → 5 files, largest ~1,520 tokens (380 lines)
+     All files under 2,000 token optimal threshold
      Confidence: 95%
   
   ⚡ SECONDARY: Compact redundant sections
-     Impact: Save ~120 lines across concerns
+     Impact: Save ~480 tokens (~120 lines) across concerns
      Confidence: 78%
 
 Would you like to see transformation preview? (Y/n)
@@ -77,27 +85,28 @@ Would you like to see transformation preview? (Y/n)
 ```bash
 $ lean-spec analyze 045 --complexity
 
-Complexity Breakdown:
-  Total lines: 1,166
-  ├─ Frontmatter: 15
-  ├─ Overview: 150
-  ├─ Design: 378
-  ├─ Implementation: 288
-  ├─ Testing: 200
-  └─ Notes: 135
+Token Breakdown (4,800 tokens total):
+  ├─ Frontmatter: 60 tokens (1%, 15 lines)
+  ├─ Overview: 600 tokens (13%, 150 lines)
+  ├─ Design: 1,512 tokens (32%, 378 lines)
+  ├─ Implementation: 1,152 tokens (24%, 288 lines)
+  ├─ Testing: 800 tokens (17%, 200 lines)
+  └─ Notes: 540 tokens (11%, 135 lines)
+  
+  Lines: 1,166 (for reference only)
 
-Nesting depth: 4 levels
-  H1 (1) → H2 (8) → H3 (23) → H4 (12)
+Structure Analysis:
+  Nesting depth: 4 levels (H1 → H2 → H3 → H4)
+  Sections: H1(1), H2(8), H3(23), H4(12)
+  Code blocks: 23 (TypeScript: 15, Bash: 5, Markdown: 3)
 
-Code blocks: 23
-  ├─ TypeScript: 15
-  ├─ Bash: 5
-  └─ Markdown: 3
-
-Thresholds:
-  ✗ Exceeds 400 lines (by 766 lines, 291%)
-  ✗ Approaching 600 lines (exceeds by 566)
-  ! Complexity score: 87/100 (High complexity)
+Token Threshold Status:
+  ✗ Exceeds 3,500 token warning threshold (by 1,300 tokens, 137%)
+  ⚠️  Approaching 5,000 token error threshold (4,800/5,000, 96%)
+  
+Structure:
+  ✗ No sub-spec files - consider progressive disclosure
+  ✓ Good sectioning (58 sections)
 
 Suggested actions:
   1. Split into sub-specs immediately
@@ -178,7 +187,7 @@ $ lean-spec analyze 045 --json
 {
   "spec": "045-unified-dashboard",
   "complexity": {
-    "lineCount": 1166,
+    "tokenCount": 4800,
     "exceedsLimit": true,
     "score": 87,
     "thresholds": {
@@ -192,7 +201,7 @@ $ lean-spec analyze 045 --json
     {
       "id": "overview",
       "name": "Overview & Decision",
-      "lineCount": 150,
+      "tokenCount": 600,
       "sections": ["Overview", "Background", "Decision"]
     },
     // ...
@@ -200,7 +209,7 @@ $ lean-spec analyze 045 --json
   "recommendations": [
     {
       "strategy": "partition",
-      "rationale": "Spec exceeds 400 lines with 5 distinct concerns",
+      "rationale": "Spec exceeds 3,500 tokens with 5 distinct concerns",
       "confidence": 0.95,
       "estimatedImpact": {
         "filesCreated": 5,
@@ -257,21 +266,21 @@ $ lean-spec split 045
 
 Split Preview:
   045-unified-dashboard/
-  ├── README.md (203 lines)
+  ├── README.md (812 tokens / 203 lines)
   │   └── Overview, decision, quick reference
-  ├── DESIGN.md (378 lines)
+  ├── DESIGN.md (1,512 tokens / 378 lines)
   │   └── Architecture, components, data flow
-  ├── RATIONALE.md (146 lines)
+  ├── RATIONALE.md (584 tokens / 146 lines)
   │   └── Trade-offs, alternatives, decisions
-  ├── IMPLEMENTATION.md (144 lines)
+  ├── IMPLEMENTATION.md (576 tokens / 144 lines)
   │   └── Phased plan with milestones
-  └── TESTING.md (182 lines)
+  └── TESTING.md (728 tokens / 182 lines)
       └── Test strategy, cases, criteria
 
 Changes:
-  ✓ 5 files created
+  ✓ 5 files created (4,212 tokens total, ~588 tokens saved via compaction)
   ✓ 47 cross-references updated
-  ✓ All files under 400 lines
+  ✓ All files under 2,000 token optimal threshold
   ✓ No content lost
 
 Apply this split? (Y/n) █
@@ -283,13 +292,13 @@ $ lean-spec split 045 --preview
 
 Split Plan:
 
-README.md (203 lines):
+README.md (812 tokens / 203 lines):
   # Unified Dashboard
   
   > **Status**: 📅 Planned · **Priority**: Critical
   
   ## Overview
-  [150 lines of overview content...]
+  [600 tokens / 150 lines of overview content...]
   
   ## Sub-Specs
   - [DESIGN.md](./DESIGN.md) - Architecture details
@@ -297,7 +306,7 @@ README.md (203 lines):
   - [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Phased plan
   - [TESTING.md](./TESTING.md) - Test strategy
 
-DESIGN.md (378 lines):
+DESIGN.md (1,512 tokens / 378 lines):
   # Design & Architecture
   
   Detailed design for unified dashboard...
@@ -318,13 +327,13 @@ $ lean-spec split 043 --strategy=phases
 Phase-based split for multi-phase spec:
 
 043-official-launch-02/
-├── README.md (180 lines)
+├── README.md (720 tokens / 180 lines)
 │   └── Overview, vision, success criteria
-├── PHASE-1-FOUNDATION.md (142 lines)
+├── PHASE-1-FOUNDATION.md (568 tokens / 142 lines)
 │   └── First principles, guidelines
-├── PHASE-2-OPERATIONALIZATION.md (158 lines)
+├── PHASE-2-OPERATIONALIZATION.md (632 tokens / 158 lines)
 │   └── Validation, tooling, dogfooding
-└── PHASE-3-LAUNCH.md (125 lines)
+└── PHASE-3-LAUNCH.md (500 tokens / 125 lines)
     └── Marketing, docs, announcement
 
 Apply? (Y/n)
@@ -360,7 +369,7 @@ Select sections for next file:
 ### Post-Split Validation
 
 After splitting, automatically validates:
-- ✓ All files under 400 lines
+- ✓ All files under 3,500 tokens
 - ✓ No broken cross-references
 - ✓ Valid markdown syntax
 - ✓ Valid frontmatter in README.md
