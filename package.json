@@ -7,6 +7,7 @@
   "scripts": {
     "build": "pnpm build:templates && pnpm -r build",
     "build:templates": "tsx scripts/build-agents-templates.ts",
+    "validate:templates": "tsx scripts/validate-agents-templates.ts",
     "dev": "pnpm --parallel -r dev",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",

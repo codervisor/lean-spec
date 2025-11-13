@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-13'
 tags:
   - templates
@@ -13,7 +13,7 @@ related:
   - '072'
   - '074'
 created_at: '2025-11-13T08:35:40.229Z'
-updated_at: '2025-11-13T09:48:01.526Z'
+updated_at: '2025-11-13T10:32:28.046Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T09:26:58.535Z'
@@ -21,13 +21,15 @@ transitions:
     at: '2025-11-13T09:29:32.737Z'
   - status: in-progress
     at: '2025-11-13T09:48:01.526Z'
+  - status: complete
+    at: '2025-11-13T10:32:28.046Z'
 completed_at: '2025-11-13T09:29:32.737Z'
 completed: '2025-11-13'
 ---
 
 # template-engine-agents-md
 
-> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: templates, maintainability, dx, refactor, ai-first
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: templates, maintainability, dx, refactor, ai-first
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -252,39 +254,39 @@ lean-spec create my-feature --with-subs
 
 ### Phase 1: AGENTS.md Template Engine
 
-- [ ] **Setup Template Infrastructure**
-  - [ ] Create `packages/cli/templates/_shared/agents-components/` directory
-  - [ ] Extract shared components from existing AGENTS.md files
-  - [ ] Create `agents-template.hbs` main template
-  - [ ] Add Handlebars dependency to CLI package
+- [x] **Setup Template Infrastructure**
+  - [x] Create `packages/cli/templates/_shared/agents-components/` directory
+  - [x] Extract shared components from existing AGENTS.md files
+  - [x] Create `agents-template.hbs` main template
+  - [x] Add Handlebars dependency to CLI package
 
-- [ ] **Create Component Files**
-  - [ ] `core-rules-base.md` - 4 shared rules
-  - [ ] `discovery-commands.md` - identical across templates
-  - [ ] `essential-commands.md` - command reference
-  - [ ] `frontmatter-minimal.md` - minimal frontmatter guidance
-  - [ ] `frontmatter-standard.md` - standard frontmatter
-  - [ ] `frontmatter-enterprise.md` - enterprise frontmatter
-  - [ ] `workflow-standard.md` - standard SDD workflow
-  - [ ] `workflow-enterprise.md` - enterprise approval workflow
-  - [ ] `quality-standards.md` - identical across templates
+- [x] **Create Component Files**
+  - [x] `core-rules-base.md` - 4 shared rules
+  - [x] `discovery-commands.md` - identical across templates
+  - [x] `essential-commands.md` - command reference
+  - [x] `frontmatter-minimal.md` - minimal frontmatter guidance
+  - [x] `frontmatter-standard.md` - standard frontmatter
+  - [x] `frontmatter-enterprise.md` - enterprise frontmatter
+  - [x] `workflow-standard.md` - standard SDD workflow
+  - [x] `workflow-enterprise.md` - enterprise approval workflow
+  - [x] `quality-standards.md` - identical across templates
 
-- [ ] **Create Template Configs**
-  - [ ] `minimal/agents-config.json`
-  - [ ] `standard/agents-config.json`
-  - [ ] `enterprise/agents-config.json`
+- [x] **Create Template Configs**
+  - [x] `minimal/agents-config.json`
+  - [x] `standard/agents-config.json`
+  - [x] `enterprise/agents-config.json`
 
-- [ ] **Build Script**
-  - [ ] Create `scripts/build-agents-templates.ts`
-  - [ ] Implement template composition logic
-  - [ ] Add validation for generated output
-  - [ ] Integrate into `pnpm build` script
+- [x] **Build Script**
+  - [x] Create `scripts/build-agents-templates.ts`
+  - [x] Implement template composition logic
+  - [x] Add validation for generated output
+  - [x] Integrate into `pnpm build` script
 
-- [ ] **Validation & Testing**
-  - [ ] Verify generated AGENTS.md matches current versions
-  - [ ] Test `lean-spec init` with each template
-  - [ ] Update CI to fail if generated files out of sync
-  - [ ] Add pre-commit hook to regenerate if source changed
+- [x] **Validation & Testing**
+  - [x] Verify generated AGENTS.md matches current versions
+  - [x] Test `lean-spec init` with each template
+  - [x] Update CI to fail if generated files out of sync
+  - [ ] Add pre-commit hook to regenerate if source changed (deferred - CI validation sufficient)
 
 ### Phase 2: Sub-Spec Template System
 
@@ -425,13 +427,34 @@ See Overview section for full list of related specs.
 ### Open Questions
 
 - Should we also template-ize spec templates (README.md)? Or just AGENTS.md?
-- Do we need a `lean-spec templates validate` command?
-- Should CI auto-regenerate and commit, or just fail?
+- ~~Do we need a `lean-spec templates validate` command?~~ ✅ Implemented as `pnpm validate:templates`
+- ~~Should CI auto-regenerate and commit, or just fail?~~ ✅ CI fails on drift (regeneration is manual)
 - Can we detect if AGENTS.md was manually edited and warn?
 
 ### Success Metrics
 
-- **Maintenance Time**: Adding new rule takes 1 file edit + build (not 4 file edits)
-- **Consistency**: No drift between templates (verified by tests)
-- **Flexibility**: Easy to create new templates with different combinations
-- **Adoption**: Sub-spec templates used in 20%+ of new specs within 2 months
+- **Maintenance Time**: Adding new rule takes 1 file edit + build (not 4 file edits) ✅ **Achieved**
+- **Consistency**: No drift between templates (verified by tests) ✅ **Achieved** (CI validation in place)
+- **Flexibility**: Easy to create new templates with different combinations ✅ **Achieved**
+- **Adoption**: Sub-spec templates used in 20%+ of new specs within 2 months (Phase 2)
+
+## Phase 1 Completion Summary
+
+**Status**: Phase 1 Complete ✅
+
+**Completed Work**:
+1. ✅ Template infrastructure created with component-based architecture
+2. ✅ All component files extracted and organized
+3. ✅ Build system integrated (`pnpm build:templates`)
+4. ✅ Validation system implemented (`pnpm validate:templates`)
+5. ✅ CI integration added to prevent drift
+6. ✅ Manual testing completed for all three templates (minimal, standard, enterprise)
+7. ✅ Documentation updated with validation guide
+
+**Benefits Realized**:
+- Single source of truth for shared content
+- Automated validation prevents template drift
+- Easy maintenance: update once, propagates to all templates
+- CI ensures quality and consistency
+
+**Next Steps**: Phase 2 - Sub-Spec Template System (separate implementation)
