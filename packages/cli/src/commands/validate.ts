@@ -78,8 +78,7 @@ export async function validateCommand(options: ValidateOptions = {}): Promise<bo
 
   // Initialize validators
   const validators: ValidationRule[] = [
-    new LineCountValidator({ maxLines: options.maxLines }),
-    new ComplexityValidator({ maxLines: options.maxLines }), // New: multi-dimensional complexity
+    new ComplexityValidator({ maxLines: options.maxLines }), // Token-based complexity (primary), line count (backstop)
     new FrontmatterValidator(),
     new StructureValidator(),
     new CorruptionValidator(),
