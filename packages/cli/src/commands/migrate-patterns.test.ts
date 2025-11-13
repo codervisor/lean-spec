@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { scanDocuments } from './migrate.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Migration pattern validation tests
@@ -10,7 +13,7 @@ import { scanDocuments } from './migrate.js';
  * the migration scenarios we're documenting and supporting.
  */
 describe('Migration pattern validation', () => {
-  const fixturesRoot = path.join(process.cwd(), 'test-fixtures', 'migration-samples');
+  const fixturesRoot = path.resolve(__dirname, '../../test-fixtures/migration-samples');
 
   describe('Pattern 1: spec-kit (Minimal Changes)', () => {
     const specKitRoot = path.join(fixturesRoot, 'spec-kit-sample', '.specify', 'specs');

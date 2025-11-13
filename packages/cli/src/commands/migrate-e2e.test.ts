@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { migrateCommand, scanDocuments } from './migrate.js';
 import {
   createTestEnvironment,
@@ -8,10 +9,12 @@ import {
   type TestContext,
 } from '../test-helpers.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 describe('End-to-end migration workflows', () => {
   let ctx: TestContext;
   let originalCwd: string;
-  const fixturesRoot = path.join(process.cwd(), 'test-fixtures', 'migration-samples');
+  const fixturesRoot = path.resolve(__dirname, '../../test-fixtures/migration-samples');
 
   beforeEach(async () => {
     ctx = await createTestEnvironment();

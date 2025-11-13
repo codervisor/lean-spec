@@ -1,10 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { scanDocuments } from './migrate.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 describe('Migration with test fixtures', () => {
-  const fixturesRoot = path.join(process.cwd(), 'test-fixtures', 'migration-samples');
+  const fixturesRoot = path.resolve(__dirname, '../../test-fixtures/migration-samples');
 
   describe('spec-kit sample', () => {
     const specKitRoot = path.join(fixturesRoot, 'spec-kit-sample', '.specify', 'specs');
