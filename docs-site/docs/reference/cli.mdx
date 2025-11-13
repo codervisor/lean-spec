@@ -509,6 +509,90 @@ lean-spec board
 
 ---
 
+### `lean-spec tokens`
+
+Count tokens in specifications for LLM context management.
+
+```bash
+lean-spec tokens [spec] [options]
+```
+
+**Arguments:**
+- `[spec]` - Spec identifier (optional). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+  - If omitted, shows token counts for all specs
+
+**Options:**
+- `--detailed` - Show content breakdown (prose, code, tables, frontmatter)
+- `--include-sub-specs` - Include sub-spec files in count
+- `--all` - Show all specs (not just active)
+- `--sort-by <field>` - Sort by: `tokens`, `lines`, `name` (default: `tokens`)
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Count tokens in a specific spec
+lean-spec tokens 045
+lean-spec tokens unified-dashboard
+
+# Show detailed breakdown
+lean-spec tokens 045 --detailed
+
+# Include sub-spec files
+lean-spec tokens 045 --include-sub-specs
+
+# Show all specs sorted by token count
+lean-spec tokens
+lean-spec tokens --all
+
+# JSON output for programmatic use
+lean-spec tokens 045 --json
+```
+
+**Output:**
+```
+📊 Token Count: 045-unified-dashboard
+
+  Total: 2,847 tokens ✅
+
+Files:
+
+  README.md                 1,923 tokens (287 lines)
+  DESIGN.md                   654 tokens (98 lines)
+  TESTING.md                  270 tokens (41 lines)
+
+Content Breakdown:
+
+  Prose       2,145 tokens  (75%)
+  Code          523 tokens  (18%)
+  Tables        156 tokens  (5%)
+  Frontmatter    23 tokens  (1%)
+```
+
+**Performance Indicators:**
+- ✅ Excellent (&lt;2,000 tokens) - Baseline AI performance (100% effectiveness)
+- 👍 Good (2,000-3,500 tokens) - Slight degradation, acceptable (95% effectiveness)
+- ⚠️ Warning (3,500-5,000 tokens) - Consider simplification (85% effectiveness)
+- 🔴 Problem (&gt;5,000 tokens) - Should split (70% effectiveness)
+
+**Use Cases:**
+- Check if spec fits in AI context window
+- Identify specs that need splitting
+- Understand token cost before loading into AI tools
+- Monitor spec complexity over time
+- Validate specs meet Context Economy thresholds
+
+**Why Token Count Matters:**
+- Token count is the industry standard for LLM context measurement
+- Research shows quality degradation starts well before context limits
+- Code is denser (~3 chars/token) than prose (~4 chars/token)
+- 6x cost difference between high and low token count specs
+
+---
+
 ### `lean-spec deps`
 
 Show dependencies for a spec (coming soon).
@@ -524,6 +608,109 @@ lean-spec deps <spec>
   - Full folder: `045-unified-dashboard`
 
 **Note:** This feature is planned but not yet implemented.
+
+---
+
+### `lean-spec validate`
+
+Validate specs for quality issues using token-based thresholds.
+
+```bash
+lean-spec validate [specs...] [options]
+```
+
+**Arguments:**
+- `[specs...]` - Specific specs to validate (optional). If omitted, validates all specs.
+
+**Options:**
+- `--verbose` - Show passing specs in addition to warnings/errors
+- `--quiet` - Suppress warnings, only show errors
+- `--format <format>` - Output format: `default`, `json`, `compact` (default: `default`)
+- `--rule <rule>` - Filter by specific rule name (e.g., `complexity`, `frontmatter`, `structure`)
+
+**Examples:**
+
+```bash
+# Validate all specs
+lean-spec validate
+
+# Validate specific specs
+lean-spec validate 045 unified-dashboard
+
+# Show all specs including passing
+lean-spec validate --verbose
+
+# Only show errors (suppress warnings)
+lean-spec validate --quiet
+
+# JSON output for CI/CD
+lean-spec validate --format json
+
+# Check specific validation rule
+lean-spec validate --rule complexity
+lean-spec validate --rule frontmatter
+```
+
+**Output:**
+```
+✓ Validating specs...
+
+✅ 045-unified-dashboard
+   Token count: 2,847 (Good)
+   Structure: 32 sections, 6 sub-specs
+
+⚠️ 059-programmatic-spec-management
+   Token count: 4,203 (Warning - consider simplification)
+   Suggestion: Consider splitting or using sub-specs
+
+🔴 016-github-action
+   Token count: 6,450 (Should split)
+   Suggestion: Split for Context Economy
+
+Summary:
+  Passed: 1
+  Warnings: 1
+  Errors: 1
+```
+
+**Validation Rules:**
+
+1. **Complexity** (token-based)
+   - Checks token count against research-backed thresholds
+   - Evaluates structure quality (sectioning, sub-specs)
+   - Identifies specs that need splitting
+
+2. **Frontmatter**
+   - Validates required fields (status, created)
+   - Checks field types and values
+   - Ensures metadata consistency
+
+3. **Structure**
+   - Checks for proper heading hierarchy
+   - Validates section organization
+   - Ensures required sections present
+
+4. **Sub-specs**
+   - Validates sub-spec file naming
+   - Checks cross-references
+   - Ensures sub-spec consistency
+
+5. **Corruption**
+   - Detects malformed frontmatter
+   - Identifies parsing issues
+   - Flags inconsistent metadata
+
+**Token Thresholds:**
+- ✅ Excellent: &lt;2,000 tokens (100% AI effectiveness)
+- 👍 Good: 2,000-3,500 tokens (95% AI effectiveness)
+- ⚠️ Warning: 3,500-5,000 tokens (85% AI effectiveness)
+- 🔴 Error: &gt;5,000 tokens (70% AI effectiveness, should split)
+
+**Use Cases:**
+- Pre-commit validation in CI/CD
+- Quality checks before marking specs complete
+- Identifying specs that need refactoring
+- Ensuring consistent spec quality across project
 
 ---
 

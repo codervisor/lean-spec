@@ -128,6 +128,11 @@ Skip specs for:
 - `lean-spec update <spec> --assignee <name>` - Update spec assignee (REQUIRED - never edit frontmatter manually)
 - `lean-spec deps <spec>` - Show dependencies and relationships
 
+**Token Management:**
+- `lean-spec tokens <spec>` - Count tokens in a spec for LLM context management
+- `lean-spec tokens` - Show token counts for all specs (sorted by token count)
+- `lean-spec tokens <spec> --detailed` - Show content breakdown (prose vs code vs tables)
+
 **When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover available commands and options.
 
 ## Understanding Spec Relationships
@@ -219,9 +224,12 @@ Required By:
 - Tests cover critical paths
 - Specs stay in sync with implementation
 - **Always validate before completing work:**
-  - Run `npx lean-spec validate` to check spec structure and frontmatter
+  - Run `node bin/lean-spec.js validate` to check spec structure and frontmatter (use local build, not `npx`)
   - Run `cd docs-site && npm run build` to ensure documentation site builds successfully
   - Fix any validation errors or build failures before marking work complete
+
+**Note on Local Development:**
+When working on the LeanSpec codebase itself, always use the local build (`node bin/lean-spec.js <command>`) instead of `npx lean-spec`, which runs the published npm package. Build changes with `pnpm build` before testing.
 
 ## Spec Complexity Guidelines
 
@@ -230,50 +238,53 @@ Required By:
 **Single File vs Sub-Specs:**
 
 Keep as **single file** when:
-- Under 300 lines (Context Economy: fits in working memory)
+- Under 2,000 tokens (Context Economy: optimal AI performance)
 - Can be read/understood in 5-10 minutes (attention span)
 - Single, focused concern (Signal-to-Noise: one clear topic)
 - Implementation plan <6 phases (cognitive load manageable)
 
 Consider **splitting** when:
-- Over 400 lines (Context Economy: exceeds working memory)
+- Over 3,500 tokens (Context Economy: AI performance degradation)
 - Multiple distinct concerns (Signal-to-Noise: multiple topics reduce clarity)
 - AI tools corrupt the spec during edits (context window overflow)
 - Updates frequently cause inconsistencies (too complex to maintain)
 - Implementation has >6 phases (Intent: breaks down into sub-problems)
 
-### Complexity Validation (Specs 066, 071) - Token-Based
+**Check your spec:** Run `lean-spec tokens <spec>` to see token count and performance indicators.
 
-LeanSpec uses **direct token thresholds** as the primary validation metric:
+### Complexity Validation (Specs 066, 069, 071) - Token-Based
 
-**Why Tokens Over Lines?**
+LeanSpec uses **token count** as the validation metric for Context Economy:
+
+**Why Tokens?**
 - Token count is the **industry standard** for LLM context measurement
 - Research shows token count predicts AI performance better than line count
 - Quality degradation happens even within context limits (39% drop in multi-turn contexts)
 - Code is denser (~3 chars/token) than prose (~4 chars/token)
+- 6x cost difference: 2,000-line vs 300-line specs
 
-**Token Thresholds (Primary Check):**
-1. **<2,000 tokens**: ✅ Excellent - Baseline AI performance
-2. **2,000-3,500 tokens**: ✅ Good - Slight degradation, acceptable
-3. **3,500-5,000 tokens**: ⚠️ Warning - Consider simplification
-4. **>5,000 tokens**: 🔴 Should split - Significant performance impact
+**Token Thresholds:**
+1. **<2,000 tokens**: ✅ Excellent - Baseline AI performance (100% effectiveness)
+2. **2,000-3,500 tokens**: ✅ Good - Slight degradation, acceptable (95% effectiveness)
+3. **3,500-5,000 tokens**: ⚠️ Warning - Consider simplification (85% effectiveness)
+4. **>5,000 tokens**: 🔴 Should split - Significant performance impact (70% effectiveness)
 
 **Structure Checks (Independent Feedback):**
 - **Sub-specs present**: Positive feedback for progressive disclosure
 - **Good sectioning** (15-35 sections): Positive feedback for cognitive chunking
 - **Poor sectioning** (<8 sections): Warning about monolithic structure
 
-**Line Count (Backstop Only):**
-- >500 lines: Additional warning even if token count is acceptable
-- Line count is now secondary to token-based measurement
-
-**Run validation:** `lean-spec validate` includes direct token threshold validation automatically.
+**Check token counts:**
+- `lean-spec tokens <spec>` - Count tokens in a specific spec
+- `lean-spec tokens` - Show token counts for all specs
+- `lean-spec validate` - Run full validation including token thresholds
 
 **Note:** Token thresholds are research-based (see specs 066, 071) and validated against real-world usage.
 
 ### Warning Signs
 
 Your spec might be too complex if:
+- ⚠️ Token count >3,500 (run `lean-spec tokens <spec>` to check)
 - ⚠️ It takes >10 minutes to read through (Context Economy)
 - ⚠️ You can't summarize it in 2 paragraphs (Signal-to-Noise)
 - ⚠️ Recent edits caused corruption (context window overflow)
