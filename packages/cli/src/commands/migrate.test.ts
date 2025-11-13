@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { migrateCommand, scanDocuments } from './migrate.js';
@@ -7,6 +7,15 @@ import {
   initTestProject,
   type TestContext,
 } from '../test-helpers.js';
+
+// Mock child_process at the top level
+vi.mock('node:child_process', async () => {
+  const actual = await vi.importActual<typeof import('node:child_process')>('node:child_process');
+  return {
+    ...actual,
+    execSync: vi.fn(),
+  };
+});
 
 describe('migrate command', () => {
   let ctx: TestContext;
@@ -188,6 +197,13 @@ describe('migrate command', () => {
       await fs.mkdir(testDir, { recursive: true });
       await fs.writeFile(path.join(testDir, '0001-adr.md'), '# ADR 1');
 
+      // Mock execSync to simulate CLI not installed
+      const { execSync } = await import('node:child_process');
+      const mockExecSync = execSync as any;
+      mockExecSync.mockImplementation(() => {
+        throw new Error('Command not found');
+      });
+
       const exitSpy = { called: false, code: 0 };
       const originalExit = process.exit;
       process.exit = ((code?: number) => {
@@ -213,6 +229,7 @@ describe('migrate command', () => {
       } finally {
         process.exit = originalExit;
         console.error = originalError;
+        mockExecSync.mockClear();
       }
     });
 
@@ -222,6 +239,19 @@ describe('migrate command', () => {
       const testDir = path.join(ctx.tmpDir, 'test-adr');
       await fs.mkdir(testDir, { recursive: true });
       await fs.writeFile(path.join(testDir, '0001-adr.md'), '# ADR 1');
+
+      // Mock execSync to simulate Claude CLI being installed
+      const { execSync } = await import('node:child_process');
+      const mockExecSync = execSync as any;
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (cmd.includes('which claude')) {
+          return Buffer.from('/usr/local/bin/claude');
+        }
+        if (cmd.includes('claude --version')) {
+          return Buffer.from('claude version 1.0.0');
+        }
+        return Buffer.from('');
+      });
 
       // Mock console.log to capture output
       const logs: string[] = [];
@@ -237,6 +267,7 @@ describe('migrate command', () => {
         expect(output).toContain('AI-assisted migration is not yet fully implemented');
       } finally {
         console.log = originalLog;
+        mockExecSync.mockClear();
       }
     });
   });

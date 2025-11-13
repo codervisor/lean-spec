@@ -1,8 +1,73 @@
 /**
  * Unit tests for database queries
+ * 
+ * Note: These tests verify the structure and types of query functions.
+ * They operate on an empty in-memory database and test that queries
+ * return the expected format (empty arrays/objects with correct structure).
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
+import * as schema from '../schema';
+
+// Create in-memory test database
+let testDb: BetterSQLite3Database<typeof schema>;
+let sqlite: Database.Database;
+
+beforeAll(() => {
+  sqlite = new Database(':memory:');
+  testDb = drizzle(sqlite, { schema });
+  
+  // Create tables for testing
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      github_owner TEXT NOT NULL,
+      github_repo TEXT NOT NULL,
+      display_name TEXT,
+      description TEXT,
+      homepage_url TEXT,
+      stars INTEGER DEFAULT 0,
+      is_public INTEGER DEFAULT 1,
+      is_featured INTEGER DEFAULT 0,
+      last_synced_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS specs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      spec_number INTEGER,
+      spec_name TEXT NOT NULL,
+      title TEXT,
+      status TEXT CHECK(status IN ('planned', 'in-progress', 'complete', 'archived')),
+      priority TEXT CHECK(priority IN ('low', 'medium', 'high', 'critical')),
+      tags TEXT,
+      assignee TEXT,
+      content_md TEXT NOT NULL,
+      content_html TEXT,
+      created_at INTEGER,
+      updated_at INTEGER,
+      completed_at INTEGER,
+      file_path TEXT NOT NULL,
+      github_url TEXT,
+      synced_at INTEGER NOT NULL
+    );
+    
+    CREATE UNIQUE INDEX IF NOT EXISTS unique_spec_number ON specs(project_id, spec_number);
+  `);
+});
+
+// Mock the database module
+vi.mock('../index', () => ({
+  get db() {
+    return testDb;
+  },
+  schema,
+}));
+
 import { getProjects, getSpecs, getStats, getSpecsByStatus } from '../queries';
 
 describe('Database Queries', () => {

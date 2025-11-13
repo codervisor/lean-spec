@@ -11,12 +11,11 @@ When making spec decisions, apply these principles in priority order:
 ### 1. Context Economy - Fit in working memory
 **Specs must fit in working memory—both human and AI.**
 
-- **Target**: <300 lines per spec file
-- **Warning**: 300-400 lines (consider simplifying)
-- **Problem**: >400 lines (must split)
+- **Target**: <2,000 tokens per spec file
+- **Warning**: 2,000-3,500 tokens (acceptable but watch complexity)
+- **Problem**: >3,500 tokens (consider splitting)
 - **Question**: "Can this be read in 5-10 minutes? Can you hold the entire structure in your head?"
-- **Action**: Split at 400 lines, warning at 300
-- **Why**: Not about exceeding token limits—it's about **attention and cognitive capacity**. Even within token limits, AI performance degrades with longer context (quality drops beyond 50K tokens despite 200K limits). Humans can't hold >7 concepts in working memory. **Attention is the scarce resource, not storage.**
+- **Why**: Attention and cognitive capacity are scarce resources. AI performance degrades with longer context (quality drops beyond 50K tokens despite 200K limits). Humans can't hold >7 concepts in working memory. **Use `lean-spec tokens <spec>` to check.**
 
 ### 2. Signal-to-Noise Maximization - Every word informs decisions
 **Every word must inform decisions or be cut.**
@@ -61,8 +60,8 @@ When making spec decisions, apply these principles in priority order:
 
 When practices conflict, apply principles in priority order:
 
-**"Should I split this 450-line spec?"**
-→ **Yes** (Context Economy at 400 lines overrides completeness)
+**"Should I split this 4,000-token spec?"**
+→ **Yes** (Context Economy: >3,500 tokens needs splitting)
 
 **"Should I document every edge case?"**
 → **Only if it informs current decisions** (Signal-to-Noise test)
@@ -70,14 +69,8 @@ When practices conflict, apply principles in priority order:
 **"Should I add custom fields upfront?"**
 → **Only if you feel pain without them** (Progressive Disclosure)
 
-**"Should I keep implementation details in spec?"**
-→ **Only if rationale/constraints matter** (Intent Over Implementation)
-
-**"This spec is complex but under 350 lines, split it?"**
-→ **No** (Under Context Economy threshold, no split needed)
-
-**"Which is more important: Complete documentation or staying under 400 lines?"**
-→ **Staying under 400 lines** (Context Economy is #1 principle)
+**"This spec is complex but only 2,500 tokens, split it?"**
+→ **No** (Under Context Economy warning threshold)
 
 ## Core Rules
 
@@ -206,17 +199,10 @@ Required By:
 4. **Update** - Mark progress with `lean-spec update <spec> --status <status>` (NEVER edit system-managed frontmatter directly)
 5. **Complete** - Mark complete with `lean-spec update <spec> --status complete`
 
-**Critical - Frontmatter Editing Rules**:
-
-**NEVER manually edit these system-managed fields:**
-- `status`, `priority`, `tags`, `assignee` - Use `lean-spec update` commands only
-- `transitions`, `created_at`, `updated_at`, `completed_at` - Automatically managed by the system
-- Manual edits will corrupt metadata, break tracking, and cause validation failures
-
-**Currently MUST manually edit these relationship fields:**
-- `depends_on`, `related` - No CLI command exists yet, edit frontmatter directly
-- Be careful with syntax and use `lean-spec deps <spec>` to verify relationships
-5. **Complete** - Archive or mark complete when done
+**Critical - Frontmatter Editing Rules:**
+- **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`
+- **Use CLI commands**: `lean-spec update` for all system-managed fields
+- **Manual edit only**: `depends_on`, `related` (no CLI command yet - verify with `lean-spec deps <spec>`)
 
 ## Quality Standards
 
@@ -248,75 +234,51 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 
 ## Spec Complexity Guidelines
 
-### Keep Specs Lean (Context Economy in Practice)
+### Token-Based Thresholds (Specs 066, 069, 071)
 
-**Single File vs Sub-Specs:**
-
-Keep as **single file** when:
-- Under 2,000 tokens (Context Economy: optimal AI performance)
-- Can be read/understood in 5-10 minutes (attention span)
-- Single, focused concern (Signal-to-Noise: one clear topic)
-- Implementation plan <6 phases (cognitive load manageable)
-
-Consider **splitting** when:
-- Over 3,500 tokens (Context Economy: AI performance degradation)
-- Multiple distinct concerns (Signal-to-Noise: multiple topics reduce clarity)
-- AI tools corrupt the spec during edits (context window overflow)
-- Updates frequently cause inconsistencies (too complex to maintain)
-- Implementation has >6 phases (Intent: breaks down into sub-problems)
-
-**Check your spec:** Run `lean-spec tokens <spec>` to see token count and performance indicators.
-
-### Complexity Validation (Specs 066, 069, 071) - Token-Based
-
-LeanSpec uses **token count** as the validation metric for Context Economy:
-
-**Why Tokens?**
-- Token count is the **industry standard** for LLM context measurement
-- Research shows token count predicts AI performance better than line count
-- Quality degradation happens even within context limits (39% drop in multi-turn contexts)
-- Code is denser (~3 chars/token) than prose (~4 chars/token)
-- 6x cost difference: 2,000-line vs 300-line specs
+LeanSpec uses **token count** as the primary complexity metric:
 
 **Token Thresholds:**
-1. **<2,000 tokens**: ✅ Excellent - Baseline AI performance (100% effectiveness)
-2. **2,000-3,500 tokens**: ✅ Good - Slight degradation, acceptable (95% effectiveness)
-3. **3,500-5,000 tokens**: ⚠️ Warning - Consider simplification (85% effectiveness)
-4. **>5,000 tokens**: 🔴 Should split - Significant performance impact (70% effectiveness)
+- **<2,000 tokens**: ✅ Excellent - Optimal AI performance (100%)
+- **2,000-3,500 tokens**: ✅ Good - Slight degradation (95%)
+- **3,500-5,000 tokens**: ⚠️ Warning - Consider splitting (85%)
+- **>5,000 tokens**: 🔴 Should split - Significant degradation (70%)
 
-**Structure Checks (Independent Feedback):**
-- **Sub-specs present**: Positive feedback for progressive disclosure
-- **Good sectioning** (15-35 sections): Positive feedback for cognitive chunking
-- **Poor sectioning** (<8 sections): Warning about monolithic structure
+**Why tokens?** Industry standard for LLM context, better predictor than line count, accounts for code density differences (3 chars/token vs 4 for prose).
 
 **Check token counts:**
-- `lean-spec tokens <spec>` - Count tokens in a specific spec
-- `lean-spec tokens` - Show token counts for all specs
-- `lean-spec validate` - Run full validation including token thresholds
+- `lean-spec tokens <spec>` - Count tokens in a spec
+- `lean-spec tokens` - Show all specs by token count
+- `lean-spec validate` - Full validation including thresholds
 
-**Note:** Token thresholds are research-based (see specs 066, 071) and validated against real-world usage.
+### When to Split
 
-### Warning Signs
+Keep as **single file** when:
+- Under 2,000 tokens (optimal)
+- Single, focused concern
+- Readable in 5-10 minutes
+- Implementation <6 phases
 
-Your spec might be too complex if:
-- ⚠️ Token count >3,500 (run `lean-spec tokens <spec>` to check)
-- ⚠️ It takes >10 minutes to read through (Context Economy)
-- ⚠️ You can't summarize it in 2 paragraphs (Signal-to-Noise)
-- ⚠️ Recent edits caused corruption (context window overflow)
-- ⚠️ You're scrolling endlessly to find information (Progressive Disclosure: needs sub-specs)
-- ⚠️ Implementation plan has >8 phases (Intent: should break into smaller specs)
+Consider **splitting** when:
+- Over 3,500 tokens
+- Multiple distinct concerns
+- AI tools corrupt during edits
+- Implementation >6 phases
 
-**Action**: Split using sub-specs (see spec 012-sub-spec-files). This applies Progressive Disclosure—add complexity (sub-specs) when pain is felt.
+**Warning signs:**
+- Token count >3,500
+- Takes >10 minutes to read
+- Can't summarize in 2 paragraphs
+- Scrolling endlessly to find info
 
-### How to Split (See spec 012-sub-spec-files)
+### How to Split
 
-Use sub-spec files for complex features:
+Use sub-spec files (see spec 012):
 - `README.md`: Overview, decision, high-level design
-- `DESIGN.md`: Detailed design and architecture
-- `IMPLEMENTATION.md`: Implementation plan with phases
-- `TESTING.md`: Test strategy and cases
-- `CONFIGURATION.md`: Config examples and schemas
-- `{CONCERN}.md`: Other specific concerns (API, MIGRATION, etc.)
+- `DESIGN.md`: Detailed architecture
+- `IMPLEMENTATION.md`: Implementation phases
+- `TESTING.md`: Test strategy
+- `{CONCERN}.md`: Specific concerns (API, MIGRATION, etc.)
 
 ---
 
