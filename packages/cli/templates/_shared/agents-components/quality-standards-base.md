@@ -1,0 +1,5 @@
+- Code is clear and maintainable
+- Tests cover critical paths
+- No unnecessary complexity
+- Documentation where needed (not everywhere)
+- Specs stay in sync with implementation

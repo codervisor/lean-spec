@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Lightweight spec methodology for AI-powered development (monorepo root)",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm build:templates && pnpm -r build",
+    "build:templates": "tsx scripts/build-agents-templates.ts",
     "dev": "pnpm --parallel -r dev",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
@@ -38,7 +39,9 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
+    "handlebars": "^4.7.8",
     "prettier": "^3.1.1",
+    "tsx": "^4.19.2",
     "vitest": "^4.0.6"
   },
   "engines": {
