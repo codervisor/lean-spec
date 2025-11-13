@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-11-13
+
+### Added
+- Token counting commands (`lean-spec tokens`) for LLM context management
+- Token-based validation thresholds replacing line-count metrics
+- Chinese (zh-Hans) translations for documentation site
+- UI/UX enhancements for LeanSpec Web including dark theme improvements
+
+### Fixed
+- Migration tests now use correct fixture paths
+- CI workflow improvements and error handling
+- Dark theme typography and status color consistency
+- Validator error handling for better user experience
+
+### Changed
+- Complexity validation now uses token-based thresholds (spec 071)
+- Web package downgraded to Tailwind v3 for better compatibility
+- Enhanced spec detail pages with timeline and metadata display
+
 ## [0.2.0] - 2025-11-10
 
 **🎉 Official Public Release - Production Ready**
