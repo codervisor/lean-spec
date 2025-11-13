@@ -6,6 +6,7 @@ import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
+import { searchSpecs, type SearchableSpec } from '@leanspec/core';
 
 export async function searchCommand(query: string, options: {
   status?: SpecStatus;
@@ -40,41 +41,25 @@ export async function searchCommand(query: string, options: {
     return;
   }
 
-  // Search for query in content
-  const results: Array<{
-    spec: typeof specs[0];
-    matches: string[];
-  }> = [];
+  // Convert to searchable format
+  const searchableSpecs: SearchableSpec[] = specs.map(spec => ({
+    path: spec.path,
+    name: spec.path,
+    status: spec.frontmatter.status,
+    priority: spec.frontmatter.priority,
+    tags: spec.frontmatter.tags,
+    title: spec.frontmatter.title,
+    description: spec.frontmatter.description,
+    content: spec.content,
+  }));
 
-  const queryLower = query.toLowerCase();
+  // Use intelligent search engine
+  const searchResult = searchSpecs(query, searchableSpecs, {
+    maxMatchesPerSpec: 5,
+    contextLength: 80,
+  });
 
-  for (const spec of specs) {
-    if (!spec.content) continue;
-
-    const matches: string[] = [];
-    
-    // Search in content
-    const lines = spec.content.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.toLowerCase().includes(queryLower)) {
-        // Get context: current line with some surrounding context
-        const contextStart = Math.max(0, i - 1);
-        const contextEnd = Math.min(lines.length - 1, i + 1);
-        const context = lines.slice(contextStart, contextEnd + 1);
-        
-        // Highlight the matching line
-        const matchLine = context[i - contextStart];
-        const highlighted = highlightMatch(matchLine, query);
-        
-        matches.push(highlighted);
-      }
-    }
-
-    if (matches.length > 0) {
-      results.push({ spec, matches });
-    }
-  }
+  const { results, metadata } = searchResult;
 
   // Display results
   if (results.length === 0) {
@@ -94,9 +79,10 @@ export async function searchCommand(query: string, options: {
     return;
   }
 
-  // Show summary header
+  // Show summary header with metadata
   console.log('');
   console.log(chalk.green(`🔍 Found ${results.length} spec${results.length === 1 ? '' : 's'} matching "${sanitizeUserInput(query)}"`));
+  console.log(chalk.gray(`   Searched ${metadata.specsSearched} specs in ${metadata.searchTime}ms`));
   
   // Show active filters
   if (Object.keys(filter).length > 0) {
@@ -105,51 +91,85 @@ export async function searchCommand(query: string, options: {
     if (options.tag) filters.push(`tag=${sanitizeUserInput(options.tag)}`);
     if (options.priority) filters.push(`priority=${sanitizeUserInput(options.priority)}`);
     if (options.assignee) filters.push(`assignee=${sanitizeUserInput(options.assignee)}`);
-    console.log(chalk.gray(`With filters: ${filters.join(', ')}`));
+    console.log(chalk.gray(`   With filters: ${filters.join(', ')}`));
   }
   console.log('');
 
   // Display each result with matches
   for (const result of results) {
-    const { spec, matches } = result;
+    const { spec, matches, score, totalMatches } = result;
     
-    // Spec header
-    console.log(chalk.cyan(`${spec.frontmatter.status === 'in-progress' ? '🔨' : spec.frontmatter.status === 'complete' ? '✅' : '📅'} ${sanitizeUserInput(spec.path)}`));
+    // Spec header with relevance score
+    const statusEmoji = spec.status === 'in-progress' ? '🔨' : 
+                       spec.status === 'complete' ? '✅' : '📅';
+    console.log(chalk.cyan(`${statusEmoji} ${sanitizeUserInput(spec.path)} ${chalk.gray(`(${score}% match)`)}`));
     
     // Metadata
     const meta: string[] = [];
-    if (spec.frontmatter.priority) {
-      const priorityEmoji = spec.frontmatter.priority === 'critical' ? '🔴' : 
-                           spec.frontmatter.priority === 'high' ? '🟡' :
-                           spec.frontmatter.priority === 'medium' ? '🟠' : '🟢';
-      meta.push(`${priorityEmoji} ${sanitizeUserInput(spec.frontmatter.priority)}`);
+    if (spec.priority) {
+      const priorityEmoji = spec.priority === 'critical' ? '🔴' : 
+                           spec.priority === 'high' ? '🟡' :
+                           spec.priority === 'medium' ? '🟠' : '🟢';
+      meta.push(`${priorityEmoji} ${sanitizeUserInput(spec.priority)}`);
     }
-    if (spec.frontmatter.tags && spec.frontmatter.tags.length > 0) {
-      meta.push(`[${spec.frontmatter.tags.map(tag => sanitizeUserInput(tag)).join(', ')}]`);
+    if (spec.tags && spec.tags.length > 0) {
+      meta.push(`[${spec.tags.map(tag => sanitizeUserInput(tag)).join(', ')}]`);
     }
     if (meta.length > 0) {
-      console.log(chalk.gray(`  ${meta.join(' • ')}`));
+      console.log(chalk.gray(`   ${meta.join(' • ')}`));
     }
     
-    // Show first few matches (limit to 3 per spec)
-    const maxMatches = 3;
-    for (let i = 0; i < Math.min(matches.length, maxMatches); i++) {
-      console.log(`  ${chalk.gray('Match:')} ${matches[i].trim()}`);
+    // Show title if it matched
+    const titleMatch = matches.find(m => m.field === 'title');
+    if (titleMatch) {
+      console.log(`   ${chalk.bold('Title:')} ${highlightMatches(titleMatch.text, titleMatch.highlights)}`);
     }
     
-    if (matches.length > maxMatches) {
-      console.log(chalk.gray(`  ... and ${matches.length - maxMatches} more match${matches.length - maxMatches === 1 ? '' : 'es'}`));
+    // Show description if it matched
+    const descMatch = matches.find(m => m.field === 'description');
+    if (descMatch) {
+      console.log(`   ${chalk.bold('Description:')} ${highlightMatches(descMatch.text, descMatch.highlights)}`);
+    }
+    
+    // Show tag matches
+    const tagMatches = matches.filter(m => m.field === 'tags');
+    if (tagMatches.length > 0) {
+      console.log(`   ${chalk.bold('Tags:')} ${tagMatches.map(m => highlightMatches(m.text, m.highlights)).join(', ')}`);
+    }
+    
+    // Show content matches
+    const contentMatches = matches.filter(m => m.field === 'content');
+    if (contentMatches.length > 0) {
+      console.log(`   ${chalk.bold('Content matches:')}`);
+      for (const match of contentMatches) {
+        const lineInfo = match.lineNumber ? chalk.gray(`[L${match.lineNumber}]`) : '';
+        console.log(`   ${lineInfo} ${highlightMatches(match.text, match.highlights)}`);
+      }
+    }
+    
+    if (totalMatches > matches.length) {
+      console.log(chalk.gray(`   ... and ${totalMatches - matches.length} more match${totalMatches - matches.length === 1 ? '' : 'es'}`));
     }
     
     console.log('');
   }
 }
 
-function highlightMatch(text: string, query: string): string {
-  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-  return text.replace(regex, chalk.yellow('$1'));
-}
+/**
+ * Highlight matches in text using character ranges
+ */
+function highlightMatches(text: string, highlights: Array<[number, number]>): string {
+  if (highlights.length === 0) return text;
 
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let result = '';
+  let lastEnd = 0;
+
+  for (const [start, end] of highlights) {
+    result += text.substring(lastEnd, start);
+    result += chalk.yellow(text.substring(start, end));
+    lastEnd = end;
+  }
+  result += text.substring(lastEnd);
+
+  return result;
 }
