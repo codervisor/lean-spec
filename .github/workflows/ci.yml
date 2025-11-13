@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: pnpm build
       
+      - name: Validate templates
+        run: pnpm validate:templates
+      
       - name: Type check
         run: pnpm typecheck
       
