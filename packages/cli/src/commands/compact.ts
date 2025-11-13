@@ -11,6 +11,7 @@
 
 import chalk from 'chalk';
 import * as path from 'node:path';
+import { Command } from 'commander';
 import { readFile, writeFile } from 'node:fs/promises';
 import { removeLines, countLines, extractLines } from '@leanspec/core';
 import { loadConfig } from '../config.js';
@@ -30,10 +31,34 @@ interface ParsedRemove {
   originalIndex: number; // Track original order for better reporting
 }
 
+// Helper function to collect multiple --remove options
+function collectRemoves(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
+/**
+ * Compact command - remove specified line ranges
+ */
+export function compactCommand(): Command {
+  return new Command('compact')
+    .description('Remove specified line ranges from spec (spec 059)')
+    .argument('<spec>', 'Spec to compact')
+    .option('--remove <lines>', 'Line range to remove (e.g., 145-153)', collectRemoves, [])
+    .option('--dry-run', 'Show what would be removed without making changes')
+    .option('--force', 'Skip confirmation')
+    .action(async (specPath: string, options: { remove: string[]; dryRun?: boolean; force?: boolean }) => {
+      await compactSpec(specPath, {
+        removes: options.remove,
+        dryRun: options.dryRun,
+        force: options.force,
+      });
+    });
+}
+
 /**
  * Compact spec by removing specified line ranges
  */
-export async function compactCommand(specPath: string, options: CompactOptions): Promise<void> {
+export async function compactSpec(specPath: string, options: CompactOptions): Promise<void> {
   await autoCheckIfEnabled();
   
   try {

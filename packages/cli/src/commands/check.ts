@@ -1,9 +1,23 @@
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadConfig } from '../config.js';
 import { loadAllSpecs } from '../spec-loader.js';
 import { createSpecDirPattern } from '../utils/path-helpers.js';
 import { sanitizeUserInput } from '../utils/ui.js';
+
+/**
+ * Check command - check for sequence conflicts
+ */
+export function checkCommand(): Command {
+  return new Command('check')
+    .description('Check for sequence conflicts')
+    .option('-q, --quiet', 'Brief output')
+    .action(async (options: { quiet?: boolean }) => {
+      const hasNoConflicts = await checkSpecs(options);
+      process.exit(hasNoConflicts ? 0 : 1);
+    });
+}
 
 /**
  * Check for sequence conflicts in specs

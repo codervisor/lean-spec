@@ -1,11 +1,24 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadConfig } from '../config.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 import { getSpecFile, updateFrontmatter } from '../frontmatter.js';
+
+/**
+ * Archive command - move spec to archived/
+ */
+export function archiveCommand(): Command {
+  return new Command('archive')
+    .description('Move spec to archived/')
+    .argument('<spec>', 'Spec to archive')
+    .action(async (specPath: string) => {
+      await archiveSpec(specPath);
+    });
+}
 
 export async function archiveSpec(specPath: string): Promise<void> {
   // Auto-check for conflicts before archive

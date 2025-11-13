@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
+import { Command } from 'commander';
 import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
 import { getGlobalNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
@@ -10,6 +11,56 @@ import type { SpecPriority } from '../frontmatter.js';
 import { normalizeDateFields } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
+import { parseCustomFieldOptions } from '../utils/cli-helpers.js';
+
+/**
+ * Create command - create new spec
+ */
+export function createCommand(): Command {
+  return new Command('create')
+    .description('Create new spec in folder structure')
+    .argument('<name>', 'Name of the spec')
+    .option('--title <title>', 'Set custom title')
+    .option('--description <desc>', 'Set initial description')
+    .option('--tags <tags>', 'Set tags (comma-separated)')
+    .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
+    .option('--assignee <name>', 'Set assignee')
+    .option('--template <template>', 'Use a specific template')
+    .option('--field <name=value...>', 'Set custom field (can specify multiple)')
+    .option('--no-prefix', 'Skip date prefix even if configured')
+    .action(async (name: string, options: {
+      title?: string;
+      description?: string;
+      tags?: string;
+      priority?: SpecPriority;
+      assignee?: string;
+      template?: string;
+      field?: string[];
+      prefix?: boolean;
+    }) => {
+      const customFields = parseCustomFieldOptions(options.field);
+      const createOptions: {
+        title?: string;
+        description?: string;
+        tags?: string[];
+        priority?: SpecPriority;
+        assignee?: string;
+        template?: string;
+        customFields?: Record<string, unknown>;
+        noPrefix?: boolean;
+      } = {
+        title: options.title,
+        description: options.description,
+        tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
+        priority: options.priority,
+        assignee: options.assignee,
+        template: options.template,
+        customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+        noPrefix: options.prefix === false,
+      };
+      await createSpec(name, createOptions);
+    });
+}
 
 export async function createSpec(name: string, options: { 
   title?: string; 

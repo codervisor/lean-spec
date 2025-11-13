@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { marked } from 'marked';
 import { markedTerminal } from 'marked-terminal';
 import { loadConfig } from '../config.js';
@@ -216,10 +217,34 @@ function displayFormattedSpec(spec: SpecContent): string {
 }
 
 /**
+ * View command - view spec content
+ */
+export function viewCommand(): Command {
+  return new Command('view')
+    .description('View spec content (supports sub-specs like "045/DESIGN.md")')
+    .argument('<spec>', 'Spec to view')
+    .option('--raw', 'Output raw markdown (for piping/scripting)')
+    .option('--json', 'Output as JSON')
+    .option('--no-color', 'Disable colors')
+    .action(async (specPath: string, options: { raw?: boolean; json?: boolean; color?: boolean }) => {
+      try {
+        await viewSpec(specPath, {
+          raw: options.raw,
+          json: options.json,
+          noColor: options.color === false,
+        });
+      } catch (error) {
+        console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
+    });
+}
+
+/**
  * lean-spec view <spec-name>
  * Display spec with rendered markdown, or output raw/json
  */
-export async function viewCommand(
+export async function viewSpec(
   specPath: string,
   options: {
     raw?: boolean;
@@ -260,10 +285,30 @@ export async function viewCommand(
 }
 
 /**
+ * Open command - open spec in editor
+ */
+export function openCommand(): Command {
+  return new Command('open')
+    .description('Open spec in editor')
+    .argument('<spec>', 'Spec to open')
+    .option('--editor <editor>', 'Specify editor command')
+    .action(async (specPath: string, options: { editor?: string }) => {
+      try {
+        await openSpec(specPath, {
+          editor: options.editor,
+        });
+      } catch (error) {
+        console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
+    });
+}
+
+/**
  * lean-spec open <spec-name>
  * Open spec in editor
  */
-export async function openCommand(
+export async function openSpec(
   specPath: string,
   options: {
     editor?: string;

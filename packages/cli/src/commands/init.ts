@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { select } from '@inquirer/prompts';
 import { saveConfig, type LeanSpecConfig } from '../config.js';
 import {
@@ -13,6 +14,17 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
+
+/**
+ * Init command - initialize LeanSpec in current directory
+ */
+export function initCommand(): Command {
+  return new Command('init')
+    .description('Initialize LeanSpec in current directory')
+    .action(async () => {
+      await initProject();
+    });
+}
 
 export async function initProject(): Promise<void> {
   const cwd = process.cwd();

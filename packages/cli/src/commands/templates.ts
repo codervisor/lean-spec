@@ -1,7 +1,59 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadConfig, saveConfig } from '../config.js';
+
+/**
+ * Templates command - manage spec templates
+ */
+export function templatesCommand(): Command {
+  const cmd = new Command('templates')
+    .description('Manage spec templates');
+
+  cmd.command('list')
+    .description('List available templates')
+    .action(async () => {
+      await listTemplates();
+    });
+
+  cmd.command('show')
+    .description('Show template content')
+    .argument('<name>', 'Template name')
+    .action(async (name: string) => {
+      await showTemplate(name);
+    });
+
+  cmd.command('add')
+    .description('Register a template')
+    .argument('<name>', 'Template name')
+    .argument('<file>', 'Template file path')
+    .action(async (name: string, file: string) => {
+      await addTemplate(name, file);
+    });
+
+  cmd.command('remove')
+    .description('Unregister a template')
+    .argument('<name>', 'Template name')
+    .action(async (name: string) => {
+      await removeTemplate(name);
+    });
+
+  cmd.command('copy')
+    .description('Copy a template to create a new one')
+    .argument('<source>', 'Source template name')
+    .argument('<target>', 'Target template name')
+    .action(async (source: string, target: string) => {
+      await copyTemplate(source, target);
+    });
+
+  // Default action (list)
+  cmd.action(async () => {
+    await listTemplates();
+  });
+
+  return cmd;
+}
 
 export async function listTemplates(cwd: string = process.cwd()): Promise<void> {
   const config = await loadConfig(cwd);
