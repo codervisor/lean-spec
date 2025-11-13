@@ -1,671 +1,392 @@
 # System Architecture
 
-**Programmatic spec management through AST manipulation**
+**Mechanical transformation tools for AI agent orchestration**
 
 ## Design Principles
 
-### 1. Separate Concerns
+### 1. AI Agent Orchestration Model
 
-**AI Role**: Strategic decisions
-- Identify concerns in spec
-- Suggest splitting strategy
-- Review transformation results
-- Detect semantic issues
+**AI Agent Role** (GitHub Copilot, Claude, etc.):
+- Read and understand spec content
+- Detect issues (token count, redundancy, structure)
+- Decide transformation strategy
+- Determine split points, what to remove, what to compress
+- Call tools with explicit parameters
+- Verify results
 
-**Code Role**: Tactical execution
-- Parse markdown to AST
-- Analyze structure
-- Transform content
-- Update references
-- Validate results
+**Tool Role** (LeanSpec CLI):
+- Parse markdown structure (sections, line ranges)
+- Execute mechanical transformations (split, move, delete)
+- Update cross-references
+- Validate markdown syntax
+- Report results as structured data (JSON)
 
-**Human Role**: Final decisions
-- Approve transformations
-- Override suggestions
-- Provide context
-- Handle edge cases
+**Key Insight**: Tools don't need semantic understanding - AI agents already have context. Tools just need reliable execution.
+
+**What Changed**: Previously designed tools to do semantic analysis (detect concerns, find redundancy). Now tools are dumb executors - AI agents do the thinking.
 
 ### 2. Deterministic Transformations
 
-**No LLM in transformation pipeline**:
+**No LLM in tools** - AI agent provides intelligence, tools execute:
 ```
-Input spec → Parse → Analyze → Transform → Output spec
-    (AST-based, deterministic, fast)
+AI Agent analyzes spec → Decides what to do → Calls tool with parameters
+                                                      ↓
+                                         Tool executes mechanically
+                                                      ↓
+                                              Returns result (JSON)
+                                                      ↓
+                                         AI Agent verifies/continues
 
 NOT:
-Input spec → LLM rewrite → Hope it's correct → Manual fixes
-    (slow, error-prone, non-deterministic)
+Tool tries to understand content → Makes decisions → Uses LLM → Slow/unreliable
 ```
 
 **Benefits**:
-- ✅ Predictable results
-- ✅ No hallucinations
-- ✅ 100x+ faster
-- ✅ Reversible (diffable)
+- ✅ Predictable results (same input = same output)
+- ✅ No hallucinations (just file operations)
+- ✅ Fast (milliseconds, no LLM calls)
+- ✅ Testable (deterministic behavior)
+- ✅ Simple (no AI integration complexity)
 
-### 3. Working Memory Constraints
+### 3. Minimal Parsing Requirements
 
-Every component must fit in memory:
-- Parser: <1MB for any reasonable spec
-- Analyzer: Streaming for large projects
-- Transformer: Operate on AST nodes, not full text
-- Validator: Incremental checks
+Tools only need basic markdown parsing:
+- Extract line ranges: "Give me lines 100-200"
+- Identify sections: "Where does ## Design start?"
+- Parse frontmatter: "What's the current status?"
+- Update references: "Change line 45 ref to line 23"
+
+**No need for**:
+- ❌ Semantic understanding of content
+- ❌ Concern detection algorithms
+- ❌ Similarity/redundancy detection
+- ❌ Conflict detection
+- ❌ Content summarization
+
+AI agents already have this context - tools just execute their decisions.
 
 ## System Components
 
 ### High-Level Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    CLI Layer                        │
-│  lean-spec analyze | split | compact | compress        │
-└─────────────────────┬───────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────┐
-│              Orchestration Layer                    │
-│    - Command routing                                │
-│    - User interaction (prompts, confirmations)      │
-│    - Preview generation                             │
-│    - Undo/rollback                                  │
-└─────────────────────┬───────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        │             │             │
-┌───────▼──────┐ ┌───▼────┐ ┌─────▼──────────┐
-│   Parser     │ │Analyzer│ │  Transformer   │
-│  (AST)       │ │        │ │    Engine      │
-└───────┬──────┘ └───┬────┘ └─────┬──────────┘
-        │            │            │
-        └────────────┴────────────┘
-                     │
-         ┌───────────▼──────────────┐
-         │   Validation Layer       │
-         │  - Markdown validity     │
-         │  - Frontmatter schema    │
-         │  - Cross-reference check │
-         │  - Line count limits     │
-         └──────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│           AI Agent (Copilot/Claude)              │
+│  • Reads specs                                   │
+│  • Detects issues (4,800 tokens)                 │
+│  • Decides strategy (split by concerns)          │
+│  • Calls tools with parameters                   │
+└─────────────────┬────────────────────────────────┘
+                  │ (tool calls)
+┌─────────────────▼────────────────────────────────┐
+│              LeanSpec CLI Tools                  │
+│  lean-spec analyze | split | compact | compress     │
+└─────────────────┬────────────────────────────────┘
+                  │
+        ┌─────────┼─────────┐
+        │         │         │
+┌───────▼──────┐ │ ┌───────▼─────────┐
+│   Parser     │ │ │  Transformer    │
+│  (Basic MD)  │ │ │   (Mechanical)  │
+└───────┬──────┘ │ └───────┬─────────┘
+        │         │         │
+        └─────────┼─────────┘
+                  │
+         ┌────────▼─────────┐
+         │    Validator     │
+         │  (Syntax checks) │
+         └──────────────────┘
+                  │
+         ┌────────▼─────────┐
+         │   JSON Output    │
+         │  (for AI agent)  │
+         └──────────────────┘
 ```
+
+**Key Points**:
+- AI agent is the orchestrator (top)
+- Tools are executors (middle)
+- No "analyzer" or "concern detector" - AI does that
+- Validation is just syntax checking
 
 ### Component Details
 
-#### 1. Markdown Parser
+#### 1. Markdown Parser (Simplified)
 
-**Technology**: [unified.js](https://unifiedjs.com/) ecosystem
+**Technology**: [unified.js](https://unifiedjs.com/) for basic parsing
 - `remark-parse`: Markdown → AST
 - `remark-stringify`: AST → Markdown
-- `remark-frontmatter`: YAML frontmatter support
-- `mdast-util-*`: AST traversal and manipulation
+- `remark-frontmatter`: YAML frontmatter
 
 **Why unified.js**:
-- ✅ Battle-tested (used by MDX, Docusaurus, etc.)
-- ✅ Rich plugin ecosystem
-- ✅ Stable AST format (mdast)
-- ✅ TypeScript support
-- ✅ Streaming capable
+- ✅ Battle-tested
+- ✅ Handles edge cases (nested lists, code blocks, etc.)
+- ✅ Position tracking (line numbers)
+- ✅ Round-trip safe (parse → stringify → parse = same)
 
-**Interface**:
+**What we need**:
 ```typescript
 interface MarkdownParser {
-  parse(content: string): SpecAST;
-  stringify(ast: SpecAST): string;
-  validate(ast: SpecAST): ValidationResult;
-}
-
-interface SpecAST {
-  frontmatter: FrontmatterNode;
-  sections: SectionNode[];
-  references: ReferenceNode[];
-}
-```
-
-**Example**:
-```typescript
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkFrontmatter from 'remark-frontmatter';
-
-const parser = unified()
-  .use(remarkParse)
-  .use(remarkFrontmatter, ['yaml']);
-
-const ast = parser.parse(specContent);
-// Now we can traverse/transform the AST programmatically
-```
-
-#### 2. Structure Analyzer
-
-**Purpose**: Extract semantic structure from AST
-
-**Capabilities**:
-- **Boundary Detection**: Identify logical section boundaries
-- **Concern Extraction**: Group related sections
-- **Complexity Metrics**: Lines, nesting depth, cross-references
-- **Redundancy Analysis**: Find duplicate/similar content
-- **Conflict Detection**: Identify contradictions
-
-**Interface**:
-```typescript
-interface StructureAnalyzer {
-  analyze(ast: SpecAST): AnalysisResult;
-  detectBoundaries(ast: SpecAST): Boundary[];
-  extractConcerns(ast: SpecAST): Concern[];
-  calculateComplexity(ast: SpecAST): ComplexityMetrics;
-  findRedundancy(ast: SpecAST): RedundancyReport;
-  detectConflicts(ast: SpecAST): Conflict[];
-}
-
-interface Concern {
-  id: string;
-  name: string;
-  sections: SectionNode[];
-  lineCount: number;
-  dependencies: string[];
-}
-
-interface Boundary {
-  type: 'section' | 'subsection' | 'concern';
-  start: number;
-  end: number;
-  confidence: number;
-}
-```
-
-**Algorithms** (see ALGORITHMS.md):
-- Boundary detection via heading hierarchy
-- Concern clustering via content similarity
-- Redundancy via fuzzy text matching
-- Conflicts via semantic contradiction
-
-#### 3. Transformation Engine
-
-**Purpose**: Apply transformations to AST
-
-**Core Transformers**:
-```typescript
-interface Transformer {
-  name: string;
-  preview(ast: SpecAST, options: TransformOptions): TransformPreview;
-  apply(ast: SpecAST, options: TransformOptions): SpecAST;
-  rollback(ast: SpecAST, snapshot: Snapshot): SpecAST;
-}
-
-class PartitionTransformer implements Transformer {
-  // Split into sub-specs by concern
-  preview(ast, options) {
-    return {
-      subSpecs: [
-        { name: 'README.md', lineCount: 203, sections: [...] },
-        { name: 'DESIGN.md', lineCount: 378, sections: [...] },
-        // ...
-      ],
-      crossReferences: [...],
-      warnings: [...]
-    };
-  }
+  // Get section line ranges
+  getSectionRange(content: string, sectionName: string): [number, number];
   
-  apply(ast, options) {
-    const subSpecs = this.splitByConcerns(ast, options);
-    const updated = this.updateCrossReferences(ast, subSpecs);
-    return updated;
-  }
-}
-
-class CompactionTransformer implements Transformer {
-  // Remove redundancy, consolidate references
-  preview(ast, options) {
-    return {
-      duplicates: [...],
-      consolidations: [...],
-      linesSaved: 142,
-      preservedDecisions: [...]
-    };
-  }
+  // Extract line range
+  extractLines(content: string, start: number, end: number): string;
   
-  apply(ast, options) {
-    const deduped = this.removeDuplicates(ast);
-    const consolidated = this.consolidateReferences(deduped);
-    return consolidated;
-  }
-}
-
-class CompressionTransformer implements Transformer {
-  // Summarize sections (optionally with AI)
-  preview(ast, options) {
-    return {
-      sectionsToCompress: [...],
-      estimatedLinesSaved: 58,
-      summaries: [...]
-    };
-  }
+  // Parse frontmatter
+  parseFrontmatter(content: string): Record<string, any>;
   
-  apply(ast, options) {
-    // Can use AI for summarization if configured
-    const compressed = this.compressSections(ast, options);
-    return compressed;
-  }
-}
-
-class IsolationTransformer implements Transformer {
-  // Move concern to new spec
-  preview(ast, options) {
-    return {
-      concernToMove: {...},
-      newSpecName: '060-velocity-algorithm',
-      remainingSections: [...],
-      crossReferences: [...]
-    };
-  }
+  // Update frontmatter
+  updateFrontmatter(content: string, updates: Record<string, any>): string;
   
-  apply(ast, options) {
-    const { extracted, remaining } = this.extractConcern(ast, options);
-    this.createNewSpec(extracted, options);
-    return remaining;
-  }
+  // Find and replace references
+  updateReferences(content: string, oldLine: number, newLine: number): string;
 }
 ```
 
-#### 4. Reference Manager
+**What we DON'T need**:
+- ❌ Full AST traversal algorithms
+- ❌ Semantic analysis
+- ❌ Content understanding
+- ❌ Concern detection
 
-**Purpose**: Maintain cross-reference integrity
+#### 2. Analyze Command (Metrics Only)
 
-**Challenges**:
-- Internal links: `[see Design section](#design)`
-- Sub-spec links: `[see TESTING.md](./TESTING.md)`
-- Cross-spec links: `[spec 012](../012-sub-spec-files/)`
-- Code references: Links to source files
+**Purpose**: Return structural metrics as JSON for AI agent
 
-**Interface**:
 ```typescript
-interface ReferenceManager {
-  findReferences(ast: SpecAST): Reference[];
-  updateReferences(ast: SpecAST, mapping: ReferenceMapping): SpecAST;
-  validateReferences(ast: SpecAST): ValidationResult;
-}
-
-interface Reference {
-  type: 'internal' | 'sub-spec' | 'cross-spec' | 'code';
-  source: Location;
-  target: string;
-  valid: boolean;
-}
-
-interface ReferenceMapping {
-  // When we move section "Design" to DESIGN.md:
-  '#design' => './DESIGN.md#design',
-  // When we split concerns:
-  '#velocity-tracking' => '../060-velocity-algorithm/README.md',
-  // etc.
+interface AnalyzeResult {
+  spec: string;
+  metrics: {
+    tokens: number;
+    lines: number;
+    sections: SectionInfo[];
+    codeBlocks: number;
+  };
+  threshold: {
+    status: 'excellent' | 'good' | 'warning' | 'error';
+    limit: number;
+  };
+  structure: {
+    section: string;
+    level: number;
+    lineRange: [number, number];
+    tokens: number;
+  }[];
 }
 ```
 
-**Update algorithm**:
-1. Parse all references in AST
-2. Build mapping based on transformation
-3. Update each reference according to mapping
-4. Validate all references still resolve
+**No semantic analysis** - just counts and structure. AI agent interprets the data.
 
-#### 5. Validation Layer
+#### 3. Transformation Commands (Mechanical)
 
-**Purpose**: Ensure transformations produce valid specs
+**Split**: Extract line ranges to new files
+```typescript
+function split(spec: string, outputs: Array<{file: string, lines: [number, number]}>) {
+  outputs.forEach(({file, lines}) => {
+    const content = extractLines(spec, lines[0], lines[1]);
+    writeFile(`${spec}/${file}`, content);
+  });
+  updateFrontmatter(spec, { /* sub-spec links */ });
+}
+```
 
-**Checks**:
+**Compact**: Remove specified line ranges
+```typescript
+function compact(spec: string, removes: Array<[number, number]>) {
+  let content = readFile(spec);
+  removes.reverse().forEach(([start, end]) => {
+    content = removeLines(content, start, end);
+  });
+  writeFile(spec, content);
+}
+```
+
+**Compress**: Replace line range with new content
+```typescript
+function compress(spec: string, range: [number, number], replacement: string) {
+  const content = readFile(spec);
+  const newContent = replaceLines(content, range[0], range[1], replacement);
+  writeFile(spec, newContent);
+}
+```
+
+**Isolate**: Move lines to new spec
+```typescript
+function isolate(spec: string, lines: [number, number], newSpec: string) {
+  const content = extractLines(spec, lines[0], lines[1]);
+  createSpec(newSpec, content);
+  compact(spec, [lines]);
+  addReference(spec, newSpec);
+}
+```
+
+All mechanical - no decisions, no LLM calls.
+
+#### 4. Validation (Syntax Only)
+
+**Purpose**: Ensure transformations produce valid markdown
+
 ```typescript
 interface Validator {
-  validate(ast: SpecAST): ValidationResult;
+  validateMarkdown(content: string): ValidationResult;
+  validateFrontmatter(content: string): ValidationResult;
+  validateReferences(content: string): ValidationResult;
 }
 
-class MarkdownValidator implements Validator {
-  // Ensure valid markdown structure
-  validate(ast) {
-    return {
-      syntaxValid: true,
-      wellFormed: true,
-      errors: []
-    };
+class SyntaxValidator {
+  validateMarkdown(content) {
+    // Use unified.js to check for syntax errors
+    // No semantic validation
+    return { valid: true, errors: [] };
   }
-}
-
-class FrontmatterValidator implements Validator {
-  // Ensure valid frontmatter (existing from spec 018)
-  validate(ast) {
-    const fm = ast.frontmatter;
-    return validateFrontmatter(fm);
+  
+  validateFrontmatter(content) {
+    // Use existing frontmatter validator (spec 018)
+    return validateFrontmatter(parseFrontmatter(content));
   }
-}
-
-class ReferenceValidator implements Validator {
-  // Ensure all links resolve
-  validate(ast) {
-    const refs = findReferences(ast);
-    const broken = refs.filter(r => !r.valid);
-    return {
-      passed: broken.length === 0,
-      errors: broken.map(r => ({
-        message: `Broken reference: ${r.target}`,
-        location: r.source
-      }))
-    };
-  }
-}
-
-class LineCountValidator implements Validator {
-  // Ensure Context Economy (existing from spec 048)
-  validate(ast) {
-    const lines = countLines(ast);
-    if (lines > 400) {
-      return {
-        passed: false,
-        errors: [{ message: `Exceeds 400 lines (${lines})` }]
-      };
-    }
-    // ...
+  
+  validateReferences(content) {
+    // Check that links point to existing files/sections
+    // No semantic validation of whether link makes sense
+    return { valid: true, brokenLinks: [] };
   }
 }
 ```
 
-## Data Structures
+**No complex validation** - just syntax and structure. AI agent handles semantic correctness.
 
-### SpecAST (Abstract Syntax Tree)
+## Data Flow
 
-```typescript
-interface SpecAST {
-  type: 'root';
-  frontmatter: FrontmatterNode;
-  children: Node[];
-  
-  // Convenience accessors
-  sections: SectionNode[];
-  references: ReferenceNode[];
-  codeBlocks: CodeNode[];
-}
+### Example: AI Agent Splits Oversized Spec
 
-interface FrontmatterNode {
-  type: 'yaml';
-  value: string;  // Raw YAML
-  data: FrontmatterData;  // Parsed
-}
+```
+1. AI Agent reads spec
+   ├─ Spec 045: 4,800 tokens
+   └─ Detects: Exceeds 3,500 token warning
 
-interface SectionNode {
-  type: 'heading';
-  depth: 1 | 2 | 3 | 4 | 5 | 6;
-  value: string;
-  children: Node[];
-  
-  // Computed
-  lineStart: number;
-  lineEnd: number;
-  lineCount: number;
-}
+2. AI Agent calls analyze
+   $ lean-spec analyze 045 --json
+   ├─ Returns: Structure, sections, line ranges
+   └─ AI interprets: "5 major H2 sections"
 
-interface ReferenceNode {
-  type: 'link' | 'linkReference';
-  url: string;
-  title?: string;
-  
-  // Analysis
-  referenceType: 'internal' | 'sub-spec' | 'cross-spec' | 'external';
-  valid: boolean;
-}
+3. AI Agent decides strategy
+   ├─ Group sections into concerns
+   ├─ Overview (lines 1-150)
+   ├─ Design (lines 151-528)
+   └─ Testing (lines 529-710)
 
-interface CodeNode {
-  type: 'code';
-  lang?: string;
-  value: string;
-  
-  // Context
-  lineStart: number;
-  lineEnd: number;
-}
+4. AI Agent calls split
+   $ lean-spec split 045 \
+     --output=README.md:1-150 \
+     --output=DESIGN.md:151-528 \
+     --output=TESTING.md:529-710
+
+5. Tool executes mechanically
+   ├─ Extract line ranges
+   ├─ Create new files
+   ├─ Update frontmatter
+   └─ Validate syntax
+
+6. Tool returns result
+   {
+     "filesCreated": 3,
+     "totalTokens": 3052,
+     "success": true
+   }
+
+7. AI Agent verifies
+   $ lean-spec tokens 045/*
+   └─ Confirms all under 2,000 tokens
 ```
 
-### AnalysisResult
+## Implementation Scope
 
-```typescript
-interface AnalysisResult {
-  complexity: ComplexityMetrics;
-  concerns: Concern[];
-  boundaries: Boundary[];
-  redundancy: RedundancyReport;
-  conflicts: Conflict[];
-  recommendations: Recommendation[];
-}
+### What We're Building
 
-interface ComplexityMetrics {
-  lineCount: number;
-  sectionCount: number;
-  maxNestingDepth: number;
-  codeBlockCount: number;
-  referenceCount: number;
-  
-  // Token thresholds (primary metric)
-  tokenCount: number;
-  exceedsTokenLimit: boolean;  // >5,000 tokens
-  approachingTokenLimit: boolean;  // >3,500 tokens
-  
-  // Line count (backstop)
-  lineCount: number;
-  veryLong: boolean;  // >500 lines
-}
+**Core Functionality**:
+- ✅ Basic markdown parsing (sections, line ranges, frontmatter)
+- ✅ `analyze` - Return structure as JSON
+- ✅ `split` - Extract line ranges to files
+- ✅ `compact` - Remove line ranges
+- ✅ `compress` - Replace line range with text
+- ✅ `isolate` - Move lines to new spec
+- ✅ Syntax validation
 
-interface RedundancyReport {
-  duplicateSections: DuplicateGroup[];
-  similarContent: SimilarityGroup[];
-  consolidationOpportunities: Consolidation[];
-  
-  // Metrics
-  totalRedundantLines: number;
-  potentialSavings: number;  // Lines that could be removed
-}
+**What We're NOT Building** (AI agent does this):
+- ❌ Concern detection algorithms
+- ❌ Redundancy detection
+- ❌ Similarity analysis
+- ❌ Conflict detection
+- ❌ Content summarization
+- ❌ Semantic understanding
 
-interface Conflict {
-  type: 'contradiction' | 'outdated' | 'inconsistent';
-  sections: SectionNode[];
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  suggestion: string;
-}
+### Technology Stack
 
-interface Recommendation {
-  strategy: 'partition' | 'compact' | 'compress' | 'isolate';
-  rationale: string;
-  estimatedImpact: {
-    linesSaved: number;
-    filesCreated: number;
-    complexity: 'reduced' | 'same' | 'increased';
-  };
-  confidence: number;  // 0-1
-}
-```
+**Core**:
+- `unified.js` + `remark-parse` - Markdown parsing
+- `remark-frontmatter` - YAML parsing
+- TypeScript - Type safety
+- Node.js - Runtime
 
-### TransformPreview
+**Testing**:
+- Vitest - Unit/integration tests
+- Existing specs - Real-world test data
 
-```typescript
-interface TransformPreview {
-  transformation: string;  // 'partition' | 'compact' | etc.
-  
-  before: {
-    lineCount: number;
-    fileCount: number;
-    complexity: number;
-  };
-  
-  after: {
-    lineCount: number;
-    fileCount: number;
-    complexity: number;
-  };
-  
-  changes: Change[];
-  warnings: Warning[];
-  
-  // For review
-  diff: string;  // Git-style diff
-  affectedFiles: string[];
-}
+**CLI**:
+- Commander.js - CLI framework (already used)
+- Existing CLI infrastructure from core package
 
-interface Change {
-  type: 'create' | 'modify' | 'delete' | 'move';
-  file: string;
-  description: string;
-  linesDelta: number;
-}
-```
+## Performance Targets
 
-## Performance Considerations
+| Operation | Target | Why |
+|-----------|--------|-----|
+| Parse spec | <50ms | Feels instant |
+| Analyze | <100ms | AI agent needs fast feedback |
+| Split/compact | <200ms | Simple file operations |
+| Validate | <50ms | Just syntax checking |
 
-### Target Performance
-
-| Operation | Target | Rationale |
-|-----------|--------|-----------|
-| Parse spec (<2000 lines) | <50ms | Should feel instant |
-| Analyze complexity | <100ms | Real-time feedback |
-| Generate preview | <200ms | Quick iteration |
-| Apply transformation | <500ms | One-time operation |
-| Validate result | <100ms | Post-transform check |
-| Full project analysis | <2s | Acceptable for bulk operations |
-
-### Optimization Strategies
-
-**1. Incremental Processing**
-- Parse only when content changes
-- Cache AST between operations
-- Invalidate cache on write
-
-**2. Streaming for Large Projects**
-```typescript
-async function* analyzeProject(specs: SpecInfo[]): AsyncGenerator<AnalysisResult> {
-  for (const spec of specs) {
-    const ast = await parseSpec(spec);
-    const analysis = await analyzeAST(ast);
-    yield analysis;  // Stream results
-  }
-}
-```
-
-**3. Parallel Processing**
-- Analyze multiple specs concurrently
-- Use worker threads for CPU-intensive tasks
-- Batch file I/O operations
-
-**4. Smart Defaults**
-- Skip analysis for specs <200 lines (rarely need splitting)
-- Focus on specs >300 lines
-- Prioritize specs with known issues
+**No complex algorithms = naturally fast**
 
 ## Error Handling
 
-### Graceful Degradation
-
+**Simple and clear**:
 ```typescript
-async function splitSpec(specPath: string): Promise<Result<SplitResult, Error>> {
-  try {
-    // 1. Parse
-    const ast = await parseSpec(specPath);
-    if (!ast.ok) {
-      return Err(new ParseError('Invalid markdown', ast.error));
-    }
-    
-    // 2. Analyze
-    const analysis = await analyzeAST(ast.value);
-    if (analysis.concerns.length === 0) {
-      return Err(new AnalysisError('No concerns detected', {
-        suggestion: 'Spec may be too simple to split'
-      }));
-    }
-    
-    // 3. Preview
-    const preview = await generatePreview(ast.value, analysis);
-    const confirmed = await promptUser(preview);
-    if (!confirmed) {
-      return Err(new UserCancelled());
-    }
-    
-    // 4. Transform (with rollback on error)
-    const snapshot = createSnapshot(specPath);
-    try {
-      const result = await applyTransformation(ast.value, analysis);
-      await validateResult(result);
-      return Ok(result);
-    } catch (error) {
-      await rollback(snapshot);
-      return Err(new TransformError('Transformation failed', error));
-    }
-    
-  } catch (error) {
-    return Err(new UnexpectedError(error));
-  }
+// Invalid line range
+if (startLine > endLine || startLine < 1) {
+  return { error: 'Invalid line range', code: 2 };
+}
+
+// File doesn't exist
+if (!fs.existsSync(specPath)) {
+  return { error: 'Spec not found', code: 4 };
+}
+
+// Markdown syntax error
+if (!isValidMarkdown(content)) {
+  return { error: 'Invalid markdown syntax', code: 3 };
 }
 ```
 
-### User-Friendly Errors
+Exit codes match COMMANDS.md specification.
 
-```typescript
-class LeanSpecError extends Error {
-  constructor(
-    message: string,
-    public context: ErrorContext,
-    public suggestion?: string
-  ) {
-    super(message);
-  }
-  
-  format(): string {
-    return `
-${this.message}
+## Future Considerations
 
-Context: ${this.context}
-${this.suggestion ? `\nSuggestion: ${this.suggestion}` : ''}
-    `.trim();
-  }
-}
+### v0.4.0: Enhanced Tooling
+- `--dry-run` mode for all commands
+- `preview` command for visualization
+- `rollback` via git integration
 
-// Usage:
-throw new LeanSpecError(
-  'Failed to split spec',
-  { specPath, lineCount: 1166, concerns: 5 },
-  'Try using --force to override automatic concern detection'
-);
-```
+### v0.5.0: MCP Integration
+- Expose tools as MCP server
+- AI agents can call tools over stdio/HTTP
+- Better integration with Claude Desktop, etc.
 
-## Testing Strategy
-
-### Unit Tests
-- Parser: Round-trip (parse → stringify → parse)
-- Analyzer: Known specs with expected results
-- Transformer: Input AST → Expected output AST
-- Validator: Valid/invalid AST examples
-
-### Integration Tests
-- CLI commands end-to-end
-- Multi-step transformations
-- Error handling scenarios
-
-### Golden Tests
-- Known-good transformations
-- Regression testing on real specs
-- Compare against manual splits
-
-See [TESTING.md](./TESTING.md) for detailed test plan.
-
-## Future Enhancements
-
-### v0.4.0: Continuous Management
-- Watch mode: Auto-detect when specs exceed limits
-- Pre-commit hooks: Validate before commit
-- CI/CD integration: Block PRs with oversized specs
-
-### v0.5.0: AI-Assisted Strategy
-- LLM suggests optimal splitting strategy
-- Semantic analysis for better concern detection
-- Automated conflict resolution
-
-### v1.0.0: Project-Wide Optimization
-- Analyze all specs together
-- Identify duplicate content across specs
-- Suggest consolidation opportunities
-- Generate spec dependency graph
+### v1.0.0: Advanced Features
+- Batch operations (split multiple specs)
+- Project-wide analysis
+- CI/CD integration
 
 ---
 
-**Key Principle**: Fast, deterministic transformations > slow, unpredictable LLM rewrites. Use AI for strategy, code for execution.
+**Key Takeaway**: Keep it simple. Tools provide clean file operations, AI agents provide intelligence. This architecture reflects that philosophy.

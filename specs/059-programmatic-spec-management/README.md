@@ -25,27 +25,57 @@ related:
 
 > **Status**: 📅 Planned · **Priority**: Critical · **Created**: 2025-11-07 · **Tags**: context-engineering, automation, tooling, ai-agents, performance
 
-**The Problem**: Manually splitting oversized specs with LLM text generation is painfully slow and error-prone. We need programmatic tools.
+**The Problem**: AI agents manually editing oversized spec files is slow and error-prone. They need clean, mechanical tools to transform specs without direct markdown manipulation.
 
-**The Solution**: Apply context engineering techniques (partitioning, compaction, compression, isolation) through automated analysis and transformation.
+**The Solution**: Provide programmatic transformation commands that AI agents can orchestrate. AI agents analyze specs and call tools with explicit parameters - tools execute transformations mechanically without LLM calls.
 
 ## Overview
 
 ### Critical Performance Issue
 
 **Current Reality**:
-- AI agents manually rewriting 1,166-line specs → 10+ minutes of slow LLM generation
+- AI agents manually editing 1,166-line markdown files → slow, error-prone
 - Text corruption during large multi-replace operations
-- Context poisoning from accumulated editing errors
-- Human time wasted babysitting AI spec splits
+- Context window pollution from oversized specs
+- Manual markdown editing by AI is fundamentally inefficient
 
-**Root Cause**: Relying on LLM text generation for what should be programmatic transformations.
+**Root Cause**: AI agents lack clean tools to transform specs programmatically - they resort to direct markdown editing.
 
 **Impact**:
-- ❌ Spec 045 (1,166 lines): ~15 min to split manually
-- ❌ Context confusion from processing oversized specs
-- ❌ Context clash when multiple edits accumulate
+- ❌ Spec 045 (4,800 tokens): AI struggles to edit coherently
+- ❌ Context window waste processing oversized specs
+- ❌ Risk of file corruption during complex transformations
 - ❌ Violation of our own Context Economy principle
+
+### The AI Agent Orchestration Model
+
+**Key Insight**: AI agents should orchestrate transformations, not perform them manually.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  AI Agent (GitHub Copilot, Claude, etc.)                │
+│  - Reads spec files                                      │
+│  - Detects issues (token count, redundancy, etc.)       │
+│  - Decides transformation strategy                       │
+│  - Calls tools with explicit parameters                  │
+└─────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────┐
+│  LeanSpec CLI Tools (No LLM, Pure Execution)            │
+│  - Parse markdown structure                              │
+│  - Execute mechanical transformations                    │
+│  - Validate results                                      │
+│  - No semantic analysis, no LLM calls                    │
+└─────────────────────────────────────────────────────────┘
+                           ↓
+                  Transformed Specs
+```
+
+**Benefits**:
+- ✅ Fast: No LLM text generation for file operations
+- ✅ Reliable: Deterministic, testable transformations
+- ✅ Clean: AI agents don't touch markdown directly
+- ✅ Composable: Tools are building blocks AI agents orchestrate
 
 ### Context Engineering Foundation
 
@@ -65,77 +95,80 @@ Based on research from [Anthropic](https://www.anthropic.com/engineering/effecti
 
 ### What We're Building
 
-**Programmatic tools that operate on spec AST (Abstract Syntax Tree)**:
-- ✅ Parse markdown structure without LLM
-- ✅ Analyze complexity programmatically
-- ✅ Transform/split/compact algorithmically
-- ✅ Validate transformations automatically
-- ⚡ Orders of magnitude faster than LLM text generation
+**Mechanical transformation tools for AI agent orchestration**:
+- ✅ Parse markdown structure (sections, line ranges, tokens)
+- ✅ Analyze complexity algorithmically (metrics, patterns)
+- ✅ Execute transformations mechanically (split, move, merge)
+- ✅ Validate results automatically (structure, references)
+- ⚡ No LLM calls - AI agents provide the intelligence
 
-**Human-in-the-Loop**:
-- AI suggests strategy, programs execute transformation
-- Human reviews and confirms changes
-- Best of both: AI insight + programmatic speed
+**AI Agent Workflow**:
+1. Agent reads spec → detects issue (e.g., 4,800 tokens)
+2. Agent decides strategy (e.g., "split by concerns")
+3. Agent calls tool with explicit parameters (e.g., section mappings)
+4. Tool executes transformation mechanically
+5. Agent reviews result and continues or adjusts
+
+**Why This Works**:
+- AI agents already have context understanding
+- Tools just need to execute what AI decides
+- Clean separation: intelligence (AI) vs execution (tools)
 
 ## The Vision
 
 ```bash
-# Current (slow, manual, error-prone):
-$ # AI manually rewrites 1,166 lines of spec text
-$ # 10+ minutes of LLM generation, risk of corruption
+# AI Agent Workflow Example:
 
-# Future (fast, programmatic, reliable):
-$ lean-spec analyze 045 --complexity
-# Analyzing spec structure...
-# ⚠ Spec exceeds 3,500 tokens (4,800 tokens)
-# ⚠ Detected 5 distinct concerns: overview, design, rationale, implementation, testing
-# 
-# Recommended strategy: PARTITION into sub-specs
-# Estimated split: 5 files, largest ~1,500 tokens
-# 
-# Would you like to proceed? (Y/n)
+# 1. AI agent detects issue
+$ lean-spec analyze 045 --json
+{
+  "tokens": 4800,
+  "threshold": "warning",
+  "concerns": [
+    {"name": "Overview", "sections": ["Overview", "Background"], "lines": "1-150"},
+    {"name": "Design", "sections": ["Architecture", "Components"], "lines": "151-528"},
+    {"name": "Testing", "sections": ["Test Strategy", "Test Cases"], "lines": "529-710"}
+  ],
+  "recommendation": "split"
+}
 
-$ lean-spec split 045 --auto-partition
-# Analyzing markdown structure... ✓
-# Identifying logical boundaries... ✓
-# Creating sub-spec files... ✓
-# Moving content programmatically... ✓ (0.3s, not 10 min!)
-# Updating cross-references... ✓
-# Validating result... ✓
-# 
-# Split complete:
-#   README.md (830 tokens, 203 lines) - Overview + decision
-#   DESIGN.md (1,500 tokens, 378 lines) - Detailed design
-#   RATIONALE.md (590 tokens, 146 lines) - Trade-offs
-#   IMPLEMENTATION.md (580 tokens, 144 lines) - Implementation plan
-#   TESTING.md (740 tokens, 182 lines) - Test strategy
+# 2. AI agent decides: "I'll split by concerns"
 
-$ lean-spec compact 018 --remove-redundancy
-# Analyzing for redundancy... ✓
-# Found 3 duplicate sections
-# Found 5 sections inferable from others
-# 
-# Compaction preview:
-#   Before: 2,400 tokens (591 lines)
-#   After: 1,700 tokens (420 lines) - 29% reduction
-#   Preserved: All decision-making content
-#   Removed: Redundant examples, obvious explanations
-# 
-# Apply compaction? (Y/n)
+# 3. AI agent calls tool with explicit parameters
+$ lean-spec split 045 \
+  --output=README.md:1-150 \
+  --output=DESIGN.md:151-528 \
+  --output=TESTING.md:529-710 \
+  --update-refs
+
+# Tool executes mechanically (no LLM):
+# ✓ Created README.md (812 tokens / 150 lines)
+# ✓ Created DESIGN.md (1,512 tokens / 378 lines)
+# ✓ Created TESTING.md (728 tokens / 182 lines)
+# ✓ Updated 47 cross-references
+# ✓ Validated all files
+
+# 4. AI agent verifies result
+$ lean-spec tokens 045/*
+# 045-unified-dashboard/README.md: 812 tokens
+# 045-unified-dashboard/DESIGN.md: 1,512 tokens
+# 045-unified-dashboard/TESTING.md: 728 tokens
+# Total: 3,052 tokens (saved 1,748 via compaction)
 ```
+
+**Key Difference from Current Approach**:
+- ❌ Old: AI manually rewrites markdown → slow, error-prone
+- ✅ New: AI orchestrates tools → fast, deterministic
 
 ## Sub-Specs
 
-This spec is organized using sub-spec files (practicing what we preach):
+This spec is organized using sub-spec files:
 
-- **[CONTEXT-ENGINEERING.md](./CONTEXT-ENGINEERING.md)** - Deep dive: 4 strategies, 4 failure modes, research synthesis
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design: AST parser, analysis engine, transformation engine
-- **[COMMANDS.md](./COMMANDS.md)** - CLI interface: analyze, split, compact, compress, isolate
-- **[ALGORITHMS.md](./ALGORITHMS.md)** - Core algorithms: boundary detection, concern extraction, reference updating
-- **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Phased plan: parser → analyzer → transformers → commands
-- **[TESTING.md](./TESTING.md)** - Test strategy: unit tests, integration tests, golden tests
-
-**Note**: Several sub-specs currently exceed optimal token counts (2,996-4,799 tokens). This demonstrates the exact problem we're solving - comprehensive technical documentation naturally grows beyond working memory limits. The tools we're building will make it trivial to further split these sub-specs programmatically.
+- **[CONTEXT-ENGINEERING.md](./CONTEXT-ENGINEERING.md)** - Research: 4 strategies, 4 failure modes, academic synthesis
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design: AI agent orchestration, mechanical tools, simple parsing
+- **[COMMANDS.md](./COMMANDS.md)** - CLI reference: analyze, split, compact, compress, isolate with AI agent examples
+- **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Roadmap: 4-week plan, simplified from original 7-week complexity
+- **[TESTING.md](./TESTING.md)** - Test strategy: unit tests, integration tests, real-world validation
 
 ## Quick Reference
 
@@ -160,20 +193,19 @@ This spec is organized using sub-spec files (practicing what we preach):
 ### Commands Preview
 
 ```bash
-# Analyze spec complexity
-lean-spec analyze <spec> --complexity
-lean-spec analyze <spec> --redundancy
-lean-spec analyze <spec> --conflicts
+# Analyze spec (returns JSON for AI agent)
+lean-spec analyze <spec> --json
 
-# Transform specs
-lean-spec split <spec> --strategy=partition|concerns|phases
-lean-spec compact <spec> --remove-redundancy
-lean-spec compress <spec> --section="Completed Phases"
-lean-spec isolate <spec> --section="API Design" --new-spec="api-design"
+# Transform specs (AI agent provides parameters)
+lean-spec split <spec> --output=FILE:LINES [--output=...]
+lean-spec compact <spec> --remove=LINES [--remove=...]
+lean-spec compress <spec> --replace=LINES:TEXT
+lean-spec isolate <spec> --lines=RANGE --to=NEW_SPEC
 
-# Validate transformations
-lean-spec validate <spec> --after-transform
+# Utilities
 lean-spec diff <spec> --before-after
+lean-spec preview <spec> --split=FILE:LINES
+lean-spec rollback <spec>
 ```
 
 ## Status
@@ -187,30 +219,36 @@ lean-spec diff <spec> --before-after
 
 ## Key Principles
 
-### Why Programmatic > LLM for Transformations
+### Why AI Agent Orchestration Works
 
-**LLM Strengths** (keep using):
-- Understanding intent
-- Suggesting strategy
-- Identifying concerns
-- Reviewing results
+**AI Agent Strengths** (provide intelligence):
+- Understanding spec content
+- Detecting issues (oversized, redundant, contradictory)
+- Deciding transformation strategy
+- Determining split points, what to remove
+- Reviewing and verifying results
 
-**LLM Weaknesses** (replace with code):
-- Rewriting large text blocks (slow!)
-- Maintaining exact structure
-- Updating cross-references
-- Avoiding corruption
+**Tool Strengths** (provide execution):
+- Fast file operations
+- Deterministic behavior
+- No hallucinations
+- Syntax validation
+- Reference updating
 
-**Hybrid Approach**:
+**Clean Separation**:
 ```
-AI: "This spec should be partitioned into 5 sub-specs: [analysis]"
+AI Agent: "Split this 4,800 token spec at lines 1-150, 151-528, 529-710"
   ↓
-Code: [parses markdown, identifies boundaries, moves sections]
+Tool: [mechanically extracts line ranges, creates files, validates]
   ↓
-Human: "Looks good" or "Adjust this split"
-  ↓
-Code: [applies transformation in 0.3s, not 10 min]
+AI Agent: "Verify: all files under 2,000 tokens" → ✓
 ```
+
+**Why This is Better**:
+- ✅ AI agents already have context (no need to re-analyze in tool)
+- ✅ Tools are simple and fast (no LLM calls)
+- ✅ Deterministic (same params = same result)
+- ✅ Testable (no AI unpredictability)
 
 ### Context Engineering as First Principle
 

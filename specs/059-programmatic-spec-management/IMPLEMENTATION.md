@@ -1,52 +1,339 @@
 # Implementation Roadmap
 
-**Phased delivery for programmatic spec management**
+**Phased delivery for mechanical transformation tools**
 
 ## Timeline Overview
 
-**Total Duration**: 7 weeks for v0.3.0
+**Total Duration**: 4 weeks for v0.3.0
 
 ```
-Weeks 1-2: Foundation (parsing, analysis core)
-Week 3:    Analysis tools (CLI commands)
-Weeks 4-5: Transformation engine
-Week 6:    CLI integration
-Week 7:    Polish & dogfooding
+Week 1:    Foundation (parsing, basic operations)
+Week 2:    Core commands (analyze, split, compact)
+Week 3:    Additional commands (compress, isolate)
+Week 4:    Polish, testing, dogfooding
 ```
 
-## Phase 1: Foundation (Weeks 1-2)
+**Key Change**: Significantly simpler than originally planned. No complex algorithms, no semantic analysis - just mechanical file operations.
+
+## Phase 1: Foundation (Week 1)
 
 ### Goals
-- ✅ Parse markdown to AST
-- ✅ Traverse and query AST
-- ✅ Validate round-trip (parse → stringify → parse)
+- ✅ Basic markdown parsing (line ranges, sections, frontmatter)
+- ✅ File operations (extract, create, delete, move)
+- ✅ Token counting integration
 
 ### Tasks
 
-#### Week 1: Parser Setup
+#### Day 1-2: Parser Setup
 
-**Day 1-2: Project scaffolding**
 ```bash
-# Create new package/module
-src/analysis/
-  parser/
-    index.ts
-    ast-types.ts
-    unified-config.ts
-  analyzer/
-  transformer/
-  __tests__/
+# Leverage existing code
+packages/core/src/analysis/
+  parser.ts         # Basic markdown parsing
+  line-extractor.ts # Extract line ranges
+  section-finder.ts # Find section boundaries
 ```
 
-- [ ] Set up unified.js dependencies
-- [ ] Configure TypeScript types
-- [ ] Create test fixtures (sample specs)
+**What we need**:
+- Parse frontmatter (already exists)
+- Find section headings and line numbers
+- Extract line ranges from content
+- Count tokens (already exists via spec 069)
 
-**Day 3-4: Basic parsing**
-- [ ] Implement `parseSpec(content: string): SpecAST`
-- [ ] Implement `stringifySpec(ast: SpecAST): string`
-- [ ] Handle frontmatter parsing
-- [ ] Add position tracking (line numbers)
+**What we DON'T need**:
+- ❌ Full AST traversal
+- ❌ Semantic analysis
+- ❌ Concern detection
+- ❌ Similarity algorithms
+
+#### Day 3-4: Basic File Operations
+
+```typescript
+// Simple utilities
+function extractLines(content: string, start: number, end: number): string {
+  return content.split('\n').slice(start - 1, end).join('\n');
+}
+
+function removeLines(content: string, start: number, end: number): string {
+  const lines = content.split('\n');
+  lines.splice(start - 1, end - start + 1);
+  return lines.join('\n');
+}
+
+function replaceLines(content: string, start: number, end: number, replacement: string): string {
+  const lines = content.split('\n');
+  lines.splice(start - 1, end - start + 1, replacement);
+  return lines.join('\n');
+}
+```
+
+#### Day 5: Token Integration
+
+```bash
+# Already exists from spec 069
+$ lean-spec tokens <spec>
+
+# Just need to integrate into analyze command
+$ lean-spec analyze <spec> --json
+# Returns token count in JSON
+```
+
+## Phase 2: Core Commands (Week 2)
+
+### Goals
+- ✅ `analyze` command (return structure as JSON)
+- ✅ `split` command (mechanical line extraction)
+- ✅ `compact` command (remove line ranges)
+
+### Day 1-2: Analyze Command
+
+```typescript
+// packages/cli/src/commands/analyze.ts
+interface AnalyzeResult {
+  spec: string;
+  metrics: {
+    tokens: number;
+    lines: number;
+    sections: SectionInfo[];
+  };
+  threshold: {
+    status: 'excellent' | 'good' | 'warning' | 'error';
+  };
+  structure: Array<{
+    section: string;
+    level: number;
+    lineRange: [number, number];
+    tokens: number;
+  }>;
+}
+
+export async function analyze(spec: string): Promise<AnalyzeResult> {
+  // 1. Read spec
+  const content = await readFile(spec);
+  
+  // 2. Count tokens (existing utility)
+  const tokens = await countTokens(content);
+  
+  // 3. Find sections
+  const sections = findSections(content);
+  
+  // 4. Return structured data
+  return {
+    spec,
+    metrics: { tokens, lines: content.split('\n').length, sections },
+    threshold: getThresholdStatus(tokens),
+    structure: sections
+  };
+}
+```
+
+### Day 3-4: Split Command
+
+```typescript
+// packages/cli/src/commands/split.ts
+interface SplitOptions {
+  outputs: Array<{
+    file: string;
+    lines: [number, number];
+  }>;
+  updateRefs: boolean;
+}
+
+export async function split(spec: string, options: SplitOptions) {
+  const content = await readFile(`${spec}/README.md`);
+  
+  // Extract each output
+  for (const { file, lines } of options.outputs) {
+    const extracted = extractLines(content, lines[0], lines[1]);
+    await writeFile(`${spec}/${file}`, extracted);
+  }
+  
+  // Update frontmatter in README.md
+  if (options.updateRefs) {
+    await updateSubSpecLinks(spec, options.outputs.map(o => o.file));
+  }
+  
+  // Validate
+  await validateSpec(spec);
+}
+```
+
+### Day 5: Compact Command
+
+```typescript
+// packages/cli/src/commands/compact.ts
+interface CompactOptions {
+  removes: Array<[number, number]>;
+}
+
+export async function compact(spec: string, options: CompactOptions) {
+  let content = await readFile(`${spec}/README.md`);
+  
+  // Remove ranges (reverse order to maintain line numbers)
+  const sorted = options.removes.sort((a, b) => b[0] - a[0]);
+  for (const [start, end] of sorted) {
+    content = removeLines(content, start, end);
+  }
+  
+  await writeFile(`${spec}/README.md`, content);
+  await validateSpec(spec);
+}
+```
+
+## Phase 3: Additional Commands (Week 3)
+
+### Goals
+- ✅ `compress` command (replace with summary)
+- ✅ `isolate` command (move to new spec)
+- ✅ CLI polish
+
+### Day 1-2: Compress Command
+
+```typescript
+// packages/cli/src/commands/compress.ts
+interface CompressOptions {
+  range: [number, number];
+  replacement: string;
+}
+
+export async function compress(spec: string, options: CompressOptions) {
+  const content = await readFile(`${spec}/README.md`);
+  const newContent = replaceLines(
+    content,
+    options.range[0],
+    options.range[1],
+    options.replacement
+  );
+  
+  await writeFile(`${spec}/README.md`, newContent);
+  await validateSpec(spec);
+}
+```
+
+### Day 3-4: Isolate Command
+
+```typescript
+// packages/cli/src/commands/isolate.ts
+interface IsolateOptions {
+  lines: [number, number];
+  newSpec: string;
+  addReference: boolean;
+}
+
+export async function isolate(sourceSpec: string, options: IsolateOptions) {
+  // 1. Extract content
+  const content = await readFile(`${sourceSpec}/README.md`);
+  const extracted = extractLines(content, options.lines[0], options.lines[1]);
+  
+  // 2. Create new spec
+  await createSpec(options.newSpec, extracted);
+  
+  // 3. Remove from source
+  await compact(sourceSpec, { removes: [options.lines] });
+  
+  // 4. Add reference if requested
+  if (options.addReference) {
+    await addCrossReference(sourceSpec, options.newSpec);
+  }
+}
+```
+
+### Day 5: CLI Integration
+
+```bash
+# Add commands to CLI
+packages/cli/src/index.ts
+
+program
+  .command('analyze <spec>')
+  .option('--json', 'Output as JSON')
+  .action(analyzeCommand);
+
+program
+  .command('split <spec>')
+  .option('--output <file:lines>', 'Output file with line range', collect)
+  .option('--update-refs', 'Update cross-references')
+  .action(splitCommand);
+
+# etc.
+```
+
+## Phase 4: Polish & Dogfooding (Week 4)
+
+### Goals
+- ✅ Test on real specs
+- ✅ Fix bugs
+- ✅ Documentation
+- ✅ Release v0.3.0
+
+### Day 1-2: Dogfooding
+
+**Target specs** (oversized or complex):
+1. This spec (059) - Use to split itself
+2. Spec 045 - Large unified dashboard spec
+3. Spec 048 - Complexity analysis spec
+
+### Day 3-4: Testing & Fixes
+
+```bash
+# Test suite
+packages/core/src/analysis/__tests__/
+  parser.test.ts
+  line-extractor.test.ts
+  section-finder.test.ts
+
+packages/cli/src/commands/__tests__/
+  analyze.test.ts
+  split.test.ts
+  compact.test.ts
+  compress.test.ts
+  isolate.test.ts
+```
+
+### Day 5: Release
+
+- [ ] Update CHANGELOG.md
+- [ ] Version bump to v0.3.0
+- [ ] Publish to npm
+- [ ] Update documentation site
+
+## Success Criteria
+
+**Must Have**:
+- ✅ AI agent can analyze spec via JSON output
+- ✅ AI agent can split spec with explicit parameters
+- ✅ All transformations are deterministic
+- ✅ No LLM calls in tools
+- ✅ Fast (<200ms for typical operations)
+
+**Nice to Have**:
+- `--dry-run` mode
+- `preview` command
+- `rollback` command
+
+**Deferred to v0.4.0**:
+- Batch operations
+- Watch mode
+- CI/CD integration
+
+## Testing Strategy
+
+See [TESTING.md](./TESTING.md) for detailed test plan.
+
+**Key insight**: Simple tools = simple tests. No complex algorithms to test.
+
+## Risks & Mitigations
+
+| Risk | Mitigation |
+|------|-----------|
+| Line numbers shift after edits | Tools update references automatically |
+| Invalid markdown after split | Validation catches errors |
+| AI agent provides bad parameters | Dry-run mode for safety |
+| Breaking cross-references | Reference validator checks links |
+
+---
+
+**Key Principle**: Keep it simple. 4 weeks to build mechanical tools vs. 7+ weeks for complex semantic analysis. AI agents do the hard work, tools just execute.
 
 **Day 5: Round-trip validation**
 - [ ] Test parse → stringify → parse identity

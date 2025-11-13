@@ -1,16 +1,31 @@
 # CLI Commands
 
-**User interface for programmatic spec management**
+**Mechanical transformation tools for AI agent orchestration**
+
+## Design Philosophy
+
+These commands are designed for **AI agent orchestration**:
+- AI agents read specs and detect issues
+- AI agents decide transformation strategies
+- AI agents call tools with explicit parameters
+- Tools execute transformations mechanically (no LLM calls)
+
+**Key Principles**:
+1. **Tools are executors, not deciders** - AI agents provide intelligence
+2. **Deterministic operations** - Same input = same output, always
+3. **Structured I/O** - JSON output for AI agent consumption
+4. **No semantic analysis** - Just parse, transform, validate
+5. **Fast and reliable** - Milliseconds, not minutes
 
 ## Command Overview
 
 ```bash
-# Analysis
+# Analysis (returns structured data)
 lean-spec analyze <spec> [options]
 
-# Transformations  
+# Transformations (execute AI agent decisions)
 lean-spec split <spec> [options]
-lean-spec compact <spec> [options]
+lean-spec compact <spec> [options]  
 lean-spec compress <spec> [options]
 lean-spec isolate <spec> [options]
 
@@ -20,234 +35,363 @@ lean-spec preview <spec> --transformation=<type>
 lean-spec rollback <spec>
 ```
 
-**Implementation Note**: The transformation commands (`split`, `compact`, `compress`, `isolate`) require sophisticated analysis of spec structure, semantic understanding of content relationships, and intelligent decision-making about what to keep/move/remove. **AI/LLM assistance is recommended** for high-quality results. Non-AI implementations would be limited to basic pattern matching and may produce suboptimal results or require extensive manual review.
-
 ## `lean-spec analyze` - Analyze Spec Complexity
 
 ### Purpose
-Analyze spec structure and provide recommendations without making changes.
+Parse spec structure and return metrics for AI agent decision-making. No semantic analysis, just structural facts.
 
 ### Usage
 ```bash
 lean-spec analyze <spec> [options]
 
 Options:
-  --complexity      Show complexity metrics
-  --redundancy      Detect redundant content
-  --conflicts       Find contradictions
-  --all            Run all analyses (default)
-  --json           Output as JSON
-  --verbose        Show detailed breakdown
+  --json           Output as JSON (default for AI agents)
+  --concerns       Detect logical groupings by section structure
+  --verbose        Include detailed breakdown
 ```
 
-### Examples
+### Output Format
 
-**Basic analysis**:
-```bash
-$ lean-spec analyze 045
-
-📊 Analyzing spec 045-unified-dashboard...
-
-Token Count: 4,800 tokens (⚠️  WARNING - approaching 5,000 limit)
-  • Optimal: <2,000 tokens (100% AI performance)
-  • Good: 2,000-3,500 tokens (95% AI performance)
-  • Warning: 3,500-5,000 tokens (85% AI performance)
-  • Should split: >5,000 tokens (70% AI performance)
-
-Supporting Context:
-  Lines: 1,166 (for reference only)
-  Sections: 58
-  Max nesting: 4 levels
-  Code blocks: 23
-  References: 47
-
-Concerns Detected (5):
-  1. Overview & Decision (600 tokens / 150 lines, 13%)
-  2. Design & Architecture (1,512 tokens / 378 lines, 32%)
-  3. Rationale & Trade-offs (584 tokens / 146 lines, 12%)
-  4. Implementation Plan (576 tokens / 144 lines, 12%)
-  5. Testing Strategy (728 tokens / 182 lines, 15%) / 182 lines, 15%)
-
-Recommendations:
-  ✅ PRIMARY: Partition into sub-specs (Context Economy)
-     Impact: 4,800 tokens → 5 files, largest ~1,520 tokens (380 lines)
-     All files under 2,000 token optimal threshold
-     Confidence: 95%
-  
-  ⚡ SECONDARY: Compact redundant sections
-     Impact: Save ~480 tokens (~120 lines) across concerns
-     Confidence: 78%
-
-Would you like to see transformation preview? (Y/n)
-```
-
-**Complexity focus**:
-```bash
-$ lean-spec analyze 045 --complexity
-
-Token Breakdown (4,800 tokens total):
-  ├─ Frontmatter: 60 tokens (1%, 15 lines)
-  ├─ Overview: 600 tokens (13%, 150 lines)
-  ├─ Design: 1,512 tokens (32%, 378 lines)
-  ├─ Implementation: 1,152 tokens (24%, 288 lines)
-  ├─ Testing: 800 tokens (17%, 200 lines)
-  └─ Notes: 540 tokens (11%, 135 lines)
-  
-  Lines: 1,166 (for reference only)
-
-Structure Analysis:
-  Nesting depth: 4 levels (H1 → H2 → H3 → H4)
-  Sections: H1(1), H2(8), H3(23), H4(12)
-  Code blocks: 23 (TypeScript: 15, Bash: 5, Markdown: 3)
-
-Token Threshold Status:
-  ✗ Exceeds 3,500 token warning threshold (by 1,300 tokens, 137%)
-  ⚠️  Approaching 5,000 token error threshold (4,800/5,000, 96%)
-  
-Structure:
-  ✗ No sub-spec files - consider progressive disclosure
-  ✓ Good sectioning (58 sections)
-
-Suggested actions:
-  1. Split into sub-specs immediately
-  2. Review each section for compaction
-  3. Consider if any concerns should be separate specs
-```
-
-**Redundancy focus**:
-```bash
-$ lean-spec analyze 045 --redundancy
-
-Redundancy Analysis:
-
-Duplicate Content (3 instances):
-  1. "Dashboard layout using CSS Grid" (lines 145, 289)
-     → Save 8 lines by consolidating
-  
-  2. "Velocity calculation algorithm" (lines 201-215, 423-437)
-     → Save 14 lines by linking to canonical version
-  
-  3. "Chart.js vs D3.js comparison" (lines 178-192, 456-470)
-     → Save 14 lines by referencing once
-
-Similar Content (5 groups):
-  1. Component prop descriptions (4 instances, ~40 lines)
-     → Could use table format (save ~25 lines)
-  
-  2. Test case examples (3 instances, ~30 lines)
-     → Move to TESTING.md, link from overview
-
-Consolidation Opportunities:
-  - Move all "Rationale" subsections to RATIONALE.md
-  - Use reference links for repeated concepts
-  - Create glossary for common terms
-
-Total potential savings: ~120 lines (10%)
-```
-
-**Conflict detection**:
-```bash
-$ lean-spec analyze 045 --conflicts
-
-Conflict Analysis:
-
-Contradictions (2):
-  1. MEDIUM: Tech stack inconsistency
-     Line 89: "Using React with TypeScript"
-     Line 456: "Vanilla JavaScript for charts"
-     → Clarify: React for UI, vanilla JS for chart library
-  
-  2. LOW: Date format inconsistency
-     Line 123: "ISO 8601 format (YYYY-MM-DD)"
-     Line 234: "Example: 11/07/2025"
-     → Standardize examples to match stated format
-
-Outdated Decisions (1):
-  1. Line 178: "Will evaluate Chart.js vs D3.js"
-     Line 289: "Using Chart.js (decision made)"
-     → Mark evaluation section as completed
-
-Inconsistencies (1):
-  1. Section "## Design" vs "## Detailed Design"
-     Both sections cover architecture
-     → Consolidate or clarify distinction
-
-Recommendations:
-  - Resolve contradictions before splitting
-  - Mark superseded decisions clearly
-  - Use consistent terminology throughout
-```
-
-### Output Formats
-
-**JSON output** (for programmatic use):
-```bash
-$ lean-spec analyze 045 --json
-
+**JSON (primary format for AI agents)**:
+```json
 {
   "spec": "045-unified-dashboard",
-  "complexity": {
-    "tokenCount": 4800,
-    "exceedsLimit": true,
-    "score": 87,
-    "thresholds": {
-      "ideal": 300,
-      "warning": 400,
-      "error": 400,
-      "current": 1166
-    }
+  "path": "specs/045-unified-dashboard/README.md",
+  "metrics": {
+    "tokens": 4800,
+    "lines": 1166,
+    "characters": 19200,
+    "sections": {
+      "h1": 1,
+      "h2": 8,
+      "h3": 23,
+      "h4": 12,
+      "total": 44
+    },
+    "codeBlocks": 23,
+    "maxNesting": 4
   },
-  "concerns": [
+  "threshold": {
+    "status": "warning",
+    "limit": 3500,
+    "message": "Exceeds 3,500 token warning threshold"
+  },
+  "structure": [
     {
-      "id": "overview",
-      "name": "Overview & Decision",
-      "tokenCount": 600,
-      "sections": ["Overview", "Background", "Decision"]
-    },
-    // ...
-  ],
-  "recommendations": [
-    {
-      "strategy": "partition",
-      "rationale": "Spec exceeds 3,500 tokens with 5 distinct concerns",
-      "confidence": 0.95,
-      "estimatedImpact": {
-        "filesCreated": 5,
-        "largestFile": 378,
-        "linesSaved": 0
-      }
+      "section": "Overview",
+      "level": 2,
+      "lineRange": [1, 150],
+      "tokens": 600,
+      "subsections": ["Background", "Decision"]
     },
     {
-      "strategy": "compact",
-      "rationale": "Redundant content detected",
-      "confidence": 0.78,
-      "estimatedImpact": {
-        "linesSaved": 120
-      }
+      "section": "Design",
+      "level": 2,
+      "lineRange": [151, 528],
+      "tokens": 1512,
+      "subsections": ["Architecture", "Components", "Data Flow"]
     }
-  ]
+  ],
+  "recommendation": {
+    "action": "split",
+    "reason": "Exceeds 3,500 token threshold with multiple distinct concerns",
+    "confidence": "high"
+  }
 }
 ```
 
-## `lean-spec split` - Partition into Sub-Specs
+### Human-Readable Format
+
+**For human review** (optional `--verbose` flag):
+```bash
+$ lean-spec analyze 045 --verbose
+
+📊 Spec Analysis: 045-unified-dashboard
+
+Token Count: 4,800 tokens (⚠️  WARNING)
+  • Threshold: 3,500 tokens
+  • Status: Exceeds warning, approaching 5,000 error threshold
+
+Structure:
+  Lines: 1,166
+  Sections: 44 (H1:1, H2:8, H3:23, H4:12)
+  Code blocks: 23
+  Max nesting: 4 levels
+
+Top Sections by Size:
+  1. Design (1,512 tokens / 378 lines, 32%)
+  2. Testing (728 tokens / 182 lines, 15%)
+  3. Overview (600 tokens / 150 lines, 13%)
+
+Recommendation: Split into sub-specs
+  → Multiple distinct concerns detected
+  → Would reduce to 5 files under 2,000 tokens each
+```
+
+### AI Agent Usage Pattern
+
+```typescript
+// AI agent workflow
+const analysis = await exec('lean-spec analyze 045 --json');
+const data = JSON.parse(analysis);
+
+if (data.threshold.status === 'warning' && data.recommendation.action === 'split') {
+  // AI decides split strategy based on structure
+  const outputs = data.structure
+    .filter(s => s.level === 2)
+    .map(s => `${s.section}.md:${s.lineRange[0]}-${s.lineRange[1]}`);
+  
+  // AI calls tool with explicit parameters
+  await exec(`lean-spec split 045 ${outputs.map(o => `--output=${o}`).join(' ')}`);
+}
+```
+
+## `lean-spec split` - Partition Spec into Files
 
 ### Purpose
-Split oversized spec into focused sub-spec files.
+Mechanically split spec into multiple files based on explicit line ranges. AI agent decides what goes where.
 
 ### Usage
 ```bash
 lean-spec split <spec> [options]
 
 Options:
-  --strategy=<type>        Splitting strategy (default: auto)
-                          auto | concerns | phases | custom
-  --preview               Show preview without applying
-  --dry-run               Simulate without writing files
-  --force                 Skip confirmations
-  --no-compaction         Don't compact during split
+  --output=<file>:<lines>   Output file with line range (required, repeatable)
+  --update-refs            Update cross-references automatically
+  --dry-run                Show what would be created
+  --force                  Overwrite existing files
 ```
 
-### Strategies
+### Examples
+
+**AI agent orchestrated split**:
+```bash
+# AI agent analyzed spec and decided on split points
+$ lean-spec split 045 \
+  --output=README.md:1-150 \
+  --output=DESIGN.md:151-528 \
+  --output=TESTING.md:529-710 \
+  --update-refs
+
+✓ Created specs/045-unified-dashboard/README.md (812 tokens / 150 lines)
+✓ Created specs/045-unified-dashboard/DESIGN.md (1,512 tokens / 378 lines)
+✓ Created specs/045-unified-dashboard/TESTING.md (728 tokens / 182 lines)
+✓ Updated 47 cross-references
+✓ Validated all files
+
+Split complete: 3 files, 3,052 tokens total
+```
+
+**Dry run preview**:
+```bash
+$ lean-spec split 045 --output=README.md:1-150 --dry-run
+
+Would create:
+  specs/045-unified-dashboard/README.md
+    Lines: 1-150 (150 lines)
+    Estimated tokens: 812
+    Sections: Overview, Background, Decision
+
+No files modified (dry run)
+```
+
+**Conflict detection**:
+```bash
+**AI agent orchestrated split**:
+```bash
+# AI agent analyzed spec and decided on split points
+$ lean-spec split 045 \
+  --output=README.md:1-150 \
+  --output=DESIGN.md:151-528 \
+  --output=TESTING.md:529-710 \
+  --update-refs
+
+✓ Created specs/045-unified-dashboard/README.md (812 tokens / 150 lines)
+✓ Created specs/045-unified-dashboard/DESIGN.md (1,512 tokens / 378 lines)
+✓ Created specs/045-unified-dashboard/TESTING.md (728 tokens / 182 lines)
+✓ Updated 47 cross-references
+✓ Validated all files
+
+Split complete: 3 files, 3,052 tokens total
+```
+
+**Dry run preview**:
+```bash
+$ lean-spec split 045 --output=README.md:1-150 --dry-run
+
+Would create:
+  specs/045-unified-dashboard/README.md
+    Lines: 1-150 (150 lines)
+    Estimated tokens: 812
+    Sections: Overview, Background, Decision
+
+No files modified (dry run)
+```
+
+### Tool Behavior
+
+**What it does**:
+1. Parses spec structure (frontmatter, sections, line ranges)
+2. Extracts specified line ranges to new files
+3. Copies frontmatter to README.md only
+4. Updates internal cross-references if `--update-refs`
+5. Validates all created files
+
+**What it doesn't do**:
+- ❌ No semantic analysis of content
+- ❌ No decisions about what should go where
+- ❌ No content rewriting or summarization
+- ✅ Just mechanical extraction and file creation
+
+## `lean-spec compact` - Remove Specified Content
+
+### Purpose
+Mechanically remove specified line ranges. AI agent identifies redundancy, tool executes removal.
+
+### Usage
+```bash
+lean-spec compact <spec> [options]
+
+Options:
+  --remove=<lines>         Line range to remove (required, repeatable)
+  --dry-run               Show what would be removed
+  --force                 Skip confirmation
+```
+
+### Examples
+
+**AI agent orchestrated compaction**:
+```bash
+# AI agent detected redundancy at specific lines
+$ lean-spec compact 045 \
+  --remove=145-153 \
+  --remove=234-256 \
+  --remove=401-415
+
+✓ Removed lines 145-153 (9 lines, ~36 tokens)
+✓ Removed lines 234-256 (23 lines, ~92 tokens)
+✓ Removed lines 401-415 (15 lines, ~60 tokens)
+✓ Updated line references
+
+Compaction complete: Removed 47 lines, saved ~188 tokens
+```
+
+**Dry run**:
+```bash
+$ lean-spec compact 045 --remove=145-153 --dry-run
+
+Would remove:
+  Lines 145-153 (9 lines):
+    "Dashboard layout using CSS Grid..."
+    [duplicate of content at lines 289-297]
+  
+  Estimated savings: ~36 tokens
+
+No files modified (dry run)
+```
+
+### Tool Behavior
+
+**What it does**:
+1. Removes specified line ranges
+2. Updates internal line number references
+3. Validates markdown structure after removal
+4. Reports token/line savings
+
+**What it doesn't do**:
+- ❌ No detection of redundancy
+- ❌ No semantic understanding of what's safe to remove
+- ✅ Just mechanical deletion of specified lines
+
+## `lean-spec compress` - Replace Content with Summary
+
+### Purpose
+Replace specified content with AI-provided summary. AI agent generates summary, tool executes replacement.
+
+### Usage
+```bash
+lean-spec compress <spec> [options]
+
+Options:
+  --replace=<lines>:<text>  Replace line range with text (required)
+  --dry-run                Show preview
+```
+
+### Examples
+
+**AI agent orchestrated compression**:
+```bash
+# AI agent read completed phase, generated summary
+$ lean-spec compress 043 \
+  --replace='142-284:## ✅ Phase 1: Foundation (Completed 2025-11-05)
+
+Established first principles through comprehensive analysis.
+See: specs/049-leanspec-first-principles/'
+
+✓ Replaced lines 142-284 (143 lines) with 4 lines
+✓ Saved ~572 tokens
+
+Compression complete: 143 → 4 lines
+```
+
+### Tool Behavior
+
+**What it does**:
+1. Replaces specified line range with provided text
+2. Validates markdown structure
+3. Reports compression ratio
+
+**What it doesn't do**:
+- ❌ No summarization of content
+- ❌ No decision about what to keep/remove
+- ✅ Just mechanical text replacement
+
+## `lean-spec isolate` - Move Content to New Spec
+
+### Purpose
+Move specified content to a new spec file. AI agent decides what to isolate, tool executes move.
+
+### Usage
+```bash
+lean-spec isolate <source-spec> [options]
+
+Options:
+  --lines=<range>          Lines to move (required)
+  --to=<new-spec>         New spec name (required)
+  --add-reference         Add cross-reference in source
+```
+
+### Examples
+
+**AI agent orchestrated isolation**:
+```bash
+# AI agent determined section is independent concern
+$ lean-spec isolate 045 \
+  --lines=401-542 \
+  --to=060-velocity-algorithm \
+  --add-reference
+
+✓ Created specs/060-velocity-algorithm/README.md (142 lines, ~568 tokens)
+✓ Removed lines 401-542 from spec 045
+✓ Added reference: "See [spec 060](../060-velocity-algorithm/)"
+✓ Updated frontmatter (related fields)
+
+Isolation complete: New spec 060 created
+```
+
+### Tool Behavior
+
+**What it does**:
+1. Creates new spec directory and README.md
+2. Moves specified lines to new spec
+3. Removes lines from source spec
+4. Updates cross-references if requested
+5. Initializes frontmatter for new spec
+
+**What it doesn't do**:
+- ❌ No decision about what constitutes a separate concern
+- ❌ No analysis of dependencies
+- ✅ Just mechanical file operations
 
 **auto (default)**: AI-suggested strategy based on analysis
 **concerns**: Split by logical concerns (design, testing, etc.)
@@ -656,30 +800,30 @@ $ lean-spec diff 045 --before-after
 Comparing before/after split:
 
 Before:
-  045-unified-dashboard/README.md (1,166 lines)
+  045-unified-dashboard/README.md (4,800 tokens / 1,166 lines)
 
 After:
   045-unified-dashboard/
-  ├── README.md (203 lines, -963)
-  ├── DESIGN.md (378 lines, +378)
-  ├── RATIONALE.md (146 lines, +146)
-  ├── IMPLEMENTATION.md (144 lines, +144)
-  └── TESTING.md (182 lines, +182)
+  ├── README.md (812 tokens / 203 lines)
+  ├── DESIGN.md (1,512 tokens / 378 lines)
+  └── TESTING.md (728 tokens / 182 lines)
 
-Total line count: 1,053 lines (-113 from compaction)
-
-Detailed diff:
-[Git-style diff showing moved/modified content]
+Total: 3,052 tokens / 763 lines
+Savings: 1,748 tokens / 403 lines (via compaction)
 ```
 
 ### `lean-spec preview` - Preview Transformation
 
 ```bash
-$ lean-spec preview 045 --transformation=partition
+$ lean-spec preview 045 \
+  --split=README.md:1-150,DESIGN.md:151-528
 
-Transformation: Partition into sub-specs
+Preview:
+  Would create 2 files from spec 045
+  README.md: 812 tokens / 150 lines
+  DESIGN.md: 1,512 tokens / 378 lines
 
-[Shows same preview as `lean-spec split --preview`]
+Use --apply to execute transformation
 ```
 
 ### `lean-spec rollback` - Undo Transformation
@@ -687,25 +831,147 @@ Transformation: Partition into sub-specs
 ```bash
 $ lean-spec rollback 045
 
-Available rollback points:
-  1. Split into sub-specs (2 hours ago)
-  2. Compact README.md (5 hours ago)
-  3. Compress Phase 1 (2 days ago)
+Found git history:
+  1. Split into sub-specs (2 hours ago) - commit abc123
+  2. Compact README.md (5 hours ago) - commit def456
 
 Select rollback point: 1
 
-⚠️  This will:
-  - Delete 4 sub-spec files
-  - Restore original README.md
-  - Update git history
+✓ Git reset to commit xyz789
+✓ Spec 045 restored to pre-split state
+```
 
-Continue? (Y/n)
+## AI Agent Usage Patterns
 
-Rolling back...
-✓ Files restored
-✓ Git commit created: "Rollback: Split into sub-specs"
+### Pattern 1: Detect and Split Oversized Spec
 
-Spec 045 rolled back to pre-split state.
+```typescript
+// AI agent detects large spec during review
+const analysis = await exec('lean-spec analyze 045 --json');
+const data = JSON.parse(analysis);
+
+if (data.metrics.tokens > 3500) {
+  // AI analyzes structure and decides split points
+  const h2Sections = data.structure.filter(s => s.level === 2);
+  
+  // Group related sections
+  const groups = [
+    { file: 'README.md', sections: h2Sections.slice(0, 2) },
+    { file: 'DESIGN.md', sections: h2Sections.slice(2, 5) },
+    { file: 'TESTING.md', sections: h2Sections.slice(5) }
+  ];
+  
+  // Build command
+  const outputs = groups.map(g => {
+    const start = g.sections[0].lineRange[0];
+    const end = g.sections[g.sections.length - 1].lineRange[1];
+    return `--output=${g.file}:${start}-${end}`;
+  });
+  
+  // Execute split
+  await exec(`lean-spec split 045 ${outputs.join(' ')} --update-refs`);
+  
+  // Verify
+  const newTokens = await exec('lean-spec tokens 045/*');
+  // Confirm all files under 2,000 tokens
+}
+```
+
+### Pattern 2: Detect and Remove Redundancy
+
+```typescript
+// AI agent reads spec and detects duplicate content
+const content = await readFile('specs/045-unified-dashboard/README.md');
+const lines = content.split('\n');
+
+// AI identifies duplicate sections by semantic similarity
+const duplicates = [
+  { original: [145, 153], duplicate: [289, 297] },
+  { original: [201, 215], duplicate: [423, 437] }
+];
+
+// Remove duplicates (keep original, remove duplicate)
+const removes = duplicates
+  .map(d => `--remove=${d.duplicate[0]}-${d.duplicate[1]}`)
+  .join(' ');
+
+await exec(`lean-spec compact 045 ${removes}`);
+```
+
+### Pattern 3: Compress Completed Phases
+
+```typescript
+// AI agent detects completed phase in implementation spec
+const content = await readFile('specs/043-official-launch-02/README.md');
+const analysis = await exec('lean-spec analyze 043 --json');
+
+// AI reads phase 1 section (lines 142-284)
+const phase1Content = lines.slice(141, 284).join('\n');
+
+// AI generates summary
+const summary = `## ✅ Phase 1: Foundation (Completed 2025-11-05)
+
+Established first principles through comprehensive analysis.
+Key deliverable: specs/049-leanspec-first-principles/`;
+
+// Execute compression
+await exec(`lean-spec compress 043 --replace='142-284:${summary}'`);
+```
+
+### Pattern 4: Isolate Independent Concern
+
+```typescript
+// AI agent identifies section that should be separate spec
+const analysis = await exec('lean-spec analyze 045 --json');
+
+// AI finds "Velocity Algorithm" section is self-contained
+const velocitySection = analysis.structure.find(
+  s => s.section === 'Velocity Algorithm'
+);
+
+// Check dependencies (AI reads content and determines it's independent)
+const hasExternalDeps = false; // AI determined this
+
+if (!hasExternalDeps) {
+  // Execute isolation
+  await exec(`lean-spec isolate 045 \
+    --lines=${velocitySection.lineRange.join('-')} \
+    --to=060-velocity-algorithm \
+    --add-reference`);
+}
+```
+
+### Pattern 5: Full Transformation Pipeline
+
+```typescript
+// AI agent performs complete spec optimization
+async function optimizeSpec(specId: string) {
+  // 1. Analyze
+  const analysis = JSON.parse(
+    await exec(`lean-spec analyze ${specId} --json`)
+  );
+  
+  // 2. Decide strategy based on metrics
+  if (analysis.metrics.tokens > 5000) {
+    // Critical: Must split immediately
+    await splitSpec(specId, analysis);
+  } else if (analysis.metrics.tokens > 3500) {
+    // Try compaction first, then split if still too large
+    await compactSpec(specId, analysis);
+    
+    const recheck = JSON.parse(
+      await exec(`lean-spec analyze ${specId} --json`)
+    );
+    
+    if (recheck.metrics.tokens > 3500) {
+      await splitSpec(specId, recheck);
+    }
+  }
+  
+  // 3. Verify all files are healthy
+  const finalCheck = await exec(`lean-spec validate ${specId}`);
+  return finalCheck;
+}
 ```
 
 ## Global Options
@@ -713,11 +979,11 @@ Spec 045 rolled back to pre-split state.
 Available for all commands:
 
 ```bash
---verbose, -v      Show detailed output
---quiet, -q        Minimal output
---json             JSON output (for programmatic use)
+--json             JSON output (default for AI agents)
 --dry-run          Simulate without making changes
---force            Skip confirmations
+--force            Skip confirmations (use with caution)
+--verbose, -v      Show detailed output (for human review)
+--quiet, -q        Minimal output
 --help, -h         Show command help
 ```
 
@@ -728,80 +994,9 @@ Available for all commands:
 1   General error
 2   Invalid arguments
 3   Validation failed
-4   User cancelled
-5   File operation failed
-10  Analysis failed
-20  Transformation failed
-30  Rollback failed
-```
-
-## Examples: Complete Workflows
-
-### Workflow 1: Split Oversized Spec
-
-```bash
-# 1. Analyze first
-$ lean-spec analyze 045
-# Shows: 1,166 lines, 5 concerns, recommend partition
-
-# 2. Preview split
-$ lean-spec split 045 --preview
-# Review the plan
-
-# 3. Apply split
-$ lean-spec split 045
-# Creates 5 files, validates
-
-# 4. Verify
-$ lean-spec validate 045
-# All files pass validation
-```
-
-### Workflow 2: Compact Verbose Spec
-
-```bash
-# 1. Check redundancy
-$ lean-spec analyze 018 --redundancy
-# Shows: 73 lines of redundancy
-
-# 2. Preview compaction
-$ lean-spec compact 018 --preview
-# Review changes
-
-# 3. Apply compaction
-$ lean-spec compact 018
-# Removes redundancy
-
-# 4. Still too large? Split
-$ lean-spec analyze 018
-# Now 518 lines, still >400
-
-$ lean-spec split 018
-# Split into sub-specs
-```
-
-### Workflow 3: Clean Up Completed Spec
-
-```bash
-# Spec with many completed phases
-
-# 1. Compress completed phases
-$ lean-spec compress 043 --phases
-# Reduces completed phases to summaries
-
-# 2. Check if compaction needed
-$ lean-spec analyze 043 --redundancy
-# Some redundancy in active phases
-
-# 3. Compact active content
-$ lean-spec compact 043 --preserve="Phase 3"
-# Don't compact active phase
-
-# 4. Final validation
-$ lean-spec validate 043
-# All good!
+4   File operation failed
 ```
 
 ---
 
-**Design Philosophy**: Interactive by default, scriptable when needed. Always preview before applying, always validate after.
+**Key Takeaway**: These tools are building blocks for AI agents. The agent provides the intelligence (what to split, where to split, what to remove), tools provide reliable execution.
