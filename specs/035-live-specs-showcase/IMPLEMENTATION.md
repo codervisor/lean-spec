@@ -12,8 +12,6 @@ This document outlines the phased implementation roadmap for LeanSpec Web.
 3. Community & Discovery (2-3 weeks) - Public showcase
 4. Advanced Features (Future) - OAuth, webhooks, collaboration
 
-**See [TASKS.md](./TASKS.md) for detailed, granular task breakdown.**
-
 ## Phase 1: Foundation & MVP (2-3 weeks)
 
 **Goal:** Working web app showcasing LeanSpec's own specs.
@@ -429,7 +427,3 @@ This document outlines the phased implementation roadmap for LeanSpec Web.
 - Social media presence
 - Tool integrations
 - Regular updates
-
----
-
-**For detailed task-by-task breakdown, see [TASKS.md](./TASKS.md)**
