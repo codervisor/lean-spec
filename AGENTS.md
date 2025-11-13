@@ -229,10 +229,15 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 6. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
 7. **Publish**: `cd packages/cli && npm publish` (only publish the CLI package)
 8. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
-9. **Verify**: 
+9. **GitHub Release**: Create release with `gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "$(cat << 'EOF'
+## Release notes here
+EOF
+)"`
+10. **Verify**: 
    - `npm view lean-spec version` to confirm publication
    - `npm view lean-spec dependencies` to ensure no `workspace:*` dependencies leaked
    - Test installation: `npm install -g lean-spec@latest` in a clean environment
+   - Check GitHub release page: https://github.com/codervisor/lean-spec/releases
 
 **Critical - Workspace Dependencies:**
 - The `@leanspec/core` package MUST NOT be in `packages/cli/package.json` dependencies
