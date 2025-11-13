@@ -14,6 +14,7 @@ depends_on:
   - 059-programmatic-spec-management
   - 067-monorepo-core-extraction
   - 035-live-specs-showcase
+  - 075-intelligent-search-engine
 ---
 
 # LeanSpec v0.3 - Performance & AI Agent Optimization
@@ -47,13 +48,21 @@ v0.3 focuses on **AI agent performance optimization** and **programmatic spec ma
    - Structured queries (filter/search without parsing all files)
    - Performance benchmarks and optimization
 
-2. **Live Specs Showcase** (spec 035) - HIGH PRIORITY
+2. **Intelligent Search Engine** (spec 075) - CRITICAL
+   - Relevance ranking and scoring algorithms
+   - Field-weighted search (title > tags > content)
+   - Fuzzy matching for typo tolerance
+   - Boolean operators (AND/OR/NOT)
+   - Phrase search with quotes
+   - Replaces primitive substring matching
+
+3. **Live Specs Showcase** (spec 035) - HIGH PRIORITY
    - Real-time documentation preview
    - Embedded dogfooding showcase
    - Performance optimization for large spec sets
    - Deep dive into rendering/build optimization
 
-3. **MCP Server Enhancements**
+4. **MCP Server Enhancements**
    - Optimize context delivery
    - Add caching layer
    - Reduce token usage in responses
@@ -70,6 +79,7 @@ v0.3 focuses on **AI agent performance optimization** and **programmatic spec ma
 
 **Phase 1: Core Performance (Week 1-2)**
 - [ ] Complete spec 059 (programmatic-spec-management)
+- [ ] Complete spec 075 Phase 1-2 (intelligent-search-engine)
 - [ ] Benchmark current performance (baseline metrics)
 - [ ] Implement caching layer for spec parsing
 - [ ] Optimize MCP server response times
@@ -122,6 +132,7 @@ v0.3 focuses on **AI agent performance optimization** and **programmatic spec ma
 
 **Priority Decisions:**
 - **059 (programmatic-spec-management)**: CRITICAL - Foundation for AI agent performance
+- **075 (intelligent-search-engine)**: CRITICAL - Search is broken, blocks AI agent effectiveness
 - **035 (live-specs-showcase)**: HIGH - User-requested, builds trust, needs deep optimization work
 
 **Dependencies:**
@@ -141,6 +152,7 @@ v0.3 focuses on **AI agent performance optimization** and **programmatic spec ma
 
 **Related Specs:**
 - 059-programmatic-spec-management (critical path)
+- 075-intelligent-search-engine (critical path)
 - 035-live-specs-showcase (high priority)
 - 043-official-launch-02 (just completed)
 - Future: 034-copilot-slash-commands, 036-pm-integrations

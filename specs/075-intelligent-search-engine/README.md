@@ -7,9 +7,13 @@ tags:
   - cli
   - core
   - ranking
-priority: high
+  - v0.3.0
+priority: critical
 created_at: '2025-11-13T09:01:46.579Z'
 updated_at: '2025-11-13T09:03:18.802Z'
+related:
+  - 065-v03-planning
+  - 059-programmatic-spec-management
 ---
 
 # Intelligent Search Engine
@@ -23,7 +27,7 @@ updated_at: '2025-11-13T09:03:18.802Z'
 
 **Problem**: Current search is primitive - simple case-insensitive substring matching with no ranking, relevance scoring, or intelligent query interpretation. Both CLI and MCP use identical basic logic that returns poor results when multiple specs match.
 
-**Why Now**: Search is foundational for AI agents and human users to discover relevant specs. As projects grow (60+ specs in our own repo), poor search becomes a bottleneck. AI agents need intelligent search to provide better context.
+**Why Now**: Search is foundational for AI agents and human users to discover relevant specs. As projects grow (60+ specs in our own repo), poor search becomes a bottleneck. AI agents need intelligent search to provide better context. **Included in v0.3 release** - critical for AI agent performance optimization theme.
 
 **Current Limitations**:
 - No relevance ranking (first match = best match)
@@ -222,7 +226,7 @@ Search in spec: lean-spec view 042 | grep -i "authentication"
 
 ## Plan
 
-### Phase 1: Core Search Engine (MVP)
+### Phase 1: Core Search Engine (MVP) - Target: 2-4 hours
 
 - [ ] **Create search engine module** (`packages/core/src/search/`)
   - [ ] Define TypeScript interfaces (SearchResult, SearchMatch, SearchOptions)
@@ -259,14 +263,14 @@ Search in spec: lean-spec view 042 | grep -i "authentication"
   - [ ] Add search algorithm documentation
   - [ ] Update finding-specs guide
 
-### Phase 2: Enhanced Features (Future)
+### Phase 2: Enhanced Features - Target: 2-3 hours
 
-- [ ] Fuzzy matching for typo tolerance
-- [ ] Phrase search with quotes
+- [ ] Fuzzy matching for typo tolerance (Levenshtein distance ≤2)
+- [ ] Phrase search with quotes ("exact phrase")
 - [ ] Boolean operators (AND, OR, NOT)
-- [ ] Field-specific search syntax
-- [ ] Query suggestions/autocomplete
-- [ ] Search history and analytics
+- [ ] Field-specific search syntax (title:, tag:, content:)
+- [ ] Query suggestions/autocomplete (defer to post-v0.3)
+- [ ] Search history and analytics (defer to post-v0.3)
 
 ### Phase 3: Performance Optimization (If Needed)
 
@@ -375,8 +379,9 @@ Test on lean-spec repo with 68+ specs:
 
 ### Dependencies
 
+- **Part of**: v0.3 release (spec 065)
 - **Depends on**: None (new core module)
-- **Related**: 070 (MCP token counting), 072 (AI agent workflow)
+- **Related**: 059 (programmatic spec management), 070 (MCP token counting), 072 (AI agent workflow)
 - **Blocks**: Future web UI search (will use same engine)
 
 ### Migration Notes
