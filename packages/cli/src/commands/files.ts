@@ -1,13 +1,28 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { getSpec, loadSubFiles } from '../spec-loader.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import { loadConfig } from '../config.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 
-export async function filesCommand(
+/**
+ * Files command - list files in a spec
+ */
+export function filesCommand(): Command {
+  return new Command('files')
+    .description('List files in a spec')
+    .argument('<spec>', 'Spec to list files for')
+    .option('--type <type>', 'Filter by type: docs, assets')
+    .option('--tree', 'Show tree structure')
+    .action(async (specPath: string, options: { type?: 'docs' | 'assets'; tree?: boolean }) => {
+      await showFiles(specPath, options);
+    });
+}
+
+export async function showFiles(
   specPath: string,
   options: {
     type?: 'docs' | 'assets';

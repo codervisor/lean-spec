@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import dayjs from 'dayjs';
+import { Command } from 'commander';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecInfo } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority } from '../frontmatter.js';
@@ -29,7 +30,21 @@ const PRIORITY_CONFIG: Record<SpecPriority, { emoji: string; label: string; colo
   low: { emoji: '🟢', label: 'LOW', colorFn: chalk.green },
 };
 
-export async function ganttCommand(options: {
+/**
+ * Gantt command - show timeline with dependencies
+ */
+export function ganttCommand(): Command {
+  return new Command('gantt')
+    .description('Show timeline with dependencies')
+    .option('--weeks <n>', 'Show N weeks (default: 4)', parseInt)
+    .option('--show-complete', 'Include completed specs')
+    .option('--critical-path', 'Highlight critical path')
+    .action(async (options: { weeks?: number; showComplete?: boolean; criticalPath?: boolean }) => {
+      await showGantt(options);
+    });
+}
+
+export async function showGantt(options: {
   weeks?: number;
   showComplete?: boolean;
   criticalPath?: boolean;

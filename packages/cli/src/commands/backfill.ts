@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import { Command } from 'commander';
 import { loadAllSpecs, getSpec, type SpecInfo } from '../spec-loader.js';
 import { updateFrontmatter, type SpecFrontmatter } from '../frontmatter.js';
 import { loadConfig } from '../config.js';
@@ -28,6 +29,35 @@ export interface BackfillOptions {
   includeAssignee?: boolean;
   includeTransitions?: boolean;
   specs?: string[]; // specific specs to target
+}
+
+/**
+ * Backfill command - backfill timestamps from git history
+ */
+export function backfillCommand(): Command {
+  return new Command('backfill')
+    .description('Backfill timestamps from git history')
+    .argument('[specs...]', 'Specific specs to backfill (optional)')
+    .option('--dry-run', 'Show what would be updated without making changes')
+    .option('--force', 'Overwrite existing timestamp values')
+    .option('--assignee', 'Include assignee from first commit author')
+    .option('--transitions', 'Include full status transition history')
+    .option('--all', 'Include all optional fields (assignee + transitions)')
+    .action(async (specs: string[] | undefined, options: {
+      dryRun?: boolean;
+      force?: boolean;
+      assignee?: boolean;
+      transitions?: boolean;
+      all?: boolean;
+    }) => {
+      await backfillTimestamps({
+        dryRun: options.dryRun,
+        force: options.force,
+        includeAssignee: options.assignee || options.all,
+        includeTransitions: options.transitions || options.all,
+        specs: specs && specs.length > 0 ? specs : undefined,
+      });
+    });
 }
 
 /**

@@ -1,10 +1,25 @@
 import chalk from 'chalk';
 import dayjs from 'dayjs';
+import { Command } from 'commander';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecFilterOptions } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
 
-export async function timelineCommand(options: {
+/**
+ * Timeline command - show creation/completion over time
+ */
+export function timelineCommand(): Command {
+  return new Command('timeline')
+    .description('Show creation/completion over time')
+    .option('--days <n>', 'Show last N days (default: 30)', parseInt)
+    .option('--by-tag', 'Group by tag')
+    .option('--by-assignee', 'Group by assignee')
+    .action(async (options: { days?: number; byTag?: boolean; byAssignee?: boolean }) => {
+      await showTimeline(options);
+    });
+}
+
+export async function showTimeline(options: {
   days?: number;
   byTag?: boolean;
   byAssignee?: boolean;

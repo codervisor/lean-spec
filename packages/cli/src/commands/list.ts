@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { Command } from 'commander';
 import { loadConfig } from '../config.js';
 import { withSpinner, sanitizeUserInput } from '../utils/ui.js';
 import { loadAllSpecs } from '../spec-loader.js';
@@ -9,6 +10,55 @@ import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter
 import { autoCheckIfEnabled } from './check.js';
 import { detectPatternType } from '../utils/pattern-detection.js';
 import { PRIORITY_CONFIG, getStatusEmoji, getPriorityEmoji } from '../utils/colors.js';
+import { parseCustomFieldOptions } from '../utils/cli-helpers.js';
+
+/**
+ * List command - list all specs
+ */
+export function listCommand(): Command {
+  return new Command('list')
+    .description('List all specs')
+    .option('--archived', 'Include archived specs')
+    .option('--status <status>', 'Filter by status (planned, in-progress, complete, archived)')
+    .option('--tag <tag...>', 'Filter by tag (can specify multiple)')
+    .option('--priority <priority>', 'Filter by priority (low, medium, high, critical)')
+    .option('--assignee <name>', 'Filter by assignee')
+    .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
+    .option('--sort <field>', 'Sort by field (id, created, name, status, priority)', 'id')
+    .option('--order <order>', 'Sort order (asc, desc)', 'desc')
+    .action(async (options: {
+      archived?: boolean;
+      status?: SpecStatus;
+      tag?: string[];
+      priority?: SpecPriority;
+      assignee?: string;
+      field?: string[];
+      sort?: string;
+      order?: string;
+    }) => {
+      const customFields = parseCustomFieldOptions(options.field);
+      const listOptions: {
+        showArchived?: boolean;
+        status?: SpecStatus;
+        tags?: string[];
+        priority?: SpecPriority;
+        assignee?: string;
+        customFields?: Record<string, unknown>;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+      } = {
+        showArchived: options.archived,
+        status: options.status,
+        tags: options.tag,
+        priority: options.priority,
+        assignee: options.assignee,
+        customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+        sortBy: options.sort || 'id',
+        sortOrder: (options.order as 'asc' | 'desc') || 'desc',
+      };
+      await listSpecs(listOptions);
+    });
+}
 
 export async function listSpecs(options: {
   showArchived?: boolean;

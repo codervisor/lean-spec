@@ -11,6 +11,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadConfig } from '../config.js';
 import { loadAllSpecs, type SpecInfo } from '../spec-loader.js';
 import { withSpinner } from '../utils/ui.js';
@@ -40,9 +41,34 @@ interface ValidationResultWithSpec {
 }
 
 /**
+ * Validate command - validate specs for quality issues
+ */
+export function validateCommand(): Command {
+  return new Command('validate')
+    .description('Validate specs for quality issues')
+    .argument('[specs...]', 'Specific specs to validate (optional)')
+    .option('--max-lines <number>', 'Custom line limit (default: 400)', parseInt)
+    .option('--verbose', 'Show passing specs')
+    .option('--quiet', 'Suppress warnings, only show errors')
+    .option('--format <format>', 'Output format: default, json, compact', 'default')
+    .option('--rule <rule>', 'Filter by specific rule name (e.g., max-lines, frontmatter)')
+    .action(async (specs: string[] | undefined, options: ValidateOptions) => {
+      const passed = await validateSpecs({
+        maxLines: options.maxLines,
+        specs: specs && specs.length > 0 ? specs : undefined,
+        verbose: options.verbose,
+        quiet: options.quiet,
+        format: options.format,
+        rule: options.rule,
+      });
+      process.exit(passed ? 0 : 1);
+    });
+}
+
+/**
  * Validate specs for quality issues
  */
-export async function validateCommand(options: ValidateOptions = {}): Promise<boolean> {
+export async function validateSpecs(options: ValidateOptions = {}): Promise<boolean> {
   const config = await loadConfig();
 
   // Load specs to validate

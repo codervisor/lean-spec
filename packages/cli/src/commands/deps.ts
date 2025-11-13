@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { getSpec, loadAllSpecs, type SpecInfo } from '../spec-loader.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
@@ -7,7 +8,22 @@ import { loadConfig } from '../config.js';
 import * as path from 'node:path';
 import { getStatusIndicator } from '../utils/colors.js';
 
-export async function depsCommand(specPath: string, options: {
+/**
+ * Deps command - show dependency graph
+ */
+export function depsCommand(): Command {
+  return new Command('deps')
+    .description('Show dependency graph for a spec. Related specs (⟷) are shown bidirectionally, depends_on (→) are directional.')
+    .argument('<spec>', 'Spec to show dependencies for')
+    .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
+    .option('--graph', 'ASCII graph visualization')
+    .option('--json', 'Output as JSON')
+    .action(async (specPath: string, options: { depth?: number; graph?: boolean; json?: boolean }) => {
+      await showDeps(specPath, options);
+    });
+}
+
+export async function showDeps(specPath: string, options: {
   depth?: number;
   graph?: boolean;
   json?: boolean;
