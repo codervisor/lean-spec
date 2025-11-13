@@ -242,9 +242,9 @@ Consider **splitting** when:
 - Updates frequently cause inconsistencies (too complex to maintain)
 - Implementation has >6 phases (Intent: breaks down into sub-problems)
 
-### Complexity Validation (Spec 066) - Token-Based
+### Complexity Validation (Specs 066, 071) - Token-Based
 
-LeanSpec uses **token-based complexity scoring** as the primary metric:
+LeanSpec uses **direct token thresholds** as the primary validation metric:
 
 **Why Tokens Over Lines?**
 - Token count is the **industry standard** for LLM context measurement
@@ -252,24 +252,24 @@ LeanSpec uses **token-based complexity scoring** as the primary metric:
 - Quality degradation happens even within context limits (39% drop in multi-turn contexts)
 - Code is denser (~3 chars/token) than prose (~4 chars/token)
 
-**Token Thresholds (Primary Metric):**
+**Token Thresholds (Primary Check):**
 1. **<2,000 tokens**: ✅ Excellent - Baseline AI performance
 2. **2,000-3,500 tokens**: ✅ Good - Slight degradation, acceptable
 3. **3,500-5,000 tokens**: ⚠️ Warning - Consider simplification
 4. **>5,000 tokens**: 🔴 Should split - Significant performance impact
 
-**Structure Modifiers:**
-- **Sub-specs present**: -30 bonus (progressive disclosure)
-- **Good sectioning** (15-35 sections): -15 bonus (cognitive chunking)
-- **Poor sectioning** (<8 sections): +20 penalty (monolithic)
+**Structure Checks (Independent Feedback):**
+- **Sub-specs present**: Positive feedback for progressive disclosure
+- **Good sectioning** (15-35 sections): Positive feedback for cognitive chunking
+- **Poor sectioning** (<8 sections): Warning about monolithic structure
 
 **Line Count (Backstop Only):**
 - >500 lines: Additional warning even if token count is acceptable
 - Line count is now secondary to token-based measurement
 
-**Run validation:** `lean-spec validate` includes token-based complexity scoring automatically.
+**Run validation:** `lean-spec validate` includes direct token threshold validation automatically.
 
-**Note:** Token thresholds are research-based hypotheses (see spec 066) and may be refined based on empirical data.
+**Note:** Token thresholds are research-based (see specs 066, 071) and validated against real-world usage.
 
 ### Warning Signs
 

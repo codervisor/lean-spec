@@ -1,10 +1,12 @@
 /**
  * Tests for ComplexityValidator
  * 
- * Validates multi-dimensional complexity scoring based on:
- * - Token count (primary factor)
- * - Structure quality (sub-specs, sectioning)
+ * Validates direct token threshold validation based on:
+ * - Token count (primary check) - direct thresholds
+ * - Structure quality (independent feedback) - sub-specs and sectioning
  * - Line count backstop
+ * 
+ * Updated per spec 071: Simplified Token-Based Validation
  */
 
 import { describe, it, expect } from 'vitest';
@@ -138,29 +140,31 @@ describe('ComplexityValidator', () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
-      // ~600 lines = ~3000-4000 tokens
-      const content = generateContent({ lines: 600, sections: 30 });
+      // ~450 lines with good structure = ~3000-4000 tokens
+      const content = generateContent({ lines: 450, sections: 30 });
       
       const result = await validator.validate(spec, content);
       
       expect(result.passed).toBe(true);
       expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings[0].message).toContain('complexity moderate');
+      expect(result.warnings[0].message).toContain('tokens');
+      expect(result.warnings[0].message).toContain('threshold');
     });
 
     it('should error for very large specs (>5000 tokens) with poor structure', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
-      // ~1200 lines with code blocks but poor sectioning (<8 sections) = >5000 tokens + penalty
-      // Token score: 60, Structure penalty: +20 (only 5 sections), Final: 80 (should split)
+      // ~1200 lines with code blocks but poor sectioning = >5000 tokens
       const content = generateContent({ lines: 1200, sections: 5, codeBlocks: 30 });
       
       const result = await validator.validate(spec, content);
       
       expect(result.passed).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors[0].message).toContain('complexity too high');
+      expect(result.errors[0].message).toContain('tokens');
+      expect(result.errors[0].message).toContain('threshold');
+      expect(result.errors[0].message).toContain('should split');
     });
 
     it('should respect custom token thresholds', async () => {
@@ -182,11 +186,11 @@ describe('ComplexityValidator', () => {
   });
 
   describe('Structure Modifiers', () => {
-    it('should apply bonus for sub-specs (-30 points)', async () => {
+    it('should provide positive feedback for sub-specs on large specs', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
-      // 400 lines with sub-specs should be better than without
+      // 400 lines with sub-specs should show positive feedback
       const contentWithSubSpecs = generateContent({ 
         lines: 400, 
         sections: 25,
@@ -195,11 +199,11 @@ describe('ComplexityValidator', () => {
       
       const resultWithSubSpecs = await validator.validate(spec, contentWithSubSpecs);
       
-      // Should pass or at most warn (sub-specs help)
+      // Should pass (sub-specs help manage complexity)
       expect(resultWithSubSpecs.passed).toBe(true);
     });
 
-    it('should apply bonus for good sectioning (15-35 sections, -15 points)', async () => {
+    it('should provide positive feedback for good sectioning on large specs', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
@@ -211,7 +215,7 @@ describe('ComplexityValidator', () => {
       expect(result.passed).toBe(true);
     });
 
-    it('should apply penalty for poor sectioning (<8 sections, +20 points)', async () => {
+    it('should warn about poor sectioning for monolithic specs', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
@@ -221,25 +225,27 @@ describe('ComplexityValidator', () => {
       const result = await validator.validate(spec, content);
       
       // May warn due to poor structure
-      // The penalty pushes it into warning range
       expect(result.warnings.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should prioritize sub-specs over sectioning', async () => {
+    it('should suggest sub-specs for large specs without them', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
-      // Sub-specs with few sections should still be good
+      // Large spec without sub-specs (above goodThreshold)
       const content = generateContent({ 
-        lines: 400, 
-        sections: 10,
-        hasSubSpecs: true 
+        lines: 500, 
+        sections: 20,
+        hasSubSpecs: false 
       });
       
       const result = await validator.validate(spec, content);
       
-      // Sub-specs bonus should outweigh sectioning concerns
-      expect(result.passed).toBe(true);
+      // Should have warning suggesting sub-specs
+      const hasSubSpecSuggestion = result.warnings.some(w => 
+        w.message?.toLowerCase().includes('sub-spec')
+      );
+      expect(hasSubSpecSuggestion).toBe(true);
     });
   });
 
@@ -275,13 +281,14 @@ describe('ComplexityValidator', () => {
       const spec = createMockSpec();
       
       // High tokens AND high line count with poor structure
-      // Token score: 60, Structure penalty: +20 (5 sections), Final: 80 (should split)
       const content = generateContent({ lines: 1100, sections: 5, codeBlocks: 30 });
       
       const result = await validator.validate(spec, content);
       
       expect(result.passed).toBe(false);
-      expect(result.errors[0].message).toContain('lines');
+      // Should have warnings about line count
+      const hasLineWarning = result.warnings.some(w => w.message?.includes('lines'));
+      expect(hasLineWarning).toBe(true);
     });
 
     it('should respect custom line count limits', async () => {
@@ -302,7 +309,7 @@ describe('ComplexityValidator', () => {
   });
 
   describe('Code Block Density', () => {
-    it('should suggest moving examples for high code block density', async () => {
+    it('should warn about high code block density', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
@@ -316,14 +323,12 @@ describe('ComplexityValidator', () => {
       const result = await validator.validate(spec, content);
       
       // Should provide suggestion about code blocks
-      const hasCodeBlockSuggestion = result.warnings.some(w => 
-        w.suggestion?.includes('code block')
-      ) || result.errors.some(e => 
-        e.suggestion?.includes('code block')
+      const hasCodeBlockWarning = result.warnings.some(w => 
+        w.message?.toLowerCase().includes('code block')
       );
       
-      if (result.warnings.length > 0 || result.errors.length > 0) {
-        expect(hasCodeBlockSuggestion).toBe(true);
+      if (result.warnings.length > 0) {
+        expect(hasCodeBlockWarning).toBe(true);
       }
     });
   });
@@ -403,9 +408,11 @@ More content
       
       const result = await validator.validate(spec, content);
       
-      if (result.warnings.length > 0 || result.errors.length > 0) {
-        const hasSuggestion = (result.warnings[0]?.suggestion || result.errors[0]?.suggestion || '');
-        expect(hasSuggestion.toLowerCase()).toContain('sub-spec');
+      if (result.warnings.length > 0) {
+        const hasSubSpecSuggestion = result.warnings.some(w => 
+          w.message?.toLowerCase().includes('sub-spec')
+        );
+        expect(hasSubSpecSuggestion).toBe(true);
       }
     });
 
@@ -418,15 +425,18 @@ More content
       
       const result = await validator.validate(spec, content);
       
-      if (result.warnings.length > 0 || result.errors.length > 0) {
-        const hasSuggestion = (result.warnings[0]?.suggestion || result.errors[0]?.suggestion || '');
-        expect(hasSuggestion.toLowerCase()).toMatch(/section|chunking/);
+      if (result.warnings.length > 0) {
+        const hasSectionSuggestion = result.warnings.some(w => 
+          w.message?.toLowerCase().includes('section') ||
+          w.suggestion?.toLowerCase().includes('section')
+        );
+        expect(hasSectionSuggestion).toBe(true);
       }
     });
   });
 
   describe('Real-World Examples', () => {
-    it('should rate well-structured 394-line spec with sub-specs as excellent', async () => {
+    it('should rate well-structured 394-line spec with sub-specs as good', async () => {
       const validator = new ComplexityValidator();
       const spec = createMockSpec();
       
@@ -440,7 +450,7 @@ More content
       
       const result = await validator.validate(spec, content);
       
-      // Should pass (score should be low due to sub-specs bonus)
+      // Should pass (token count in good range, well-structured)
       expect(result.passed).toBe(true);
       expect(result.errors).toHaveLength(0);
     });

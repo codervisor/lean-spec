@@ -33,7 +33,7 @@ export interface SubSpecOptions {
 
 export class SubSpecValidator implements ValidationRule {
   name = 'sub-specs';
-  description = 'Validate sub-spec files using complexity scoring (spec 066)';
+  description = 'Validate sub-spec files using direct token thresholds (spec 071)';
 
   private excellentThreshold: number;
   private goodThreshold: number;
@@ -108,8 +108,8 @@ export class SubSpecValidator implements ValidationRule {
   }
 
   /**
-   * Validate complexity for each sub-spec file using token count + structure
-   * Same algorithm as ComplexityValidator but simplified (sub-specs don't have sub-sub-specs)
+   * Validate complexity for each sub-spec file using direct token thresholds
+   * Same approach as ComplexityValidator (spec 071)
    */
   private async validateComplexity(
     subSpecs: SubFileInfo[], 
@@ -140,74 +140,35 @@ export class SubSpecValidator implements ValidationRule {
       // Estimate tokens
       const tokenCount = estimateTokenCount(subSpec.content);
 
-      // Calculate token score (primary factor)
-      let tokenScore = 0;
-      if (tokenCount >= this.warningThreshold) {
-        tokenScore = 60; // Should split
-      } else if (tokenCount >= this.goodThreshold) {
-        tokenScore = 40; // Warning zone
-      } else if (tokenCount >= this.excellentThreshold) {
-        tokenScore = 20; // Good range
-      } else {
-        tokenScore = 0; // Excellent
-      }
-
-      // Calculate structure modifier
-      // Sub-specs don't have sub-sub-specs, so only check sectioning
-      let structureModifier = 0;
-      if (sectionCount >= 15 && sectionCount <= 35) {
-        structureModifier = -15; // Good sectioning
-      } else if (sectionCount < 8) {
-        structureModifier = +20; // Too monolithic
-      }
-
-      // Final score
-      const finalScore = Math.max(0, Math.min(100, tokenScore + structureModifier));
-
-      // Generate messages based on score
-      if (finalScore > 50) {
-        // Error: should split
+      // PRIMARY CHECK: Direct token thresholds
+      if (tokenCount > this.warningThreshold) {
         errors.push({
-          message: `Sub-spec ${subSpec.name} complexity too high (score: ${finalScore}/100, ${tokenCount} tokens, ${lineCount} lines)`,
-          suggestion: this.getSuggestion(tokenCount, sectionCount, lineCount),
+          message: `Sub-spec ${subSpec.name} has ${tokenCount.toLocaleString()} tokens (threshold: ${this.warningThreshold.toLocaleString()}) - should split`,
+          suggestion: 'Consider splitting for Context Economy (attention and cognitive load)',
         });
-      } else if (finalScore > 25) {
-        // Warning: review
+      } else if (tokenCount > this.goodThreshold) {
         warnings.push({
-          message: `Sub-spec ${subSpec.name} complexity moderate (score: ${finalScore}/100, ${tokenCount} tokens, ${lineCount} lines)`,
-          suggestion: this.getSuggestion(tokenCount, sectionCount, lineCount),
+          message: `Sub-spec ${subSpec.name} has ${tokenCount.toLocaleString()} tokens (threshold: ${this.goodThreshold.toLocaleString()})`,
+          suggestion: 'Consider simplification or further splitting',
         });
-      } else if (lineCount > this.maxLines) {
-        // Backstop: well-structured but very long
+      }
+
+      // STRUCTURE CHECK: Sectioning
+      if (sectionCount < 8 && lineCount > 200) {
         warnings.push({
-          message: `Sub-spec ${subSpec.name} is very long (${lineCount} lines) despite good structure`,
-          suggestion: 'Consider splitting for Context Economy (easier to read and navigate)',
+          message: `Sub-spec ${subSpec.name} has only ${sectionCount} sections - too monolithic`,
+          suggestion: 'Break into 15-35 sections for better readability (7±2 cognitive chunks)',
+        });
+      }
+
+      // BACKSTOP CHECK: Line count (only for extreme cases)
+      if (lineCount > this.maxLines) {
+        warnings.push({
+          message: `Sub-spec ${subSpec.name} is very long (${lineCount} lines)`,
+          suggestion: 'Consider splitting even if token count is acceptable',
         });
       }
     }
-  }
-
-  /**
-   * Generate actionable suggestion based on complexity analysis
-   */
-  private getSuggestion(tokenCount: number, sectionCount: number, lineCount: number): string {
-    const suggestions: string[] = [];
-
-    if (tokenCount > this.warningThreshold) {
-      suggestions.push('Token count very high - strongly consider splitting');
-    } else if (tokenCount > this.goodThreshold) {
-      suggestions.push('Token count elevated - consider simplification');
-    }
-
-    if (sectionCount < 8 && lineCount > 200) {
-      suggestions.push('Break into more sections (aim for 15-35 sections for better cognitive chunking)');
-    }
-
-    if (suggestions.length === 0) {
-      suggestions.push('Consider further splitting or simplification');
-    }
-
-    return suggestions.join('; ');
   }
 
   /**
