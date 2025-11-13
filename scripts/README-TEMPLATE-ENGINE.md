@@ -75,6 +75,62 @@ To update a specific template:
 ✅ **Template Flexibility**: Mix and match components per template  
 ✅ **Build-time Generation**: No runtime overhead, generated files committed to repo
 
+## Validation
+
+The template system includes validation to ensure templates are always in sync:
+
+### Validate Templates
+
+Check that generated AGENTS.md files match the source components:
+
+```bash
+pnpm validate:templates
+```
+
+This command:
+- Regenerates AGENTS.md from source components (in memory)
+- Compares with the committed AGENTS.md files
+- Fails if any template is out of sync
+
+### CI Integration
+
+The validation is automatically run in CI after the build step:
+
+```yaml
+- name: Build
+  run: pnpm build
+  
+- name: Validate templates
+  run: pnpm validate:templates
+```
+
+This ensures that:
+- Generated files are always in sync with source components
+- PRs cannot be merged with outdated templates
+- No manual drift can occur
+
+### Manual Testing
+
+To manually test that templates work end-to-end:
+
+```bash
+# 1. Build templates
+pnpm build:templates
+
+# 2. Test init with each template
+cd /tmp/test-minimal && lean-spec init
+# Select: Choose template → minimal → Simple pattern
+# Verify: AGENTS.md is created with correct content
+
+cd /tmp/test-standard && lean-spec init
+# Select: Quick start (uses standard template)
+# Verify: AGENTS.md is created with correct content
+
+cd /tmp/test-enterprise && lean-spec init
+# Select: Choose template → enterprise → Simple pattern
+# Verify: AGENTS.md is created with correct content
+```
+
 ## Examples
 
 ### Example: Adding a New Rule
