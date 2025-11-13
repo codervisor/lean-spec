@@ -5,6 +5,7 @@
  */
 
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { TokenCounter, type TokenCount } from '@leanspec/core';
 import { loadAllSpecs } from '../spec-loader.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
@@ -22,9 +23,30 @@ export interface TokensOptions {
 }
 
 /**
+ * Tokens command - count tokens in spec(s)
+ */
+export function tokensCommand(): Command {
+  return new Command('tokens')
+    .description('Count tokens in spec(s) for LLM context management')
+    .argument('[spec]', 'Spec to count tokens for (optional)')
+    .option('--detailed', 'Show content type breakdown (code, prose, tables)')
+    .option('--include-sub-specs', 'Count all sub-spec files (DESIGN.md, etc.)')
+    .option('--all', 'Show all specs (when [spec] is omitted)')
+    .option('--sort-by <field>', 'Sort by: tokens, lines, name (default: tokens)')
+    .option('--json', 'Output as JSON')
+    .action(async (specPath: string | undefined, options: TokensOptions) => {
+      if (specPath) {
+        await countSpecTokens(specPath, options);
+      } else {
+        await tokensAllCommand(options);
+      }
+    });
+}
+
+/**
  * Count tokens in a single spec
  */
-export async function tokensCommand(specPath: string, options: TokensOptions = {}): Promise<void> {
+export async function countSpecTokens(specPath: string, options: TokensOptions = {}): Promise<void> {
   await autoCheckIfEnabled();
 
   const counter = new TokenCounter();

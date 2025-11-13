@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { Command } from 'commander';
 import { loadConfig } from '../config.js';
 
 export interface MigrationOptions {
@@ -18,9 +19,42 @@ export interface DocumentInfo {
 }
 
 /**
+ * Migrate command - migrate specs from other SDD tools
+ */
+export function migrateCommand(): Command {
+  return new Command('migrate')
+    .description('Migrate specs from other SDD tools (ADR, RFC, OpenSpec, spec-kit, etc.)')
+    .argument('<input-path>', 'Path to directory containing specs to migrate')
+    .option('--with <provider>', 'AI-assisted migration (copilot, claude, gemini)')
+    .option('--dry-run', 'Preview without making changes')
+    .option('--batch-size <n>', 'Process N docs at a time', parseInt)
+    .option('--skip-validation', "Don't validate after migration")
+    .option('--backfill', 'Auto-run backfill after migration')
+    .action(async (inputPath: string, options: {
+      with?: string;
+      dryRun?: boolean;
+      batchSize?: number;
+      skipValidation?: boolean;
+      backfill?: boolean;
+    }) => {
+      if (options.with && !['copilot', 'claude', 'gemini'].includes(options.with)) {
+        console.error('\x1b[31m❌ Error:\x1b[0m Invalid AI provider. Use: copilot, claude, or gemini');
+        process.exit(1);
+      }
+      await migrateSpecs(inputPath, {
+        aiProvider: options.with as 'copilot' | 'claude' | 'gemini' | undefined,
+        dryRun: options.dryRun,
+        batchSize: options.batchSize,
+        skipValidation: options.skipValidation,
+        backfill: options.backfill,
+      });
+    });
+}
+
+/**
  * Main migration command - generates instructions for migrating specs from other tools
  */
-export async function migrateCommand(inputPath: string, options: Partial<MigrationOptions> = {}): Promise<void> {
+export async function migrateSpecs(inputPath: string, options: Partial<MigrationOptions> = {}): Promise<void> {
   const config = await loadConfig();
   
   // Validate input path exists

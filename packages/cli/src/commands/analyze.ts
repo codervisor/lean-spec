@@ -11,6 +11,7 @@
 
 import chalk from 'chalk';
 import * as path from 'node:path';
+import { Command } from 'commander';
 import { TokenCounter, analyzeMarkdownStructure, type Section } from '@leanspec/core';
 import { loadConfig } from '../config.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
@@ -21,6 +22,20 @@ import { readFile } from 'node:fs/promises';
 export interface AnalyzeOptions {
   json?: boolean;           // Output as JSON for AI agents
   verbose?: boolean;        // Include detailed breakdown
+}
+
+/**
+ * Analyze command - analyze spec complexity and structure
+ */
+export function analyzeCommand(): Command {
+  return new Command('analyze')
+    .description('Analyze spec complexity and structure (spec 059)')
+    .argument('<spec>', 'Spec to analyze')
+    .option('--json', 'Output as JSON for AI agents')
+    .option('--verbose', 'Include detailed section breakdown')
+    .action(async (specPath: string, options: { json?: boolean; verbose?: boolean }) => {
+      await analyzeSpec(specPath, options);
+    });
 }
 
 export interface AnalyzeResult {
@@ -64,7 +79,7 @@ export interface AnalyzeResult {
 /**
  * Analyze spec complexity and structure
  */
-export async function analyzeCommand(specPath: string, options: AnalyzeOptions = {}): Promise<void> {
+export async function analyzeSpec(specPath: string, options: AnalyzeOptions = {}): Promise<void> {
   await autoCheckIfEnabled();
 
   const counter = new TokenCounter();

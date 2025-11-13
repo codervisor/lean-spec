@@ -1,14 +1,46 @@
 import React from 'react';
 import { render } from 'ink';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 import { searchSpecs, type SearchableSpec } from '@leanspec/core';
+import { parseCustomFieldOptions } from '../utils/cli-helpers.js';
 
-export async function searchCommand(query: string, options: {
+/**
+ * Search command - full-text search with metadata filters
+ */
+export function searchCommand(): Command {
+  return new Command('search')
+    .description('Full-text search with metadata filters')
+    .argument('<query>', 'Search query')
+    .option('--status <status>', 'Filter by status')
+    .option('--tag <tag>', 'Filter by tag')
+    .option('--priority <priority>', 'Filter by priority')
+    .option('--assignee <name>', 'Filter by assignee')
+    .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
+    .action(async (query: string, options: {
+      status?: SpecStatus;
+      tag?: string;
+      priority?: SpecPriority;
+      assignee?: string;
+      field?: string[];
+    }) => {
+      const customFields = parseCustomFieldOptions(options.field);
+      await performSearch(query, {
+        status: options.status,
+        tag: options.tag,
+        priority: options.priority,
+        assignee: options.assignee,
+        customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+      });
+    });
+}
+
+export async function performSearch(query: string, options: {
   status?: SpecStatus;
   tag?: string;
   priority?: SpecPriority;

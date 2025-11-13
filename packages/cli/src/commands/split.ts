@@ -11,6 +11,7 @@
 
 import chalk from 'chalk';
 import * as path from 'node:path';
+import { Command } from 'commander';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { 
   extractLines, 
@@ -39,10 +40,48 @@ interface ParsedOutput {
   endLine: number;
 }
 
+// Helper function to collect multiple --output options
+function collectOutputs(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
+/**
+ * Split command - split spec into multiple files
+ */
+export function splitCommand(): Command {
+  return new Command('split')
+    .description('Split spec into multiple files by line ranges (spec 059)')
+    .argument('<spec>', 'Spec to split')
+    .option('--output <file:lines>', 'Output file with line range (e.g., README.md:1-150)', collectOutputs, [])
+    .option('--update-refs', 'Update cross-references in README.md')
+    .option('--dry-run', 'Show what would be created without making changes')
+    .option('--force', 'Overwrite existing files')
+    .action(async (specPath: string, options: { 
+      output: Array<string>;
+      updateRefs?: boolean;
+      dryRun?: boolean;
+      force?: boolean;
+    }) => {
+      const outputs = options.output.map((opt: string) => {
+        const [file, lines] = opt.split(':');
+        if (!file || !lines) {
+          throw new Error(`Invalid --output format: ${opt}. Expected: file.md:1-150`);
+        }
+        return { file, lines };
+      });
+      await splitSpec(specPath, {
+        outputs,
+        updateRefs: options.updateRefs,
+        dryRun: options.dryRun,
+        force: options.force,
+      });
+    });
+}
+
 /**
  * Split spec into multiple files
  */
-export async function splitCommand(specPath: string, options: SplitOptions): Promise<void> {
+export async function splitSpec(specPath: string, options: SplitOptions): Promise<void> {
   await autoCheckIfEnabled();
   
   try {
