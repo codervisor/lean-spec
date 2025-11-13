@@ -27,6 +27,10 @@ export { ganttCommand } from './gantt.js';
 export { tokensCommand, tokensAllCommand } from './tokens.js';
 export { analyzeCommand } from './analyze.js';
 
+// Transformation commands (spec 059)
+export { splitCommand } from './split.js';
+export { compactCommand } from './compact.js';
+
 // Viewer commands
 export { viewCommand, openCommand } from './viewer.js';
 

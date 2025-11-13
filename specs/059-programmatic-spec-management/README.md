@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-07'
 tags:
   - context-engineering
@@ -19,11 +19,15 @@ related:
   - 018-spec-validation
   - 012-sub-spec-files
   - 066-context-economy-thresholds-refinement
+updated_at: '2025-11-13T10:24:05.467Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-13T10:24:05.467Z'
 ---
 
 # Programmatic Spec Management & Context Engineering
 
-> **Status**: 📅 Planned · **Priority**: Critical · **Created**: 2025-11-07 · **Tags**: context-engineering, automation, tooling, ai-agents, performance
+> **Status**: ⏳ In progress · **Priority**: Critical · **Created**: 2025-11-07 · **Tags**: context-engineering, automation, tooling, ai-agents, performance, v0.3.0
 
 **The Problem**: AI agents manually editing oversized spec files is slow and error-prone. They need clean, mechanical tools to transform specs without direct markdown manipulation.
 
