@@ -364,8 +364,9 @@ html.changing-theme * {
 }
 
 .prose th {
-  background: hsl(210 40% 96%);
+  background: hsl(var(--muted));
   font-weight: 600;
+  color: hsl(var(--muted-foreground));
 }
 
 .prose hr {
@@ -445,7 +446,8 @@ html.changing-theme * {
 }
 
 .dark .prose th {
-  background: hsl(217.2 32.6% 17.5%);
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .prose hr {
