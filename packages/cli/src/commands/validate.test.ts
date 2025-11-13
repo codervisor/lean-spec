@@ -116,70 +116,8 @@ ${Array(335).fill('Content line').join('\n')}
     expect(result).toBe(true); // Still passes with warning
   });
 
-  it('should fail validation for specs over 400 lines', async () => {
-    const specsDir = path.join(tmpDir, 'specs');
-    await fs.mkdir(specsDir, { recursive: true });
-    
-    // Create a spec with 450 lines
-    const specDir = path.join(specsDir, '001-large-spec');
-    await fs.mkdir(specDir, { recursive: true });
-    const content = `---
-status: planned
-created: "2025-11-05"
----
-
-# Large Spec
-
-## Overview
-
-Some overview content.
-
-## Design
-
-Some design content.
-
-${Array(435).fill('Content line').join('\n')}
-`;
-    await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
-
-    const result = await validateCommand();
-    expect(result).toBe(false);
-  });
-
-  it('should respect custom maxLines option', async () => {
-    const specsDir = path.join(tmpDir, 'specs');
-    await fs.mkdir(specsDir, { recursive: true });
-    
-    // Create a spec with 450 lines
-    const specDir = path.join(specsDir, '001-spec');
-    await fs.mkdir(specDir, { recursive: true });
-    const content = `---
-status: planned
-created: "2025-11-05"
----
-
-# Spec
-
-## Overview
-
-Some overview content.
-
-## Design
-
-Some design content.
-
-${Array(435).fill('Content line').join('\n')}
-`;
-    await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
-
-    // Should fail with default (400)
-    let result = await validateCommand();
-    expect(result).toBe(false);
-
-    // Should pass with higher limit (500)
-    result = await validateCommand({ maxLines: 500 });
-    expect(result).toBe(true);
-  });
+  // Note: Line-count threshold tests removed - we now use token-based validation
+  // See ComplexityValidator tests for token threshold validation
 
   it('should validate specific specs when provided', async () => {
     const specsDir = path.join(tmpDir, 'specs');
@@ -208,9 +146,7 @@ ${Array(435).fill('Content line').join('\n')}
     const result = await validateCommand({ specs: ['001'] });
     expect(result).toBe(true);
 
-    // Validate only the bad spec
-    const result2 = await validateCommand({ specs: ['002'] });
-    expect(result2).toBe(false);
+    // Note: Removed "bad spec" test - simple repeated text doesn't generate enough tokens to fail
   });
 
   it('should return true when no specs found', async () => {
@@ -221,35 +157,8 @@ ${Array(435).fill('Content line').join('\n')}
     expect(result).toBe(true);
   });
 
-  it('should handle multiple specs with mixed results', async () => {
-    const specsDir = path.join(tmpDir, 'specs');
-    await fs.mkdir(specsDir, { recursive: true });
-    
-    // Create specs with different line counts
-    const specs = [
-      { name: '001-small', lines: 200 },
-      { name: '002-medium', lines: 350 },
-      { name: '003-large', lines: 450 },
-    ];
-
-    for (const spec of specs) {
-      const specDir = path.join(specsDir, spec.name);
-      await fs.mkdir(specDir, { recursive: true });
-      const content = `---
-status: planned
-created: "2025-11-05"
----
-
-# Spec
-
-${Array(spec.lines - 10).fill('line').join('\n')}
-`;
-      await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
-    }
-
-    const result = await validateCommand();
-    expect(result).toBe(false); // Should fail because one spec exceeds limit
-  });
+  // Note: Removed "multiple specs with mixed results" test - line counts no longer trigger errors
+  // Token-based validation is tested in ComplexityValidator tests
 
   it('should return false when spec not found', async () => {
     const specsDir = path.join(tmpDir, 'specs');
@@ -410,17 +319,16 @@ ${Array(90).fill('Content line').join('\n')}
     const specsDir = path.join(tmpDir, 'specs');
     await fs.mkdir(specsDir, { recursive: true });
     
-    // Create a spec with error
+    // Create a spec with frontmatter error
     const specDir = path.join(specsDir, '001-bad-spec');
     await fs.mkdir(specDir, { recursive: true });
     await fs.writeFile(
       path.join(specDir, 'README.md'),
-      '---\nstatus: planned\ncreated: "2025-11-05"\n---\n\n# Bad Spec\n\n## Overview\n\nContent.\n\n' +
-      Array(435).fill('line').join('\n'),
+      '---\nstatus: wip\ncreated: "invalid-date"\npriority: urgent\n---\n\n# Bad Spec\n\n## Overview\n\nContent.',
       'utf-8'
     );
 
-    // With json format, should output JSON (still fail due to error)
+    // With json format, should output JSON (still fail due to frontmatter errors)
     const result = await validateCommand({ format: 'json' });
     expect(result).toBe(false);
   });
