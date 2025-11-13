@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-13'
 tags:
   - core
@@ -15,15 +15,19 @@ depends_on:
 related:
   - 059-programmatic-spec-management
   - 048-spec-complexity-analysis
-updated_at: '2025-11-13T02:35:30.196Z'
+updated_at: '2025-11-13T02:49:45.179Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T02:35:30.196Z'
+  - status: complete
+    at: '2025-11-13T02:49:45.179Z'
+completed_at: '2025-11-13T02:49:45.179Z'
+completed: '2025-11-13'
 ---
 
 # Token Counting Utilities for LLM Context Management
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-13 · **Tags**: core, tooling, context-economy, llm, validation
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-13 · **Tags**: core, tooling, context-economy, llm, validation
 > **Assignee**: marvin · **Reviewer**: TBD
 
 **The Problem**: Token count is the most accurate predictor of LLM context performance, but we lack convenient tools (MCP, CLI, core utilities) to measure it for specs and sub-specs.

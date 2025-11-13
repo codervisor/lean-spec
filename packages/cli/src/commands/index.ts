@@ -24,6 +24,7 @@ export { searchCommand } from './search.js';
 export { depsCommand } from './deps.js';
 export { timelineCommand } from './timeline.js';
 export { ganttCommand } from './gantt.js';
+export { tokensCommand, tokensAllCommand } from './tokens.js';
 
 // Viewer commands
 export { viewCommand, openCommand } from './viewer.js';

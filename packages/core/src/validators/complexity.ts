@@ -16,7 +16,7 @@
 
 import type { ValidationRule, ValidationResult, ValidationError, ValidationWarning } from '../utils/validation-framework.js';
 import type { SpecInfo } from '../types/index.js';
-import { estimateTokenCount } from 'tokenx';
+import { TokenCounter } from '../utils/token-counter.js';
 import matter from 'gray-matter';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -159,8 +159,10 @@ export class ComplexityValidator implements ValidationRule {
     // Count tables (lines with table separators)
     const tableCount = lines.filter(line => line.includes('|') && line.match(/[-:]{3,}/)).length;
 
-    // Estimate tokens
-    const tokenCount = estimateTokenCount(content);
+    // Count tokens using tiktoken
+    const counter = new TokenCounter();
+    const tokenCount = counter.countString(content);
+    counter.dispose();
 
     // Detect sub-specs by checking actual files in the spec directory
     let hasSubSpecs = false;
