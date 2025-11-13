@@ -1,11 +1,62 @@
 import * as path from 'node:path';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadConfig } from '../config.js';
 import { getSpecFile, updateFrontmatter } from '../frontmatter.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
 import type { SpecStatus, SpecPriority } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
+import { parseCustomFieldOptions } from '../utils/cli-helpers.js';
+
+/**
+ * Update command - update spec metadata
+ */
+export function updateCommand(): Command {
+  return new Command('update')
+    .description('Update spec metadata')
+    .argument('<spec>', 'Spec to update')
+    .option('--status <status>', 'Set status (planned, in-progress, complete, archived)')
+    .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
+    .option('--tags <tags>', 'Set tags (comma-separated)')
+    .option('--assignee <name>', 'Set assignee')
+    .option('--field <name=value...>', 'Set custom field (can specify multiple)')
+    .action(async (specPath: string, options: {
+      status?: SpecStatus;
+      priority?: SpecPriority;
+      tags?: string;
+      assignee?: string;
+      field?: string[];
+    }) => {
+      const customFields = parseCustomFieldOptions(options.field);
+      const updates: {
+        status?: SpecStatus;
+        priority?: SpecPriority;
+        tags?: string[];
+        assignee?: string;
+        customFields?: Record<string, unknown>;
+      } = {
+        status: options.status,
+        priority: options.priority,
+        tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
+        assignee: options.assignee,
+        customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+      };
+      
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof typeof updates] === undefined) {
+          delete updates[key as keyof typeof updates];
+        }
+      });
+      
+      if (Object.keys(updates).length === 0) {
+        console.error('Error: At least one update option required (--status, --priority, --tags, --assignee, --field)');
+        process.exit(1);
+      }
+      
+      await updateSpec(specPath, updates);
+    });
+}
 
 export async function updateSpec(
   specPath: string,

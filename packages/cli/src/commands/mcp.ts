@@ -5,10 +5,22 @@
  * with AI assistants like Claude Desktop, Cline, and other MCP clients.
  */
 
+import { Command } from 'commander';
 import { createMcpServer } from '../mcp-server.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-export async function mcpCommand(): Promise<void> {
+/**
+ * MCP command - start MCP server
+ */
+export function mcpCommand(): Command {
+  return new Command('mcp')
+    .description('Start MCP server for AI assistants (Claude Desktop, Cline, etc.)')
+    .action(async () => {
+      await startMcpServer();
+    });
+}
+
+export async function startMcpServer(): Promise<void> {
   try {
     const server = await createMcpServer();
     const transport = new StdioServerTransport();

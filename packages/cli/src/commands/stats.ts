@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import dayjs from 'dayjs';
+import { Command } from 'commander';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter.js';
 import { withSpinner } from '../utils/ui.js';
@@ -9,7 +10,31 @@ import { countSpecsByStatusAndPriority } from '../utils/spec-stats.js';
 import { calculateCompletion, getCompletionStatus } from '../utils/completion.js';
 import { generateInsights, getSpecInsightDetails } from '../utils/insights.js';
 
-export async function statsCommand(options: {
+/**
+ * Stats command - show aggregate statistics
+ */
+export function statsCommand(): Command {
+  return new Command('stats')
+    .description('Show aggregate statistics (default: simplified view)')
+    .option('--tag <tag>', 'Filter by tag')
+    .option('--assignee <name>', 'Filter by assignee')
+    .option('--full', 'Show full detailed analytics (all sections)')
+    .option('--timeline', 'Show only timeline section')
+    .option('--velocity', 'Show only velocity section')
+    .option('--json', 'Output as JSON')
+    .action(async (options: {
+      tag?: string;
+      assignee?: string;
+      full?: boolean;
+      timeline?: boolean;
+      velocity?: boolean;
+      json?: boolean;
+    }) => {
+      await showStats(options);
+    });
+}
+
+export async function showStats(options: {
   tag?: string;
   assignee?: string;
   full?: boolean;

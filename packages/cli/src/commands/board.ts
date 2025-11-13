@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { loadAllSpecs } from '../spec-loader.js';
 import type { SpecInfo } from '../spec-loader.js';
 import type { SpecFilterOptions, SpecStatus, SpecPriority } from '../frontmatter.js';
@@ -9,7 +10,29 @@ import { calculateCompletion, getCompletionStatus } from '../utils/completion.js
 import { calculateVelocityMetrics } from '../utils/velocity.js';
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '../utils/colors.js';
 
-export async function boardCommand(options: {
+/**
+ * Board command - show Kanban-style board view
+ */
+export function boardCommand(): Command {
+  return new Command('board')
+    .description('Show Kanban-style board view with project completion summary')
+    .option('--complete', 'Include complete specs (default: hidden)')
+    .option('--simple', 'Hide completion summary (kanban only)')
+    .option('--completion-only', 'Show only completion summary (no kanban)')
+    .option('--tag <tag>', 'Filter by tag')
+    .option('--assignee <name>', 'Filter by assignee')
+    .action(async (options: {
+      showComplete?: boolean;
+      simple?: boolean;
+      completionOnly?: boolean;
+      tag?: string;
+      assignee?: string;
+    }) => {
+      await showBoard(options);
+    });
+}
+
+export async function showBoard(options: {
   showComplete?: boolean;
   simple?: boolean;
   completionOnly?: boolean;
