@@ -2,9 +2,9 @@
 	"servers": {
 		"lean-spec": {
 			"type": "stdio",
-			"command": "npx",
+			"command": "node",
 			"args": [
-				"lean-spec",
+				"${workspaceFolder}/bin/lean-spec.js",
 				"mcp"
 			]
 		},

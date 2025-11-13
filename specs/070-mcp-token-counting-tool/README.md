@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-11-13'
 tags:
   - core
@@ -14,11 +14,17 @@ depends_on:
 related:
   - 059-programmatic-spec-management
   - 066-context-economy-thresholds-refinement
+updated_at: '2025-11-13T08:55:34.796Z'
+completed_at: '2025-11-13T08:55:34.796Z'
+completed: '2025-11-13'
+transitions:
+  - status: complete
+    at: '2025-11-13T08:55:34.796Z'
 ---
 
 # MCP Token Counting Tool
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: core, mcp, llm, tooling
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: core, mcp, llm, tooling
 > **Assignee**: marvin · **Reviewer**: TBD
 
 **The Problem**: AI agents cannot query token counts programmatically. They need to make context-aware decisions about which specs to load, but have no way to check token sizes.

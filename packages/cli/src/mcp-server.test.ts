@@ -72,6 +72,45 @@ This is a test specification for MCP server testing.
 Testing the MCP server functionality.
 `
     );
+
+    // Create a spec with sub-specs for token counting tests
+    const multiSpecDir = path.join(testDir, 'specs', '002-multi-file-spec');
+    await fs.mkdir(multiSpecDir, { recursive: true });
+    await fs.writeFile(
+      path.join(multiSpecDir, 'README.md'),
+      `---
+status: in-progress
+created: '2025-11-03'
+tags: ["test"]
+priority: medium
+---
+
+# Multi-File Spec
+
+This spec has multiple files.
+
+## Overview
+
+Main spec content here.
+`
+    );
+    await fs.writeFile(
+      path.join(multiSpecDir, 'DESIGN.md'),
+      `# Design Document
+
+This is the design document with more content.
+
+## Architecture
+
+Some architectural details here.
+
+\`\`\`typescript
+function example() {
+  return 'code example';
+}
+\`\`\`
+`
+    );
   });
 
   afterEach(async () => {
@@ -267,6 +306,50 @@ Details here.
       // Process should still be running - test by doing a successful operation
       await expect(
         updateSpec('001-test-spec', { status: 'in-progress' as any })
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('Tokens Command', () => {
+    it('should count tokens in a simple spec', async () => {
+      const { tokensCommand } = await import('./commands/tokens.js');
+      
+      // Count tokens in test spec (should not throw)
+      await expect(
+        tokensCommand('001-test-spec', { json: true })
+      ).resolves.toBeUndefined();
+    });
+
+    it('should count tokens with sub-specs included', async () => {
+      const { tokensCommand } = await import('./commands/tokens.js');
+      
+      // Count tokens including sub-specs
+      await expect(
+        tokensCommand('002-multi-file-spec', { 
+          includeSubSpecs: true,
+          json: true 
+        })
+      ).resolves.toBeUndefined();
+    });
+
+    it('should handle non-existent spec errors', async () => {
+      const { tokensCommand } = await import('./commands/tokens.js');
+      
+      // Should throw error for non-existent spec
+      await expect(
+        tokensCommand('nonexistent-spec-999', {})
+      ).rejects.toThrow('Spec not found: nonexistent-spec-999');
+    });
+
+    it('should provide detailed breakdown when requested', async () => {
+      const { tokensCommand } = await import('./commands/tokens.js');
+      
+      // Count with detailed breakdown
+      await expect(
+        tokensCommand('002-multi-file-spec', { 
+          detailed: true,
+          json: true 
+        })
       ).resolves.toBeUndefined();
     });
   });

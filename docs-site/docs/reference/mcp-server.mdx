@@ -33,6 +33,7 @@ The MCP server exposes these tools to AI assistants:
 - **check** - Check for sequence number conflicts
 - **validate** - Validate specs for quality issues (line count, complexity)
 - **backfill** - Backfill timestamps and metadata from git history
+- **tokens** - Count tokens in specs for LLM context management
 
 ### Resources
 
@@ -241,6 +242,28 @@ Or with a dry run:
 ```
 Show me what would be backfilled without making changes
 ```
+
+### Count tokens
+
+Check token count before loading a spec:
+
+```
+How many tokens is spec 059?
+```
+
+Include sub-spec files:
+
+```
+Count tokens in spec 059 including all sub-specs
+```
+
+Get detailed breakdown:
+
+```
+Show me detailed token breakdown for spec 066
+```
+
+This helps you make smart decisions about what to load into context, avoiding context window overflow.
 
 ## Troubleshooting
 
