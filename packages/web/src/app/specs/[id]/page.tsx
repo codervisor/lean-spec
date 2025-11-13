@@ -22,6 +22,9 @@ import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { SubSpecTabs } from '@/components/sub-spec-tabs';
 
+// Force dynamic rendering - this page needs runtime data
+export const dynamic = 'force-dynamic';
+
 export default async function SpecDetailPage({ 
   params 
 }: { 
