@@ -157,7 +157,7 @@ export async function tokensAllCommand(options: TokensOptions = {}): Promise<voi
       });
       
       const indicators = counter.getPerformanceIndicators(result.total);
-      const totalLines = result.files.reduce((sum, f) => sum + (f.lines || 0), 0);
+      const totalLines = result.files.reduce((sum: number, f: { lines?: number }) => sum + (f.lines || 0), 0);
       
       results.push({
         name: spec.name,
