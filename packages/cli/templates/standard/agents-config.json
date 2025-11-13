@@ -1,0 +1,12 @@
+{
+  "description": "Lightweight spec methodology for AI-powered development.",
+  "coreRules": "core-rules-base.md",
+  "whenToUse": "when-to-use-standard.md",
+  "whenToUseEarly": true,
+  "discoveryCommands": "discovery-commands-standard.md",
+  "frontmatter": "frontmatter-standard.md",
+  "workflow": "workflow-standard-detailed.md",
+  "qualityStandards": "quality-standards-base.md",
+  "closingNote": "**Remember**: LeanSpec is a mindset. Adapt these guidelines to what actually helps.",
+  "additionalSections": []
+}
