@@ -29,6 +29,8 @@ export { countSpecTokens, tokensAllCommand, tokensCommand } from './tokens.js';
 export { analyzeSpec, analyzeCommand } from './analyze.js';
 
 // Transformation commands (spec 059)
+export { compressCommand } from './compress.js';
+export { isolateCommand } from './isolate.js';
 export { splitSpec, splitCommand } from './split.js';
 export { compactSpec, compactCommand } from './compact.js';
 

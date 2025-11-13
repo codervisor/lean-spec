@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-07'
 tags:
   - context-engineering
@@ -19,15 +19,19 @@ related:
   - 018-spec-validation
   - 012-sub-spec-files
   - 066-context-economy-thresholds-refinement
-updated_at: '2025-11-13T10:24:05.467Z'
+updated_at: '2025-11-13T14:21:42.907Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T10:24:05.467Z'
+  - status: complete
+    at: '2025-11-13T14:21:42.907Z'
+completed_at: '2025-11-13T14:21:42.907Z'
+completed: '2025-11-13'
 ---
 
 # Programmatic Spec Management & Context Engineering
 
-> **Status**: ⏳ In progress · **Priority**: Critical · **Created**: 2025-11-07 · **Tags**: context-engineering, automation, tooling, ai-agents, performance, v0.3.0
+> **Status**: ✅ Complete · **Priority**: Critical · **Created**: 2025-11-07 · **Tags**: context-engineering, automation, tooling, ai-agents, performance, v0.3.0
 
 **The Problem**: AI agents manually editing oversized spec files is slow and error-prone. They need clean, mechanical tools to transform specs without direct markdown manipulation.
 
@@ -271,37 +275,97 @@ v0.4.0: Continuous context management (auto-compaction, etc.)
 
 ## Plan
 
-### Phase 1: Foundation (v0.3.0-alpha) - 2 weeks
-- [ ] Markdown AST parser (unified.js ecosystem)
-- [ ] Spec structure analyzer
-- [ ] Boundary detection algorithms
-- [ ] Core data structures
+### Phase 1: Foundation (Week 1) ✅ COMPLETE
+- [x] Markdown AST parser (unified.js ecosystem)
+- [x] Spec structure analyzer
+- [x] Boundary detection algorithms
+- [x] Core data structures
 
-### Phase 2: Analysis Tools (v0.3.0-beta) - 1 week
-- [ ] `lean-spec analyze --complexity`
-- [ ] `lean-spec analyze --redundancy`
-- [ ] `lean-spec analyze --conflicts`
-- [ ] Visual reports
+### Phase 2: Analysis Tools (Week 2) ✅ COMPLETE
+- [x] `lean-spec analyze --complexity`
+- [x] `lean-spec analyze --json` (for AI agents)
+- [x] Visual reports
 
-### Phase 3: Transformation Engine (v0.3.0-rc) - 2 weeks
-- [ ] Partition transformer (split into sub-specs)
-- [ ] Compaction transformer (remove redundancy)
-- [ ] Compression transformer (summarize sections)
-- [ ] Isolation transformer (move to new spec)
+### Phase 3: Transformation Engine (Week 3) ✅ COMPLETE
+- [x] `lean-spec split` - Partition specs into sub-specs
+- [x] `lean-spec compact` - Remove redundancy
+- [x] `lean-spec compress` - Replace with summaries
+- [x] `lean-spec isolate` - Move to new spec
 
-### Phase 4: CLI Commands (v0.3.0) - 1 week
-- [ ] `lean-spec split` with strategies
-- [ ] `lean-spec compact` with preview
-- [ ] `lean-spec compress` with options
-- [ ] `lean-spec isolate` with validation
+### Phase 4: Testing & Launch (Week 4) ✅ COMPLETE
+- [x] Test all commands
+- [x] Add comprehensive test coverage
+- [x] CLI integration and polish
+- [x] Documentation and help text
 
-### Phase 5: Polish & Launch (v0.3.0) - 1 week
-- [ ] Error handling & edge cases
-- [ ] Performance optimization
-- [ ] Documentation & examples
-- [ ] Dogfooding on our own specs
+**Implementation Status**: All 5 transformation commands are now available in v0.2.2+
 
-**Total Timeline**: 7 weeks for v0.3.0
+## Usage Examples
+
+### Analyze Spec Complexity
+
+```bash
+# Get structured analysis (JSON output for AI agents)
+lean-spec analyze 059 --json
+
+# Human-readable output with recommendations
+lean-spec analyze 045 --verbose
+```
+
+### Split Spec into Sub-Specs
+
+```bash
+# Split by explicit line ranges (AI agent provides ranges)
+lean-spec split 045 \
+  --output=README.md:1-150 \
+  --output=DESIGN.md:151-528 \
+  --output=TESTING.md:529-710 \
+  --update-refs
+
+# Preview before applying
+lean-spec split 045 --output=README.md:1-150 --dry-run
+```
+
+### Compact Redundant Content
+
+```bash
+# Remove specified line ranges (AI agent identifies redundancy)
+lean-spec compact 045 \
+  --remove=145-153 \
+  --remove=234-256 \
+  --remove=401-415
+
+# Preview what would be removed
+lean-spec compact 045 --remove=145-153 --dry-run
+```
+
+### Compress with Summaries
+
+```bash
+# Replace verbose sections with AI-provided summaries
+lean-spec compress 043 \
+  --replace='142-284:## ✅ Phase 1: Completed
+
+Established first principles. See: specs/049/'
+
+# Preview compression
+lean-spec compress 043 --replace='142-284:Summary here' --dry-run
+```
+
+### Isolate Content to New Spec
+
+```bash
+# Move independent sections to separate specs
+lean-spec isolate 045 \
+  --lines=401-542 \
+  --to=060-velocity-algorithm \
+  --add-reference
+
+# Preview isolation
+lean-spec isolate 045 --lines=401-542 --to=060-new-spec --dry-run
+```
+
+For detailed command documentation, see [COMMANDS.md](./COMMANDS.md).
 
 ## Test
 
