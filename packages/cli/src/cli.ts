@@ -400,6 +400,81 @@ program
     await statsCommand(options);
   });
 
+// analyze command - for spec 059
+program
+  .command('analyze <spec>')
+  .description('Analyze spec complexity and structure (spec 059)')
+  .option('--json', 'Output as JSON for AI agents')
+  .option('--verbose', 'Include detailed section breakdown')
+  .action(async (specPath: string, options: { json?: boolean; verbose?: boolean }) => {
+    const { analyzeCommand } = await import('./commands/index.js');
+    await analyzeCommand(specPath, options);
+  });
+
+// split command - for spec 059
+program
+  .command('split <spec>')
+  .description('Split spec into multiple files by line ranges (spec 059)')
+  .option('--output <file:lines>', 'Output file with line range (e.g., README.md:1-150)', collectOutputs, [])
+  .option('--update-refs', 'Update cross-references in README.md')
+  .option('--dry-run', 'Show what would be created without making changes')
+  .option('--force', 'Overwrite existing files')
+  .action(async (specPath: string, options: { 
+    output: Array<string>;
+    updateRefs?: boolean;
+    dryRun?: boolean;
+    force?: boolean;
+  }) => {
+    const { splitCommand } = await import('./commands/index.js');
+    
+    // Parse outputs into structured format
+    const outputs = options.output.map((opt: string) => {
+      const [file, lines] = opt.split(':');
+      if (!file || !lines) {
+        throw new Error(`Invalid --output format: ${opt}. Expected: file.md:1-150`);
+      }
+      return { file, lines };
+    });
+    
+    await splitCommand(specPath, {
+      outputs,
+      updateRefs: options.updateRefs,
+      dryRun: options.dryRun,
+      force: options.force,
+    });
+  });
+
+// Helper function to collect multiple --output options
+function collectOutputs(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
+// Helper function to collect multiple --remove options
+function collectRemoves(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
+// compact command - for spec 059
+program
+  .command('compact <spec>')
+  .description('Remove specified line ranges from spec (spec 059)')
+  .option('--remove <lines>', 'Line range to remove (e.g., 145-153)', collectRemoves, [])
+  .option('--dry-run', 'Show what would be removed without making changes')
+  .option('--force', 'Skip confirmation')
+  .action(async (specPath: string, options: { 
+    remove: string[];
+    dryRun?: boolean;
+    force?: boolean;
+  }) => {
+    const { compactCommand } = await import('./commands/index.js');
+    
+    await compactCommand(specPath, {
+      removes: options.remove,
+      dryRun: options.dryRun,
+      force: options.force,
+    });
+  });
+
 // tokens command
 program
   .command('tokens [spec]')

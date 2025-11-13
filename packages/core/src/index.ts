@@ -14,6 +14,7 @@ export * from './types/index.js';
 
 // Parsers
 export * from './parsers/frontmatter.js';
+export * from './parsers/markdown-parser.js';
 
 // Validators
 export {
