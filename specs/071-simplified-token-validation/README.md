@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-13'
 tags:
   - validation
@@ -217,33 +217,33 @@ Line Count:
 
 ## Plan
 
-### Phase 1: Simplify ComplexityValidator ✓
+### Phase 1: Simplify ComplexityValidator ✅
 - [x] Remove score calculation logic
 - [x] Implement direct token threshold checks
 - [x] Implement independent structure checks
 - [x] Update error/warning messages to show actual values
 - [x] Keep line count as simple backstop
 
-### Phase 2: Update SubSpecValidator
-- [ ] Apply same simplification to sub-spec validation
-- [ ] Remove score calculation from sub-spec checks
-- [ ] Use direct token thresholds for sub-specs
+### Phase 2: Update SubSpecValidator ✅
+- [x] Apply same simplification to sub-spec validation
+- [x] Remove score calculation from sub-spec checks
+- [x] Use direct token thresholds for sub-specs
 
-### Phase 3: Update Tests
-- [ ] Remove tests that check score values
-- [ ] Add tests for direct threshold behavior
-- [ ] Add tests for structure feedback messages
-- [ ] Verify output format
+### Phase 3: Update Tests ✅
+- [x] Remove tests that check score values
+- [x] Add tests for direct threshold behavior
+- [x] Add tests for structure feedback messages
+- [x] Verify output format
 
-### Phase 4: Update Documentation
-- [ ] Update AGENTS.md to remove score references
-- [ ] Update spec 066 to document simplified approach
-- [ ] Update validation output examples in docs
+### Phase 4: Update Documentation ✅
+- [x] Update AGENTS.md to remove score references
+- [x] Update spec 066 to document simplified approach
+- [x] Update validation output examples in docs
 
-### Phase 5: Test Against Real Specs
-- [ ] Validate against all current specs
-- [ ] Verify messages are clear and actionable
-- [ ] Confirm no false positives/negatives
+### Phase 5: Test Against Real Specs ✅
+- [x] Validate against all current specs
+- [x] Verify messages are clear and actionable
+- [x] Confirm no false positives/negatives
 
 ## Test
 

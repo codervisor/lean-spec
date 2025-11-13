@@ -1,11 +1,12 @@
 /**
- * Complexity validator - multi-dimensional spec complexity analysis
+ * Complexity validator - direct token threshold validation
  * 
- * Implements spec 066: Context Economy Thresholds Refinement
+ * Implements spec 071: Simplified Token-Based Validation
  * 
- * Measures complexity using:
- * 1. Token count (primary factor) - correlates with AI performance
- * 2. Structure quality (modifier) - sub-specs and section organization
+ * Uses direct, independent checks instead of derived scores:
+ * 1. Token count (primary check) - direct thresholds
+ * 2. Structure quality (independent feedback) - sub-specs and sectioning
+ * 3. Line count (backstop only) - for extreme cases
  * 
  * Research-backed findings:
  * - Token count predicts AI performance better than line count
@@ -44,20 +45,21 @@ export interface ComplexityMetrics {
   averageSectionLength: number;
 }
 
+// Deprecated - kept for backward compatibility only
 export interface ComplexityScore {
-  score: number; // 0-100 (lower is better)
+  score: number; // 0-100 (lower is better) - DEPRECATED
   factors: {
-    tokens: number;      // Primary: token-based score (0-60)
-    structure: number;   // Modifier: structure quality (-30 to +20)
+    tokens: number;      // Primary: token-based score (0-60) - DEPRECATED
+    structure: number;   // Modifier: structure quality (-30 to +20) - DEPRECATED
   };
-  recommendation: 'excellent' | 'good' | 'review' | 'split';
+  recommendation: 'excellent' | 'good' | 'review' | 'split'; // DEPRECATED
   metrics: ComplexityMetrics;
   costMultiplier: number; // vs 1,200 token baseline
 }
 
 export class ComplexityValidator implements ValidationRule {
   name = 'complexity';
-  description = 'Multi-dimensional complexity analysis based on tokens and structure';
+  description = 'Direct token threshold validation with independent structure checks';
 
   private excellentThreshold: number;
   private goodThreshold: number;
@@ -82,36 +84,39 @@ export class ComplexityValidator implements ValidationRule {
 
     // Analyze complexity
     const metrics = await this.analyzeComplexity(content, spec);
-    const score = this.calculateComplexityScore(metrics);
 
-    // Primary check: Complexity score
-    if (score.recommendation === 'split') {
+    // PRIMARY CHECK: Direct token thresholds
+    const tokenValidation = this.validateTokens(metrics.tokenCount);
+    if (tokenValidation.level === 'error') {
       errors.push({
-        message: `Spec complexity too high (score: ${score.score}/100, ${metrics.tokenCount} tokens)`,
-        suggestion: this.getSuggestion(score, metrics),
+        message: tokenValidation.message,
+        suggestion: 'Consider splitting for Context Economy (attention and cognitive load)',
       });
-    } else if (score.recommendation === 'review') {
+    } else if (tokenValidation.level === 'warning') {
       warnings.push({
-        message: `Spec complexity moderate (score: ${score.score}/100, ${metrics.tokenCount} tokens)`,
-        suggestion: this.getSuggestion(score, metrics),
+        message: tokenValidation.message,
+        suggestion: 'Consider simplification or splitting into sub-specs',
       });
     }
 
-    // Backstop check: Line count (only if complexity is already concerning)
-    if (metrics.lineCount > this.maxLines) {
-      if (score.recommendation === 'split') {
-        // Already erroring, just note line count
-        errors[0].message += ` and ${metrics.lineCount} lines`;
-      } else {
-        // Well-structured but very long - warn
+    // INDEPENDENT CHECKS: Structure feedback
+    const structureChecks = this.checkStructure(metrics);
+    for (const check of structureChecks) {
+      if (!check.passed && check.message) {
         warnings.push({
-          message: `Spec is very long (${metrics.lineCount} lines) despite good structure`,
-          suggestion: 'Consider splitting for Context Economy (easier to read and navigate)',
+          message: check.message,
+          suggestion: check.suggestion,
         });
       }
-    } else if (metrics.lineCount > this.warningLines && score.recommendation === 'review') {
-      // Approaching line limit with moderate complexity
-      warnings[0].message += ` and ${metrics.lineCount} lines`;
+    }
+
+    // BACKSTOP CHECK: Line count (only for extreme cases)
+    const lineCheck = this.checkLineCount(metrics.lineCount);
+    if (lineCheck) {
+      warnings.push({
+        message: lineCheck.message,
+        suggestion: lineCheck.suggestion,
+      });
     }
 
     return {
@@ -119,6 +124,102 @@ export class ComplexityValidator implements ValidationRule {
       errors,
       warnings,
     };
+  }
+
+  /**
+   * Validate token count with direct thresholds
+   */
+  private validateTokens(tokens: number): { level: 'excellent' | 'good' | 'info' | 'warning' | 'error'; message: string } {
+    if (tokens > this.warningThreshold) {
+      return {
+        level: 'error',
+        message: `Spec has ${tokens.toLocaleString()} tokens (threshold: ${this.warningThreshold.toLocaleString()}) - should split`,
+      };
+    }
+    
+    if (tokens > this.goodThreshold) {
+      return {
+        level: 'warning',
+        message: `Spec has ${tokens.toLocaleString()} tokens (threshold: ${this.goodThreshold.toLocaleString()})`,
+      };
+    }
+    
+    if (tokens > this.excellentThreshold) {
+      return {
+        level: 'info',
+        message: `Spec has ${tokens.toLocaleString()} tokens - acceptable, watch for growth`,
+      };
+    }
+    
+    return {
+      level: 'excellent',
+      message: `Spec has ${tokens.toLocaleString()} tokens - excellent`,
+    };
+  }
+
+  /**
+   * Check structure quality independently
+   */
+  private checkStructure(metrics: ComplexityMetrics): Array<{ passed: boolean; message?: string; suggestion?: string }> {
+    const checks: Array<{ passed: boolean; message?: string; suggestion?: string }> = [];
+    
+    // Sub-specs presence (positive feedback when helpful)
+    if (metrics.hasSubSpecs) {
+      // Only show positive feedback if spec is large enough that sub-specs help
+      if (metrics.tokenCount > this.excellentThreshold) {
+        checks.push({
+          passed: true,
+          message: `Uses ${metrics.subSpecCount} sub-spec file${metrics.subSpecCount > 1 ? 's' : ''} for progressive disclosure`,
+        });
+      }
+    } else if (metrics.tokenCount > this.goodThreshold) {
+      checks.push({
+        passed: false,
+        message: 'Consider using sub-spec files (DESIGN.md, IMPLEMENTATION.md, etc.)',
+        suggestion: 'Progressive disclosure reduces cognitive load for large specs',
+      });
+    }
+    
+    // Section organization
+    if (metrics.sectionCount >= 15 && metrics.sectionCount <= 35) {
+      // Only show positive feedback if structure is helping manage complexity
+      if (metrics.tokenCount > this.excellentThreshold) {
+        checks.push({
+          passed: true,
+          message: `Good sectioning (${metrics.sectionCount} sections) enables cognitive chunking`,
+        });
+      }
+    } else if (metrics.sectionCount < 8 && metrics.lineCount > 200) {
+      checks.push({
+        passed: false,
+        message: `Only ${metrics.sectionCount} sections - too monolithic`,
+        suggestion: 'Break into 15-35 sections for better readability (7±2 cognitive chunks)',
+      });
+    }
+    
+    // Code block density
+    if (metrics.codeBlockCount > 20) {
+      checks.push({
+        passed: false,
+        message: `High code block density (${metrics.codeBlockCount} blocks)`,
+        suggestion: 'Consider moving examples to separate files or sub-specs',
+      });
+    }
+    
+    return checks;
+  }
+
+  /**
+   * Check line count as backstop
+   */
+  private checkLineCount(lines: number): { message: string; suggestion?: string } | null {
+    if (lines > this.maxLines) {
+      return {
+        message: `Spec is very long (${lines} lines)`,
+        suggestion: 'Consider splitting even if token count is acceptable',
+      };
+    }
+    return null;
   }
 
   /**
@@ -205,102 +306,5 @@ export class ComplexityValidator implements ValidationRule {
       subSpecCount,
       averageSectionLength,
     };
-  }
-
-  /**
-   * Calculate complexity score using token count and structure modifiers
-   */
-  private calculateComplexityScore(metrics: ComplexityMetrics): ComplexityScore {
-    // PRIMARY: Token count (research-backed predictor of AI performance)
-    // Thresholds are hypotheses to be validated empirically
-    let tokenScore = 0;
-    if (metrics.tokenCount >= this.warningThreshold) {
-      tokenScore = 60; // Should split
-    } else if (metrics.tokenCount >= this.goodThreshold) {
-      tokenScore = 40; // Warning zone
-    } else if (metrics.tokenCount >= this.excellentThreshold) {
-      tokenScore = 20; // Good range
-    } else {
-      tokenScore = 0; // Excellent
-    }
-
-    // MODIFIERS: Structure quality adjusts token-based score
-    let structureModifier = 0;
-    
-    if (metrics.hasSubSpecs) {
-      // Progressive disclosure bonus (big win for Context Economy)
-      structureModifier = -30;
-    } else if (metrics.sectionCount >= 15 && metrics.sectionCount <= 35) {
-      // Good sectioning enables cognitive chunking (7±2 rule)
-      structureModifier = -15;
-    } else if (metrics.sectionCount < 8) {
-      // Too monolithic (harder to chunk mentally)
-      structureModifier = +20;
-    }
-
-    // Calculate final score (bounded 0-100)
-    const finalScore = Math.max(0, Math.min(100, tokenScore + structureModifier));
-
-    // Determine recommendation
-    let recommendation: 'excellent' | 'good' | 'review' | 'split';
-    if (finalScore <= 10) {
-      recommendation = 'excellent';
-    } else if (finalScore <= 25) {
-      recommendation = 'good';
-    } else if (finalScore <= 50) {
-      recommendation = 'review';
-    } else {
-      recommendation = 'split';
-    }
-
-    // Calculate cost multiplier (vs 1,200 token baseline)
-    const baselineTokens = 1200;
-    const costMultiplier = Math.round((metrics.tokenCount / baselineTokens) * 10) / 10;
-
-    return {
-      score: finalScore,
-      factors: {
-        tokens: tokenScore,
-        structure: structureModifier,
-      },
-      recommendation,
-      metrics,
-      costMultiplier,
-    };
-  }
-
-  /**
-   * Generate actionable suggestion based on complexity analysis
-   */
-  private getSuggestion(score: ComplexityScore, metrics: ComplexityMetrics): string {
-    const suggestions: string[] = [];
-
-    // Token count suggestions
-    if (metrics.tokenCount > this.warningThreshold) {
-      suggestions.push('Token count very high - strongly consider splitting');
-    } else if (metrics.tokenCount > this.goodThreshold) {
-      suggestions.push('Token count elevated - consider simplification');
-    }
-
-    // Structure suggestions
-    if (!metrics.hasSubSpecs && metrics.tokenCount > this.excellentThreshold) {
-      suggestions.push('Use sub-spec files (DESIGN.md, IMPLEMENTATION.md) for progressive disclosure');
-    }
-
-    if (metrics.sectionCount < 8 && metrics.lineCount > 200) {
-      suggestions.push('Break into more sections (aim for 15-35 sections for better cognitive chunking)');
-    }
-
-    // Code block density
-    if (metrics.codeBlockCount > 20) {
-      suggestions.push('High code block density - consider moving examples to separate files');
-    }
-
-    // Default suggestion
-    if (suggestions.length === 0) {
-      suggestions.push('Consider simplification or splitting to improve readability');
-    }
-
-    return suggestions.join('; ');
   }
 }
