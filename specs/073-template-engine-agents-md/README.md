@@ -12,6 +12,7 @@ related:
   - '025'
   - '072'
   - '074'
+  - '078'
 created_at: '2025-11-13T08:35:40.229Z'
 updated_at: '2025-11-13T10:32:28.046Z'
 transitions:
@@ -54,7 +55,7 @@ completed: '2025-11-13'
 
 **Goal**: Use template engine to generate AGENTS.md from shared components, eliminate duplication, prevent drift.
 
-**Related Issue**: `.lean-spec/templates/` system also needs redesign - currently only generates main spec file, should support optional sub-specs (DESIGN.md, TESTING.md, etc.).
+**Scope**: This spec covers Phase 1 only (AGENTS.md template engine). Phase 2 (sub-spec template system) was split into spec 078.
 
 **Related Specs**:
 - `012-sub-spec-files` (archived) - Original sub-spec design (implemented)
@@ -62,6 +63,7 @@ completed: '2025-11-13'
 - `025-template-config-updates` - Config format updates
 - `072-ai-agent-first-use-workflow` - Current AGENTS.md improvement driving this
 - `074-content-at-creation` - Spec creation with content flags (similar AI-first approach)
+- `078-sub-spec-template-system` - Phase 2 split into separate spec (sub-spec generation)
 
 ## Design
 
@@ -149,87 +151,15 @@ npm run build:agents-templates
 - ✅ Prevents drift automatically
 - ✅ Can version control both source and generated files
 
-#### Part 2: Redesign `.lean-spec/templates/` System (Future)
-
-**Current Problem**: Templates only generate main spec file (README.md), but specs often need sub-files.
-
-**Proposed Design**:
-```
-.lean-spec/
-└── templates/
-    ├── default/
-    │   ├── README.md         # Main spec template (required)
-    │   ├── DESIGN.md.opt     # Optional sub-spec
-    │   └── TESTING.md.opt    # Optional sub-spec
-    └── api/
-        ├── README.md
-        ├── API.md.opt
-        └── SCHEMAS.md.opt
-```
-
-**Convention**:
-- `{name}.md` - Always generated
-- `{name}.md.opt` - Generate only if requested (flag or prompt)
-- `{name}.md.req` - Always generated (for templates requiring sub-specs)
-
-**Usage** (AI-first, flag-based by default):
-```bash
-# Standard: generates README.md only
-lean-spec create my-feature
-
-# With explicit sub-spec flags (AI-friendly)
-lean-spec create my-feature --design --testing
-
-# Human interactive mode (opt-in)
-lean-spec create my-feature --with-subs
-? Include optional sub-specs? (space to select)
-  [ ] DESIGN.md
-  [x] TESTING.md
-  [ ] IMPLEMENTATION.md
-
-# Rationale: AI agents primarily use CLI, prefer declarative flags over interactive prompts
-```
-
-**Config Enhancement**:
-```json
-{
-  "templates": {
-    "default": {
-      "main": "README.md",
-      "optional": ["DESIGN.md", "TESTING.md", "IMPLEMENTATION.md"],
-      "required": [],
-      "flags": {
-        "--design": "DESIGN.md",
-        "--testing": "TESTING.md",
-        "--implementation": "IMPLEMENTATION.md"
-      }
-    },
-    "api": {
-      "main": "README.md",
-      "optional": ["SCHEMAS.md"],
-      "required": ["API.md"],
-      "flags": {
-        "--schemas": "SCHEMAS.md"
-      }
-    }
-  }
-}
-```
-
 ### Technical Approach
 
-**Phase 1**: AGENTS.md Template Engine
+**AGENTS.md Template Engine**:
 - Tool: Handlebars.js (lightweight, widely used)
 - Build script: `scripts/build-agents-templates.ts`
 - Runs during: `pnpm build` or `pnpm build:templates`
 - Generated files committed to repo (easier distribution)
 
-**Phase 2**: Sub-Spec Template System (AI-First Design)
-- Extend existing template resolution in `src/commands/creator.ts`
-- Add explicit sub-spec flags (`--design`, `--testing`, etc.) - primary interface
-- Add `--with-subs` interactive prompt - opt-in for human users
-- Support `.opt` and `.req` file conventions
-- Update config schema for template metadata and flag mappings
+**Note**: Originally this spec included Phase 2 (Sub-Spec Template System) for generating optional sub-spec files. That has been split into spec 078 for clearer separation of concerns
 
 ### Alternative Approaches Considered
 
@@ -288,31 +218,7 @@ lean-spec create my-feature --with-subs
   - [x] Update CI to fail if generated files out of sync
   - [ ] Add pre-commit hook to regenerate if source changed (deferred - CI validation sufficient)
 
-### Phase 2: Sub-Spec Template System
-
-- [ ] **Design & Planning**
-  - [ ] Define `.opt` / `.req` file convention
-  - [ ] Design config schema for template metadata and flag mappings
-  - [ ] Design flag-based interface (primary) + interactive mode (opt-in)
-  - [ ] Document sub-spec template authoring guide
-
-- [ ] **Implementation**
-  - [ ] Extend `creator.ts` to handle sub-spec templates
-  - [ ] Add explicit sub-spec flags (`--design`, `--testing`, etc.)
-  - [ ] Add `--with-subs` interactive mode (opt-in for humans)
-  - [ ] Implement file filtering logic (opt/req/flags)
-  - [ ] Update template resolution and variable substitution
-
-- [ ] **Template Updates**
-  - [ ] Create example templates with sub-specs
-  - [ ] Update existing templates with `.opt` convention
-  - [ ] Add template metadata to config.json files
-
-- [ ] **Documentation & Testing**
-  - [ ] Update docs for sub-spec usage
-  - [ ] Create examples in templates
-  - [ ] Test all combinations of sub-spec generation
-  - [ ] Add integration tests
+**Note**: Phase 2 (Sub-Spec Template System) has been moved to spec 078-sub-spec-template-system
 
 ## Test
 
@@ -342,38 +248,6 @@ pnpm build:templates
 # Verify all AGENTS.md files updated
 ```
 
-**Phase 2: Sub-Spec Template System**
-
-- [ ] **Basic Sub-Spec Generation**: `lean-spec create feat --design` generates README.md + DESIGN.md
-- [ ] **Interactive Selection**: Prompt allows selecting multiple optional sub-specs
-- [ ] **Required Sub-Spec**: Templates with `.req` files always generate those files
-- [ ] **Variable Substitution**: Variables work in sub-spec templates
-- [ ] **No Sub-Specs**: Default behavior (no flags) generates only README.md
-
-**Test Protocol**:
-```bash
-# 1. Test required sub-spec
-lean-spec create api-endpoint --template api
-# Should generate README.md + API.md (required)
-
-# 2. Test explicit flags (AI-first interface)
-lean-spec create feature --design --testing
-# Should generate README.md + DESIGN.md + TESTING.md
-
-# 3. Test interactive mode (human opt-in)
-lean-spec create feature --with-subs
-# Interactive prompt, select TESTING.md only
-# Should generate README.md + TESTING.md
-
-# 4. Test default (no sub-specs)
-lean-spec create simple-fix
-# Should generate only README.md
-
-# 5. AI agent usage test
-# AI should prefer: lean-spec create feature --design --implementation
-# Not: lean-spec create feature --with-subs (requires interaction)
-```
-
 ## Notes
 
 ### Why This Matters
@@ -399,26 +273,15 @@ lean-spec create simple-fix
 - ✅ Always fresh
 - ❌ Template engine in runtime deps
 - ❌ More complex error handling
-- ❌ Harder to debug
+**Decision**: Build-time generation with Handlebars is the sweet spot - simple, reliable, works everywhere.
 
-### AI-First Design Rationale
+### Phase 2 Split Decision
 
-**Why flag-based over interactive by default?**
-
-In AI-human co-op spec writing mode:
-- **AI agents primarily use the CLI**, not humans
-- **Interactive prompts block automation** - AI can't respond to prompts effectively
-- **Flags are declarative** - AI can determine needed sub-specs and invoke with explicit flags
-- **Humans can opt-in** - `--with-subs` flag preserves interactive experience when desired
-
-**Example AI workflow**:
-```
-AI analyzes task → determines needs DESIGN + TESTING sub-specs
-→ runs: lean-spec create feature --design --testing
-→ no interaction needed, continues working
-```
-
-This aligns with `072-ai-agent-first-use-workflow` principles: optimize for AI, accommodate humans.
+**Why split into separate spec (078)?**
+- Phase 1 (AGENTS.md template engine) is complete and independent
+- Phase 2 (sub-spec template system) is a different feature with different scope
+- Cleaner separation allows independent planning and archiving
+- Phase 1 can be archived when appropriate while Phase 2 continues as spec 078
 
 ### Related Specs
 
@@ -430,17 +293,17 @@ See Overview section for full list of related specs.
 - ~~Do we need a `lean-spec templates validate` command?~~ ✅ Implemented as `pnpm validate:templates`
 - ~~Should CI auto-regenerate and commit, or just fail?~~ ✅ CI fails on drift (regeneration is manual)
 - Can we detect if AGENTS.md was manually edited and warn?
+- ~~Should we support optional sub-specs?~~ ✅ Moved to spec 078
 
 ### Success Metrics
 
 - **Maintenance Time**: Adding new rule takes 1 file edit + build (not 4 file edits) ✅ **Achieved**
 - **Consistency**: No drift between templates (verified by tests) ✅ **Achieved** (CI validation in place)
 - **Flexibility**: Easy to create new templates with different combinations ✅ **Achieved**
-- **Adoption**: Sub-spec templates used in 20%+ of new specs within 2 months (Phase 2)
 
-## Phase 1 Completion Summary
+## Completion Summary
 
-**Status**: Phase 1 Complete ✅
+**Status**: Complete ✅
 
 **Completed Work**:
 1. ✅ Template infrastructure created with component-based architecture
@@ -457,4 +320,4 @@ See Overview section for full list of related specs.
 - Easy maintenance: update once, propagates to all templates
 - CI ensures quality and consistency
 
-**Next Steps**: Phase 2 - Sub-Spec Template System (separate implementation)
+**Note**: Originally planned Phase 2 (Sub-Spec Template System) has been split into spec 078-sub-spec-template-system for clearer separation of concerns
