@@ -30,6 +30,8 @@ export { analyzeCommand } from './analyze.js';
 // Transformation commands (spec 059)
 export { splitCommand } from './split.js';
 export { compactCommand } from './compact.js';
+export { compressCommand } from './compress.js';
+export { isolateCommand } from './isolate.js';
 
 // Viewer commands
 export { viewCommand, openCommand } from './viewer.js';

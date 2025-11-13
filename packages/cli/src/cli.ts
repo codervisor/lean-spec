@@ -64,6 +64,14 @@ Command Groups:
     search <query>                Full-text search with metadata filters
     files <spec>                  List files in a spec
     
+  Spec Transformation (Spec 059):
+    analyze <spec>                Analyze spec complexity and structure
+    split <spec>                  Split spec into multiple files
+    compact <spec>                Remove specified line ranges
+    compress <spec>               Replace content with summaries
+    isolate <spec>                Move content to new spec
+    tokens [spec]                 Count tokens for LLM context
+    
   Project & Analytics:
     board                         Show Kanban-style board view
     stats                         Show aggregate statistics
@@ -93,6 +101,8 @@ Examples:
   $ lean-spec validate --verbose
   $ lean-spec validate --quiet --rule max-lines
   $ lean-spec validate 018 --max-lines 500
+  $ lean-spec analyze 059 --json
+  $ lean-spec split 045 --output=README.md:1-150 --dry-run
 `);
 
 // archive command
@@ -454,6 +464,11 @@ function collectRemoves(value: string, previous: string[]): string[] {
   return previous.concat([value]);
 }
 
+// Helper function to collect multiple --replace options
+function collectReplaces(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
 // compact command - for spec 059
 program
   .command('compact <spec>')
@@ -470,6 +485,77 @@ program
     
     await compactCommand(specPath, {
       removes: options.remove,
+      dryRun: options.dryRun,
+      force: options.force,
+    });
+  });
+
+// compress command - for spec 059
+program
+  .command('compress <spec>')
+  .description('Replace line ranges with AI-provided summaries (spec 059)')
+  .option('--replace <lines:text>', 'Replace line range with text (e.g., 142-284:"## Summary...")', collectReplaces, [])
+  .option('--dry-run', 'Show what would be replaced without making changes')
+  .option('--force', 'Skip confirmation')
+  .action(async (specPath: string, options: { 
+    replace: string[];
+    dryRun?: boolean;
+    force?: boolean;
+  }) => {
+    const { compressCommand } = await import('./commands/index.js');
+    
+    // Parse replace options into structured format
+    const replaces = options.replace.map((opt: string) => {
+      const colonIndex = opt.indexOf(':');
+      if (colonIndex === -1) {
+        throw new Error(`Invalid --replace format: ${opt}. Expected format: "142-284:replacement text"`);
+      }
+      
+      const lines = opt.substring(0, colonIndex);
+      const text = opt.substring(colonIndex + 1);
+      
+      return { lines, text };
+    });
+    
+    await compressCommand(specPath, {
+      replaces,
+      dryRun: options.dryRun,
+      force: options.force,
+    });
+  });
+
+// isolate command - for spec 059
+program
+  .command('isolate <spec>')
+  .description('Move content to a new spec (spec 059)')
+  .option('--lines <range>', 'Lines to move (e.g., 401-542)', String)
+  .option('--to <new-spec>', 'New spec name (e.g., 060-velocity-algorithm)', String)
+  .option('--add-reference', 'Add cross-reference in source spec')
+  .option('--dry-run', 'Show what would be created without making changes')
+  .option('--force', 'Overwrite existing spec')
+  .action(async (specPath: string, options: { 
+    lines?: string;
+    to?: string;
+    addReference?: boolean;
+    dryRun?: boolean;
+    force?: boolean;
+  }) => {
+    const { isolateCommand } = await import('./commands/index.js');
+    
+    if (!options.lines) {
+      console.error('Error: --lines option is required');
+      process.exit(1);
+    }
+    
+    if (!options.to) {
+      console.error('Error: --to option is required');
+      process.exit(1);
+    }
+    
+    await isolateCommand(specPath, {
+      lines: options.lines,
+      to: options.to,
+      addReference: options.addReference,
       dryRun: options.dryRun,
       force: options.force,
     });
