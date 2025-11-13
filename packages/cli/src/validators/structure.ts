@@ -63,37 +63,8 @@ export class StructureValidator implements ValidationRule {
     // Extract all headings
     const headings = this.extractHeadings(body);
 
-    // Check for required sections (H2 level)
-    for (const requiredSection of this.requiredSections) {
-      const found = headings.some(
-        h => h.level === 2 && h.text.toLowerCase() === requiredSection.toLowerCase()
-      );
-      if (!found) {
-        if (this.strict) {
-          errors.push({
-            message: `Missing required section: ## ${requiredSection}`,
-            suggestion: `Add ## ${requiredSection} section to the spec`,
-          });
-        } else {
-          warnings.push({
-            message: `Recommended section missing: ## ${requiredSection}`,
-            suggestion: `Consider adding ## ${requiredSection} section`,
-          });
-        }
-      }
-    }
-
-    // Check for empty sections
-    const emptySections = this.findEmptySections(body, headings);
-    for (const section of emptySections) {
-      // Only warn about empty required sections
-      if (this.requiredSections.some(req => req.toLowerCase() === section.toLowerCase())) {
-        warnings.push({
-          message: `Empty required section: ## ${section}`,
-          suggestion: 'Add content to this section or remove it',
-        });
-      }
-    }
+    // Skip checking for required sections - too verbose and not critical
+    // Skip checking for empty sections - too verbose and not critical
 
     // Check for duplicate headers at same level
     const duplicates = this.findDuplicateHeaders(headings);

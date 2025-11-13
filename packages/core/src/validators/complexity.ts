@@ -110,15 +110,6 @@ export class ComplexityValidator implements ValidationRule {
       }
     }
 
-    // BACKSTOP CHECK: Line count (only for extreme cases)
-    const lineCheck = this.checkLineCount(metrics.lineCount);
-    if (lineCheck) {
-      warnings.push({
-        message: lineCheck.message,
-        suggestion: lineCheck.suggestion,
-      });
-    }
-
     return {
       passed: errors.length === 0,
       errors,
@@ -207,19 +198,6 @@ export class ComplexityValidator implements ValidationRule {
     }
     
     return checks;
-  }
-
-  /**
-   * Check line count as backstop
-   */
-  private checkLineCount(lines: number): { message: string; suggestion?: string } | null {
-    if (lines > this.maxLines) {
-      return {
-        message: `Spec is very long (${lines} lines)`,
-        suggestion: 'Consider splitting even if token count is acceptable',
-      };
-    }
-    return null;
   }
 
   /**

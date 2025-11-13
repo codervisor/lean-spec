@@ -27,8 +27,6 @@ export interface SubSpecOptions {
   
   // Line count backstop (safety net)
   maxLines?: number;            // Default: 500 lines
-  
-  checkCrossReferences?: boolean;  // Default: true
 }
 
 export class SubSpecValidator implements ValidationRule {
@@ -39,7 +37,6 @@ export class SubSpecValidator implements ValidationRule {
   private goodThreshold: number;
   private warningThreshold: number;
   private maxLines: number;
-  private checkCrossReferences: boolean;
 
   constructor(options: SubSpecOptions = {}) {
     // Token thresholds (hypothesis values based on research)
@@ -49,8 +46,6 @@ export class SubSpecValidator implements ValidationRule {
     
     // Line count backstop
     this.maxLines = options.maxLines ?? 500;
-    
-    this.checkCrossReferences = options.checkCrossReferences ?? true;
   }
 
   async validate(spec: SpecInfo, content: string): Promise<ValidationResult> {
@@ -76,11 +71,6 @@ export class SubSpecValidator implements ValidationRule {
 
     // Check for orphaned sub-specs (not referenced in README.md)
     this.checkOrphanedSubSpecs(subSpecs, content, warnings);
-
-    // Validate cross-references
-    if (this.checkCrossReferences) {
-      await this.validateCrossReferences(subSpecs, spec, warnings);
-    }
 
     return {
       passed: errors.length === 0,
@@ -161,14 +151,6 @@ export class SubSpecValidator implements ValidationRule {
           suggestion: 'Break into 15-35 sections for better readability (7±2 cognitive chunks)',
         });
       }
-
-      // BACKSTOP CHECK: Line count (only for extreme cases)
-      if (lineCount > this.maxLines) {
-        warnings.push({
-          message: `Sub-spec ${subSpec.name} is very long (${lineCount} lines)`,
-          suggestion: 'Consider splitting even if token count is acceptable',
-        });
-      }
     }
   }
 
@@ -199,39 +181,4 @@ export class SubSpecValidator implements ValidationRule {
     }
   }
 
-  /**
-   * Validate cross-document references between sub-specs
-   */
-  private async validateCrossReferences(
-    subSpecs: SubFileInfo[],
-    spec: SpecInfo,
-    warnings: ValidationWarning[]
-  ): Promise<void> {
-    // Build a set of all valid sub-spec filenames
-    const validFileNames = new Set(subSpecs.map(s => s.name));
-    validFileNames.add('README.md'); // README is also valid
-
-    for (const subSpec of subSpecs) {
-      if (!subSpec.content) {
-        continue;
-      }
-
-      // Find all markdown links in the content with optional ./ prefix
-      // Match any characters except closing paren to support various filename patterns
-      const linkRegex = /\[([^\]]+)\]\((?:\.\/)?(([^)]+)\.md)\)/g;
-      let match;
-
-      while ((match = linkRegex.exec(subSpec.content)) !== null) {
-        const referencedFile = match[2];
-        
-        // Check if referenced file exists
-        if (!validFileNames.has(referencedFile)) {
-          warnings.push({
-            message: `Broken reference in ${subSpec.name}: ${referencedFile} not found`,
-            suggestion: `Check if ${referencedFile} exists or update the link`,
-          });
-        }
-      }
-    }
-  }
 }
