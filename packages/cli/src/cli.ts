@@ -400,6 +400,33 @@ program
     await statsCommand(options);
   });
 
+// tokens command
+program
+  .command('tokens [spec]')
+  .description('Count tokens in spec(s) for LLM context management')
+  .option('--detailed', 'Show content type breakdown (code, prose, tables)')
+  .option('--include-sub-specs', 'Count all sub-spec files (DESIGN.md, etc.)')
+  .option('--all', 'Show all specs (when [spec] is omitted)')
+  .option('--sort-by <field>', 'Sort by: tokens, lines, name (default: tokens)')
+  .option('--json', 'Output as JSON')
+  .action(async (specPath: string | undefined, options: {
+    detailed?: boolean;
+    includeSubSpecs?: boolean;
+    all?: boolean;
+    sortBy?: 'tokens' | 'lines' | 'name';
+    json?: boolean;
+  }) => {
+    const { tokensCommand, tokensAllCommand } = await import('./commands/index.js');
+    
+    if (specPath) {
+      // Count specific spec
+      await tokensCommand(specPath, options);
+    } else {
+      // Count all specs
+      await tokensAllCommand(options);
+    }
+  });
+
 // templates command and subcommands
 const templatesCmd = program
   .command('templates')

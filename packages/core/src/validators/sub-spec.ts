@@ -13,7 +13,7 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { estimateTokenCount } from 'tokenx';
+import { TokenCounter } from '../utils/token-counter.js';
 import matter from 'gray-matter';
 import type { ValidationRule, ValidationResult, ValidationError, ValidationWarning } from '../utils/validation-framework.js';
 import type { SpecInfo, SubFileInfo } from '../types/index.js';
@@ -136,8 +136,10 @@ export class SubSpecValidator implements ValidationRule {
         }
       }
 
-      // Estimate tokens
-      const tokenCount = estimateTokenCount(subSpec.content);
+      // Count tokens using tiktoken
+      const counter = new TokenCounter();
+      const tokenCount = counter.countString(subSpec.content);
+      counter.dispose();
 
       // Calculate token score (primary factor)
       let tokenScore = 0;

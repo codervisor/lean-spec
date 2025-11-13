@@ -44,3 +44,9 @@ export {
 // Utilities
 export { countSpecsByStatusAndPriority } from './utils/spec-stats.js';
 export { generateInsights } from './utils/insights.js';
+export {
+  TokenCounter,
+  countTokens,
+  type TokenCount,
+  type TokenCounterOptions,
+} from './utils/token-counter.js';
