@@ -225,10 +225,20 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 2. **Update CHANGELOG.md**: Add release notes with date and version
 3. **Build**: Run `pnpm build` to build all packages
 4. **Test**: Run `pnpm test:run` to ensure tests pass (web DB tests may fail - that's OK)
-5. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
-6. **Publish**: `cd packages/cli && npm publish` (only publish the CLI package)
-7. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
-8. **Verify**: `npm view lean-spec version` to confirm publication
+5. **Validate**: Run `node bin/lean-spec.js validate` and `cd docs-site && npm run build` to ensure everything works
+6. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
+7. **Publish**: `cd packages/cli && npm publish` (only publish the CLI package)
+8. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
+9. **Verify**: 
+   - `npm view lean-spec version` to confirm publication
+   - `npm view lean-spec dependencies` to ensure no `workspace:*` dependencies leaked
+   - Test installation: `npm install -g lean-spec@latest` in a clean environment
+
+**Critical - Workspace Dependencies:**
+- The `@leanspec/core` package MUST NOT be in `packages/cli/package.json` dependencies
+- tsup config has `noExternal: ['@leanspec/core']` which bundles the core package
+- NEVER add `@leanspec/core` back to dependencies - it will cause `workspace:*` errors
+- If you see `workspace:*` in published dependencies, the package is broken and must be republished
 
 **Important**: Do NOT publish `@leanspec/core` or `@leanspec/web` - they are internal packages. The `@leanspec` npm scope doesn't exist, and the core package is bundled into the CLI distribution.
 

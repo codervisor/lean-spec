@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-11-13
+
+### Added
+- **Template Engine for AGENTS.md** (spec 073) - Dynamic template system for maintaining AGENTS.md with mechanical transformations
+- **Intelligent Search Engine** (spec 075) - Relevance-ranked search with TF-IDF scoring and content-based ranking
+- **Programmatic Spec Management** (spec 059, Phase 1-2) - `analyze`, `split`, `compact` commands for automated spec restructuring
+- **Programmatic Spec Relationships** (spec 076) - CLI and MCP tools for managing `depends_on` and `related` fields
+- **Sub-spec Template System** (spec 078) - Documentation for creating and managing multi-file spec structures
+- **Archiving Strategy** (spec 077) - Documentation for proper spec archival workflows
+
+### Changed
+- Search commands now use intelligent ranking algorithm prioritizing title/frontmatter matches
+- MCP search tool upgraded with relevance scoring and better result filtering
+- AGENTS.md validation enforces template system consistency
+
+### Fixed
+- **Critical npm publishing bug**: `workspace:*` dependency in published package causing installation failures
+  - Root cause: pnpm workspace protocol leaked into published tarball
+  - Fix required: Use pnpm's `--no-workspace` flag or proper bundling configuration
+
+### In Progress
+- Spec 059 (Programmatic Management) - Phases 1-2 complete, remaining phases in progress
+- Spec 072 (AI Agent First-Use Workflow) - Planning stage
+- Spec 074 (Content at Creation) - Specification stage
+
 ## [0.2.1] - 2025-11-13
 
 ### Added

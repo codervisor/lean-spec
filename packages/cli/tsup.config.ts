@@ -7,5 +7,8 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   treeshake: true,
-  external: ['@leanspec/core'],
+  // Bundle @leanspec/core into the distribution
+  noExternal: ['@leanspec/core'],
+  // Don't bundle tiktoken - it has native dependencies and dynamic requires
+  external: ['tiktoken'],
 });
