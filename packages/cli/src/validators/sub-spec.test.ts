@@ -9,12 +9,11 @@ import * as os from 'node:os';
 import { SubSpecValidator } from './sub-spec.js';
 import type { SpecInfo } from '../spec-loader.js';
 
-// Test constants - aligned with validator defaults
-const DEFAULT_MAX_LINES = 400;
-const DEFAULT_WARNING_THRESHOLD = 300;
-const UNDER_THRESHOLD_LINES = DEFAULT_WARNING_THRESHOLD - 50; // 250 lines
-const IN_WARNING_RANGE_LINES = DEFAULT_WARNING_THRESHOLD + 50; // 350 lines
-const OVER_LIMIT_LINES = DEFAULT_MAX_LINES + 50; // 450 lines
+// Test constants - aligned with validator token thresholds
+// Using dense content (~15 tokens per line): "This is substantial content..."
+const UNDER_THRESHOLD_LINES = 130; // ~1900 tokens - should pass (< 2K excellent)
+const IN_WARNING_RANGE_LINES = 270; // ~4000 tokens - warning range (3.5K-5K)
+const OVER_LIMIT_LINES = 350; // ~5200 tokens - should error (> 5K)
 
 describe('SubSpecValidator', () => {
   let tmpDir: string;
@@ -108,8 +107,8 @@ created: '2025-11-01'
     });
   });
 
-  describe('Line Count Validation', () => {
-    it('should pass when all sub-specs are under 300 lines', async () => {
+  describe('Token-Based Validation', () => {
+    it('should pass when sub-specs are under token threshold', async () => {
       const specDir = path.join(tmpDir, 'test-spec');
       await fs.mkdir(specDir, { recursive: true });
 
@@ -124,7 +123,7 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with UNDER_THRESHOLD_LINES (250 lines)
+      // Create a sub-spec with UNDER_THRESHOLD_LINES (~130 lines = ~1900 tokens, under 2K threshold)
       const designContent = '# Design\n\n' + 'Line content\n'.repeat(UNDER_THRESHOLD_LINES - 2);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
@@ -133,10 +132,12 @@ created: '2025-11-01'
 
       expect(result.passed).toBe(true);
       expect(result.errors).toHaveLength(0);
-      expect(result.warnings).toHaveLength(0);
+      // Should have no token-related warnings (though may have orphaned file warnings)
+      const tokenWarnings = result.warnings.filter(w => w.message.includes('token'));
+      expect(tokenWarnings).toHaveLength(0);
     });
 
-    it('should warn when sub-spec is between 300-400 lines', async () => {
+    it('should warn when sub-spec has high token count (3.5K-5K tokens)', async () => {
       const specDir = path.join(tmpDir, 'test-spec');
       await fs.mkdir(specDir, { recursive: true });
 
@@ -151,8 +152,9 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with IN_WARNING_RANGE_LINES (350 lines)
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(IN_WARNING_RANGE_LINES - 2);
+      // Create a sub-spec with ~4000 tokens (in warning range 3.5K-5K)
+      // IN_WARNING_RANGE_LINES (270) - 4 header lines = 266 content lines
+      const designContent = '# Design\n\n## Section\n\n' + 'This is substantial content that will generate tokens for testing the validator threshold behavior.\n'.repeat(IN_WARNING_RANGE_LINES - 4);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
@@ -160,10 +162,10 @@ created: '2025-11-01'
 
       expect(result.passed).toBe(true);
       expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings.some(w => w.message.includes('approaching limit'))).toBe(true);
+      expect(result.warnings.some(w => w.message.includes('tokens'))).toBe(true);
     });
 
-    it('should error when sub-spec exceeds 400 lines', async () => {
+    it('should error when sub-spec exceeds token threshold (>5K tokens)', async () => {
       const specDir = path.join(tmpDir, 'test-spec');
       await fs.mkdir(specDir, { recursive: true });
 
@@ -178,8 +180,8 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec with OVER_LIMIT_LINES (450 lines)
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(OVER_LIMIT_LINES - 2);
+      // Create a sub-spec with OVER_LIMIT_LINES (~350 lines with dense content = ~5200 tokens, over 5K threshold)
+      const designContent = '# Design\n\n## Section\n\n' + 'This is substantial content that will generate many tokens for testing the validator threshold behavior and exceed the limit.\n'.repeat(OVER_LIMIT_LINES - 4);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
@@ -187,14 +189,16 @@ created: '2025-11-01'
 
       expect(result.passed).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors[0].message).toContain('exceeds 400 lines');
+      expect(result.errors[0].message).toContain('tokens');
+      expect(result.errors[0].message).toContain('threshold');
     });
 
-    it('should respect custom line limits', async () => {
-      const customMaxLines = 200;
-      const customWarningThreshold = 150;
+    it('should respect custom token thresholds', async () => {
+      // Use custom token thresholds
+      const customGoodThreshold = 2000;
+      const customWarningThreshold = 3000;
       const customValidator = new SubSpecValidator({ 
-        maxLines: customMaxLines, 
+        goodThreshold: customGoodThreshold,
         warningThreshold: customWarningThreshold 
       });
       const specDir = path.join(tmpDir, 'test-spec');
@@ -211,16 +215,16 @@ created: '2025-11-01'
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Create a sub-spec in warning range for custom threshold (180 lines)
-      const customWarningLines = customWarningThreshold + 30;
-      const designContent = '# Design\n\n' + 'Line content\n'.repeat(customWarningLines - 2);
+      // Create content that will trigger warning with custom threshold (~2500 tokens, in 2K-3K range)
+      // Custom thresholds: good=2K, warning=3K (so 2K-3K should warn, >3K should error)
+      const designContent = '# Design\n\n## Section\n\n' + 'This is content for testing custom thresholds in the validator.\n'.repeat(220);
       await fs.writeFile(path.join(specDir, 'DESIGN.md'), designContent);
 
       const spec = createSpecInfo(specDir);
       const result = await customValidator.validate(spec, readmeContent);
 
       expect(result.passed).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('approaching limit'))).toBe(true);
+      expect(result.warnings.some(w => w.message.includes('tokens'))).toBe(true);
     });
   });
 
@@ -450,8 +454,8 @@ Only links [Testing](./TESTING.md)
 `;
       await fs.writeFile(path.join(specDir, 'README.md'), readmeContent);
 
-      // Lowercase filename (warning) + Over limit (error)
-      const designContent = '# Design\n\n' + 'Line\n'.repeat(OVER_LIMIT_LINES);
+      // Lowercase filename (warning) + Over token threshold (error)
+      const designContent = '# Design\n\n## Section\n\n' + 'This is substantial content that will generate many tokens for testing the validator threshold behavior and exceed the limit for error reporting.\n'.repeat(OVER_LIMIT_LINES);
       await fs.writeFile(path.join(specDir, 'design.md'), designContent);
 
       // Not linked (warning)
@@ -461,7 +465,7 @@ Only links [Testing](./TESTING.md)
       const result = await validator.validate(spec, readmeContent);
 
       expect(result.passed).toBe(false); // Has errors
-      expect(result.errors.length).toBeGreaterThan(0); // Line count error
+      expect(result.errors.length).toBeGreaterThan(0); // Token count error
       expect(result.warnings.length).toBeGreaterThan(0); // Naming + orphaned
     });
   });

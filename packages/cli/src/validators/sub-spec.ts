@@ -13,7 +13,7 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { estimateTokenCount } from 'tokenx';
+import { countTokens } from '@leanspec/core';
 import matter from 'gray-matter';
 import type { ValidationRule, ValidationResult, ValidationError, ValidationWarning } from '../utils/validation-framework.js';
 import type { SpecInfo } from '../spec-loader.js';
@@ -137,8 +137,9 @@ export class SubSpecValidator implements ValidationRule {
         }
       }
 
-      // Estimate tokens
-      const tokenCount = estimateTokenCount(subSpec.content);
+      // Count tokens (async, accurate)
+      const tokenResult = await countTokens(subSpec.content);
+      const tokenCount = tokenResult.total;
 
       // PRIMARY CHECK: Direct token thresholds
       if (tokenCount > this.warningThreshold) {
