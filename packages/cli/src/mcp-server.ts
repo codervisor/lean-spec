@@ -16,7 +16,7 @@ import { readSpecContent } from './commands/viewer.js';
 import { parseFrontmatter } from './frontmatter.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from './frontmatter.js';
 import { resolveSpecPath } from './utils/path-helpers.js';
-import { TokenCounter } from '@leanspec/core';
+import { TokenCounter, searchSpecs, type SearchableSpec } from '@leanspec/core';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { readFileSync } from 'fs';
@@ -119,7 +119,26 @@ async function searchSpecsData(query: string, options: {
   priority?: SpecPriority;
   assignee?: string;
   customFields?: Record<string, unknown>;
-}): Promise<Array<{ spec: SpecData; matches: string[] }>> {
+}): Promise<{
+  results: Array<{
+    spec: SpecData;
+    score: number;
+    totalMatches: number;
+    matches: Array<{
+      field: string;
+      text: string;
+      lineNumber?: number;
+      score: number;
+      highlights: Array<[number, number]>;
+    }>;
+  }>;
+  metadata: {
+    totalResults: number;
+    searchTime: number;
+    query: string;
+    specsSearched: number;
+  };
+}> {
   const filter: SpecFilterOptions = {};
   if (options.status) filter.status = options.status;
   if (options.tags) filter.tags = options.tags;
@@ -133,29 +152,51 @@ async function searchSpecsData(query: string, options: {
     filter,
   });
 
-  const results: Array<{ spec: SpecData; matches: string[] }> = [];
-  const queryLower = query.toLowerCase();
+  // Convert to searchable format
+  const searchableSpecs: SearchableSpec[] = specs.map(spec => ({
+    path: spec.path,
+    name: spec.path,
+    status: spec.frontmatter.status,
+    priority: spec.frontmatter.priority,
+    tags: spec.frontmatter.tags,
+    title: spec.frontmatter.title as string | undefined,
+    description: spec.frontmatter.description as string | undefined,
+    content: spec.content,
+  }));
 
-  for (const spec of specs) {
-    if (!spec.content) continue;
+  // Use intelligent search engine
+  const searchResult = searchSpecs(query, searchableSpecs, {
+    maxMatchesPerSpec: 5,
+    contextLength: 80,
+  });
 
-    const matches: string[] = [];
-    const lines = spec.content.split('\n');
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.toLowerCase().includes(queryLower)) {
-        matches.push(line.trim());
-        if (matches.length >= 5) break; // Limit matches per spec
-      }
-    }
-
-    if (matches.length > 0) {
-      results.push({ spec: specToData(spec), matches });
-    }
-  }
-
-  return results;
+  // Convert to MCP format
+  return {
+    results: searchResult.results.map(result => ({
+      spec: {
+        name: result.spec.name,
+        path: result.spec.path,
+        status: result.spec.status as SpecStatus,
+        created: specs.find(s => s.path === result.spec.path)?.frontmatter.created || '',
+        title: result.spec.title,
+        tags: result.spec.tags,
+        priority: result.spec.priority as SpecPriority | undefined,
+        assignee: specs.find(s => s.path === result.spec.path)?.frontmatter.assignee,
+        description: result.spec.description,
+        customFields: specs.find(s => s.path === result.spec.path)?.frontmatter.custom as Record<string, unknown> | undefined,
+      },
+      score: result.score,
+      totalMatches: result.totalMatches,
+      matches: result.matches.map(match => ({
+        field: match.field,
+        text: match.text,
+        lineNumber: match.lineNumber,
+        score: match.score,
+        highlights: match.highlights,
+      })),
+    })),
+    metadata: searchResult.metadata,
+  };
 }
 
 /**
@@ -354,29 +395,45 @@ async function createMcpServer(): Promise<McpServer> {
     'search',
     {
       title: 'Search Specs',
-      description: 'Full-text search across all specification content. Use this when you need to find specs by keyword, topic, or concept. Returns matching specs with relevant excerpts.',
+      description: 'Intelligent relevance-ranked search across all specification content. Uses field-weighted scoring (title > tags > description > content) to return the most relevant specs. Returns matching specs with relevance scores, highlighted excerpts, and metadata.',
       inputSchema: {
-        query: z.string().describe('Search term or phrase to find in spec content. Searches across titles, descriptions, and body text.'),
+        query: z.string().describe('Search term or phrase to find in spec content. Multiple terms are combined with AND logic. Searches across titles, tags, descriptions, and body text with intelligent relevance ranking.'),
         status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Limit search to specs with this status.'),
         tags: z.array(z.string()).optional().describe('Limit search to specs with these tags.'),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Limit search to specs with this priority.'),
       },
       outputSchema: {
-        results: z.array(z.any()),
+        results: z.array(z.object({
+          spec: z.any(),
+          score: z.number(),
+          totalMatches: z.number(),
+          matches: z.array(z.object({
+            field: z.string(),
+            text: z.string(),
+            lineNumber: z.number().optional(),
+            score: z.number(),
+            highlights: z.array(z.tuple([z.number(), z.number()])),
+          })),
+        })),
+        metadata: z.object({
+          totalResults: z.number(),
+          searchTime: z.number(),
+          query: z.string(),
+          specsSearched: z.number(),
+        }),
       },
     },
     async (input) => {
       try {
-        const results = await searchSpecsData(input.query, {
+        const searchResult = await searchSpecsData(input.query, {
           status: input.status as SpecStatus | undefined,
           tags: input.tags,
           priority: input.priority as SpecPriority | undefined,
         });
 
-        const output = { results };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
-          structuredContent: output,
+          content: [{ type: 'text', text: JSON.stringify(searchResult, null, 2) }],
+          structuredContent: searchResult,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error searching specs', error);
