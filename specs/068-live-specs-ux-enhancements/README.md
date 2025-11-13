@@ -8,6 +8,8 @@ tags:
   - v0.3.0-launch
 priority: high
 created_at: '2025-11-12T21:49:12.069Z'
+depends_on:
+  - '035'
 related:
   - 035-live-specs-showcase
 ---
@@ -24,11 +26,14 @@ related:
 
 This spec captures the remaining UX/UI enhancements and missing features for the LeanSpec Web platform that were identified during Phase 1 development (spec 035) but deferred as out-of-scope for the MVP. These enhancements will significantly improve the user experience and complete the professional polish of the application.
 
+**Dependency**: This spec **depends on** spec 035 Phase 1 MVP completion (~80% done). Work cannot start until foundational UI/UX is stable.
+
 **Why now?**
-- Phase 1 MVP is nearly complete with critical fixes applied
+- Phase 1 MVP (spec 035) is nearly complete with critical fixes applied
 - Users need these features for a complete, professional experience
 - Several items are blockers for broader adoption (quick search, proper navigation)
 - Must be completed before official v0.3.0 launch
+- Can run in parallel with spec 035 Phase 2 (GitHub integration)
 
 **What's included?**
 - Stats page completion
@@ -42,6 +47,8 @@ This spec captures the remaining UX/UI enhancements and missing features for the
 - Accessibility improvements
 
 ## Design
+
+See **[DESIGN.md](./DESIGN.md)** for comprehensive UI/UX design system specifications, component patterns, and implementation details.
 
 ### 1. Stats Page Completion
 

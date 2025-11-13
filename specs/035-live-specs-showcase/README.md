@@ -76,219 +76,83 @@ Build a fullstack web application for browsing and showcasing LeanSpec specifica
 - Version history and diffs
 - Team collaboration features
 
-### UI/UX Enhancement Requirements
+### Core Features (MVP)
 
-**Professional Design System:**
-- shadcn/ui component library fully integrated (Button, Card, Badge, Input, Select, Dialog, Tabs, Tooltip, Dropdown, etc.)
-- Tailwind CSS v3 with consistent design tokens (v4 was causing compatibility issues with shadcn/ui)
-- Lucide React icon library for visual clarity
-- Refined spacing scale (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)
-- Professional elevation system (shadow-sm, shadow-md, shadow-lg, shadow-xl)
-- Typography hierarchy (font sizes, weights, line heights)
-- Color refinement with better contrast ratios (WCAG AA compliance)
-- Icons for all status, priority, and content types (visual identification)
+**Essential Functionality:**
+- Browse LeanSpec's own specs (dogfooding)
+- Rich markdown rendering with syntax highlighting
+- Kanban board view by status
+- Stats dashboard with basic metrics
+- Search and filtering
+- Responsive design for mobile/desktop
 
-**Theme Switching:**
-- Dark/light theme toggle with smooth transitions
-- System preference detection
-- Theme persistence in localStorage
-- next-themes integration
-- Refined dark mode colors (less harsh blacks, better contrast)
-- Theme-aware syntax highlighting for code blocks
+**Basic UI Implementation:**
+- shadcn/ui component library (Button, Card, Badge, etc.)
+- Tailwind CSS v3 with design tokens
+- Lucide React icons for status/priority
+- Dark/light theme toggle with next-themes
+- Sticky header with breadcrumb navigation
 
-**Navigation & Layout:**
-- Sticky header with blur backdrop effect
-- Active page indicators in navigation
-- Breadcrumb navigation for spec pages
-- Mobile-responsive hamburger menu
-- Quick search modal (Cmd+K) with fuzzy search
-- Footer with proper links and branding
-
-**Spec Detail Page Enhancements:**
-- **Timeline & Metadata Display:**
-  - Visual timeline showing spec evolution (created → in-progress → complete)
-  - Timestamp display with relative time ("2 days ago")
-  - Status transitions history with icons
-  - Time-to-completion metrics
-  - Assignee display with avatar
-  - Icons for all metadata fields (status, priority, tags, etc.)
-- **Sub-Spec Navigation & Display:**
-  - Automatic detection of sub-spec files (DESIGN.md, IMPLEMENTATION.md, etc.)
-  - Tab-based navigation for main spec + sub-specs with icons
-  - Sidebar navigation with sub-spec links
-  - Sub-spec table of contents
-  - Proper layout for each sub-spec type
-  - Breadcrumb showing current sub-spec location
-  - Visual indicators for sub-spec relationships
-  - Color-coded icons for different sub-spec types
-  - Visual indicators for sub-spec relationships
-  
-- **Reading Experience:**
-  - Sticky table of contents sidebar
-  - Scroll spy with active section highlighting
-  - Smooth scroll to anchors
-  - Read time estimation
-  - Progress indicator (% of page read)
-  - Font size controls
-  - Print-friendly view
-
-**Interactive Components:**
-- Smooth transitions (150-200ms ease-in-out)
-- Hover states with subtle scale transforms
-- Loading skeletons for async data
-- Empty states with helpful messaging
-- Error boundaries with recovery actions
-- Toast notifications for actions
-- Pagination or infinite scroll for long lists
-**Stats Dashboard:**
-- Cards with gradient backgrounds and icons
-- Mini sparkline charts showing trends
-- Trend indicators (↑ ↓ with percentages)
-- Interactive hover tooltips
-- Responsive grid layout
-- Color-coded icons (FileText, CheckCircle, PlayCircle, Clock)tips
-- Responsive grid layout
-
-**Specs Browser:**
-- Toggle between table/grid/kanban views
-- Advanced filtering sidebar (collapsible)
-- Tag-based filtering with counts
-- Status and priority filters
-- Date range picker for timeline filtering
-- Sort options (date, priority, status, name)
-**Kanban Board:**
-- Color-coded column headers by status
-- Card priority indicators (left border colors)
-- Quick actions on card hover (view, edit status)
-- Drag-and-drop support (future)
-- Compact/expanded card view toggle
-- Column collapse/expand functionality
-- Horizontal scroll on mobile
-- Status icons for visual clarity (Clock, PlayCircle, CheckCircle, Archive)toggle
-- Column collapse/expand functionality
-- Horizontal scroll on mobile
-
-**Accessibility:**
-- WCAG 2.1 AA compliance
-- Keyboard navigation support
-- Screen reader optimized
-- Focus indicators
-- Skip links
-- Alt text for all images
-- Proper heading hierarchy
-- Color contrast validation
-
-**Performance:**
-- Code splitting per route
-- Image optimization (Next.js Image)
-- Lazy loading for heavy components
-- Virtual scrolling for long lists
-- Suspense boundaries
-- Streaming server components
-- Optimistic UI updates
+**Note**: Advanced UX enhancements (quick search Cmd+K, loading skeletons, enhanced empty states, improved spec detail layout, etc.) have been moved to **spec 068** to keep this spec focused on core platform functionality.
 
 ### Sub-Specifications
 
-This spec is split into detailed sub-specs for maintainability:
-
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Technology stack, database schema, API design, caching strategy
-- **[UI-UX-DESIGN.md](./UI-UX-DESIGN.md)** - Comprehensive UI/UX design system, theme switching, navigation, accessibility
-- **[GITHUB-INTEGRATION.md](./GITHUB-INTEGRATION.md)** - GitHub sync mechanism, rate limiting, error handling
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Technical architecture, database schema, GitHub integration
 - **[IMPLEMENTATION.md](./IMPLEMENTATION.md)** - Phased implementation plan with timelines
-- **[TASKS.md](./TASKS.md)** - Detailed task-by-task breakdown with code examples (reference document)
 
-**See sub-specs for complete technical details.**
+**Note**: UI/UX design details moved to **spec 068** (live-specs-ux-enhancements).
 
 ## Progress
 
-**Current Status**: Phase 1 ~40% Complete (revised 2025-11-13 after realistic assessment)
+**Current Status**: Phase 1 ~40% Complete
 
-**Reality Check (2025-11-13)**: Previous 70% estimate was overly optimistic. While foundational work is solid, many core pages and features are incomplete or have significant UX issues.
+### Foundation Complete (2025-11-12)
 
-**✅ Major UI/UX Improvements Completed (2025-11-12)**:
+**✅ Core UI Implementation:**
+- Icon system integrated (Lucide React throughout)
+- Visual design system (color-coded status/priority, elevation, transitions)
+- Component library (shadcn/ui components replacing raw HTML)
+- Sub-spec navigation (automatic detection and tabs)
+- Timeline visualization (status progression with icons)
+- Theme switching (dark/light modes working)
 
-### Icon System Integration ✅
-- ✅ Lucide React icons integrated throughout the application
-- ✅ Status icons: Clock (planned), PlayCircle (in-progress), CheckCircle (complete), Archive (archived)
-- ✅ Priority icons: AlertCircle (critical), ArrowUp (high), Minus (medium), ArrowDown (low)
-- ✅ Navigation icons enhanced (Home, LayoutGrid, Github)
-- ✅ Action icons: Search for filters
-
-### Visual Design System ✅
-- ✅ Color-coded Kanban columns with status-specific colors and icons
-- ✅ Priority indicators with colored left borders on Kanban cards
-- ✅ Stats cards enhanced with:
-  - Gradient backgrounds (blue/green/orange based on type)
-  - Icons for each stat (FileText, CheckCircle, PlayCircle, Clock)
-  - Completion rate percentage display
-- ✅ Professional elevation system implemented (hover shadows, transitions)
-- ✅ Refined spacing scale applied consistently
-- ✅ Smooth transitions (150ms ease-in-out) on all interactive elements
-
-### Component Library ✅
-- ✅ Replaced HTML `<select>` with shadcn/ui Select component
-- ✅ Added @radix-ui/react-select dependency
-- ✅ StatusBadge and PriorityBadge components using icons
-- ✅ Consistent component usage across all pages
-
-### Sub-Spec Navigation System ✅
-- ✅ Created sub-spec detection system (detectSubSpecs utility)
-- ✅ Tab-based navigation component (SubSpecTabs)
-- ✅ Automatic detection of sub-spec files (DESIGN.md, IMPLEMENTATION.md, ARCHITECTURE.md, etc.)
-- ✅ Icon-coded tabs with color indicators
-- ✅ Integrated into spec detail page
-
-### Timeline Enhancement ✅
-- ✅ Enhanced timeline with status-specific icons
-- ✅ Larger icon circles (10x10) with proper hover states
-- ✅ Relative time display already present ("2 days ago")
-- ✅ Color-coded timeline events (orange/blue/green/gray)
-- ✅ Current status highlighted with stronger visual emphasis
-
-### Design Polish ✅
-- ✅ Blur backdrop effect on sticky header (already present)
-- ✅ Smooth transitions added globally via CSS
-- ✅ Enhanced hover effects with scale transforms on Kanban cards
-- ✅ Better empty states with icons on Kanban board
-- ✅ Color-coded Kanban column headers with gradient backgrounds
+**Remaining for MVP**: Error handling, testing, documentation, deployment. Advanced UX polish moved to spec 068.
 
 ### Previously Completed
 - ✅ Next.js 16 project initialized with TypeScript, Tailwind CSS
 - ✅ SQLite database with Drizzle ORM fully configured
-- ✅ Database schema created (projects, specs, spec_relationships, sync_logs)
-- ✅ Migrations generated and applied
-- ✅ Core database queries implemented (`queries.ts`)
-- ✅ API routes: `/api/specs/[id]`, `/api/projects`, `/api/stats`, `/api/projects/[id]/specs`
+- ✅ Database schema created and migrations applied
+- ✅ Core database queries implemented
+- ✅ API routes for specs, projects, stats
 - ✅ Home page with stats dashboard and specs table
 - ✅ Spec detail page with rich markdown rendering
-- ✅ Syntax highlighting (highlight.js) + GitHub-flavored markdown (remarkGfm)
+- ✅ Syntax highlighting + GitHub-flavored markdown
 - ✅ Database seeded with 32 LeanSpec specs
-- ✅ Responsive layout with status/priority badges
-- ✅ Theme switching with next-themes (basic implementation)
-- ✅ Basic navigation with sticky header
-- ✅ Kanban board page (basic implementation)
-- ✅ Breadcrumb navigation (basic implementation)
-- ✅ Timeline component (basic implementation)
+- ✅ Responsive layout with badges
+- ✅ Kanban board page
+- ✅ Breadcrumb navigation
 
 ### 🚧 Critical Issues & Missing Features (2025-11-13)
 
+**Note**: Major UX/UI enhancements have been split into **spec 068** (live-specs-ux-enhancements) to keep specs focused. The items below marked with "→ Spec 068" will be addressed there.
+
 **Major UX/UI Problems - Must Fix:**
-- [ ] **Color Scheme Issue** - Planned (orange) and In-Progress (blue) colors are backwards - swap them
-- [ ] **Stats Page Incomplete** - Major page with missing/incomplete sections
-- [ ] **Spec Detail Page - No Sidebar for Spec Navigation** - Missing sidebar to quickly switch between different specs (not TOC)
-- [ ] **Sub-Spec Navigation Poor Design** - Current tab design doesn't make sense, needs complete redesign
-- [ ] **Spec Detail - No Sticky Left Info** - Metadata/info area should be sticky on left side
-- [ ] **Spec Detail - No Sticky Header** - Header should stick on scroll for navigation
-- [ ] **Spec Detail - Poor Frontmatter Display** - Frontmatter metadata display is very bad, needs redesign
-- [ ] **Missing Logo & Favicon** - No logo beside "LeanSpec" in top left header, no favicon for browser tab
-- [ ] **Dark Theme Typography Issues** - Bold text (e.g., "Recent Improvements (2025-11-05):") has wrong color in dark theme
-- [ ] **Dark Theme Strong Tags** - Similar color issues with `<strong>` elements throughout
+- [ ] **Color Scheme Issue** - Planned (orange) and In-Progress (blue) colors are backwards - swap them → **Spec 068**
+- [ ] **Stats Page Incomplete** - Major page with missing/incomplete sections → **Spec 068**
+- [ ] **Spec Detail Page - No Sidebar for Spec Navigation** - Missing sidebar to quickly switch between different specs (not TOC) → **Spec 068**
+- [ ] **Sub-Spec Navigation Poor Design** - Current tab design doesn't make sense, needs complete redesign → **Spec 068**
+- [ ] **Spec Detail - No Sticky Left Info** - Metadata/info area should be sticky on left side → **Spec 068**
+- [ ] **Spec Detail - No Sticky Header** - Header should stick on scroll for navigation → **Spec 068**
+- [ ] **Spec Detail - Poor Frontmatter Display** - Frontmatter metadata display is very bad, needs redesign → **Spec 068**
+- [ ] **Missing Logo & Favicon** - No logo beside "LeanSpec" in top left header, no favicon for browser tab → **Spec 068**
+- [ ] **Dark Theme Typography Issues** - Bold text (e.g., "Recent Improvements (2025-11-05):") has wrong color in dark theme → **Spec 068**
+- [ ] **Dark Theme Strong Tags** - Similar color issues with `<strong>` elements throughout → **Spec 068**
 
 **High Priority - Still Needed:**
-- [ ] **Quick Search Modal (Cmd+K)** - Fuzzy search with keyboard shortcuts
-- [ ] **Loading Skeletons** - Add Suspense boundaries and skeleton loaders for async content
-- [ ] **Enhanced Empty States** - More helpful messaging with actions (currently basic)
-- [ ] **Toast Notifications** - System for user feedback (create/update/delete actions)
+- [ ] **Quick Search Modal (Cmd+K)** - Fuzzy search with keyboard shortcuts → **Spec 068**
+- [ ] **Loading Skeletons** - Add Suspense boundaries and skeleton loaders for async content → **Spec 068**
+- [ ] **Enhanced Empty States** - More helpful messaging with actions (currently basic) → **Spec 068**
+- [ ] **Toast Notifications** - System for user feedback (create/update/delete actions) → **Spec 068**
 
 **Core Functionality:**
 - [ ] Advanced search and filtering functionality (beyond basic filters)
@@ -404,194 +268,35 @@ This spec is split into detailed sub-specs for maintainability:
 2. **No Error Handling** - Missing try/catch blocks, error boundaries, error pages
 3. **No Tests** - Zero test coverage currently
 4. **README Outdated** - Still contains Next.js boilerplate
+5. **UI/UX Polish Needed** - Many enhancements deferred to spec 068
 
-### UI/UX Implementation Progress (Updated 2025-11-12)
+### Design Decisions
 
-**✅ MAJOR IMPROVEMENTS COMPLETED**: Addressed critical UI/UX gaps identified in earlier audit.
+**Why Next.js?** Full-stack framework, excellent DX, Vercel integration, server components
 
-**What Was Improved:**
+**Why PostgreSQL + SQLite?** Structured relational data, PostgreSQL for production, SQLite for dev parity
 
-1. **Icon System Integration** ✅
-   - Integrated Lucide React icons throughout (Status, Priority, Navigation, Actions)
-   - Status icons: Clock, PlayCircle, CheckCircle2, Archive
-   - Priority icons: AlertCircle, ArrowUp, Minus, ArrowDown
-   - Visual identification greatly improved
+**Why Database + GitHub Dual Storage?** GitHub is source of truth (reliable, versioned), Database is performance layer (fast queries, search). Best of both: Reliability + Speed + Decoupling from API limits.
 
-2. **Visual Design System** ✅
-   - Color-coded Kanban columns with status-specific backgrounds and borders
-   - Priority indicators with colored left borders on Kanban cards (red/orange/blue/gray)
-   - Stats cards enhanced with gradient backgrounds and icons
-   - Professional elevation system with proper shadows and hover effects
-   - Smooth transitions (150ms ease-in-out) applied globally
-
-3. **Component Library Completion** ✅
-   - Replaced HTML `<select>` with shadcn/ui Select component
-   - Added @radix-ui/react-select dependency
-   - StatusBadge and PriorityBadge components now use icons
-   - Consistent component usage across all pages
-
-4. **Sub-Spec Navigation System** ✅
-   - Created detectSubSpecs utility for automatic sub-spec file detection
-   - Built SubSpecTabs component with icon-coded tabs
-   - Integrated into spec detail page
-   - Supports DESIGN.md, IMPLEMENTATION.md, ARCHITECTURE.md, TESTING.md, etc.
-
-5. **Timeline Enhancement** ✅
-   - Enhanced with status-specific icons in circular containers
-   - Color-coded events (orange/blue/green/gray)
-   - Relative time display already present ("2 days ago")
-   - Current status highlighted with stronger visual emphasis
-
-6. **Design Polish** ✅
-   - Blur backdrop on sticky header (already present, confirmed working)
-   - Smooth transitions added globally via CSS
-   - Enhanced hover effects with scale transforms
-   - Better empty states with icons on Kanban board
-   - Improved spacing and typography throughout
-
-**Current State**: Professional UI/UX that matches spec requirements. Phase 1 MVP now ~70% complete (up from ~40-50%).
-
-**Remaining Work**: Quick search (Cmd+K), loading skeletons, toast notifications, testing, deployment.
-
-### Next Immediate Steps (Updated 2025-11-13)
-
-**Priority 0: Fix Critical UX Issues (3-5 days) - MUST DO FIRST**
-1. **Swap Planned/In-Progress Colors** - Orange should be in-progress, blue should be planned
-2. **Fix Dark Theme Typography** - Bold/strong text colors in dark mode
-3. **Complete Stats Page** - Fill in missing sections and features
-4. **Redesign Spec Detail Page**:
-   - Add sidebar for quick navigation between different specs (not a TOC)
-   - Add sticky left sidebar with metadata + info
-   - Add sticky header for navigation
-   - Completely redesign frontmatter display (current is very bad)
-5. **Redesign Sub-Spec Navigation** - Current design doesn't make sense, needs better UX
-
-**Priority 1: Remaining Features (2-3 days)**
-6. **Quick Search Modal (Cmd+K)** - Implement keyboard-triggered search with fuzzy matching
-7. **Loading States** - Add Suspense boundaries and skeleton components
-8. **Enhanced Empty States** - Better messaging with icons and helpful actions
-9. **Toast Notifications** - User feedback system for actions
-
-**Priority 2: Testing & Quality (1-2 days)**
-10. **Error Handling** - Proper error boundaries, 404/500 pages with good design
-11. **Accessibility Audit** - WCAG AA compliance check, keyboard navigation
-12. **Mobile Testing** - Test on real devices, polish responsive behavior
-13. **Unit Tests** - Basic coverage for queries and critical paths
-
-**Priority 3: Documentation & Deployment (1 day)**
-14. **README Update** - Replace boilerplate with actual project docs
-15. **Deploy to Vercel** - Production deployment with environment variables
-
-**Estimated time to complete Phase 1**: 2-3 weeks (revised from 4-6 days based on realistic assessment)
-
-**Definition of Done for Phase 1:**
-- ✅ Icon system throughout (ACHIEVED 2025-11-12)
-- ✅ Timeline with icons and relative time (ACHIEVED 2025-11-12)
-- ✅ Blur backdrop and smooth transitions (ACHIEVED 2025-11-12)
-- ❌ Professional UI/UX matching spec requirements - NEEDS MAJOR FIXES (color swap, spec detail redesign, stats completion)
-- ❌ Color-coded status/priority - WRONG COLORS (planned/in-progress swapped)
-- ❌ Sub-spec navigation working - POOR DESIGN, needs complete rework
-- ❌ Spec detail page design - MISSING sticky sidebar, sticky header, proper frontmatter display
-- ❌ Dark theme typography - Bold/strong text has wrong colors
-- ⏳ Quick search (Cmd+K) - TODO
-- ⏳ Loading states everywhere - TODO
-- ⏳ No major accessibility issues - TESTING NEEDED
-- ⏳ Basic test coverage (>50%) - TODO
-- ⏳ Deployed and viewable - TODO
-- ⏳ README documentation complete - TODO
-
-### Technical Decisions
-
-**Why Next.js?**
-- Unified full-stack framework (frontend + API)
-- Excellent DX, performance, Vercel integration
-- Server components and streaming
-- Built-in optimizations
-
-**Why PostgreSQL + SQLite?**
-- Structured relational data (projects, specs, relationships)
-- Complex queries with joins and full-text search
-- PostgreSQL for production, SQLite for dev parity
-
-**Why Database + GitHub Dual Storage?**
-- **GitHub**: Source of truth (reliable, versioned, authoritative)
-- **Database**: Performance layer (fast queries, search, caching)
-- Best of both: Reliability + Speed + Decoupling from API limits
-
-**Why Tailwind CSS v3 instead of v4?**
-- **Decision made**: 2025-11-13 - Downgrade from v4 to v3
-- **Reason**: Tailwind v4 is still in beta/alpha and causing compatibility issues with shadcn/ui
-- **Impact**: shadcn/ui components are designed for Tailwind v3, using v4 breaks styling
-- **Trade-off**: Lose latest features (native CSS variables, improved performance) but gain stability
-- **Migration path**: Can upgrade to v4 once it's stable and shadcn/ui officially supports it
-- **Current state**: Using Tailwind CSS v3.4.x with PostCSS configuration
-
-**Caching Strategy:**
-- Database caches parsed specs (primary cache)
-- React Query caches API responses client-side
-- Redis optional for GitHub API rate limit optimization
-- Stale-while-revalidate pattern
-
-### Security Considerations
-
-- [ ] Validate and sanitize GitHub URLs (prevent SSRF)
-- [ ] Sanitize markdown content (prevent XSS)
-- [ ] Rate limit API endpoints (prevent abuse)
-- [ ] CORS configuration
-- [ ] Environment variables for secrets
-- [ ] Database connection pooling limits
+**Why Tailwind CSS v3 instead of v4?** v4 still in beta, causing compatibility issues with shadcn/ui. Can upgrade once stable.
 
 ### Open Questions
 
 - **Private repos?** → Phase 4 with OAuth
 - **Sync frequency?** → Daily for featured, weekly for others
 - **Edit specs via web?** → No, GitHub is source of truth (view-only)
-- **Full-text search?** → PostgreSQL FTS for MVP, Algolia if needed
 - **Show archived specs?** → Yes, but collapsed/hidden by default
-- **Monetization?** → Free for public repos, premium for private/teams (future)
 
 ### Related Specs
 
+- **spec 068**: Live Specs UX Enhancements (depends on this spec, contains Phase 2 UX work)
 - **spec 010**: Documentation website (integration point)
 - **spec 059**: Programmatic spec management (API design overlap)
 - **spec 065**: v0.3.0 planning (this is key deliverable)
 
-### Content Strategy
-
-**Launch Narrative:**
-1. Hero: "See how LeanSpec builds LeanSpec"
-2. Showcase: Live view of our specs
-3. Community: "Add your project" CTA
-4. Examples: Featured projects using LeanSpec
-
-**SEO Keywords:**
-- Specification management
-- Agile documentation
-- Lightweight specs
-- AI-powered development
-- Living documentation
-
-### Future Enhancements
-
-- Upvote/favorite projects
-- Comments and discussions
-- Spec templates marketplace
-- Issue tracker integrations
-- AI-generated summaries
-- Semantic search
-- Quality scoring
-
-### Inspiration
-
-- **Linear**: Public roadmap, clean design
-- **Stripe Docs**: API reference, search
-- **Tailwind**: Visual showcase
-- **Vercel**: Deployment UX
-- **GitHub**: Repo browser, file viewer
-
 ---
 
 **For detailed information, see:**
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - Technical architecture and database design
-- [GITHUB-INTEGRATION.md](./GITHUB-INTEGRATION.md) - GitHub sync strategy and implementation
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Technical architecture, database, GitHub integration
 - [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Phased implementation plan with timelines
+- **Spec 068** - UI/UX enhancements and polish
