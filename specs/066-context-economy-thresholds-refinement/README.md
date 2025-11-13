@@ -12,6 +12,7 @@ related:
   - 049-leanspec-first-principles
   - 018-spec-validation
   - 059-programmatic-spec-management
+  - 069-token-counting-utils
 created_at: '2025-11-11T06:58:44.846Z'
 updated_at: '2025-11-11T15:00:26.886Z'
 completed_at: '2025-11-11T15:00:26.886Z'

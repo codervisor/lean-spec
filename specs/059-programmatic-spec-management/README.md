@@ -12,11 +12,13 @@ priority: critical
 created_at: '2025-11-07T11:28:43.206Z'
 depends_on:
   - 067-monorepo-core-extraction
+  - 069-token-counting-utils
 related:
   - 048-spec-complexity-analysis
   - 049-leanspec-first-principles
   - 018-spec-validation
   - 012-sub-spec-files
+  - 066-context-economy-thresholds-refinement
 ---
 
 # Programmatic Spec Management & Context Engineering
