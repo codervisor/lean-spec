@@ -6,14 +6,19 @@ tags:
   - maintainability
   - dx
   - refactor
+  - ai-first
 priority: medium
+related:
+  - '025'
+  - '072'
+  - '074'
 created_at: '2025-11-13T08:35:40.229Z'
-updated_at: '2025-11-13T08:37:17.706Z'
+updated_at: '2025-11-13T09:02:39.867Z'
 ---
 
 # template-engine-agents-md
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: templates, maintainability, dx, refactor
+> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: templates, maintainability, dx, refactor, ai-first
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -39,6 +44,13 @@ updated_at: '2025-11-13T08:37:17.706Z'
 **Goal**: Use template engine to generate AGENTS.md from shared components, eliminate duplication, prevent drift.
 
 **Related Issue**: `.lean-spec/templates/` system also needs redesign - currently only generates main spec file, should support optional sub-specs (DESIGN.md, TESTING.md, etc.).
+
+**Related Specs**:
+- `012-sub-spec-files` (archived) - Original sub-spec design (implemented)
+- `013-custom-spec-templates` (archived) - Template system v1
+- `025-template-config-updates` - Config format updates
+- `072-ai-agent-first-use-workflow` - Current AGENTS.md improvement driving this
+- `074-content-at-creation` - Spec creation with content flags (similar AI-first approach)
 
 ## Design
 
@@ -149,20 +161,22 @@ npm run build:agents-templates
 - `{name}.md.opt` - Generate only if requested (flag or prompt)
 - `{name}.md.req` - Always generated (for templates requiring sub-specs)
 
-**Usage**:
+**Usage** (AI-first, flag-based by default):
 ```bash
 # Standard: generates README.md only
 lean-spec create my-feature
 
-# With sub-specs: prompt which to include
+# With explicit sub-spec flags (AI-friendly)
+lean-spec create my-feature --design --testing
+
+# Human interactive mode (opt-in)
 lean-spec create my-feature --with-subs
 ? Include optional sub-specs? (space to select)
   [ ] DESIGN.md
   [x] TESTING.md
   [ ] IMPLEMENTATION.md
 
-# Or explicit flags
-lean-spec create my-feature --design --testing
+# Rationale: AI agents primarily use CLI, prefer declarative flags over interactive prompts
 ```
 
 **Config Enhancement**:
@@ -172,12 +186,20 @@ lean-spec create my-feature --design --testing
     "default": {
       "main": "README.md",
       "optional": ["DESIGN.md", "TESTING.md", "IMPLEMENTATION.md"],
-      "required": []
+      "required": [],
+      "flags": {
+        "--design": "DESIGN.md",
+        "--testing": "TESTING.md",
+        "--implementation": "IMPLEMENTATION.md"
+      }
     },
     "api": {
       "main": "README.md",
       "optional": ["SCHEMAS.md"],
-      "required": ["API.md"]
+      "required": ["API.md"],
+      "flags": {
+        "--schemas": "SCHEMAS.md"
+      }
     }
   }
 }
@@ -191,11 +213,12 @@ lean-spec create my-feature --design --testing
 - Runs during: `pnpm build` or `pnpm build:templates`
 - Generated files committed to repo (easier distribution)
 
-**Phase 2**: Sub-Spec Template System
+**Phase 2**: Sub-Spec Template System (AI-First Design)
 - Extend existing template resolution in `src/commands/creator.ts`
-- Add `--with-subs` interactive prompt
+- Add explicit sub-spec flags (`--design`, `--testing`, etc.) - primary interface
+- Add `--with-subs` interactive prompt - opt-in for human users
 - Support `.opt` and `.req` file conventions
-- Update config schema for template metadata
+- Update config schema for template metadata and flag mappings
 
 ### Alternative Approaches Considered
 
@@ -258,14 +281,15 @@ lean-spec create my-feature --design --testing
 
 - [ ] **Design & Planning**
   - [ ] Define `.opt` / `.req` file convention
-  - [ ] Design config schema for template metadata
-  - [ ] Plan interactive prompts for sub-spec selection
+  - [ ] Design config schema for template metadata and flag mappings
+  - [ ] Design flag-based interface (primary) + interactive mode (opt-in)
   - [ ] Document sub-spec template authoring guide
 
 - [ ] **Implementation**
   - [ ] Extend `creator.ts` to handle sub-spec templates
-  - [ ] Add `--with-subs` flag and interactive mode
-  - [ ] Implement file filtering logic (opt/req)
+  - [ ] Add explicit sub-spec flags (`--design`, `--testing`, etc.)
+  - [ ] Add `--with-subs` interactive mode (opt-in for humans)
+  - [ ] Implement file filtering logic (opt/req/flags)
   - [ ] Update template resolution and variable substitution
 
 - [ ] **Template Updates**
@@ -321,11 +345,11 @@ pnpm build:templates
 lean-spec create api-endpoint --template api
 # Should generate README.md + API.md (required)
 
-# 2. Test optional sub-spec with flag
+# 2. Test explicit flags (AI-first interface)
 lean-spec create feature --design --testing
 # Should generate README.md + DESIGN.md + TESTING.md
 
-# 3. Test interactive mode
+# 3. Test interactive mode (human opt-in)
 lean-spec create feature --with-subs
 # Interactive prompt, select TESTING.md only
 # Should generate README.md + TESTING.md
@@ -333,6 +357,10 @@ lean-spec create feature --with-subs
 # 4. Test default (no sub-specs)
 lean-spec create simple-fix
 # Should generate only README.md
+
+# 5. AI agent usage test
+# AI should prefer: lean-spec create feature --design --implementation
+# Not: lean-spec create feature --with-subs (requires interaction)
 ```
 
 ## Notes
@@ -362,12 +390,28 @@ lean-spec create simple-fix
 - ❌ More complex error handling
 - ❌ Harder to debug
 
+### AI-First Design Rationale
+
+**Why flag-based over interactive by default?**
+
+In AI-human co-op spec writing mode:
+- **AI agents primarily use the CLI**, not humans
+- **Interactive prompts block automation** - AI can't respond to prompts effectively
+- **Flags are declarative** - AI can determine needed sub-specs and invoke with explicit flags
+- **Humans can opt-in** - `--with-subs` flag preserves interactive experience when desired
+
+**Example AI workflow**:
+```
+AI analyzes task → determines needs DESIGN + TESTING sub-specs
+→ runs: lean-spec create feature --design --testing
+→ no interaction needed, continues working
+```
+
+This aligns with `072-ai-agent-first-use-workflow` principles: optimize for AI, accommodate humans.
+
 ### Related Specs
 
-- `specs/012-sub-spec-files` - Original sub-spec design (implemented)
-- `specs/013-custom-spec-templates` - Template system v1
-- `specs/025-template-config-updates` - Config format updates
-- `specs/072-ai-agent-first-use-workflow` - Current AGENTS.md improvement driving this
+See Overview section for full list of related specs.
 
 ### Open Questions
 
