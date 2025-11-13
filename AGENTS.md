@@ -242,41 +242,34 @@ Consider **splitting** when:
 - Updates frequently cause inconsistencies (too complex to maintain)
 - Implementation has >6 phases (Intent: breaks down into sub-problems)
 
-### Complexity Validation (Spec 066)
+### Complexity Validation (Spec 066) - Token-Based
 
-LeanSpec uses **multi-dimensional complexity scoring** that considers:
+LeanSpec uses **token-based complexity scoring** as the primary metric:
 
-1. **Token Count** (primary factor):
-   - <2,000 tokens: Excellent
-   - 2,000-3,500 tokens: Good
-   - 3,500-5,000 tokens: Warning (consider simplification)
-   - >5,000 tokens: Should split
+**Why Tokens Over Lines?**
+- Token count is the **industry standard** for LLM context measurement
+- Research shows token count predicts AI performance better than line count
+- Quality degradation happens even within context limits (39% drop in multi-turn contexts)
+- Code is denser (~3 chars/token) than prose (~4 chars/token)
 
-2. **Structure Quality** (modifiers):
-   - **Sub-specs present**: -30 bonus (progressive disclosure)
-   - **Good sectioning** (15-35 sections): -15 bonus (cognitive chunking)
-   - **Poor sectioning** (<8 sections): +20 penalty (monolithic)
+**Token Thresholds (Primary Metric):**
+1. **<2,000 tokens**: ✅ Excellent - Baseline AI performance
+2. **2,000-3,500 tokens**: ✅ Good - Slight degradation, acceptable
+3. **3,500-5,000 tokens**: ⚠️ Warning - Consider simplification
+4. **>5,000 tokens**: 🔴 Should split - Significant performance impact
 
-3. **Line Count** (backstop):
-   - >500 lines: Warning even if well-structured
-   - >400 lines: Strong candidate for splitting
+**Structure Modifiers:**
+- **Sub-specs present**: -30 bonus (progressive disclosure)
+- **Good sectioning** (15-35 sections): -15 bonus (cognitive chunking)
+- **Poor sectioning** (<8 sections): +20 penalty (monolithic)
 
-**Why Token Count?** Research shows token count predicts AI performance better than line count. Quality degradation happens even within context limits. Code is denser (~3 chars/token) than prose (~4 chars/token).
+**Line Count (Backstop Only):**
+- >500 lines: Additional warning even if token count is acceptable
+- Line count is now secondary to token-based measurement
 
-**Run validation:** `lean-spec validate` includes complexity scoring automatically.
+**Run validation:** `lean-spec validate` includes token-based complexity scoring automatically.
 
 **Note:** Token thresholds are research-based hypotheses (see spec 066) and may be refined based on empirical data.
-
-### Line Count Thresholds (Context Economy Enforcement)
-
-- **<300 lines**: ✅ Ideal, keep as single file
-- **300-400 lines**: ⚠️ Warning zone, consider simplifying or splitting
-- **>400 lines**: 🔴 Strong candidate for splitting (Context Economy violated)
-- **>600 lines**: 🔴 Almost certainly should be split
-
-**Rationale**: These thresholds come from Context Economy—the fundamental constraint that specs must fit in working memory (human + AI). Violating this makes specs hard to read, prone to errors, and difficult to maintain.
-
-**However:** A well-structured 400-line spec with sub-specs may pass complexity validation (low token count + good structure), while a poorly-structured 300-line spec may trigger warnings (high density + monolithic structure).
 
 ### Warning Signs
 
