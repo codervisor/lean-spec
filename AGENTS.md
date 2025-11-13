@@ -231,6 +231,21 @@ Required By:
 **Note on Local Development:**
 When working on the LeanSpec codebase itself, always use the local build (`node bin/lean-spec.js <command>`) instead of `npx lean-spec`, which runs the published npm package. Build changes with `pnpm build` before testing.
 
+## Publishing Releases
+
+**Only publish the `lean-spec` CLI package to npm:**
+
+1. **Version bump**: Update version in all package.json files (root, cli, core, web) for consistency
+2. **Update CHANGELOG.md**: Add release notes with date and version
+3. **Build**: Run `pnpm build` to build all packages
+4. **Test**: Run `pnpm test:run` to ensure tests pass (web DB tests may fail - that's OK)
+5. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
+6. **Publish**: `cd packages/cli && npm publish` (only publish the CLI package)
+7. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
+8. **Verify**: `npm view lean-spec version` to confirm publication
+
+**Important**: Do NOT publish `@leanspec/core` or `@leanspec/web` - they are internal packages. The `@leanspec` npm scope doesn't exist, and the core package is bundled into the CLI distribution.
+
 ## Spec Complexity Guidelines
 
 ### Keep Specs Lean (Context Economy in Practice)
