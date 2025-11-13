@@ -50,3 +50,16 @@ export {
   type TokenCount,
   type TokenCounterOptions,
 } from './utils/token-counter.js';
+
+// Search
+export {
+  searchSpecs,
+  FIELD_WEIGHTS,
+  type SearchOptions,
+  type SearchMatch,
+  type SearchResult,
+  type SearchResultSpec,
+  type SearchResponse,
+  type SearchMetadata,
+  type SearchableSpec,
+} from './search/index.js';
