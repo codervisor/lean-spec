@@ -43,7 +43,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className="antialiased bg-background overflow-x-hidden">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -51,9 +51,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Navigation specs={specsForSearch} />
-          <div className="flex">
+          <div className="flex w-[100vw]">
             <MainSidebar />
-            <main className="flex-1 min-h-[calc(100vh-3.5rem)]">
+            <main className="flex-1 min-h-[calc(100vh-3.5rem)] w-[calc(100vw-var(--main-sidebar-width,240px))]">
               {children}
             </main>
           </div>

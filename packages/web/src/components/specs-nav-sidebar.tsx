@@ -2,25 +2,25 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  FileText, 
-  Search, 
-  ChevronDown, 
+import {
+  FileText,
+  Search,
+  ChevronLeft,
   ChevronRight,
-  Palette,
-  Code,
-  TestTube,
-  CheckSquare,
-  Wrench,
-  Map,
-  GitBranch,
-  BookOpen
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { StatusBadge } from '@/components/status-badge';
+import { Button } from '@/components/ui/button';
+import { StatusBadge, getStatusLabel } from '@/components/status-badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { extractH1Title } from '@/lib/utils';
+import { PriorityBadge, getPriorityLabel } from './priority-badge';
+import { formatRelativeTime } from '@/lib/date-utils';
 
 interface SubSpec {
   name: string;
@@ -39,6 +39,7 @@ interface Spec {
   priority: string | null;
   subSpecs?: SubSpec[];
   contentMd?: string;
+  updatedAt?: Date | string | number | null;
 }
 
 interface SpecsNavSidebarProps {
@@ -47,39 +48,54 @@ interface SpecsNavSidebarProps {
   currentSubSpec?: string;
 }
 
-const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  'FileText': FileText,
-  'Palette': Palette,
-  'Code': Code,
-  'TestTube': TestTube,
-  'CheckSquare': CheckSquare,
-  'Wrench': Wrench,
-  'Map': Map,
-  'GitBranch': GitBranch,
-  'BookOpen': BookOpen,
-};
-
 export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsNavSidebarProps) {
-  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [expandedSpecs, setExpandedSpecs] = React.useState<Set<string>>(() => {
-    // Auto-expand current spec
-    return new Set([currentSpecId]);
+  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('specs-nav-sidebar-collapsed');
+      return saved === 'true';
+    }
+    return false;
   });
+  const [mounted, setMounted] = React.useState(false);
   const activeItemRef = React.useRef<HTMLAnchorElement>(null);
 
-  // Auto-expand current spec when it changes
   React.useEffect(() => {
-    setExpandedSpecs(prev => new Set(prev).add(currentSpecId));
-  }, [currentSpecId]);
+    setMounted(true);
+  }, []);
 
-  // Scroll active item into view
+  // Update CSS variable for page width calculations and persist to localStorage
+  React.useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--specs-nav-sidebar-width',
+      isCollapsed ? '0px' : '280px'
+    );
+    localStorage.setItem('specs-nav-sidebar-collapsed', String(isCollapsed));
+  }, [isCollapsed]);
+
+  // Scroll active item into view only if it's not visible
   React.useEffect(() => {
     if (activeItemRef.current) {
-      activeItemRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-      });
+      const element = activeItemRef.current;
+      const parent = element.closest('.overflow-y-auto');
+
+      if (parent) {
+        const elementRect = element.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+
+        // Check if element is already visible
+        const isVisible =
+          elementRect.top >= parentRect.top &&
+          elementRect.bottom <= parentRect.bottom;
+
+        // Only scroll if not visible
+        if (!isVisible) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }
     }
   }, [currentSpecId, currentSubSpec]);
 
@@ -99,128 +115,138 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
     return [...filteredSpecs].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
   }, [filteredSpecs]);
 
-  const toggleExpanded = (specId: string) => {
-    setExpandedSpecs(prev => {
-      const next = new Set(prev);
-      if (next.has(specId)) {
-        next.delete(specId);
-      } else {
-        next.add(specId);
-      }
-      return next;
-    });
-  };
-
   return (
-    <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-[280px] shrink-0 border-r border-border bg-background flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <h2 className="font-semibold text-sm mb-3">Specifications</h2>
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search specs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 border-border"
-          />
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
-        <div className="p-2">
-          {sortedSpecs.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              No specs found
+    <TooltipProvider delayDuration={700}>
+      <div className="relative flex-shrink-0">
+        <aside className={cn(
+          "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background flex flex-col overflow-hidden transition-all duration-300",
+          mounted && isCollapsed ? "w-0 border-r-0" : "w-[280px]"
+        )}>
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-sm">Specifications</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCollapsed(true)}
+                className="h-6 w-6 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
             </div>
-          ) : (
-            sortedSpecs.map((spec) => {
-              const isCurrentSpec = spec.id === currentSpecId;
-              const isExpanded = expandedSpecs.has(spec.id);
-              const hasSubSpecs = spec.subSpecs && spec.subSpecs.length > 0;
-              
-              // Extract H1 title, fallback to title or name
-              const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
-              const displayTitle = h1Title || spec.title || spec.specName;
-              
-              return (
-                <div key={spec.id} className="mb-1">
-                  {/* Main spec item */}
-                  <div className="flex items-center gap-1">
-                    {hasSubSpecs && (
-                      <button
-                        onClick={() => toggleExpanded(spec.id)}
-                        className="p-1 hover:bg-accent rounded"
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-3 w-3" />
-                        ) : (
-                          <ChevronRight className="h-3 w-3" />
-                        )}
-                      </button>
-                    )}
-                    <Link
-                      ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
-                      href={`/specs/${spec.specNumber || spec.id}`}
-                      className={cn(
-                        'flex-1 flex items-start gap-2 p-2 rounded-md text-sm transition-colors',
-                        isCurrentSpec && !currentSubSpec
-                          ? 'bg-accent text-accent-foreground font-medium'
-                          : 'hover:bg-accent/50',
-                        !hasSubSpecs && 'ml-5'
-                      )}
-                      title={spec.specName} /* Show name as tooltip */
-                    >
-                      <FileText className="h-4 w-4 shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {spec.specNumber && (
-                            <span className="text-xs font-mono text-muted-foreground">
-                              #{spec.specNumber.toString().padStart(3, '0')}
-                            </span>
-                          )}
-                        </div>
-                        <div className="truncate text-xs leading-relaxed">{displayTitle}</div>
-                        {spec.status && (
-                          <div className="mt-1">
-                            <StatusBadge status={spec.status} className="text-xs scale-90" />
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  </div>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search specs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 border-border"
+              />
+            </div>
+          </div>
 
-                  {/* Sub-specs (indented) */}
-                  {hasSubSpecs && isExpanded && (
-                    <div className="ml-5 mt-1 space-y-1">
-                      {spec.subSpecs!.map((subSpec) => {
-                        const Icon = SUB_SPEC_ICONS[subSpec.iconName] || FileText;
-                        const isCurrentSubSpec = isCurrentSpec && currentSubSpec === subSpec.file;
-                        
-                        return (
-                          <Link
-                            ref={isCurrentSubSpec ? activeItemRef : null}
-                            key={subSpec.file}
-                            href={`/specs/${spec.specNumber || spec.id}?subspec=${subSpec.file}`}
-                            className={cn(
-                              'flex items-center gap-2 p-2 rounded-md text-sm transition-colors',
-                              isCurrentSubSpec
-                                ? 'bg-accent text-accent-foreground font-medium'
-                                : 'hover:bg-accent/50'
-                            )}
-                          >
-                            <Icon className={cn('h-4 w-4 shrink-0', subSpec.color)} />
-                            <span className="truncate text-xs">{subSpec.name}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="p-1">
+              {sortedSpecs.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  No specs found
                 </div>
-              );
-            })
-          )}
-        </div>
+              ) : (
+                sortedSpecs.map((spec) => {
+                  const isCurrentSpec = spec.id === currentSpecId;
+
+                  // Extract H1 title, fallback to title or name
+                  const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
+                  const displayTitle = h1Title || spec.title || spec.specName;
+
+                  return (
+                    <div key={spec.id} className="mb-0.5">
+                      {/* Main spec item */}
+                      <div className="flex items-center gap-0.5">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link
+                              ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
+                              href={`/specs/${spec.specNumber || spec.id}`}
+                              className={cn(
+                                'w-full flex items-start gap-2 p-1.5 rounded-md text-sm transition-colors',
+                                isCurrentSpec && !currentSubSpec
+                                  ? 'bg-accent text-accent-foreground font-medium'
+                                  : 'hover:bg-accent/50',
+                              )}
+                            >
+                              <FileText className="h-4 w-4 shrink-0 mt-0.5" />
+                              <div className="flex-1 min-w-0 overflow-hidden">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  {spec.specNumber && (
+                                    <span className="text-xs font-mono text-muted-foreground shrink-0">
+                                      #{spec.specNumber.toString().padStart(3, '0')}
+                                    </span>
+                                  )}
+                                  <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {spec.status && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div>
+                                          <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        {getStatusLabel(spec.status)}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {spec.priority && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div>
+                                          <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        {getPriorityLabel(spec.priority)}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {spec.updatedAt && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {formatRelativeTime(spec.updatedAt)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[300px]">
+                            <div className="space-y-1">
+                              <div className="font-semibold">{displayTitle}</div>
+                              <div className="text-xs text-muted-foreground">{spec.specName}</div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Floating toggle button when collapsed */}
+        {mounted && isCollapsed && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(false)}
+            className="h-6 w-6 p-0 fixed z-50 top-20 -translate-y-1 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
       </div>
-    </aside>
+    </TooltipProvider>
   );
 }

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, FileText, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import * as React from 'react';
 
 interface SidebarLinkProps {
   href: string;
@@ -44,18 +44,38 @@ function SidebarLink({ href, icon: Icon, children, description, currentPath, isC
 
 export function MainSidebar() {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('main-sidebar-collapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Update CSS variable for other components to use and persist to localStorage
+  React.useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--main-sidebar-width',
+      isCollapsed ? '60px' : '240px'
+    );
+    localStorage.setItem('main-sidebar-collapsed', String(isCollapsed));
+  }, [isCollapsed]);
 
   return (
     <aside 
       className={cn(
-        "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background transition-all duration-300",
-        isCollapsed ? "w-[60px]" : "w-[240px]"
+        "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background transition-all duration-300 flex-shrink-0",
+        mounted && isCollapsed ? "w-[60px]" : "w-[240px]"
       )}
     >
       <div className="flex flex-col h-full">
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        {mounted && <nav className="flex-1 px-2 py-4 space-y-1">
           <SidebarLink 
             href="/" 
             icon={Home} 
@@ -83,7 +103,7 @@ export function MainSidebar() {
           >
             Stats
           </SidebarLink>
-        </nav>
+        </nav>}
 
         {/* Collapse Toggle */}
         <div className="p-2 border-t border-border">
@@ -91,9 +111,9 @@ export function MainSidebar() {
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className={cn("w-full", isCollapsed && "px-2")}
+            className={cn("w-full", mounted && isCollapsed && "px-2")}
           >
-            {isCollapsed ? (
+            {mounted && isCollapsed ? (
               <ChevronRight className="h-4 w-4" />
             ) : (
               <>

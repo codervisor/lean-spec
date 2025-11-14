@@ -3,7 +3,7 @@
  */
 
 import { Clock, PlayCircle, CheckCircle2, Archive, Circle } from 'lucide-react';
-import { formatDate, formatRelativeTime } from '@/lib/date-utils';
+import { formatDate, formatRelativeTime, formatDuration } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 
 interface TimelineEvent {
@@ -101,16 +101,23 @@ export function SpecTimeline({
   if (events.length === 0) return null;
 
   return (
-    <div className={cn('space-y-4 border-l-2 border-muted pl-6 py-2', className)}>
+    <div className={cn('flex items-start gap-2', className)}>
       {events.map((event, i) => {
         const Icon = event.icon;
+        const isLast = i === events.length - 1;
+        const nextEvent = !isLast ? events[i + 1] : null;
+        const duration = event.date && nextEvent?.date && !nextEvent.isFuture
+          ? formatDuration(event.date, nextEvent.date)
+          : '';
+        
         return (
-          <div key={i} className="relative">
-            {/* Icon dot */}
-            <div className="absolute -left-[29px] top-0">
+          <div key={i} className="flex items-center gap-2 flex-1">
+            {/* Event content */}
+            <div className="flex flex-col items-center gap-1 min-w-0">
+              {/* Icon */}
               <div
                 className={cn(
-                  "w-4 h-4 rounded-full border-2 bg-background flex items-center justify-center",
+                  "w-8 h-8 rounded-full border-2 bg-background flex items-center justify-center shrink-0",
                   event.isActive && !event.isFuture
                     ? "border-primary"
                     : "border-muted-foreground/40"
@@ -119,33 +126,49 @@ export function SpecTimeline({
                 {Icon && (
                   <Icon 
                     className={cn(
-                      "h-2.5 w-2.5",
+                      "h-4 w-4",
                       event.isActive && !event.isFuture ? "text-primary" : "text-muted-foreground/60"
                     )} 
                   />
                 )}
               </div>
-            </div>
-            
-            {/* Content */}
-            <div>
+              
+              {/* Label */}
               <div
                 className={cn(
-                  "text-sm font-medium",
+                  "text-xs font-medium text-center whitespace-nowrap",
                   event.isActive && !event.isFuture ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 {event.label}
               </div>
               
+              {/* Date */}
               {event.date && !event.isFuture && (
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {formatDate(event.date)}
-                  {' · '}
+                <div className="text-[10px] text-muted-foreground text-center">
                   {formatRelativeTime(event.date)}
                 </div>
               )}
             </div>
+            
+            {/* Connecting line with duration */}
+            {!isLast && (
+              <div className="flex flex-col items-center flex-1 min-w-4 gap-0.5">
+                <div 
+                  className={cn(
+                    "h-0.5 w-full",
+                    event.isActive && !event.isFuture 
+                      ? "bg-primary" 
+                      : "bg-muted-foreground/40"
+                  )}
+                />
+                {duration && (
+                  <div className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+                    {duration}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       })}

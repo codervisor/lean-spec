@@ -5,13 +5,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSpecById, getSpecs } from '@/lib/db/queries';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
 import { extractH1Title } from '@/lib/utils';
+import { MarkdownLink } from '@/components/markdown-link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -92,7 +92,7 @@ export default async function SpecDetailPage({
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)]">
+    <div className="flex min-h-[calc(100vh-3.5rem)] w-[calc(100vw-var(--main-sidebar-width,240px))]">
       {/* Specs Navigation Sidebar */}
       <SpecsNavSidebar 
         specs={allSpecs} 
@@ -103,7 +103,7 @@ export default async function SpecDetailPage({
       {/* Main Content */}
       <div className="flex-1 min-w-0">
         {/* Compact Sticky Header */}
-        <header className="sticky top-14 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/95">
+        <header className="sticky top-14 z-20 border-b bg-card">
           <div className="px-6 py-4">
             {/* Line 1: Spec number + H1 Title */}
             <h1 className="text-2xl font-bold tracking-tight mb-3">
@@ -154,7 +154,7 @@ export default async function SpecDetailPage({
           {/* Horizontal Tabs for Sub-specs (only if sub-specs exist) */}
           {spec.subSpecs && spec.subSpecs.length > 0 && (
             <div className="border-t bg-muted/30">
-              <div className="px-6 overflow-x-auto scrollbar-thin">
+              <div className="px-6 overflow-x-auto">
                 <div className="flex gap-1 py-2 min-w-max">
                   {/* Overview tab (README.md) */}
                   <Link
@@ -198,27 +198,28 @@ export default async function SpecDetailPage({
         <main className="px-6 py-8">
           <div className="space-y-6">
             {/* Markdown content with embedded timeline */}
-            <Card className="p-8">
-              {/* Compact inline timeline at the top */}
-              <div className="mb-6 pb-6 border-b">
-                <h2 className="text-sm font-semibold text-muted-foreground mb-3">Status Timeline</h2>
-                <SpecTimeline
-                  createdAt={spec.createdAt}
-                  updatedAt={spec.updatedAt}
-                  completedAt={spec.completedAt}
-                  status={spec.status || 'planned'}
-                />
-              </div>
+            {/* Compact inline timeline at the top */}
+            <div className="mb-6 pb-6 border-b">
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Status Timeline</h2>
+              <SpecTimeline
+                createdAt={spec.createdAt}
+                updatedAt={spec.updatedAt}
+                completedAt={spec.completedAt}
+                status={spec.status || 'planned'}
+              />
+            </div>
 
-              <article className="prose prose-slate dark:prose-invert max-w-none">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
-                  {displayContent}
-                </ReactMarkdown>
-              </article>
-            </Card>
+            <article className="prose prose-slate dark:prose-invert max-w-none">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={{
+                  a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
+                }}
+              >
+                {displayContent}
+              </ReactMarkdown>
+            </article>
           </div>
         </main>
       </div>

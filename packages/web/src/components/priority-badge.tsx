@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface PriorityBadgeProps {
   priority: string;
   className?: string;
+  iconOnly?: boolean;
 }
 
 const priorityConfig = {
@@ -34,14 +35,19 @@ const priorityConfig = {
   }
 };
 
-export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
+export function PriorityBadge({ priority, className, iconOnly = false }: PriorityBadgeProps) {
   const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
   const Icon = config.icon;
 
   return (
-    <Badge className={cn('flex items-center gap-1.5 w-fit', config.className, className)}>
+    <Badge className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', config.className, className)}>
       <Icon className="h-3.5 w-3.5" />
-      {config.label}
+      {!iconOnly && config.label}
     </Badge>
   );
+}
+
+export function getPriorityLabel(priority: string): string {
+  const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
+  return config.label;
 }
