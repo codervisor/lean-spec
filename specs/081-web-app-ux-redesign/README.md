@@ -44,12 +44,14 @@ Comprehensive UX/UI redesign for the LeanSpec Web application (`@leanspec/web`) 
 
 **What's the solution?**
 Complete redesign with:
-- **Left sidebar navigation** for all pages (specs list tree with sub-specs)
-- **Compact top navbar** with logo, breadcrumbs, search, and theme toggle
+- **Three-section navigation**: Home (dashboard) / Specs (unified list+board) / Stats
+- **GitHub link** moved to top navbar as icon (declutters sidebar)
+- **Compact top navbar** with logo, breadcrumbs, search, theme toggle, and GitHub link
+- **Main sidebar** for primary navigation (3 items: Home, Specs, Stats)
+- **Specs nav sidebar** on detail pages only (specs tree with sub-specs)
 - **Full-width content** without artificial constraints
 - **Integrated metadata** in spec header (no separate sidebar)
 - **Vertical timeline** design with better visual hierarchy
-- **Unified List/Board experience** with consistent navigation
 
 ## Design
 
@@ -93,68 +95,70 @@ Complete redesign with:
 
 **New Layout Architecture:**
 
-**Global Pages (Home, Board, Stats):**
+**Global Pages (Home, Specs, Stats):**
 ```
-┌─────────────────────────────────────────────────────┐
-│ Top Navbar (sticky, h-14)                          │
-│ [Logo] [Breadcrumb...] [Search] [Theme] [GitHub]   │
-├──────────┬──────────────────────────────────────────┤
-│          │                                          │
-│ Main     │ Main Content Area                        │
-│ Sidebar  │ (full width, no max constraints)         │
-│ (sticky) │                                          │
-│          │                                          │
-│ • Home   │                                          │
-│ • Board  │                                          │
-│ • Stats  │                                          │
-│ • GitHub │                                          │
-│          │                                          │
-│          │                                          │
-│          │                                          │
-│          │                                          │
-└──────────┴──────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ Top Navbar (sticky, h-14)                                  │
+│ [Logo] [Breadcrumb...] [Search] [Theme] [GitHub Icon]      │
+├──────────┬──────────────────────────────────────────────────┤
+│          │                                                  │
+│ Main     │ Main Content Area                                │
+│ Sidebar  │ (full width, no max constraints)                 │
+│ (sticky) │                                                  │
+│          │                                                  │
+│ • Home   │ Home: Dashboard with project overview,           │
+│ • Specs  │       recent activity, key metrics               │
+│ • Stats  │                                                  │
+│          │ Specs: Unified list/board view with switcher     │
+│          │                                                  │
+│          │ Stats: Project analytics and insights            │
+│          │                                                  │
+│          │                                                  │
+└──────────┴──────────────────────────────────────────────────┘
 ```
 
 **Spec Detail Page (Two Sidebars):**
 ```
-┌──────────────────────────────────────────────────────────┐
-│ Top Navbar (sticky, h-14)                               │
-│ [Logo] [Breadcrumb...] [Search] [Theme] [GitHub]        │
-├──────────┬──────────┬────────────────────────────────────┤
-│          │          │                                    │
-│ Main     │ Specs    │ Main Content Area                  │
-│ Sidebar  │ Nav      │ (full width, no max constraints)   │
-│ (sticky) │ Sidebar  │                                    │
-│          │ (sticky) │                                    │
-│ • Home   │ ▼ 080-x  │                                    │
-│ • Board  │   • Over │                                    │
-│ • Stats  │   • IMPL │                                    │
-│ • GitHub │ ▼ 079-y  │                                    │
-│          │   • Over │                                    │
-│          │ ...      │                                    │
-│          │          │                                    │
-└──────────┴──────────┴────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ Top Navbar (sticky, h-14)                                   │
+│ [Logo] [Breadcrumb...] [Search] [Theme] [GitHub Icon]       │
+├──────────┬──────────┬────────────────────────────────────────┤
+│          │          │                                        │
+│ Main     │ Specs    │ Main Content Area                      │
+│ Sidebar  │ Nav      │ (full width, no max constraints)       │
+│ (sticky) │ Sidebar  │                                        │
+│          │ (sticky) │                                        │
+│ • Home   │ ▼ 080-x  │                                        │
+│ • Specs  │   • Over │                                        │
+│ • Stats  │   • IMPL │                                        │
+│          │ ▼ 079-y  │                                        │
+│          │   • Over │                                        │
+│          │ ...      │                                        │
+│          │          │                                        │
+└──────────┴──────────┴────────────────────────────────────────┘
 ```
 
 **Implementation Details:**
 
 **Top Navbar Changes:**
-- Remove horizontal nav items (Home, Board, Stats, GitHub)
+- Remove horizontal nav items (moved to sidebar)
+- Add GitHub icon link at right edge (between theme toggle and nothing)
 - Move breadcrumb from spec detail page to navbar (always visible)
 - Keep search and theme toggle at right edge
 - Logo on left, breadcrumb next to it
+- Layout: `[Logo] [Breadcrumb] ... [Search] [Theme] [GitHub Icon]`
 - Height: 56px (h-14)
 
 **Main Sidebar (New - Always Visible):**
 - Width: 240px, collapsible to 60px
 - Sticky positioning (top: 56px, height: calc(100vh - 56px))
-- Contains ONLY:
-  1. **Home** (link to /)
-  2. **Board** (link to /board)
-  3. **Stats** (link to /stats)
-  4. **GitHub** (external link)
+- Contains ONLY 3 primary sections:
+  1. **Home** (/) - Dashboard with overview, recent activity, key metrics
+  2. **Specs** (/specs) - Unified list/board view with layout switcher
+  3. **Stats** (/stats) - Project analytics and insights
 - Current page highlighted
-- Simple, clean navigation
+- Simple, clean, focused navigation
+- GitHub moved to top navbar (no longer in sidebar)
 
 **Specs Nav Sidebar (New - Spec Detail Page Only):**
 - Width: 280px, collapsible
@@ -173,14 +177,48 @@ Complete redesign with:
 export function MainSidebar({ currentPath }: Props) {
   return (
     <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-[240px] border-r">
-      {/* Main Navigation Only */}
+      {/* Main Navigation - 3 Primary Sections */}
       <nav className="p-4 space-y-1">
-        <SidebarLink href="/" icon={Home}>Home</SidebarLink>
-        <SidebarLink href="/board" icon={LayoutGrid}>Board</SidebarLink>
-        <SidebarLink href="/stats" icon={BarChart3}>Stats</SidebarLink>
-        <SidebarLink href="https://..." external icon={Github}>GitHub</SidebarLink>
+        <SidebarLink href="/" icon={Home}>
+          Home
+          <span className="text-xs text-muted-foreground">Dashboard</span>
+        </SidebarLink>
+        <SidebarLink href="/specs" icon={FileText}>
+          Specs
+          <span className="text-xs text-muted-foreground">All Specifications</span>
+        </SidebarLink>
+        <SidebarLink href="/stats" icon={BarChart3}>
+          Stats
+          <span className="text-xs text-muted-foreground">Analytics</span>
+        </SidebarLink>
       </nav>
     </aside>
+  );
+}
+
+// Updated: src/components/navbar.tsx (add GitHub icon)
+export function Navbar({ breadcrumb }: Props) {
+  return (
+    <header className="sticky top-0 z-50 h-14 border-b bg-background">
+      <div className="flex items-center justify-between h-full px-4">
+        {/* Left: Logo + Breadcrumb */}
+        <div className="flex items-center gap-4">
+          <Logo />
+          <Breadcrumb items={breadcrumb} />
+        </div>
+        
+        {/* Right: Search + Theme + GitHub */}
+        <div className="flex items-center gap-2">
+          <SearchButton />
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" asChild>
+            <a href="https://github.com/codervisor/lean-spec" target="_blank">
+              <Github className="h-5 w-5" />
+            </a>
+          </Button>
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -202,7 +240,77 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 }
 ```
 
-### 3. Spec Detail Page Redesign
+### 3. Home Page Dashboard Redesign
+
+**Current State**: Home page (`/`) = Spec List with filters and sorting
+
+**New Purpose**: Comprehensive operational dashboard for daily work
+
+**Dashboard Layout:**
+
+```
+┌────────────────────────────────────────────────────────┐
+│ Home Dashboard                                         │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│ ┌─────────────────┐ ┌─────────────────┐ ┌──────────┐ │
+│ │ In Progress (5) │ │ Recently Added │ │ Stats    │ │
+│ │                 │ │                 │ │          │ │
+│ │ • 081 Web UX    │ │ • 081 Web UX    │ │ 82 Total │ │
+│ │ • 080 MCP Mod   │ │ • 080 MCP Mod   │ │ 5 Active │ │
+│ │ • ...           │ │ • ...           │ │ 68 Done  │ │
+│ └─────────────────┘ └─────────────────┘ └──────────┘ │
+│                                                        │
+│ ┌──────────────────────────────────────────────────┐  │
+│ │ Activity Timeline                                │  │
+│ │                                                  │  │
+│ │ • 081 marked in-progress (2 hours ago)           │  │
+│ │ • 080 created (yesterday)                        │  │
+│ │ • 079 completed (2 days ago)                     │  │
+│ └──────────────────────────────────────────────────┘  │
+│                                                        │
+│ ┌──────────────────────────────────────────────────┐  │
+│ │ Quick Actions                                    │  │
+│ │ [+ Create Spec] [View All Specs] [Board View]    │  │
+│ └──────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────┘
+```
+
+**Dashboard Components:**
+
+1. **Status Overview Cards** (top row, 3-4 cards)
+   - In Progress count + list
+   - Planned count + list
+   - Recently Added (last 5)
+   - Quick stats (total, active, completed)
+
+2. **Activity Timeline** (middle)
+   - Recent status changes
+   - Spec creations
+   - Completions
+   - Time-based (last 7 days)
+
+3. **Quick Actions** (bottom)
+   - Create new spec button
+   - View all specs (→ /specs)
+   - Board view (→ /specs?view=board)
+
+**Purpose**: Give users immediate context on project health and recent activity without needing to navigate to other pages.
+
+### 4. Specs Page (Unified List/Board)
+
+**Current State**: 
+- `/` = Spec List (cards with filters)
+- `/board` = Board view (kanban columns)
+
+**New Structure**:
+- Route: `/specs` (primary specs page)
+- Layout switcher: List view (default) or Board view
+- URL param: `?view=list` or `?view=board`
+
+**This is the full spec collection page** - replaces both old Home and Board pages.
+
+### 5. Spec Detail Page Redesign
 
 **Current Issues:**
 - Metadata sidebar duplicates info from header
@@ -214,16 +322,16 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 **New Design (Two Sidebars):**
 
 ```
-┌──────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │ Top Navbar with Breadcrumb                               │
-├──────────┬──────────┬────────────────────────────────────┤
+├──────────┬──────────┬────────────────────────────────────────┤
 │ Main     │ Specs    │ Spec Header (sticky, compact)      │
 │ Sidebar  │ Nav      │ ┌────────────────────────────────┐ │
 │          │ Sidebar  │ │ #080 Title                     │ │
 │ • Home   │          │ │ [Status] [Priority] [Tags...]  │ │
-│ • Board  │ ▼ 080-x  │ │ Created: X | Updated: Y        │ │
+│ • Specs  │ ▼ 080-x  │ │ Created: X | Updated: Y        │ │
 │ • Stats  │   • Over │ └────────────────────────────────┘ │
-│ • GitHub │   • IMPL │                                    │
+│          │   • IMPL │                                    │
 │          │   • TEST │ Content (full-width, no max)       │
 │          │ ▼ 079-y  │ ┌────────────────────────────────┐ │
 │          │   • Over │ │                                │ │
@@ -237,7 +345,7 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 │          │          │ │  ○ Complete                     │ │
 │          │          │ │                                │ │
 │          │          │ └────────────────────────────────┘ │
-└──────────┴──────────┴────────────────────────────────────┘
+└──────────┴──────────┴────────────────────────────────────────┘
 ```
 
 **Key Changes:**
@@ -309,7 +417,7 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 - Future events: outline icon, muted text
 - Compact spacing, embedded in content flow
 
-### 5. Spec List (Home Page) Improvements
+### 6. Specs Page - List View Improvements
 
 **Current Issues:**
 - No sorting controls (only filters)
@@ -335,15 +443,13 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 - Table columns: ID, Title, Status, Priority, Tags, Updated
 - Clickable rows navigate to spec detail
 
-### 6. Board and List Integration
+### 7. Board and List Layout Switcher
 
-**Current Issue**: Board and List pages feel like separate experiences
-
-**Solution**: They are fundamentally the same (spec collection), just different layouts
+**Integration**: List and Board are now unified on `/specs` page
 
 **Layout Switcher:**
 ```tsx
-// Add to both /board and / (home) pages
+// Add to /specs page
 <div className="flex items-center gap-2 mb-4">
   <span className="text-sm text-muted-foreground">View:</span>
   <ToggleGroup type="single" value={layout} onValueChange={setLayout}>
@@ -360,7 +466,7 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 ```
 
 **Implementation:**
-- Single route: `/` (home)
+- Single route: `/specs`
 - URL param: `?view=list` (default) or `?view=board`
 - Switcher persists choice in localStorage
 - Board view = kanban columns by status
@@ -368,12 +474,14 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 - Same spec card component, different container layouts
 
 **Navigation:**
-- Remove separate `/board` route (or redirect to `/?view=board`)
-- Breadcrumb shows: Home (Board View) when in board mode
+- `/` = Home dashboard (new)
+- `/specs` = Specs with list/board switcher
+- `/specs/[id]` = Spec detail page
+- Breadcrumb: Home → Specs (List View) or Home → Specs (Board View)
 - Consistent behavior: click spec → detail page
 - Back button/sidebar returns to same view mode
 
-### 7. Display `title` vs `name`
+### 8. Display `title` vs `name`
 
 **Current Implementation**: 
 - `title` field in frontmatter (optional, can be null)
@@ -400,7 +508,7 @@ export function SpecsNavSidebar({ specs, currentPath, currentSpec }: Props) {
 - H1 is the "true" document title
 - Frontmatter `title` can be stale/inconsistent
 
-### 8. Sub-Spec Icons
+### 9. Sub-Spec Icons
 
 **Generic Icons** (default for unknown types):
 - 📄 Generic document icon (lucide-react `FileText`)
@@ -439,7 +547,7 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 - [ ] Test logo rendering in light/dark modes
 
 **Day 3-5: Sidebar Implementation**
-- [ ] Create `MainSidebar` component (Home/Board/Stats/GitHub only)
+- [ ] Create `MainSidebar` component (3 items: Home/Specs/Stats)
 - [ ] Create `SpecsNavSidebar` component (specs tree with sub-specs)
 - [ ] Build collapsible specs tree with expand/collapse
 - [ ] Add search/filter within specs nav sidebar
@@ -449,13 +557,21 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 **Day 6-7: Top Navbar Redesign**
 - [ ] Remove horizontal nav items from navbar
 - [ ] Move breadcrumb to navbar (next to logo)
-- [ ] Reposition search and theme toggle to right edge
-- [ ] Add GitHub link to sidebar instead of navbar
+- [ ] Add GitHub icon link at right edge of navbar
+- [ ] Reposition: Logo → Breadcrumb ... Search → Theme → GitHub
 - [ ] Test responsive behavior (mobile collapse)
 
-### Phase 2: Spec Detail Redesign (Week 2)
+### Phase 2: Home Dashboard & Spec Detail (Week 2)
 
-**Day 8-9: Compact Header**
+**Day 8-9: Home Dashboard Implementation**
+- [ ] Design dashboard layout (status cards + activity timeline + quick actions)
+- [ ] Implement status overview cards (In Progress, Planned, Recently Added, Stats)
+- [ ] Build activity timeline component (recent status changes, creations, completions)
+- [ ] Add quick actions section (Create Spec, View All Specs, Board View)
+- [ ] Test dashboard with real data
+- [ ] Ensure dashboard loads quickly (<1s)
+
+**Day 10-11: Compact Spec Header**
 - [ ] Redesign spec header with integrated metadata
 - [ ] Remove "Back to Specs" button
 - [ ] Add small metadata row (created, updated, name)
@@ -482,21 +598,23 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 - [ ] Add proper icons and visual states
 - [ ] Test with different status transitions
 
-### Phase 3: List/Board Improvements (Week 3)
+### Phase 3: Specs Page Unification (Week 3)
 
-**Day 15-16: Spec List Enhancements**
+**Day 15-16: Specs Page Route Changes**
+- [ ] Move spec list from `/` to `/specs`
+- [ ] Implement routing: `/` = dashboard, `/specs` = specs page
+- [ ] Update all internal links to point to `/specs`
 - [ ] Add sorting controls (ID desc, ID asc, updated, title)
 - [ ] Set default sort to ID descending
 - [ ] Implement table view option (toggle with card view)
-- [ ] Ensure sorting persists in URL params
 
 **Day 17-18: Board/List Layout Switcher**
-- [ ] Add layout switcher component (List/Board toggle)
+- [ ] Add layout switcher component (List/Board toggle) to `/specs`
 - [ ] Implement URL param handling (?view=list|board)
 - [ ] Add localStorage persistence for layout preference
 - [ ] Share spec card component between layouts
-- [ ] Update breadcrumbs to show current view mode
-- [ ] Consider consolidating routes (/ with view param vs /board)
+- [ ] Update breadcrumbs: Home → Specs (List/Board View)
+- [ ] Remove old `/board` route (redirect to `/specs?view=board`)
 - [ ] Test navigation flow consistency
 
 **Day 19-21: Polish & Testing**
@@ -533,12 +651,13 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 - [ ] All icon sizes render correctly
 
 **Layout:**
-- [ ] Main sidebar appears on all pages
+- [ ] Main sidebar appears on all pages with 3 items (Home, Specs, Stats)
 - [ ] Specs nav sidebar appears only on spec detail pages
 - [ ] Both sidebars are sticky and don't scroll with content
 - [ ] Both sidebars collapsible function works
+- [ ] Top navbar has GitHub icon at right edge
 - [ ] Top navbar breadcrumb updates correctly on navigation
-- [ ] Search and theme toggle positioned at right edge
+- [ ] Search and theme toggle positioned correctly
 - [ ] Two-sidebar layout doesn't feel cramped on spec detail pages
 
 **Spec Detail:**
@@ -551,20 +670,31 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 - [ ] Sub-spec navigation works (no 404 errors)
 - [ ] Overview and README.md merged (no duplication)
 
-**Spec List:**
+**Home Dashboard:**
+- [ ] Dashboard loads quickly (<1s)
+- [ ] Status overview cards display correct counts
+- [ ] In Progress and Planned lists show relevant specs
+- [ ] Recently Added shows last 5 specs
+- [ ] Activity timeline shows recent changes
+- [ ] Quick actions navigate correctly
+- [ ] Dashboard responsive on all screen sizes
+
+**Specs Page:**
+- [ ] Route `/specs` works correctly
 - [ ] Specs sorted by ID descending by default
 - [ ] Sort controls change order correctly
 - [ ] Table view displays properly
 - [ ] Filters work in conjunction with sorting
 
 **Board/List Switcher:**
-- [ ] Layout switcher appears on home page
+- [ ] Layout switcher appears on `/specs` page
 - [ ] Switching between List and Board views works
 - [ ] Layout preference persists via localStorage
 - [ ] URL param reflects current view (?view=list|board)
 - [ ] Card click navigates to spec detail from both views
-- [ ] Breadcrumb shows correct view context
-- [ ] Navigation back returns to same view mode
+- [ ] Breadcrumb shows: Home → Specs (List View) or (Board View)
+- [ ] Navigation back to `/specs` returns to same view mode
+- [ ] Old `/board` route redirects to `/specs?view=board`
 
 ### Visual Testing
 
@@ -600,17 +730,26 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 
 ### Design Decisions
 
+**Why three-section navigation (Home/Specs/Stats)?**
+- **Clear purpose**: Each section has a distinct role
+  - Home = Daily operational dashboard
+  - Specs = Full spec collection (list/board)
+  - Stats = Project analytics
+- **Avoids redundancy**: Old design had Home (list) and Board (also list), confusing
+- **GitHub in navbar**: External link, doesn't need sidebar prominence
+
+**Why move GitHub to navbar?**
+- **External link**: Doesn't belong in primary navigation
+- **Less prominent**: Not a primary workflow destination
+- **Space efficiency**: Navbar has room, sidebar is cleaner with 3 items
+- **Standard pattern**: Many apps put external links in top-right (GitHub, Twitter, etc.)
+
 **Why two sidebars on spec detail pages?**
-- **Separation of concerns**: Main nav (Home/Board/Stats) vs Specs navigation
+- **Separation of concerns**: Main nav (Home/Specs/Stats) vs Specs navigation
 - **Context preservation**: Main sidebar always visible for quick navigation
 - **Spec focus**: Specs nav sidebar only when needed (detail page)
 - **Scalability**: Specs tree sidebar scales better as spec count grows (80+ specs)
 - **Standard pattern**: Matches tools like VS Code (activity bar + file explorer)
-
-**Why main sidebar only has 4 items?**
-- **Simplicity**: Core navigation always accessible
-- **Clean design**: Not cluttered with specs list on non-detail pages
-- **Performance**: Specs list only loads when needed
 
 **Why remove metadata sidebar on spec detail?**
 - **Signal-to-Noise**: Metadata in sidebar duplicates info from header (violates principle)
@@ -653,9 +792,11 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 
 - [ ] Should sidebars be resizable (drag to adjust width)?
 - [ ] Do we need keyboard shortcuts for navigation (j/k for next/prev spec)?
-- [ ] Should we add "recently viewed" section in specs nav sidebar?
+- [ ] Should we add "recently viewed" section in specs nav sidebar or Home dashboard?
 - [ ] Do we need a "favorites" system for frequently accessed specs?
 - [ ] **Title field**: Should we use H1 heading (always present) or frontmatter `title` (can be null)? Recommend H1 as canonical source.
+- [ ] **Home dashboard**: What other widgets would be useful? (Blocked specs, overdue specs, contributor activity, etc.)
+- [ ] **Home dashboard**: Should it be customizable (user can add/remove/rearrange widgets)?
 
 ### Related Work
 
