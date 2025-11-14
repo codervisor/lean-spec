@@ -170,7 +170,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                               href={`/specs/${spec.specNumber || spec.id}`}
                               className={cn(
                                 'w-full flex items-start gap-2 p-1.5 rounded-md text-sm transition-colors',
-                                isCurrentSpec && !currentSubSpec
+                                isCurrentSpec
                                   ? 'bg-accent text-accent-foreground font-medium'
                                   : 'hover:bg-accent/50',
                               )}
