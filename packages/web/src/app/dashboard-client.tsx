@@ -17,6 +17,7 @@ import {
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { Badge } from '@/components/ui/badge';
+import { extractH1Title } from '@/lib/utils';
 
 interface Spec {
   id: string;
@@ -28,6 +29,7 @@ interface Spec {
   tags: string[] | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+  contentMd?: string;
 }
 
 interface Stats {
@@ -57,10 +59,15 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 function SpecListItem({ spec }: { spec: Spec }) {
+  // Extract H1 title from content if available, fallback to title or name
+  const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
+  const displayTitle = h1Title || spec.title || spec.specName;
+  
   return (
     <Link 
       href={`/specs/${spec.specNumber}`}
       className="block p-3 rounded-lg hover:bg-accent transition-colors"
+      title={spec.specName} /* Show name as tooltip */
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -71,9 +78,15 @@ function SpecListItem({ spec }: { spec: Spec }) {
               </span>
             )}
             <h4 className="text-sm font-medium truncate">
-              {spec.title || spec.specName}
+              {displayTitle}
             </h4>
           </div>
+          {/* Show spec name as secondary if it differs from title */}
+          {displayTitle !== spec.specName && (
+            <div className="text-xs text-muted-foreground mb-1">
+              {spec.specName}
+            </div>
+          )}
           {spec.tags && spec.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {spec.tags.slice(0, 3).map(tag => (
@@ -94,6 +107,9 @@ function SpecListItem({ spec }: { spec: Spec }) {
 }
 
 function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time: Date | null }) {
+  const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
+  const displayTitle = h1Title || spec.title || spec.specName;
+  
   return (
     <div className="flex items-start gap-3 py-2">
       <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
@@ -102,8 +118,9 @@ function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time
           <Link 
             href={`/specs/${spec.specNumber}`}
             className="font-medium hover:underline"
+            title={spec.specName}
           >
-            #{spec.specNumber?.toString().padStart(3, '0')} {spec.title || spec.specName}
+            #{spec.specNumber?.toString().padStart(3, '0')} {displayTitle}
           </Link>
           {' '}
           <span className="text-muted-foreground">{action}</span>

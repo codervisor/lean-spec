@@ -49,7 +49,7 @@ export function MainSidebar() {
   return (
     <aside 
       className={cn(
-        "sticky top-14 h-[calc(100vh-3.5rem)] border-r bg-background transition-all duration-300",
+        "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background transition-all duration-300",
         isCollapsed ? "w-[60px]" : "w-[240px]"
       )}
     >
@@ -86,7 +86,7 @@ export function MainSidebar() {
         </nav>
 
         {/* Collapse Toggle */}
-        <div className="p-2 border-t">
+        <div className="p-2 border-t border-border">
           <Button
             variant="ghost"
             size="sm"

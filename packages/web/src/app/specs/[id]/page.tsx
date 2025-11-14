@@ -11,12 +11,39 @@ import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
+import { extractH1Title } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import { 
+  FileText, 
+  Palette, 
+  Code, 
+  TestTube, 
+  CheckSquare, 
+  Wrench, 
+  Map, 
+  GitBranch, 
+  Home,
+  TrendingUp
+} from 'lucide-react';
 
 // Force dynamic rendering - this page needs runtime data
 export const dynamic = 'force-dynamic';
+
+// Icon mapping for sub-specs
+const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  'FileText': FileText,
+  'Palette': Palette,
+  'Code': Code,
+  'TestTube': TestTube,
+  'CheckSquare': CheckSquare,
+  'Wrench': Wrench,
+  'Map': Map,
+  'GitBranch': GitBranch,
+  'Home': Home,
+  'TrendingUp': TrendingUp,
+};
 
 export default async function SpecDetailPage({ 
   params,
@@ -26,7 +53,7 @@ export default async function SpecDetailPage({
   searchParams: Promise<{ subspec?: string }>;
 }) {
   const { id } = await params;
-  const { subspec } = await searchParams;
+  const { subspec: currentSubSpec } = await searchParams;
   
   const [spec, allSpecs] = await Promise.all([
     getSpecById(id),
@@ -39,17 +66,18 @@ export default async function SpecDetailPage({
 
   // Parse tags if stored as JSON string
   const tags = spec.tags ? (typeof spec.tags === 'string' ? JSON.parse(spec.tags) : spec.tags) : [];
-  const specWithTags = { ...spec, tags };
 
+  // Extract H1 title from markdown content
+  const h1Title = extractH1Title(spec.contentMd);
+  const displayTitle = h1Title || spec.title || spec.specName;
+  
   // Get content to display (main or sub-spec)
   let displayContent = spec.contentMd;
-  let displayTitle = spec.title || spec.specName;
   
-  if (subspec && spec.subSpecs) {
-    const subSpecData = spec.subSpecs.find(s => s.file === subspec);
+  if (currentSubSpec && spec.subSpecs) {
+    const subSpecData = spec.subSpecs.find(s => s.file === currentSubSpec);
     if (subSpecData) {
       displayContent = subSpecData.content;
-      displayTitle = `${spec.title || spec.specName} - ${subSpecData.name}`;
     }
   }
 
@@ -69,7 +97,7 @@ export default async function SpecDetailPage({
       <SpecsNavSidebar 
         specs={allSpecs} 
         currentSpecId={spec.id}
-        currentSubSpec={subspec}
+        currentSubSpec={currentSubSpec}
       />
 
       {/* Main Content */}
@@ -77,12 +105,12 @@ export default async function SpecDetailPage({
         {/* Compact Sticky Header */}
         <header className="sticky top-14 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/95">
           <div className="px-6 py-4">
-            {/* Line 1: Spec number + Title */}
+            {/* Line 1: Spec number + H1 Title */}
             <h1 className="text-2xl font-bold tracking-tight mb-3">
               {spec.specNumber && (
                 <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
               )}
-              {spec.title || spec.specName}
+              {displayTitle}
             </h1>
             
             {/* Line 2: Status, Priority, Tags, Actions */}
@@ -122,24 +150,66 @@ export default async function SpecDetailPage({
               )}
             </div>
           </div>
+
+          {/* Horizontal Tabs for Sub-specs (only if sub-specs exist) */}
+          {spec.subSpecs && spec.subSpecs.length > 0 && (
+            <div className="border-t bg-muted/30">
+              <div className="px-6 overflow-x-auto scrollbar-thin">
+                <div className="flex gap-1 py-2 min-w-max">
+                  {/* Overview tab (README.md) */}
+                  <Link
+                    href={`/specs/${spec.specNumber || spec.id}`}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                      !currentSubSpec
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <Home className="h-4 w-4" />
+                    Overview
+                  </Link>
+
+                  
+                  {/* Sub-spec tabs */}
+                  {spec.subSpecs.map((subSpec) => {
+                    const Icon = SUB_SPEC_ICONS[subSpec.iconName] || FileText;
+                    return (
+                      <Link
+                        key={subSpec.file}
+                        href={`/specs/${spec.specNumber || spec.id}?subspec=${subSpec.file}`}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                          currentSubSpec === subSpec.file
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                      >
+                        <Icon className={`h-4 w-4 ${subSpec.color}`} />
+                        {subSpec.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Main content (full width) */}
         <main className="px-6 py-8">
-          <div className="space-y-8">
-            {/* Timeline embedded in content */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Timeline</h2>
-              <SpecTimeline
-                createdAt={spec.createdAt}
-                updatedAt={spec.updatedAt}
-                completedAt={spec.completedAt}
-                status={spec.status || 'planned'}
-              />
-            </Card>
-
-            {/* Markdown content */}
+          <div className="space-y-6">
+            {/* Markdown content with embedded timeline */}
             <Card className="p-8">
+              {/* Compact inline timeline at the top */}
+              <div className="mb-6 pb-6 border-b">
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3">Status Timeline</h2>
+                <SpecTimeline
+                  createdAt={spec.createdAt}
+                  updatedAt={spec.updatedAt}
+                  completedAt={spec.completedAt}
+                  status={spec.status || 'planned'}
+                />
+              </div>
+
               <article className="prose prose-slate dark:prose-invert max-w-none">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
