@@ -66,6 +66,22 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
     // Auto-expand current spec
     return new Set([currentSpecId]);
   });
+  const activeItemRef = React.useRef<HTMLAnchorElement>(null);
+
+  // Auto-expand current spec when it changes
+  React.useEffect(() => {
+    setExpandedSpecs(prev => new Set(prev).add(currentSpecId));
+  }, [currentSpecId]);
+
+  // Scroll active item into view
+  React.useEffect(() => {
+    if (activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [currentSpecId, currentSubSpec]);
 
   const filteredSpecs = React.useMemo(() => {
     if (!searchQuery) return specs;
@@ -143,6 +159,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                       </button>
                     )}
                     <Link
+                      ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
                       href={`/specs/${spec.specNumber || spec.id}`}
                       className={cn(
                         'flex-1 flex items-start gap-2 p-2 rounded-md text-sm transition-colors',
@@ -181,6 +198,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                         
                         return (
                           <Link
+                            ref={isCurrentSubSpec ? activeItemRef : null}
                             key={subSpec.file}
                             href={`/specs/${spec.specNumber || spec.id}?subspec=${subSpec.file}`}
                             className={cn(
