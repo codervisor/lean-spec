@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getSpecById, getSpecs } from '@/lib/db/queries';
+import { getSpecById, getSpecs } from '@/lib/db/service-queries';
 import { Badge } from '@/components/ui/badge';
 import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
