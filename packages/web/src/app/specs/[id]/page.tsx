@@ -12,6 +12,8 @@ import { PriorityBadge } from '@/components/priority-badge';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
 import { extractH1Title } from '@/lib/utils';
 import { MarkdownLink } from '@/components/markdown-link';
+import { TableOfContents } from '@/components/table-of-contents';
+import { BackToTop } from '@/components/back-to-top';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -222,6 +224,10 @@ export default async function SpecDetailPage({
             </article>
           </div>
         </main>
+
+        {/* Floating action buttons */}
+        <TableOfContents content={displayContent} />
+        <BackToTop />
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Github, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { QuickSearch } from '@/components/quick-search';
 import { Button } from '@/components/ui/button';
@@ -130,7 +130,20 @@ export function Navigation({ specs }: NavigationProps) {
               rel="noopener noreferrer"
               aria-label="GitHub repository"
             >
-              <Github className="h-5 w-5" />
+              <Image
+                src="/github-mark-white.svg"
+                alt="GitHub"
+                width={20}
+                height={20}
+                className="hidden dark:block"
+              />
+              <Image
+                src="/github-mark.svg"
+                alt="GitHub"
+                width={20}
+                height={20}
+                className="dark:hidden"
+              />
             </a>
           </Button>
         </div>
