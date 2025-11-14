@@ -85,8 +85,8 @@ function SpecListItem({ spec }: { spec: Spec }) {
           )}
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          {spec.status && <StatusBadge status={spec.status} size="sm" />}
-          {spec.priority && <PriorityBadge priority={spec.priority} size="sm" />}
+          {spec.status && <StatusBadge status={spec.status} className="text-xs scale-90" />}
+          {spec.priority && <PriorityBadge priority={spec.priority} className="text-xs scale-90" />}
         </div>
       </div>
     </Link>
