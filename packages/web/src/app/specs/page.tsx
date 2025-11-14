@@ -2,7 +2,7 @@
  * Specs page - Browse all LeanSpec specifications with list/board switcher
  */
 
-import { getSpecs, getStats } from '@/lib/db/queries';
+import { getSpecs, getStats } from '@/lib/db/service-queries';
 import { SpecsClient } from './specs-client';
 
 // Force dynamic rendering - this page needs runtime data

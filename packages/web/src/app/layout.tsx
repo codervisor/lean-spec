@@ -4,7 +4,7 @@ import { Navigation } from "@/components/navigation";
 import { MainSidebar } from "@/components/main-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toast } from "@/components/ui/toast";
-import { getSpecs } from "@/lib/db/queries";
+import { getSpecs } from "@/lib/db/service-queries";
 
 export const metadata: Metadata = {
   title: "LeanSpec Web - Interactive Spec Showcase",
