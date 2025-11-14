@@ -1,9 +1,9 @@
 /**
- * Home page - Browse LeanSpec specifications
+ * Home page - Dashboard with project overview
  */
 
 import { getProjects, getStats, getSpecs } from '@/lib/db/queries';
-import { HomeClient } from './home-client';
+import { DashboardClient } from './dashboard-client';
 
 // Force dynamic rendering - this page needs runtime data
 export const dynamic = 'force-dynamic';
@@ -15,5 +15,5 @@ export default async function Home() {
     getSpecs(),
   ]);
 
-  return <HomeClient initialProjects={projects} initialStats={stats} initialSpecs={specs} />;
+  return <DashboardClient initialSpecs={specs} initialStats={stats} />;
 }
