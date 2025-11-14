@@ -125,11 +125,12 @@ Skip specs for:
 - `lean-spec tokens <spec>` - Count tokens in a spec for LLM context management
 - `lean-spec tokens` - Show token counts for all specs (sorted by token count)
 - `lean-spec tokens <spec> --detailed` - Show content breakdown (prose vs code vs tables)
+- `lean-spec validate` - Validate specs including token thresholds
 
-**Advanced Editing (AI Agent Orchestration):**
-- `lean-spec analyze <spec>` - Analyze spec complexity and structure (returns JSON with --json flag)
-- `lean-spec split <spec> --output FILE:LINES` - Split spec into multiple files by line ranges (spec 059)
-- `lean-spec compact <spec> --remove LINES` - Remove specified line ranges from spec (spec 059)
+**Spec Splitting (When >3,500 tokens):**
+- `lean-spec analyze <spec>` - Analyze complexity and get split recommendations (use `--json` for structured output)
+- `lean-spec split <spec> --output "FILE.md:START-END"` - Extract sections to sub-spec files (can use multiple `--output` flags)
+- `lean-spec compact <spec> --remove "START-END"` - Remove extracted sections from main README (can use multiple `--remove` flags)
 
 **When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover available commands and options.
 
@@ -290,7 +291,26 @@ Consider **splitting** when:
 
 ### How to Split
 
-Use sub-spec files (see spec 012):
+**Use built-in commands** (preferred method):
+
+1. **Analyze structure**: `lean-spec analyze <spec> --json`
+   - Get token counts per section
+   - Identify heavy sections to extract
+   - Get line ranges for splitting
+
+2. **Split into sub-specs**: `lean-spec split <spec> --output "FILE.md:START-END"`
+   - Example: `lean-spec split 082 --output "DESIGN.md:100-250"`
+   - Creates new sub-spec files with extracted content
+   - Can specify multiple `--output` flags
+
+3. **Compact main README**: `lean-spec compact <spec> --remove "START-END"`
+   - Example: `lean-spec compact 082 --remove "100-250"`
+   - Removes extracted sections from main README
+   - Can specify multiple `--remove` flags
+
+4. **Add navigation links**: Manually add links to sub-specs in README
+
+**Sub-spec file conventions** (see spec 012):
 - `README.md`: Overview, decision, high-level design
 - `DESIGN.md`: Detailed architecture
 - `IMPLEMENTATION.md`: Implementation phases
