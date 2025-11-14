@@ -13,6 +13,11 @@ updated_at: '2025-11-14T05:35:02.854Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T05:35:02.854Z'
+related:
+  - 035-live-specs-showcase
+  - 081-web-app-ux-redesign
+  - 068-live-specs-ux-enhancements
+  - 065-v03-planning
 ---
 
 # Web App Realtime Spec Sync Architecture
@@ -495,13 +500,19 @@ const source = config.sourceType === 'github'
   : new FilesystemSource();
 ```
 
-### Dependencies
+### Dependencies & Relationships
 
-This spec **blocks**:
+**This spec blocks:**
 - Spec 081 (web-app-ux-redesign) - needs stable data layer
+- Spec 035 (live-specs-showcase) - web app foundation must be solid
 - v0.3 release - critical blocker
 
-This spec **depends on**:
+**Related to:**
+- Spec 035 (live-specs-showcase) - This is the web app being fixed
+- Spec 068 (live-specs-ux-enhancements) - UX work for the web app
+- Spec 065 (v03-planning) - v0.3 release planning, includes this as critical deliverable
+
+**This spec depends on:**
 - `@leanspec/core` APIs for reading specs
 - Specs directory structure stability
 
