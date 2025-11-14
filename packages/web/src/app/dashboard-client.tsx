@@ -254,24 +254,18 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* In Progress Specs */}
+          {/* Recently Added */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <PlayCircle className="h-5 w-5 text-orange-600" />
-                In Progress ({inProgressSpecs.length})
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Recently Added
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
-              {inProgressSpecs.length > 0 ? (
-                inProgressSpecs.map(spec => (
-                  <SpecListItem key={spec.id} spec={spec} />
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  No specs in progress
-                </p>
-              )}
+              {recentlyAdded.slice(0, 5).map(spec => (
+                <SpecListItem key={spec.id} spec={spec} />
+              ))}
             </CardContent>
           </Card>
 
@@ -296,18 +290,24 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
             </CardContent>
           </Card>
 
-          {/* Recently Added */}
+          {/* In Progress Specs */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                Recently Added
+                <PlayCircle className="h-5 w-5 text-orange-600" />
+                In Progress ({inProgressSpecs.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
-              {recentlyAdded.slice(0, 5).map(spec => (
-                <SpecListItem key={spec.id} spec={spec} />
-              ))}
+              {inProgressSpecs.length > 0 ? (
+                inProgressSpecs.map(spec => (
+                  <SpecListItem key={spec.id} spec={spec} />
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No specs in progress
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

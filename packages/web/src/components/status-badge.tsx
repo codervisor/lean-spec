@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface StatusBadgeProps {
   status: string;
   className?: string;
+  iconOnly?: boolean;
 }
 
 const statusConfig = {
@@ -34,14 +35,19 @@ const statusConfig = {
   }
 };
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, className, iconOnly = false }: StatusBadgeProps) {
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.planned;
   const Icon = config.icon;
 
   return (
-    <Badge className={cn('flex items-center gap-1.5 w-fit', config.className, className)}>
+    <Badge className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', config.className, className)}>
       <Icon className="h-3.5 w-3.5" />
-      {config.label}
+      {!iconOnly && config.label}
     </Badge>
   );
+}
+
+export function getStatusLabel(status: string): string {
+  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.planned;
+  return config.label;
 }
