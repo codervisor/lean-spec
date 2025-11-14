@@ -5,10 +5,8 @@
  * This script should be run in CI to catch drift between source and generated files
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { resolve, join } from 'path';
-import { tmpdir } from 'os';
-import { mkdirSync, rmSync, existsSync } from 'fs';
 import Handlebars from 'handlebars';
 
 const TEMPLATES_DIR = resolve(process.cwd(), 'packages/cli/templates');
@@ -23,6 +21,7 @@ interface AgentsConfig {
   whenToUse?: string;
   whenToUseEarly?: boolean;
   discoveryCommands: string;
+  essentialCommands?: string;
   frontmatter: string;
   workflow: string;
   qualityStandards: string;
@@ -52,6 +51,7 @@ function generateAgentsFileContent(templateName: string): string {
     whenToUse: config.whenToUse ? readComponent(config.whenToUse) : null,
     whenToUseEarly: config.whenToUseEarly !== false,
     discoveryCommands: readComponent(config.discoveryCommands),
+    essentialCommands: config.essentialCommands ? readComponent(config.essentialCommands) : null,
     frontmatter: readComponent(config.frontmatter),
     workflow: readComponent(config.workflow),
     qualityStandards: readComponent(config.qualityStandards),

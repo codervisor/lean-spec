@@ -126,6 +126,11 @@ Skip specs for:
 - `lean-spec tokens` - Show token counts for all specs (sorted by token count)
 - `lean-spec tokens <spec> --detailed` - Show content breakdown (prose vs code vs tables)
 
+**Advanced Editing (AI Agent Orchestration):**
+- `lean-spec analyze <spec>` - Analyze spec complexity and structure (returns JSON with --json flag)
+- `lean-spec split <spec> --output FILE:LINES` - Split spec into multiple files by line ranges (spec 059)
+- `lean-spec compact <spec> --remove LINES` - Remove specified line ranges from spec (spec 059)
+
 **When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover available commands and options.
 
 ## Understanding Spec Relationships

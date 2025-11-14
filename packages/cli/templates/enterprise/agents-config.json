@@ -3,6 +3,7 @@
   "coreRules": "core-rules-enterprise.md",
   "whenToUseEarly": false,
   "discoveryCommands": "discovery-commands-enterprise.md",
+  "essentialCommands": "essential-commands-enterprise.md",
   "frontmatter": "frontmatter-enterprise.md",
   "workflow": "workflow-enterprise.md",
   "qualityStandards": "quality-standards-enterprise.md",

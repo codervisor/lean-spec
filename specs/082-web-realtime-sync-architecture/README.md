@@ -29,123 +29,143 @@ related:
 
 ## Overview
 
-**Critical architectural flaw identified before v0.3 release**: The web app currently uses a **static seed-based architecture** that doesn't support realtime updates from the filesystem.
+**Critical architectural decision for v0.3 release**: Design a **dual-mode architecture** that supports both local filesystem reads (for LeanSpec's own specs) and database-backed multi-project showcase (for external GitHub repos).
 
 **The Problem:**
 
-1. **Local Development**: Specs are seeded into SQLite DB from `specs/` directory once. Changes to spec files require manual re-seeding (`pnpm db:seed`). No realtime updates.
+The web app serves two distinct use cases with different requirements:
 
-2. **Production (Vercel)**: 
-   - How do we seed the database on deployment?
-   - How do we keep the DB in sync when specs change?
-   - Static builds mean no access to filesystem after build time
-   - No automatic updates when specs are updated via CLI or git push
+1. **LeanSpec's Own Specs** (Primary Use Case):
+   - Specs live in same monorepo (`specs/` directory)
+   - Need realtime updates during development
+   - Need automatic sync on git push/deployment
+   - Fast filesystem reads available
+   - No API rate limits or latency concerns
 
-**Current Architecture:**
+2. **External GitHub Repos** (Multi-Project Showcase - spec 035):
+   - Specs live in external public GitHub repositories
+   - GitHub API has rate limits (5000 req/hour authenticated)
+   - API latency: 200-500ms per file fetch
+   - Need caching layer for performance
+   - Need scheduled sync (not realtime)
+
+**Current Architecture (Insufficient):**
 ```
 CLI (specs/) → Manual seed script → SQLite DB → Next.js Web App
                     ↓
             No automatic sync
-            No realtime updates
+            Only supports local specs
+            Manual re-seeding required
 ```
 
 **Why This Matters:**
-- Web app becomes stale immediately after spec changes
+- Web app becomes stale immediately after spec changes (bad DX)
 - Manual re-seeding is unacceptable for production use
+- Cannot support multi-project showcase (spec 035) without DB
 - Breaks the "single source of truth" principle (specs/ directory)
-- Bad UX: users see outdated information
+- GitHub API latency makes direct reads too slow for UX
 - Critical blocker for v0.3 launch
 
 **What We Need:**
-A robust architecture that:
-1. Keeps web app in sync with spec files (both local and production)
-2. Supports realtime or near-realtime updates
-3. Works seamlessly in both development and production environments
-4. Maintains performance (no expensive rebuilds on every change)
-5. Leverages existing LeanSpec CLI/core infrastructure
+A **configurable dual-mode architecture** that:
+1. **Mode 1 (Filesystem)**: Direct reads from local `specs/` directory
+   - For LeanSpec's own specs
+   - Realtime updates with in-memory caching
+   - No database dependency
+   - Fast performance (<100ms)
+   
+2. **Mode 2 (Database + GitHub)**: Database-backed multi-project support
+   - For external GitHub repos (spec 035 vision)
+   - GitHub API → DB cache layer
+   - Scheduled sync (webhooks optional)
+   - Handles rate limits gracefully
+   
+3. **Configuration-driven**: Environment variable determines mode
+4. **Backwards compatible**: Can run both modes simultaneously
 
 ## Design
 
-### Solution Options Analysis
+### Recommended Solution: Dual-Mode Architecture
 
-#### Option 1: File-Based Direct Read (No Database)
+**Architecture Overview:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Web App (Next.js)                       │
+├─────────────────────────────────────────────────────────────┤
+│                    Unified Service Layer                     │
+│                  (SpecsService Abstraction)                  │
+├──────────────────────────┬──────────────────────────────────┤
+│   Mode 1: Filesystem     │   Mode 2: Database + GitHub      │
+│   (Local Specs)          │   (External Repos)               │
+├──────────────────────────┼──────────────────────────────────┤
+│  specs/ → @leanspec/core │  GitHub API → PostgreSQL         │
+│  In-Memory Cache (60s)   │  Scheduled Sync (cron)           │
+│  Fast (<100ms)           │  Cached (<50ms)                  │
+│  Realtime Updates        │  Near-Realtime (5-60 min)        │
+└──────────────────────────┴──────────────────────────────────┘
+```
+
+**Key Design Principles:**
+
+1. **Configuration-Driven**: Environment variable determines which mode(s) to use
+2. **Unified Interface**: Same API for both modes (transparent to UI)
+3. **Performance First**: Aggressive caching for both modes
+4. **Backwards Compatible**: Can enable both modes simultaneously
+5. **Graceful Degradation**: Falls back if one mode fails
+
+### Mode 1: Filesystem-Based (Local Specs)
+
+**Use Case:** LeanSpec's own specs in monorepo
+
+**Data Flow:**
+```
+specs/ directory → @leanspec/core → In-Memory Cache → Web App
+         ↓
+   Single source of truth
+   Git is the version control
+```
 
 **Architecture:**
-```
-specs/ directory → @leanspec/core APIs → Next.js Server Components
-                         ↓
-                  Read on every request
-                  Cache with revalidation
-```
-
-**Pros:**
-- ✅ Always in sync (single source of truth)
-- ✅ No seeding required
-- ✅ Simple architecture
-- ✅ Works in both dev and production (if specs/ is in repo)
-- ✅ Leverages existing `@leanspec/core` APIs
-
-**Cons:**
-- ❌ Performance: filesystem reads on every request
-- ❌ Vercel deployment: specs/ directory must be included in build
-- ❌ No GitHub integration (can't show external repos)
-- ❌ Loses advanced query capabilities (filtering, sorting at DB level)
-
-**Mitigation:**
-- Use Next.js data cache with revalidation (`revalidate: 60`)
-- Use React Server Components (no client-side data fetching)
-- Keep cache in memory between requests
-
-#### Option 2: Hybrid - Direct Read + Smart Caching
-
-**Architecture:**
-```
-specs/ directory → @leanspec/core → In-Memory Cache → Next.js
-                         ↓
-                  Cache miss: read file
-                  Cache hit: return cached
-                  Invalidation: time-based (60s)
-```
-
-**Pros:**
-- ✅ Always eventually consistent
-- ✅ Good performance (in-memory cache)
-- ✅ Simple deployment (specs/ in repo)
-- ✅ No database complexity
-- ✅ Automatic updates (cache expires)
-
-**Cons:**
-- ❌ Still no GitHub integration for external repos
-- ❌ Cache invalidation strategy needed
-- ❌ Cold starts on Vercel (cache empty)
-
-**Implementation:**
 ```typescript
-// packages/web/src/lib/specs-cache.ts
-import { SpecReader } from '@leanspec/core';
-
-const CACHE_TTL = 60_000; // 60 seconds
-
-class SpecsCache {
-  private cache: Map<string, { data: any; expires: number }> = new Map();
-  private reader = new SpecReader();
-
-  async getSpec(specPath: string) {
-    const cached = this.cache.get(specPath);
-    if (cached && Date.now() < cached.expires) {
+// packages/web/src/lib/specs/sources/filesystem-source.ts
+export class FilesystemSource implements SpecSource {
+  private cache = new Map<string, CachedSpec>();
+  private reader = new SpecReader({ specsDir: '../../specs' });
+  
+  async getAllSpecs(): Promise<Spec[]> {
+    const cacheKey = '__all_specs__';
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && Date.now() < cached.expiresAt) {
       return cached.data;
     }
-
+    
+    const specs = await this.reader.getAllSpecs();
+    this.cache.set(cacheKey, {
+      data: specs,
+      expiresAt: Date.now() + CACHE_TTL,
+    });
+    
+    return specs;
+  }
+  
+  async getSpec(specPath: string): Promise<Spec | null> {
+    const cached = this.cache.get(specPath);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+    
     const spec = await this.reader.readSpec(specPath);
     this.cache.set(specPath, {
       data: spec,
-      expires: Date.now() + CACHE_TTL,
+      expiresAt: Date.now() + CACHE_TTL,
     });
     
     return spec;
   }
-
-  invalidate(specPath?: string) {
+  
+  invalidateCache(specPath?: string) {
     if (specPath) {
       this.cache.delete(specPath);
     } else {
@@ -153,249 +173,516 @@ class SpecsCache {
     }
   }
 }
-
-export const specsCache = new SpecsCache();
-```
-
-#### Option 3: Build-Time Generation + ISR
-
-**Architecture:**
-```
-Build Time: specs/ → Static JSON → .next/cache
-Runtime: Read from cache → Revalidate every N seconds
 ```
 
 **Pros:**
-- ✅ Fast (static generation)
-- ✅ Works on Vercel
-- ✅ Leverages Next.js ISR (Incremental Static Regeneration)
+- ✅ **Realtime sync**: Changes appear within cache TTL (60s)
+- ✅ **No database dependency**: Simpler deployment
+- ✅ **Fast**: In-memory cache keeps performance <100ms
+- ✅ **Source of truth**: Filesystem is authoritative
+- ✅ **Works everywhere**: Dev, staging, production (Vercel)
 
 **Cons:**
-- ❌ Complex: build-time script + runtime revalidation
-- ❌ Still no GitHub integration
-- ❌ Revalidation delay (not truly realtime)
+- ⚠️ Cache invalidation: TTL-based (not event-driven)
+- ⚠️ Cold starts: Cache empty after deployment
+- ⚠️ No cross-instance cache: Each Vercel function has own cache
 
-#### Option 4: GitHub API Integration (Future-Proof)
+**Mitigation:**
+- Use Next.js `revalidate` for additional CDN caching
+- File watcher in dev mode for instant invalidation (optional)
+- Acceptable trade-off for simplicity
+
+### Mode 2: Database-Backed (External GitHub Repos)
+
+**Use Case:** Multi-project showcase (spec 035), external public repos
+
+**Data Flow:**
+```
+GitHub API → Sync Service → PostgreSQL → Web App
+     ↓              ↓             ↓
+Rate limits    Orchestration   Cache layer
+(5000/hr)      (scheduled)     (fast queries)
+```
 
 **Architecture:**
-```
-GitHub Repo → GitHub API → Next.js Edge Runtime → Response
-                ↓
-         Cache with CDN
-         Webhook updates (optional)
-```
-
-**Pros:**
-- ✅ True realtime (via webhooks)
-- ✅ Supports external repos (multi-project showcase)
-- ✅ No database seeding needed
-- ✅ Works on any platform (Vercel, Netlify, etc.)
-- ✅ Scales to multiple projects
-
-**Cons:**
-- ❌ Requires GitHub API tokens
-- ❌ Rate limiting concerns
-- ❌ More complex architecture
-- ❌ Dependency on GitHub availability
-- ❌ Requires webhook setup for realtime updates
-
-**Implementation Sketch:**
 ```typescript
-// packages/web/src/lib/github-specs.ts
-import { Octokit } from '@octokit/rest';
-
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-
-export async function getSpecFromGitHub(
-  owner: string, 
-  repo: string, 
-  specPath: string
-) {
-  const { data } = await octokit.repos.getContent({
-    owner,
-    repo,
-    path: `specs/${specPath}/README.md`,
-  });
+// packages/web/src/lib/specs/sources/database-source.ts
+export class DatabaseSource implements SpecSource {
+  async getAllSpecs(projectId?: string): Promise<Spec[]> {
+    const query = projectId 
+      ? db.select().from(specs).where(eq(specs.projectId, projectId))
+      : db.select().from(specs);
+    
+    return await query.orderBy(specs.specNumber);
+  }
   
-  if ('content' in data) {
-    const content = Buffer.from(data.content, 'base64').toString('utf-8');
-    return parseSpec(content); // Use @leanspec/core
+  async getSpec(specPath: string, projectId: string): Promise<Spec | null> {
+    // Parse spec number from path (e.g., "035" or "035-my-spec")
+    const specNum = parseInt(specPath.split('-')[0], 10);
+    
+    const results = await db.select()
+      .from(specs)
+      .where(and(
+        eq(specs.projectId, projectId),
+        eq(specs.specNumber, specNum)
+      ))
+      .limit(1);
+    
+    return results[0] || null;
+  }
+}
+
+// packages/web/src/lib/github/sync-service.ts
+export class GitHubSyncService {
+  private octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  
+  async syncProject(owner: string, repo: string, projectId: string) {
+    // 1. Fetch specs from GitHub
+    const repoSpecs = await this.discoverSpecs(owner, repo);
+    
+    // 2. Compare with database
+    const dbSpecs = await db.select()
+      .from(specs)
+      .where(eq(specs.projectId, projectId));
+    
+    // 3. Compute diff (added, updated, deleted)
+    const diff = this.computeDiff(repoSpecs, dbSpecs);
+    
+    // 4. Apply changes
+    await this.applyDiff(projectId, diff);
+    
+    // 5. Log sync result
+    await db.insert(syncLogs).values({
+      projectId,
+      status: 'success',
+      specsAdded: diff.added.length,
+      specsUpdated: diff.updated.length,
+      specsDeleted: diff.deleted.length,
+      completedAt: new Date(),
+    });
+  }
+  
+  private async discoverSpecs(owner: string, repo: string) {
+    // Fetch specs directory listing
+    const { data } = await this.octokit.repos.getContent({
+      owner,
+      repo,
+      path: 'specs',
+    });
+    
+    // Filter directories (ignore archived)
+    const specDirs = Array.isArray(data)
+      ? data.filter(item => item.type === 'dir' && item.name !== 'archived')
+      : [];
+    
+    // Fetch each spec's README.md
+    const specs = await Promise.all(
+      specDirs.map(dir => this.fetchSpec(owner, repo, dir.name))
+    );
+    
+    return specs.filter(Boolean);
   }
 }
 ```
 
-### Recommended Solution: Option 2 (Hybrid) for v0.3 + Option 4 (GitHub) for v0.4
+**Pros:**
+- ✅ **Handles rate limits**: Database caches GitHub data
+- ✅ **Fast queries**: Database optimized for filtering/sorting/search
+- ✅ **Multi-project support**: Can showcase many repos
+- ✅ **Scheduled sync**: Background jobs handle updates
+- ✅ **Relationships**: Can query cross-spec dependencies
+- ✅ **Audit trail**: Sync logs track changes
 
-**v0.3 (Immediate)**: Option 2 - Hybrid Direct Read + Smart Caching
-- Solves the immediate problem (realtime sync)
-- Simple deployment (specs/ directory in repo)
-- No database complexity
-- Good performance with in-memory caching
-- Works for LeanSpec's own specs (primary use case)
+**Cons:**
+- ⚠️ **Not realtime**: Sync delay (5-60 min typical)
+- ⚠️ **Database dependency**: PostgreSQL required (Vercel Postgres)
+- ⚠️ **Sync orchestration**: Need cron jobs or webhooks
+- ⚠️ **Complexity**: More moving parts
 
-**v0.4 (Future)**: Option 4 - GitHub API Integration
-- Enables multi-project showcase (original vision for spec 035)
-- True realtime updates via webhooks
-- Supports external repositories
-- More scalable architecture
+**Mitigation:**
+- Webhooks for near-realtime (optional, Phase 2+)
+- Database is cache layer, not source of truth
+- Fallback to GitHub API if sync fails
+
+### Unified Service Layer (Abstraction)
+
+**Configuration-driven routing:**
+
+```typescript
+// packages/web/src/lib/specs/service.ts
+interface SpecSource {
+  getAllSpecs(projectId?: string): Promise<Spec[]>;
+  getSpec(specPath: string, projectId?: string): Promise<Spec | null>;
+  getSpecsByStatus(status: string, projectId?: string): Promise<Spec[]>;
+  searchSpecs(query: string, projectId?: string): Promise<Spec[]>;
+}
+
+export class SpecsService {
+  private filesystemSource?: FilesystemSource;
+  private databaseSource?: DatabaseSource;
+  
+  constructor() {
+    const mode = process.env.SPECS_MODE || 'filesystem'; // 'filesystem' | 'database' | 'both'
+    
+    if (mode === 'filesystem' || mode === 'both') {
+      this.filesystemSource = new FilesystemSource();
+    }
+    
+    if (mode === 'database' || mode === 'both') {
+      this.databaseSource = new DatabaseSource();
+    }
+  }
+  
+  async getAllSpecs(projectId?: string): Promise<Spec[]> {
+    // If projectId provided, use database (external repo)
+    if (projectId && this.databaseSource) {
+      return await this.databaseSource.getAllSpecs(projectId);
+    }
+    
+    // Otherwise use filesystem (LeanSpec's own specs)
+    if (this.filesystemSource) {
+      return await this.filesystemSource.getAllSpecs();
+    }
+    
+    throw new Error('No spec source configured');
+  }
+  
+  // ... other methods follow same pattern
+}
+
+export const specsService = new SpecsService();
+```
+
+**Environment Variables:**
+
+```bash
+# Mode configuration
+SPECS_MODE=both  # 'filesystem' | 'database' | 'both'
+
+# Filesystem mode
+SPECS_DIR=../../specs
+
+# Database mode
+DATABASE_URL=postgres://...  # Vercel Postgres
+GITHUB_TOKEN=ghp_...         # For API access
+
+# Cache settings
+CACHE_TTL=60000              # 60 seconds
+```
+
+### Performance Comparison
+
+| Metric | Filesystem Mode | Database Mode |
+|--------|----------------|---------------|
+| **First Load** | ~100ms (file read) | ~50ms (DB query) |
+| **Cached Load** | ~10ms (memory) | ~10ms (memory) |
+| **Sync Latency** | 0-60s (cache TTL) | 5-60 min (scheduled) |
+| **Multi-Project** | ❌ Not supported | ✅ Supported |
+| **Rate Limits** | ✅ None | ⚠️ 5000 req/hr |
+| **Cold Start** | ~100ms | ~50ms |
+| **Deployment** | Simple (specs/ in repo) | Complex (DB + cron) |
+
+### Migration Strategy
+
+**Phase 1 (v0.3)**: Filesystem mode only
+- Remove database dependency for simplicity
+- Focus on LeanSpec's own specs
+- Get to production fast
+
+**Phase 2 (v0.3.1)**: Add database mode
+- Keep filesystem mode working
+- Add database + GitHub sync
+- Run both modes in parallel
+
+**Phase 3 (v0.4)**: Full multi-project showcase
+- Webhooks for realtime sync
+- Advanced features (search, relationships)
+- Community showcase
 
 ### v0.3 Implementation Plan
 
-#### Phase 1: Remove Database Dependency
+#### Phase 1: Filesystem Mode (v0.3.0 - Days 1-4)
+
+**Goal**: Ship filesystem-based architecture for LeanSpec's own specs
 
 **Changes Required:**
 
-1. **Remove SQLite + Drizzle ORM** (simplify)
-   - Delete `packages/web/src/lib/db/` directory
-   - Remove Drizzle dependencies from package.json
-   - Remove database-related npm scripts
-
-2. **Create Specs Service** (new abstraction)
+1. **Create Unified Service Layer**
    ```typescript
    // packages/web/src/lib/specs/service.ts
-   import { SpecReader, SpecParser } from '@leanspec/core';
-   
-   export class SpecsService {
-     private reader: SpecReader;
+   export interface SpecSource { ... }
+   export class SpecsService { ... }
+   ```
+
+2. **Implement Filesystem Source**
+   ```typescript
+   // packages/web/src/lib/specs/sources/filesystem-source.ts
+   export class FilesystemSource implements SpecSource {
      private cache: Map<string, CachedSpec>;
-     
-     async getAllSpecs() { ... }
-     async getSpec(specPath: string) { ... }
-     async getSpecsByStatus(status: string) { ... }
-     async searchSpecs(query: string) { ... }
-     invalidateCache() { ... }
+     private reader: SpecReader;
+     // ... implementation
    }
    ```
 
 3. **Update All Data Fetching**
-   - Replace database queries with SpecsService calls
-   - Use React Server Components
-   - Add Next.js cache revalidation
+   - Replace `db.select()` calls with `specsService.getAllSpecs()`
+   - Update API routes to use service layer
+   - Update page components to use service layer
 
-4. **Update Environment Setup**
-   - Set `SPECS_DIR` environment variable (defaults to `../../specs`)
-   - Production: specs/ must be in repo (include in git)
+4. **Add Cache Invalidation API** (optional, nice-to-have)
+   ```typescript
+   // packages/web/src/app/api/revalidate/route.ts
+   export async function POST(request: Request) {
+     const { secret, specPath } = await request.json();
+     if (secret !== process.env.REVALIDATION_SECRET) {
+       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+     }
+     specsService.invalidateCache(specPath);
+     revalidatePath('/specs');
+     return Response.json({ revalidated: true });
+   }
+   ```
 
-#### Phase 2: Implement Caching Strategy
+5. **Environment Configuration**
+   ```bash
+   # .env.local (development)
+   SPECS_MODE=filesystem
+   SPECS_DIR=../../specs
+   CACHE_TTL=60000
+   
+   # Vercel (production)
+   SPECS_MODE=filesystem
+   SPECS_DIR=../../specs
+   CACHE_TTL=60000
+   ```
 
-**Caching Layers:**
+6. **Keep Database Schema (for Phase 2)**
+   - Don't delete database code yet
+   - Add feature flag to switch between modes
+   - Document migration path for Phase 2
 
-1. **In-Memory Cache** (Node.js process)
-   - TTL: 60 seconds (configurable)
-   - Invalidation: time-based + manual API endpoint
+**Testing:**
+- [ ] All specs load from filesystem
+- [ ] Cache works (verify hit rate)
+- [ ] Performance <100ms
+- [ ] Deployment to Vercel succeeds
+- [ ] Specs update within 60s of file change
 
-2. **Next.js Data Cache** (fetch cache)
-   - Use `revalidate: 60` in fetch options
-   - Automatic background revalidation
+#### Phase 2: Database Mode (v0.3.1 - Days 5-8)
 
-3. **CDN Cache** (Vercel Edge)
-   - Cache static spec content
-   - Bypass for dynamic queries
+**Goal**: Add multi-project support with GitHub integration
 
-**Cache Invalidation API:**
-```typescript
-// packages/web/src/app/api/revalidate/route.ts
-export async function POST(request: Request) {
-  const { secret, specPath } = await request.json();
-  
-  if (secret !== process.env.REVALIDATION_SECRET) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  
-  specsService.invalidateCache(specPath);
-  revalidatePath('/specs');
-  
-  return Response.json({ revalidated: true });
-}
-```
+**Changes Required:**
 
-#### Phase 3: Development Experience
+1. **Implement Database Source**
+   ```typescript
+   // packages/web/src/lib/specs/sources/database-source.ts
+   export class DatabaseSource implements SpecSource {
+     async getAllSpecs(projectId?: string): Promise<Spec[]> { ... }
+     async getSpec(specPath: string, projectId: string): Promise<Spec | null> { ... }
+   }
+   ```
 
-**Local Development:**
-- File watcher to detect spec changes (optional, nice-to-have)
-- Auto-invalidate cache on file change
-- Fast refresh for instant updates
+2. **Implement GitHub Sync Service**
+   ```typescript
+   // packages/web/src/lib/github/sync-service.ts
+   export class GitHubSyncService {
+     async syncProject(owner: string, repo: string, projectId: string) { ... }
+     private async discoverSpecs(owner: string, repo: string) { ... }
+     private computeDiff(repoSpecs: Spec[], dbSpecs: Spec[]) { ... }
+   }
+   ```
 
-**Script:**
-```typescript
-// packages/web/src/lib/specs/watcher.ts (optional)
-import { watch } from 'fs';
+3. **Add Project Management UI**
+   - Add project page (admin only)
+   - Add project form (owner, repo, sync frequency)
+   - Add sync status dashboard
 
-if (process.env.NODE_ENV === 'development') {
-  watch('../../specs', { recursive: true }, (event, filename) => {
-    console.log(`Spec changed: ${filename}`);
-    specsService.invalidateCache();
-  });
-}
-```
+4. **Add Scheduled Sync (Vercel Cron)**
+   ```typescript
+   // packages/web/src/app/api/cron/sync/route.ts
+   export async function GET(request: Request) {
+     // Verify cron secret
+     if (request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+     }
+     
+     // Sync all projects
+     const projects = await db.select().from(schema.projects);
+     for (const project of projects) {
+       await syncService.syncProject(project.githubOwner, project.githubRepo, project.id);
+     }
+     
+     return Response.json({ synced: projects.length });
+   }
+   ```
 
-### Production Deployment (Vercel)
+5. **Update Configuration**
+   ```bash
+   # Vercel (production)
+   SPECS_MODE=both  # Enable both modes
+   DATABASE_URL=postgres://...
+   GITHUB_TOKEN=ghp_...
+   CRON_SECRET=...
+   ```
 
-**Build Configuration:**
+6. **Update Service Layer Routing**
+   - If `projectId` provided → use database source
+   - Otherwise → use filesystem source
+   - Graceful fallback if one fails
+
+**Testing:**
+- [ ] Can add external GitHub repo
+- [ ] Sync discovers all specs
+- [ ] Database stores specs correctly
+- [ ] UI shows both local and external specs
+- [ ] Cron job runs successfully
+
+#### Phase 3: Webhooks & Optimization (v0.4 - Future)
+
+**Goal**: Near-realtime sync with webhooks
+
+**Changes Required:**
+
+1. **GitHub Webhook Endpoint**
+   ```typescript
+   // packages/web/src/app/api/webhooks/github/route.ts
+   export async function POST(request: Request) {
+     const payload = await request.json();
+     const event = request.headers.get('X-GitHub-Event');
+     
+     if (event === 'push') {
+       const { repository, commits } = payload;
+       const changedFiles = commits.flatMap(c => c.modified);
+       
+       if (changedFiles.some(f => f.startsWith('specs/'))) {
+         // Trigger sync for this project
+         await syncService.syncProject(
+           repository.owner.login,
+           repository.name,
+           projectId
+         );
+       }
+     }
+     
+     return Response.json({ ok: true });
+   }
+   ```
+
+2. **Webhook Management UI**
+   - Auto-configure webhook on project add
+   - Show webhook status and delivery logs
+   - Retry failed deliveries
+
+3. **Incremental Sync**
+   - Only sync changed specs (not full resync)
+   - Use webhook payload to identify changed files
+   - Much faster than full sync
+
+**Testing:**
+- [ ] Webhook receives push events
+- [ ] Only changed specs are synced
+- [ ] Latency <10 seconds from push to UI update
+
+### Production Deployment Configuration
+
+#### v0.3.0 (Filesystem Mode)
+
+**Vercel Configuration:**
 ```json
-// vercel.json (updated)
+// vercel.json (web app deployment)
+{
+  "buildCommand": "pnpm -F @leanspec/web build",
+  "outputDirectory": "packages/web/.next",
+  "framework": "nextjs",
+  "installCommand": "pnpm install"
+}
+```
+
+**Environment Variables (Vercel Dashboard):**
+```bash
+SPECS_MODE=filesystem
+SPECS_DIR=../../specs
+CACHE_TTL=60000
+REVALIDATION_SECRET=<random-secret>
+```
+
+**Key Points:**
+- Specs directory (`specs/`) must be in git repo
+- No database required for v0.3.0
+- Specs read at runtime from filesystem
+- In-memory cache keeps performance <100ms
+- Vercel serverless functions have filesystem access
+
+#### v0.3.1+ (Dual Mode)
+
+**Vercel Configuration:**
+```json
+// vercel.json (unchanged)
 {
   "buildCommand": "pnpm -F @leanspec/web build",
   "outputDirectory": "packages/web/.next",
   "framework": "nextjs",
   "installCommand": "pnpm install",
-  "env": {
-    "SPECS_DIR": "../../specs"
-  }
+  "crons": [{
+    "path": "/api/cron/sync",
+    "schedule": "0 * * * *"
+  }]
 }
 ```
+
+**Environment Variables (Vercel Dashboard):**
+```bash
+SPECS_MODE=both
+SPECS_DIR=../../specs
+CACHE_TTL=60000
+DATABASE_URL=postgres://...
+GITHUB_TOKEN=ghp_...
+CRON_SECRET=<random-secret>
+REVALIDATION_SECRET=<random-secret>
+```
+
+**Database Setup (Vercel Postgres):**
+1. Create Vercel Postgres database
+2. Run migrations: `pnpm -F @leanspec/web db:migrate`
+3. Seed LeanSpec project: `pnpm -F @leanspec/web db:seed`
+4. Cron job handles external repos
 
 **Key Points:**
-- Specs directory must be in repo (it already is)
-- No build-time seeding required
-- Specs are read at runtime from filesystem
-- Cache keeps performance acceptable
-- Vercel Edge Functions support filesystem reads
-
-### Migration Path
-
-**Step 1: Feature Flag (Safety)**
-```typescript
-const USE_DATABASE = process.env.USE_DATABASE === 'true';
-
-async function getSpecs() {
-  if (USE_DATABASE) {
-    return getSpecsFromDB(); // Old way
-  } else {
-    return getSpecsFromFilesystem(); // New way
-  }
-}
-```
-
-**Step 2: Parallel Implementation**
-- Keep database code working
-- Add new filesystem-based service
-- Test both in parallel
-
-**Step 3: Gradual Rollout**
-- Dev environment: filesystem first
-- Test thoroughly
-- Production: flip feature flag
-- Monitor performance
-
-**Step 4: Cleanup**
-- Remove database code after successful rollout
-- Delete migration files
-- Update documentation
+- Both filesystem and database sources active
+- LeanSpec's specs use filesystem (fast, realtime)
+- External repos use database (cached, scheduled sync)
+- Cron job syncs external repos every hour
 
 ## Plan
 
-### Phase 1: Core Architecture (Days 1-3)
-- [x] Create spec and analyze problem ✅
-- [ ] Remove database dependency (SQLite, Drizzle)
-- [ ] Create `SpecsService` with `@leanspec/core` integration
-- [ ] Implement in-memory caching layer
-- [ ] Update environment configuration
+### Phase 1: Filesystem Mode (v0.3.0 - Days 1-4)
+- [x] Create spec and analyze requirements ✅
+- [x] Design dual-mode architecture ✅
+- [ ] Create unified `SpecsService` abstraction
+- [ ] Implement `FilesystemSource` with caching
+- [ ] Refactor all data fetching to use service layer
+- [ ] Update API routes and page components
+- [ ] Add cache invalidation endpoint (optional)
+- [ ] Test filesystem mode thoroughly
+- [ ] Deploy to Vercel staging
+- [ ] Deploy to production
 
-### Phase 2: Data Layer Migration (Days 4-6)
-- [ ] Refactor all data fetching to use `SpecsService`
-- [ ] Update dashboard page (stats, recent activity)
-- [ ] Update specs list page
+### Phase 2: Database Mode (v0.3.1 - Days 5-8)
+- [ ] Implement `DatabaseSource` with PostgreSQL
+- [ ] Implement `GitHubSyncService` (Octokit integration)
+- [ ] Add project management UI (add/remove repos)
+- [ ] Add sync status dashboard
+- [ ] Implement scheduled sync (Vercel Cron)
+- [ ] Update `SpecsService` routing logic
+- [ ] Test both modes in parallel
+- [ ] Deploy to production with `SPECS_MODE=both`
+
+### Phase 3: Webhooks (v0.4 - Future)
+- [ ] Implement GitHub webhook endpoint
+- [ ] Add webhook management UI
+- [ ] Implement incremental sync (only changed files)
+- [ ] Test near-realtime updates (<10s latency)
 - [ ] Update specs board page
 - [ ] Update spec detail pages
 - [ ] Add Next.js cache revalidation
@@ -410,119 +697,183 @@ async function getSpecs() {
 - [ ] Test in local environment
 - [ ] Test cache invalidation
 - [ ] Test performance under load
-- [ ] Update Vercel configuration
-- [ ] Deploy to staging
-- [ ] Production deployment
-- [ ] Monitor for issues
-
-### Phase 5: Cleanup & Documentation (Day 11)
-- [ ] Remove database code completely
-- [ ] Update README and docs
-- [ ] Document caching strategy
-- [ ] Update deployment guide
-- [ ] Close spec
+- [ ] Test near-realtime updates (<10s latency)
 
 ## Test
 
-### Functional Testing
-- [ ] All specs load correctly from filesystem
-- [ ] Cache works (verify with console logs)
-- [ ] Cache invalidation API works
-- [ ] Stats calculations are accurate
+### Phase 1 Testing (Filesystem Mode)
+
+**Functional:**
+- [ ] All specs load from filesystem
+- [ ] Cache hit rate >90% after warmup
+- [ ] Cache invalidation works correctly
+- [ ] Stats calculations accurate
 - [ ] Search and filtering work
 - [ ] Board view displays correctly
-- [ ] Spec detail pages load all content
+- [ ] Spec detail pages render markdown
+- [ ] Sub-specs navigation works
 
-### Performance Testing
-- [ ] Initial page load <2s
-- [ ] Cached page load <500ms
-- [ ] Cache hit rate >90% after warmup
-- [ ] Memory usage acceptable (<200MB)
+**Performance:**
+- [ ] Initial page load <100ms (filesystem read)
+- [ ] Cached page load <10ms (memory hit)
+- [ ] Memory usage <100MB per instance
 - [ ] No memory leaks over 24 hours
+- [ ] Cold start acceptable (<500ms)
 
-### Deployment Testing
+**Deployment:**
 - [ ] Build succeeds on Vercel
 - [ ] Specs directory accessible at runtime
-- [ ] Environment variables set correctly
-- [ ] Cache works in production
-- [ ] Realtime updates work (after cache TTL)
+- [ ] Environment variables configured
+- [ ] Cache works in serverless functions
+- [ ] Updates appear within 60s
 
-### Regression Testing
-- [ ] All existing features still work
-- [ ] No broken links
-- [ ] Search functionality intact
-- [ ] Filtering and sorting work
-- [ ] Mobile responsiveness maintained
+### Phase 2 Testing (Database Mode)
+
+**Functional:**
+- [ ] Can add external GitHub repo
+- [ ] Sync discovers all specs correctly
+- [ ] Database stores specs with metadata
+- [ ] Multi-project UI works
+- [ ] Cron job executes successfully
+- [ ] Sync logs recorded properly
+- [ ] Rate limiting handled gracefully
+
+**Performance:**
+- [ ] Database queries <50ms
+- [ ] GitHub sync <30s for typical repo
+- [ ] Parallel fetching works (not sequential)
+- [ ] Database connections pooled correctly
+
+**Integration:**
+- [ ] Both filesystem and database modes work
+- [ ] Service layer routes correctly
+- [ ] No conflicts between sources
+- [ ] Graceful fallback on errors
 
 ## Notes
 
-### Why Not Keep the Database?
+### Key Design Decisions
 
-**Complexity vs Value:**
-- Database adds complexity (migrations, seeding, sync logic)
-- SQLite is single-instance (doesn't scale horizontally on Vercel)
-- Filesystem is already the source of truth
-- Cache provides similar performance benefits
-- Simpler architecture is easier to maintain
+**Why Dual-Mode Architecture?**
+1. **Different Requirements**: Local specs need realtime, external repos need caching
+2. **Performance**: Filesystem reads (<100ms) vs GitHub API (200-500ms)
+3. **Flexibility**: Can disable either mode via config
+4. **Simplicity**: v0.3 can ship without database complexity
+5. **Future-Proof**: Easy to add database mode in v0.3.1
 
-**When Would We Need a Database?**
-- Multi-project showcase (external repos)
-- User authentication and permissions
-- Comments, annotations, collaborative features
-- Analytics and tracking
-- These are all v0.4+ features
+**Why Keep Database for External Repos?**
+- GitHub API has rate limits (5000 req/hour)
+- API latency too high for good UX (200-500ms per file)
+- Need scheduled sync, not on-demand fetching
+- Database enables advanced features (search, relationships, analytics)
+- Database is cache layer, not source of truth
 
-### Performance Considerations
+**Why NOT Database for Local Specs?**
+- Adds complexity (migrations, seeding, sync logic)
+- Filesystem is already source of truth
+- In-memory cache provides similar performance
+- Simpler deployment (no database required)
+- Easier local development (no DB setup)
 
-**Cache TTL Trade-offs:**
-- **60s**: Good balance (updates appear within 1 minute)
-- **30s**: More realtime but more filesystem reads
-- **120s**: Better performance but slower updates
+### Cache TTL Trade-offs
 
-**Recommendation**: Start with 60s, make it configurable
+| TTL | Pros | Cons | Recommendation |
+|-----|------|------|----------------|
+| 30s | More realtime | More filesystem reads | Dev mode |
+| 60s | Good balance | 1-minute delay | **Production default** |
+| 120s | Better performance | Slower updates | High-traffic sites |
 
-### Future: GitHub API Integration (v0.4)
+**Configurable via `CACHE_TTL` environment variable**
 
-This architecture change makes GitHub integration easier:
-```typescript
-// Future: packages/web/src/lib/specs/sources.ts
-interface SpecSource {
-  getAllSpecs(): Promise<Spec[]>;
-  getSpec(path: string): Promise<Spec>;
-}
+### GitHub API Rate Limits
 
-class FilesystemSource implements SpecSource { ... }
-class GitHubSource implements SpecSource { ... }
+**Without Authentication:**
+- 60 requests per hour
+- Not viable for production
 
-// Pluggable architecture
-const source = config.sourceType === 'github' 
-  ? new GitHubSource() 
-  : new FilesystemSource();
+**With Authentication (`GITHUB_TOKEN`):**
+- 5,000 requests per hour
+- Sufficient for scheduled sync
+- ~1 request per spec (README.md + metadata)
+- Can sync ~100 specs every 5 minutes
+
+**Mitigation:**
+- Database caching layer (essential)
+- Scheduled sync (hourly or less)
+- Webhooks for near-realtime (Phase 3)
+- Conditional requests (ETags) to avoid re-fetching
+
+### Performance Benchmarks
+
+**Filesystem Mode:**
 ```
+Cold start (no cache):  ~100ms  (read file + parse)
+Warm cache (in-memory): ~10ms   (memory lookup)
+Cache miss penalty:     ~90ms   (acceptable)
+```
+
+**Database Mode:**
+```
+Database query:         ~50ms   (PostgreSQL)
+GitHub API fetch:       ~300ms  (per file, avoided via cache)
+Sync full repo (50 specs): ~15s (parallel fetching)
+```
+
+**Comparison:**
+- Filesystem: Faster for single project (LeanSpec)
+- Database: Necessary for multi-project (spec 035)
+- Both: Optimal for production
 
 ### Dependencies & Relationships
 
-**This spec blocks:**
-- Spec 081 (web-app-ux-redesign) - needs stable data layer
-- Spec 035 (live-specs-showcase) - web app foundation must be solid
-- v0.3 release - critical blocker
+**This spec enables:**
+- v0.3 release (filesystem mode)
+- Spec 035 (multi-project showcase) - database mode required
+- Spec 081 (UX redesign) - needs stable data layer
 
-**Related to:**
-- Spec 035 (live-specs-showcase) - This is the web app being fixed
-- Spec 068 (live-specs-ux-enhancements) - UX work for the web app
-- Spec 065 (v03-planning) - v0.3 release planning, includes this as critical deliverable
+**This spec blocks:**
+- v0.3 production deployment
+- Community showcase features
+- External repo integration
+
+**Related specs:**
+- Spec 035 (live-specs-showcase) - Web app being fixed
+- Spec 068 (live-specs-ux-enhancements) - UI/UX improvements
+- Spec 065 (v03-planning) - Release planning
+- Spec 059 (programmatic-spec-management) - API design overlap
 
 **This spec depends on:**
-- `@leanspec/core` APIs for reading specs
-- Specs directory structure stability
+- `@leanspec/core` APIs (SpecReader, SpecParser)
+- Existing database schema (keep for Phase 2)
+- Vercel serverless functions (filesystem access)
 
 ### Open Questions
 
-- [x] Should we keep database for v0.3 or remove it? → **Remove it**
-- [ ] What should cache TTL be? (30s, 60s, 120s?) → **Recommend 60s**
-- [ ] Do we need file watching in dev mode? → **Nice-to-have, not critical**
-- [ ] Should cache invalidation API be authenticated? → **Yes, use secret**
+- [x] Should we keep database for v0.3? → **Keep schema, don't use yet (Phase 2)**
+- [x] What should cache TTL be? → **60s (configurable via env)**
+- [x] Do we really need database if it's only cache? → **Yes, for multi-project showcase**
+- [x] How to manage GitHub API latency? → **Scheduled sync + database caching**
+- [ ] Should we use PostgreSQL or SQLite? → **PostgreSQL (Vercel Postgres)**
+- [ ] Should cache invalidation API be authenticated? → **Yes, use REVALIDATION_SECRET**
+- [ ] File watcher in dev mode? → **Nice-to-have, not critical for v0.3**
 
-## Notes
+### Success Criteria
 
-<!-- Optional: Research findings, alternatives considered, open questions -->
+**v0.3.0 (Filesystem Mode):**
+- ✅ LeanSpec's specs load from filesystem
+- ✅ Performance <100ms (filesystem) / <10ms (cached)
+- ✅ Updates appear within 60s (cache TTL)
+- ✅ Works in local dev and Vercel production
+- ✅ No manual re-seeding required
+
+**v0.3.1 (Database Mode):**
+- ✅ Can add external GitHub repos
+- ✅ Sync discovers and stores specs
+- ✅ Performance <50ms (database queries)
+- ✅ Scheduled sync works (hourly)
+- ✅ Both modes work simultaneously
+
+**v0.4 (Webhooks):**
+- ✅ Near-realtime updates (<10s)
+- ✅ Incremental sync (only changed files)
+- ✅ Webhook management UI
