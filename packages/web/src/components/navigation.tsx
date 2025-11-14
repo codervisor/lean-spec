@@ -95,7 +95,7 @@ export function Navigation({ specs }: NavigationProps) {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="sticky top-0 z-50 w-full h-14 border-b border-gray-200 dark:border-gray-800 bg-background">
+    <header className="sticky top-0 z-50 w-full h-14 border-b border-border bg-background">
       <div className="flex items-center justify-between h-full px-4">
         {/* Left: Logo + Breadcrumb */}
         <div className="flex items-center gap-4">

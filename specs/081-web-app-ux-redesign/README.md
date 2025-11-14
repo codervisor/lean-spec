@@ -10,6 +10,7 @@ priority: high
 created_at: '2025-11-14T03:21:43.076Z'
 depends_on:
   - 068
+  - 082-web-realtime-sync-architecture
 related:
   - 052-branding-assets
   - 068-live-specs-ux-enhancements
@@ -25,12 +26,14 @@ transitions:
 
 **Project**: lean-spec  
 **Team**: Core Development  
-**Dependencies**: Spec 068 (live-specs-ux-enhancements)  
+**Dependencies**: Spec 068 (live-specs-ux-enhancements), **Spec 082 (web-realtime-sync-architecture) - CRITICAL BLOCKER**  
 **Related**: Spec 052 (branding-assets)
 
 ## Overview
 
 Comprehensive UX/UI redesign for the LeanSpec Web application (`@leanspec/web`) addressing critical layout, navigation, branding, and usability issues. This spec consolidates feedback from initial user testing and aims to create a professional, intuitive interface that aligns with LeanSpec's core principles.
+
+**⚠️ CRITICAL BLOCKER IDENTIFIED**: This spec is **blocked** by spec 082 (web-realtime-sync-architecture). The current database-seeding architecture has a fundamental flaw - no realtime updates from filesystem. Spec 082 proposes removing the database entirely and using direct filesystem reads with smart caching. **This must be resolved before continuing with UX redesign** to avoid building on unstable foundations.
 
 **Why now?**
 - Current implementation (spec 068) completed foundational features but has UX issues
@@ -545,85 +548,85 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 ### Phase 1: Branding & Layout Foundation (Week 1)
 
 **Day 1-2: Branding Integration**
-- [ ] Copy logo assets from spec 052 to `packages/web/public/`
-- [ ] Update favicon references in `layout.tsx`
-- [ ] Implement theme-aware logo switching in navbar
-- [ ] Test logo rendering in light/dark modes
+- [x] Copy logo assets from spec 052 to `packages/web/public/`
+- [x] Update favicon references in `layout.tsx`
+- [x] Implement theme-aware logo switching in navbar
+- [x] Test logo rendering in light/dark modes
 
 **Day 3-5: Sidebar Implementation**
-- [ ] Create `MainSidebar` component (3 items: Home/Specs/Stats)
-- [ ] Create `SpecsNavSidebar` component (specs tree with sub-specs)
-- [ ] Build collapsible specs tree with expand/collapse
-- [ ] Add search/filter within specs nav sidebar
-- [ ] Integrate both sidebars into layouts (main sidebar always, specs nav on detail pages only)
-- [ ] Test two-sidebar layout on spec detail pages
+- [x] Create `MainSidebar` component (3 items: Home/Specs/Stats)
+- [x] Create `SpecsNavSidebar` component (specs tree with sub-specs)
+- [x] Build collapsible specs tree with expand/collapse
+- [x] Add search/filter within specs nav sidebar
+- [x] Integrate both sidebars into layouts (main sidebar always, specs nav on detail pages only)
+- [x] Test two-sidebar layout on spec detail pages
 
 **Day 6-7: Top Navbar Redesign**
-- [ ] Remove horizontal nav items from navbar
-- [ ] Move breadcrumb to navbar (next to logo)
-- [ ] Add GitHub icon link at right edge of navbar
-- [ ] Reposition: Logo → Breadcrumb ... Search → Theme → GitHub
-- [ ] Test responsive behavior (mobile collapse)
+- [x] Remove horizontal nav items from navbar
+- [x] Move breadcrumb to navbar (next to logo)
+- [x] Add GitHub icon link at right edge of navbar
+- [x] Reposition: Logo → Breadcrumb ... Search → Theme → GitHub
+- [x] Test responsive behavior (mobile collapse)
 
 ### Phase 2: Home Dashboard & Spec Detail (Week 2)
 
 **Day 8-9: Home Dashboard Implementation**
-- [ ] Design dashboard layout (status cards + activity timeline + quick actions)
-- [ ] Implement status overview cards (In Progress, Planned, Recently Added, Stats)
-- [ ] Build activity timeline component (recent status changes, creations, completions)
-- [ ] Add quick actions section (Create Spec, View All Specs, Board View)
-- [ ] Test dashboard with real data
-- [ ] Ensure dashboard loads quickly (<1s)
+- [x] Design dashboard layout (status cards + activity timeline + quick actions)
+- [x] Implement status overview cards (In Progress, Planned, Recently Added, Stats)
+- [x] Build activity timeline component (recent status changes, creations, completions)
+- [x] Add quick actions section (Create Spec, View All Specs, Board View)
+- [x] Test dashboard with real data
+- [x] Ensure dashboard loads quickly (<1s)
 
 **Day 10-11: Compact Spec Header**
-- [ ] Redesign spec header with integrated metadata
-- [ ] Remove "Back to Specs" button
-- [ ] Add small metadata row (created, updated, name)
-- [ ] Make header sticky with proper z-index
-- [ ] Display `title` prominently, `name` as metadata
+- [x] Redesign spec header with integrated metadata
+- [x] Remove "Back to Specs" button
+- [x] Add small metadata row (created, updated, name)
+- [x] Make header sticky with proper z-index
+- [x] Display `title` prominently, `name` as metadata
 
 **Day 10-11: Content Layout**
-- [ ] Remove max-width constraint on content
-- [ ] Remove left metadata sidebar entirely
-- [ ] Implement full-width single-column layout
-- [ ] Ensure proper responsive behavior
+- [x] Remove max-width constraint on content
+- [x] Remove left metadata sidebar entirely
+- [x] Implement full-width single-column layout
+- [x] Ensure proper responsive behavior
 
 **Day 12-13: Sub-Spec Integration**
-- [ ] Move sub-specs from tabs to specs nav sidebar tree
-- [ ] Implement sub-spec icon mapping system
-- [ ] Add expand/collapse for specs with sub-specs
-- [ ] Merge "Overview" and "README.md" (no duplication)
-- [ ] Fix sub-spec navigation routing
-- [ ] Ensure specs nav sidebar only appears on spec detail pages
+- [x] Move sub-specs from tabs to specs nav sidebar tree
+- [x] Implement sub-spec icon mapping system
+- [x] Add expand/collapse for specs with sub-specs
+- [x] Merge "Overview" and "README.md" (no duplication)
+- [x] Fix sub-spec navigation routing
+- [x] Ensure specs nav sidebar only appears on spec detail pages
 
 **Day 14: Timeline Redesign**
-- [ ] Implement vertical timeline component
-- [ ] Embed timeline in content area (not sidebar)
-- [ ] Add proper icons and visual states
-- [ ] Test with different status transitions
+- [x] Implement vertical timeline component
+- [x] Embed timeline in content area (not sidebar)
+- [x] Add proper icons and visual states
+- [x] Test with different status transitions
 
 ### Phase 3: Specs Page Unification (Week 3)
 
 **Day 15-16: Specs Page Route Changes**
-- [ ] Move spec list from `/` to `/specs`
-- [ ] Implement routing: `/` = dashboard, `/specs` = specs page
-- [ ] Update all internal links to point to `/specs`
-- [ ] Add sorting controls (ID desc, ID asc, updated, title)
-- [ ] Set default sort to ID descending
+- [x] Move spec list from `/` to `/specs`
+- [x] Implement routing: `/` = dashboard, `/specs` = specs page
+- [x] Update all internal links to point to `/specs`
+- [x] Add sorting controls (ID desc, ID asc, updated, title)
+- [x] Set default sort to ID descending
 - [ ] Implement table view option (toggle with card view)
 
 **Day 17-18: Board/List Layout Switcher**
-- [ ] Add layout switcher component (List/Board toggle) to `/specs`
-- [ ] Implement URL param handling (?view=list|board)
-- [ ] Add localStorage persistence for layout preference
-- [ ] Share spec card component between layouts
-- [ ] Update breadcrumbs: Home → Specs (List/Board View)
-- [ ] Remove old `/board` route (redirect to `/specs?view=board`)
-- [ ] Test navigation flow consistency
+- [x] Add layout switcher component (List/Board toggle) to `/specs`
+- [x] Implement URL param handling (?view=list|board)
+- [x] Add localStorage persistence for layout preference
+- [x] Share spec card component between layouts
+- [x] Update breadcrumbs: Home → Specs (List/Board View)
+- [x] Remove old `/board` route (redirect to `/specs?view=board`)
+- [x] Test navigation flow consistency
 
 **Day 19-21: Polish & Testing**
-- [ ] Fix any navigation routing issues
-- [ ] Ensure all links work correctly
+- [x] Fix any navigation routing issues
+- [x] Ensure all links work correctly
 - [ ] Test responsive behavior on mobile/tablet
 - [ ] Accessibility audit (keyboard navigation, ARIA labels)
 - [ ] Performance testing (ensure no regressions)
@@ -649,56 +652,56 @@ const SUB_SPEC_ICONS: Record<string, { icon: LucideIcon, color: string }> = {
 ### Functional Testing
 
 **Branding:**
-- [ ] Logo displays correctly in navbar (light mode)
-- [ ] Logo switches to dark variant in dark mode
-- [ ] Favicon appears in browser tabs
-- [ ] All icon sizes render correctly
+- [x] Logo displays correctly in navbar (light mode)
+- [x] Logo switches to dark variant in dark mode
+- [x] Favicon appears in browser tabs
+- [x] All icon sizes render correctly
 
 **Layout:**
-- [ ] Main sidebar appears on all pages with 3 items (Home, Specs, Stats)
-- [ ] Specs nav sidebar appears only on spec detail pages
-- [ ] Both sidebars are sticky and don't scroll with content
-- [ ] Both sidebars collapsible function works
-- [ ] Top navbar has GitHub icon at right edge
-- [ ] Top navbar breadcrumb updates correctly on navigation
-- [ ] Search and theme toggle positioned correctly
-- [ ] Two-sidebar layout doesn't feel cramped on spec detail pages
+- [x] Main sidebar appears on all pages with 3 items (Home, Specs, Stats)
+- [x] Specs nav sidebar appears only on spec detail pages
+- [x] Both sidebars are sticky and don't scroll with content
+- [x] Both sidebars collapsible function works
+- [x] Top navbar has GitHub icon at right edge
+- [x] Top navbar breadcrumb updates correctly on navigation
+- [x] Search and theme toggle positioned correctly
+- [x] Two-sidebar layout doesn't feel cramped on spec detail pages
 
 **Spec Detail:**
-- [ ] Spec header shows all metadata in compact format
-- [ ] Title displays correctly (`title` field, not `name`)
-- [ ] Name field shown in metadata row
-- [ ] Content uses full width (no artificial constraints)
-- [ ] Timeline renders vertically with correct states
-- [ ] Sub-specs appear in sidebar tree (not tabs)
-- [ ] Sub-spec navigation works (no 404 errors)
-- [ ] Overview and README.md merged (no duplication)
+- [x] Spec header shows all metadata in compact format
+- [x] Title displays correctly (`title` field, not `name`)
+- [x] Name field shown in metadata row
+- [x] Content uses full width (no artificial constraints)
+- [x] Timeline renders vertically with correct states
+- [x] Sub-specs appear in sidebar tree (not tabs)
+- [x] Sub-spec navigation works (no 404 errors)
+- [x] Overview and README.md merged (no duplication)
 
 **Home Dashboard:**
-- [ ] Dashboard loads quickly (<1s)
-- [ ] Status overview cards display correct counts
-- [ ] In Progress and Planned lists show relevant specs
-- [ ] Recently Added shows last 5 specs
-- [ ] Activity timeline shows recent changes
-- [ ] Quick actions navigate correctly
-- [ ] Dashboard responsive on all screen sizes
+- [x] Dashboard loads quickly (<1s)
+- [x] Status overview cards display correct counts
+- [x] In Progress and Planned lists show relevant specs
+- [x] Recently Added shows last 5 specs
+- [x] Activity timeline shows recent changes
+- [x] Quick actions navigate correctly
+- [x] Dashboard responsive on all screen sizes
 
 **Specs Page:**
-- [ ] Route `/specs` works correctly
-- [ ] Specs sorted by ID descending by default
-- [ ] Sort controls change order correctly
+- [x] Route `/specs` works correctly
+- [x] Specs sorted by ID descending by default
+- [x] Sort controls change order correctly
 - [ ] Table view displays properly
-- [ ] Filters work in conjunction with sorting
+- [x] Filters work in conjunction with sorting
 
 **Board/List Switcher:**
-- [ ] Layout switcher appears on `/specs` page
-- [ ] Switching between List and Board views works
-- [ ] Layout preference persists via localStorage
-- [ ] URL param reflects current view (?view=list|board)
-- [ ] Card click navigates to spec detail from both views
-- [ ] Breadcrumb shows: Home → Specs (List View) or (Board View)
-- [ ] Navigation back to `/specs` returns to same view mode
-- [ ] Old `/board` route redirects to `/specs?view=board`
+- [x] Layout switcher appears on `/specs` page
+- [x] Switching between List and Board views works
+- [x] Layout preference persists via localStorage
+- [x] URL param reflects current view (?view=list|board)
+- [x] Card click navigates to spec detail from both views
+- [x] Breadcrumb shows: Home → Specs (List View) or (Board View)
+- [x] Navigation back to `/specs` returns to same view mode
+- [x] Old `/board` route redirects to `/specs?view=board`
 
 ### Visual Testing
 

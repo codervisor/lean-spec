@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/status-badge';
 import { cn } from '@/lib/utils';
+import { extractH1Title } from '@/lib/utils';
 
 interface SubSpec {
   name: string;
@@ -37,6 +38,7 @@ interface Spec {
   status: string | null;
   priority: string | null;
   subSpecs?: SubSpec[];
+  contentMd?: string;
 }
 
 interface SpecsNavSidebarProps {
@@ -94,8 +96,8 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
   };
 
   return (
-    <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-[280px] border-r bg-background flex flex-col">
-      <div className="p-4 border-b">
+    <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-[280px] shrink-0 border-r border-border bg-background flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-border">
         <h2 className="font-semibold text-sm mb-3">Specifications</h2>
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -103,12 +105,12 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
             placeholder="Search specs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9"
+            className="pl-8 h-9 border-border"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
         <div className="p-2">
           {sortedSpecs.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
@@ -119,7 +121,10 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
               const isCurrentSpec = spec.id === currentSpecId;
               const isExpanded = expandedSpecs.has(spec.id);
               const hasSubSpecs = spec.subSpecs && spec.subSpecs.length > 0;
-              const displayTitle = spec.title || spec.specName;
+              
+              // Extract H1 title, fallback to title or name
+              const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
+              const displayTitle = h1Title || spec.title || spec.specName;
               
               return (
                 <div key={spec.id} className="mb-1">
@@ -146,6 +151,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                           : 'hover:bg-accent/50',
                         !hasSubSpecs && 'ml-5'
                       )}
+                      title={spec.specName} /* Show name as tooltip */
                     >
                       <FileText className="h-4 w-4 shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
@@ -156,7 +162,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                             </span>
                           )}
                         </div>
-                        <div className="truncate text-xs">{displayTitle}</div>
+                        <div className="truncate text-xs leading-relaxed">{displayTitle}</div>
                         {spec.status && (
                           <div className="mt-1">
                             <StatusBadge status={spec.status} className="text-xs scale-90" />
