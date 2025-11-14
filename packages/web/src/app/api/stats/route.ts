@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getStats } from '@/lib/db/queries';
+import { getStats } from '@/lib/db/service-queries';
 
 export async function GET() {
   try {

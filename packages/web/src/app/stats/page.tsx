@@ -2,7 +2,7 @@
  * Stats page with detailed metrics and charts
  */
 
-import { getStats, getSpecs } from '@/lib/db/queries';
+import { getStats, getSpecs } from '@/lib/db/service-queries';
 import { StatsClient } from './stats-client';
 
 // Force dynamic rendering

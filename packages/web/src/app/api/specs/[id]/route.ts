@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getSpecById } from '@/lib/db/queries';
+import { getSpecById } from '@/lib/db/service-queries';
 
 export async function GET(
   request: Request,
