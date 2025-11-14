@@ -159,7 +159,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                         <div className="truncate text-xs">{displayTitle}</div>
                         {spec.status && (
                           <div className="mt-1">
-                            <StatusBadge status={spec.status} size="sm" />
+                            <StatusBadge status={spec.status} className="text-xs scale-90" />
                           </div>
                         )}
                       </div>

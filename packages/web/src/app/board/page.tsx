@@ -2,8 +2,17 @@
  * Board page - Redirects to unified specs page with board view
  */
 
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Board() {
-  redirect('/specs?view=board');
+  const router = useRouter();
+  
+  useEffect(() => {
+    router.replace('/specs?view=board');
+  }, [router]);
+
+  return null;
 }
