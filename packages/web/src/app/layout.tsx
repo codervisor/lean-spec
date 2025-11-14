@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { MainSidebar } from "@/components/main-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toast } from "@/components/ui/toast";
 import { getSpecs } from "@/lib/db/queries";
@@ -50,9 +51,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Navigation specs={specsForSearch} />
-          <main className="min-h-screen">
-            {children}
-          </main>
+          <div className="flex">
+            <MainSidebar />
+            <main className="flex-1 min-h-[calc(100vh-3.5rem)]">
+              {children}
+            </main>
+          </div>
           <Toast />
         </ThemeProvider>
       </body>
