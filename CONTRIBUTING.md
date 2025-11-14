@@ -17,17 +17,41 @@ Thanks for your interest in contributing! LeanSpec is about keeping things lean,
 # Install dependencies
 pnpm install
 
-# Run in watch mode while developing
-pnpm dev
-
-# Run tests
-pnpm test
-
-# Type check
-pnpm typecheck
-
-# Build
+# Build all packages (uses Turborepo with caching)
 pnpm build
+
+# Development
+pnpm dev          # Start web dev server
+pnpm dev:cli      # Start CLI in watch mode
+
+# Testing & Validation
+pnpm test         # Run tests (with caching)
+pnpm typecheck    # Type check all packages (with caching)
+```
+
+### Monorepo with Turborepo
+
+This project uses [Turborepo](https://turbo.build/) to manage the monorepo with pnpm workspaces:
+
+- **Parallel execution** - Independent packages build simultaneously
+- **Smart caching** - Only rebuilds what changed (126ms vs 19s!)
+- **Task dependencies** - Dependencies built first automatically
+
+**Packages:**
+- `packages/cli` - Main CLI tool (published as `lean-spec`)
+- `packages/core` - Core spec parsing/validation library (internal)
+- `packages/web` - Live specs showcase (Next.js app)
+- `docs-site` - Documentation website (Docusaurus)
+
+**Key files:**
+- `turbo.json` - Task pipeline configuration
+- `pnpm-workspace.yaml` - Workspace definitions
+- `package.json` - Root scripts that invoke Turbo
+
+**Build specific package:**
+```bash
+turbo run build --filter=lean-spec
+turbo run build --filter=@leanspec/core
 ```
 
 ## Testing

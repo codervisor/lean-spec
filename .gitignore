@@ -9,3 +9,5 @@ docs-site/.docusaurus/
 tmp/
 
 *.db
+.turbo
+*.tsbuildinfo
