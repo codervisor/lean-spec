@@ -1,14 +1,9 @@
 /**
- * Board page - Kanban view of specs by status
+ * Board page - Redirects to unified specs page with board view
  */
 
-import { getSpecs } from '@/lib/db/queries';
-import { BoardClient } from './board-client';
+import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page needs runtime data
-export const dynamic = 'force-dynamic';
-
-export default async function Board() {
-  const specs = await getSpecs();
-  return <BoardClient initialSpecs={specs} />;
+export default function Board() {
+  redirect('/specs?view=board');
 }
