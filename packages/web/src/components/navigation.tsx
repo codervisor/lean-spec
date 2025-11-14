@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Github, ChevronRight } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -94,19 +95,23 @@ export function Navigation({ specs }: NavigationProps) {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="sticky top-0 z-50 w-full h-14 border-b border-gray-200 dark:border-gray-800 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full h-14 border-b border-gray-200 dark:border-gray-800 bg-background">
       <div className="flex items-center justify-between h-full px-4">
         {/* Left: Logo + Breadcrumb */}
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center space-x-2 shrink-0">
-            <img 
+            <Image
               src="/logo-with-bg.svg" 
               alt="LeanSpec" 
+              width={32}
+              height={32}
               className="h-8 w-8 dark:hidden" 
             />
-            <img 
+            <Image
               src="/logo-dark-bg.svg" 
               alt="LeanSpec" 
+              width={32}
+              height={32}
               className="h-8 w-8 hidden dark:block" 
             />
             <span className="font-bold text-xl">LeanSpec</span>

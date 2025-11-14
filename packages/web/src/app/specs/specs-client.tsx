@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/select';
 import { 
   Search, 
-  FileText, 
   CheckCircle2, 
   PlayCircle, 
   Clock,
@@ -53,7 +52,7 @@ interface SpecsClientProps {
 type ViewMode = 'list' | 'board';
 type SortBy = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 
-export function SpecsClient({ initialSpecs, initialStats }: SpecsClientProps) {
+export function SpecsClient({ initialSpecs }: SpecsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -72,10 +71,17 @@ export function SpecsClient({ initialSpecs, initialStats }: SpecsClientProps) {
     }
     return 'list';
   });
+  
+  const isFirstRender = useRef(true);
 
-  // Update URL when view mode changes
+  // Update URL when view mode changes (skip on initial mount)
   useEffect(() => {
-    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    
+    const current = new URLSearchParams(window.location.search);
     if (viewMode === 'board') {
       current.set('view', 'board');
     } else {
@@ -89,10 +95,10 @@ export function SpecsClient({ initialSpecs, initialStats }: SpecsClientProps) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('specs-view-mode', viewMode);
     }
-  }, [viewMode, router, searchParams]);
+  }, [viewMode, router]);
 
   const filteredAndSortedSpecs = useMemo(() => {
-    let specs = initialSpecs.filter(spec => {
+    const specs = initialSpecs.filter(spec => {
       const matchesSearch = !searchQuery ||
         spec.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         spec.specName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -130,8 +136,6 @@ export function SpecsClient({ initialSpecs, initialStats }: SpecsClientProps) {
 
     return specs;
   }, [initialSpecs, searchQuery, statusFilter, priorityFilter, sortBy]);
-
-  const stats = initialStats;
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -297,38 +301,38 @@ function ListView({ specs }: { specs: Spec[] }) {
 }
 
 function BoardView({ specs }: { specs: Spec[] }) {
-  const statusConfig = {
-    'planned': {
-      icon: Clock,
-      title: 'Planned',
-      colorClass: 'text-blue-600 dark:text-blue-400',
-      bgClass: 'bg-blue-50 dark:bg-blue-900/20',
-      borderClass: 'border-blue-200 dark:border-blue-800'
-    },
-    'in-progress': {
-      icon: PlayCircle,
-      title: 'In Progress',
-      colorClass: 'text-orange-600 dark:text-orange-400',
-      bgClass: 'bg-orange-50 dark:bg-orange-900/20',
-      borderClass: 'border-orange-200 dark:border-orange-800'
-    },
-    'complete': {
-      icon: CheckCircle2,
-      title: 'Complete',
-      colorClass: 'text-green-600 dark:text-green-400',
-      bgClass: 'bg-green-50 dark:bg-green-900/20',
-      borderClass: 'border-green-200 dark:border-green-800'
-    },
-    'archived': {
-      icon: Archive,
-      title: 'Archived',
-      colorClass: 'text-gray-600 dark:text-gray-400',
-      bgClass: 'bg-gray-50 dark:bg-gray-900/20',
-      borderClass: 'border-gray-200 dark:border-gray-800'
-    }
-  };
-
   const columns = useMemo(() => {
+    const statusConfig = {
+      'planned': {
+        icon: Clock,
+        title: 'Planned',
+        colorClass: 'text-blue-600 dark:text-blue-400',
+        bgClass: 'bg-blue-50 dark:bg-blue-900/20',
+        borderClass: 'border-blue-200 dark:border-blue-800'
+      },
+      'in-progress': {
+        icon: PlayCircle,
+        title: 'In Progress',
+        colorClass: 'text-orange-600 dark:text-orange-400',
+        bgClass: 'bg-orange-50 dark:bg-orange-900/20',
+        borderClass: 'border-orange-200 dark:border-orange-800'
+      },
+      'complete': {
+        icon: CheckCircle2,
+        title: 'Complete',
+        colorClass: 'text-green-600 dark:text-green-400',
+        bgClass: 'bg-green-50 dark:bg-green-900/20',
+        borderClass: 'border-green-200 dark:border-green-800'
+      },
+      'archived': {
+        icon: Archive,
+        title: 'Archived',
+        colorClass: 'text-gray-600 dark:text-gray-400',
+        bgClass: 'bg-gray-50 dark:bg-gray-900/20',
+        borderClass: 'border-gray-200 dark:border-gray-800'
+      }
+    };
+    
     const statuses = ['planned', 'in-progress', 'complete', 'archived'] as const;
     
     return statuses.map(status => ({
