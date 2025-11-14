@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LayoutGrid, Github, BarChart3 } from 'lucide-react';
+import { Github, ChevronRight } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { QuickSearch } from '@/components/quick-search';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface Spec {
   id: string
@@ -21,68 +21,113 @@ interface NavigationProps {
   specs: Spec[]
 }
 
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
+  return (
+    <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+      {items.map((item, index) => (
+        <div key={index} className="flex items-center gap-1">
+          {index > 0 && <ChevronRight className="h-4 w-4" />}
+          {item.href ? (
+            <Link 
+              href={item.href}
+              className="hover:text-foreground transition-colors"
+            >
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-foreground">{item.label}</span>
+          )}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
+  if (pathname === '/') {
+    return [{ label: 'Home' }];
+  }
+  
+  if (pathname === '/stats') {
+    return [
+      { label: 'Home', href: '/' },
+      { label: 'Stats' }
+    ];
+  }
+  
+  if (pathname === '/specs' || pathname.startsWith('/specs?')) {
+    const searchParams = new URLSearchParams(pathname.split('?')[1] || '');
+    const view = searchParams.get('view');
+    const viewLabel = view === 'board' ? 'Board View' : 'List View';
+    return [
+      { label: 'Home', href: '/' },
+      { label: `Specs (${viewLabel})` }
+    ];
+  }
+  
+  if (pathname.startsWith('/specs/')) {
+    const specId = pathname.split('/')[2];
+    return [
+      { label: 'Home', href: '/' },
+      { label: 'Specs', href: '/specs' },
+      { label: specId }
+    ];
+  }
+  
+  if (pathname === '/board') {
+    return [
+      { label: 'Home', href: '/' },
+      { label: 'Board' }
+    ];
+  }
+  
+  return [{ label: 'Home', href: '/' }];
+}
+
 export function Navigation({ specs }: NavigationProps) {
   const pathname = usePathname();
+  const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center px-4">
-        <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <img src="/logo.svg" alt="LeanSpec" className="h-6 w-6" />
+    <header className="sticky top-0 z-50 w-full h-14 border-b border-gray-200 dark:border-gray-800 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center justify-between h-full px-4">
+        {/* Left: Logo + Breadcrumb */}
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center space-x-2 shrink-0">
+            <img 
+              src="/logo-with-bg.svg" 
+              alt="LeanSpec" 
+              className="h-8 w-8 dark:hidden" 
+            />
+            <img 
+              src="/logo-dark-bg.svg" 
+              alt="LeanSpec" 
+              className="h-8 w-8 hidden dark:block" 
+            />
             <span className="font-bold text-xl">LeanSpec</span>
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link
-              href="/"
-              className={cn(
-                "transition-colors hover:text-foreground/80 flex items-center gap-1.5",
-                pathname === "/" 
-                  ? "text-foreground font-semibold" 
-                  : "text-foreground/60"
-              )}
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </Link>
-            <Link
-              href="/board"
-              className={cn(
-                "transition-colors hover:text-foreground/80 flex items-center gap-1.5",
-                pathname === "/board" 
-                  ? "text-foreground font-semibold" 
-                  : "text-foreground/60"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Board
-            </Link>
-            <Link
-              href="/stats"
-              className={cn(
-                "transition-colors hover:text-foreground/80 flex items-center gap-1.5",
-                pathname === "/stats" 
-                  ? "text-foreground font-semibold" 
-                  : "text-foreground/60"
-              )}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Stats
-            </Link>
-            <a
-              href="https://github.com/codervisor/lean-spec"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1.5"
-            >
-              <Github className="h-4 w-4" />
-              GitHub
-            </a>
-          </nav>
+          <Breadcrumb items={breadcrumbs} />
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        
+        {/* Right: Search + Theme + GitHub */}
+        <div className="flex items-center gap-2">
           <QuickSearch specs={specs} />
           <ThemeToggle />
+          <Button variant="ghost" size="icon" asChild>
+            <a 
+              href="https://github.com/codervisor/lean-spec" 
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
+            >
+              <Github className="h-5 w-5" />
+            </a>
+          </Button>
         </div>
       </div>
     </header>

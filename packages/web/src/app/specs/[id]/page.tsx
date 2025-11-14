@@ -4,34 +4,30 @@
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
 import { getSpecById, getSpecs } from '@/lib/db/queries';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
+import { Badge } from '@/components/ui/badge';
 import { SpecTimeline } from '@/components/spec-timeline';
-import { SpecMetadata } from '@/components/spec-metadata';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
-import { SubSpecTabs } from '@/components/sub-spec-tabs';
-import { SpecSidebar } from '@/components/spec-sidebar';
+import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 
 // Force dynamic rendering - this page needs runtime data
 export const dynamic = 'force-dynamic';
 
 export default async function SpecDetailPage({ 
-  params 
+  params,
+  searchParams
 }: { 
-  params: Promise<{ id: string }> 
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ subspec?: string }>;
 }) {
   const { id } = await params;
+  const { subspec } = await searchParams;
+  
   const [spec, allSpecs] = await Promise.all([
     getSpecById(id),
     getSpecs()
@@ -45,95 +41,114 @@ export default async function SpecDetailPage({
   const tags = spec.tags ? (typeof spec.tags === 'string' ? JSON.parse(spec.tags) : spec.tags) : [];
   const specWithTags = { ...spec, tags };
 
+  // Get content to display (main or sub-spec)
+  let displayContent = spec.contentMd;
+  let displayTitle = spec.title || spec.specName;
+  
+  if (subspec && spec.subSpecs) {
+    const subSpecData = spec.subSpecs.find(s => s.file === subspec);
+    if (subSpecData) {
+      displayContent = subSpecData.content;
+      displayTitle = `${spec.title || spec.specName} - ${subSpecData.name}`;
+    }
+  }
+
+  // Format dates
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Left Sidebar - Spec List */}
-      <SpecSidebar specs={allSpecs} currentSpecId={spec.id} />
+    <div className="flex min-h-[calc(100vh-3.5rem)]">
+      {/* Specs Navigation Sidebar */}
+      <SpecsNavSidebar 
+        specs={allSpecs} 
+        currentSpecId={spec.id}
+        currentSubSpec={subspec}
+      />
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
-        {/* Sticky Breadcrumb Navigation */}
-        <div className="sticky top-14 z-30 border-b border-gray-200 dark:border-gray-800 bg-muted/50 backdrop-blur supports-[backdrop-filter]:bg-muted/95">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/">Home</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/">Specs</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </div>
-
-        {/* Sticky Header */}
-        <header className="sticky top-[calc(3.5rem+3.25rem)] z-20 border-b border-gray-200 dark:border-gray-800 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/95">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
-            {/* Back button */}
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Specs
-              </Button>
-            </Link>
-
-            {/* Title and badges */}
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {spec.specNumber && (
-                  <span className="text-muted-foreground">#{spec.specNumber} </span>
-                )}
-                {spec.title || spec.specName}
-              </h1>
+        {/* Compact Sticky Header */}
+        <header className="sticky top-14 z-20 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/95">
+          <div className="px-6 py-4">
+            {/* Line 1: Spec number + Title */}
+            <h1 className="text-2xl font-bold tracking-tight mb-3">
+              {spec.specNumber && (
+                <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+              )}
+              {spec.title || spec.specName}
+            </h1>
+            
+            {/* Line 2: Status, Priority, Tags, Actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={spec.status || 'planned'} />
+              <PriorityBadge priority={spec.priority || 'medium'} />
               
-              <div className="flex flex-wrap gap-2 mt-3">
-                <StatusBadge status={spec.status || 'planned'} />
-                <PriorityBadge priority={spec.priority || 'medium'} />
-              </div>
+              {tags.length > 0 && (
+                <>
+                  <div className="h-4 w-px bg-border mx-1" />
+                  {tags.slice(0, 5).map((tag: string) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {tags.length > 5 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{tags.length - 5} more
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Line 3: Small metadata row */}
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-3">
+              <span>Created: {formatDate(spec.createdAt)}</span>
+              <span>•</span>
+              <span>Updated: {formatDate(spec.updatedAt)}</span>
+              <span>•</span>
+              <span>Name: {spec.specName}</span>
+              {spec.assignee && (
+                <>
+                  <span>•</span>
+                  <span>Assignee: {spec.assignee}</span>
+                </>
+              )}
             </div>
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left sidebar - Metadata (Sticky) */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-[calc(3.5rem+3.25rem+12rem)] space-y-6">
-                {/* Timeline */}
-                <Card className="p-4">
-                  <h3 className="text-sm font-semibold mb-2">Timeline</h3>
-                  <SpecTimeline
-                    createdAt={spec.createdAt}
-                    updatedAt={spec.updatedAt}
-                    completedAt={spec.completedAt}
-                    status={spec.status || 'planned'}
-                  />
-                </Card>
+        {/* Main content (full width) */}
+        <main className="px-6 py-8">
+          <div className="space-y-8">
+            {/* Timeline embedded in content */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Timeline</h2>
+              <SpecTimeline
+                createdAt={spec.createdAt}
+                updatedAt={spec.updatedAt}
+                completedAt={spec.completedAt}
+                status={spec.status || 'planned'}
+              />
+            </Card>
 
-                {/* Metadata */}
-                <SpecMetadata spec={specWithTags} />
-              </div>
-            </div>
-
-            {/* Main content - Markdown */}
-            <div className="lg:col-span-2">
-              <Card className="p-8">
-                <SubSpecTabs 
-                  mainContent={spec.contentMd} 
-                  subSpecs={spec.subSpecs || []} 
-                />
-              </Card>
-            </div>
+            {/* Markdown content */}
+            <Card className="p-8">
+              <article className="prose prose-slate dark:prose-invert max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                >
+                  {displayContent}
+                </ReactMarkdown>
+              </article>
+            </Card>
           </div>
         </main>
       </div>
