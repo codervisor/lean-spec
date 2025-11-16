@@ -96,6 +96,11 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
+          href: 'https://web.lean-spec.dev',
+          label: 'Web App',
+          position: 'left',
+        },
+        {
           type: 'localeDropdown',
           position: 'right',
         },
