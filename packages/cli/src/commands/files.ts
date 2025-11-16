@@ -7,6 +7,7 @@ import { resolveSpecPath } from '../utils/path-helpers.js';
 import { loadConfig } from '../config.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
+import { countTokens } from '@leanspec/core';
 
 /**
  * Files command - list files in a spec
@@ -59,7 +60,9 @@ export async function showFiles(
   console.log(chalk.green('Required:'));
   const readmeStat = await fs.stat(spec.filePath);
   const readmeSize = formatSize(readmeStat.size);
-  console.log(chalk.green(`  ✓ README.md              (${readmeSize})  Main spec`));
+  const readmeContent = await fs.readFile(spec.filePath, 'utf-8');
+  const readmeTokens = await countTokens({ content: readmeContent });
+  console.log(chalk.green(`  ✓ README.md              (${readmeSize}, ~${readmeTokens.total.toLocaleString()} tokens)  Main spec`));
   console.log('');
 
   // Filter by type if requested
@@ -84,7 +87,10 @@ export async function showFiles(
     console.log(chalk.cyan('Documents:'));
     for (const file of documents) {
       const size = formatSize(file.size);
-      console.log(chalk.cyan(`  ✓ ${sanitizeUserInput(file.name).padEnd(20)} (${size})`));
+      // Count tokens for document files
+      const content = await fs.readFile(file.path, 'utf-8');
+      const tokenCount = await countTokens({ content });
+      console.log(chalk.cyan(`  ✓ ${sanitizeUserInput(file.name).padEnd(20)} (${size}, ~${tokenCount.total.toLocaleString()} tokens)`));
     }
     console.log('');
   }
