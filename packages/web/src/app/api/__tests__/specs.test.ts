@@ -11,6 +11,10 @@ vi.mock('@/lib/db/service-queries', () => ({
 }));
 
 describe('Spec API Routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('GET /api/specs/[id]', () => {
     it('should return spec with cache headers', async () => {
       const { getSpecById } = await import('@/lib/db/service-queries');
