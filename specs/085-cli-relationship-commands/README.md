@@ -24,8 +24,10 @@ created_at: '2025-11-16T13:33:40.858Z'
 1. **Violates Core Rule #6**: "NEVER manually edit system-managed frontmatter"
 2. **Error-prone**: Easy to create invalid spec references (typos, non-existent specs)
 3. **No validation**: Can break `lean-spec deps` without knowing
-4. **Inconsistent with other metadata**: Status, priority, tags use `lean-spec update`, but relationships don't
+4. **Inconsistent with other metadata**: Status, priority, tags use CLI flags, but relationships don't
 5. **Poor DX**: Have to remember YAML syntax, indentation, array format
+6. **Blocks AI agents**: No programmatic interface for MCP tools (spec 076)
+7. **Missing from `create`**: Can't set relationships at creation time (unlike tags, priority, assignee)
 
 **Current Workaround** (from AGENTS.md):
 ```yaml
@@ -34,20 +36,30 @@ depends_on: [042, 035]
 related: [081, 068]
 ```
 
-**What We Need**: CLI commands to manage relationships safely:
+**What We Need**: CLI commands AND MCP tools to manage relationships safely:
 ```bash
+# At creation
+lean-spec create new-feature --depends-on 042,035 --related 081
+
+# After creation
 lean-spec link 085 --depends-on 042,035
 lean-spec link 085 --related 081,068
 lean-spec unlink 085 --depends-on 042
 lean-spec deps 085  # Verify relationships
+
+# MCP usage (AI agents)
+await mcp_lean_spec_create({ name: "new-feature", dependsOn: ["042", "035"] });
+await mcp_lean_spec_link({ specPath: "085", dependsOn: ["042", "035"] });
+await mcp_lean_spec_unlink({ specPath: "085", related: ["081"] });
 ```
 
 **Why It Matters**:
-- Consistency with existing `lean-spec update` command
+- Consistency with other metadata (tags, priority, assignee all settable at creation)
 - Validation prevents broken relationships
-- Enables automation (scripts, CI/CD)
+- Enables automation (scripts, CI/CD, **AI agents**)
 - Better error messages
-- Completes the metadata management story
+- Completes the metadata management story (CLI + MCP)
+- **Unblocks spec 076** (programmatic-spec-relationships)
 
 ## Design
 
@@ -59,9 +71,15 @@ lean-spec deps 085  # Verify relationships
 3. Clear intent: "linking specs" vs "updating metadata"
 4. Future-proof for advanced relationship features (types, labels, etc.)
 
+**Additionally**: Extend `lean-spec create` to support relationship flags for consistency with other metadata (tags, priority, assignee).
+
 ### Command Interface
 
 ```bash
+# Create with relationships (new)
+lean-spec create <name> --depends-on <spec1,spec2,...>
+lean-spec create <name> --related <spec1,spec2,...>
+
 # Add relationships
 lean-spec link <spec> --depends-on <spec1,spec2,...>
 lean-spec link <spec> --related <spec1,spec2,...>
@@ -81,6 +99,16 @@ lean-spec deps <spec>
 ```
 
 ### Examples
+
+**Creating with relationships:**
+```bash
+# Create spec that depends on 042 and relates to 068
+lean-spec create api-redesign --depends-on 042 --related 068,081
+
+# Result in api-redesign/README.md frontmatter:
+# depends_on: [042]
+# related: [068, 081]
+```
 
 **Adding dependencies:**
 ```bash
@@ -179,6 +207,28 @@ export function unlinkCommand(): Command {
     .option('--related <specs>', 'Remove related specs')
     .option('--all', 'Remove all relationships of specified type')
     .action(async (spec, options) => { ... });
+}
+
+// packages/cli/src/commands/create.ts (extend existing)
+export function createCommand(): Command {
+  return new Command('create')
+    .description('Create new spec in folder structure')
+    .argument('<name>', 'Name of the spec')
+    // ... existing options ...
+    .option('--depends-on <specs>', 'Set dependencies (comma-separated)')
+    .option('--related <specs>', 'Set related specs (comma-separated)')
+    .action(async (name, options) => { 
+      await createSpec(name, options);
+      
+      // Add relationships after creation if specified
+      if (options.dependsOn || options.related) {
+        await updateRelationships(name, {
+          dependsOn: options.dependsOn?.split(','),
+          related: options.related?.split(','),
+          operation: 'add',
+        });
+      }
+    });
 }
 ```
 
@@ -347,6 +397,157 @@ Required By:
 
 **No changes needed** - `deps` command already reads frontmatter correctly.
 
+### MCP Integration
+
+**Goal**: Expose `link`/`unlink` functionality as MCP tools for AI agents (spec 076).
+
+**MCP Tool Design** (leveraging modular architecture from spec 080):
+
+```typescript
+// packages/cli/src/mcp/tools/create.ts (extend existing)
+export function createTool(): ToolDefinition {
+  return [
+    'create',
+    {
+      title: 'Create Spec',
+      description: '...',
+      inputSchema: {
+        name: z.string(),
+        // ... existing fields ...
+        dependsOn: z.array(z.string()).optional().describe('Specs this depends on'),
+        related: z.array(z.string()).optional().describe('Related specs (bidirectional)'),
+      },
+      // ... implementation includes relationship handling ...
+    }
+  ];
+}
+
+// packages/cli/src/mcp/tools/link.ts
+export function linkTool(): ToolDefinition {
+  return [
+    'link',
+    {
+      title: 'Link Specs',
+      description: 'Add relationships between specs (depends_on, related). Use this to establish dependencies or related connections between specifications.',
+      inputSchema: {
+        specPath: z.string().describe('The spec to update (e.g., "085", "cli-relationship-commands")'),
+        dependsOn: z.array(z.string()).optional().describe('Specs this depends on'),
+        related: z.array(z.string()).optional().describe('Related specs (bidirectional)'),
+        blocks: z.array(z.string()).optional().describe('Specs this blocks (inverse of depends-on)'),
+      },
+      outputSchema: {
+        success: z.boolean(),
+        updated: z.array(z.string()),
+      },
+    },
+    async (input) => {
+      try {
+        // Reuse CLI logic
+        await updateRelationships(input.specPath, {
+          dependsOn: input.dependsOn,
+          related: input.related,
+          operation: 'add',
+        });
+        
+        return {
+          content: [{ type: 'text', text: 'Relationships updated successfully' }],
+          structuredContent: { success: true, updated: [input.specPath] },
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: formatErrorMessage('Error linking specs', error) }],
+          isError: true,
+        };
+      }
+    }
+  ];
+}
+
+// packages/cli/src/mcp/tools/unlink.ts
+export function unlinkTool(): ToolDefinition {
+  return [
+    'unlink',
+    {
+      title: 'Unlink Specs',
+      description: 'Remove relationships between specs. Use this to remove dependencies or related connections.',
+      inputSchema: {
+        specPath: z.string().describe('The spec to update'),
+        dependsOn: z.array(z.string()).optional().describe('Dependencies to remove'),
+        related: z.array(z.string()).optional().describe('Related specs to remove'),
+        all: z.boolean().optional().describe('Remove all relationships of specified type'),
+      },
+      outputSchema: {
+        success: z.boolean(),
+        updated: z.array(z.string()),
+      },
+    },
+    async (input) => {
+      try {
+        await updateRelationships(input.specPath, {
+          dependsOn: input.dependsOn,
+          related: input.related,
+          operation: 'remove',
+        });
+        
+        return {
+          content: [{ type: 'text', text: 'Relationships removed successfully' }],
+          structuredContent: { success: true, updated: [input.specPath] },
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: formatErrorMessage('Error unlinking specs', error) }],
+          isError: true,
+        };
+      }
+    }
+  ];
+}
+```
+
+**Registration** (in `packages/cli/src/mcp/tools/registry.ts`):
+```typescript
+import { linkTool } from './link.js';
+import { unlinkTool } from './unlink.js';
+
+export function registerTools(server: McpServer): void {
+  // ... existing tools ...
+  server.registerTool(...linkTool());      // Add alphabetically
+  // ... existing tools ...
+  server.registerTool(...unlinkTool());    // Add alphabetically
+  // ... existing tools ...
+}
+```
+
+**Benefits**:
+- AI agents can manage relationships without manual YAML editing
+- Consistent interface between CLI and MCP
+- Reuses validation and business logic from CLI
+- Follows established modular pattern from spec 080
+- Enables spec 076 (programmatic-spec-relationships)
+
+**Example AI Agent Workflow**:
+```typescript
+// Before: Manual YAML editing (error-prone)
+await mcp_lean_spec_view({ specPath: "085" });
+// Parse YAML, edit frontmatter manually, risk corruption
+
+// After: Programmatic interface (safe, validated)
+// At creation
+await mcp_lean_spec_create({
+  name: "new-feature",
+  dependsOn: ["042", "035"],
+  related: ["068"]
+});
+
+// After creation
+await mcp_lean_spec_link({
+  specPath: "085",
+  dependsOn: ["042", "035"],
+  related: ["082"]
+});
+// Done! Validated, bidirectional updates handled automatically
+```
+
 ## Plan
 
 ### Phase 1: Core Commands (Days 1-2)
@@ -361,13 +562,15 @@ Required By:
 - [ ] Add tests for link command
 - [ ] Update CLI index to register command
 
-**Day 2: `unlink` Command**
+**Day 2: `unlink` Command + `create` Extension**
 - [ ] Create `packages/cli/src/commands/unlink.ts`
 - [ ] Implement `--depends-on` option (remove dependencies)
 - [ ] Implement `--related` option (remove related specs)
 - [ ] Implement `--all` flag (remove all of type)
 - [ ] Handle bidirectional removal for `related`
 - [ ] Add tests for unlink command
+- [ ] **Extend `create` command** with `--depends-on` and `--related` flags
+- [ ] Add tests for create with relationships
 
 ### Phase 2: Validation & Safety (Day 3)
 
@@ -392,18 +595,43 @@ Required By:
 - [ ] Interactive mode (prompt for relationships)
 - [ ] Graph visualization (`lean-spec graph`)
 
-### Phase 4: Documentation & Migration (Day 5)
+### Phase 4: MCP Integration (Day 5)
+
+**MCP Tools** (leveraging modular architecture from spec 080):
+- [ ] **Extend `packages/cli/src/mcp/tools/create.ts`**
+  - [ ] Add `dependsOn` and `related` to input schema
+  - [ ] Wire to relationship handling logic
+  - [ ] Update tests
+- [ ] Create `packages/cli/src/mcp/tools/link.ts`
+  - [ ] `linkTool()` definition
+  - [ ] Wire to CLI `updateRelationships()` logic
+  - [ ] Schema: `{ specPath, dependsOn?, related?, blocks? }`
+- [ ] Create `packages/cli/src/mcp/tools/unlink.ts`
+  - [ ] `unlinkTool()` definition
+  - [ ] Wire to CLI `updateRelationships()` logic (remove operation)
+  - [ ] Schema: `{ specPath, dependsOn?, related?, all? }`
+- [ ] Update `packages/cli/src/mcp/tools/registry.ts`
+  - [ ] Import `linkTool` and `unlinkTool`
+  - [ ] Register alphabetically: `server.registerTool(...linkTool())`
+- [ ] Add MCP tool tests
+- [ ] Update spec 076 status (enable MCP relationship management)
+
+**Note**: Spec 080 (MCP modular architecture) is complete, making this integration straightforward. Follow the pattern from existing tools like `update.ts`.
+
+### Phase 5: Documentation & Migration (Day 6)
 
 **Documentation:**
 - [ ] Update AGENTS.md (remove manual editing exception)
 - [ ] Update CLI help text
 - [ ] Add examples to README
 - [ ] Update contributing guide
+- [ ] Document MCP tools in spec 076
 
 **Migration:**
 - [ ] Validate all existing relationships in specs/
 - [ ] Fix any broken references
 - [ ] Test commands on real specs
+- [ ] Test MCP tools with AI agents (verify workflow improvement)
 
 ## Test
 
@@ -516,6 +744,13 @@ $ lean-spec deps test-spec
 - [ ] Updated relationships persist across commands
 - [ ] Works with spec numbers (042) and names (mcp-error-handling)
 
+**MCP Tools:**
+- [ ] `mcp_lean_spec_link` tool works from AI agent
+- [ ] `mcp_lean_spec_unlink` tool works from AI agent
+- [ ] MCP tools validate inputs correctly
+- [ ] MCP tools show in tool registry alphabetically
+- [ ] Error messages are helpful for AI agents
+
 ## Notes
 
 ### Design Decisions
@@ -543,6 +778,20 @@ $ lean-spec deps test-spec
 - Can compute from existing data
 - Add later if users request it
 - Keeps MVP simpler
+
+**Why MCP tools in Phase 4 instead of separate spec?**
+- CLI logic is the foundation - MCP tools are thin wrappers
+- Reusing validation/business logic prevents divergence
+- Spec 080 (modular MCP architecture) makes integration trivial
+- Delivers complete solution (CLI + MCP) in one spec
+- Enables spec 076 (programmatic-spec-relationships) immediately
+
+**Why extend `create` instead of separate command?**
+- Consistency: tags, priority, assignee all settable at creation
+- Natural workflow: declare dependencies upfront when planning
+- Reduces manual steps: create + link → create (one command)
+- Better AI agent UX: single tool call vs. two
+- Matches user expectations from other metadata
 
 ### Alternative Approaches Considered
 
@@ -591,6 +840,7 @@ lean-spec link 085
 - [ ] Should we support relationship types (e.g., "implements", "extends")? (Future)
 - [ ] Graph visualization format? (Mermaid, DOT, ASCII) (Future)
 - [ ] Should unlink remove bidirectional automatically? (Yes for `related`)
+- [ ] Should MCP tools use same command names or different? (Use same: `link`/`unlink` for consistency)
 
 ### Success Criteria
 
@@ -611,21 +861,51 @@ lean-spec link 085
 - ✅ No regressions in existing commands
 - ✅ Passes `lean-spec validate`
 - ✅ TypeScript compilation clean
+- ✅ MCP tools follow modular pattern from spec 080
 
-### Related Work
+**AI Agent Experience:**
+- ✅ Can manage relationships without manual YAML editing
+- ✅ Workflow parity with spec 076 vision
+- ✅ Error messages guide agents to correct usage
+
+### Context Economy Analysis
+
+**Current state**: 6,296 tokens (🔴 should split threshold)
+- 54% code examples (validation, CLI, MCP)
+- 45% prose (design rationale, decisions)
+- 808 lines total
+
+**Why not split?**
+- This is a **design spec** with extensive code examples needed for:
+  - CLI command interface (multiple examples)
+  - Validation logic (comprehensive error cases)
+  - MCP tool integration (complete examples)
+  - Bidirectional relationship handling
+- Examples are cross-referenced and interdependent
+- Splitting would harm coherence and discoverability
+- Once implemented, can extract to sub-specs if needed
+
+**Trade-off**: Accept elevated token count for design phase to maintain coherence. After implementation, can extract:
+- `IMPLEMENTATION.md` - Core logic, validation
+- `MCP-INTEGRATION.md` - MCP tool details
+- `EXAMPLES.md` - Usage examples, edge cases
+
+### Related Specs
 
 **This spec depends on:**
 - Existing frontmatter parsing (`packages/cli/src/frontmatter.ts`)
-- Existing `lean-spec deps` command
+- Existing `lean-spec deps` command (view-only)
 - Spec path resolution utilities
+- Spec 080 (mcp-server-modular-architecture) - Modular MCP structure for adding new tools
 
 **This spec enables:**
 - Automated relationship management in CI/CD
 - Better spec graph analysis
 - Foundation for future relationship features
 - Removal of manual editing exception in AGENTS.md
+- **Spec 076 (programmatic-spec-relationships)** - MCP tools for relationship management
 
 **Related specs:**
-- Spec 076 (programmatic-spec-relationships) - MCP server side
-- Spec 059 (programmatic-spec-management) - API design
-- Spec 080 (mcp-server-modular-architecture) - MCP relationships
+- **Spec 076 (programmatic-spec-relationships)** - MCP server side (depends on this CLI foundation)
+- Spec 059 (programmatic-spec-management) - API design patterns
+- Spec 080 (mcp-server-modular-architecture) - Modular MCP architecture (complete)
