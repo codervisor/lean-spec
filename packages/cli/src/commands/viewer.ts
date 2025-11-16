@@ -19,6 +19,7 @@ interface SpecContent {
   rawContent: string;
   path: string;
   name: string;
+  fullPath?: string; // Full absolute path to spec directory for sub-spec loading
 }
 
 /**
@@ -130,6 +131,7 @@ export async function readSpecContent(
     rawContent,
     path: resolvedPath,
     name: displayName,
+    fullPath: resolvedPath, // Add fullPath for sub-spec loading
   };
 }
 

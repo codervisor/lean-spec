@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { readSpecContent } from '../../commands/viewer.js';
-import { formatErrorMessage } from '../helpers.js';
+import { formatErrorMessage, loadSubSpecMetadata } from '../helpers.js';
 import type { ToolDefinition, SpecData } from '../types.js';
 
 /**
@@ -20,16 +20,30 @@ export async function readSpecData(specPath: string): Promise<{ spec: SpecData; 
     throw new Error(`Spec not found: ${specPath}`);
   }
 
+  const spec: SpecData = {
+    name: specContent.name,
+    path: specContent.path,
+    status: specContent.frontmatter.status,
+    created: String(specContent.frontmatter.created),
+    priority: specContent.frontmatter.priority,
+    tags: specContent.frontmatter.tags,
+    assignee: specContent.frontmatter.assignee,
+  };
+
+  // Only include subSpecs when viewing main spec (not a sub-spec file)
+  // Check if the specPath contains a slash (indicates sub-spec file like "045/DESIGN.md")
+  const isSubSpecFile = specPath.includes('/') && specPath.split('/')[1].includes('.');
+  
+  if (!isSubSpecFile && specContent.fullPath) {
+    // Load sub-spec metadata for progressive disclosure
+    const subSpecs = await loadSubSpecMetadata(specContent.fullPath);
+    if (subSpecs.length > 0) {
+      spec.subSpecs = subSpecs;
+    }
+  }
+
   return {
-    spec: {
-      name: specContent.name,
-      path: specContent.path,
-      status: specContent.frontmatter.status,
-      created: String(specContent.frontmatter.created),
-      priority: specContent.frontmatter.priority,
-      tags: specContent.frontmatter.tags,
-      assignee: specContent.frontmatter.assignee,
-    },
+    spec,
     content: specContent.content,
   };
 }
