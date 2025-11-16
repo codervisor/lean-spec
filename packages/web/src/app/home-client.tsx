@@ -65,11 +65,11 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
       {/* Stats Section */}
       <section className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight">LeanSpec Web</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">LeanSpec Web</h1>
           <p className="text-muted-foreground mt-2">Interactive spec showcase for AI-powered development</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Total Specs */}
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-transparent" />
@@ -141,24 +141,24 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
       {/* Specs List */}
       <section className="container mx-auto px-4 py-4">
         <div className="mb-1">
-          <h2 className="text-2xl font-bold mb-4">Specifications</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Specifications</h2>
 
           {/* Search and Filters */}
           <div className="sticky top-14 z-40 bg-background pb-4 pt-2 mb-1">
-            <div className="flex flex-col sm:flex-row gap-4 mb-3">
+            <div className="flex flex-col gap-3 mb-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Search specs by title, name, or tags..."
+                  placeholder="Search specs..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[140px] sm:w-[180px]">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -171,7 +171,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
                 </Select>
 
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[140px] sm:w-[180px]">
                     <SelectValue placeholder="All Priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -187,7 +187,8 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
           </div>
         </div>
 
-        <div className="border rounded-lg border-gray-200 dark:border-gray-800">
+        {/* Desktop Table View */}
+        <div className="hidden md:block border rounded-lg border-gray-200 dark:border-gray-800 overflow-x-auto">
           <table className="w-full">
             <thead className="sticky top-14 z-30 border-b backdrop-blur border-gray-200 bg-background/95 dark:border-gray-800">
               <tr>
@@ -230,6 +231,36 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {filteredSpecs.map((spec) => (
+            <Link
+              key={spec.id}
+              href={`/specs/${spec.specNumber || spec.id}`}
+              className="block"
+            >
+              <Card className="hover:bg-muted/50 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-primary mb-1">
+                        {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
+                      </div>
+                      <div className="text-sm text-foreground truncate">
+                        {spec.title || spec.specName}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <StatusBadge status={spec.status || 'planned'} />
+                    <PriorityBadge priority={spec.priority || 'medium'} />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </section>
 

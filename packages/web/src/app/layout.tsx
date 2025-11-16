@@ -21,6 +21,11 @@ export const metadata: Metadata = {
     description: "Browse and explore LeanSpec specifications in a rich, interactive format",
     type: "website",
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default async function RootLayout({
@@ -51,9 +56,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Navigation specs={specsForSearch} />
-          <div className="flex w-[100vw]">
+          <div className="flex w-full min-w-0">
             <MainSidebar />
-            <main className="flex-1 min-h-[calc(100vh-3.5rem)] w-[calc(100vw-var(--main-sidebar-width,240px))]">
+            <main className="flex-1 min-h-[calc(100vh-3.5rem)] min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))]">
               {children}
             </main>
           </div>

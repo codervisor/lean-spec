@@ -7,6 +7,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
     }
     return false;
   });
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const activeItemRef = React.useRef<HTMLAnchorElement>(null);
 
@@ -72,6 +74,18 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
     );
     localStorage.setItem('specs-nav-sidebar-collapsed', String(isCollapsed));
   }, [isCollapsed]);
+
+  // Close mobile menu on route change
+  React.useEffect(() => {
+    setMobileOpen(false);
+  }, [currentSpecId, currentSubSpec]);
+
+  // Expose function for mobile toggle
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).toggleSpecsSidebar = () => setMobileOpen(prev => !prev);
+    }
+  }, []);
 
   // Scroll active item into view only if it's not visible
   React.useEffect(() => {
@@ -117,22 +131,46 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
 
   return (
     <TooltipProvider delayDuration={700}>
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       <div className="relative flex-shrink-0">
         <aside className={cn(
           "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background flex flex-col overflow-hidden transition-all duration-300",
-          mounted && isCollapsed ? "w-0 border-r-0" : "w-[280px]"
+          // Desktop behavior
+          "hidden lg:flex",
+          mounted && isCollapsed ? "lg:w-0 lg:border-r-0" : "lg:w-[280px]",
+          // Mobile behavior - show as overlay when open
+          mobileOpen && "fixed left-0 top-14 z-50 flex w-[280px]"
         )}>
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Specifications</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsCollapsed(true)}
-                className="h-6 w-6 p-0"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {/* Mobile close button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMobileOpen(false)}
+                  className="h-6 w-6 p-0 lg:hidden"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                {/* Desktop collapse button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsCollapsed(true)}
+                  className="h-6 w-6 p-0 hidden lg:block"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -235,17 +273,27 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
           </div>
         </aside>
 
-        {/* Floating toggle button when collapsed */}
+        {/* Floating toggle button when collapsed (desktop only) */}
         {mounted && isCollapsed && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(false)}
-            className="h-6 w-6 p-0 fixed z-50 top-20 -translate-y-1 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
+            className="hidden lg:block h-6 w-6 p-0 fixed z-50 top-20 -translate-y-1 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         )}
+
+        {/* Mobile floating toggle button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setMobileOpen(true)}
+          className="lg:hidden h-8 w-8 p-0 fixed z-40 top-16 left-2 bg-background border shadow-md"
+        >
+          <FileText className="h-4 w-4" />
+        </Button>
       </div>
     </TooltipProvider>
   );

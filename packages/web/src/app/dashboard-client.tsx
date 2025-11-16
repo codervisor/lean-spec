@@ -167,18 +167,18 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
   const completeCount = stats.specsByStatus.find(s => s.status === 'complete')?.count || 0;
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-2">
             Project overview and recent activity
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Total Specs */}
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
@@ -253,7 +253,7 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Recently Added */}
           <Card>
             <CardHeader>
