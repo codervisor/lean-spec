@@ -11,6 +11,7 @@ import {
   filesCommand,
   ganttCommand,
   initCommand,
+  linkCommand,
   listCommand,
   mcpCommand,
   migrateCommand,
@@ -21,6 +22,7 @@ import {
   templatesCommand,
   timelineCommand,
   tokensCommand,
+  unlinkCommand,
   updateCommand,
   validateCommand,
   viewCommand,
@@ -42,6 +44,7 @@ export function registerCommands(program: Command): void {
   program.addCommand(filesCommand());
   program.addCommand(ganttCommand());
   program.addCommand(initCommand());
+  program.addCommand(linkCommand());
   program.addCommand(listCommand());
   program.addCommand(mcpCommand());
   program.addCommand(migrateCommand());
@@ -52,6 +55,7 @@ export function registerCommands(program: Command): void {
   program.addCommand(templatesCommand());
   program.addCommand(timelineCommand());
   program.addCommand(tokensCommand());
+  program.addCommand(unlinkCommand());
   program.addCommand(updateCommand());
   program.addCommand(validateCommand());
   program.addCommand(viewCommand());
