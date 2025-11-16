@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-16'
 tags:
   - mcp
@@ -9,11 +9,15 @@ tags:
   - ux
 priority: high
 created_at: '2025-11-16T13:30:17.281Z'
+updated_at: '2025-11-16T13:58:37.156Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-16T13:58:37.156Z'
 ---
 
 # Sub-Spec File Visibility in MCP Tools and Commands
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-16
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-16 · **Tags**: mcp, tools, sub-specs, ai-agents, ux
 
 **Project**: lean-spec  
 **Team**: Core Development
