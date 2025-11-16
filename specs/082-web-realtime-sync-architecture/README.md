@@ -402,6 +402,8 @@ Sync full repo (50 specs): ~15s (parallel fetching)
 **Related specs:**
 - Spec 035 (live-specs-showcase) - Web app being fixed
 - Spec 068 (live-specs-ux-enhancements) - UI/UX improvements
+- Spec 081 (web-app-ux-redesign) - UX redesign complete
+- Spec 083 (web-navigation-performance) - Navigation performance optimization
 - Spec 065 (v03-planning) - Release planning
 - Spec 059 (programmatic-spec-management) - API design overlap
 

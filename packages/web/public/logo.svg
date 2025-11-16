@@ -1,13 +1,17 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Abstract representation of a lean spec document -->
-  <!-- Main document shape -->
-  <rect x="6" y="4" width="20" height="24" rx="2" fill="#3B82F6"/>
-  
-  <!-- Lines representing text -->
-  <rect x="9" y="8" width="14" height="2" rx="1" fill="white" opacity="0.9"/>
-  <rect x="9" y="12" width="10" height="2" rx="1" fill="white" opacity="0.7"/>
-  <rect x="9" y="16" width="12" height="2" rx="1" fill="white" opacity="0.7"/>
-  
-  <!-- Checkmark indicating completion/quality -->
-  <path d="M19 20 L21 22 L25 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Light background for contrast -->
+  <rect width="120" height="120" fill="#ffffff" rx="8"/>
+  <!-- Left bracket -->
+  <path d="M 35 15 L 20 15 L 20 105 L 35 105" 
+        fill="none" stroke="#1a1a2e" stroke-width="6" stroke-linecap="round"/>
+  <!-- Right bracket -->
+  <path d="M 85 15 L 100 15 L 100 105 L 85 105" 
+        fill="none" stroke="#1a1a2e" stroke-width="6" stroke-linecap="round"/>
+  <!-- LS monogram -->
+  <text x="60" y="75" 
+        font-family="system-ui, -apple-system, sans-serif" 
+        font-size="42" 
+        font-weight="700" 
+        text-anchor="middle" 
+        fill="#1a1a2e">LS</text>
 </svg>
