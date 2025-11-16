@@ -7,9 +7,6 @@ import { notFound } from 'next/navigation';
 import { getSpecById, getSpecs } from '@/lib/db/service-queries';
 import { SpecDetailWrapper } from '@/components/spec-detail-wrapper';
 
-// Force dynamic rendering - this page needs runtime data
-export const dynamic = 'force-dynamic';
-
 // Tier 1: Route segment caching for performance
 export const revalidate = 60; // Cache rendered pages for 60s
 export const dynamicParams = true; // Generate new pages on demand

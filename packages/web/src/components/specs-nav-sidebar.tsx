@@ -287,14 +287,14 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
           </Button>
         )}
 
-        {/* Mobile floating toggle button */}
+        {/* Mobile floating toggle button - matches BackToTop/TOC style */}
         <Button
-          variant="ghost"
-          size="sm"
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden h-8 w-8 p-0 fixed z-40 top-16 left-2 bg-background border shadow-md"
+          size="icon"
+          className="lg:hidden fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
+          aria-label="Show specifications list"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-5 w-5" />
         </Button>
       </div>
     </TooltipProvider>
