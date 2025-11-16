@@ -33,6 +33,10 @@ import {
 // Force dynamic rendering - this page needs runtime data
 export const dynamic = 'force-dynamic';
 
+// Tier 1: Route segment caching for performance
+export const revalidate = 60; // Cache rendered pages for 60s
+export const dynamicParams = true; // Generate new pages on demand
+
 // Icon mapping for sub-specs
 const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'FileText': FileText,
