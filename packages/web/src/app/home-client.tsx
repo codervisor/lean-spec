@@ -144,7 +144,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
           <h2 className="text-xl sm:text-2xl font-bold mb-4">Specifications</h2>
 
           {/* Search and Filters */}
-          <div className="sticky top-14 z-40 bg-background pb-4 pt-2 mb-1">
+          <div className="lg:sticky lg:top-14 lg:z-40 bg-background pb-4 pt-2 mb-1">
             <div className="flex flex-col gap-3 mb-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -190,7 +190,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
         {/* Desktop Table View */}
         <div className="hidden md:block border rounded-lg border-gray-200 dark:border-gray-800 overflow-x-auto">
           <table className="w-full">
-            <thead className="sticky top-14 z-30 border-b backdrop-blur border-gray-200 bg-background/95 dark:border-gray-800">
+            <thead className="lg:sticky lg:top-14 lg:z-30 border-b backdrop-blur border-gray-200 bg-background/95 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Spec
