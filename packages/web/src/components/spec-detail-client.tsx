@@ -1,5 +1,5 @@
 /**
- * Client component for spec detail page with SWR caching and optimistic updates
+ * Client component for spec detail page with SWR caching and instant sub-spec navigation
  * Phase 2: Tier 2 - Hybrid Rendering
  */
 
@@ -19,7 +19,6 @@ import { MarkdownLink } from '@/components/markdown-link';
 import { TableOfContents } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
 import { extractH1Title } from '@/lib/utils';
-import Link from 'next/link';
 import { 
   FileText, 
   Palette, 
@@ -76,8 +75,26 @@ interface SpecDetailClientProps {
   initialSubSpec?: string;
 }
 
-// SWR fetcher
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+// Helper to safely parse tags
+const parseTags = (tags: string | string[] | null): string[] => {
+  if (!tags) return [];
+  if (typeof tags === 'string') {
+    try {
+      return JSON.parse(tags);
+    } catch {
+      return [];
+    }
+  }
+  return tags;
+};
+
+// SWR fetcher with error handling
+const fetcher = (url: string) => fetch(url).then((res) => {
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+});
 
 export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClientProps) {
   const router = useRouter();
@@ -97,8 +114,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
 
   const spec = specData?.spec || initialSpec;
 
-  // Parse tags if stored as JSON string
-  const tags = spec.tags ? (typeof spec.tags === 'string' ? JSON.parse(spec.tags) : spec.tags) : [];
+  // Parse tags safely
+  const tags = parseTags(spec.tags);
 
   // Extract H1 title from markdown content
   const h1Title = extractH1Title(spec.contentMd);
@@ -136,11 +153,11 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
 
   return (
     <>
-      {/* Compact Sticky Header */}
-      <header className="sticky top-14 z-20 border-b bg-card">
-        <div className="px-6 py-4">
+      {/* Compact Header - sticky on desktop, static on mobile */}
+      <header className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
           {/* Line 1: Spec number + H1 Title */}
-          <h1 className="text-2xl font-bold tracking-tight mb-3">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-2 sm:mb-3">
             {spec.specNumber && (
               <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
             )}
@@ -154,32 +171,34 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
             
             {tags.length > 0 && (
               <>
-                <div className="h-4 w-px bg-border mx-1" />
-                {tags.slice(0, 5).map((tag: string) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-                {tags.length > 5 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{tags.length - 5} more
-                  </Badge>
-                )}
+                <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+                <div className="flex flex-wrap gap-1">
+                  {tags.slice(0, 5).map((tag: string) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {tags.length > 5 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{tags.length - 5} more
+                    </Badge>
+                  )}
+                </div>
               </>
             )}
           </div>
 
           {/* Line 3: Small metadata row */}
-          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-3">
-            <span>Created: {formatDate(spec.createdAt)}</span>
-            <span>•</span>
+          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-2 sm:mt-3">
+            <span className="hidden sm:inline">Created: {formatDate(spec.createdAt)}</span>
+            <span className="hidden sm:inline">•</span>
             <span>Updated: {formatDate(spec.updatedAt)}</span>
-            <span>•</span>
-            <span>Name: {spec.specName}</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden md:inline">Name: {spec.specName}</span>
             {spec.assignee && (
               <>
-                <span>•</span>
-                <span>Assignee: {spec.assignee}</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden sm:inline">Assignee: {spec.assignee}</span>
               </>
             )}
           </div>
@@ -188,19 +207,19 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
         {/* Horizontal Tabs for Sub-specs (only if sub-specs exist) */}
         {spec.subSpecs && spec.subSpecs.length > 0 && (
           <div className="border-t bg-muted/30">
-            <div className="px-6 overflow-x-auto">
+            <div className="px-3 sm:px-6 overflow-x-auto">
               <div className="flex gap-1 py-2 min-w-max">
                 {/* Overview tab (README.md) */}
                 <button
                   onClick={() => handleSubSpecSwitch(null)}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
                     !currentSubSpec
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
                 >
                   <Home className="h-4 w-4" />
-                  Overview
+                  <span className="hidden sm:inline">Overview</span>
                 </button>
 
                 
@@ -211,14 +230,14 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
                     <button
                       key={subSpec.file}
                       onClick={() => handleSubSpecSwitch(subSpec.file)}
-                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                      className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
                         currentSubSpec === subSpec.file
                           ? 'bg-background text-foreground shadow-sm'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                       }`}
                     >
                       <Icon className={`h-4 w-4 ${subSpec.color}`} />
-                      {subSpec.name}
+                      <span className="hidden sm:inline">{subSpec.name}</span>
                     </button>
                   );
                 })}
@@ -229,7 +248,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
       </header>
 
       {/* Main content (full width) */}
-      <main className="px-6 py-8">
+      <main className="px-3 sm:px-6 py-4 sm:py-8">
         <div className="space-y-6">
           {/* Markdown content with embedded timeline */}
           {/* Compact inline timeline at the top */}
@@ -246,7 +265,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
           {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
           {error && <div className="text-sm text-destructive">Error loading spec</div>}
 
-          <article className="prose prose-slate dark:prose-invert max-w-none">
+          <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}

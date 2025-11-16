@@ -49,7 +49,7 @@ export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetail
   }, []);
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] w-[calc(100vw-var(--main-sidebar-width,240px))]">
+    <div className="flex min-h-[calc(100vh-3.5rem)] w-full min-w-0">
       {/* Specs Navigation Sidebar with prefetching */}
       <SpecsNavSidebar 
         specs={allSpecs} 
