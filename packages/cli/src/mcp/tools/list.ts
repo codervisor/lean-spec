@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { loadAllSpecs } from '../../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../../frontmatter.js';
-import { formatErrorMessage, specToData } from '../helpers.js';
+import { formatErrorMessage, specToData, loadSubSpecMetadata } from '../helpers.js';
 import type { ToolDefinition, SpecData } from '../types.js';
 
 /**
@@ -31,7 +31,22 @@ export async function listSpecsData(options: {
     filter,
   });
 
-  return specs.map(specToData);
+  // Convert specs to data and add sub-spec metadata
+  const specsData = await Promise.all(
+    specs.map(async (spec) => {
+      const data = specToData(spec);
+      
+      // Load sub-spec metadata for progressive disclosure
+      const subSpecs = await loadSubSpecMetadata(spec.fullPath);
+      if (subSpecs.length > 0) {
+        data.subSpecs = subSpecs;
+      }
+      
+      return data;
+    })
+  );
+
+  return specsData;
 }
 
 /**

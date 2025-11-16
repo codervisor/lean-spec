@@ -98,6 +98,7 @@ export async function listSpecs(options: {
     'Loading specs...',
     () => loadAllSpecs({
       includeArchived: options.showArchived || false,
+      includeSubFiles: true, // Load sub-file info for display
       filter,
       sortBy: options.sortBy || 'id',
       sortOrder: options.sortOrder || 'desc',
@@ -163,8 +164,17 @@ function renderFlatList(specs: SpecInfo[]): void {
       }
     }
 
+    // Add sub-spec indicator if present
+    let subSpecStr = '';
+    if (spec.subFiles) {
+      const docCount = spec.subFiles.filter(f => f.type === 'document').length;
+      if (docCount > 0) {
+        subSpecStr = ' ' + chalk.dim(chalk.yellow(`(+${docCount} sub-spec${docCount > 1 ? 's' : ''})`));
+      }
+    }
+
     const priorityPrefix = priorityEmoji ? `${priorityEmoji} ` : '';
-    console.log(`${priorityPrefix}${statusEmoji} ${chalk.cyan(sanitizeUserInput(spec.path))}${assigneeStr}${tagsStr}`);
+    console.log(`${priorityPrefix}${statusEmoji} ${chalk.cyan(sanitizeUserInput(spec.path))}${assigneeStr}${tagsStr}${subSpecStr}`);
   }
 }
 
@@ -240,8 +250,17 @@ function renderGroupedList(specs: SpecInfo[], groupExtractor: string): void {
         }
       }
 
+      // Add sub-spec indicator if present
+      let subSpecStr = '';
+      if (spec.subFiles) {
+        const docCount = spec.subFiles.filter(f => f.type === 'document').length;
+        if (docCount > 0) {
+          subSpecStr = ' ' + chalk.dim(chalk.yellow(`(+${docCount} sub-spec${docCount > 1 ? 's' : ''})`));
+        }
+      }
+
       const priorityPrefix = priorityEmoji ? `${priorityEmoji} ` : '';
-      console.log(`  ${priorityPrefix}${statusEmoji} ${chalk.cyan(sanitizeUserInput(displayPath))}${assigneeStr}${tagsStr}`);
+      console.log(`  ${priorityPrefix}${statusEmoji} ${chalk.cyan(sanitizeUserInput(displayPath))}${assigneeStr}${tagsStr}${subSpecStr}`);
     }
 
     // Spacing between groups
