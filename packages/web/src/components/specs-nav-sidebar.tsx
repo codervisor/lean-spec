@@ -47,9 +47,10 @@ interface SpecsNavSidebarProps {
   specs: Spec[];
   currentSpecId: string;
   currentSubSpec?: string;
+  onSpecHover?: (specId: string) => void;
 }
 
-export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsNavSidebarProps) {
+export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHover }: SpecsNavSidebarProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     if (typeof window !== 'undefined') {
@@ -206,6 +207,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec }: SpecsN
                             <Link
                               ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
                               href={`/specs/${spec.specNumber || spec.id}`}
+                              onMouseEnter={() => onSpecHover?.(spec.specNumber?.toString() || spec.id)}
                               className={cn(
                                 'w-full flex items-start gap-2 p-1.5 rounded-md text-sm transition-colors',
                                 isCurrentSpec
