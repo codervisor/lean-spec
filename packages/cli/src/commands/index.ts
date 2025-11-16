@@ -3,6 +3,8 @@ export { createSpec, createCommand } from './create.js';
 export { archiveSpec, archiveCommand } from './archive.js';
 export { listSpecs, listCommand } from './list.js';
 export { updateSpec, updateCommand } from './update.js';
+export { linkSpec, linkCommand } from './link.js';
+export { unlinkSpec, unlinkCommand } from './unlink.js';
 export { checkSpecs, checkCommand } from './check.js';
 export { backfillTimestamps, backfillCommand } from './backfill.js';
 export {

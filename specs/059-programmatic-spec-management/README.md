@@ -19,7 +19,7 @@ related:
   - 018-spec-validation
   - 012-sub-spec-files
   - 066-context-economy-thresholds-refinement
-updated_at: '2025-11-13T14:21:42.907Z'
+updated_at: '2025-11-16T13:59:12.743Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T10:24:05.467Z'

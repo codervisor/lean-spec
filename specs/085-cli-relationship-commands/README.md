@@ -8,11 +8,14 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-16T13:33:40.858Z'
+depends_on: []
+updated_at: '2025-11-16T14:03:16.888Z'
+related: []
 ---
 
 # CLI Commands for Spec Relationship Management
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-16
+> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-16 · **Tags**: cli, metadata, relationships, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
