@@ -79,7 +79,7 @@ When practices conflict, apply principles in priority order:
 3. **Use `lean-spec --help`** - When unsure about commands, check the built-in help
 4. **Follow LeanSpec principles** - Clarity over documentation
 5. **Keep it minimal** - If it doesn't add clarity, cut it
-6. **NEVER manually edit system-managed frontmatter** - Fields like `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at` are system-managed. Always use `lean-spec update` or `lean-spec create` commands. Manual edits will cause metadata corruption and tracking issues. **Exception**: Relationship fields (`depends_on`, `related`) must currently be edited manually as no CLI command exists yet.
+6. **NEVER manually edit system-managed frontmatter** - Fields like `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`, `depends_on`, `related` are system-managed. Always use `lean-spec update`, `lean-spec link`, `lean-spec unlink`, or `lean-spec create` commands. Manual edits will cause metadata corruption and tracking issues.
 7. **Never use nested code blocks** - Markdown doesn't support code blocks within code blocks. If you need to show code examples in documentation, use indentation or describe the structure instead of nesting backticks.
 
 ## When to Use Specs
@@ -206,9 +206,12 @@ Required By:
 5. **Complete** - Mark complete with `lean-spec update <spec> --status complete`
 
 **Critical - Frontmatter Editing Rules:**
-- **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`
-- **Use CLI commands**: `lean-spec update` for all system-managed fields
-- **Manual edit only**: `depends_on`, `related` (no CLI command yet - verify with `lean-spec deps <spec>`)
+- **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`, `depends_on`, `related`
+- **Use CLI commands**: 
+  - `lean-spec update <spec>` for status, priority, tags, assignee
+  - `lean-spec link <spec>` to add relationships (depends_on, related)
+  - `lean-spec unlink <spec>` to remove relationships
+  - Verify changes with `lean-spec deps <spec>`
 
 ## Quality Standards
 

@@ -27,7 +27,9 @@ Command Groups:
     backfill [specs...]           Backfill timestamps from git history
     create <name>                 Create new spec
     init                          Initialize LeanSpec in current directory
+    link <spec>                   Add relationships between specs
     migrate <input-path>          Migrate specs from other SDD tools
+    unlink <spec>                 Remove relationships between specs
     update <spec>                 Update spec metadata
     
   Discovery & Search:
@@ -65,6 +67,10 @@ Examples:
   $ lean-spec create my-feature --priority high
   $ lean-spec list --status in-progress
   $ lean-spec view 042
+  $ lean-spec link 085 --depends-on 042,035
+  $ lean-spec link 085 --related 082
+  $ lean-spec unlink 085 --depends-on 042
+  $ lean-spec deps 085
   $ lean-spec backfill --dry-run
   $ lean-spec migrate ./docs/adr
   $ lean-spec migrate ./docs/rfcs --with copilot
