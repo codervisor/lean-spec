@@ -104,8 +104,8 @@ export default async function SpecDetailPage({
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
-        {/* Compact Sticky Header */}
-        <header className="sticky top-14 z-20 border-b bg-card">
+        {/* Compact Header - sticky on desktop, static on mobile */}
+        <header className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
           <div className="px-3 sm:px-6 py-3 sm:py-4">
             {/* Line 1: Spec number + H1 Title */}
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-2 sm:mb-3">
