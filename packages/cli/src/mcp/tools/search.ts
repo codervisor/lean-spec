@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { loadAllSpecs } from '../../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../../frontmatter.js';
 import { searchSpecs, type SearchableSpec } from '@leanspec/core';
-import { formatErrorMessage } from '../helpers.js';
+import { formatErrorMessage, loadSubSpecMetadata } from '../helpers.js';
 import type { ToolDefinition, SpecData } from '../types.js';
 
 /**
@@ -70,30 +70,48 @@ export async function searchSpecsData(query: string, options: {
   });
 
   // Convert to MCP format
-  return {
-    results: searchResult.results.map(result => ({
-      spec: {
+  const results = await Promise.all(
+    searchResult.results.map(async (result) => {
+      const specInfo = specs.find(s => s.path === result.spec.path);
+      
+      const spec: SpecData = {
         name: result.spec.name,
         path: result.spec.path,
         status: result.spec.status as SpecStatus,
-        created: specs.find(s => s.path === result.spec.path)?.frontmatter.created || '',
+        created: specInfo?.frontmatter.created || '',
         title: result.spec.title,
         tags: result.spec.tags,
         priority: result.spec.priority as SpecPriority | undefined,
-        assignee: specs.find(s => s.path === result.spec.path)?.frontmatter.assignee,
+        assignee: specInfo?.frontmatter.assignee,
         description: result.spec.description,
-        customFields: specs.find(s => s.path === result.spec.path)?.frontmatter.custom as Record<string, unknown> | undefined,
-      },
-      score: result.score,
-      totalMatches: result.totalMatches,
-      matches: result.matches.map(match => ({
-        field: match.field,
-        text: match.text,
-        lineNumber: match.lineNumber,
-        score: match.score,
-        highlights: match.highlights,
-      })),
-    })),
+        customFields: specInfo?.frontmatter.custom as Record<string, unknown> | undefined,
+      };
+      
+      // Add sub-spec metadata for progressive disclosure
+      if (specInfo?.fullPath) {
+        const subSpecs = await loadSubSpecMetadata(specInfo.fullPath);
+        if (subSpecs.length > 0) {
+          spec.subSpecs = subSpecs;
+        }
+      }
+      
+      return {
+        spec,
+        score: result.score,
+        totalMatches: result.totalMatches,
+        matches: result.matches.map(match => ({
+          field: match.field,
+          text: match.text,
+          lineNumber: match.lineNumber,
+          score: match.score,
+          highlights: match.highlights,
+        })),
+      };
+    })
+  );
+
+  return {
+    results,
     metadata: searchResult.metadata,
   };
 }

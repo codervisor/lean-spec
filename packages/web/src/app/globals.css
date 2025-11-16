@@ -255,6 +255,31 @@ html.changing-theme * {
   line-height: 1.75;
 }
 
+/* Mobile-specific prose adjustments */
+@media (max-width: 640px) {
+  .prose {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+  
+  .prose h1 { font-size: 1.75em; }
+  .prose h2 { font-size: 1.5em; }
+  .prose h3 { font-size: 1.25em; }
+  .prose h4 { font-size: 1.125em; }
+  
+  .prose pre {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    border-radius: 0;
+  }
+  
+  .prose table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
   font-weight: 600;
   line-height: 1.25;
