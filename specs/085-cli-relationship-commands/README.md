@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-11-16'
 tags:
   - cli
@@ -9,13 +9,18 @@ tags:
 priority: medium
 created_at: '2025-11-16T13:33:40.858Z'
 depends_on: []
-updated_at: '2025-11-16T14:03:16.888Z'
+updated_at: '2025-11-16T14:08:51.283Z'
 related: []
+completed_at: '2025-11-16T14:08:51.283Z'
+completed: '2025-11-16'
+transitions:
+  - status: complete
+    at: '2025-11-16T14:08:51.283Z'
 ---
 
 # CLI Commands for Spec Relationship Management
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-16 · **Tags**: cli, metadata, relationships, dx
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-16 · **Tags**: cli, metadata, relationships, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
