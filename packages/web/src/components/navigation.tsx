@@ -123,6 +123,16 @@ export function Navigation({ specs }: NavigationProps) {
         <div className="flex items-center gap-2">
           <QuickSearch specs={specs} />
           <ThemeToggle />
+          <Button variant="ghost" size="sm" asChild>
+            <a 
+              href="https://www.lean-spec.dev" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium"
+            >
+              Docs
+            </a>
+          </Button>
           <Button variant="ghost" size="icon" asChild>
             <a 
               href="https://github.com/codervisor/lean-spec" 
