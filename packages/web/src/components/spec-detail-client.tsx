@@ -20,7 +20,15 @@ import { PriorityBadge } from '@/components/priority-badge';
 import { MarkdownLink } from '@/components/markdown-link';
 import { TableOfContents } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
-import { SpecRelationships } from '@/components/spec-relationships';
+import { SpecDependencyGraph } from '@/components/spec-dependency-graph';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { extractH1Title, cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/date-utils';
 import type { SpecWithMetadata } from '@/types/specs';
@@ -36,7 +44,7 @@ import {
   Home,
   TrendingUp,
   Clock,
-  ChevronDown
+  Maximize2
 } from 'lucide-react';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
@@ -81,40 +89,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSubSpec = searchParams.get('subspec') || initialSubSpec;
-  const [timelineOpen, setTimelineOpen] = React.useState(false);
-  const [dependenciesOpen, setDependenciesOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const timelinePref = window.localStorage.getItem('spec-timeline-open');
-    if (timelinePref !== null) {
-      setTimelineOpen(timelinePref === 'true');
-    }
-    const depsPref = window.localStorage.getItem('spec-dependencies-open');
-    if (depsPref !== null) {
-      setDependenciesOpen(depsPref === 'true');
-    }
-  }, []);
-
-  const handleToggleTimeline = React.useCallback(() => {
-    setTimelineOpen((prev) => {
-      const next = !prev;
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('spec-timeline-open', String(next));
-      }
-      return next;
-    });
-  }, []);
-
-  const handleToggleDependencies = React.useCallback(() => {
-    setDependenciesOpen((prev) => {
-      const next = !prev;
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('spec-dependencies-open', String(next));
-      }
-      return next;
-    });
-  }, []);
+  const [timelineDialogOpen, setTimelineDialogOpen] = React.useState(false);
+  const [dependenciesDialogOpen, setDependenciesDialogOpen] = React.useState(false);
   
   // Use SWR for client-side caching with the initial spec as fallback
   const { data: specData, error, isLoading } = useSWR<{ spec: SpecWithMetadata }>(
@@ -134,6 +110,12 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   const hasRelationships = Boolean(
     relationships && ((relationships.dependsOn?.length ?? 0) > 0 || (relationships.related?.length ?? 0) > 0)
   );
+
+  React.useEffect(() => {
+    if (!hasRelationships) {
+      setDependenciesDialogOpen(false);
+    }
+  }, [hasRelationships]);
 
   // Extract H1 title from markdown content
   const h1Title = extractH1Title(spec.contentMd);
@@ -227,75 +209,71 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleToggleTimeline}
-              aria-pressed={timelineOpen}
-              className={cn(
-                'h-8 rounded-full border px-3 text-xs font-medium transition-colors',
-                timelineOpen
-                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                  : 'border-border text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Clock className="mr-1.5 h-3.5 w-3.5" />
-              {timelineOpen ? 'Collapse Timeline' : 'Show Timeline'}
-              <ChevronDown
-                className={cn(
-                  'ml-1.5 h-3.5 w-3.5 transition-transform',
-                  timelineOpen && 'rotate-180'
-                )}
-              />
-            </Button>
+            <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Clock className="mr-1.5 h-3.5 w-3.5" />
+                  View Timeline
+                  <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Spec Timeline</DialogTitle>
+                  <DialogDescription>Created, updated, and completion milestones.</DialogDescription>
+                </DialogHeader>
+                <div className="rounded-xl border border-border bg-muted/30 p-4">
+                  <SpecTimeline
+                    createdAt={spec.createdAt}
+                    updatedAt={spec.updatedAt}
+                    completedAt={spec.completedAt}
+                    status={spec.status || 'planned'}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleToggleDependencies}
-              aria-pressed={dependenciesOpen}
-              disabled={!hasRelationships}
-              className={cn(
-                'h-8 rounded-full border px-3 text-xs font-medium transition-colors',
-                dependenciesOpen
-                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                  : 'border-border text-muted-foreground hover:text-foreground',
-                !hasRelationships && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-              {dependenciesOpen ? 'Hide Dependencies' : 'Show Dependencies'}
-              <ChevronDown
-                className={cn(
-                  'ml-1.5 h-3.5 w-3.5 transition-transform',
-                  dependenciesOpen && 'rotate-180'
-                )}
-              />
-            </Button>
+            <Dialog open={dependenciesDialogOpen} onOpenChange={setDependenciesDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!hasRelationships}
+                  className={cn(
+                    'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
+                    !hasRelationships && 'cursor-not-allowed opacity-50'
+                  )}
+                >
+                  <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+                  View Dependencies
+                  <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
+                <DialogHeader>
+                  <DialogTitle>Dependency Graph</DialogTitle>
+                  <DialogDescription>
+                    Precedence requirements and connected specs rendered with automatic layout.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="min-h-0 flex-1">
+                  {relationships && (
+                    <SpecDependencyGraph
+                      relationships={relationships}
+                      specNumber={spec.specNumber}
+                      specTitle={displayTitle}
+                    />
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
-
-          {timelineOpen && (
-            <div className="mt-3 mb-1 rounded-lg border border-border bg-muted/30 p-3">
-              <SpecTimeline
-                createdAt={spec.createdAt}
-                updatedAt={spec.updatedAt}
-                completedAt={spec.completedAt}
-                status={spec.status || 'planned'}
-              />
-            </div>
-          )}
-
-          {dependenciesOpen && hasRelationships && (
-            <div className="mt-3 mb-1">
-              <SpecRelationships
-                relationships={relationships}
-                specNumber={spec.specNumber}
-                specTitle={displayTitle}
-              />
-            </div>
-          )}
         </div>
 
         {/* Horizontal Tabs for Sub-specs (only if sub-specs exist) */}
