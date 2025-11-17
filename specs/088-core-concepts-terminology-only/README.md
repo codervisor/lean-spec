@@ -46,8 +46,6 @@ Users report that the current "Core Concepts" section in docs-site contains phil
 - Workflow guidance → move to tutorials/guides
 - Decision frameworks → keep in methodology docs
 
-<!-- What are we solving? Why now? -->
-
 ## Design
 
 **Restructure Core Concepts as a terminology glossary with definitions only.**

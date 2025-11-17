@@ -9,8 +9,10 @@ import matter from 'gray-matter';
 import type { SpecSource, CachedSpec } from '../types';
 import type { Spec } from '../../db/schema';
 
-// Cache TTL from environment or default to 60 seconds
-const CACHE_TTL = parseInt(process.env.CACHE_TTL || '60000', 10);
+// Cache TTL from environment
+// Default: 0ms in development, 60s in production
+const isDev = process.env.NODE_ENV === 'development';
+const CACHE_TTL = parseInt(process.env.CACHE_TTL || (isDev ? '0' : '60000'), 10);
 
 /**
  * Filesystem source implementation
@@ -179,8 +181,8 @@ export class FilesystemSource implements SpecSource {
     const readmePath = path.join(specDir, 'README.md');
 
     try {
-      const content = await fs.readFile(readmePath, 'utf-8');
-      const { data: frontmatter } = matter(content);
+      const rawContent = await fs.readFile(readmePath, 'utf-8');
+      const { data: frontmatter, content: markdownContent } = matter(rawContent);
 
       if (!frontmatter || !frontmatter.status) {
         return null;
@@ -199,12 +201,12 @@ export class FilesystemSource implements SpecSource {
         projectId: 'leanspec', // Default project for LeanSpec's own specs
         specNumber,
         specName,
-        title: this.extractTitle(content),
+        title: this.extractTitle(markdownContent),
         status: frontmatter.status || 'planned',
         priority: frontmatter.priority || null,
         tags: frontmatter.tags ? JSON.stringify(frontmatter.tags) : null,
         assignee: frontmatter.assignee || null,
-        contentMd: content,
+        contentMd: markdownContent, // Use parsed content without frontmatter
         contentHtml: null, // Not pre-rendered for filesystem mode
         createdAt: frontmatter.created ? new Date(frontmatter.created) : null,
         updatedAt: frontmatter.updated ? new Date(frontmatter.updated) : null,
