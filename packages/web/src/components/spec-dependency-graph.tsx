@@ -22,8 +22,9 @@ const NODE_WIDTH = 280;
 const NODE_HEIGHT = 110;
 const precedenceColor = '#f59e0b';
 const relatedColor = '#38bdf8';
+const requiredByColor = '#ef4444'; // Red color for downstream dependents
 
-type GraphTone = 'precedence' | 'related' | 'current';
+type GraphTone = 'precedence' | 'related' | 'current' | 'required-by';
 
 interface SpecNodeData {
   label: string;
@@ -38,6 +39,7 @@ const toneClasses: Record<GraphTone, string> = {
   current: 'border-primary/70 bg-primary/5 text-foreground',
   precedence: 'border-amber-400/70 bg-amber-400/10 text-amber-900 dark:text-amber-200',
   related: 'border-sky-400/70 bg-sky-400/10 text-sky-900 dark:text-sky-200',
+  'required-by': 'border-red-400/70 bg-red-400/10 text-red-900 dark:text-red-200',
 };
 
 const dagreConfig: dagre.GraphLabel = {
@@ -198,6 +200,45 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
     });
   });
 
+  // Required By: Specs that depend on this one (downstream, blocked)
+  relationships.requiredBy?.forEach((value, index) => {
+    const id = nodeId('required-by', value, index);
+    nodes.push({
+      id,
+      type: 'specNode',
+      data: {
+        label: formatRelationshipLabel(value),
+        badge: 'Required By',
+        subtitle: 'Blocked by this spec',
+        tone: 'required-by',
+        href: buildRelationshipHref(value),
+        interactive: true,
+      },
+      position: { x: 0, y: 0 },
+      draggable: false,
+      selectable: true,
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
+    });
+
+    edges.push({
+      id: `edge-current-${id}`,
+      source: currentNode.id,
+      target: id,
+      type: 'smoothstep',
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: requiredByColor,
+        width: 28,
+        height: 28,
+      },
+      style: {
+        stroke: requiredByColor,
+        strokeWidth: 3,
+      },
+    });
+  });
+
   // Related: Bidirectional informational connections
   relationships.related?.forEach((value, index) => {
     const id = nodeId('related', value, index);
@@ -309,6 +350,10 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle }: Sp
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="inline-block h-2.5 w-8 rounded-full bg-amber-400/80" />
           Depends On → blocks until complete
+        </span>
+        <span className="inline-flex items-center gap-2 font-medium">
+          <span className="inline-block h-2.5 w-8 rounded-full bg-red-400/80" />
+          Required By ← blocked by this spec
         </span>
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="inline-block h-2.5 w-8 rounded-full bg-sky-400/80" />

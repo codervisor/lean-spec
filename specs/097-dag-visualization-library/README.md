@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-17'
 tags:
   - web
@@ -8,17 +8,21 @@ tags:
   - technical-debt
 priority: high
 created_at: '2025-11-17T08:02:23.227Z'
-updated_at: '2025-11-17T08:45:56.805Z'
+updated_at: '2025-11-17T10:02:22.453Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T08:39:56.385Z'
+  - status: complete
+    at: '2025-11-17T10:02:22.453Z'
 depends_on:
   - 082-web-realtime-sync-architecture
+completed_at: '2025-11-17T10:02:22.453Z'
+completed: '2025-11-17'
 ---
 
 # Replace Manual DAG with Visualization Library
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-17 · **Tags**: web, ux, dependencies, technical-debt
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-17 · **Tags**: web, ux, dependencies, technical-debt
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -201,22 +205,23 @@ Current API only provides current spec's perspective. Need to either:
 - [x] Update legend text for clarity
 - [x] Reduce horizontal spacing between nodes
 
-**Phase 2: API Enhancement**
-- [ ] Design complete dependency graph API response format
-- [ ] Implement `GET /api/specs/:id/dependency-graph` endpoint
-- [ ] Add graph traversal logic to find:
+**Phase 2: API Enhancement** ✅
+- [x] Design complete dependency graph API response format
+- [x] Implement `GET /api/specs/:id/dependency-graph` endpoint
+- [x] Add graph traversal logic to find:
   - Specs that depend on current spec (`requiredBy`)
   - Bidirectional `related` connections
-- [ ] Optimize with caching and efficient queries
-- [ ] Add tests for API endpoint
+- [x] Optimize with caching and efficient queries
+- [x] Add tests for API endpoint
 
-**Phase 3: Client-Side Graph Enhancement**
-- [ ] Update `SpecRelationships` type: add `requiredBy: string[]`
-- [ ] Modify `buildGraph()` function to support all relationship types
-- [ ] Add downstream nodes (red/orange styling for "Required By")
-- [ ] Add node type for bidirectional related connections
-- [ ] Update dagre layout for 4-column structure
-- [ ] Add subtitle text for each node type explaining relationship
+**Phase 3: Client-Side Graph Enhancement** ✅
+- [x] Update `SpecRelationships` type: add `requiredBy: string[]`
+- [x] Modify `buildGraph()` function to support all relationship types
+- [x] Add downstream nodes (red styling for "Required By")
+- [x] Add node type for bidirectional related connections
+- [x] Update dagre layout for complete graph structure
+- [x] Add subtitle text for each node type explaining relationship
+- [x] Fetch complete graph on dialog open using SWR
 
 **Phase 4: UX Polish**
 - [ ] Add tooltips with relationship explanations
@@ -313,6 +318,38 @@ Current API only provides current spec's perspective. Need to either:
 - `/packages/web/src/components/spec-dependency-graph.tsx`
 
 **Next Steps**: Phase 2 requires API changes to support complete dependency graph.
+
+### Phase 2 & 3 Completion Summary
+
+**Completed (Nov 17, 2025)**:
+- ✅ **API Endpoint**: Created `GET /api/specs/[id]/dependency-graph`
+  - Returns complete graph: `{ current, dependsOn, requiredBy, related }`
+  - Standalone implementation to avoid tiktoken wasm issues
+  - Caching with 60s TTL
+- ✅ **Graph Building**: `SpecDependencyGraph` class
+  - Builds reverse edges (requiredBy) from dependsOn relationships
+  - Handles bidirectional related connections automatically
+  - O(1) lookups with in-memory Map
+- ✅ **Frontend Integration**: 
+  - Updated `SpecRelationships` type to include `requiredBy`
+  - Added SWR hook to fetch complete graph on dialog open
+  - Added red styling for "Required By" nodes (downstream dependents)
+  - Updated legend to show all 3 relationship types
+  - Graph auto-layouts with dagre algorithm
+- ✅ **Testing**: 
+  - 2 tests for API endpoint
+  - Tests gracefully handle missing specs in test environment
+  - Build and all tests passing
+
+**Files Modified**:
+- `/packages/web/src/lib/dependency-graph.ts` (new)
+- `/packages/web/src/app/api/specs/[id]/dependency-graph/route.ts` (new)
+- `/packages/web/src/app/api/specs/[id]/dependency-graph/route.test.ts` (new)
+- `/packages/web/src/components/spec-dependency-graph.tsx`
+- `/packages/web/src/components/spec-detail-client.tsx`
+- `/packages/web/src/types/specs.ts`
+
+**Next Steps**: Phases 4-5 are optional UX polish and testing enhancements.
 
 ### Why Complete Dependency Graph Matters
 
