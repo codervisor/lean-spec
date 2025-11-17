@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -16,11 +16,13 @@ export function uiCommand(): Command {
     .option('-s, --specs <dir>', 'Specs directory (auto-detected if not specified)')
     .option('-p, --port <port>', 'Port to run on', '3000')
     .option('--no-open', "Don't open browser automatically")
+    .option('--dev', 'Run in development mode (only works in LeanSpec monorepo)')
     .option('--dry-run', 'Show what would run without executing')
     .action(async (options: {
       specs?: string;
       port: string;
       open: boolean;
+      dev?: boolean;
       dryRun?: boolean;
     }) => {
       try {
@@ -39,6 +41,7 @@ export async function startUi(options: {
   specs?: string;
   port: string;
   open: boolean;
+  dev?: boolean;
   dryRun?: boolean;
 }): Promise<void> {
   // Validate port
@@ -68,15 +71,43 @@ export async function startUi(options: {
     throw new Error(`Specs directory not found: ${specsDir}`);
   }
 
-  // Check if running in LeanSpec monorepo (dev mode)
-  const localWebDir = join(cwd, 'packages/web');
-  const isMonorepo = existsSync(localWebDir);
-
-  if (isMonorepo) {
-    // Dev mode: Run local web package
+  // Check if --dev flag is set and we're in LeanSpec monorepo
+  if (options.dev) {
+    const isLeanSpecMonorepo = checkIsLeanSpecMonorepo(cwd);
+    if (!isLeanSpecMonorepo) {
+      console.error(chalk.red(`✗ Development mode only works in the LeanSpec monorepo`));
+      console.log(chalk.dim('Remove --dev flag to use production mode'));
+      throw new Error('Not in LeanSpec monorepo');
+    }
+    const localWebDir = join(cwd, 'packages/web');
     return runLocalWeb(localWebDir, specsDir, options);
-  } else {
-    return runPublishedUI(cwd, specsDir, options);
+  }
+
+  // Production mode: use published @leanspec/ui
+  return runPublishedUI(cwd, specsDir, options);
+}
+
+/**
+ * Check if we're in the LeanSpec monorepo
+ * 
+ * This is more specific than just checking for packages/web to avoid
+ * false positives in other projects with similar structure.
+ */
+function checkIsLeanSpecMonorepo(cwd: string): boolean {
+  // Check for LeanSpec-specific markers
+  const localWebDir = join(cwd, 'packages/web');
+  const webPackageJson = join(localWebDir, 'package.json');
+  
+  if (!existsSync(webPackageJson)) {
+    return false;
+  }
+  
+  try {
+    const packageJson = JSON.parse(readFileSync(webPackageJson, 'utf-8'));
+    // Check if it's the @leanspec/web package
+    return packageJson.name === '@leanspec/web';
+  } catch {
+    return false;
   }
 }
 
@@ -97,6 +128,7 @@ async function runLocalWeb(
   options: {
     port: string;
     open: boolean;
+    dev?: boolean;
     dryRun?: boolean;
   }
 ): Promise<void> {
@@ -181,6 +213,7 @@ async function runPublishedUI(
   options: {
     port: string;
     open: boolean;
+    dev?: boolean;
     dryRun?: boolean;
   }
 ): Promise<void> {

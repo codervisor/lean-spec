@@ -3,14 +3,16 @@
   "version": "0.2.3",
   "description": "LeanSpec web UI launcher for visual spec management",
   "type": "module",
-  "bin": "./bin/ui.js",
+  "bin": {
+    "leanspec-ui": "./bin/ui.js"
+  },
   "scripts": {
     "build": "node ./scripts/prepare-dist.mjs",
     "prepublishOnly": "pnpm run build"
   },
   "files": [
     "bin/",
-    "dist/",
+    "dist/standalone/",
     "README.md",
     "LICENSE"
   ],

@@ -38,14 +38,30 @@ async function rebuildDist() {
   await mkdir(distDir, { recursive: true });
 
   await copyDirectory(standaloneSrc, join(distDir, 'standalone'));
-  await copyDirectory(staticSrc, join(distDir, 'static'));
-  await copyDirectory(publicSrc, join(distDir, 'public'));
+
+  // Copy static assets into the standalone structure for distribution
+  await copyStaticAssets();
 
   if (existsSync(buildIdSrc)) {
     await cp(buildIdSrc, join(distDir, 'BUILD_ID'));
   }
 
   console.log('✅ LeanSpec UI artifacts copied to packages/ui/dist');
+}
+
+async function copyStaticAssets() {
+  const standaloneWebDir = join(distDir, 'standalone', 'packages', 'web');
+  const nextDir = join(standaloneWebDir, '.next');
+  
+  // Copy .next/static directory into standalone
+  const staticDest = join(nextDir, 'static');
+  await copyDirectory(staticSrc, staticDest);
+  console.log('  ✓ Copied static assets to .next/static');
+  
+  // Copy public assets into standalone
+  const publicDest = join(standaloneWebDir, 'public');
+  await copyDirectory(publicSrc, publicDest);
+  console.log('  ✓ Copied public assets');
 }
 
 async function copyDirectory(src, dest) {
