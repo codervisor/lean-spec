@@ -1,10 +1,10 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:09:38.041Z'
-updated_at: '2025-11-17T02:58:35.396Z'
+updated_at: '2025-11-17T03:45:49.119Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:10:38.350Z'
@@ -12,13 +12,15 @@ transitions:
     at: '2025-11-17T02:10:43.845Z'
   - status: planned
     at: '2025-11-17T02:58:35.396Z'
+  - status: in-progress
+    at: '2025-11-17T03:45:49.119Z'
 completed_at: '2025-11-17T02:10:43.845Z'
 completed: '2025-11-17'
 ---
 
 # Core Concepts: Real SDD Terminology Only
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-17
 
 **Project**: lean-spec  
 **Team**: Core Development
