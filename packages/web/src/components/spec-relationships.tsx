@@ -67,7 +67,7 @@ interface DagNodeProps {
 
 function DagNode({ href, label, badge, xPercent, yPercent, tone, subtitle }: DagNodeProps) {
   const baseClasses = cn(
-    'absolute flex flex-col gap-1 rounded-xl border px-4 py-3 text-xs shadow-sm transition-colors',
+    'absolute flex flex-col gap-1 rounded-xl border px-4 py-3 text-xs shadow-sm transition-colors pointer-events-auto',
     tone === 'current' && 'border-primary/70 bg-primary/5 text-foreground',
     tone === 'precedence' && 'border-amber-400/70 bg-amber-400/10 text-amber-900 dark:text-amber-200',
     tone === 'related' && 'border-sky-400/70 bg-sky-400/10 text-sky-900 dark:text-sky-200'
@@ -75,7 +75,8 @@ function DagNode({ href, label, badge, xPercent, yPercent, tone, subtitle }: Dag
 
   const style: CSSProperties = {
     left: `calc(${xPercent}% - ${NODE_WIDTH / 2}px)`,
-    top: `calc(${yPercent}% - ${NODE_HEIGHT / 2}px)`
+    top: `calc(${yPercent}% - ${NODE_HEIGHT / 2}px)`,
+    width: `${NODE_WIDTH}px`
   };
 
   const content = (
@@ -160,9 +161,9 @@ export function SpecRelationships({ relationships, specNumber, specTitle }: Spec
         </div>
       </div>
 
-      <div className="relative mt-5" style={{ minHeight: height }}>
+      <div className="relative mt-5 mx-auto" style={{ height: `${height}px`, maxWidth: '100%', aspectRatio: `${VIEWBOX_WIDTH} / ${height}` }}>
         <svg
-          className="absolute inset-0 h-full w-full"
+          className="absolute inset-0 h-full w-full pointer-events-none"
           viewBox={`0 0 ${VIEWBOX_WIDTH} ${height}`}
           preserveAspectRatio="none"
         >
