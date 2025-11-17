@@ -8,6 +8,7 @@ import {
   ChevronRight,
   X,
   List,
+  Filter,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { extractH1Title } from '@/lib/utils';
 import { PriorityBadge, getPriorityLabel } from './priority-badge';
@@ -34,6 +42,10 @@ interface SpecsNavSidebarProps {
 
 export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSpec, onSpecHover }: SpecsNavSidebarProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
+  const [tagFilter, setTagFilter] = React.useState<string>('all');
+  const [showFilters, setShowFilters] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('specs-nav-sidebar-collapsed');
@@ -115,15 +127,55 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   }, [currentSpecId, currentSubSpec]);
 
   const filteredSpecs = React.useMemo(() => {
-    if (!searchQuery) return cachedSpecs;
-    const query = searchQuery.toLowerCase();
-    return cachedSpecs.filter(
-      (spec) =>
-        spec.title?.toLowerCase().includes(query) ||
-        spec.specName.toLowerCase().includes(query) ||
-        spec.specNumber?.toString().includes(query)
-    );
-  }, [cachedSpecs, searchQuery]);
+    let specs = cachedSpecs;
+
+    // Apply search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      specs = specs.filter(
+        (spec) =>
+          spec.title?.toLowerCase().includes(query) ||
+          spec.specName.toLowerCase().includes(query) ||
+          spec.specNumber?.toString().includes(query)
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      specs = specs.filter((spec) => spec.status === statusFilter);
+    }
+
+    // Apply priority filter
+    if (priorityFilter !== 'all') {
+      specs = specs.filter((spec) => spec.priority === priorityFilter);
+    }
+
+    // Apply tag filter
+    if (tagFilter !== 'all') {
+      specs = specs.filter((spec) => spec.tags?.includes(tagFilter));
+    }
+
+    return specs;
+  }, [cachedSpecs, searchQuery, statusFilter, priorityFilter, tagFilter]);
+
+  // Get all unique tags from all specs
+  const allTags = React.useMemo(() => {
+    const tagsSet = new Set<string>();
+    cachedSpecs.forEach((spec) => {
+      spec.tags?.forEach((tag) => tagsSet.add(tag));
+    });
+    return Array.from(tagsSet).sort();
+  }, [cachedSpecs]);
+
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
+
+  // Reset all filters
+  const resetFilters = () => {
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setTagFilter('all');
+  };
 
   // Sort specs by number descending (newest first)
   const sortedSpecs = React.useMemo(() => {
@@ -165,6 +217,22 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Specifications</h2>
               <div className="flex items-center gap-1">
+                {/* Filter toggle button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={showFilters || hasActiveFilters ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Filter className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {showFilters ? 'Hide filters' : 'Show filters'}
+                  </TooltipContent>
+                </Tooltip>
                 {/* Mobile close button */}
                 <Button
                   variant="ghost"
@@ -179,12 +247,74 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsCollapsed(true)}
-                  className="h-6 w-6 p-0 hidden lg:block"
+                  className="h-6 w-6 p-0 hidden lg:flex lg:items-center lg:justify-center"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
             </div>
+
+            {/* Filter controls */}
+            {showFilters && (
+              <div className="space-y-2 mb-3 pb-3 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Filters</span>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={resetFilters}
+                      className="h-5 text-xs px-2 py-0"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="planned">Planned</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="complete">Complete</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {allTags.length > 0 && (
+                  <Select value={tagFilter} onValueChange={setTagFilter}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Tag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Tags</SelectItem>
+                      {allTags.map((tag) => (
+                        <SelectItem key={tag} value={tag}>
+                          {tag}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -294,7 +424,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(false)}
-            className="hidden lg:block h-6 w-6 p-0 fixed z-50 top-20 -translate-y-1 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
+            className="hidden lg:items-center lg:justify-center lg:flex h-6 w-6 p-0 fixed z-50 top-20 -translate-y-1 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
