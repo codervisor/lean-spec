@@ -13,13 +13,17 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { MarkdownLink } from '@/components/markdown-link';
 import { TableOfContents } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
-import { extractH1Title } from '@/lib/utils';
+import { SpecRelationships } from '@/components/spec-relationships';
+import { extractH1Title, cn } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/date-utils';
+import type { SpecWithMetadata } from '@/types/specs';
 import { 
   FileText, 
   Palette, 
@@ -30,7 +34,9 @@ import {
   Map, 
   GitBranch, 
   Home,
-  TrendingUp
+  TrendingUp,
+  Clock,
+  ChevronDown
 } from 'lucide-react';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
@@ -58,47 +64,10 @@ const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>
   'TrendingUp': TrendingUp,
 };
 
-interface SubSpec {
-  name: string;
-  file: string;
-  iconName: string;
-  color: string;
-  content: string;
-}
-
-interface Spec {
-  id: string;
-  specNumber: number | null;
-  title: string | null;
-  specName: string;
-  status: string | null;
-  priority: string | null;
-  tags: string | string[] | null;
-  assignee: string | null;
-  createdAt: Date | null;
-  updatedAt: Date | string | number | null;
-  completedAt: Date | null;
-  contentMd: string;
-  subSpecs?: SubSpec[];
-}
-
 interface SpecDetailClientProps {
-  initialSpec: Spec;
+  initialSpec: SpecWithMetadata;
   initialSubSpec?: string;
 }
-
-// Helper to safely parse tags
-const parseTags = (tags: string | string[] | null): string[] => {
-  if (!tags) return [];
-  if (typeof tags === 'string') {
-    try {
-      return JSON.parse(tags);
-    } catch {
-      return [];
-    }
-  }
-  return tags;
-};
 
 // SWR fetcher with error handling
 const fetcher = (url: string) => fetch(url).then((res) => {
@@ -112,9 +81,28 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSubSpec = searchParams.get('subspec') || initialSubSpec;
+  const [timelineOpen, setTimelineOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem('spec-timeline-open');
+    if (saved !== null) {
+      setTimelineOpen(saved === 'true');
+    }
+  }, []);
+
+  const handleToggleTimeline = React.useCallback(() => {
+    setTimelineOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('spec-timeline-open', String(next));
+      }
+      return next;
+    });
+  }, []);
   
   // Use SWR for client-side caching with the initial spec as fallback
-  const { data: specData, error, isLoading } = useSWR<{ spec: Spec }>(
+  const { data: specData, error, isLoading } = useSWR<{ spec: SpecWithMetadata }>(
     `/api/specs/${initialSpec.specNumber || initialSpec.id}`,
     fetcher,
     {
@@ -125,9 +113,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   );
 
   const spec = specData?.spec || initialSpec;
-
-  // Parse tags safely
-  const tags = parseTags(spec.tags);
+  const tags = spec.tags || [];
+  const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : 'N/A';
 
   // Extract H1 title from markdown content
   const h1Title = extractH1Title(spec.contentMd);
@@ -214,6 +201,40 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
               </>
             )}
           </div>
+
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>
+                Created {formatDate(spec.createdAt)} · Updated {updatedRelative}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleTimeline}
+              className="h-8 px-3 text-xs font-medium"
+            >
+              {timelineOpen ? 'Hide Timeline' : 'Show Timeline'}
+              <ChevronDown
+                className={cn(
+                  'ml-1.5 h-3.5 w-3.5 transition-transform',
+                  timelineOpen && 'rotate-180'
+                )}
+              />
+            </Button>
+          </div>
+
+          {timelineOpen && (
+            <div className="mt-3 mb-1 rounded-lg border border-border bg-muted/30 p-3">
+              <SpecTimeline
+                createdAt={spec.createdAt}
+                updatedAt={spec.updatedAt}
+                completedAt={spec.completedAt}
+                status={spec.status || 'planned'}
+              />
+            </div>
+          )}
         </div>
 
         {/* Horizontal Tabs for Sub-specs (only if sub-specs exist) */}
@@ -262,20 +283,10 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
       {/* Main content (full width) */}
       <main className="px-3 sm:px-6 py-4 sm:py-8">
         <div className="space-y-6">
-          {/* Markdown content with embedded timeline */}
-          {/* Compact inline timeline at the top */}
-          <div className="mb-6 pb-6 border-b">
-            <h2 className="text-sm font-semibold text-muted-foreground mb-3">Status Timeline</h2>
-            <SpecTimeline
-              createdAt={spec.createdAt}
-              updatedAt={spec.updatedAt}
-              completedAt={spec.completedAt}
-              status={spec.status || 'planned'}
-            />
-          </div>
-
           {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
           {error && <div className="text-sm text-destructive">Error loading spec</div>}
+
+          <SpecRelationships relationships={spec.relationships} />
 
           <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
             <ReactMarkdown

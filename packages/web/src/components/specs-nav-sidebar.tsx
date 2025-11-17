@@ -22,35 +22,17 @@ import { cn } from '@/lib/utils';
 import { extractH1Title } from '@/lib/utils';
 import { PriorityBadge, getPriorityLabel } from './priority-badge';
 import { formatRelativeTime } from '@/lib/date-utils';
-
-interface SubSpec {
-  name: string;
-  file: string;
-  iconName: string;
-  color: string;
-  content: string;
-}
-
-interface Spec {
-  id: string;
-  specNumber: number | null;
-  title: string | null;
-  specName: string;
-  status: string | null;
-  priority: string | null;
-  subSpecs?: SubSpec[];
-  contentMd?: string;
-  updatedAt?: Date | string | number | null;
-}
+import { useSpecsSidebarState, updateSidebarScrollTop } from '@/lib/stores/specs-sidebar-store';
+import type { SidebarSpec } from '@/types/specs';
 
 interface SpecsNavSidebarProps {
-  specs: Spec[];
+  initialSpecs?: SidebarSpec[];
   currentSpecId: string;
   currentSubSpec?: string;
   onSpecHover?: (specId: string) => void;
 }
 
-export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHover }: SpecsNavSidebarProps) {
+export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSpec, onSpecHover }: SpecsNavSidebarProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     if (typeof window !== 'undefined') {
@@ -62,6 +44,11 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const activeItemRef = React.useRef<HTMLAnchorElement>(null);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const scrollFrameRef = React.useRef<number | null>(null);
+  const sidebarState = useSpecsSidebarState();
+  const cachedSpecs = sidebarState.specs.length > 0 ? sidebarState.specs : initialSpecs;
+  const persistedScrollTop = sidebarState.scrollTop;
 
   React.useEffect(() => {
     setMounted(true);
@@ -80,6 +67,13 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
   React.useEffect(() => {
     setMobileOpen(false);
   }, [currentSpecId, currentSubSpec]);
+
+  React.useLayoutEffect(() => {
+    if (!scrollContainerRef.current) return;
+    if (Math.abs(scrollContainerRef.current.scrollTop - persistedScrollTop) > 1) {
+      scrollContainerRef.current.scrollTop = persistedScrollTop;
+    }
+  }, [persistedScrollTop]);
 
   // Expose function for mobile toggle
   React.useEffect(() => {
@@ -120,20 +114,32 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
   }, [currentSpecId, currentSubSpec]);
 
   const filteredSpecs = React.useMemo(() => {
-    if (!searchQuery) return specs;
+    if (!searchQuery) return cachedSpecs;
     const query = searchQuery.toLowerCase();
-    return specs.filter(
+    return cachedSpecs.filter(
       (spec) =>
         spec.title?.toLowerCase().includes(query) ||
         spec.specName.toLowerCase().includes(query) ||
         spec.specNumber?.toString().includes(query)
     );
-  }, [specs, searchQuery]);
+  }, [cachedSpecs, searchQuery]);
 
   // Sort specs by number descending (newest first)
   const sortedSpecs = React.useMemo(() => {
     return [...filteredSpecs].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
   }, [filteredSpecs]);
+
+  const handleScroll = React.useCallback(() => {
+    if (scrollFrameRef.current) {
+      return;
+    }
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = null;
+      if (scrollContainerRef.current) {
+        updateSidebarScrollTop(scrollContainerRef.current.scrollTop);
+      }
+    });
+  }, []);
 
   return (
     <TooltipProvider delayDuration={700}>
@@ -189,7 +195,11 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden"
+            onScroll={handleScroll}
+          >
             <div className="p-1">
               {sortedSpecs.length === 0 ? (
                 <div className="text-center py-8 text-sm text-muted-foreground">

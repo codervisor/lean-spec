@@ -7,6 +7,8 @@ import { specsService } from '../specs/service';
 import type { Spec } from './schema';
 import { detectSubSpecs } from '../sub-specs';
 import { join } from 'path';
+import { readFileSync } from 'node:fs';
+import matter from 'gray-matter';
 
 /**
  * Spec with parsed tags (for client consumption)
@@ -14,6 +16,38 @@ import { join } from 'path';
 export type ParsedSpec = Omit<Spec, 'tags'> & {
   tags: string[] | null;
 };
+
+interface SpecRelationships {
+  dependsOn: string[];
+  related: string[];
+}
+function normalizeRelationshipList(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry));
+  }
+  if (typeof value === 'string') {
+    return [value];
+  }
+  return [];
+}
+
+function getFilesystemRelationships(specDirPath: string): SpecRelationships {
+  try {
+    const readmePath = join(specDirPath, 'README.md');
+    const raw = readFileSync(readmePath, 'utf-8');
+    const { data } = matter(raw);
+    const dependsOn = normalizeRelationshipList(data?.depends_on ?? data?.dependsOn);
+    const related = normalizeRelationshipList(data?.related);
+    return {
+      dependsOn,
+      related,
+    };
+  } catch (error) {
+    console.warn('Unable to parse spec relationships', error);
+    return { dependsOn: [], related: [] };
+  }
+}
 
 /**
  * Parse tags from JSON string to array
@@ -36,7 +70,7 @@ export async function getSpecs(projectId?: string): Promise<ParsedSpec[]> {
 /**
  * Get a spec by ID (number or UUID)
  */
-export async function getSpecById(id: string, projectId?: string): Promise<(ParsedSpec & { subSpecs?: import('../sub-specs').SubSpec[] }) | null> {
+export async function getSpecById(id: string, projectId?: string): Promise<(ParsedSpec & { subSpecs?: import('../sub-specs').SubSpec[]; relationships?: SpecRelationships }) | null> {
   const spec = await specsService.getSpec(id, projectId);
 
   if (!spec) return null;
@@ -47,7 +81,8 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
   if (!projectId) {
     const specDirPath = join(process.cwd(), '../../specs', spec.filePath.replace('/README.md', '').replace('specs/', ''));
     const subSpecs = detectSubSpecs(specDirPath);
-    return { ...parsedSpec, subSpecs };
+    const relationships = getFilesystemRelationships(specDirPath);
+    return { ...parsedSpec, subSpecs, relationships };
   }
 
   return parsedSpec;

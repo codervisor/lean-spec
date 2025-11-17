@@ -8,57 +8,52 @@
 import * as React from 'react';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
 import { SpecDetailClient } from '@/components/spec-detail-client';
-
-interface SubSpec {
-  name: string;
-  file: string;
-  iconName: string;
-  color: string;
-  content: string;
-}
-
-interface Spec {
-  id: string;
-  specNumber: number | null;
-  title: string | null;
-  specName: string;
-  status: string | null;
-  priority: string | null;
-  tags: string | string[] | null;
-  assignee: string | null;
-  createdAt: Date | null;
-  updatedAt: Date | string | number | null;
-  completedAt: Date | null;
-  contentMd: string;
-  subSpecs?: SubSpec[];
-}
+import { primeSpecsSidebar } from '@/lib/stores/specs-sidebar-store';
+import type { SpecWithMetadata, SidebarSpec } from '@/types/specs';
+import type { ParsedSpec } from '@/lib/db/service-queries';
 
 interface SpecDetailWrapperProps {
-  spec: Spec;
-  allSpecs: Spec[];
+  spec: SpecWithMetadata;
+  allSpecs: ParsedSpec[];
   currentSubSpec?: string;
 }
 
 export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetailWrapperProps) {
+  const sidebarSpecs = React.useMemo<SidebarSpec[]>(() => (
+    allSpecs.map((item) => ({
+      id: item.id,
+      specNumber: item.specNumber,
+      title: item.title,
+      specName: item.specName,
+      status: item.status,
+      priority: item.priority,
+      tags: item.tags,
+      contentMd: item.contentMd,
+      updatedAt: item.updatedAt,
+    }))
+  ), [allSpecs]);
+
+  // Prime sidebar store with latest metadata (only publishes when signature changes)
+  React.useEffect(() => {
+    primeSpecsSidebar(sidebarSpecs);
+  }, [sidebarSpecs]);
+
   // Prefetch spec data on hover
   const handleSpecPrefetch = React.useCallback((specId: string) => {
-    // Warm the cache by fetching the spec
     fetch(`/api/specs/${specId}`).catch(() => {
-      // Silently fail - prefetching is optional
+      // Prefetch is opportunistic, ignore failures
     });
   }, []);
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] w-full min-w-0">
-      {/* Specs Navigation Sidebar with prefetching */}
       <SpecsNavSidebar 
-        specs={allSpecs} 
+        initialSpecs={sidebarSpecs}
         currentSpecId={spec.id}
         currentSubSpec={currentSubSpec}
         onSpecHover={handleSpecPrefetch}
       />
 
-      {/* Main Content - Client Component */}
       <div className="flex-1 min-w-0">
         <SpecDetailClient 
           initialSpec={spec}

@@ -105,6 +105,16 @@ Successfully migrated PRs #66-69 from the old `lean-spec` repository to the new 
 **Files modified**: 1 file
 - New: `i18n/zh-Hans/TERMINOLOGY_GLOSSARY.md`
 
+### Post-Migration QA Fix (ee70869, 2025-11-17)
+
+After verification we found zh-Hans anchor references missing for the new terminology links. Commit `ee70869` adds:
+- Explicit anchor IDs on `guide/first-principles` translation so cross-links resolve
+- Translated `lean-spec tokens` reference section to surface `/reference/cli#lean-spec-tokens`
+- FAQ link update to reuse the new anchor slug
+- `pnpm build` now passes without broken-anchor warnings for en + zh-Hans
+
+This commit is part of the same `migrate-prs-66-69` branch and must be included in the docs-site PR.
+
 ## Design
 
 ### Migration Approach
@@ -185,6 +195,7 @@ lean-spec (old repo)
 - [x] Build succeeds with PR #69 changes (Chinese glossary)
 - [x] Final build succeeds with all changes
 - [x] Both English and Chinese locales build successfully
+- [x] `pnpm build` (2025-11-17) after `ee70869` → no broken anchors; warning resolved by zh-Hans fixes
 
 ### Content Verification
 - [x] All 21 files present in migration branch
@@ -196,13 +207,24 @@ lean-spec (old repo)
 - [x] Chinese translations present in i18n files
 
 ### Git Verification
-- [x] 4 commits on migrate-prs-66-69 branch
+- [x] 5 commits on migrate-prs-66-69 branch (includes QA fix `ee70869`)
 - [x] Each commit references source PR
 - [x] Commit messages descriptive and detailed
 - [x] Branch successfully pushed to origin
 - [x] No merge conflicts
 
 ## Next Steps for Verification Session
+
+### 0. Update docs-site Submodule Pointer
+```bash
+cd /home/marvin/projects/codervisor/lean-spec
+git add docs-site
+git commit -m "chore: point docs-site to ee70869 (spec 095 QA fix)"
+```
+
+Verify:
+- Root repo references `ee70869`
+- Include this commit with any follow-up PR in main repo
 
 ### 1. Review Migration Branch
 ```bash
@@ -251,7 +273,7 @@ Migrates documentation improvements from 4 unmerged PRs that were created before
 **Total**: 21 files changed, 4,032 insertions(+), 7 deletions(-)
 
 ### Verification
-- ✅ All builds pass (EN + zh-Hans)
+- ✅ All builds pass (EN + zh-Hans) — confirmed via `pnpm build` on 2025-11-17 after `ee70869`
 - ✅ No breaking changes
 - ✅ All links functional
 - ✅ Each PR tracked in separate commit
