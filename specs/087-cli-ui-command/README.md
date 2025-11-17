@@ -1,5 +1,5 @@
 ---
-status: complete
+status: in-progress
 created: '2025-11-17'
 tags:
   - cli
@@ -12,23 +12,51 @@ related:
   - 035-live-specs-showcase
   - 081-web-app-ux-redesign
   - 082-web-realtime-sync-architecture
-updated_at: '2025-11-17T02:00:24.131Z'
+updated_at: '2025-11-17T04:41:33.637Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T01:59:34.354Z'
   - status: complete
     at: '2025-11-17T02:00:24.131Z'
+  - status: in-progress
+    at: '2025-11-17T04:41:33.637Z'
 completed_at: '2025-11-17T02:00:24.131Z'
 completed: '2025-11-17'
 ---
 
 # CLI UI Command: `lean-spec ui`
 
-> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-17 · **Tags**: cli, web, dx, integration
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-17 · **Tags**: cli, web, dx, integration
 
 **Project**: lean-spec  
 **Team**: Core Development  
 **Related**: Spec 035 (live-specs-showcase), Spec 081 (web-app-ux-redesign), Spec 082 (web-realtime-sync-architecture)
+
+## Current Status
+
+**Phase 1: CLI Command (Monorepo Mode)** - ✅ **COMPLETE**
+- Basic `lean-spec ui` command implemented with all options
+- Monorepo detection working (checks for `packages/web`)
+- Package manager auto-detection (pnpm/yarn/npm)
+- Port validation (1-65535 range)
+- Robust error handling and graceful shutdown
+- Unit tests passing
+- Code review feedback addressed
+
+**Phase 2: Standalone UI Package (Production Mode)** - 🚧 **IN PROGRESS**
+- Need to create `@leanspec/ui` package for external projects
+- Need to implement `runPublishedUI()` logic in CLI
+- Need to set up npm publish CI workflow
+
+**What works now:**
+- ✅ `lean-spec ui` in LeanSpec monorepo (dev mode)
+- ✅ All command options: `--port`, `--specs`, `--no-open`, `--dry-run`
+- ✅ Auto-opens browser, launches web server with filesystem mode
+
+**What's next:**
+- Create standalone `@leanspec/ui` package
+- Implement production mode for external projects
+- Set up CI/CD for npm publishing
 
 ## Overview
 
@@ -359,23 +387,27 @@ PORT=3000
 
 ### Phase 1: CLI Command (Week 1)
 
-**Day 1-2: Basic Command Implementation**
-- [ ] Create `packages/cli/src/commands/ui.ts`
-- [ ] Implement command registration in registry
-- [ ] Add monorepo detection logic (check for `packages/web`)
-- [ ] Implement `runLocalWeb()` for dev mode
-- [ ] Add port, specs-dir, and no-open options
-- [ ] Add `--dry-run` flag for testing
-- [ ] Test in LeanSpec monorepo
+**Day 1-2: Basic Command Implementation** - ✅ **COMPLETE**
+- [x] Create `packages/cli/src/commands/ui.ts`
+- [x] Implement command registration in registry
+- [x] Add monorepo detection logic (check for `packages/web`)
+- [x] Implement `runLocalWeb()` for dev mode
+- [x] Add port, specs-dir, and no-open options
+- [x] Add `--dry-run` flag for testing
+- [x] Test in LeanSpec monorepo
+- [x] Add port validation (1-65535)
+- [x] Auto-detect package manager (pnpm/yarn/npm)
+- [x] Fix race conditions and event listener leaks
+- [x] Comprehensive error handling
 
-**Day 3: External Package Delegation**
+**Day 3: External Package Delegation** - 🚧 **TODO**
 - [ ] Implement `runPublishedUI()` that spawns `npx @leanspec/ui`
 - [ ] Add specs directory auto-detection
 - [ ] Add error handling (specs dir not found)
 - [ ] Add graceful shutdown (SIGINT handling)
 - [ ] Test with non-existent @leanspec/ui (show helpful error)
 
-### Phase 2: Standalone UI Package (Week 2)
+### Phase 2: Standalone UI Package (Week 2) - 🚧 **TODO**
 
 **Day 4-5: Package Structure**
 - [ ] Create `packages/ui/` directory
@@ -427,14 +459,16 @@ PORT=3000
 ### Functional Testing
 
 **CLI Command:**
-- [ ] `lean-spec ui` works in LeanSpec monorepo (launches local web)
+- [x] `lean-spec ui` works in LeanSpec monorepo (launches local web)
 - [ ] `lean-spec ui` works in external project (delegates to @leanspec/ui)
-- [ ] `--specs` option overrides auto-detection
-- [ ] `--port` option changes port correctly
-- [ ] `--no-open` prevents browser from opening
-- [ ] `--dry-run` shows what would run without executing
-- [ ] Error message when specs directory not found
-- [ ] Graceful shutdown on Ctrl+C
+- [x] `--specs` option overrides auto-detection
+- [x] `--port` option changes port correctly
+- [x] `--no-open` prevents browser from opening
+- [x] `--dry-run` shows what would run without executing
+- [x] Error message when specs directory not found
+- [x] Graceful shutdown on Ctrl+C
+- [x] Port validation (1-65535 range)
+- [x] Package manager detection (pnpm/yarn/npm)
 
 **Standalone UI Package:**
 - [ ] `npx @leanspec/ui` launches web UI
