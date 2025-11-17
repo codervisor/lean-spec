@@ -103,16 +103,27 @@ lean-spec update <spec> --status in-progress --assignee yourname
 1. **Discover context** - Run `lean-spec stats` or `lean-spec board` to see current state
 2. **Search existing specs** - Use `lean-spec search` or `lean-spec list` to find relevant work
 3. **Check dependencies** - Run `lean-spec deps <spec>` if working on existing spec
-4. **Create or update spec** - Add frontmatter with required fields and helpful metadata
-5. **Start work** - **IMMEDIATELY** update status: `lean-spec update <spec> --status in-progress`
+4. **Create or update spec** - Add frontmatter with required fields (status: `planned`)
+5. **Start implementation** - Mark `in-progress` BEFORE implementing what the spec describes
 6. **Implement changes** - Keep spec in sync as you learn
-7. **Complete** - **IMMEDIATELY** update status: `lean-spec update <spec> --status complete`
+7. **Complete implementation** - Mark `complete` AFTER implementing what the spec describes
 8. **Archive when done** - `lean-spec archive <spec>` moves to archive
-**Status Update Triggers (CRITICAL):**
-- ✅ **Before starting implementation** → Update to `in-progress`
-- ✅ **Immediately after completing all work** → Update to `complete`
+
+**Remember**: Status tracks implementation work, not spec document creation. Creating a spec = planning (stays `planned` until implementation starts).
+**CRITICAL - What "Work" Means:**
+- ❌ **NOT**: Creating/writing the spec document itself
+- ✅ **YES**: Implementing what the spec describes (code, docs, features, etc.)
+- **Example**: Creating a spec for "API redesign" ≠ work complete
+  - Work = Actually redesigning the API as described in the spec
+  - Status `planned` until someone starts the redesign
+  - Status `in-progress` while redesigning
+  - Status `complete` after redesign is done
+
+**Status Update Triggers:**
+- ✅ **Before starting implementation** → `lean-spec update <spec> --status in-progress`
+- ✅ **After completing implementation** → `lean-spec update <spec> --status complete`
 - ✅ **If blocked or paused** → Update status and document why in spec
-- ❌ **NEVER skip status updates** - They're required for project tracking
+- ❌ **NEVER mark spec complete just because you finished writing it**
 
 ## Quality Standards
 
