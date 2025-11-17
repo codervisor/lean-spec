@@ -11,6 +11,8 @@ Thanks for your interest in contributing! LeanSpec is about keeping things lean,
 5. Commit with clear message: `git commit -m "Add feature X"`
 6. Push and open a PR
 
+> Note: The documentation site lives in the `codervisor/lean-spec-docs` repository and is mounted here as the `docs-site/` submodule. Run `git submodule update --init --recursive` after cloning if you plan to work on docs.
+
 ## Development Setup
 
 ```bash
@@ -29,6 +31,22 @@ pnpm test         # Run tests (with caching)
 pnpm typecheck    # Type check all packages (with caching)
 ```
 
+### Docs Site Submodule
+
+The docs are maintained in [codervisor/lean-spec-docs](https://github.com/codervisor/lean-spec-docs) and pulled in via the `docs-site/` git submodule. Typical workflow:
+
+```bash
+git submodule update --init --recursive  # first time or when the submodule is missing
+cd docs-site
+pnpm install                            # install docs dependencies once inside the submodule
+pnpm start                              # develop docs locally
+git commit -am "docs: ..." && git push  # push changes from inside the submodule
+
+cd ..
+git add docs-site                       # stage updated submodule pointer in this repo
+git commit -m "chore: bump docs-site"
+```
+
 ### Monorepo with Turborepo
 
 This project uses [Turborepo](https://turbo.build/) to manage the monorepo with pnpm workspaces:
@@ -41,7 +59,7 @@ This project uses [Turborepo](https://turbo.build/) to manage the monorepo with 
 - `packages/cli` - Main CLI tool (published as `lean-spec`)
 - `packages/core` - Core spec parsing/validation library (internal)
 - `packages/web` - Live specs showcase (Next.js app)
-- `docs-site` - Documentation website (Docusaurus)
+- `docs-site/` - Git submodule pointing to `codervisor/lean-spec-docs` (Docusaurus)
 
 **Key files:**
 - `turbo.json` - Task pipeline configuration

@@ -18,9 +18,9 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "docs:dev": "pnpm -F docs-site start",
-    "docs:build": "pnpm -F docs-site build",
-    "docs:serve": "pnpm -F docs-site serve"
+    "docs:dev": "pnpm --dir docs-site start",
+    "docs:build": "pnpm --dir docs-site build",
+    "docs:serve": "pnpm --dir docs-site serve"
   },
   "keywords": [
     "spec",

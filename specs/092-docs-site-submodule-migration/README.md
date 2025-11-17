@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-17'
 tags:
   - infrastructure
@@ -7,12 +7,15 @@ tags:
   - monorepo
 priority: high
 created_at: '2025-11-17T04:54:37.212Z'
-updated_at: '2025-11-17T04:55:16.581Z'
+updated_at: '2025-11-17T05:31:55.704Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-17T05:31:55.704Z'
 ---
 
 # Migrate docs-site to separate repository as submodule
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17 · **Tags**: infrastructure, docs, monorepo
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-17 · **Tags**: infrastructure, docs, monorepo
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -101,24 +104,24 @@ git commit -m "chore: update docs submodule pointer"
 
 ## Plan
 
-- [ ] Create `codervisor/lean-spec-docs` repository on GitHub
-- [ ] Copy `docs-site/` content to new repository
+- [x] Create `codervisor/lean-spec-docs` repository on GitHub
+- [x] Copy `docs-site/` content to new repository
 - [ ] Set up Vercel deployment for new docs repo
 - [ ] Test docs build and deployment independently
-- [ ] Remove `docs-site/` from lean-spec monorepo
-- [ ] Update workspace configs (package.json, pnpm-workspace.yaml, turbo.json)
-- [ ] Add docs-site as git submodule
-- [ ] Update CONTRIBUTING.md with submodule workflow
-- [ ] Update GitHub Actions to skip docs builds
+- [x] Remove `docs-site/` from lean-spec monorepo
+- [x] Update workspace configs (package.json, pnpm-workspace.yaml, turbo.json)
+- [x] Add docs-site as git submodule
+- [x] Update CONTRIBUTING.md with submodule workflow
+- [x] Update GitHub Actions to skip docs builds
 - [ ] Test full workflow: clone, build, deploy
-- [ ] Document submodule best practices in README
+- [x] Document submodule best practices in README
 
 ## Test
 
 - [ ] New docs repo builds successfully on Vercel
 - [ ] Docs deploy independently when pushed to lean-spec-docs
-- [ ] Main repo builds without docs-site directory
-- [ ] Submodule clone works: `git clone --recurse-submodules`
+- [x] Main repo builds without docs-site directory
+- [x] Submodule clone works: `git clone --recurse-submodules`
 - [ ] Submodule update works: `git submodule update --remote`
 - [ ] CI/CD skips docs builds when only CLI/core changes
 - [ ] Developers can work on docs independently

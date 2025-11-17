@@ -30,13 +30,6 @@
     },
     "format": {
       "outputs": []
-    },
-    "docs:build": {
-      "outputs": ["docs-site/build/**"]
-    },
-    "docs:dev": {
-      "cache": false,
-      "persistent": true
     }
   }
 }

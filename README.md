@@ -249,6 +249,35 @@ lean-spec update <spec> --status in-progress
 
 ---
 
+## Documentation Repository
+
+The Docusaurus site now lives in **codervisor/lean-spec-docs** and is pulled into this repo as the `docs-site/` git submodule. That keeps docs deployments independent while preserving a single source of truth inside this monorepo.
+
+### Clone with docs included
+
+```bash
+git clone --recurse-submodules https://github.com/codervisor/lean-spec.git
+# or, if you already cloned earlier
+git submodule update --init --recursive
+```
+
+### Work on the docs
+
+```bash
+cd docs-site        # inside the submodule
+pnpm install        # install docs dependencies (first run in the submodule)
+pnpm start          # run the docs dev server
+git commit -am "docs: ..." && git push  # push to codervisor/lean-spec-docs
+
+cd ..
+git add docs-site   # stage updated submodule pointer
+git commit -m "chore: bump docs-site"
+```
+
+Root scripts (`pnpm docs:dev|docs:build|docs:serve`) now forward into the submodule automatically, so you can continue to use the familiar commands from the repo root once the submodule is initialized.
+
+---
+
 ## When to Use LeanSpec
 
 | Use LeanSpec When: | Skip It When: |
