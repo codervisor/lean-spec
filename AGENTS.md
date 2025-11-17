@@ -265,19 +265,20 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 
 ## Publishing Releases
 
-**Only publish the `lean-spec` CLI package to npm:**
+**Publish both CLI and UI packages to npm with synchronized versions:**
 
-1. **Version bump**: Update version in all package.json files (root, cli, core, web) for consistency
+1. **Version bump**: Update version in all package.json files (root, cli, core, ui, web) for consistency
 2. **Update CHANGELOG.md**: Add release notes with date and version
 3. **Build**: Run `pnpm build` to build all packages
 4. **Test**: Run `pnpm test:run` to ensure tests pass (web DB tests may fail - that's OK)
 5. **Validate**: Run `node bin/lean-spec.js validate` and `cd docs-site && npm run build` to ensure everything works
 6. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
-7. **Publish**: `cd packages/cli && npm publish` (only publish the CLI package)
-8. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
-9. **GitHub Release**: `gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "Release notes here"`
-10. **Verify**: 
-   - `npm view lean-spec version` to confirm publication
+7. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
+8. **GitHub Release**: `gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "Release notes here"`
+   - This triggers the GitHub Action workflow that publishes both `lean-spec` and `@leanspec/ui` to npm
+9. **Verify**: 
+   - `npm view lean-spec version` to confirm CLI publication
+   - `npm view @leanspec/ui version` to confirm UI publication
    - `npm view lean-spec dependencies` to ensure no `workspace:*` dependencies leaked
    - Test installation: `npm install -g lean-spec@latest` in a clean environment
    - Check GitHub release page: https://github.com/codervisor/lean-spec/releases
@@ -288,7 +289,10 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 - NEVER add `@leanspec/core` back to dependencies - it will cause `workspace:*` errors
 - If you see `workspace:*` in published dependencies, the package is broken and must be republished
 
-**Important**: Do NOT publish `@leanspec/core` or `@leanspec/web` - they are internal packages. The `@leanspec` npm scope doesn't exist, and the core package is bundled into the CLI distribution.
+**Important**: 
+- Do NOT publish `@leanspec/core` or `@leanspec/web` - they are internal packages
+- The `@leanspec/ui` package IS published to npm as a public scoped package
+- Both `lean-spec` (CLI) and `@leanspec/ui` are published automatically via GitHub Actions when a release is created
 
 ## Spec Complexity Guidelines
 

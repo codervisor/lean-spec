@@ -30,7 +30,14 @@ jobs:
       - name: Build
         run: pnpm build
       
-      - name: Publish to npm
+      - name: Publish CLI to npm
+        working-directory: packages/cli
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish UI to npm
+        working-directory: packages/ui
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
