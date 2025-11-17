@@ -1,6 +1,5 @@
 packages:
   - packages/*
-  - docs-site
 
 ignoredBuiltDependencies:
   - core-js
