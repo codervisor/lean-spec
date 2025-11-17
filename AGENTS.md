@@ -269,14 +269,15 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 
 1. **Version bump**: Update version in all package.json files (root, cli, core, ui, web) for consistency
 2. **Update CHANGELOG.md**: Add release notes with date and version
-3. **Build**: Run `pnpm build` to build all packages
+3. **Type check**: Run `pnpm typecheck` to catch type errors (REQUIRED before release)
 4. **Test**: Run `pnpm test:run` to ensure tests pass (web DB tests may fail - that's OK)
-5. **Validate**: Run `node bin/lean-spec.js validate` and `cd docs-site && npm run build` to ensure everything works
-6. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
-7. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
-8. **GitHub Release**: `gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "Release notes here"`
+5. **Build**: Run `pnpm build` to build all packages
+6. **Validate**: Run `node bin/lean-spec.js validate` and `cd docs-site && npm run build` to ensure everything works
+7. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
+8. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
+9. **GitHub Release**: `gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "Release notes here"`
    - This triggers the GitHub Action workflow that publishes both `lean-spec` and `@leanspec/ui` to npm
-9. **Verify**: 
+10. **Verify**: 
    - `npm view lean-spec version` to confirm CLI publication
    - `npm view @leanspec/ui version` to confirm UI publication
    - `npm view lean-spec dependencies` to ensure no `workspace:*` dependencies leaked
