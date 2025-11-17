@@ -1,7 +1,7 @@
 {
   "name": "@leanspec/core",
-  "version": "0.2.2",
-  "description": "Core spec parsing and validation library for LeanSpec",
+  "version": "0.2.3",
+  "description": "Core functionality for LeanSpec",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

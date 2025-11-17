@@ -31,10 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cleaner monorepo structure
   - Independent documentation deployment
   - Beginner-first reorganization
-- **Web App Chinese Localization** - Complete i18n infrastructure
-  - Chinese (zh-Hans) translations for web interface
-  - i18n hook with caching and loading states
-  - Localization-ready architecture
 
 ### Changed
 - **Web App Navigation**: Switched from full server-side rendering to hybrid architecture

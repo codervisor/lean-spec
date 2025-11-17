@@ -1,7 +1,7 @@
 {
   "name": "lean-spec",
-  "version": "0.2.2",
-  "description": "Lightweight spec methodology for AI-powered development",
+  "version": "0.2.3",
+  "description": "Specification-driven development made simple",
   "type": "module",
   "bin": {
     "lean-spec": "./bin/lean-spec.js"

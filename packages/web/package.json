@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/web",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "LeanSpec Web: Fullstack spec showcase platform",
   "private": true,
   "type": "module",

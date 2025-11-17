@@ -1,10 +1,10 @@
 ---
-status: complete
+status: planned
 created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:12:58.531Z'
-updated_at: '2025-11-17T09:15:05.884Z'
+updated_at: '2025-11-17T12:52:05.092Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:14:06.440Z'
@@ -14,16 +14,20 @@ transitions:
     at: '2025-11-17T02:58:36.055Z'
   - status: complete
     at: '2025-11-17T09:15:05.884Z'
+  - status: planned
+    at: '2025-11-17T12:52:05.092Z'
 completed_at: '2025-11-17T02:14:06.656Z'
 completed: '2025-11-17'
 ---
 
 # Comprehensive Chinese Localization for LeanSpec
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-17
+> **Status**: 📋 Planned · **Priority**: High · **Created**: 2025-11-17
 
 **Project**: lean-spec  
 **Team**: Core Development
+
+**Current Progress**: Docs-site i18n complete (spec 064). Web app and CLI i18n not yet started.
 
 ## Overview
 
@@ -142,39 +146,39 @@ Create SDD terminology glossary:
 ## Plan
 
 **Phase 1: Foundation**
-- [ ] Create SDD terminology glossary (Chinese)
-- [ ] Set up Docusaurus i18n configuration
+- [x] Create SDD terminology glossary (Chinese) - Done in spec 064
+- [x] Set up Docusaurus i18n configuration - Done in spec 064
 - [ ] Set up web app i18n infrastructure (react-i18next)
-- [ ] Create translation file structures
+- [ ] Create translation file structures (web app)
 
-**Phase 2: Docs Site Translation** (Priority 1)
-- [ ] Translate Core Concepts pages
-- [ ] Translate "Your First Spec" tutorial (spec 089)
-- [ ] Translate Guides and best practices
-- [ ] Translate homepage and navigation
-- [ ] Test zh-CN docs site build
+**Phase 2: Docs Site Translation** (Priority 1) - ✅ COMPLETE (spec 064)
+- [x] Translate Core Concepts pages
+- [x] Translate "Your First Spec" tutorial (spec 089)
+- [x] Translate Guides and best practices
+- [x] Translate homepage and navigation
+- [x] Test zh-CN docs site build
 
-**Phase 3: Web App Translation** (Priority 2)
+**Phase 3: Web App Translation** (Priority 2) - 🔴 NOT STARTED
 - [ ] Extract all UI strings to translation files
 - [ ] Translate to Chinese
 - [ ] Add language switcher to UI
 - [ ] Test web app with Chinese locale
 
-**Phase 4: CLI Templates Translation** (Priority 3)
+**Phase 4: CLI Templates Translation** (Priority 3) - 🔴 NOT STARTED
 - [ ] Create Chinese template variants (zh-CN)
 - [ ] Translate template boilerplate text
 - [ ] Translate AGENTS.md instructions
 - [ ] Test Chinese template creation
 
 **Phase 5: Quality & Polish**
-- [ ] Native speaker review of translations
-- [ ] Cultural adaptation review
-- [ ] Fix inconsistencies
+- [x] Native speaker review of translations (docs-site done)
+- [ ] Cultural adaptation review (web app)
+- [x] Fix inconsistencies (docs-site)
 - [ ] Create Chinese example specs for docs
 
 **Phase 6: Ongoing Maintenance**
-- [ ] Document translation workflow
-- [ ] Set up process for new content
+- [x] Document translation workflow (docs-site done)
+- [ ] Set up process for new content (web app)
 - [ ] Build Chinese community for feedback
 
 **Future: Cross-Language Spec Translation** (separate spec, after this)
@@ -185,12 +189,16 @@ Create SDD terminology glossary:
 
 ## Test
 
-- [ ] Chinese users can read all core docs in their language
+**Docs-site (completed in spec 064):**
+- [x] Chinese users can read all core docs in their language
+- [x] Terminology is consistent across all translations (docs-site)
+- [x] Language switcher works smoothly in docs
+
+**Web app (not yet implemented):**
 - [ ] Web app fully functional in Chinese
-- [ ] Terminology is consistent across all translations
-- [ ] Native speakers confirm quality and clarity
-- [ ] Language switcher works smoothly in both web app and docs
-- [ ] Chinese users successfully complete tutorials in Chinese
+- [ ] Language switcher works in web app
+- [ ] Native speakers confirm quality and clarity (web app)
+- [ ] Chinese users successfully complete tutorials in Chinese (web app)
 
 ## Cross-Language Spec Reading (Future)
 
