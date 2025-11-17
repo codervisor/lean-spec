@@ -31,7 +31,16 @@ import { cn } from '@/lib/utils';
 import { extractH1Title } from '@/lib/utils';
 import { PriorityBadge, getPriorityLabel } from './priority-badge';
 import { formatRelativeTime } from '@/lib/date-utils';
-import { useSpecsSidebarSpecs, useSpecsSidebarActiveSpec } from '@/lib/stores/specs-sidebar-store';
+import {
+  useSpecsSidebarSpecs,
+  useSpecsSidebarActiveSpec,
+  getSidebarScrollTop,
+  updateSidebarScrollTop,
+} from '@/lib/stores/specs-sidebar-store';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined'
+  ? React.useLayoutEffect
+  : React.useEffect;
 import type { SidebarSpec } from '@/types/specs';
 
 interface SpecsNavSidebarProps {
@@ -58,6 +67,11 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   const [mounted, setMounted] = React.useState(false);
   const activeItemRef = React.useRef<HTMLAnchorElement>(null);
   const scrollFrameRef = React.useRef<number | null>(null);
+  const restoredScrollRef = React.useRef(false);
+  const listRef = React.useRef<ListImperativeAPI>(null);
+  const savedScrollRef = React.useRef(0);
+  const anchoredActiveSpecRef = React.useRef(false);
+  const initialRenderRef = React.useRef(true);
   
   // Use selector hooks to avoid unnecessary re-renders from unrelated state changes
   const sidebarSpecs = useSpecsSidebarSpecs();
@@ -88,21 +102,6 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   React.useEffect(() => {
     setMobileOpen(false);
   }, [resolvedCurrentSpecId, currentSubSpec]);
-
-  // Note: Scroll position management removed to prevent drift.
-  // The list now maintains its natural scroll position.
-
-  // Expose function for mobile toggle
-  React.useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    window.toggleSpecsSidebar = () => setMobileOpen(prev => !prev);
-    return () => {
-      window.toggleSpecsSidebar = undefined;
-    };
-  }, []);
 
   const filteredSpecs = React.useMemo(() => {
     let specs = cachedSpecs;
@@ -160,6 +159,128 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   const sortedSpecs = React.useMemo(() => {
     return [...filteredSpecs].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
   }, [filteredSpecs]);
+
+  // Persist and restore sidebar scroll position without triggering component re-renders
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let rafId: number | null = null;
+    let cleanup: (() => void) | null = null;
+
+    savedScrollRef.current = getSidebarScrollTop();
+    anchoredActiveSpecRef.current = savedScrollRef.current > 0;
+
+    const setupScrollPersistence = () => {
+      const listElement = listRef.current?.element;
+
+      if (!listElement) {
+        rafId = window.requestAnimationFrame(setupScrollPersistence);
+        return;
+      }
+
+      if (!restoredScrollRef.current) {
+        if (savedScrollRef.current > 0) {
+          listElement.scrollTop = savedScrollRef.current;
+        }
+        restoredScrollRef.current = true;
+      }
+
+      const handleScroll = () => {
+        if (scrollFrameRef.current !== null) {
+          return;
+        }
+        scrollFrameRef.current = window.requestAnimationFrame(() => {
+          scrollFrameRef.current = null;
+          savedScrollRef.current = listElement.scrollTop;
+          updateSidebarScrollTop(listElement.scrollTop);
+        });
+      };
+
+      listElement.addEventListener('scroll', handleScroll, { passive: true });
+      cleanup = () => {
+        listElement.removeEventListener('scroll', handleScroll);
+      };
+    };
+
+    setupScrollPersistence();
+
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
+    };
+  }, []);
+
+  // Ensure the active spec is visible when first loading without a stored scroll position
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!initialRenderRef.current) {
+      return;
+    }
+
+    initialRenderRef.current = false;
+
+    if (anchoredActiveSpecRef.current) {
+      return;
+    }
+
+    if (!resolvedCurrentSpecId) {
+      return;
+    }
+
+    let rafId: number | null = null;
+
+    const tryAnchorScroll = () => {
+      if (anchoredActiveSpecRef.current) {
+        return;
+      }
+
+      if (!restoredScrollRef.current || !listRef.current) {
+        rafId = window.requestAnimationFrame(tryAnchorScroll);
+        return;
+      }
+
+      const targetIndex = sortedSpecs.findIndex((spec) => spec.id === resolvedCurrentSpecId);
+      if (targetIndex === -1) {
+        return;
+      }
+
+      anchoredActiveSpecRef.current = true;
+      listRef.current.scrollToRow({ index: targetIndex, align: 'center' });
+    };
+
+    tryAnchorScroll();
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [sortedSpecs, resolvedCurrentSpecId]);
+
+  // Expose function for mobile toggle
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.toggleSpecsSidebar = () => setMobileOpen(prev => !prev);
+    return () => {
+      window.toggleSpecsSidebar = undefined;
+    };
+  }, []);
 
   // Virtual list row renderer (rowProps will be passed by react-window)
   const RowComponent = React.useCallback((rowProps: { index: number; style: React.CSSProperties }) => {
@@ -256,8 +377,6 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
     }
     return 600; // fallback
   }, []);
-
-  const listRef = React.useRef<ListImperativeAPI>(null);
 
   // Memoized List component to prevent unnecessary re-renders
   const MemoizedList = React.useMemo(() => {

@@ -18,6 +18,8 @@ let state: SidebarState = {
   activeSpecId: null,
 };
 
+const EMPTY_SIDEBAR_SPECS: SidebarSpec[] = [];
+
 const listeners = new Set<() => void>();
 
 // Separate listeners for different state slices to avoid unnecessary re-renders
@@ -82,7 +84,7 @@ export function useSpecsSidebarSpecs() {
   return useSyncExternalStore(
     subscribeToSpecs,
     () => getState().specs,
-    () => []
+    () => EMPTY_SIDEBAR_SPECS
   );
 }
 
@@ -142,7 +144,7 @@ export function updateSidebarScrollTop(nextScrollTop: number) {
     ...state,
     scrollTop: nextScrollTop,
   };
-  emitChange();
+  // Scroll position persistence should not trigger subscriber re-renders.
 }
 
 export function getSidebarScrollTop() {

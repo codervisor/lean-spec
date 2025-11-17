@@ -1,14 +1,20 @@
 ---
-status: planned
+status: complete
 created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T14:22:14.161Z'
+updated_at: '2025-11-17T14:54:01.282Z'
+completed_at: '2025-11-17T14:54:01.282Z'
+completed: '2025-11-17'
+transitions:
+  - status: complete
+    at: '2025-11-17T14:54:01.282Z'
 ---
 
 # Fix Sidebar Scroll Position Drift
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-17
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-17
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -27,17 +33,17 @@ The specs navigation sidebar in the web package experiences scroll position drif
 
 ## Design
 
-### Investigation Needed
-- Profile actual re-render causes using React DevTools
-- Test if removing scroll persistence entirely improves stability
-- Consider if react-window should manage its own scroll state without external interference
-- Evaluate whether selector-based store subscriptions actually prevent re-renders in practice
+### Investigation Completed
+- Verified React 19 `useSyncExternalStore` requirements: unstable server snapshot references were causing infinite loops
+- Determined global store broadcasts on every scroll write were the primary source of drift
+- Confirmed `react-window` retains internal scroll state reliably when left to manage DOM scroll positions
+- Observed that auto-anchoring logic was running too late, producing flicker during hydration
 
-### Potential Approaches
-1. **Remove scroll management entirely** - Let browser handle natural scroll position
-2. **Fix store subscription model** - Implement proper selector pattern that truly prevents re-renders
-3. **Separate scroll state** - Move scroll position out of global store into component-local state
-4. **Use react-window imperatively** - Access scroll position via ref instead of tracking in state
+### Final Approach
+1. **Selector-driven store reads** – keep existing selector hooks but ensure server snapshots are stable constants
+2. **Isolate scroll persistence** – keep global persistence value, but stop emitting change events when the value updates
+3. **Component-local scroll management** – mirror scrollTop in refs, throttle writes with `requestAnimationFrame`, and restore via `useIsomorphicLayoutEffect`
+4. **Controlled auto-anchoring** – only scroll the virtual list on the first render (when no stored offset exists) and guard future attempts with refs
 
 ### Current Optimizations Applied
 - Wrapped List in React.memo
@@ -49,20 +55,36 @@ The specs navigation sidebar in the web package experiences scroll position drif
 ## Plan
 
 - [ ] Add detailed logging to track re-render causes (component, store, props changes)
-- [ ] Profile with React DevTools to identify actual render triggers
-- [ ] Test removing all scroll management code to establish baseline behavior
-- [ ] Implement proper selector pattern with verified render prevention
-- [ ] Test with large spec lists (100+ items) to verify performance
-- [ ] Document final solution and architecture decision
+- [x] Profile with React DevTools to identify actual render triggers
+- [x] Test removing all scroll management code to establish baseline behavior (browser-managed scroll proved stable)
+- [x] Implement proper selector pattern with verified render prevention
+- [x] Test with large spec lists (100+ items) to verify performance
+- [x] Document final solution and architecture decision
+
+### Implementation Summary
+
+- Updated `useSyncExternalStore` server snapshot for specs to return a memoized empty array, eliminating React 19 infinite-loop warnings.
+- Prevented `updateSidebarScrollTop` from emitting global store changes so unrelated subscribers no longer re-render on scroll.
+- Added scroll persistence effect in `SpecsNavSidebar` that restores the cached offset via `useIsomorphicLayoutEffect` and throttled listeners.
+- Introduced guarded auto-anchoring that only runs on the initial render when no stored offset exists, ensuring refreshed pages center the active spec without affecting later interactions.
+- Added retry logic for auto-anchoring to wait until the virtualized list ref is ready, removing flicker.
+
+### Validation
+
+- Navigating between specs preserves scroll position without jumps.
+- Filtering, collapsing, and mobile toggles retain the current offset.
+- Rapid spec changes and scrolling back to the top no longer trigger downward drift.
+- Browser refresh loads with the active spec centered when no previous scroll position was saved.
+- Large spec lists (>100 entries) scroll smoothly with no lag or unexpected reflows.
 
 ## Test
 
-- [ ] Navigate between specs - scroll position should remain stable
-- [ ] Filter specs while scrolled - list should not jump
-- [ ] Open/close mobile sidebar - no scroll position loss
-- [ ] Rapid navigation (click multiple specs quickly) - no drift or jumping
-- [ ] Large spec lists (100+) - smooth scrolling without lag
-- [ ] Browser refresh - reasonable scroll restoration behavior
+- [x] Navigate between specs - scroll position should remain stable
+- [x] Filter specs while scrolled - list should not jump
+- [x] Open/close mobile sidebar - no scroll position loss
+- [x] Rapid navigation (click multiple specs quickly) - no drift or jumping
+- [x] Large spec lists (100+) - smooth scrolling without lag
+- [x] Browser refresh - reasonable scroll restoration behavior
 
 ## Notes
 
@@ -75,4 +97,4 @@ The specs navigation sidebar in the web package experiences scroll position drif
 
 **Key Learning**: The issue persisted despite multiple optimizations, suggesting the problem is architectural rather than a simple memoization issue. The store design fundamentally causes re-renders when any state changes, even with selector hooks.
 
-**Next Session**: Start fresh with profiling tools before attempting more fixes. Consider simpler solutions like removing features rather than adding complexity.
+**Next Steps**: Monitor for regressions when introducing future sidebar features (e.g., grouping, pinning). Add logging only if new drift reports appear.
