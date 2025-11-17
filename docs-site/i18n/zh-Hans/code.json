@@ -393,5 +393,17 @@
   "homepage.feature.tooling.description": {
     "message": "CLI 自动化工作流。MCP 服务器供 AI 代理使用。VS Code 扩展。GitHub Actions 集成 CI/CD。可扩展可组合的工具链。",
     "description": "Rich Tooling feature description"
+  },
+  "homepage.caseStudies.title": {
+    "message": "实战案例",
+    "description": "Case Studies section title"
+  },
+  "homepage.caseStudies.description": {
+    "message": "从真实案例中学习 LeanSpec 如何使用 SDD。从简单功能到复杂重构，了解规范如何指导实现。",
+    "description": "Case Studies section description"
+  },
+  "homepage.caseStudies.button": {
+    "message": "查看案例研究 →",
+    "description": "View Case Studies button"
   }
 }

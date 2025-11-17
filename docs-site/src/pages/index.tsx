@@ -66,6 +66,40 @@ export default function Home(): ReactNode {
       <HomepageHeader />
       <main>
         <HomepageFeatures />
+        <section className="margin-top--lg margin-bottom--lg">
+          <div className="container">
+            <div className="row">
+              <div className="col col--12 text--center">
+                <Heading as="h2" className="margin-bottom--md">
+                  <Translate
+                    id="homepage.caseStudies.title"
+                    description="Case Studies section title">
+                    See SDD in Action
+                  </Translate>
+                </Heading>
+                <p className="margin-bottom--lg" style={{fontSize: '1.1rem'}}>
+                  <Translate
+                    id="homepage.caseStudies.description"
+                    description="Case Studies section description">
+                    Learn from real-world examples of how LeanSpec itself uses SDD. 
+                    From simple features to complex refactors, see how specs guide implementation.
+                  </Translate>
+                </p>
+                <div className={styles.buttons}>
+                  <Link
+                    className="button button--primary button--lg"
+                    to="/docs/case-studies">
+                    <Translate
+                      id="homepage.caseStudies.button"
+                      description="View Case Studies button">
+                      View Case Studies →
+                    </Translate>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </Layout>
   );
