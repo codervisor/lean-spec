@@ -1,0 +1,3 @@
+[submodule "docs-site"]
+	path = docs-site
+	url = https://github.com/codervisor/lean-spec-docs.git
