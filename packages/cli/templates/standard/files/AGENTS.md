@@ -28,13 +28,15 @@ Skip specs for:
 
 Before starting work, understand project context:
 
-- `lean-spec stats` - See work distribution across specs
-- `lean-spec board` - View specs organized by status
-- `lean-spec list --tag=<tag>` - Find specs by tag (e.g., `--tag=api`)
-- `lean-spec search "<query>"` - Full-text search across specs
-- `lean-spec deps <spec>` - Check dependencies before starting work
+- `lean-spec stats` - See work distribution
+- `lean-spec board` - View specs by status
+- `lean-spec search "<query>"` - Find relevant work
+- `lean-spec list` - List all specs
 
-These commands help you understand what exists, what's in progress, and what depends on what.
+These help you understand what exists and what's in progress.
+**Additional commands:**
+- `lean-spec list --tag=<tag>` - Find specs by tag (e.g., `--tag=api`)
+- `lean-spec deps <spec>` - Check dependencies before starting work
 
 ## Essential Commands
 
