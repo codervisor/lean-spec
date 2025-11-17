@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ChevronRight, Menu } from 'lucide-react';
+import { ChevronRight, Menu, BookOpen } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { QuickSearch } from '@/components/quick-search';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Spec {
   id: string
@@ -141,40 +142,67 @@ export function Navigation({ specs }: NavigationProps) {
         {/* Right: Search + Theme + Docs + GitHub */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <QuickSearch specs={specs} />
-          <ThemeToggle />
-          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-            <a 
-              href="https://www.lean-spec.dev" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium"
-            >
-              Docs
-            </a>
-          </Button>
-          <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
-            <a 
-              href="https://github.com/codervisor/lean-spec" 
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository"
-            >
-              <Image
-                src="/github-mark-white.svg"
-                alt="GitHub"
-                width={20}
-                height={20}
-                className="hidden dark:block"
-              />
-              <Image
-                src="/github-mark.svg"
-                alt="GitHub"
-                width={20}
-                height={20}
-                className="dark:hidden"
-              />
-            </a>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <ThemeToggle />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle theme</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                  <a 
+                    href="https://www.lean-spec.dev" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Documentation"
+                  >
+                    <BookOpen className="h-5 w-5" />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Documentation</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                  <a 
+                    href="https://github.com/codervisor/lean-spec" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="GitHub repository"
+                  >
+                    <Image
+                      src="/github-mark-white.svg"
+                      alt="GitHub"
+                      width={20}
+                      height={20}
+                      className="hidden dark:block"
+                    />
+                    <Image
+                      src="/github-mark.svg"
+                      alt="GitHub"
+                      width={20}
+                      height={20}
+                      className="dark:hidden"
+                    />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>GitHub repository</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </header>
