@@ -4,7 +4,7 @@
  */
 
 import { notFound } from 'next/navigation';
-import { getSpecById, getSpecs } from '@/lib/db/service-queries';
+import { getSpecById, getSpecsWithSubSpecCount } from '@/lib/db/service-queries';
 import { SpecDetailWrapper } from '@/components/spec-detail-wrapper';
 
 // Tier 1: Route segment caching for performance
@@ -23,7 +23,7 @@ export default async function SpecDetailPage({
   
   const [spec, allSpecs] = await Promise.all([
     getSpecById(id),
-    getSpecs()
+    getSpecsWithSubSpecCount()
   ]);
 
   if (!spec) {

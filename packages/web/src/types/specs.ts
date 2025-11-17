@@ -14,4 +14,5 @@ export type SpecWithMetadata = ParsedSpec & {
 
 export type SidebarSpec = Pick<SpecWithMetadata, 'id' | 'specNumber' | 'title' | 'specName' | 'status' | 'priority' | 'contentMd' | 'updatedAt'> & {
   tags: string[] | null;
+  subSpecsCount?: number;
 };

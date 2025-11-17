@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useSyncExternalStore } from 'react';
 import type { SidebarSpec } from '@/types/specs';
 
@@ -19,8 +20,24 @@ let state: SidebarState = {
 
 const listeners = new Set<() => void>();
 
+// Separate listeners for different state slices to avoid unnecessary re-renders
+const specsListeners = new Set<() => void>();
+const activeSpecListeners = new Set<() => void>();
+
 function emitChange() {
   for (const listener of listeners) {
+    listener();
+  }
+}
+
+function emitSpecsChange() {
+  for (const listener of specsListeners) {
+    listener();
+  }
+}
+
+function emitActiveSpecChange() {
+  for (const listener of activeSpecListeners) {
     listener();
   }
 }
@@ -53,6 +70,37 @@ export function useSpecsSidebarState() {
   return useSyncExternalStore(subscribe, getState, () => state);
 }
 
+// Optimized selector hooks that only subscribe to specific state slices
+export function useSpecsSidebarSpecs() {
+  const subscribeToSpecs = React.useCallback((listener: () => void) => {
+    specsListeners.add(listener);
+    return () => {
+      specsListeners.delete(listener);
+    };
+  }, []);
+
+  return useSyncExternalStore(
+    subscribeToSpecs,
+    () => getState().specs,
+    () => []
+  );
+}
+
+export function useSpecsSidebarActiveSpec() {
+  const subscribeToActiveSpec = React.useCallback((listener: () => void) => {
+    activeSpecListeners.add(listener);
+    return () => {
+      activeSpecListeners.delete(listener);
+    };
+  }, []);
+
+  return useSyncExternalStore(
+    subscribeToActiveSpec,
+    () => getState().activeSpecId,
+    () => null
+  );
+}
+
 export function primeSpecsSidebar(specs: SidebarSpec[]) {
   if (specs.length === 0) {
     return;
@@ -69,6 +117,7 @@ export function primeSpecsSidebar(specs: SidebarSpec[]) {
     signature,
   };
   emitChange();
+  emitSpecsChange(); // Notify specs-specific listeners
 }
 
 export function setActiveSidebarSpec(specId: string) {
@@ -81,6 +130,7 @@ export function setActiveSidebarSpec(specId: string) {
     activeSpecId: specId,
   };
   emitChange();
+  emitActiveSpecChange(); // Notify activeSpec-specific listeners
 }
 
 export function updateSidebarScrollTop(nextScrollTop: number) {

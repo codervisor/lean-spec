@@ -60,11 +60,63 @@ function parseSpecTags(spec: Spec): ParsedSpec {
 }
 
 /**
+ * Count sub-specs in a directory
+ */
+function countSubSpecs(specDirPath: string): number {
+  try {
+    const { readdirSync, existsSync, statSync } = require('fs');
+    if (!existsSync(specDirPath)) return 0;
+    
+    const entries = readdirSync(specDirPath);
+    let count = 0;
+    
+    for (const entry of entries) {
+      // Skip README.md (main spec file) and non-.md files
+      if (entry === 'README.md' || !entry.endsWith('.md')) {
+        continue;
+      }
+      
+      const filePath = join(specDirPath, entry);
+      try {
+        const stat = statSync(filePath);
+        if (stat.isFile()) {
+          count++;
+        }
+      } catch {
+        // Skip files that can't be accessed
+      }
+    }
+    
+    return count;
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Get all specs (uses filesystem by default, database if projectId provided)
  */
 export async function getSpecs(projectId?: string): Promise<ParsedSpec[]> {
   const specs = await specsService.getAllSpecs(projectId);
   return specs.map(parseSpecTags);
+}
+
+/**
+ * Get all specs with sub-spec count (for sidebar)
+ */
+export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(ParsedSpec & { subSpecsCount: number })[]> {
+  const specs = await specsService.getAllSpecs(projectId);
+  
+  // Only count sub-specs for filesystem mode
+  if (projectId) {
+    return specs.map(spec => ({ ...parseSpecTags(spec), subSpecsCount: 0 }));
+  }
+  
+  return specs.map(spec => {
+    const specDirPath = join(process.cwd(), '../../specs', spec.filePath.replace('/README.md', '').replace('specs/', ''));
+    const subSpecsCount = countSubSpecs(specDirPath);
+    return { ...parseSpecTags(spec), subSpecsCount };
+  });
 }
 
 /**

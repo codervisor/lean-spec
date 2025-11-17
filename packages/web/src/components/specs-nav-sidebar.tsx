@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 import { extractH1Title } from '@/lib/utils';
 import { PriorityBadge, getPriorityLabel } from './priority-badge';
 import { formatRelativeTime } from '@/lib/date-utils';
-import { useSpecsSidebarState, updateSidebarScrollTop } from '@/lib/stores/specs-sidebar-store';
+import { useSpecsSidebarSpecs, useSpecsSidebarActiveSpec } from '@/lib/stores/specs-sidebar-store';
 import type { SidebarSpec } from '@/types/specs';
 
 interface SpecsNavSidebarProps {
@@ -57,12 +57,19 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const activeItemRef = React.useRef<HTMLAnchorElement>(null);
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollFrameRef = React.useRef<number | null>(null);
-  const sidebarState = useSpecsSidebarState();
-  const cachedSpecs = sidebarState.specs.length > 0 ? sidebarState.specs : initialSpecs;
-  const resolvedCurrentSpecId = currentSpecId || sidebarState.activeSpecId || '';
-  const persistedScrollTop = sidebarState.scrollTop;
+  
+  // Use selector hooks to avoid unnecessary re-renders from unrelated state changes
+  const sidebarSpecs = useSpecsSidebarSpecs();
+  const sidebarActiveSpecId = useSpecsSidebarActiveSpec();
+  
+  // Memoize specs to prevent unnecessary recalculations downstream
+  const cachedSpecs = React.useMemo(
+    () => (sidebarSpecs.length > 0 ? sidebarSpecs : initialSpecs),
+    [sidebarSpecs, initialSpecs]
+  );
+  
+  const resolvedCurrentSpecId = currentSpecId || sidebarActiveSpecId || '';
 
   React.useEffect(() => {
     setMounted(true);
@@ -82,12 +89,8 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
     setMobileOpen(false);
   }, [resolvedCurrentSpecId, currentSubSpec]);
 
-  React.useLayoutEffect(() => {
-    if (!scrollContainerRef.current) return;
-    if (Math.abs(scrollContainerRef.current.scrollTop - persistedScrollTop) > 1) {
-      scrollContainerRef.current.scrollTop = persistedScrollTop;
-    }
-  }, [persistedScrollTop]);
+  // Note: Scroll position management removed to prevent drift.
+  // The list now maintains its natural scroll position.
 
   // Expose function for mobile toggle
   React.useEffect(() => {
@@ -100,32 +103,6 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
       window.toggleSpecsSidebar = undefined;
     };
   }, []);
-
-  // Scroll active item into view only if it's not visible
-  React.useEffect(() => {
-    if (activeItemRef.current) {
-      const element = activeItemRef.current;
-      const parent = element.closest('.overflow-y-auto');
-
-      if (parent) {
-        const elementRect = element.getBoundingClientRect();
-        const parentRect = parent.getBoundingClientRect();
-
-        // Check if element is already visible
-        const isVisible =
-          elementRect.top >= parentRect.top &&
-          elementRect.bottom <= parentRect.bottom;
-
-        // Only scroll if not visible
-        if (!isVisible) {
-          element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
-        }
-      }
-    }
-  }, [currentSpecId, currentSubSpec]);
 
   const filteredSpecs = React.useMemo(() => {
     let specs = cachedSpecs;
@@ -156,6 +133,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
       specs = specs.filter((spec) => spec.tags?.includes(tagFilter));
     }
 
+    console.debug(specs);
     return specs;
   }, [cachedSpecs, searchQuery, statusFilter, priorityFilter, tagFilter]);
 
@@ -182,18 +160,6 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   const sortedSpecs = React.useMemo(() => {
     return [...filteredSpecs].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
   }, [filteredSpecs]);
-
-  const handleScroll = React.useCallback(() => {
-    if (scrollFrameRef.current) {
-      return;
-    }
-    scrollFrameRef.current = window.requestAnimationFrame(() => {
-      scrollFrameRef.current = null;
-      if (scrollContainerRef.current) {
-        updateSidebarScrollTop(scrollContainerRef.current.scrollTop);
-      }
-    });
-  }, []);
 
   // Virtual list row renderer (rowProps will be passed by react-window)
   const RowComponent = React.useCallback((rowProps: { index: number; style: React.CSSProperties }) => {
@@ -256,6 +222,11 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
                         </TooltipContent>
                       </Tooltip>
                     )}
+                    {typeof spec.subSpecsCount === 'number' && spec.subSpecsCount > 0 && (
+                      <span className="text-[10px] text-muted-foreground">
+                        +{spec.subSpecsCount} files
+                      </span>
+                    )}
                     {spec.updatedAt && (
                       <span className="text-[10px] text-muted-foreground">
                         {formatRelativeTime(spec.updatedAt)}
@@ -286,23 +257,12 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
     return 600; // fallback
   }, []);
 
-  // Find the index of the current spec for scrolling
-  const currentSpecIndex = React.useMemo(() => {
-    return sortedSpecs.findIndex(spec => spec.id === resolvedCurrentSpecId);
-  }, [sortedSpecs, resolvedCurrentSpecId]);
-
   const listRef = React.useRef<ListImperativeAPI>(null);
 
-  // Scroll to current spec in virtual list
-  React.useEffect(() => {
-    if (listRef.current && currentSpecIndex >= 0) {
-      listRef.current.scrollToRow({
-        index: currentSpecIndex,
-        align: 'center',
-        behavior: 'smooth'
-      });
-    }
-  }, [currentSpecIndex]);
+  // Memoized List component to prevent unnecessary re-renders
+  const MemoizedList = React.useMemo(() => {
+    return React.memo(List<Record<string, never>>);
+  }, []);
 
   return (
     <TooltipProvider delayDuration={700}>
@@ -436,17 +396,13 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             </div>
           </div>
 
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden"
-            onScroll={handleScroll}
-          >
+          <div className="flex-1 overflow-hidden">
             {sortedSpecs.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 No specs found
               </div>
             ) : (
-              <List<Record<string, never>>
+              <MemoizedList
                 listRef={listRef}
                 defaultHeight={listHeight}
                 rowCount={sortedSpecs.length}

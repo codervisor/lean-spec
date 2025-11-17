@@ -30,6 +30,7 @@ export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetail
       tags: item.tags,
       contentMd: item.contentMd,
       updatedAt: item.updatedAt,
+      subSpecsCount: ('subSpecsCount' in item) ? (item as any).subSpecsCount : undefined,
     }))
   ), [allSpecs]);
 

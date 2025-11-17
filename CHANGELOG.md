@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Web spec detail page sub-specs display** - Fixed missing sub-specs tabs and count indicator
+  - Sub-specs tabs now correctly display when available
+  - Sidebar shows sub-spec count (e.g., "+3") for specs with additional markdown files
+  - Added `getSpecsWithSubSpecCount()` function for efficient sub-spec counting
+  - Enhanced `SidebarSpec` type to include `subSpecsCount` field
+- **`@leanspec/ui` package build** - Fixed static asset bundling for npm distribution
+  - Changed from symlinks to copying static assets into standalone build
+  - Ensures Next.js static files and public assets are included in published package
+  - Fixed 404 errors for `/_next/static/*` and `/public/*` assets
+  - Cross-platform compatible (Windows, macOS, Linux)
+
 ## [0.2.3] - 2025-11-17
 
 ### Added
