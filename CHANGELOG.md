@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2025-11-17
+
 ### Fixed
+- **CLI `lean-spec ui` pnpm flow** (spec 087) - Removed `pnpm dlx --prefer-offline` forcing offline cache, so the UI command now fetches `@leanspec/ui` on demand and no longer fails when the package is missing locally.
+- **Web filesystem relationship parsing** - UI development mode now respects the `SPECS_DIR` environment variable, so relationships and sub-spec counts resolve correctly when serving specs from an external workspace (fixes ENOENT errors when pointing the UI at another repo).
 - **Web sidebar scroll position drift** (spec 101) - Eliminated scroll position jumping during navigation
   - Fixed React 19 `useSyncExternalStore` infinite loop by stabilizing server snapshot references
   - Isolated scroll persistence to prevent global store re-renders on every scroll event
@@ -424,6 +428,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.4]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.4
 [0.2.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.3
 [0.2.2]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.2
 [0.1.5]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.5
