@@ -153,17 +153,28 @@ Optional for:
 1. **Discover context** - Run `lean-spec stats`, `lean-spec board`, or `lean-spec gantt`
 2. **Search existing specs** - Use `lean-spec search` or `lean-spec list --tag=<relevant>`
 3. **Check dependencies** - Run `lean-spec deps <spec>` to understand dependencies
-4. **Create or update spec** - Add complete frontmatter with compliance tags
+4. **Create or update spec** - Add complete frontmatter with compliance tags (status: `planned`)
 5. **Get reviews** - Assign reviewer, tag for security review if needed
-6. **Start work** - **IMMEDIATELY** update status: `lean-spec update <spec> --status in-progress`
-7. **Implement changes** - Keep spec in sync with implementation
-8. **Complete** - **IMMEDIATELY** update status: `lean-spec update <spec> --status complete`
+6. **Start implementation** - Mark `in-progress` BEFORE implementing what the spec describes
+7. **Implement changes** - Keep spec in sync, update status appropriately
+8. **Complete implementation** - Mark `complete` AFTER implementing what the spec describes
 9. **Archive when done** - `lean-spec archive <spec>` after completion
-**Status Update Triggers (CRITICAL):**
-- ✅ **Before starting implementation** → Update to `in-progress`
-- ✅ **Immediately after completing all work** → Update to `complete`
+
+**Remember**: Status tracks implementation work, not spec document creation. Creating a spec = planning (stays `planned` until implementation starts).
+**CRITICAL - What "Work" Means:**
+- ❌ **NOT**: Creating/writing the spec document itself
+- ✅ **YES**: Implementing what the spec describes (code, docs, features, etc.)
+- **Example**: Creating a spec for "API redesign" ≠ work complete
+  - Work = Actually redesigning the API as described in the spec
+  - Status `planned` until someone starts the redesign
+  - Status `in-progress` while redesigning
+  - Status `complete` after redesign is done
+
+**Status Update Triggers:**
+- ✅ **Before starting implementation** → `lean-spec update <spec> --status in-progress`
+- ✅ **After completing implementation** → `lean-spec update <spec> --status complete`
 - ✅ **If blocked or paused** → Update status and document why in spec
-- ❌ **NEVER skip status updates** - They're required for project tracking
+- ❌ **NEVER mark spec complete just because you finished writing it**
 
 ## Quality Standards
 

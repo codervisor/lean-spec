@@ -200,16 +200,25 @@ Required By:
 ## SDD Workflow
 
 1. **Discover** - Check existing specs with `lean-spec list`
-2. **Plan** - Create spec with `lean-spec create <name>` when needed
-3. **Start Work** - **IMMEDIATELY** run `lean-spec update <spec> --status in-progress` before writing code
-4. **Implement** - Write code, keep spec in sync as you learn
-5. **Complete** - **IMMEDIATELY** run `lean-spec update <spec> --status complete` when done
+2. **Plan** - Create spec with `lean-spec create <name>` (status: `planned`)
+3. **Start Work** - Run `lean-spec update <spec> --status in-progress` before implementing
+4. **Implement** - Write code/docs, keep spec in sync as you learn
+5. **Complete** - Run `lean-spec update <spec> --status complete` after implementation done
 
-**Status Update Triggers (CRITICAL):**
+**CRITICAL - What "Work" Means:**
+- ❌ **NOT**: Creating/writing the spec document itself
+- ✅ **YES**: Implementing what the spec describes (code, docs, features, etc.)
+- **Example**: Creating spec 088 (Core Concepts restructuring) ≠ work complete
+  - Work = Actually restructuring the docs as described in spec 088
+  - Status `planned` until someone starts restructuring
+  - Status `in-progress` while restructuring
+  - Status `complete` after restructuring is done
+
+**Status Update Triggers:**
 - ✅ **Before starting implementation** → `lean-spec update <spec> --status in-progress`
-- ✅ **Immediately after completing all work** → `lean-spec update <spec> --status complete`
+- ✅ **After completing implementation** → `lean-spec update <spec> --status complete`
 - ✅ **If blocked or paused** → Update status and document why in spec
-- ❌ **NEVER skip status updates** - They're required for project tracking
+- ❌ **NEVER mark spec complete just because you finished writing it**
 
 **Critical - Frontmatter Editing Rules:**
 - **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`, `depends_on`, `related`
@@ -225,8 +234,10 @@ Required By:
 - Tests cover critical paths
 - Specs stay in sync with implementation
 - **Status tracking is mandatory:**
-  - Mark spec as `in-progress` BEFORE starting work
-  - Mark spec as `complete` IMMEDIATELY after finishing
+  - Specs start as `planned` after creation
+  - Mark `in-progress` BEFORE starting implementation work
+  - Mark `complete` AFTER implementation is finished
+  - **Remember**: Status tracks implementation, not spec document completion
   - Never leave specs with stale status
 - **Always validate before completing work:**
   - Run `node bin/lean-spec.js validate` to check spec structure and frontmatter (use local build, not `npx`)
