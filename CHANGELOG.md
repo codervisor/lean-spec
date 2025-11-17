@@ -7,9 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2025-11-17
+
 ### Added
-- `lean-spec ui` now works in any project by delegating to the published `@leanspec/ui` package (spec 087)
-- `@leanspec/ui` bundle and GitHub Actions workflow for publishing the standalone filesystem-mode UI (spec 087)
+- **`lean-spec ui` command** (spec 087) - Launch web interface directly from CLI
+  - Monorepo mode: Auto-detects and runs local web package
+  - Package manager auto-detection (pnpm/yarn/npm)
+  - Port validation and configuration
+  - Auto-opens browser with graceful shutdown
+  - Support for both filesystem and database-backed modes
+- **Web App Performance Optimizations** (spec 083) - Dramatically improved navigation speed
+  - Hybrid rendering: Server-side initial load, client-side navigation
+  - Navigation latency reduced from 600ms-1.2s to <100ms
+  - API routes with aggressive caching and prefetching
+  - Optimistic UI for instant feedback
+  - Sidebar state persistence and loading shells
+- **Enhanced Spec Detail UI** - Improved user experience
+  - Dependency visualization with bidirectional relationships
+  - Timeline view for spec history
+  - Loading skeletons for better perceived performance
+  - Responsive layout improvements
+- **Documentation Migration** - Migrated docs-site to separate repository as submodule
+  - Cleaner monorepo structure
+  - Independent documentation deployment
+  - Beginner-first reorganization
+- **Web App Chinese Localization** - Complete i18n infrastructure
+  - Chinese (zh-Hans) translations for web interface
+  - i18n hook with caching and loading states
+  - Localization-ready architecture
+
+### Changed
+- **Web App Navigation**: Switched from full server-side rendering to hybrid architecture
+- **Command Interfaces**: Enhanced validation logic across CLI commands
+- **Template System**: Refactored agent templates for improved status tracking
+- **Mobile UX**: Enhanced sticky header behavior and mobile button styling
+- **Responsive Design**: Improved mobile navigation for dashboard and specs pages
+
+### Fixed
+- i18n hook caching and loading states
+- Current spec highlighting in navigation sidebar
+- Mobile navigation responsiveness
+- Various UI/UX refinements for web app
+
+### Technical
+- Migrated to Node.js >=20 requirement across all packages
+- Added Vercel configuration for deployment
+- Improved filesystem source caching
+- Enhanced CSS modules TypeScript support
 
 ## [0.2.2] - 2025-11-13
 
@@ -366,6 +410,8 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.3
+[0.2.2]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.2
 [0.1.5]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.5
 [0.1.4]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.4
 [0.1.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.1.3

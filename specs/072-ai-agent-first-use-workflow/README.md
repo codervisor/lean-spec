@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: planned
 created: '2025-11-13'
 tags:
   - onboarding
@@ -8,15 +8,17 @@ tags:
   - mcp
 priority: high
 created_at: '2025-11-13T08:20:28.110Z'
-updated_at: '2025-11-13T08:21:45.345Z'
+updated_at: '2025-11-17T08:18:44.417Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T08:21:45.345Z'
+  - status: planned
+    at: '2025-11-17T08:18:44.417Z'
 ---
 
 # ai-agent-first-use-workflow
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-13 · **Tags**: onboarding, ai-agents, ux, mcp
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-13 · **Tags**: onboarding, ai-agents, ux, mcp
 
 **Project**: lean-spec  
 **Team**: Core Development
