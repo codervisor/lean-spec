@@ -6,7 +6,7 @@
 import { specsService } from '../specs/service';
 import type { Spec } from './schema';
 import { detectSubSpecs } from '../sub-specs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { readFileSync } from 'node:fs';
 import matter from 'gray-matter';
 
@@ -16,6 +16,23 @@ import matter from 'gray-matter';
 export type ParsedSpec = Omit<Spec, 'tags'> & {
   tags: string[] | null;
 };
+
+const DEFAULT_SPECS_DIR = resolve(process.cwd(), '../../specs');
+
+function getSpecsRootDir(): string {
+  const envDir = process.env.SPECS_DIR;
+  if (!envDir) {
+    return DEFAULT_SPECS_DIR;
+  }
+  return envDir.startsWith('/') ? envDir : resolve(process.cwd(), envDir);
+}
+
+function buildSpecDirPath(filePath: string): string {
+  const normalized = filePath
+    .replace(/^specs\//, '')
+    .replace(/\/README\.md$/, '');
+  return join(getSpecsRootDir(), normalized);
+}
 
 interface SpecRelationships {
   dependsOn: string[];
@@ -113,7 +130,7 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Par
   }
   
   return specs.map(spec => {
-    const specDirPath = join(process.cwd(), '../../specs', spec.filePath.replace('/README.md', '').replace('specs/', ''));
+    const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecsCount = countSubSpecs(specDirPath);
     return { ...parseSpecTags(spec), subSpecsCount };
   });
@@ -131,7 +148,7 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
 
   // Detect sub-specs from filesystem (only for filesystem mode)
   if (!projectId) {
-    const specDirPath = join(process.cwd(), '../../specs', spec.filePath.replace('/README.md', '').replace('specs/', ''));
+    const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecs = detectSubSpecs(specDirPath);
     const relationships = getFilesystemRelationships(specDirPath);
     return { ...parsedSpec, subSpecs, relationships };
