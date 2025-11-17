@@ -21,6 +21,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Tutorials',
+      items: [
+        'tutorials/your-first-spec',
+        'tutorials/sdd-workflow-feature-development',
+        'tutorials/managing-multiple-specs',
+        'tutorials/working-with-teams',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Core Concepts',
       items: [
         'guide/understanding',

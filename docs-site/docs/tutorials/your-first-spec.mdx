@@ -1,0 +1,326 @@
+---
+id: your-first-spec
+title: Your First Spec
+sidebar_position: 1
+description: Create your first spec and complete the SDD workflow in 15 minutes
+---
+
+# Your First Spec
+
+**Time**: 15 minutes  
+**Goal**: Experience the complete SDD workflow from creating a spec to marking it complete
+
+## What You'll Learn
+
+- Install and initialize LeanSpec in a project
+- Create your first spec with the CLI
+- Update spec status as you work
+- Use basic commands to manage specs
+
+## Prerequisites
+
+- Node.js 20+ installed
+- Basic familiarity with command line
+- A project directory (can be new or existing)
+
+## Step 1: Install LeanSpec
+
+Install LeanSpec globally so it's available everywhere:
+
+```bash
+npm install -g lean-spec
+```
+
+Verify the installation:
+
+```bash
+lean-spec --version
+```
+
+**Expected output**: Version number like `0.2.2`
+
+:::tip
+If you prefer project-local installation, use `npm install -D lean-spec` and run commands with `npx lean-spec`.
+:::
+
+## Step 2: Initialize Your Project
+
+Navigate to your project directory (or create a new one):
+
+```bash
+mkdir my-project
+cd my-project
+```
+
+Initialize LeanSpec:
+
+```bash
+lean-spec init
+```
+
+**What happens:**
+1. Interactive prompt appears asking how you'd like to set up
+2. Select "Quick start (recommended)"
+3. LeanSpec creates:
+   - `.lean-spec/config.json` - Configuration
+   - `specs/` - Directory for your specs
+   - `AGENTS.md` - AI agent integration guide
+
+**Expected output**:
+```
+✓ Created .lean-spec/config.json
+✓ Created specs/ directory
+✓ Created AGENTS.md
+```
+
+:::info Checkpoint
+Run `ls -la` and verify you see `.lean-spec/`, `specs/`, and `AGENTS.md`.
+:::
+
+## Step 3: Create Your First Spec
+
+Let's create a spec for a simple feature - adding a search bar to a website.
+
+```bash
+lean-spec create search-bar
+```
+
+**What happens:**
+- Creates `specs/001-search-bar/` directory
+- Generates `README.md` inside with template content
+- Sets status to `planned` automatically
+
+**Expected output**:
+```
+✓ Created spec: 001-search-bar
+  Location: specs/001-search-bar/README.md
+  Status: planned
+```
+
+View your new spec:
+
+```bash
+lean-spec view 001
+```
+
+**Expected output**: The spec content with frontmatter showing `status: planned`.
+
+:::info Checkpoint
+Your spec exists! Run `lean-spec list` to see it in the list.
+:::
+
+## Step 4: Edit Your Spec
+
+Open the spec file in your editor:
+
+```bash
+lean-spec open 001
+```
+
+This opens `specs/001-search-bar/README.md` in your default editor.
+
+**Edit the spec** to describe your feature. Replace the template with:
+
+```markdown
+---
+status: planned
+created: 2025-11-17
+tags: []
+priority: medium
+---
+
+# Search Bar Feature
+
+## Overview
+
+Add a search bar to the website header that allows users to search for products.
+
+## Goal
+
+Users can quickly find products by typing keywords into a search bar.
+
+## Design
+
+- Search bar appears in the header on all pages
+- Auto-complete shows suggestions as user types
+- Pressing Enter navigates to search results page
+
+## Plan
+
+- [ ] Design search bar UI component
+- [ ] Implement auto-complete API endpoint
+- [ ] Create search results page
+- [ ] Add tests for search functionality
+
+## Test
+
+- [ ] Search finds products by name
+- [ ] Auto-complete shows relevant suggestions
+- [ ] Search works on mobile and desktop
+```
+
+Save the file.
+
+:::tip
+Keep specs concise! Focus on the "what" and "why", not every implementation detail.
+:::
+
+## Step 5: Start Working
+
+Before you begin implementing, update the spec status:
+
+```bash
+lean-spec update 001 --status in-progress
+```
+
+**Expected output**:
+```
+✓ Updated spec: 001-search-bar
+  Status: planned → in-progress
+```
+
+**What this does:**
+- Changes status from `planned` to `in-progress`
+- Records the transition with timestamp
+- Updates `updated_at` field
+
+:::info Checkpoint
+Run `lean-spec view 001` and verify the status shows `in-progress`.
+:::
+
+## Step 6: Check Project Status
+
+See your specs at a glance:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned          In Progress      Complete
+─────────       ─────────────    ──────────
+                001-search-bar
+```
+
+This Kanban-style view shows specs organized by status.
+
+:::tip
+Use `lean-spec board` frequently to track project progress!
+:::
+
+## Step 7: Complete Your Spec
+
+After you've implemented the feature (or for this tutorial, we'll pretend you did), mark the spec as complete:
+
+```bash
+lean-spec update 001 --status complete
+```
+
+**Expected output**:
+```
+✓ Updated spec: 001-search-bar
+  Status: in-progress → complete
+  Completed: 2025-11-17
+```
+
+**What this does:**
+- Changes status to `complete`
+- Records completion date
+- Tracks the status transition
+
+View the board again:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned          In Progress      Complete
+─────────       ─────────────    ──────────
+                                 001-search-bar
+```
+
+:::success Checkpoint
+Your first spec is complete! 🎉
+:::
+
+## Step 8: View Project Stats
+
+Get insights into your project:
+
+```bash
+lean-spec stats
+```
+
+**Expected output**:
+```
+📊 Project Statistics
+
+Overview:
+  Total Specs: 1
+  Active: 0
+  Complete: 1
+  Completion Rate: 100%
+
+Status Distribution:
+  complete: 1 (100%)
+```
+
+## What You Learned
+
+✅ **Installation**: Set up LeanSpec globally  
+✅ **Initialization**: Created LeanSpec project structure  
+✅ **Creating specs**: Used `lean-spec create` to generate specs  
+✅ **Editing specs**: Modified spec content for your feature  
+✅ **Status tracking**: Updated status as work progresses  
+✅ **Project visibility**: Used `board` and `stats` for overview
+
+## Key Commands Recap
+
+```bash
+# Create a spec
+lean-spec create <name>
+
+# View a spec
+lean-spec view <number>
+
+# Open in editor
+lean-spec open <number>
+
+# Update status
+lean-spec update <number> --status <status>
+
+# View project board
+lean-spec board
+
+# View statistics
+lean-spec stats
+```
+
+## Common Mistakes to Avoid
+
+❌ **Forgetting to update status** - Status tracking is how you manage workflow  
+❌ **Writing too much detail** - Keep specs lean and focused  
+❌ **Skipping the "why"** - Always include the goal and context  
+❌ **Never updating specs** - Specs are living documents, update as you learn
+
+## Next Steps
+
+Now that you've created your first spec, you're ready for:
+
+**[SDD Workflow: Feature Development →](./sdd-workflow-feature-development)**  
+Learn how to use specs with AI agents for real feature development
+
+**[Managing Multiple Specs →](./managing-multiple-specs)**  
+Handle dependencies, relationships, and track multiple specs
+
+Or explore more concepts:
+- [Creating & Managing Specs](/docs/guide/usage/essential-usage/creating-managing) - Detailed guide
+- [First Principles](/docs/guide/first-principles) - Understand the LeanSpec philosophy
+- [CLI Reference](/docs/reference/cli) - Complete command documentation

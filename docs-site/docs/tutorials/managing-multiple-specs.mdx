@@ -1,0 +1,454 @@
+---
+id: managing-multiple-specs
+title: Managing Multiple Specs
+sidebar_position: 3
+description: Work with multiple specs, dependencies, and relationships in 20 minutes
+---
+
+# Managing Multiple Specs
+
+**Time**: 20 minutes  
+**Goal**: Learn to manage multiple specs with dependencies, relationships, and track progress across them
+
+## What You'll Learn
+
+- Create and organize multiple related specs
+- Set up dependencies between specs
+- Use relationships to link related work
+- Track progress across multiple specs
+- Use the board and search effectively
+
+## Prerequisites
+
+- Completed [Your First Spec](./your-first-spec) and [SDD Workflow](./sdd-workflow-feature-development) tutorials
+- LeanSpec installed and initialized project
+
+## The Scenario
+
+You're building an e-commerce platform. You need to implement:
+1. User authentication (login/signup)
+2. Shopping cart functionality (depends on authentication)
+3. Product search (independent, but related to catalog)
+4. Product catalog API (needed by search)
+
+These specs have dependencies and relationships you need to manage.
+
+## Step 1: Create Multiple Specs
+
+Create specs for all four features:
+
+```bash
+lean-spec create user-authentication
+lean-spec create shopping-cart
+lean-spec create product-search
+lean-spec create product-catalog-api
+```
+
+**Expected output**:
+```
+✓ Created spec: 003-user-authentication
+✓ Created spec: 004-shopping-cart
+✓ Created spec: 005-product-search
+✓ Created spec: 006-product-catalog-api
+```
+
+List all specs:
+
+```bash
+lean-spec list
+```
+
+**Expected output**:
+```
+📋 Specs (6 total)
+
+  001  search-bar               complete  medium  created: 2025-11-17
+  002  task-priority-filter     complete  high    created: 2025-11-17
+  003  user-authentication      planned   medium  created: 2025-11-17
+  004  shopping-cart            planned   medium  created: 2025-11-17
+  005  product-search           planned   medium  created: 2025-11-17
+  006  product-catalog-api      planned   medium  created: 2025-11-17
+```
+
+:::info Checkpoint
+You now have 4 new specs, all starting in `planned` status.
+:::
+
+## Step 2: Set Dependencies
+
+The shopping cart depends on user authentication - users must be logged in to add items. Set up this dependency:
+
+```bash
+lean-spec link 004 --depends-on 003
+```
+
+**Expected output**:
+```
+✓ Updated dependencies for spec: 004-shopping-cart
+  Depends on: 003-user-authentication
+```
+
+Similarly, product search needs the catalog API:
+
+```bash
+lean-spec link 005 --depends-on 006
+```
+
+:::tip Dependency Rule
+Use `depends_on` when spec B **cannot start** until spec A is complete. This creates a blocking dependency.
+:::
+
+## Step 3: Set Relationships
+
+Product search and shopping cart are related (both use products) but don't block each other. Create a relationship:
+
+```bash
+lean-spec link 005 --related 004
+```
+
+**Expected output**:
+```
+✓ Updated relationships for spec: 005-product-search
+  Related: 004-shopping-cart
+```
+
+:::info Related vs Depends On
+- **depends_on**: Blocking dependency (can't start B until A is done)
+- **related**: Informational link (work is connected but not blocking)
+
+Related links are **bidirectional** - when you link A to B, both specs show the relationship.
+:::
+
+## Step 4: View Dependencies
+
+Check dependencies for the shopping cart spec:
+
+```bash
+lean-spec deps 004
+```
+
+**Expected output**:
+```
+Dependencies for 004-shopping-cart:
+
+Depends On:
+  → 003-user-authentication [planned]
+
+Related Specs:
+  ⟷ 005-product-search [planned]
+```
+
+Check dependencies for authentication:
+
+```bash
+lean-spec deps 003
+```
+
+**Expected output**:
+```
+Dependencies for 003-user-authentication:
+
+Required By:
+  ← 004-shopping-cart [planned]
+```
+
+Notice how dependencies show from both sides:
+- Shopping cart **depends on** authentication (→)
+- Authentication is **required by** shopping cart (←)
+
+:::success Understanding Dependencies
+This helps you see:
+- What must be done before starting a spec (Depends On)
+- What's blocked waiting for this spec (Required By)
+- What's related for context (Related Specs)
+:::
+
+## Step 5: Prioritize Work
+
+Set priorities to guide what to work on first:
+
+```bash
+lean-spec update 003 --priority high
+lean-spec update 006 --priority high
+lean-spec update 004 --priority medium
+lean-spec update 005 --priority low
+```
+
+Why these priorities?
+- **003 (auth)**: High - needed by shopping cart
+- **006 (catalog API)**: High - needed by search
+- **004 (cart)**: Medium - core feature but depends on auth
+- **005 (search)**: Low - nice to have, not critical path
+
+## Step 6: Use Tags for Organization
+
+Add tags to group related specs:
+
+```bash
+lean-spec update 003 --tags "authentication,backend,api"
+lean-spec update 004 --tags "cart,frontend,feature"
+lean-spec update 005 --tags "search,frontend,feature"
+lean-spec update 006 --tags "api,backend,catalog"
+```
+
+Now search by tag:
+
+```bash
+lean-spec search "tag:backend"
+```
+
+**Expected output**:
+```
+🔍 Search results for "tag:backend"
+
+  003  user-authentication    planned   high    [authentication, backend, api]
+  006  product-catalog-api    planned   high    [api, backend, catalog]
+```
+
+:::tip Organizing with Tags
+Use tags to:
+- Group by layer (frontend, backend, api)
+- Group by type (feature, bugfix, refactor)
+- Group by epic (checkout, catalog, user-mgmt)
+:::
+
+## Step 7: Track Progress on Board
+
+View the project board:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned                        In Progress    Complete
+─────────────────────────    ─────────      ──────────────────
+003-user-authentication [H]                 001-search-bar
+006-product-catalog-api [H]                 002-task-priority-filter
+004-shopping-cart [M]
+005-product-search [L]
+
+[H] = High Priority, [M] = Medium, [L] = Low
+```
+
+The board shows:
+- Specs organized by status
+- Priority indicators
+- Quick visual overview
+
+## Step 8: Start Work on First Spec
+
+Based on dependencies and priority, start with user authentication:
+
+```bash
+lean-spec update 003 --status in-progress
+```
+
+Update the board:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned                        In Progress                Complete
+─────────────────────────    ─────────────────────      ──────────────────
+006-product-catalog-api [H]  003-user-authentication    001-search-bar
+004-shopping-cart [M]                                   002-task-priority-filter
+005-product-search [L]
+```
+
+## Step 9: Complete Work in Order
+
+Complete authentication:
+
+```bash
+lean-spec update 003 --status complete
+```
+
+Check what's unblocked:
+
+```bash
+lean-spec deps 004
+```
+
+**Expected output**:
+```
+Dependencies for 004-shopping-cart:
+
+Depends On:
+  → 003-user-authentication [complete]  ✅
+
+Related Specs:
+  ⟷ 005-product-search [planned]
+```
+
+Notice the ✅ - the dependency is now satisfied! You can start work on spec 004.
+
+Start shopping cart work:
+
+```bash
+lean-spec update 004 --status in-progress
+```
+
+## Step 10: View Project Statistics
+
+Get insights into your project:
+
+```bash
+lean-spec stats
+```
+
+**Expected output**:
+```
+📊 Project Statistics
+
+Overview:
+  Total Specs: 6
+  Active: 1
+  Complete: 3
+  Completion Rate: 50%
+
+Status Distribution:
+  planned: 2 (33%)
+  in-progress: 1 (17%)
+  complete: 3 (50%)
+
+Priority Distribution:
+  high: 2
+  medium: 2
+  low: 1
+  none: 1
+
+Recent Activity:
+  ✓ 004-shopping-cart → in-progress (just now)
+  ✓ 003-user-authentication → complete (2 min ago)
+  ✓ 003-user-authentication → in-progress (5 min ago)
+```
+
+:::success Project Visibility
+Stats give you a quick health check:
+- Completion rate trending up? ✅
+- Too many in-progress? May be spreading thin
+- High-priority items not moving? Investigate blockers
+:::
+
+## Step 11: Search and Filter
+
+Find all high-priority specs:
+
+```bash
+lean-spec search "priority:high"
+```
+
+Find all planned backend work:
+
+```bash
+lean-spec search "tag:backend status:planned"
+```
+
+Find specs about authentication:
+
+```bash
+lean-spec search "authentication"
+```
+
+**Expected output**:
+```
+🔍 Search results for "authentication"
+
+  003  user-authentication    complete   high   [authentication, backend, api]
+```
+
+## What You Learned
+
+✅ **Creating multiple specs**: Organized several related features  
+✅ **Dependencies**: Set up blocking relationships with `--depends-on`  
+✅ **Relationships**: Linked related specs with `--related`  
+✅ **Viewing dependencies**: Used `deps` to see spec relationships  
+✅ **Prioritization**: Set priorities to guide work order  
+✅ **Tagging**: Organized specs by category  
+✅ **Board view**: Tracked progress across all specs  
+✅ **Statistics**: Got project health insights  
+✅ **Search**: Found specs by tag, status, priority, or content
+
+## Key Commands Recap
+
+```bash
+# Manage dependencies
+lean-spec link <spec> --depends-on <other-spec>
+lean-spec link <spec> --related <other-spec>
+lean-spec deps <spec>
+
+# Set priority and tags
+lean-spec update <spec> --priority <high|medium|low>
+lean-spec update <spec> --tags "tag1,tag2,tag3"
+
+# Track progress
+lean-spec board
+lean-spec stats
+
+# Search and filter
+lean-spec search "<query>"
+lean-spec search "tag:frontend"
+lean-spec search "priority:high status:planned"
+```
+
+## Dependency Patterns
+
+**Sequential dependencies** (one depends on next):
+```bash
+lean-spec link 010 --depends-on 009
+lean-spec link 009 --depends-on 008
+```
+
+**Multiple dependencies** (spec depends on several others):
+```bash
+lean-spec link 015 --depends-on 012,013,014
+```
+
+**Removing dependencies**:
+```bash
+lean-spec unlink 004 --depends-on 003
+```
+
+## Best Practices
+
+**Use dependencies when:**
+- Spec B truly cannot start until A is done
+- There's a technical dependency (API must exist before UI)
+- Work must be done in specific order
+
+**Use relationships when:**
+- Specs are related but not blocking
+- Context is helpful but not required
+- Working on one informs the other
+
+**Set priorities based on:**
+- Dependencies (what unblocks other work)
+- Business value (what delivers most value)
+- Risk (what's most uncertain, do early)
+
+**Use tags for:**
+- Quick filtering by category
+- Grouping related work
+- Sprint planning
+- Team assignments
+
+## Next Steps
+
+You've mastered managing multiple specs! Now learn about team collaboration:
+
+**[Working with Teams →](./working-with-teams)**  
+Assign specs, coordinate work, and review with team members
+
+Or explore advanced features:
+- [Dependencies Reference](/docs/guide/usage/project-management/dependencies) - Deep dive
+- [Board & Stats](/docs/guide/usage/project-management/board-stats) - Advanced usage
+- [Validation](/docs/guide/usage/project-management/validation) - Keep specs healthy

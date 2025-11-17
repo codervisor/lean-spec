@@ -1,0 +1,527 @@
+---
+id: working-with-teams
+title: Working with Teams
+sidebar_position: 4
+description: Collaborate on specs with team members in 15 minutes
+---
+
+# Working with Teams
+
+**Time**: 15 minutes  
+**Goal**: Learn to use LeanSpec for team collaboration - assigning work, coordinating, and reviewing specs
+
+## What You'll Learn
+
+- Assign specs to team members
+- Use priorities for team planning
+- Review others' specs effectively
+- Coordinate work across multiple people
+- Handle spec handoffs
+
+## Prerequisites
+
+- Completed previous tutorials ([Your First Spec](./your-first-spec), [SDD Workflow](./sdd-workflow-feature-development), [Managing Multiple Specs](./managing-multiple-specs))
+- LeanSpec installed and initialized project
+- Understanding of basic spec operations
+
+## The Scenario
+
+You're on a team of 3 developers building a social media app:
+- **Alice** (you): Frontend developer
+- **Bob**: Backend developer
+- **Carol**: Full-stack developer
+
+You need to coordinate work on the news feed feature, which involves multiple specs.
+
+## Step 1: Create Team Specs
+
+Create specs for different parts of the news feed:
+
+```bash
+lean-spec create news-feed-api
+lean-spec create news-feed-ui
+lean-spec create post-reactions
+lean-spec create comment-system
+```
+
+**Expected output**:
+```
+✓ Created spec: 007-news-feed-api
+✓ Created spec: 008-news-feed-ui
+✓ Created spec: 009-post-reactions
+✓ Created spec: 010-comment-system
+```
+
+## Step 2: Assign Specs to Team Members
+
+Assign specs based on expertise:
+
+```bash
+# Bob will handle the API
+lean-spec update 007 --assignee "Bob"
+
+# You (Alice) will build the UI
+lean-spec update 008 --assignee "Alice"
+
+# Carol will implement reactions
+lean-spec update 009 --assignee "Carol"
+
+# Comment system TBD
+```
+
+**Expected output** (for each):
+```
+✓ Updated spec: 007-news-feed-api
+  Assignee: Bob
+```
+
+List specs to see assignments:
+
+```bash
+lean-spec list
+```
+
+**Expected output**:
+```
+📋 Specs (10 total)
+
+  ...
+  007  news-feed-api       planned  medium  @Bob    created: 2025-11-17
+  008  news-feed-ui        planned  medium  @Alice  created: 2025-11-17
+  009  post-reactions      planned  medium  @Carol  created: 2025-11-17
+  010  comment-system      planned  medium          created: 2025-11-17
+```
+
+:::tip Assignee Format
+Use simple names or GitHub usernames. LeanSpec doesn't enforce format - use what works for your team.
+:::
+
+## Step 3: Set Up Dependencies
+
+The UI depends on the API:
+
+```bash
+lean-spec link 008 --depends-on 007
+```
+
+Reactions and comments are related but independent:
+
+```bash
+lean-spec link 009 --related 010
+```
+
+## Step 4: Prioritize as a Team
+
+Set priorities for the sprint:
+
+```bash
+lean-spec update 007 --priority high --tags "backend,api,sprint-1"
+lean-spec update 008 --priority high --tags "frontend,ui,sprint-1"
+lean-spec update 009 --priority medium --tags "feature,sprint-2"
+lean-spec update 010 --priority low --tags "feature,backlog"
+```
+
+:::info Sprint Planning
+Use priorities + tags to mark sprint work:
+- **high** priority + **sprint-1** tag = current sprint
+- **medium** priority + **sprint-2** tag = next sprint
+- **low** priority + **backlog** tag = future work
+:::
+
+## Step 5: View Team Board
+
+Check who's working on what:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned                        In Progress    Complete
+─────────────────────────    ─────────      ──────────────
+007-news-feed-api [H] @Bob                  001-search-bar
+008-news-feed-ui [H] @Alice                 002-task-priority-filter
+009-post-reactions [M] @Carol               003-user-authentication
+010-comment-system [L]
+...
+```
+
+Now you can see:
+- What each person is assigned
+- Priority of their work
+- Current status
+
+## Step 6: Bob Starts His Work
+
+Bob picks up the API spec:
+
+```bash
+lean-spec update 007 --status in-progress
+```
+
+Check the board again:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned                        In Progress              Complete
+─────────────────────────    ───────────────────────  ──────────────
+008-news-feed-ui [H] @Alice  007-news-feed-api @Bob   001-search-bar
+009-post-reactions [M] @Carol                         ...
+010-comment-system [L]
+...
+```
+
+## Step 7: Check Your Blocked Work
+
+Alice (you) wants to start the UI, but it depends on Bob's API:
+
+```bash
+lean-spec deps 008
+```
+
+**Expected output**:
+```
+Dependencies for 008-news-feed-ui:
+
+Depends On:
+  → 007-news-feed-api [in-progress] @Bob  ⏳
+
+Status: Waiting for dependencies
+```
+
+The ⏳ indicates the dependency is in progress - you're blocked.
+
+:::info Blocked Work
+When a spec depends on in-progress work, you can:
+1. Work on other specs (009, 010)
+2. Help Bob finish 007 faster
+3. Prepare 008 (write tests, mock the API)
+:::
+
+## Step 8: Bob Completes the API
+
+Bob finishes the API:
+
+```bash
+lean-spec update 007 --status complete
+```
+
+Check your dependency again:
+
+```bash
+lean-spec deps 008
+```
+
+**Expected output**:
+```
+Dependencies for 008-news-feed-ui:
+
+Depends On:
+  → 007-news-feed-api [complete] @Bob  ✅
+
+Status: Ready to start
+```
+
+Now you can start! ✅
+
+## Step 9: Review Bob's Spec
+
+Before implementing the UI, review Bob's API spec to understand the contract:
+
+```bash
+lean-spec view 007
+```
+
+Look for:
+- **API endpoints**: What URLs are available?
+- **Data format**: What JSON structure does it return?
+- **Error handling**: How are errors communicated?
+- **Success criteria**: What tests were done?
+
+If anything is unclear, talk to Bob or update the spec with clarifications.
+
+:::tip Spec Review Checklist
+When reviewing specs:
+- [ ] Goal is clear and measurable
+- [ ] Design decisions are documented
+- [ ] Success criteria are testable
+- [ ] Non-goals are explicit
+- [ ] Related specs are linked
+:::
+
+## Step 10: Search for Your Work
+
+Find all specs assigned to you:
+
+```bash
+lean-spec search "assignee:Alice"
+```
+
+Find all your current sprint work:
+
+```bash
+lean-spec search "tag:sprint-1 assignee:Alice"
+```
+
+Find unassigned specs:
+
+```bash
+lean-spec search "assignee:"
+```
+
+**Expected output**:
+```
+🔍 Search results for "assignee:"
+
+  010  comment-system    planned   low
+```
+
+## Step 11: Coordinate Across Specs
+
+Carol asks about post reactions - are there any related specs she should know about?
+
+```bash
+lean-spec deps 009
+```
+
+**Expected output**:
+```
+Dependencies for 009-post-reactions:
+
+Related Specs:
+  ⟷ 010-comment-system [planned]
+```
+
+Carol sees that reactions are related to comments - she might want to coordinate design with whoever picks up 010.
+
+## Step 12: Handoff a Spec
+
+Alice decides to hand off the comment system to Bob (who finished his API work):
+
+```bash
+lean-spec update 010 --assignee "Bob"
+```
+
+Bob can see his new assignment:
+
+```bash
+lean-spec search "assignee:Bob"
+```
+
+**Expected output**:
+```
+🔍 Search results for "assignee:Bob"
+
+  007  news-feed-api     complete  high    @Bob
+  010  comment-system    planned   low     @Bob
+```
+
+:::tip Handoff Best Practice
+When handing off a spec:
+1. Ensure the spec is up-to-date
+2. Add handoff notes in the spec (why, context)
+3. Notify the new assignee
+4. Make sure they understand dependencies
+:::
+
+## Step 13: Team Statistics
+
+Check team progress:
+
+```bash
+lean-spec stats
+```
+
+**Expected output**:
+```
+📊 Project Statistics
+
+Overview:
+  Total Specs: 10
+  Active: 0
+  Complete: 4
+  Completion Rate: 40%
+
+Assignee Distribution:
+  Alice: 1 spec (1 planned)
+  Bob: 2 specs (1 complete, 1 planned)
+  Carol: 1 spec (1 planned)
+  Unassigned: 6 specs
+
+Tag Distribution:
+  sprint-1: 2 specs
+  sprint-2: 1 spec
+  backlog: 1 spec
+```
+
+This helps with:
+- Load balancing (who has too much/too little work)
+- Sprint tracking (how many sprint-1 specs are done)
+- Identifying bottlenecks
+
+## What You Learned
+
+✅ **Assigning work**: Used `--assignee` to assign specs  
+✅ **Team planning**: Combined priorities and tags for sprints  
+✅ **Coordination**: Used dependencies to manage work order  
+✅ **Visibility**: Board and stats show team progress  
+✅ **Searching**: Found work by assignee, tag, status  
+✅ **Reviewing**: Checked specs before implementation  
+✅ **Handoffs**: Reassigned work between team members
+
+## Key Commands Recap
+
+```bash
+# Assign work
+lean-spec update <spec> --assignee "Name"
+
+# Find your work
+lean-spec search "assignee:Alice"
+
+# View team board
+lean-spec board
+
+# Check dependencies
+lean-spec deps <spec>
+
+# Review a spec
+lean-spec view <spec>
+
+# Team stats
+lean-spec stats
+```
+
+## Team Collaboration Patterns
+
+**Sprint Planning**:
+```bash
+# Tag specs for current sprint
+lean-spec update 015 --tags "sprint-5,frontend"
+lean-spec update 016 --tags "sprint-5,backend"
+
+# Find sprint work
+lean-spec search "tag:sprint-5"
+```
+
+**Daily Standup**:
+```bash
+# What's in progress?
+lean-spec board
+
+# What's blocked?
+lean-spec deps <spec-number>
+
+# Who's working on what?
+lean-spec search "status:in-progress"
+```
+
+**Load Balancing**:
+```bash
+# Check team workload
+lean-spec stats
+
+# Find unassigned work
+lean-spec search "assignee:"
+
+# Find who has least work
+lean-spec search "assignee:Alice"
+lean-spec search "assignee:Bob"
+```
+
+## Team Best Practices
+
+**1. Clear Assignments**
+- Assign specs at the start of sprint
+- One assignee per spec (avoid shared ownership confusion)
+- Reassign explicitly if someone picks up another's work
+
+**2. Document Handoffs**
+- Add notes to spec explaining handoff context
+- Update Design or Notes section with decisions made
+- Ensure new assignee reviews spec and asks questions
+
+**3. Review Before Starting**
+- Always review dependent specs before starting work
+- Look for API contracts, data formats, error handling
+- Ask questions if anything is unclear
+
+**4. Keep Specs Current**
+- Update status as work progresses
+- Document learnings and changes
+- Complete specs properly (don't leave orphaned in-progress work)
+
+**5. Use Tags Strategically**
+- Sprint tags (sprint-1, sprint-2)
+- Team tags (frontend-team, backend-team)
+- Epic tags (checkout-epic, user-mgmt)
+- Type tags (feature, bugfix, refactor)
+
+**6. Regular Check-ins**
+- Review board in standup
+- Check stats weekly for health
+- Identify blockers early
+
+## Common Team Scenarios
+
+**Parallel Work**:
+```bash
+# Alice and Bob work independently
+lean-spec update 020 --assignee "Alice" --status in-progress
+lean-spec update 021 --assignee "Bob" --status in-progress
+```
+
+**Blocked Work**:
+```bash
+# Check what's blocking Alice
+lean-spec deps 020
+
+# If blocked, work on something else
+lean-spec search "assignee:Alice status:planned"
+```
+
+**Cross-team Dependencies**:
+```bash
+# Frontend depends on backend
+lean-spec link 025 --depends-on 024
+
+# Both teams can see the dependency
+lean-spec deps 024  # Backend sees who needs them
+lean-spec deps 025  # Frontend sees who they're waiting for
+```
+
+## Next Steps
+
+Congratulations! You've completed all SDD tutorials. You now know:
+- ✅ How to create and manage specs
+- ✅ The full SDD workflow with AI agents
+- ✅ Managing multiple specs with dependencies
+- ✅ Team collaboration and coordination
+
+**Continue your learning**:
+- [First Principles](/docs/guide/first-principles) - Understand the LeanSpec philosophy
+- [AI-Executable Patterns](/docs/guide/usage/ai-assisted/ai-executable-patterns) - 12 practical patterns
+- [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration) - Set up semantic memory
+- [CLI Reference](/docs/reference/cli) - Complete command documentation
+
+**Apply to your projects**:
+- Run `lean-spec init` in your project
+- Create specs for your next features
+- Use specs to guide AI implementation
+- Share with your team
+
+## Need Help?
+
+- Check the [FAQ](/docs/faq) for common questions
+- Visit [GitHub Issues](https://github.com/codervisor/lean-spec/issues) to report problems
+- Read [Contributing Guide](https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md) to contribute
+
+Welcome to Spec-Driven Development! 🚀

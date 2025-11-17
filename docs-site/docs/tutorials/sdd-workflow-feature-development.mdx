@@ -1,0 +1,369 @@
+---
+id: sdd-workflow-feature-development
+title: SDD Workflow - Feature Development
+sidebar_position: 2
+description: Use specs with AI agents for real feature development in 30 minutes
+---
+
+# SDD Workflow: Feature Development
+
+**Time**: 30 minutes  
+**Goal**: Experience the complete SDD workflow using specs to guide AI-powered feature development
+
+## What You'll Learn
+
+- Plan a feature with a spec before coding
+- Use the spec to guide AI agent implementation
+- Keep the spec in sync during development
+- Handle requirement changes and iterations
+- Complete the full spec lifecycle
+
+## Prerequisites
+
+- Completed [Your First Spec](./your-first-spec) tutorial
+- LeanSpec installed and project initialized
+- Basic familiarity with AI coding assistants (GitHub Copilot, Claude, etc.)
+
+## The Scenario
+
+You're building a task management app. You need to add a feature that lets users filter tasks by priority (high, medium, low).
+
+## Step 1: Create the Spec
+
+Start by creating a spec for the feature:
+
+```bash
+lean-spec create task-priority-filter
+```
+
+**Expected output**:
+```
+✓ Created spec: 002-task-priority-filter
+  Location: specs/002-task-priority-filter/README.md
+  Status: planned
+```
+
+Open the spec:
+
+```bash
+lean-spec open 002
+```
+
+## Step 2: Write the Spec
+
+Edit `specs/002-task-priority-filter/README.md`:
+
+```markdown
+---
+status: planned
+created: 2025-11-17
+tags: [ui, feature]
+priority: high
+---
+
+# Task Priority Filter
+
+## Overview
+
+Users need to filter tasks by priority level to focus on what's important.
+
+## Goal
+
+Enable users to filter their task list by priority (high, medium, low) with a single click.
+
+**Success Criteria:**
+- [ ] Filter buttons appear above task list
+- [ ] Clicking "High" shows only high-priority tasks
+- [ ] Clicking "All" shows all tasks again
+- [ ] Filter state persists across page reloads
+
+## Design
+
+**UI Components:**
+- Filter bar with 4 buttons: All, High, Medium, Low
+- Active filter button is highlighted
+- Task count shows for each filter
+
+**User Flow:**
+1. User sees task list with all tasks
+2. User clicks "High Priority" filter button
+3. List updates to show only high-priority tasks
+4. Button shows active state
+5. Filter choice saved to localStorage
+
+**Technical Approach:**
+- Add filter state to task list component
+- Filter tasks array before rendering
+- Use localStorage for persistence
+- Add CSS for active filter button
+
+## Plan
+
+**Phase 1: UI Components (2 hours)**
+- [ ] Create FilterBar component
+- [ ] Add filter buttons with click handlers
+- [ ] Style active state
+
+**Phase 2: Filtering Logic (2 hours)**
+- [ ] Add filter state to task list
+- [ ] Implement filter function
+- [ ] Wire up buttons to state
+
+**Phase 3: Persistence (1 hour)**
+- [ ] Save filter to localStorage on change
+- [ ] Load filter on component mount
+- [ ] Test persistence across sessions
+
+## Test
+
+**Functional Tests:**
+- [ ] All filter shows all tasks
+- [ ] High filter shows only high-priority tasks
+- [ ] Medium filter shows only medium-priority tasks
+- [ ] Low filter shows only low-priority tasks
+- [ ] Filter persists after page reload
+
+**Edge Cases:**
+- [ ] Works with empty task list
+- [ ] Works when no tasks match filter
+- [ ] Filter state resets correctly
+
+## Non-Goals
+
+- Multiple filter selection (AND logic) - future enhancement
+- Sorting within filtered results - separate feature
+- Filter by other attributes (status, date) - separate specs
+```
+
+Save the file.
+
+:::tip Spec Quality
+Notice how the spec includes:
+- Clear goal and success criteria
+- Specific UI design details
+- Technical approach (without over-specifying)
+- Explicit non-goals to prevent scope creep
+:::
+
+## Step 3: Mark Spec In Progress
+
+Before you start implementing, update the status:
+
+```bash
+lean-spec update 002 --status in-progress
+```
+
+**Why this matters:**
+- Signals to your team you're working on this
+- Tracks when implementation started
+- AI agents can see spec status through MCP
+
+## Step 4: Share Spec with AI Agent
+
+Now you'll work with your AI coding assistant. Here's how to use the spec effectively:
+
+**Prompt to AI agent:**
+
+```
+I'm implementing spec 002-task-priority-filter. Please read the spec at 
+specs/002-task-priority-filter/README.md and help me implement Phase 1 
+(UI Components).
+
+Create the FilterBar component following the design in the spec. Include:
+- Four filter buttons (All, High, Medium, Low)
+- Click handlers
+- Active state styling
+```
+
+**If using MCP-enabled AI** (GitHub Copilot, Claude):
+```
+Read spec 002 and implement the FilterBar component for Phase 1.
+```
+
+:::info
+With MCP integration, AI can directly read your specs. Without it, you'll need to paste or reference the spec file path.
+:::
+
+## Step 5: Implement with AI Guidance
+
+Work with your AI agent to implement each phase. After completing Phase 1:
+
+**Update the spec** to track progress:
+
+```markdown
+## Plan
+
+**Phase 1: UI Components (2 hours)** ✅ Complete
+- [x] Create FilterBar component
+- [x] Add filter buttons with click handlers
+- [x] Style active state
+
+**Phase 2: Filtering Logic (2 hours)** 🔄 In Progress
+- [ ] Add filter state to task list
+- [ ] Implement filter function
+- [ ] Wire up buttons to state
+```
+
+:::tip Living Documentation
+Update your spec as you work! This keeps it accurate and useful.
+:::
+
+## Step 6: Handle Requirement Changes
+
+Midway through implementation, you realize users want to see task counts on each filter button.
+
+**Update the spec** to reflect this:
+
+```markdown
+## Design
+
+**UI Components:**
+- Filter bar with 4 buttons: All, High, Medium, Low
+- Active filter button is highlighted
+- **Each button shows task count** ← NEW
+- Badge with count appears next to button text
+
+**Technical Approach:**
+- Add filter state to task list component
+- Filter tasks array before rendering
+- **Calculate counts for each priority level** ← NEW
+- Use localStorage for persistence
+- Add CSS for active filter button
+```
+
+Then **prompt your AI agent**:
+```
+We need to add task counts to the filter buttons. Update the FilterBar 
+component to show counts like "High (5)" for each filter button.
+
+Calculate counts by filtering the full task list for each priority level.
+```
+
+:::success Adapting to Change
+This is the SDD workflow in action! Specs evolve as you learn. Update the spec, 
+communicate the change to AI, and keep moving forward.
+:::
+
+## Step 7: Complete Implementation
+
+Continue working through all phases with your AI agent. As you complete each section, check off items in the spec.
+
+When all phases are done, run your tests (from the Test section of the spec):
+
+```bash
+# Run your test suite
+npm test
+```
+
+Verify all test cases pass.
+
+## Step 8: Final Spec Update
+
+Once everything works, update the spec to mark it complete:
+
+```bash
+lean-spec update 002 --status complete
+```
+
+**Expected output**:
+```
+✓ Updated spec: 002-task-priority-filter
+  Status: in-progress → complete
+  Completed: 2025-11-17
+```
+
+:::info Checkpoint
+View your spec one more time: `lean-spec view 002`  
+Notice the complete status and completion date.
+:::
+
+## Step 9: Review Your Work
+
+Check the project board:
+
+```bash
+lean-spec board
+```
+
+**Expected output**:
+```
+📊 LeanSpec Project Board
+
+Planned          In Progress      Complete
+─────────       ─────────────    ──────────────────
+                                 001-search-bar
+                                 002-task-priority-filter
+```
+
+## What You Learned
+
+✅ **Plan first**: Create spec before coding to clarify requirements  
+✅ **Guide AI**: Use specs to give AI clear context and goals  
+✅ **Living docs**: Update specs as requirements evolve  
+✅ **Track progress**: Use spec checklist to mark completed work  
+✅ **Complete workflow**: Full lifecycle from plan to completion
+
+## The SDD Workflow Pattern
+
+Here's the repeatable pattern you just learned:
+
+1. **Create spec** → `lean-spec create <name>`
+2. **Write spec** → Define goal, design, plan, tests
+3. **Start work** → `lean-spec update <number> --status in-progress`
+4. **Implement** → Use spec to guide AI agents
+5. **Update spec** → Keep it current as you learn
+6. **Complete** → `lean-spec update <number> --status complete`
+
+This workflow works for features of any size.
+
+## Benefits You Just Experienced
+
+**For You:**
+- Clear plan before coding (less confusion)
+- Documented decisions (easier to remember why)
+- Tracked progress (visible momentum)
+
+**For AI Agents:**
+- Context for implementation (better code)
+- Success criteria (knows when it's done)
+- Constraints (avoids scope creep)
+
+**For Your Team:**
+- Visibility into what you're building
+- Understanding of design decisions
+- Easy handoff if needed
+
+## Common Patterns
+
+**When requirements change mid-implementation:**
+1. Update the spec to reflect new understanding
+2. Note what changed and why (in spec or commit)
+3. Communicate changes to AI agent
+4. Continue implementation
+
+**When stuck on implementation:**
+1. Review the spec's Design and Plan sections
+2. Ask AI to suggest approaches based on spec
+3. Break down the Plan into smaller steps
+4. Update spec if approach needs to change
+
+**When adding new insights:**
+1. Add "Learnings" or "Notes" section to spec
+2. Document what worked, what didn't
+3. Update Plan or Design if needed
+4. This helps future work on similar features
+
+## Next Steps
+
+You've mastered the core SDD workflow! Now learn how to:
+
+**[Managing Multiple Specs →](./managing-multiple-specs)**  
+Handle multiple specs with dependencies and relationships
+
+**[Working with Teams →](./working-with-teams)**  
+Collaborate on specs with team members
+
+Or dive deeper into concepts:
+- [Writing Specs with AI](/docs/guide/usage/ai-assisted/writing-specs-with-ai) - Let AI help write specs
+- [AI-Executable Patterns](/docs/guide/usage/ai-assisted/ai-executable-patterns) - 12 practical patterns
+- [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration) - Set up AI semantic memory

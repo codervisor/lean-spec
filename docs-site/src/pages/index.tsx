@@ -35,12 +35,21 @@ function HomepageHeader() {
         </p>
         <div className={styles.buttons}>
           <Link
+            className="button button--primary button--lg"
+            to="/docs/tutorials/your-first-spec">
+            <Translate
+              id="homepage.quickStart"
+              description="Quick Start button on homepage">
+              Quick Start →
+            </Translate>
+          </Link>
+          <Link
             className="button button--secondary button--lg"
             to="/docs/guide/getting-started">
             <Translate
               id="homepage.getStarted"
               description="Get Started button on homepage">
-              Get Started →
+              Get Started
             </Translate>
           </Link>
         </div>
