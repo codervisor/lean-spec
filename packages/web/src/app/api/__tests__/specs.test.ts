@@ -58,7 +58,7 @@ describe('Spec API Routes', () => {
       
       const json = await response.json();
       expect(json).toHaveProperty('spec');
-      expect(json.spec.id).toBe('1');
+      expect(json.spec.id).toBe(mockSpec.id);
       
       // Verify cache headers are present
       const cacheControl = response.headers.get('Cache-Control');

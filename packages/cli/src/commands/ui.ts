@@ -269,7 +269,7 @@ function buildUiRunner(
   }
 
   if (packageManager === 'pnpm') {
-    const args = ['dlx', '--prefer-offline', ...uiArgs];
+    const args = ['dlx', ...uiArgs];
     return { command: 'pnpm', args, preview: `pnpm ${args.join(' ')}` };
   }
 

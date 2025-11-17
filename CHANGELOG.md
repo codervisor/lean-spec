@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Web sidebar scroll position drift** (spec 101) - Eliminated scroll position jumping during navigation
+  - Fixed React 19 `useSyncExternalStore` infinite loop by stabilizing server snapshot references
+  - Isolated scroll persistence to prevent global store re-renders on every scroll event
+  - Implemented component-local scroll management with `useIsomorphicLayoutEffect` for flicker-free restoration
+  - Added guarded auto-anchoring that centers active spec on page refresh without disrupting user scrolling
+  - Validated smooth scrolling for 100+ spec lists with no drift during rapid navigation or filtering
 - **Web spec detail page sub-specs display** - Fixed missing sub-specs tabs and count indicator
   - Sub-specs tabs now correctly display when available
   - Sidebar shows sub-spec count (e.g., "+3") for specs with additional markdown files
