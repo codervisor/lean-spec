@@ -7,6 +7,7 @@ import ReactFlow, {
   Background,
   Controls,
   Edge,
+  Handle,
   MarkerType,
   Node,
   NodeProps,
@@ -17,10 +18,10 @@ import 'reactflow/dist/style.css';
 import type { SpecRelationships } from '@/types/specs';
 import { cn } from '@/lib/utils';
 
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 90;
-const precedenceColor = 'rgba(251, 191, 36, 0.85)';
-const relatedColor = 'rgba(56, 189, 248, 0.8)';
+const NODE_WIDTH = 280;
+const NODE_HEIGHT = 110;
+const precedenceColor = '#f59e0b';
+const relatedColor = '#38bdf8';
 
 type GraphTone = 'precedence' | 'related' | 'current';
 
@@ -52,18 +53,20 @@ const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>)
   return (
     <div
       className={cn(
-        'flex w-[220px] flex-col gap-1 rounded-xl border px-4 py-3 text-xs shadow-sm transition-colors',
+        'flex w-[280px] flex-col gap-1.5 rounded-xl border-2 px-5 py-4 text-base shadow-md transition-colors',
         toneClasses[data.tone],
-        data.interactive && 'cursor-pointer hover:border-primary/70 hover:shadow'
+        data.interactive && 'cursor-pointer hover:border-primary/70 hover:shadow-lg'
       )}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+      <Handle type="target" position={Position.Left} className="opacity-0" />
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
         {data.badge}
       </span>
-      <span className="text-sm font-semibold leading-snug">{data.label}</span>
+      <span className="text-base font-semibold leading-snug">{data.label}</span>
       {data.subtitle && (
-        <span className="text-[11px] text-muted-foreground/80">{data.subtitle}</span>
+        <span className="text-sm text-muted-foreground/80">{data.subtitle}</span>
       )}
+      <Handle type="source" position={Position.Right} className="opacity-0" />
     </div>
   );
 });
@@ -183,12 +186,12 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
       markerEnd: {
         type: MarkerType.ArrowClosed,
         color: precedenceColor,
-        width: 24,
-        height: 24,
+        width: 28,
+        height: 28,
       },
       style: {
         stroke: precedenceColor,
-        strokeWidth: 2.5,
+        strokeWidth: 3,
       },
     });
   });
@@ -217,10 +220,16 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
       source: currentNode.id,
       target: id,
       type: 'smoothstep',
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: relatedColor,
+        width: 24,
+        height: 24,
+      },
       style: {
         stroke: relatedColor,
-        strokeWidth: 2,
-        strokeDasharray: '8 6',
+        strokeWidth: 3,
+        strokeDasharray: '10 8',
       },
     });
   });
@@ -257,12 +266,12 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle }: Sp
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide">Dependency Map</p>
-          <p className="text-sm text-foreground">Explore precedence and connected work</p>
+          <p className="text-xs font-semibold uppercase tracking-wide">Dependency Map</p>
+          <p className="text-base text-foreground">Explore precedence and connected work</p>
         </div>
-        <div className="rounded-full border border-border px-3 py-1 font-medium uppercase tracking-wide">
+        <div className="rounded-full border border-border px-3 py-1.5 text-sm font-medium uppercase tracking-wide">
           React Flow DAG
         </div>
       </div>
@@ -292,17 +301,17 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle }: Sp
         </ReactFlow>
       </div>
 
-      <div className="flex flex-wrap gap-4 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-2 font-medium">
-          <span className="inline-block h-2 w-6 rounded-full bg-amber-400/80" />
+          <span className="inline-block h-2.5 w-8 rounded-full bg-amber-400/80" />
           Precedence → work that must finish first.
         </span>
         <span className="inline-flex items-center gap-2 font-medium">
-          <span className="inline-block h-2 w-6 rounded-full bg-sky-400/80" />
+          <span className="inline-block h-2.5 w-8 rounded-full bg-sky-400/80" />
           Connected → parallel or follow-up specs.
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="inline-block h-2 w-6 rounded-full bg-primary/60" />
+          <span className="inline-block h-2.5 w-8 rounded-full bg-primary/60" />
           Drag to pan • Scroll / pinch to zoom.
         </span>
       </div>
