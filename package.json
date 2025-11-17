@@ -18,6 +18,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "pre-release": "pnpm typecheck && pnpm test:run && pnpm build && node bin/lean-spec.js validate",
     "docs:dev": "pnpm --dir docs-site start",
     "docs:build": "pnpm --dir docs-site build",
     "docs:serve": "pnpm --dir docs-site serve"
