@@ -8,7 +8,7 @@ import {
   getTestDate,
   type TestContext,
 } from '../test-helpers.js';
-import { viewCommand, openCommand, readSpecContent } from './viewer.js';
+import { viewSpec, openSpec, readSpecContent } from './viewer.js';
 
 describe('Viewer Commands', () => {
   let testCtx: TestContext;
@@ -161,7 +161,7 @@ Short content here.`
     });
   });
 
-  describe('viewCommand', () => {
+  describe('viewSpec', () => {
     it('should display spec with formatted output', async () => {
       // Capture console output
       const logs: string[] = [];
@@ -169,7 +169,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('001-test-spec', { noColor: false });
+        await viewSpec('001-test-spec', { noColor: false });
 
         const output = logs.join('\n');
         expect(output).toContain('001-test-spec');
@@ -188,7 +188,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('002');
+        await viewSpec('002');
 
         const output = logs.join('\n');
         expect(output).toContain('002-another-spec');
@@ -201,7 +201,7 @@ Short content here.`
 
     it('should throw error for non-existent spec', async () => {
       await expect(
-        viewCommand('999-nonexistent')
+        viewSpec('999-nonexistent')
       ).rejects.toThrow('Spec not found: 999-nonexistent');
     });
 
@@ -211,7 +211,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('001-test-spec', { raw: true });
+        await viewSpec('001-test-spec', { raw: true });
 
         const output = logs.join('\n');
         expect(output).toContain('---');
@@ -228,7 +228,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('001-test-spec', { json: true });
+        await viewSpec('001-test-spec', { json: true });
 
         const output = logs.join('\n');
         const parsed = JSON.parse(output);
@@ -248,7 +248,7 @@ Short content here.`
       console.log = (...args: unknown[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('2', { json: true });
+        await viewSpec('2', { json: true });
 
         const output = logs.join('\n');
         const parsed = JSON.parse(output);
@@ -361,13 +361,13 @@ Test the full system.
       expect(content?.content).toContain('Design Document');
     });
 
-    it('should render sub-spec with viewCommand', async () => {
+    it('should render sub-spec with viewSpec', async () => {
       const originalLog = console.log;
       const logs: string[] = [];
       console.log = (...args: any[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('003-multi-doc-spec/DESIGN.md', { noColor: false });
+        await viewSpec('003-multi-doc-spec/DESIGN.md', { noColor: false });
 
         const output = logs.join('\\n');
         expect(output).toContain('003-multi-doc-spec/DESIGN.md');
@@ -383,7 +383,7 @@ Test the full system.
       console.log = (...args: any[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('003/TESTING.md', { raw: true });
+        await viewSpec('003/TESTING.md', { raw: true });
 
         const output = logs.join('\\n');
         expect(output).toContain('# Testing Strategy');
@@ -400,7 +400,7 @@ Test the full system.
       console.log = (...args: any[]) => logs.push(args.join(' '));
 
       try {
-        await viewCommand('003/DESIGN.md', { json: true });
+        await viewSpec('003/DESIGN.md', { json: true });
 
         const output = logs.join('\\n');
         const parsed = JSON.parse(output);
@@ -414,7 +414,7 @@ Test the full system.
     });
   });
 
-  describe('openCommand', () => {
+  describe('openSpec', () => {
     it('should resolve spec path and prepare to open', async () => {
       // This test verifies that the spec path resolves correctly
       // We can't easily test the actual spawn without complex mocking,
@@ -430,7 +430,7 @@ Test the full system.
 
     it('should throw error for non-existent spec', async () => {
       await expect(
-        openCommand('999-nonexistent', { editor: 'echo' })
+        openSpec('999-nonexistent', { editor: 'echo' })
       ).rejects.toThrow('Spec not found: 999-nonexistent');
     });
   });

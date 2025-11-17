@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { validateCommand } from './validate.js';
+import { validateSpecs } from './validate.js';
 import { saveConfig } from '../config.js';
 
 describe('validateCommand', () => {
@@ -82,7 +82,7 @@ ${Array(185).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
-    const result = await validateCommand();
+    const result = await validateSpecs();
     expect(result).toBe(true);
   });
 
@@ -112,7 +112,7 @@ ${Array(335).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
-    const result = await validateCommand();
+    const result = await validateSpecs();
     expect(result).toBe(true); // Still passes with warning
   });
 
@@ -143,7 +143,7 @@ ${Array(335).fill('Content line').join('\n')}
     );
 
     // Validate only the good spec
-    const result = await validateCommand({ specs: ['001'] });
+    const result = await validateSpecs({ specs: ['001'] });
     expect(result).toBe(true);
 
     // Note: Removed "bad spec" test - simple repeated text doesn't generate enough tokens to fail
@@ -153,7 +153,7 @@ ${Array(335).fill('Content line').join('\n')}
     const specsDir = path.join(tmpDir, 'specs');
     await fs.mkdir(specsDir, { recursive: true });
 
-    const result = await validateCommand();
+    const result = await validateSpecs();
     expect(result).toBe(true);
   });
 
@@ -164,7 +164,7 @@ ${Array(335).fill('Content line').join('\n')}
     const specsDir = path.join(tmpDir, 'specs');
     await fs.mkdir(specsDir, { recursive: true });
 
-    const result = await validateCommand({ specs: ['999-nonexistent'] });
+    const result = await validateSpecs({ specs: ['999-nonexistent'] });
     expect(result).toBe(false);
   });
 
@@ -187,7 +187,7 @@ This spec has multiple frontmatter issues.
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
-    const result = await validateCommand();
+    const result = await validateSpecs();
     expect(result).toBe(false); // Should fail due to frontmatter errors
   });
 
@@ -211,7 +211,7 @@ Missing status and created fields - spec-loader will skip this.
 
     // The spec-loader filters out specs with missing required fields
     // so no specs will be found, and validation returns true (nothing to validate)
-    const result = await validateCommand();
+    const result = await validateSpecs();
     expect(result).toBe(true); // No specs found = success
   });
 
@@ -245,7 +245,7 @@ ${Array(90).fill('Content line').join('\n')}
 `;
     await fs.writeFile(path.join(specDir, 'README.md'), content, 'utf-8');
 
-    const result = await validateCommand();
+    const result = await validateSpecs();
     expect(result).toBe(true); // Should pass
   });
 
@@ -273,7 +273,7 @@ ${Array(90).fill('Content line').join('\n')}
     );
 
     // With verbose flag, should pass and output should include passing specs
-    const result = await validateCommand({ verbose: true });
+    const result = await validateSpecs({ verbose: true });
     expect(result).toBe(true);
   });
 
@@ -292,7 +292,7 @@ ${Array(90).fill('Content line').join('\n')}
     );
 
     // With quiet flag, warnings are suppressed, should still pass
-    const result = await validateCommand({ quiet: true });
+    const result = await validateSpecs({ quiet: true });
     expect(result).toBe(true);
   });
 
@@ -311,7 +311,7 @@ ${Array(90).fill('Content line').join('\n')}
     );
 
     // Filter by max-lines rule
-    const result = await validateCommand({ rule: 'max-lines' });
+    const result = await validateSpecs({ rule: 'max-lines' });
     expect(result).toBe(true); // Should pass (only warnings)
   });
 
@@ -329,7 +329,7 @@ ${Array(90).fill('Content line').join('\n')}
     );
 
     // With json format, should output JSON (still fail due to frontmatter errors)
-    const result = await validateCommand({ format: 'json' });
+    const result = await validateSpecs({ format: 'json' });
     expect(result).toBe(false);
   });
 });

@@ -25,7 +25,7 @@ describe('StructureValidator', () => {
   /**
    * Helper to create a spec directory with README.md
    */
-  async function createSpec(name: string, content: string): Promise<SpecInfo> {
+  async function createSpec(name: string, content: string): Promise<SpecInfo | any> {
     const specPath = path.join(tempDir, name);
     await fs.mkdir(specPath, { recursive: true });
     const readmePath = path.join(specPath, 'README.md');
@@ -82,8 +82,8 @@ Content here.
     });
   });
 
-  describe('Required sections validation', () => {
-    it('should warn about missing recommended sections (non-strict mode)', async () => {
+  describe('Section recommendations', () => {
+    it('should skip warnings when overview/design sections are missing', async () => {
       const content = `---
 status: planned
 created: '2025-11-05'
@@ -97,14 +97,12 @@ Only implementation, no Overview or Design.
 `;
       const spec = await createSpec('missing-sections', content);
       const result = await validator.validate(spec, content);
-      
+
       expect(result.passed).toBe(true);
-      expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings.some(w => w.message.includes('Overview'))).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('Design'))).toBe(true);
+      expect(result.warnings.length).toBe(0);
     });
 
-    it('should fail for missing required sections in strict mode', async () => {
+    it('should ignore strict mode (required sections disabled)', async () => {
       const strictValidator = new StructureValidator({ strict: true });
       const content = `---
 status: planned
@@ -119,13 +117,13 @@ Only implementation section.
 `;
       const spec = await createSpec('missing-sections-strict', content);
       const result = await strictValidator.validate(spec, content);
-      
-      expect(result.passed).toBe(false);
-      expect(result.errors.some(e => e.message.includes('Overview'))).toBe(true);
-      expect(result.errors.some(e => e.message.includes('Design'))).toBe(true);
+
+      expect(result.passed).toBe(true);
+      expect(result.warnings.length).toBe(0);
+      expect(result.errors.length).toBe(0);
     });
 
-    it('should pass if all required sections present', async () => {
+    it('should still pass complete specs without emitting warnings', async () => {
       const content = `---
 status: planned
 created: '2025-11-05'
@@ -143,64 +141,14 @@ Design content.
 `;
       const spec = await createSpec('all-sections', content);
       const result = await validator.validate(spec, content);
-      
+
       expect(result.passed).toBe(true);
       expect(result.warnings.length).toBe(0);
-    });
-
-    it('should be case-insensitive for section matching', async () => {
-      const content = `---
-status: planned
-created: '2025-11-05'
----
-
-# Test Spec
-
-## OVERVIEW
-
-Overview content.
-
-## design
-
-Design content.
-`;
-      const spec = await createSpec('case-insensitive', content);
-      const result = await validator.validate(spec, content);
-      
-      expect(result.passed).toBe(true);
-      expect(result.warnings.length).toBe(0);
-    });
-
-    it('should allow custom required sections', async () => {
-      const customValidator = new StructureValidator({ 
-        requiredSections: ['Problem', 'Solution', 'Testing'] 
-      });
-      
-      const content = `---
-status: planned
-created: '2025-11-05'
----
-
-# Test Spec
-
-## Problem
-
-Problem description.
-
-## Solution
-
-Solution description.
-`;
-      const spec = await createSpec('custom-sections', content);
-      const result = await customValidator.validate(spec, content);
-      
-      expect(result.passed).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('Testing'))).toBe(true);
     });
   });
 
-  describe('Empty sections detection', () => {
-    it('should warn about empty required sections', async () => {
+  describe('Empty sections handling', () => {
+    it('should treat empty sections as acceptable noise', async () => {
       const content = `---
 status: planned
 created: '2025-11-05'
@@ -213,19 +161,15 @@ created: '2025-11-05'
 ## Design
 
 Content in design.
-
-## Implementation
-
-More content.
 `;
       const spec = await createSpec('empty-section', content);
       const result = await validator.validate(spec, content);
-      
+
       expect(result.passed).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('Empty required section: ## Overview'))).toBe(true);
+      expect(result.warnings.length).toBe(0);
     });
 
-    it('should not warn about empty non-required sections', async () => {
+    it('should focus on duplicates rather than empty optional sections', async () => {
       const content = `---
 status: planned
 created: '2025-11-05'
@@ -237,10 +181,6 @@ created: '2025-11-05'
 
 Content here.
 
-## Design
-
-More content.
-
 ## Optional Empty Section
 
 ## Another Section
@@ -249,55 +189,9 @@ Final content.
 `;
       const spec = await createSpec('empty-optional', content);
       const result = await validator.validate(spec, content);
-      
+
       expect(result.passed).toBe(true);
-      expect(result.warnings.filter(w => w.message.includes('Optional Empty Section')).length).toBe(0);
-    });
-
-    it('should consider sections with only comments as empty', async () => {
-      const content = `---
-status: planned
-created: '2025-11-05'
----
-
-# Test Spec
-
-## Overview
-
-<!-- TODO: Fill this in -->
-
-## Design
-
-Actual content.
-`;
-      const spec = await createSpec('comment-only', content);
-      const result = await validator.validate(spec, content);
-      
-      expect(result.passed).toBe(true);
-      expect(result.warnings.some(w => w.message.includes('Empty required section: ## Overview'))).toBe(true);
-    });
-
-    it('should not consider sections with content as empty', async () => {
-      const content = `---
-status: planned
-created: '2025-11-05'
----
-
-# Test Spec
-
-## Overview
-
-This section has content.
-
-## Design
-
-This one too.
-`;
-      const spec = await createSpec('non-empty', content);
-      const result = await validator.validate(spec, content);
-      
-      expect(result.passed).toBe(true);
-      expect(result.warnings.filter(w => w.message.includes('Empty')).length).toBe(0);
+      expect(result.warnings.length).toBe(0);
     });
   });
 

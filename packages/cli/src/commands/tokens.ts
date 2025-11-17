@@ -22,10 +22,13 @@ export interface TokensOptions {
   json?: boolean;           // JSON output
 }
 
-/**
- * Tokens command - count tokens in spec(s)
- */
-export function tokensCommand(): Command {
+export function tokensCommand(): Command;
+export function tokensCommand(specPath: string, options?: TokensOptions): Promise<void>;
+export function tokensCommand(specPath?: string, options: TokensOptions = {}): Command | Promise<void> {
+  if (typeof specPath === 'string') {
+    return countSpecTokens(specPath, options);
+  }
+
   return new Command('tokens')
     .description('Count tokens in spec(s) for LLM context management')
     .argument('[spec]', 'Spec to count tokens for (optional)')
@@ -34,11 +37,11 @@ export function tokensCommand(): Command {
     .option('--all', 'Show all specs (when [spec] is omitted)')
     .option('--sort-by <field>', 'Sort by: tokens, lines, name (default: tokens)')
     .option('--json', 'Output as JSON')
-    .action(async (specPath: string | undefined, options: TokensOptions) => {
-      if (specPath) {
-        await countSpecTokens(specPath, options);
+    .action(async (specPathArg: string | undefined, opts: TokensOptions) => {
+      if (specPathArg) {
+        await countSpecTokens(specPathArg, opts);
       } else {
-        await tokensAllCommand(options);
+        await tokensAllCommand(opts);
       }
     });
 }

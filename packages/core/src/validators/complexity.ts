@@ -110,6 +110,12 @@ export class ComplexityValidator implements ValidationRule {
       }
     }
 
+    // LINE COUNT BACKSTOP: catch extremely long specs even if tokens are fine
+    const lineWarning = this.checkLineCounts(metrics.lineCount);
+    if (lineWarning) {
+      warnings.push(lineWarning);
+    }
+
     return {
       passed: errors.length === 0,
       errors,
@@ -198,6 +204,27 @@ export class ComplexityValidator implements ValidationRule {
     }
     
     return checks;
+  }
+
+  /**
+   * Provide warnings when line counts exceed backstop thresholds
+   */
+  private checkLineCounts(lineCount: number): ValidationWarning | null {
+    if (lineCount > this.maxLines) {
+      return {
+        message: `Spec is very long at ${lineCount.toLocaleString()} lines (limit ${this.maxLines.toLocaleString()})`,
+        suggestion: 'Split the document or move details to sub-spec files to keep context manageable',
+      };
+    }
+
+    if (lineCount > this.warningLines) {
+      return {
+        message: `Spec is ${lineCount.toLocaleString()} lines — approaching the ${this.warningLines.toLocaleString()} line backstop`,
+        suggestion: 'Watch size growth and consider progressive disclosure before hitting hard limits',
+      };
+    }
+
+    return null;
   }
 
   /**

@@ -18,10 +18,13 @@ export interface DocumentInfo {
   size: number;
 }
 
-/**
- * Migrate command - migrate specs from other SDD tools
- */
-export function migrateCommand(): Command {
+export function migrateCommand(): Command;
+export function migrateCommand(inputPath: string, options?: Partial<MigrationOptions>): Promise<void>;
+export function migrateCommand(inputPath?: string, options: Partial<MigrationOptions> = {}): Command | Promise<void> {
+  if (typeof inputPath === 'string') {
+    return migrateSpecs(inputPath, options);
+  }
+
   return new Command('migrate')
     .description('Migrate specs from other SDD tools (ADR, RFC, OpenSpec, spec-kit, etc.)')
     .argument('<input-path>', 'Path to directory containing specs to migrate')
@@ -30,23 +33,23 @@ export function migrateCommand(): Command {
     .option('--batch-size <n>', 'Process N docs at a time', parseInt)
     .option('--skip-validation', "Don't validate after migration")
     .option('--backfill', 'Auto-run backfill after migration')
-    .action(async (inputPath: string, options: {
+    .action(async (target: string, opts: {
       with?: string;
       dryRun?: boolean;
       batchSize?: number;
       skipValidation?: boolean;
       backfill?: boolean;
     }) => {
-      if (options.with && !['copilot', 'claude', 'gemini'].includes(options.with)) {
+      if (opts.with && !['copilot', 'claude', 'gemini'].includes(opts.with)) {
         console.error('\x1b[31m❌ Error:\x1b[0m Invalid AI provider. Use: copilot, claude, or gemini');
         process.exit(1);
       }
-      await migrateSpecs(inputPath, {
-        aiProvider: options.with as 'copilot' | 'claude' | 'gemini' | undefined,
-        dryRun: options.dryRun,
-        batchSize: options.batchSize,
-        skipValidation: options.skipValidation,
-        backfill: options.backfill,
+      await migrateSpecs(target, {
+        aiProvider: opts.with as 'copilot' | 'claude' | 'gemini' | undefined,
+        dryRun: opts.dryRun,
+        batchSize: opts.batchSize,
+        skipValidation: opts.skipValidation,
+        backfill: opts.backfill,
       });
     });
 }

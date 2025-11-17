@@ -9,26 +9,31 @@ import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 import { countTokens } from '@leanspec/core';
 
-/**
- * Files command - list files in a spec
- */
-export function filesCommand(): Command {
+export interface FilesOptions {
+  type?: 'docs' | 'assets';
+  tree?: boolean;
+}
+
+export function filesCommand(): Command;
+export function filesCommand(specPath: string, options?: FilesOptions): Promise<void>;
+export function filesCommand(specPath?: string, options: FilesOptions = {}): Command | Promise<void> {
+  if (typeof specPath === 'string') {
+    return showFiles(specPath, options);
+  }
+
   return new Command('files')
     .description('List files in a spec')
     .argument('<spec>', 'Spec to list files for')
     .option('--type <type>', 'Filter by type: docs, assets')
     .option('--tree', 'Show tree structure')
-    .action(async (specPath: string, options: { type?: 'docs' | 'assets'; tree?: boolean }) => {
-      await showFiles(specPath, options);
+    .action(async (target: string, opts: FilesOptions) => {
+      await showFiles(target, opts);
     });
 }
 
 export async function showFiles(
   specPath: string,
-  options: {
-    type?: 'docs' | 'assets';
-    tree?: boolean;
-  } = {}
+  options: FilesOptions = {}
 ): Promise<void> {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();

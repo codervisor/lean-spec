@@ -8,26 +8,31 @@ import { loadConfig } from '../config.js';
 import * as path from 'node:path';
 import { getStatusIndicator } from '../utils/colors.js';
 
-/**
- * Deps command - show dependency graph
- */
-export function depsCommand(): Command {
+export interface DepsOptions {
+  depth?: number;
+  graph?: boolean;
+  json?: boolean;
+}
+
+export function depsCommand(): Command;
+export function depsCommand(specPath: string, options?: DepsOptions): Promise<void>;
+export function depsCommand(specPath?: string, options: DepsOptions = {}): Command | Promise<void> {
+  if (typeof specPath === 'string') {
+    return showDeps(specPath, options);
+  }
+
   return new Command('deps')
     .description('Show dependency graph for a spec. Related specs (⟷) are shown bidirectionally, depends_on (→) are directional.')
     .argument('<spec>', 'Spec to show dependencies for')
     .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
     .option('--graph', 'ASCII graph visualization')
     .option('--json', 'Output as JSON')
-    .action(async (specPath: string, options: { depth?: number; graph?: boolean; json?: boolean }) => {
-      await showDeps(specPath, options);
+    .action(async (target: string, opts: DepsOptions) => {
+      await showDeps(target, opts);
     });
 }
 
-export async function showDeps(specPath: string, options: {
-  depth?: number;
-  graph?: boolean;
-  json?: boolean;
-}): Promise<void> {
+export async function showDeps(specPath: string, options: DepsOptions = {}): Promise<void> {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
   

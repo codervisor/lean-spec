@@ -22,6 +22,12 @@ interface SpecContent {
   fullPath?: string; // Full absolute path to spec directory for sub-spec loading
 }
 
+export interface ViewOptions {
+  raw?: boolean;
+  json?: boolean;
+  noColor?: boolean;
+}
+
 /**
  * Read and parse a spec by path/name/number
  * Supports sub-spec files like: "045/DESIGN.md" or "045-dashboard/TESTING.md"
@@ -218,22 +224,25 @@ function displayFormattedSpec(spec: SpecContent): string {
   return output.join('\n');
 }
 
-/**
- * View command - view spec content
- */
-export function viewCommand(): Command {
+export function viewCommand(): Command;
+export function viewCommand(specPath: string, options?: ViewOptions): Promise<void>;
+export function viewCommand(specPath?: string, options: ViewOptions = {}): Command | Promise<void> {
+  if (typeof specPath === 'string') {
+    return viewSpec(specPath, options);
+  }
+
   return new Command('view')
     .description('View spec content (supports sub-specs like "045/DESIGN.md")')
     .argument('<spec>', 'Spec to view')
     .option('--raw', 'Output raw markdown (for piping/scripting)')
     .option('--json', 'Output as JSON')
     .option('--no-color', 'Disable colors')
-    .action(async (specPath: string, options: { raw?: boolean; json?: boolean; color?: boolean }) => {
+    .action(async (target: string, opts: { raw?: boolean; json?: boolean; color?: boolean }) => {
       try {
-        await viewSpec(specPath, {
-          raw: options.raw,
-          json: options.json,
-          noColor: options.color === false,
+        await viewSpec(target, {
+          raw: opts.raw,
+          json: opts.json,
+          noColor: opts.color === false,
         });
       } catch (error) {
         console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
@@ -248,11 +257,7 @@ export function viewCommand(): Command {
  */
 export async function viewSpec(
   specPath: string,
-  options: {
-    raw?: boolean;
-    json?: boolean;
-    noColor?: boolean;
-  } = {}
+  options: ViewOptions = {}
 ): Promise<void> {
   const spec = await readSpecContent(specPath, process.cwd());
   
@@ -289,15 +294,25 @@ export async function viewSpec(
 /**
  * Open command - open spec in editor
  */
-export function openCommand(): Command {
+export interface OpenOptions {
+  editor?: string;
+}
+
+export function openCommand(): Command;
+export function openCommand(specPath: string, options?: OpenOptions): Promise<void>;
+export function openCommand(specPath?: string, options: OpenOptions = {}): Command | Promise<void> {
+  if (typeof specPath === 'string') {
+    return openSpec(specPath, options);
+  }
+
   return new Command('open')
     .description('Open spec in editor')
     .argument('<spec>', 'Spec to open')
     .option('--editor <editor>', 'Specify editor command')
-    .action(async (specPath: string, options: { editor?: string }) => {
+    .action(async (target: string, opts: OpenOptions) => {
       try {
-        await openSpec(specPath, {
-          editor: options.editor,
+        await openSpec(target, {
+          editor: opts.editor,
         });
       } catch (error) {
         console.error('\x1b[31mError:\x1b[0m', error instanceof Error ? error.message : String(error));
@@ -312,9 +327,7 @@ export function openCommand(): Command {
  */
 export async function openSpec(
   specPath: string,
-  options: {
-    editor?: string;
-  } = {}
+  options: OpenOptions = {}
 ): Promise<void> {
   const cwd = process.cwd();
   const config = await loadConfig(cwd);

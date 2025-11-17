@@ -27,6 +27,9 @@ export interface SubSpecOptions {
   
   // Line count backstop (safety net)
   maxLines?: number;            // Default: 500 lines
+
+  // Cross-reference validation toggle
+  checkCrossReferences?: boolean; // Default: true
 }
 
 export class SubSpecValidator implements ValidationRule {
@@ -37,6 +40,7 @@ export class SubSpecValidator implements ValidationRule {
   private goodThreshold: number;
   private warningThreshold: number;
   private maxLines: number;
+  private checkCrossRefs: boolean;
 
   constructor(options: SubSpecOptions = {}) {
     // Token thresholds (hypothesis values based on research)
@@ -46,6 +50,9 @@ export class SubSpecValidator implements ValidationRule {
     
     // Line count backstop
     this.maxLines = options.maxLines ?? 500;
+
+    // Cross-reference validation toggle
+    this.checkCrossRefs = options.checkCrossReferences ?? true;
   }
 
   async validate(spec: SpecInfo, content: string): Promise<ValidationResult> {
@@ -71,6 +78,10 @@ export class SubSpecValidator implements ValidationRule {
 
     // Check for orphaned sub-specs (not referenced in README.md)
     this.checkOrphanedSubSpecs(subSpecs, content, warnings);
+
+    if (this.checkCrossRefs) {
+      this.validateCrossReferences(subSpecs, warnings);
+    }
 
     return {
       passed: errors.length === 0,
@@ -176,6 +187,44 @@ export class SubSpecValidator implements ValidationRule {
         warnings.push({
           message: `Orphaned sub-spec: ${fileName} (not linked from README.md)`,
           suggestion: `Add a link to ${fileName} in README.md to document its purpose`,
+        });
+      }
+    }
+  }
+
+  /**
+   * Detect cross-document references that point to missing files
+   */
+  private validateCrossReferences(
+    subSpecs: SubFileInfo[],
+    warnings: ValidationWarning[]
+  ): void {
+    const availableFiles = new Set<string>(
+      subSpecs.map(subSpec => subSpec.name.toLowerCase())
+    );
+    availableFiles.add('readme.md');
+
+    const linkPattern = /\[[^\]]+\]\(([^)]+)\)/gi;
+
+    for (const subSpec of subSpecs) {
+      if (!subSpec.content) continue;
+
+      for (const match of subSpec.content.matchAll(linkPattern)) {
+        const rawTarget = match[1].split('#')[0]?.trim();
+        if (!rawTarget || !rawTarget.toLowerCase().endsWith('.md')) {
+          continue;
+        }
+
+        const normalized = rawTarget.replace(/^\.\//, '');
+        const normalizedLower = normalized.toLowerCase();
+
+        if (availableFiles.has(normalizedLower)) {
+          continue;
+        }
+
+        warnings.push({
+          message: `Broken reference in ${subSpec.name}: ${normalized}`,
+          suggestion: `Ensure ${normalized} exists or update the link`,
         });
       }
     }
