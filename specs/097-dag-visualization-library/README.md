@@ -8,10 +8,12 @@ tags:
   - technical-debt
 priority: high
 created_at: '2025-11-17T08:02:23.227Z'
-updated_at: '2025-11-17T08:39:56.385Z'
+updated_at: '2025-11-17T08:45:56.805Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T08:39:56.385Z'
+depends_on:
+  - 082-web-realtime-sync-architecture
 ---
 
 # Replace Manual DAG with Visualization Library
