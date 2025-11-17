@@ -35,6 +35,7 @@ Before starting work, understand project context:
 
 These help you understand what exists and what's in progress.
 
+
 ## Essential Commands
 
 **Discovery:**

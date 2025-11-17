@@ -17,10 +17,10 @@ const TEMPLATE_NAMES = ['minimal', 'standard', 'enterprise'];
 
 interface AgentsConfig {
   description: string;
-  coreRules: string;
+  coreRules: string | string[];
   whenToUse?: string;
   whenToUseEarly?: boolean;
-  discoveryCommands: string;
+  discoveryCommands: string | string[];
   essentialCommands?: string | string[];
   frontmatter: string;
   workflow: string | string[];
@@ -56,10 +56,10 @@ function generateAgentsFile(templateName: string): void {
   const data = {
     project_name: '{project_name}',
     description: config.description,
-    coreRules: readComponent(config.coreRules),
+    coreRules: readComponents(config.coreRules),
     whenToUse: config.whenToUse ? readComponent(config.whenToUse) : null,
     whenToUseEarly: config.whenToUseEarly !== false,
-    discoveryCommands: readComponent(config.discoveryCommands),
+    discoveryCommands: readComponents(config.discoveryCommands),
     essentialCommands: config.essentialCommands ? readComponents(config.essentialCommands) : null,
     frontmatter: readComponent(config.frontmatter),
     workflow: readComponents(config.workflow),
