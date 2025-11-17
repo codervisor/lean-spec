@@ -119,7 +119,11 @@ Skip specs for:
 - `lean-spec update <spec> --priority <priority>` - Update spec priority (REQUIRED - never edit frontmatter manually)
 - `lean-spec update <spec> --tags <tag1,tag2>` - Update spec tags (REQUIRED - never edit frontmatter manually)
 - `lean-spec update <spec> --assignee <name>` - Update spec assignee (REQUIRED - never edit frontmatter manually)
-- `lean-spec deps <spec>` - Show dependencies and relationships
+- `lean-spec deps <spec>` - Show complete dependency graph (upstream, downstream, related)
+- `lean-spec deps <spec> --upstream` - Show only upstream dependencies
+- `lean-spec deps <spec> --downstream` - Show only downstream dependents
+- `lean-spec deps <spec> --impact` - Show full impact analysis with summary
+- `lean-spec deps <spec> --json` - Output as JSON for programmatic use
 
 **Token Management:**
 - `lean-spec tokens <spec>` - Count tokens in a spec for LLM context management

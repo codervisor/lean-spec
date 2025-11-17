@@ -7,11 +7,13 @@ import { resolveSpecPath } from '../utils/path-helpers.js';
 import { loadConfig } from '../config.js';
 import * as path from 'node:path';
 import { getStatusIndicator } from '../utils/colors.js';
+import { SpecDependencyGraph } from '@leanspec/core';
 
 export interface DepsOptions {
   depth?: number;
   graph?: boolean;
   json?: boolean;
+  mode?: 'complete' | 'upstream' | 'downstream' | 'impact';
 }
 
 export function depsCommand(): Command;
@@ -27,6 +29,10 @@ export function depsCommand(specPath?: string, options: DepsOptions = {}): Comma
     .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
     .option('--graph', 'ASCII graph visualization')
     .option('--json', 'Output as JSON')
+    .option('--complete', 'Show complete graph (default: all relationships)')
+    .option('--upstream', 'Show only upstream dependencies')
+    .option('--downstream', 'Show only downstream dependents')
+    .option('--impact', 'Show impact radius (all affected specs)')
     .action(async (target: string, opts: DepsOptions) => {
       await showDeps(target, opts);
     });
@@ -52,29 +58,71 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
     throw new Error(`Spec not found: ${sanitizeUserInput(specPath)}`);
   }
 
-  // Load all specs to resolve dependencies
+  // Load all specs and build dependency graph
   const allSpecs = await loadAllSpecs({ includeArchived: true });
+  const graph = new SpecDependencyGraph(allSpecs);
+  
+  // Determine mode from options (explicit flags take precedence)
+  let mode: 'complete' | 'upstream' | 'downstream' | 'impact' = 'complete';
+  if (options.mode) {
+    mode = options.mode;
+  } else if ((options as any).upstream) {
+    mode = 'upstream';
+  } else if ((options as any).downstream) {
+    mode = 'downstream';
+  } else if ((options as any).impact) {
+    mode = 'impact';
+  }
+  
   const specMap = new Map<string, SpecInfo>();
   for (const s of allSpecs) {
     specMap.set(s.path, s);
   }
 
-  // Find dependencies
-  const dependsOn = findDependencies(spec, specMap);
-  const blocks = findBlocking(spec, allSpecs);
+  // Get dependency information based on mode
+  let dependsOn: SpecInfo[] = [];
+  let requiredBy: SpecInfo[] = [];
+  let related: SpecInfo[] = [];
   
-  // Find related specs bidirectionally (merge both directions)
-  const relatedSpecs = findAllRelated(spec, specMap, allSpecs);
+  if (mode === 'complete') {
+    const completeGraph = graph.getCompleteGraph(spec.path);
+    dependsOn = completeGraph.dependsOn;
+    requiredBy = completeGraph.requiredBy;
+    related = completeGraph.related;
+  } else if (mode === 'upstream') {
+    dependsOn = graph.getUpstream(spec.path, options.depth || 3);
+  } else if (mode === 'downstream') {
+    requiredBy = graph.getDownstream(spec.path, options.depth || 3);
+  } else if (mode === 'impact') {
+    const impact = graph.getImpactRadius(spec.path, options.depth || 3);
+    dependsOn = impact.upstream;
+    requiredBy = impact.downstream;
+    related = impact.related;
+  }
 
   // Output as JSON if requested
   if (options.json) {
-    const data = {
+    const data: any = {
       spec: spec.path,
-      dependsOn: dependsOn.map(s => ({ path: s.path, status: s.frontmatter.status })),
-      blocks: blocks.map(s => ({ path: s.path, status: s.frontmatter.status })),
-      related: relatedSpecs.map(s => ({ path: s.path, status: s.frontmatter.status })),
-      chain: buildDependencyChain(spec, specMap, options.depth || 3),
+      mode,
     };
+    
+    if (mode === 'complete' || mode === 'upstream' || mode === 'impact') {
+      data.dependsOn = dependsOn.map(s => ({ path: s.path, status: s.frontmatter.status }));
+    }
+    
+    if (mode === 'complete' || mode === 'downstream' || mode === 'impact') {
+      data.requiredBy = requiredBy.map(s => ({ path: s.path, status: s.frontmatter.status }));
+    }
+    
+    if (mode === 'complete' || mode === 'impact') {
+      data.related = related.map(s => ({ path: s.path, status: s.frontmatter.status }));
+    }
+    
+    if (mode === 'complete' && (options.graph || dependsOn.length > 0)) {
+      data.chain = buildDependencyChain(spec, specMap, options.depth || 3);
+    }
+    
     console.log(JSON.stringify(data, null, 2));
     return;
   }
@@ -85,7 +133,7 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
   console.log('');
 
   // Check if there are any relationships at all
-  const hasAnyRelationships = dependsOn.length > 0 || blocks.length > 0 || relatedSpecs.length > 0;
+  const hasAnyRelationships = dependsOn.length > 0 || requiredBy.length > 0 || related.length > 0;
   
   if (!hasAnyRelationships) {
     console.log(chalk.gray('  No dependencies or relationships'));
@@ -93,9 +141,10 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
     return;
   }
 
-  // Depends On section
-  if (dependsOn.length > 0) {
-    console.log(chalk.bold('Depends On:'));
+  // Depends On section (Upstream)
+  if ((mode === 'complete' || mode === 'upstream' || mode === 'impact') && dependsOn.length > 0) {
+    const label = mode === 'complete' ? 'Depends On' : mode === 'upstream' ? 'Upstream Dependencies' : 'Upstream (Impact)';
+    console.log(chalk.bold(`${label}:`));
     for (const dep of dependsOn) {
       const status = getStatusIndicator(dep.frontmatter.status);
       console.log(`  → ${sanitizeUserInput(dep.path)} ${status}`);
@@ -103,10 +152,11 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
     console.log('');
   }
 
-  // Required By section
-  if (blocks.length > 0) {
-    console.log(chalk.bold('Required By:'));
-    for (const blocked of blocks) {
+  // Required By section (Downstream)
+  if ((mode === 'complete' || mode === 'downstream' || mode === 'impact') && requiredBy.length > 0) {
+    const label = mode === 'complete' ? 'Required By' : mode === 'downstream' ? 'Downstream Dependents' : 'Downstream (Impact)';
+    console.log(chalk.bold(`${label}:`));
+    for (const blocked of requiredBy) {
       const status = getStatusIndicator(blocked.frontmatter.status);
       console.log(`  ← ${sanitizeUserInput(blocked.path)} ${status}`);
     }
@@ -114,20 +164,29 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
   }
 
   // Related Specs section (bidirectional)
-  if (relatedSpecs.length > 0) {
+  if ((mode === 'complete' || mode === 'impact') && related.length > 0) {
     console.log(chalk.bold('Related Specs:'));
-    for (const rel of relatedSpecs) {
+    for (const rel of related) {
       const status = getStatusIndicator(rel.frontmatter.status);
       console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
     }
     console.log('');
   }
 
-  // Dependency chain (tree view)
-  if (options.graph || dependsOn.length > 0) {
+  // Dependency chain (tree view) - only for complete mode or when graph is requested
+  if (mode === 'complete' && (options.graph || dependsOn.length > 0)) {
     console.log(chalk.bold('Dependency Chain:'));
     const chain = buildDependencyChain(spec, specMap, options.depth || 3);
     displayChain(chain, 0);
+    console.log('');
+  }
+  
+  // Impact summary for impact mode
+  if (mode === 'impact') {
+    const total = dependsOn.length + requiredBy.length + related.length;
+    console.log(chalk.bold(`Impact Summary:`));
+    console.log(`  Changing this spec affects ${chalk.yellow(total)} specs total`);
+    console.log(`    Upstream: ${dependsOn.length} | Downstream: ${requiredBy.length} | Related: ${related.length}`);
     console.log('');
   }
 }
@@ -135,114 +194,6 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
 interface DependencyNode {
   spec: SpecInfo;
   dependencies: DependencyNode[];
-}
-
-function findDependencies(spec: SpecInfo, specMap: Map<string, SpecInfo>): SpecInfo[] {
-  if (!spec.frontmatter.depends_on) return [];
-  
-  const deps: SpecInfo[] = [];
-  for (const depPath of spec.frontmatter.depends_on) {
-    const dep = specMap.get(depPath);
-    if (dep) {
-      deps.push(dep);
-    } else {
-      // Try to find by name only (in case of relative path)
-      for (const [path, s] of specMap.entries()) {
-        if (path.includes(depPath)) {
-          deps.push(s);
-          break;
-        }
-      }
-    }
-  }
-  
-  return deps;
-}
-
-function findBlocking(spec: SpecInfo, allSpecs: SpecInfo[]): SpecInfo[] {
-  const blocks: SpecInfo[] = [];
-  
-  for (const other of allSpecs) {
-    if (other.path === spec.path) continue;
-    
-    if (other.frontmatter.depends_on) {
-      for (const depPath of other.frontmatter.depends_on) {
-        if (depPath === spec.path || spec.path.includes(depPath)) {
-          blocks.push(other);
-          break;
-        }
-      }
-    }
-  }
-  
-  return blocks;
-}
-
-function findRelated(spec: SpecInfo, specMap: Map<string, SpecInfo>): SpecInfo[] {
-  if (!spec.frontmatter.related) return [];
-  
-  const related: SpecInfo[] = [];
-  for (const relPath of spec.frontmatter.related) {
-    const rel = specMap.get(relPath);
-    if (rel) {
-      related.push(rel);
-    } else {
-      // Try to find by name only
-      for (const [path, s] of specMap.entries()) {
-        if (path.includes(relPath)) {
-          related.push(s);
-          break;
-        }
-      }
-    }
-  }
-  
-  return related;
-}
-
-function findRelatedBy(spec: SpecInfo, allSpecs: SpecInfo[]): SpecInfo[] {
-  const relatedBy: SpecInfo[] = [];
-  
-  for (const other of allSpecs) {
-    if (other.path === spec.path) continue;
-    
-    if (other.frontmatter.related) {
-      for (const relPath of other.frontmatter.related) {
-        if (relPath === spec.path || spec.path.includes(relPath)) {
-          relatedBy.push(other);
-          break;
-        }
-      }
-    }
-  }
-  
-  return relatedBy;
-}
-
-/**
- * Find all related specs bidirectionally - combines specs that this spec
- * relates to AND specs that relate to this spec, deduplicated.
- */
-function findAllRelated(
-  spec: SpecInfo, 
-  specMap: Map<string, SpecInfo>, 
-  allSpecs: SpecInfo[]
-): SpecInfo[] {
-  const outgoing = findRelated(spec, specMap);
-  const incoming = findRelatedBy(spec, allSpecs);
-  
-  // Merge and deduplicate by path
-  const seenPaths = new Set<string>();
-  const merged: SpecInfo[] = [];
-  
-  for (const s of [...outgoing, ...incoming]) {
-    if (!seenPaths.has(s.path)) {
-      seenPaths.add(s.path);
-      merged.push(s);
-    }
-  }
-  
-  return merged;
 }
 
 function buildDependencyChain(
@@ -268,10 +219,14 @@ function buildDependencyChain(
     return node;
   }
   
-  // Find dependencies
-  const deps = findDependencies(spec, specMap);
-  for (const dep of deps) {
-    node.dependencies.push(buildDependencyChain(dep, specMap, maxDepth, currentDepth + 1, visited));
+  // Find dependencies from frontmatter
+  if (spec.frontmatter.depends_on) {
+    for (const depPath of spec.frontmatter.depends_on) {
+      const dep = specMap.get(depPath);
+      if (dep) {
+        node.dependencies.push(buildDependencyChain(dep, specMap, maxDepth, currentDepth + 1, visited));
+      }
+    }
   }
   
   return node;

@@ -60,9 +60,11 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-a');
     await createSpec('spec-b');
     
-    // Add related field to spec A pointing to spec B
+    const today = getTestDate();
+    
+    // Add related field to spec A pointing to spec B (with date prefix)
     await addFrontmatter('001-spec-a', {
-      related: ['002-spec-b'],
+      related: [`${today}/002-spec-b`],
     });
 
     // Capture output for spec A
@@ -110,9 +112,11 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-a');
     await createSpec('spec-b');
     
-    // Add depends_on field to spec A pointing to spec B
+    const today = getTestDate();
+    
+    // Add depends_on field to spec A pointing to spec B (with date prefix)
     await addFrontmatter('001-spec-a', {
-      depends_on: ['002-spec-b'],
+      depends_on: [`${today}/002-spec-b`],
     });
 
     // Capture output for spec A
@@ -161,10 +165,12 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-b');
     await createSpec('spec-c');
     
-    // Add both related and depends_on to spec A
+    const today = getTestDate();
+    
+    // Add both related and depends_on to spec A (with date prefixes)
     await addFrontmatter('001-spec-a', {
-      related: ['002-spec-b'],
-      depends_on: ['003-spec-c'],
+      related: [`${today}/002-spec-b`],
+      depends_on: [`${today}/003-spec-c`],
     });
 
     // Capture output
@@ -198,12 +204,14 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-a');
     await createSpec('spec-b');
     
-    // Add mutual relationships
+    const today = getTestDate();
+    
+    // Add mutual relationships (with date prefixes)
     await addFrontmatter('001-spec-a', {
-      related: ['002-spec-b'],
+      related: [`${today}/002-spec-b`],
     });
     await addFrontmatter('002-spec-b', {
-      related: ['001-spec-a'],
+      related: [`${today}/001-spec-a`],
     });
 
     // Capture output for spec A
@@ -227,9 +235,11 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-a');
     await createSpec('spec-b');
     
-    // Add related field to spec A
+    const today = getTestDate();
+    
+    // Add related field to spec A (with date prefix)
     await addFrontmatter('001-spec-a', {
-      related: ['002-spec-b'],
+      related: [`${today}/002-spec-b`],
     });
 
     // Capture JSON output for spec B
@@ -260,14 +270,16 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-b');
     await createSpec('spec-c');
     
+    const today = getTestDate();
+    
     await addFrontmatter('001-spec-a', {
-      related: ['002-spec-b'],
+      related: [`${today}/002-spec-b`],
     });
     await addFrontmatter('002-spec-b', {
-      related: ['003-spec-c'],
+      related: [`${today}/003-spec-c`],
     });
     await addFrontmatter('003-spec-c', {
-      related: ['001-spec-a'],
+      related: [`${today}/001-spec-a`],
     });
 
     // Should not crash or hang
@@ -286,8 +298,10 @@ describe('depsCommand - Bidirectional Relationships', () => {
     // Create spec A with related to non-existent spec
     await createSpec('spec-a');
     
+    const today = getTestDate();
+    
     await addFrontmatter('001-spec-a', {
-      related: ['999-nonexistent'],
+      related: [`${today}/999-nonexistent`],
     });
 
     // Should not crash
@@ -309,9 +323,11 @@ describe('depsCommand - Bidirectional Relationships', () => {
     await createSpec('spec-a');
     await createSpec('spec-b');
     
-    // Add related field to spec A
+    const today = getTestDate();
+    
+    // Add related field to spec A (with date prefix)
     await addFrontmatter('001-spec-a', {
-      related: ['002-spec-b'],
+      related: [`${today}/002-spec-b`],
     });
 
     // Should show the relationship even if archived
