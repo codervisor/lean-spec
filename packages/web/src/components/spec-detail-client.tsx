@@ -82,12 +82,17 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   const searchParams = useSearchParams();
   const currentSubSpec = searchParams.get('subspec') || initialSubSpec;
   const [timelineOpen, setTimelineOpen] = React.useState(false);
+  const [dependenciesOpen, setDependenciesOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    const saved = window.localStorage.getItem('spec-timeline-open');
-    if (saved !== null) {
-      setTimelineOpen(saved === 'true');
+    const timelinePref = window.localStorage.getItem('spec-timeline-open');
+    if (timelinePref !== null) {
+      setTimelineOpen(timelinePref === 'true');
+    }
+    const depsPref = window.localStorage.getItem('spec-dependencies-open');
+    if (depsPref !== null) {
+      setDependenciesOpen(depsPref === 'true');
     }
   }, []);
 
@@ -96,6 +101,16 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
       const next = !prev;
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('spec-timeline-open', String(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleDependencies = React.useCallback(() => {
+    setDependenciesOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('spec-dependencies-open', String(next));
       }
       return next;
     });
@@ -115,6 +130,10 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   const spec = specData?.spec || initialSpec;
   const tags = spec.tags || [];
   const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : 'N/A';
+  const relationships = spec.relationships;
+  const hasRelationships = Boolean(
+    relationships && ((relationships.dependsOn?.length ?? 0) > 0 || (relationships.related?.length ?? 0) > 0)
+  );
 
   // Extract H1 title from markdown content
   const h1Title = extractH1Title(spec.contentMd);
@@ -191,7 +210,12 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
           <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-2 sm:mt-3">
             <span className="hidden sm:inline">Created: {formatDate(spec.createdAt)}</span>
             <span className="hidden sm:inline">•</span>
-            <span>Updated: {formatDate(spec.updatedAt)}</span>
+            <span>
+              Updated: {formatDate(spec.updatedAt)}
+              {spec.updatedAt && (
+                <span className="ml-1 text-[11px] text-muted-foreground/80">({updatedRelative})</span>
+              )}
+            </span>
             <span className="hidden sm:inline">•</span>
             <span className="hidden md:inline">Name: {spec.specName}</span>
             {spec.assignee && (
@@ -202,24 +226,51 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                Created {formatDate(spec.createdAt)} · Updated {updatedRelative}
-              </span>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             <Button
-              variant="ghost"
+              type="button"
+              variant="outline"
               size="sm"
               onClick={handleToggleTimeline}
-              className="h-8 px-3 text-xs font-medium"
+              aria-pressed={timelineOpen}
+              className={cn(
+                'h-8 rounded-full border px-3 text-xs font-medium transition-colors',
+                timelineOpen
+                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              )}
             >
-              {timelineOpen ? 'Hide Timeline' : 'Show Timeline'}
+              <Clock className="mr-1.5 h-3.5 w-3.5" />
+              {timelineOpen ? 'Collapse Timeline' : 'Show Timeline'}
               <ChevronDown
                 className={cn(
                   'ml-1.5 h-3.5 w-3.5 transition-transform',
                   timelineOpen && 'rotate-180'
+                )}
+              />
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleToggleDependencies}
+              aria-pressed={dependenciesOpen}
+              disabled={!hasRelationships}
+              className={cn(
+                'h-8 rounded-full border px-3 text-xs font-medium transition-colors',
+                dependenciesOpen
+                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                  : 'border-border text-muted-foreground hover:text-foreground',
+                !hasRelationships && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+              {dependenciesOpen ? 'Hide Dependencies' : 'Show Dependencies'}
+              <ChevronDown
+                className={cn(
+                  'ml-1.5 h-3.5 w-3.5 transition-transform',
+                  dependenciesOpen && 'rotate-180'
                 )}
               />
             </Button>
@@ -232,6 +283,16 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
                 updatedAt={spec.updatedAt}
                 completedAt={spec.completedAt}
                 status={spec.status || 'planned'}
+              />
+            </div>
+          )}
+
+          {dependenciesOpen && hasRelationships && (
+            <div className="mt-3 mb-1">
+              <SpecRelationships
+                relationships={relationships}
+                specNumber={spec.specNumber}
+                specTitle={displayTitle}
               />
             </div>
           )}
@@ -285,8 +346,6 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
         <div className="space-y-6">
           {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
           {error && <div className="text-sm text-destructive">Error loading spec</div>}
-
-          <SpecRelationships relationships={spec.relationships} />
 
           <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
             <ReactMarkdown

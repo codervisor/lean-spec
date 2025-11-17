@@ -7,12 +7,14 @@ interface SidebarState {
   specs: SidebarSpec[];
   signature: string | null;
   scrollTop: number;
+  activeSpecId: string | null;
 }
 
 let state: SidebarState = {
   specs: [],
   signature: null,
   scrollTop: 0,
+  activeSpecId: null,
 };
 
 const listeners = new Set<() => void>();
@@ -48,7 +50,7 @@ function computeSignature(specs: SidebarSpec[]): string {
 }
 
 export function useSpecsSidebarState() {
-  return useSyncExternalStore(subscribe, getState);
+  return useSyncExternalStore(subscribe, getState, () => state);
 }
 
 export function primeSpecsSidebar(specs: SidebarSpec[]) {
@@ -65,6 +67,18 @@ export function primeSpecsSidebar(specs: SidebarSpec[]) {
     ...state,
     specs,
     signature,
+  };
+  emitChange();
+}
+
+export function setActiveSidebarSpec(specId: string) {
+  if (state.activeSpecId === specId) {
+    return;
+  }
+
+  state = {
+    ...state,
+    activeSpecId: specId,
   };
   emitChange();
 }

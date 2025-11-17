@@ -143,12 +143,21 @@ export function SpecTimeline({
                 {event.label}
               </div>
               
-              {/* Date */}
-              {event.date && !event.isFuture && (
-                <div className="text-[10px] text-muted-foreground text-center">
-                  {formatRelativeTime(event.date)}
-                </div>
-              )}
+              {/* Date row - reserve space even when pending */}
+              <div className="text-[10px] text-center min-h-[14px]">
+                {event.date && !event.isFuture && (
+                  <span className="text-muted-foreground">{formatRelativeTime(event.date)}</span>
+                )}
+                {!event.date && event.isFuture && (
+                  <span className="text-muted-foreground/70">Awaiting start</span>
+                )}
+                {event.date && event.isFuture && (
+                  <span className="text-muted-foreground/70">Queued</span>
+                )}
+                {!event.date && !event.isFuture && (
+                  <span className="text-muted-foreground/60">Pending update</span>
+                )}
+              </div>
             </div>
             
             {/* Connecting line with duration */}

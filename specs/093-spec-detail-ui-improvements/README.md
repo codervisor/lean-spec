@@ -34,23 +34,26 @@ The docs site's spec-detail experience currently blocks reviewers from scanning 
 ## Plan
 
 - [ ] Document current UI data flow for spec sidebar, detail header, and relationship sections
-- [ ] Implement navigation cache + scroll state persistence in sidebar component
-- [ ] Add collapsible timeline UI plus state tied to URL hash or local preference
+- [x] Implement navigation cache + scroll state persistence in sidebar component (SSR-safe and preserved during route loading)
+- [x] Add collapsible timeline UI with persisted preference and action-style toggle controls
+- [x] Keep spec navigation sidebar mounted while switching specs to avoid layout pop-in
+- [x] Introduce shared action toggle pattern for secondary panels (timeline + dependencies) with highlight state
 - [x] Fix TOC anchor generation and hash syncing, verify across nested headings
 - [x] Strip HTML comments during markdown render pipeline
 - [x] Plumb real `updated_at` values through API and UI
 - [x] Remove file icons from sidebar rows and adjust spacing
-- [ ] Ship first iteration of dependency badges, capture follow-up requirements for richer charts
+- [x] Ship first iteration of dependency DAG view with precedence/connected naming and follow-up capture for richer charts
 
 ## Test
 
-- [ ] Switching between multiple specs keeps sidebar state without flash reloads
-- [ ] Timeline stays collapsed by default and expands/collapses via toggle without layout shift in main content
+- [ ] Switching between multiple specs keeps sidebar state (selection + scroll) and the nav never disappears during route transitions
+- [ ] Timeline action button defaults to collapsed, highlights only when expanded, and the step connectors stay horizontally aligned even when timestamps are missing
+- [ ] Dependencies action button highlights on expansion, hides when collapsed, and renders the DAG with correct precedence/connected labels
 - [ ] Clicking every TOC entry scrolls to the right heading and updates the URL hash
 - [ ] Specs that contain `<!-- comment -->` sequences render without showing the comment text
-- [ ] `Updated` value matches the spec metadata or git timestamp for recently edited specs
+- [ ] `Updated` value matches the spec metadata or git timestamp for recently edited specs without duplicating the created date pill
 - [ ] Sidebar displays titles cleanly with no icons and adequate padding
-- [ ] Dependency widget lists accurate `depends_on` and `related` specs for at least two known specs
+- [ ] Dependency DAG lists accurate `depends_on` and `related` specs (nodes + edges) for at least two known specs
 
 ## Notes
 

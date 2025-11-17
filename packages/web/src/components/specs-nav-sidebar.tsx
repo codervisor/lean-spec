@@ -27,7 +27,7 @@ import type { SidebarSpec } from '@/types/specs';
 
 interface SpecsNavSidebarProps {
   initialSpecs?: SidebarSpec[];
-  currentSpecId: string;
+  currentSpecId?: string;
   currentSubSpec?: string;
   onSpecHover?: (specId: string) => void;
 }
@@ -48,6 +48,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   const scrollFrameRef = React.useRef<number | null>(null);
   const sidebarState = useSpecsSidebarState();
   const cachedSpecs = sidebarState.specs.length > 0 ? sidebarState.specs : initialSpecs;
+  const resolvedCurrentSpecId = currentSpecId || sidebarState.activeSpecId || '';
   const persistedScrollTop = sidebarState.scrollTop;
 
   React.useEffect(() => {
@@ -66,7 +67,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   // Close mobile menu on route change
   React.useEffect(() => {
     setMobileOpen(false);
-  }, [currentSpecId, currentSubSpec]);
+  }, [resolvedCurrentSpecId, currentSubSpec]);
 
   React.useLayoutEffect(() => {
     if (!scrollContainerRef.current) return;
@@ -207,7 +208,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
                 </div>
               ) : (
                 sortedSpecs.map((spec) => {
-                  const isCurrentSpec = spec.id === currentSpecId;
+                  const isCurrentSpec = spec.id === resolvedCurrentSpecId;
 
                   // Extract H1 title, fallback to title or name
                   const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;

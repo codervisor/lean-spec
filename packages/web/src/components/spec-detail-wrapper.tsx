@@ -8,7 +8,7 @@
 import * as React from 'react';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
 import { SpecDetailClient } from '@/components/spec-detail-client';
-import { primeSpecsSidebar } from '@/lib/stores/specs-sidebar-store';
+import { primeSpecsSidebar, setActiveSidebarSpec } from '@/lib/stores/specs-sidebar-store';
 import type { SpecWithMetadata, SidebarSpec } from '@/types/specs';
 import type { ParsedSpec } from '@/lib/db/service-queries';
 
@@ -37,6 +37,10 @@ export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetail
   React.useEffect(() => {
     primeSpecsSidebar(sidebarSpecs);
   }, [sidebarSpecs]);
+
+  React.useEffect(() => {
+    setActiveSidebarSpec(spec.id);
+  }, [spec.id]);
 
   // Prefetch spec data on hover
   const handleSpecPrefetch = React.useCallback((specId: string) => {
