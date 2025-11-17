@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-11-17'
 tags:
   - cli
@@ -10,12 +10,17 @@ priority: high
 created_at: '2025-11-17T08:45:47.025Z'
 depends_on:
   - 097-dag-visualization-library
-updated_at: '2025-11-17T08:45:57.054Z'
+updated_at: '2025-11-17T09:13:14.295Z'
+completed_at: '2025-11-17T09:13:14.295Z'
+completed: '2025-11-17'
+transitions:
+  - status: complete
+    at: '2025-11-17T09:13:14.295Z'
 ---
 
 # Enhanced Dependency Commands for CLI/MCP
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17 · **Tags**: cli, mcp, dependencies, core
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-17 · **Tags**: cli, mcp, dependencies, core
 
 **Project**: lean-spec  
 **Team**: Core Development

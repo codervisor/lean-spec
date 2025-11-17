@@ -51,6 +51,11 @@ export {
   type TokenCount,
   type TokenCounterOptions,
 } from './utils/token-counter.js';
+export {
+  SpecDependencyGraph,
+  type CompleteDependencyGraph,
+  type ImpactRadius,
+} from './utils/dependency-graph.js';
 
 // Search
 export {
