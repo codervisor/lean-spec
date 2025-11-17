@@ -38,7 +38,7 @@ describe('UI Command', () => {
       ).rejects.toThrow('Specs directory not found');
     });
 
-    it('should error when not in monorepo and no standalone package', async () => {
+    it('should delegate to npx @leanspec/ui when not in monorepo', async () => {
       // Save current cwd
       const originalCwd = process.cwd();
 
@@ -46,14 +46,15 @@ describe('UI Command', () => {
         // Change to test directory (not a monorepo)
         process.chdir(testDir);
 
-        // This should error because we're not in the monorepo
-        await expect(
-          startUi({
-            port: '3000',
-            open: false,
-            dryRun: true,
-          })
-        ).rejects.toThrow('Standalone UI package not yet available');
+        // This should run successfully in dry-run mode, delegating to npx
+        await startUi({
+          port: '3000',
+          open: false,
+          dryRun: true,
+        });
+
+        // If we get here, it successfully detected non-monorepo and would delegate
+        expect(true).toBe(true);
       } finally {
         // Restore original cwd
         process.chdir(originalCwd);
@@ -68,15 +69,16 @@ describe('UI Command', () => {
         // Change to test directory
         process.chdir(testDir);
 
-        // This should also error (not in monorepo) but with valid specs dir
-        await expect(
-          startUi({
-            specs: specsDir,
-            port: '3000',
-            open: false,
-            dryRun: true,
-          })
-        ).rejects.toThrow('Standalone UI package not yet available');
+        // This should run successfully with custom specs dir
+        await startUi({
+          specs: specsDir,
+          port: '3000',
+          open: false,
+          dryRun: true,
+        });
+
+        // If we get here, it accepted the custom specs dir
+        expect(true).toBe(true);
       } finally {
         // Restore original cwd
         process.chdir(originalCwd);

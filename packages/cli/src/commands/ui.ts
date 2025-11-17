@@ -75,14 +75,8 @@ export async function startUi(options: {
     // Dev mode: Run local web package
     return runLocalWeb(localWebDir, specsDir, options);
   } else {
-    // Future: Production mode would run published @leanspec/ui package
-    console.error(chalk.yellow('\n⚠ Standalone UI package not yet available'));
-    console.log(chalk.dim('\nThe `lean-spec ui` command currently only works in the LeanSpec monorepo.'));
-    console.log(chalk.dim('Support for external projects will be added in a future release.'));
-    console.log(chalk.dim('\nFor now, you can:'));
-    console.log(chalk.dim('  1. Use CLI commands (lean-spec list, board, view, etc.)'));
-    console.log(chalk.dim('  2. Clone the LeanSpec repo and run from there'));
-    throw new Error('Standalone UI package not yet available');
+    // Production mode: Run published @leanspec/ui package
+    return runPublishedUI(specsDir, options);
   }
 }
 
@@ -183,5 +177,108 @@ async function runLocalWeb(
       console.error(chalk.red(`\nProcess exited with code ${code}`));
       process.exit(code);
     }
+  });
+}
+
+/**
+ * Run published @leanspec/ui package (production mode for external projects)
+ * 
+ * Spawns npx @leanspec/ui as a child process with appropriate arguments.
+ * This is used when lean-spec is installed in a project outside the monorepo.
+ * 
+ * @param specsDir - Absolute path to specs directory
+ * @param options - Command options including port, open, and dryRun flags
+ * @throws {Error} If @leanspec/ui package is not available or fails to start
+ */
+async function runPublishedUI(
+  specsDir: string,
+  options: {
+    port: string;
+    open: boolean;
+    dryRun?: boolean;
+  }
+): Promise<void> {
+  console.log(chalk.dim('→ Running standalone @leanspec/ui package\n'));
+
+  if (options.dryRun) {
+    console.log(chalk.cyan('Would run:'));
+    const args = [`--specs=${specsDir}`, `--port=${options.port}`];
+    if (!options.open) {
+      args.push('--no-open');
+    }
+    console.log(chalk.dim(`  npx @leanspec/ui ${args.join(' ')}`));
+    return;
+  }
+
+  const spinner = ora('Starting web UI...').start();
+
+  // Build npx arguments
+  const args = ['@leanspec/ui', `--specs=${specsDir}`, `--port=${options.port}`];
+  if (!options.open) {
+    args.push('--no-open');
+  }
+
+  // Spawn npx process
+  const child = spawn('npx', args, {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+    },
+  });
+
+  // Wait for server to be ready (npx handles the server startup)
+  const readyTimeout = setTimeout(() => {
+    spinner.succeed('Web UI running');
+    console.log(chalk.green(`\n✨ LeanSpec UI: http://localhost:${options.port}\n`));
+    console.log(chalk.dim('Press Ctrl+C to stop\n'));
+  }, 5000); // Longer timeout for npx + cold start
+
+  // Handle shutdown gracefully
+  const sigintHandler = () => {
+    clearTimeout(readyTimeout);
+    spinner.stop();
+    child.kill('SIGTERM');
+    console.log(chalk.dim('\n✓ Web UI stopped'));
+    process.exit(0);
+  };
+  process.once('SIGINT', sigintHandler);
+
+  // Handle child process exit
+  child.on('exit', (code) => {
+    clearTimeout(readyTimeout);
+    spinner.stop();
+    if (code !== 0 && code !== null) {
+      spinner.fail('Web UI failed to start');
+      
+      // Provide helpful error message if package not found
+      if (code === 1) {
+        console.error(chalk.red('\n✗ @leanspec/ui package not found or failed to start'));
+        console.log(chalk.dim('\nThis may happen if:'));
+        console.log(chalk.dim('  1. @leanspec/ui has not been published yet'));
+        console.log(chalk.dim('  2. Network connectivity issues preventing npx from downloading'));
+        console.log(chalk.dim('  3. Node.js version is incompatible (requires Node 20+)'));
+        console.log(chalk.dim('\nFor now, you can:'));
+        console.log(chalk.dim('  • Use CLI commands (lean-spec list, board, view, etc.)'));
+        console.log(chalk.dim('  • Clone the LeanSpec repo and run from there'));
+      } else {
+        console.error(chalk.red(`\nProcess exited with code ${code}`));
+      }
+      
+      process.exit(code);
+    }
+  });
+
+  // Handle errors
+  child.on('error', (error) => {
+    clearTimeout(readyTimeout);
+    spinner.fail('Failed to start web UI');
+    console.error(chalk.red(`\n✗ Error: ${error.message}`));
+    
+    if (error.message.includes('ENOENT')) {
+      console.log(chalk.dim('\nMake sure npx is available:'));
+      console.log(chalk.dim('  npm install -g npm'));
+    }
+    
+    process.exit(1);
   });
 }
