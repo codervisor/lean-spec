@@ -96,123 +96,44 @@ Skip specs for:
 
 ## Essential Commands
 
-**Discovery:
+**Quick Reference** (for full details, see [docs/agents/COMMANDS.md](docs/agents/COMMANDS.md)):
+
+**Discovery:**
 - `lean-spec list` - See all specs
 - `lean-spec search "<query>"` - Find relevant specs
 
-**Viewing specs:**
-- `lean-spec view <spec>` - View a spec (formatted)
-- `lean-spec view <spec>/DESIGN.md` - View sub-spec file (DESIGN.md, TESTING.md, etc.)
-- `lean-spec view <spec> --raw` - Get raw markdown (for parsing)
-- `lean-spec view <spec> --json` - Get structured JSON
-- `lean-spec open <spec>` - Open spec in editor
-- `lean-spec files <spec>` - List all files in a spec (including sub-specs)
-
-**Project Overview:**
-- `lean-spec board` - Kanban view with project health summary
-- `lean-spec stats` - Quick project metrics and insights
-- `lean-spec stats --full` - Detailed analytics (all sections)
-
 **Working with specs:**
-- `lean-spec create <name>` - Create a new spec
-- `lean-spec update <spec> --status <status>` - Update spec status (REQUIRED - never edit frontmatter manually)
-- `lean-spec update <spec> --priority <priority>` - Update spec priority (REQUIRED - never edit frontmatter manually)
-- `lean-spec update <spec> --tags <tag1,tag2>` - Update spec tags (REQUIRED - never edit frontmatter manually)
-- `lean-spec update <spec> --assignee <name>` - Update spec assignee (REQUIRED - never edit frontmatter manually)
-- `lean-spec deps <spec>` - Show complete dependency graph (upstream, downstream, related)
-- `lean-spec deps <spec> --upstream` - Show only upstream dependencies
-- `lean-spec deps <spec> --downstream` - Show only downstream dependents
-- `lean-spec deps <spec> --impact` - Show full impact analysis with summary
-- `lean-spec deps <spec> --json` - Output as JSON for programmatic use
+- `lean-spec create <name>` - Create new spec
+- `lean-spec update <spec> --status <status>` - Update status (REQUIRED - never edit frontmatter manually)
+- `lean-spec update <spec> --priority <priority>` - Update priority
+- `lean-spec deps <spec>` - Show dependency graph
+- `lean-spec tokens <spec>` - Count tokens for context management
 
-**Token Management:**
-- `lean-spec tokens <spec>` - Count tokens in a spec for LLM context management
-- `lean-spec tokens` - Show token counts for all specs (sorted by token count)
-- `lean-spec tokens <spec> --detailed` - Show content breakdown (prose vs code vs tables)
-- `lean-spec validate` - Validate specs including token thresholds
+**Project overview:**
+- `lean-spec board` - Kanban view with project health
+- `lean-spec stats` - Quick project metrics
 
-**Spec Splitting (When >3,500 tokens):**
-- `lean-spec analyze <spec>` - Analyze complexity and get split recommendations (use `--json` for structured output)
-- `lean-spec split <spec> --output "FILE.md:START-END"` - Extract sections to sub-spec files (can use multiple `--output` flags)
-- `lean-spec compact <spec> --remove "START-END"` - Remove extracted sections from main README (can use multiple `--remove` flags)
+**When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover commands.
 
-**When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover available commands and options.
+## Spec Relationships
 
-## Documentation Map (Beginner-First)
-
-Use the docs-site to keep humans and AI oriented:
-
-- **Guide** → Overview, Getting Started, Tutorials (AI-first walkthroughs), Core Concepts, and Usage patterns.
-- **Advanced Topics** → Deep theory (First Principles, Context Engineering, AI Agent Memory, Philosophy, Limits & Tradeoffs).
-- **Real-World Examples** → Renamed case studies with filters, time estimates, and links to the interactive specs on `web.lean-spec.dev`.
-- **Reference** → CLI, configuration, frontmatter, and MCP server details.
-
-When pointing an agent (or teammate) to documentation, pick the section that matches their experience level so they are not overwhelmed with advanced material too early.
-
-## Understanding Spec Relationships
-
-LeanSpec has two types of relationships between specs:
+LeanSpec has two types of relationships (for detailed examples, see [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md)):
 
 ### `related` - Bidirectional Soft Reference
-**Meaning**: Informational relationship between specs (they're related/connected)
-**Behavior**: Automatically shown from both sides
-**Symbol**: ⟷ (bidirectional arrow)
+Informational relationship between specs. Automatically shown from both sides.
 
-**Example:**
-```yaml
-# Spec 042
-related: [043]
-
-# Spec 043 doesn't need to list 042
-```
-
-Both `lean-spec deps 042` and `lean-spec deps 043` will show the relationship:
-```bash
-$ lean-spec deps 042
-Related Specs:
-  ⟷ 043-official-launch-02 [in-progress]
-
-$ lean-spec deps 043  
-Related Specs:
-  ⟷ 042-mcp-error-handling [complete]  # Automatically shown!
-```
-
-**Use when:**
-- Specs cover related topics or features
-- Work is coordinated but not blocking
-- Context is helpful but not required
+**Use when:** Specs cover related topics, work is coordinated but not blocking.
 
 ### `depends_on` - Directional Blocking Dependency
-**Meaning**: Hard dependency - spec cannot start until dependencies complete
-**Behavior**: Directional only (shows differently from each side)
-**Symbol**: → (depends on) and ← (blocks)
+Hard dependency - spec cannot start until dependencies complete.
 
-**Example:**
-```yaml
-# Spec A
-depends_on: [spec-b]
-```
+**Use when:** Spec truly cannot start until another completes, work order matters.
 
-```bash
-$ lean-spec deps spec-a
-Depends On:
-  → spec-b [in-progress]  # A depends on B
+**Best Practice:** Use `related` by default. Reserve `depends_on` for true blocking dependencies.
 
-$ lean-spec deps spec-b
-Required By:
-  ← spec-a [planned]  # B is required by A
-```
-
-**Use when:**
-- Spec truly cannot start until another completes
-- There's a clear dependency chain
-- Work must be done in specific order
-
-### Best Practices
-
-1. **Use `related` by default** - It's simpler and matches most use cases
-2. **Reserve `depends_on` for true blocking dependencies** - When work order matters
 ## SDD Workflow
+
+**Full workflow details:** See [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md)
 
 1. **Discover** - Check existing specs with `lean-spec list`
 2. **Plan** - Create spec with `lean-spec create <name>` (status: `planned`)
@@ -223,25 +144,10 @@ Required By:
 **CRITICAL - What "Work" Means:**
 - ❌ **NOT**: Creating/writing the spec document itself
 - ✅ **YES**: Implementing what the spec describes (code, docs, features, etc.)
-- **Example**: Creating spec 088 (Core Concepts restructuring) ≠ work complete
-  - Work = Actually restructuring the docs as described in spec 088
-  - Status `planned` until someone starts restructuring
-  - Status `in-progress` while restructuring
-  - Status `complete` after restructuring is done
 
-**Status Update Triggers:**
-- ✅ **Before starting implementation** → `lean-spec update <spec> --status in-progress`
-- ✅ **After completing implementation** → `lean-spec update <spec> --status complete`
-- ✅ **If blocked or paused** → Update status and document why in spec
-- ❌ **NEVER mark spec complete just because you finished writing it**
-
-**Critical - Frontmatter Editing Rules:**
-- **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`, `depends_on`, `related`
-- **Use CLI commands**: 
-  - `lean-spec update <spec>` for status, priority, tags, assignee
-  - `lean-spec link <spec>` to add relationships (depends_on, related)
-  - `lean-spec unlink <spec>` to remove relationships
-  - Verify changes with `lean-spec deps <spec>`
+**Frontmatter Editing Rules:**
+- **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on`, `related`
+- **Use CLI commands**: `lean-spec update`, `lean-spec link`, `lean-spec unlink`
 
 ## Quality Standards
 
@@ -265,102 +171,21 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 
 ## Publishing Releases
 
-**Publish both CLI and UI packages to npm with synchronized versions:**
-
-1. **Version bump**: Update version in all package.json files (root, cli, core, ui, web) for consistency
-2. **Update CHANGELOG.md**: Add release notes with date and version
-3. **Type check**: Run `pnpm typecheck` to catch type errors (REQUIRED before release)
-4. **Test**: Run `pnpm test:run` to ensure tests pass (web DB tests may fail - that's OK)
-5. **Build**: Run `pnpm build` to build all packages
-6. **Validate**: Run `node bin/lean-spec.js validate` and `cd docs-site && npm run build` to ensure everything works
-7. **Commit**: `git add -A && git commit -m "chore: bump version to X.Y.Z"`
-8. **Tag**: `git tag vX.Y.Z && git push origin main --tags`
-9. **GitHub Release**: `gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "Release notes here"`
-   - This triggers the GitHub Action workflow that publishes both `lean-spec` and `@leanspec/ui` to npm
-10. **Verify**: 
-   - `npm view lean-spec version` to confirm CLI publication
-   - `npm view @leanspec/ui version` to confirm UI publication
-   - `npm view lean-spec dependencies` to ensure no `workspace:*` dependencies leaked
-   - Test installation: `npm install -g lean-spec@latest` in a clean environment
-   - Check GitHub release page: https://github.com/codervisor/lean-spec/releases
-
-**Critical - Workspace Dependencies:**
-- The `@leanspec/core` package MUST NOT be in `packages/cli/package.json` dependencies
-- tsup config has `noExternal: ['@leanspec/core']` which bundles the core package
-- NEVER add `@leanspec/core` back to dependencies - it will cause `workspace:*` errors
-- If you see `workspace:*` in published dependencies, the package is broken and must be republished
-
-**Important**: 
-- Do NOT publish `@leanspec/core` or `@leanspec/web` - they are internal packages
-- The `@leanspec/ui` package IS published to npm as a public scoped package
-- Both `lean-spec` (CLI) and `@leanspec/ui` are published automatically via GitHub Actions when a release is created
+See [docs/agents/PUBLISHING.md](docs/agents/PUBLISHING.md) for the complete release process.
 
 ## Spec Complexity Guidelines
 
-### Token-Based Thresholds (Specs 066, 069, 071)
-
-LeanSpec uses **token count** as the primary complexity metric:
-
 **Token Thresholds:**
-- **<2,000 tokens**: ✅ Excellent - Optimal AI performance (100%)
-- **2,000-3,500 tokens**: ✅ Good - Slight degradation (95%)
-- **3,500-5,000 tokens**: ⚠️ Warning - Consider splitting (85%)
-- **>5,000 tokens**: 🔴 Should split - Significant degradation (70%)
+- **<2,000 tokens**: ✅ Optimal
+- **2,000-3,500 tokens**: ✅ Good
+- **3,500-5,000 tokens**: ⚠️ Warning - Consider splitting
+- **>5,000 tokens**: 🔴 Should split
 
-**Why tokens?** Industry standard for LLM context, better predictor than line count, accounts for code density differences (3 chars/token vs 4 for prose).
+**Check with:** `lean-spec tokens <spec>`
 
-**Check token counts:**
-- `lean-spec tokens <spec>` - Count tokens in a spec
-- `lean-spec tokens` - Show all specs by token count
-- `lean-spec validate` - Full validation including thresholds
+**When to split:** >3,500 tokens, multiple concerns, takes >10 min to read
 
-### When to Split
-
-Keep as **single file** when:
-- Under 2,000 tokens (optimal)
-- Single, focused concern
-- Readable in 5-10 minutes
-- Implementation <6 phases
-
-Consider **splitting** when:
-- Over 3,500 tokens
-- Multiple distinct concerns
-- AI tools corrupt during edits
-- Implementation >6 phases
-
-**Warning signs:**
-- Token count >3,500
-- Takes >10 minutes to read
-- Can't summarize in 2 paragraphs
-- Scrolling endlessly to find info
-
-### How to Split
-
-**Use built-in commands** (preferred method):
-
-1. **Analyze structure**: `lean-spec analyze <spec> --json`
-   - Get token counts per section
-   - Identify heavy sections to extract
-   - Get line ranges for splitting
-
-2. **Split into sub-specs**: `lean-spec split <spec> --output "FILE.md:START-END"`
-   - Example: `lean-spec split 082 --output "DESIGN.md:100-250"`
-   - Creates new sub-spec files with extracted content
-   - Can specify multiple `--output` flags
-
-3. **Compact main README**: `lean-spec compact <spec> --remove "START-END"`
-   - Example: `lean-spec compact 082 --remove "100-250"`
-   - Removes extracted sections from main README
-   - Can specify multiple `--remove` flags
-
-4. **Add navigation links**: Manually add links to sub-specs in README
-
-**Sub-spec file conventions** (see spec 012):
-- `README.md`: Overview, decision, high-level design
-- `DESIGN.md`: Detailed architecture
-- `IMPLEMENTATION.md`: Implementation phases
-- `TESTING.md`: Test strategy
-- `{CONCERN}.md`: Specific concerns (API, MIGRATION, etc.)
+**How to split:** Use `lean-spec analyze <spec>`, `lean-spec split`, and `lean-spec compact` commands. See [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md) for detailed examples.
 
 ---
 
