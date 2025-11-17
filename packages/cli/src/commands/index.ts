@@ -41,3 +41,4 @@ export { viewSpec, openSpec, viewCommand, openCommand } from './viewer.js';
 
 // Server commands
 export { startMcpServer, mcpCommand } from './mcp.js';
+export { startUi, uiCommand } from './ui.js';

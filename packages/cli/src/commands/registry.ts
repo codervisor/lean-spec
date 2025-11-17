@@ -22,6 +22,7 @@ import {
   templatesCommand,
   timelineCommand,
   tokensCommand,
+  uiCommand,
   unlinkCommand,
   updateCommand,
   validateCommand,
@@ -55,6 +56,7 @@ export function registerCommands(program: Command): void {
   program.addCommand(templatesCommand());
   program.addCommand(timelineCommand());
   program.addCommand(tokensCommand());
+  program.addCommand(uiCommand());
   program.addCommand(unlinkCommand());
   program.addCommand(updateCommand());
   program.addCommand(validateCommand());
