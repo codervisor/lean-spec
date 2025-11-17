@@ -1,0 +1,42 @@
+{
+  "name": "@leanspec/ui",
+  "version": "0.2.2",
+  "description": "Standalone web UI for LeanSpec - lightweight spec methodology",
+  "type": "module",
+  "bin": {
+    "leanspec-ui": "./bin/ui.js"
+  },
+  "keywords": [
+    "spec",
+    "specification",
+    "documentation",
+    "ai",
+    "agent",
+    "ui",
+    "web",
+    "leanspec"
+  ],
+  "author": "Marvin Zhang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git",
+    "directory": "packages/ui"
+  },
+  "homepage": "https://lean-spec.dev",
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "open": "^10.0.3",
+    "@leanspec/web": "^0.2.2"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ]
+}
