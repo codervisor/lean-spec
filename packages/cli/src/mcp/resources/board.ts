@@ -17,7 +17,7 @@ export function boardResource() {
       title: 'Kanban Board',
       description: 'Current Kanban board state organized by status',
     },
-    async (uri: URL) => {
+    async (uri: URL, _variables: Record<string, string | string[]>, _extra: any) => {
       try {
         const board = await getBoardData();
         const text = Object.entries(board.columns)

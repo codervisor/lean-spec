@@ -45,7 +45,7 @@ export function tokensTool(): ToolDefinition {
         
         if (!resolvedPath) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ 
+            content: [{ type: 'text' as const, text: JSON.stringify({ 
               error: `Spec not found: ${input.specPath}`,
               code: 'SPEC_NOT_FOUND'
             }, null, 2) }],
@@ -91,13 +91,13 @@ export function tokensTool(): ToolDefinition {
         }
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error counting tokens', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       } finally {

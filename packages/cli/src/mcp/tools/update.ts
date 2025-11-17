@@ -29,7 +29,7 @@ export function updateTool(): ToolDefinition {
         message: z.string(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
       const originalLog = console.log;
       try {
         // Capture output
@@ -53,7 +53,7 @@ export function updateTool(): ToolDefinition {
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
@@ -62,7 +62,7 @@ export function updateTool(): ToolDefinition {
           message: formatErrorMessage('Error updating spec', error),
         };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } finally {

@@ -11,6 +11,7 @@
 
 // Types
 export * from './types/index.js';
+export type { SpecFrontmatter as Frontmatter } from './types/spec.js';
 
 // Parsers
 export * from './parsers/frontmatter.js';

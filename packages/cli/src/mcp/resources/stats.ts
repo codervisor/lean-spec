@@ -17,7 +17,7 @@ export function statsResource() {
       title: 'Project Statistics',
       description: 'Overview of project statistics',
     },
-    async (uri: URL) => {
+    async (uri: URL, _variables: Record<string, string | string[]>, _extra: any) => {
       try {
         const stats = await getStatsData();
         

@@ -29,7 +29,7 @@ export function backfillTool(): ToolDefinition {
         message: z.string(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
       const originalLog = console.log;
       const originalError = console.error;
       try {
@@ -52,8 +52,8 @@ export function backfillTool(): ToolDefinition {
         // Parse output to extract updated specs
         const updated = capturedOutput
           .split('\n')
-          .filter(l => l.includes('Updated:') || l.includes('✓'))
-          .map(l => l.replace(/.*Updated:\s*/, '').replace(/✓\s*/, '').trim())
+          .filter((l: string) => l.includes('Updated:') || l.includes('✓'))
+          .map((l: string) => l.replace(/.*Updated:\s*/, '').replace(/✓\s*/, '').trim())
           .filter(Boolean);
 
         const output = {
@@ -65,13 +65,13 @@ export function backfillTool(): ToolDefinition {
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error backfilling timestamps', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       } finally {

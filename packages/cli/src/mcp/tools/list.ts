@@ -69,7 +69,8 @@ export function listTool(): ToolDefinition {
         specs: z.array(z.any()),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
+      const originalLog = console.log;
       try {
         const specs = await listSpecsData({
           status: input.status as SpecStatus | undefined,
@@ -81,13 +82,13 @@ export function listTool(): ToolDefinition {
 
         const output = { specs };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error listing specs', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       }

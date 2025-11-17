@@ -24,7 +24,7 @@ export function filesTool(): ToolDefinition {
         files: z.array(z.any()),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
       const originalLog = console.log;
       const originalError = console.error;
       try {
@@ -42,20 +42,20 @@ export function filesTool(): ToolDefinition {
         });
 
         // Parse the captured output to extract file list
-        const lines = capturedOutput.split('\n').filter(l => l.trim());
+        const lines = capturedOutput.split('\n').filter((l: string) => l.trim());
         const files = lines
-          .filter(l => l.includes('├──') || l.includes('└──') || l.match(/^\s*[-•]/))
-          .map(l => l.replace(/[├└│─•-]\s*/g, '').trim());
+          .filter((l: string) => l.includes('├──') || l.includes('└──') || l.match(/^\s*[-•]/))
+          .map((l: string) => l.replace(/[├└│─•-]\s*/g, '').trim());
 
         const output = { files };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error listing files', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       } finally {

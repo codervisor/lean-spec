@@ -135,19 +135,20 @@ export function depsTool(): ToolDefinition {
         dependencies: z.any(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
+      const originalLog = console.log;
       try {
         const mode = input.mode || 'complete';
         const deps = await getDepsData(input.specPath, mode);
         const output = { dependencies: deps, mode };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error getting dependencies', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       }

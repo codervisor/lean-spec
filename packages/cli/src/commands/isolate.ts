@@ -214,6 +214,7 @@ async function executeIsolate(
   // 3. Create new spec with extracted content
   const targetFrontmatter: Frontmatter = {
     status: 'planned',
+    created: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
     priority: sourceFrontmatter?.priority || 'medium',
     tags: sourceFrontmatter?.tags || [],
     created_at: new Date().toISOString(),

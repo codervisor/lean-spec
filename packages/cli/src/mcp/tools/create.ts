@@ -32,7 +32,7 @@ export function createTool(): ToolDefinition {
         message: z.string(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
       const originalLog = console.log;
       try {
         // Capture output
@@ -57,7 +57,7 @@ export function createTool(): ToolDefinition {
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
@@ -67,7 +67,7 @@ export function createTool(): ToolDefinition {
           message: formatErrorMessage('Error creating spec', error),
         };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } finally {

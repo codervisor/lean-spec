@@ -80,8 +80,8 @@ export async function performSearch(query: string, options: {
     status: spec.frontmatter.status,
     priority: spec.frontmatter.priority,
     tags: spec.frontmatter.tags,
-    title: spec.frontmatter.title,
-    description: spec.frontmatter.description,
+    title: typeof spec.frontmatter.title === 'string' ? spec.frontmatter.title : undefined,
+    description: typeof spec.frontmatter.description === 'string' ? spec.frontmatter.description : undefined,
     content: spec.content,
   }));
 

@@ -65,7 +65,7 @@ export type ToolDefinition = [
     inputSchema: Record<string, z.ZodTypeAny>;
     outputSchema: Record<string, z.ZodTypeAny>;
   },
-  handler: (input: any) => Promise<{
+  handler: (input: any, extra: any) => Promise<{
     content: Array<{ type: string; text: string }>;
     structuredContent?: any;
     isError?: boolean;

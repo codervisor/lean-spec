@@ -23,7 +23,7 @@ export function checkTool(): ToolDefinition {
         message: z.string(),
       },
     },
-    async () => {
+    async (_input, _extra) => {
       const originalLog = console.log;
       const originalError = console.error;
       try {
@@ -44,13 +44,13 @@ export function checkTool(): ToolDefinition {
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error checking specs', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       } finally {

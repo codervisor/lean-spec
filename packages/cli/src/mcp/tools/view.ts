@@ -67,14 +67,15 @@ export function viewTool(): ToolDefinition {
         content: z.string(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
+      const originalLog = console.log;
       try {
         const result = await readSpecData(input.specPath);
         
         // If json flag is set, return structured data
         if (input.json) {
           return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
             structuredContent: result,
           };
         }
@@ -83,7 +84,7 @@ export function viewTool(): ToolDefinition {
         if (input.raw) {
           const rawMarkdown = `---\nstatus: ${result.spec.status}\ncreated: ${result.spec.created}\n${result.spec.priority ? `priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `tags:\n${result.spec.tags.map(t => `  - ${t}`).join('\n')}\n` : ''}${result.spec.assignee ? `assignee: ${result.spec.assignee}\n` : ''}---\n\n${result.content}`;
           return {
-            content: [{ type: 'text', text: rawMarkdown }],
+            content: [{ type: 'text' as const, text: rawMarkdown }],
             structuredContent: result,
           };
         }
@@ -91,13 +92,13 @@ export function viewTool(): ToolDefinition {
         // Default: formatted output with structured content
         const formatted = `# ${result.spec.name}\n\nStatus: ${result.spec.status}\nCreated: ${result.spec.created}\n${result.spec.priority ? `Priority: ${result.spec.priority}\n` : ''}${result.spec.tags ? `Tags: ${result.spec.tags.join(', ')}\n` : ''}${result.spec.assignee ? `Assignee: ${result.spec.assignee}\n` : ''}\n\n${result.content}`;
         return {
-          content: [{ type: 'text', text: formatted }],
+          content: [{ type: 'text' as const, text: formatted }],
           structuredContent: result,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error viewing spec', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       }

@@ -26,7 +26,7 @@ export function validateTool(): ToolDefinition {
         message: z.string(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
       const originalLog = console.log;
       const originalError = console.error;
       try {
@@ -46,17 +46,17 @@ export function validateTool(): ToolDefinition {
         const output = {
           passed,
           message: passed ? 'All specs passed validation' : 'Some specs have validation issues',
-          issues: !passed ? capturedOutput.split('\n').filter(l => l.trim()) : undefined,
+          issues: !passed ? capturedOutput.split('\n').filter((l: string) => l.trim()) : undefined,
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error validating specs', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       } finally {

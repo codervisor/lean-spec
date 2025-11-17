@@ -152,7 +152,8 @@ export function searchTool(): ToolDefinition {
         }),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
+      const originalLog = console.log;
       try {
         const searchResult = await searchSpecsData(input.query, {
           status: input.status as SpecStatus | undefined,
@@ -161,13 +162,13 @@ export function searchTool(): ToolDefinition {
         });
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(searchResult, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(searchResult, null, 2) }],
           structuredContent: searchResult,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error searching specs', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       }

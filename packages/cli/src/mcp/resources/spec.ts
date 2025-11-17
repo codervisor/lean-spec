@@ -17,8 +17,9 @@ export function specResource() {
       title: 'Spec Content',
       description: 'Read individual specification content by path or name',
     },
-    async (uri: URL, { specPath }: { specPath: string | string[] }) => {
+    async (uri: URL, variables: Record<string, string | string[]>, _extra: any) => {
       try {
+        const specPath = variables.specPath;
         const pathString = Array.isArray(specPath) ? specPath[0] : specPath;
         const { spec, content } = await readSpecData(pathString);
         return {

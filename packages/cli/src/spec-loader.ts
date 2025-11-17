@@ -8,7 +8,7 @@ export interface SpecInfo {
   fullPath: string; // Absolute path to spec directory
   filePath: string; // Absolute path to spec file (README.md)
   name: string; // Just the spec name like "003-pm-visualization-tools"
-  date: string; // Date folder like "20251101"
+  date?: string; // Date folder like "20251101" (optional for flat/nested patterns)
   frontmatter: SpecFrontmatter;
   content?: string; // Full file content (optional, for search)
   subFiles?: SubFileInfo[]; // Sub-documents and assets

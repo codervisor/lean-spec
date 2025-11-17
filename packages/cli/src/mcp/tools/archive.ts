@@ -24,7 +24,7 @@ export function archiveTool(): ToolDefinition {
         message: z.string(),
       },
     },
-    async (input) => {
+    async (input, _extra) => {
       const originalLog = console.log;
       try {
         let capturedOutput = '';
@@ -40,7 +40,7 @@ export function archiveTool(): ToolDefinition {
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
@@ -49,7 +49,7 @@ export function archiveTool(): ToolDefinition {
           message: formatErrorMessage('Error archiving spec', error),
         };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } finally {

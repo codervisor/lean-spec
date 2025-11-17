@@ -43,18 +43,18 @@ export function boardTool(): ToolDefinition {
         board: z.any(),
       },
     },
-    async () => {
+    async (_input, _extra) => {
       try {
         const board = await getBoardData();
         const output = { board };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error getting board', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       }

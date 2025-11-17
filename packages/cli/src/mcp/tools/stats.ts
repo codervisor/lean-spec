@@ -73,18 +73,18 @@ export function statsTool(): ToolDefinition {
         stats: z.any(),
       },
     },
-    async () => {
+    async (_input, _extra) => {
       try {
         const stats = await getStatsData();
         const output = { stats };
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
         };
       } catch (error) {
         const errorMessage = formatErrorMessage('Error getting stats', error);
         return {
-          content: [{ type: 'text', text: errorMessage }],
+          content: [{ type: 'text' as const, text: errorMessage }],
           isError: true,
         };
       }
