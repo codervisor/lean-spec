@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { List, ChevronRight } from 'lucide-react';
+import GithubSlugger from 'github-slugger';
 import { cn } from '@/lib/utils';
 
 interface TOCItem {
@@ -31,6 +32,7 @@ function extractHeadings(markdown: string): TOCItem[] {
   const headings: TOCItem[] = [];
   const lines = markdown.split('\n');
   let inCodeBlock = false;
+  const slugger = new GithubSlugger();
 
   for (const line of lines) {
     // Track code blocks
@@ -47,12 +49,7 @@ function extractHeadings(markdown: string): TOCItem[] {
     if (match) {
       const level = match[1].length;
       const text = match[2].trim();
-      
-      // Generate ID from heading text (same as markdown renderers do)
-      const id = text
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-');
+      const id = slugger.slug(text);
 
       headings.push({ id, text, level });
     }
@@ -63,7 +60,7 @@ function extractHeadings(markdown: string): TOCItem[] {
 
 export function TableOfContents({ content }: TableOfContentsProps) {
   const [open, setOpen] = React.useState(false);
-  const headings = extractHeadings(content);
+  const headings = React.useMemo(() => extractHeadings(content), [content]);
 
   // If no headings, don't render
   if (headings.length === 0) return null;
@@ -83,6 +80,12 @@ export function TableOfContents({ content }: TableOfContentsProps) {
           top: offsetPosition,
           behavior: 'smooth'
         });
+
+        if (window.history.replaceState) {
+          window.history.replaceState(null, '', `#${id}`);
+        } else {
+          window.location.hash = id;
+        }
       }
     }, 100);
   };

@@ -9,7 +9,7 @@ tags:
   - v0.3.0
 priority: critical
 created_at: '2025-11-14T05:33:26.170Z'
-updated_at: '2025-11-14T05:35:02.854Z'
+updated_at: '2025-11-17T06:32:59.770Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T05:35:02.854Z'
@@ -18,6 +18,7 @@ related:
   - 081-web-app-ux-redesign
   - 068-live-specs-ux-enhancements
   - 065-v03-planning
+  - 094-ai-chatbot-web-integration
 ---
 
 # Web App Realtime Spec Sync Architecture

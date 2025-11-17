@@ -1,11 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, PlayCircle, CheckCircle2, Archive } from 'lucide-react';
-import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { cn } from '@/lib/utils';
 
@@ -55,15 +53,12 @@ export function BoardClient({ initialSpecs }: BoardClientProps) {
     }
   };
 
-  const columns = useMemo(() => {
-    const statuses = ['planned', 'in-progress', 'complete', 'archived'] as const;
-    
-    return statuses.map(status => ({
-      status,
-      config: statusConfig[status],
-      specs: initialSpecs.filter(spec => spec.status === status),
-    }));
-  }, [initialSpecs]);
+  const statuses = ['planned', 'in-progress', 'complete', 'archived'] as const;
+  const columns = statuses.map(status => ({
+    status,
+    config: statusConfig[status],
+    specs: initialSpecs.filter(spec => spec.status === status),
+  }));
 
   return (
     <div className="min-h-screen bg-background">

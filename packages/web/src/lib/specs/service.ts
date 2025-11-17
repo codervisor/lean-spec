@@ -8,7 +8,8 @@ import type { SpecSource } from './types';
 import type { Spec } from '../db/schema';
 
 // Lazy import DatabaseSource to avoid DB connection issues in filesystem mode
-let DatabaseSource: any;
+type DatabaseSourceConstructor = new () => SpecSource;
+let DatabaseSourceCtor: DatabaseSourceConstructor | null = null;
 
 /**
  * Service modes
@@ -24,7 +25,7 @@ type SpecsMode = 'filesystem' | 'database' | 'both';
  */
 export class SpecsService {
   private filesystemSource?: FilesystemSource;
-  private databaseSource?: InstanceType<typeof DatabaseSource>;
+  private databaseSource?: SpecSource;
   private mode: SpecsMode;
 
   constructor() {
@@ -41,13 +42,13 @@ export class SpecsService {
   /**
    * Lazy load database source
    */
-  private async getDatabaseSource(): Promise<InstanceType<typeof DatabaseSource>> {
+  private async getDatabaseSource(): Promise<SpecSource> {
     if (!this.databaseSource) {
-      if (!DatabaseSource) {
-        const module = await import('./sources/database-source');
-        DatabaseSource = module.DatabaseSource;
+      if (!DatabaseSourceCtor) {
+        const { DatabaseSource } = await import('./sources/database-source');
+        DatabaseSourceCtor = DatabaseSource;
       }
-      this.databaseSource = new DatabaseSource();
+      this.databaseSource = new DatabaseSourceCtor();
     }
     return this.databaseSource;
   }

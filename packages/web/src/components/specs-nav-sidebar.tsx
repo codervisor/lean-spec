@@ -3,11 +3,11 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {
-  FileText,
   Search,
   ChevronLeft,
   ChevronRight,
   X,
+  List,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -83,9 +83,14 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
 
   // Expose function for mobile toggle
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).toggleSpecsSidebar = () => setMobileOpen(prev => !prev);
+    if (typeof window === 'undefined') {
+      return;
     }
+
+    window.toggleSpecsSidebar = () => setMobileOpen(prev => !prev);
+    return () => {
+      window.toggleSpecsSidebar = undefined;
+    };
   }, []);
 
   // Scroll active item into view only if it's not visible
@@ -209,53 +214,50 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
                               href={`/specs/${spec.specNumber || spec.id}`}
                               onMouseEnter={() => onSpecHover?.(spec.specNumber?.toString() || spec.id)}
                               className={cn(
-                                'w-full flex items-start gap-2 p-1.5 rounded-md text-sm transition-colors',
+                                'w-full flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
                                 isCurrentSpec
                                   ? 'bg-accent text-accent-foreground font-medium'
                                   : 'hover:bg-accent/50',
                               )}
                             >
-                              <FileText className="h-4 w-4 shrink-0 mt-0.5" />
-                              <div className="flex-1 min-w-0 overflow-hidden">
-                                <div className="flex items-center gap-1.5 mb-0.5">
-                                  {spec.specNumber && (
-                                    <span className="text-xs font-mono text-muted-foreground shrink-0">
-                                      #{spec.specNumber.toString().padStart(3, '0')}
-                                    </span>
-                                  )}
-                                  <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {spec.status && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div>
-                                          <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        {getStatusLabel(spec.status)}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {spec.priority && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div>
-                                          <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        {getPriorityLabel(spec.priority)}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {spec.updatedAt && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      {formatRelativeTime(spec.updatedAt)}
-                                    </span>
-                                  )}
-                                </div>
+                              <div className="flex items-center gap-1.5">
+                                {spec.specNumber && (
+                                  <span className="text-xs font-mono text-muted-foreground shrink-0">
+                                    #{spec.specNumber.toString().padStart(3, '0')}
+                                  </span>
+                                )}
+                                <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {spec.status && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div>
+                                        <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      {getStatusLabel(spec.status)}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {spec.priority && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div>
+                                        <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      {getPriorityLabel(spec.priority)}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {spec.updatedAt && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {formatRelativeTime(spec.updatedAt)}
+                                  </span>
+                                )}
                               </div>
                             </Link>
                           </TooltipTrigger>
@@ -294,7 +296,7 @@ export function SpecsNavSidebar({ specs, currentSpecId, currentSubSpec, onSpecHo
           className="lg:hidden fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
           aria-label="Show specifications list"
         >
-          <FileText className="h-5 w-5" />
+          <List className="h-5 w-5" />
         </Button>
       </div>
     </TooltipProvider>

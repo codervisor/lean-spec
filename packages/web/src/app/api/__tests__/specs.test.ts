@@ -4,11 +4,34 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextResponse } from 'next/server';
+import type { ParsedSpec } from '@/lib/db/service-queries';
+import type { SubSpec } from '@/lib/sub-specs';
 
 // Mock the service-queries module
 vi.mock('@/lib/db/service-queries', () => ({
   getSpecById: vi.fn(),
 }));
+
+const createMockSpec = (overrides: Partial<ParsedSpec> = {}): ParsedSpec => ({
+  id: 'fs-001-test-spec',
+  projectId: 'leanspec',
+  specNumber: 1,
+  specName: '001-test-spec',
+  title: 'Test Spec',
+  status: 'planned',
+  priority: 'high',
+  tags: ['test'],
+  assignee: null,
+  contentMd: '# Test Spec',
+  contentHtml: null,
+  createdAt: new Date('2025-01-01'),
+  updatedAt: new Date('2025-01-02'),
+  completedAt: null,
+  filePath: 'specs/001-test-spec/README.md',
+  githubUrl: 'https://github.com/codervisor/lean-spec/tree/main/specs/001-test-spec/README.md',
+  syncedAt: new Date('2025-01-03'),
+  ...overrides,
+});
 
 describe('Spec API Routes', () => {
   beforeEach(() => {
@@ -20,23 +43,12 @@ describe('Spec API Routes', () => {
       const { getSpecById } = await import('@/lib/db/service-queries');
       const { GET } = await import('@/app/api/specs/[id]/route');
 
-      const mockSpec = {
-        id: '1',
-        specNumber: 1,
-        title: 'Test Spec',
-        specName: '001-test-spec',
-        status: 'planned',
-        priority: 'high',
-        tags: ['test'],
-        assignee: null,
-        createdAt: new Date('2025-01-01'),
-        updatedAt: new Date('2025-01-02'),
-        completedAt: null,
-        contentMd: '# Test Spec',
+      const mockSpec: ParsedSpec & { subSpecs: SubSpec[] } = {
+        ...createMockSpec(),
         subSpecs: [],
       };
 
-      vi.mocked(getSpecById).mockResolvedValue(mockSpec as any);
+      vi.mocked(getSpecById).mockResolvedValue(mockSpec);
 
       const request = new Request('http://localhost/api/specs/1');
       const params = Promise.resolve({ id: '1' });
@@ -76,12 +88,8 @@ describe('Spec API Routes', () => {
       const { getSpecById } = await import('@/lib/db/service-queries');
       const { GET } = await import('@/app/api/specs/[id]/subspecs/[file]/route');
 
-      const mockSpec = {
-        id: '1',
-        specNumber: 1,
-        title: 'Test Spec',
-        specName: '001-test-spec',
-        contentMd: '# Test Spec',
+      const mockSpec: ParsedSpec & { subSpecs: SubSpec[] } = {
+        ...createMockSpec(),
         subSpecs: [
           {
             name: 'Design',
@@ -93,7 +101,7 @@ describe('Spec API Routes', () => {
         ],
       };
 
-      vi.mocked(getSpecById).mockResolvedValue(mockSpec as any);
+      vi.mocked(getSpecById).mockResolvedValue(mockSpec);
 
       const request = new Request('http://localhost/api/specs/1/subspecs/DESIGN.md');
       const params = Promise.resolve({ id: '1', file: 'DESIGN.md' });
@@ -116,16 +124,12 @@ describe('Spec API Routes', () => {
       const { getSpecById } = await import('@/lib/db/service-queries');
       const { GET } = await import('@/app/api/specs/[id]/subspecs/[file]/route');
 
-      const mockSpec = {
-        id: '1',
-        specNumber: 1,
-        title: 'Test Spec',
-        specName: '001-test-spec',
-        contentMd: '# Test Spec',
+      const mockSpec: ParsedSpec & { subSpecs: SubSpec[] } = {
+        ...createMockSpec(),
         subSpecs: [],
       };
 
-      vi.mocked(getSpecById).mockResolvedValue(mockSpec as any);
+      vi.mocked(getSpecById).mockResolvedValue(mockSpec);
 
       const request = new Request('http://localhost/api/specs/1/subspecs/NONEXISTENT.md');
       const params = Promise.resolve({ id: '1', file: 'NONEXISTENT.md' });

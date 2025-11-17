@@ -1,0 +1,50 @@
+{
+  "name": "@leanspec/ui",
+  "version": "0.3.0",
+  "description": "LeanSpec web UI launcher for visual spec management",
+  "type": "module",
+  "bin": "./bin/ui.js",
+  "scripts": {
+    "build": "node ./scripts/prepare-dist.mjs",
+    "prepublishOnly": "pnpm run build"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "leanspec",
+    "spec",
+    "documentation",
+    "cli",
+    "ui"
+  ],
+  "author": "Marvin Zhang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  },
+  "homepage": "https://lean-spec.dev",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^14.0.2",
+    "js-yaml": "^4.1.0",
+    "open": "^11.0.0",
+    "ora": "^9.0.0"
+  },
+  "devDependencies": {
+    "@leanspec/web": "workspace:*"
+  }
+}

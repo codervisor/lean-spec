@@ -14,7 +14,8 @@ depends_on:
 related:
   - 052-branding-assets
   - 068-live-specs-ux-enhancements
-updated_at: '2025-11-17T01:14:24.924Z'
+  - 094-ai-chatbot-web-integration
+updated_at: '2025-11-17T06:32:59.774Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T04:08:03.555Z'

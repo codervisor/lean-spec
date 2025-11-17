@@ -12,10 +12,24 @@ import { eq } from 'drizzle-orm';
 // Path to specs directory (relative to monorepo root)
 const SPECS_DIR = join(process.cwd(), '../../specs');
 
+type Frontmatter = {
+  title?: string;
+  status?: 'planned' | 'in-progress' | 'complete' | 'archived';
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  tags?: string[];
+  assignee?: string;
+  created?: string;
+  created_at?: string;
+  updated?: string;
+  updated_at?: string;
+  completed?: string;
+  completed_at?: string;
+};
+
 interface ParsedSpec {
   number: number | null;
   name: string;
-  frontmatter: Record<string, any>;
+  frontmatter: Frontmatter;
   content: string;
   filePath: string;
 }
@@ -35,7 +49,7 @@ function parseSpecDirectory(dirPath: string): ParsedSpec | null {
     return {
       number: specNumber,
       name: specName,
-      frontmatter: frontmatter as Record<string, any>,
+      frontmatter: frontmatter as Frontmatter,
       content: markdownContent, // Use the parsed content without frontmatter
       filePath: `specs/${dirName}/README.md`,
     };
@@ -106,6 +120,10 @@ async function seed() {
   for (const spec of specs) {
     const specId = randomUUID();
     const fm = spec.frontmatter;
+    const parseDate = (value?: string) => (value ? new Date(value) : null);
+    const created = fm.created_at ?? fm.created;
+    const updated = fm.updated_at ?? fm.updated;
+    const completed = fm.completed_at ?? fm.completed;
     
     await db.insert(schema.specs).values({
       id: specId,
@@ -118,9 +136,9 @@ async function seed() {
       tags: fm.tags ? JSON.stringify(fm.tags) : null,
       assignee: fm.assignee || null,
       contentMd: spec.content,
-      createdAt: fm.created_at ? new Date(fm.created_at) : null,
-      updatedAt: fm.updated_at ? new Date(fm.updated_at) : null,
-      completedAt: fm.completed_at ? new Date(fm.completed_at) : null,
+      createdAt: parseDate(created),
+      updatedAt: parseDate(updated),
+      completedAt: parseDate(completed),
       filePath: spec.filePath,
       githubUrl: `https://github.com/codervisor/lean-spec/blob/main/${spec.filePath}`,
       syncedAt: new Date(),

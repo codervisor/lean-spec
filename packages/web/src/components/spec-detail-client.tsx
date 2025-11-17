@@ -11,6 +11,7 @@ import useSWR from 'swr';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeSlug from 'rehype-slug';
 import { Badge } from '@/components/ui/badge';
 import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
@@ -31,6 +32,17 @@ import {
   Home,
   TrendingUp
 } from 'lucide-react';
+import type { Plugin } from 'unified';
+import { visit } from 'unist-util-visit';
+import type { Html, Root } from 'mdast';
+
+const remarkStripHtmlComments: Plugin<[], Root> = () => (tree: Root) => {
+  visit(tree, 'html', (node: Html) => {
+    if (typeof node.value === 'string' && node.value.trim().startsWith('<!--')) {
+      node.value = '';
+    }
+  });
+};
 
 // Icon mapping for sub-specs
 const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -267,8 +279,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
 
           <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
+              remarkPlugins={[remarkGfm, remarkStripHtmlComments]}
+              rehypePlugins={[rehypeHighlight, rehypeSlug]}
               components={{
                 a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
               }}

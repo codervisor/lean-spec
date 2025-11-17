@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `lean-spec ui` now works in any project by delegating to the published `@leanspec/ui` package (spec 087)
+- `@leanspec/ui` bundle and GitHub Actions workflow for publishing the standalone filesystem-mode UI (spec 087)
+
 ## [0.2.2] - 2025-11-13
 
 ### Added

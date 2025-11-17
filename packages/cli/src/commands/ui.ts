@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
 import { loadConfig } from '../config.js';
+import { detectPackageManager, PackageManager } from '../utils/package-manager.js';
 
 /**
  * UI command - start local web UI for spec management
@@ -75,14 +76,7 @@ export async function startUi(options: {
     // Dev mode: Run local web package
     return runLocalWeb(localWebDir, specsDir, options);
   } else {
-    // Future: Production mode would run published @leanspec/ui package
-    console.error(chalk.yellow('\n⚠ Standalone UI package not yet available'));
-    console.log(chalk.dim('\nThe `lean-spec ui` command currently only works in the LeanSpec monorepo.'));
-    console.log(chalk.dim('Support for external projects will be added in a future release.'));
-    console.log(chalk.dim('\nFor now, you can:'));
-    console.log(chalk.dim('  1. Use CLI commands (lean-spec list, board, view, etc.)'));
-    console.log(chalk.dim('  2. Clone the LeanSpec repo and run from there'));
-    throw new Error('Standalone UI package not yet available');
+    return runPublishedUI(cwd, specsDir, options);
   }
 }
 
@@ -108,14 +102,13 @@ async function runLocalWeb(
 ): Promise<void> {
   console.log(chalk.dim('→ Detected LeanSpec monorepo, using local web package\n'));
 
+  const repoRoot = resolve(webDir, '..', '..');
+  const packageManager = detectPackageManager(repoRoot);
+
   if (options.dryRun) {
     console.log(chalk.cyan('Would run:'));
     console.log(chalk.dim(`  cd ${webDir}`));
-    
-    // Detect package manager
-    const packageManager = existsSync(join(webDir, '../../pnpm-lock.yaml')) ? 'pnpm' :
-                           existsSync(join(webDir, '../../yarn.lock')) ? 'yarn' : 'npm';
-    
+
     console.log(chalk.dim(`  SPECS_MODE=filesystem SPECS_DIR=${specsDir} PORT=${options.port} ${packageManager} run dev`));
     if (options.open) {
       console.log(chalk.dim(`  open http://localhost:${options.port}`));
@@ -132,10 +125,6 @@ async function runLocalWeb(
     SPECS_DIR: specsDir,
     PORT: options.port,
   };
-
-  // Detect package manager
-  const packageManager = existsSync(join(webDir, '../../pnpm-lock.yaml')) ? 'pnpm' :
-                         existsSync(join(webDir, '../../yarn.lock')) ? 'yarn' : 'npm';
 
   const child = spawn(packageManager, ['run', 'dev'], {
     cwd: webDir,
@@ -184,4 +173,78 @@ async function runLocalWeb(
       process.exit(code);
     }
   });
+}
+
+async function runPublishedUI(
+  cwd: string,
+  specsDir: string,
+  options: {
+    port: string;
+    open: boolean;
+    dryRun?: boolean;
+  }
+): Promise<void> {
+  console.log(chalk.dim('→ Using published @leanspec/ui package\n'));
+
+  const packageManager = detectPackageManager(cwd);
+  const { command, args, preview } = buildUiRunner(packageManager, specsDir, options.port, options.open);
+
+  if (options.dryRun) {
+    console.log(chalk.cyan('Would run:'));
+    console.log(chalk.dim(`  ${preview}`));
+    return;
+  }
+
+  const child = spawn(command, args, {
+    stdio: 'inherit',
+    env: process.env,
+  });
+
+  const shutdown = () => {
+    child.kill('SIGINT');
+    console.log(chalk.dim('\n✓ Web UI stopped'));
+    process.exit(0);
+  };
+
+  process.once('SIGINT', shutdown);
+
+  child.on('exit', (code) => {
+    if (code === 0 || code === null) {
+      return;
+    }
+    console.error(chalk.red(`\n@leanspec/ui exited with code ${code}`));
+    console.log(chalk.dim('Make sure npm can download @leanspec/ui (https://www.npmjs.com/package/@leanspec/ui).'));
+    process.exit(code);
+  });
+
+  child.on('error', (error) => {
+    console.error(chalk.red(`Failed to launch @leanspec/ui: ${error instanceof Error ? error.message : String(error)}`));
+    console.log(chalk.dim('You can also run it manually with `npx @leanspec/ui --specs <dir>`'));
+    process.exit(1);
+  });
+}
+
+function buildUiRunner(
+  packageManager: PackageManager,
+  specsDir: string,
+  port: string,
+  openBrowser: boolean
+): { command: string; args: string[]; preview: string } {
+  const uiArgs = ['@leanspec/ui', '--specs', specsDir, '--port', port];
+  if (!openBrowser) {
+    uiArgs.push('--no-open');
+  }
+
+  if (packageManager === 'pnpm') {
+    const args = ['dlx', '--prefer-offline', ...uiArgs];
+    return { command: 'pnpm', args, preview: `pnpm ${args.join(' ')}` };
+  }
+
+  if (packageManager === 'yarn') {
+    const args = ['dlx', ...uiArgs];
+    return { command: 'yarn', args, preview: `yarn ${args.join(' ')}` };
+  }
+
+  const args = ['--yes', ...uiArgs];
+  return { command: 'npx', args, preview: `npx ${args.join(' ')}` };
 }

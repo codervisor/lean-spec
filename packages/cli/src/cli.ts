@@ -83,6 +83,7 @@ Examples:
   $ lean-spec split 045 --output README.md:1-150 --output DESIGN.md:151-end
   $ lean-spec ui
   $ lean-spec ui --port 3001 --no-open
+  $ lean-spec ui --specs ./docs/specs --dry-run
 `);
 
 // Register all commands (alphabetically ordered)

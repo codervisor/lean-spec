@@ -38,7 +38,7 @@ describe('UI Command', () => {
       ).rejects.toThrow('Specs directory not found');
     });
 
-    it('should error when not in monorepo and no standalone package', async () => {
+    it('should delegate to published package outside the monorepo', async () => {
       // Save current cwd
       const originalCwd = process.cwd();
 
@@ -46,14 +46,14 @@ describe('UI Command', () => {
         // Change to test directory (not a monorepo)
         process.chdir(testDir);
 
-        // This should error because we're not in the monorepo
+        // Should now fall back to the published package without throwing
         await expect(
           startUi({
             port: '3000',
             open: false,
             dryRun: true,
           })
-        ).rejects.toThrow('Standalone UI package not yet available');
+        ).resolves.toBeUndefined();
       } finally {
         // Restore original cwd
         process.chdir(originalCwd);
@@ -68,7 +68,6 @@ describe('UI Command', () => {
         // Change to test directory
         process.chdir(testDir);
 
-        // This should also error (not in monorepo) but with valid specs dir
         await expect(
           startUi({
             specs: specsDir,
@@ -76,7 +75,7 @@ describe('UI Command', () => {
             open: false,
             dryRun: true,
           })
-        ).rejects.toThrow('Standalone UI package not yet available');
+        ).resolves.toBeUndefined();
       } finally {
         // Restore original cwd
         process.chdir(originalCwd);

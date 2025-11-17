@@ -74,9 +74,14 @@ export function MainSidebar() {
 
   // Expose function for mobile toggle
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).toggleMainSidebar = () => setMobileOpen(prev => !prev);
+    if (typeof window === 'undefined') {
+      return;
     }
+
+    window.toggleMainSidebar = () => setMobileOpen(prev => !prev);
+    return () => {
+      window.toggleMainSidebar = undefined;
+    };
   }, []);
 
   return (

@@ -8,7 +8,6 @@ import {
   CheckCircle2, 
   PlayCircle, 
   Clock,
-  Plus,
   LayoutGrid,
   List,
   TrendingUp,

@@ -3,8 +3,7 @@
  */
 
 import { db, schema } from './index';
-import { eq, and, inArray, desc } from 'drizzle-orm';
-import type { Project, Spec } from './schema';
+import { eq, desc } from 'drizzle-orm';
 import { detectSubSpecs } from '../sub-specs';
 import { join } from 'path';
 

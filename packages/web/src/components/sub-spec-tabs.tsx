@@ -20,7 +20,7 @@ export interface SubSpec {
   content: string;
 }
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText,
   Palette,
   Code,

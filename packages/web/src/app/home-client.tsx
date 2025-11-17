@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -12,10 +11,9 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Search, FileText, CheckCircle2, PlayCircle, Clock, TrendingUp } from 'lucide-react';
+import { Search, FileText, CheckCircle2, PlayCircle, Clock } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
-import { cn } from '@/lib/utils';
 
 interface Spec {
   id: string;
@@ -34,12 +32,13 @@ interface Stats {
 }
 
 interface HomeClientProps {
-  initialProjects: any[];
+  initialProjects: unknown[];
   initialStats: Stats;
   initialSpecs: Spec[];
 }
 
-export function HomeClient({ initialProjects, initialStats, initialSpecs }: HomeClientProps) {
+export function HomeClient({ initialProjects: _initialProjects, initialStats, initialSpecs }: HomeClientProps) {
+  void _initialProjects;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');

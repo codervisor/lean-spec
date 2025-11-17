@@ -1,21 +1,25 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-17'
 tags: []
 priority: medium
 created_at: '2025-11-17T06:07:38.678Z'
+updated_at: '2025-11-17T06:11:38.816Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-17T06:11:38.816Z'
 ---
 
 # spec-detail-ui-improvements
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-17
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-17
 
 **Project**: lean-spec  
 **Team**: Core Development
 
 ## Overview
 
-The docs site's spec-detail experience currently blocks reviewers from scanning specs quickly. Users reported seven consistent issues: sidebar refresh flicker after every spec switch, timeline panel overpowering the main content, TOC links that do nothing, HTML comment snippets leaking into the rendered markdown, `Updated` metadata stuck on `N/A`, distracting file icons in the nav, and no visual depiction of spec dependencies. These break Context Economy by forcing extra scrolling and erode trust in the data. We want to reclaim focus on the spec body, make navigation reliable, and expose relationship insights without jumping to other tools.
+The docs site's spec-detail experience currently blocks reviewers from scanning specs quickly, which is especially risky for the next release where we promised smoother UI/UX polish. Users reported seven consistent issues: sidebar refresh flicker after every spec switch, timeline panel overpowering the main content, TOC links that do nothing, HTML comment snippets leaking into the rendered markdown, `Updated` metadata stuck on `N/A`, distracting file icons in the nav, and no visual depiction of spec dependencies. These break Context Economy by forcing extra scrolling and erode trust in the data. We want this spec to be the single tracker for all near-release UI/UX fixes so we reclaim focus on the spec body, make navigation reliable, and expose relationship insights without jumping to other tools.
 
 ## Design
 
@@ -32,10 +36,10 @@ The docs site's spec-detail experience currently blocks reviewers from scanning 
 - [ ] Document current UI data flow for spec sidebar, detail header, and relationship sections
 - [ ] Implement navigation cache + scroll state persistence in sidebar component
 - [ ] Add collapsible timeline UI plus state tied to URL hash or local preference
-- [ ] Fix TOC anchor generation and hash syncing, verify across nested headings
-- [ ] Strip HTML comments during markdown render pipeline
-- [ ] Plumb real `updated_at` values through API and UI
-- [ ] Remove file icons from sidebar rows and adjust spacing
+- [x] Fix TOC anchor generation and hash syncing, verify across nested headings
+- [x] Strip HTML comments during markdown render pipeline
+- [x] Plumb real `updated_at` values through API and UI
+- [x] Remove file icons from sidebar rows and adjust spacing
 - [ ] Ship first iteration of dependency badges, capture follow-up requirements for richer charts
 
 ## Test

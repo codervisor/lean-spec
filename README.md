@@ -237,6 +237,22 @@ lean-spec view <spec> --json # AI-friendly output
 lean-spec update <spec> --status in-progress
 ```
 
+### 4. Visual Mode (LeanSpec UI)
+
+```bash
+# Inside this monorepo (dev mode)
+lean-spec ui
+
+# Any other project (downloads the published UI bundle)
+npx @leanspec/ui
+```
+
+The command auto-detects your specs directory (or use `--specs <dir>`), starts the LeanSpec web UI in filesystem mode, and opens `http://localhost:3000`. Customize behavior with:
+
+- `--port <number>` – choose a different port
+- `--no-open` – skip opening the browser automatically
+- `--dry-run` – show the exact command/env without executing
+
 **Why this works:**
 - Specs <300 lines fit in AI context window
 - Structured format AI can parse and act on

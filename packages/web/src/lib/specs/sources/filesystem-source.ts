@@ -195,6 +195,16 @@ export class FilesystemSource implements SpecSource {
       // Generate a pseudo-ID for filesystem specs (not stored in DB)
       const id = `fs-${specName}`;
 
+      const createdValue = frontmatter.created_at ?? frontmatter.created;
+      const updatedValue = frontmatter.updated_at ?? frontmatter.updated;
+      const completedValue = frontmatter.completed_at ?? frontmatter.completed;
+
+      const toDate = (value: unknown): Date | null => {
+        if (!value) return null;
+        const parsed = new Date(value as string | number | Date);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      };
+
       // Create a Spec object compatible with the schema
       const spec: Spec = {
         id,
@@ -208,16 +218,16 @@ export class FilesystemSource implements SpecSource {
         assignee: frontmatter.assignee || null,
         contentMd: markdownContent, // Use parsed content without frontmatter
         contentHtml: null, // Not pre-rendered for filesystem mode
-        createdAt: frontmatter.created ? new Date(frontmatter.created) : null,
-        updatedAt: frontmatter.updated ? new Date(frontmatter.updated) : null,
-        completedAt: frontmatter.completed ? new Date(frontmatter.completed) : null,
+        createdAt: toDate(createdValue),
+        updatedAt: toDate(updatedValue),
+        completedAt: toDate(completedValue),
         filePath: `specs/${specName}/README.md`,
         githubUrl: `https://github.com/codervisor/lean-spec/tree/main/specs/${specName}/README.md`,
         syncedAt: new Date(), // Current time for filesystem reads
       };
 
       return spec;
-    } catch (error) {
+    } catch {
       // File doesn't exist or can't be read
       return null;
     }

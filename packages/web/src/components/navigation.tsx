@@ -95,8 +95,8 @@ export function Navigation({ specs }: NavigationProps) {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   const toggleSidebar = () => {
-    if (typeof window !== 'undefined' && (window as any).toggleMainSidebar) {
-      (window as any).toggleMainSidebar();
+    if (typeof window !== 'undefined' && window.toggleMainSidebar) {
+      window.toggleMainSidebar();
     }
   };
 

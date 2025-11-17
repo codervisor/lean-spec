@@ -35,8 +35,8 @@ export { schema };
 
 // Legacy export for backward compatibility (will be lazy)
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get(_target, prop) {
+  get(_target, prop, receiver) {
     const realDb = getDb();
-    return (realDb as any)[prop];
+    return Reflect.get(realDb as object, prop, receiver);
   }
 });

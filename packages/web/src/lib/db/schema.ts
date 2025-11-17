@@ -3,7 +3,7 @@
  * Using Drizzle ORM with SQLite (development) / PostgreSQL (production)
  */
 
-import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // Projects table - GitHub repositories using LeanSpec
