@@ -1,0 +1,276 @@
+---
+id: 'terminology'
+title: 'Terminology'
+sidebar_position: 1
+---
+# Terminology
+
+> Essential terms you'll encounter when using LeanSpec.
+
+This is a glossary of key SDD (Spec-Driven Development) terms used throughout LeanSpec. Each term includes a clear definition, why it matters, and a concrete example.
+
+## Spec
+
+**Definition**: A lightweight specification document that captures intent, requirements, and context for a feature or work item.
+
+**Why it matters**: Specs bridge the gap between human goals and AI execution. They provide persistent memory for AI agents and ensure team alignment on what's being built and why.
+
+**Example**: 
+```markdown
+# 042-api-rate-limiting
+Implement token bucket rate limiting (100 req/min per API key) 
+to protect API from abuse by 2% of heavy users.
+```
+
+**See also**: [Creating & Managing Specs](/docs/guide/usage/essential-usage/creating-managing)
+
+---
+
+## Status
+
+**Definition**: The current lifecycle state of a spec (planned, in-progress, complete, blocked, cancelled).
+
+**Why it matters**: Status tracking enables project visibility and helps teams coordinate work. It answers "What's being worked on?" at a glance.
+
+**Example**:
+```yaml
+status: in-progress  # Actively being implemented
+```
+
+**See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
+
+---
+
+## Context
+
+**Definition**: The information available in working memory (human or AI) at any given moment.
+
+**Why it matters**: Both humans and AI have limited working memory. Context Economy means keeping specs small enough to fit in working memory (~300 lines) for maximum effectiveness.
+
+**Example**: A 1,200-line spec exceeds working memory—split it into README (overview) + DESIGN.md (details) + TESTING.md (test strategy).
+
+**See also**: [Context Engineering](/docs/guide/context-engineering), [First Principles](/docs/guide/first-principles#1-context-economy-)
+
+---
+
+## Tokens
+
+**Definition**: The fundamental units that AI models process text with (roughly 3-4 characters per token). Also used to measure spec size.
+
+**Why it matters**: Token count determines:
+- AI context window usage (performance degrades with more tokens)
+- Cost (API calls charge per token)
+- Reading time (~200 tokens per minute)
+
+**Example**: 
+- A 300-line spec ≈ 1,500-2,000 tokens
+- Target: Under 2,000 tokens per spec file
+- Warning: Over 3,500 tokens (consider splitting)
+
+**See also**: [Token Management](/docs/reference/cli#lean-spec-tokens)
+
+---
+
+## Agent
+
+**Definition**: An AI system that can autonomously perform tasks by accessing tools, reading specs, and executing plans.
+
+**Why it matters**: In SDD workflows, AI agents implement features from specs. Well-written specs reduce hallucination and improve agent output quality.
+
+**Example**: An AI agent reads spec 042 (API rate limiting), accesses the codebase via MCP, and implements the token bucket algorithm with tests.
+
+**See also**: [AI-Assisted Workflows](/docs/guide/usage/ai-assisted/writing-specs-with-ai), [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration)
+
+---
+
+## Dependencies
+
+**Definition**: Relationships between specs indicating blocking dependencies (`depends_on`) or informational connections (`related`).
+
+**Why it matters**: Dependencies help coordinate work, prevent conflicts, and maintain architectural coherence across the codebase.
+
+**Example**:
+```yaml
+# Spec 084 depends on spec 082 being complete first
+depends_on: [082]
+
+# Spec 084 is related to spec 086 (coordinated but not blocking)
+related: [086]
+```
+
+**See also**: [Dependencies](/docs/guide/usage/project-management/dependencies)
+
+---
+
+## Tags
+
+**Definition**: Labels attached to specs for categorization and filtering (e.g., `api`, `frontend`, `urgent`).
+
+**Why it matters**: Tags enable quick filtering and searching. They help answer "Show me all API-related work" or "What's urgent?"
+
+**Example**:
+```yaml
+tags: [api, backend, security]
+```
+
+**See also**: [Custom Fields](/docs/guide/usage/advanced-features/custom-fields)
+
+---
+
+## Priority
+
+**Definition**: The relative importance of a spec (low, medium, high, critical).
+
+**Why it matters**: Priority helps teams focus on what matters most and make trade-off decisions when resources are limited.
+
+**Example**:
+```yaml
+priority: high  # Security vulnerability fix
+```
+
+**See also**: [Board & Stats](/docs/guide/usage/project-management/board-stats)
+
+---
+
+## Sub-Spec
+
+**Definition**: A separate file within a spec directory (like DESIGN.md, TESTING.md) that contains detailed information for a specific concern.
+
+**Why it matters**: Sub-specs enable partitioning—keeping main README under 300 lines while providing detailed information on-demand. This respects Context Economy.
+
+**Example**:
+```
+specs/082/
+  README.md          (overview, 203 lines)
+  DESIGN.md          (architecture, 378 lines)
+  IMPLEMENTATION.md  (phases, 144 lines)
+  TESTING.md         (test strategy, 182 lines)
+```
+
+**See also**: [Spec Structure](/docs/guide/usage/essential-usage/spec-structure)
+
+---
+
+## Frontmatter
+
+**Definition**: YAML metadata at the top of a spec file containing structured data (status, priority, tags, dates, etc.).
+
+**Why it matters**: Frontmatter enables automation, filtering, and project management features. It's machine-readable while keeping specs human-friendly.
+
+**Example**:
+```yaml
+---
+status: in-progress
+priority: high
+tags: [api, backend]
+assignee: alice
+created_at: 2025-11-15
+---
+```
+
+**See also**: [Frontmatter Reference](/docs/reference/frontmatter)
+
+---
+
+## MCP (Model Context Protocol)
+
+**Definition**: A protocol that allows AI agents to access tools and data sources through a standardized interface.
+
+**Why it matters**: LeanSpec's MCP server enables AI agents to search, read, and reason about specs programmatically—providing persistent memory across sessions.
+
+**Example**: An AI agent uses `search_specs("authentication")` via MCP to find relevant auth-related specs before implementing a feature.
+
+**See also**: [MCP Server](/docs/reference/mcp-server), [MCP Integration](/docs/guide/usage/ai-assisted/mcp-integration)
+
+---
+
+## Context Economy
+
+**Definition**: The first principle of LeanSpec—specs must fit in working memory (human and AI), typically under 2,000 tokens or ~300 lines.
+
+**Why it matters**: Attention is the scarce resource. Specs that exceed working memory don't get read, understood, or used effectively.
+
+**Example**: A 650-line spec violates Context Economy. Solution: Split into README (overview) + DESIGN.md (details).
+
+**See also**: [First Principles](/docs/guide/first-principles#1-context-economy-)
+
+---
+
+## Signal-to-Noise
+
+**Definition**: The second principle of LeanSpec—every word must inform decisions or be cut.
+
+**Why it matters**: Verbose specs waste time and tokens. High signal-to-noise means maximum information with minimum words.
+
+**Example**:
+```markdown
+❌ Low Signal: "The authentication system will use JWT tokens, which are 
+industry-standard and provide stateless authentication..."
+
+✅ High Signal: "Use JWT tokens (stateless, 24h expiry)."
+```
+
+**See also**: [First Principles](/docs/guide/first-principles#2-signal-to-noise-maximization-)
+
+---
+
+## Progressive Disclosure
+
+**Definition**: The fifth principle of LeanSpec—start simple, add structure only when pain is felt.
+
+**Why it matters**: Prevents premature abstraction and over-engineering. Teams evolve naturally without rewriting specs.
+
+**Example**:
+```yaml
+# Day 1 (solo): Just status
+status: planned
+
+# Week 2 (team): Add tags/priority as needed
+status: in-progress
+tags: [api]
+priority: high
+
+# Month 3 (enterprise): Add workflow fields as needed
+assignee: alice
+epic: PROJ-123
+```
+
+**See also**: [First Principles](/docs/guide/first-principles#5-progressive-disclosure-)
+
+---
+
+## Template
+
+**Definition**: A pre-configured spec structure that provides starting scaffolding for common project types (minimal, standard, enterprise).
+
+**Why it matters**: Templates speed up project setup and ensure consistency across teams while following LeanSpec best practices.
+
+**Example**: `lean-spec init --template standard` creates a new project with standard spec structure and configuration.
+
+**See also**: [Templates](/docs/guide/usage/advanced-features/templates)
+
+---
+
+## Validation
+
+**Definition**: Checking specs for structural correctness, required frontmatter, token limits, and broken dependencies.
+
+**Why it matters**: Validation catches common mistakes early (missing status, broken links, oversized specs) before they cause problems.
+
+**Example**: `lean-spec validate` checks all specs and reports:
+- Missing required fields
+- Broken dependencies
+- Specs exceeding token thresholds
+- Invalid frontmatter
+
+**See also**: [Validation](/docs/guide/usage/project-management/validation)
+
+---
+
+## Need More?
+
+If you encounter a term not listed here, check:
+- [CLI Reference](/docs/reference/cli) - Complete command documentation
+- [Frontmatter Reference](/docs/reference/frontmatter) - All frontmatter fields
+- [FAQ](/docs/faq) - Common questions and answers
+- [First Principles](/docs/guide/first-principles) - The foundational concepts

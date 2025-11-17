@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Core Concepts',
       items: [
+        'guide/terminology',
         'guide/understanding',
         'guide/first-principles',
         'guide/context-engineering',
