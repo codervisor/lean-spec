@@ -40,6 +40,14 @@ export async function startUi(options: {
   open: boolean;
   dryRun?: boolean;
 }): Promise<void> {
+  // Validate port
+  const portNum = parseInt(options.port, 10);
+  if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+    console.error(chalk.red(`✗ Invalid port number: ${options.port}`));
+    console.log(chalk.dim('Port must be between 1 and 65535'));
+    throw new Error(`Invalid port: ${options.port}`);
+  }
+
   const cwd = process.cwd();
 
   // Determine specs directory
@@ -80,6 +88,14 @@ export async function startUi(options: {
 
 /**
  * Run local web package (monorepo dev mode)
+ * 
+ * Spawns the web dev server as a child process with appropriate environment
+ * variables. Only works within the LeanSpec monorepo structure.
+ * 
+ * @param webDir - Absolute path to packages/web directory
+ * @param specsDir - Absolute path to specs directory
+ * @param options - Command options including port, open, and dryRun flags
+ * @throws {Error} If server fails to start
  */
 async function runLocalWeb(
   webDir: string,
@@ -95,7 +111,12 @@ async function runLocalWeb(
   if (options.dryRun) {
     console.log(chalk.cyan('Would run:'));
     console.log(chalk.dim(`  cd ${webDir}`));
-    console.log(chalk.dim(`  SPECS_MODE=filesystem SPECS_DIR=${specsDir} PORT=${options.port} npm run dev`));
+    
+    // Detect package manager
+    const packageManager = existsSync(join(webDir, '../../pnpm-lock.yaml')) ? 'pnpm' :
+                           existsSync(join(webDir, '../../yarn.lock')) ? 'yarn' : 'npm';
+    
+    console.log(chalk.dim(`  SPECS_MODE=filesystem SPECS_DIR=${specsDir} PORT=${options.port} ${packageManager} run dev`));
     if (options.open) {
       console.log(chalk.dim(`  open http://localhost:${options.port}`));
     }
@@ -112,14 +133,18 @@ async function runLocalWeb(
     PORT: options.port,
   };
 
-  const child = spawn('npm', ['run', 'dev'], {
+  // Detect package manager
+  const packageManager = existsSync(join(webDir, '../../pnpm-lock.yaml')) ? 'pnpm' :
+                         existsSync(join(webDir, '../../yarn.lock')) ? 'yarn' : 'npm';
+
+  const child = spawn(packageManager, ['run', 'dev'], {
     cwd: webDir,
     stdio: 'inherit',
     env,
   });
 
   // Wait for server to be ready
-  setTimeout(async () => {
+  const readyTimeout = setTimeout(async () => {
     spinner.succeed('Web UI running');
     console.log(chalk.green(`\n✨ LeanSpec UI: http://localhost:${options.port}\n`));
     console.log(chalk.dim('Press Ctrl+C to stop\n'));
@@ -134,20 +159,25 @@ async function runLocalWeb(
         // If open package not available, just show the URL
         console.log(chalk.yellow('⚠ Could not open browser automatically'));
         console.log(chalk.dim('Please visit the URL above manually\n'));
+        console.error(chalk.dim(`Debug: ${error instanceof Error ? error.message : String(error)}`));
       }
     }
   }, 3000);
 
   // Handle shutdown gracefully
-  process.on('SIGINT', () => {
+  const sigintHandler = () => {
+    clearTimeout(readyTimeout);
     spinner.stop();
     child.kill('SIGTERM');
     console.log(chalk.dim('\n✓ Web UI stopped'));
     process.exit(0);
-  });
+  };
+  process.once('SIGINT', sigintHandler);
 
   // Handle child process exit
   child.on('exit', (code) => {
+    clearTimeout(readyTimeout);
+    spinner.stop();
     if (code !== 0 && code !== null) {
       spinner.fail('Web UI failed to start');
       console.error(chalk.red(`\nProcess exited with code ${code}`));
