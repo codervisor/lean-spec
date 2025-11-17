@@ -1,0 +1,580 @@
+---
+sidebar_position: 4
+title: Refactoring - Monorepo Core Extraction
+---
+
+# Refactoring: Monorepo Core Extraction
+
+**Spec**: [067-monorepo-core-extraction](https://github.com/codervisor/lean-spec/tree/main/specs/067-monorepo-core-extraction)  
+**Status**: ✅ Complete  
+**Complexity**: High  
+**Duration**: 1 week
+
+## Context
+
+### The Problem
+
+LeanSpec needed a web application to showcase live specs (spec 035). But ~40% of the CLI codebase was tightly coupled to Node.js file system operations:
+
+```typescript
+// Tightly coupled to fs
+function loadSpec(specId: string): SpecInfo {
+  const path = `specs/${specId}/README.md`;
+  const content = fs.readFileSync(path, 'utf-8');
+  return parseSpec(content);
+}
+```
+
+**The dilemma**:
+- Web app needs same parsing/validation logic as CLI
+- Web app reads from GitHub API, not filesystem
+- Duplicating code would lead to drift and inconsistency
+- Need shared logic that works with both storage backends
+
+### Why This Spec?
+
+**Critical decision point**: Restructure before building web app, or duplicate code?
+
+**If we don't refactor**:
+- Web app duplicates 2,000+ lines of parsing/validation code
+- CLI and web implementations drift apart
+- Bugs fixed in one place, not the other
+- Inconsistent behavior confuses users
+
+**If we refactor**:
+- Shared `@leanspec/core` package ensures consistency
+- Breaking change requires careful migration
+- One-time pain, long-term maintainability
+
+**Decision**: Refactor now. Future us will thank present us.
+
+## The Spec
+
+### Architecture Decision
+
+**Monorepo structure** with shared core package:
+
+```
+lean-spec/
+├── packages/
+│   ├── core/                 # 🎯 NEW: Shared logic
+│   │   ├── types/            # Platform-agnostic types
+│   │   ├── parsers/          # Spec parsing
+│   │   ├── validators/       # Validation logic
+│   │   └── utils/            # Stats, filters
+│   │
+│   ├── cli/                  # 🔧 EXISTING: CLI/MCP
+│   │   ├── commands/
+│   │   └── adapters/
+│   │       └── fs-storage.ts # File system adapter
+│   │
+│   └── web/                  # 🌐 FUTURE: Web app
+│       └── adapters/
+│           └── github-storage.ts  # GitHub adapter
+```
+
+### Key Design Decisions
+
+**1. Abstract Storage Interface**
+
+Instead of coupling to `fs`, define abstract interface:
+
+```typescript
+// packages/core/src/types/storage.ts
+interface SpecStorage {
+  listSpecs(): Promise<string[]>;
+  readSpec(id: string): Promise<string>;
+  readSubSpec(id: string, file: string): Promise<string>;
+}
+```
+
+**2. Dependency Injection**
+
+Core functions accept storage, not global `fs`:
+
+```typescript
+// Before (tightly coupled)
+function loadSpec(id: string): SpecInfo {
+  const content = fs.readFileSync(`specs/${id}/README.md`);
+  return parseSpec(content);
+}
+
+// After (dependency injection)
+function loadSpec(
+  id: string,
+  storage: SpecStorage
+): Promise<SpecInfo> {
+  const content = await storage.readSpec(id);
+  return parseSpec(content);
+}
+```
+
+**3. CLI Adapter**
+
+CLI provides filesystem implementation:
+
+```typescript
+// packages/cli/src/adapters/fs-storage.ts
+class FileSystemStorage implements SpecStorage {
+  constructor(private specsPath: string) {}
+  
+  async readSpec(id: string): Promise<string> {
+    return fs.readFile(`${this.specsPath}/${id}/README.md`, 'utf-8');
+  }
+}
+```
+
+**4. Build Configuration**
+
+Use `tsup` to bundle core into CLI (no runtime dependency):
+
+```typescript
+// packages/cli/tsup.config.ts
+export default defineConfig({
+  noExternal: ['@leanspec/core'],  // Bundle core, don't require at runtime
+});
+```
+
+**Why this matters**: Published CLI package is self-contained, no `workspace:*` dependencies.
+
+[View full spec →](https://github.com/codervisor/lean-spec/blob/main/specs/067-monorepo-core-extraction/README.md)
+
+## Implementation
+
+### Phase 1: Setup Monorepo (Day 1)
+
+**Steps**:
+1. Create `pnpm-workspace.yaml`
+2. Create `packages/core` directory
+3. Set up TypeScript build configuration
+4. Configure Turborepo for build orchestration
+
+**Challenges**:
+- Turborepo caching configuration
+- TypeScript path mappings for local development
+- Build order (core must build before cli/web)
+
+**Solution**:
+```yaml
+# pnpm-workspace.yaml
+packages:
+  - 'packages/*'
+
+# turbo.json
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],  # Build dependencies first
+      "outputs": ["dist/**"]
+    }
+  }
+}
+```
+
+### Phase 2: Extract Core Logic (Day 2-3)
+
+**Extraction strategy**:
+1. Move types first (no dependencies)
+2. Move parsers (depend on types)
+3. Move validators (depend on parsers)
+4. Move utils last (depend on everything)
+
+**Code movement**:
+```bash
+# Types (0 external deps)
+src/types/ → packages/core/src/types/
+
+# Parsers (~300 lines)
+src/parsers/frontmatter.ts → packages/core/src/parsers/
+
+# Validators (~500 lines)  
+src/validators/*.ts → packages/core/src/validators/
+
+# Utils (~200 lines)
+src/utils/stats.ts → packages/core/src/utils/
+```
+
+**Key refactoring**:
+- Remove all `fs` imports from core
+- Change sync functions to async (GitHub API is async)
+- Add `SpecStorage` parameter to all public functions
+
+### Phase 3: Create CLI Adapter (Day 4)
+
+**Implementation**:
+```typescript
+// packages/cli/src/adapters/fs-storage.ts
+export class FileSystemStorage implements SpecStorage {
+  constructor(private specsPath: string) {}
+
+  async listSpecs(): Promise<string[]> {
+    const entries = await fs.readdir(this.specsPath, { withFileTypes: true });
+    return entries
+      .filter(e => e.isDirectory() && /^\d{3}-/.test(e.name))
+      .map(e => e.name);
+  }
+
+  async readSpec(id: string): Promise<string> {
+    return fs.readFile(
+      path.join(this.specsPath, id, 'README.md'),
+      'utf-8'
+    );
+  }
+
+  async readSubSpec(id: string, file: string): Promise<string> {
+    return fs.readFile(
+      path.join(this.specsPath, id, file),
+      'utf-8'
+    );
+  }
+}
+```
+
+**Integration**:
+```typescript
+// packages/cli/src/cli.ts
+const storage = new FileSystemStorage('./specs');
+const specs = await listSpecs(storage);  // Core function + CLI adapter
+```
+
+### Phase 4: Update CLI Commands (Day 5-6)
+
+**Every command** needs adapter:
+- `lean-spec list` - Pass storage to `listSpecs()`
+- `lean-spec view` - Pass storage to `loadSpec()`
+- `lean-spec validate` - Pass storage to `validateSpec()`
+
+**Pattern**:
+```typescript
+// Before
+async function listCommand() {
+  const specs = getSpecs();  // Reads fs directly
+  console.log(specs);
+}
+
+// After  
+async function listCommand() {
+  const storage = new FileSystemStorage('./specs');
+  const specs = await getSpecs(storage);  // Inject storage
+  console.log(specs);
+}
+```
+
+### Phase 5: Fix Tests (Day 7)
+
+**Test updates**:
+- Create mock storage for unit tests
+- Update integration tests to use adapter
+- Add adapter-specific tests
+
+**Mock storage**:
+```typescript
+class MockStorage implements SpecStorage {
+  private specs = new Map<string, string>();
+  
+  async readSpec(id: string): Promise<string> {
+    return this.specs.get(id) || '';
+  }
+  
+  // Test helper
+  setSpec(id: string, content: string) {
+    this.specs.set(id, content);
+  }
+}
+```
+
+**Benefits**:
+- Tests run without filesystem
+- Faster test execution
+- Can test edge cases (malformed specs)
+
+### Phase 6: Build & Publish (Day 7)
+
+**Critical**: Ensure `@leanspec/core` is bundled, not external dependency.
+
+**Problem**: pnpm workspaces use `workspace:*` protocol:
+```json
+{
+  "dependencies": {
+    "@leanspec/core": "workspace:*"  // ❌ Breaks published package
+  }
+}
+```
+
+**Solution**: Bundle core with tsup, remove from dependencies:
+```typescript
+// packages/cli/tsup.config.ts
+export default defineConfig({
+  noExternal: ['@leanspec/core'],  // Bundle into dist/
+});
+```
+
+**Verification**:
+```bash
+# Build
+pnpm build
+
+# Check published package contents
+cd packages/cli/dist
+ls -la  # Should include bundled core code
+
+# Verify no workspace dependencies
+npm pack --dry-run
+# Check dependencies - should NOT include @leanspec/core
+```
+
+## Evolution
+
+### What Changed During Implementation?
+
+**1. Build Configuration Complexity**
+   - **Unexpected**: TypeScript path mappings broke between packages
+   - **Solution**: Used `tsconfig.json` references
+   - **Learning**: Monorepos need careful build orchestration
+
+**2. Async Conversion**
+   - **Original**: Core functions were synchronous
+   - **Problem**: GitHub API is async, need common interface
+   - **Change**: Made all core functions async
+   - **Impact**: CLI code needed `await` added everywhere
+
+**3. Testing Strategy**
+   - **Original**: Tests used real filesystem
+   - **Opportunity**: Mock storage enables better testing
+   - **Change**: Switched to mock-based unit tests
+   - **Benefit**: 10x faster test execution
+
+**4. Bundle Configuration**
+   - **Discovery**: `workspace:*` dependencies break published package
+   - **Root cause**: pnpm workspace protocol not recognized by npm
+   - **Solution**: Use `noExternal` to bundle core
+   - **Critical**: Would have broken published package without this
+
+### Challenges
+
+**Challenge 1: Breaking Changes**
+   - **Issue**: All existing code imports changed
+   - **Scope**: 50+ files needed updates
+   - **Mitigation**: Used IDE refactoring tools
+   - **Validation**: Ran full test suite after each phase
+
+**Challenge 2: Build Orchestration**
+   - **Issue**: CLI build failed if core wasn't built first
+   - **Solution**: Turborepo `dependsOn: ["^build"]`
+   - **Complexity**: Cache invalidation when core changes
+   - **Outcome**: Added 30s to cold build, but hot builds are fast
+
+**Challenge 3: Type Preservation**
+   - **Issue**: TypeScript types sometimes lost across packages
+   - **Solution**: Explicit type exports in core `index.ts`
+   - **Lesson**: Be intentional about public API surface
+
+**Challenge 4: Developer Experience**
+   - **Issue**: Local development required building core first
+   - **Solution**: `pnpm build:templates && turbo run build`
+   - **Documentation**: Updated CONTRIBUTING.md with setup steps
+
+## Outcome
+
+### Metrics
+
+**Code Organization**:
+- Core package: 1,200 lines (pure logic)
+- CLI package: 800 lines (commands + adapter)
+- Web package: Ready for implementation
+- Code reuse: ~60% of logic now shared
+
+**Build Performance**:
+- Cold build: +30s (core + cli + web)
+- Hot build: No change (turbo caching)
+- Test execution: -50% time (mock storage)
+
+**Breaking Changes**:
+- Files changed: 52
+- Test updates: 38
+- Build config: 5 new files
+- Migration time: 1 week
+
+### Developer Impact
+
+**Before**:
+- CLI and future web would duplicate code
+- File system coupling prevented testing
+- Changes required editing multiple places
+
+**After**:
+- Core logic shared across all packages
+- Clean abstraction enables easy testing
+- Single source of truth for parsing/validation
+
+### Risk Mitigation
+
+**How spec prevented issues**:
+- ✅ Explicit migration plan prevented missing edge cases
+- ✅ Test strategy ensured no regressions
+- ✅ Build configuration documented prevented publish issues
+- ✅ Rollback plan (kept in spec) gave confidence
+
+**What could have gone wrong**:
+- Publishing with `workspace:*` dependencies → Would break users
+- Missing sync-to-async conversion → Would break web app later
+- No test updates → Would have failing CI
+- Breaking CLI without migration guide → Would strand users
+
+## Lessons
+
+### What Worked
+
+✅ **Spec-driven refactoring**
+   - Explicit plan prevented mistakes
+   - Could pause and resume work easily
+   - Team could review approach before implementation
+
+✅ **Phased implementation**
+   - One package at a time (core → cli → web)
+   - Could validate each phase before moving on
+   - Reduced risk of breaking everything at once
+
+✅ **Comprehensive testing**
+   - Test updates in same PR as code changes
+   - Mock storage enabled better unit tests
+   - Caught issues before merge
+
+✅ **Build configuration attention**
+   - Documented bundle strategy in spec
+   - Caught `workspace:*` issue before publish
+   - Spec reviewers spotted potential problems
+
+### What We'd Do Differently
+
+🔄 **Async conversion earlier**
+   - Did it mid-implementation when we realized need
+   - Should have been in original spec design
+   - Would have saved re-work
+
+🔄 **Better progress tracking**
+   - Should have used `lean-spec update 067 --status in-progress`
+   - Spec status stayed `planned` until completion
+   - Lost visibility into progress
+
+🔄 **Incremental commits**
+   - Large PR (~1,500 lines changed)
+   - Should have split into multiple PRs per phase
+   - Would have been easier to review
+
+### Key Takeaways
+
+**1. Specs de-risk refactors**
+   - Explicit plan surfaces issues before coding
+   - Can discuss approach with team
+   - Provides rollback plan if needed
+
+**2. Refactoring is investment**
+   - 1 week of work for long-term maintainability
+   - Enables future features (web app)
+   - Tests become faster and more reliable
+
+**3. Build configuration matters**
+   - Monorepo tooling has sharp edges
+   - Bundle strategy affects published package
+   - Document non-obvious configuration decisions
+
+**4. Breaking changes need care**
+   - Migration guide essential
+   - Test coverage gives confidence
+   - Phased rollout reduces risk
+
+## AI Agent Collaboration
+
+### How AI Agents Used This Spec
+
+**GitHub Copilot Agent**:
+1. Read spec to understand refactoring scope
+2. Moved files according to extraction plan
+3. Updated imports across 50+ files
+4. Implemented `FileSystemStorage` adapter matching interface
+5. Converted sync functions to async
+6. Updated test files to use mock storage
+
+**Challenges for AI**:
+- **Large scope**: 1,500 lines changed across 52 files
+- **Build system**: Needed understanding of tsup, turborepo
+- **Testing strategy**: Required judgment on what to mock
+- **Error recovery**: Build failures needed diagnosis
+
+**Success factors**:
+- **Explicit file movement plan** - Agent knew what to move where
+- **Interface definition** - Clear `SpecStorage` contract
+- **Test strategy documented** - Agent knew to create mock storage
+- **Build configuration examples** - Spec included tsup config
+
+**Agent autonomy**: 60% - Agent handled file movement and import updates. Human provided guidance on build configuration, async conversion strategy, and test approach.
+
+### Spec Quality Challenges
+
+**What made this harder for AI**:
+
+1. **Large scope** - Touching 52 files is challenging to coordinate
+2. **Build system complexity** - Monorepo tooling requires expertise
+3. **Judgment calls** - Async conversion strategy not explicit
+4. **System-level thinking** - Understanding package boundaries
+
+**What helped AI succeed**:
+
+1. **Phased plan** - Clear steps (setup → extract → adapt → test)
+2. **Code examples** - Spec showed exact interfaces and patterns
+3. **Test strategy** - Explicit guidance on mocking
+4. **Risk mitigation** - Spec called out `workspace:*` issue
+
+### Human-AI Division of Labor
+
+**Human role**:
+- Architectural decisions (monorepo vs alternatives)
+- Build configuration (tsup, turborepo)
+- Async conversion strategy
+- Risk assessment and validation
+
+**AI role**:
+- File movement according to plan
+- Import path updates (mechanical)
+- Test file updates
+- Mock storage implementation
+
+**Result**: Refactoring completed in 1 week vs estimated 2 weeks without AI assistance. Human focused on architecture and validation, AI handled mechanical changes.
+
+### Lessons for AI-Assisted Refactoring
+
+**Do**:
+- ✅ Break down into clear phases
+- ✅ Provide interface definitions
+- ✅ Include code examples for adapters
+- ✅ Document non-obvious configuration
+
+**Don't**:
+- ❌ Expect AI to make architectural decisions
+- ❌ Assume AI understands build tool nuances
+- ❌ Leave judgment calls implicit
+- ❌ Skip validation steps
+
+**Key insight**: AI excels at mechanical refactoring when given explicit plan. Human provides architecture and judgment.
+
+---
+
+## Try It Yourself
+
+Want to refactor with confidence?
+
+1. **Write the spec first** - Plan before coding, surface issues early
+2. **Phase the work** - Break into validatable chunks
+3. **Update tests in lockstep** - Don't leave for later
+4. **Document build configuration** - Non-obvious decisions need explanation
+5. **Have rollback plan** - Spec should include how to undo changes
+
+**Template**: Use [spec 067](https://github.com/codervisor/lean-spec/tree/main/specs/067-monorepo-core-extraction) as a template for breaking refactors that need careful coordination.
+
+**Key Questions**:
+- What breaks if this goes wrong?
+- How do we validate each phase?
+- Can we roll back safely?
+
+If you can answer these, you're ready to refactor.

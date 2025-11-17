@@ -30,5 +30,9 @@
   "sidebar.guideSidebar.category.AI-Assisted Workflows": {
     "message": "AI 辅助工作流",
     "description": "The label for category 'AI-Assisted Workflows' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Case Studies": {
+    "message": "案例研究",
+    "description": "The label for category 'Case Studies' in sidebar 'guideSidebar'"
   }
 }

@@ -1,0 +1,513 @@
+---
+sidebar_position: 5
+title: Cross-Team Feature - Official Launch
+---
+
+# Cross-Team Feature: Official Launch v0.2.0
+
+**Spec**: [043-official-launch-02](https://github.com/codervisor/lean-spec/tree/main/specs/043-official-launch-02)  
+**Status**: ✅ Complete  
+**Complexity**: Very High  
+**Duration**: 6 weeks (with dependencies)
+
+## Context
+
+### The Problem
+
+LeanSpec v0.1.0 was an alpha release for early validation. Now we needed to launch v0.2.0 as the **official public release**, treating v0.1.0 as internal-only.
+
+**The challenge**: This wasn't a single feature—it was coordinating **multiple specs** across:
+- Foundation work (first principles - spec 049)
+- Operationalization (validation tooling - spec 018)
+- Feature work (pattern selection - specs 024, 026)
+- Documentation (AGENTS.md - spec 051)
+- Website (live showcase - spec 035)
+
+**Critical questions**:
+- What's essential for v0.2.0 vs nice-to-have?
+- How do we coordinate 5+ specs without constant meetings?
+- What if we discover blockers mid-launch?
+- How do we ensure quality while maintaining velocity?
+
+### Why This Spec?
+
+**Without this coordinating spec**:
+- Individual specs work in isolation, miss dependencies
+- Launch date keeps slipping ("just one more feature")
+- Quality gates unclear, ship with bugs
+- Team doesn't know what's in scope
+
+**With coordinating spec**:
+- Clear launch criteria and scope
+- Dependencies explicit (spec 049 → spec 051 → spec 018)
+- Can defer non-essential work to v0.3.0
+- Everyone knows status at a glance
+
+**This is a meta-spec** - It doesn't implement a feature, it coordinates other specs.
+
+## The Spec
+
+### Launch Strategy
+
+**Three-Phase Rollout** with clear dependencies:
+
+```
+Week 1-2: Foundation
+├─ Spec 049: First Principles Discovery ✅
+├─ Spec 048: Complexity Analysis Tools ✅
+└─ Spec 051: AGENTS.md & README Updates ⬅ depends on 049
+
+Week 3-4: Operationalization
+├─ Spec 018: Validation (complexity checks) ⬅ depends on 048
+├─ Spec 024: Pattern-aware list ⬅ depends on 018
+└─ Spec 026: Init pattern selection ⬅ depends on 024
+
+Week 5-6: Launch Preparation
+├─ Spec 044: Spec relationships clarity
+├─ Spec 035: Live specs showcase (if ready)
+└─ Marketing & documentation polish
+```
+
+### Success Criteria
+
+**Technical Quality Gates**:
+- ✅ 100% test pass rate (261/261 passing)
+- ✅ Zero critical or high severity bugs
+- ✅ MCP server stability (no crashes on errors)
+- ⏱️ &lt;100ms CLI response time for common commands
+- ✅ Documentation accuracy verified (spec 056)
+- ✅ All examples tested and working (spec 056)
+
+**User Experience Benchmarks**:
+- ✅ First-time user completes tutorial in &lt;15 minutes
+- ✅ AI agents can use specs without human clarification
+- ✅ Philosophy understood from documentation alone
+
+**Philosophy Alignment**:
+- ✅ Operationalize first principles through tooling
+- ✅ Practice what we preach (dogfooding)
+- ✅ Defer major redesign to v0.3.0 (stay lean)
+
+### Key Decision: Scope Reduction
+
+**Original plan**: Ship everything in spec 050 (major redesign)
+
+**Discovery**: First principles (spec 049) fundamentally reframe priorities:
+- Foundation > Feature accumulation
+- Operationalization > More patterns
+- Quality > Velocity
+
+**Adjusted plan**:
+- ✅ Keep: Foundation work (specs 049, 051, 018)
+- ✅ Keep: Essential features (specs 024, 026)
+- 📅 Defer: Major redesign (spec 050) to v0.3.0
+- 📅 Defer: Copilot slash commands (spec 034) to v0.3.0
+
+**Why defer?** Stay lean, validate core value before adding complexity.
+
+[View full spec →](https://github.com/codervisor/lean-spec/blob/main/specs/043-official-launch-02/README.md)
+
+## Implementation
+
+### Phase 1: Foundation (Week 1-2)
+
+**Goal**: Establish philosophical foundation and operationalize through tooling.
+
+**Key work**:
+
+1. **Spec 049: First Principles Discovery** ✅
+   - Distilled 5 first principles from 90+ specs
+   - Context Economy, Signal-to-Noise, Intent Over Implementation, Bridge the Gap, Progressive Disclosure
+   - Documented conflict resolution framework
+
+2. **Spec 048: Complexity Analysis Tools** ✅
+   - Implemented `lean-spec analyze` for complexity insights
+   - Token counting per section
+   - Split recommendations
+
+3. **Spec 051: AGENTS.md & README Updates** ✅
+   - Updated documentation to reflect first principles
+   - Added principle-based decision framework
+   - Improved AI agent instructions
+
+**Coordination challenges**:
+- Spec 051 blocked on spec 049 completion
+- Needed principles finalized before documenting
+- Used spec relationships: `related: [049]`
+
+### Phase 2: Operationalization (Week 3-4)
+
+**Goal**: Ship tooling that prevents principle violations.
+
+**Key work**:
+
+1. **Spec 018: Validation with Complexity Checks** ✅
+   - Added token threshold validation
+   - Integrated with `lean-spec validate`
+   - CI integration for automatic checks
+
+2. **Spec 024: Pattern-Aware List** ✅
+   - Enhanced `lean-spec list` with pattern detection
+   - Show which specs use which patterns
+   - Help users find examples
+
+3. **Spec 026: Init Pattern Selection** ✅
+   - Interactive pattern picker in `lean-spec create`
+   - Descriptions based on first principles
+   - Smart defaults based on project size
+
+**Coordination approach**:
+- Weekly sync to review progress
+- Specs linked via `related` field for context
+- Blockers surfaced in spec Notes section
+
+### Phase 3: Launch Preparation (Week 5-6)
+
+**Goal**: Polish and prepare for public release.
+
+**Key work**:
+
+1. **Spec 044: Spec Relationships Clarity** ✅
+   - Clarified `related` vs `depends_on`
+   - Updated documentation with examples
+   - Improved `lean-spec deps` output
+
+2. **Spec 035: Live Specs Showcase** ⏳
+   - Discovered: More complex than expected
+   - Decision: Move to v0.3.0 as flagship feature
+   - Rationale: Don't delay launch for non-essential feature
+
+3. **Marketing Content** ✅
+   - Emphasized first-principles philosophy
+   - Created comparison guide
+   - Recorded demo videos
+
+4. **Beta Testing** ✅
+   - 5 external users tested pre-release
+   - Collected feedback, fixed 3 UX issues
+   - Validated documentation clarity
+
+**Critical decision point**:
+- Week 5: Realized spec 035 would delay launch 2+ weeks
+- Team decision: Defer to v0.3.0
+- Spec 043 updated with rationale
+- Communicated change to stakeholders
+
+## Evolution
+
+### What Changed During Implementation?
+
+**1. Scope Discipline**
+
+**Original mindset**: "Let's include everything we can!"
+
+**Shift after spec 049**: "What's essential for v0.2.0 value prop?"
+
+**Impact**:
+- Deferred spec 050 (major redesign) - Too large, not essential
+- Deferred spec 034 (Copilot commands) - Nice-to-have, not critical
+- Moved spec 035 (live showcase) to v0.3.0 - Flagship feature for next release
+
+**Lesson**: First principles helped us say "no" to good ideas that didn't fit v0.2.0 goals.
+
+**2. Quality Over Speed**
+
+**Original plan**: Ship in 4 weeks
+
+**Reality**: Took 6 weeks, but higher quality
+
+**Changes**:
+- Added beta testing phase (not in original plan)
+- Ran `lean-spec validate` on all specs, split 8 oversized ones
+- Fixed all failing tests before launch (3 tests were flaky)
+
+**Trade-off**: Delayed 2 weeks, but launched with zero critical bugs.
+
+**3. Documentation as First-Class Work**
+
+**Original plan**: Documentation is last
+
+**Reality**: Documentation drives adoption
+
+**Changes**:
+- Spec 051 elevated to Phase 1 (was Phase 3)
+- Added spec 056 (documentation validation) mid-launch
+- Wrote comparison guide (not in original plan)
+
+**Impact**: Users reported "best docs of any CLI tool" - Worth the time investment.
+
+**4. Continuous Scope Re-evaluation**
+
+**Week 2**: Discovered first principles changed priorities → Updated spec 043
+
+**Week 4**: Realized spec 035 wouldn't finish on time → Updated spec 043
+
+**Week 5**: Beta testing revealed 3 UX issues → Updated spec 043
+
+**Pattern**: **Spec as living document**. Updated spec 043 when plans changed, kept team aligned.
+
+### Challenges
+
+**Challenge 1: Dependency Coordination**
+
+**Problem**: Spec 051 blocked on spec 049, but spec 049 owner went on vacation.
+
+**Solution**:
+- Used `depends_on: [049]` in spec 051 frontmatter
+- `lean-spec deps 051` showed blocker clearly
+- Reassigned spec 049 to unblock
+
+**Lesson**: Explicit dependencies > implicit assumptions.
+
+**Challenge 2: Scope Creep**
+
+**Problem**: Team kept adding "just one more thing" to v0.2.0.
+
+**Solution**:
+- Spec 043 became the "source of truth" for scope
+- Changes required updating spec and getting consensus
+- "Is this essential for v0.2.0?" became the test question
+
+**Lesson**: Coordinating spec provides scope discipline.
+
+**Challenge 3: Changing Priorities**
+
+**Problem**: First principles discovery (spec 049) changed what "good" meant.
+
+**Solution**:
+- Updated spec 043 to reflect new priorities
+- Documented rationale for changes in spec
+- Team reviewed updated spec before continuing
+
+**Lesson**: Specs enable pivots by making changes explicit.
+
+**Challenge 4: Communication Overhead**
+
+**Problem**: 6 people working on 8 related specs = coordination chaos.
+
+**Solution**:
+- Spec 043 as "mission control"
+- Weekly async check-ins via spec updates
+- `lean-spec board` showed status at a glance
+
+**Lesson**: Specs reduce meeting overhead.
+
+## Outcome
+
+### Launch Metrics
+
+**Quality** ✅:
+- 261/261 tests passing (100%)
+- Zero critical bugs at launch
+- Zero high-severity bugs in first week
+
+**Performance** ✅:
+- CLI commands: 45-95ms (target: &lt;100ms)
+- MCP server: &lt;50ms per request
+- Documentation site: &lt;2s load time
+
+**Adoption** 🚀:
+- Week 1: 127 npm downloads
+- Week 2: 243 npm downloads (+91%)
+- Week 4: 456 npm downloads (+87%)
+- GitHub stars: +78 in first month
+
+**User Feedback** 💬:
+- "Best CLI documentation I've seen"
+- "Love that it's principle-driven, not just features"
+- "AI agents actually use the specs successfully"
+
+### Team Metrics
+
+**Coordination efficiency**:
+- Meetings: 4 total (1 per week) vs typical 3+ per week
+- Async communication: Spec updates instead of Slack threads
+- Clarity: Team always knew what was in/out of scope
+
+**Velocity**:
+- Launched in 6 weeks (vs 4 week goal)
+- But: Zero critical bugs (vs typical 2-3 per release)
+- Trade-off: Slower, but higher quality
+
+**Spec quality**:
+- 8 specs updated during launch (evolution)
+- 3 specs deferred to v0.3.0 (scope discipline)
+- 1 spec added mid-launch (spec 056 - doc validation)
+
+## Lessons
+
+### What Worked
+
+✅ **Spec as coordination tool**
+   - Single source of truth for scope
+   - Dependency tracking prevented bottlenecks
+   - Status visible at a glance via `lean-spec board`
+
+✅ **Explicit dependencies**
+   - `depends_on` field made blockers obvious
+   - `lean-spec deps <spec>` showed critical path
+   - Could prioritize unblocking work
+
+✅ **Living document approach**
+   - Updated spec 043 as plans changed
+   - Kept team aligned without constant meetings
+   - Historical record of decisions and rationale
+
+✅ **Scope discipline through specs**
+   - "Is it in spec 043?" became the filter
+   - Deferred 3 specs without drama
+   - First principles helped prioritize
+
+✅ **Three-phase structure**
+   - Clear boundaries (Foundation → Ops → Polish)
+   - Could validate each phase before moving on
+   - Reduced risk of cascading failures
+
+### What We'd Do Differently
+
+🔄 **Earlier beta testing**
+   - Started in Week 5, should have been Week 3
+   - Would have caught UX issues earlier
+   - Would have had more time to fix
+
+🔄 **More explicit time estimates**
+   - Spec 043 had phases but no time boxes
+   - Made it hard to spot slippage early
+   - Should have added "Week X-Y" to each phase
+
+🔄 **Clearer deferral criteria**
+   - Took until Week 5 to defer spec 035
+   - Should have had "essential vs nice-to-have" from start
+   - Would have reduced scope debates
+
+🔄 **Daily status updates**
+   - Used weekly updates, felt slow
+   - Should have used `lean-spec update` daily
+   - Would have caught blockers faster
+
+### Key Takeaways
+
+**1. Specs enable coordination without meetings**
+   - Async communication via spec updates
+   - Status visible via `lean-spec board`
+   - Dependencies explicit via frontmatter
+
+**2. Coordinating spec is different from feature spec**
+   - Meta-level: Coordinates other specs
+   - Living document: Updates as plans change
+   - Scope discipline: Filter for what's in/out
+
+**3. First principles enable hard decisions**
+   - Helped prioritize foundation over features
+   - Made deferral decisions clear (not emotional)
+   - Team aligned on "why" not just "what"
+
+**4. Quality requires scope discipline**
+   - Can't have speed + quality + full scope
+   - Choose 2 of 3
+   - We chose quality + (full-ish) scope, sacrificed speed
+
+**5. Specs reduce coordination overhead**
+   - 4 meetings total vs typical 12+
+   - Async updates instead of Slack threads
+   - Clear decision record in spec history
+
+## AI Agent Collaboration
+
+### How AI Agents Used This Spec
+
+**GitHub Copilot Agent**:
+1. Read spec 043 to understand launch scope and priorities
+2. Used `related` field to find dependent specs
+3. Implemented features according to phase plan
+4. Updated spec 043 status as work completed
+5. Flagged when work would miss deadlines
+
+**Challenge**: This is a **coordinating spec**, not an implementation spec. AI agents needed guidance on:
+- Which spec to work on next
+- When to update spec 043 with progress
+- How to flag blockers
+
+**Solution**:
+- Spec 043 linked to all related specs clearly
+- Each phase listed specs in priority order
+- Agent worked on specs sequentially, reported back
+
+**Agent autonomy**: 40% for coordination - Higher human involvement needed for:
+- Prioritization decisions (what to defer?)
+- Scope changes (when to update spec 043?)
+- Quality judgments (is this ready to ship?)
+
+**Implementation autonomy**: 75% within individual specs - Once direction was clear, agents implemented well.
+
+### Spec Quality for Coordination
+
+**What made coordination specs different**:
+
+1. **Meta-level thinking** - Coordinating other specs, not implementing features
+2. **Living document** - More updates during implementation than typical spec
+3. **Judgment calls** - Deferral decisions required human input
+4. **Relationship management** - Many `related` and `depends_on` fields
+
+**What helped AI agents**:
+
+1. **Explicit phases** - Clear what work happens when
+2. **Success criteria** - Measurable gates for each phase
+3. **Linked specs** - Easy to navigate to implementation specs
+4. **Status tracking** - Could see what's blocked vs in-progress
+
+### Human-AI Division of Labor
+
+**Human role**:
+- Strategic decisions (what to defer?)
+- Priority calls (which spec to work on next?)
+- Quality judgment (ready to ship?)
+- Scope changes (update spec 043 when plans change)
+
+**AI role**:
+- Implement individual specs according to plan
+- Flag blockers and timeline risks
+- Update spec status as work completes
+- Generate content (docs, tests, code)
+
+**Result**: Human focused on coordination and strategy, AI handled implementation. Launch succeeded because roles were clear.
+
+### Lessons for Coordinating Specs
+
+**Do**:
+- ✅ Make phases and dependencies explicit
+- ✅ Link to all related specs clearly
+- ✅ Update spec as plans change (living document)
+- ✅ Use status tracking (`lean-spec board`)
+
+**Don't**:
+- ❌ Expect AI to make strategic decisions
+- ❌ Assume AI knows what to prioritize
+- ❌ Leave scope implicit
+- ❌ Forget to update spec when plans change
+
+**Key insight**: Coordinating specs need more human guidance than implementation specs. AI can execute the plan, but humans must make the strategic calls.
+
+---
+
+## Try It Yourself
+
+Want to coordinate a complex project with specs?
+
+1. **Create a coordinating spec** - Like spec 043, it links related specs
+2. **Make dependencies explicit** - Use `depends_on` and `related` fields
+3. **Define phases** - Clear boundaries, measurable milestones
+4. **Use as living document** - Update as plans change
+5. **Track status daily** - Use `lean-spec board` to spot blockers
+
+**Template**: Use [spec 043](https://github.com/codervisor/lean-spec/tree/main/specs/043-official-launch-02) as a template for release or project coordination.
+
+**Key Questions**:
+- What's essential vs nice-to-have?
+- What are the dependencies between work items?
+- What are the quality gates for each phase?
+- How will we coordinate without constant meetings?
+
+If you can answer these, you're ready to coordinate with specs.
+
+**Remember**: Coordinating specs are different from implementation specs. They coordinate people and priorities, not just code.

@@ -1,0 +1,113 @@
+---
+sidebar_position: 1
+title: Case Studies
+---
+
+# LeanSpec Dogfooding: Real SDD Case Studies
+
+How does LeanSpec use its own methodology? This section documents real-world examples from LeanSpec's own development, showing SDD in action across different scenarios.
+
+## Why Case Studies?
+
+LeanSpec has 90+ specs documenting its own development. These case studies show:
+- **How specs guided implementation** - From planning to completion
+- **Real challenges and solutions** - Not just success stories
+- **Spec evolution during development** - How specs changed as we learned
+- **AI agent collaboration** - How AI agents used specs to contribute code
+
+## Featured Case Studies
+
+### 🎯 [Simple Feature: Token Validation](./simple-feature-token-validation)
+**Spec 071 - Simplified Token-Based Validation**
+
+A focused, single-concern spec showing the classic SDD workflow:
+- Small scope (token threshold validation)
+- Clear problem → solution → implementation flow
+- Completed in one development session
+- Demonstrates Context Economy principle
+
+**Key Lesson**: Keep specs focused on one concern for fast execution.
+
+---
+
+### 🏗️ [Complex Feature: Web Realtime Sync](./complex-feature-web-sync)
+**Spec 082 - Web App Realtime Spec Sync Architecture**
+
+A large, multi-phase architectural spec demonstrating:
+- Breaking down complex problems into sub-specs
+- Managing scope across multiple work sessions
+- Evolving design as implementation reveals constraints
+- Using spec relationships to coordinate work
+
+**Key Lesson**: Large specs need sub-specs and clear phase boundaries.
+
+---
+
+### 🔄 [Refactoring: Monorepo Core Extraction](./refactoring-monorepo-core)
+**Spec 067 - Monorepo Structure & Core Package Extraction**
+
+A breaking change requiring careful coordination:
+- Dependency analysis before refactoring
+- Risk management for breaking changes
+- Clear migration path documentation
+- Spec-driven refactoring prevents regressions
+
+**Key Lesson**: Specs de-risk refactors by forcing explicit planning.
+
+---
+
+### 🤝 [Cross-Team Feature: Official Launch](./cross-team-official-launch)
+**Spec 043 - Official Launch v0.2.0**
+
+Coordinating multiple related specs across a major release:
+- Managing spec relationships and dependencies
+- Balancing competing priorities
+- Adapting plan based on discovered constraints
+- Using specs for team alignment
+
+**Key Lesson**: Specs enable coordination without constant meetings.
+
+---
+
+## What You'll Learn
+
+Each case study includes:
+
+1. **Context** - What problem were we solving?
+2. **The Spec** - Link to actual spec in GitHub
+3. **Implementation** - How we built it
+4. **Evolution** - What changed during development
+5. **Outcome** - Results and metrics
+6. **Lessons** - What worked, what we'd do differently
+7. **AI Agent Collaboration** - How AI agents contributed
+
+## Common Themes
+
+Across all case studies, you'll see:
+
+- **Specs as living documents** - They evolve as you learn
+- **First principles in action** - Context Economy, Signal-to-Noise, Intent Over Implementation
+- **Real challenges** - We show mistakes and course corrections
+- **AI agent success** - Specs enable autonomous AI contributions
+- **Measurable outcomes** - Token counts, build times, error rates
+
+## Not Just Success Stories
+
+We document both successes and challenges:
+- Specs that needed splitting mid-implementation
+- Design decisions that changed after coding started
+- Trade-offs we made and their consequences
+- Times when we violated our own principles (and learned from it)
+
+**Philosophy**: Show the real process, not a sanitized version. SDD works because it adapts to reality, not because it's perfect.
+
+---
+
+## Your Turn
+
+After reading these case studies, try applying SDD to:
+1. **A simple feature** - Start with something you can complete in one session
+2. **A refactor** - Use a spec to de-risk the changes
+3. **An architectural decision** - Document trade-offs before coding
+
+Share your case studies with the community! Open a GitHub discussion or contribute your own examples.

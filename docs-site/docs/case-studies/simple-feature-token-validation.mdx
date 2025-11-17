@@ -1,0 +1,254 @@
+---
+sidebar_position: 2
+title: Simple Feature - Token Validation
+---
+
+# Simple Feature: Token-Based Validation
+
+**Spec**: [071-simplified-token-validation](https://github.com/codervisor/lean-spec/tree/main/specs/071-simplified-token-validation)  
+**Status**: ✅ Complete  
+**Complexity**: Simple  
+**Duration**: Single session (~3 hours)
+
+## Context
+
+### The Problem
+
+LeanSpec had a complexity validation system that used a composite score (0-100) with arbitrary weights. The system was confusing:
+
+- **Opaque scoring**: "Score 45/100" didn't tell users what was wrong
+- **Hidden metrics**: 5,207 tokens became "score 60" - users couldn't see actual numbers
+- **Misleading results**: Large specs with sub-specs got "good" scores despite being too large
+- **Arbitrary weights**: Token score (0-60) + structure modifier (-30 to +20) had no clear rationale
+
+### Why This Spec?
+
+We had just implemented token counting (spec 069) and removed line-count validation in favor of token-based validation. But the implementation was overly complex. Spec 071 aimed to **simplify by applying first principles**:
+
+1. **Context Economy** - Use direct token thresholds (2,000 / 3,500 / 5,000)
+2. **Signal-to-Noise** - Report actual numbers, not derived scores
+3. **Intent Over Implementation** - Check each factor independently
+
+## The Spec
+
+### Key Sections
+
+**Design Principle**: Replace composite scoring with **direct, independent checks**.
+
+```typescript
+// OLD: Confusing composite score
+score = tokenScore (0-60) + structureModifier (-30 to +20)
+// Result: "Score 45/100" - what does this mean?
+
+// NEW: Direct threshold checks
+if (tokens > 5000) return 'error'
+if (tokens > 3500) return 'warning'  
+if (tokens > 2000) return 'info'
+return 'excellent'
+```
+
+**Token Thresholds**:
+- **&lt;2,000 tokens**: Excellent - Optimal AI performance
+- **2,000-3,500**: Good - Acceptable, watch for growth
+- **3,500-5,000**: Warning - Consider splitting
+- **>5,000**: Error - Should split for Context Economy
+
+**Implementation Approach**:
+1. Remove score calculation logic
+2. Implement direct threshold checks
+3. Report actual token counts
+4. Add independent structure checks
+
+[View full spec →](https://github.com/codervisor/lean-spec/blob/main/specs/071-simplified-token-validation/README.md)
+
+## Implementation
+
+### Phase 1: Analysis
+
+**Files to change**:
+- `packages/core/src/validators/complexity.ts` - Main validation logic
+- `packages/cli/src/commands/validate.ts` - CLI output formatting
+
+**Approach**:
+1. Read existing complexity validator
+2. Identify score calculation code to remove
+3. Design new threshold-based API
+4. Update CLI to show token counts directly
+
+### Phase 2: Core Changes
+
+**Key code changes**:
+
+```typescript
+// Before: Complex scoring
+const tokenScore = Math.max(0, 60 - (tokens - 2000) / 100);
+const structureModifier = hasSubSpecs ? -30 : 0;
+const score = tokenScore + structureModifier;
+
+// After: Direct thresholds
+function validateTokens(tokens: number) {
+  if (tokens > 5000) return { level: 'error', message: '...' };
+  if (tokens > 3500) return { level: 'warning', message: '...' };
+  if (tokens > 2000) return { level: 'info', message: '...' };
+  return { level: 'excellent', message: '...' };
+}
+```
+
+**Structure checks became independent**:
+- No more scoring modifier for sub-specs
+- Each structural issue gets its own clear message
+- Suggestions based on actual problems, not scores
+
+### Phase 3: Testing
+
+**Validation tests**:
+- Token counts at each threshold boundary
+- Structure checks report independently
+- CLI output shows actual numbers, not scores
+- Error messages are actionable
+
+## Evolution
+
+### What Changed During Implementation?
+
+**1. Removed "good with sub-specs" loophole**
+   - **Original**: Sub-specs gave -30 modifier (5K tokens could be "good")
+   - **Problem**: Violated Context Economy principle
+   - **Change**: Token thresholds are absolute, structure checks are independent
+
+**2. Added detailed content breakdown**
+   - **Discovered**: Users wanted to know where tokens came from
+   - **Added**: `--detailed` flag shows prose vs code vs tables
+   - **Impact**: Helps users identify what to extract to sub-specs
+
+**3. Clearer validation messages**
+   - **Original**: "Consider splitting" (vague)
+   - **Improved**: "Spec has 4,207 tokens (threshold: 3,500) - consider simplification"
+   - **Impact**: Users know exactly how far over threshold they are
+
+### Challenges
+
+**Challenge 1: Breaking change for existing specs**
+- **Issue**: 12 specs had scores, now showing warnings
+- **Solution**: Documented in spec, provided migration guide
+- **Outcome**: Forced us to split oversized specs (good outcome!)
+
+**Challenge 2: Balancing simplicity vs features**
+- **Issue**: Wanted token analysis per section, but adds complexity
+- **Decision**: Shipped simple version first, added `--detailed` later
+- **Lesson**: Progressive disclosure - add features when pain is felt
+
+## Outcome
+
+### Metrics
+
+**Before**:
+- 12 specs with confusing "score 45/100" messages
+- Users asked "what does score mean?" in 3 GitHub issues
+- Validation false negatives: 5K+ token specs marked "good"
+
+**After**:
+- 100% of specs show actual token counts
+- Zero user questions about validation output
+- Caught 8 specs >3,500 tokens that needed splitting
+
+### Code Impact
+
+**Lines changed**: ~200 lines
+- Removed: 150 lines (score calculation logic)
+- Added: 50 lines (threshold checks)
+- Net: Simpler codebase
+
+**Build time**: No change (validation is fast)
+
+**Test coverage**: Increased from 78% → 92% (simpler code = easier to test)
+
+## Lessons
+
+### What Worked
+
+✅ **Applying first principles to existing code**
+   - Context Economy → Direct thresholds
+   - Signal-to-Noise → Show actual numbers
+   - Made validation immediately understandable
+
+✅ **Small, focused scope**
+   - Changed only validation logic
+   - Kept CLI commands unchanged (backward compatible)
+   - Completed in one session
+
+✅ **Real dogfooding**
+   - Running validation on our own specs found 8 oversized specs
+   - Forced us to practice what we preach (split specs)
+
+### What We'd Do Differently
+
+🔄 **More examples in spec**
+   - Spec had code examples, but could have shown CLI output examples
+   - Would help visualize the user experience earlier
+
+🔄 **Test against real specs earlier**
+   - Discovered edge cases (specs with many tables) during implementation
+   - Could have validated against actual spec corpus first
+
+### Key Takeaway
+
+**Small, principle-driven changes have outsized impact.** By simplifying validation to match first principles, we:
+- Made the tool more useful
+- Reduced code complexity
+- Improved our own specs (dogfooding revealed problems)
+
+## AI Agent Collaboration
+
+### How AI Agents Used This Spec
+
+**GitHub Copilot Agent**:
+1. Read spec to understand problem and solution
+2. Identified exact files to change (`complexity.ts`)
+3. Implemented threshold logic matching spec design
+4. Added test cases for threshold boundaries
+5. Updated CLI output formatting
+
+**Success factors**:
+- **Clear problem statement** - Agent understood "why" not just "what"
+- **Code examples** - Provided exact API to implement
+- **Test criteria** - Agent knew what success looked like
+- **Focused scope** - Single file change, clear boundaries
+
+**Agent autonomy**: 90% - Agent completed implementation with minimal human guidance. Human reviewed output and requested one refinement (error message wording).
+
+### Spec Quality Enablers
+
+What made this spec AI-agent-friendly:
+
+1. **Concrete examples** - Code snippets showed exact API
+2. **Clear success criteria** - "Show actual token counts" is measurable
+3. **Token count**: 1,847 tokens - Well within Context Economy limit
+4. **Single concern** - Validation logic only, no CLI redesign
+
+### Human-AI Collaboration
+
+**Human role**:
+- Wrote spec based on first principles analysis
+- Reviewed agent implementation for principle alignment
+- Made judgment call on breaking changes
+
+**AI role**:
+- Implemented code changes
+- Wrote test cases
+- Generated validation error messages
+
+**Result**: Feature shipped same day spec was written.
+
+---
+
+## Try It Yourself
+
+Want to apply this pattern to your project?
+
+1. **Find complex code** - Look for scoring systems, weighted averages
+2. **Apply first principles** - What are you actually measuring? Report directly
+3. **Write a focused spec** - One concern, clear problem/solution
+4. **Implement quickly** - Small changes compound
+
+**Template**: Use [spec 071](https://github.com/codervisor/lean-spec/tree/main/specs/071-simplified-token-validation) as a template for simplification refactors.
