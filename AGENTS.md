@@ -134,6 +134,17 @@ Skip specs for:
 
 **When in doubt:** Run `lean-spec --help` or `lean-spec <command> --help` to discover available commands and options.
 
+## Documentation Map (Beginner-First)
+
+Use the docs-site to keep humans and AI oriented:
+
+- **Guide** → Overview, Getting Started, Tutorials (AI-first walkthroughs), Core Concepts, and Usage patterns.
+- **Advanced Topics** → Deep theory (First Principles, Context Engineering, AI Agent Memory, Philosophy, Limits & Tradeoffs).
+- **Real-World Examples** → Renamed case studies with filters, time estimates, and links to the interactive specs on `web.lean-spec.dev`.
+- **Reference** → CLI, configuration, frontmatter, and MCP server details.
+
+When pointing an agent (or teammate) to documentation, pick the section that matches their experience level so they are not overwhelmed with advanced material too early.
+
 ## Understanding Spec Relationships
 
 LeanSpec has two types of relationships between specs:
