@@ -5,7 +5,7 @@
 - `lean-spec search "<query>"` - Find relevant specs
 
 **Viewing specs:**
-- `lean-spec view <spec>` - View a spec
+- `lean-spec view <spec>` - View a spec (formatted)
 - `lean-spec open <spec>` - Open spec in editor
 
 **Working with specs:**

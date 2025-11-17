@@ -21,7 +21,7 @@ interface AgentsConfig {
   whenToUse?: string;
   whenToUseEarly?: boolean;
   discoveryCommands: string;
-  essentialCommands?: string;
+  essentialCommands?: string | string[];
   frontmatter: string;
   workflow: string | string[];
   qualityStandards: string | string[];
@@ -60,7 +60,7 @@ function generateAgentsFile(templateName: string): void {
     whenToUse: config.whenToUse ? readComponent(config.whenToUse) : null,
     whenToUseEarly: config.whenToUseEarly !== false,
     discoveryCommands: readComponent(config.discoveryCommands),
-    essentialCommands: config.essentialCommands ? readComponent(config.essentialCommands) : null,
+    essentialCommands: config.essentialCommands ? readComponents(config.essentialCommands) : null,
     frontmatter: readComponent(config.frontmatter),
     workflow: readComponents(config.workflow),
     qualityStandards: readComponents(config.qualityStandards),

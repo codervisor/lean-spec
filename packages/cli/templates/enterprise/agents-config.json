@@ -3,7 +3,7 @@
   "coreRules": "core-rules-enterprise.md",
   "whenToUseEarly": false,
   "discoveryCommands": "discovery-commands-enterprise.md",
-  "essentialCommands": "essential-commands-enterprise.md",
+  "essentialCommands": ["essential-commands-shared.md", "essential-commands-enterprise-additions.md"],
   "frontmatter": "frontmatter-enterprise.md",
   "workflow": ["workflow-enterprise.md", "status-update-triggers.md"],
   "qualityStandards": ["quality-standards-enterprise-additions.md", "quality-standards-shared.md"],

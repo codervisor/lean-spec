@@ -4,7 +4,7 @@
   "whenToUse": "when-to-use-standard.md",
   "whenToUseEarly": true,
   "discoveryCommands": "discovery-commands-standard.md",
-  "essentialCommands": "essential-commands-standard.md",
+  "essentialCommands": ["essential-commands-shared.md", "essential-commands-standard-additions.md"],
   "frontmatter": "frontmatter-standard.md",
   "workflow": ["workflow-standard-detailed.md", "status-update-triggers.md"],
   "qualityStandards": ["quality-standards-minimal-additions.md", "quality-standards-shared.md"],
