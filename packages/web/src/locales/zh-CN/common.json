@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "LeanSpec Web",
+    "tagline": "交互式规范展示平台，助力 AI 驱动开发",
+    "description": "以丰富的交互格式浏览和探索 LeanSpec 规范文档"
+  },
+  "navigation": {
+    "home": "首页",
+    "board": "看板",
+    "specs": "规范",
+    "stats": "统计",
+    "search": "搜索",
+    "theme": {
+      "light": "浅色",
+      "dark": "深色",
+      "system": "系统"
+    }
+  },
+  "status": {
+    "planned": "已计划",
+    "inProgress": "进行中",
+    "complete": "已完成",
+    "archived": "已归档",
+    "all": "全部状态"
+  },
+  "priority": {
+    "critical": "关键",
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "all": "全部优先级"
+  },
+  "stats": {
+    "totalSpecs": "规范总数",
+    "completed": "已完成",
+    "inProgress": "进行中",
+    "planned": "已计划",
+    "completionRate": "完成率"
+  },
+  "board": {
+    "title": "看板视图",
+    "description": "跨状态跟踪规范进度"
+  },
+  "specs": {
+    "title": "规范列表",
+    "search": "搜索规范...",
+    "noResults": "未找到规范",
+    "spec": "规范",
+    "specTitle": "标题",
+    "specStatus": "状态",
+    "specPriority": "优先级"
+  },
+  "search": {
+    "placeholder": "按标题、编号或标签搜索规范...",
+    "noResults": "未找到结果"
+  },
+  "actions": {
+    "view": "查看",
+    "edit": "编辑",
+    "delete": "删除",
+    "archive": "归档",
+    "unarchive": "取消归档"
+  },
+  "footer": {
+    "description": "LeanSpec - 轻量级规范方法论，助力 AI 驱动开发",
+    "github": "在 GitHub 上查看"
+  }
+}

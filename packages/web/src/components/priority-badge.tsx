@@ -2,9 +2,12 @@
  * Priority badge component with icons
  */
 
+'use client';
+
 import { AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n/use-translations';
 
 interface PriorityBadgeProps {
   priority: string;
@@ -12,42 +15,50 @@ interface PriorityBadgeProps {
   iconOnly?: boolean;
 }
 
-const priorityConfig = {
-  'critical': {
-    icon: AlertCircle,
-    label: 'Critical',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-  },
-  'high': {
-    icon: ArrowUp,
-    label: 'High',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-  },
-  'medium': {
-    icon: Minus,
-    label: 'Medium',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-  },
-  'low': {
-    icon: ArrowDown,
-    label: 'Low',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-  }
+const priorityConfigKeys = {
+  'critical': 'priority.critical',
+  'high': 'priority.high',
+  'medium': 'priority.medium',
+  'low': 'priority.low'
+};
+
+const priorityIcons = {
+  'critical': AlertCircle,
+  'high': ArrowUp,
+  'medium': Minus,
+  'low': ArrowDown
+};
+
+const priorityStyles = {
+  'critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  'high': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  'medium': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  'low': 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
 };
 
 export function PriorityBadge({ priority, className, iconOnly = false }: PriorityBadgeProps) {
-  const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
-  const Icon = config.icon;
+  const { t } = useTranslations();
+  const priorityKey = priority as keyof typeof priorityConfigKeys;
+  const Icon = priorityIcons[priorityKey] || Minus;
+  const style = priorityStyles[priorityKey] || priorityStyles.medium;
+  const label = t(priorityConfigKeys[priorityKey] || 'priority.medium');
 
   return (
-    <Badge className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', config.className, className)}>
+    <Badge className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', style, className)}>
       <Icon className="h-3.5 w-3.5" />
-      {!iconOnly && config.label}
+      {!iconOnly && label}
     </Badge>
   );
 }
 
 export function getPriorityLabel(priority: string): string {
-  const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
-  return config.label;
+  // This is a server-side function, so we can't use the hook
+  // We'll keep the English labels here for backward compatibility
+  const labels: Record<string, string> = {
+    'critical': 'Critical',
+    'high': 'High',
+    'medium': 'Medium',
+    'low': 'Low'
+  };
+  return labels[priority] || 'Medium';
 }

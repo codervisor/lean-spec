@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "LeanSpec Web",
+    "tagline": "Interactive spec showcase for AI-powered development",
+    "description": "Browse and explore LeanSpec specifications in a rich, interactive format"
+  },
+  "navigation": {
+    "home": "Home",
+    "board": "Board",
+    "specs": "Specs",
+    "stats": "Stats",
+    "search": "Search",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
+  },
+  "status": {
+    "planned": "Planned",
+    "inProgress": "In Progress",
+    "complete": "Complete",
+    "archived": "Archived",
+    "all": "All Status"
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "all": "All Priority"
+  },
+  "stats": {
+    "totalSpecs": "Total Specs",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "planned": "Planned",
+    "completionRate": "completion rate"
+  },
+  "board": {
+    "title": "Kanban Board",
+    "description": "Track spec progress across all statuses"
+  },
+  "specs": {
+    "title": "Specifications",
+    "search": "Search specs...",
+    "noResults": "No specs found",
+    "spec": "Spec",
+    "specTitle": "Title",
+    "specStatus": "Status",
+    "specPriority": "Priority"
+  },
+  "search": {
+    "placeholder": "Search specs by title, number, or tags...",
+    "noResults": "No results found"
+  },
+  "actions": {
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "archive": "Archive",
+    "unarchive": "Unarchive"
+  },
+  "footer": {
+    "description": "LeanSpec - Lightweight spec methodology for AI-powered development",
+    "github": "View on GitHub"
+  }
+}

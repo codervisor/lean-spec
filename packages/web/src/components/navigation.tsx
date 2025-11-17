@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronRight, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { QuickSearch } from '@/components/quick-search';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
 
 interface Spec {
@@ -138,9 +139,10 @@ export function Navigation({ specs }: NavigationProps) {
           </div>
         </div>
         
-        {/* Right: Search + Theme + Docs + GitHub */}
+        {/* Right: Search + Language + Theme + Docs + GitHub */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <QuickSearch specs={specs} />
+          <LanguageSwitcher />
           <ThemeToggle />
           <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
             <a 

@@ -16,6 +16,7 @@ import { Search, FileText, CheckCircle2, PlayCircle, Clock, TrendingUp } from 'l
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n/use-translations';
 
 interface Spec {
   id: string;
@@ -40,6 +41,7 @@ interface HomeClientProps {
 }
 
 export function HomeClient({ initialProjects, initialStats, initialSpecs }: HomeClientProps) {
+  const { t } = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -65,8 +67,8 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
       {/* Stats Section */}
       <section className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">LeanSpec Web</h1>
-          <p className="text-muted-foreground mt-2">Interactive spec showcase for AI-powered development</p>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('app.name')}</h1>
+          <p className="text-muted-foreground mt-2">{t('app.tagline')}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -75,7 +77,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Specs</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('stats.totalSpecs')}</CardTitle>
                 <FileText className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
@@ -89,7 +91,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             <div className="absolute inset-0 bg-linear-to-br from-green-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('stats.completed')}</CardTitle>
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
               </div>
             </CardHeader>
@@ -99,7 +101,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
               </div>
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                 <span className="text-green-600">{stats.completionRate}%</span>
-                completion rate
+                {t('stats.completionRate')}
               </p>
             </CardContent>
           </Card>
@@ -109,7 +111,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             <div className="absolute inset-0 bg-linear-to-br from-orange-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('stats.inProgress')}</CardTitle>
                 <PlayCircle className="h-5 w-5 text-orange-600" />
               </div>
             </CardHeader>
@@ -125,7 +127,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Planned</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('stats.planned')}</CardTitle>
                 <Clock className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
@@ -141,7 +143,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
       {/* Specs List */}
       <section className="container mx-auto px-4 py-4">
         <div className="mb-1">
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">Specifications</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">{t('specs.title')}</h2>
 
           {/* Search and Filters */}
           <div className="lg:sticky lg:top-14 lg:z-40 bg-background pb-4 pt-2 mb-1">
@@ -149,7 +151,7 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Search specs..."
+                  placeholder={t('specs.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -159,27 +161,27 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
               <div className="flex gap-2 overflow-x-auto pb-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px] sm:w-[180px]">
-                    <SelectValue placeholder="All Status" />
+                    <SelectValue placeholder={t('status.all')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="planned">Planned</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="complete">Complete</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="all">{t('status.all')}</SelectItem>
+                    <SelectItem value="planned">{t('status.planned')}</SelectItem>
+                    <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
+                    <SelectItem value="complete">{t('status.complete')}</SelectItem>
+                    <SelectItem value="archived">{t('status.archived')}</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                   <SelectTrigger className="w-[140px] sm:w-[180px]">
-                    <SelectValue placeholder="All Priority" />
+                    <SelectValue placeholder={t('priority.all')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="all">{t('priority.all')}</SelectItem>
+                    <SelectItem value="critical">{t('priority.critical')}</SelectItem>
+                    <SelectItem value="high">{t('priority.high')}</SelectItem>
+                    <SelectItem value="medium">{t('priority.medium')}</SelectItem>
+                    <SelectItem value="low">{t('priority.low')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -193,16 +195,16 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
             <thead className="lg:sticky lg:top-14 lg:z-30 border-b backdrop-blur border-gray-200 bg-background/95 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Spec
+                  {t('specs.spec')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Title
+                  {t('specs.specTitle')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Status
+                  {t('specs.specStatus')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Priority
+                  {t('specs.specPriority')}
                 </th>
               </tr>
             </thead>
@@ -266,10 +268,10 @@ export function HomeClient({ initialProjects, initialStats, initialSpecs }: Home
 
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 text-center text-muted-foreground border-t border-gray-200 dark:border-gray-800 mt-12">
-        <p>LeanSpec - Lightweight spec methodology for AI-powered development</p>
+        <p>{t('footer.description')}</p>
         <p className="mt-2 text-sm">
           <a href="https://github.com/codervisor/lean-spec" className="text-primary hover:underline">
-            View on GitHub
+            {t('footer.github')}
           </a>
         </p>
       </footer>
