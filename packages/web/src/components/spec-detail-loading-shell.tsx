@@ -14,7 +14,7 @@ export function SpecDetailLoadingShell() {
       <SpecsNavSidebar initialSpecs={cachedSpecs} currentSpecId={activeSpecId} />
 
       <div className="flex-1 min-w-0 px-4 py-6 sm:px-8 sm:py-10">
-        <div className="max-w-4xl space-y-6">
+        <div className="space-y-6">
           <div className="space-y-3">
             <Skeleton className="h-7 w-56" />
             <div className="flex flex-wrap gap-3">
