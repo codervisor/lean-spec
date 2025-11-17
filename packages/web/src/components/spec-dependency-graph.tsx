@@ -43,7 +43,7 @@ const toneClasses: Record<GraphTone, string> = {
 const dagreConfig: dagre.GraphLabel = {
   rankdir: 'LR',
   align: 'UL',
-  nodesep: 20,
+  nodesep: 60,
   ranksep: 120,
   marginx: 40,
   marginy: 40,

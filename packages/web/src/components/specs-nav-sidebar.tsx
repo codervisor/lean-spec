@@ -2,12 +2,13 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { List, type ListImperativeAPI } from 'react-window';
 import {
   Search,
   ChevronLeft,
   ChevronRight,
   X,
-  List,
+  List as ListIconLucide,
   Filter,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -194,6 +195,115 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
     });
   }, []);
 
+  // Virtual list row renderer (rowProps will be passed by react-window)
+  const RowComponent = React.useCallback((rowProps: { index: number; style: React.CSSProperties }) => {
+    const { index, style } = rowProps;
+    const spec = sortedSpecs[index];
+    const isCurrentSpec = spec.id === resolvedCurrentSpecId;
+
+    // Extract H1 title, fallback to title or name
+    const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
+    const displayTitle = h1Title || spec.title || spec.specName;
+
+    return (
+      <div style={style} className="px-1">
+        <div className="mb-0.5">
+          {/* Main spec item */}
+          <div className="flex items-center gap-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
+                  href={`/specs/${spec.specNumber || spec.id}`}
+                  onMouseEnter={() => onSpecHover?.(spec.specNumber?.toString() || spec.id)}
+                  className={cn(
+                    'w-full flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
+                    isCurrentSpec
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'hover:bg-accent/50',
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {spec.specNumber && (
+                      <span className="text-xs font-mono text-muted-foreground shrink-0">
+                        #{spec.specNumber.toString().padStart(3, '0')}
+                      </span>
+                    )}
+                    <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {spec.status && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {getStatusLabel(spec.status)}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {spec.priority && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {getPriorityLabel(spec.priority)}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {spec.updatedAt && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatRelativeTime(spec.updatedAt)}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[300px]">
+                <div className="space-y-1">
+                  <div className="font-semibold">{displayTitle}</div>
+                  <div className="text-xs text-muted-foreground">{spec.specName}</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </div>
+    );
+  }, [sortedSpecs, resolvedCurrentSpecId, currentSubSpec, onSpecHover]);
+
+  // Calculate list height
+  const listHeight = React.useMemo(() => {
+    // Get viewport height minus header (3.5rem = 56px) and search/filter area (~180px)
+    if (typeof window !== 'undefined') {
+      return window.innerHeight - 56 - 180;
+    }
+    return 600; // fallback
+  }, []);
+
+  // Find the index of the current spec for scrolling
+  const currentSpecIndex = React.useMemo(() => {
+    return sortedSpecs.findIndex(spec => spec.id === resolvedCurrentSpecId);
+  }, [sortedSpecs, resolvedCurrentSpecId]);
+
+  const listRef = React.useRef<ListImperativeAPI>(null);
+
+  // Scroll to current spec in virtual list
+  React.useEffect(() => {
+    if (listRef.current && currentSpecIndex >= 0) {
+      listRef.current.scrollToRow({
+        index: currentSpecIndex,
+        align: 'center',
+        behavior: 'smooth'
+      });
+    }
+  }, [currentSpecIndex]);
+
   return (
     <TooltipProvider delayDuration={700}>
       {/* Mobile overlay backdrop */}
@@ -331,90 +441,21 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             className="flex-1 overflow-y-auto overflow-x-hidden"
             onScroll={handleScroll}
           >
-            <div className="p-1">
-              {sortedSpecs.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  No specs found
-                </div>
-              ) : (
-                sortedSpecs.map((spec) => {
-                  const isCurrentSpec = spec.id === resolvedCurrentSpecId;
-
-                  // Extract H1 title, fallback to title or name
-                  const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
-                  const displayTitle = h1Title || spec.title || spec.specName;
-
-                  return (
-                    <div key={spec.id} className="mb-0.5">
-                      {/* Main spec item */}
-                      <div className="flex items-center gap-0.5">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link
-                              ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
-                              href={`/specs/${spec.specNumber || spec.id}`}
-                              onMouseEnter={() => onSpecHover?.(spec.specNumber?.toString() || spec.id)}
-                              className={cn(
-                                'w-full flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
-                                isCurrentSpec
-                                  ? 'bg-accent text-accent-foreground font-medium'
-                                  : 'hover:bg-accent/50',
-                              )}
-                            >
-                              <div className="flex items-center gap-1.5">
-                                {spec.specNumber && (
-                                  <span className="text-xs font-mono text-muted-foreground shrink-0">
-                                    #{spec.specNumber.toString().padStart(3, '0')}
-                                  </span>
-                                )}
-                                <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                {spec.status && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div>
-                                        <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      {getStatusLabel(spec.status)}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {spec.priority && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div>
-                                        <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      {getPriorityLabel(spec.priority)}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {spec.updatedAt && (
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {formatRelativeTime(spec.updatedAt)}
-                                  </span>
-                                )}
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-[300px]">
-                            <div className="space-y-1">
-                              <div className="font-semibold">{displayTitle}</div>
-                              <div className="text-xs text-muted-foreground">{spec.specName}</div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            {sortedSpecs.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No specs found
+              </div>
+            ) : (
+              <List<Record<string, never>>
+                listRef={listRef}
+                defaultHeight={listHeight}
+                rowCount={sortedSpecs.length}
+                rowHeight={72}
+                overscanCount={5}
+                rowComponent={RowComponent}
+                rowProps={{}}
+              />
+            )}
           </div>
         </aside>
 
@@ -437,7 +478,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
           className="lg:hidden fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
           aria-label="Show specifications list"
         >
-          <List className="h-5 w-5" />
+          <ListIconLucide className="h-5 w-5" />
         </Button>
       </div>
     </TooltipProvider>
