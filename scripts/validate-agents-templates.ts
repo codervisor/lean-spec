@@ -17,19 +17,22 @@ const TEMPLATE_NAMES = ['minimal', 'standard', 'enterprise'];
 
 interface AgentsConfig {
   description: string;
-  coreRules: string;
-  whenToUse?: string;
+  coreRules: string | string[];
+  whenToUse?: string | string[];
   whenToUseEarly?: boolean;
-  discoveryCommands: string;
-  essentialCommands?: string;
-  frontmatter: string;
-  workflow: string;
-  qualityStandards: string;
+  discoveryCommands: string | string[];
+  essentialCommands?: string | string[];
+  frontmatter: string | string[];
+  workflow: string | string[];
+  qualityStandards: string | string[];
   closingNote: string;
   additionalSections?: string[];
 }
 
-function readComponent(filename: string): string {
+function readComponent(filename: string | string[]): string {
+  if (Array.isArray(filename)) {
+    return filename.map(f => readComponent(f)).join('\n');
+  }
   const path = join(SHARED_COMPONENTS_DIR, filename);
   return readFileSync(path, 'utf-8').trim();
 }
