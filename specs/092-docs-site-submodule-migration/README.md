@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-17'
 tags:
   - infrastructure
@@ -7,15 +7,19 @@ tags:
   - monorepo
 priority: high
 created_at: '2025-11-17T04:54:37.212Z'
-updated_at: '2025-11-17T05:31:55.704Z'
+updated_at: '2025-11-17T07:51:43.434Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T05:31:55.704Z'
+  - status: complete
+    at: '2025-11-17T07:51:43.434Z'
+completed_at: '2025-11-17T07:51:43.434Z'
+completed: '2025-11-17'
 ---
 
 # Migrate docs-site to separate repository as submodule
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-17 · **Tags**: infrastructure, docs, monorepo
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-17 · **Tags**: infrastructure, docs, monorepo
 
 **Project**: lean-spec  
 **Team**: Core Development
