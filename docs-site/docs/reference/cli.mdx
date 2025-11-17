@@ -714,6 +714,109 @@ Summary:
 
 ---
 
+### `lean-spec ui`
+
+Launch a local web UI for visual spec browsing and management.
+
+```bash
+lean-spec ui [options]
+```
+
+**Options:**
+- `-s, --specs <dir>` - Specs directory (auto-detected if not specified)
+- `-p, --port <port>` - Port to run on (default: 3000)
+- `--no-open` - Don't open browser automatically
+- `--dry-run` - Show what would run without executing
+
+**Examples:**
+
+```bash
+# Start UI with auto-detection
+lean-spec ui
+
+# Use custom specs directory
+lean-spec ui --specs ./my-specs
+
+# Use custom port
+lean-spec ui --port 4000
+
+# Don't open browser
+lean-spec ui --no-open
+
+# Preview what would run
+lean-spec ui --dry-run
+```
+
+**Output:**
+```
+→ Starting LeanSpec web UI...
+
+  Specs: /path/to/your/specs
+  Port:  3000
+  Open:  yes
+
+✨ LeanSpec UI: http://localhost:3000
+
+Press Ctrl+C to stop
+```
+
+**Features:**
+- 📊 Visual spec browser with status indicators
+- 🔍 Full-text search across all specs
+- 📈 Project statistics and health metrics
+- 🎯 Kanban board view
+- 🔗 Relationship visualization (dependencies, related specs)
+- 📱 Responsive design
+- ⚡ Real-time updates (changes appear within 60 seconds)
+
+**How It Works:**
+
+The UI uses **filesystem mode** for local projects:
+- Direct reads from your `specs/` directory (no database required)
+- In-memory caching with 60-second TTL
+- Changes to spec files appear automatically
+- No manual seeding or sync required
+
+**Auto-Detection:**
+
+If you don't specify `--specs`, the UI automatically looks for specs in:
+1. `./specs`
+2. `./spec`
+3. `./docs/specs`
+4. `./docs/spec`
+5. `./.lean-spec/specs`
+6. The `specsDir` field in `leanspec.yaml` config file
+
+**Troubleshooting:**
+
+**"Specs directory not found"**
+```bash
+# Initialize LeanSpec first
+lean-spec init
+
+# Or specify directory explicitly
+lean-spec ui --specs ./my-custom-dir
+```
+
+**Port already in use**
+```bash
+# Use different port
+lean-spec ui --port 4000
+```
+
+**Browser doesn't open**
+- Use the URL printed in terminal to open manually
+- Check `--no-open` flag wasn't set accidentally
+
+**Use Cases:**
+- Visual overview of project status
+- Onboarding new team members
+- Presentations and demos
+- Quick navigation between related specs
+- Monitoring project health
+
+---
+
 ## Spec Identifiers
 
 All commands that accept a `<spec>` argument support flexible formats:

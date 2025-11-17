@@ -180,6 +180,26 @@ $ lean-spec stats
   Completion: 52%  |  Avg size: 287 lines
 ```
 
+Or launch a web UI for visual browsing:
+
+```bash
+$ lean-spec ui
+
+✨ LeanSpec UI: http://localhost:3000
+
+  Specs: /path/to/your/specs
+  Port:  3000
+```
+
+The web UI provides:
+- Visual spec browser with search
+- Kanban board view
+- Project statistics
+- Relationship visualization
+- Real-time updates (changes appear within 60s)
+
+No database setup required—reads directly from your filesystem.
+
 ### 🎨 Progressive Structure
 
 Start simple, add complexity when needed:
@@ -235,6 +255,7 @@ lean-spec init
 lean-spec board              # Check project status
 lean-spec view <spec> --json # AI-friendly output
 lean-spec update <spec> --status in-progress
+lean-spec ui                 # Launch web UI (optional)
 ```
 
 **Why this works:**
