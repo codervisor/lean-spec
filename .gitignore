@@ -11,3 +11,4 @@ tmp/
 *.db
 .turbo
 *.tsbuildinfo
+.playwright-mcp/
