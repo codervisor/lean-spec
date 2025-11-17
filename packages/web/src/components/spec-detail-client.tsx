@@ -103,10 +103,35 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
     }
   );
 
+  // Fetch complete dependency graph when dialog opens
+  const { data: dependencyGraphData } = useSWR<{
+    current: any;
+    dependsOn: any[];
+    requiredBy: any[];
+    related: any[];
+  }>(
+    dependenciesDialogOpen ? `/api/specs/${initialSpec.specNumber || initialSpec.id}/dependency-graph` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // Cache for 1 minute
+    }
+  );
+
   const spec = specData?.spec || initialSpec;
   const tags = spec.tags || [];
   const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : 'N/A';
   const relationships = spec.relationships;
+  
+  // Use complete graph if available, otherwise fall back to basic relationships
+  const completeRelationships = dependencyGraphData
+    ? {
+        dependsOn: dependencyGraphData.dependsOn.map(s => s.specName),
+        requiredBy: dependencyGraphData.requiredBy.map(s => s.specName),
+        related: dependencyGraphData.related.map(s => s.specName),
+      }
+    : relationships;
+  
   const hasRelationships = Boolean(
     relationships && ((relationships.dependsOn?.length ?? 0) > 0 || (relationships.related?.length ?? 0) > 0)
   );
@@ -263,9 +288,9 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
                   </DialogDescription>
                 </DialogHeader>
                 <div className="min-h-0 flex-1">
-                  {relationships && (
+                  {completeRelationships && (
                     <SpecDependencyGraph
-                      relationships={relationships}
+                      relationships={completeRelationships}
                       specNumber={spec.specNumber}
                       specTitle={displayTitle}
                     />
