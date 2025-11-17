@@ -43,8 +43,8 @@ const toneClasses: Record<GraphTone, string> = {
 const dagreConfig: dagre.GraphLabel = {
   rankdir: 'LR',
   align: 'UL',
-  nodesep: 160,
-  ranksep: 190,
+  nodesep: 20,
+  ranksep: 120,
   marginx: 40,
   marginy: 40,
 };
@@ -159,6 +159,7 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
 
   nodes.push(currentNode);
 
+  // Precedence: Specs this one depends on (upstream, blocking)
   relationships.dependsOn?.forEach((value, index) => {
     const id = nodeId('precedence', value, index);
     nodes.push({
@@ -166,7 +167,8 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
       type: 'specNode',
       data: {
         label: formatRelationshipLabel(value),
-        badge: 'Precedence',
+        badge: 'Depends On',
+        subtitle: 'Must complete first',
         tone: 'precedence',
         href: buildRelationshipHref(value),
         interactive: true,
@@ -196,6 +198,7 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
     });
   });
 
+  // Related: Bidirectional informational connections
   relationships.related?.forEach((value, index) => {
     const id = nodeId('related', value, index);
     nodes.push({
@@ -203,7 +206,8 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
       type: 'specNode',
       data: {
         label: formatRelationshipLabel(value),
-        badge: 'Connected',
+        badge: 'Related',
+        subtitle: 'Connected work',
         tone: 'related',
         href: buildRelationshipHref(value),
         interactive: true,
@@ -304,11 +308,11 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle }: Sp
       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="inline-block h-2.5 w-8 rounded-full bg-amber-400/80" />
-          Precedence → work that must finish first.
+          Depends On → blocks until complete
         </span>
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="inline-block h-2.5 w-8 rounded-full bg-sky-400/80" />
-          Connected → parallel or follow-up specs.
+          Related ↔ connected work (bidirectional)
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-2.5 w-8 rounded-full bg-primary/60" />
