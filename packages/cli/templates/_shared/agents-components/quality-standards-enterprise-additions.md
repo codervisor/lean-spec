@@ -2,5 +2,3 @@
 - Tests include security scenarios
 - Documentation complete
 - Compliance checklist completed
-- Code is clear and maintainable
-- Specs stay in sync with implementation

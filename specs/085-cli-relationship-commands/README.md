@@ -9,8 +9,9 @@ tags:
 priority: medium
 created_at: '2025-11-16T13:33:40.858Z'
 depends_on: []
-updated_at: '2025-11-16T14:08:51.283Z'
-related: []
+updated_at: '2025-11-17T01:11:50.003Z'
+related:
+  - 076-programmatic-spec-relationships
 completed_at: '2025-11-16T14:08:51.283Z'
 completed: '2025-11-16'
 transitions:

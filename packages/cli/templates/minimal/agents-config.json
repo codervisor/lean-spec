@@ -6,8 +6,8 @@
   "discoveryCommands": "discovery-commands-minimal.md",
   "essentialCommands": "essential-commands-minimal.md",
   "frontmatter": "frontmatter-minimal.md",
-  "workflow": "workflow-standard.md",
-  "qualityStandards": "quality-standards-base.md",
+  "workflow": ["workflow-standard.md", "status-update-triggers.md"],
+  "qualityStandards": ["quality-standards-minimal-additions.md", "quality-standards-shared.md"],
   "closingNote": "**Remember**: LeanSpec is a mindset. Adapt these guidelines to what actually helps.",
   "additionalSections": []
 }

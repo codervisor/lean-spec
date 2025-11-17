@@ -5,8 +5,8 @@
   "discoveryCommands": "discovery-commands-enterprise.md",
   "essentialCommands": "essential-commands-enterprise.md",
   "frontmatter": "frontmatter-enterprise.md",
-  "workflow": "workflow-enterprise.md",
-  "qualityStandards": "quality-standards-enterprise.md",
+  "workflow": ["workflow-enterprise.md", "status-update-triggers.md"],
+  "qualityStandards": ["quality-standards-enterprise-additions.md", "quality-standards-shared.md"],
   "closingNote": "**Remember**: Enterprise doesn't mean heavy. Keep specs lean while meeting governance needs.",
   "additionalSections": [
     "enterprise-compliance.md",

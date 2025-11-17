@@ -201,9 +201,15 @@ Required By:
 
 1. **Discover** - Check existing specs with `lean-spec list`
 2. **Plan** - Create spec with `lean-spec create <name>` when needed
-3. **Implement** - Write code, keep spec in sync as you learn
-4. **Update** - Mark progress with `lean-spec update <spec> --status <status>` (NEVER edit system-managed frontmatter directly)
-5. **Complete** - Mark complete with `lean-spec update <spec> --status complete`
+3. **Start Work** - **IMMEDIATELY** run `lean-spec update <spec> --status in-progress` before writing code
+4. **Implement** - Write code, keep spec in sync as you learn
+5. **Complete** - **IMMEDIATELY** run `lean-spec update <spec> --status complete` when done
+
+**Status Update Triggers (CRITICAL):**
+- ✅ **Before starting implementation** → `lean-spec update <spec> --status in-progress`
+- ✅ **Immediately after completing all work** → `lean-spec update <spec> --status complete`
+- ✅ **If blocked or paused** → Update status and document why in spec
+- ❌ **NEVER skip status updates** - They're required for project tracking
 
 **Critical - Frontmatter Editing Rules:**
 - **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`, `depends_on`, `related`
@@ -218,9 +224,14 @@ Required By:
 - Code is clear and maintainable
 - Tests cover critical paths
 - Specs stay in sync with implementation
+- **Status tracking is mandatory:**
+  - Mark spec as `in-progress` BEFORE starting work
+  - Mark spec as `complete` IMMEDIATELY after finishing
+  - Never leave specs with stale status
 - **Always validate before completing work:**
   - Run `node bin/lean-spec.js validate` to check spec structure and frontmatter (use local build, not `npx`)
   - Run `cd docs-site && npm run build` to ensure documentation site builds successfully
+  - Update spec status to `complete` with `lean-spec update <spec> --status complete`
   - Fix any validation errors or build failures before marking work complete
 
 **Note on Local Development:**

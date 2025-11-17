@@ -3,6 +3,7 @@
 3. **Check dependencies** - Run `lean-spec deps <spec>` to understand dependencies
 4. **Create or update spec** - Add complete frontmatter with compliance tags
 5. **Get reviews** - Assign reviewer, tag for security review if needed
-6. **Implement changes** - Keep spec in sync, update status appropriately
-7. **Update status** - Mark progress through workflow states
-8. **Archive when done** - `lean-spec archive <spec>` after completion
+6. **Start work** - **IMMEDIATELY** update status: `lean-spec update <spec> --status in-progress`
+7. **Implement changes** - Keep spec in sync with implementation
+8. **Complete** - **IMMEDIATELY** update status: `lean-spec update <spec> --status complete`
+9. **Archive when done** - `lean-spec archive <spec>` after completion

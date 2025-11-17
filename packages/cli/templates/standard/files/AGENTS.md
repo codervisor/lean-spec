@@ -97,17 +97,27 @@ lean-spec update <spec> --status in-progress --assignee yourname
 2. **Search existing specs** - Use `lean-spec search` or `lean-spec list` to find relevant work
 3. **Check dependencies** - Run `lean-spec deps <spec>` if working on existing spec
 4. **Create or update spec** - Add frontmatter with required fields and helpful metadata
-5. **Implement changes** - Keep spec in sync as you learn
-6. **Update status** - Mark progress: `draft` → `in-progress` → `complete`
-7. **Archive when done** - `lean-spec archive <spec>` moves to archive
+5. **Start work** - **IMMEDIATELY** update status: `lean-spec update <spec> --status in-progress`
+6. **Implement changes** - Keep spec in sync as you learn
+7. **Complete** - **IMMEDIATELY** update status: `lean-spec update <spec> --status complete`
+8. **Archive when done** - `lean-spec archive <spec>` moves to archive
+**Status Update Triggers (CRITICAL):**
+- ✅ **Before starting implementation** → Update to `in-progress`
+- ✅ **Immediately after completing all work** → Update to `complete`
+- ✅ **If blocked or paused** → Update status and document why in spec
+- ❌ **NEVER skip status updates** - They're required for project tracking
 
 ## Quality Standards
 
-- Code is clear and maintainable
 - Tests cover critical paths
 - No unnecessary complexity
 - Documentation where needed (not everywhere)
+- Code is clear and maintainable
 - Specs stay in sync with implementation
+- **Status tracking is mandatory:**
+  - Mark spec as `in-progress` BEFORE starting work
+  - Mark spec as `complete` IMMEDIATELY after finishing
+  - Never leave specs with stale status
 
 ---
 

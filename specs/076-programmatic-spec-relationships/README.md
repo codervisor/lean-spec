@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-11-13'
 tags:
   - cli
@@ -9,11 +9,19 @@ tags:
   - relationships
 priority: high
 created_at: '2025-11-13T09:03:06.741Z'
+updated_at: '2025-11-17T01:11:50.008Z'
+completed_at: '2025-11-17T01:11:49.548Z'
+completed: '2025-11-17'
+transitions:
+  - status: complete
+    at: '2025-11-17T01:11:49.548Z'
+related:
+  - 085-cli-relationship-commands
 ---
 
 # Programmatic Spec Relationship Management
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-13
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-13 · **Tags**: cli, mcp, dx, ai-agents, relationships
 
 **Project**: lean-spec  
 **Team**: Core Development

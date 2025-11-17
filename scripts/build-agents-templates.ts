@@ -23,8 +23,8 @@ interface AgentsConfig {
   discoveryCommands: string;
   essentialCommands?: string;
   frontmatter: string;
-  workflow: string;
-  qualityStandards: string;
+  workflow: string | string[];
+  qualityStandards: string | string[];
   closingNote: string;
   additionalSections?: string[];
 }
@@ -32,6 +32,13 @@ interface AgentsConfig {
 function readComponent(filename: string): string {
   const path = join(SHARED_COMPONENTS_DIR, filename);
   return readFileSync(path, 'utf-8').trim();
+}
+
+function readComponents(filenames: string | string[]): string {
+  if (typeof filenames === 'string') {
+    return readComponent(filenames);
+  }
+  return filenames.map(readComponent).join('\n');
 }
 
 function generateAgentsFile(templateName: string): void {
@@ -55,8 +62,8 @@ function generateAgentsFile(templateName: string): void {
     discoveryCommands: readComponent(config.discoveryCommands),
     essentialCommands: config.essentialCommands ? readComponent(config.essentialCommands) : null,
     frontmatter: readComponent(config.frontmatter),
-    workflow: readComponent(config.workflow),
-    qualityStandards: readComponent(config.qualityStandards),
+    workflow: readComponents(config.workflow),
+    qualityStandards: readComponents(config.qualityStandards),
     closingNote: config.closingNote,
     additionalSections: config.additionalSections
       ? config.additionalSections.map(readComponent)

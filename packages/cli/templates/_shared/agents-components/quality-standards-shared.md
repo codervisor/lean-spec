@@ -1,0 +1,6 @@
+- Code is clear and maintainable
+- Specs stay in sync with implementation
+- **Status tracking is mandatory:**
+  - Mark spec as `in-progress` BEFORE starting work
+  - Mark spec as `complete` IMMEDIATELY after finishing
+  - Never leave specs with stale status
