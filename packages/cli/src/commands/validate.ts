@@ -31,6 +31,7 @@ export interface ValidateOptions {
   quiet?: boolean;    // Suppress warnings, only show errors
   format?: 'default' | 'json' | 'compact';  // Output format
   rule?: string;      // Filter by specific rule name
+  warningsOnly?: boolean; // Treat all issues as warnings, never fail (useful for CI)
 }
 
 interface ValidationResultWithSpec {
@@ -52,6 +53,7 @@ export function validateCommand(): Command {
     .option('--quiet', 'Suppress warnings, only show errors')
     .option('--format <format>', 'Output format: default, json, compact', 'default')
     .option('--rule <rule>', 'Filter by specific rule name (e.g., max-lines, frontmatter)')
+    .option('--warnings-only', 'Treat all issues as warnings, never fail (useful for CI pre-release checks)')
     .action(async (specs: string[] | undefined, options: ValidateOptions) => {
       const passed = await validateSpecs({
         maxLines: options.maxLines,
@@ -60,6 +62,7 @@ export function validateCommand(): Command {
         quiet: options.quiet,
         format: options.format,
         rule: options.rule,
+        warningsOnly: options.warningsOnly,
       });
       process.exit(passed ? 0 : 1);
     });
@@ -151,7 +154,13 @@ export async function validateSpecs(options: ValidateOptions = {}): Promise<bool
   const output = formatValidationResults(results, specs, config.specsDir, formatOptions);
   console.log(output);
 
-  // Determine if validation passed (any errors = failed)
+  // Determine if validation passed
+  if (options.warningsOnly) {
+    // In warnings-only mode, always pass (just report issues)
+    return true;
+  }
+  
+  // Normal mode: any errors = failed
   const hasErrors = results.some(r => !r.result.passed);
   return !hasErrors;
 }

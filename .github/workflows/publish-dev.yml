@@ -27,8 +27,8 @@ jobs:
       
       - name: Auto-bump dev version
         run: |
-          # Get current version from CLI package
-          CURRENT_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          # Get current version from root package.json (single source of truth)
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
           
           # Extract base version (remove any prerelease suffix)
           BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-dev\..*//')
@@ -39,25 +39,22 @@ jobs:
           
           echo "Bumping version to: $DEV_VERSION"
           
-          # Update all package.json files
+          # Update root package.json only
           node -e "
             const fs = require('fs');
-            const packages = ['packages/cli', 'packages/ui', 'packages/mcp', '.'];
-            packages.forEach(pkg => {
-              const path = \`\${pkg}/package.json\`;
-              const json = JSON.parse(fs.readFileSync(path, 'utf8'));
-              json.version = '$DEV_VERSION';
-              fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
-            });
+            const path = 'package.json';
+            const json = JSON.parse(fs.readFileSync(path, 'utf8'));
+            json.version = '$DEV_VERSION';
+            fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
           "
+          
+          # Sync all workspace packages using our version sync script
+          pnpm sync-versions
           
           echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
       
-      - name: Type check
-        run: pnpm typecheck
-      
-      - name: Build
-        run: pnpm build
+      - name: Run pre-release checks
+        run: pnpm pre-release
       
       - name: Publish CLI to npm with dev tag
         working-directory: packages/cli

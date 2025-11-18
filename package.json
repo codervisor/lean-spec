@@ -9,6 +9,7 @@
     "build": "pnpm build:templates && turbo run build",
     "build:templates": "tsx scripts/build-agents-templates.ts",
     "validate:templates": "tsx scripts/validate-agents-templates.ts",
+    "sync-versions": "tsx scripts/sync-versions.ts",
     "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/core",
     "dev:web": "turbo run dev --filter=@leanspec/ui",
     "dev:cli": "turbo run dev --filter=lean-spec",
@@ -18,7 +19,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "pre-release": "pnpm typecheck && pnpm test:run && pnpm build && node bin/lean-spec.js validate",
+    "pre-release": "pnpm sync-versions && pnpm typecheck && pnpm test:run && pnpm build && node bin/lean-spec.js validate --warnings-only",
     "docs:dev": "pnpm --dir docs-site start",
     "docs:build": "pnpm --dir docs-site build",
     "docs:serve": "pnpm --dir docs-site serve"

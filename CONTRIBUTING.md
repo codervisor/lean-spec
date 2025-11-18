@@ -33,27 +33,68 @@ pnpm typecheck    # Type check all packages (with caching)
 
 ## Version Management
 
-All packages in the monorepo should maintain synchronized versions for consistency:
+All packages in the monorepo maintain synchronized versions automatically. The root `package.json` serves as the single source of truth.
 
+**Packages:**
 - `lean-spec` (CLI package)
 - `@leanspec/core` (shared core library)
 - `@leanspec/ui` (web UI package)
 - `@leanspec/mcp` (MCP server wrapper)
 
-**Before Publishing:**
-1. Update version in all `package.json` files (root and all packages)
-2. Update cross-package dependencies (e.g., `@leanspec/mcp` depends on `lean-spec`)
-3. Run `pnpm build` to verify all packages build successfully
-4. Run `node bin/lean-spec.js validate` to check specs
-5. Test package installation locally using `npm pack`
+### Automated Version Sync
 
-**Example version bump:**
+The `pnpm sync-versions` script automatically synchronizes all package versions with the root:
+
 ```bash
-# Bump all packages from 0.2.4 to 0.2.5
-# Update: package.json, packages/cli/package.json, packages/core/package.json,
-#         packages/ui/package.json, packages/mcp/package.json
-# Also update: packages/mcp/package.json dependency on lean-spec
+# Check current version alignment (dry run)
+pnpm sync-versions --dry-run
+
+# Sync all package versions to match root package.json
+pnpm sync-versions
 ```
+
+The script:
+- Reads the version from root `package.json`
+- Updates all workspace packages to match
+- Reports what changed
+- Runs automatically as part of `pre-release`
+
+### Release Process
+
+**Before Publishing:**
+1. Update version in **root `package.json` only**
+2. Run `pnpm sync-versions` (or it runs automatically with `pre-release`)
+3. Update cross-package dependencies if needed (e.g., `@leanspec/mcp` → `lean-spec`)
+4. Run `pnpm build` to verify all packages build successfully
+5. Run `pnpm pre-release` to run full validation suite
+   - Includes: sync-versions, typecheck, tests, build, and validate with `--warnings-only`
+   - The validate step treats all issues as warnings (won't fail on complexity/token issues)
+   - For stricter validation before committing spec changes, run `node bin/lean-spec.js validate` without flags
+6. Test package installation locally using `npm pack`
+
+**Version Bump Example:**
+```bash
+# 1. Update root version
+npm version patch  # or minor/major
+
+# 2. Sync all packages (automatic in pre-release)
+pnpm sync-versions
+
+# 3. Verify
+pnpm build
+pnpm test:run
+
+# 4. Commit and publish
+git add .
+git commit -m "chore: release v0.2.6"
+git push
+```
+
+**Why root as source of truth?**
+- Single place to update version
+- Prevents version drift
+- Automated sync in CI/CD
+- Simpler release process
 
 ### Docs Site Submodule
 

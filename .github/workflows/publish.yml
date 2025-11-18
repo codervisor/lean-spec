@@ -24,11 +24,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
-      - name: Type check
-        run: pnpm typecheck
-      
-      - name: Build
-        run: pnpm build
+      - name: Run pre-release checks
+        run: pnpm pre-release
       
       - name: Publish CLI to npm
         working-directory: packages/cli

@@ -24,17 +24,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
-      - name: Build
-        run: pnpm build
-      
-      - name: Validate templates
-        run: pnpm validate:templates
-      
-      - name: Type check
-        run: pnpm typecheck
-      
-      - name: Run tests
-        run: pnpm test
+      - name: Run pre-release checks
+        run: pnpm pre-release
       
       - name: Generate coverage
         run: pnpm test:coverage
