@@ -19,6 +19,8 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "prepare-publish": "tsx scripts/prepare-publish.ts",
+    "restore-packages": "tsx scripts/restore-packages.ts",
     "pre-release": "pnpm sync-versions && pnpm typecheck && pnpm test:run && pnpm build && node bin/lean-spec.js validate --warnings-only",
     "docs:dev": "pnpm --dir docs-site start",
     "docs:build": "pnpm --dir docs-site build",
