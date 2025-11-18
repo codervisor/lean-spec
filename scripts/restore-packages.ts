@@ -40,6 +40,7 @@ function main() {
   const packages = [
     'packages/core/package.json',
     'packages/cli/package.json',
+    'packages/mcp/package.json',
     'packages/ui/package.json',
   ];
 

@@ -29,7 +29,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "lean-spec": "^0.2.5"
+    "lean-spec": "workspace:*"
   },
   "engines": {
     "node": ">=20"
