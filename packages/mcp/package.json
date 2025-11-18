@@ -1,0 +1,39 @@
+{
+  "name": "@leanspec/mcp",
+  "version": "0.2.4",
+  "description": "MCP server integration wrapper for LeanSpec",
+  "type": "module",
+  "bin": {
+    "leanspec-mcp": "./bin/leanspec-mcp.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "leanspec",
+    "spec",
+    "ai",
+    "agent"
+  ],
+  "author": "Marvin Zhang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://lean-spec.dev",
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  },
+  "files": [
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "lean-spec": "^0.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

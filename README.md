@@ -323,7 +323,7 @@ Root scripts (`pnpm docs:dev|docs:build|docs:serve`) now forward into the submod
 - [First Principles](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles) - The philosophy behind LeanSpec
 - [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands with examples
 - [AI Agent Configuration](AGENTS.md) - Cursor, Copilot, Aider setup
-- [MCP Server](docs/MCP-SERVER.md) - Claude Desktop integration
+- [MCP Integration](https://www.lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) - Claude Desktop, Cline, Zed setup
 - [GitHub Issues](https://github.com/codervisor/lean-spec/issues) - Report bugs or request features
 - [Contributing Guide](CONTRIBUTING.md) - Join the project
 

@@ -8,6 +8,7 @@ This directory contains the LeanSpec monorepo packages.
 packages/
 ├── core/       - @leanspec/core: Platform-agnostic spec parsing & validation
 ├── cli/        - lean-spec: CLI tool and MCP server (Node.js)
+├── mcp/        - @leanspec/mcp: MCP server wrapper (spec 102)
 ├── ui/         - @leanspec/ui: Standalone UI bundle + launcher (spec 087)
 └── web/        - @leanspec/web: Web application (future - spec 035)
 ```
@@ -61,6 +62,21 @@ pnpm install
 pnpm build
 pnpm test
 ```
+
+## @leanspec/mcp
+
+**MCP server integration wrapper.**
+
+Simple passthrough wrapper that delegates to `lean-spec mcp`. Makes MCP setup more discoverable with a dedicated package name.
+
+### Usage
+
+```bash
+# Use with Claude Desktop, Cline, Zed, etc.
+npx -y @leanspec/mcp
+```
+
+The package automatically installs `lean-spec` as a dependency and runs `lean-spec mcp`. See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) for setup instructions.
 
 ## Storage Adapters
 
@@ -130,7 +146,7 @@ pnpm --filter lean-spec test
 
 ## Publishing
 
-The CLI package (`lean-spec`) and the UI bundle (`@leanspec/ui`) are published to npm. The core package (`@leanspec/core`) is currently workspace-only but can be published if needed for external use.
+The CLI package (`lean-spec`), the MCP wrapper (`@leanspec/mcp`), and the UI bundle (`@leanspec/ui`) are published to npm. The core package (`@leanspec/core`) is currently workspace-only but can be published if needed for external use.
 
 ## Architecture
 

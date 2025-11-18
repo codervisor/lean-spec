@@ -173,6 +173,12 @@ importers:
         specifier: ^4.0.6
         version: 4.0.6(@types/debug@4.1.12)(@types/node@20.19.24)(@vitest/ui@4.0.6)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)
 
+  packages/mcp:
+    dependencies:
+      lean-spec:
+        specifier: ^0.2.4
+        version: 0.2.4(@types/node@20.19.24)(@types/react@19.2.2)
+
   packages/ui:
     dependencies:
       chalk:
@@ -3783,6 +3789,11 @@ packages:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
 
+  lean-spec@0.2.4:
+    resolution: {integrity: sha512-fD26E1kDWbqnUfD/meY3z+zyLQtxgoAxFa7Dbl2sSbShUi6B7cT+wzS3S3Wq2GSr4x6ZTaPayoo/QENncL2vUw==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -7117,14 +7128,6 @@ snapshots:
       chai: 6.2.0
       tinyrainbow: 3.0.3
 
-  '@vitest/mocker@4.0.6(vite@7.1.12(@types/node@20.19.24)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6))':
-    dependencies:
-      '@vitest/spy': 4.0.6
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.1.12(@types/node@20.19.24)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)
-
   '@vitest/mocker@4.0.6(vite@7.1.12(@types/node@20.19.24)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6))':
     dependencies:
       '@vitest/spy': 4.0.6
@@ -7159,7 +7162,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vitest: 4.0.6(@types/debug@4.1.12)(@types/node@20.19.24)(@vitest/ui@4.0.6)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)
+      vitest: 4.0.6(@types/debug@4.1.12)(@types/node@20.19.24)(@vitest/ui@4.0.6)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)
 
   '@vitest/utils@4.0.6':
     dependencies:
@@ -8887,6 +8890,43 @@ snapshots:
   language-tags@1.0.9:
     dependencies:
       language-subtag-registry: 0.3.23
+
+  lean-spec@0.2.4(@types/node@20.19.24)(@types/react@19.2.2):
+    dependencies:
+      '@inquirer/prompts': 7.9.0(@types/node@20.19.24)
+      '@modelcontextprotocol/sdk': 1.21.0
+      chalk: 5.6.2
+      cli-spinners: 3.3.0
+      cli-table3: 0.6.5
+      commander: 14.0.2
+      dayjs: 1.11.19
+      gray-matter: 4.0.3
+      handlebars: 4.7.8
+      ink: 6.4.0(@types/react@19.2.2)(react@19.2.0)
+      ink-gradient: 3.0.0(ink@6.4.0(@types/react@19.2.2)(react@19.2.0))
+      ink-progress-bar: 3.0.0
+      ink-select-input: 6.2.0(ink@6.4.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
+      ink-spinner: 5.0.0(ink@6.4.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
+      ink-table: 3.1.0(ink@6.4.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
+      ink-text-input: 6.0.0(ink@6.4.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
+      js-yaml: 4.1.0
+      marked: 15.0.12
+      marked-terminal: 7.3.0(marked@15.0.12)
+      open: 11.0.0
+      ora: 9.0.0
+      react: 19.2.0
+      strip-ansi: 7.1.2
+      tiktoken: 1.0.22
+      tokenx: 1.2.1
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - '@types/node'
+      - '@types/react'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
 
   levn@0.4.1:
     dependencies:
@@ -10828,7 +10868,7 @@ snapshots:
   vitest@4.0.6(@types/debug@4.1.12)(@types/node@20.19.24)(@vitest/ui@4.0.6)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6):
     dependencies:
       '@vitest/expect': 4.0.6
-      '@vitest/mocker': 4.0.6(vite@7.1.12(@types/node@20.19.24)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6))
+      '@vitest/mocker': 4.0.6(vite@7.1.12(@types/node@20.19.24)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6))
       '@vitest/pretty-format': 4.0.6
       '@vitest/runner': 4.0.6
       '@vitest/snapshot': 4.0.6
