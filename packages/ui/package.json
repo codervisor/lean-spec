@@ -22,7 +22,8 @@
   },
   "files": [
     "bin/",
-    ".next/standalone/",
+    ".next/standalone/packages/",
+    ".next/standalone/node_modules/",
     ".next/static/",
     "public/",
     "README.md",
