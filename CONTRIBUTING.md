@@ -31,6 +31,30 @@ pnpm test         # Run tests (with caching)
 pnpm typecheck    # Type check all packages (with caching)
 ```
 
+## Version Management
+
+All packages in the monorepo should maintain synchronized versions for consistency:
+
+- `lean-spec` (CLI package)
+- `@leanspec/core` (shared core library)
+- `@leanspec/ui` (web UI package)
+- `@leanspec/mcp` (MCP server wrapper)
+
+**Before Publishing:**
+1. Update version in all `package.json` files (root and all packages)
+2. Update cross-package dependencies (e.g., `@leanspec/mcp` depends on `lean-spec`)
+3. Run `pnpm build` to verify all packages build successfully
+4. Run `node bin/lean-spec.js validate` to check specs
+5. Test package installation locally using `npm pack`
+
+**Example version bump:**
+```bash
+# Bump all packages from 0.2.4 to 0.2.5
+# Update: package.json, packages/cli/package.json, packages/core/package.json,
+#         packages/ui/package.json, packages/mcp/package.json
+# Also update: packages/mcp/package.json dependency on lean-spec
+```
+
 ### Docs Site Submodule
 
 The docs are maintained in [codervisor/lean-spec-docs](https://github.com/codervisor/lean-spec-docs) and pulled in via the `docs-site/` git submodule. Typical workflow:
