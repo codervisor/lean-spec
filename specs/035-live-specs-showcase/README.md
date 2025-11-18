@@ -8,7 +8,7 @@ tags:
   - v0.3.0-launch
 priority: high
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-17T08:18:56.995Z'
+updated_at: '2025-11-18T14:36:33.079Z'
 depends_on:
   - 067-monorepo-core-extraction
 transitions:
@@ -18,6 +18,8 @@ transitions:
     at: '2025-11-17T08:18:56.995Z'
 completed_at: '2025-11-17T08:18:56.995Z'
 completed: '2025-11-17'
+related:
+  - 105-docs-site-enhancements
 ---
 
 # LeanSpec Web: Fullstack Spec Showcase Platform
