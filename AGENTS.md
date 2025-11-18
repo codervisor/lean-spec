@@ -171,7 +171,19 @@ When working on the LeanSpec codebase itself, always use the local build (`node 
 
 ## Publishing Releases
 
+⚠️ **CRITICAL**: When publishing a release, you MUST create a GitHub release. This is not optional.
+
 See [docs/agents/PUBLISHING.md](docs/agents/PUBLISHING.md) for the complete release process.
+
+**Quick reminder of mandatory steps:**
+1. Update versions & CHANGELOG
+2. Run pre-release checks (`pnpm pre-release`)
+3. Commit, tag, and push
+4. Prepare packages (`pnpm prepare-publish`)
+5. Publish to npm (all packages)
+6. Restore packages (`pnpm restore-packages`)
+7. **CREATE GITHUB RELEASE** (`gh release create vX.Y.Z --title "..." --notes-file ...`) ← DO NOT SKIP THIS
+8. Verify everything is published correctly
 
 ## Spec Complexity Guidelines
 
