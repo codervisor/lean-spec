@@ -1,12 +1,12 @@
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
 
-const webSrc = fileURLToPath(new URL('./packages/web/src', import.meta.url));
+const uiSrc = fileURLToPath(new URL('./packages/ui/src', import.meta.url));
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@': webSrc,
+      '@': uiSrc,
     },
   },
   test: {
