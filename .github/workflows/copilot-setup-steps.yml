@@ -43,6 +43,7 @@ jobs:
 
       - name: Install lean-spec CLI globally
         run: pnpm link --global
+        working-directory: packages/cli
 
       - name: Verify lean-spec installation
         run: |
