@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2025-11-18
+
+### Added
+- **`@leanspec/mcp` standalone package** (spec 102) - Dedicated npm package for MCP server integration
+  - Simpler onboarding: Use `npx @leanspec/mcp` directly in IDE configs
+  - Better discoverability: Package name clearly indicates MCP functionality
+  - Zero-config setup: Just copy-paste config snippet for Claude Desktop, Cline, or Zed
+  - Automatic dependency management: npx handles installation of both `@leanspec/mcp` and `lean-spec`
+  - Pure passthrough design: Delegates to `lean-spec mcp` with no additional logic
+- **Enhanced dependency commands** (spec 099) - Improved CLI and MCP tools for managing spec relationships
+  - Better dependency graph visualization
+  - Enhanced `link` and `unlink` commands for managing `depends_on` and `related` fields
+  - Improved error handling and validation for circular dependencies
+- **GitHub Action for automated publishing** (spec 016 - partial implementation) - CI/CD workflow for dev releases
+  - Automated `@leanspec/mcp` publishing on npm with version suffix
+  - Pre-release checks and validations
+  - Package preparation scripts for handling workspace dependencies
+
+### Changed
+- **UI Package Consolidation** (spec 103) - Merged `@leanspec/web` into `@leanspec/ui` for simpler architecture
+  - Single publishable Next.js app package instead of separate web + wrapper packages
+  - Eliminated complex symlink handling and node_modules distribution issues
+  - Simplified CLI launcher with direct Next.js standalone server execution
+  - Cleaner monorepo structure with one less package to maintain
+  - No breaking changes to user-facing `lean-spec ui` command
+- **Package Publishing Workflow** - Enhanced automation for npm releases
+  - New `prepare-publish` script handles workspace protocol replacement
+  - New `restore-packages` script reverts changes after publishing
+  - Updated CI workflow for streamlined version synchronization
+
+### Fixed
+- **`@leanspec/ui` packaging issue** (spec 104) - Fixed "Cannot find module 'next'" error in published package
+  - Root cause: npm pack doesn't follow symlinks by default, so `node_modules/` symlinks in standalone build weren't resolved
+  - Solution: Include actual pnpm store location (`.next/standalone/node_modules/.pnpm/`) in published files
+  - Package now correctly bundles all Next.js dependencies (~18.3 MB compressed, 65 MB unpacked)
+  - Users can now successfully run `lean-spec ui` via published npm package
+- **UI command signal handling** - Improved process cleanup and graceful shutdown
+  - Better handling of Ctrl+C and Ctrl+D to stop the UI server
+  - Proper signal forwarding to child processes
+- **Documentation updates** - Enhanced READMEs for MCP, UI, and CLI packages
+  - Clearer setup instructions for MCP server integration
+  - Updated `lean-spec ui` documentation with new package structure
+  - Added examples for different IDE configurations
+
+### Technical
+- All packages bumped to version 0.2.5
+- Enhanced build scripts for better monorepo management
+- Improved workspace configuration with `.code-workspace` file
+- Updated Vitest configuration to use UI package source path
+
 ## [0.2.4] - 2025-11-17
 
 ### Fixed
@@ -428,6 +478,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.5]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.5
 [0.2.4]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.4
 [0.2.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.3
 [0.2.2]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.2
