@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { List, ChevronRight } from 'lucide-react';
 import GithubSlugger from 'github-slugger';
@@ -92,15 +91,16 @@ export function TableOfContents({ content }: TableOfContentsProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="icon"
-          className="fixed bottom-24 right-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
-          aria-label="Table of contents"
-        >
-          <List className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+      <Button
+        size="icon"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className="fixed bottom-24 right-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
+        aria-label="Table of contents"
+      >
+        <List className="h-5 w-5" />
+      </Button>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Table of Contents</DialogTitle>
