@@ -79,8 +79,8 @@ export async function startUi(options: {
       console.log(chalk.dim('Remove --dev flag to use production mode'));
       throw new Error('Not in LeanSpec monorepo');
     }
-    const localWebDir = join(cwd, 'packages/web');
-    return runLocalWeb(localWebDir, specsDir, options);
+    const localUiDir = join(cwd, 'packages/ui');
+    return runLocalWeb(localUiDir, specsDir, options);
   }
 
   // Production mode: use published @leanspec/ui
@@ -90,40 +90,40 @@ export async function startUi(options: {
 /**
  * Check if we're in the LeanSpec monorepo
  * 
- * This is more specific than just checking for packages/web to avoid
+ * This is more specific than just checking for packages/ui to avoid
  * false positives in other projects with similar structure.
  */
 function checkIsLeanSpecMonorepo(cwd: string): boolean {
   // Check for LeanSpec-specific markers
-  const localWebDir = join(cwd, 'packages/web');
-  const webPackageJson = join(localWebDir, 'package.json');
+  const localUiDir = join(cwd, 'packages/ui');
+  const uiPackageJson = join(localUiDir, 'package.json');
   
-  if (!existsSync(webPackageJson)) {
+  if (!existsSync(uiPackageJson)) {
     return false;
   }
   
   try {
-    const packageJson = JSON.parse(readFileSync(webPackageJson, 'utf-8'));
-    // Check if it's the @leanspec/web package
-    return packageJson.name === '@leanspec/web';
+    const packageJson = JSON.parse(readFileSync(uiPackageJson, 'utf-8'));
+    // Check if it's the @leanspec/ui package
+    return packageJson.name === '@leanspec/ui';
   } catch {
     return false;
   }
 }
 
 /**
- * Run local web package (monorepo dev mode)
+ * Run local ui package (monorepo dev mode)
  * 
- * Spawns the web dev server as a child process with appropriate environment
+ * Spawns the ui dev server as a child process with appropriate environment
  * variables. Only works within the LeanSpec monorepo structure.
  * 
- * @param webDir - Absolute path to packages/web directory
+ * @param uiDir - Absolute path to packages/ui directory
  * @param specsDir - Absolute path to specs directory
  * @param options - Command options including port, open, and dryRun flags
  * @throws {Error} If server fails to start
  */
 async function runLocalWeb(
-  webDir: string,
+  uiDir: string,
   specsDir: string,
   options: {
     port: string;
@@ -132,14 +132,14 @@ async function runLocalWeb(
     dryRun?: boolean;
   }
 ): Promise<void> {
-  console.log(chalk.dim('→ Detected LeanSpec monorepo, using local web package\n'));
+  console.log(chalk.dim('→ Detected LeanSpec monorepo, using local ui package\n'));
 
-  const repoRoot = resolve(webDir, '..', '..');
+  const repoRoot = resolve(uiDir, '..', '..');
   const packageManager = detectPackageManager(repoRoot);
 
   if (options.dryRun) {
     console.log(chalk.cyan('Would run:'));
-    console.log(chalk.dim(`  cd ${webDir}`));
+    console.log(chalk.dim(`  cd ${uiDir}`));
 
     console.log(chalk.dim(`  SPECS_MODE=filesystem SPECS_DIR=${specsDir} PORT=${options.port} ${packageManager} run dev`));
     if (options.open) {
@@ -159,7 +159,7 @@ async function runLocalWeb(
   };
 
   const child = spawn(packageManager, ['run', 'dev'], {
-    cwd: webDir,
+    cwd: uiDir,
     stdio: 'inherit',
     env,
     detached: true,

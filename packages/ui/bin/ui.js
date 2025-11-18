@@ -125,16 +125,10 @@ function readConfigSpecsDir(cwd) {
 function getServerPath() {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
-  const standaloneDir = resolve(__dirname, '../dist/standalone');
-  const candidates = [
-    join(standaloneDir, 'server.js'),
-    join(standaloneDir, 'packages', 'web', 'server.js')
-  ];
+  const serverPath = resolve(__dirname, '../.next/standalone/packages/ui/server.js');
 
-  for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
+  if (existsSync(serverPath)) {
+    return serverPath;
   }
 
   throw new Error('LeanSpec UI build not found. Reinstall @leanspec/ui or run pnpm --filter @leanspec/ui build.');
