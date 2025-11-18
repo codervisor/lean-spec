@@ -27,7 +27,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { extractH1Title, cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/date-utils';
@@ -235,18 +234,19 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Clock className="mr-1.5 h-3.5 w-3.5" />
-                  View Timeline
-                  <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
-                </Button>
-              </DialogTrigger>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-haspopup="dialog"
+                aria-expanded={timelineDialogOpen}
+                onClick={() => setTimelineDialogOpen(true)}
+                className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Clock className="mr-1.5 h-3.5 w-3.5" />
+                View Timeline
+                <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
               <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Spec Timeline</DialogTitle>
@@ -264,22 +264,23 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
             </Dialog>
 
             <Dialog open={dependenciesDialogOpen} onOpenChange={setDependenciesDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!hasRelationships}
-                  className={cn(
-                    'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
-                    !hasRelationships && 'cursor-not-allowed opacity-50'
-                  )}
-                >
-                  <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-                  View Dependencies
-                  <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
-                </Button>
-              </DialogTrigger>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-haspopup="dialog"
+                aria-expanded={dependenciesDialogOpen}
+                onClick={() => setDependenciesDialogOpen(true)}
+                disabled={!hasRelationships}
+                className={cn(
+                  'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
+                  !hasRelationships && 'cursor-not-allowed opacity-50'
+                )}
+              >
+                <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+                View Dependencies
+                <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
               <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>Dependency Graph</DialogTitle>

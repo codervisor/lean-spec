@@ -1,11 +1,9 @@
 {
   "name": "@leanspec/mcp",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "MCP server integration wrapper for LeanSpec",
   "type": "module",
-  "bin": {
-    "leanspec-mcp": "./bin/leanspec-mcp.js"
-  },
+  "bin": "./bin/leanspec-mcp.js",
   "keywords": [
     "mcp",
     "model-context-protocol",
