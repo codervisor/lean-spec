@@ -36,6 +36,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
+      - name: Publish MCP wrapper to npm
+        working-directory: packages/mcp
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
       - name: Publish UI to npm
         working-directory: packages/ui
         run: npm publish --provenance --access public
