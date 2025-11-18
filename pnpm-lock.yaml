@@ -181,28 +181,6 @@ importers:
 
   packages/ui:
     dependencies:
-      chalk:
-        specifier: ^5.3.0
-        version: 5.6.2
-      commander:
-        specifier: ^14.0.2
-        version: 14.0.2
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.0
-      open:
-        specifier: ^11.0.0
-        version: 11.0.0
-      ora:
-        specifier: ^9.0.0
-        version: 9.0.0
-    devDependencies:
-      '@leanspec/web':
-        specifier: workspace:*
-        version: link:../web
-
-  packages/web:
-    dependencies:
       '@dagrejs/dagre':
         specifier: ^1.1.8
         version: 1.1.8
@@ -239,6 +217,9 @@ importers:
       better-sqlite3:
         specifier: ^11.7.0
         version: 11.10.0
+      chalk:
+        specifier: ^5.3.0
+        version: 5.6.2
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -248,6 +229,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      commander:
+        specifier: ^14.0.2
+        version: 14.0.2
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
@@ -266,6 +250,9 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
       lucide-react:
         specifier: ^0.553.0
         version: 0.553.0(react@19.2.0)
@@ -275,6 +262,12 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      open:
+        specifier: ^11.0.0
+        version: 11.0.0
+      ora:
+        specifier: ^9.0.0
+        version: 9.0.0
       react:
         specifier: 19.2.0
         version: 19.2.0
