@@ -13,3 +13,4 @@ tmp/
 *.tsbuildinfo
 .playwright-mcp/
 *.tsbuildinfo
+*.tgz

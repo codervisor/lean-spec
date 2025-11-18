@@ -162,6 +162,7 @@ async function runLocalWeb(
     cwd: webDir,
     stdio: 'inherit',
     env,
+    detached: true,
   });
 
   // Wait for server to be ready
@@ -185,15 +186,37 @@ async function runLocalWeb(
     }
   }, 3000);
 
-  // Handle shutdown gracefully
-  const sigintHandler = () => {
+  // Handle shutdown gracefully (forward signals to child process group)
+  const shutdown = (signal?: NodeJS.Signals) => {
     clearTimeout(readyTimeout);
     spinner.stop();
-    child.kill('SIGTERM');
+    try {
+      if (child && child.pid) {
+        // Try killing the whole process group (POSIX)
+        try {
+          process.kill(-child.pid, signal ?? 'SIGTERM');
+        } catch (err) {
+          // Fallback to killing the child directly
+          child.kill(signal ?? 'SIGTERM');
+        }
+      }
+    } catch (err) {
+      // ignore failures to kill
+    }
+
     console.log(chalk.dim('\n✓ Web UI stopped'));
+    // Ensure we exit after cleanup
     process.exit(0);
   };
-  process.once('SIGINT', sigintHandler);
+
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+  process.once('SIGHUP', () => shutdown('SIGHUP'));
+
+  // If stdin closes (Ctrl+D) treat it as an exit request
+  if (process.stdin && !process.stdin.destroyed) {
+    process.stdin.once('end', () => shutdown('SIGTERM'));
+  }
 
   // Handle child process exit
   child.on('exit', (code) => {
@@ -204,6 +227,8 @@ async function runLocalWeb(
       console.error(chalk.red(`\nProcess exited with code ${code}`));
       process.exit(code);
     }
+    // If child exited cleanly, exit too
+    process.exit(0);
   });
 }
 
@@ -231,18 +256,35 @@ async function runPublishedUI(
   const child = spawn(command, args, {
     stdio: 'inherit',
     env: process.env,
+    detached: true,
   });
 
-  const shutdown = () => {
-    child.kill('SIGINT');
+  const shutdownPublished = (signal?: NodeJS.Signals) => {
+    try {
+      if (child && child.pid) {
+        try {
+          process.kill(-child.pid, signal ?? 'SIGINT');
+        } catch (err) {
+          child.kill(signal ?? 'SIGINT');
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
     console.log(chalk.dim('\n✓ Web UI stopped'));
     process.exit(0);
   };
 
-  process.once('SIGINT', shutdown);
+  process.once('SIGINT', () => shutdownPublished('SIGINT'));
+  process.once('SIGTERM', () => shutdownPublished('SIGTERM'));
+  process.once('SIGHUP', () => shutdownPublished('SIGHUP'));
+  if (process.stdin && !process.stdin.destroyed) {
+    process.stdin.once('end', () => shutdownPublished('SIGTERM'));
+  }
 
   child.on('exit', (code) => {
     if (code === 0 || code === null) {
+      process.exit(0);
       return;
     }
     console.error(chalk.red(`\n@leanspec/ui exited with code ${code}`));

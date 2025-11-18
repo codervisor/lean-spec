@@ -1,8 +1,8 @@
-import { access, cp, mkdir, rm } from 'node:fs/promises';
+import { access, cp, mkdir, rm, readdir, lstat, readlink, symlink, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, relative } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -39,6 +39,12 @@ async function rebuildDist() {
 
   await copyDirectory(standaloneSrc, join(distDir, 'standalone'));
 
+  // Rebase PNPM symlinks so published package doesn't reference absolute paths
+  await fixStandaloneSymlinks();
+
+  // Ensure node_modules contains real directories instead of symlinks
+  await materializeStandaloneNodeModules();
+
   // Copy static assets into the standalone structure for distribution
   await copyStaticAssets();
 
@@ -47,6 +53,71 @@ async function rebuildDist() {
   }
 
   console.log('✅ LeanSpec UI artifacts copied to packages/ui/dist');
+}
+
+async function fixStandaloneSymlinks() {
+  const origRoot = standaloneSrc;
+  const newRoot = join(distDir, 'standalone');
+  const nodeModulesDir = join(newRoot, 'node_modules');
+
+  if (!(await pathExists(nodeModulesDir))) {
+    return;
+  }
+
+  console.log('  ✓ Rewriting symlinks for standalone node_modules');
+  await rewriteSymlinks(nodeModulesDir, origRoot, newRoot);
+}
+
+async function rewriteSymlinks(dir, origRoot, newRoot) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  await Promise.all(entries.map(async (entry) => {
+    const fullPath = join(dir, entry.name);
+
+    if (entry.isSymbolicLink()) {
+      const linkTarget = await readlink(fullPath);
+      if (linkTarget.startsWith(origRoot)) {
+        const updatedTarget = linkTarget.replace(origRoot, newRoot);
+        const relativeTarget = relative(dirname(fullPath), updatedTarget);
+        await unlink(fullPath);
+        await symlink(relativeTarget || '.', fullPath);
+      }
+      return;
+    }
+
+    if (entry.isDirectory()) {
+      await rewriteSymlinks(fullPath, origRoot, newRoot);
+    }
+  }));
+}
+
+async function materializeStandaloneNodeModules() {
+  const nodeModulesDir = join(distDir, 'standalone', 'node_modules');
+  if (!(await pathExists(nodeModulesDir))) {
+    return;
+  }
+
+  console.log('  ✓ Materializing node_modules symlinks');
+  await materializeSymlinks(nodeModulesDir);
+}
+
+async function materializeSymlinks(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+
+  await Promise.all(entries.map(async (entry) => {
+    const fullPath = join(dir, entry.name);
+
+    if (entry.isSymbolicLink()) {
+      const target = await readlink(fullPath);
+      const resolvedTarget = resolve(dirname(fullPath), target);
+      await rm(fullPath, { recursive: true, force: true });
+      await copyDirectory(resolvedTarget, fullPath);
+      return;
+    }
+
+    if (entry.isDirectory()) {
+      await materializeSymlinks(fullPath);
+    }
+  }));
 }
 
 async function copyStaticAssets() {
@@ -68,7 +139,7 @@ async function copyDirectory(src, dest) {
   if (!(await pathExists(src))) {
     throw new Error(`Missing build artifact at ${src}. Run pnpm --filter @leanspec/web build first.`);
   }
-  await cp(src, dest, { recursive: true });
+  await cp(src, dest, { recursive: true, force: true });
 }
 
 async function pathExists(pathname) {
