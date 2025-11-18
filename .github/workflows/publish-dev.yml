@@ -1,0 +1,78 @@
+name: Publish Dev Version to npm
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  publish-dev:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Auto-bump dev version
+        run: |
+          # Get current version from CLI package
+          CURRENT_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          
+          # Extract base version (remove any prerelease suffix)
+          BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-dev\..*//')
+          
+          # Generate timestamp-based prerelease version
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          DEV_VERSION="${BASE_VERSION}-dev.${TIMESTAMP}"
+          
+          echo "Bumping version to: $DEV_VERSION"
+          
+          # Update all package.json files
+          node -e "
+            const fs = require('fs');
+            const packages = ['packages/cli', 'packages/ui', 'packages/mcp', '.'];
+            packages.forEach(pkg => {
+              const path = \`\${pkg}/package.json\`;
+              const json = JSON.parse(fs.readFileSync(path, 'utf8'));
+              json.version = '$DEV_VERSION';
+              fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
+            });
+          "
+          
+          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
+      
+      - name: Type check
+        run: pnpm typecheck
+      
+      - name: Build
+        run: pnpm build
+      
+      - name: Publish CLI to npm with dev tag
+        working-directory: packages/cli
+        run: npm publish --tag dev --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish MCP wrapper to npm with dev tag
+        working-directory: packages/mcp
+        run: npm publish --tag dev --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish UI to npm with dev tag
+        working-directory: packages/ui
+        run: npm publish --tag dev --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
