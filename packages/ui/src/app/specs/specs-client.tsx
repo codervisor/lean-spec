@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,54 +24,199 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
-import { cn } from '@/lib/utils';
-
-interface Spec {
-  id: string;
-  specNumber: number | null;
-  specName: string;
-  title: string | null;
-  status: string | null;
-  priority: string | null;
-  tags: string[] | null;
-  updatedAt: Date | null;
+interface BoardViewProps {
+  specs: Spec[];
+  onStatusChange: (spec: Spec, status: SpecStatus) => void;
+  pendingSpecIds: Record<string, boolean>;
 }
 
-interface Stats {
-  totalSpecs: number;
-  completionRate: number;
-  specsByStatus: { status: string; count: number }[];
-}
+function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
 
-interface SpecsClientProps {
-  initialSpecs: Spec[];
-  initialStats: Stats;
-}
+  const columns = useMemo(() => {
+    return BOARD_STATUSES.map(status => ({
+      status,
+      config: STATUS_CONFIG[status],
+      specs: specs.filter(spec => spec.status === status),
+    }));
+  }, [specs]);
 
-type ViewMode = 'list' | 'board';
-type SortBy = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
+  const specLookup = useMemo(() => {
+    const map = new Map<string, Spec>();
+    specs.forEach(spec => map.set(spec.id, spec));
+    return map;
+  }, [specs]);
 
-export function SpecsClient({ initialSpecs }: SpecsClientProps) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('id-desc');
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    // Initialize from URL or localStorage
-    const urlView = searchParams.get('view');
-    if (urlView === 'board' || urlView === 'list') return urlView;
-    
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('specs-view-mode');
-      if (stored === 'board' || stored === 'list') return stored;
+  const handleDragStart = useCallback((specId: string, event: React.DragEvent<HTMLDivElement>) => {
+    event.dataTransfer.setData('text/plain', specId);
+    event.dataTransfer.effectAllowed = 'move';
+    setDraggingId(specId);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingId(null);
+    setActiveDropZone(null);
+  }, []);
+
+  const handleDragOver = useCallback((status: SpecStatus, event: React.DragEvent<HTMLDivElement>) => {
+    if (!draggingId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setActiveDropZone(status);
+  }, [draggingId]);
+
+  const handleDragLeave = useCallback((status: SpecStatus, event: React.DragEvent<HTMLDivElement>) => {
+    if (!draggingId) return;
+    const related = event.relatedTarget as Node | null;
+    if (!related || !event.currentTarget.contains(related)) {
+      setActiveDropZone((current) => (current === status ? null : current));
     }
-    return 'list';
-  });
-  
-  const isFirstRender = useRef(true);
+  }, [draggingId]);
+
+  const handleDrop = useCallback((status: SpecStatus, event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const draggedId = event.dataTransfer.getData('text/plain') || draggingId;
+    if (!draggedId) {
+      handleDragEnd();
+      return;
+    }
+
+    const spec = specLookup.get(draggedId);
+    if (spec && spec.status !== status) {
+      onStatusChange(spec, status);
+    }
+
+    handleDragEnd();
+  }, [draggingId, handleDragEnd, onStatusChange, specLookup]);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {columns.map(column => {
+        const Icon = column.config.icon;
+        return (
+          <div key={column.status} className="flex flex-col">
+            <div className={cn(
+              'sticky top-14 z-40 mb-4 p-3 rounded-lg border-2 bg-background',
+              column.config.bgClass,
+              column.config.borderClass
+            )}>
+              <h2 className={cn(
+                'text-lg font-semibold flex items-center gap-2',
+                column.config.colorClass
+              )}>
+                <Icon className="h-5 w-5" />
+                {column.config.title}
+                <Badge variant="outline" className="ml-auto">{column.specs.length}</Badge>
+              </h2>
+            </div>
+
+            <div
+              className={cn(
+                'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors',
+                draggingId && 'border-dashed border-muted-foreground/40',
+                draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
+              )}
+              onDragOver={(event) => handleDragOver(column.status, event)}
+              onDragLeave={(event) => handleDragLeave(column.status, event)}
+              onDrop={(event) => handleDrop(column.status, event)}
+            >
+              {column.specs.map(spec => {
+                const priorityColors = {
+                  'critical': 'border-l-red-500',
+                  'high': 'border-l-orange-500',
+                  'medium': 'border-l-blue-500',
+                  'low': 'border-l-gray-400'
+                };
+                const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
+                const isUpdating = Boolean(pendingSpecIds[spec.id]);
+
+                return (
+                  <Card
+                    key={spec.id}
+                    draggable={!isUpdating}
+                    onDragStart={(event) => {
+                      if (isUpdating) {
+                        event.preventDefault();
+                        return;
+                      }
+                      handleDragStart(spec.id, event);
+                    }}
+                    onDragEnd={handleDragEnd}
+                    aria-disabled={isUpdating}
+                    className={cn(
+                      'relative hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer',
+                      borderColor,
+                      isUpdating && 'opacity-60 cursor-wait'
+                    )}
+                    onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
+                  >
+                    {isUpdating && (
+                      <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs font-medium">
+                        Updating…
+                      </div>
+                    )}
+                    <CardHeader className="pb-3">
+                      <Link href={`/specs/${spec.specNumber || spec.id}`}>
+                        <CardTitle className="text-sm font-medium hover:text-primary transition-colors">
+                          {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
+                        </CardTitle>
+                      </Link>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {spec.title || spec.specName}
+                      </p>
+                      
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {spec.priority && <PriorityBadge priority={spec.priority} />}
+                        
+                        {spec.tags && spec.tags.length > 0 && (
+                          <>
+                            {spec.tags.slice(0, 2).map(tag => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {spec.tags.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{spec.tags.length - 2}
+                              </Badge>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+
+              {column.specs.length === 0 && (
+                <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
+                  <CardContent className="py-8 text-center">
+                    <Icon className={cn('mx-auto h-8 w-8 mb-2', column.config.colorClass, 'opacity-50')} />
+                    <p className="text-sm text-muted-foreground">Drop here to move specs</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+      console.error('Failed to update spec status', error);
+      setSpecs((prev) => prev.map(item => item.id === spec.id ? { ...item, status: previousStatus } : item));
+      toast.error('Unable to update status. Please try again.');
+    } finally {
+      setPendingSpecIds((prev) => {
+        const next = { ...prev };
+        delete next[spec.id];
+        return next;
+      });
+    }
+  }, []);
 
   // Update URL when view mode changes (skip on initial mount)
   useEffect(() => {
@@ -97,7 +242,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
   }, [viewMode, router]);
 
   const filteredAndSortedSpecs = useMemo(() => {
-    const specs = initialSpecs.filter(spec => {
+    const filtered = specs.filter(spec => {
       const matchesSearch = !searchQuery ||
         spec.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         spec.specName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -109,23 +254,25 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
       return matchesSearch && matchesStatus && matchesPriority;
     });
 
+    const sorted = [...filtered];
+
     // Sort
     switch (sortBy) {
       case 'id-desc':
-        specs.sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
+        sorted.sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
         break;
       case 'id-asc':
-        specs.sort((a, b) => (a.specNumber || 0) - (b.specNumber || 0));
+        sorted.sort((a, b) => (a.specNumber || 0) - (b.specNumber || 0));
         break;
       case 'updated-desc':
-        specs.sort((a, b) => {
+        sorted.sort((a, b) => {
           if (!a.updatedAt) return 1;
           if (!b.updatedAt) return -1;
           return b.updatedAt.getTime() - a.updatedAt.getTime();
         });
         break;
       case 'title-asc':
-        specs.sort((a, b) => {
+        sorted.sort((a, b) => {
           const titleA = (a.title || a.specName).toLowerCase();
           const titleB = (b.title || b.specName).toLowerCase();
           return titleA.localeCompare(titleB);
@@ -133,8 +280,8 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
         break;
     }
 
-    return specs;
-  }, [initialSpecs, searchQuery, statusFilter, priorityFilter, sortBy]);
+    return sorted;
+  }, [specs, searchQuery, statusFilter, priorityFilter, sortBy]);
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -161,7 +308,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
             </div>
 
             {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpecStatus | 'all')}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -229,7 +376,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
 
         {/* Results count */}
         <div className="text-sm text-muted-foreground mb-4">
-          Showing {filteredAndSortedSpecs.length} of {initialSpecs.length} specs
+          Showing {filteredAndSortedSpecs.length} of {specs.length} specs
         </div>
 
         {/* Content based on view mode */}

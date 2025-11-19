@@ -66,13 +66,14 @@ export async function updateSpec(
     tags?: string[];
     assignee?: string;
     customFields?: Record<string, unknown>;
-  }
+  },
+  options: { cwd?: string } = {}
 ): Promise<void> {
   // Auto-check for conflicts before update
   await autoCheckIfEnabled();
   
-  const config = await loadConfig();
-  const cwd = process.cwd();
+  const cwd = options.cwd ?? process.cwd();
+  const config = await loadConfig(cwd);
   const specsDir = path.join(cwd, config.specsDir);
   
   const resolvedPath = await resolveSpecPath(specPath, cwd, specsDir);

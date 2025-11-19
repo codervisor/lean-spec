@@ -143,20 +143,47 @@ This spec addresses comprehensive improvements to the documentation site based o
 
 ## Status Update · 2025-11-19
 
-**Completed so far**
-- Navigation restructure (`docs-site/sidebars.ts`) now surfaces Migration, Core Concepts, and AI-Assisted content in the intended beginner → advanced order.
-- `docs-site/docs/guide/understanding-leanspec.mdx` (and the zh-Hans translation) fully replaces the old "Understanding Specs" doc with deeper rationale and working-memory guidance.
-- Terminology was consolidated: sub-spec coverage folded into `guide/terminology/spec.mdx`, and the new `guide/terminology/built-in-metadata.mdx` (plus zh-Hans) replaces the individual status/dependency/tag pages.
-- Examples landing doc renamed to `examples/overview.mdx` (and translated) so the sidebar no longer points at an `index` placeholder.
-- Validation guidance (`docs-site/docs/guide/usage/project-management/validation.mdx`) now speaks in token thresholds rather than line counts, keeping the docs consistent with the CLI's token tooling.
-- Token-first messaging now covers the FAQ, comparison page, MCP reference, and context-engineering guide (including zh-Hans translations) so there are no remaining "300-line"/"line limit" references in the docs-site.
-- Chinese localization mirrors the new terminology so both languages describe the 2,000/3,500/5,000-token thresholds consistently.
+**Completed (Phases 1-3)**
+- ✅ Navigation restructure (`docs-site/sidebars.ts`) now surfaces Migration, Core Concepts, and AI-Assisted content in the intended beginner → advanced order.
+- ✅ `docs-site/docs/guide/understanding-leanspec.mdx` (and the zh-Hans translation) fully replaces the old "Understanding Specs" doc with deeper rationale and working-memory guidance.
+- ✅ Terminology was consolidated: sub-spec coverage folded into `guide/terminology/spec.mdx`, and the new `guide/terminology/built-in-metadata.mdx` (plus zh-Hans) replaces the individual status/dependency/tag pages.
+- ✅ Examples landing doc renamed to `examples/overview.mdx` (and translated) so the sidebar no longer points at an `index` placeholder.
+- ✅ Validation guidance (`docs-site/docs/guide/usage/project-management/validation.mdx`) now speaks in token thresholds rather than line counts, keeping the docs consistent with the CLI's token tooling.
+- ✅ Token-first messaging now covers the FAQ, comparison page, MCP reference, and context-engineering guide (including zh-Hans translations) so there are no remaining "300-line"/"line limit" references in the docs-site.
+- ✅ Chinese localization mirrors the new terminology so both languages describe the 2,000/3,500/5,000-token thresholds consistently.
+- ✅ "Writing Specs AI Can Execute" page removed and replaced with `ai-executable-patterns.mdx` in the correct location.
+- ✅ "AI-Assisted Workflows" lifted to correct hierarchy level (under usage/, not buried deeper).
 
-- **Still outstanding / next focus**
-- Remaining Phase 1 audit work: build a Usage/Reference inventory plus translation gap list.
-- Usage + Reference sections still need to be re-validated against the current CLI outputs, and tutorials continue to reference video placeholders.
-- Examples beyond the existing two zh-Hans files remain untranslated; Chinese landing-page tagline and "Web App" copy still need refinement.
-- We have not yet simplified the Introduction Overview or run a docs-site build/link check to validate the new IA.
+**Priority Next Actions (Remaining from Phases 3-5)**
+
+1. **Tutorial Cleanup** (Phase 3)
+   - Remove video walkthrough note and all timestamp references from `docs/tutorials/writing-first-spec-with-ai.mdx`:
+     - Line 12: Remove "🎥 Video walkthrough (Loom) — coming soon" note
+     - Line 19: "Step 1: Share Intent with the Agent (00:30)" → "Step 1: Share Intent with the Agent"
+     - Line 31: "Step 2: Let the Agent Outline the Spec (02:10)" → "Step 2: Let the Agent Outline the Spec"
+     - Line 41: "Step 3: Generate the Draft (04:00)" → "Step 3: Generate the Draft"
+     - Line 51: "Step 4: Review with Lean Principles (06:30)" → "Step 4: Review with Lean Principles"
+     - Line 66: "Step 5: Validate and Set Status (08:45)" → "Step 5: Validate and Set Status"
+     - Line 81: "Step 6: Capture AI/Human Responsibilities (10:00)" → "Step 6: Capture AI/Human Responsibilities"
+
+2. **Examples Translation** (Phase 4)
+   - Translate `docs/examples/cross-team-official-launch.mdx` to Chinese
+   - Translate `docs/examples/refactoring-monorepo-core.mdx` to Chinese
+
+3. **Introduction Simplification** (Phase 2)
+   - Condense `docs/guide/index.mdx` (currently 150 lines) for better first-time user experience
+
+4. **Usage Docs Validation** (Phase 3)
+   - Systematically verify all usage docs against current CLI output (see Usage Doc Audit table)
+
+5. **Chinese Localization Polish** (Phase 4)
+   - Improve landing page Chinese tagline (current: "轻量级规范方法论，助力 AI 驱动开发")
+   - Improve "Web App" Chinese translation (consider "网页应用" or context-specific term)
+
+6. **Final Validation** (Phase 5)
+   - Run `npm run build` in docs-site to verify no broken links
+   - Test navigation flow for beginner → advanced progression
+   - Spot-check translation quality
 
 ## Plan
 
@@ -170,13 +197,13 @@ This spec addresses comprehensive improvements to the documentation site based o
 
 ### Phase 2: Information Architecture
 - [x] Update sidebars.ts for navigation restructure
-- [ ] Simplify "Introduction -> Overview"
+- [ ] Simplify "Introduction -> Overview" (docs/guide/index.mdx is 150 lines, needs condensing)
 - [x] Move "Migrating to LeanSpec" to top level
 - [x] Rename "Understanding Specs" → "Understanding LeanSpec"
 - [x] Remove "Terminology Overview" page
 - [x] Restructure terminology concepts (merge Sub-Specs, consolidate metadata)
 - [x] Move "AI-Assisted Workflows" up one level
-- [x] Remove "Writing Specs AI Can Execute" page
+- [x] Remove "Writing Specs AI Can Execute" page (now ai-executable-patterns.mdx)
 - [x] Fix "Examples" default doc name
 
 ### Phase 3: Content Updates
@@ -184,11 +211,11 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] Update outdated "Usage" docs
 - [ ] Update "Reference" docs to match current CLI
 - [x] Expand terminology with in-depth explanations
-- [ ] Rewrite tutorials (remove video placeholders, focus on AI-assisted)
+- [ ] Rewrite tutorials (remove video placeholders from writing-first-spec-with-ai.mdx, focus on AI-assisted)
 - [ ] Update code examples and command outputs
 
 ### Phase 4: Translation & Localization
-- [ ] Translate all "Examples" to Chinese
+- [ ] Translate remaining "Examples" to Chinese (2 remaining: cross-team-official-launch, refactoring-monorepo-core)
 - [ ] Fill other translation gaps identified in audit
 - [ ] Improve landing page Chinese tagline
 - [ ] Improve "Web App" Chinese translation
