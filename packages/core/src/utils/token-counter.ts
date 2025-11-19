@@ -12,7 +12,15 @@
  * See spec 066 for research findings and threshold rationale.
  */
 
-import { encoding_for_model } from 'tiktoken';
+// Lazy import tiktoken to avoid WASM loading issues in Next.js
+let encoding: any = null;
+async function getEncoding() {
+  if (!encoding) {
+    const { encoding_for_model } = await import('tiktoken');
+    encoding = encoding_for_model('gpt-4');
+  }
+  return encoding;
+}
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import matter from 'gray-matter';
@@ -41,26 +49,31 @@ export interface TokenCounterOptions {
  * Token counter using tiktoken for exact token counts
  */
 export class TokenCounter {
-  private encoding: ReturnType<typeof encoding_for_model>;
+  private encoding: any = null;
 
-  constructor() {
-    // Use GPT-4 encoding (also compatible with Claude and other models)
-    // This is the standard BPE encoding used by most modern LLMs
-    this.encoding = encoding_for_model('gpt-4');
+  async getEncoding() {
+    if (!this.encoding) {
+      const { encoding_for_model } = await import('tiktoken');
+      this.encoding = encoding_for_model('gpt-4');
+    }
+    return this.encoding;
   }
 
   /**
    * Clean up resources (important to prevent memory leaks)
    */
   dispose(): void {
-    this.encoding.free();
+    if (this.encoding) {
+      this.encoding.free();
+    }
   }
 
   /**
    * Count tokens in a string
    */
-  countString(text: string): number {
-    const tokens = this.encoding.encode(text);
+  async countString(text: string): Promise<number> {
+    const encoding = await this.getEncoding();
+    const tokens = encoding.encode(text);
     return tokens.length;
   }
 
@@ -77,7 +90,7 @@ export class TokenCounter {
    */
   async countFile(filePath: string, options: TokenCounterOptions = {}): Promise<TokenCount> {
     const content = await fs.readFile(filePath, 'utf-8');
-    const tokens = this.countString(content);
+    const tokens = await this.countString(content);
     const lines = content.split('\n').length;
 
     const result: TokenCount = {
@@ -144,7 +157,7 @@ export class TokenCounter {
     for (const file of filesToCount) {
       const filePath = path.join(specPath, file);
       const content = await fs.readFile(filePath, 'utf-8');
-      const tokens = this.countString(content);
+      const tokens = await this.countString(content);
       const lines = content.split('\n').length;
 
       fileCounts.push({
@@ -190,7 +203,7 @@ export class TokenCounter {
       const parsed = matter(content);
       body = parsed.content;
       frontmatterContent = parsed.matter;
-      breakdown.frontmatter = this.countString(frontmatterContent);
+      breakdown.frontmatter = await this.countString(frontmatterContent);
     } catch {
       // No frontmatter or parsing error
     }
@@ -207,12 +220,12 @@ export class TokenCounter {
       // Track code blocks
       if (trimmed.startsWith('```')) {
         inCodeBlock = !inCodeBlock;
-        breakdown.code += this.countString(line + '\n');
+        breakdown.code += await this.countString(line + '\n');
         continue;
       }
 
       if (inCodeBlock) {
-        breakdown.code += this.countString(line + '\n');
+        breakdown.code += await this.countString(line + '\n');
         continue;
       }
 
@@ -222,14 +235,14 @@ export class TokenCounter {
       
       if (isTableSeparator || (inTable && isTableRow)) {
         inTable = true;
-        breakdown.tables += this.countString(line + '\n');
+        breakdown.tables += await this.countString(line + '\n');
         continue;
       } else if (inTable && !isTableRow) {
         inTable = false;
       }
 
       // Everything else is prose
-      breakdown.prose += this.countString(line + '\n');
+      breakdown.prose += await this.countString(line + '\n');
     }
 
     return breakdown;
@@ -335,13 +348,13 @@ export async function countTokens(
     if (typeof input === 'string') {
       // String content
       return {
-        total: counter.countString(input),
+        total: await counter.countString(input),
         files: [],
       };
     } else if ('content' in input) {
       // Content object
       return {
-        total: counter.countString(input.content),
+        total: await counter.countString(input.content),
         files: [],
       };
     } else if ('filePath' in input) {

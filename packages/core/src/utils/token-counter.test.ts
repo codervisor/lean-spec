@@ -25,27 +25,27 @@ describe('TokenCounter', () => {
   });
 
   describe('countString', () => {
-    it('should count tokens in a simple string', () => {
+    it('should count tokens in a simple string', async () => {
       const text = 'Hello world';
-      const count = counter.countString(text);
+      const count = await counter.countString(text);
       expect(count).toBeGreaterThan(0);
       expect(count).toBeLessThan(10); // Should be ~2-3 tokens
     });
 
-    it('should count tokens in code', () => {
+    it('should count tokens in code', async () => {
       const code = 'function hello() { return "world"; }';
-      const count = counter.countString(code);
+      const count = await counter.countString(code);
       expect(count).toBeGreaterThan(0);
     });
 
-    it('should return 0 for empty string', () => {
-      const count = counter.countString('');
+    it('should return 0 for empty string', async () => {
+      const count = await counter.countString('');
       expect(count).toBe(0);
     });
 
-    it('should handle unicode characters', () => {
+    it('should handle unicode characters', async () => {
       const text = '你好世界 🌍';
-      const count = counter.countString(text);
+      const count = await counter.countString(text);
       expect(count).toBeGreaterThan(0);
     });
   });

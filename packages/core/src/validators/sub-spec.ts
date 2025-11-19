@@ -138,7 +138,7 @@ export class SubSpecValidator implements ValidationRule {
 
       // Count tokens using tiktoken
       const counter = new TokenCounter();
-      const tokenCount = counter.countString(subSpec.content);
+      const tokenCount = await counter.countString(subSpec.content);
       counter.dispose();
 
       // Calculate token score (primary factor)

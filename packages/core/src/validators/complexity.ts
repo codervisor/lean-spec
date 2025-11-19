@@ -267,7 +267,7 @@ export class ComplexityValidator implements ValidationRule {
 
     // Count tokens using tiktoken
     const counter = new TokenCounter();
-    const tokenCount = counter.countString(content);
+    const tokenCount = await counter.countString(content);
     counter.dispose();
 
     // Detect sub-specs by checking actual files in the spec directory
