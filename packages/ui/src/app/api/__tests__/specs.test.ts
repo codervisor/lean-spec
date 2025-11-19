@@ -12,6 +12,10 @@ vi.mock('@/lib/db/service-queries', () => ({
   getSpecById: vi.fn(),
 }));
 
+vi.mock('@cli/commands/update', () => ({
+  updateSpec: vi.fn(),
+}));
+
 const createMockSpec = (overrides: Partial<ParsedSpec> = {}): ParsedSpec => ({
   id: 'fs-001-test-spec',
   projectId: 'leanspec',
@@ -138,6 +142,67 @@ describe('Spec API Routes', () => {
       expect(response.status).toBe(404);
       const json = await response.json();
       expect(json.error).toBe('Sub-spec not found');
+    });
+  });
+
+  describe('PATCH /api/specs/[id]/status', () => {
+    it('should update spec status', async () => {
+      const { updateSpec } = await import('@cli/commands/update');
+      const { PATCH } = await import('@/app/api/specs/[id]/status/route');
+
+      vi.mocked(updateSpec).mockResolvedValue(undefined);
+
+      const request = new Request('http://localhost/api/specs/001/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'complete' }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const params = Promise.resolve({ id: '001-test-spec' });
+
+      const response = await PATCH(request, { params });
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.success).toBe(true);
+      expect(updateSpec).toHaveBeenCalledWith(
+        '001-test-spec',
+        { status: 'complete' },
+        expect.objectContaining({ cwd: expect.any(String) })
+      );
+    });
+
+    it('should return 400 for invalid status', async () => {
+      const { PATCH } = await import('@/app/api/specs/[id]/status/route');
+
+      const request = new Request('http://localhost/api/specs/001/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'invalid' }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const params = Promise.resolve({ id: '001-test-spec' });
+
+      const response = await PATCH(request, { params });
+      expect(response.status).toBe(400);
+      const json = await response.json();
+      expect(json.error).toContain('Invalid status');
+    });
+
+    it('should return 500 when update fails', async () => {
+      const { updateSpec } = await import('@cli/commands/update');
+      const { PATCH } = await import('@/app/api/specs/[id]/status/route');
+
+      vi.mocked(updateSpec).mockRejectedValue(new Error('boom'));
+
+      const request = new Request('http://localhost/api/specs/001/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'planned' }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const params = Promise.resolve({ id: '001-test-spec' });
+
+      const response = await PATCH(request, { params });
+      expect(response.status).toBe(500);
+      const json = await response.json();
+      expect(json.error).toBe('Failed to update spec status');
     });
   });
 });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import type { DragEvent } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,193 +20,135 @@ import {
   CheckCircle2, 
   PlayCircle, 
   Clock,
+  Archive,
   LayoutGrid,
   List as ListIcon
 } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
-interface BoardViewProps {
-  specs: Spec[];
-  onStatusChange: (spec: Spec, status: SpecStatus) => void;
-  pendingSpecIds: Record<string, boolean>;
+import { cn } from '@/lib/utils';
+import { toast } from '@/components/ui/toast';
+
+type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
+
+const STATUS_CONFIG: Record<SpecStatus, {
+  icon: typeof Clock;
+  title: string;
+  colorClass: string;
+  bgClass: string;
+  borderClass: string;
+}> = {
+  'planned': {
+    icon: Clock,
+    title: 'Planned',
+    colorClass: 'text-blue-600 dark:text-blue-400',
+    bgClass: 'bg-blue-50 dark:bg-blue-900/20',
+    borderClass: 'border-blue-200 dark:border-blue-800'
+  },
+  'in-progress': {
+    icon: PlayCircle,
+    title: 'In Progress',
+    colorClass: 'text-orange-600 dark:text-orange-400',
+    bgClass: 'bg-orange-50 dark:bg-orange-900/20',
+    borderClass: 'border-orange-200 dark:border-orange-800'
+  },
+  'complete': {
+    icon: CheckCircle2,
+    title: 'Complete',
+    colorClass: 'text-green-600 dark:text-green-400',
+    bgClass: 'bg-green-50 dark:bg-green-900/20',
+    borderClass: 'border-green-200 dark:border-green-800'
+  },
+  'archived': {
+    icon: Archive,
+    title: 'Archived',
+    colorClass: 'text-gray-600 dark:text-gray-400',
+    bgClass: 'bg-gray-50 dark:bg-gray-900/20',
+    borderClass: 'border-gray-200 dark:border-gray-800'
+  }
+};
+
+const BOARD_STATUSES: SpecStatus[] = ['planned', 'in-progress', 'complete', 'archived'];
+
+interface Spec {
+  id: string;
+  specNumber: number | null;
+  specName: string;
+  title: string | null;
+  status: SpecStatus | null;
+  priority: string | null;
+  tags: string[] | null;
+  updatedAt: Date | null;
 }
 
-function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
+interface Stats {
+  totalSpecs: number;
+  completionRate: number;
+  specsByStatus: { status: string; count: number }[];
+}
 
-  const columns = useMemo(() => {
-    return BOARD_STATUSES.map(status => ({
-      status,
-      config: STATUS_CONFIG[status],
-      specs: specs.filter(spec => spec.status === status),
-    }));
-  }, [specs]);
+interface SpecsClientProps {
+  initialSpecs: Spec[];
+  initialStats: Stats;
+}
 
-  const specLookup = useMemo(() => {
-    const map = new Map<string, Spec>();
-    specs.forEach(spec => map.set(spec.id, spec));
-    return map;
-  }, [specs]);
+type ViewMode = 'list' | 'board';
+type SortBy = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 
-  const handleDragStart = useCallback((specId: string, event: React.DragEvent<HTMLDivElement>) => {
-    event.dataTransfer.setData('text/plain', specId);
-    event.dataTransfer.effectAllowed = 'move';
-    setDraggingId(specId);
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    setDraggingId(null);
-    setActiveDropZone(null);
-  }, []);
-
-  const handleDragOver = useCallback((status: SpecStatus, event: React.DragEvent<HTMLDivElement>) => {
-    if (!draggingId) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    setActiveDropZone(status);
-  }, [draggingId]);
-
-  const handleDragLeave = useCallback((status: SpecStatus, event: React.DragEvent<HTMLDivElement>) => {
-    if (!draggingId) return;
-    const related = event.relatedTarget as Node | null;
-    if (!related || !event.currentTarget.contains(related)) {
-      setActiveDropZone((current) => (current === status ? null : current));
+export function SpecsClient({ initialSpecs }: SpecsClientProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
+  const [pendingSpecIds, setPendingSpecIds] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | SpecStatus>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('id-desc');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    // Initialize from URL or localStorage
+    const urlView = searchParams.get('view');
+    if (urlView === 'board' || urlView === 'list') return urlView;
+    
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('specs-view-mode');
+      if (stored === 'board' || stored === 'list') return stored;
     }
-  }, [draggingId]);
+    return 'list';
+  });
+  
+  const isFirstRender = useRef(true);
 
-  const handleDrop = useCallback((status: SpecStatus, event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const draggedId = event.dataTransfer.getData('text/plain') || draggingId;
-    if (!draggedId) {
-      handleDragEnd();
+  useEffect(() => {
+    setSpecs(initialSpecs);
+  }, [initialSpecs]);
+
+  const handleStatusChange = useCallback(async (spec: Spec, nextStatus: SpecStatus) => {
+    if (spec.status === nextStatus) {
       return;
     }
 
-    const spec = specLookup.get(draggedId);
-    if (spec && spec.status !== status) {
-      onStatusChange(spec, status);
-    }
+    const previousStatus = spec.status;
+    setPendingSpecIds((prev) => ({ ...prev, [spec.id]: true }));
+    setSpecs((prev) => prev.map(item => item.id === spec.id ? { ...item, status: nextStatus } : item));
 
-    handleDragEnd();
-  }, [draggingId, handleDragEnd, onStatusChange, specLookup]);
+    try {
+      const response = await fetch(`/api/specs/${encodeURIComponent(spec.specName)}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {columns.map(column => {
-        const Icon = column.config.icon;
-        return (
-          <div key={column.status} className="flex flex-col">
-            <div className={cn(
-              'sticky top-14 z-40 mb-4 p-3 rounded-lg border-2 bg-background',
-              column.config.bgClass,
-              column.config.borderClass
-            )}>
-              <h2 className={cn(
-                'text-lg font-semibold flex items-center gap-2',
-                column.config.colorClass
-              )}>
-                <Icon className="h-5 w-5" />
-                {column.config.title}
-                <Badge variant="outline" className="ml-auto">{column.specs.length}</Badge>
-              </h2>
-            </div>
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Failed to update spec status');
+      }
 
-            <div
-              className={cn(
-                'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors',
-                draggingId && 'border-dashed border-muted-foreground/40',
-                draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
-              )}
-              onDragOver={(event) => handleDragOver(column.status, event)}
-              onDragLeave={(event) => handleDragLeave(column.status, event)}
-              onDrop={(event) => handleDrop(column.status, event)}
-            >
-              {column.specs.map(spec => {
-                const priorityColors = {
-                  'critical': 'border-l-red-500',
-                  'high': 'border-l-orange-500',
-                  'medium': 'border-l-blue-500',
-                  'low': 'border-l-gray-400'
-                };
-                const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
-                const isUpdating = Boolean(pendingSpecIds[spec.id]);
-
-                return (
-                  <Card
-                    key={spec.id}
-                    draggable={!isUpdating}
-                    onDragStart={(event) => {
-                      if (isUpdating) {
-                        event.preventDefault();
-                        return;
-                      }
-                      handleDragStart(spec.id, event);
-                    }}
-                    onDragEnd={handleDragEnd}
-                    aria-disabled={isUpdating}
-                    className={cn(
-                      'relative hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer',
-                      borderColor,
-                      isUpdating && 'opacity-60 cursor-wait'
-                    )}
-                    onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
-                  >
-                    {isUpdating && (
-                      <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs font-medium">
-                        Updating…
-                      </div>
-                    )}
-                    <CardHeader className="pb-3">
-                      <Link href={`/specs/${spec.specNumber || spec.id}`}>
-                        <CardTitle className="text-sm font-medium hover:text-primary transition-colors">
-                          {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
-                        </CardTitle>
-                      </Link>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {spec.title || spec.specName}
-                      </p>
-                      
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {spec.priority && <PriorityBadge priority={spec.priority} />}
-                        
-                        {spec.tags && spec.tags.length > 0 && (
-                          <>
-                            {spec.tags.slice(0, 2).map(tag => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                            {spec.tags.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{spec.tags.length - 2}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-
-              {column.specs.length === 0 && (
-                <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
-                  <CardContent className="py-8 text-center">
-                    <Icon className={cn('mx-auto h-8 w-8 mb-2', column.config.colorClass, 'opacity-50')} />
-                    <p className="text-sm text-muted-foreground">Drop here to move specs</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+      const displayName = spec.specNumber ? `#${spec.specNumber}` : spec.specName;
+      toast.success(`Moved ${displayName} to ${STATUS_CONFIG[nextStatus].title}`);
+    } catch (error) {
       console.error('Failed to update spec status', error);
       setSpecs((prev) => prev.map(item => item.id === spec.id ? { ...item, status: previousStatus } : item));
       toast.error('Unable to update status. Please try again.');
@@ -383,7 +326,11 @@ function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
         {viewMode === 'list' ? (
           <ListView specs={filteredAndSortedSpecs} />
         ) : (
-          <BoardView specs={filteredAndSortedSpecs} />
+          <BoardView
+            specs={filteredAndSortedSpecs}
+            onStatusChange={handleStatusChange}
+            pendingSpecIds={pendingSpecIds}
+          />
         )}
       </div>
     </div>
@@ -446,54 +393,85 @@ function ListView({ specs }: { specs: Spec[] }) {
   );
 }
 
-function BoardView({ specs }: { specs: Spec[] }) {
+interface BoardViewProps {
+  specs: Spec[];
+  onStatusChange: (spec: Spec, status: SpecStatus) => void;
+  pendingSpecIds: Record<string, boolean>;
+}
+
+function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
+
   const columns = useMemo(() => {
-    const statusConfig = {
-      'planned': {
-        icon: Clock,
-        title: 'Planned',
-        colorClass: 'text-blue-600 dark:text-blue-400',
-        bgClass: 'bg-blue-50 dark:bg-blue-900/20',
-        borderClass: 'border-blue-200 dark:border-blue-800'
-      },
-      'in-progress': {
-        icon: PlayCircle,
-        title: 'In Progress',
-        colorClass: 'text-orange-600 dark:text-orange-400',
-        bgClass: 'bg-orange-50 dark:bg-orange-900/20',
-        borderClass: 'border-orange-200 dark:border-orange-800'
-      },
-      'complete': {
-        icon: CheckCircle2,
-        title: 'Complete',
-        colorClass: 'text-green-600 dark:text-green-400',
-        bgClass: 'bg-green-50 dark:bg-green-900/20',
-        borderClass: 'border-green-200 dark:border-green-800'
-      }
-    } as const;
-    
-    const statuses = ['planned', 'in-progress', 'complete'] as const;
-    
-    return statuses.map(status => ({
+    return BOARD_STATUSES.map(status => ({
       status,
-      config: statusConfig[status],
+      config: STATUS_CONFIG[status],
       specs: specs.filter(spec => spec.status === status),
     }));
   }, [specs]);
 
+  const specLookup = useMemo(() => {
+    const map = new Map<string, Spec>();
+    specs.forEach(spec => map.set(spec.id, spec));
+    return map;
+  }, [specs]);
+
+  const handleDragStart = useCallback((specId: string, event: DragEvent<HTMLDivElement>) => {
+    event.dataTransfer.setData('text/plain', specId);
+    event.dataTransfer.effectAllowed = 'move';
+    setDraggingId(specId);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingId(null);
+    setActiveDropZone(null);
+  }, []);
+
+  const handleDragOver = useCallback((status: SpecStatus, event: DragEvent<HTMLDivElement>) => {
+    if (!draggingId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setActiveDropZone(status);
+  }, [draggingId]);
+
+  const handleDragLeave = useCallback((status: SpecStatus, event: DragEvent<HTMLDivElement>) => {
+    if (!draggingId) return;
+    const related = event.relatedTarget as Node | null;
+    if (!related || !event.currentTarget.contains(related)) {
+      setActiveDropZone((current) => (current === status ? null : current));
+    }
+  }, [draggingId]);
+
+  const handleDrop = useCallback((status: SpecStatus, event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const draggedId = event.dataTransfer.getData('text/plain') || draggingId;
+    if (!draggedId) {
+      handleDragEnd();
+      return;
+    }
+
+    const spec = specLookup.get(draggedId);
+    if (spec && spec.status !== status) {
+      onStatusChange(spec, status);
+    }
+
+    handleDragEnd();
+  }, [draggingId, handleDragEnd, onStatusChange, specLookup]);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {columns.map(column => {
         const Icon = column.config.icon;
         return (
           <div key={column.status} className="flex flex-col">
             <div className={cn(
-              "sticky top-14 z-40 mb-4 p-3 rounded-lg border-2 bg-background",
+              'sticky top-14 z-40 mb-4 p-3 rounded-lg border-2 bg-background',
               column.config.bgClass,
               column.config.borderClass
             )}>
               <h2 className={cn(
-                "text-lg font-semibold flex items-center gap-2",
+                'text-lg font-semibold flex items-center gap-2',
                 column.config.colorClass
               )}>
                 <Icon className="h-5 w-5" />
@@ -502,7 +480,16 @@ function BoardView({ specs }: { specs: Spec[] }) {
               </h2>
             </div>
 
-            <div className="space-y-3 flex-1">
+            <div
+              className={cn(
+                'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors',
+                draggingId && 'border-dashed border-muted-foreground/40',
+                draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
+              )}
+              onDragOver={(event) => handleDragOver(column.status, event)}
+              onDragLeave={(event) => handleDragLeave(column.status, event)}
+              onDrop={(event) => handleDrop(column.status, event)}
+            >
               {column.specs.map(spec => {
                 const priorityColors = {
                   'critical': 'border-l-red-500',
@@ -511,16 +498,33 @@ function BoardView({ specs }: { specs: Spec[] }) {
                   'low': 'border-l-gray-400'
                 };
                 const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
+                const isUpdating = Boolean(pendingSpecIds[spec.id]);
 
                 return (
-                  <Card 
-                    key={spec.id} 
+                  <Card
+                    key={spec.id}
+                    draggable={!isUpdating}
+                    onDragStart={(event) => {
+                      if (isUpdating) {
+                        event.preventDefault();
+                        return;
+                      }
+                      handleDragStart(spec.id, event);
+                    }}
+                    onDragEnd={handleDragEnd}
+                    aria-disabled={isUpdating}
                     className={cn(
-                      "hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer",
-                      borderColor
+                      'relative hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer',
+                      borderColor,
+                      isUpdating && 'opacity-60 cursor-wait'
                     )}
                     onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
                   >
+                    {isUpdating && (
+                      <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs font-medium">
+                        Updating...
+                      </div>
+                    )}
                     <CardHeader className="pb-3">
                       <Link href={`/specs/${spec.specNumber || spec.id}`}>
                         <CardTitle className="text-sm font-medium hover:text-primary transition-colors">
@@ -555,6 +559,15 @@ function BoardView({ specs }: { specs: Spec[] }) {
                   </Card>
                 );
               })}
+
+              {column.specs.length === 0 && (
+                <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
+                  <CardContent className="py-8 text-center">
+                    <Icon className={cn('mx-auto h-8 w-8 mb-2', column.config.colorClass, 'opacity-50')} />
+                    <p className="text-sm text-muted-foreground">Drop here to move specs</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         );
