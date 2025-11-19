@@ -1,17 +1,20 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-18'
 tags: []
 priority: medium
 created_at: '2025-11-18T14:33:07.663Z'
 related:
   - 105-docs-site-enhancements
-updated_at: '2025-11-18T14:35:46.744Z'
+updated_at: '2025-11-19T01:06:46.667Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-19T01:06:46.667Z'
 ---
 
 # UI Package Documentation and Integration
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-18
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-18
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -295,42 +298,42 @@ All new content needs Chinese translation:
 ## Plan
 
 ### Phase 1: Content Writing
-- [ ] Write `docs/guide/visual-mode.mdx` (comprehensive guide)
-  - [ ] Introduction and benefits
-  - [ ] Getting started (both methods)
-  - [ ] Features overview
-  - [ ] Filesystem mode explanation
-  - [ ] Development workflows
-  - [ ] Troubleshooting section
-- [ ] Write `docs/reference/ui-package.mdx` (package reference)
-  - [ ] Overview and installation
-  - [ ] CLI options
-  - [ ] Environment variables
-  - [ ] Architecture details
-  - [ ] Development guide
-  - [ ] Troubleshooting
-- [ ] Update `docs/reference/cli.mdx`
-  - [ ] Add `lean-spec ui` section
-  - [ ] Document all options
-  - [ ] Add examples
-  - [ ] Link to visual mode guide
+- [x] Write `docs/guide/visual-mode.mdx` (comprehensive guide)
+  - [x] Introduction and benefits
+  - [x] Getting started (both methods)
+  - [x] Features overview
+  - [x] Filesystem mode explanation
+  - [x] Development workflows
+  - [x] Troubleshooting section
+- [x] Write `docs/reference/ui-package.mdx` (package reference)
+  - [x] Overview and installation
+  - [x] CLI options
+  - [x] Environment variables
+  - [x] Architecture details
+  - [x] Development guide
+  - [x] Troubleshooting
+- [x] Update `docs/reference/cli.mdx`
+  - [x] Add `lean-spec ui` section
+  - [x] Document all options
+  - [x] Add examples
+  - [x] Link to visual mode guide
 
 ### Phase 2: Integration
-- [ ] Update Quick Start
-  - [ ] Add "Visual Mode" step to Introduction
-  - [ ] Include UI in main flow
-  - [ ] Add screenshots
-- [ ] Update existing guides
-  - [ ] `getting-started.mdx` - mention UI option
-  - [ ] `ai-assisted-workflows.mdx` - UI in workflows
-  - [ ] Update tutorials with UI mentions
-- [ ] Update FAQ
-  - [ ] Add UI-related questions
-  - [ ] CLI vs UI comparison
-- [ ] Update navigation (sidebars.ts)
-  - [ ] Add visual-mode to Guide section
-  - [ ] Add ui-package to Reference section
-  - [ ] Ensure proper ordering
+- [x] Update Quick Start
+  - [x] Add "Visual Mode" step to Introduction
+  - [x] Include UI in main flow
+  - [x] Add screenshots
+- [x] Update existing guides
+  - [x] `getting-started.mdx` - mention UI option
+  - [x] `ai-assisted-workflows.mdx` - UI in workflows
+  - [x] Update tutorials with UI mentions
+- [x] Update FAQ
+  - [x] Add UI-related questions
+  - [x] CLI vs UI comparison
+- [x] Update navigation (sidebars.ts)
+  - [x] Add visual-mode to Guide section
+  - [x] Add ui-package to Reference section
+  - [x] Ensure proper ordering
 
 ### Phase 3: Visual Assets
 - [ ] Take screenshots
@@ -349,12 +352,12 @@ All new content needs Chinese translation:
   - [ ] Optimize for web
 
 ### Phase 4: Translation
-- [ ] Translate visual-mode.mdx to Chinese
-- [ ] Translate ui-package.mdx to Chinese
-- [ ] Update Chinese CLI reference
-- [ ] Update Chinese Quick Start
-- [ ] Update Chinese navigation
-- [ ] Verify terminology consistency
+- [x] Translate visual-mode.mdx to Chinese
+- [x] Translate ui-package.mdx to Chinese
+- [x] Update Chinese CLI reference
+- [x] Update Chinese Quick Start
+- [x] Update Chinese navigation
+- [x] Verify terminology consistency
 
 ### Phase 5: Validation
 - [ ] Build docs site (`npm run build`)
