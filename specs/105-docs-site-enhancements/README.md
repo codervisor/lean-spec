@@ -153,35 +153,27 @@ This spec addresses comprehensive improvements to the documentation site based o
 - ✅ Chinese localization mirrors the new terminology so both languages describe the 2,000/3,500/5,000-token thresholds consistently.
 - ✅ "Writing Specs AI Can Execute" page removed and replaced with `ai-executable-patterns.mdx` in the correct location.
 - ✅ "AI-Assisted Workflows" lifted to correct hierarchy level (under usage/, not buried deeper).
+- ✅ Tutorial cleanup complete: All video walkthrough placeholders and timestamps removed from `docs/tutorials/writing-first-spec-with-ai.mdx` (both English and Chinese versions).
+- ✅ Broken links fixed: `/docs/guide/terminology` → `/docs/guide/terminology/spec`, `/docs/examples` → `/docs/examples/overview`.
+- ✅ Build validation passed: `npm run build` succeeds with no broken links or errors.
 
 **Priority Next Actions (Remaining from Phases 3-5)**
 
-1. **Tutorial Cleanup** (Phase 3)
-   - Remove video walkthrough note and all timestamp references from `docs/tutorials/writing-first-spec-with-ai.mdx`:
-     - Line 12: Remove "🎥 Video walkthrough (Loom) — coming soon" note
-     - Line 19: "Step 1: Share Intent with the Agent (00:30)" → "Step 1: Share Intent with the Agent"
-     - Line 31: "Step 2: Let the Agent Outline the Spec (02:10)" → "Step 2: Let the Agent Outline the Spec"
-     - Line 41: "Step 3: Generate the Draft (04:00)" → "Step 3: Generate the Draft"
-     - Line 51: "Step 4: Review with Lean Principles (06:30)" → "Step 4: Review with Lean Principles"
-     - Line 66: "Step 5: Validate and Set Status (08:45)" → "Step 5: Validate and Set Status"
-     - Line 81: "Step 6: Capture AI/Human Responsibilities (10:00)" → "Step 6: Capture AI/Human Responsibilities"
-
-2. **Examples Translation** (Phase 4)
+1. **Examples Translation** (Phase 4) - HIGH PRIORITY
    - Translate `docs/examples/cross-team-official-launch.mdx` to Chinese
    - Translate `docs/examples/refactoring-monorepo-core.mdx` to Chinese
 
-3. **Introduction Simplification** (Phase 2)
+2. **Introduction Simplification** (Phase 2)
    - Condense `docs/guide/index.mdx` (currently 150 lines) for better first-time user experience
 
-4. **Usage Docs Validation** (Phase 3)
+3. **Usage Docs Validation** (Phase 3)
    - Systematically verify all usage docs against current CLI output (see Usage Doc Audit table)
 
-5. **Chinese Localization Polish** (Phase 4)
+4. **Chinese Localization Polish** (Phase 4)
    - Improve landing page Chinese tagline (current: "轻量级规范方法论，助力 AI 驱动开发")
    - Improve "Web App" Chinese translation (consider "网页应用" or context-specific term)
 
-6. **Final Validation** (Phase 5)
-   - Run `npm run build` in docs-site to verify no broken links
+5. **Final Validation** (Phase 5)
    - Test navigation flow for beginner → advanced progression
    - Spot-check translation quality
 
@@ -211,7 +203,7 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] Update outdated "Usage" docs
 - [ ] Update "Reference" docs to match current CLI
 - [x] Expand terminology with in-depth explanations
-- [ ] Rewrite tutorials (remove video placeholders from writing-first-spec-with-ai.mdx, focus on AI-assisted)
+- [x] Rewrite tutorials (video placeholders removed from writing-first-spec-with-ai.mdx)
 - [ ] Update code examples and command outputs
 
 ### Phase 4: Translation & Localization
@@ -222,7 +214,7 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] Verify feature parity between languages
 
 ### Phase 5: Validation
-- [ ] Build docs-site and verify no broken links
+- [x] Build docs-site and verify no broken links
 - [ ] Review navigation flow (beginner → advanced)
 - [ ] Spot-check translations for quality
 - [ ] Verify all commands and examples work
@@ -262,9 +254,9 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] Command outputs are current
 
 ### Tutorial Quality
-- [ ] No video walkthrough placeholders (timestamps removed)
-- [ ] Tutorials emphasize AI-assisted workflow
-- [ ] Clear examples of intent → AI spec creation → implementation
+- [x] No video walkthrough placeholders (timestamps removed)
+- [x] Tutorials emphasize AI-assisted workflow
+- [x] Clear examples of intent → AI spec creation → implementation
 
 ### Translation Completeness
 - [ ] All English docs have Chinese equivalents
@@ -273,9 +265,9 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] "Web App" has appropriate Chinese translation
 
 ### Build & Technical
-- [ ] `npm run build` succeeds in docs-site
-- [ ] No broken links or 404s
-- [ ] Cross-references work between restructured pages
+- [x] `npm run build` succeeds in docs-site
+- [x] No broken links or 404s
+- [x] Cross-references work between restructured pages
 - [ ] Navigation hierarchy makes sense (test with fresh eyes)
 
 ### User Experience
