@@ -19,16 +19,16 @@
 			"envFile": "",
 			"dev": {}
 		},
-		"context7": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"@upstash/context7-mcp@1.0.28",
-				"--api-key",
-				"${input:context7_api_key}"
-			]
-		}
+		// "context7": {
+		// 	"type": "stdio",
+		// 	"command": "npx",
+		// 	"args": [
+		// 		"-y",
+		// 		"@upstash/context7-mcp@1.0.28",
+		// 		"--api-key",
+		// 		"${input:context7_api_key}"
+		// 	]
+		// }
 	},
 	"inputs": [
 		{

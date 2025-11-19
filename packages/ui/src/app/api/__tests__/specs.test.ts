@@ -12,9 +12,25 @@ vi.mock('@/lib/db/service-queries', () => ({
   getSpecById: vi.fn(),
 }));
 
-vi.mock('@cli/commands/update', () => ({
-  updateSpec: vi.fn(),
-}));
+// Mock fs/promises for status update tests
+vi.mock('node:fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+  return {
+    ...actual,
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    readdir: vi.fn(),
+  };
+});
+
+// Mock fs for existsSync
+vi.mock('node:fs', async () => {
+  const actual = await vi.importActual<typeof import('node:fs')>('node:fs');
+  return {
+    ...actual,
+    existsSync: vi.fn(),
+  };
+});
 
 const createMockSpec = (overrides: Partial<ParsedSpec> = {}): ParsedSpec => ({
   id: 'fs-001-test-spec',
@@ -147,10 +163,20 @@ describe('Spec API Routes', () => {
 
   describe('PATCH /api/specs/[id]/status', () => {
     it('should update spec status', async () => {
-      const { updateSpec } = await import('@cli/commands/update');
+      const { readFile, writeFile, readdir } = await import('node:fs/promises');
+      const { existsSync } = await import('node:fs');
       const { PATCH } = await import('@/app/api/specs/[id]/status/route');
 
-      vi.mocked(updateSpec).mockResolvedValue(undefined);
+      // Mock filesystem operations
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readdir).mockResolvedValue([
+        { name: '001-test-spec', isDirectory: () => true },
+      ] as unknown as Awaited<ReturnType<typeof readdir>>);
+      vi.mocked(readFile).mockResolvedValue(`---
+status: planned
+---
+# Test Spec`);
+      vi.mocked(writeFile).mockResolvedValue(undefined);
 
       const request = new Request('http://localhost/api/specs/001/status', {
         method: 'PATCH',
@@ -163,11 +189,11 @@ describe('Spec API Routes', () => {
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
-      expect(updateSpec).toHaveBeenCalledWith(
-        '001-test-spec',
-        { status: 'complete' },
-        expect.objectContaining({ cwd: expect.any(String) })
-      );
+      
+      // Verify writeFile was called with updated content
+      expect(writeFile).toHaveBeenCalled();
+      const writtenContent = vi.mocked(writeFile).mock.calls[0][1] as string;
+      expect(writtenContent).toContain('status: complete');
     });
 
     it('should return 400 for invalid status', async () => {
@@ -187,10 +213,23 @@ describe('Spec API Routes', () => {
     });
 
     it('should return 500 when update fails', async () => {
-      const { updateSpec } = await import('@cli/commands/update');
+      const { readFile, readdir } = await import('node:fs/promises');
+      const { existsSync } = await import('node:fs');
       const { PATCH } = await import('@/app/api/specs/[id]/status/route');
 
-      vi.mocked(updateSpec).mockRejectedValue(new Error('boom'));
+      // Mock filesystem to succeed initially but then fail on writeFile
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readdir).mockResolvedValue([
+        { name: '001-test-spec', isDirectory: () => true },
+      ] as unknown as Awaited<ReturnType<typeof readdir>>);
+      vi.mocked(readFile).mockResolvedValue(`---
+status: planned
+---
+# Test Spec`);
+      
+      // Import writeFile after other mocks are set up
+      const { writeFile } = await import('node:fs/promises');
+      vi.mocked(writeFile).mockRejectedValue(new Error('Write failed'));
 
       const request = new Request('http://localhost/api/specs/001/status', {
         method: 'PATCH',
