@@ -1,20 +1,24 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-18'
 tags: []
 priority: medium
 created_at: '2025-11-18T14:33:07.663Z'
 related:
   - 105-docs-site-enhancements
-updated_at: '2025-11-19T01:06:46.667Z'
+updated_at: '2025-11-19T01:12:10.591Z'
 transitions:
   - status: in-progress
     at: '2025-11-19T01:06:46.667Z'
+  - status: complete
+    at: '2025-11-19T01:12:10.591Z'
+completed_at: '2025-11-19T01:12:10.591Z'
+completed: '2025-11-19'
 ---
 
 # UI Package Documentation and Integration
 
-> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-18
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-18
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -336,7 +340,9 @@ All new content needs Chinese translation:
   - [x] Ensure proper ordering
 
 ### Phase 3: Visual Assets
-- [ ] Take screenshots
+- [ ] Take screenshots using Playwright MCP
+  - [ ] Strategy: Use Playwright MCP to automate screenshot capture for consistency
+  - [ ] Viewport: Set common viewport (1280x720) for all screenshots (default Playwright MCP viewport may vary)
   - [ ] Spec list view
   - [ ] Spec detail view
   - [ ] Dependency graph
