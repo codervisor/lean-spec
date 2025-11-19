@@ -22,11 +22,14 @@ import {
   Clock,
   Archive,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  FileText,
+  GitBranch
 } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { cn } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/date-utils';
 import { toast } from '@/components/ui/toast';
 
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
@@ -70,6 +73,11 @@ const STATUS_CONFIG: Record<SpecStatus, {
 
 const BOARD_STATUSES: SpecStatus[] = ['planned', 'in-progress', 'complete', 'archived'];
 
+interface SpecRelationships {
+  dependsOn: string[];
+  related: string[];
+}
+
 interface Spec {
   id: string;
   specNumber: number | null;
@@ -79,6 +87,8 @@ interface Spec {
   priority: string | null;
   tags: string[] | null;
   updatedAt: Date | null;
+  subSpecsCount?: number;
+  relationships?: SpecRelationships;
 }
 
 interface Stats {
@@ -105,6 +115,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | SpecStatus>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('id-desc');
+  const [showArchivedBoard, setShowArchivedBoard] = useState(false); // Start collapsed
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     // Initialize from URL or localStorage
     const urlView = searchParams.get('view');
@@ -161,6 +172,13 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
     }
   }, []);
 
+  // Auto-show archived column when filtering by archived status in board view
+  useEffect(() => {
+    if (statusFilter === 'archived' && viewMode === 'board') {
+      setShowArchivedBoard(true);
+    }
+  }, [statusFilter, viewMode]);
+
   // Update URL when view mode changes (skip on initial mount)
   useEffect(() => {
     if (isFirstRender.current) {
@@ -191,7 +209,9 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
         spec.specName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         spec.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesStatus = statusFilter === 'all' || spec.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' 
+        ? (viewMode === 'list' ? spec.status !== 'archived' : true)
+        : spec.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || spec.priority === priorityFilter;
 
       return matchesSearch && matchesStatus && matchesPriority;
@@ -224,7 +244,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
     }
 
     return sorted;
-  }, [specs, searchQuery, statusFilter, priorityFilter, sortBy]);
+  }, [specs, searchQuery, statusFilter, priorityFilter, sortBy, viewMode]);
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -279,47 +299,49 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
             </Select>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            {/* Sort Controls */}
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-              <SelectTrigger className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="id-desc">Newest First (ID ↓)</SelectItem>
-                <SelectItem value="id-asc">Oldest First (ID ↑)</SelectItem>
-                <SelectItem value="updated-desc">Recently Updated</SelectItem>
-                <SelectItem value="title-asc">Title (A-Z)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
+              {/* Sort Controls */}
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                <SelectTrigger className="w-full sm:w-[220px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="id-desc">Newest First (ID ↓)</SelectItem>
+                  <SelectItem value="id-asc">Oldest First (ID ↑)</SelectItem>
+                  <SelectItem value="updated-desc">Recently Updated</SelectItem>
+                  <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {/* View Mode Switcher */}
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="flex items-center gap-2"
-              >
-                <ListIcon className="h-4 w-4" />
-                List
-              </Button>
-              <Button
-                variant={viewMode === 'board' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('board')}
-                className="flex items-center gap-2"
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Board
-              </Button>
+              {/* View Mode Switcher */}
+              <div className="flex gap-2">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="flex items-center gap-2"
+                >
+                  <ListIcon className="h-4 w-4" />
+                  List
+                </Button>
+                <Button
+                  variant={viewMode === 'board' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('board')}
+                  className="flex items-center gap-2"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  Board
+                </Button>
+              </div>
+
+              {/* Results count */}
+              <div className="text-sm text-muted-foreground">
+                Showing {filteredAndSortedSpecs.length} of {specs.length} specs
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Results count */}
-        <div className="text-sm text-muted-foreground mb-4">
-          Showing {filteredAndSortedSpecs.length} of {specs.length} specs
         </div>
 
         {/* Content based on view mode */}
@@ -330,6 +352,8 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
             specs={filteredAndSortedSpecs}
             onStatusChange={handleStatusChange}
             pendingSpecIds={pendingSpecIds}
+            showArchived={showArchivedBoard}
+            onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
           />
         )}
       </div>
@@ -348,6 +372,8 @@ function ListView({ specs }: { specs: Spec[] }) {
           'low': 'border-l-gray-400'
         };
         const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
+        const hasDependencies = spec.relationships && (spec.relationships.dependsOn.length > 0 || spec.relationships.related.length > 0);
+        const hasSubSpecs = !!(spec.subSpecsCount && spec.subSpecsCount > 0);
 
         return (
           <Card 
@@ -368,6 +394,9 @@ function ListView({ specs }: { specs: Spec[] }) {
                       {spec.title || spec.specName}
                     </CardTitle>
                   </Link>
+                  {spec.title && spec.title !== spec.specName && (
+                    <p className="text-sm text-muted-foreground mt-1">{spec.specName}</p>
+                  )}
                 </div>
                 <div className="flex gap-2 shrink-0">
                   {spec.status && <StatusBadge status={spec.status} />}
@@ -375,15 +404,47 @@ function ListView({ specs }: { specs: Spec[] }) {
                 </div>
               </div>
             </CardHeader>
-            {spec.tags && spec.tags.length > 0 && (
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {spec.tags.map(tag => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
+            {/* Only render CardContent if there's metadata or tags to show */}
+            {((spec.updatedAt || hasSubSpecs || hasDependencies || (spec.tags && spec.tags.length > 0))) && (
+              <CardContent className="space-y-3">
+                {/* Metadata row */}
+                {(spec.updatedAt || hasSubSpecs || hasDependencies) && (
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                    {spec.updatedAt && (
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>Updated {formatRelativeTime(spec.updatedAt)}</span>
+                      </div>
+                    )}
+                    {hasSubSpecs && (
+                      <div className="flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5" />
+                        <span>+{spec.subSpecsCount} files</span>
+                      </div>
+                    )}
+                    {hasDependencies && (
+                      <div className="flex items-center gap-1.5">
+                        <GitBranch className="h-3.5 w-3.5" />
+                        <span>
+                          {spec.relationships!.dependsOn.length > 0 && `${spec.relationships!.dependsOn.length} deps`}
+                          {spec.relationships!.dependsOn.length > 0 && spec.relationships!.related.length > 0 && ', '}
+                          {spec.relationships!.related.length > 0 && `${spec.relationships!.related.length} related`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tags */}
+                {spec.tags && spec.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {spec.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             )}
           </Card>
@@ -397,13 +458,16 @@ interface BoardViewProps {
   specs: Spec[];
   onStatusChange: (spec: Spec, status: SpecStatus) => void;
   pendingSpecIds: Record<string, boolean>;
+  showArchived: boolean;
+  onToggleArchived: () => void;
 }
 
-function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
+function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
 
   const columns = useMemo(() => {
+    // Always show all columns, including archived (it will be rendered as collapsed bar when showArchived=false)
     return BOARD_STATUSES.map(status => ({
       status,
       config: STATUS_CONFIG[status],
@@ -460,29 +524,51 @@ function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
   }, [draggingId, handleDragEnd, onStatusChange, specLookup]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="flex gap-6">
       {columns.map(column => {
         const Icon = column.config.icon;
+        const isArchivedColumn = column.status === 'archived';
+        
         return (
-          <div key={column.status} className="flex flex-col">
+          <div key={column.status} className={cn(
+            "flex flex-col",
+            isArchivedColumn && !showArchived && "w-20 flex-shrink-0"
+          )}>
             <div className={cn(
-              'sticky top-14 z-40 mb-4 p-3 rounded-lg border-2 bg-background',
+              'sticky top-14 z-40 mb-4 rounded-lg border-2 bg-background transition-all',
               column.config.bgClass,
-              column.config.borderClass
-            )}>
+              column.config.borderClass,
+              isArchivedColumn ? 'cursor-pointer hover:opacity-80' : '',
+              isArchivedColumn && !showArchived ? 'py-6 px-2' : 'p-3'
+            )}
+            onClick={isArchivedColumn ? onToggleArchived : undefined}
+            >
               <h2 className={cn(
                 'text-lg font-semibold flex items-center gap-2',
-                column.config.colorClass
+                column.config.colorClass,
+                isArchivedColumn && !showArchived && 'flex-col text-sm gap-3'
               )}>
                 <Icon className="h-5 w-5" />
-                {column.config.title}
-                <Badge variant="outline" className="ml-auto">{column.specs.length}</Badge>
+                {isArchivedColumn && !showArchived ? (
+                  <>
+                    <span className="vertical-text text-sm whitespace-nowrap">
+                      {column.config.title}
+                    </span>
+                    <Badge variant="outline" className="text-xs">{column.specs.length}</Badge>
+                  </>
+                ) : (
+                  <>
+                    {column.config.title}
+                    <Badge variant="outline" className="ml-auto">{column.specs.length}</Badge>
+                  </>
+                )}
               </h2>
             </div>
 
-            <div
+            {(!isArchivedColumn || showArchived) && (
+              <div
               className={cn(
-                'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors',
+                'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors overflow-y-auto max-h-[calc(100vh-250px)]',
                 draggingId && 'border-dashed border-muted-foreground/40',
                 draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
               )}
@@ -569,6 +655,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds }: BoardViewProps) {
                 </Card>
               )}
             </div>
+            )}
           </div>
         );
       })}

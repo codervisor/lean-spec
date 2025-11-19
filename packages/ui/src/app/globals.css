@@ -528,4 +528,14 @@ html.changing-theme * {
   .overflow-x-hidden {
     overflow-x: hidden !important;
   }
+
+  /* Vertical text for collapsed columns (ADO-style) */
+  .writing-mode-vertical-rl {
+    writing-mode: vertical-rl;
+  }
+  
+  .vertical-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
 }

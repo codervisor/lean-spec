@@ -135,11 +135,29 @@ export class FilesystemSource implements SpecSource {
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
-      if (entry.name === 'archived') continue; // Skip archived directory
+
+      // Load archived specs from archived/ directory
+      if (entry.name === 'archived') {
+        const archivedDir = path.join(this.specsDir, 'archived');
+        const archivedEntries = await fs.readdir(archivedDir, { withFileTypes: true });
+        
+        for (const archivedEntry of archivedEntries) {
+          if (!archivedEntry.isDirectory()) continue;
+          
+          if (specPattern.test(archivedEntry.name)) {
+            const specDir = path.join(archivedDir, archivedEntry.name);
+            const spec = await this.loadSpecFromDirectory(specDir, archivedEntry.name, true);
+            if (spec) {
+              specs.push(spec);
+            }
+          }
+        }
+        continue;
+      }
 
       if (specPattern.test(entry.name)) {
         const specDir = path.join(this.specsDir, entry.name);
-        const spec = await this.loadSpecFromDirectory(specDir, entry.name);
+        const spec = await this.loadSpecFromDirectory(specDir, entry.name, false);
         if (spec) {
           specs.push(spec);
         }
@@ -163,12 +181,30 @@ export class FilesystemSource implements SpecSource {
     const entries = await fs.readdir(this.specsDir, { withFileTypes: true });
     const specPattern = new RegExp(`^0*${specNum}-`);
 
+    // Check regular specs
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
+      if (entry.name === 'archived') continue; // Check archived separately
       if (specPattern.test(entry.name)) {
         const specDir = path.join(this.specsDir, entry.name);
-        return await this.loadSpecFromDirectory(specDir, entry.name);
+        return await this.loadSpecFromDirectory(specDir, entry.name, false);
       }
+    }
+
+    // Check archived specs
+    try {
+      const archivedDir = path.join(this.specsDir, 'archived');
+      const archivedEntries = await fs.readdir(archivedDir, { withFileTypes: true });
+      
+      for (const entry of archivedEntries) {
+        if (!entry.isDirectory()) continue;
+        if (specPattern.test(entry.name)) {
+          const specDir = path.join(archivedDir, entry.name);
+          return await this.loadSpecFromDirectory(specDir, entry.name, true);
+        }
+      }
+    } catch {
+      // Archived directory doesn't exist or can't be read
     }
 
     return null;
@@ -177,7 +213,7 @@ export class FilesystemSource implements SpecSource {
   /**
    * Load a spec from a directory
    */
-  private async loadSpecFromDirectory(specDir: string, specName: string): Promise<Spec | null> {
+  private async loadSpecFromDirectory(specDir: string, specName: string, isArchived: boolean = false): Promise<Spec | null> {
     const readmePath = path.join(specDir, 'README.md');
 
     try {
@@ -205,6 +241,10 @@ export class FilesystemSource implements SpecSource {
         return isNaN(parsed.getTime()) ? null : parsed;
       };
 
+      // Build the file path (include "archived/" prefix if archived)
+      const filePathPrefix = isArchived ? 'specs/archived/' : 'specs/';
+      const filePath = `${filePathPrefix}${specName}/README.md`;
+
       // Create a Spec object compatible with the schema
       const spec: Spec = {
         id,
@@ -221,8 +261,8 @@ export class FilesystemSource implements SpecSource {
         createdAt: toDate(createdValue),
         updatedAt: toDate(updatedValue),
         completedAt: toDate(completedValue),
-        filePath: `specs/${specName}/README.md`,
-        githubUrl: `https://github.com/codervisor/lean-spec/tree/main/specs/${specName}/README.md`,
+        filePath,
+        githubUrl: `https://github.com/codervisor/lean-spec/tree/main/${filePath}`,
         syncedAt: new Date(), // Current time for filesystem reads
       };
 
