@@ -219,11 +219,11 @@ Workflow becomes:
 ### Phase 2: Update Core Docs
 - [x] Update "When to Use" with AI-assisted context (merged into understanding.mdx)
 - [x] Update "Understanding LeanSpec" with new mental models (decision framework added)
-- [x] Update "AI Integration" docs with authoring workflow (covered in writing-specs-with-ai.mdx)
+- [x] Update "AI Integration" docs with authoring workflow (covered in ai-executable-patterns.mdx)
 - [x] Review all docs for consistency (validated via build + validate)
 
 ### Phase 3: New Content (If Needed)
-- [x] Created dedicated "Writing Specs with AI" page (docs-site/docs/guide/usage/ai-assisted/writing-specs-with-ai.mdx)
+- [x] Created dedicated "Writing Specs with AI" page (docs-site/docs/guide/usage/ai-assisted/ai-executable-patterns.mdx)
 - [x] Added examples of AI-drafted specs and workflows
 - [x] Documented best practices for prompting (Do's and Don'ts)
 - [x] Created workflow templates (5-step process, common patterns)
@@ -239,16 +239,16 @@ Workflow becomes:
 
 - [x] Docs clearly explain when to formalize intent as spec vs. just converse with AI (understanding.mdx updated with decision framework)
 - [x] First principles still make sense in AI-assisted context (understanding.mdx confirms they're reinforced, not replaced)
-- [x] New mental models are clear and actionable (Spec-as-Checkpoint, Artifact, Context defined in writing-specs-with-ai.mdx)
+- [x] New mental models are clear and actionable (Spec-as-Checkpoint, Artifact, Context defined in ai-executable-patterns.mdx)
 - [x] No contradictions between old/new framing (consistent messaging across all updated docs)
-- [x] Examples demonstrate AI-assisted workflow (writing-specs-with-ai.mdx has 5-step workflow + patterns)
+- [x] Examples demonstrate AI-assisted workflow (ai-executable-patterns.mdx has 5-step workflow + patterns)
 - [ ] Community understands and can apply guidance (deferred to Phase 4: user feedback)
 
 **Additional Validation:**
 - [x] Docs build successfully (verified with `npm run build`)
 - [x] Spec structure validated (no new errors from our changes)
 - [x] All three target docs updated (understanding.mdx updated; when-to-use.mdx was merged into understanding.mdx by spec 062)
-- [x] New dedicated page created (guide/usage/ai-assisted/writing-specs-with-ai.mdx)
+- [x] New dedicated page created (guide/usage/ai-assisted/ai-executable-patterns.mdx)
 - [x] Sidebar navigation updated (added to "AI-Assisted Workflows" section)
 
 **Success Signals (To be measured in Phase 4):**

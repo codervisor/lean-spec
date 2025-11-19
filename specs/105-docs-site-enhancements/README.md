@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-18'
 tags: []
 priority: medium
@@ -8,12 +8,15 @@ related:
   - 106-ui-package-documentation
   - 087-cli-ui-command
   - 035-live-specs-showcase
-updated_at: '2025-11-19T01:05:47.912Z'
+updated_at: '2025-11-19T02:47:45.348Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-19T02:47:45.348Z'
 ---
 
 # Documentation Site Optimization and Enhancements
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-18
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-18
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -138,6 +141,22 @@ This spec addresses comprehensive improvements to the documentation site based o
    - Improve existing translations
    - Verify completeness
 
+## Status Update · 2025-11-19
+
+**Completed so far**
+- Navigation restructure (`docs-site/sidebars.ts`) now surfaces Migration, Core Concepts, and AI-Assisted content in the intended beginner → advanced order.
+- `docs-site/docs/guide/understanding-leanspec.mdx` (and the zh-Hans translation) fully replaces the old "Understanding Specs" doc with deeper rationale and working-memory guidance.
+- Terminology was consolidated: sub-spec coverage folded into `guide/terminology/spec.mdx`, and the new `guide/terminology/built-in-metadata.mdx` (plus zh-Hans) replaces the individual status/dependency/tag pages.
+- Examples landing doc renamed to `examples/overview.mdx` (and translated) so the sidebar no longer points at an `index` placeholder.
+- Validation guidance (`docs-site/docs/guide/usage/project-management/validation.mdx`) now speaks in token thresholds rather than line counts, keeping the docs consistent with the CLI's token tooling.
+
+**Still outstanding / next focus**
+- Phase 1 audit tasks haven’t started (global line→token sweep, Usage/Reference inventory, translation gap list).
+- Usage + Reference sections still need to be re-validated against the current CLI outputs, and tutorials continue to reference video placeholders.
+- Token guidance was only updated in validation docs; the remaining advanced/FAQ pages still reference line-count limits.
+- Examples beyond the existing two zh-Hans files remain untranslated; Chinese landing-page tagline and "Web App" copy still need refinement.
+- We have not yet simplified the Introduction Overview or run a docs-site build/link check to validate the new IA.
+
 ## Plan
 
 ### Phase 1: Content Audit
@@ -149,21 +168,21 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] List all "Examples" that need Chinese translation
 
 ### Phase 2: Information Architecture
-- [ ] Update sidebars.ts for navigation restructure
+- [x] Update sidebars.ts for navigation restructure
 - [ ] Simplify "Introduction -> Overview"
-- [ ] Move "Migrating to LeanSpec" to top level
-- [ ] Rename "Understanding Specs" → "Understanding LeanSpec"
-- [ ] Remove "Terminology Overview" page
-- [ ] Restructure terminology concepts (merge Sub-Specs, consolidate metadata)
-- [ ] Move "AI-Assisted Workflows" up one level
-- [ ] Remove "Writing Specs AI Can Execute" page
-- [ ] Fix "Examples" default doc name
+- [x] Move "Migrating to LeanSpec" to top level
+- [x] Rename "Understanding Specs" → "Understanding LeanSpec"
+- [x] Remove "Terminology Overview" page
+- [x] Restructure terminology concepts (merge Sub-Specs, consolidate metadata)
+- [x] Move "AI-Assisted Workflows" up one level
+- [x] Remove "Writing Specs AI Can Execute" page
+- [x] Fix "Examples" default doc name
 
 ### Phase 3: Content Updates
 - [ ] Replace all line-count references with token-based
 - [ ] Update outdated "Usage" docs
 - [ ] Update "Reference" docs to match current CLI
-- [ ] Expand terminology with in-depth explanations
+- [x] Expand terminology with in-depth explanations
 - [ ] Rewrite tutorials (remove video placeholders, focus on AI-assisted)
 - [ ] Update code examples and command outputs
 
@@ -184,11 +203,11 @@ This spec addresses comprehensive improvements to the documentation site based o
 
 ### Navigation & Structure
 - [ ] Introduction section is concise and intuitive for new users
-- [ ] "Migrating to LeanSpec" appears at top level beside Roadmap
-- [ ] "Understanding LeanSpec" (renamed) appears in Core Concepts
-- [ ] Terminology concepts are properly organized and consolidated
-- [ ] "AI-Assisted Workflows" is at correct hierarchy level
-- [ ] Examples section has proper default doc name (not "index")
+- [x] "Migrating to LeanSpec" appears at top level beside Roadmap
+- [x] "Understanding LeanSpec" (renamed) appears in Core Concepts
+- [x] Terminology concepts are properly organized and consolidated
+- [x] "AI-Assisted Workflows" is at correct hierarchy level
+- [x] Examples section has proper default doc name (not "index")
 
 ### Content Accuracy
 - [ ] No line-count references remain (all token-based)
