@@ -149,19 +149,20 @@ This spec addresses comprehensive improvements to the documentation site based o
 - Terminology was consolidated: sub-spec coverage folded into `guide/terminology/spec.mdx`, and the new `guide/terminology/built-in-metadata.mdx` (plus zh-Hans) replaces the individual status/dependency/tag pages.
 - Examples landing doc renamed to `examples/overview.mdx` (and translated) so the sidebar no longer points at an `index` placeholder.
 - Validation guidance (`docs-site/docs/guide/usage/project-management/validation.mdx`) now speaks in token thresholds rather than line counts, keeping the docs consistent with the CLI's token tooling.
+- Token-first messaging now covers the FAQ, comparison page, MCP reference, and context-engineering guide (including zh-Hans translations) so there are no remaining "300-line"/"line limit" references in the docs-site.
+- Chinese localization mirrors the new terminology so both languages describe the 2,000/3,500/5,000-token thresholds consistently.
 
-**Still outstanding / next focus**
-- Phase 1 audit tasks haven’t started (global line→token sweep, Usage/Reference inventory, translation gap list).
+- **Still outstanding / next focus**
+- Remaining Phase 1 audit work: build a Usage/Reference inventory plus translation gap list.
 - Usage + Reference sections still need to be re-validated against the current CLI outputs, and tutorials continue to reference video placeholders.
-- Token guidance was only updated in validation docs; the remaining advanced/FAQ pages still reference line-count limits.
 - Examples beyond the existing two zh-Hans files remain untranslated; Chinese landing-page tagline and "Web App" copy still need refinement.
 - We have not yet simplified the Introduction Overview or run a docs-site build/link check to validate the new IA.
 
 ## Plan
 
 ### Phase 1: Content Audit
-- [ ] Grep search for "line" references that should be "token"
-- [ ] Review "Advanced Topics" docs for line-count metrics
+- [x] Grep search for "line" references that should be "token"
+- [x] Review "Advanced Topics" docs for line-count metrics
 - [ ] List all "Usage" docs and check against current implementation
 - [ ] Review "Reference" docs against CLI codebase
 - [ ] Identify all translation gaps (English vs Chinese)
@@ -179,7 +180,7 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [x] Fix "Examples" default doc name
 
 ### Phase 3: Content Updates
-- [ ] Replace all line-count references with token-based
+- [x] Replace all line-count references with token-based
 - [ ] Update outdated "Usage" docs
 - [ ] Update "Reference" docs to match current CLI
 - [x] Expand terminology with in-depth explanations
@@ -198,6 +199,23 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [ ] Review navigation flow (beginner → advanced)
 - [ ] Spot-check translations for quality
 - [ ] Verify all commands and examples work
+
+### Usage Doc Audit (WIP)
+| Path | Review status | Notes |
+| --- | --- | --- |
+| `guide/usage/essential-usage/spec-structure.mdx` | Pending | Needs verification of sub-spec guidance vs current CLI defaults |
+| `guide/usage/essential-usage/creating-managing.mdx` | Pending | Confirm `lean-spec create/update/archive` examples |
+| `guide/usage/essential-usage/finding-specs.mdx` | Pending | Re-run search/list examples against current CLI output |
+| `guide/usage/project-management/board-stats.mdx` | Pending | Ensure board + stats screenshots/commands match latest CLI responses |
+| `guide/usage/project-management/dependencies.mdx` | Pending | Validate `lean-spec deps` output and flags |
+| `guide/usage/project-management/validation.mdx` | ✅ | Token thresholds already updated (2025-11-19) |
+| `guide/usage/ai-assisted/agent-configuration.mdx` | Pending | Confirm MCP config + prompts align with latest agent guidance |
+| `guide/usage/ai-assisted/ai-executable-patterns.mdx` | Pending | Remove any lingering video placeholder notes |
+| `guide/usage/ai-assisted/mcp-integration.mdx` | Pending | Double-check step-by-step instructions |
+| `guide/usage/advanced-features/custom-fields.mdx` | Pending | Ensure examples match CLI `lean-spec update --custom-field` behavior |
+| `guide/usage/advanced-features/frontmatter.mdx` | Pending | Sync with `docs/reference/frontmatter.mdx` and CLI validation rules |
+| `guide/usage/advanced-features/templates.mdx` | Pending | Cross-check template commands |
+| `guide/usage/advanced-features/variables.mdx` | Pending | Confirm environment variable usage in CLI |
 
 ## Test
 
