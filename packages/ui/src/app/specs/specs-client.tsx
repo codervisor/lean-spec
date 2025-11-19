@@ -14,12 +14,11 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { 
+import {
   Search, 
   CheckCircle2, 
   PlayCircle, 
   Clock,
-  Archive,
   LayoutGrid,
   List as ListIcon
 } from 'lucide-react';
@@ -143,7 +142,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
         <div className="mb-8">
           <h1 className="text-4xl font-bold tracking-tight">Specifications</h1>
           <p className="text-muted-foreground mt-2">
-            {viewMode === 'board' ? 'Kanban board view' : 'Browse all specifications'}
+            {viewMode === 'board' ? 'Kanban board view (active statuses only)' : 'Browse all specifications'}
           </p>
         </div>
 
@@ -323,17 +322,10 @@ function BoardView({ specs }: { specs: Spec[] }) {
         colorClass: 'text-green-600 dark:text-green-400',
         bgClass: 'bg-green-50 dark:bg-green-900/20',
         borderClass: 'border-green-200 dark:border-green-800'
-      },
-      'archived': {
-        icon: Archive,
-        title: 'Archived',
-        colorClass: 'text-gray-600 dark:text-gray-400',
-        bgClass: 'bg-gray-50 dark:bg-gray-900/20',
-        borderClass: 'border-gray-200 dark:border-gray-800'
       }
-    };
+    } as const;
     
-    const statuses = ['planned', 'in-progress', 'complete', 'archived'] as const;
+    const statuses = ['planned', 'in-progress', 'complete'] as const;
     
     return statuses.map(status => ({
       status,
@@ -343,7 +335,7 @@ function BoardView({ specs }: { specs: Spec[] }) {
   }, [specs]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {columns.map(column => {
         const Icon = column.config.icon;
         return (
