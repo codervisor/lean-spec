@@ -6,7 +6,7 @@ priority: medium
 created_at: '2025-11-18T14:33:07.663Z'
 related:
   - 105-docs-site-enhancements
-updated_at: '2025-11-19T01:12:10.591Z'
+updated_at: '2025-11-19T02:16:54.241Z'
 transitions:
   - status: in-progress
     at: '2025-11-19T01:06:46.667Z'
@@ -340,22 +340,22 @@ All new content needs Chinese translation:
   - [x] Ensure proper ordering
 
 ### Phase 3: Visual Assets
-- [ ] Take screenshots using Playwright MCP
-  - [ ] Strategy: Use Playwright MCP to automate screenshot capture for consistency
-  - [ ] Viewport: Set common viewport (1280x720) for all screenshots (default Playwright MCP viewport may vary)
-  - [ ] Spec list view
-  - [ ] Spec detail view
-  - [ ] Dependency graph
-  - [ ] Board view
-  - [ ] Search interface
-- [ ] Create diagrams
-  - [ ] Architecture (CLI → UI → Next.js)
-  - [ ] Filesystem mode flow
-  - [ ] Monorepo vs external
-- [ ] Add images to docs
-  - [ ] Place in `static/img/ui/`
-  - [ ] Reference in markdown
-  - [ ] Optimize for web
+- [x] Take screenshots using Playwright MCP
+  - [x] Strategy: Use Playwright MCP to automate screenshot capture for consistency
+  - [x] Viewport: Set common viewport (1280x720) for all screenshots (default Playwright MCP viewport may vary)
+  - [x] Spec list view
+  - [x] Spec detail view
+  - [x] Dependency graph
+  - [x] Board view
+  - [x] Search interface
+- [x] Create diagrams
+  - [x] Architecture (CLI → UI → Next.js)
+  - [x] Filesystem mode flow
+  - [x] Monorepo vs external
+- [x] Add images to docs
+  - [x] Place in `static/img/ui/`
+  - [x] Reference in markdown
+  - [x] Optimize for web
 
 ### Phase 4: Translation
 - [x] Translate visual-mode.mdx to Chinese
@@ -366,63 +366,63 @@ All new content needs Chinese translation:
 - [x] Verify terminology consistency
 
 ### Phase 5: Validation
-- [ ] Build docs site (`npm run build`)
-- [ ] Verify all links work
-- [ ] Test navigation flow
-- [ ] Check screenshots display correctly
-- [ ] Verify Chinese translations
-- [ ] Proofread all content
+- [x] Build docs site (`npm run build`)
+- [x] Verify all links work
+- [x] Test navigation flow
+- [x] Check screenshots display correctly
+- [x] Verify Chinese translations
+- [x] Proofread all content
 
 ## Test
 
 ### Content Quality
-- [ ] Visual mode guide is comprehensive and clear
-- [ ] All features explained with examples
-- [ ] Troubleshooting covers common issues
-- [ ] Architecture explanation is accurate
-- [ ] Code examples are correct and tested
+- [x] Visual mode guide is comprehensive and clear
+- [x] All features explained with examples
+- [x] Troubleshooting covers common issues
+- [x] Architecture explanation is accurate
+- [x] Code examples are correct and tested
 
 ### Navigation & Discovery
-- [ ] UI mentioned in Quick Start/Introduction
-- [ ] Easy to find visual-mode guide from nav
-- [ ] UI package reference easy to find
-- [ ] CLI reference includes `ui` command
-- [ ] Cross-references work between pages
+- [x] UI mentioned in Quick Start/Introduction
+- [x] Easy to find visual-mode guide from nav
+- [x] UI package reference easy to find
+- [x] CLI reference includes `ui` command
+- [x] Cross-references work between pages
 
 ### Accuracy
-- [ ] All commands match actual implementation
-- [ ] Options and flags are current
-- [ ] Environment variables correct
-- [ ] Architecture diagrams accurate
-- [ ] Filesystem mode explanation matches spec 082
+- [x] All commands match actual implementation
+- [x] Options and flags are current
+- [x] Environment variables correct
+- [x] Architecture diagrams accurate
+- [x] Filesystem mode explanation matches spec 082
 
 ### Visual Assets
-- [ ] Screenshots are current and clear
-- [ ] Images display at proper size
-- [ ] Diagrams are readable and accurate
-- [ ] All images have alt text
-- [ ] Images optimized for web
+- [x] Screenshots are current and clear
+- [x] Images display at proper size
+- [x] Diagrams are readable and accurate
+- [x] All images have alt text
+- [x] Images optimized for web
 
 ### Translation
-- [ ] All English content has Chinese equivalent
-- [ ] Terminology consistent across translations
-- [ ] Technical terms properly translated
-- [ ] Navigation works in both languages
-- [ ] Code examples don't need translation
+- [x] All English content has Chinese equivalent
+- [x] Terminology consistent across translations
+- [x] Technical terms properly translated
+- [x] Navigation works in both languages
+- [x] Code examples don't need translation
 
 ### Build & Technical
-- [ ] `npm run build` succeeds
-- [ ] No broken links
-- [ ] No missing images
-- [ ] Search includes new pages
-- [ ] Sitemap updated
+- [x] `npm run build` succeeds
+- [x] No broken links
+- [x] No missing images
+- [x] Search includes new pages
+- [x] Sitemap updated
 
 ### User Experience
-- [ ] New users can discover UI feature
-- [ ] Clear when to use UI vs CLI
-- [ ] Troubleshooting helps solve common issues
-- [ ] Examples are practical and useful
-- [ ] Flow from Quick Start → Guide → Reference makes sense
+- [x] New users can discover UI feature
+- [x] Clear when to use UI vs CLI
+- [x] Troubleshooting helps solve common issues
+- [x] Examples are practical and useful
+- [x] Flow from Quick Start → Guide → Reference makes sense
 
 ## Notes
 
