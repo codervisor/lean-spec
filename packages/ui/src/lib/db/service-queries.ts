@@ -137,6 +137,29 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Par
 }
 
 /**
+ * Get all specs with sub-spec count and relationships (for comprehensive list view)
+ */
+export async function getSpecsWithMetadata(projectId?: string): Promise<(ParsedSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
+  const specs = await specsService.getAllSpecs(projectId);
+  
+  // Only count sub-specs and relationships for filesystem mode
+  if (projectId) {
+    return specs.map(spec => ({ 
+      ...parseSpecTags(spec), 
+      subSpecsCount: 0,
+      relationships: { dependsOn: [], related: [] }
+    }));
+  }
+  
+  return specs.map(spec => {
+    const specDirPath = buildSpecDirPath(spec.filePath);
+    const subSpecsCount = countSubSpecs(specDirPath);
+    const relationships = getFilesystemRelationships(specDirPath);
+    return { ...parseSpecTags(spec), subSpecsCount, relationships };
+  });
+}
+
+/**
  * Get a spec by ID (number or UUID)
  */
 export async function getSpecById(id: string, projectId?: string): Promise<(ParsedSpec & { subSpecs?: import('../sub-specs').SubSpec[]; relationships?: SpecRelationships }) | null> {
