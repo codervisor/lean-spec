@@ -88,15 +88,7 @@ function TOCList({ headings, onHeadingClick }: TOCListProps) {
 function scrollToHeading(id: string) {
   const element = document.getElementById(id);
   if (element) {
-    // Scroll with offset for sticky header (top navbar + spec header)
-    const headerOffset = 180; // Adjust based on your header height
-    const elementPosition = element.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: 'smooth'
-    });
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     if (window.history.replaceState) {
       window.history.replaceState(null, '', `#${id}`);
