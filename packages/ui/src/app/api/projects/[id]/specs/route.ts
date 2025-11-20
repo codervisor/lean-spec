@@ -4,6 +4,7 @@
 
 import { NextResponse } from 'next/server';
 import { getSpecsByProjectId } from '@/lib/db/queries';
+import { specsService } from '@/lib/specs/service';
 
 export async function GET(
   request: Request,
@@ -11,6 +12,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    if (process.env.SPECS_MODE === 'multi-project') {
+      const specs = await specsService.getAllSpecs(id);
+      return NextResponse.json({ specs });
+    }
+
     const specs = await getSpecsByProjectId(id);
     return NextResponse.json({ specs });
   } catch (error) {

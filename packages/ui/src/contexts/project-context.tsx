@@ -52,7 +52,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/local-projects');
+      const response = await fetch('/api/projects');
       if (!response.ok) {
         throw new Error('Failed to fetch projects');
       }
@@ -83,7 +83,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
   // Switch to a different project
   const switchProject = useCallback(async (projectId: string) => {
     try {
-      const response = await fetch(`/api/local-projects/${projectId}`);
+      const response = await fetch(`/api/projects/${projectId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch project');
       }
@@ -106,7 +106,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
     options?: { favorite?: boolean; color?: string }
   ): Promise<LocalProject> => {
     try {
-      const response = await fetch('/api/local-projects', {
+      const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path, ...options }),
@@ -130,7 +130,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
   // Remove a project
   const removeProject = useCallback(async (projectId: string) => {
     try {
-      const response = await fetch(`/api/local-projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
       });
 
@@ -155,7 +155,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
   // Toggle favorite status
   const toggleFavorite = useCallback(async (projectId: string) => {
     try {
-      const response = await fetch(`/api/local-projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ favorite: true }),
@@ -179,7 +179,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
     updates: Partial<Pick<LocalProject, 'name' | 'color' | 'description'>>
   ) => {
     try {
-      const response = await fetch(`/api/local-projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),

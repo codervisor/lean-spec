@@ -309,6 +309,7 @@ export class ProjectRegistry {
   async discoverProjects(rootDir: string, maxDepth: number = 3): Promise<ProjectValidation[]> {
     const discovered: ProjectValidation[] = [];
     
+    const self = this;
     async function scan(dir: string, depth: number) {
       if (depth > maxDepth) {
         return;
@@ -330,7 +331,7 @@ export class ProjectRegistry {
           const fullPath = path.join(dir, entry.name);
           
           // Check if this directory is a LeanSpec project
-          const validation = await projectRegistry.validateProject(fullPath);
+          const validation = await self.validateProject(fullPath);
           if (validation.isValid) {
             discovered.push(validation);
           } else {

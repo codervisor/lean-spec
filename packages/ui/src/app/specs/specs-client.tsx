@@ -102,12 +102,13 @@ interface Stats {
 interface SpecsClientProps {
   initialSpecs: Spec[];
   initialStats: Stats;
+  projectId?: string;
 }
 
 type ViewMode = 'list' | 'board';
 type SortBy = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 
-export function SpecsClient({ initialSpecs }: SpecsClientProps) {
+export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -147,7 +148,11 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
     setSpecs((prev) => prev.map(item => item.id === spec.id ? { ...item, status: nextStatus } : item));
 
     try {
-      const response = await fetch(`/api/specs/${encodeURIComponent(spec.specName)}/status`, {
+      const url = projectId 
+        ? `/api/projects/${projectId}/specs/${encodeURIComponent(spec.specName)}/status`
+        : `/api/specs/${encodeURIComponent(spec.specName)}/status`;
+
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

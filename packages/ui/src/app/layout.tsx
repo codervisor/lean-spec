@@ -4,6 +4,7 @@ import { Navigation } from "@/components/navigation";
 import { MainSidebar } from "@/components/main-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toast } from "@/components/ui/toast";
+import { ProjectProvider } from "@/contexts/project-context";
 import { getSpecs } from "@/lib/db/service-queries";
 
 export const metadata: Metadata = {
@@ -56,14 +57,16 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navigation specs={specsForSearch} />
-          <div className="flex w-full min-w-0">
-            <MainSidebar />
-            <main className="flex-1 min-h-[calc(100vh-3.5rem)] min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))]">
-              {children}
-            </main>
-          </div>
-          <Toast />
+          <ProjectProvider>
+            <Navigation specs={specsForSearch} />
+            <div className="flex w-full min-w-0">
+              <MainSidebar />
+              <main className="flex-1 min-h-[calc(100vh-3.5rem)] min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))]">
+                {children}
+              </main>
+            </div>
+            <Toast />
+          </ProjectProvider>
         </ThemeProvider>
       </body>
     </html>

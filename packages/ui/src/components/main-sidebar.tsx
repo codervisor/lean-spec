@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, FileText, BarChart3, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ProjectSwitcher } from '@/components/project-switcher';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
@@ -121,6 +122,9 @@ export function MainSidebar() {
 
           {/* Navigation */}
           {mounted && <nav className="flex-1 px-2 py-4 space-y-1">
+            <div className="mb-4">
+              <ProjectSwitcher collapsed={isCollapsed && !mobileOpen} />
+            </div>
             <SidebarLink 
               href="/" 
               icon={Home} 

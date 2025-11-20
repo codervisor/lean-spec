@@ -17,6 +17,7 @@ program
   .option('-s, --specs <dir>', 'Specs directory (auto-detected if omitted)')
   .option('-p, --port <port>', 'Port to run on', '3000')
   .option('--no-open', "Don't open the browser automatically")
+  .option('--multi-project', 'Enable multi-project mode')
   .option('--dry-run', 'Show what would run without executing')
   .action(async (options) => {
     try {
@@ -33,15 +34,24 @@ program.parseAsync(process.argv);
 async function startUi(options) {
   const cwd = process.cwd();
   const port = validatePort(options.port);
-  const specsDir = resolveSpecsDirectory(cwd, options.specs);
+  
+  let specsDir = '';
+  let specsMode = 'filesystem';
+
+  if (options.multiProject) {
+    specsMode = 'multi-project';
+  } else {
+    specsDir = resolveSpecsDirectory(cwd, options.specs);
+  }
+
   const serverPath = getServerPath();
 
   if (options.dryRun) {
-    printDryRun({ port, specsDir, serverPath, openBrowser: options.open });
+    printDryRun({ port, specsDir, specsMode, serverPath, openBrowser: options.open });
     return;
   }
 
-  await launchServer({ port, specsDir, serverPath, openBrowser: options.open });
+  await launchServer({ port, specsDir, specsMode, serverPath, openBrowser: options.open });
 }
 
 function validatePort(value) {
@@ -134,22 +144,22 @@ function getServerPath() {
   throw new Error('LeanSpec UI build not found. Reinstall @leanspec/ui or run pnpm --filter @leanspec/ui build.');
 }
 
-function printDryRun({ port, specsDir, serverPath, openBrowser }) {
+function printDryRun({ port, specsDir, specsMode, serverPath, openBrowser }) {
   console.log(chalk.cyan('Would run:'));
-  console.log(chalk.dim(`  SPECS_MODE=filesystem SPECS_DIR=${specsDir} PORT=${port} node ${serverPath}`));
+  console.log(chalk.dim(`  SPECS_MODE=${specsMode} SPECS_DIR=${specsDir} PORT=${port} node ${serverPath}`));
   if (openBrowser) {
     console.log(chalk.dim(`  open http://localhost:${port}`));
   }
 }
 
-async function launchServer({ port, specsDir, serverPath, openBrowser }) {
+async function launchServer({ port, specsDir, specsMode, serverPath, openBrowser }) {
   const spinner = ora('Starting LeanSpec UI...').start();
   const serverDir = dirname(serverPath);
   const env = {
     ...process.env,
     NODE_ENV: 'production',
     NEXT_TELEMETRY_DISABLED: '1',
-    SPECS_MODE: 'filesystem',
+    SPECS_MODE: specsMode,
     SPECS_DIR: specsDir,
     PORT: port,
   };

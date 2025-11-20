@@ -201,15 +201,63 @@ async function runLocalWeb(
   const readyTimeout = setTimeout(async () => {
     spinner.succeed('Web UI running');
     console.log(chalk.green(`\n✨ LeanSpec UI: http://localhost:${options.port}\n`));
+    
     if (options.multiProject) {
       console.log(chalk.cyan('Multi-project mode is active'));
+      
+      // Handle addProject
       if (options.addProject) {
-        console.log(chalk.dim(`  Project to add: ${options.addProject}`));
+        try {
+          const res = await fetch(`http://localhost:${options.port}/api/projects`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: options.addProject }),
+          });
+          if (res.ok) {
+            console.log(chalk.green(`  ✓ Added project: ${options.addProject}`));
+          } else {
+            console.error(chalk.red(`  ✗ Failed to add project: ${options.addProject}`));
+          }
+        } catch (e) {
+          console.error(chalk.red(`  ✗ Failed to connect to server for adding project`));
+        }
       }
+
+      // Handle discover
       if (options.discover) {
-        console.log(chalk.dim(`  Discovery path: ${options.discover}`));
+        console.log(chalk.dim(`  Discovering projects in: ${options.discover}...`));
+        try {
+          const res = await fetch(`http://localhost:${options.port}/api/local-projects/discover`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: options.discover }),
+          });
+          
+          if (res.ok) {
+            const data = await res.json() as any;
+            const discovered = data.discovered || [];
+            console.log(chalk.green(`  ✓ Found ${discovered.length} projects`));
+            
+            // Add discovered projects
+            for (const p of discovered) {
+              const addRes = await fetch(`http://localhost:${options.port}/api/projects`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: p.path }),
+              });
+              if (addRes.ok) {
+                console.log(chalk.dim(`    + Added: ${p.name} (${p.path})`));
+              }
+            }
+          } else {
+            console.error(chalk.red(`  ✗ Failed to discover projects`));
+          }
+        } catch (e) {
+          console.error(chalk.red(`  ✗ Failed to connect to server for discovery`));
+        }
       }
     }
+
     console.log(chalk.dim('\nPress Ctrl+C to stop\n'));
 
     if (options.open) {
