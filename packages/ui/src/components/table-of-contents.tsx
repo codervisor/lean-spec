@@ -57,6 +57,68 @@ function extractHeadings(markdown: string): TOCItem[] {
   return headings;
 }
 
+interface TOCListProps {
+  headings: TOCItem[];
+  onHeadingClick: (id: string) => void;
+}
+
+function TOCList({ headings, onHeadingClick }: TOCListProps) {
+  return (
+    <nav className="space-y-1">
+      {headings.map((heading, index) => (
+        <button
+          key={`${heading.id}-${index}`}
+          onClick={() => onHeadingClick(heading.id)}
+          className={cn(
+            'w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors flex items-start gap-2 group text-muted-foreground hover:text-foreground',
+            heading.level === 2 && 'font-medium text-foreground',
+            heading.level === 3 && 'pl-6',
+            heading.level === 4 && 'pl-10',
+            heading.level === 5 && 'pl-14',
+            heading.level === 6 && 'pl-18'
+          )}
+        >
+          <span className="flex-1 truncate">{heading.text}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function scrollToHeading(id: string) {
+  const element = document.getElementById(id);
+  if (element) {
+    // Scroll with offset for sticky header (top navbar + spec header)
+    const headerOffset = 180; // Adjust based on your header height
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+
+    if (window.history.replaceState) {
+      window.history.replaceState(null, '', `#${id}`);
+    } else {
+      window.location.hash = id;
+    }
+  }
+}
+
+export function TableOfContentsSidebar({ content }: TableOfContentsProps) {
+  const headings = React.useMemo(() => extractHeadings(content), [content]);
+
+  if (headings.length === 0) return null;
+
+  return (
+    <div className="py-2">
+      <h4 className="mb-4 text-sm font-semibold leading-none tracking-tight px-2">On this page</h4>
+      <TOCList headings={headings} onHeadingClick={scrollToHeading} />
+    </div>
+  );
+}
+
 export function TableOfContents({ content }: TableOfContentsProps) {
   const [open, setOpen] = React.useState(false);
   const headings = React.useMemo(() => extractHeadings(content), [content]);
@@ -68,24 +130,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
     setOpen(false);
     // Small delay to allow dialog to close before scrolling
     setTimeout(() => {
-      const element = document.getElementById(id);
-      if (element) {
-        // Scroll with offset for sticky header (top navbar + spec header)
-        const headerOffset = 180; // Adjust based on your header height
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-
-        if (window.history.replaceState) {
-          window.history.replaceState(null, '', `#${id}`);
-        } else {
-          window.location.hash = id;
-        }
-      }
+      scrollToHeading(id);
     }, 100);
   };
 
@@ -105,25 +150,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
         <DialogHeader>
           <DialogTitle>Table of Contents</DialogTitle>
         </DialogHeader>
-        <nav className="space-y-1">
-          {headings.map((heading, index) => (
-            <button
-              key={`${heading.id}-${index}`}
-              onClick={() => handleHeadingClick(heading.id)}
-              className={cn(
-                'w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors flex items-start gap-2 group',
-                heading.level === 2 && 'font-medium',
-                heading.level === 3 && 'pl-6',
-                heading.level === 4 && 'pl-10',
-                heading.level === 5 && 'pl-14',
-                heading.level === 6 && 'pl-18'
-              )}
-            >
-              <ChevronRight className="h-4 w-4 mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="flex-1">{heading.text}</span>
-            </button>
-          ))}
-        </nav>
+        <TOCList headings={headings} onHeadingClick={handleHeadingClick} />
       </DialogContent>
     </Dialog>
   );

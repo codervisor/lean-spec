@@ -18,7 +18,7 @@ import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { MarkdownLink } from '@/components/markdown-link';
-import { TableOfContents } from '@/components/table-of-contents';
+import { TableOfContents, TableOfContentsSidebar } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
 import { SpecDependencyGraph } from '@/components/spec-dependency-graph';
 import {
@@ -345,28 +345,37 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
         )}
       </header>
 
-      {/* Main content (full width) */}
-      <main className="px-3 sm:px-6 py-4 sm:py-8">
-        <div className="space-y-6">
-          {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
-          {error && <div className="text-sm text-destructive">Error loading spec</div>}
+      {/* Main content with Sidebar */}
+      <div className="flex flex-col xl:flex-row xl:items-start">
+        <main className="flex-1 px-3 sm:px-6 py-4 sm:py-8 min-w-0">
+          <div className="space-y-6">
+            {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
+            {error && <div className="text-sm text-destructive">Error loading spec</div>}
 
-          <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkStripHtmlComments]}
-              rehypePlugins={[rehypeHighlight, rehypeSlug]}
-              components={{
-                a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
-              }}
-            >
-              {displayContent}
-            </ReactMarkdown>
-          </article>
-        </div>
-      </main>
+            <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkStripHtmlComments]}
+                rehypePlugins={[rehypeHighlight, rehypeSlug]}
+                components={{
+                  a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
+                }}
+              >
+                {displayContent}
+              </ReactMarkdown>
+            </article>
+          </div>
+        </main>
 
-      {/* Floating action buttons */}
-      <TableOfContents content={displayContent} />
+        {/* Right Sidebar for TOC (Desktop only) */}
+        <aside className="hidden xl:block w-72 shrink-0 px-6 py-8 sticky top-40 h-[calc(100vh-10rem)] overflow-y-auto">
+           <TableOfContentsSidebar content={displayContent} />
+        </aside>
+      </div>
+
+      {/* Floating action buttons (Mobile/Tablet only) */}
+      <div className="xl:hidden">
+        <TableOfContents content={displayContent} />
+      </div>
       <BackToTop />
     </>
   );
