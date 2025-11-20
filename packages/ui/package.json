@@ -101,6 +101,7 @@
     "@leanspec/core": "workspace:*",
     "@tailwindcss/typography": "^0.5.15",
     "@types/better-sqlite3": "^7.6.12",
+    "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",
     "@types/node": "^20",
     "@types/react": "^19",

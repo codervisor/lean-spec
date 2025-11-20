@@ -15,16 +15,18 @@ export function updateSpecStatusPrompt() {
       description: 'Quick workflow to update specification status',
       argsSchema: {
         specPath: z.string(),
-        newStatus: z.enum(['planned', 'in-progress', 'complete', 'archived']),
+        status: z.enum(['planned', 'in-progress', 'complete', 'archived']),
       },
     },
-    ({ specPath, newStatus }: { specPath: string; newStatus: string }) => ({
+    ({ specPath, status }: { specPath: string; status: string }) => ({
       messages: [
         {
           role: 'user' as const,
           content: {
             type: 'text' as const,
-            text: `Update the status of spec "${specPath}" to "${newStatus}". Use the update tool to make this change.`,
+            text: `Update the status of spec "${specPath}" to "${status}".
+
+Use the \`update\` tool: \`update <spec> --status ${status}\``,
           },
         },
       ],

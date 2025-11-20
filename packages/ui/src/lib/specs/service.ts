@@ -4,6 +4,7 @@
  */
 
 import { FilesystemSource } from './sources/filesystem-source';
+import { MultiProjectFilesystemSource } from './sources/multi-project-source';
 import type { SpecSource } from './types';
 import type { Spec } from '../db/schema';
 
@@ -14,10 +15,11 @@ let DatabaseSourceCtor: DatabaseSourceConstructor | null = null;
 /**
  * Service modes
  * - filesystem: Read from local filesystem only (LeanSpec's own specs)
+ * - multi-project: Read from multiple local filesystem projects
  * - database: Read from database only (external repos)
  * - both: Support both modes (route based on projectId)
  */
-type SpecsMode = 'filesystem' | 'database' | 'both';
+type SpecsMode = 'filesystem' | 'multi-project' | 'database' | 'both';
 
 /**
  * Unified specs service
@@ -25,6 +27,7 @@ type SpecsMode = 'filesystem' | 'database' | 'both';
  */
 export class SpecsService {
   private filesystemSource?: FilesystemSource;
+  private multiProjectSource?: MultiProjectFilesystemSource;
   private databaseSource?: SpecSource;
   private mode: SpecsMode;
 
@@ -34,6 +37,10 @@ export class SpecsService {
     if (this.mode === 'filesystem' || this.mode === 'both') {
       const specsDir = process.env.SPECS_DIR;
       this.filesystemSource = new FilesystemSource(specsDir);
+    }
+
+    if (this.mode === 'multi-project') {
+      this.multiProjectSource = new MultiProjectFilesystemSource();
     }
 
     // Don't instantiate database source here - do it lazily
@@ -102,6 +109,11 @@ export class SpecsService {
    * Get the appropriate source based on projectId and mode
    */
   private async getSource(projectId?: string): Promise<SpecSource> {
+    // Multi-project mode: use multi-project source
+    if (this.mode === 'multi-project' && this.multiProjectSource) {
+      return this.multiProjectSource;
+    }
+
     // If projectId provided, use database (external repo)
     if (projectId && (this.mode === 'database' || this.mode === 'both')) {
       return await this.getDatabaseSource();

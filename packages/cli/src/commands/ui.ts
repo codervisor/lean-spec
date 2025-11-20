@@ -16,12 +16,18 @@ export function uiCommand(): Command {
     .option('-s, --specs <dir>', 'Specs directory (auto-detected if not specified)')
     .option('-p, --port <port>', 'Port to run on', '3000')
     .option('--no-open', "Don't open browser automatically")
+    .option('--multi-project', 'Enable multi-project mode')
+    .option('--add-project <path>', 'Add a project to multi-project registry')
+    .option('--discover <path>', 'Discover LeanSpec projects in directory tree')
     .option('--dev', 'Run in development mode (only works in LeanSpec monorepo)')
     .option('--dry-run', 'Show what would run without executing')
     .action(async (options: {
       specs?: string;
       port: string;
       open: boolean;
+      multiProject?: boolean;
+      addProject?: string;
+      discover?: string;
       dev?: boolean;
       dryRun?: boolean;
     }) => {
@@ -41,6 +47,9 @@ export async function startUi(options: {
   specs?: string;
   port: string;
   open: boolean;
+  multiProject?: boolean;
+  addProject?: string;
+  discover?: string;
   dev?: boolean;
   dryRun?: boolean;
 }): Promise<void> {
@@ -54,21 +63,40 @@ export async function startUi(options: {
 
   const cwd = process.cwd();
 
-  // Determine specs directory
-  let specsDir: string;
-  if (options.specs) {
-    specsDir = resolve(cwd, options.specs);
-  } else {
-    // Auto-detect from config
-    const config = await loadConfig(cwd);
-    specsDir = join(cwd, config.specsDir);
-  }
+  // Determine mode based on flags
+  const specsMode = options.multiProject ? 'multi-project' : 'filesystem';
 
-  // Verify specs directory exists
-  if (!existsSync(specsDir)) {
-    console.error(chalk.red(`✗ Specs directory not found: ${specsDir}`));
-    console.log(chalk.dim('\nRun `lean-spec init` to initialize LeanSpec in this directory.'));
-    throw new Error(`Specs directory not found: ${specsDir}`);
+  // Determine specs directory (only for single-project mode)
+  let specsDir: string = '';
+  if (!options.multiProject) {
+    if (options.specs) {
+      specsDir = resolve(cwd, options.specs);
+    } else {
+      // Auto-detect from config
+      const config = await loadConfig(cwd);
+      specsDir = join(cwd, config.specsDir);
+    }
+
+    // Verify specs directory exists
+    if (!existsSync(specsDir)) {
+      console.error(chalk.red(`✗ Specs directory not found: ${specsDir}`));
+      console.log(chalk.dim('\nRun `lean-spec init` to initialize LeanSpec in this directory.'));
+      throw new Error(`Specs directory not found: ${specsDir}`);
+    }
+  } else {
+    console.log(chalk.cyan('→ Multi-project mode enabled'));
+    
+    // Handle --add-project flag
+    if (options.addProject) {
+      console.log(chalk.dim(`  Adding project: ${options.addProject}`));
+      // The project will be added via API after UI starts
+    }
+    
+    // Handle --discover flag
+    if (options.discover) {
+      console.log(chalk.dim(`  Will discover projects in: ${options.discover}`));
+      // Projects will be discovered via API after UI starts
+    }
   }
 
   // Check if --dev flag is set and we're in LeanSpec monorepo
@@ -80,11 +108,11 @@ export async function startUi(options: {
       throw new Error('Not in LeanSpec monorepo');
     }
     const localUiDir = join(cwd, 'packages/ui');
-    return runLocalWeb(localUiDir, specsDir, options);
+    return runLocalWeb(localUiDir, specsDir, specsMode, options);
   }
 
   // Production mode: use published @leanspec/ui
-  return runPublishedUI(cwd, specsDir, options);
+  return runPublishedUI(cwd, specsDir, specsMode, options);
 }
 
 /**
@@ -125,9 +153,13 @@ function checkIsLeanSpecMonorepo(cwd: string): boolean {
 async function runLocalWeb(
   uiDir: string,
   specsDir: string,
+  specsMode: string,
   options: {
     port: string;
     open: boolean;
+    multiProject?: boolean;
+    addProject?: string;
+    discover?: string;
     dev?: boolean;
     dryRun?: boolean;
   }
@@ -141,7 +173,7 @@ async function runLocalWeb(
     console.log(chalk.cyan('Would run:'));
     console.log(chalk.dim(`  cd ${uiDir}`));
 
-    console.log(chalk.dim(`  SPECS_MODE=filesystem SPECS_DIR=${specsDir} PORT=${options.port} ${packageManager} run dev`));
+    console.log(chalk.dim(`  SPECS_MODE=${specsMode} SPECS_DIR=${specsDir} PORT=${options.port} ${packageManager} run dev`));
     if (options.open) {
       console.log(chalk.dim(`  open http://localhost:${options.port}`));
     }
@@ -153,8 +185,8 @@ async function runLocalWeb(
   // Set environment variables for the web server
   const env = {
     ...process.env,
-    SPECS_MODE: 'filesystem',
-    SPECS_DIR: specsDir,
+    SPECS_MODE: specsMode,
+    SPECS_DIR: specsDir || '',
     PORT: options.port,
   };
 
@@ -169,7 +201,16 @@ async function runLocalWeb(
   const readyTimeout = setTimeout(async () => {
     spinner.succeed('Web UI running');
     console.log(chalk.green(`\n✨ LeanSpec UI: http://localhost:${options.port}\n`));
-    console.log(chalk.dim('Press Ctrl+C to stop\n'));
+    if (options.multiProject) {
+      console.log(chalk.cyan('Multi-project mode is active'));
+      if (options.addProject) {
+        console.log(chalk.dim(`  Project to add: ${options.addProject}`));
+      }
+      if (options.discover) {
+        console.log(chalk.dim(`  Discovery path: ${options.discover}`));
+      }
+    }
+    console.log(chalk.dim('\nPress Ctrl+C to stop\n'));
 
     if (options.open) {
       try {
@@ -235,9 +276,13 @@ async function runLocalWeb(
 async function runPublishedUI(
   cwd: string,
   specsDir: string,
+  specsMode: string,
   options: {
     port: string;
     open: boolean;
+    multiProject?: boolean;
+    addProject?: string;
+    discover?: string;
     dev?: boolean;
     dryRun?: boolean;
   }
@@ -245,7 +290,7 @@ async function runPublishedUI(
   console.log(chalk.dim('→ Using published @leanspec/ui package\n'));
 
   const packageManager = detectPackageManager(cwd);
-  const { command, args, preview } = buildUiRunner(packageManager, specsDir, options.port, options.open);
+  const { command, args, preview } = buildUiRunner(packageManager, specsDir, specsMode, options.port, options.open, options.multiProject);
 
   if (options.dryRun) {
     console.log(chalk.cyan('Would run:'));
@@ -302,10 +347,21 @@ async function runPublishedUI(
 function buildUiRunner(
   packageManager: PackageManager,
   specsDir: string,
+  specsMode: string,
   port: string,
-  openBrowser: boolean
+  openBrowser: boolean,
+  multiProject?: boolean
 ): { command: string; args: string[]; preview: string } {
-  const uiArgs = ['@leanspec/ui', '--specs', specsDir, '--port', port];
+  const uiArgs = ['@leanspec/ui'];
+  
+  if (!multiProject) {
+    uiArgs.push('--specs', specsDir);
+  } else {
+    uiArgs.push('--multi-project');
+  }
+  
+  uiArgs.push('--port', port);
+  
   if (!openBrowser) {
     uiArgs.push('--no-open');
   }

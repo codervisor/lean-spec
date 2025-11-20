@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-20'
 tags:
   - web
@@ -13,12 +13,15 @@ related:
   - 017-vscode-extension
   - 036-pm-integrations
   - 087-cli-ui-command
-updated_at: '2025-11-20T05:50:48.138Z'
+updated_at: '2025-11-20T07:01:48.211Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-20T07:01:48.211Z'
 ---
 
 # Local Multi-Project Switching in Web UI
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-20 · **Tags**: web, ux, dx, enhancement
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-20 · **Tags**: web, ux, dx, enhancement
 > **Assignee**: marvin · **Reviewer**: TBD
 
 **Project**: lean-spec  
