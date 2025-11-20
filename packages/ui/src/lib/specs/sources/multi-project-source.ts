@@ -26,7 +26,7 @@ export class MultiProjectFilesystemSource implements SpecSource {
    */
   async getAllSpecs(projectId?: string): Promise<Spec[]> {
     if (!projectId) {
-      throw new Error('projectId is required for multi-project mode');
+      return [];
     }
 
     const cacheKey = `project:${projectId}:all`;
@@ -56,7 +56,7 @@ export class MultiProjectFilesystemSource implements SpecSource {
    */
   async getSpec(specPath: string, projectId?: string): Promise<Spec | null> {
     if (!projectId) {
-      throw new Error('projectId is required for multi-project mode');
+      return null;
     }
 
     const cacheKey = `project:${projectId}:spec:${specPath}`;
@@ -237,8 +237,8 @@ export class MultiProjectFilesystemSource implements SpecSource {
         specNumber: specNum,
         specName,
         title,
-        status: frontmatter.status as any,
-        priority: frontmatter.priority as any,
+        status: frontmatter.status,
+        priority: frontmatter.priority,
         tags: frontmatter.tags ? JSON.stringify(frontmatter.tags) : null,
         assignee: frontmatter.assignee || null,
         contentMd: content,

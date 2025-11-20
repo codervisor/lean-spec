@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useProject } from '@/contexts/project-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -11,7 +13,8 @@ import {
   LayoutGrid,
   List,
   TrendingUp,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
@@ -133,20 +136,78 @@ function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time
 }
 
 export function DashboardClient({ initialSpecs, initialStats }: DashboardClientProps) {
-  const stats = initialStats;
+  const { mode, currentProject, isLoading: isProjectLoading } = useProject();
+  const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
+  const [stats, setStats] = useState<Stats>(initialStats);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'multi-project') {
+      if (currentProject) {
+        fetchProjectData(currentProject.id);
+      } else {
+        setSpecs([]);
+        setStats({ totalSpecs: 0, completionRate: 0, specsByStatus: [] });
+      }
+    }
+  }, [mode, currentProject]);
+
+  const fetchProjectData = async (projectId: string) => {
+    setIsLoadingData(true);
+    try {
+      const [specsRes, statsRes] = await Promise.all([
+        fetch(`/api/projects/${projectId}/specs`),
+        fetch(`/api/projects/${projectId}/stats`)
+      ]);
+      
+      if (specsRes.ok && statsRes.ok) {
+        const specsData = await specsRes.json();
+        const statsData = await statsRes.json();
+        
+        const parsedSpecs = specsData.specs.map((s: any) => ({
+            ...s,
+            createdAt: s.createdAt ? new Date(s.createdAt) : null,
+            updatedAt: s.updatedAt ? new Date(s.updatedAt) : null,
+        }));
+
+        setSpecs(parsedSpecs);
+        setStats(statsData.stats);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  if (mode === 'multi-project' && !currentProject) {
+     if (isProjectLoading) {
+         return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
+     }
+     return (
+         <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] text-center p-8">
+             <h2 className="text-2xl font-bold mb-2">Welcome to LeanSpec</h2>
+             <p className="text-muted-foreground mb-4">Select a project from the sidebar or create a new one to get started.</p>
+         </div>
+     );
+  }
+
+  if (isLoadingData) {
+      return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
+  }
   
   // Get specs by status
-  const inProgressSpecs = initialSpecs
+  const inProgressSpecs = specs
     .filter(spec => spec.status === 'in-progress')
     .sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0))
     .slice(0, 5);
   
-  const plannedSpecs = initialSpecs
+  const plannedSpecs = specs
     .filter(spec => spec.status === 'planned')
     .sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0))
     .slice(0, 5);
   
-  const recentlyAdded = initialSpecs
+  const recentlyAdded = specs
     .sort((a, b) => {
       if (!a.createdAt) return 1;
       if (!b.createdAt) return -1;
@@ -154,7 +215,7 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
     })
     .slice(0, 5);
   
-  const recentActivity = initialSpecs
+  const recentActivity = specs
     .filter(spec => spec.updatedAt)
     .sort((a, b) => {
       if (!a.updatedAt) return 1;

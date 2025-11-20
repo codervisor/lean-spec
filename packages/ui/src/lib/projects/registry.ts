@@ -173,11 +173,11 @@ export class ProjectRegistry {
         name,
         description,
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         isValid: false,
         path: projectPath,
-        error: error.message || 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -245,10 +245,50 @@ export class ProjectRegistry {
   }
 
   /**
+   * Find the closest project root with .lean-spec directory
+   */
+  private async findProjectRoot(startDir: string): Promise<string | null> {
+    let currentDir = path.resolve(startDir);
+    const { root } = path.parse(currentDir);
+
+    while (true) {
+      const leanSpecDir = path.join(currentDir, '.lean-spec');
+      try {
+        await fs.access(leanSpecDir);
+        return currentDir;
+      } catch {
+        // Not found
+      }
+
+      if (currentDir === root) {
+        break;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    
+    return null;
+  }
+
+  /**
    * Get all projects
    */
   async getProjects(): Promise<LocalProject[]> {
     const config = await this.loadConfig();
+
+    // Auto-discover if no projects
+    if (config.projects.length === 0) {
+      const projectRoot = await this.findProjectRoot(process.cwd());
+      if (projectRoot) {
+        try {
+          const project = await this.addProject(projectRoot);
+          return [project];
+        } catch (e) {
+          // Ignore error if auto-add fails
+          console.warn('Failed to auto-add default project:', e);
+        }
+      }
+    }
+
     return config.projects;
   }
 

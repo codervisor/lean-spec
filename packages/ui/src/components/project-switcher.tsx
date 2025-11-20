@@ -33,6 +33,7 @@ interface ProjectSwitcherProps {
 
 export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
   const {
+    mode,
     currentProject,
     projects,
     switchProject,
@@ -40,6 +41,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
   
   const [open, setOpen] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+
+  if (mode !== 'multi-project') {
+    return null;
+  }
 
   const handleProjectSelect = async (projectId: string) => {
     await switchProject(projectId);

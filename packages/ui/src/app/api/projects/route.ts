@@ -13,11 +13,19 @@ export async function GET() {
       const projects = await projectRegistry.getProjects();
       const recentProjects = await projectRegistry.getRecentProjects();
       const favoriteProjects = await projectRegistry.getFavoriteProjects();
-      return NextResponse.json({ projects, recentProjects, favoriteProjects });
+      return NextResponse.json({ 
+        mode: 'multi-project',
+        projects, 
+        recentProjects, 
+        favoriteProjects 
+      });
     }
 
     const projects = await getProjects();
-    return NextResponse.json({ projects });
+    return NextResponse.json({ 
+      mode: 'single-project',
+      projects 
+    });
   } catch (error) {
     console.error('Error fetching projects:', error);
     return NextResponse.json(
@@ -48,10 +56,10 @@ export async function POST(request: Request) {
 
     const project = await projectRegistry.addProject(path, { favorite, color });
     return NextResponse.json({ project });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error adding project:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to add project' },
+      { error: error instanceof Error ? error.message : 'Failed to add project' },
       { status: 500 }
     );
   }

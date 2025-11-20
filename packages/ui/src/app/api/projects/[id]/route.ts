@@ -4,10 +4,10 @@ import { projectRegistry } from '@/lib/projects/registry';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (process.env.SPECS_MODE === 'multi-project') {
       const project = await projectRegistry.getProject(id);
@@ -41,7 +41,7 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (process.env.SPECS_MODE !== 'multi-project') {
@@ -51,7 +51,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     await projectRegistry.removeProject(id);
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -65,7 +65,7 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (process.env.SPECS_MODE !== 'multi-project') {
@@ -75,7 +75,7 @@ export async function PATCH(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Handle favorite toggle separately

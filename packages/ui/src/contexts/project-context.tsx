@@ -9,6 +9,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { LocalProject } from '@/lib/projects/types';
 
 interface ProjectContextType {
+  mode: 'multi-project' | 'single-project';
   currentProject: LocalProject | null;
   projects: LocalProject[];
   recentProjects: LocalProject[];
@@ -39,6 +40,7 @@ interface ProjectProviderProps {
 }
 
 export function ProjectProvider({ children, initialProjectId }: ProjectProviderProps) {
+  const [mode, setMode] = useState<'multi-project' | 'single-project'>('single-project');
   const [currentProject, setCurrentProject] = useState<LocalProject | null>(null);
   const [projects, setProjects] = useState<LocalProject[]>([]);
   const [recentProjects, setRecentProjects] = useState<LocalProject[]>([]);
@@ -58,6 +60,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       }
 
       const data = await response.json();
+      setMode(data.mode || 'single-project');
       setProjects(data.projects || []);
       setRecentProjects(data.recentProjects || []);
       setFavoriteProjects(data.favoriteProjects || []);
@@ -203,6 +206,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
   }, []);
 
   const value: ProjectContextType = {
+    mode,
     currentProject,
     projects,
     recentProjects,

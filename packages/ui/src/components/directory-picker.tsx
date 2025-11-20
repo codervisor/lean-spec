@@ -15,14 +15,18 @@ interface DirectoryPickerProps {
   onSelect: (path: string) => void;
   onCancel: () => void;
   initialPath?: string;
+  actionLabel?: string;
+  isLoading?: boolean;
 }
 
-export function DirectoryPicker({ onSelect, onCancel, initialPath }: DirectoryPickerProps) {
+export function DirectoryPicker({ onSelect, onCancel, initialPath, actionLabel = "Select This Folder", isLoading: externalLoading }: DirectoryPickerProps) {
   const [currentPath, setCurrentPath] = useState(initialPath || '');
   const [items, setItems] = useState<DirectoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const isLoading = externalLoading || internalLoading;
 
   useEffect(() => {
     fetchDirectory(currentPath);
@@ -37,7 +41,7 @@ export function DirectoryPicker({ onSelect, onCancel, initialPath }: DirectoryPi
 
   const fetchDirectory = async (path: string) => {
     try {
-      setIsLoading(true);
+      setInternalLoading(true);
       setError(null);
       const response = await fetch('/api/local-projects/list-directory', {
         method: 'POST',
@@ -58,7 +62,7 @@ export function DirectoryPicker({ onSelect, onCancel, initialPath }: DirectoryPi
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setIsLoading(false);
+      setInternalLoading(false);
     }
   };
 
@@ -175,11 +179,11 @@ export function DirectoryPicker({ onSelect, onCancel, initialPath }: DirectoryPi
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
         <Button onClick={() => onSelect(currentPath)} disabled={isLoading || !currentPath}>
-          Select This Folder
+          {actionLabel}
         </Button>
       </div>
     </div>

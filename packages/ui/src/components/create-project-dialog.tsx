@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProject } from '@/contexts/project-context';
 import { Button } from '@/components/ui/button';
@@ -26,20 +26,23 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
   const { addProject, switchProject } = useProject();
   const [path, setPath] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
+  const [mode, setMode] = useState<'picker' | 'manual'>('picker');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!path) return;
+  useEffect(() => {
+    if (open) {
+      setMode('picker');
+      setPath('');
+    }
+  }, [open]);
 
+  const handleAddProject = async (projectPath: string) => {
     try {
       setIsLoading(true);
-      const project = await addProject(path);
+      const project = await addProject(projectPath);
       await switchProject(project.id);
       toast.success('Project added successfully');
       onOpenChange(false);
-      setPath('');
       router.push('/'); // Navigate to dashboard
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to add project';
@@ -49,29 +52,44 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
     }
   };
 
-  const handlePickerSelect = (selectedPath: string) => {
-    setPath(selectedPath);
-    setShowPicker(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!path) return;
+    handleAddProject(path);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{showPicker ? 'Select Folder' : 'Add Project'}</DialogTitle>
+          <DialogTitle>Add Project</DialogTitle>
           <DialogDescription>
-            {showPicker 
+            {mode === 'picker' 
               ? 'Browse and select the project directory.' 
               : 'Enter the absolute path to your local project directory.'}
           </DialogDescription>
         </DialogHeader>
         
-        {showPicker ? (
-          <DirectoryPicker 
-            onSelect={handlePickerSelect} 
-            onCancel={() => setShowPicker(false)} 
-            initialPath={path}
-          />
+        {mode === 'picker' ? (
+          <div className="space-y-2">
+            <DirectoryPicker 
+              onSelect={handleAddProject} 
+              onCancel={() => onOpenChange(false)} 
+              initialPath={path}
+              actionLabel={isLoading ? "Adding..." : "Add Project"}
+              isLoading={isLoading}
+            />
+            <div className="flex justify-center">
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={() => setMode('manual')}
+                className="text-muted-foreground"
+              >
+                Enter path manually
+              </Button>
+            </div>
+          </div>
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
@@ -88,22 +106,24 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
                     className="flex-1"
                     disabled={isLoading}
                   />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setShowPicker(true)}
-                    title="Browse folders"
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Select the root directory of your project.
                 </p>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex justify-start">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setMode('picker')}
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Browse folders
+                </Button>
+              </div>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
                 Cancel
               </Button>
