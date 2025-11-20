@@ -141,6 +141,12 @@ This spec addresses comprehensive improvements to the documentation site based o
    - Improve existing translations
    - Verify completeness
 
+## Status Update · 2025-11-20
+
+**In Progress**
+- Started Usage Doc Audit (Phase 3).
+- Currently verifying `guide/usage/essential-usage/spec-structure.mdx`.
+
 ## Status Update · 2025-11-19
 
 **Completed (Phases 1-3)**
@@ -222,7 +228,7 @@ This spec addresses comprehensive improvements to the documentation site based o
 ### Usage Doc Audit (WIP)
 | Path | Review status | Notes |
 | --- | --- | --- |
-| `guide/usage/essential-usage/spec-structure.mdx` | Pending | Needs verification of sub-spec guidance vs current CLI defaults |
+| `guide/usage/essential-usage/spec-structure.mdx` | ⏳ In Progress | Verifying sub-spec guidance vs current CLI defaults |
 | `guide/usage/essential-usage/creating-managing.mdx` | Pending | Confirm `lean-spec create/update/archive` examples |
 | `guide/usage/essential-usage/finding-specs.mdx` | Pending | Re-run search/list examples against current CLI output |
 | `guide/usage/project-management/board-stats.mdx` | Pending | Ensure board + stats screenshots/commands match latest CLI responses |
