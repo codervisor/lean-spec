@@ -115,6 +115,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
               <CommandSeparator />
               <CommandGroup>
                 <CommandItem
+                  className="cursor-pointer"
                   onSelect={() => {
                     setOpen(false);
                     setShowNewProjectDialog(true);
