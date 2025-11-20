@@ -104,10 +104,10 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
 
   // Fetch complete dependency graph when dialog opens
   const { data: dependencyGraphData } = useSWR<{
-    current: any;
-    dependsOn: any[];
-    requiredBy: any[];
-    related: any[];
+    current: { specName: string; specNumber?: number };
+    dependsOn: { specName: string; specNumber?: number }[];
+    requiredBy: { specName: string; specNumber?: number }[];
+    related: { specName: string; specNumber?: number }[];
   }>(
     dependenciesDialogOpen ? `/api/specs/${initialSpec.specNumber || initialSpec.id}/dependency-graph` : null,
     fetcher,
@@ -118,7 +118,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
   );
 
   const spec = specData?.spec || initialSpec;
-  const tags = spec.tags || [];
+  const tags = React.useMemo(() => spec.tags || [], [spec.tags]);
   const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : 'N/A';
   const relationships = spec.relationships;
   
@@ -175,10 +175,45 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
     router.push(newUrl, { scroll: false });
   };
 
+  const headerRef = React.useRef<HTMLElement>(null);
+
+  // Handle scroll padding for sticky header
+  React.useEffect(() => {
+    const updateScrollPadding = () => {
+      const navbarHeight = 56; // 3.5rem / top-14
+      let offset = navbarHeight;
+
+      // On large screens, the spec header is also sticky
+      if (window.innerWidth >= 1024 && headerRef.current) {
+        offset += headerRef.current.offsetHeight - navbarHeight;
+      }
+
+      document.documentElement.style.scrollPaddingTop = `${offset}px`;
+    };
+
+    // Initial update
+    updateScrollPadding();
+
+    // Update on resize
+    window.addEventListener('resize', updateScrollPadding);
+    
+    // Update when content changes (might affect header height if tags wrap)
+    const observer = new ResizeObserver(updateScrollPadding);
+    if (headerRef.current) {
+      observer.observe(headerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateScrollPadding);
+      observer.disconnect();
+      document.documentElement.style.scrollPaddingTop = '';
+    };
+  }, [spec, tags]); // Re-run if spec metadata changes
+
   return (
     <>
       {/* Compact Header - sticky on desktop, static on mobile */}
-      <header className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
+      <header ref={headerRef} className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
         <div className="px-3 sm:px-6 py-3 sm:py-4">
           {/* Line 1: Spec number + H1 Title */}
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-2 sm:mb-3">
@@ -367,7 +402,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
         </main>
 
         {/* Right Sidebar for TOC (Desktop only) */}
-        <aside className="hidden xl:block w-72 shrink-0 px-6 py-8 sticky top-40 h-[calc(100vh-10rem)] overflow-y-auto">
+        <aside className="hidden xl:block w-72 shrink-0 px-6 py-8 sticky top-40 h-[calc(100vh-10rem)] overflow-y-auto scrollbar-auto-hide">
            <TableOfContentsSidebar content={displayContent} />
         </aside>
       </div>
