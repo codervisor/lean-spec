@@ -14,3 +14,4 @@ tmp/
 .playwright-mcp/
 *.tsbuildinfo
 *.tgz
+GEMINI.md
