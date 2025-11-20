@@ -16,15 +16,17 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  Search, 
-  CheckCircle2, 
-  PlayCircle, 
+  Search,
+  CheckCircle2,
+  PlayCircle,
   Clock,
   Archive,
   LayoutGrid,
   List as ListIcon,
   FileText,
-  GitBranch
+  GitBranch,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
@@ -108,7 +110,7 @@ type SortBy = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 export function SpecsClient({ initialSpecs }: SpecsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
   const [pendingSpecIds, setPendingSpecIds] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,18 +118,19 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('id-desc');
   const [showArchivedBoard, setShowArchivedBoard] = useState(false); // Start collapsed
+  const [isWideMode, setIsWideMode] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     // Initialize from URL or localStorage
     const urlView = searchParams.get('view');
     if (urlView === 'board' || urlView === 'list') return urlView;
-    
+
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('specs-view-mode');
       if (stored === 'board' || stored === 'list') return stored;
     }
     return 'list';
   });
-  
+
   const isFirstRender = useRef(true);
 
   useEffect(() => {
@@ -185,7 +188,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
       isFirstRender.current = false;
       return;
     }
-    
+
     const current = new URLSearchParams(window.location.search);
     if (viewMode === 'board') {
       current.set('view', 'board');
@@ -195,7 +198,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
     const search = current.toString();
     const query = search ? `?${search}` : '';
     router.replace(`/specs${query}`, { scroll: false });
-    
+
     // Persist to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('specs-view-mode', viewMode);
@@ -209,7 +212,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
         spec.specName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         spec.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesStatus = statusFilter === 'all' 
+      const matchesStatus = statusFilter === 'all'
         ? (viewMode === 'list' ? spec.status !== 'archived' : true)
         : spec.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || spec.priority === priorityFilter;
@@ -242,120 +245,131 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
         });
         break;
     }
-
     return sorted;
   }, [specs, searchQuery, statusFilter, priorityFilter, sortBy, viewMode]);
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight">Specifications</h1>
-          <p className="text-muted-foreground mt-2">
-            {viewMode === 'board' ? 'Kanban board view (active statuses only)' : 'Browse all specifications'}
-          </p>
-        </div>
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-background p-4">
+      <div className={cn(
+        "flex flex-col h-full mx-auto transition-all duration-300",
+        isWideMode ? "w-full" : "max-w-7xl w-full"
+      )}>
+        {/* Unified Compact Header */}
+        <div className="flex-none mb-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Specifications</h1>
+                <p className="text-sm text-muted-foreground">
+                  {filteredAndSortedSpecs.length} specs
+                </p>
+              </div>
 
-        {/* Filters and View Switcher */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search specs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
+                  <Button
+                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="h-8 px-2 lg:px-3"
+                  >
+                    <ListIcon className="h-4 w-4 lg:mr-2" />
+                    <span className="hidden lg:inline">List</span>
+                  </Button>
+                  <Button
+                    variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('board')}
+                    className="h-8 px-2 lg:px-3"
+                  >
+                    <LayoutGrid className="h-4 w-4 lg:mr-2" />
+                    <span className="hidden lg:inline">Board</span>
+                  </Button>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsWideMode(!isWideMode)}
+                  className="h-10 w-10 text-muted-foreground hover:text-foreground"
+                  title={isWideMode ? "Exit wide mode" : "Enter wide mode"}
+                >
+                  {isWideMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
 
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpecStatus | 'all')}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="planned">Planned</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="complete">Complete</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              <div className="relative flex-1 min-w-[200px] max-w-md">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search specs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
 
-            {/* Priority Filter */}
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpecStatus | 'all')}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="planned">Planned</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="complete">Complete</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
-              {/* Sort Controls */}
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-                <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectTrigger className="w-[180px] h-9">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="id-desc">Newest First (ID ↓)</SelectItem>
-                  <SelectItem value="id-asc">Oldest First (ID ↑)</SelectItem>
+                  <SelectItem value="id-desc">Newest First</SelectItem>
+                  <SelectItem value="id-asc">Oldest First</SelectItem>
                   <SelectItem value="updated-desc">Recently Updated</SelectItem>
                   <SelectItem value="title-asc">Title (A-Z)</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* View Mode Switcher */}
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="flex items-center gap-2"
-                >
-                  <ListIcon className="h-4 w-4" />
-                  List
-                </Button>
-                <Button
-                  variant={viewMode === 'board' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('board')}
-                  className="flex items-center gap-2"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  Board
-                </Button>
-              </div>
-
-              {/* Results count */}
-              <div className="text-sm text-muted-foreground">
-                Showing {filteredAndSortedSpecs.length} of {specs.length} specs
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Content based on view mode */}
-        {viewMode === 'list' ? (
-          <ListView specs={filteredAndSortedSpecs} />
-        ) : (
-          <BoardView
-            specs={filteredAndSortedSpecs}
-            onStatusChange={handleStatusChange}
-            pendingSpecIds={pendingSpecIds}
-            showArchived={showArchivedBoard}
-            onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
-          />
-        )}
+        {/* Content Area */}
+        <div className={cn(
+          "flex-1 min-h-0",
+          viewMode === 'board' ? "overflow-x-auto overflow-y-hidden" : "overflow-y-auto"
+        )}>
+          {viewMode === 'list' ? (
+            <div className="w-full">
+              <ListView specs={filteredAndSortedSpecs} />
+            </div>
+          ) : (
+            <BoardView
+              specs={filteredAndSortedSpecs}
+              onStatusChange={handleStatusChange}
+              pendingSpecIds={pendingSpecIds}
+              showArchived={showArchivedBoard}
+              onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -363,7 +377,7 @@ export function SpecsClient({ initialSpecs }: SpecsClientProps) {
 
 function ListView({ specs }: { specs: Spec[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="grid grid-cols-1 gap-4 pb-8">
       {specs.map(spec => {
         const priorityColors = {
           'critical': 'border-l-red-500',
@@ -376,8 +390,8 @@ function ListView({ specs }: { specs: Spec[] }) {
         const hasSubSpecs = !!(spec.subSpecsCount && spec.subSpecsCount > 0);
 
         return (
-          <Card 
-            key={spec.id} 
+          <Card
+            key={spec.id}
             className={cn(
               "hover:shadow-lg transition-all duration-150 hover:scale-[1.01] border-l-4 cursor-pointer",
               borderColor
@@ -388,14 +402,17 @@ function ListView({ specs }: { specs: Spec[] }) {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <Link href={`/specs/${spec.specNumber || spec.id}`}>
-                    <CardTitle className="text-lg font-semibold hover:text-primary transition-colors">
-                      {spec.specNumber ? `#${spec.specNumber.toString().padStart(3, '0')}` : spec.specName}
-                      {' '}
+                    <CardTitle className="text-lg font-semibold hover:text-primary transition-colors flex items-center">
+                      {spec.specNumber ? (
+                        <span className="font-mono text-base font-normal text-muted-foreground mr-3">
+                          #{spec.specNumber.toString().padStart(3, '0')}
+                        </span>
+                      ) : null}
                       {spec.title || spec.specName}
                     </CardTitle>
                   </Link>
                   {spec.title && spec.title !== spec.specName && (
-                    <p className="text-sm text-muted-foreground mt-1">{spec.specName}</p>
+                    <p className="text-xs font-mono text-muted-foreground mt-1.5 truncate">{spec.specName}</p>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -404,12 +421,12 @@ function ListView({ specs }: { specs: Spec[] }) {
                 </div>
               </div>
             </CardHeader>
-            {/* Only render CardContent if there's metadata or tags to show */}
-            {((spec.updatedAt || hasSubSpecs || hasDependencies || (spec.tags && spec.tags.length > 0))) && (
-              <CardContent className="space-y-3">
-                {/* Metadata row */}
-                {(spec.updatedAt || hasSubSpecs || hasDependencies) && (
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+
+            <CardContent className="flex items-center justify-between gap-4 pt-0">
+              {/* Metadata (Left) */}
+              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                {(spec.updatedAt || hasSubSpecs || hasDependencies) ? (
+                  <>
                     {spec.updatedAt && (
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5" />
@@ -432,21 +449,23 @@ function ListView({ specs }: { specs: Spec[] }) {
                         </span>
                       </div>
                     )}
-                  </div>
+                  </>
+                ) : (
+                  <span className="invisible">No metadata</span> /* Keep height consistent */
                 )}
+              </div>
 
-                {/* Tags */}
-                {spec.tags && spec.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {spec.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            )}
+              {/* Tags (Right) */}
+              {spec.tags && spec.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 justify-end shrink-0">
+                  {spec.tags.map(tag => (
+                    <Badge key={tag} variant="outline" className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
           </Card>
         );
       })}
@@ -524,24 +543,24 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
   }, [draggingId, handleDragEnd, onStatusChange, specLookup]);
 
   return (
-    <div className="flex gap-6">
+    <div className="flex gap-6 h-full pb-2">
       {columns.map(column => {
         const Icon = column.config.icon;
         const isArchivedColumn = column.status === 'archived';
-        
+
         return (
           <div key={column.status} className={cn(
-            "flex flex-col",
-            isArchivedColumn && !showArchived && "w-20 flex-shrink-0"
+            "flex flex-col h-full flex-1 min-w-[280px]",
+            isArchivedColumn && !showArchived && "w-14 min-w-[3.5rem] flex-none flex-shrink-0"
           )}>
             <div className={cn(
-              'sticky top-14 z-40 mb-4 rounded-lg border-2 bg-background transition-all',
+              'flex-none mb-4 rounded-lg border-2 bg-background transition-all',
               column.config.bgClass,
               column.config.borderClass,
               isArchivedColumn ? 'cursor-pointer hover:opacity-80' : '',
               isArchivedColumn && !showArchived ? 'py-6 px-2' : 'p-3'
             )}
-            onClick={isArchivedColumn ? onToggleArchived : undefined}
+              onClick={isArchivedColumn ? onToggleArchived : undefined}
             >
               <h2 className={cn(
                 'text-lg font-semibold flex items-center gap-2',
@@ -567,94 +586,103 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
 
             {(!isArchivedColumn || showArchived) && (
               <div
-              className={cn(
-                'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors overflow-y-auto max-h-[calc(100vh-250px)]',
-                draggingId && 'border-dashed border-muted-foreground/40',
-                draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
-              )}
-              onDragOver={(event) => handleDragOver(column.status, event)}
-              onDragLeave={(event) => handleDragLeave(column.status, event)}
-              onDrop={(event) => handleDrop(column.status, event)}
-            >
-              {column.specs.map(spec => {
-                const priorityColors = {
-                  'critical': 'border-l-red-500',
-                  'high': 'border-l-orange-500',
-                  'medium': 'border-l-blue-500',
-                  'low': 'border-l-gray-400'
-                };
-                const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
-                const isUpdating = Boolean(pendingSpecIds[spec.id]);
+                className={cn(
+                  'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors overflow-y-auto min-h-0',
+                  draggingId && 'border-dashed border-muted-foreground/40',
+                  draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
+                )}
+                onDragOver={(event) => handleDragOver(column.status, event)}
+                onDragLeave={(event) => handleDragLeave(column.status, event)}
+                onDrop={(event) => handleDrop(column.status, event)}
+              >
+                {column.specs.map(spec => {
+                  const priorityColors = {
+                    'critical': 'border-l-red-500',
+                    'high': 'border-l-orange-500',
+                    'medium': 'border-l-blue-500',
+                    'low': 'border-l-gray-400'
+                  };
+                  const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
+                  const isUpdating = Boolean(pendingSpecIds[spec.id]);
 
-                return (
-                  <Card
-                    key={spec.id}
-                    draggable={!isUpdating}
-                    onDragStart={(event) => {
-                      if (isUpdating) {
-                        event.preventDefault();
-                        return;
-                      }
-                      handleDragStart(spec.id, event);
-                    }}
-                    onDragEnd={handleDragEnd}
-                    aria-disabled={isUpdating}
-                    className={cn(
-                      'relative hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer',
-                      borderColor,
-                      isUpdating && 'opacity-60 cursor-wait'
-                    )}
-                    onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
-                  >
-                    {isUpdating && (
-                      <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs font-medium">
-                        Updating...
-                      </div>
-                    )}
-                    <CardHeader className="pb-3">
-                      <Link href={`/specs/${spec.specNumber || spec.id}`}>
-                        <CardTitle className="text-sm font-medium hover:text-primary transition-colors">
-                          {spec.specNumber ? `#${spec.specNumber}` : spec.specName}
-                        </CardTitle>
-                      </Link>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {spec.title || spec.specName}
-                      </p>
-                      
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {spec.priority && <PriorityBadge priority={spec.priority} />}
-                        
-                        {spec.tags && spec.tags.length > 0 && (
-                          <>
-                            {spec.tags.slice(0, 2).map(tag => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                            {spec.tags.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{spec.tags.length - 2}
-                              </Badge>
+                  return (
+                    <Card
+                      key={spec.id}
+                      draggable={!isUpdating}
+                      onDragStart={(event) => {
+                        if (isUpdating) {
+                          event.preventDefault();
+                          return;
+                        }
+                        handleDragStart(spec.id, event);
+                      }}
+                      onDragEnd={handleDragEnd}
+                      aria-disabled={isUpdating}
+                      className={cn(
+                        'relative hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer group flex flex-col',
+                        borderColor,
+                        isUpdating && 'opacity-60 cursor-wait'
+                      )}
+                      onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
+                    >
+                      {isUpdating && (
+                        <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs font-medium z-10">
+                          Updating...
+                        </div>
+                      )}
+                      <CardHeader className="p-4 pb-2 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs text-muted-foreground/70 group-hover:text-primary/60 transition-colors">
+                            {spec.specNumber ? `#${spec.specNumber}` : ''}
+                          </span>
+                        </div>
+                        <Link href={`/specs/${spec.specNumber || spec.id}`} className="block">
+                          <CardTitle className="text-sm font-semibold leading-snug hover:text-primary transition-colors line-clamp-3">
+                            {spec.title || spec.specName}
+                          </CardTitle>
+                        </Link>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-2 flex-1 flex flex-col justify-end">
+                        <div className="flex flex-col gap-3">
+                          {spec.title && spec.title !== spec.specName && (
+                            <p className="text-xs font-mono text-muted-foreground truncate opacity-70">
+                              {spec.specName}
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            {spec.priority ? <PriorityBadge priority={spec.priority} /> : <div />}
+
+                            {spec.tags && spec.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 justify-end">
+                                {spec.tags.slice(0, 2).map(tag => (
+                                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 h-5 font-mono text-muted-foreground/80">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {spec.tags.length > 2 && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 h-5 font-mono text-muted-foreground/80">
+                                    +{spec.tags.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
                             )}
-                          </>
-                        )}
-                      </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {column.specs.length === 0 && (
+                  <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
+                    <CardContent className="py-8 text-center">
+                      <Icon className={cn('mx-auto h-8 w-8 mb-2', column.config.colorClass, 'opacity-50')} />
+                      <p className="text-sm text-muted-foreground">Drop here to move specs</p>
                     </CardContent>
                   </Card>
-                );
-              })}
-
-              {column.specs.length === 0 && (
-                <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
-                  <CardContent className="py-8 text-center">
-                    <Icon className={cn('mx-auto h-8 w-8 mb-2', column.config.colorClass, 'opacity-50')} />
-                    <p className="text-sm text-muted-foreground">Drop here to move specs</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                )}
+              </div>
             )}
           </div>
         );
