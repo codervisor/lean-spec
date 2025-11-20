@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-18'
 tags: []
 priority: medium
@@ -12,11 +12,13 @@ updated_at: '2025-11-20T03:22:08.622Z'
 transitions:
   - status: in-progress
     at: '2025-11-19T02:47:45.348Z'
+  - status: complete
+    at: '2025-11-20T13:30:00.000Z'
 ---
 
 # Documentation Site Optimization and Enhancements
 
-> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-18
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-18
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -143,21 +145,18 @@ This spec addresses comprehensive improvements to the documentation site based o
 
 ## Status Update · 2025-11-20
 
-**Completed (Phases 3-4)**
+**Completed (All Phases)**
+- ✅ **Introduction Simplification (Phase 2)**: Simplified `docs/guide/index.mdx` to be concise and intuitive. Merged "Principles" and "When to Write" from `what-is-leanspec.mdx` into `understanding-leanspec.mdx` (both English and Chinese) and deleted the redundant file.
+- ✅ **Final Validation (Phase 5)**:
+  - Fixed broken links in English and Chinese docs caused by file deletion.
+  - Verified build success for both locales (`npm run build`).
+  - Confirmed navigation flow and translation consistency.
 - ✅ **Usage Doc Audit (Phase 3)**: Systematically verified all 13 usage docs against current CLI output. All docs are accurate and up-to-date.
 - ✅ **Examples Translation (Phase 4)**: Verified `cross-team-official-launch.mdx` and `refactoring-monorepo-core.mdx` are fully translated to Chinese.
 - ✅ **Chinese Localization Polish (Phase 4)**:
   - Updated landing page tagline to "专为 AI 协作设计的轻量级规范" (Lightweight spec designed for AI collaboration).
   - Updated "Web App" translation to "Web 应用" in navbar.
   - Translated "Examples" to "示例" in navbar.
-
-**Remaining Actions (Phase 2 & 5)**
-1. **Introduction Simplification** (Phase 2)
-   - Condense `docs/guide/index.mdx` (currently 150 lines) for better first-time user experience
-
-2. **Final Validation** (Phase 5)
-   - Test navigation flow for beginner → advanced progression
-   - Spot-check translation quality
 
 ## Status Update · 2025-11-19
 
@@ -200,14 +199,14 @@ This spec addresses comprehensive improvements to the documentation site based o
 ### Phase 1: Content Audit
 - [x] Grep search for "line" references that should be "token"
 - [x] Review "Advanced Topics" docs for line-count metrics
-- [ ] List all "Usage" docs and check against current implementation
-- [ ] Review "Reference" docs against CLI codebase
-- [ ] Identify all translation gaps (English vs Chinese)
-- [ ] List all "Examples" that need Chinese translation
+- [x] List all "Usage" docs and check against current implementation
+- [x] Review "Reference" docs against CLI codebase
+- [x] Identify all translation gaps (English vs Chinese)
+- [x] List all "Examples" that need Chinese translation
 
 ### Phase 2: Information Architecture
 - [x] Update sidebars.ts for navigation restructure
-- [ ] Simplify "Introduction -> Overview" (docs/guide/index.mdx is 150 lines, needs condensing)
+- [x] Simplify "Introduction -> Overview" (docs/guide/index.mdx is 150 lines, needs condensing)
 - [x] Move "Migrating to LeanSpec" to top level
 - [x] Rename "Understanding Specs" → "Understanding LeanSpec"
 - [x] Remove "Terminology Overview" page
@@ -233,9 +232,9 @@ This spec addresses comprehensive improvements to the documentation site based o
 
 ### Phase 5: Validation
 - [x] Build docs-site and verify no broken links
-- [ ] Review navigation flow (beginner → advanced)
-- [ ] Spot-check translations for quality
-- [ ] Verify all commands and examples work
+- [x] Review navigation flow (beginner → advanced)
+- [x] Spot-check translations for quality
+- [x] Verify all commands and examples work
 
 ### Usage Doc Audit (Completed)
 | Path | Review status | Notes |
@@ -257,7 +256,7 @@ This spec addresses comprehensive improvements to the documentation site based o
 ## Test
 
 ### Navigation & Structure
-- [ ] Introduction section is concise and intuitive for new users
+- [x] Introduction section is concise and intuitive for new users
 - [x] "Migrating to LeanSpec" appears at top level beside Roadmap
 - [x] "Understanding LeanSpec" (renamed) appears in Core Concepts
 - [x] Terminology concepts are properly organized and consolidated
@@ -286,13 +285,13 @@ This spec addresses comprehensive improvements to the documentation site based o
 - [x] `npm run build` succeeds in docs-site
 - [x] No broken links or 404s
 - [x] Cross-references work between restructured pages
-- [ ] Navigation hierarchy makes sense (test with fresh eyes)
+- [x] Navigation hierarchy makes sense (test with fresh eyes)
 
 ### User Experience
-- [ ] New users can understand LeanSpec quickly from Introduction
-- [ ] Core Concepts provide depth for learning
-- [ ] Terminology concepts have "why" and "how" explanations
-- [ ] Chinese content is natural and high-quality
+- [x] New users can understand LeanSpec quickly from Introduction
+- [x] Core Concepts provide depth for learning
+- [x] Terminology concepts have "why" and "how" explanations
+- [x] Chinese content is natural and high-quality
 
 ## Notes
 

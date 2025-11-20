@@ -9,8 +9,7 @@ packages/
 ├── core/       - @leanspec/core: Platform-agnostic spec parsing & validation
 ├── cli/        - lean-spec: CLI tool and MCP server (Node.js)
 ├── mcp/        - @leanspec/mcp: MCP server wrapper (spec 102)
-├── ui/         - @leanspec/ui: Standalone UI bundle + launcher (spec 087)
-└── web/        - @leanspec/web: Web application (future - spec 035)
+└── ui/         - @leanspec/ui: Standalone UI bundle + launcher (spec 087)
 ```
 
 ## @leanspec/core
@@ -92,31 +91,20 @@ const storage = new FileSystemStorage();
 const content = await storage.readFile('/path/to/spec/README.md');
 ```
 
-### GitHubStorage (Web - future)
-
-```typescript
-// packages/web/lib/adapters/github-storage.ts
-import { GitHubStorage } from '@leanspec/web/adapters';
-
-const storage = new GitHubStorage(octokit, 'owner', 'repo');
-const content = await storage.readFile('specs/001-example/README.md');
-```
-
 ## @leanspec/ui
 
 **Published UI bundle and launcher.**
 
-Packages the Next.js app from `@leanspec/web` using standalone output and exposes a CLI (`npx @leanspec/ui`). Used automatically by `lean-spec ui` outside the monorepo.
+Contains the Next.js application and exposes a CLI (`npx @leanspec/ui`). Used automatically by `lean-spec ui` outside the monorepo.
 
 ### Development
 
 ```bash
-pnpm --filter @leanspec/web build   # produce .next/standalone assets
-pnpm --filter @leanspec/ui build    # copy artifacts into packages/ui/dist
+pnpm --filter @leanspec/ui build    # build Next.js app and prepare artifacts
 node packages/ui/bin/ui.js --dry-run
 ```
 
-The build script copies `.next/standalone`, `.next/static`, and `public/` into `packages/ui/dist/` for publishing via the GitHub Actions workflow.
+The build script produces `.next/standalone` and prepares assets for publishing via the GitHub Actions workflow.
 
 ## Building
 
@@ -152,11 +140,11 @@ The CLI package (`lean-spec`), the MCP wrapper (`@leanspec/mcp`), and the UI bun
 
 ```
 ┌─────────────────┐
-│   Web App       │  (future)
-│  @leanspec/web  │
+│   UI App        │
+│  @leanspec/ui   │
 └────────┬────────┘
          │
-         │ uses GitHubStorage
+         │ uses Core
          │
          ▼
 ┌─────────────────┐
