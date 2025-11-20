@@ -1,15 +1,22 @@
 ---
 status: planned
 created: '2025-11-02'
-tags: ["feature","ide","vscode"]
+tags:
+  - feature
+  - ide
+  - vscode
 priority: low
 depends_on:
   - 067-monorepo-core-extraction
+related:
+  - 109-local-project-switching
+created_at: '2025-11-20T05:50:48.128Z'
+updated_at: '2025-11-20T05:50:48.128Z'
 ---
 
 # vscode-extension
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-02
+> **Status**: 🗓️ Planned · **Priority**: Low · **Created**: 2025-11-02 · **Tags**: feature, ide, vscode
 
 ## Overview
 

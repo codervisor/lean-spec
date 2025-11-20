@@ -1,13 +1,22 @@
 ---
 status: planned
 created: '2025-11-03'
-tags: ["integration","pm","github","jira","ado"]
+tags:
+  - integration
+  - pm
+  - github
+  - jira
+  - ado
 priority: low
+related:
+  - 109-local-project-switching
+created_at: '2025-11-20T05:50:48.136Z'
+updated_at: '2025-11-20T05:50:48.136Z'
 ---
 
 # External PM Systems Integration
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-03
+> **Status**: 🗓️ Planned · **Priority**: Low · **Created**: 2025-11-03 · **Tags**: integration, pm, github, jira, ado
 
 **Project**: lean-spec  
 **Team**: Core Development
