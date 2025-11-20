@@ -13,7 +13,8 @@ related:
   - 017-vscode-extension
   - 036-pm-integrations
   - 087-cli-ui-command
-updated_at: '2025-11-20T07:43:56.108Z'
+  - 112-project-management-ui
+updated_at: '2025-11-20T08:35:51.776Z'
 transitions:
   - status: in-progress
     at: '2025-11-20T07:01:48.211Z'

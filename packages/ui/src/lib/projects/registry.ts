@@ -349,6 +349,39 @@ export class ProjectRegistry {
   }
 
   /**
+   * List directories in a given path
+   */
+  async listDirectory(dirPath: string = homedir()): Promise<{ name: string; path: string; isDirectory: boolean }[]> {
+    try {
+      const normalizedPath = path.resolve(dirPath);
+      const entries = await fs.readdir(normalizedPath, { withFileTypes: true });
+      
+      const items = entries
+        .filter(entry => entry.isDirectory() && !entry.name.startsWith('.'))
+        .map(entry => ({
+          name: entry.name,
+          path: path.join(normalizedPath, entry.name),
+          isDirectory: true
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      // Add parent directory entry if not at root
+      const parentDir = path.dirname(normalizedPath);
+      if (parentDir !== normalizedPath) {
+        items.unshift({
+          name: '..',
+          path: parentDir,
+          isDirectory: true
+        });
+      }
+
+      return items;
+    } catch (error: any) {
+      throw new Error(`Failed to list directory: ${error.message}`);
+    }
+  }
+
+  /**
    * Get recent projects
    */
   async getRecentProjects(limit: number = 10): Promise<LocalProject[]> {
