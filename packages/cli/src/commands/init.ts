@@ -326,7 +326,7 @@ export async function initProject(skipPrompts = false, templateOption?: string):
   try {
     // Check if files/ directory has any files to copy (besides the spec templates already copied)
     const filesToCopy = await fs.readdir(filesDir);
-    const hasOtherFiles = filesToCopy.some(f => !f.match(/\.(md)$/i) || ['README.md', 'DESIGN.md', 'PLAN.md', 'TEST.md'].includes(f));
+    const hasOtherFiles = filesToCopy.some(f => !f.match(/\.(md)$/i) || !['README.md', 'DESIGN.md', 'PLAN.md', 'TEST.md'].includes(f));
     
     if (hasOtherFiles) {
       await copyDirectory(filesDir, cwd, [...skipFiles, 'README.md', 'DESIGN.md', 'PLAN.md', 'TEST.md'], { project_name: projectName });
