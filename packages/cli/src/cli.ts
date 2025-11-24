@@ -65,6 +65,7 @@ Command Groups:
 
 Examples:
   $ lean-spec init
+  $ lean-spec init -y
   $ lean-spec create my-feature --priority high
   $ lean-spec list --status in-progress
   $ lean-spec view 042

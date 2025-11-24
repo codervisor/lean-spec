@@ -21,12 +21,13 @@ const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 export function initCommand(): Command {
   return new Command('init')
     .description('Initialize LeanSpec in current directory')
-    .action(async () => {
-      await initProject();
+    .option('-y, --yes', 'Skip prompts and use defaults (quick start with standard template)')
+    .action(async (options: { yes?: boolean }) => {
+      await initProject(options.yes);
     });
 }
 
-export async function initProject(): Promise<void> {
+export async function initProject(skipPrompts = false): Promise<void> {
   const cwd = process.cwd();
 
   // Check if already initialized
@@ -43,45 +44,52 @@ export async function initProject(): Promise<void> {
   console.log(chalk.green('Welcome to LeanSpec!'));
   console.log('');
 
-  // Main question: How to set up?
-  const setupMode = await select({
-    message: 'How would you like to set up?',
-    choices: [
-      {
-        name: 'Quick start (recommended)',
-        value: 'quick',
-        description: 'Use standard template, start immediately',
-      },
-      {
-        name: 'Choose template',
-        value: 'template',
-        description: 'Pick from: minimal, standard, enterprise',
-      },
-      // TODO: Re-enable when custom setup mode is implemented
-      // {
-      //   name: 'Customize everything',
-      //   value: 'custom',
-      //   description: 'Full control over structure and settings',
-      // },
-    ],
-  });
-
+  let setupMode = 'quick';
   let templateName = 'standard';
 
-  if (setupMode === 'template') {
-    // Let user choose template
-    templateName = await select({
-      message: 'Select template:',
+  // Skip prompts if -y flag is used
+  if (skipPrompts) {
+    console.log(chalk.gray('Using defaults: quick start with standard template'));
+    console.log('');
+  } else {
+    // Main question: How to set up?
+    setupMode = await select({
+      message: 'How would you like to set up?',
       choices: [
-        { name: 'minimal', value: 'minimal', description: 'Just folder structure, no extras' },
-        { name: 'standard', value: 'standard', description: 'Recommended - includes AGENTS.md' },
         {
-          name: 'enterprise',
-          value: 'enterprise',
-          description: 'Governance with approvals and compliance',
+          name: 'Quick start (recommended)',
+          value: 'quick',
+          description: 'Use standard template, start immediately',
         },
+        {
+          name: 'Choose template',
+          value: 'template',
+          description: 'Pick from: minimal, standard, enterprise',
+        },
+        // TODO: Re-enable when custom setup mode is implemented
+        // {
+        //   name: 'Customize everything',
+        //   value: 'custom',
+        //   description: 'Full control over structure and settings',
+        // },
       ],
     });
+
+    if (setupMode === 'template') {
+      // Let user choose template
+      templateName = await select({
+        message: 'Select template:',
+        choices: [
+          { name: 'minimal', value: 'minimal', description: 'Just folder structure, no extras' },
+          { name: 'standard', value: 'standard', description: 'Recommended - includes AGENTS.md' },
+          {
+            name: 'enterprise',
+            value: 'enterprise',
+            description: 'Governance with approvals and compliance',
+          },
+        ],
+      });
+    }
   }
   // Note: setupMode === 'custom' branch removed - will be implemented in future
 
@@ -98,10 +106,10 @@ export async function initProject(): Promise<void> {
     process.exit(1);
   }
 
-  // Pattern selection (skip for quick start)
+  // Pattern selection (skip for quick start or if -y flag is used)
   let patternChoice = 'simple'; // Default for quick start
 
-  if (setupMode !== 'quick') {
+  if (setupMode !== 'quick' && !skipPrompts) {
     patternChoice = await select({
       message: 'Select folder pattern:',
       choices: [
@@ -192,39 +200,46 @@ export async function initProject(): Promise<void> {
     console.log('');
     console.log(chalk.yellow(`Found existing: ${existingFiles.join(', ')}`));
 
-    const action = await select<'merge-ai' | 'merge-append' | 'overwrite' | 'skip'>({
-      message: 'How would you like to handle existing AGENTS.md?',
-      choices: [
-        {
-          name: 'AI-Assisted Merge (recommended)',
-          value: 'merge-ai',
-          description: 'Creates prompt for AI to intelligently consolidate both files',
-        },
-        {
-          name: 'Simple Append',
-          value: 'merge-append',
-          description: 'Quickly appends LeanSpec section (may be verbose)',
-        },
-        {
-          name: 'Replace with LeanSpec',
-          value: 'overwrite',
-          description: 'Backs up existing, creates fresh AGENTS.md from template',
-        },
-        {
-          name: 'Keep Existing Only',
-          value: 'skip',
-          description: 'Skips AGENTS.md, only adds .lean-spec config and specs/',
-        },
-      ],
-    });
+    if (skipPrompts) {
+      // With -y flag, use AI-Assisted Merge as default for existing files
+      console.log(chalk.gray('Using AI-Assisted Merge for existing AGENTS.md'));
+      const projectName = await getProjectName(cwd);
+      await handleExistingFiles('merge-ai', existingFiles, templateDir, cwd, { project_name: projectName });
+    } else {
+      const action = await select<'merge-ai' | 'merge-append' | 'overwrite' | 'skip'>({
+        message: 'How would you like to handle existing AGENTS.md?',
+        choices: [
+          {
+            name: 'AI-Assisted Merge (recommended)',
+            value: 'merge-ai',
+            description: 'Creates prompt for AI to intelligently consolidate both files',
+          },
+          {
+            name: 'Simple Append',
+            value: 'merge-append',
+            description: 'Quickly appends LeanSpec section (may be verbose)',
+          },
+          {
+            name: 'Replace with LeanSpec',
+            value: 'overwrite',
+            description: 'Backs up existing, creates fresh AGENTS.md from template',
+          },
+          {
+            name: 'Keep Existing Only',
+            value: 'skip',
+            description: 'Skips AGENTS.md, only adds .lean-spec config and specs/',
+          },
+        ],
+      });
 
-    // Get project name for variable substitution
-    const projectName = await getProjectName(cwd);
-    
-    await handleExistingFiles(action, existingFiles, templateDir, cwd, { project_name: projectName });
+      // Get project name for variable substitution
+      const projectName = await getProjectName(cwd);
+      
+      await handleExistingFiles(action, existingFiles, templateDir, cwd, { project_name: projectName });
 
-    if (action === 'skip') {
-      skipFiles = existingFiles;
+      if (action === 'skip') {
+        skipFiles = existingFiles;
+      }
     }
   }
 
@@ -238,6 +253,16 @@ export async function initProject(): Promise<void> {
     console.log(chalk.green('✓ Initialized project structure'));
   } catch (error) {
     console.error(chalk.red('Error copying template files:'), error);
+    process.exit(1);
+  }
+
+  // Create empty specs/ directory
+  const specsDir = path.join(cwd, 'specs');
+  try {
+    await fs.mkdir(specsDir, { recursive: true });
+    console.log(chalk.green('✓ Created specs/ directory'));
+  } catch (error) {
+    console.error(chalk.red('Error creating specs directory:'), error);
     process.exit(1);
   }
 
