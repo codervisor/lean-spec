@@ -29,7 +29,7 @@ export function initCommand(): Command {
   return new Command('init')
     .description('Initialize LeanSpec in current directory')
     .option('-y, --yes', 'Skip prompts and use defaults (quick start with standard template)')
-    .option('--example <name>', 'Scaffold an example project for tutorials')
+    .option('--example [name]', 'Scaffold an example project for tutorials (interactive if no name provided)')
     .option('--name <dirname>', 'Custom directory name for example project')
     .option('--list', 'List available example projects')
     .action(async (options: { yes?: boolean; example?: string; name?: string; list?: boolean }) => {

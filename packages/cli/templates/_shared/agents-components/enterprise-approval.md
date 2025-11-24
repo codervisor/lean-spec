@@ -7,4 +7,6 @@
 5. **Stakeholder sign-off** - Update status to `planned`
 6. **Implementation** - Update status to `in-progress`, keep spec in sync
 7. **Final review** - Before deployment
-8. **Complete & archive** - Mark `complete`, then archive
+8. **Complete** - Mark `complete` after successful deployment
+
+**Note**: Archive specs only when they're no longer actively referenced (weeks/months later), not immediately after completion.

@@ -81,9 +81,11 @@ lean-spec update <spec> --status in-progress
 3. **Start implementation** - Mark `in-progress` BEFORE implementing what the spec describes
 4. **Implement changes** - Keep spec in sync as you learn
 5. **Complete implementation** - Mark `complete` AFTER implementing what the spec describes
-6. **Archive when done** - `lean-spec archive <spec>` moves to archive
+6. **Document** - Report progress and document changes into the spec
 
 **Remember**: Status tracks implementation work, not spec document creation. Creating a spec = planning (stays `planned` until implementation starts).
+
+**Note on Archiving**: Archive specs when they're no longer actively referenced (weeks/months after completion), not immediately. Use `lean-spec archive <spec>` to move old specs to `archived/` directory.
 **CRITICAL - What "Work" Means:**
 - ❌ **NOT**: Creating/writing the spec document itself
 - ✅ **YES**: Implementing what the spec describes (code, docs, features, etc.)

@@ -150,6 +150,8 @@ Hard dependency - spec cannot start until dependencies complete.
 - **NEVER manually edit**: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on`, `related`
 - **Use CLI commands**: `lean-spec update`, `lean-spec link`, `lean-spec unlink`
 
+**Note on Archiving**: Archive specs when they're no longer actively referenced (weeks/months after completion), not immediately. Use `lean-spec archive <spec>` to move old/stale specs to `archived/` directory.
+
 ## Quality Standards
 
 - Code is clear and maintainable

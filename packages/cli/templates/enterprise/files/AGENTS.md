@@ -146,7 +146,9 @@ Optional for:
 5. **Stakeholder sign-off** - Update status to `planned`
 6. **Implementation** - Update status to `in-progress`, keep spec in sync
 7. **Final review** - Before deployment
-8. **Complete & archive** - Mark `complete`, then archive
+8. **Complete** - Mark `complete` after successful deployment
+
+**Note**: Archive specs only when they're no longer actively referenced (weeks/months later), not immediately after completion.
 
 ## Workflow
 
@@ -158,9 +160,11 @@ Optional for:
 6. **Start implementation** - Mark `in-progress` BEFORE implementing what the spec describes
 7. **Implement changes** - Keep spec in sync, update status appropriately
 8. **Complete implementation** - Mark `complete` AFTER implementing what the spec describes
-9. **Archive when done** - `lean-spec archive <spec>` after completion
+9. **Document** - Report progress and document changes into the spec
 
 **Remember**: Status tracks implementation work, not spec document creation. Creating a spec = planning (stays `planned` until implementation starts).
+
+**Note on Archiving**: Archive specs when they're no longer actively referenced (weeks/months after completion), not immediately. Used for historical specs, not recent work. Use `lean-spec archive <spec>` to move old specs to `archived/` directory.
 **CRITICAL - What "Work" Means:**
 - ❌ **NOT**: Creating/writing the spec document itself
 - ✅ **YES**: Implementing what the spec describes (code, docs, features, etc.)
