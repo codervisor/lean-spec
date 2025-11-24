@@ -1,7 +1,7 @@
 {
-  "name": "email-notifications-demo",
+  "name": "dark-theme-demo",
   "version": "1.0.0",
-  "description": "Simple Express.js API for LeanSpec Tutorial 1",
+  "description": "Simple web app for LeanSpec Dark Theme Tutorial",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",

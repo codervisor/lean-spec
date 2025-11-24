@@ -254,7 +254,7 @@ lean-spec tokens large-feature
 # Launch depends on multiple features
 lean-spec link product-launch --depends-on payment-integration
 lean-spec link product-launch --depends-on user-dashboard
-lean-spec link product-launch --depends-on email-notifications
+lean-spec link product-launch --depends-on dark-theme-support
 
 # View full dependency graph
 lean-spec deps product-launch --impact

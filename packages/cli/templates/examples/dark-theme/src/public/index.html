@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>My Tasks</h1>
+      <p class="subtitle">Stay organized, stay productive</p>
+    </header>
+
+    <main>
+      <div class="task-input">
+        <input type="text" id="taskInput" placeholder="What needs to be done?" />
+        <button id="addButton">Add Task</button>
+      </div>
+
+      <div class="task-list">
+        <ul id="taskList"></ul>
+      </div>
+
+      <div class="stats">
+        <span id="taskCount">0 tasks</span>
+      </div>
+    </main>
+
+    <footer>
+      <p>Built with ❤️ • Try adding dark theme support!</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

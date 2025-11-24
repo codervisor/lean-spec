@@ -15,16 +15,16 @@ export interface ExampleMetadata {
 }
 
 export const EXAMPLES: Record<string, ExampleMetadata> = {
-  'email-notifications': {
-    name: 'email-notifications',
-    title: 'Email Notifications API',
-    description: 'Add email notifications to a user registration API',
+  'dark-theme': {
+    name: 'dark-theme',
+    title: 'Dark Theme Support',
+    description: 'Add dark theme support with automatic system preference detection',
     difficulty: 'beginner',
-    tutorial: 'Your First Feature with AI',
-    tutorialUrl: 'https://leanspec.dev/docs/tutorials/first-feature',
-    tech: ['Express.js', 'Node.js'],
+    tutorial: 'Your First Spec with AI',
+    tutorialUrl: 'https://leanspec.dev/docs/tutorials/first-spec-with-ai',
+    tech: ['HTML', 'CSS', 'JavaScript', 'Express.js'],
     files: 6,
-    lines: 200,
+    lines: 150,
   },
   'dashboard-widgets': {
     name: 'dashboard-widgets',

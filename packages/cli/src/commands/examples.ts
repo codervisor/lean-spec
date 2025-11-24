@@ -51,6 +51,6 @@ async function listExamples(): Promise<void> {
   console.log(chalk.cyan('  lean-spec init --example'));
   console.log('');
   console.log('  # Custom directory name');
-  console.log(chalk.cyan('  lean-spec init --example email-notifications --name my-demo'));
+  console.log(chalk.cyan('  lean-spec init --example dark-theme --name my-demo'));
   console.log('');
 }
