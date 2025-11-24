@@ -140,6 +140,7 @@ Hard dependency - spec cannot start until dependencies complete.
 3. **Start Work** - Run `lean-spec update <spec> --status in-progress` before implementing
 4. **Implement** - Write code/docs, keep spec in sync as you learn
 5. **Complete** - Run `lean-spec update <spec> --status complete` after implementation done
+6. **Document** - Report progress and document changes into the spec
 
 **CRITICAL - What "Work" Means:**
 - ❌ **NOT**: Creating/writing the spec document itself
