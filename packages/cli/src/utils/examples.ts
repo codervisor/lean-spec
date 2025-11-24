@@ -18,13 +18,13 @@ export const EXAMPLES: Record<string, ExampleMetadata> = {
   'dark-theme': {
     name: 'dark-theme',
     title: 'Dark Theme Support',
-    description: 'Add dark theme support with automatic system preference detection',
+    description: 'Add dark theme support to a professional admin dashboard with charts',
     difficulty: 'beginner',
     tutorial: 'Your First Spec with AI',
     tutorialUrl: 'https://leanspec.dev/docs/tutorials/first-spec-with-ai',
-    tech: ['HTML', 'CSS', 'JavaScript', 'Express.js'],
+    tech: ['HTML', 'CSS', 'JavaScript', 'Chart.js', 'Express.js'],
     files: 6,
-    lines: 150,
+    lines: 420,
   },
   'dashboard-widgets': {
     name: 'dashboard-widgets',

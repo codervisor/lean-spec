@@ -1,13 +1,13 @@
 {
   "name": "dark-theme-demo",
   "version": "1.0.0",
-  "description": "Simple web app for LeanSpec Dark Theme Tutorial",
+  "description": "Professional admin dashboard for LeanSpec Dark Theme Tutorial",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js"
   },
-  "keywords": ["leanspec", "tutorial", "demo"],
+  "keywords": ["leanspec", "tutorial", "demo", "dashboard", "admin"],
   "author": "",
   "license": "MIT",
   "dependencies": {

@@ -12,6 +12,7 @@ const PORT = 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
-  console.log(`✓ Task Manager running at http://localhost:${PORT}`);
-  console.log(`✓ Open your browser and try adding some tasks!`);
+  console.log(`✓ Admin Dashboard running at http://localhost:${PORT}`);
+  console.log(`✓ Open your browser to see the professional dashboard!`);
+  console.log(`💡 Tutorial goal: Add dark theme support`);
 });
