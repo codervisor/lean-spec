@@ -1,0 +1,16 @@
+{
+  "name": "email-notifications-demo",
+  "version": "1.0.0",
+  "description": "Simple Express.js API for LeanSpec Tutorial 1",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": ["leanspec", "tutorial", "demo"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

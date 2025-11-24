@@ -17,6 +17,7 @@ export {
 } from './templates.js';
 export { initProject, initCommand } from './init.js';
 export { showFiles, filesCommand } from './files.js';
+export { examplesCommand } from './examples.js';
 export { validateSpecs, validateCommand } from './validate.js';
 export { migrateSpecs, migrateCommand } from './migrate.js';
 

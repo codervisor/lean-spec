@@ -26,6 +26,7 @@ Command Groups:
     archive <spec>                Move spec to archived/
     backfill [specs...]           Backfill timestamps from git history
     create <name>                 Create new spec
+    examples                      List example projects for tutorials
     init                          Initialize LeanSpec in current directory
     link <spec>                   Add relationships between specs
     migrate <input-path>          Migrate specs from other SDD tools
@@ -66,6 +67,9 @@ Command Groups:
 Examples:
   $ lean-spec init
   $ lean-spec init -y
+  $ lean-spec init --example email-notifications
+  $ lean-spec init --example dashboard-widgets --name my-demo
+  $ lean-spec examples
   $ lean-spec create my-feature --priority high
   $ lean-spec list --status in-progress
   $ lean-spec view 042

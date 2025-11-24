@@ -11,9 +11,16 @@ import {
   copyDirectory,
   getProjectName,
 } from '../utils/template-helpers.js';
+import { 
+  getExamplesList, 
+  getExample, 
+  exampleExists,
+  type ExampleMetadata 
+} from '../utils/examples.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
+const EXAMPLES_DIR = path.join(TEMPLATES_DIR, 'examples');
 
 /**
  * Init command - initialize LeanSpec in current directory
@@ -22,7 +29,20 @@ export function initCommand(): Command {
   return new Command('init')
     .description('Initialize LeanSpec in current directory')
     .option('-y, --yes', 'Skip prompts and use defaults (quick start with standard template)')
-    .action(async (options: { yes?: boolean }) => {
+    .option('--example <name>', 'Scaffold an example project for tutorials')
+    .option('--name <dirname>', 'Custom directory name for example project')
+    .option('--list', 'List available example projects')
+    .action(async (options: { yes?: boolean; example?: string; name?: string; list?: boolean }) => {
+      if (options.list) {
+        await listExamples();
+        return;
+      }
+      
+      if (options.example !== undefined) {
+        await scaffoldExample(options.example, options.name);
+        return;
+      }
+      
       await initProject(options.yes);
     });
 }
@@ -275,3 +295,180 @@ export async function initProject(skipPrompts = false): Promise<void> {
   console.log(chalk.gray('  - Create your first spec: lean-spec create my-feature'));
   console.log('');
 }
+
+/**
+ * List available example projects
+ */
+async function listExamples(): Promise<void> {
+  const examples = getExamplesList();
+  
+  console.log('');
+  console.log(chalk.bold('Available Examples:'));
+  console.log('');
+  
+  for (const example of examples) {
+    const difficultyColor = 
+      example.difficulty === 'beginner' ? chalk.green :
+      example.difficulty === 'intermediate' ? chalk.yellow :
+      chalk.red;
+    
+    console.log(chalk.cyan(`  ${example.name}`));
+    console.log(`    ${example.description}`);
+    console.log(`    ${difficultyColor(example.difficulty)} • ${example.tech.join(', ')} • ~${example.lines} lines`);
+    console.log(`    Tutorial: ${chalk.gray(example.tutorialUrl)}`);
+    console.log('');
+  }
+  
+  console.log('Usage:');
+  console.log(chalk.gray('  lean-spec init --example <name>'));
+  console.log(chalk.gray('  lean-spec init --example email-notifications'));
+  console.log('');
+}
+
+/**
+ * Scaffold an example project
+ */
+async function scaffoldExample(exampleName: string, customName?: string): Promise<void> {
+  // If no example name provided, show interactive selection
+  if (!exampleName) {
+    exampleName = await selectExample();
+  }
+  
+  // Validate example exists
+  if (!exampleExists(exampleName)) {
+    console.error(chalk.red(`Error: Example "${exampleName}" not found.`));
+    console.log('');
+    console.log('Available examples:');
+    getExamplesList().forEach(ex => {
+      console.log(`  - ${ex.name}`);
+    });
+    console.log('');
+    console.log('Use: lean-spec init --list');
+    process.exit(1);
+  }
+  
+  const example = getExample(exampleName)!;
+  const targetDirName = customName || exampleName;
+  const targetPath = path.join(process.cwd(), targetDirName);
+  
+  // Check if directory already exists and is not empty
+  try {
+    const files = await fs.readdir(targetPath);
+    const nonGitFiles = files.filter(f => f !== '.git');
+    if (nonGitFiles.length > 0) {
+      console.error(chalk.red(`Error: Directory "${targetDirName}" already exists and is not empty.`));
+      console.log(chalk.gray('Choose a different name with --name option.'));
+      process.exit(1);
+    }
+  } catch {
+    // Directory doesn't exist, that's fine
+  }
+  
+  console.log('');
+  console.log(chalk.green(`Setting up example: ${example.title}`));
+  console.log(chalk.gray(example.description));
+  console.log('');
+  
+  // Create target directory
+  await fs.mkdir(targetPath, { recursive: true });
+  console.log(chalk.green(`✓ Created directory: ${targetDirName}/`));
+  
+  // Copy example template
+  const examplePath = path.join(EXAMPLES_DIR, exampleName);
+  await copyDirectoryRecursive(examplePath, targetPath);
+  console.log(chalk.green('✓ Copied example project'));
+  
+  // Detect package manager
+  const packageManager = await detectPackageManager();
+  
+  // Install dependencies
+  console.log(chalk.gray(`Installing dependencies with ${packageManager}...`));
+  try {
+    const { execSync } = await import('node:child_process');
+    execSync(`${packageManager} install`, { 
+      cwd: targetPath, 
+      stdio: 'inherit' 
+    });
+    console.log(chalk.green('✓ Installed dependencies'));
+  } catch (error) {
+    console.log(chalk.yellow('⚠ Failed to install dependencies automatically'));
+    console.log(chalk.gray(`  Run: cd ${targetDirName} && ${packageManager} install`));
+  }
+  
+  // Show next steps
+  console.log('');
+  console.log(chalk.green('✓ Example project ready!'));
+  console.log('');
+  console.log('Next steps:');
+  console.log(chalk.cyan(`  1. cd ${targetDirName}`));
+  console.log(chalk.cyan('  2. Open this project in your editor'));
+  console.log(chalk.cyan(`  3. Follow the tutorial: ${example.tutorialUrl}`));
+  console.log(chalk.cyan(`  4. Ask your AI: "Help me with this tutorial using LeanSpec"`));
+  console.log('');
+}
+
+/**
+ * Interactive example selection
+ */
+async function selectExample(): Promise<string> {
+  const examples = getExamplesList();
+  
+  const choice = await select({
+    message: 'Select an example project:',
+    choices: examples.map(ex => {
+      const difficultyLabel = 
+        ex.difficulty === 'beginner' ? '★☆☆' :
+        ex.difficulty === 'intermediate' ? '★★☆' :
+        '★★★';
+      
+      return {
+        name: `${ex.title} (${difficultyLabel})`,
+        value: ex.name,
+        description: `${ex.description} • ${ex.tech.join(', ')}`,
+      };
+    }),
+  });
+  
+  return choice;
+}
+
+/**
+ * Copy directory recursively
+ */
+async function copyDirectoryRecursive(src: string, dest: string): Promise<void> {
+  const entries = await fs.readdir(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    
+    if (entry.isDirectory()) {
+      await fs.mkdir(destPath, { recursive: true });
+      await copyDirectoryRecursive(srcPath, destPath);
+    } else {
+      await fs.copyFile(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * Detect package manager (pnpm > yarn > npm)
+ */
+async function detectPackageManager(): Promise<string> {
+  const cwd = process.cwd();
+  
+  // Check for lockfiles in parent directory
+  try {
+    await fs.access(path.join(cwd, '..', 'pnpm-lock.yaml'));
+    return 'pnpm';
+  } catch {}
+  
+  try {
+    await fs.access(path.join(cwd, '..', 'yarn.lock'));
+    return 'yarn';
+  } catch {}
+  
+  // Default to npm
+  return 'npm';
+}
+

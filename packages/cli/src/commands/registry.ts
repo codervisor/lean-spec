@@ -8,6 +8,7 @@ import {
   compactCommand,
   createCommand,
   depsCommand,
+  examplesCommand,
   filesCommand,
   ganttCommand,
   initCommand,
@@ -42,6 +43,7 @@ export function registerCommands(program: Command): void {
   program.addCommand(compactCommand());
   program.addCommand(createCommand());
   program.addCommand(depsCommand());
+  program.addCommand(examplesCommand());
   program.addCommand(filesCommand());
   program.addCommand(ganttCommand());
   program.addCommand(initCommand());

@@ -1,0 +1,23 @@
+.widget {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.widget-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.widget-body {
+  padding: 20px;
+}
