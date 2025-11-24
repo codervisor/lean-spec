@@ -7,12 +7,14 @@ tags:
   - ai-workflow
 priority: high
 created_at: '2025-11-24T02:57:57.618Z'
-updated_at: '2025-11-24T03:14:19.419Z'
+updated_at: '2025-11-24T04:50:05.884Z'
 completed_at: '2025-11-24T03:14:19.419Z'
 completed: '2025-11-24'
 transitions:
   - status: complete
     at: '2025-11-24T03:14:19.419Z'
+related:
+  - 114-example-projects-scaffold
 ---
 
 # Simplify and Streamline Tutorial Content
