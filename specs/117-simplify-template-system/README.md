@@ -1,16 +1,20 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-24'
 tags:
   - templates
   - dx
 priority: medium
 created_at: '2025-11-24T07:08:39.244Z'
+updated_at: '2025-11-24T07:36:56.753Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-24T07:36:56.753Z'
 ---
 
 # Simplify Template System to Standard + Detailed
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-24
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-24 · **Tags**: templates, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
