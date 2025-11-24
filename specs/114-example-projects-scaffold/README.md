@@ -37,7 +37,7 @@ The new simplified tutorials (spec 113) demonstrate real-world scenarios with AI
 - Understand domain context before starting
 - Risk typos or misconfigurations that block learning
 
-**Goal**: Users can run `lean-spec init --example email-notifications` and immediately have a working project ready for Tutorial 1, with all files, dependencies, and context in place.
+**Goal**: Users can run `lean-spec init --example dark-theme` and immediately have a working project ready for Tutorial 1, with all files, dependencies, and context in place.
 
 **Related**: Spec 113 - Tutorial Simplification
 
@@ -50,14 +50,16 @@ The new simplified tutorials (spec 113) demonstrate real-world scenarios with AI
 Each example is a complete mini-project with:
 ```
 examples/
-  email-notifications/     # Tutorial 1: Your First Feature with AI
+  dark-theme/              # Tutorial 1: Adding Dark Theme Support (simplest)
     package.json
     src/
-      app.ts              # Basic Express app
-      routes/
-        users.ts          # Existing user routes
+      server.js           # Express server
+      public/
+        index.html        # Task manager UI
+        style.css         # Light theme only
+        app.js            # Task logic
     README.md             # Scenario context
-    .lean-spec/           # Empty, ready for specs
+    .gitignore
   
   dashboard-widgets/      # Tutorial 2: Managing Multiple Features
     package.json
@@ -88,25 +90,25 @@ examples/
 
 **Example usage**:
 ```bash
-lean-spec init --example email-notifications
+lean-spec init --example dark-theme
 
 # Output:
-# ✓ Created directory: email-notifications/
+# ✓ Created directory: dark-theme/
 # ✓ Copied example project
 # ✓ Installed dependencies
 # 
 # Next steps:
-# 1. cd email-notifications
+# 1. cd dark-theme
 # 2. Open this project in your editor
-# 3. Follow the tutorial: https://leanspec.dev/docs/tutorials/first-feature
-# 4. Ask your AI: "Help me add email notifications to this app using LeanSpec"
+# 3. Follow the tutorial: https://leanspec.dev/docs/tutorials/first-spec-with-ai
+# 4. Ask your AI: "Help me add dark theme support to this app using LeanSpec"
 ```
 
 **Custom directory name**:
 ```bash
-lean-spec init --example email-notifications --name my-feature-demo
+lean-spec init --example dark-theme --name my-feature-demo
 
-# Creates: my-feature-demo/ with email-notifications template
+# Creates: my-feature-demo/ with dark-theme template
 ```
 
 **Interactive mode**: `lean-spec init --example` (no name)
@@ -134,10 +136,10 @@ Tutorial docs reference the examples:
 Want to follow along? Set up the example project:
 
 \```bash
-npx lean-spec init --example email-notifications
+npx lean-spec init --example dark-theme
 \```
 
-Or use your own Node.js project...
+Or use your own project...
 ```
 
 **Benefits**:
@@ -156,7 +158,15 @@ Or use your own Node.js project...
 - [ ] Add interactive example selection mode
 
 ### Phase 2: Example Projects
-- [ ] Create `email-notifications` example (Tutorial 1)
+- [x] Create `dark-theme` example (Tutorial 0: Adding Dark Theme Support)
+  - Simple task manager web app with light theme
+  - Express server serving static files
+  - HTML/CSS/JS (no framework complexity)
+  - README with scenario context
+  - ~150 lines of starter code
+  - **Status**: ✅ Completed 2025-11-24
+
+- [ ] Create `email-notifications` example (Tutorial 2 - future)
   - Express.js API with user routes
   - Simple in-memory store
   - README with scenario context
@@ -182,7 +192,10 @@ Or use your own Node.js project...
 - [ ] Add error handling for non-empty directories
 
 ### Phase 4: Documentation Integration
-- [ ] Update tutorial 1 to reference `email-notifications` example
+- [x] Update tutorial 0 to reference `dark-theme` example
+  - **Status**: ✅ Completed 2025-11-24 - Created new first tutorial "Adding Dark Theme Support"
+- [x] Update tutorial 1 to reference `dark-theme` example
+  - **Status**: ✅ Completed 2025-11-24
 - [ ] Update tutorial 2 to reference `dashboard-widgets` example
 - [ ] Update tutorial 3 to reference `api-refactor` example
 - [ ] Add "Examples" page to docs site
@@ -205,7 +218,8 @@ Or use your own Node.js project...
 
 **Success Criteria:**
 - [ ] User can scaffold any example in <30 seconds
-- [ ] `lean-spec init --example email-notifications` creates working project
+- [x] `lean-spec init --example dark-theme` creates working project
+  - **Status**: ✅ Completed 2025-11-24
 - [ ] All examples run without errors: `npm install && npm start`
 - [ ] Interactive mode shows all examples with descriptions
 - [ ] Tutorial prompts work correctly with scaffolded examples
@@ -225,7 +239,7 @@ Or use your own Node.js project...
 **Test Cases:**
 ```bash
 # Basic usage
-lean-spec init --example email-notifications
+lean-spec init --example dark-theme
 npm install && npm start  # Should run without errors
 
 # Interactive mode
@@ -236,7 +250,7 @@ lean-spec examples  # Should show all available examples
 
 # Error cases
 lean-spec init --example invalid-name  # Should show helpful error
-lean-spec init --example email-notifications  # In non-empty dir → error
+lean-spec init --example dark-theme  # In non-empty dir → error
 ```
 
 ## Notes
@@ -262,11 +276,12 @@ lean-spec init --example email-notifications  # In non-empty dir → error
 
 ### Example Project Tech Choices
 
-**Tutorial 1 - Email Notifications**:
-- **Tech**: Express.js + TypeScript
-- **Why**: Most common Node.js setup, familiar to developers
-- **Scenario**: Add email notifications to existing user registration
-- **Complexity**: ~200 lines, 5-6 files
+**Tutorial 1 - Dark Theme Support**:
+- **Tech**: Vanilla HTML/CSS/JS + Express
+- **Why**: Simplest possible example, no framework complexity, CSS-focused
+- **Scenario**: Add dark theme support with system preference detection
+- **Complexity**: ~150 lines, 6 files
+- **Learning focus**: Basic SDD workflow, CSS theming, spec creation
 
 **Tutorial 2 - Dashboard Widgets**:
 - **Tech**: React + TypeScript

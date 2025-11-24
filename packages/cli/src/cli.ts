@@ -67,7 +67,7 @@ Command Groups:
 Examples:
   $ lean-spec init
   $ lean-spec init -y
-  $ lean-spec init --example email-notifications
+  $ lean-spec init --example dark-theme
   $ lean-spec init --example dashboard-widgets --name my-demo
   $ lean-spec examples
   $ lean-spec create my-feature --priority high

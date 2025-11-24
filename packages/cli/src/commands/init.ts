@@ -321,7 +321,7 @@ async function listExamples(): Promise<void> {
   
   console.log('Usage:');
   console.log(chalk.gray('  lean-spec init --example <name>'));
-  console.log(chalk.gray('  lean-spec init --example email-notifications'));
+  console.log(chalk.gray('  lean-spec init --example dark-theme'));
   console.log('');
 }
 
