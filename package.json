@@ -6,9 +6,7 @@
   "description": "Lightweight spec methodology for AI-powered development (monorepo root)",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
-    "build": "pnpm build:templates && turbo run build",
-    "build:templates": "tsx scripts/build-agents-templates.ts",
-    "validate:templates": "tsx scripts/validate-agents-templates.ts",
+    "build": "turbo run build",
     "sync-versions": "tsx scripts/sync-versions.ts",
     "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/core",
     "dev:web": "turbo run dev --filter=@leanspec/ui",
@@ -47,7 +45,6 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
-    "handlebars": "^4.7.8",
     "next": "16.0.1",
     "prettier": "^3.1.1",
     "tsx": "^4.19.2",

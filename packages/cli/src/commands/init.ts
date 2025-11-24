@@ -29,10 +29,11 @@ export function initCommand(): Command {
   return new Command('init')
     .description('Initialize LeanSpec in current directory')
     .option('-y, --yes', 'Skip prompts and use defaults (quick start with standard template)')
+    .option('--template <name>', 'Use specific template (standard or detailed)')
     .option('--example [name]', 'Scaffold an example project for tutorials (interactive if no name provided)')
     .option('--name <dirname>', 'Custom directory name for example project')
     .option('--list', 'List available example projects')
-    .action(async (options: { yes?: boolean; example?: string; name?: string; list?: boolean }) => {
+    .action(async (options: { yes?: boolean; template?: string; example?: string; name?: string; list?: boolean }) => {
       if (options.list) {
         await listExamples();
         return;
@@ -43,11 +44,11 @@ export function initCommand(): Command {
         return;
       }
       
-      await initProject(options.yes);
+      await initProject(options.yes, options.template);
     });
 }
 
-export async function initProject(skipPrompts = false): Promise<void> {
+export async function initProject(skipPrompts = false, templateOption?: string): Promise<void> {
   const cwd = process.cwd();
 
   // Check if already initialized
@@ -65,13 +66,14 @@ export async function initProject(skipPrompts = false): Promise<void> {
   console.log('');
 
   let setupMode = 'quick';
-  let templateName = 'standard';
+  let templateName = templateOption || 'standard'; // Use provided template or default to standard
 
   // Skip prompts if -y flag is used
   if (skipPrompts) {
     console.log(chalk.gray('Using defaults: quick start with standard template'));
     console.log('');
-  } else {
+  } else if (!templateOption) {
+    // Only show setup mode prompt if no template was explicitly provided
     // Main question: How to set up?
     setupMode = await select({
       message: 'How would you like to set up?',
@@ -84,7 +86,7 @@ export async function initProject(skipPrompts = false): Promise<void> {
         {
           name: 'Choose template',
           value: 'template',
-          description: 'Pick from: minimal, standard, enterprise',
+          description: 'Pick from: standard, detailed',
         },
         // TODO: Re-enable when custom setup mode is implemented
         // {
@@ -100,18 +102,30 @@ export async function initProject(skipPrompts = false): Promise<void> {
       templateName = await select({
         message: 'Select template:',
         choices: [
-          { name: 'minimal', value: 'minimal', description: 'Just folder structure, no extras' },
-          { name: 'standard', value: 'standard', description: 'Recommended - includes AGENTS.md' },
+          { name: 'standard', value: 'standard', description: 'Recommended - single-file specs with AGENTS.md' },
           {
-            name: 'enterprise',
-            value: 'enterprise',
-            description: 'Governance with approvals and compliance',
+            name: 'detailed',
+            value: 'detailed',
+            description: 'Complex specs with sub-spec structure (DESIGN, PLAN, TEST)',
           },
         ],
       });
     }
   }
   // Note: setupMode === 'custom' branch removed - will be implemented in future
+
+  // Handle legacy template names
+  if (templateName === 'minimal') {
+    console.log(chalk.yellow('⚠ The "minimal" template has been removed.'));
+    console.log(chalk.gray('  Using "standard" template instead (same lightweight approach).'));
+    console.log('');
+    templateName = 'standard';
+  } else if (templateName === 'enterprise') {
+    console.log(chalk.yellow('⚠ The "enterprise" template has been renamed to "detailed".'));
+    console.log(chalk.gray('  Using "detailed" template (sub-spec structure for complex specs).'));
+    console.log('');
+    templateName = 'detailed';
+  }
 
   // Load template config
   const templateDir = path.join(TEMPLATES_DIR, templateName);
@@ -191,22 +205,45 @@ export async function initProject(skipPrompts = false): Promise<void> {
     process.exit(1);
   }
   
-  // Copy chosen template to .lean-spec/templates/spec-template.md
-  const templateSpecPath = path.join(templateDir, 'spec-template.md');
-  const targetSpecPath = path.join(templatesDir, 'spec-template.md');
+  // Copy spec templates from template/files/ to .lean-spec/templates/
+  const templateFilesDir = path.join(templateDir, 'files');
+  
   try {
-    await fs.copyFile(templateSpecPath, targetSpecPath);
-    console.log(chalk.green('✓ Created .lean-spec/templates/spec-template.md'));
+    const files = await fs.readdir(templateFilesDir);
+    
+    if (templateName === 'standard') {
+      // Standard template: Copy files/README.md as spec-template.md (backward compat)
+      const readmePath = path.join(templateFilesDir, 'README.md');
+      const targetSpecPath = path.join(templatesDir, 'spec-template.md');
+      await fs.copyFile(readmePath, targetSpecPath);
+      console.log(chalk.green('✓ Created .lean-spec/templates/spec-template.md'));
+      
+      // Update config to use spec-template.md
+      templateConfig.template = 'spec-template.md';
+      templateConfig.templates = {
+        default: 'spec-template.md',
+      };
+    } else if (templateName === 'detailed') {
+      // Detailed template: Copy all files preserving names
+      for (const file of files) {
+        const srcPath = path.join(templateFilesDir, file);
+        const destPath = path.join(templatesDir, file);
+        await fs.copyFile(srcPath, destPath);
+      }
+      console.log(chalk.green(`✓ Created .lean-spec/templates/ with ${files.length} files`));
+      console.log(chalk.gray(`  Files: ${files.join(', ')}`));
+      
+      // Update config to use README.md as main template
+      templateConfig.template = 'README.md';
+      templateConfig.templates = {
+        default: 'README.md',
+      };
+    }
   } catch (error) {
-    console.error(chalk.red('Error copying template:'), error);
+    console.error(chalk.red('Error copying template files:'), error);
     process.exit(1);
   }
   
-  // Update config to use new template structure
-  templateConfig.template = 'spec-template.md';
-  templateConfig.templates = {
-    default: 'spec-template.md',
-  };
 
   // Save config
   await saveConfig(templateConfig, cwd);
@@ -266,10 +303,34 @@ export async function initProject(skipPrompts = false): Promise<void> {
   // Get project name for variable substitution
   const projectName = await getProjectName(cwd);
 
-  // Copy template files (excluding those we're skipping)
+  // Copy AGENTS.md from template root to project root (unless skipping)
+  if (!skipFiles.includes('AGENTS.md')) {
+    const agentsSourcePath = path.join(templateDir, 'AGENTS.md');
+    const agentsTargetPath = path.join(cwd, 'AGENTS.md');
+    
+    try {
+      let agentsContent = await fs.readFile(agentsSourcePath, 'utf-8');
+      // Replace variables in AGENTS.md
+      agentsContent = agentsContent.replace(/\{project_name\}/g, projectName);
+      await fs.writeFile(agentsTargetPath, agentsContent, 'utf-8');
+      console.log(chalk.green('✓ Created AGENTS.md'));
+    } catch (error) {
+      console.error(chalk.red('Error copying AGENTS.md:'), error);
+      process.exit(1);
+    }
+  }
+
+  // Copy any other template files from files/ directory (excluding those we're skipping)
+  // Note: files/ directory no longer contains AGENTS.md
   const filesDir = path.join(templateDir, 'files');
   try {
-    await copyDirectory(filesDir, cwd, skipFiles, { project_name: projectName });
+    // Check if files/ directory has any files to copy (besides the spec templates already copied)
+    const filesToCopy = await fs.readdir(filesDir);
+    const hasOtherFiles = filesToCopy.some(f => !f.match(/\.(md)$/i) || !['README.md', 'DESIGN.md', 'PLAN.md', 'TEST.md'].includes(f));
+    
+    if (hasOtherFiles) {
+      await copyDirectory(filesDir, cwd, [...skipFiles, 'README.md', 'DESIGN.md', 'PLAN.md', 'TEST.md'], { project_name: projectName });
+    }
     console.log(chalk.green('✓ Initialized project structure'));
   } catch (error) {
     console.error(chalk.red('Error copying template files:'), error);

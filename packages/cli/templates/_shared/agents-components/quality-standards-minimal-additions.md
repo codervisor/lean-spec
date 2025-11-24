@@ -1,3 +1,0 @@
-- Tests cover critical paths
-- No unnecessary complexity
-- Documentation where needed (not everywhere)
