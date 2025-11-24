@@ -36,7 +36,8 @@ export async function handleExistingFiles(
 ): Promise<void> {
   for (const file of existingFiles) {
     const filePath = path.join(cwd, file);
-    const templateFilePath = path.join(templateDir, 'files', file);
+    // AGENTS.md is now at template root, not in files/ subdirectory
+    const templateFilePath = path.join(templateDir, file);
 
     // Check if template has this file
     try {
