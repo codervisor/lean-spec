@@ -378,6 +378,20 @@ async function scaffoldExample(exampleName: string, customName?: string): Promis
   await copyDirectoryRecursive(examplePath, targetPath);
   console.log(chalk.green('✓ Copied example project'));
   
+  // Initialize LeanSpec in the new directory
+  const originalCwd = process.cwd();
+  try {
+    process.chdir(targetPath);
+    console.log(chalk.gray('Initializing LeanSpec...'));
+    await initProject(true); // Use -y flag for defaults (standard template)
+    console.log(chalk.green('✓ Initialized LeanSpec'));
+  } catch (error) {
+    console.error(chalk.red('Error initializing LeanSpec:'), error);
+    process.exit(1);
+  } finally {
+    process.chdir(originalCwd);
+  }
+  
   // Detect package manager
   const packageManager = await detectPackageManager();
   
@@ -398,6 +412,10 @@ async function scaffoldExample(exampleName: string, customName?: string): Promis
   // Show next steps
   console.log('');
   console.log(chalk.green('✓ Example project ready!'));
+  console.log('');
+  console.log(chalk.gray('Created:'));
+  console.log(chalk.gray(`  - Application code (${example.tech.join(', ')})`));
+  console.log(chalk.gray('  - LeanSpec files (AGENTS.md, .lean-spec/, specs/)'));
   console.log('');
   console.log('Next steps:');
   console.log(chalk.cyan(`  1. cd ${targetDirName}`));
