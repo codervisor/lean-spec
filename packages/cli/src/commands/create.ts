@@ -151,10 +151,34 @@ export async function createSpec(name: string, options: {
     templateName = config.template || 'spec-template.md';
   }
   
-  const templatePath = path.join(templatesDir, templateName);
+  let templatePath = path.join(templatesDir, templateName);
+
+  // Backward compatibility: If template not found, try spec-template.md then README.md
+  try {
+    await fs.access(templatePath);
+  } catch {
+    // Try spec-template.md first (legacy)
+    const legacyPath = path.join(templatesDir, 'spec-template.md');
+    try {
+      await fs.access(legacyPath);
+      templatePath = legacyPath;
+      templateName = 'spec-template.md';
+    } catch {
+      // Try README.md as fallback
+      const readmePath = path.join(templatesDir, 'README.md');
+      try {
+        await fs.access(readmePath);
+        templatePath = readmePath;
+        templateName = 'README.md';
+      } catch {
+        throw new Error(`Template not found: ${templatePath}. Run: lean-spec init`);
+      }
+    }
+  }
 
   // Load spec template from .lean-spec/templates/
   let content: string;
+  let varContext: Record<string, unknown>;
   
   try {
     const template = await fs.readFile(templatePath, 'utf-8');
@@ -162,7 +186,7 @@ export async function createSpec(name: string, options: {
     const title = options.title || name;
     
     // Build variable context and resolve all variables in template
-    const varContext = await buildVariableContext(config, { name: title, date });
+    varContext = await buildVariableContext(config, { name: title, date });
     content = resolveVariables(template, varContext);
     
     // Parse frontmatter to get the resolved values (always needed for variable resolution)
@@ -225,8 +249,42 @@ export async function createSpec(name: string, options: {
 
   await fs.writeFile(specFile, content, 'utf-8');
 
-  console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
-  console.log(chalk.gray(`  Edit: ${sanitizeUserInput(specFile)}`));
+  // For detailed templates, copy any additional sub-spec files
+  // Check if there are other .md files in the templates directory
+  try {
+    const templateFiles = await fs.readdir(templatesDir);
+    const additionalFiles = templateFiles.filter(f => 
+      f.endsWith('.md') && 
+      f !== templateName && 
+      f !== 'spec-template.md' && 
+      f !== config.structure.defaultFile
+    );
+    
+    if (additionalFiles.length > 0) {
+      for (const file of additionalFiles) {
+        const srcPath = path.join(templatesDir, file);
+        const destPath = path.join(specDir, file);
+        
+        // Read template file and process variables
+        let fileContent = await fs.readFile(srcPath, 'utf-8');
+        
+        // Replace variables in the file
+        fileContent = resolveVariables(fileContent, varContext);
+        
+        // Write to spec directory
+        await fs.writeFile(destPath, fileContent, 'utf-8');
+      }
+      console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
+      console.log(chalk.gray(`  Files: ${config.structure.defaultFile}, ${additionalFiles.join(', ')}`));
+    } else {
+      console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
+      console.log(chalk.gray(`  Edit: ${sanitizeUserInput(specFile)}`));
+    }
+  } catch (error) {
+    // If reading directory fails, just show the main file
+    console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
+    console.log(chalk.gray(`  Edit: ${sanitizeUserInput(specFile)}`));
+  }
   
   // Auto-check for conflicts after creation
   await autoCheckIfEnabled();
