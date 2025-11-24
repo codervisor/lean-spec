@@ -8,12 +8,14 @@ tags:
   - tutorials
 priority: high
 created_at: '2025-11-24T04:44:10.441Z'
-updated_at: '2025-11-24T05:03:27.523Z'
+updated_at: '2025-11-24T06:12:12.999Z'
 completed_at: '2025-11-24T05:03:27.523Z'
 completed: '2025-11-24'
 transitions:
   - status: complete
     at: '2025-11-24T05:03:27.523Z'
+related:
+  - 116-init-example-leanspec-setup
 ---
 
 # Example Projects and Init Scaffold for Tutorials
