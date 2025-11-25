@@ -8,7 +8,7 @@ tags:
   - visualization
 priority: high
 created_at: '2025-11-25T09:18:07.795Z'
-updated_at: '2025-11-25T09:50:35.092Z'
+updated_at: '2025-11-25T12:53:39.163Z'
 transitions:
   - status: in-progress
     at: '2025-11-25T09:46:08.354Z'
@@ -16,6 +16,8 @@ transitions:
     at: '2025-11-25T09:50:35.092Z'
 completed_at: '2025-11-25T09:50:35.092Z'
 completed: '2025-11-25'
+related:
+  - 120-mermaid-diagram-showcase
 ---
 
 # Native Diagram Rendering in Spec Detail View
