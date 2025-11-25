@@ -346,10 +346,10 @@ When specs have dependencies (`depends_on`):
 git worktree add .worktrees/spec-048 -b feature/048
 # Work on 048 after 045 is merged
 
-# Option 2: Branch from 045's feature branch
-cd .worktrees/spec-045-dashboard
-git worktree add ../spec-048-analysis -b feature/048-from-045
-# 048 includes changes from 045
+# Option 2: Branch from 045's feature branch (when 045 not yet merged)
+cd ~/project  # Back to main worktree
+git worktree add .worktrees/spec-048-analysis feature/045-dashboard -b feature/048-from-045
+# 048 includes all changes from 045's branch
 ```
 
 ### Best Practices
