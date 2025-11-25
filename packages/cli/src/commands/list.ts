@@ -26,6 +26,7 @@ export function listCommand(): Command {
     .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
     .option('--sort <field>', 'Sort by field (id, created, name, status, priority)', 'id')
     .option('--order <order>', 'Sort order (asc, desc)', 'desc')
+    .option('--json', 'Output as JSON')
     .action(async (options: {
       archived?: boolean;
       status?: SpecStatus;
@@ -35,6 +36,7 @@ export function listCommand(): Command {
       field?: string[];
       sort?: string;
       order?: string;
+      json?: boolean;
     }) => {
       const customFields = parseCustomFieldOptions(options.field);
       const listOptions: {
@@ -46,6 +48,7 @@ export function listCommand(): Command {
         customFields?: Record<string, unknown>;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
+        json?: boolean;
       } = {
         showArchived: options.archived,
         status: options.status,
@@ -55,6 +58,7 @@ export function listCommand(): Command {
         customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
         sortBy: options.sort || 'id',
         sortOrder: (options.order as 'asc' | 'desc') || 'desc',
+        json: options.json,
       };
       await listSpecs(listOptions);
     });
@@ -69,6 +73,7 @@ export async function listSpecs(options: {
   customFields?: Record<string, unknown>;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  json?: boolean;
 } = {}): Promise<void> {
   // Auto-check for conflicts before listing
   await autoCheckIfEnabled();
@@ -106,7 +111,32 @@ export async function listSpecs(options: {
   );
 
   if (specs.length === 0) {
-    console.log(chalk.dim('No specs found.'));
+    if (options.json) {
+      console.log(JSON.stringify({ specs: [], total: 0 }, null, 2));
+    } else {
+      console.log(chalk.dim('No specs found.'));
+    }
+    return;
+  }
+
+  // JSON output
+  if (options.json) {
+    const jsonOutput = {
+      specs: specs.map(spec => ({
+        path: spec.path,
+        name: spec.name,
+        status: spec.frontmatter.status,
+        priority: spec.frontmatter.priority,
+        tags: spec.frontmatter.tags,
+        assignee: spec.frontmatter.assignee,
+        created: spec.frontmatter.created,
+        completed: spec.frontmatter.completed,
+        subFiles: spec.subFiles?.length || 0,
+      })),
+      total: specs.length,
+      filter: options,
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
     return;
   }
 

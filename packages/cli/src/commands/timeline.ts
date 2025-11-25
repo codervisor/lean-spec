@@ -14,7 +14,8 @@ export function timelineCommand(): Command {
     .option('--days <n>', 'Show last N days (default: 30)', parseInt)
     .option('--by-tag', 'Group by tag')
     .option('--by-assignee', 'Group by assignee')
-    .action(async (options: { days?: number; byTag?: boolean; byAssignee?: boolean }) => {
+    .option('--json', 'Output as JSON')
+    .action(async (options: { days?: number; byTag?: boolean; byAssignee?: boolean; json?: boolean }) => {
       await showTimeline(options);
     });
 }
@@ -23,6 +24,7 @@ export async function showTimeline(options: {
   days?: number;
   byTag?: boolean;
   byAssignee?: boolean;
+  json?: boolean;
 }): Promise<void> {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
@@ -75,6 +77,18 @@ export async function showTimeline(options: {
         completedByDate[dateKey] = (completedByDate[dateKey] || 0) + 1;
       }
     }
+  }
+
+  // JSON output
+  if (options.json) {
+    const jsonOutput = {
+      days,
+      createdByDate,
+      completedByDate,
+      createdByMonth,
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return;
   }
 
   // Display timeline

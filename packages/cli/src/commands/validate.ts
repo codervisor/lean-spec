@@ -30,6 +30,7 @@ export interface ValidateOptions {
   verbose?: boolean;  // Show passing specs
   quiet?: boolean;    // Suppress warnings, only show errors
   format?: 'default' | 'json' | 'compact';  // Output format
+  json?: boolean;     // Shorthand for --format json
   rule?: string;      // Filter by specific rule name
   warningsOnly?: boolean; // Treat all issues as warnings, never fail (useful for CI)
 }
@@ -52,6 +53,7 @@ export function validateCommand(): Command {
     .option('--verbose', 'Show passing specs')
     .option('--quiet', 'Suppress warnings, only show errors')
     .option('--format <format>', 'Output format: default, json, compact', 'default')
+    .option('--json', 'Output as JSON (shorthand for --format json)')
     .option('--rule <rule>', 'Filter by specific rule name (e.g., max-lines, frontmatter)')
     .option('--warnings-only', 'Treat all issues as warnings, never fail (useful for CI pre-release checks)')
     .action(async (specs: string[] | undefined, options: ValidateOptions) => {
@@ -60,7 +62,7 @@ export function validateCommand(): Command {
         specs: specs && specs.length > 0 ? specs : undefined,
         verbose: options.verbose,
         quiet: options.quiet,
-        format: options.format,
+        format: options.json ? 'json' : options.format,
         rule: options.rule,
         warningsOnly: options.warningsOnly,
       });

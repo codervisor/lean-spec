@@ -12,6 +12,7 @@ import { countTokens } from '@leanspec/core';
 export interface FilesOptions {
   type?: 'docs' | 'assets';
   tree?: boolean;
+  json?: boolean;
 }
 
 export function filesCommand(): Command;
@@ -26,6 +27,7 @@ export function filesCommand(specPath?: string, options: FilesOptions = {}): Com
     .argument('<spec>', 'Spec to list files for')
     .option('--type <type>', 'Filter by type: docs, assets')
     .option('--tree', 'Show tree structure')
+    .option('--json', 'Output as JSON')
     .action(async (target: string, opts: FilesOptions) => {
       await showFiles(target, opts);
     });
@@ -56,6 +58,34 @@ export async function showFiles(
 
   // Load sub-files
   const subFiles = await loadSubFiles(spec.fullPath);
+
+  // JSON output
+  if (options.json) {
+    const readmeStat = await fs.stat(spec.filePath);
+    const readmeContent = await fs.readFile(spec.filePath, 'utf-8');
+    const readmeTokens = await countTokens({ content: readmeContent });
+    
+    const jsonOutput = {
+      spec: spec.name,
+      path: spec.fullPath,
+      files: [
+        {
+          name: 'README.md',
+          type: 'required',
+          size: readmeStat.size,
+          tokens: readmeTokens.total,
+        },
+        ...subFiles.map(f => ({
+          name: f.name,
+          type: f.type,
+          size: f.size,
+        })),
+      ],
+      total: subFiles.length + 1,
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return;
+  }
 
   console.log('');
   console.log(chalk.cyan(`📄 Files in ${sanitizeUserInput(spec.name)}`));

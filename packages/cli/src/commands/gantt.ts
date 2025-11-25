@@ -39,7 +39,8 @@ export function ganttCommand(): Command {
     .option('--weeks <n>', 'Show N weeks (default: 4)', parseInt)
     .option('--show-complete', 'Include completed specs')
     .option('--critical-path', 'Highlight critical path')
-    .action(async (options: { weeks?: number; showComplete?: boolean; criticalPath?: boolean }) => {
+    .option('--json', 'Output as JSON')
+    .action(async (options: { weeks?: number; showComplete?: boolean; criticalPath?: boolean; json?: boolean }) => {
       await showGantt(options);
     });
 }
@@ -48,6 +49,7 @@ export async function showGantt(options: {
   weeks?: number;
   showComplete?: boolean;
   criticalPath?: boolean;
+  json?: boolean;
 }): Promise<void> {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
@@ -79,8 +81,30 @@ export async function showGantt(options: {
   });
 
   if (relevantSpecs.length === 0) {
-    console.log(chalk.dim('No active specs found.'));
-    console.log(chalk.dim('Tip: Use --show-complete to include completed specs.'));
+    if (options.json) {
+      console.log(JSON.stringify({ specs: [], weeks }, null, 2));
+    } else {
+      console.log(chalk.dim('No active specs found.'));
+      console.log(chalk.dim('Tip: Use --show-complete to include completed specs.'));
+    }
+    return;
+  }
+
+  // JSON output
+  if (options.json) {
+    const jsonOutput = {
+      weeks,
+      specs: relevantSpecs.map(spec => ({
+        path: spec.path,
+        status: spec.frontmatter.status,
+        priority: spec.frontmatter.priority,
+        created: spec.frontmatter.created,
+        completed: spec.frontmatter.completed,
+        due: spec.frontmatter.due,
+        dependsOn: spec.frontmatter.depends_on,
+      })),
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
     return;
   }
 

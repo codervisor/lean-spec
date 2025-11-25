@@ -22,12 +22,14 @@ export function searchCommand(): Command {
     .option('--priority <priority>', 'Filter by priority')
     .option('--assignee <name>', 'Filter by assignee')
     .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
+    .option('--json', 'Output as JSON')
     .action(async (query: string, options: {
       status?: SpecStatus;
       tag?: string;
       priority?: SpecPriority;
       assignee?: string;
       field?: string[];
+      json?: boolean;
     }) => {
       const customFields = parseCustomFieldOptions(options.field);
       await performSearch(query, {
@@ -36,6 +38,7 @@ export function searchCommand(): Command {
         priority: options.priority,
         assignee: options.assignee,
         customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
+        json: options.json,
       });
     });
 }
@@ -46,6 +49,7 @@ export async function performSearch(query: string, options: {
   priority?: SpecPriority;
   assignee?: string;
   customFields?: Record<string, unknown>;
+  json?: boolean;
 }): Promise<void> {
   // Auto-check for conflicts before search
   await autoCheckIfEnabled();
@@ -92,6 +96,27 @@ export async function performSearch(query: string, options: {
   });
 
   const { results, metadata } = searchResult;
+
+  // JSON output
+  if (options.json) {
+    const jsonOutput = {
+      query,
+      results: results.map(r => ({
+        spec: r.spec.path,
+        score: r.score,
+        totalMatches: r.totalMatches,
+        matches: r.matches.map(m => ({
+          field: m.field,
+          text: m.text,
+          lineNumber: m.lineNumber,
+        })),
+      })),
+      metadata,
+      filters: filter,
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return;
+  }
 
   // Display results
   if (results.length === 0) {
