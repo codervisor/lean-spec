@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2025-11-25
+
+### Added
+- **Example projects scaffold** (spec 114) - Quick-start tutorial projects with `lean-spec init --example`
+  - Three complete example projects: dark-theme, dashboard-widgets, api-refactor
+  - Instant setup with dependencies and realistic starter code
+  - `lean-spec examples` command to list available examples
+  - Interactive selection mode for scaffolding
+  - Automatic LeanSpec initialization in scaffolded projects
+- **Chinese translation quality guidelines** (spec 115) - Professional localization standards
+  - Comprehensive translation guidelines in `docs-site/AGENTS.md`
+  - Translation glossary with 40+ technical terms
+  - Natural Chinese expression patterns for technical content
+  - Quality checklist for translation validation
+
+### Changed
+- **Template system simplification** (spec 117) - Removed template engine for direct maintenance
+  - Eliminated Handlebars build layer and 15+ component files
+  - Consolidated to 2 templates: `standard` (default) and `detailed` (sub-specs demo)
+  - Shared AGENTS.md across templates for consistency
+  - Faster iteration without build step (edit → test directly)
+  - Improved AI workflow with stronger CLI command emphasis
+
+### Fixed
+- **Example project initialization** (spec 116) - Fixed missing LeanSpec files in scaffolded examples
+  - `lean-spec init --example` now properly initializes LeanSpec (AGENTS.md, .lean-spec/, specs/)
+  - All LeanSpec CLI commands now work in scaffolded example projects
+  - Tutorial workflows function correctly out of the box
+
+### Technical
+- Removed Handlebars dependency from CLI package
+- Simplified template directory structure
+- Enhanced tutorial documentation with example project references
+- Improved Chinese documentation quality across docs-site
+
 ## [0.2.5] - 2025-11-18
 
 ### Added
