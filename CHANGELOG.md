@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Translation glossary with 40+ technical terms
   - Natural Chinese expression patterns for technical content
   - Quality checklist for translation validation
+- **JSON output support** - Added `--json` flag to CLI commands for programmatic use
+  - `lean-spec list --json` - Machine-readable spec listing
+  - `lean-spec board --json` - Kanban board data export
+  - `lean-spec search --json` - Structured search results
+  - `lean-spec check --json` - Validation results in JSON
+  - `lean-spec files --json` - File listing in structured format
+  - `lean-spec timeline --json` - Timeline data export
+  - `lean-spec backfill --json` - Backfill results in JSON
+  - `lean-spec gantt --json` - Gantt chart data export
 
 ### Changed
 - **Template system simplification** (spec 117) - Removed template engine for direct maintenance
