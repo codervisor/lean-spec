@@ -259,3 +259,104 @@ lean-spec link product-launch --depends-on dark-theme-support
 # View full dependency graph
 lean-spec deps product-launch --impact
 ```
+
+## Parallel Development with Git Worktrees
+
+Need to work on multiple specs simultaneously? Use Git worktrees for complete code isolation.
+
+### Why Git Worktrees?
+
+- **Native Git feature** - No additional tools required
+- **Complete isolation** - Each worktree has independent working directory
+- **Shared history** - Efficient disk usage, all worktrees share `.git`
+- **No context switching** - Work on multiple specs without stashing/committing
+
+### Basic Setup
+
+```bash
+# Main repo structure after creating worktrees:
+~/project/                    # Primary worktree (main branch)
+~/project/.worktrees/
+  ├── spec-045-dashboard/     # Worktree for spec 045
+  ├── spec-047-timestamps/    # Worktree for spec 047
+  └── spec-048-analysis/      # Worktree for spec 048
+```
+
+### Pattern 1: Solo Developer - Parallel Features
+
+```bash
+# Start spec 045
+lean-spec update 045 --status in-progress
+git worktree add .worktrees/spec-045-dashboard -b feature/045-dashboard
+cd .worktrees/spec-045-dashboard
+# Implement spec 045...
+
+# While 045 is ongoing, start spec 047 in parallel
+cd ~/project  # Back to main worktree
+lean-spec update 047 --status in-progress
+git worktree add .worktrees/spec-047-timestamps -b feature/047-timestamps
+cd .worktrees/spec-047-timestamps
+# Implement spec 047...
+
+# Work continues independently in each worktree
+# Merge and clean up when done:
+git worktree remove .worktrees/spec-045-dashboard
+```
+
+### Pattern 2: Team - Multiple Developers
+
+```bash
+# Developer A works on spec 045
+git worktree add .worktrees/spec-045 -b feature/045-dashboard
+cd .worktrees/spec-045
+lean-spec update 045 --status in-progress --assignee "dev-a"
+
+# Developer B works on spec 047 (from their clone)
+git worktree add .worktrees/spec-047 -b feature/047-timestamps
+cd .worktrees/spec-047
+lean-spec update 047 --status in-progress --assignee "dev-b"
+
+# Each developer has isolated environment
+# Merge to main when complete
+```
+
+### Pattern 3: Experiment + Stable Work
+
+```bash
+# Keep main worktree for stable/production work
+cd ~/project  # Main worktree on main branch
+
+# Create experimental worktree for risky spec
+git worktree add .worktrees/spec-048-experiment -b experiment/048
+cd .worktrees/spec-048-experiment
+# Try experimental approach...
+
+# If experiment fails, just remove worktree
+git worktree remove .worktrees/spec-048-experiment
+# Main work remains untouched
+```
+
+### Handling Dependencies
+
+When specs have dependencies (`depends_on`):
+
+```bash
+# Spec 048 depends on 045
+# Option 1: Wait for 045 to merge to main
+git worktree add .worktrees/spec-048 -b feature/048
+# Work on 048 after 045 is merged
+
+# Option 2: Branch from 045's feature branch (when 045 not yet merged)
+cd ~/project  # Back to main worktree
+git worktree add .worktrees/spec-048-analysis feature/045-dashboard -b feature/048-from-045
+# 048 includes all changes from 045's branch
+```
+
+### Best Practices
+
+1. **Worktree naming**: Use spec number + short name (e.g., `spec-045-dashboard`)
+2. **Branch strategy**: Feature branches per spec (e.g., `feature/045-dashboard`)
+3. **Cleanup**: Remove worktrees after merge (`git worktree remove <path>`)
+4. **Status updates**: Update spec status from main worktree where `specs/` lives
+5. **Dependencies**: Branch from dependent spec's feature branch if needed
+6. **Ignore worktrees**: Add `.worktrees/` to `.gitignore`
