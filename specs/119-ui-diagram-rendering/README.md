@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-25'
 tags:
   - ui
@@ -8,11 +8,15 @@ tags:
   - visualization
 priority: high
 created_at: '2025-11-25T09:18:07.795Z'
+updated_at: '2025-11-25T09:46:08.354Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-25T09:46:08.354Z'
 ---
 
 # Native Diagram Rendering in Spec Detail View
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-25 · **Tags**: ui, ux, feature, visualization
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-25 · **Tags**: ui, ux, feature, visualization
 
 **Project**: lean-spec  
 **Team**: Core Development
