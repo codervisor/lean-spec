@@ -12,147 +12,226 @@
 </p>
 
 <p align="center">
-  <a href="https://www.lean-spec.dev"><strong>Docs</strong></a>
+  <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a>
   •
-  <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文</strong></a>
+  <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文文档</strong></a>
+  •
+  <a href="#quick-start"><strong>Quick Start</strong></a>
+  •
+  <a href="https://github.com/codervisor/lean-spec/tree/main/specs"><strong>Live Examples</strong></a>
 </p>
 
 ---
 
-## Specs that fit in AI working memory
+**Lean specifications for AI-assisted development. Start simple. Iterate fast. Stay aligned.**
 
-Traditional 2,000-line RFCs overflow AI context windows. Your AI agent can't help because it can't fit the full context.
-
-**LeanSpec: Pragmatic spec tooling for human + AI collaboration.**
-
-Specs under 300 lines. Intent-focused. Machine-readable. Adapts to your workflow—from solo dev to enterprise.
+LeanSpec brings agile principles to technical specs—small, focused documents that evolve with your understanding. Concise enough (&lt;2,000 tokens) for both humans and AI to process without context rot.
 
 <p align="center">
-  <a href="#quick-start-5-minutes"><strong>Quick Start (5 Minutes) →</strong></a>
+  <a href="#quick-start"><strong>Get Started in 2 Minutes →</strong></a>
 </p>
 
 ---
 
-## Why LeanSpec?
+## The Problem: Context Rot
 
-**Context Overflow**: Traditional specs are too large for AI agents. You paste a 2,000-line RFC into Cursor—"Context too large." Back to manual implementation.
+You're working with an AI coding assistant. You feed it a comprehensive 2,000-line RFC with every detail:
 
-**Stale Docs**: Nobody maintains specs because updates are painful. They become documentation theater.
+```
+🤖 AI: "I'll help you implement this feature..."
+     [Produces mediocre code that misses key requirements]
+```
 
-**Wrong Balance**: Code generation tools are heavyweight. Vibe coding lacks structure. Where's the middle ground?
+**The issue isn't hitting context limits—it's context rot.**
 
-**LeanSpec solves this:**
-- Specs under 300 lines (fits in AI context)
-- Structured for AI agents, flexible for teams
-- CLI & MCP tools for actual workflow support
+Even with 200K token windows, AI performance degrades significantly with verbose specs:
+- **Lost signal** - Important decisions buried in 50 pages of detail
+- **Cognitive overload** - Humans can't hold >7 concepts in working memory
+- **Spec decay** - Nobody updates 2,000-line docs, so they become stale
+- **Implementation drift** - By the time you're done writing, requirements changed
 
----
+Traditional specs fail because they're too heavyweight. Vibe coding fails because there's no shared understanding.
 
-## How It's Different
+## The Solution: Lean Specs
 
-**Not a code generation tool** - No automated workflows or slash commands. Just specs for alignment and AI context.
+**LeanSpec = Agile principles applied to specifications**
 
-**Not "vibe coding"** - Enough structure for AI agents to act on. Team alignment through shared documentation.
+Start with minimal structure. Add detail iteratively as you learn. Keep specs focused and actionable.
 
-**Not a change-tracking system** - Direct spec editing with version control. Philosophy over process.
-
-LeanSpec is markdown files with structure. No ceremony, no overhead. Realistic 10-30% productivity improvement through better human-AI alignment.
-
-📖 [Full comparison & realistic expectations →](https://www.lean-spec.dev/docs/comparison)
-
----
-
-## How It Works
-
-Here's an actual spec from this project (287 lines):
+- **Simple** - Markdown files with minimal ceremony
+- **Small** - Under 2,000 tokens so AI maintains high performance
+- **Iterative** - Update specs as understanding evolves
+- **Adaptive** - Progressive structure grows with your needs
 
 ```yaml
 ---
 status: in-progress
 created: 2025-11-01
-tags: [cli, dx]
+tags: [api, auth]
 priority: high
 ---
 
-# Unified Dashboard
+# OAuth2 Authentication
 
-## Overview
-Combine `lean-spec board` and `lean-spec stats` into a single
-project health view for instant status insight.
+## Problem
+Users need secure third-party login without managing passwords.
 
-## Design
-- Board view (Kanban columns)
-- Key metrics (completion rate, avg spec size)
-- Bottleneck detection (specs >400 lines, stale specs)
-- Health score (0-100)
-
-## Plan
-1. Merge board + stats logic
-2. Add health scoring algorithm
-3. Implement bottleneck detection
-4. Add color-coded indicators
+## Solution
+Implement OAuth2 flow with Google and GitHub providers.
 
 ## Success Criteria
-- Shows full project state in <5 seconds
-- Identifies bottlenecks automatically
-- Used daily by team leads
+- Users can sign in with Google/GitHub
+- Tokens refresh automatically
+- Session persists across browser restarts
 ```
 
-**Key characteristics:**
-- Under 300 lines (fits in AI + human working memory)
-- Intent is clear ("what" and "why")
-- Implementation details are minimal
-- Both human and AI can understand
-- Structured metadata for tooling
+That's it. **287 tokens.** Both humans and AI understand the full context immediately.
+
+## What Makes It Different
+
+**Living documents, not upfront design** - Start with 3 lines. Update as you learn. Specs evolve with your code instead of rotting in a wiki.
+
+**Progressive structure** - Solo dev? Just status. Growing team? Add tags. Enterprise? Custom fields. Structure emerges from real needs, not "just in case" planning.
+
+**AI-native workflow** - Built for AI collaboration from day one. MCP integration + CLI commands mean your AI assistant reads, creates, and manages specs autonomously.
+
+**Proven velocity** - Built LeanSpec itself in 10 days: 80+ specs, full CLI/MCP/Web UI, production-ready. 90%+ AI-assisted development.
+
+📖 [Compare with Spec Kit, OpenSpec, Vibe Coding →](https://www.lean-spec.dev/docs/comparison)
+
+---
+
+## How It Works
+
+### Real Example from This Project
+
+Here's [spec 106](https://github.com/codervisor/lean-spec/tree/main/specs/106-ui-package-documentation) - documentation for the UI package:
+
+```yaml
+---
+status: complete
+created: 2025-11-18
+tags: []
+priority: medium
+---
+
+# UI Package Documentation and Integration
+
+## Overview
+The `@leanspec/ui` package and `lean-spec ui` CLI command are 
+complete and functional, but lack comprehensive documentation.
+
+## Problems
+- Users don't know the UI exists
+- Missing usage clarity and integration guidance
+- No docs-site page for visual spec management
+
+## Design
+Create comprehensive documentation:
+1. New guide: Visual Mode (how to use UI)
+2. New reference: UI Package (technical details)
+3. Update CLI reference with `ui` command
+4. Add to Quick Start flow
+
+## Success Criteria
+- ✅ Full coverage in docs site
+- ✅ Prominent in Quick Start
+- ✅ Clear discovery path for users
+- ✅ Troubleshooting guide included
+```
+
+**Total size:** 1,847 tokens. Complete feature documentation with design and implementation plan.
+
+<p align="center">
+  <img src="docs-site/static/img/ui/ui-spec-detail.png" alt="Spec Detail View" width="800">
+  <br>
+  <em>Spec detail view showing structure, metadata, and content</em>
+</p>
+
+### The AI Workflow
+
+```bash
+# 1. Create spec with your AI assistant
+👤 You: "Create a spec for user authentication with OAuth2"
+🤖 AI: [creates specs/002-oauth-authentication/README.md]
+
+# 2. AI implements based on spec
+👤 You: "Implement spec 002"
+🤖 AI: [reads spec, writes code, tests, updates spec]
+
+# 3. Track progress
+$ lean-spec board
+📋 Planned (3)  ⏳ In Progress (1)  ✅ Complete (8)
+```
+
+**Why this works:**
+- **Lean** - Small specs avoid context rot, maintain AI performance
+- **Simple** - Clear structure AI can parse, humans can scan
+- **Iterative** - Update spec as you learn, keep it in sync
+- **Focused** - Intent explicit enough to guide implementation
 
 ---
 
 ## Core Principles
 
-LeanSpec is built on fundamental constraints of working with AI:
+LeanSpec applies lean thinking to specifications:
 
-### 🧠 Context Economy
-**Specs <300 lines fit in working memory**
+**🧠 Context Economy** - Keep specs under 2,000 tokens. AI performance degrades with verbosity even in 200K windows. Humans can't hold >7 concepts in working memory.
 
-AI performance degrades with longer context. Human attention is limited. Keep specs concise so both can process them effectively.
+**✂️ Signal-to-Noise** - Every word must inform decisions. Test: "What decision does this sentence enable?" If it doesn't answer, cut it.
 
-### ✂️ Signal-to-Noise Maximization
-**Every word informs decisions**
+**🎯 Intent Over Implementation** - Document why and what. Let how emerge through iteration. Requirements evolve—capture stable intent, not volatile details.
 
-Each sentence must answer: "What decision does this inform?" Cut everything else. Dense, actionable specs respect reader attention.
+**🌉 Bridge the Gap** - Clear structure (for AI) + natural language (for humans) = true collaboration. Simple markdown with just enough metadata.
 
-### 📈 Progressive Disclosure
-**Add structure when you feel pain**
+**📈 Progressive Disclosure** - Start minimal. Add structure only when you feel pain. Like agile ceremonies, complexity emerges from real needs.
 
-Solo dev needs just `status`. Teams add `tags` and `priority`. Enterprise adds custom fields. Structure adapts to you, not vice versa.
-
-### 🎯 Intent Over Implementation
-**Capture "why", let "how" emerge**
-
-Document problem, intent, and success criteria. Implementation details change—intent stays stable.
-
-### 🌉 Bridge the Gap
-**Both humans AND AI must understand**
-
-Clear structure for AI parsing. Natural language for human reasoning. True human-AI collaboration requires both.
-
----
-
-**These aren't preferences—they're constraints.** Physics (context windows), biology (working memory), and economics (token costs) dictate what works.
-
-📖 [Deep dive: First Principles Guide →](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles)
+📖 [Deep dive into the principles →](https://www.lean-spec.dev/docs/advanced/first-principles)
 
 ---
 
 ## Key Features
 
-### 🤖 AI-Native Integration
+### 🤖 Works with Your AI Tools
 
-Works with GitHub Copilot, Claude Code, OpenAI Codex, Cursor, and Windsurf. MCP-native specs work with any tool supporting Model Context Protocol.
+**Two integration methods for any AI coding assistant:**
 
-### 📊 Workflow Visibility
+**1. MCP Server** (Recommended) - AI-native structured access:
 
-Track progress from the terminal:
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["@leanspec/mcp"]
+    }
+  }
+}
+```
+
+**2. CLI Commands** - AI agents directly invoke commands:
+
+```bash
+lean-spec create <name>
+lean-spec search "<query>"
+lean-spec update <spec> --status in-progress
+```
+
+**SDD Workflow Guidance**: Both methods work with `AGENTS.md`—a system prompt that teaches your AI the Spec-Driven Development workflow, LeanSpec principles, and best practices.
+
+**Compatible with:**
+
+| Category | AI Tools |
+|----------|----------|
+| **CLI-based** | [GitHub Copilot CLI](https://github.com/features/copilot/cli), [Claude Code](https://www.claude.com/product/claude-code), [Gemini CLI](https://geminicli.com/), [Open Code](https://opencode.ai/) |
+| **IDE/Editor** | [VS Code (GitHub Copilot)](https://code.visualstudio.com/docs/copilot/overview), [Cursor](https://cursor.com/), [Windsurf](https://windsurf.com/), [Antigravity](https://antigravity.google/) |
+| **Cloud Coding Agents** | [GitHub Copilot Coding Agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent), [OpenAI Codex Cloud](https://developers.openai.com/codex/cloud/), [Replit AI](https://replit.com/ai) |
+
+Your AI can read, search, create, and manage specs—no manual copy-paste needed.
+
+### 📊 Instant Project Visibility
+
+Track progress from your terminal:
 
 ```bash
 $ lean-spec board
@@ -161,171 +240,200 @@ $ lean-spec board
 
 📅 Planned (11)
   🟠 High Priority
-    • readme-redesign-ai-first
-    • validate-output-lint-style
+    • user-authentication
+    • payment-integration
   
 ⏳ In Progress (2)
-    • unified-dashboard
-    • mcp-error-handling
+    • oauth-flow
+    • stripe-checkout
 
 ✅ Complete (14)
 ```
 
+<p align="center">
+  <img src="docs-site/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
+  <br>
+  <em>Visual Kanban board showing project status at a glance</em>
+</p>
+
 ```bash
 $ lean-spec stats
 
-📊 Project Stats
+📊 Project Health
 
   Total: 27 specs  |  Active: 13  |  Complete: 14
-  Completion: 52%  |  Avg size: 287 lines
+  Completion: 52%  |  Avg size: 1,847 tokens
+  
+  ⚠️ Bottlenecks Detected:
+    • spec-validation (3,127 tokens - consider splitting)
+    • oauth-flow (stale for 14 days)
 ```
 
-### 🎨 Progressive Structure
+<p align="center">
+  <img src="docs-site/static/img/ui/ui-dashboard.png" alt="Project Dashboard" width="800">
+  <br>
+  <em>Web UI dashboard with real-time project metrics and health indicators</em>
+</p>
 
-Start simple, add complexity when needed:
+### 🎨 Adaptive Structure (Progressive Disclosure)
+
+**Start simple. Scale iteratively as needs emerge:**
 
 ```yaml
-# Day 1: Solo dev
+# Solo developer - Day 1
+# Just status. That's it.
 status: planned
 
-# Week 2: Small team  
+# Small team - Week 2
+# Feeling coordination pain? Add tags and priority.
 status: in-progress
-tags: [api, feature]
+tags: [api, auth]
 priority: high
 
-# Month 3: Enterprise
+# Enterprise - Month 3
+# Scaling up? Add custom fields for your workflow.
+status: in-progress
+tags: [api, auth, security]
+priority: high
 assignee: alice
 epic: PROJ-123
 sprint: 2025-Q4-S3
+custom_field: your-value
 ```
 
-Custom fields fully supported. Adapts to your workflow as you grow.
+**Lean principle**: Don't add structure "just in case." Add it when you feel the pain. Full custom field support adapts to your workflow.
+
+<p align="center">
+  <img src="docs-site/static/img/ui/ui-project-stats.png" alt="Project Health Metrics" width="800">
+  <br>
+  <em>Project health dashboard showing how metadata enables powerful insights</em>
+</p>
+
+### 🚀 Tutorial Projects & Automation
+
+**Learn with complete examples:**
+```bash
+npx lean-spec init --example dark-theme
+```
+
+Three projects (beginner → advanced): `dark-theme`, `dashboard-widgets`, `api-refactor`
+
+**JSON output for CI/CD:**
+```bash
+lean-spec board --json | jq '.columns[]'
+lean-spec list --json --status=complete > report.json
+```
 
 ---
 
-## Quick Start (5 Minutes)
+## Quick Start
 
-### 1. Install & Initialize
+### Option 1: Start with an Example (Recommended)
+
+**Best way to learn—hands-on with a complete project:**
 
 ```bash
+# Clone a tutorial project
+npx lean-spec init --example dark-theme
+cd dark-theme
+
+# Install dependencies and start
+npm install
+npm start
+```
+
+You now have:
+- ✅ Working React app
+- ✅ LeanSpec already configured  
+- ✅ Real feature specs to learn from
+- ✅ Ready for the [tutorial](https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai)
+
+**Available examples:** `dark-theme`, `dashboard-widgets`, `api-refactor`
+
+### Option 2: Add to Your Project
+
+```bash
+# Install globally
 npm install -g lean-spec
+
+# Initialize in your project
 cd your-project
 lean-spec init
 ```
 
-### 2. Work with Your AI Tool
+Now you're ready to create specs with your AI assistant!
 
-**In Cursor, Copilot, or any AI coding assistant:**
-
-```
-👤 You: "Create a spec for user authentication with OAuth2."
-
-🤖 AI: [runs lean-spec create user-authentication]
-      "I've created specs/001-user-authentication/README.md..."
-
-👤 You: "Now implement the OAuth2 flow based on this spec."
-
-🤖 AI: [reads spec, implements code]
-      "I've implemented the OAuth2 provider in src/auth/oauth.ts..."
-```
-
-### 3. Track Progress
+### Visualize Your Project
 
 ```bash
-lean-spec board              # Check project status
-lean-spec view <spec> --json # AI-friendly output
-lean-spec update <spec> --status in-progress
+# Terminal UI
+lean-spec board              # Kanban view
+lean-spec stats              # Project metrics
+
+# Web UI  
+lean-spec ui                 # Opens http://localhost:3000
 ```
 
-### 4. Visual Mode (LeanSpec UI)
+<p align="center">
+  <img src="docs-site/static/img/ui/ui-dependency-graph.png" alt="Dependency Graph Visualization" width="800">
+  <br>
+  <em>Interactive dependency graph showing spec relationships</em>
+</p>
 
-```bash
-# Inside this monorepo (dev mode)
-lean-spec ui
+### Next Steps
 
-# Any other project (downloads the published UI bundle)
-npx @leanspec/ui
-```
-
-The command auto-detects your specs directory (or use `--specs <dir>`), starts the LeanSpec web UI in filesystem mode, and opens `http://localhost:3000`. Customize behavior with:
-
-- `--port <number>` – choose a different port
-- `--no-open` – skip opening the browser automatically
-- `--dry-run` – show the exact command/env without executing
-
-**Why this works:**
-- Specs <300 lines fit in AI context window
-- Structured format AI can parse and act on
-- You drive, AI executes
-
-**Next steps:**
-- [Full CLI Reference](https://www.lean-spec.dev/docs/reference/cli)
-- [Choose a Template](https://www.lean-spec.dev/docs/guide/templates)
-- [AI Agent Setup](AGENTS.md)
+- **Learn by doing:** [Your First Spec with AI](https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai) (10 min)
+- **Understand the principles:** [First Principles Guide](https://www.lean-spec.dev/docs/advanced/first-principles)
+- **Configure AI tools:** [MCP Integration](https://www.lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) for Claude/Cline/Zed
+- **Explore examples:** [Browse live specs from this project](https://github.com/codervisor/lean-spec/tree/main/specs)
 
 ---
 
-## Documentation Repository
+## Built with LeanSpec (Dogfooding)
 
-The Docusaurus site now lives in **codervisor/lean-spec-docs** and is pulled into this repo as the `docs-site/` git submodule. That keeps docs deployments independent while preserving a single source of truth inside this monorepo.
+**LeanSpec is built using LeanSpec.** Every feature has a spec. All follow the principles—small, intent-focused, AI-readable.
 
-### Clone with docs included
+**Project velocity:**
+- 🚀 **80+ specs** written and implemented  
+- ⏱️ **10 days** from first commit to production-ready v0.1
+- 🤖 **AI-assisted development** for 90%+ of features
+- 📊 **100% context economy compliance** (all specs &lt;2,000 tokens)
 
-```bash
-git clone --recurse-submodules https://github.com/codervisor/lean-spec.git
-# or, if you already cloned earlier
-git submodule update --init --recursive
-```
+**Live examples you can learn from:**
+- [UI Package Documentation](https://github.com/codervisor/lean-spec/tree/main/specs/106-ui-package-documentation) - Documentation project (1,847 tokens)
+- [Unified Dashboard](https://github.com/codervisor/lean-spec/tree/main/specs/045-unified-dashboard) - Complex CLI feature (287 tokens)
+- [MCP Server Architecture](https://github.com/codervisor/lean-spec/tree/main/specs/080-mcp-server-modular-architecture) - System refactor (1,847 tokens)
+- [Example Projects Scaffold](https://github.com/codervisor/lean-spec/tree/main/specs/114-example-projects-scaffold) - Tutorial system (1,392 tokens)
 
-### Work on the docs
-
-```bash
-cd docs-site        # inside the submodule
-pnpm install        # install docs dependencies (first run in the submodule)
-pnpm start          # run the docs dev server
-git commit -am "docs: ..." && git push  # push to codervisor/lean-spec-docs
-
-cd ..
-git add docs-site   # stage updated submodule pointer
-git commit -m "chore: bump docs-site"
-```
-
-Root scripts (`pnpm docs:dev|docs:build|docs:serve`) now forward into the submodule automatically, so you can continue to use the familiar commands from the repo root once the submodule is initialized.
+→ [Browse all 80+ specs](https://github.com/codervisor/lean-spec/tree/main/specs)
 
 ---
 
-## When to Use LeanSpec
+## Documentation & Resources
 
-| Use LeanSpec When: | Skip It When: |
-|---------------------|---------------|
-| Features span multiple files/components | Trivial bug fixes |
-| Architecture decisions need alignment | Self-explanatory refactors |
-| Guiding AI agents on complex features | Quick experiments |
-| Design rationale should be documented | Changes are obvious |
+### Getting Started
+- 📖 [Getting Started Guide](https://www.lean-spec.dev/docs/guide/getting-started) - 5-minute setup
+- 🎓 [First Spec Tutorial](https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai) - Hands-on learning (10 min)
+- 🧠 [First Principles](https://www.lean-spec.dev/docs/advanced/first-principles) - The philosophy explained
+- 🔍 [Understanding LeanSpec](https://www.lean-spec.dev/docs/guide/understanding-leanspec) - Core concepts
 
-📖 [Compare with other tools (Spec Kit, OpenSpec, etc.) →](https://www.lean-spec.dev/docs/comparison)
+### Usage Guides  
+- ⚡ [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands with examples
+- 🤖 [MCP Integration](https://www.lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) - Connect Claude, Cline, Zed
+- 📝 [Spec Structure](https://www.lean-spec.dev/docs/guide/usage/spec-structure) - Anatomy of good specs
+- 🔗 [Managing Dependencies](https://www.lean-spec.dev/docs/guide/usage/cli/dependencies) - Link related work
 
----
+### Advanced Topics
+- 🎯 [Context Engineering](https://www.lean-spec.dev/docs/advanced/context-engineering) - AI performance optimization
+- 🏗️ [Large Projects](https://www.lean-spec.dev/docs/tutorials/large-project-management) - Scaling strategies
+- ✍️ [AI-Assisted Spec Writing](https://www.lean-spec.dev/docs/advanced/ai-assisted-spec-writing) - Co-create with AI
+- 🔬 [Why AI Performance Degrades](https://www.lean-spec.dev/blog/ai-agent-performance) - The research
 
-## Built With LeanSpec
-
-**LeanSpec is built using LeanSpec.** Every feature has a spec. All follow the principles—under 300 lines, AI-readable, actively maintained.
-
-**Velocity:** 10 days from first commit to production. Full CLI, MCP server, and documentation site. 60+ specs written and implemented with AI agents.
-
-→ [Browse our specs](https://github.com/codervisor/lean-spec/tree/main/specs)
-
----
-
-## Learn More
-
-- [Getting Started Guide](https://www.lean-spec.dev/docs/guide/getting-started) - Complete setup walkthrough
-- [First Principles](https://www.lean-spec.dev/docs/guide/understanding#the-five-first-principles) - The philosophy behind LeanSpec
-- [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) - All commands with examples
-- [AI Agent Configuration](AGENTS.md) - Cursor, Copilot, Aider setup
-- [MCP Integration](https://www.lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) - Claude Desktop, Cline, Zed setup
-- [GitHub Issues](https://github.com/codervisor/lean-spec/issues) - Report bugs or request features
-- [Contributing Guide](CONTRIBUTING.md) - Join the project
+### Community
+- 💬 [GitHub Discussions](https://github.com/codervisor/lean-spec/discussions) - Ask questions, share ideas
+- 🐛 [Report Issues](https://github.com/codervisor/lean-spec/issues) - Bugs and feature requests  
+- 🤝 [Contributing Guide](CONTRIBUTING.md) - Join the project
+- 🌏 [中文文档](https://www.lean-spec.dev/zh-Hans/) - Chinese documentation
 
 ---
 
@@ -335,7 +443,29 @@ MIT - See [LICENSE](LICENSE)
 
 ---
 
+## What's New (v0.2.6)
+
+**Example Projects** - Scaffold complete tutorial projects: `npx lean-spec init --example dark-theme`
+
+**JSON Output** - All major commands support `--json` for automation and custom tooling
+
+**MCP Package** - Standalone `@leanspec/mcp` package for simpler AI tool integration
+
+**Template Simplification** - Direct markdown editing, no build step required
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
+
+---
+
 <p align="center">
-  <strong>Spec-Driven Development without the overhead.</strong><br>
-  Keep your specs short. Keep them clear. Keep them useful.
+  <strong>Lean Spec-Driven Development.</strong><br>
+  Start simple. Iterate fast. Stay aligned.
+</p>
+
+<p align="center">
+  <a href="https://www.lean-spec.dev/docs/guide/getting-started">Get Started</a>
+  •
+  <a href="https://github.com/codervisor/lean-spec/tree/main/specs">Browse Examples</a>
+  •
+  <a href="https://github.com/codervisor/lean-spec/discussions">Join Community</a>
 </p>
