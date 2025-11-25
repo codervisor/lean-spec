@@ -21,12 +21,14 @@ export function boardCommand(): Command {
     .option('--completion-only', 'Show only completion summary (no kanban)')
     .option('--tag <tag>', 'Filter by tag')
     .option('--assignee <name>', 'Filter by assignee')
+    .option('--json', 'Output as JSON')
     .action(async (options: {
       showComplete?: boolean;
       simple?: boolean;
       completionOnly?: boolean;
       tag?: string;
       assignee?: string;
+      json?: boolean;
     }) => {
       await showBoard(options);
     });
@@ -38,6 +40,7 @@ export async function showBoard(options: {
   completionOnly?: boolean;
   tag?: string;
   assignee?: string;
+  json?: boolean;
 }): Promise<void> {
   // Auto-check for conflicts before display
   await autoCheckIfEnabled();
@@ -61,7 +64,11 @@ export async function showBoard(options: {
   );
 
   if (specs.length === 0) {
-    console.log(chalk.dim('No specs found.'));
+    if (options.json) {
+      console.log(JSON.stringify({ columns: {}, total: 0 }, null, 2));
+    } else {
+      console.log(chalk.dim('No specs found.'));
+    }
     return;
   }
 
@@ -83,6 +90,32 @@ export async function showBoard(options: {
     if (status !== 'archived') {
       columns[status].push(spec);
     }
+  }
+
+  // JSON output
+  if (options.json) {
+    const completionMetrics = calculateCompletion(specs);
+    const velocityMetrics = calculateVelocityMetrics(specs);
+    
+    const jsonOutput = {
+      columns: {
+        planned: columns.planned.map(s => ({ path: s.path, priority: s.frontmatter.priority, assignee: s.frontmatter.assignee, tags: s.frontmatter.tags })),
+        'in-progress': columns['in-progress'].map(s => ({ path: s.path, priority: s.frontmatter.priority, assignee: s.frontmatter.assignee, tags: s.frontmatter.tags })),
+        complete: columns.complete.map(s => ({ path: s.path, priority: s.frontmatter.priority, assignee: s.frontmatter.assignee, tags: s.frontmatter.tags })),
+      },
+      summary: {
+        total: completionMetrics.totalSpecs,
+        active: completionMetrics.activeSpecs,
+        complete: completionMetrics.completeSpecs,
+        completionRate: completionMetrics.score,
+        velocity: {
+          avgCycleTime: velocityMetrics.cycleTime.average,
+          throughputPerWeek: velocityMetrics.throughput.perWeek / 7 * 7,
+        },
+      },
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return;
   }
 
   // Display header

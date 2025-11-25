@@ -13,7 +13,8 @@ export function checkCommand(): Command {
   return new Command('check')
     .description('Check for sequence conflicts')
     .option('-q, --quiet', 'Brief output')
-    .action(async (options: { quiet?: boolean }) => {
+    .option('--json', 'Output as JSON')
+    .action(async (options: { quiet?: boolean; json?: boolean }) => {
       const hasNoConflicts = await checkSpecs(options);
       process.exit(hasNoConflicts ? 0 : 1);
     });
@@ -25,6 +26,7 @@ export function checkCommand(): Command {
 export async function checkSpecs(options: {
   quiet?: boolean;
   silent?: boolean;
+  json?: boolean;
 } = {}): Promise<boolean> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -59,9 +61,26 @@ export async function checkSpecs(options: {
   
   if (conflicts.length === 0) {
     if (!options.quiet && !options.silent) {
-      console.log(chalk.green('✓ No sequence conflicts detected'));
+      if (options.json) {
+        console.log(JSON.stringify({ conflicts: [], hasConflicts: false }, null, 2));
+      } else {
+        console.log(chalk.green('✓ No sequence conflicts detected'));
+      }
     }
     return true;
+  }
+  
+  // JSON output
+  if (options.json) {
+    const jsonOutput = {
+      hasConflicts: true,
+      conflicts: conflicts.map(([seq, paths]) => ({
+        sequence: seq,
+        specs: paths,
+      })),
+    };
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return false;
   }
   
   // Report conflicts

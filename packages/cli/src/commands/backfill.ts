@@ -29,6 +29,7 @@ export interface BackfillOptions {
   includeAssignee?: boolean;
   includeTransitions?: boolean;
   specs?: string[]; // specific specs to target
+  json?: boolean;
 }
 
 /**
@@ -43,12 +44,14 @@ export function backfillCommand(): Command {
     .option('--assignee', 'Include assignee from first commit author')
     .option('--transitions', 'Include full status transition history')
     .option('--all', 'Include all optional fields (assignee + transitions)')
+    .option('--json', 'Output as JSON')
     .action(async (specs: string[] | undefined, options: {
       dryRun?: boolean;
       force?: boolean;
       assignee?: boolean;
       transitions?: boolean;
       all?: boolean;
+      json?: boolean;
     }) => {
       await backfillTimestamps({
         dryRun: options.dryRun,
@@ -56,6 +59,7 @@ export function backfillCommand(): Command {
         includeAssignee: options.assignee || options.all,
         includeTransitions: options.transitions || options.all,
         specs: specs && specs.length > 0 ? specs : undefined,
+        json: options.json,
       });
     });
 }
