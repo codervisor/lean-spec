@@ -6,7 +6,7 @@ import yaml from 'js-yaml';
 import { Command } from 'commander';
 import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
 import { getGlobalNextSeq } from '../utils/path-helpers.js';
-import { buildVariableContext, resolveVariables } from '../utils/variable-resolver.js';
+import { buildVariableContext, resolveVariables, type VariableContext } from '../utils/variable-resolver.js';
 import type { SpecPriority } from '../frontmatter.js';
 import { normalizeDateFields } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
@@ -178,7 +178,7 @@ export async function createSpec(name: string, options: {
 
   // Load spec template from .lean-spec/templates/
   let content: string;
-  let varContext: Record<string, unknown>;
+  let varContext: VariableContext;
   
   try {
     const template = await fs.readFile(templatePath, 'utf-8');
