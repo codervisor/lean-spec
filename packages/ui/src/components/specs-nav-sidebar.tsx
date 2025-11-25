@@ -395,12 +395,12 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
 
       <div className="relative flex-shrink-0">
         <aside className={cn(
-          "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background flex flex-col overflow-hidden transition-all duration-300",
+          "border-r border-border bg-background flex flex-col overflow-hidden transition-all duration-300",
           // Desktop behavior
-          "hidden lg:flex",
+          "hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]",
           mounted && isCollapsed ? "lg:w-0 lg:border-r-0" : "lg:w-[280px]",
           // Mobile behavior - show as overlay when open
-          mobileOpen && "fixed left-0 top-14 z-50 flex w-[280px]"
+          mobileOpen && "fixed inset-y-0 left-0 z-[60] flex w-[280px]"
         )}>
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
@@ -545,16 +545,6 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             <ChevronRight className="h-4 w-4" />
           </Button>
         )}
-
-        {/* Mobile floating toggle button - matches BackToTop/TOC style */}
-        <Button
-          onClick={() => setMobileOpen(true)}
-          size="icon"
-          className="lg:hidden fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
-          aria-label="Show specifications list"
-        >
-          <ListIconLucide className="h-5 w-5" />
-        </Button>
       </div>
     </TooltipProvider>
   );

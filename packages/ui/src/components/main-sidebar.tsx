@@ -98,12 +98,12 @@ export function MainSidebar() {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "sticky top-14 h-[calc(100vh-3.5rem)] border-r border-border bg-background transition-all duration-300 flex-shrink-0",
+          "border-r border-border bg-background transition-all duration-300 flex-shrink-0",
           // Desktop behavior
-          "hidden lg:flex",
+          "hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]",
           mounted && isCollapsed ? "lg:w-[60px]" : "lg:w-[240px]",
           // Mobile behavior - show as overlay when open
-          mobileOpen && "fixed left-0 top-14 z-50 flex w-[280px]"
+          mobileOpen && "fixed inset-y-0 left-0 z-[60] flex w-[280px]"
         )}
       >
         <div className="flex flex-col h-full w-full">
