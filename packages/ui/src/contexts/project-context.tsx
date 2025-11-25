@@ -69,15 +69,15 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       if (!currentProject && data.projects.length > 0) {
         const projectToSet = initialProjectId 
           ? data.projects.find((p: LocalProject) => p.id === initialProjectId)
-          : data.recentProjects[0] || data.projects[0];
+          : data.recentProjects?.[0] || data.projects[0];
         
         if (projectToSet) {
           setCurrentProject(projectToSet);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching projects:', err);
-      setError(err.message || 'Failed to load projects');
+      setError(err instanceof Error ? err.message : 'Failed to load projects');
     } finally {
       setIsLoading(false);
     }
@@ -96,9 +96,9 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
 
       // Refresh recent projects list
       await refreshProjects();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error switching project:', err);
-      setError(err.message || 'Failed to switch project');
+      setError(err instanceof Error ? err.message : 'Failed to switch project');
       throw err;
     }
   }, [refreshProjects]);
@@ -123,9 +123,9 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       const data = await response.json();
       await refreshProjects();
       return data.project;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error adding project:', err);
-      setError(err.message || 'Failed to add project');
+      setError(err instanceof Error ? err.message : 'Failed to add project');
       throw err;
     }
   }, [refreshProjects]);
@@ -148,9 +148,9 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       }
 
       await refreshProjects();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error removing project:', err);
-      setError(err.message || 'Failed to remove project');
+      setError(err instanceof Error ? err.message : 'Failed to remove project');
       throw err;
     }
   }, [currentProject, projects, refreshProjects]);
@@ -169,9 +169,9 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       }
 
       await refreshProjects();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error toggling favorite:', err);
-      setError(err.message || 'Failed to toggle favorite');
+      setError(err instanceof Error ? err.message : 'Failed to toggle favorite');
       throw err;
     }
   }, [refreshProjects]);
@@ -193,9 +193,9 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
       }
 
       await refreshProjects();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating project:', err);
-      setError(err.message || 'Failed to update project');
+      setError(err instanceof Error ? err.message : 'Failed to update project');
       throw err;
     }
   }, [refreshProjects]);
@@ -203,7 +203,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
   // Load projects on mount
   useEffect(() => {
     refreshProjects();
-  }, []);
+  }, [refreshProjects]);
 
   const value: ProjectContextType = {
     mode,
