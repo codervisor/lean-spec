@@ -43,7 +43,8 @@ import {
   Home,
   TrendingUp,
   Clock,
-  Maximize2
+  Maximize2,
+  List as ListIcon
 } from 'lucide-react';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
@@ -216,12 +217,29 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
       <header ref={headerRef} className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
         <div className="px-3 sm:px-6 py-3 sm:py-4">
           {/* Line 1: Spec number + H1 Title */}
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-2 sm:mb-3">
-            {spec.specNumber && (
-              <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
-            )}
-            {displayTitle}
-          </h1>
+          <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+              {spec.specNumber && (
+                <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+              )}
+              {displayTitle}
+            </h1>
+            
+            {/* Mobile Specs List Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden h-8 w-8 -mr-2 shrink-0 text-muted-foreground"
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.toggleSpecsSidebar) {
+                  window.toggleSpecsSidebar();
+                }
+              }}
+            >
+              <ListIcon className="h-5 w-5" />
+              <span className="sr-only">Toggle specs list</span>
+            </Button>
+          </div>
           
           {/* Line 2: Status, Priority, Tags, Actions */}
           <div className="flex flex-wrap items-center gap-2">

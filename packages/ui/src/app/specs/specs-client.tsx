@@ -26,7 +26,9 @@ import {
   FileText,
   GitBranch,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
@@ -254,41 +256,44 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   }, [specs, searchQuery, statusFilter, priorityFilter, sortBy, viewMode]);
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-background p-4">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-background p-2 sm:p-4">
       <div className={cn(
         "flex flex-col h-full mx-auto transition-all duration-300",
         isWideMode ? "w-full" : "max-w-7xl w-full"
       )}>
         {/* Unified Compact Header */}
-        <div className="flex-none mb-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Specifications</h1>
-                <p className="text-sm text-muted-foreground">
+        <div className="flex-none mb-3 sm:mb-4">
+          <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
+            {/* Title and Controls Row */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Specifications</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {filteredAndSortedSpecs.length} specs
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="flex items-center gap-0.5 sm:gap-1 bg-muted/50 p-0.5 sm:p-1 rounded-lg">
                   <Button
                     variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('list')}
-                    className="h-8 px-2 lg:px-3"
+                    className="h-7 sm:h-8 px-2 sm:px-3"
+                    title="List view"
                   >
-                    <ListIcon className="h-4 w-4 lg:mr-2" />
-                    <span className="hidden lg:inline">List</span>
+                    <ListIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden lg:inline ml-2">List</span>
                   </Button>
                   <Button
                     variant={viewMode === 'board' ? 'secondary' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('board')}
-                    className="h-8 px-2 lg:px-3"
+                    className="h-7 sm:h-8 px-2 sm:px-3"
+                    title="Board view"
                   >
-                    <LayoutGrid className="h-4 w-4 lg:mr-2" />
-                    <span className="hidden lg:inline">Board</span>
+                    <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden lg:inline ml-2">Board</span>
                   </Button>
                 </div>
 
@@ -296,62 +301,67 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsWideMode(!isWideMode)}
-                  className="h-10 w-10 text-muted-foreground hover:text-foreground"
+                  className="hidden md:flex h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground"
                   title={isWideMode ? "Exit wide mode" : "Enter wide mode"}
                 >
-                  {isWideMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  {isWideMode ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                 </Button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              <div className="relative flex-1 min-w-[200px] max-w-md">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* Search and Filters Row */}
+            <div className="flex flex-col gap-2">
+              {/* Search Bar - Full width on mobile */}
+              <div className="relative w-full">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Search specs..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9"
+                  className="pl-8 sm:pl-9 h-9 sm:h-10 w-full text-sm"
                 />
               </div>
 
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpecStatus | 'all')}>
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="planned">Planned</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="complete">Complete</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Filters - Horizontal scroll on mobile with snap points */}
+              <div className="flex items-center gap-2 overflow-x-auto snap-x snap-mandatory pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:pb-0 scrollbar-thin">
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpecStatus | 'all')}>
+                  <SelectTrigger className="w-[110px] sm:w-[130px] h-9 sm:h-10 flex-shrink-0 snap-start text-xs sm:text-sm">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="planned">Planned</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="complete">Complete</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-[110px] sm:w-[130px] h-9 sm:h-10 flex-shrink-0 snap-start text-xs sm:text-sm">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-                <SelectTrigger className="w-[180px] h-9">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="id-desc">Newest First</SelectItem>
-                  <SelectItem value="id-asc">Oldest First</SelectItem>
-                  <SelectItem value="updated-desc">Recently Updated</SelectItem>
-                  <SelectItem value="title-asc">Title (A-Z)</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                  <SelectTrigger className="w-[130px] sm:w-[170px] h-9 sm:h-10 flex-shrink-0 snap-start text-xs sm:text-sm">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="id-desc">Newest First</SelectItem>
+                    <SelectItem value="id-asc">Oldest First</SelectItem>
+                    <SelectItem value="updated-desc">Recently Updated</SelectItem>
+                    <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
@@ -382,7 +392,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
 
 function ListView({ specs }: { specs: Spec[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4 pb-8">
+    <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4 pb-2 sm:pb-4 md:pb-8">
       {specs.map(spec => {
         const priorityColors = {
           'critical': 'border-l-red-500',
@@ -398,78 +408,83 @@ function ListView({ specs }: { specs: Spec[] }) {
           <Card
             key={spec.id}
             className={cn(
-              "hover:shadow-lg transition-all duration-150 hover:scale-[1.01] border-l-4 cursor-pointer",
+              "hover:shadow-lg active:shadow-xl transition-all duration-150 hover:scale-[1.01] active:scale-[0.99] border-l-4 cursor-pointer touch-manipulation",
               borderColor
             )}
             onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
           >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-4">
+            {/* Mobile-optimized layout */}
+            <CardHeader className="pb-2 sm:pb-2.5 md:pb-3 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-4">
                 <div className="flex-1 min-w-0">
                   <Link href={`/specs/${spec.specNumber || spec.id}`}>
-                    <CardTitle className="text-lg font-semibold hover:text-primary transition-colors flex items-center">
+                    <CardTitle className="text-sm sm:text-base md:text-lg font-semibold hover:text-primary transition-colors flex items-start flex-wrap gap-1.5 sm:gap-2 leading-snug sm:leading-normal">
                       {spec.specNumber ? (
-                        <span className="font-mono text-base font-normal text-muted-foreground mr-3">
+                        <span className="font-mono text-xs sm:text-sm md:text-base font-normal text-muted-foreground flex-shrink-0">
                           #{spec.specNumber.toString().padStart(3, '0')}
                         </span>
                       ) : null}
-                      {spec.title || spec.specName}
+                      <span className="flex-1 break-words">{spec.title || spec.specName}</span>
                     </CardTitle>
                   </Link>
                   {spec.title && spec.title !== spec.specName && (
-                    <p className="text-xs font-mono text-muted-foreground mt-1.5 truncate">{spec.specName}</p>
+                    <p className="text-[11px] sm:text-xs font-mono text-muted-foreground mt-1 sm:mt-1.5 truncate">{spec.specName}</p>
                   )}
                 </div>
-                <div className="flex gap-2 shrink-0">
+                {/* Badges: responsive layout */}
+                <div className="flex gap-1.5 sm:gap-2 flex-wrap md:shrink-0">
                   {spec.status && <StatusBadge status={spec.status} />}
                   {spec.priority && <PriorityBadge priority={spec.priority} />}
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="flex items-center justify-between gap-4 pt-0">
-              {/* Metadata (Left) */}
-              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                {(spec.updatedAt || hasSubSpecs || hasDependencies) ? (
-                  <>
-                    {spec.updatedAt && (
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>Updated {formatRelativeTime(spec.updatedAt)}</span>
-                      </div>
-                    )}
-                    {hasSubSpecs && (
-                      <div className="flex items-center gap-1.5">
-                        <FileText className="h-3.5 w-3.5" />
-                        <span>+{spec.subSpecsCount} files</span>
-                      </div>
-                    )}
-                    {hasDependencies && (
-                      <div className="flex items-center gap-1.5">
-                        <GitBranch className="h-3.5 w-3.5" />
-                        <span>
-                          {spec.relationships!.dependsOn.length > 0 && `${spec.relationships!.dependsOn.length} deps`}
-                          {spec.relationships!.dependsOn.length > 0 && spec.relationships!.related.length > 0 && ', '}
-                          {spec.relationships!.related.length > 0 && `${spec.relationships!.related.length} related`}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <span className="invisible">No metadata</span> /* Keep height consistent */
+            <CardContent className="px-3 sm:px-4 md:px-6 pb-2.5 sm:pb-3 md:pb-6 pt-0">
+              {/* Metadata and Tags - Stack on mobile */}
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
+                {/* Metadata (Left) */}
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 text-[11px] sm:text-xs md:text-sm text-muted-foreground flex-wrap">
+                  {(spec.updatedAt || hasSubSpecs || hasDependencies) ? (
+                    <>
+                      {spec.updatedAt && (
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                          <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                          <span className="whitespace-nowrap">Updated {formatRelativeTime(spec.updatedAt)}</span>
+                        </div>
+                      )}
+                      {hasSubSpecs && (
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                          <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                          <span className="whitespace-nowrap">+{spec.subSpecsCount} files</span>
+                        </div>
+                      )}
+                      {hasDependencies && (
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                          <GitBranch className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                          <span className="whitespace-nowrap">
+                            {spec.relationships!.dependsOn.length > 0 && `${spec.relationships!.dependsOn.length} deps`}
+                            {spec.relationships!.dependsOn.length > 0 && spec.relationships!.related.length > 0 && ', '}
+                            {spec.relationships!.related.length > 0 && `${spec.relationships!.related.length} related`}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <span className="invisible hidden md:inline">No metadata</span> /* Keep height consistent on desktop */
+                  )}
+                </div>
+
+                {/* Tags (Right on desktop, below on mobile) */}
+                {spec.tags && spec.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2 md:justify-end md:shrink-0">
+                    {spec.tags.map(tag => (
+                      <Badge key={tag} variant="outline" className="text-[10px] sm:text-xs font-mono text-muted-foreground hover:text-foreground transition-colors h-5 sm:h-auto px-1.5 sm:px-2">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
                 )}
               </div>
-
-              {/* Tags (Right) */}
-              {spec.tags && spec.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-end shrink-0">
-                  {spec.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         );
@@ -489,6 +504,14 @@ interface BoardViewProps {
 function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
+  const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
+
+  const toggleColumn = (status: string) => {
+    setCollapsedColumns(prev => ({
+      ...prev,
+      [status]: !prev[status]
+    }));
+  };
 
   const columns = useMemo(() => {
     // Always show all columns, including archived (it will be rendered as collapsed bar when showArchived=false)
@@ -548,51 +571,68 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
   }, [draggingId, handleDragEnd, onStatusChange, specLookup]);
 
   return (
-    <div className="flex gap-6 h-full pb-2">
+    <div className="flex flex-col md:flex-row gap-3 sm:gap-4 md:gap-6 h-full pb-2 md:snap-x md:snap-mandatory overflow-y-auto md:overflow-y-hidden md:overflow-x-auto">
       {columns.map(column => {
         const Icon = column.config.icon;
         const isArchivedColumn = column.status === 'archived';
+        const isCollapsed = collapsedColumns[column.status];
 
         return (
           <div key={column.status} className={cn(
-            "flex flex-col h-full flex-1 min-w-[280px]",
-            isArchivedColumn && !showArchived && "w-14 min-w-[3.5rem] flex-none flex-shrink-0"
+            "flex flex-col flex-1 snap-start",
+            "h-auto md:h-full w-full md:w-auto flex-shrink-0",
+            isArchivedColumn && !showArchived ? "md:w-12 md:sm:w-14 md:min-w-[3rem] md:sm:min-w-[3.5rem] flex-none" : "md:min-w-[260px] md:sm:min-w-[280px] md:md:min-w-[300px]"
           )}>
             <div className={cn(
-              'flex-none mb-4 rounded-lg border-2 bg-background transition-all',
+              'flex-none mb-3 sm:mb-4 rounded-lg border-2 bg-background transition-all touch-manipulation',
               column.config.bgClass,
               column.config.borderClass,
-              isArchivedColumn ? 'cursor-pointer hover:opacity-80' : '',
-              isArchivedColumn && !showArchived ? 'py-6 px-2' : 'p-3'
+              isArchivedColumn ? 'cursor-pointer hover:opacity-80 active:opacity-70' : '',
+              isArchivedColumn && !showArchived ? 'py-4 sm:py-6 px-1.5 sm:px-2' : 'p-2.5 sm:p-3',
+              // Mobile collapsible header styling
+              'md:cursor-default cursor-pointer'
             )}
-              onClick={isArchivedColumn ? onToggleArchived : undefined}
+              onClick={() => {
+                if (isArchivedColumn) {
+                  onToggleArchived();
+                } else {
+                  // Only toggle collapse on mobile
+                  if (window.innerWidth < 768) {
+                    toggleColumn(column.status);
+                  }
+                }
+              }}
             >
               <h2 className={cn(
-                'text-lg font-semibold flex items-center gap-2',
+                'text-base sm:text-lg font-semibold flex items-center gap-1.5 sm:gap-2',
                 column.config.colorClass,
-                isArchivedColumn && !showArchived && 'flex-col text-sm gap-3'
+                isArchivedColumn && !showArchived && 'flex-col text-xs sm:text-sm gap-2 sm:gap-3'
               )}>
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                 {isArchivedColumn && !showArchived ? (
                   <>
-                    <span className="vertical-text text-sm whitespace-nowrap">
+                    <span className="vertical-text text-xs sm:text-sm whitespace-nowrap">
                       {column.config.title}
                     </span>
-                    <Badge variant="outline" className="text-xs">{column.specs.length}</Badge>
+                    <Badge variant="outline" className="text-[10px] sm:text-xs px-1 sm:px-2 h-4 sm:h-5">{column.specs.length}</Badge>
                   </>
                 ) : (
                   <>
-                    {column.config.title}
-                    <Badge variant="outline" className="ml-auto">{column.specs.length}</Badge>
+                    <span className="truncate flex-1">{column.config.title}</span>
+                    <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 h-4 sm:h-5 flex-shrink-0">{column.specs.length}</Badge>
+                    {/* Mobile collapse indicator */}
+                    <div className="md:hidden ml-2 text-muted-foreground/50">
+                      {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </div>
                   </>
                 )}
               </h2>
             </div>
 
-            {(!isArchivedColumn || showArchived) && (
+            {(!isArchivedColumn || showArchived) && !isCollapsed && (
               <div
                 className={cn(
-                  'space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors overflow-y-auto min-h-0',
+                  'space-y-2 sm:space-y-2.5 md:space-y-3 flex-1 rounded-xl border border-transparent p-1 transition-colors overflow-y-auto min-h-0 scrollbar-thin',
                   draggingId && 'border-dashed border-muted-foreground/40',
                   draggingId && activeDropZone === column.status && 'bg-muted/40 border-primary/50'
                 )}
@@ -624,49 +664,49 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                       onDragEnd={handleDragEnd}
                       aria-disabled={isUpdating}
                       className={cn(
-                        'relative hover:shadow-lg transition-all duration-150 hover:scale-[1.02] border-l-4 cursor-pointer group flex flex-col',
+                        'relative hover:shadow-lg active:shadow-xl transition-all duration-150 hover:scale-[1.02] active:scale-[0.99] border-l-4 cursor-pointer group flex flex-col touch-manipulation',
                         borderColor,
                         isUpdating && 'opacity-60 cursor-wait'
                       )}
                       onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
                     >
                       {isUpdating && (
-                        <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs font-medium z-10">
+                        <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs sm:text-sm font-medium z-10">
                           Updating...
                         </div>
                       )}
-                      <CardHeader className="p-4 pb-2 space-y-1.5">
+                      <CardHeader className="p-3 sm:p-4 pb-1.5 sm:pb-2 space-y-1 sm:space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-xs text-muted-foreground/70 group-hover:text-primary/60 transition-colors">
+                          <span className="font-mono text-[10px] sm:text-xs text-muted-foreground/70 group-hover:text-primary/60 transition-colors">
                             {spec.specNumber ? `#${spec.specNumber}` : ''}
                           </span>
                         </div>
                         <Link href={`/specs/${spec.specNumber || spec.id}`} className="block">
-                          <CardTitle className="text-sm font-semibold leading-snug hover:text-primary transition-colors line-clamp-3">
+                          <CardTitle className="text-xs sm:text-sm font-semibold leading-snug hover:text-primary transition-colors line-clamp-3">
                             {spec.title || spec.specName}
                           </CardTitle>
                         </Link>
                       </CardHeader>
-                      <CardContent className="p-4 pt-2 flex-1 flex flex-col justify-end">
-                        <div className="flex flex-col gap-3">
+                      <CardContent className="p-3 sm:p-4 pt-1.5 sm:pt-2 flex-1 flex flex-col justify-end">
+                        <div className="flex flex-col gap-2 sm:gap-3">
                           {spec.title && spec.title !== spec.specName && (
-                            <p className="text-xs font-mono text-muted-foreground truncate opacity-70">
+                            <p className="text-[10px] sm:text-xs font-mono text-muted-foreground truncate opacity-70">
                               {spec.specName}
                             </p>
                           )}
 
-                          <div className="flex items-center justify-between gap-2 pt-1">
+                          <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
                             {spec.priority ? <PriorityBadge priority={spec.priority} /> : <div />}
 
                             {spec.tags && spec.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 justify-end">
+                              <div className="flex flex-wrap gap-0.5 sm:gap-1 justify-end">
                                 {spec.tags.slice(0, 2).map(tag => (
-                                  <Badge key={tag} variant="outline" className="text-[10px] px-1.5 h-5 font-mono text-muted-foreground/80">
+                                  <Badge key={tag} variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5 font-mono text-muted-foreground/80">
                                     {tag}
                                   </Badge>
                                 ))}
                                 {spec.tags.length > 2 && (
-                                  <Badge variant="outline" className="text-[10px] px-1.5 h-5 font-mono text-muted-foreground/80">
+                                  <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 h-4 sm:h-5 font-mono text-muted-foreground/80">
                                     +{spec.tags.length - 2}
                                   </Badge>
                                 )}
@@ -681,9 +721,9 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
 
                 {column.specs.length === 0 && (
                   <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
-                    <CardContent className="py-8 text-center">
-                      <Icon className={cn('mx-auto h-8 w-8 mb-2', column.config.colorClass, 'opacity-50')} />
-                      <p className="text-sm text-muted-foreground">Drop here to move specs</p>
+                    <CardContent className="py-6 sm:py-8 text-center px-2">
+                      <Icon className={cn('mx-auto h-6 w-6 sm:h-8 sm:w-8 mb-1.5 sm:mb-2', column.config.colorClass, 'opacity-50')} />
+                      <p className="text-xs sm:text-sm text-muted-foreground">Drop here to move specs</p>
                     </CardContent>
                   </Card>
                 )}

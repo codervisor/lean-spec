@@ -565,4 +565,29 @@ html.changing-theme * {
   .scrollbar-auto-hide:hover::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground) / 0.3);
   }
+
+  /* Touch-friendly interactions */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth scrolling with momentum on mobile */
+  .scroll-smooth-mobile {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Snap scrolling for horizontal board view */
+  .snap-x {
+    scroll-snap-type: x mandatory;
+  }
+
+  .snap-start {
+    scroll-snap-align: start;
+  }
+
+  .snap-mandatory {
+    scroll-snap-type: x mandatory;
+  }
 }
