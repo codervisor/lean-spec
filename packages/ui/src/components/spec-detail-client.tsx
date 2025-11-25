@@ -413,19 +413,20 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
                 components={{
                   a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
                   pre: ({ children, ...props }) => {
+                    // Safely get the first child element
+                    const childArray = React.Children.toArray(children);
+                    const firstChild = childArray[0];
+                    
                     // Check if this is a mermaid code block
-                    const child = React.Children.only(children) as React.ReactElement<{
-                      className?: string;
-                      children?: React.ReactNode;
-                    }>;
                     if (
-                      React.isValidElement(child) &&
-                      child.type === 'code' &&
-                      typeof child.props.className === 'string' &&
-                      child.props.className.includes('language-mermaid')
+                      React.isValidElement(firstChild) &&
+                      firstChild.type === 'code' &&
+                      typeof (firstChild.props as { className?: string }).className === 'string' &&
+                      (firstChild.props as { className?: string }).className?.includes('language-mermaid')
                     ) {
-                      const code = typeof child.props.children === 'string'
-                        ? child.props.children
+                      const codeProps = firstChild.props as { children?: React.ReactNode };
+                      const code = typeof codeProps.children === 'string'
+                        ? codeProps.children
                         : '';
                       return <MermaidDiagram code={code} />;
                     }
