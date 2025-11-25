@@ -10,6 +10,9 @@ interface MermaidDiagramProps {
   code: string;
 }
 
+// Counter for generating unique IDs
+let diagramIdCounter = 0;
+
 export function MermaidDiagram({ code }: MermaidDiagramProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [svg, setSvg] = React.useState<string>('');
@@ -39,12 +42,14 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
         mermaid.initialize({
           startOnLoad: false,
           theme: resolvedTheme === 'dark' ? 'dark' : 'default',
-          securityLevel: 'loose',
+          // Use 'strict' for security - specs are developer-authored
+          // but we still want to prevent potential XSS from code blocks
+          securityLevel: 'strict',
           fontFamily: 'inherit',
         });
 
-        // Generate unique ID for the diagram
-        const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
+        // Generate unique ID for the diagram using counter
+        const id = `mermaid-${Date.now()}-${++diagramIdCounter}`;
         const cleanedCode = code.trim();
 
         const { svg: renderedSvg } = await mermaid.render(id, cleanedCode);

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-25'
 tags:
   - ui
@@ -8,15 +8,19 @@ tags:
   - visualization
 priority: high
 created_at: '2025-11-25T09:18:07.795Z'
-updated_at: '2025-11-25T09:46:08.354Z'
+updated_at: '2025-11-25T09:50:35.092Z'
 transitions:
   - status: in-progress
     at: '2025-11-25T09:46:08.354Z'
+  - status: complete
+    at: '2025-11-25T09:50:35.092Z'
+completed_at: '2025-11-25T09:50:35.092Z'
+completed: '2025-11-25'
 ---
 
 # Native Diagram Rendering in Spec Detail View
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-25 · **Tags**: ui, ux, feature, visualization
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-25 · **Tags**: ui, ux, feature, visualization
 
 **Project**: lean-spec  
 **Team**: Core Development
