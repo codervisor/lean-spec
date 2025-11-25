@@ -202,6 +202,38 @@ See [docs/agents/PUBLISHING.md](docs/agents/PUBLISHING.md) for the complete rele
 
 **How to split:** Use `lean-spec analyze <spec>`, `lean-spec split`, and `lean-spec compact` commands. See [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md) for detailed examples.
 
+## Parallel Development
+
+Need to work on multiple specs at once? Use Git worktrees for complete code isolation:
+
+```bash
+# Create worktree for spec 045
+lean-spec update 045 --status in-progress
+git worktree add .worktrees/spec-045-dashboard -b feature/045-dashboard
+cd .worktrees/spec-045-dashboard
+# Implement spec 045...
+
+# Meanwhile, start spec 047 in a separate worktree
+cd ~/project  # Back to main
+lean-spec update 047 --status in-progress
+git worktree add .worktrees/spec-047-timestamps -b feature/047-timestamps
+```
+
+**Best Practices:**
+- **Naming**: Use `spec-<number>-<short-name>` for worktrees
+- **Branches**: Feature branch per spec (`feature/045-dashboard`)
+- **Cleanup**: `git worktree remove <path>` after merge
+- **Status**: Update spec status from main worktree
+- **Ignore**: Add `.worktrees/` to `.gitignore`
+
+**Full guide:** See [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md) for complete patterns.
+
+## FAQ
+
+**Q: How do I work on multiple specs at once?**
+
+Use Git worktrees. Each worktree gives you an isolated working directory with its own branch while sharing the same Git history. See [Parallel Development](#parallel-development) above and [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md) for detailed patterns.
+
 ---
 
 **Remember**: LeanSpec is a mindset, not a rulebook. When in doubt, apply the first principles in order: Context Economy → Signal-to-Noise → Intent Over Implementation → Bridge the Gap → Progressive Disclosure. Use `lean-spec --help` to discover features as needed.
