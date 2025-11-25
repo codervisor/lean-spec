@@ -21,6 +21,7 @@ import { MarkdownLink } from '@/components/markdown-link';
 import { TableOfContents, TableOfContentsSidebar } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
 import { SpecDependencyGraph } from '@/components/spec-dependency-graph';
+import { MermaidDiagram } from '@/components/mermaid-diagram';
 import {
   Dialog,
   DialogContent,
@@ -411,6 +412,27 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
                 rehypePlugins={[rehypeHighlight, rehypeSlug]}
                 components={{
                   a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
+                  pre: ({ children, ...props }) => {
+                    // Safely get the first child element
+                    const childArray = React.Children.toArray(children);
+                    const firstChild = childArray[0];
+                    
+                    // Check if this is a mermaid code block
+                    if (
+                      React.isValidElement(firstChild) &&
+                      firstChild.type === 'code' &&
+                      typeof (firstChild.props as { className?: string }).className === 'string' &&
+                      (firstChild.props as { className?: string }).className?.includes('language-mermaid')
+                    ) {
+                      const codeProps = firstChild.props as { children?: React.ReactNode };
+                      const code = typeof codeProps.children === 'string'
+                        ? codeProps.children
+                        : '';
+                      return <MermaidDiagram code={code} />;
+                    }
+                    // Default pre rendering
+                    return <pre {...props}>{children}</pre>;
+                  },
                 }}
               >
                 {displayContent}
