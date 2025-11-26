@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **MCP-first agent experience** (spec 121) - Enhanced AI agent workflow with better SDD compliance
+  - Multi-tool symlink support: `lean-spec init` now creates tool-specific symlinks (CLAUDE.md, GEMINI.md → AGENTS.md)
+  - New `--agent-tools` flag for non-interactive mode (`--agent-tools all`, `--agent-tools claude,gemini`, `--agent-tools none`)
+  - MCP-first AGENTS.md rewrite emphasizing MCP tools as primary method over CLI
+  - New MCP prompt: `checkpoint` - Periodic SDD compliance reminder for long sessions
+  - New MCP prompt: `create-spec` - Guided spec creation workflow with dependency linking
+  - Stale spec warnings in board output
+  - SDD Workflow Checkpoints section in AGENTS.md
+- **Dependency alignment validation** (spec 122) - Automated detection of content/frontmatter misalignment
+  - New `--check-deps` flag for `lean-spec validate` command
+  - `DependencyAlignmentValidator` scans spec content for references to other specs
+  - Detects patterns like "spec 045", "depends on", "related to", "builds on", etc.
+  - Outputs actionable fix commands (e.g., `lean-spec link <spec> --related 045`)
+  - MCP `validate` tool now supports `checkDeps` option
+  - Added Core Rule #8 in AGENTS.md: "ALWAYS link spec dependencies"
+- **Native diagram rendering in Web UI** (spec 119) - Mermaid diagram support in spec detail view
+  - Client-side Mermaid rendering for flowcharts, sequence diagrams, class diagrams, etc.
+  - Dark mode theme support with automatic theme switching
+  - Error handling with fallback to code block display
+  - Lazy loading for optimal bundle size (only loads when diagrams present)
+- **Parallel spec implementation workflow** (spec 118) - Documentation for concurrent spec development
+  - Git worktrees pattern for working on multiple specs simultaneously
+  - Patterns for solo developers, teams, and experimental work
+  - Best practices for worktree naming, branch strategy, and cleanup
+  - Added to AGENTS.md FAQ section
+
+### Changed
+- **AGENTS.md restructured for MCP-first approach**
+  - MCP tools listed before CLI commands
+  - Added "How to Manage Specs" section with MCP vs CLI comparison table
+  - Added "SDD Workflow Checkpoints" with before/during/after task reminders
+  - Added "Common Mistakes to Avoid" section with clear ❌/✅ examples
+- **Quality Standards updated** - Added `--check-deps` validation to required checks before completing work
+
+### Fixed
+- All existing specs now have aligned dependencies (19+ specs fixed after running `validate --check-deps`)
+
 ## [0.2.6] - 2025-11-25
 
 ### Added
