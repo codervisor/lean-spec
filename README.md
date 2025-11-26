@@ -1,7 +1,7 @@
 # LeanSpec
 
 <p align="center">
-  <img src="docs-site/static/img/logo-with-bg.svg" alt="LeanSpec Logo" width="120" height="120">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/logo-with-bg.svg" alt="LeanSpec Logo" width="120" height="120">
 </p>
 
 <p align="center">
