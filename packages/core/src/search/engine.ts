@@ -44,9 +44,14 @@ export interface SearchableSpec {
  * 
  * @param spec - Spec to check
  * @param queryTerms - Terms that must all be present
- * @returns True if all terms are found somewhere in the spec
+ * @returns True if all terms are found somewhere in the spec, false for empty queryTerms
  */
 export function specContainsAllTerms(spec: SearchableSpec, queryTerms: string[]): boolean {
+  // Return false for empty query to match main search function behavior
+  if (queryTerms.length === 0) {
+    return false;
+  }
+  
   // Combine all searchable text from the spec
   const allText = [
     spec.title || '',
