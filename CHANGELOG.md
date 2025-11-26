@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.7] - 2025-11-26
 
 ### Added
+- **AI tool auto-detection** (spec 126) - Smart defaults for `lean-spec init`
+  - Auto-detect installed AI CLI tools (Aider, Claude, Codex, Copilot, Cursor, Droid, Gemini, OpenCode, Windsurf)
+  - Detection via CLI commands, config directories, and environment variables
+  - Shows detected tools with reasons before AI tools prompt
+  - Pre-selects detected tools in checkbox for better UX
+  - Fallback to `copilot` only (AGENTS.md) when nothing detected
 - **MCP-first agent experience** (spec 121) - Enhanced AI agent workflow with better SDD compliance
   - Multi-tool symlink support: `lean-spec init` now creates tool-specific symlinks (CLAUDE.md, GEMINI.md → AGENTS.md)
   - New `--agent-tools` flag for non-interactive mode (`--agent-tools all`, `--agent-tools claude,gemini`, `--agent-tools none`)
