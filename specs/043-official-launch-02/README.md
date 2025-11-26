@@ -9,8 +9,10 @@ tags:
 priority: critical
 related:
   - '054'
+  - 090-leanspec-sdd-case-studies
+  - 058-docs-overview-polish
 created_at: '2025-11-04T00:00:00Z'
-updated_at: '2025-11-11T06:41:01.866Z'
+updated_at: '2025-11-26T02:35:55.285Z'
 completed_at: '2025-11-11T06:41:01.866Z'
 completed: '2025-11-11'
 transitions:

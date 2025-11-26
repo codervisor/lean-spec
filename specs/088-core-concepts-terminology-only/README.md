@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:09:38.041Z'
-updated_at: '2025-11-17T09:14:30.117Z'
+updated_at: '2025-11-26T02:35:46.418Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:10:38.350Z'
@@ -16,6 +16,8 @@ transitions:
     at: '2025-11-17T09:14:30.117Z'
 completed_at: '2025-11-17T02:10:43.845Z'
 completed: '2025-11-17'
+related:
+  - 096-docs-beginner-first-reorg
 ---
 
 # Core Concepts: Real SDD Terminology Only

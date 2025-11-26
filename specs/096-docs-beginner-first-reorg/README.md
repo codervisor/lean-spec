@@ -7,7 +7,7 @@ tags:
   - beginner-friendly
 priority: high
 created_at: '2025-11-17T07:51:56.155Z'
-updated_at: '2025-11-17T08:35:19.888Z'
+updated_at: '2025-11-26T02:35:47.462Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T08:35:10.599Z'
@@ -15,6 +15,12 @@ transitions:
     at: '2025-11-17T08:35:19.888Z'
 completed_at: '2025-11-17T08:35:19.888Z'
 completed: '2025-11-17'
+related:
+  - 088-core-concepts-terminology-only
+  - 089-sdd-practical-tutorials
+  - 090-leanspec-sdd-case-studies
+  - 091-chinese-localization-strategy
+  - 092-docs-site-submodule-migration
 ---
 
 # Documentation: Beginner-First Reorganization

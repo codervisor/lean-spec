@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:11:56.264Z'
-updated_at: '2025-11-17T09:14:54.020Z'
+updated_at: '2025-11-26T02:35:46.942Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:12:47.218Z'
@@ -16,6 +16,12 @@ transitions:
     at: '2025-11-17T09:14:54.020Z'
 completed_at: '2025-11-17T02:12:47.445Z'
 completed: '2025-11-17'
+related:
+  - 071-simplified-token-validation
+  - 082-web-realtime-sync-architecture
+  - 067-monorepo-core-extraction
+  - 043-official-launch-02
+  - 096-docs-beginner-first-reorg
 ---
 
 # LeanSpec Dogfooding: Real SDD Case Studies

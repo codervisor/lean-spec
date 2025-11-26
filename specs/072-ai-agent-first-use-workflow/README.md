@@ -8,12 +8,15 @@ tags:
   - mcp
 priority: high
 created_at: '2025-11-13T08:20:28.110Z'
-updated_at: '2025-11-17T08:18:44.417Z'
+updated_at: '2025-11-26T02:35:28.449Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T08:21:45.345Z'
   - status: planned
     at: '2025-11-17T08:18:44.417Z'
+related:
+  - 121-mcp-first-agent-experience
+  - 110-project-aware-agents-generation
 ---
 
 # ai-agent-first-use-workflow

@@ -8,11 +8,18 @@ tags:
   - dx
 priority: high
 created_at: '2025-11-20T06:23:35.088Z'
+related:
+  - 121-mcp-first-agent-experience
+  - 072-ai-agent-first-use-workflow
+updated_at: '2025-11-26T02:35:28.452Z'
+depends_on:
+  - 073-template-engine-agents-md
+  - 086-template-component-deduplication
 ---
 
 # Context-Aware AGENTS.md Generation for Init
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-20
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-20 · **Tags**: init, templates, ai-agents, dx
 
 **Project**: lean-spec  
 **Team**: Core Development

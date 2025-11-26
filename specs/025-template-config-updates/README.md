@@ -1,11 +1,20 @@
 ---
 status: planned
-created: 2025-11-03
-tags: [templates, polish]
+created: '2025-11-03'
+tags:
+  - templates
+  - polish
 priority: low
+related:
+  - 024-pattern-aware-list-grouping
+created_at: '2025-11-26T02:36:00.273Z'
+updated_at: '2025-11-26T02:36:00.273Z'
 ---
 
 # Template Config Updates
+
+> **Status**: 🗓️ Planned · **Priority**: Low · **Created**: 2025-11-03 · **Tags**: templates, polish
+
 
 > Update all template configs to use new format consistently
 

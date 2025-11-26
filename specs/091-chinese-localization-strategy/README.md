@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:12:58.531Z'
-updated_at: '2025-11-17T12:52:05.092Z'
+updated_at: '2025-11-26T02:35:47.208Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:14:06.440Z'
@@ -18,11 +18,16 @@ transitions:
     at: '2025-11-17T12:52:05.092Z'
 completed_at: '2025-11-17T02:14:06.656Z'
 completed: '2025-11-17'
+depends_on:
+  - 064-docs-site-zh-translation
+related:
+  - 089-sdd-practical-tutorials
+  - 096-docs-beginner-first-reorg
 ---
 
 # Comprehensive Chinese Localization for LeanSpec
 
-> **Status**: 📋 Planned · **Priority**: High · **Created**: 2025-11-17
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17
 
 **Project**: lean-spec  
 **Team**: Core Development

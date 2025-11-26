@@ -3,6 +3,133 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 
 /**
+ * AI Tool configuration for symlink generation
+ * Maps tool keys to their expected instruction file names
+ */
+export interface AIToolConfig {
+  file: string;        // The filename expected by the tool (e.g., 'CLAUDE.md')
+  description: string; // Human-readable description for prompts
+  default: boolean;    // Whether to include by default in quick start
+  usesSymlink: boolean; // Whether this tool uses a symlink (false for AGENTS.md itself)
+}
+
+export type AIToolKey = 'claude' | 'gemini' | 'copilot' | 'cursor' | 'windsurf' | 'cline' | 'warp';
+
+export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
+  claude: {
+    file: 'CLAUDE.md',
+    description: 'Claude Code / Claude Desktop (CLAUDE.md)',
+    default: true,
+    usesSymlink: true,
+  },
+  gemini: {
+    file: 'GEMINI.md',
+    description: 'Gemini CLI (GEMINI.md)',
+    default: false,
+    usesSymlink: true,
+  },
+  copilot: {
+    file: 'AGENTS.md',
+    description: 'GitHub Copilot (AGENTS.md - default)',
+    default: true,
+    usesSymlink: false, // Primary file, no symlink needed
+  },
+  cursor: {
+    file: 'AGENTS.md',
+    description: 'Cursor (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+  },
+  windsurf: {
+    file: 'AGENTS.md',
+    description: 'Windsurf (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+  },
+  cline: {
+    file: 'AGENTS.md',
+    description: 'Cline (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+  },
+  warp: {
+    file: 'AGENTS.md',
+    description: 'Warp Terminal (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+  },
+};
+
+export interface SymlinkResult {
+  file: string;
+  created?: boolean;
+  skipped?: boolean;
+  error?: string;
+}
+
+/**
+ * Create symlinks for selected AI tools pointing to AGENTS.md
+ */
+export async function createAgentToolSymlinks(
+  cwd: string,
+  selectedTools: AIToolKey[]
+): Promise<SymlinkResult[]> {
+  const results: SymlinkResult[] = [];
+  const isWindows = process.platform === 'win32';
+
+  // Get unique files that need symlinks (exclude AGENTS.md itself)
+  const filesToCreate = new Set<string>();
+  for (const tool of selectedTools) {
+    const config = AI_TOOL_CONFIGS[tool];
+    if (config.usesSymlink) {
+      filesToCreate.add(config.file);
+    }
+  }
+
+  for (const file of filesToCreate) {
+    const targetPath = path.join(cwd, file);
+    
+    try {
+      // Check if file already exists
+      try {
+        await fs.access(targetPath);
+        results.push({ file, skipped: true });
+        continue;
+      } catch {
+        // File doesn't exist, good to create
+      }
+
+      if (isWindows) {
+        // Windows: Create a copy instead of symlink (symlinks require admin privileges)
+        // The copy will be a regular file pointing users to edit AGENTS.md instead
+        const windowsContent = `# ${file}
+
+> **Note**: This file is a copy of AGENTS.md for tools that expect ${file}.
+> 
+> **Important**: Edit AGENTS.md instead. Then run \`lean-spec init\` to regenerate this file,
+> or manually copy AGENTS.md to ${file}.
+
+See AGENTS.md for the full LeanSpec AI agent instructions.
+`;
+        await fs.writeFile(targetPath, windowsContent, 'utf-8');
+        results.push({ file, created: true, error: 'created as copy (Windows)' });
+      } else {
+        // Unix: Create symbolic link
+        await fs.symlink('AGENTS.md', targetPath);
+        results.push({ file, created: true });
+      }
+    } catch (error) {
+      results.push({ 
+        file, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
  * Detect common system prompt files in a directory
  */
 export async function detectExistingSystemPrompts(cwd: string): Promise<string[]> {

@@ -12,6 +12,10 @@ related:
   - 048-spec-complexity-analysis
   - 043-official-launch-02
   - 012-sub-spec-files
+  - 053-spec-assets-philosophy
+  - 071-simplified-token-validation
+created_at: '2025-11-26T02:35:37.506Z'
+updated_at: '2025-11-26T02:35:51.359Z'
 ---
 
 # LeanSpec First Principles (第一性原理)

@@ -8,8 +8,9 @@ tags:
 priority: high
 related:
   - 043-official-launch-02
+  - 024-pattern-aware-list-grouping
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-05T05:44:40.533Z'
+updated_at: '2025-11-26T02:35:41.622Z'
 completed_at: '2025-11-05T05:44:40.533Z'
 completed: '2025-11-05'
 transitions:
