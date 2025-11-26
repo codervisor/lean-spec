@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { loadAllSpecs } from '../../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../../frontmatter.js';
-import { searchSpecs, type SearchableSpec } from '@leanspec/core';
+import { advancedSearchSpecs, type SearchableSpec } from '@leanspec/core';
 import { formatErrorMessage, loadSubSpecMetadata } from '../helpers.js';
 import type { ToolDefinition, SpecData } from '../types.js';
 
@@ -61,10 +61,13 @@ export async function searchSpecsData(query: string, options: {
     title: spec.frontmatter.title as string | undefined,
     description: spec.frontmatter.description as string | undefined,
     content: spec.content,
+    created: spec.frontmatter.created,
+    updated: spec.frontmatter.updated_at,
+    assignee: spec.frontmatter.assignee,
   }));
 
-  // Use intelligent search engine
-  const searchResult = searchSpecs(query, searchableSpecs, {
+  // Use advanced search engine (supports boolean operators, field filters, fuzzy matching)
+  const searchResult = advancedSearchSpecs(query, searchableSpecs, {
     maxMatchesPerSpec: 5,
     contextLength: 80,
   });
@@ -124,25 +127,34 @@ export function searchTool(): ToolDefinition {
     'search',
     {
       title: 'Search Specs',
-      description: `Intelligent relevance-ranked search across all specification content. Uses field-weighted scoring (title > tags > description > content) to return the most relevant specs.
+      description: `Advanced search across all specification content with support for boolean operators, field filters, date ranges, and fuzzy matching.
 
-**Query Formulation Tips:**
-- Use 2-4 specific terms for best results (e.g., "search ranking" not "AI agent integration coding agent orchestration")
-- All terms must appear in the SAME field/line to match - keep queries focused
-- Prefer nouns and technical terms over common words
-- Use filters (status, tags, priority) to narrow scope instead of adding more search terms
+**Query Syntax:**
+- Simple terms: \`api authentication\` (implicit AND)
+- Boolean: \`api AND auth\`, \`frontend OR backend\`, \`api NOT deprecated\`
+- Field filters: \`status:in-progress\`, \`tag:api\`, \`priority:high\`, \`title:dashboard\`
+- Date filters: \`created:>2025-11-01\`, \`created:2025-01..2025-11-15\`
+- Fuzzy matching: \`authetication~\` (matches "authentication" despite typo)
+- Exact phrases: \`"token refresh"\`
+- Grouping: \`(frontend OR backend) AND api\`
+
+**Query Tips:**
+- Use 2-4 specific terms for best results
+- Cross-field matching: terms can span title, tags, description, content
+- Combine field filters with search terms: \`tag:api status:planned oauth\`
 
 **Examples:**
-- Good: "search ranking" or "token validation"
-- Good: "api" with tags filter ["integration"]  
-- Poor: "AI agent integration coding agent orchestration" (too many terms, unlikely all in one line)
+- \`api authentication\` - Find specs with both terms
+- \`status:in-progress tag:api\` - API specs being worked on
+- \`created:>2025-11-01\` - Recently created specs
+- \`"user session" OR "token refresh"\` - Either phrase
 
 Returns matching specs with relevance scores, highlighted excerpts, and metadata.`,
       inputSchema: {
-        query: z.string().describe('Search term or phrase. Use 2-4 specific terms. All terms must appear in the same field/line to match. For broad concepts, use fewer terms + filters instead of long queries.'),
-        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Limit search to specs with this status.'),
-        tags: z.array(z.string()).optional().describe('Limit search to specs with these tags. Use this to narrow scope instead of adding more search terms.'),
-        priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Limit search to specs with this priority.'),
+        query: z.string().describe('Search query with optional advanced syntax. Supports: boolean operators (AND/OR/NOT), field filters (status:, tag:, priority:, title:, created:), fuzzy matching (term~), exact phrases ("phrase"), and parentheses for grouping.'),
+        status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Pre-filter by status (applied before query parsing).'),
+        tags: z.array(z.string()).optional().describe('Pre-filter by tags (applied before query parsing).'),
+        priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Pre-filter by priority (applied before query parsing).'),
       },
       outputSchema: {
         results: z.array(z.object({
