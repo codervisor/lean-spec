@@ -115,9 +115,10 @@ export function containsAllTerms(text: string, queryTerms: string[]): boolean {
  * 
  * @param text - Text to search
  * @param queryTerms - Terms to find
- * @returns True if any term is found
+ * @returns True if any term is found, false for empty queryTerms
  */
 export function containsAnyTerm(text: string, queryTerms: string[]): boolean {
+  // Note: returns false for empty queryTerms (no terms to match)
   const textLower = text.toLowerCase();
   return queryTerms.some(term => textLower.includes(term));
 }
