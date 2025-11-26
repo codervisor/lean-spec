@@ -43,3 +43,15 @@ export { viewSpec, openSpec, viewCommand, openCommand } from './viewer.js';
 // Server commands
 export { startMcpServer, mcpCommand } from './mcp.js';
 export { startUi, uiCommand } from './ui.js';
+
+// Agent orchestration commands (spec 123)
+export {
+  agentCommand,
+  runAgent,
+  showAgentStatus,
+  listAgents,
+  setDefaultAgent,
+  type AgentType,
+  type AgentConfig,
+  type AgentSession,
+} from './agent.js';
