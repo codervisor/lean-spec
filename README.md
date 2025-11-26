@@ -416,7 +416,7 @@ lean-spec ui                 # Opens http://localhost:3000
 If you feel LeanSpec could benefit your daily work or your company, please add the author's Wechat account noting "LeanSpec" to enter the discussion group.
 
 <p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="Contact Me on WeChat" width="800">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="Contact Me on WeChat" height="360">
   <br>
   <em>Contact Me on WeChat</em>
 </p>
