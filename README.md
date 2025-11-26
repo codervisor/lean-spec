@@ -18,7 +18,9 @@
   •
   <a href="#quick-start"><strong>Quick Start</strong></a>
   •
-  <a href="https://github.com/codervisor/lean-spec/tree/main/specs"><strong>Live Examples</strong></a>
+  <a href="https://web.lean-spec.dev"><strong>Live Examples</strong></a>
+  •
+  <a href="https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
 ---
