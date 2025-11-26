@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-26'
 tags:
   - onboarding
@@ -7,15 +7,19 @@ tags:
   - agents-md
 priority: high
 created_at: '2025-11-26T08:24:50.022Z'
-updated_at: '2025-11-26T08:24:54.329Z'
+updated_at: '2025-11-26T08:27:32.463Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T08:24:54.329Z'
+  - status: complete
+    at: '2025-11-26T08:27:32.463Z'
+completed_at: '2025-11-26T08:27:32.463Z'
+completed: '2025-11-26'
 ---
 
 # Streamline Onboarding: Clear Project Context Section
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-26 · **Tags**: onboarding, user-experience, agents-md
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-26 · **Tags**: onboarding, user-experience, agents-md
 
 **Project**: lean-spec  
 **Team**: Core Development
