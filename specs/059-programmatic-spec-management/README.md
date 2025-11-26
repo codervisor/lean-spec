@@ -19,7 +19,9 @@ related:
   - 018-spec-validation
   - 012-sub-spec-files
   - 066-context-economy-thresholds-refinement
-updated_at: '2025-11-16T13:59:12.743Z'
+  - 045-unified-dashboard
+  - 060-core-concepts-coherence
+updated_at: '2025-11-26T02:54:14.350Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T10:24:05.467Z'

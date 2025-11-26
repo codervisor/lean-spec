@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { loadAllSpecs } from '../../spec-loader.js';
-import { formatErrorMessage, specToData } from '../helpers.js';
+import { formatErrorMessage, specToData, getStaleSpecs } from '../helpers.js';
 import type { ToolDefinition, BoardData } from '../types.js';
 
 /**
@@ -41,12 +41,28 @@ export function boardTool(): ToolDefinition {
       inputSchema: {},
       outputSchema: {
         board: z.any(),
+        warnings: z.array(z.string()).optional(),
       },
     },
     async (_input, _extra) => {
       try {
         const board = await getBoardData();
-        const output = { board };
+        
+        // Check for stale specs (in-progress for > 7 days)
+        const staleSpecs = getStaleSpecs(board);
+        const warnings: string[] = [];
+        
+        if (staleSpecs.length > 0) {
+          for (const spec of staleSpecs) {
+            warnings.push(`⚠️ Spec "${spec.name}" has been in-progress for ${spec.daysStale} days. Consider updating status.`);
+          }
+        }
+        
+        const output = { 
+          board,
+          ...(warnings.length > 0 ? { warnings } : {}),
+        };
+        
         return {
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,

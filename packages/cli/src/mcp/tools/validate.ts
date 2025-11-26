@@ -15,10 +15,11 @@ export function validateTool(): ToolDefinition {
     'validate',
     {
       title: 'Validate Specs',
-      description: 'Validate specifications for quality issues like excessive length, missing sections, or complexity problems. Use this before committing changes or for project health checks.',
+      description: 'Validate specifications for quality issues like excessive length, missing sections, or complexity problems. Use this before committing changes or for project health checks. Use checkDeps to detect content/frontmatter dependency misalignment.',
       inputSchema: {
         specs: z.array(z.string()).optional().describe('Specific specs to validate. If omitted, validates all specs in the project.'),
         maxLines: z.number().optional().describe('Custom line limit for complexity checks (default: 400 lines).'),
+        checkDeps: z.boolean().optional().describe('Check for content/frontmatter dependency alignment. Detects when spec content references other specs but those references are not in frontmatter depends_on/related fields.'),
       },
       outputSchema: {
         passed: z.boolean(),
@@ -41,6 +42,7 @@ export function validateTool(): ToolDefinition {
         const passed = await validateSpecs({
           maxLines: input.maxLines,
           specs: input.specs,
+          checkDeps: input.checkDeps,
         });
 
         const output = {

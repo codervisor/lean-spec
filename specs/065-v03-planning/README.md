@@ -15,11 +15,16 @@ depends_on:
   - 067-monorepo-core-extraction
   - 035-live-specs-showcase
   - 075-intelligent-search-engine
+related:
+  - 043-official-launch-02
+  - 034-copilot-slash-commands
+  - 036-pm-integrations
+updated_at: '2025-11-26T02:54:21.239Z'
 ---
 
 # LeanSpec v0.3 - Performance & AI Agent Optimization
 
-> **Status**: 📅 Planned · **Priority**: Critical · **Created**: 2025-11-11
+> **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-11-11 · **Tags**: release, planning, milestone, v0.3.0, performance, ai-agents
 
 **Project**: lean-spec  
 **Team**: Core Development

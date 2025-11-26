@@ -5,7 +5,7 @@
 import * as fs from 'node:fs/promises';
 import { countTokens } from '@leanspec/core';
 import { loadSubFiles } from '../spec-loader.js';
-import type { SpecData, SubSpecReference } from './types.js';
+import type { SpecData, SubSpecReference, BoardData } from './types.js';
 
 /**
  * Format error messages for MCP responses
@@ -13,6 +13,45 @@ import type { SpecData, SubSpecReference } from './types.js';
 export function formatErrorMessage(prefix: string, error: unknown): string {
   const errorMsg = error instanceof Error ? error.message : String(error);
   return `${prefix}: ${errorMsg}`;
+}
+
+/**
+ * Stale spec information
+ */
+export interface StaleSpec {
+  name: string;
+  daysStale: number;
+}
+
+/**
+ * Get specs that have been in-progress for too long
+ * Default threshold: 7 days
+ */
+export function getStaleSpecs(board: BoardData, thresholdDays = 7): StaleSpec[] {
+  const now = new Date();
+  const staleSpecs: StaleSpec[] = [];
+  
+  for (const spec of board.columns['in-progress']) {
+    // Check updated_at first, then fall back to created date
+    const lastActivity = spec.updated_at || spec.created;
+    if (!lastActivity) continue;
+    
+    try {
+      const activityDate = new Date(lastActivity);
+      const daysSinceActivity = Math.floor((now.getTime() - activityDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysSinceActivity >= thresholdDays) {
+        staleSpecs.push({
+          name: spec.name,
+          daysStale: daysSinceActivity,
+        });
+      }
+    } catch {
+      // Invalid date format, skip
+    }
+  }
+  
+  return staleSpecs;
 }
 
 /**
@@ -30,6 +69,7 @@ export function specToData(spec: any): SpecData {
     assignee: spec.frontmatter.assignee,
     description: spec.frontmatter.description,
     customFields: spec.frontmatter.custom,
+    updated_at: spec.frontmatter.updated_at,
   };
 }
 

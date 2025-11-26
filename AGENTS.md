@@ -188,6 +188,7 @@ Hard dependency - spec cannot start until dependencies complete.
   - Never leave specs with stale status
 - **Always validate before completing work:**
   - Run `node bin/lean-spec.js validate` to check spec structure and frontmatter (use local build, not `npx`)
+  - Run `node bin/lean-spec.js validate --check-deps` to verify content/frontmatter dependency alignment
   - Run `cd docs-site && npm run build` to ensure documentation site builds successfully
   - Update spec status to `complete` with `lean-spec update <spec> --status complete`
   - Fix any validation errors or build failures before marking work complete

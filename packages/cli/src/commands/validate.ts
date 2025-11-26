@@ -21,6 +21,7 @@ import { StructureValidator } from '../validators/structure.js';
 import { CorruptionValidator } from '../validators/corruption.js';
 import { SubSpecValidator } from '../validators/sub-spec.js';
 import { ComplexityValidator } from '../validators/complexity.js';
+import { DependencyAlignmentValidator } from '../validators/dependency-alignment.js';
 import type { ValidationRule, ValidationResult } from '../utils/validation-framework.js';
 import { formatValidationResults, type FormatOptions } from '../utils/validate-formatter.js';
 
@@ -33,6 +34,7 @@ export interface ValidateOptions {
   json?: boolean;     // Shorthand for --format json
   rule?: string;      // Filter by specific rule name
   warningsOnly?: boolean; // Treat all issues as warnings, never fail (useful for CI)
+  checkDeps?: boolean; // Include dependency alignment check
 }
 
 interface ValidationResultWithSpec {
@@ -56,6 +58,7 @@ export function validateCommand(): Command {
     .option('--json', 'Output as JSON (shorthand for --format json)')
     .option('--rule <rule>', 'Filter by specific rule name (e.g., max-lines, frontmatter)')
     .option('--warnings-only', 'Treat all issues as warnings, never fail (useful for CI pre-release checks)')
+    .option('--check-deps', 'Check for content/frontmatter dependency alignment')
     .action(async (specs: string[] | undefined, options: ValidateOptions) => {
       const passed = await validateSpecs({
         maxLines: options.maxLines,
@@ -65,6 +68,7 @@ export function validateCommand(): Command {
         format: options.json ? 'json' : options.format,
         rule: options.rule,
         warningsOnly: options.warningsOnly,
+        checkDeps: options.checkDeps,
       });
       process.exit(passed ? 0 : 1);
     });
@@ -115,6 +119,20 @@ export async function validateSpecs(options: ValidateOptions = {}): Promise<bool
     new CorruptionValidator(),
     new SubSpecValidator({ maxLines: options.maxLines }),
   ];
+
+  // Add dependency alignment validator if requested
+  if (options.checkDeps) {
+    // Collect existing spec numbers for validation (only active specs, not archived)
+    const activeSpecs = await loadAllSpecs({ includeArchived: false });
+    const existingSpecNumbers = new Set<string>();
+    for (const s of activeSpecs) {
+      const match = s.name.match(/^(\d{3})/);
+      if (match) {
+        existingSpecNumbers.add(match[1]);
+      }
+    }
+    validators.push(new DependencyAlignmentValidator({ existingSpecNumbers }));
+  }
 
   // Run validation
   const results: ValidationResultWithSpec[] = [];

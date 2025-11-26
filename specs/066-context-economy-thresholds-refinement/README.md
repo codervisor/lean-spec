@@ -13,8 +13,9 @@ related:
   - 018-spec-validation
   - 059-programmatic-spec-management
   - 069-token-counting-utils
+  - 075-intelligent-search-engine
 created_at: '2025-11-11T06:58:44.846Z'
-updated_at: '2025-11-11T15:00:26.886Z'
+updated_at: '2025-11-26T02:54:20.162Z'
 completed_at: '2025-11-11T15:00:26.886Z'
 completed: '2025-11-11'
 transitions:
