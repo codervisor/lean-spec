@@ -303,4 +303,105 @@ Uses token bucket algorithm.
       expect(result.results.length).toBe(0);
     });
   });
+
+  describe('Cross-field matching (spec 124)', () => {
+    // Test specs designed to validate cross-field matching
+    const crossFieldSpecs: SearchableSpec[] = [
+      {
+        path: '123-ai-coding-agent-integration',
+        name: '123-ai-coding-agent-integration',
+        status: 'planned',
+        priority: 'high',
+        tags: ['ai', 'agent', 'integration'],
+        title: 'AI Coding Agent Integration',
+        description: 'Integrate AI coding agents into the workflow',
+        content: `
+## Overview
+This spec describes how to orchestrate multiple coding agents.
+The system will manage agent communication and task distribution.
+        `.trim(),
+      },
+      {
+        path: '099-simple-api-docs',
+        name: '099-simple-api-docs',
+        status: 'complete',
+        priority: 'low',
+        tags: ['docs', 'api'],
+        title: 'Simple API Documentation',
+        description: 'Document the REST API',
+        content: `
+## API Documentation
+Basic endpoint documentation.
+        `.trim(),
+      },
+    ];
+
+    it('should find specs when terms span multiple fields', () => {
+      // "AI" is in title/tags, "agent" is in title/tags/content, 
+      // "orchestrate" is only in content
+      // Old behavior: would NOT match because no single field has all 3 terms
+      // New behavior: SHOULD match because spec contains all terms across fields
+      const result = searchSpecs('AI agent orchestrate', crossFieldSpecs);
+      
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.name).toBe('123-ai-coding-agent-integration');
+    });
+
+    it('should find specs when query terms are in different fields', () => {
+      // "coding" is in title, "orchestrate" is in content only
+      const result = searchSpecs('coding orchestrate', crossFieldSpecs);
+      
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.name).toBe('123-ai-coding-agent-integration');
+    });
+
+    it('should include partial field matches for context', () => {
+      // Search for terms that span fields
+      const result = searchSpecs('AI orchestrate', crossFieldSpecs);
+      
+      expect(result.results.length).toBe(1);
+      // Should have matches from multiple fields (title for AI, content for orchestration)
+      expect(result.results[0].matches.length).toBeGreaterThan(0);
+      
+      // Verify we get matches from different fields
+      const matchFields = new Set(result.results[0].matches.map(m => m.field));
+      expect(matchFields.size).toBeGreaterThan(1);
+    });
+
+    it('should not match specs missing any query term', () => {
+      // "ai" and "agent" exist, but "blockchain" doesn't
+      const result = searchSpecs('ai agent blockchain', crossFieldSpecs);
+      
+      expect(result.results.length).toBe(0);
+    });
+
+    it('should still rank specs with terms in higher-weighted fields better', () => {
+      // Create specs where one has terms in title (high weight), other has terms only in content (low weight)
+      const rankingSpecs: SearchableSpec[] = [
+        {
+          path: 'content-only',
+          name: 'content-only',
+          status: 'planned',
+          title: 'Database System',
+          content: 'Uses OAuth authentication for user management',
+        },
+        {
+          path: 'title-match',
+          name: 'title-match',
+          status: 'planned',
+          title: 'OAuth Authentication User System',
+          content: 'Some other content',
+        },
+      ];
+
+      const result = searchSpecs('oauth authentication user', rankingSpecs);
+      
+      // Both should match (both have all 3 terms)
+      expect(result.results.length).toBe(2);
+      // Both are found - that's the key requirement for cross-field matching
+      const names = result.results.map(r => r.spec.name);
+      expect(names).toContain('content-only');
+      expect(names).toContain('title-match');
+    });
+  });
 });

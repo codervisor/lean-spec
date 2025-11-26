@@ -7,6 +7,7 @@ import {
   calculateMatchScore,
   calculateSpecScore,
   containsAllTerms,
+  containsAnyTerm,
   countOccurrences,
   findMatchPositions,
   FIELD_WEIGHTS,
@@ -48,6 +49,33 @@ describe('Search Scoring', () => {
 
     it('should handle empty query terms', () => {
       expect(containsAllTerms('test', [])).toBe(true);
+    });
+  });
+
+  describe('containsAnyTerm', () => {
+    it('should return true when any term is present', () => {
+      expect(containsAnyTerm('authentication', ['auth', 'flow'])).toBe(true);
+      expect(containsAnyTerm('flow control', ['auth', 'flow'])).toBe(true);
+      expect(containsAnyTerm('OAuth2 API', ['oauth', 'jwt'])).toBe(true);
+    });
+
+    it('should be case-insensitive', () => {
+      expect(containsAnyTerm('AUTHENTICATION', ['auth'])).toBe(true);
+      expect(containsAnyTerm('OAuth2', ['oauth2'])).toBe(true);
+    });
+
+    it('should return false when no terms are present', () => {
+      expect(containsAnyTerm('database', ['auth', 'flow'])).toBe(false);
+      expect(containsAnyTerm('', ['auth', 'flow'])).toBe(false);
+    });
+
+    it('should handle empty query terms', () => {
+      expect(containsAnyTerm('test', [])).toBe(false);
+    });
+
+    it('should handle single term queries', () => {
+      expect(containsAnyTerm('authentication flow', ['auth'])).toBe(true);
+      expect(containsAnyTerm('database', ['auth'])).toBe(false);
     });
   });
 

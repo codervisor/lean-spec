@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-26'
 tags:
   - search
@@ -10,11 +10,15 @@ tags:
   - power-users
 priority: medium
 created_at: '2025-11-26T06:26:37.183Z'
+updated_at: '2025-11-26T06:49:50.230Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-26T06:49:50.230Z'
 ---
 
 # Advanced Search Capabilities for Specs
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-26
+> **Status**: ⏳ In progress (Phase 1 ✅ Complete) · **Priority**: Medium · **Created**: 2025-11-26 · **Tags**: search, cli, mcp, core, dx, power-users
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -97,10 +101,10 @@ lean-spec search "tag:api status:planned created:>2025-11"
 
 ## Plan
 
-### Phase 1: Fix cross-field matching (High Priority)
-- [ ] Change `containsAllTerms` to check across entire spec, not per-field
-- [ ] Keep per-field scoring but allow spec-level term matching
-- [ ] Add unit tests for multi-term queries
+### Phase 1: Fix cross-field matching (High Priority) ✅
+- [x] Change `containsAllTerms` to check across entire spec, not per-field
+- [x] Keep per-field scoring but allow spec-level term matching
+- [x] Add unit tests for multi-term queries
 
 ### Phase 2: Advanced query syntax
 - [ ] Design query grammar and AST structure
@@ -114,10 +118,10 @@ lean-spec search "tag:api status:planned created:>2025-11"
 
 ## Test
 
-### Phase 1 tests
-- [ ] `"AI agent integration coding orchestration"` finds spec 123
-- [ ] Multi-term queries return relevant specs even if terms span fields
-- [ ] Scoring still reflects per-field relevance
+### Phase 1 tests ✅
+- [x] `"AI agent integration coding orchestration"` finds spec 123
+- [x] Multi-term queries return relevant specs even if terms span fields
+- [x] Scoring still reflects per-field relevance
 
 ### Phase 2 tests
 - [ ] Parse `"tag:api AND status:planned"` correctly
