@@ -25,7 +25,7 @@ import { getStatusIndicator } from '../utils/colors.js';
 /**
  * Supported agent types
  */
-export type AgentType = 'claude' | 'copilot' | 'aider' | 'gemini' | 'gh-coding' | 'continue' | 'custom';
+export type AgentType = 'claude' | 'copilot' | 'aider' | 'gemini' | 'gh-coding' | 'continue';
 
 /**
  * Agent execution mode
@@ -41,6 +41,14 @@ export interface AgentConfig {
   args?: string[];
   contextTemplate?: string;
   provider?: string; // For cloud agents
+}
+
+/**
+ * Extended config with agents
+ */
+interface AgentsConfig {
+  default?: string;
+  [key: string]: AgentConfig | string | undefined;
 }
 
 /**
@@ -110,6 +118,16 @@ Please follow the spec's design, plan, and test sections. Update the spec status
 };
 
 /**
+ * Get agents config from LeanSpec config with type safety
+ */
+function getAgentsFromConfig(config: LeanSpecConfig): AgentsConfig | undefined {
+  // The agents property may exist on config but is not in the base interface
+  // It's added dynamically when agents are configured
+  const configWithAgents = config as LeanSpecConfig & { agents?: AgentsConfig };
+  return configWithAgents.agents;
+}
+
+/**
  * Get agent configuration, merging defaults with user config
  */
 export async function getAgentConfig(
@@ -117,9 +135,10 @@ export async function getAgentConfig(
   config: LeanSpecConfig
 ): Promise<AgentConfig | null> {
   // Check user-defined agents first
-  const userAgents = (config as any).agents as Record<string, AgentConfig> | undefined;
-  if (userAgents?.[agentName]) {
-    return { ...DEFAULT_AGENTS[agentName], ...userAgents[agentName] };
+  const userAgents = getAgentsFromConfig(config);
+  const userAgent = userAgents?.[agentName];
+  if (userAgent && typeof userAgent !== 'string') {
+    return { ...DEFAULT_AGENTS[agentName], ...userAgent };
   }
   
   // Fall back to defaults
@@ -134,7 +153,7 @@ export async function getAgentConfig(
  * Get default agent from config or use 'claude' as fallback
  */
 export async function getDefaultAgent(config: LeanSpecConfig): Promise<string> {
-  const userAgents = (config as any).agents as { default?: string } | undefined;
+  const userAgents = getAgentsFromConfig(config);
   return userAgents?.default || 'claude';
 }
 
@@ -617,10 +636,10 @@ export async function listAgents(options: { json?: boolean } = {}): Promise<void
   }
   
   // Add user-defined agents
-  const userAgents = (config as any).agents as Record<string, AgentConfig> | undefined;
+  const userAgents = getAgentsFromConfig(config);
   if (userAgents) {
     for (const [name, agentConfig] of Object.entries(userAgents)) {
-      if (name !== 'default' && !agents[name]) {
+      if (name !== 'default' && !agents[name] && typeof agentConfig !== 'string') {
         const available = await isAgentAvailable(agentConfig);
         agents[name] = {
           type: agentConfig.type,
@@ -679,10 +698,11 @@ export async function setDefaultAgent(agent: string): Promise<void> {
     process.exit(1);
   }
   
-  // Update config
-  (config as any).agents = (config as any).agents || {};
-  (config as any).agents.default = agent;
-  await saveConfig(config);
+  // Update config with proper typing
+  const configWithAgents = config as LeanSpecConfig & { agents?: AgentsConfig };
+  configWithAgents.agents = configWithAgents.agents || {};
+  configWithAgents.agents.default = agent;
+  await saveConfig(configWithAgents);
   
   console.log(chalk.green(`✓ Default agent set to: ${agent}`));
 }
