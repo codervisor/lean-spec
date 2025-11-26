@@ -411,12 +411,12 @@ lean-spec ui                 # Opens http://localhost:3000
 - 🤝 [Contributing Guide](CONTRIBUTING.md) - Join the project
 - 🌏 [中文文档](https://www.lean-spec.dev/zh-Hans/) - Chinese documentation
 
-### Contact Me
+### 联系我 (Contact Me)
 
-If you feel LeanSpec could benefit your daily work or your company, please add the author's Wechat account noting "LeanSpec" to enter the discussion group.
+如果您觉得 LeanSpec 对您的日常工作或公司有帮助，欢迎添加作者微信（备注 "LeanSpec"）加入交流群。
 
 <p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="Contact Me on WeChat" height="360">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="微信联系" height="360">
   <br>
-  <em>Contact Me on WeChat</em>
+  <em>扫码添加微信</em>
 </p>
