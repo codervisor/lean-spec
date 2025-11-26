@@ -6,11 +6,14 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-13T08:40:40.882Z'
+related:
+  - 078-sub-spec-template-system
+updated_at: '2025-11-26T06:03:51.202Z'
 ---
 
 # Pass Content Directly to lean-spec create
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-13
+> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-13 · **Tags**: cli, dx
 
 **Project**: lean-spec  
 **Team**: Core Development

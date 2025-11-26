@@ -1,15 +1,24 @@
 ---
 status: planned
 created: '2025-11-02'
-tags: ["feature","ci","automation"]
+tags:
+  - feature
+  - ci
+  - automation
 priority: low
 depends_on:
   - 067-monorepo-core-extraction
+related:
+  - 066-context-economy-thresholds-refinement
+  - 069-token-counting-utils
+  - 071-simplified-token-validation
+created_at: '2025-11-26T06:03:38.663Z'
+updated_at: '2025-11-26T06:03:44.837Z'
 ---
 
 # github-action
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-02
+> **Status**: 🗓️ Planned · **Priority**: Low · **Created**: 2025-11-02 · **Tags**: feature, ci, automation
 
 ## Overview
 

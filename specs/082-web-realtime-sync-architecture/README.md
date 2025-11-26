@@ -9,7 +9,7 @@ tags:
   - v0.3.0
 priority: critical
 created_at: '2025-11-14T05:33:26.170Z'
-updated_at: '2025-11-26T02:35:14.294Z'
+updated_at: '2025-11-26T06:04:10.952Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T05:35:02.854Z'
@@ -22,6 +22,14 @@ related:
   - 065-v03-planning
   - 094-ai-chatbot-web-integration
   - 090-leanspec-sdd-case-studies
+  - 083-web-navigation-performance
+  - 059-programmatic-spec-management
+  - 084-sub-spec-visibility-in-tools
+  - 085-cli-relationship-commands
+  - 095-pr-migration-verification
+  - 099-enhanced-dependency-commands-cli-mcp
+  - 106-ui-package-documentation
+  - 109-local-project-switching
 completed_at: '2025-11-17T08:18:56.781Z'
 completed: '2025-11-17'
 ---

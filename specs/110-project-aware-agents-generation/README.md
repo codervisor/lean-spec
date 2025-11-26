@@ -11,7 +11,8 @@ created_at: '2025-11-20T06:23:35.088Z'
 related:
   - 121-mcp-first-agent-experience
   - 072-ai-agent-first-use-workflow
-updated_at: '2025-11-26T02:35:28.452Z'
+  - 122-ai-agent-deps-management-fix
+updated_at: '2025-11-26T06:04:18.723Z'
 depends_on:
   - 073-template-engine-agents-md
   - 086-template-component-deduplication

@@ -8,7 +8,7 @@ tags:
   - mcp
 priority: high
 created_at: '2025-11-13T08:20:28.110Z'
-updated_at: '2025-11-26T02:35:28.449Z'
+updated_at: '2025-11-26T06:04:18.719Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T08:21:45.345Z'
@@ -17,6 +17,13 @@ transitions:
 related:
   - 121-mcp-first-agent-experience
   - 110-project-aware-agents-generation
+  - 061-ai-assisted-spec-writing
+  - 034-copilot-slash-commands
+  - 070-mcp-token-counting-tool
+  - 076-programmatic-spec-relationships
+  - 078-sub-spec-template-system
+  - 094-ai-chatbot-web-integration
+  - 122-ai-agent-deps-management-fix
 ---
 
 # ai-agent-first-use-workflow

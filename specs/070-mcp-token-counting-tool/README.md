@@ -14,7 +14,8 @@ depends_on:
 related:
   - 059-programmatic-spec-management
   - 066-context-economy-thresholds-refinement
-updated_at: '2025-11-13T08:55:34.796Z'
+  - 072-ai-agent-first-use-workflow
+updated_at: '2025-11-26T06:03:45.112Z'
 completed_at: '2025-11-13T08:55:34.796Z'
 completed: '2025-11-13'
 transitions:

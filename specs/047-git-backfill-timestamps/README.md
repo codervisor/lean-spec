@@ -11,10 +11,11 @@ priority: medium
 related:
   - 046-stats-dashboard-refactor
   - 014-complete-custom-frontmatter
+  - 118-parallel-spec-implementation
 created_at: '2025-11-04T22:58:23+08:00'
-updated_at: '2025-11-04T15:08:31.110Z'
+updated_at: '2025-11-26T06:04:17.915Z'
 assignee: Marvin Zhang
-updated: '2025-11-04'
+updated: '2025-11-26'
 completed_at: '2025-11-04T15:08:31.110Z'
 completed: '2025-11-04'
 transitions:

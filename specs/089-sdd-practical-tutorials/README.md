@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:10:56.366Z'
-updated_at: '2025-11-26T02:35:46.689Z'
+updated_at: '2025-11-26T06:04:04.949Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:11:45.474Z'
@@ -19,6 +19,8 @@ completed: '2025-11-17'
 related:
   - 091-chinese-localization-strategy
   - 096-docs-beginner-first-reorg
+  - 088-core-concepts-terminology-only
+  - 095-pr-migration-verification
 ---
 
 # Step-by-Step SDD Tutorials for Real Practice

@@ -21,7 +21,12 @@ related:
   - 066-context-economy-thresholds-refinement
   - 045-unified-dashboard
   - 060-core-concepts-coherence
-updated_at: '2025-11-26T02:54:14.350Z'
+  - 035-live-specs-showcase
+  - 062-docs-info-architecture-v2
+  - 077-archiving-strategy
+  - 082-web-realtime-sync-architecture
+  - 085-cli-relationship-commands
+updated_at: '2025-11-26T06:03:58.539Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T10:24:05.467Z'

@@ -7,7 +7,7 @@ tags:
   - maintenance
 priority: high
 created_at: '2025-11-17T01:27:01.679Z'
-updated_at: '2025-11-17T01:40:10.673Z'
+updated_at: '2025-11-26T06:04:17.387Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T01:27:44.713Z'
@@ -15,6 +15,9 @@ transitions:
     at: '2025-11-17T01:40:10.673Z'
 completed_at: '2025-11-17T01:40:10.673Z'
 completed: '2025-11-17'
+related:
+  - 085-cli-relationship-commands
+  - 117-simplify-template-system
 ---
 
 # template-component-deduplication

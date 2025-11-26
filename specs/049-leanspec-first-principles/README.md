@@ -14,8 +14,12 @@ related:
   - 012-sub-spec-files
   - 053-spec-assets-philosophy
   - 071-simplified-token-validation
+  - 057-docs-validation-comprehensive
+  - 061-ai-assisted-spec-writing
+  - 062-docs-info-architecture-v2
+  - 069-token-counting-utils
 created_at: '2025-11-26T02:35:37.506Z'
-updated_at: '2025-11-26T02:35:51.359Z'
+updated_at: '2025-11-26T06:03:44.576Z'
 ---
 
 # LeanSpec First Principles (第一性原理)

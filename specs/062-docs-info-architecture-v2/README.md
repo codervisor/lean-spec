@@ -8,7 +8,7 @@ tags:
   - v0.2.0
 priority: high
 created_at: '2025-11-08T13:02:31.871Z'
-updated_at: '2025-11-10T07:12:35.179Z'
+updated_at: '2025-11-26T06:03:38.399Z'
 transitions:
   - status: in-progress
     at: '2025-11-08T13:04:23.997Z'
@@ -16,6 +16,13 @@ transitions:
     at: '2025-11-10T07:12:35.179Z'
 completed_at: '2025-11-10T07:12:35.179Z'
 completed: '2025-11-10'
+related:
+  - 061-ai-assisted-spec-writing
+  - 059-programmatic-spec-management
+  - 060-core-concepts-coherence
+  - 058-docs-overview-polish
+  - 049-leanspec-first-principles
+  - 043-official-launch-02
 ---
 
 # Documentation Information Architecture v2

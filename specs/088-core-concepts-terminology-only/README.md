@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:09:38.041Z'
-updated_at: '2025-11-26T02:35:46.418Z'
+updated_at: '2025-11-26T06:04:04.948Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:10:38.350Z'
@@ -18,6 +18,8 @@ completed_at: '2025-11-17T02:10:43.845Z'
 completed: '2025-11-17'
 related:
   - 096-docs-beginner-first-reorg
+  - 089-sdd-practical-tutorials
+  - 095-pr-migration-verification
 ---
 
 # Core Concepts: Real SDD Terminology Only

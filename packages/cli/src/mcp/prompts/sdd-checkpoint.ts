@@ -41,16 +41,31 @@ For any specs you've worked on:
 2. Document key decisions or changes in the spec content
 3. Link related specs if you discovered connections
 
+### Step 4: Validate (Before Completing)
+Before marking any spec as complete, run validation:
+\`\`\`
+validate { "checkDeps": true }
+\`\`\`
+
+This checks:
+- Spec structure and frontmatter
+- Content/frontmatter dependency alignment
+- Any referenced specs are properly linked
+
+Fix any warnings before marking specs complete.
+
 ### Action Items
 Based on the board review:
 1. List any specs with stale status
 2. Identify work being done without specs
 3. Suggest status updates needed
+4. Fix any dependency alignment warnings
 
 **Remember:** 
 - Specs track implementation, not documentation
 - Update status BEFORE starting work, AFTER completing
-- Keep specs in sync with actual progress`,
+- Keep specs in sync with actual progress
+- Always validate with \`--check-deps\` before completing`,
           },
         },
       ],

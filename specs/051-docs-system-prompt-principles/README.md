@@ -13,8 +13,11 @@ related:
   - 049-leanspec-first-principles
   - 050-tool-redesign-first-principles
   - 075-intelligent-search-engine
+  - 043-official-launch-02
+  - 056-docs-site-accuracy-audit
+  - 066-context-economy-thresholds-refinement
 created_at: '2025-11-05T00:00:00Z'
-updated_at: '2025-11-26T02:54:20.423Z'
+updated_at: '2025-11-26T06:03:38.668Z'
 completed_at: '2025-11-05T05:44:08.444Z'
 completed: '2025-11-05'
 transitions:

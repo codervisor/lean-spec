@@ -16,7 +16,11 @@ related:
   - 059-programmatic-spec-management
   - 048-spec-complexity-analysis
   - 070-mcp-token-counting-tool
-updated_at: '2025-11-13T02:49:45.179Z'
+  - 016-github-action
+  - 049-leanspec-first-principles
+  - 018-spec-validation
+  - 084-sub-spec-visibility-in-tools
+updated_at: '2025-11-26T06:03:57.997Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T02:35:30.196Z'

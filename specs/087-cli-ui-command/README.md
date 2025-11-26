@@ -14,7 +14,9 @@ related:
   - 082-web-realtime-sync-architecture
   - 105-docs-site-enhancements
   - 109-local-project-switching
-updated_at: '2025-11-20T05:50:48.137Z'
+  - 017-vscode-extension
+  - 106-ui-package-documentation
+updated_at: '2025-11-26T06:04:10.654Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T01:59:34.354Z'

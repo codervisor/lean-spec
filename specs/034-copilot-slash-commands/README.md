@@ -9,12 +9,14 @@ tags:
   - v0.2.0-optional
 priority: medium
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-26T02:54:20.940Z'
+updated_at: '2025-11-26T06:03:45.111Z'
 depends_on:
   - 067-monorepo-core-extraction
   - 017-vscode-extension
 related:
   - 065-v03-planning
+  - 043-official-launch-02
+  - 072-ai-agent-first-use-workflow
 ---
 
 # GitHub Copilot Chat Slash Commands & Prompts

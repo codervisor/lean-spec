@@ -10,7 +10,7 @@ tags:
   - v0.2.0
 priority: high
 created_at: '2025-11-04T00:00:00Z'
-updated_at: '2025-11-26T02:54:13.978Z'
+updated_at: '2025-11-26T06:04:18.186Z'
 completed_at: '2025-11-07T00:00:00Z'
 transitions:
   - status: complete
@@ -22,6 +22,10 @@ transitions:
 related:
   - 048-spec-complexity-analysis
   - 059-programmatic-spec-management
+  - 043-official-launch-02
+  - 054-validate-output-lint-style
+  - 109-local-project-switching
+  - 121-mcp-first-agent-experience
 ---
 
 # Unified Analytics & Velocity Tracking

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-26'
 tags:
   - ai-agents
@@ -9,7 +9,7 @@ tags:
   - process
 priority: high
 created_at: '2025-11-26T02:34:58.957Z'
-updated_at: '2025-11-26T02:46:33.158Z'
+updated_at: '2025-11-26T06:06:02.125Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T02:35:02.351Z'
@@ -17,13 +17,25 @@ transitions:
     at: '2025-11-26T02:36:46.160Z'
   - status: in-progress
     at: '2025-11-26T02:46:33.158Z'
+  - status: complete
+    at: '2025-11-26T06:06:02.125Z'
 completed_at: '2025-11-26T02:36:46.160Z'
 completed: '2025-11-26'
+depends_on:
+  - 045-unified-dashboard
+  - 086-template-component-deduplication
+  - 073-template-engine-agents-md
+related:
+  - 072-ai-agent-first-use-workflow
+  - 110-project-aware-agents-generation
+  - 071-simplified-token-validation
+  - 090-leanspec-sdd-case-studies
+  - 121-mcp-first-agent-experience
 ---
 
 # Fix AI Agents Not Following Dependency Management
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-26 · **Tags**: ai-agents, dx, quality, frontmatter, process
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-26 · **Tags**: ai-agents, dx, quality, frontmatter, process
 
 ## Problem Statement
 
@@ -129,20 +141,21 @@ File watcher or git hook that validates specs on save/commit.
 - [x] Only warn about active (non-archived) specs
 - [x] Add `checkDeps` option to MCP `validate` tool
 
-### Phase 2: Fix Existing Specs
-- [ ] Run `lean-spec validate --check-deps` and fix all 43 remaining warnings
-- [ ] Verify with `lean-spec validate --check-deps` showing 0 warnings
+### Phase 2: Fix Existing Specs ✅ DONE
+- [x] Run `lean-spec validate --check-deps` and fix all dependency warnings
+- [x] Verify with `lean-spec validate --check-deps` showing 0 dependency-alignment warnings
 
-### Phase 3: Workflow Integration
+### Phase 3: Workflow Integration ✅ DONE
 - [x] Update AGENTS.md with dependency linking rule (done earlier)
-- [ ] Update MCP prompts with validation step
-- [ ] Add `--check-deps` to Quality Standards checklist in AGENTS.md
+- [x] Update MCP prompts with validation step
+- [x] Add `--check-deps` to Quality Standards checklist in AGENTS.md
 
 ## Success Criteria
 
 - [x] `lean-spec validate --check-deps` detects content/frontmatter misalignment
-- [ ] Running `lean-spec validate --check-deps` on current specs shows 0 dependency warnings (38 warnings remaining - ongoing cleanup)
+- [x] Running `lean-spec validate --check-deps` on current specs shows 0 dependency-alignment warnings
 - [x] MCP spec creation workflow includes dependency check step (new `create-spec` prompt)
+- [x] MCP `sdd-checkpoint` prompt includes validation step with `--check-deps`
 - [ ] New specs created by agents have aligned dependencies (measure over 2 weeks)
 
 ## What Was Implemented

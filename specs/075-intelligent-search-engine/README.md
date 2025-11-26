@@ -10,12 +10,13 @@ tags:
   - v0.3.0
 priority: critical
 created_at: '2025-11-13T09:01:46.579Z'
-updated_at: '2025-11-26T02:54:20.427Z'
+updated_at: '2025-11-26T06:03:57.998Z'
 related:
   - 065-v03-planning
   - 059-programmatic-spec-management
   - 066-context-economy-thresholds-refinement
   - 051-docs-system-prompt-principles
+  - 084-sub-spec-visibility-in-tools
 completed_at: '2025-11-13T09:32:09.405Z'
 completed: '2025-11-13'
 transitions:

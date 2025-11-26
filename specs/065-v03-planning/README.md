@@ -19,7 +19,10 @@ related:
   - 043-official-launch-02
   - 034-copilot-slash-commands
   - 036-pm-integrations
-updated_at: '2025-11-26T02:54:21.239Z'
+  - 035-live-specs-showcase
+  - 067-monorepo-core-extraction
+  - 077-archiving-strategy
+updated_at: '2025-11-26T06:03:50.934Z'
 ---
 
 # LeanSpec v0.3 - Performance & AI Agent Optimization
