@@ -311,7 +311,7 @@ Next steps:
 - [x] Add "SDD Workflow Checkpoints" section to AGENTS.md
 - [x] Add "Common Mistakes" section with clear ❌/✅ examples
 - [x] Create `checkpoint` MCP prompt for periodic reminders
-- [ ] Add gentle reminders to MCP tool responses (optional future enhancement)
+- [x] Add gentle reminders to MCP tool responses
 - [x] Add stale spec warnings to board/list outputs
 
 ### Phase 4: Documentation & Testing

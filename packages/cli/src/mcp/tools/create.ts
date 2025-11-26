@@ -30,6 +30,7 @@ export function createTool(): ToolDefinition {
         success: z.boolean(),
         path: z.string(),
         message: z.string(),
+        reminder: z.string().optional(),
       },
     },
     async (input, _extra) => {
@@ -54,6 +55,7 @@ export function createTool(): ToolDefinition {
           success: true,
           path: capturedOutput.includes('Created:') ? capturedOutput.split('Created:')[1].split('\n')[0].trim() : '',
           message: `Spec '${input.name}' created successfully`,
+          reminder: "💡 Remember to update status to 'in-progress' when you start implementing! Use: update tool with status='in-progress'",
         };
 
         return {

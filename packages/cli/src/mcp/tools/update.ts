@@ -9,6 +9,22 @@ import { formatErrorMessage } from '../helpers.js';
 import type { ToolDefinition } from '../types.js';
 
 /**
+ * Get contextual reminder based on status change
+ */
+function getStatusReminder(newStatus?: SpecStatus): string | undefined {
+  switch (newStatus) {
+    case 'in-progress':
+      return "💡 Spec marked in-progress. Remember to document decisions in the spec as you work, and update to 'complete' when done!";
+    case 'complete':
+      return "✅ Spec marked complete! Consider: Did you document what you learned? Are there follow-up specs needed?";
+    case 'planned':
+      return "📋 Spec marked as planned. Update to 'in-progress' before you start implementing!";
+    default:
+      return undefined;
+  }
+}
+
+/**
  * Update tool definition
  */
 export function updateTool(): ToolDefinition {
@@ -27,6 +43,7 @@ export function updateTool(): ToolDefinition {
       outputSchema: {
         success: z.boolean(),
         message: z.string(),
+        reminder: z.string().optional(),
       },
     },
     async (input, _extra) => {
@@ -47,9 +64,11 @@ export function updateTool(): ToolDefinition {
 
         await updateSpec(input.specPath, updates);
 
+        const reminder = getStatusReminder(input.status as SpecStatus | undefined);
         const output = {
           success: true,
           message: `Spec updated successfully`,
+          ...(reminder ? { reminder } : {}),
         };
 
         return {

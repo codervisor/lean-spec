@@ -5,8 +5,8 @@
 import { z } from 'zod';
 import { loadAllSpecs } from '../../spec-loader.js';
 import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../../frontmatter.js';
-import { formatErrorMessage, specToData, loadSubSpecMetadata } from '../helpers.js';
-import type { ToolDefinition, SpecData } from '../types.js';
+import { formatErrorMessage, specToData, loadSubSpecMetadata, getStaleSpecs } from '../helpers.js';
+import type { ToolDefinition, SpecData, BoardData } from '../types.js';
 
 /**
  * List specs with optional filtering
@@ -67,6 +67,7 @@ export function listTool(): ToolDefinition {
       },
       outputSchema: {
         specs: z.array(z.any()),
+        warnings: z.array(z.string()).optional(),
       },
     },
     async (input, _extra) => {
@@ -80,7 +81,29 @@ export function listTool(): ToolDefinition {
           includeArchived: input.includeArchived,
         });
 
-        const output = { specs };
+        // Check for stale specs (only when not filtering by status)
+        const warnings: string[] = [];
+        if (!input.status) {
+          // Build a minimal board structure for stale detection
+          const inProgressSpecs = specs.filter(s => s.status === 'in-progress');
+          const mockBoard: BoardData = {
+            columns: {
+              planned: [],
+              'in-progress': inProgressSpecs,
+              complete: [],
+              archived: [],
+            },
+          };
+          const staleSpecs = getStaleSpecs(mockBoard);
+          for (const spec of staleSpecs) {
+            warnings.push(`⚠️ Spec "${spec.name}" has been in-progress for ${spec.daysStale} days. Consider updating status.`);
+          }
+        }
+
+        const output = { 
+          specs,
+          ...(warnings.length > 0 ? { warnings } : {}),
+        };
         return {
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
           structuredContent: output,
