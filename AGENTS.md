@@ -10,6 +10,16 @@ Lightweight spec methodology for AI-powered development.
 2. **Search** → `search` or `lean-spec search` before creating new specs  
 3. **Never create files manually** → Always use `create` tool or `lean-spec create`
 
+### 🔍 Search Query Best Practices
+
+| ✅ Good Query | ❌ Poor Query |
+|---------------|---------------|
+| `"search ranking"` | `"AI agent integration coding agent orchestration"` |
+| `"token validation"` | `"how to validate tokens in specs"` |
+| `"api"` + tags filter `["integration"]` | `"api integration feature"` |
+
+**Why?** All search terms must appear in the SAME field/line to match. Use 2-4 specific terms + filters instead of long queries.
+
 ## 🔧 Managing Specs
 
 ### MCP Tools (Preferred) with CLI Fallback

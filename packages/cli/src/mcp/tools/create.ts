@@ -25,6 +25,8 @@ export function createTool(): ToolDefinition {
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Priority level for the spec. Defaults to "medium" if not specified.'),
         assignee: z.string().optional().describe('Person responsible for this spec.'),
         template: z.string().optional().describe('Template name to use (e.g., "minimal", "enterprise"). Uses default template if omitted.'),
+        dependsOn: z.array(z.string()).optional().describe('Specs this depends on (e.g., ["045-api-design", "046-database"]). Creates upstream dependencies.'),
+        related: z.array(z.string()).optional().describe('Related specs (e.g., ["047-frontend"]). Creates bidirectional relationships.'),
       },
       outputSchema: {
         success: z.boolean(),
@@ -49,6 +51,8 @@ export function createTool(): ToolDefinition {
           priority: input.priority as SpecPriority | undefined,
           assignee: input.assignee,
           template: input.template,
+          dependsOn: input.dependsOn,
+          related: input.related,
         });
 
         const output = {

@@ -12,6 +12,7 @@ import { normalizeDateFields } from '../frontmatter.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
 import { parseCustomFieldOptions } from '../utils/cli-helpers.js';
+import { linkSpec } from './link.js';
 
 /**
  * Create command - create new spec
@@ -28,6 +29,8 @@ export function createCommand(): Command {
     .option('--template <template>', 'Use a specific template')
     .option('--field <name=value...>', 'Set custom field (can specify multiple)')
     .option('--no-prefix', 'Skip date prefix even if configured')
+    .option('--depends-on <specs>', 'Add dependencies (comma-separated spec numbers or names)')
+    .option('--related <specs>', 'Add related specs (comma-separated spec numbers or names)')
     .action(async (name: string, options: {
       title?: string;
       description?: string;
@@ -37,6 +40,8 @@ export function createCommand(): Command {
       template?: string;
       field?: string[];
       prefix?: boolean;
+      dependsOn?: string;
+      related?: string;
     }) => {
       const customFields = parseCustomFieldOptions(options.field);
       const createOptions: {
@@ -48,6 +53,8 @@ export function createCommand(): Command {
         template?: string;
         customFields?: Record<string, unknown>;
         noPrefix?: boolean;
+        dependsOn?: string[];
+        related?: string[];
       } = {
         title: options.title,
         description: options.description,
@@ -57,6 +64,8 @@ export function createCommand(): Command {
         template: options.template,
         customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
         noPrefix: options.prefix === false,
+        dependsOn: options.dependsOn ? options.dependsOn.split(',').map(s => s.trim()) : undefined,
+        related: options.related ? options.related.split(',').map(s => s.trim()) : undefined,
       };
       await createSpec(name, createOptions);
     });
@@ -71,6 +80,8 @@ export async function createSpec(name: string, options: {
   template?: string;
   customFields?: Record<string, unknown>;
   noPrefix?: boolean;
+  dependsOn?: string[];
+  related?: string[];
 } = {}): Promise<void> {
   const config = await loadConfig();
   const cwd = process.cwd();
@@ -284,6 +295,21 @@ export async function createSpec(name: string, options: {
     // If reading directory fails, just show the main file
     console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
     console.log(chalk.gray(`  Edit: ${sanitizeUserInput(specFile)}`));
+  }
+  
+  // Add dependencies and related specs if specified
+  const hasRelationships = (options.dependsOn && options.dependsOn.length > 0) || 
+                           (options.related && options.related.length > 0);
+  if (hasRelationships) {
+    const newSpecName = path.basename(specDir);
+    try {
+      await linkSpec(newSpecName, {
+        dependsOn: options.dependsOn?.join(','),
+        related: options.related?.join(','),
+      });
+    } catch (error: any) {
+      console.log(chalk.yellow(`⚠️  Warning: Failed to add relationships: ${error.message}`));
+    }
   }
   
   // Auto-check for conflicts after creation

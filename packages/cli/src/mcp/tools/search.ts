@@ -124,11 +124,24 @@ export function searchTool(): ToolDefinition {
     'search',
     {
       title: 'Search Specs',
-      description: 'Intelligent relevance-ranked search across all specification content. Uses field-weighted scoring (title > tags > description > content) to return the most relevant specs. Returns matching specs with relevance scores, highlighted excerpts, and metadata.',
+      description: `Intelligent relevance-ranked search across all specification content. Uses field-weighted scoring (title > tags > description > content) to return the most relevant specs.
+
+**Query Formulation Tips:**
+- Use 2-4 specific terms for best results (e.g., "search ranking" not "AI agent integration coding agent orchestration")
+- All terms must appear in the SAME field/line to match - keep queries focused
+- Prefer nouns and technical terms over common words
+- Use filters (status, tags, priority) to narrow scope instead of adding more search terms
+
+**Examples:**
+- Good: "search ranking" or "token validation"
+- Good: "api" with tags filter ["integration"]  
+- Poor: "AI agent integration coding agent orchestration" (too many terms, unlikely all in one line)
+
+Returns matching specs with relevance scores, highlighted excerpts, and metadata.`,
       inputSchema: {
-        query: z.string().describe('Search term or phrase to find in spec content. Multiple terms are combined with AND logic. Searches across titles, tags, descriptions, and body text with intelligent relevance ranking.'),
+        query: z.string().describe('Search term or phrase. Use 2-4 specific terms. All terms must appear in the same field/line to match. For broad concepts, use fewer terms + filters instead of long queries.'),
         status: z.enum(['planned', 'in-progress', 'complete', 'archived']).optional().describe('Limit search to specs with this status.'),
-        tags: z.array(z.string()).optional().describe('Limit search to specs with these tags.'),
+        tags: z.array(z.string()).optional().describe('Limit search to specs with these tags. Use this to narrow scope instead of adding more search terms.'),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Limit search to specs with this priority.'),
       },
       outputSchema: {
