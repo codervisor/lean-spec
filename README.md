@@ -27,10 +27,6 @@
 
 LeanSpec brings agile principles to technical specs—small, focused documents that evolve with your understanding. Concise enough (&lt;2,000 tokens) for both humans and AI to process without context rot.
 
-<p align="center">
-  <a href="#quick-start"><strong>Get Started in 2 Minutes →</strong></a>
-</p>
-
 ---
 
 ## The Problem: Context Rot
@@ -143,7 +139,7 @@ Create comprehensive documentation:
 **Total size:** 1,847 tokens. Complete feature documentation with design and implementation plan.
 
 <p align="center">
-  <img src="docs-site/static/img/ui/ui-spec-detail.png" alt="Spec Detail View" width="800">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-spec-detail.png" alt="Spec Detail View" width="800">
   <br>
   <em>Spec detail view showing structure, metadata, and content</em>
 </p>
@@ -251,7 +247,7 @@ $ lean-spec board
 ```
 
 <p align="center">
-  <img src="docs-site/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
   <br>
   <em>Visual Kanban board showing project status at a glance</em>
 </p>
@@ -270,7 +266,7 @@ $ lean-spec stats
 ```
 
 <p align="center">
-  <img src="docs-site/static/img/ui/ui-dashboard.png" alt="Project Dashboard" width="800">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-dashboard.png" alt="Project Dashboard" width="800">
   <br>
   <em>Web UI dashboard with real-time project metrics and health indicators</em>
 </p>
@@ -304,7 +300,7 @@ custom_field: your-value
 **Lean principle**: Don't add structure "just in case." Add it when you feel the pain. Full custom field support adapts to your workflow.
 
 <p align="center">
-  <img src="docs-site/static/img/ui/ui-project-stats.png" alt="Project Health Metrics" width="800">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-project-stats.png" alt="Project Health Metrics" width="800">
   <br>
   <em>Project health dashboard showing how metadata enables powerful insights</em>
 </p>
@@ -375,7 +371,7 @@ lean-spec ui                 # Opens http://localhost:3000
 ```
 
 <p align="center">
-  <img src="docs-site/static/img/ui/ui-dependency-graph.png" alt="Dependency Graph Visualization" width="800">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-dependency-graph.png" alt="Dependency Graph Visualization" width="800">
   <br>
   <em>Interactive dependency graph showing spec relationships</em>
 </p>
@@ -437,35 +433,7 @@ lean-spec ui                 # Opens http://localhost:3000
 
 ---
 
-## License
-
-MIT - See [LICENSE](LICENSE)
-
----
-
-## What's New (v0.2.6)
-
-**Example Projects** - Scaffold complete tutorial projects: `npx lean-spec init --example dark-theme`
-
-**JSON Output** - All major commands support `--json` for automation and custom tooling
-
-**MCP Package** - Standalone `@leanspec/mcp` package for simpler AI tool integration
-
-**Template Simplification** - Direct markdown editing, no build step required
-
-See [CHANGELOG.md](CHANGELOG.md) for full version history.
-
----
-
 <p align="center">
   <strong>Lean Spec-Driven Development.</strong><br>
   Start simple. Iterate fast. Stay aligned.
-</p>
-
-<p align="center">
-  <a href="https://www.lean-spec.dev/docs/guide/getting-started">Get Started</a>
-  •
-  <a href="https://github.com/codervisor/lean-spec/tree/main/specs">Browse Examples</a>
-  •
-  <a href="https://github.com/codervisor/lean-spec/discussions">Join Community</a>
 </p>
