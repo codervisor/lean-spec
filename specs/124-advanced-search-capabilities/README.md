@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-26'
 tags:
   - search
@@ -10,15 +10,19 @@ tags:
   - power-users
 priority: medium
 created_at: '2025-11-26T06:26:37.183Z'
-updated_at: '2025-11-26T06:49:50.230Z'
+updated_at: '2025-11-26T07:51:30.760Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T06:49:50.230Z'
+  - status: complete
+    at: '2025-11-26T07:51:30.760Z'
+completed_at: '2025-11-26T07:51:30.760Z'
+completed: '2025-11-26'
 ---
 
 # Advanced Search Capabilities for Specs
 
-> **Status**: ⏳ In progress (Phase 1 ✅ Complete) · **Priority**: Medium · **Created**: 2025-11-26 · **Tags**: search, cli, mcp, core, dx, power-users
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-26 · **Tags**: search, cli, mcp, core, dx, power-users
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -106,15 +110,15 @@ lean-spec search "tag:api status:planned created:>2025-11"
 - [x] Keep per-field scoring but allow spec-level term matching
 - [x] Add unit tests for multi-term queries
 
-### Phase 2: Advanced query syntax
-- [ ] Design query grammar and AST structure
-- [ ] Implement query parser with field extraction
-- [ ] Add boolean operator support (AND/OR/NOT)
-- [ ] Add date range filter support
-- [ ] Add fuzzy matching option
-- [ ] Update CLI search command
-- [ ] Update MCP search tool
-- [ ] Add search syntax help command
+### Phase 2: Advanced query syntax ✅
+- [x] Design query grammar and AST structure
+- [x] Implement query parser with field extraction
+- [x] Add boolean operator support (AND/OR/NOT)
+- [x] Add date range filter support
+- [x] Add fuzzy matching option
+- [x] Update CLI search command
+- [x] Update MCP search tool
+- [x] Add search syntax help command
 
 ## Test
 
@@ -123,12 +127,12 @@ lean-spec search "tag:api status:planned created:>2025-11"
 - [x] Multi-term queries return relevant specs even if terms span fields
 - [x] Scoring still reflects per-field relevance
 
-### Phase 2 tests
-- [ ] Parse `"tag:api AND status:planned"` correctly
-- [ ] Date range `created:>2025-11-01` filters as expected
-- [ ] Fuzzy `authetication~` matches `authentication`
-- [ ] Combined queries return correct intersections
-- [ ] Invalid syntax provides helpful error messages
+### Phase 2 tests ✅
+- [x] Parse `"tag:api AND status:planned"` correctly
+- [x] Date range `created:>2025-11-01` filters as expected
+- [x] Fuzzy `authetication~` matches `authentication`
+- [x] Combined queries return correct intersections
+- [x] Invalid syntax provides helpful error messages
 
 ## Notes
 
