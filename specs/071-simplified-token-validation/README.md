@@ -11,7 +11,9 @@ created_at: '2025-11-13T03:11:29.739Z'
 related:
   - 066-context-economy-thresholds-refinement
   - 069-token-counting-utils
-updated_at: '2025-11-13T03:54:24.312Z'
+  - 090-leanspec-sdd-case-studies
+  - 049-leanspec-first-principles
+updated_at: '2025-11-26T02:35:51.362Z'
 completed_at: '2025-11-13T03:54:24.312Z'
 completed: '2025-11-13'
 transitions:

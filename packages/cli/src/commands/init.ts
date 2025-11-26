@@ -3,13 +3,16 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { select } from '@inquirer/prompts';
+import { select, checkbox } from '@inquirer/prompts';
 import { saveConfig, type LeanSpecConfig } from '../config.js';
 import {
   detectExistingSystemPrompts,
   handleExistingFiles,
   copyDirectory,
   getProjectName,
+  createAgentToolSymlinks,
+  AI_TOOL_CONFIGS,
+  type AIToolKey,
 } from '../utils/template-helpers.js';
 import { 
   getExamplesList, 
@@ -33,7 +36,8 @@ export function initCommand(): Command {
     .option('--example [name]', 'Scaffold an example project for tutorials (interactive if no name provided)')
     .option('--name <dirname>', 'Custom directory name for example project')
     .option('--list', 'List available example projects')
-    .action(async (options: { yes?: boolean; template?: string; example?: string; name?: string; list?: boolean }) => {
+    .option('--agent-tools <tools>', 'AI tools to create symlinks for (comma-separated: claude,gemini,copilot or "all" or "none")')
+    .action(async (options: { yes?: boolean; template?: string; example?: string; name?: string; list?: boolean; agentTools?: string }) => {
       if (options.list) {
         await listExamples();
         return;
@@ -44,11 +48,11 @@ export function initCommand(): Command {
         return;
       }
       
-      await initProject(options.yes, options.template);
+      await initProject(options.yes, options.template, options.agentTools);
     });
 }
 
-export async function initProject(skipPrompts = false, templateOption?: string): Promise<void> {
+export async function initProject(skipPrompts = false, templateOption?: string, agentToolsOption?: string): Promise<void> {
   const cwd = process.cwd();
 
   // Check if already initialized
@@ -67,10 +71,26 @@ export async function initProject(skipPrompts = false, templateOption?: string):
 
   let setupMode = 'quick';
   let templateName = templateOption || 'standard'; // Use provided template or default to standard
+  let selectedAgentTools: AIToolKey[] = [];
+
+  // Parse agent tools option if provided
+  if (agentToolsOption) {
+    if (agentToolsOption === 'all') {
+      selectedAgentTools = Object.keys(AI_TOOL_CONFIGS) as AIToolKey[];
+    } else if (agentToolsOption === 'none') {
+      selectedAgentTools = [];
+    } else {
+      selectedAgentTools = agentToolsOption.split(',').map(t => t.trim()) as AIToolKey[];
+    }
+  }
 
   // Skip prompts if -y flag is used
   if (skipPrompts) {
     console.log(chalk.gray('Using defaults: quick start with standard template'));
+    // Default to Claude Code + Copilot symlinks when using -y
+    if (!agentToolsOption) {
+      selectedAgentTools = ['claude', 'copilot'];
+    }
     console.log('');
   } else if (!templateOption) {
     // Only show setup mode prompt if no template was explicitly provided
@@ -196,6 +216,23 @@ export async function initProject(skipPrompts = false, templateOption?: string):
     templateConfig.structure.prefix = '';
   }
 
+  // AI tool selection (skip for quick start or if -y flag is used, or if --agent-tools was provided)
+  if (!skipPrompts && !agentToolsOption && setupMode !== 'quick') {
+    const toolChoices = Object.entries(AI_TOOL_CONFIGS).map(([key, config]) => ({
+      name: config.description,
+      value: key as AIToolKey,
+      checked: config.default,
+    }));
+
+    selectedAgentTools = await checkbox({
+      message: 'Which AI tools do you use? (creates symlinks for tool-specific instruction files)',
+      choices: toolChoices,
+    });
+  } else if (!agentToolsOption && setupMode === 'quick') {
+    // Quick start defaults to Claude + Copilot
+    selectedAgentTools = ['claude', 'copilot'];
+  }
+
   // Create .lean-spec/templates/ directory
   const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   try {
@@ -317,6 +354,20 @@ export async function initProject(skipPrompts = false, templateOption?: string):
     } catch (error) {
       console.error(chalk.red('Error copying AGENTS.md:'), error);
       process.exit(1);
+    }
+
+    // Create symlinks for selected AI tools
+    if (selectedAgentTools.length > 0) {
+      const symlinkResults = await createAgentToolSymlinks(cwd, selectedAgentTools);
+      for (const result of symlinkResults) {
+        if (result.created) {
+          console.log(chalk.green(`✓ Created ${result.file} → AGENTS.md`));
+        } else if (result.skipped) {
+          console.log(chalk.yellow(`⚠ Skipped ${result.file} (already exists)`));
+        } else if (result.error) {
+          console.log(chalk.yellow(`⚠ Could not create ${result.file}: ${result.error}`));
+        }
+      }
     }
   }
 

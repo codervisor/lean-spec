@@ -9,11 +9,22 @@ tags:
   - dx
 priority: high
 created_at: '2025-11-26T02:23:13.829Z'
+updated_at: '2025-11-26T02:38:27.405Z'
+transitions:
+  - status: in-progress
+    at: '2025-11-26T02:32:10.155Z'
+  - status: planned
+    at: '2025-11-26T02:37:22.150Z'
+depends_on:
+  - 073-template-engine-agents-md
+related:
+  - 072-ai-agent-first-use-workflow
+  - 110-project-aware-agents-generation
 ---
 
 # MCP-First Agent Experience: Multi-Tool Support & SDD Compliance
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-11-26
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-26 · **Tags**: mcp, ai-agents, ux, init, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -275,25 +286,25 @@ Next steps:
 ## Plan
 
 ### Phase 1: Multi-Tool Symlink Support
-- [ ] Add AI tool selection to init prompts
-- [ ] Create symlink generation logic (CLAUDE.md, GEMINI.md, etc.)
-- [ ] Add `--agent-tools` CLI flag for non-interactive mode
-- [ ] Handle Windows (use file copy instead of symlink if needed)
-- [ ] Update init success message with created files
+- [x] Add AI tool selection to init prompts
+- [x] Create symlink generation logic (CLAUDE.md, GEMINI.md, etc.)
+- [x] Add `--agent-tools` CLI flag for non-interactive mode
+- [x] Handle Windows (use file copy instead of symlink if needed)
+- [x] Update init success message with created files
 - [ ] Test symlinks work with actual AI tools
 
 ### Phase 2: MCP-First AGENTS.md
-- [ ] Rewrite `packages/cli/templates/standard/AGENTS.md`
-- [ ] Rewrite `packages/cli/templates/detailed/AGENTS.md`
-- [ ] Add "How to Manage Specs" section with MCP-first approach
-- [ ] Add MCP vs CLI comparison table
-- [ ] Add tool availability check guidance
-- [ ] Update SDD Workflow with MCP tools
+- [x] Rewrite `packages/cli/templates/standard/AGENTS.md`
+- [x] Rewrite `packages/cli/templates/detailed/AGENTS.md`
+- [x] Add "How to Manage Specs" section with MCP-first approach
+- [x] Add MCP vs CLI comparison table
+- [x] Add tool availability check guidance
+- [x] Update SDD Workflow with MCP tools
 
 ### Phase 3: SDD Compliance Reinforcement
-- [ ] Add "SDD Workflow Checkpoints" section to AGENTS.md
-- [ ] Add "Common Mistakes" section with clear ❌/✅ examples
-- [ ] Create `checkpoint` MCP prompt for periodic reminders
+- [x] Add "SDD Workflow Checkpoints" section to AGENTS.md
+- [x] Add "Common Mistakes" section with clear ❌/✅ examples
+- [x] Create `checkpoint` MCP prompt for periodic reminders
 - [ ] Add gentle reminders to MCP tool responses
 - [ ] Add stale spec warnings to board/list outputs
 
@@ -309,25 +320,25 @@ Next steps:
 ## Test
 
 ### Multi-Tool Symlinks
-- [ ] `lean-spec init` shows AI tool selection prompt
-- [ ] Selecting "Claude Code" creates CLAUDE.md symlink
-- [ ] Selecting "Gemini CLI" creates GEMINI.md symlink
-- [ ] Symlinks point to AGENTS.md correctly
-- [ ] Editing AGENTS.md reflects in symlinked files
-- [ ] `--agent-tools all` creates all symlinks non-interactively
-- [ ] `--agent-tools none` skips symlink creation
-- [ ] Windows handles lack of symlink support gracefully
+- [x] `lean-spec init` shows AI tool selection prompt
+- [x] Selecting "Claude Code" creates CLAUDE.md symlink
+- [x] Selecting "Gemini CLI" creates GEMINI.md symlink
+- [x] Symlinks point to AGENTS.md correctly
+- [x] Editing AGENTS.md reflects in symlinked files
+- [x] `--agent-tools all` creates all symlinks non-interactively
+- [x] `--agent-tools none` skips symlink creation
+- [x] Windows handles lack of symlink support gracefully
 
 ### MCP-First Content
-- [ ] AGENTS.md lists MCP tools before CLI commands
-- [ ] MCP vs CLI comparison table is clear
-- [ ] "Check MCP availability" guidance is prominent
-- [ ] SDD Workflow uses MCP tool names (not CLI)
+- [x] AGENTS.md lists MCP tools before CLI commands
+- [x] MCP vs CLI comparison table is clear
+- [x] "Check MCP availability" guidance is prominent
+- [x] SDD Workflow uses MCP tool names (not CLI)
 
 ### SDD Compliance
-- [ ] "SDD Workflow Checkpoints" section exists in AGENTS.md
-- [ ] "Common Mistakes" section lists anti-patterns clearly
-- [ ] `checkpoint` MCP prompt returns useful reminder
+- [x] "SDD Workflow Checkpoints" section exists in AGENTS.md
+- [x] "Common Mistakes" section lists anti-patterns clearly
+- [x] `checkpoint` MCP prompt returns useful reminder
 - [ ] Stale spec warnings appear in board output
 - [ ] AI agents (Claude Code) follow MCP-first approach
 - [ ] AI agents update specs after completing work

@@ -5,6 +5,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { planProjectRoadmapPrompt } from './plan-project-roadmap.js';
 import { projectProgressOverviewPrompt } from './project-progress-overview.js';
+import { sddCheckpointPrompt } from './sdd-checkpoint.js';
 import { updateSpecStatusPrompt } from './update-spec-status.js';
 
 /**
@@ -13,5 +14,6 @@ import { updateSpecStatusPrompt } from './update-spec-status.js';
 export function registerPrompts(server: McpServer): void {
   server.registerPrompt(...projectProgressOverviewPrompt());
   server.registerPrompt(...planProjectRoadmapPrompt());
+  server.registerPrompt(...sddCheckpointPrompt());
   server.registerPrompt(...updateSpecStatusPrompt());
 }

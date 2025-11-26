@@ -9,7 +9,7 @@ tags:
   - v0.3.0
 priority: critical
 created_at: '2025-11-14T05:33:26.170Z'
-updated_at: '2025-11-17T08:18:56.781Z'
+updated_at: '2025-11-26T02:35:14.294Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T05:35:02.854Z'
@@ -21,6 +21,7 @@ related:
   - 068-live-specs-ux-enhancements
   - 065-v03-planning
   - 094-ai-chatbot-web-integration
+  - 090-leanspec-sdd-case-studies
 completed_at: '2025-11-17T08:18:56.781Z'
 completed: '2025-11-17'
 ---

@@ -81,6 +81,7 @@ When practices conflict, apply principles in priority order:
 5. **Keep it minimal** - If it doesn't add clarity, cut it
 6. **NEVER manually edit system-managed frontmatter** - Fields like `status`, `priority`, `tags`, `assignee`, `transitions`, `created_at`, `updated_at`, `completed_at`, `depends_on`, `related` are system-managed. Always use `lean-spec update`, `lean-spec link`, `lean-spec unlink`, or `lean-spec create` commands. Manual edits will cause metadata corruption and tracking issues.
 7. **Never use nested code blocks** - Markdown doesn't support code blocks within code blocks. If you need to show code examples in documentation, use indentation or describe the structure instead of nesting backticks.
+8. **ALWAYS link spec dependencies** - When a spec mentions or references another spec in its content, you MUST add it to frontmatter using `lean-spec link <spec> --related <other>` or `lean-spec link <spec> --depends-on <other>`. Content and frontmatter must stay aligned.
 
 ## When to Use Specs
 
@@ -130,6 +131,28 @@ Hard dependency - spec cannot start until dependencies complete.
 **Use when:** Spec truly cannot start until another completes, work order matters.
 
 **Best Practice:** Use `related` by default. Reserve `depends_on` for true blocking dependencies.
+
+### ⚠️ CRITICAL: Link Dependencies When Creating/Editing Specs
+
+**After creating or editing any spec, you MUST:**
+
+1. **Scan the content** for references to other specs (e.g., "spec 045", "related to 072", "depends on", "see also", "builds on", "requires")
+2. **Link each reference** using the CLI:
+   ```bash
+   # For informational references
+   lean-spec link <spec> --related <other-spec>
+   
+   # For blocking dependencies
+   lean-spec link <spec> --depends-on <other-spec>
+   ```
+3. **Verify with:** `lean-spec deps <spec>`
+
+**Examples of content that MUST be linked:**
+- "This builds on spec 045" → `lean-spec link <this-spec> --depends-on 045`
+- "Related to spec 072" → `lean-spec link <this-spec> --related 072`
+- "See spec 110 for details" → `lean-spec link <this-spec> --related 110`
+- "Blocked by spec 086" → `lean-spec link <this-spec> --depends-on 086`
+- "## Related Specs" section listing specs → Link each one
 
 ## SDD Workflow
 

@@ -7,7 +7,7 @@ tags:
   - monorepo
 priority: high
 created_at: '2025-11-17T04:54:37.212Z'
-updated_at: '2025-11-17T07:51:43.434Z'
+updated_at: '2025-11-26T02:35:47.458Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T05:31:55.704Z'
@@ -15,6 +15,8 @@ transitions:
     at: '2025-11-17T07:51:43.434Z'
 completed_at: '2025-11-17T07:51:43.434Z'
 completed: '2025-11-17'
+related:
+  - 096-docs-beginner-first-reorg
 ---
 
 # Migrate docs-site to separate repository as submodule
