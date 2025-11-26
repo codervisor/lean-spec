@@ -13,6 +13,7 @@ import {
   calculateMatchScore,
   calculateSpecScore,
   containsAllTerms,
+  containsAnyTerm,
   countOccurrences,
   findMatchPositions,
 } from './scoring.js';
@@ -34,6 +35,28 @@ export interface SearchableSpec {
   title?: string;
   description?: string;
   content?: string;
+}
+
+/**
+ * Check if spec contains all query terms across any combination of fields
+ * 
+ * This enables cross-field matching: term A can be in title, term B in content
+ * 
+ * @param spec - Spec to check
+ * @param queryTerms - Terms that must all be present
+ * @returns True if all terms are found somewhere in the spec
+ */
+export function specContainsAllTerms(spec: SearchableSpec, queryTerms: string[]): boolean {
+  // Combine all searchable text from the spec
+  const allText = [
+    spec.title || '',
+    spec.name || '',
+    spec.tags?.join(' ') || '',
+    spec.description || '',
+    spec.content || '',
+  ].join(' ').toLowerCase();
+  
+  return queryTerms.every(term => allText.includes(term));
 }
 
 /**
@@ -78,6 +101,13 @@ export function searchSpecs(
   const results: SearchResult[] = [];
 
   for (const spec of specs) {
+    // First check: does the spec contain all query terms (across any fields)?
+    if (!specContainsAllTerms(spec, queryTerms)) {
+      continue; // Skip specs that don't have all terms somewhere
+    }
+    
+    // Collect matches from fields that contain ANY query term
+    // This provides context/highlighting even for partial field matches
     const matches = searchSpec(spec, queryTerms, contextLength);
     
     if (matches.length > 0) {
@@ -113,6 +143,9 @@ export function searchSpecs(
 
 /**
  * Search a single spec for query terms
+ * 
+ * Returns matches from fields containing ANY query terms (for context/highlighting)
+ * when doing cross-field search where spec-level matching is already confirmed
  */
 function searchSpec(
   spec: SearchableSpec,
@@ -121,8 +154,8 @@ function searchSpec(
 ): SearchMatch[] {
   const matches: SearchMatch[] = [];
 
-  // Search title
-  if (spec.title && containsAllTerms(spec.title, queryTerms)) {
+  // Search title - include if it has ANY query terms
+  if (spec.title && containsAnyTerm(spec.title, queryTerms)) {
     const occurrences = countOccurrences(spec.title, queryTerms);
     const highlights = findMatchPositions(spec.title, queryTerms);
     const score = calculateMatchScore(
@@ -141,8 +174,8 @@ function searchSpec(
     });
   }
 
-  // Search name
-  if (spec.name && containsAllTerms(spec.name, queryTerms)) {
+  // Search name - include if it has ANY query terms
+  if (spec.name && containsAnyTerm(spec.name, queryTerms)) {
     const occurrences = countOccurrences(spec.name, queryTerms);
     const highlights = findMatchPositions(spec.name, queryTerms);
     const score = calculateMatchScore(
@@ -161,10 +194,10 @@ function searchSpec(
     });
   }
 
-  // Search tags
+  // Search tags - include tags that have ANY query terms
   if (spec.tags && spec.tags.length > 0) {
     for (const tag of spec.tags) {
-      if (containsAllTerms(tag, queryTerms)) {
+      if (containsAnyTerm(tag, queryTerms)) {
         const occurrences = countOccurrences(tag, queryTerms);
         const highlights = findMatchPositions(tag, queryTerms);
         const score = calculateMatchScore(
@@ -185,8 +218,8 @@ function searchSpec(
     }
   }
 
-  // Search description
-  if (spec.description && containsAllTerms(spec.description, queryTerms)) {
+  // Search description - include if it has ANY query terms
+  if (spec.description && containsAnyTerm(spec.description, queryTerms)) {
     const occurrences = countOccurrences(spec.description, queryTerms);
     const highlights = findMatchPositions(spec.description, queryTerms);
     const score = calculateMatchScore(
@@ -220,6 +253,8 @@ function searchSpec(
 
 /**
  * Search content with context extraction
+ * 
+ * Returns matches from lines containing ANY query terms
  */
 function searchContent(
   content: string,
@@ -232,7 +267,8 @@ function searchContent(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    if (containsAllTerms(line, queryTerms)) {
+    // Include lines with ANY query terms (not all terms)
+    if (containsAnyTerm(line, queryTerms)) {
       const occurrences = countOccurrences(line, queryTerms);
       const { text, highlights } = extractSmartContext(
         content,

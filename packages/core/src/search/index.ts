@@ -14,7 +14,7 @@
  * ```
  */
 
-export { searchSpecs } from './engine.js';
+export { searchSpecs, specContainsAllTerms } from './engine.js';
 export type {
   SearchOptions,
   SearchMatch,
@@ -24,4 +24,4 @@ export type {
   SearchMetadata,
 } from './types.js';
 export type { SearchableSpec } from './engine.js';
-export { FIELD_WEIGHTS } from './scoring.js';
+export { FIELD_WEIGHTS, containsAllTerms, containsAnyTerm } from './scoring.js';

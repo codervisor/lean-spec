@@ -111,6 +111,18 @@ export function containsAllTerms(text: string, queryTerms: string[]): boolean {
 }
 
 /**
+ * Check if text contains any query term (OR logic)
+ * 
+ * @param text - Text to search
+ * @param queryTerms - Terms to find
+ * @returns True if any term is found
+ */
+export function containsAnyTerm(text: string, queryTerms: string[]): boolean {
+  const textLower = text.toLowerCase();
+  return queryTerms.some(term => textLower.includes(term));
+}
+
+/**
  * Count occurrences of query terms in text
  * 
  * @param text - Text to search
