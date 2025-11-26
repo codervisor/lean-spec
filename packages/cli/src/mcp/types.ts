@@ -32,6 +32,7 @@ export type SpecData = {
   description?: string;
   customFields?: Record<string, unknown>;
   subSpecs?: SubSpecReference[];  // Only when viewing main spec
+  updated_at?: string;  // ISO timestamp for stale detection
 };
 
 /**

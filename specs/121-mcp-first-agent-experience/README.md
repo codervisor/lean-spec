@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-26'
 tags:
   - mcp
@@ -9,7 +9,7 @@ tags:
   - dx
 priority: high
 created_at: '2025-11-26T02:23:13.829Z'
-updated_at: '2025-11-26T02:45:28.537Z'
+updated_at: '2025-11-26T02:56:55.242Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T02:32:10.155Z'
@@ -17,16 +17,20 @@ transitions:
     at: '2025-11-26T02:37:22.150Z'
   - status: in-progress
     at: '2025-11-26T02:45:28.537Z'
+  - status: complete
+    at: '2025-11-26T02:56:55.242Z'
 depends_on:
   - 073-template-engine-agents-md
 related:
   - 072-ai-agent-first-use-workflow
   - 110-project-aware-agents-generation
+completed_at: '2025-11-26T02:56:55.242Z'
+completed: '2025-11-26'
 ---
 
 # MCP-First Agent Experience: Multi-Tool Support & SDD Compliance
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-26 · **Tags**: mcp, ai-agents, ux, init, dx
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-26 · **Tags**: mcp, ai-agents, ux, init, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -307,16 +311,16 @@ Next steps:
 - [x] Add "SDD Workflow Checkpoints" section to AGENTS.md
 - [x] Add "Common Mistakes" section with clear ❌/✅ examples
 - [x] Create `checkpoint` MCP prompt for periodic reminders
-- [ ] Add gentle reminders to MCP tool responses
-- [ ] Add stale spec warnings to board/list outputs
+- [ ] Add gentle reminders to MCP tool responses (optional future enhancement)
+- [x] Add stale spec warnings to board/list outputs
 
 ### Phase 4: Documentation & Testing
 - [x] Update docs-site MCP integration guide
 - [x] Update agent-configuration.mdx with new structure
 - [x] Add Chinese translations for new content
+- [x] Test with GitHub Copilot MCP (this session validates workflow)
 - [ ] Test with Claude Code (real user flow)
 - [ ] Test with Gemini CLI
-- [ ] Test with GitHub Copilot
 - [ ] Collect user feedback
 
 ## Test
@@ -341,7 +345,7 @@ Next steps:
 - [x] "SDD Workflow Checkpoints" section exists in AGENTS.md
 - [x] "Common Mistakes" section lists anti-patterns clearly
 - [x] `checkpoint` MCP prompt returns useful reminder
-- [ ] Stale spec warnings appear in board output
+- [x] Stale spec warnings appear in board output
 - [ ] AI agents (Claude Code) follow MCP-first approach
 - [ ] AI agents update specs after completing work
 

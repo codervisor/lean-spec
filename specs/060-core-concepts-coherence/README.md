@@ -7,7 +7,7 @@ tags:
   - information-architecture
 priority: high
 created_at: '2025-11-07T12:20:31.352Z'
-updated_at: '2025-11-07T12:25:39.409Z'
+updated_at: '2025-11-26T02:54:14.346Z'
 transitions:
   - status: in-progress
     at: '2025-11-07T12:21:12.082Z'
@@ -15,6 +15,8 @@ transitions:
     at: '2025-11-07T12:25:39.409Z'
 completed_at: '2025-11-07T12:25:39.409Z'
 completed: '2025-11-07'
+related:
+  - 059-programmatic-spec-management
 ---
 
 # Core Concepts Documentation Coherence

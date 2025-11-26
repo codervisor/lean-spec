@@ -11,8 +11,9 @@ priority: critical
 related:
   - 043-official-launch-02
   - 012-sub-spec-files
+  - 048-spec-complexity-analysis
 created_at: '2025-11-02T00:00:00Z'
-updated_at: '2025-11-06T07:08:45.538Z'
+updated_at: '2025-11-26T02:54:13.470Z'
 transitions:
   - status: in-progress
     at: '2025-11-05T13:35:26.669Z'
