@@ -6,7 +6,7 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-24T07:08:39.244Z'
-updated_at: '2025-11-24T07:54:57.954Z'
+updated_at: '2025-11-26T06:04:17.388Z'
 transitions:
   - status: in-progress
     at: '2025-11-24T07:36:56.753Z'
@@ -14,6 +14,9 @@ transitions:
     at: '2025-11-24T07:54:57.954Z'
 completed_at: '2025-11-24T07:54:57.954Z'
 completed: '2025-11-24'
+related:
+  - 073-template-engine-agents-md
+  - 086-template-component-deduplication
 ---
 
 # Simplify Template System to Standard + Detailed

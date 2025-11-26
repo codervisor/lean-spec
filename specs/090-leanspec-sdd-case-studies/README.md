@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:11:56.264Z'
-updated_at: '2025-11-26T02:35:46.942Z'
+updated_at: '2025-11-26T06:04:18.724Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:12:47.218Z'
@@ -22,6 +22,8 @@ related:
   - 067-monorepo-core-extraction
   - 043-official-launch-02
   - 096-docs-beginner-first-reorg
+  - 095-pr-migration-verification
+  - 122-ai-agent-deps-management-fix
 ---
 
 # LeanSpec Dogfooding: Real SDD Case Studies

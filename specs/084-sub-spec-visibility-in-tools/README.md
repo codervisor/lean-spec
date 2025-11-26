@@ -9,7 +9,7 @@ tags:
   - ux
 priority: high
 created_at: '2025-11-16T13:30:17.281Z'
-updated_at: '2025-11-16T14:00:10.316Z'
+updated_at: '2025-11-26T06:03:58.000Z'
 transitions:
   - status: in-progress
     at: '2025-11-16T13:58:37.156Z'
@@ -17,6 +17,12 @@ transitions:
     at: '2025-11-16T14:00:10.316Z'
 completed_at: '2025-11-16T14:00:10.316Z'
 completed: '2025-11-16'
+related:
+  - 082-web-realtime-sync-architecture
+  - 066-context-economy-thresholds-refinement
+  - 069-token-counting-utils
+  - 075-intelligent-search-engine
+  - 080-mcp-server-modular-architecture
 ---
 
 # Sub-Spec File Visibility in MCP Tools and Commands

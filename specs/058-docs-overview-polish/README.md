@@ -12,10 +12,11 @@ related:
   - '057'
   - 049
   - 043-official-launch-02
+  - 062-docs-info-architecture-v2
 depends_on:
   - 049
 created_at: '2025-11-07T01:53:09.673Z'
-updated_at: '2025-11-26T02:35:55.289Z'
+updated_at: '2025-11-26T06:03:38.397Z'
 transitions:
   - status: in-progress
     at: '2025-11-07T02:17:43.534Z'

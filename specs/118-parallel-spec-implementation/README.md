@@ -7,7 +7,7 @@ tags:
   - git
 priority: high
 created_at: '2025-11-25T06:46:20.670Z'
-updated_at: '2025-11-25T06:59:12.413Z'
+updated_at: '2025-11-26T06:04:17.920Z'
 transitions:
   - status: in-progress
     at: '2025-11-25T06:55:08.382Z'
@@ -15,6 +15,11 @@ transitions:
     at: '2025-11-25T06:59:12.413Z'
 completed_at: '2025-11-25T06:59:12.413Z'
 completed: '2025-11-25'
+depends_on:
+  - 045-unified-dashboard
+related:
+  - 047-git-backfill-timestamps
+  - 048-spec-complexity-analysis
 ---
 
 # Parallel Spec Implementation Workflow

@@ -9,7 +9,7 @@ tags:
   - dx
 priority: high
 created_at: '2025-11-26T02:23:13.829Z'
-updated_at: '2025-11-26T02:56:55.242Z'
+updated_at: '2025-11-26T06:04:18.725Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T02:32:10.155Z'
@@ -24,6 +24,8 @@ depends_on:
 related:
   - 072-ai-agent-first-use-workflow
   - 110-project-aware-agents-generation
+  - 045-unified-dashboard
+  - 122-ai-agent-deps-management-fix
 completed_at: '2025-11-26T02:56:55.242Z'
 completed: '2025-11-26'
 ---

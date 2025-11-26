@@ -7,7 +7,7 @@ tags:
   - docs
 priority: high
 created_at: '2025-11-07T15:44:34.381Z'
-updated_at: '2025-11-10T07:22:30.312Z'
+updated_at: '2025-11-26T06:03:45.107Z'
 transitions:
   - status: in-progress
     at: '2025-11-07T15:51:24.539Z'
@@ -15,7 +15,12 @@ transitions:
     at: '2025-11-10T07:22:30.312Z'
 completed_at: '2025-11-10T07:22:30.312Z'
 completed: '2025-11-10'
-related: [43]
+related:
+  - '43'
+  - 043-official-launch-02
+  - 062-docs-info-architecture-v2
+  - 049-leanspec-first-principles
+  - 072-ai-agent-first-use-workflow
 ---
 
 # AI-Assisted Spec Writing

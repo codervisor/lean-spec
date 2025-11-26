@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:12:58.531Z'
-updated_at: '2025-11-26T02:35:47.208Z'
+updated_at: '2025-11-26T06:04:04.951Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:14:06.440Z'
@@ -23,6 +23,7 @@ depends_on:
 related:
   - 089-sdd-practical-tutorials
   - 096-docs-beginner-first-reorg
+  - 095-pr-migration-verification
 ---
 
 # Comprehensive Chinese Localization for LeanSpec

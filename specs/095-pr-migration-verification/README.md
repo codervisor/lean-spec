@@ -7,8 +7,18 @@ tags:
   - verification
 priority: high
 created_at: '2025-11-17T06:39:54.583Z'
-updated_at: '2025-11-17T06:41:25.954Z'
+updated_at: '2025-11-26T06:04:04.952Z'
 completed: '2025-11-17'
+related:
+  - 094-ai-chatbot-web-integration
+  - 071-simplified-token-validation
+  - 082-web-realtime-sync-architecture
+  - 067-monorepo-core-extraction
+  - 043-official-launch-02
+  - 088-core-concepts-terminology-only
+  - 089-sdd-practical-tutorials
+  - 090-leanspec-sdd-case-studies
+  - 091-chinese-localization-strategy
 ---
 
 # PR Migration Verification: docs-site → lean-spec-docs

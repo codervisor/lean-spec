@@ -8,7 +8,7 @@ tags:
   - v0.3.0-launch
 priority: high
 created_at: '2025-11-11T13:33:33.321Z'
-updated_at: '2025-11-26T02:35:14.555Z'
+updated_at: '2025-11-26T06:04:04.946Z'
 completed_at: '2025-11-11T14:06:01.220Z'
 completed: '2025-11-11'
 transitions:
@@ -16,6 +16,10 @@ transitions:
     at: '2025-11-11T14:06:01.220Z'
 related:
   - 090-leanspec-sdd-case-studies
+  - 035-live-specs-showcase
+  - 065-v03-planning
+  - 080-mcp-server-modular-architecture
+  - 095-pr-migration-verification
 ---
 
 # Monorepo Structure & Core Package Extraction

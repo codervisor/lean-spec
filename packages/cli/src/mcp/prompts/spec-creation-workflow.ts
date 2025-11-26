@@ -55,11 +55,13 @@ Use \`deps\` to verify all links are in place:
 deps { "spec": "your-spec" }
 \`\`\`
 
-### Step 5: Validate
-Run dependency alignment check:
+### Step 5: Validate (REQUIRED)
+Run dependency alignment check to ensure content matches frontmatter:
 \`\`\`
 validate { "specs": ["your-spec"], "checkDeps": true }
 \`\`\`
+
+⚠️ **Do not consider spec creation complete until validation passes with 0 dependency warnings!**
 
 ### Common Patterns to Link
 

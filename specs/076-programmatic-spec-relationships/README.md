@@ -9,7 +9,7 @@ tags:
   - relationships
 priority: high
 created_at: '2025-11-13T09:03:06.741Z'
-updated_at: '2025-11-17T01:11:50.008Z'
+updated_at: '2025-11-26T06:03:45.645Z'
 completed_at: '2025-11-17T01:11:49.548Z'
 completed: '2025-11-17'
 transitions:
@@ -17,6 +17,10 @@ transitions:
     at: '2025-11-17T01:11:49.548Z'
 related:
   - 085-cli-relationship-commands
+  - 072-ai-agent-first-use-workflow
+depends_on:
+  - 073-template-engine-agents-md
+  - 074-content-at-creation
 ---
 
 # Programmatic Spec Relationship Management

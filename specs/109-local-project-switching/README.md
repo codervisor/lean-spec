@@ -14,7 +14,11 @@ related:
   - 036-pm-integrations
   - 087-cli-ui-command
   - 112-project-management-ui
-updated_at: '2025-11-20T08:35:51.776Z'
+  - 082-web-realtime-sync-architecture
+  - 081-web-app-ux-redesign
+  - 094-ai-chatbot-web-integration
+  - 045-unified-dashboard
+updated_at: '2025-11-26T06:04:10.962Z'
 transitions:
   - status: in-progress
     at: '2025-11-20T07:01:48.211Z'

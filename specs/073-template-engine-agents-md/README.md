@@ -12,9 +12,11 @@ related:
   - '025'
   - '072'
   - '074'
-  - '078'
+  - 078
+  - 077-archiving-strategy
+  - 117-simplify-template-system
 created_at: '2025-11-13T08:35:40.229Z'
-updated_at: '2025-11-13T10:32:28.046Z'
+updated_at: '2025-11-26T06:04:17.383Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T09:26:58.535Z'

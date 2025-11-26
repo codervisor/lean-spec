@@ -15,7 +15,13 @@ related:
   - 052-branding-assets
   - 068-live-specs-ux-enhancements
   - 094-ai-chatbot-web-integration
-updated_at: '2025-11-17T06:32:59.774Z'
+  - 018-spec-validation
+  - 083-web-navigation-performance
+  - 085-cli-relationship-commands
+  - 099-enhanced-dependency-commands-cli-mcp
+  - 106-ui-package-documentation
+  - 109-local-project-switching
+updated_at: '2025-11-26T06:04:10.958Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T04:08:03.555Z'

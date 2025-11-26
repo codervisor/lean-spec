@@ -4,7 +4,7 @@ created: '2025-11-17'
 tags: []
 priority: medium
 created_at: '2025-11-17T06:07:38.678Z'
-updated_at: '2025-11-17T08:18:21.205Z'
+updated_at: '2025-11-26T06:04:04.638Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T06:11:38.816Z'
@@ -12,6 +12,8 @@ transitions:
     at: '2025-11-17T08:18:21.205Z'
 completed_at: '2025-11-17T08:18:21.205Z'
 completed: '2025-11-17'
+related:
+  - 094-ai-chatbot-web-integration
 ---
 
 # spec-detail-ui-improvements

@@ -12,7 +12,9 @@ depends_on:
   - '035'
 related:
   - 035-live-specs-showcase
-updated_at: '2025-11-13T08:55:52.705Z'
+  - 083-web-navigation-performance
+  - 085-cli-relationship-commands
+updated_at: '2025-11-26T06:03:58.536Z'
 transitions:
   - status: in-progress
     at: '2025-11-13T08:55:35.931Z'
