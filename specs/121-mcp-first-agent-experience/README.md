@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-26'
 tags:
   - mcp
@@ -9,12 +9,14 @@ tags:
   - dx
 priority: high
 created_at: '2025-11-26T02:23:13.829Z'
-updated_at: '2025-11-26T02:38:27.405Z'
+updated_at: '2025-11-26T02:45:28.537Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T02:32:10.155Z'
   - status: planned
     at: '2025-11-26T02:37:22.150Z'
+  - status: in-progress
+    at: '2025-11-26T02:45:28.537Z'
 depends_on:
   - 073-template-engine-agents-md
 related:
@@ -24,7 +26,7 @@ related:
 
 # MCP-First Agent Experience: Multi-Tool Support & SDD Compliance
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-26 · **Tags**: mcp, ai-agents, ux, init, dx
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-26 · **Tags**: mcp, ai-agents, ux, init, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -309,9 +311,9 @@ Next steps:
 - [ ] Add stale spec warnings to board/list outputs
 
 ### Phase 4: Documentation & Testing
-- [ ] Update docs-site MCP integration guide
-- [ ] Update agent-configuration.mdx with new structure
-- [ ] Add Chinese translations for new content
+- [x] Update docs-site MCP integration guide
+- [x] Update agent-configuration.mdx with new structure
+- [x] Add Chinese translations for new content
 - [ ] Test with Claude Code (real user flow)
 - [ ] Test with Gemini CLI
 - [ ] Test with GitHub Copilot
