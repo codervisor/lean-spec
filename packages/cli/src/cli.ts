@@ -61,6 +61,7 @@ Command Groups:
     templates                     Manage spec templates
     
   Integration:
+    agent                         Dispatch specs to AI coding agents
     mcp                           Start MCP server for AI assistants
     ui                            Start local web UI for spec management
 
@@ -86,6 +87,9 @@ Examples:
   $ lean-spec tokens 059
   $ lean-spec analyze 045 --json
   $ lean-spec split 045 --output README.md:1-150 --output DESIGN.md:151-end
+  $ lean-spec agent list
+  $ lean-spec agent run 045 --agent claude
+  $ lean-spec agent run 045 047 048 --parallel
   $ lean-spec ui
   $ lean-spec ui --port 3001 --no-open
   $ lean-spec ui --specs ./docs/specs --dry-run

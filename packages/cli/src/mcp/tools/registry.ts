@@ -3,6 +3,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { agentListTool, agentRunTool, agentStatusTool } from './agent.js';
 import { archiveTool } from './archive.js';
 import { backfillTool } from './backfill.js';
 import { boardTool } from './board.js';
@@ -24,6 +25,17 @@ import { viewTool } from './view.js';
 export function registerTools(server: McpServer): void {
   // Alphabetically sorted tool registration  
   // Note: Using any cast to work around MCP SDK type narrowing issues
+  
+  // Agent tools (spec 123)
+  const [agentListName, agentListConfig, agentListHandler] = agentListTool();
+  server.registerTool(agentListName, agentListConfig, agentListHandler as any);
+  
+  const [agentRunName, agentRunConfig, agentRunHandler] = agentRunTool();
+  server.registerTool(agentRunName, agentRunConfig, agentRunHandler as any);
+  
+  const [agentStatusName, agentStatusConfig, agentStatusHandler] = agentStatusTool();
+  server.registerTool(agentStatusName, agentStatusConfig, agentStatusHandler as any);
+  
   const [name1, config1, handler1] = archiveTool();
   server.registerTool(name1, config1, handler1 as any);
   

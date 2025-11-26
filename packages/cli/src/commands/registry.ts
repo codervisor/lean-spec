@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import {
+  agentCommand,
   analyzeCommand,
   archiveCommand,
   backfillCommand,
@@ -35,6 +36,7 @@ import {
  */
 export function registerCommands(program: Command): void {
   // Alphabetically sorted command registration
+  program.addCommand(agentCommand());
   program.addCommand(analyzeCommand());
   program.addCommand(archiveCommand());
   program.addCommand(backfillCommand());
