@@ -12,6 +12,7 @@ import {
   getProjectName,
   createAgentToolSymlinks,
   AI_TOOL_CONFIGS,
+  getDefaultAIToolSelection,
   type AIToolKey,
 } from '../utils/template-helpers.js';
 import { 
@@ -87,9 +88,9 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   // Skip prompts if -y flag is used
   if (skipPrompts) {
     console.log(chalk.gray('Using defaults: quick start with standard template'));
-    // Default to Claude Code + Copilot symlinks when using -y
+    // Default to Copilot only (AGENTS.md) when using -y
     if (!agentToolsOption) {
-      selectedAgentTools = ['claude', 'copilot'];
+      selectedAgentTools = ['copilot'];
     }
     console.log('');
   } else if (!templateOption) {
@@ -219,10 +220,29 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   // AI tool selection (skip only if -y flag is used or --agent-tools was provided)
   // Quick start should still ask this question - it's important for AI tool UX
   if (!skipPrompts && !agentToolsOption) {
+    // Auto-detect installed AI tools for smart defaults
+    const { defaults: detectedDefaults, detected: detectionResults } = await getDefaultAIToolSelection();
+    const anyDetected = detectionResults.some(r => r.detected);
+    
+    // Show detection info if any tools were found
+    if (anyDetected) {
+      console.log('');
+      console.log(chalk.cyan('🔍 Detected AI tools:'));
+      for (const result of detectionResults) {
+        if (result.detected) {
+          console.log(chalk.gray(`   ${AI_TOOL_CONFIGS[result.tool].description}`));
+          for (const reason of result.reasons) {
+            console.log(chalk.gray(`      └─ ${reason}`));
+          }
+        }
+      }
+      console.log('');
+    }
+
     const toolChoices = Object.entries(AI_TOOL_CONFIGS).map(([key, config]) => ({
       name: config.description,
       value: key as AIToolKey,
-      checked: config.default,
+      checked: detectedDefaults.includes(key as AIToolKey),
     }));
 
     selectedAgentTools = await checkbox({
