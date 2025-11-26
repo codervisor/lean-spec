@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { execSync } from 'node:child_process';
 import chalk from 'chalk';
 
 /**
@@ -11,54 +12,271 @@ export interface AIToolConfig {
   description: string; // Human-readable description for prompts
   default: boolean;    // Whether to include by default in quick start
   usesSymlink: boolean; // Whether this tool uses a symlink (false for AGENTS.md itself)
+  detection?: {        // Optional auto-detection configuration
+    commands?: string[];     // CLI commands to check (e.g., ['claude', 'claude-code'])
+    configDirs?: string[];   // Config directories to check (e.g., ['.claude'])
+    envVars?: string[];      // Environment variables to check (e.g., ['ANTHROPIC_API_KEY'])
+    extensions?: string[];   // VS Code extension IDs to check
+  };
 }
 
-export type AIToolKey = 'claude' | 'gemini' | 'copilot' | 'cursor' | 'windsurf' | 'cline' | 'warp';
+export type AIToolKey = 'aider' | 'claude' | 'codex' | 'copilot' | 'cursor' | 'droid' | 'gemini' | 'opencode' | 'windsurf';
 
 export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
+  aider: {
+    file: 'AGENTS.md',
+    description: 'Aider (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+    detection: {
+      commands: ['aider'],
+      configDirs: ['.aider'],
+    },
+  },
   claude: {
     file: 'CLAUDE.md',
-    description: 'Claude Code / Claude Desktop (CLAUDE.md)',
+    description: 'Claude Code (CLAUDE.md)',
     default: true,
     usesSymlink: true,
+    detection: {
+      commands: ['claude'],
+      configDirs: ['.claude'],
+      envVars: ['ANTHROPIC_API_KEY'],
+    },
   },
-  gemini: {
-    file: 'GEMINI.md',
-    description: 'Gemini CLI (GEMINI.md)',
+  codex: {
+    file: 'AGENTS.md',
+    description: 'Codex CLI by OpenAI (uses AGENTS.md)',
     default: false,
-    usesSymlink: true,
+    usesSymlink: false,
+    detection: {
+      commands: ['codex'],
+      configDirs: ['.codex'],
+      envVars: ['OPENAI_API_KEY'],
+    },
   },
   copilot: {
     file: 'AGENTS.md',
     description: 'GitHub Copilot (AGENTS.md - default)',
     default: true,
     usesSymlink: false, // Primary file, no symlink needed
+    detection: {
+      commands: ['copilot'],
+      envVars: ['GITHUB_TOKEN'],
+    },
   },
   cursor: {
     file: 'AGENTS.md',
     description: 'Cursor (uses AGENTS.md)',
     default: false,
     usesSymlink: false,
+    detection: {
+      configDirs: ['.cursor', '.cursorules'],
+      commands: ['cursor'],
+    },
+  },
+  droid: {
+    file: 'AGENTS.md',
+    description: 'Droid by Factory (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+    detection: {
+      commands: ['droid'],
+    },
+  },
+  gemini: {
+    file: 'GEMINI.md',
+    description: 'Gemini CLI (GEMINI.md)',
+    default: false,
+    usesSymlink: true,
+    detection: {
+      commands: ['gemini'],
+      configDirs: ['.gemini'],
+      envVars: ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
+    },
+  },
+  opencode: {
+    file: 'AGENTS.md',
+    description: 'OpenCode (uses AGENTS.md)',
+    default: false,
+    usesSymlink: false,
+    detection: {
+      commands: ['opencode'],
+      configDirs: ['.opencode'],
+    },
   },
   windsurf: {
     file: 'AGENTS.md',
     description: 'Windsurf (uses AGENTS.md)',
     default: false,
     usesSymlink: false,
-  },
-  cline: {
-    file: 'AGENTS.md',
-    description: 'Cline (uses AGENTS.md)',
-    default: false,
-    usesSymlink: false,
-  },
-  warp: {
-    file: 'AGENTS.md',
-    description: 'Warp Terminal (uses AGENTS.md)',
-    default: false,
-    usesSymlink: false,
+    detection: {
+      configDirs: ['.windsurf', '.windsurfrules'],
+      commands: ['windsurf'],
+    },
   },
 };
+
+/**
+ * Check if a command exists in PATH
+ */
+function commandExists(command: string): boolean {
+  try {
+    const which = process.platform === 'win32' ? 'where' : 'which';
+    execSync(`${which} ${command}`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if a directory exists in the user's home directory
+ */
+async function configDirExists(dirName: string): Promise<boolean> {
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  if (!homeDir) return false;
+  
+  try {
+    await fs.access(path.join(homeDir, dirName));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if an environment variable is set
+ */
+function envVarExists(varName: string): boolean {
+  return !!process.env[varName];
+}
+
+/**
+ * Check if a VS Code extension is installed
+ * Note: This is a best-effort check - may not work in all environments
+ */
+async function extensionInstalled(extensionId: string): Promise<boolean> {
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  if (!homeDir) return false;
+  
+  // Check common VS Code extension directories
+  const extensionDirs = [
+    path.join(homeDir, '.vscode', 'extensions'),
+    path.join(homeDir, '.vscode-server', 'extensions'),
+    path.join(homeDir, '.cursor', 'extensions'),
+  ];
+  
+  for (const extDir of extensionDirs) {
+    try {
+      const entries = await fs.readdir(extDir);
+      // Extension folders are named like 'github.copilot-1.234.567'
+      if (entries.some(e => e.toLowerCase().startsWith(extensionId.toLowerCase()))) {
+        return true;
+      }
+    } catch {
+      // Directory doesn't exist or not readable
+    }
+  }
+  
+  return false;
+}
+
+export interface DetectionResult {
+  tool: AIToolKey;
+  detected: boolean;
+  reasons: string[];
+}
+
+/**
+ * Auto-detect installed AI tools
+ * Returns detection results with reasons for each tool
+ */
+export async function detectInstalledAITools(): Promise<DetectionResult[]> {
+  const results: DetectionResult[] = [];
+  
+  for (const [toolKey, config] of Object.entries(AI_TOOL_CONFIGS)) {
+    const reasons: string[] = [];
+    const detection = config.detection;
+    
+    if (!detection) {
+      results.push({ tool: toolKey as AIToolKey, detected: false, reasons: [] });
+      continue;
+    }
+    
+    // Check commands
+    if (detection.commands) {
+      for (const cmd of detection.commands) {
+        if (commandExists(cmd)) {
+          reasons.push(`'${cmd}' command found`);
+        }
+      }
+    }
+    
+    // Check config directories
+    if (detection.configDirs) {
+      for (const dir of detection.configDirs) {
+        if (await configDirExists(dir)) {
+          reasons.push(`~/${dir} directory found`);
+        }
+      }
+    }
+    
+    // Check environment variables
+    if (detection.envVars) {
+      for (const envVar of detection.envVars) {
+        if (envVarExists(envVar)) {
+          reasons.push(`${envVar} env var set`);
+        }
+      }
+    }
+    
+    // Check VS Code extensions
+    if (detection.extensions) {
+      for (const ext of detection.extensions) {
+        if (await extensionInstalled(ext)) {
+          reasons.push(`${ext} extension installed`);
+        }
+      }
+    }
+    
+    results.push({
+      tool: toolKey as AIToolKey,
+      detected: reasons.length > 0,
+      reasons,
+    });
+  }
+  
+  return results;
+}
+
+/**
+ * Get default selection for AI tools based on auto-detection
+ * Falls back to copilot only (AGENTS.md) if nothing is detected
+ */
+export async function getDefaultAIToolSelection(): Promise<{ defaults: AIToolKey[]; detected: DetectionResult[] }> {
+  const detectionResults = await detectInstalledAITools();
+  const detectedTools = detectionResults
+    .filter(r => r.detected)
+    .map(r => r.tool);
+  
+  // If any tools detected, use those as defaults
+  if (detectedTools.length > 0) {
+    // Always include copilot if it's detected or nothing else is (AGENTS.md is primary)
+    const copilotDetected = detectedTools.includes('copilot');
+    if (!copilotDetected) {
+      // Check if any detected tool uses AGENTS.md
+      const usesAgentsMd = detectedTools.some(t => !AI_TOOL_CONFIGS[t].usesSymlink);
+      if (!usesAgentsMd) {
+        detectedTools.push('copilot');
+      }
+    }
+    return { defaults: detectedTools, detected: detectionResults };
+  }
+  
+  // Fall back to copilot only (AGENTS.md is the primary file)
+  return { defaults: ['copilot'], detected: detectionResults };
+}
 
 export interface SymlinkResult {
   file: string;
