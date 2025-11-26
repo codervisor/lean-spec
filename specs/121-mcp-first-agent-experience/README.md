@@ -431,3 +431,11 @@ For AGENTS.md, recommend tools in this order:
 4. **How often should checkpoint be called?**
    - Every N messages? Every task? User-triggered?
    - **Decision**: Document as "call periodically", let users decide
+
+### Bug Fixes (Post-Completion)
+
+**2025-11-26: Quick Start mode wasn't showing AI tool selection**
+- Issue: The AI tool selection prompt was only shown in "Choose template" mode, not "Quick start" mode
+- Root cause: Condition `setupMode !== 'quick'` incorrectly skipped the prompt
+- Fix: Removed the `setupMode !== 'quick'` condition; now AI tools prompt shows for all interactive modes
+- Impact: Users selecting Quick Start now see the AI tools prompt as designed

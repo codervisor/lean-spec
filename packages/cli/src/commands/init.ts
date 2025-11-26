@@ -216,8 +216,9 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
     templateConfig.structure.prefix = '';
   }
 
-  // AI tool selection (skip for quick start or if -y flag is used, or if --agent-tools was provided)
-  if (!skipPrompts && !agentToolsOption && setupMode !== 'quick') {
+  // AI tool selection (skip only if -y flag is used or --agent-tools was provided)
+  // Quick start should still ask this question - it's important for AI tool UX
+  if (!skipPrompts && !agentToolsOption) {
     const toolChoices = Object.entries(AI_TOOL_CONFIGS).map(([key, config]) => ({
       name: config.description,
       value: key as AIToolKey,
@@ -228,9 +229,6 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
       message: 'Which AI tools do you use? (creates symlinks for tool-specific instruction files)',
       choices: toolChoices,
     });
-  } else if (!agentToolsOption && setupMode === 'quick') {
-    // Quick start defaults to Claude + Copilot
-    selectedAgentTools = ['claude', 'copilot'];
   }
 
   // Create .lean-spec/templates/ directory
