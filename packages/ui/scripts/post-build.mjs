@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkgDir = join(__dirname, '..');
+const repoRoot = join(pkgDir, '../..');
 
 // Copy static assets into standalone build
 const staticSrc = join(pkgDir, '.next', 'static');
@@ -14,9 +15,9 @@ const staticDest = join(pkgDir, '.next', 'standalone', 'packages', 'ui', '.next'
 const publicSrc = join(pkgDir, 'public');
 const publicDest = join(pkgDir, '.next', 'standalone', 'packages', 'ui', 'public');
 
-// Copy database file to standalone build
-const dbSrc = join(pkgDir, 'leanspec.db');
-const dbDest = join(pkgDir, '.next', 'standalone', 'packages', 'ui', 'leanspec.db');
+// Copy specs directory to standalone build (for filesystem mode)
+const specsSrc = join(repoRoot, 'specs');
+const specsDest = join(pkgDir, '.next', 'standalone', 'specs');
 
 try {
   await cp(staticSrc, staticDest, { recursive: true, force: true });
@@ -25,13 +26,13 @@ try {
   await cp(publicSrc, publicDest, { recursive: true, force: true });
   console.log('✓ Copied public assets to standalone build');
   
-  // Copy database if it exists (created by db:seed)
+  // Copy specs directory for filesystem mode
   try {
-    await access(dbSrc, constants.F_OK);
-    await cp(dbSrc, dbDest, { force: true });
-    console.log('✓ Copied leanspec.db to standalone build');
+    await access(specsSrc, constants.F_OK);
+    await cp(specsSrc, specsDest, { recursive: true, force: true });
+    console.log('✓ Copied specs to standalone build');
   } catch {
-    console.log('⚠ No leanspec.db found (skipping database copy)');
+    console.log('⚠ No specs directory found (skipping specs copy)');
   }
 } catch (error) {
   console.error('Failed to copy assets:', error);

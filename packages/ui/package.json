@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:seed && next build && node ./scripts/post-build.mjs",
+    "build": "next build && node ./scripts/post-build.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
