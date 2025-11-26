@@ -385,26 +385,6 @@ lean-spec ui                 # Opens http://localhost:3000
 
 ---
 
-## Built with LeanSpec (Dogfooding)
-
-**LeanSpec is built using LeanSpec.** Every feature has a spec. All follow the principles—small, intent-focused, AI-readable.
-
-**Project velocity:**
-- 🚀 **80+ specs** written and implemented  
-- ⏱️ **10 days** from first commit to production-ready v0.1
-- 🤖 **AI-assisted development** for 90%+ of features
-- 📊 **100% context economy compliance** (all specs &lt;2,000 tokens)
-
-**Live examples you can learn from:**
-- [UI Package Documentation](https://github.com/codervisor/lean-spec/tree/main/specs/106-ui-package-documentation) - Documentation project (1,847 tokens)
-- [Unified Dashboard](https://github.com/codervisor/lean-spec/tree/main/specs/045-unified-dashboard) - Complex CLI feature (287 tokens)
-- [MCP Server Architecture](https://github.com/codervisor/lean-spec/tree/main/specs/080-mcp-server-modular-architecture) - System refactor (1,847 tokens)
-- [Example Projects Scaffold](https://github.com/codervisor/lean-spec/tree/main/specs/114-example-projects-scaffold) - Tutorial system (1,392 tokens)
-
-→ [Browse all 80+ specs](https://github.com/codervisor/lean-spec/tree/main/specs)
-
----
-
 ## Documentation & Resources
 
 ### Getting Started
@@ -431,9 +411,12 @@ lean-spec ui                 # Opens http://localhost:3000
 - 🤝 [Contributing Guide](CONTRIBUTING.md) - Join the project
 - 🌏 [中文文档](https://www.lean-spec.dev/zh-Hans/) - Chinese documentation
 
----
+### Contact Me
+
+If you feel LeanSpec could benefit your daily work or your company, please add the author's Wechat account noting "LeanSpec" to enter the discussion group.
 
 <p align="center">
-  <strong>Lean Spec-Driven Development.</strong><br>
-  Start simple. Iterate fast. Stay aligned.
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="Contact Me on WeChat" width="800">
+  <br>
+  <em>Contact Me on WeChat</em>
 </p>
