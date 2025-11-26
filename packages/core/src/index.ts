@@ -61,7 +61,11 @@ export {
 // Search
 export {
   searchSpecs,
+  advancedSearchSpecs,
+  searchSpecsAdvanced,
   FIELD_WEIGHTS,
+  parseQuery,
+  getSearchSyntaxHelp,
   type SearchOptions,
   type SearchMatch,
   type SearchResult,
@@ -69,4 +73,7 @@ export {
   type SearchResponse,
   type SearchMetadata,
   type SearchableSpec,
+  type ParsedQuery,
+  type FieldFilter,
+  type DateFilter,
 } from './search/index.js';

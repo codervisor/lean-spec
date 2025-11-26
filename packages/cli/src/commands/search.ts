@@ -7,30 +7,49 @@ import type { SpecStatus, SpecPriority, SpecFilterOptions } from '../frontmatter
 import { withSpinner } from '../utils/ui.js';
 import { autoCheckIfEnabled } from './check.js';
 import { sanitizeUserInput } from '../utils/ui.js';
-import { searchSpecs, type SearchableSpec } from '@leanspec/core';
+import { advancedSearchSpecs, getSearchSyntaxHelp, type SearchableSpec } from '@leanspec/core';
 import { parseCustomFieldOptions } from '../utils/cli-helpers.js';
 
 /**
- * Search command - full-text search with metadata filters
+ * Search command - full-text search with metadata filters and advanced query syntax
  */
 export function searchCommand(): Command {
   return new Command('search')
-    .description('Full-text search with metadata filters')
-    .argument('<query>', 'Search query')
+    .description('Full-text search with advanced query syntax')
+    .argument('[query]', 'Search query (supports AND, OR, NOT, field:value, fuzzy~)')
     .option('--status <status>', 'Filter by status')
     .option('--tag <tag>', 'Filter by tag')
     .option('--priority <priority>', 'Filter by priority')
     .option('--assignee <name>', 'Filter by assignee')
     .option('--field <name=value...>', 'Filter by custom field (can specify multiple)')
     .option('--json', 'Output as JSON')
-    .action(async (query: string, options: {
+    .option('--help-syntax', 'Show advanced query syntax help')
+    .action(async (query: string | undefined, options: {
       status?: SpecStatus;
       tag?: string;
       priority?: SpecPriority;
       assignee?: string;
       field?: string[];
       json?: boolean;
+      helpSyntax?: boolean;
     }) => {
+      // Show syntax help
+      if (options.helpSyntax) {
+        console.log('');
+        console.log(chalk.cyan('Advanced Search Syntax'));
+        console.log(chalk.gray('─'.repeat(60)));
+        console.log('');
+        console.log(getSearchSyntaxHelp());
+        console.log('');
+        return;
+      }
+
+      if (!query) {
+        console.log(chalk.yellow('Usage: lean-spec search <query>'));
+        console.log(chalk.gray('Use --help-syntax for advanced query syntax'));
+        return;
+      }
+
       const customFields = parseCustomFieldOptions(options.field);
       await performSearch(query, {
         status: options.status,
@@ -87,10 +106,13 @@ export async function performSearch(query: string, options: {
     title: typeof spec.frontmatter.title === 'string' ? spec.frontmatter.title : undefined,
     description: typeof spec.frontmatter.description === 'string' ? spec.frontmatter.description : undefined,
     content: spec.content,
+    created: spec.frontmatter.created,
+    updated: spec.frontmatter.updated_at,
+    assignee: spec.frontmatter.assignee,
   }));
 
-  // Use intelligent search engine
-  const searchResult = searchSpecs(query, searchableSpecs, {
+  // Use advanced search engine (supports boolean operators, field filters, fuzzy matching)
+  const searchResult = advancedSearchSpecs(query, searchableSpecs, {
     maxMatchesPerSpec: 5,
     contextLength: 80,
   });

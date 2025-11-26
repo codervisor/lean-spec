@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { searchSpecs } from './engine.js';
+import { searchSpecs, advancedSearchSpecs } from './engine.js';
 import type { SearchableSpec } from './engine.js';
 
 describe('Search Engine', () => {
@@ -402,6 +402,217 @@ Basic endpoint documentation.
       const names = result.results.map(r => r.spec.name);
       expect(names).toContain('content-only');
       expect(names).toContain('title-match');
+    });
+  });
+});
+
+describe('Advanced Search (spec 124 Phase 2)', () => {
+  const sampleSpecs: SearchableSpec[] = [
+    {
+      path: '042-oauth2-implementation',
+      name: '042-oauth2-implementation',
+      status: 'in-progress',
+      priority: 'high',
+      tags: ['api', 'security', 'auth'],
+      title: 'OAuth2 Authentication Flow',
+      description: 'Implement OAuth2 authentication with token refresh',
+      content: 'OAuth2 flow supports authorization code grant with PKCE.',
+      created: '2025-11-01',
+      updated: '2025-11-15',
+      assignee: 'marvin',
+    },
+    {
+      path: '038-jwt-token-service',
+      name: '038-jwt-token-service',
+      status: 'complete',
+      priority: 'medium',
+      tags: ['api', 'auth'],
+      title: 'JWT Token Service',
+      description: 'JWT-based authentication service',
+      content: 'JWT authentication flow with RS256 signing.',
+      created: '2025-10-15',
+      updated: '2025-11-10',
+      assignee: 'alice',
+    },
+    {
+      path: '051-user-session-management',
+      name: '051-user-session-management',
+      status: 'planned',
+      priority: 'medium',
+      tags: ['api', 'users'],
+      title: 'User Session Management',
+      description: 'Handle user sessions and authentication state',
+      content: 'Manage user sessions across multiple devices.',
+      created: '2025-11-20',
+      assignee: 'bob',
+    },
+    {
+      path: '025-api-rate-limiting',
+      name: '025-api-rate-limiting',
+      status: 'complete',
+      priority: 'high',
+      tags: ['api', 'security'],
+      title: 'API Rate Limiting',
+      description: 'Rate limiting for API endpoints (deprecated)',
+      content: 'Implement rate limiting to prevent abuse.',
+      created: '2025-09-01',
+      updated: '2025-09-15',
+    },
+  ];
+
+  describe('Boolean operators', () => {
+    it('should support AND operator', () => {
+      const result = advancedSearchSpecs('api AND authentication', sampleSpecs);
+      
+      // Should find specs with both "api" and "authentication"
+      expect(result.results.length).toBeGreaterThan(0);
+      // OAuth2 spec should match (has both in various fields)
+      const names = result.results.map(r => r.spec.name);
+      expect(names).toContain('042-oauth2-implementation');
+    });
+
+    it('should support OR operator', () => {
+      const result = advancedSearchSpecs('session OR token', sampleSpecs);
+      
+      // Should find specs with either "session" or "token"
+      expect(result.results.length).toBeGreaterThan(0);
+      const names = result.results.map(r => r.spec.name);
+      expect(names).toContain('051-user-session-management');
+      expect(names).toContain('038-jwt-token-service');
+    });
+
+    it('should support NOT operator', () => {
+      const result = advancedSearchSpecs('api NOT deprecated', sampleSpecs);
+      
+      // Should find specs with "api" but not "deprecated"
+      const names = result.results.map(r => r.spec.name);
+      expect(names).not.toContain('025-api-rate-limiting');
+      expect(names).toContain('042-oauth2-implementation');
+    });
+
+    it('should support parentheses for grouping', () => {
+      const result = advancedSearchSpecs('(session OR token) AND authentication', sampleSpecs);
+      
+      // Should find specs matching (session OR token) AND authentication
+      expect(result.results.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Field-specific search', () => {
+    it('should filter by status', () => {
+      const result = advancedSearchSpecs('status:in-progress', sampleSpecs);
+      
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.status).toBe('in-progress');
+    });
+
+    it('should filter by tag', () => {
+      const result = advancedSearchSpecs('tag:security', sampleSpecs);
+      
+      expect(result.results.length).toBe(2);
+      for (const r of result.results) {
+        expect(r.spec.tags).toContain('security');
+      }
+    });
+
+    it('should filter by priority', () => {
+      const result = advancedSearchSpecs('priority:high', sampleSpecs);
+      
+      expect(result.results.length).toBe(2);
+      for (const r of result.results) {
+        expect(r.spec.priority).toBe('high');
+      }
+    });
+
+    it('should combine field filters with search terms', () => {
+      const result = advancedSearchSpecs('tag:api status:planned', sampleSpecs);
+      
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.name).toBe('051-user-session-management');
+    });
+
+    it('should filter by title', () => {
+      const result = advancedSearchSpecs('title:OAuth2', sampleSpecs);
+      
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.title).toContain('OAuth2');
+    });
+  });
+
+  describe('Date range filters', () => {
+    it('should filter by created date (greater than)', () => {
+      const result = advancedSearchSpecs('created:>2025-11-01', sampleSpecs);
+      
+      // Should find specs created after Nov 1, 2025
+      expect(result.results.length).toBeGreaterThan(0);
+      for (const r of result.results) {
+        const spec = sampleSpecs.find(s => s.name === r.spec.name);
+        expect(spec?.created).toBeDefined();
+        expect(spec!.created! > '2025-11-01').toBe(true);
+      }
+    });
+
+    it('should filter by created date (less than)', () => {
+      const result = advancedSearchSpecs('created:<2025-10-01', sampleSpecs);
+      
+      // Should find specs created before Oct 1, 2025
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.name).toBe('025-api-rate-limiting');
+    });
+
+    it('should filter by date range', () => {
+      const result = advancedSearchSpecs('created:2025-10-01..2025-11-01', sampleSpecs);
+      
+      // Should find specs created between Oct 1 and Nov 1, 2025
+      expect(result.results.length).toBeGreaterThan(0);
+      for (const r of result.results) {
+        const spec = sampleSpecs.find(s => s.name === r.spec.name);
+        expect(spec?.created).toBeDefined();
+        expect(spec!.created! >= '2025-10-01').toBe(true);
+        expect(spec!.created! <= '2025-11-01').toBe(true);
+      }
+    });
+  });
+
+  describe('Fuzzy matching', () => {
+    it('should find specs with typo-tolerant search', () => {
+      const result = advancedSearchSpecs('authetication~', sampleSpecs);
+      
+      // Should find specs with "authentication" despite the typo
+      expect(result.results.length).toBeGreaterThan(0);
+    });
+
+    it('should not fuzzy match completely different words', () => {
+      const result = advancedSearchSpecs('completely_different_word~', sampleSpecs);
+      
+      // Should not find any specs
+      expect(result.results.length).toBe(0);
+    });
+  });
+
+  describe('Complex queries', () => {
+    it('should combine field filters, boolean operators, and search terms', () => {
+      const result = advancedSearchSpecs('tag:api status:in-progress oauth', sampleSpecs);
+      
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].spec.name).toBe('042-oauth2-implementation');
+    });
+
+    it('should handle quoted phrases', () => {
+      const result = advancedSearchSpecs('"token refresh"', sampleSpecs);
+      
+      // Should find specs with exact phrase "token refresh"
+      expect(result.results.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Backward compatibility', () => {
+    it('should work with simple queries (no advanced syntax)', () => {
+      const result = advancedSearchSpecs('authentication', sampleSpecs);
+      
+      // Should behave like regular search
+      expect(result.results.length).toBeGreaterThan(0);
+      expect(result.metadata.query).toBe('authentication');
     });
   });
 });
