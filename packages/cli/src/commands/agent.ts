@@ -639,7 +639,7 @@ export async function listAgents(options: { json?: boolean } = {}): Promise<void
   const userAgents = getAgentsFromConfig(config);
   if (userAgents) {
     for (const [name, agentConfig] of Object.entries(userAgents)) {
-      if (name !== 'default' && !agents[name] && typeof agentConfig !== 'string') {
+      if (name !== 'default' && !agents[name] && agentConfig && typeof agentConfig !== 'string') {
         const available = await isAgentAvailable(agentConfig);
         agents[name] = {
           type: agentConfig.type,

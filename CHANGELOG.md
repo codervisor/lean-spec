@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2025-11-26
+
 ### Added
 - **MCP-first agent experience** (spec 121) - Enhanced AI agent workflow with better SDD compliance
   - Multi-tool symlink support: `lean-spec init` now creates tool-specific symlinks (CLAUDE.md, GEMINI.md → AGENTS.md)
@@ -23,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Outputs actionable fix commands (e.g., `lean-spec link <spec> --related 045`)
   - MCP `validate` tool now supports `checkDeps` option
   - Added Core Rule #8 in AGENTS.md: "ALWAYS link spec dependencies"
+- **Advanced search capabilities** (spec 124) - Enhanced search for power users
+  - Cross-field term matching: queries now find specs where terms appear across any fields
+  - Boolean operators support: `AND`, `OR`, `NOT` for complex queries
+  - Field-specific search: `status:in-progress`, `tag:api`, `priority:high`, `assignee:name`
+  - Date range filters: `created:>2025-11-01`, `created:2025-11-01..2025-11-15`
+  - Fuzzy matching with `~` suffix for typo tolerance
+  - Combined query syntax: `tag:api status:planned created:>2025-11`
+  - Search syntax help in `lean-spec search --help`
+  - Query guidance for AI agents in AGENTS.md and MCP tool descriptions
 - **Native diagram rendering in Web UI** (spec 119) - Mermaid diagram support in spec detail view
   - Client-side Mermaid rendering for flowcharts, sequence diagrams, class diagrams, etc.
   - Dark mode theme support with automatic theme switching
@@ -33,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Patterns for solo developers, teams, and experimental work
   - Best practices for worktree naming, branch strategy, and cleanup
   - Added to AGENTS.md FAQ section
+- **AI coding agent integration** (spec 123) - Enhanced workflow for remote coding agents
+  - Support for GitHub Copilot Coding Agent, OpenAI Codex Cloud, and similar tools
+  - Guidance for spec-driven task delegation to cloud agents
+  - Best practices for parallel development with remote agents
+- **Onboarding project context clarity** (spec 125) - Improved first-use experience
+  - Clearer guidance on workspace context for AI agents
+  - Enhanced AGENTS.md with project-specific context sections
 
 ### Changed
 - **AGENTS.md restructured for MCP-first approach**
@@ -560,6 +578,8 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.7]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.7
+[0.2.6]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.6
 [0.2.5]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.5
 [0.2.4]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.4
 [0.2.3]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.3
