@@ -402,9 +402,8 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   console.log(chalk.green('✓ LeanSpec initialized!'));
   console.log('');
   console.log('Next steps:');
-  console.log(chalk.gray('  - Review and customize AGENTS.md'));
-  console.log(chalk.gray('  - Check out example spec in specs/'));
-  console.log(chalk.gray('  - Create your first spec: lean-spec create my-feature'));
+  console.log(chalk.cyan('  1. Edit AGENTS.md') + chalk.gray(' → Fill in the "📋 Project Context" section'));
+  console.log(chalk.cyan('  2. Create your first spec:') + chalk.gray(' lean-spec create my-feature'));
   console.log('');
 }
 
