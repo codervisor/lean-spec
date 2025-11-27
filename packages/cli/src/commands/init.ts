@@ -308,16 +308,31 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
       console.log('');
     }
 
-    const toolChoices = Object.entries(AI_TOOL_CONFIGS).map(([key, config]) => ({
-      name: config.description,
-      value: key as AIToolKey,
-      checked: detectedDefaults.includes(key as AIToolKey),
-    }));
+    // Only show tools that require symlinks (Claude, Gemini)
+    // Filter to only show tools that require symlinks
+    const symlinkTools = Object.entries(AI_TOOL_CONFIGS)
+      .filter(([, config]) => config.usesSymlink)
+      .map(([key, config]) => ({
+        name: config.description,
+        value: key as AIToolKey,
+        checked: detectedDefaults.includes(key as AIToolKey),
+      }));
 
-    selectedAgentTools = await checkbox({
-      message: 'Which AI tools do you use? (creates symlinks for tool-specific instruction files)',
-      choices: toolChoices,
-    });
+    // Ask about symlinks only if there are tools that need them
+    if (symlinkTools.length > 0) {
+      console.log('');
+      console.log(chalk.gray('AGENTS.md will be created as the primary instruction file.'));
+      console.log(chalk.gray('Some AI tools (Claude Code, Gemini CLI) use their own filenames.'));
+      console.log('');
+      
+      const symlinkSelection = await checkbox({
+        message: 'Create symlinks for additional AI tools?',
+        choices: symlinkTools,
+      });
+      selectedAgentTools = symlinkSelection;
+    } else {
+      selectedAgentTools = [];
+    }
   }
 
   // Create .lean-spec/templates/ directory
@@ -497,9 +512,10 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   console.log('');
   console.log(chalk.green('✓ LeanSpec initialized!'));
   console.log('');
-  console.log('Next steps:');
-  console.log(chalk.cyan('  1. Edit AGENTS.md') + chalk.gray(' → Fill in the "📋 Project Context" section'));
-  console.log(chalk.cyan('  2. Create your first spec:') + chalk.gray(' lean-spec create my-feature'));
+  console.log(chalk.cyan('You\'re ready to go!') + chalk.gray(' Ask your AI to create a spec for your next feature.'));
+  console.log('');
+  console.log(chalk.gray('Example: "Create a spec for user authentication"'));
+  console.log(chalk.gray('Learn more: https://lean-spec.dev/docs/guide/getting-started'));
   console.log('');
 }
 

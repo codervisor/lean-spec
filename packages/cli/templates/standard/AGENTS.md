@@ -2,25 +2,6 @@
 
 ## Project: {project_name}
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     👇 TODO: Fill in your project context below (then delete these comments)
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
-### 📋 Project Context
-
-**What this project does:**
-_TODO: Describe your project in 1-2 sentences_
-
-**Tech stack:**
-_TODO: List main technologies (e.g., Node.js, React, PostgreSQL)_
-
-**Key objectives:**
-_TODO: What are you building toward? (e.g., Launch MVP by Q1)_
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     👆 End of TODO section - Delete these comment markers when done
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
 ## 🚨 CRITICAL: Before ANY Task
 
 **STOP and check these first:**
