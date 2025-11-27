@@ -147,6 +147,7 @@ export async function createSpec(name: string, options: {
   // Resolve template path from .lean-spec/templates/
   const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   let templateName: string;
+  let templateDir: string | null = null; // If template is a directory, this will be set
   
   // Determine which template to use
   if (options.template) {
@@ -164,10 +165,19 @@ export async function createSpec(name: string, options: {
   
   let templatePath = path.join(templatesDir, templateName);
 
-  // Backward compatibility: If template not found, try spec-template.md then README.md
+  // Check if template is a directory or file
   try {
-    await fs.access(templatePath);
+    const stat = await fs.stat(templatePath);
+    if (stat.isDirectory()) {
+      // Template is a directory - use README.md as main file, copy all .md files
+      templateDir = templatePath;
+      templatePath = path.join(templateDir, 'README.md');
+      // Verify main template file exists
+      await fs.access(templatePath);
+    }
+    // If it's a file, templatePath is already correct
   } catch {
+    // Template not found at configured path, try fallbacks
     // Try spec-template.md first (legacy)
     const legacyPath = path.join(templatesDir, 'spec-template.md');
     try {
@@ -260,20 +270,22 @@ export async function createSpec(name: string, options: {
 
   await fs.writeFile(specFile, content, 'utf-8');
 
-  // For detailed templates, copy any additional sub-spec files
-  // Check if there are other .md files in the templates directory
+  // Copy additional template files if template is a directory
+  // This supports multi-file templates (e.g., detailed template with DESIGN.md, PLAN.md, TEST.md)
   try {
-    const templateFiles = await fs.readdir(templatesDir);
-    const additionalFiles = templateFiles.filter(f => 
-      f.endsWith('.md') && 
-      f !== templateName && 
-      f !== 'spec-template.md' && 
-      f !== config.structure.defaultFile
-    );
+    let additionalFiles: string[] = [];
+    
+    if (templateDir) {
+      // Template is a directory - copy all .md files except the main template (README.md)
+      const templateFiles = await fs.readdir(templateDir);
+      additionalFiles = templateFiles.filter(f => 
+        f.endsWith('.md') && f !== 'README.md'
+      );
+    }
     
     if (additionalFiles.length > 0) {
       for (const file of additionalFiles) {
-        const srcPath = path.join(templatesDir, file);
+        const srcPath = path.join(templateDir!, file);
         const destPath = path.join(specDir, file);
         
         // Read template file and process variables

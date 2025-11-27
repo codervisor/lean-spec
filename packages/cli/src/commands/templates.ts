@@ -72,10 +72,11 @@ export async function listTemplates(cwd: string = process.cwd()): Promise<void> 
     return;
   }
 
-  const files = await fs.readdir(templatesDir);
-  const templateFiles = files.filter((f) => f.endsWith('.md'));
+  const entries = await fs.readdir(templatesDir, { withFileTypes: true });
+  const templateFiles = entries.filter((e) => e.isFile() && e.name.endsWith('.md'));
+  const templateDirs = entries.filter((e) => e.isDirectory());
 
-  if (templateFiles.length === 0) {
+  if (templateFiles.length === 0 && templateDirs.length === 0) {
     console.log(chalk.yellow('No templates found.'));
     console.log('');
     return;
@@ -87,21 +88,51 @@ export async function listTemplates(cwd: string = process.cwd()): Promise<void> 
     for (const [name, file] of Object.entries(config.templates)) {
       const isDefault = config.template === file;
       const marker = isDefault ? chalk.green('✓ (default)') : '';
-      console.log(`  ${chalk.bold(name)}: ${file} ${marker}`);
+      
+      // Check if it's a directory-based template
+      const templatePath = path.join(templatesDir, file);
+      try {
+        const stat = await fs.stat(templatePath);
+        if (stat.isDirectory()) {
+          // List files in the directory
+          const dirFiles = await fs.readdir(templatePath);
+          const mdFiles = dirFiles.filter(f => f.endsWith('.md'));
+          console.log(`  ${chalk.bold(name)}: ${file}/ ${marker}`);
+          console.log(chalk.gray(`    Files: ${mdFiles.join(', ')}`));
+        } else {
+          console.log(`  ${chalk.bold(name)}: ${file} ${marker}`);
+        }
+      } catch {
+        console.log(`  ${chalk.bold(name)}: ${file} ${marker} ${chalk.red('(missing)')}`);
+      }
     }
     console.log('');
   }
 
   // Show all available template files
-  console.log(chalk.cyan('Available files:'));
-  for (const file of templateFiles) {
-    const filePath = path.join(templatesDir, file);
-    const stat = await fs.stat(filePath);
-    const sizeKB = (stat.size / 1024).toFixed(1);
-    console.log(`  ${file} (${sizeKB} KB)`);
+  if (templateFiles.length > 0) {
+    console.log(chalk.cyan('Available files:'));
+    for (const entry of templateFiles) {
+      const filePath = path.join(templatesDir, entry.name);
+      const stat = await fs.stat(filePath);
+      const sizeKB = (stat.size / 1024).toFixed(1);
+      console.log(`  ${entry.name} (${sizeKB} KB)`);
+    }
+    console.log('');
   }
 
-  console.log('');
+  // Show available template directories (multi-file templates)
+  if (templateDirs.length > 0) {
+    console.log(chalk.cyan('Available directories (multi-file templates):'));
+    for (const entry of templateDirs) {
+      const dirPath = path.join(templatesDir, entry.name);
+      const dirFiles = await fs.readdir(dirPath);
+      const mdFiles = dirFiles.filter(f => f.endsWith('.md'));
+      console.log(`  ${entry.name}/ (${mdFiles.length} files: ${mdFiles.join(', ')})`);
+    }
+    console.log('');
+  }
+
   console.log(chalk.gray('Use templates with: lean-spec create <name> --template=<template-name>'));
   console.log('');
 }
@@ -123,12 +154,33 @@ export async function showTemplate(
   const templatePath = path.join(templatesDir, templateFile);
 
   try {
-    const content = await fs.readFile(templatePath, 'utf-8');
-    console.log('');
-    console.log(chalk.cyan(`=== Template: ${templateName} (${templateFile}) ===`));
-    console.log('');
-    console.log(content);
-    console.log('');
+    const stat = await fs.stat(templatePath);
+    
+    if (stat.isDirectory()) {
+      // Directory-based template - show all files
+      console.log('');
+      console.log(chalk.cyan(`=== Template: ${templateName} (${templateFile}/) ===`));
+      console.log('');
+      
+      const files = await fs.readdir(templatePath);
+      const mdFiles = files.filter(f => f.endsWith('.md'));
+      
+      for (const file of mdFiles) {
+        const filePath = path.join(templatePath, file);
+        const content = await fs.readFile(filePath, 'utf-8');
+        console.log(chalk.yellow(`--- ${file} ---`));
+        console.log(content);
+        console.log('');
+      }
+    } else {
+      // Single file template
+      const content = await fs.readFile(templatePath, 'utf-8');
+      console.log('');
+      console.log(chalk.cyan(`=== Template: ${templateName} (${templateFile}) ===`));
+      console.log('');
+      console.log(content);
+      console.log('');
+    }
   } catch (error) {
     console.error(chalk.red(`Error reading template: ${templateFile}`));
     console.error(error);
@@ -145,14 +197,25 @@ export async function addTemplate(
   const templatesDir = path.join(cwd, '.lean-spec', 'templates');
   const templatePath = path.join(templatesDir, file);
 
-  // Check if file exists
+  // Check if file or directory exists
   try {
-    await fs.access(templatePath);
+    const stat = await fs.stat(templatePath);
+    if (stat.isDirectory()) {
+      // Verify it has a README.md (main template file)
+      const mainFile = path.join(templatePath, 'README.md');
+      try {
+        await fs.access(mainFile);
+      } catch {
+        console.error(chalk.red(`Directory template must contain README.md: ${file}/`));
+        console.error(chalk.gray(`Expected at: ${mainFile}`));
+        process.exit(1);
+      }
+    }
   } catch {
-    console.error(chalk.red(`Template file not found: ${file}`));
+    console.error(chalk.red(`Template not found: ${file}`));
     console.error(chalk.gray(`Expected at: ${templatePath}`));
     console.error(
-      chalk.yellow('Create the file first or use: lean-spec templates copy <source> <target>'),
+      chalk.yellow('Create the file/directory first or use: lean-spec templates copy <source> <target>'),
     );
     process.exit(1);
   }
