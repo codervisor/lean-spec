@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toast } from "@/components/ui/toast";
 import { ProjectProvider } from "@/contexts/project-context";
 import { getSpecs } from "@/lib/db/service-queries";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "LeanSpec Web - Interactive Spec Showcase",
@@ -68,6 +69,8 @@ export default async function RootLayout({
             <Toast />
           </ProjectProvider>
         </ThemeProvider>
+        {/* Only track analytics on web.lean-spec.dev, not for other users */}
+        {process.env.NEXT_PUBLIC_VERCEL_URL?.includes('lean-spec.dev') && <Analytics />}
       </body>
     </html>
   );
