@@ -23,7 +23,7 @@ export function boardCommand(): Command {
     .option('--assignee <name>', 'Filter by assignee')
     .option('--json', 'Output as JSON')
     .action(async (options: {
-      showComplete?: boolean;
+      complete?: boolean;
       simple?: boolean;
       completionOnly?: boolean;
       tag?: string;
@@ -35,7 +35,7 @@ export function boardCommand(): Command {
 }
 
 export async function showBoard(options: {
-  showComplete?: boolean;
+  complete?: boolean;
   simple?: boolean;
   completionOnly?: boolean;
   tag?: string;
@@ -198,7 +198,7 @@ export async function showBoard(options: {
   console.log(chalk.dim('━'.repeat(70)));
   console.log('');
   
-  renderColumn(STATUS_CONFIG.complete.label, STATUS_CONFIG.complete.emoji, columns.complete, options.showComplete || false, STATUS_CONFIG.complete.colorFn);
+  renderColumn(STATUS_CONFIG.complete.label, STATUS_CONFIG.complete.emoji, columns.complete, options.complete || false, STATUS_CONFIG.complete.colorFn);
 }
 
 function renderColumn(
