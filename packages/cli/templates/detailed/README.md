@@ -22,7 +22,7 @@ Keep it lean, but organized. Use sub-specs to manage complexity without overwhel
 
 ## Next Steps
 
-1. Customize AGENTS.md for your project
-2. Create your first spec: `lean-spec create my-feature`
-3. When a spec grows large, split sections into sub-spec files
+You're ready to go! Ask your AI to create a spec for your next feature.
+
+When a spec grows large, consider splitting sections into sub-spec files.
 

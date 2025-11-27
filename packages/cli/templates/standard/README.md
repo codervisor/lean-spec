@@ -21,6 +21,5 @@ Keep it lean. Write specs for features that need clarity. Skip them for obvious 
 
 ## Next Steps
 
-1. Customize AGENTS.md for your project
-2. Create your first spec: `lean-spec create my-feature`
+You're ready to go! Ask your AI to create a spec for your next feature.
 
