@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { select, checkbox } from '@inquirer/prompts';
+import { select, checkbox, confirm } from '@inquirer/prompts';
 import { saveConfig, type LeanSpecConfig } from '../config.js';
 import {
   detectExistingSystemPrompts,
@@ -13,6 +13,9 @@ import {
   createAgentToolSymlinks,
   AI_TOOL_CONFIGS,
   getDefaultAIToolSelection,
+  getCliCapableDetectedTools,
+  executeMergeWithAI,
+  getDisplayCommand,
   type AIToolKey,
 } from '../utils/template-helpers.js';
 import { 
@@ -25,6 +28,72 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 const EXAMPLES_DIR = path.join(TEMPLATES_DIR, 'examples');
+
+/**
+ * Attempt to auto-merge AGENTS.md using detected AI CLI tool
+ * Returns true if merge was successfully completed
+ */
+async function attemptAutoMerge(cwd: string, promptPath: string, autoExecute: boolean): Promise<boolean> {
+  // Check for CLI-capable AI tools
+  const cliTools = await getCliCapableDetectedTools();
+  
+  if (cliTools.length === 0) {
+    // No CLI tools detected, fall back to manual instructions
+    return false;
+  }
+  
+  // Use first detected CLI-capable tool
+  const tool = cliTools[0];
+  const displayCmd = getDisplayCommand(tool.tool, promptPath);
+  
+  console.log('');
+  console.log(chalk.cyan(`🔍 Detected AI CLI: ${tool.config.description}`));
+  for (const reason of tool.reasons) {
+    console.log(chalk.gray(`   └─ ${reason}`));
+  }
+  console.log('');
+  console.log(chalk.gray(`Command: ${displayCmd}`));
+  console.log('');
+  
+  let shouldExecute = autoExecute;
+  
+  if (!autoExecute) {
+    shouldExecute = await confirm({
+      message: 'Run merge automatically using detected AI CLI?',
+      default: true,
+    });
+  }
+  
+  if (!shouldExecute) {
+    console.log(chalk.gray('Skipping auto-merge. Run the command above manually to merge.'));
+    return false;
+  }
+  
+  console.log('');
+  console.log(chalk.cyan('🤖 Running AI-assisted merge...'));
+  console.log(chalk.gray('   (This may take a moment)'));
+  console.log('');
+  
+  const result = await executeMergeWithAI(cwd, promptPath, tool.tool);
+  
+  if (result.success) {
+    console.log('');
+    console.log(chalk.green('✓ AGENTS.md merged successfully!'));
+    console.log(chalk.gray('  Review changes: git diff AGENTS.md'));
+    return true;
+  } else if (result.timedOut) {
+    console.log('');
+    console.log(chalk.yellow('⚠ Merge timed out. Try running the command manually:'));
+    console.log(chalk.gray(`   ${displayCmd}`));
+    return false;
+  } else {
+    console.log('');
+    console.log(chalk.yellow(`⚠ Auto-merge encountered an issue: ${result.error}`));
+    console.log(chalk.gray('  Try running the command manually:'));
+    console.log(chalk.gray(`   ${displayCmd}`));
+    return false;
+  }
+}
 
 /**
  * Init command - initialize LeanSpec in current directory
@@ -307,6 +376,7 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   // Check for existing system prompt files
   const existingFiles = await detectExistingSystemPrompts(cwd);
   let skipFiles: string[] = [];
+  let mergeCompleted = false;
 
   if (existingFiles.length > 0) {
     console.log('');
@@ -317,6 +387,10 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
       console.log(chalk.gray('Using AI-Assisted Merge for existing AGENTS.md'));
       const projectName = await getProjectName(cwd);
       await handleExistingFiles('merge-ai', existingFiles, templateDir, cwd, { project_name: projectName });
+      
+      // Auto-execute merge if CLI tool is available
+      const promptPath = path.join(cwd, '.lean-spec', 'MERGE-AGENTS-PROMPT.md');
+      mergeCompleted = await attemptAutoMerge(cwd, promptPath, true /* skipPrompts */);
     } else {
       const action = await select<'merge-ai' | 'merge-append' | 'overwrite' | 'skip'>({
         message: 'How would you like to handle existing AGENTS.md?',
@@ -351,6 +425,10 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
 
       if (action === 'skip') {
         skipFiles = existingFiles;
+      } else if (action === 'merge-ai') {
+        // Offer auto-merge if CLI tool is available
+        const promptPath = path.join(cwd, '.lean-spec', 'MERGE-AGENTS-PROMPT.md');
+        mergeCompleted = await attemptAutoMerge(cwd, promptPath, false /* skipPrompts */);
       }
     }
   }
@@ -358,8 +436,8 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   // Get project name for variable substitution
   const projectName = await getProjectName(cwd);
 
-  // Copy AGENTS.md from template root to project root (unless skipping)
-  if (!skipFiles.includes('AGENTS.md')) {
+  // Copy AGENTS.md from template root to project root (unless skipping or already merged)
+  if (!skipFiles.includes('AGENTS.md') && !mergeCompleted) {
     const agentsSourcePath = path.join(templateDir, 'AGENTS.md');
     const agentsTargetPath = path.join(cwd, 'AGENTS.md');
     

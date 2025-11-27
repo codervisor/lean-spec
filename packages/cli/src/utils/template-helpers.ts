@@ -1,7 +1,17 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import chalk from 'chalk';
+
+/**
+ * CLI execution configuration for AI tools
+ */
+export interface AIToolCliConfig {
+  command: string;           // Primary CLI command
+  promptFlag: string;        // Flag for inline prompts (e.g., '-p' for copilot) or empty string for positional
+  allowToolsFlag?: string;   // Flag to enable tool use (e.g., '--allow-all-tools')
+  promptIsPositional?: boolean; // If true, prompt is a positional argument (e.g., claude "prompt")
+}
 
 /**
  * AI Tool configuration for symlink generation
@@ -18,6 +28,7 @@ export interface AIToolConfig {
     envVars?: string[];      // Environment variables to check (e.g., ['ANTHROPIC_API_KEY'])
     extensions?: string[];   // VS Code extension IDs to check
   };
+  cli?: AIToolCliConfig; // Optional CLI execution configuration
 }
 
 export type AIToolKey = 'aider' | 'claude' | 'codex' | 'copilot' | 'cursor' | 'droid' | 'gemini' | 'opencode' | 'windsurf';
@@ -32,6 +43,11 @@ export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
       commands: ['aider'],
       configDirs: ['.aider'],
     },
+    cli: {
+      command: 'aider',
+      promptFlag: '--message',
+      // Aider doesn't have a simple allow-all flag, uses different interaction model
+    },
   },
   claude: {
     file: 'CLAUDE.md',
@@ -42,6 +58,12 @@ export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
       commands: ['claude'],
       configDirs: ['.claude'],
       envVars: ['ANTHROPIC_API_KEY'],
+    },
+    cli: {
+      command: 'claude',
+      promptFlag: '-p',  // -p is the print/non-interactive flag
+      promptIsPositional: true, // Prompt is positional argument
+      allowToolsFlag: '--permission-mode acceptEdits',  // Auto-accept edit operations
     },
   },
   codex: {
@@ -63,6 +85,11 @@ export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
     detection: {
       commands: ['copilot'],
       envVars: ['GITHUB_TOKEN'],
+    },
+    cli: {
+      command: 'copilot',
+      promptFlag: '-p',
+      allowToolsFlag: '--allow-all-tools',
     },
   },
   cursor: {
@@ -93,6 +120,11 @@ export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
       commands: ['gemini'],
       configDirs: ['.gemini'],
       envVars: ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
+    },
+    cli: {
+      command: 'gemini',
+      promptFlag: '-p',  // Note: deprecated but still works
+      allowToolsFlag: '-y',  // YOLO mode
     },
   },
   opencode: {
@@ -552,4 +584,206 @@ export async function getProjectName(cwd: string): Promise<string> {
   
   // Fallback to directory name
   return path.basename(cwd);
+}
+
+/**
+ * Result of attempting to execute an AI merge
+ */
+export interface MergeExecutionResult {
+  success: boolean;
+  output?: string;
+  error?: string;
+  timedOut?: boolean;
+}
+
+/**
+ * Build the CLI command for AI-assisted merge
+ */
+export function buildMergeCommand(
+  cli: AIToolCliConfig,
+  promptPath: string
+): { command: string; args: string[] } {
+  const prompt = `Follow the instructions in ${promptPath} to consolidate AGENTS.md. Read the prompt file, then edit AGENTS.md with the merged content.`;
+  
+  const args: string[] = [];
+  
+  if (cli.promptIsPositional) {
+    // For CLIs like claude where prompt is positional: claude "prompt" -p --flags
+    args.push(prompt);
+    if (cli.promptFlag) {
+      args.push(cli.promptFlag);
+    }
+  } else {
+    // For CLIs like copilot where prompt follows a flag: copilot -p "prompt"
+    args.push(cli.promptFlag);
+    args.push(prompt);
+  }
+  
+  // Add allow-all-tools flag if available
+  if (cli.allowToolsFlag) {
+    // Handle flags that might have spaces (e.g., "--permission-mode acceptEdits")
+    const flagParts = cli.allowToolsFlag.split(' ');
+    args.push(...flagParts);
+  }
+  
+  return { command: cli.command, args };
+}
+
+/**
+ * Execute AI-assisted merge using detected CLI tool
+ * 
+ * @param cwd - Working directory for the command
+ * @param promptPath - Path to the merge prompt file
+ * @param tool - AI tool key to use
+ * @param timeoutMs - Timeout in milliseconds (default: 120000 = 2 minutes)
+ */
+export async function executeMergeWithAI(
+  cwd: string,
+  promptPath: string,
+  tool: AIToolKey,
+  timeoutMs = 120000
+): Promise<MergeExecutionResult> {
+  const config = AI_TOOL_CONFIGS[tool];
+  
+  if (!config.cli) {
+    return {
+      success: false,
+      error: `Tool ${tool} does not have CLI configuration`,
+    };
+  }
+  
+  const { command, args } = buildMergeCommand(config.cli, promptPath);
+  
+  // Build the full command string with proper quoting for shell execution
+  const quotedArgs = args.map(arg => {
+    // If arg contains spaces or special chars, wrap in single quotes
+    // and escape any single quotes within
+    if (arg.includes(' ') || arg.includes('"') || arg.includes("'")) {
+      return `'${arg.replace(/'/g, "'\\''")}'`;
+    }
+    return arg;
+  });
+  const fullCommand = `${command} ${quotedArgs.join(' ')}`;
+  
+  return new Promise((resolve) => {
+    let output = '';
+    let errorOutput = '';
+    let timedOut = false;
+    
+    const child = spawn(fullCommand, [], {
+      cwd,
+      shell: true,
+      stdio: ['inherit', 'pipe', 'pipe'],
+    });
+    
+    // Set up timeout
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeoutMs);
+    
+    child.stdout?.on('data', (data) => {
+      output += data.toString();
+      // Stream output to console
+      process.stdout.write(data);
+    });
+    
+    child.stderr?.on('data', (data) => {
+      errorOutput += data.toString();
+      // Stream errors to console
+      process.stderr.write(data);
+    });
+    
+    child.on('close', (code) => {
+      clearTimeout(timeout);
+      
+      if (timedOut) {
+        resolve({
+          success: false,
+          output,
+          error: 'Command timed out',
+          timedOut: true,
+        });
+      } else if (code === 0) {
+        resolve({
+          success: true,
+          output,
+        });
+      } else {
+        resolve({
+          success: false,
+          output,
+          error: errorOutput || `Process exited with code ${code}`,
+        });
+      }
+    });
+    
+    child.on('error', (err) => {
+      clearTimeout(timeout);
+      resolve({
+        success: false,
+        error: err.message,
+      });
+    });
+  });
+}
+
+/**
+ * Get AI tools that have CLI capabilities and are detected
+ * Sorted by preference: copilot > gemini > claude > others
+ */
+export async function getCliCapableDetectedTools(): Promise<{
+  tool: AIToolKey;
+  config: AIToolConfig;
+  reasons: string[];
+}[]> {
+  const detectionResults = await detectInstalledAITools();
+  
+  // Priority order for CLI tools
+  const priorityOrder: AIToolKey[] = ['copilot', 'gemini', 'claude', 'aider', 'codex'];
+  
+  const detected = detectionResults
+    .filter(r => r.detected && AI_TOOL_CONFIGS[r.tool].cli)
+    .map(r => ({
+      tool: r.tool,
+      config: AI_TOOL_CONFIGS[r.tool],
+      reasons: r.reasons,
+    }));
+  
+  // Sort by priority
+  detected.sort((a, b) => {
+    const aIndex = priorityOrder.indexOf(a.tool);
+    const bIndex = priorityOrder.indexOf(b.tool);
+    // If not in priority list, put at end
+    const aPriority = aIndex === -1 ? 999 : aIndex;
+    const bPriority = bIndex === -1 ? 999 : bIndex;
+    return aPriority - bPriority;
+  });
+  
+  return detected;
+}
+
+/**
+ * Get display-friendly command string for showing to user
+ */
+export function getDisplayCommand(tool: AIToolKey, promptPath: string): string {
+  const config = AI_TOOL_CONFIGS[tool];
+  if (!config.cli) return '';
+  
+  const { command, args } = buildMergeCommand(config.cli, promptPath);
+  
+  // Quote the prompt argument for display
+  const displayArgs = args.map((arg, index) => {
+    // Quote the prompt text (first arg for positional, second arg for flagged)
+    const isPromptArg = config.cli!.promptIsPositional 
+      ? index === 0 
+      : index === 1;
+    
+    if (isPromptArg && arg.includes(' ')) {
+      return `"${arg}"`;
+    }
+    return arg;
+  });
+  
+  return `${command} ${displayArgs.join(' ')}`;
 }
