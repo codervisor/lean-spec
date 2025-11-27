@@ -96,18 +96,226 @@ async function attemptAutoMerge(cwd: string, promptPath: string, autoExecute: bo
 }
 
 /**
+ * Re-initialization strategy options
+ */
+type ReinitStrategy = 'upgrade' | 'reset-config' | 'full-reset' | 'cancel';
+
+/**
+ * Handle re-initialization when LeanSpec is already initialized
+ */
+async function handleReinitialize(cwd: string, skipPrompts: boolean, forceReinit: boolean): Promise<ReinitStrategy> {
+  const specsDir = path.join(cwd, 'specs');
+  let specCount = 0;
+  
+  try {
+    const entries = await fs.readdir(specsDir, { withFileTypes: true });
+    specCount = entries.filter(e => e.isDirectory()).length;
+  } catch {
+    // specs/ doesn't exist
+  }
+  
+  console.log('');
+  console.log(chalk.yellow('⚠ LeanSpec is already initialized in this directory.'));
+  
+  if (specCount > 0) {
+    console.log(chalk.cyan(`  Found ${specCount} spec${specCount > 1 ? 's' : ''} in specs/`));
+  }
+  console.log('');
+  
+  // Force flag: reset config but preserve specs (safe default)
+  if (forceReinit) {
+    console.log(chalk.gray('Force flag detected. Resetting configuration...'));
+    return 'reset-config';
+  }
+  
+  // With -y flag, default to upgrade (safest)
+  if (skipPrompts) {
+    console.log(chalk.gray('Using safe upgrade (preserving all existing files)'));
+    return 'upgrade';
+  }
+  
+  // Interactive mode: let user choose
+  const strategy = await select<ReinitStrategy>({
+    message: 'What would you like to do?',
+    choices: [
+      {
+        name: 'Upgrade configuration (recommended)',
+        value: 'upgrade',
+        description: 'Update config to latest version. Keeps specs and AGENTS.md untouched.',
+      },
+      {
+        name: 'Reset configuration',
+        value: 'reset-config', 
+        description: 'Fresh config from template. Keeps specs/ directory.',
+      },
+      {
+        name: 'Full reset',
+        value: 'full-reset',
+        description: 'Remove .lean-spec/, specs/, and AGENTS.md. Start completely fresh.',
+      },
+      {
+        name: 'Cancel',
+        value: 'cancel',
+        description: 'Exit without changes.',
+      },
+    ],
+  });
+  
+  // Confirm destructive actions
+  if (strategy === 'full-reset') {
+    const warnings: string[] = [];
+    
+    if (specCount > 0) {
+      warnings.push(`${specCount} spec${specCount > 1 ? 's' : ''} in specs/`);
+    }
+    
+    try {
+      await fs.access(path.join(cwd, 'AGENTS.md'));
+      warnings.push('AGENTS.md');
+    } catch {}
+    
+    if (warnings.length > 0) {
+      console.log('');
+      console.log(chalk.red('⚠ This will permanently delete:'));
+      for (const warning of warnings) {
+        console.log(chalk.red(`  - ${warning}`));
+      }
+      console.log('');
+      
+      const confirmed = await confirm({
+        message: 'Are you sure you want to continue?',
+        default: false,
+      });
+      
+      if (!confirmed) {
+        console.log(chalk.gray('Cancelled.'));
+        return 'cancel';
+      }
+    }
+    
+    // Perform full reset
+    console.log(chalk.gray('Performing full reset...'));
+    
+    // Remove .lean-spec/
+    await fs.rm(path.join(cwd, '.lean-spec'), { recursive: true, force: true });
+    console.log(chalk.gray('  Removed .lean-spec/'));
+    
+    // Remove specs/
+    try {
+      await fs.rm(specsDir, { recursive: true, force: true });
+      console.log(chalk.gray('  Removed specs/'));
+    } catch {}
+    
+    // Remove AGENTS.md and symlinks
+    for (const file of ['AGENTS.md', 'CLAUDE.md', 'GEMINI.md']) {
+      try {
+        await fs.rm(path.join(cwd, file), { force: true });
+        console.log(chalk.gray(`  Removed ${file}`));
+      } catch {}
+    }
+  }
+  
+  return strategy;
+}
+
+/**
+ * Upgrade existing LeanSpec configuration
+ * This preserves all user content (specs, AGENTS.md) while updating config
+ */
+async function upgradeConfig(cwd: string): Promise<void> {
+  const configPath = path.join(cwd, '.lean-spec', 'config.json');
+  
+  // Read existing config
+  let existingConfig: LeanSpecConfig;
+  try {
+    const content = await fs.readFile(configPath, 'utf-8');
+    existingConfig = JSON.parse(content);
+  } catch {
+    console.error(chalk.red('Error reading existing config'));
+    process.exit(1);
+  }
+  
+  // Load standard template config as reference for defaults
+  const templateConfigPath = path.join(TEMPLATES_DIR, 'standard', 'config.json');
+  let templateConfig: LeanSpecConfig;
+  try {
+    const content = await fs.readFile(templateConfigPath, 'utf-8');
+    templateConfig = JSON.parse(content).config;
+  } catch {
+    console.error(chalk.red('Error reading template config'));
+    process.exit(1);
+  }
+  
+  // Merge configs - preserve user settings, add new defaults
+  const upgradedConfig: LeanSpecConfig = {
+    ...templateConfig,
+    ...existingConfig,
+    // Deep merge structure
+    structure: {
+      ...templateConfig.structure,
+      ...existingConfig.structure,
+    },
+  };
+  
+  // Ensure templates directory exists
+  const templatesDir = path.join(cwd, '.lean-spec', 'templates');
+  try {
+    await fs.mkdir(templatesDir, { recursive: true });
+  } catch {}
+  
+  // Check if templates need updating
+  const templateFiles = ['spec-template.md'];
+  let templatesUpdated = false;
+  
+  for (const file of templateFiles) {
+    const destPath = path.join(templatesDir, file);
+    try {
+      await fs.access(destPath);
+      // File exists, don't overwrite
+    } catch {
+      // File doesn't exist, copy from template
+      const srcPath = path.join(TEMPLATES_DIR, 'standard', 'files', 'README.md');
+      try {
+        await fs.copyFile(srcPath, destPath);
+        templatesUpdated = true;
+        console.log(chalk.green(`✓ Added missing template: ${file}`));
+      } catch {}
+    }
+  }
+  
+  // Save upgraded config
+  await saveConfig(upgradedConfig, cwd);
+  
+  console.log('');
+  console.log(chalk.green('✓ Configuration upgraded!'));
+  console.log('');
+  console.log(chalk.gray('What was updated:'));
+  console.log(chalk.gray('  - Config merged with latest defaults'));
+  if (templatesUpdated) {
+    console.log(chalk.gray('  - Missing templates added'));
+  }
+  console.log('');
+  console.log(chalk.gray('What was preserved:'));
+  console.log(chalk.gray('  - Your specs/ directory'));
+  console.log(chalk.gray('  - Your AGENTS.md'));
+  console.log(chalk.gray('  - Your custom settings'));
+  console.log('');
+}
+
+/**
  * Init command - initialize LeanSpec in current directory
  */
 export function initCommand(): Command {
   return new Command('init')
     .description('Initialize LeanSpec in current directory')
     .option('-y, --yes', 'Skip prompts and use defaults (quick start with standard template)')
+    .option('-f, --force', 'Force re-initialization (resets config, keeps specs)')
     .option('--template <name>', 'Use specific template (standard or detailed)')
     .option('--example [name]', 'Scaffold an example project for tutorials (interactive if no name provided)')
     .option('--name <dirname>', 'Custom directory name for example project')
     .option('--list', 'List available example projects')
     .option('--agent-tools <tools>', 'AI tools to create symlinks for (comma-separated: claude,gemini,copilot or "all" or "none")')
-    .action(async (options: { yes?: boolean; template?: string; example?: string; name?: string; list?: boolean; agentTools?: string }) => {
+    .action(async (options: { yes?: boolean; force?: boolean; template?: string; example?: string; name?: string; list?: boolean; agentTools?: string }) => {
       if (options.list) {
         await listExamples();
         return;
@@ -118,21 +326,44 @@ export function initCommand(): Command {
         return;
       }
       
-      await initProject(options.yes, options.template, options.agentTools);
+      await initProject(options.yes, options.template, options.agentTools, options.force);
     });
 }
 
-export async function initProject(skipPrompts = false, templateOption?: string, agentToolsOption?: string): Promise<void> {
+export async function initProject(skipPrompts = false, templateOption?: string, agentToolsOption?: string, forceReinit = false): Promise<void> {
   const cwd = process.cwd();
 
   // Check if already initialized
+  const configPath = path.join(cwd, '.lean-spec', 'config.json');
+  let isAlreadyInitialized = false;
+  
   try {
-    await fs.access(path.join(cwd, '.lean-spec', 'config.json'));
-    console.log(chalk.yellow('⚠ LeanSpec already initialized in this directory.'));
-    console.log(chalk.gray('To reinitialize, delete .lean-spec/ directory first.'));
-    return;
+    await fs.access(configPath);
+    isAlreadyInitialized = true;
   } catch {
-    // Not initialized, continue
+    // Not initialized, continue with fresh init
+  }
+
+  // Handle re-initialization
+  if (isAlreadyInitialized) {
+    const strategy = await handleReinitialize(cwd, skipPrompts, forceReinit);
+    
+    if (strategy === 'cancel') {
+      return;
+    }
+    
+    if (strategy === 'upgrade') {
+      await upgradeConfig(cwd);
+      return;
+    }
+    
+    // For 'reset-config' and 'full-reset', we continue with normal init flow
+    // but 'full-reset' will have already cleaned up the directory
+    if (strategy === 'reset-config') {
+      // Just remove config, keep specs
+      await fs.rm(path.join(cwd, '.lean-spec'), { recursive: true, force: true });
+      console.log(chalk.gray('Removed .lean-spec/ configuration'));
+    }
   }
 
   console.log('');
