@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Safe re-initialization workflow** - Improved `lean-spec init` for existing projects
+  - New `-f, --force` flag to force re-initialization (resets config, preserves specs)
+  - Interactive strategy selection when project is already initialized:
+    - **Upgrade configuration** (recommended) - Merges config with latest defaults, preserves all user content
+    - **Reset configuration** - Fresh config from template, keeps `specs/` directory
+    - **Full reset** - Removes everything with confirmation prompt
+    - **Cancel** - Exit without changes
+  - Safe defaults: `-y` flag defaults to upgrade (safest), `-f` flag resets config only
+  - Shows spec count when re-initializing to inform user's decision
+  - Confirmation required for destructive "full reset" option
+
 ## [0.2.7] - 2025-11-26
 
 ### Added
