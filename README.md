@@ -6,21 +6,21 @@
 
 <p align="center">
   <a href="https://github.com/codervisor/lean-spec/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codervisor/lean-spec/ci.yml?branch=main" alt="CI Status"></a>
-  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
+  <a href="https://www.npmjs.com/package/lean-spec" target="_blank"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/lean-spec" target="_blank"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
 </p>
 
 <p align="center">
-  <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a>
+  <a href="https://www.lean-spec.dev" target="_blank"><strong>Documentation</strong></a>
   •
-  <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/"><strong>中文文档</strong></a>
+  <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/" target="_blank"><strong>中文文档</strong></a>
   •
   <a href="#quick-start"><strong>Quick Start</strong></a>
   •
-  <a href="https://web.lean-spec.dev"><strong>Live Examples</strong></a>
+  <a href="https://web.lean-spec.dev" target="_blank"><strong>Live Examples</strong></a>
   •
-  <a href="https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md"><strong>Changelog</strong></a>
+  <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
 ---
