@@ -16,8 +16,6 @@
   •
   <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/" target="_blank"><strong>中文文档</strong></a>
   •
-  <a href="#quick-start"><strong>Quick Start</strong></a>
-  •
   <a href="https://web.lean-spec.dev" target="_blank"><strong>Live Examples</strong></a>
   •
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
