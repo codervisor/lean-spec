@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a>
   •
-  <a href="https://www.lean-spec.dev/zh-Hans/"><strong>中文文档</strong></a>
+  <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/"><strong>中文文档</strong></a>
   •
   <a href="#quick-start"><strong>Quick Start</strong></a>
   •
@@ -103,7 +103,7 @@ Works with any AI coding assistant via MCP or CLI:
 
 ## Documentation
 
-📖 [Full Documentation](https://www.lean-spec.dev) · [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) · [First Principles](https://www.lean-spec.dev/docs/advanced/first-principles) · [中文文档](https://www.lean-spec.dev/zh-Hans/)
+📖 [Full Documentation](https://www.lean-spec.dev) · [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) · [First Principles](https://www.lean-spec.dev/docs/advanced/first-principles) · [FAQ](https://www.lean-spec.dev/docs/faq) · [中文文档](https://www.lean-spec.dev/zh-Hans/)
 
 ## Community
 
