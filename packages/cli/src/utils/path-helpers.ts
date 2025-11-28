@@ -11,10 +11,12 @@ export function createSpecDirPattern(): RegExp {
   // - 001-name (simple sequence)
   // - 20251103-001-name (date prefix + sequence)
   // - spec-001-name (custom prefix + sequence)
+  // - 001-测试 (Unicode/Chinese name)
   // We look for: optional-prefix + NNN + dash + name
   // The sequence is 2-4 digits (to avoid matching 8-digit dates as sequences)
-  // Requires dash followed by letter to ensure this is a spec directory name
-  return /(?:^|\D)(\d{2,4})-[a-z]/i;
+  // Requires dash followed by non-digit/non-dash character to ensure this is a spec directory name
+  // Uses [^0-9-] instead of [a-z] to support Unicode characters (Chinese, Japanese, etc.)
+  return /(?:^|\D)(\d{2,4})-[^0-9-]/i;
 }
 
 /**
