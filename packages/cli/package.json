@@ -1,6 +1,6 @@
 {
   "name": "lean-spec",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Specification-driven development made simple",
   "type": "module",
   "bin": {

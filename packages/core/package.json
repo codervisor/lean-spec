@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/core",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Core functionality for LeanSpec",
   "type": "module",
   "main": "./dist/index.js",

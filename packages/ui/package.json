@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/ui",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "LeanSpec web UI launcher for visual spec management",
   "type": "module",
   "bin": {
