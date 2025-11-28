@@ -32,12 +32,10 @@ Lightweight spec methodology for AI-powered development.
 | View spec | `view` | `lean-spec view <spec>` |
 | Create spec | `create` | `lean-spec create <name>` |
 | Update spec | `update` | `lean-spec update <spec> --status <status>` |
-| Link specs | `create --related` | `lean-spec link <spec> --related <other>` |
-| Unlink specs | ❌ CLI only | `lean-spec unlink <spec> --related <other>` |
+| Link specs | `link` | `lean-spec link <spec> --related <other>` |
+| Unlink specs | `unlink` | `lean-spec unlink <spec> --related <other>` |
 | Dependencies | `deps` | `lean-spec deps <spec>` |
 | Token count | `tokens` | `lean-spec tokens <spec>` |
-
-**⚠️ Link/Unlink**: Use `--related` or `--depends-on` params in `create` tool. For existing specs, use CLI fallback. (See spec 129 for MCP tool tracking)
 
 **Local Development:** Use `node bin/lean-spec.js <command>` instead of `npx lean-spec`. Build first with `pnpm build`.
 

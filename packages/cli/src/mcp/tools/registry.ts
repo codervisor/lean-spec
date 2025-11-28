@@ -11,10 +11,12 @@ import { checkTool } from './check.js';
 import { createTool } from './create.js';
 import { depsTool } from './deps.js';
 import { filesTool } from './files.js';
+import { linkTool } from './link.js';
 import { listTool } from './list.js';
 import { searchTool } from './search.js';
 import { statsTool } from './stats.js';
 import { tokensTool } from './tokens.js';
+import { unlinkTool } from './unlink.js';
 import { updateTool } from './update.js';
 import { validateTool } from './validate.js';
 import { viewTool } from './view.js';
@@ -57,6 +59,9 @@ export function registerTools(server: McpServer): void {
   const [name7, config7, handler7] = filesTool();
   server.registerTool(name7, config7, handler7 as any);
   
+  const [linkName, linkConfig, linkHandler] = linkTool();
+  server.registerTool(linkName, linkConfig, linkHandler as any);
+  
   const [name8, config8, handler8] = listTool();
   server.registerTool(name8, config8, handler8 as any);
   
@@ -68,6 +73,9 @@ export function registerTools(server: McpServer): void {
   
   const [name11, config11, handler11] = tokensTool();
   server.registerTool(name11, config11, handler11 as any);
+  
+  const [unlinkName, unlinkConfig, unlinkHandler] = unlinkTool();
+  server.registerTool(unlinkName, unlinkConfig, unlinkHandler as any);
   
   const [name12, config12, handler12] = updateTool();
   server.registerTool(name12, config12, handler12 as any);
