@@ -13,7 +13,8 @@ related:
   - 107-ui-ux-refinements
   - 106-ui-package-documentation
   - 133-ui-web-code-editor
-updated_at: '2025-11-28T03:37:36.872Z'
+  - 134-ui-metadata-editing
+updated_at: '2025-11-28T05:15:08.048Z'
 ---
 
 # UI Project Context Visibility
