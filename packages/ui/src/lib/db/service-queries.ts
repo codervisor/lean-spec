@@ -82,7 +82,6 @@ function parseSpecTags(spec: Spec): ParsedSpec {
  */
 function countSubSpecs(specDirPath: string): number {
   try {
-    const { readdirSync, existsSync, statSync } = require('fs');
     if (!existsSync(specDirPath)) return 0;
     
     const entries = readdirSync(specDirPath);
@@ -380,6 +379,7 @@ export async function getProjectDocs(): Promise<ContextFile[]> {
  * Get complete project context
  */
 export async function getProjectContext(): Promise<ProjectContext> {
+  const projectRoot = getProjectRootDir();
   const [agentInstructions, config, projectDocs] = await Promise.all([
     getAgentInstructions(),
     getProjectConfig(),
@@ -403,5 +403,6 @@ export async function getProjectContext(): Promise<ProjectContext> {
     config,
     projectDocs,
     totalTokens,
+    projectRoot,
   };
 }

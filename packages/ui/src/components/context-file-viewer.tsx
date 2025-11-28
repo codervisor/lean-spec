@@ -1,13 +1,13 @@
 /**
  * Context File Viewer Component
  * Displays a single context file with token count, copy button, and syntax highlighting
- * Phase 1: Spec 131 - UI Project Context Visibility
+ * Phase 1 & 4: Spec 131 - UI Project Context Visibility
  */
 
 'use client';
 
 import * as React from 'react';
-import { Copy, Check, FileText, Clock, Coins } from 'lucide-react';
+import { Copy, Check, FileText, Clock, Coins, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,8 @@ interface ContextFileViewerProps {
   isExpanded?: boolean;
   onToggle?: () => void;
   className?: string;
+  searchQuery?: string;
+  projectRoot?: string;
 }
 
 /**
@@ -61,6 +63,45 @@ function formatDate(date: Date | string): string {
   });
 }
 
+/**
+ * Highlight search matches in text
+ */
+function highlightMatches(text: string, query: string): React.ReactNode {
+  if (!query || query.length < 2) return text;
+  
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escapedQuery})`, 'gi');
+  const parts = text.split(regex);
+  
+  return parts.map((part, i) => 
+    regex.test(part) ? (
+      <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
+/**
+ * Count search matches in content
+ */
+export function countMatches(content: string, query: string): number {
+  if (!query || query.length < 2) return 0;
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matches = content.match(new RegExp(escapedQuery, 'gi'));
+  return matches ? matches.length : 0;
+}
+
+/**
+ * Generate VS Code URI to open file
+ */
+function getVSCodeUri(projectRoot: string, filePath: string): string {
+  const fullPath = filePath.startsWith('/') ? filePath : `${projectRoot}/${filePath}`;
+  return `vscode://file${fullPath}`;
+}
+
 export function ContextFileViewer({
   name,
   path,
@@ -70,8 +111,11 @@ export function ContextFileViewer({
   isExpanded = false,
   onToggle,
   className,
+  searchQuery,
+  projectRoot,
 }: ContextFileViewerProps) {
   const [copied, setCopied] = React.useState(false);
+  const matchCount = searchQuery ? countMatches(content, searchQuery) : 0;
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -84,8 +128,23 @@ export function ContextFileViewer({
     }
   };
 
+  const handleOpenInEditor = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (projectRoot) {
+      window.open(getVSCodeUri(projectRoot, path), '_blank');
+    }
+  };
+
   const isJson = name.endsWith('.json');
   const isMarkdown = name.endsWith('.md');
+
+  // For non-markdown content with search, highlight matches
+  const renderPlainContent = (text: string) => {
+    if (searchQuery && searchQuery.length >= 2) {
+      return highlightMatches(text, searchQuery);
+    }
+    return text;
+  };
 
   return (
     <Card className={cn('overflow-hidden', className)}>
@@ -105,6 +164,11 @@ export function ContextFileViewer({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {searchQuery && matchCount > 0 && (
+              <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                {matchCount} match{matchCount !== 1 ? 'es' : ''}
+              </Badge>
+            )}
             <Badge variant="outline" className={cn('text-xs', getTokenColor(tokenCount))}>
               <Coins className="h-3 w-3 mr-1" />
               {tokenCount.toLocaleString()} tokens
@@ -112,6 +176,17 @@ export function ContextFileViewer({
             <span className="text-xs text-muted-foreground hidden sm:inline">
               {getTokenStatus(tokenCount)}
             </span>
+            {projectRoot && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={handleOpenInEditor}
+                title="Open in VS Code"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -143,23 +218,28 @@ export function ContextFileViewer({
           {/* Content area */}
           <div className="max-h-[500px] overflow-auto">
             {isJson ? (
-              <pre className="p-4 text-sm overflow-x-auto bg-muted/20">
-                <code className="language-json">
-                  {JSON.stringify(JSON.parse(content), null, 2)}
-                </code>
+              <pre className="p-4 text-sm overflow-x-auto bg-muted/20 whitespace-pre-wrap">
+                {renderPlainContent(JSON.stringify(JSON.parse(content), null, 2))}
               </pre>
             ) : isMarkdown ? (
-              <article className="prose prose-slate dark:prose-invert max-w-none prose-sm p-4">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
-                  {content}
-                </ReactMarkdown>
-              </article>
+              searchQuery && searchQuery.length >= 2 ? (
+                // Render as plain text with highlighting when searching
+                <pre className="p-4 text-sm overflow-x-auto bg-muted/20 whitespace-pre-wrap font-mono">
+                  {renderPlainContent(content)}
+                </pre>
+              ) : (
+                <article className="prose prose-slate dark:prose-invert max-w-none prose-sm p-4">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight]}
+                  >
+                    {content}
+                  </ReactMarkdown>
+                </article>
+              )
             ) : (
               <pre className="p-4 text-sm overflow-x-auto bg-muted/20 whitespace-pre-wrap">
-                {content}
+                {renderPlainContent(content)}
               </pre>
             )}
           </div>
@@ -179,8 +259,20 @@ export function ContextFileCard({
   tokenCount,
   lastModified,
   className,
+  searchQuery,
+  projectRoot,
 }: Omit<ContextFileViewerProps, 'isExpanded' | 'onToggle'>) {
   const [expanded, setExpanded] = React.useState(false);
+
+  // Auto-expand when there are search matches
+  React.useEffect(() => {
+    if (searchQuery && searchQuery.length >= 2) {
+      const matches = countMatches(content, searchQuery);
+      if (matches > 0) {
+        setExpanded(true);
+      }
+    }
+  }, [searchQuery, content]);
 
   return (
     <ContextFileViewer
@@ -192,6 +284,8 @@ export function ContextFileCard({
       isExpanded={expanded}
       onToggle={() => setExpanded(!expanded)}
       className={className}
+      searchQuery={searchQuery}
+      projectRoot={projectRoot}
     />
   );
 }

@@ -1,17 +1,18 @@
 /**
  * Project Context Client Component
  * Displays project-level context files (AGENTS.md, config, README, etc.)
- * Phase 2: Spec 131 - UI Project Context Visibility
+ * Phases 2 & 4: Spec 131 - UI Project Context Visibility
  */
 
 'use client';
 
 import * as React from 'react';
-import { BookOpen, Settings, FileText, Copy, Check, AlertCircle, Coins, Info } from 'lucide-react';
+import { BookOpen, Settings, FileText, Copy, Check, AlertCircle, Coins, Info, Search, X } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ContextFileCard } from '@/components/context-file-viewer';
+import { Input } from '@/components/ui/input';
+import { ContextFileCard, countMatches } from '@/components/context-file-viewer';
 import type { ProjectContext, ContextFile } from '@/lib/specs/types';
 import { cn } from '@/lib/utils';
 
@@ -66,6 +67,8 @@ function ContextSection({
   emptyMessage,
   emptySuggestion,
   defaultExpanded = true,
+  searchQuery,
+  projectRoot,
 }: {
   title: string;
   description: string;
@@ -74,8 +77,26 @@ function ContextSection({
   emptyMessage: string;
   emptySuggestion?: string;
   defaultExpanded?: boolean;
+  searchQuery?: string;
+  projectRoot?: string;
 }) {
   const totalTokens = files.reduce((sum, f) => sum + f.tokenCount, 0);
+  
+  // Filter files by search if query exists
+  const filteredFiles = React.useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return files;
+    return files.filter(file => {
+      const matches = countMatches(file.content, searchQuery);
+      const nameMatch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matches > 0 || nameMatch;
+    });
+  }, [files, searchQuery]);
+  
+  // Calculate total matches in this section
+  const totalMatches = React.useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return 0;
+    return filteredFiles.reduce((sum, file) => sum + countMatches(file.content, searchQuery), 0);
+  }, [filteredFiles, searchQuery]);
 
   return (
     <Card>
@@ -92,8 +113,13 @@ function ContextSection({
           </div>
           {files.length > 0 && (
             <div className="flex items-center gap-2">
+              {searchQuery && totalMatches > 0 && (
+                <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                  {totalMatches} match{totalMatches !== 1 ? 'es' : ''}
+                </Badge>
+              )}
               <Badge variant="secondary" className="text-xs">
-                {files.length} file{files.length !== 1 ? 's' : ''}
+                {filteredFiles.length}{filteredFiles.length !== files.length ? `/${files.length}` : ''} file{files.length !== 1 ? 's' : ''}
               </Badge>
               <Badge variant="outline" className={cn('text-xs', getTotalTokenColor(totalTokens))}>
                 <Coins className="h-3 w-3 mr-1" />
@@ -104,16 +130,16 @@ function ContextSection({
         </div>
       </CardHeader>
       <CardContent>
-        {files.length === 0 ? (
+        {filteredFiles.length === 0 ? (
           <EmptyState
             icon={AlertCircle}
-            title={emptyMessage}
-            description="No files found in this category"
-            suggestion={emptySuggestion}
+            title={searchQuery ? "No matches found" : emptyMessage}
+            description={searchQuery ? "Try a different search term" : "No files found in this category"}
+            suggestion={searchQuery ? undefined : emptySuggestion}
           />
         ) : (
           <div className="space-y-3">
-            {files.map((file) => (
+            {filteredFiles.map((file) => (
               <ContextFileCard
                 key={file.path}
                 name={file.name}
@@ -121,6 +147,8 @@ function ContextSection({
                 content={file.content}
                 tokenCount={file.tokenCount}
                 lastModified={file.lastModified}
+                searchQuery={searchQuery}
+                projectRoot={projectRoot}
               />
             ))}
           </div>
@@ -132,6 +160,7 @@ function ContextSection({
 
 export function ContextClient({ context }: ContextClientProps) {
   const [copiedAll, setCopiedAll] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   // Collect all content for "Copy All" feature
   const handleCopyAll = async () => {
@@ -165,6 +194,22 @@ export function ContextClient({ context }: ContextClientProps) {
     context.agentInstructions.length > 0 || 
     context.config.file !== null || 
     context.projectDocs.length > 0;
+    
+  // Calculate total matches across all files
+  const totalMatches = React.useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return 0;
+    let total = 0;
+    for (const file of context.agentInstructions) {
+      total += countMatches(file.content, searchQuery);
+    }
+    if (context.config.file) {
+      total += countMatches(context.config.file.content, searchQuery);
+    }
+    for (const file of context.projectDocs) {
+      total += countMatches(file.content, searchQuery);
+    }
+    return total;
+  }, [context, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -203,27 +248,65 @@ export function ContextClient({ context }: ContextClientProps) {
             )}
           </div>
 
-          {/* Summary card */}
+          {/* Search and Summary */}
           {hasAnyContent && (
-            <Card className="mt-6 bg-muted/30">
-              <CardContent className="py-4">
-                <div className="flex flex-wrap items-center gap-4 sm:gap-8">
-                  <div className="flex items-center gap-2">
-                    <Coins className={cn('h-5 w-5', getTotalTokenColor(context.totalTokens))} />
-                    <span className="text-sm">
-                      <strong className={getTotalTokenColor(context.totalTokens)}>
-                        {context.totalTokens.toLocaleString()}
-                      </strong>
-                      {' '}total tokens
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Info className="h-4 w-4" />
-                    Context budget for AI agents
-                  </div>
+            <div className="mt-6 space-y-4">
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search within context files..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* Search results info */}
+              {searchQuery && searchQuery.length >= 2 && (
+                <div className="flex items-center gap-2 text-sm">
+                  {totalMatches > 0 ? (
+                    <Badge variant="secondary" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                      {totalMatches} match{totalMatches !== 1 ? 'es' : ''} found
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">No matches found for &quot;{searchQuery}&quot;</span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              )}
+              
+              {/* Summary card */}
+              <Card className="bg-muted/30">
+                <CardContent className="py-4">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-8">
+                    <div className="flex items-center gap-2">
+                      <Coins className={cn('h-5 w-5', getTotalTokenColor(context.totalTokens))} />
+                      <span className="text-sm">
+                        <strong className={getTotalTokenColor(context.totalTokens)}>
+                          {context.totalTokens.toLocaleString()}
+                        </strong>
+                        {' '}total tokens
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Info className="h-4 w-4" />
+                      Context budget for AI agents
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
 
@@ -238,6 +321,8 @@ export function ContextClient({ context }: ContextClientProps) {
             emptyMessage="No agent instructions found"
             emptySuggestion="Create an AGENTS.md file in your project root"
             defaultExpanded={context.agentInstructions.length <= 2}
+            searchQuery={searchQuery}
+            projectRoot={context.projectRoot}
           />
 
           {/* Configuration */}
@@ -249,6 +334,8 @@ export function ContextClient({ context }: ContextClientProps) {
             emptyMessage="No configuration found"
             emptySuggestion="Run 'lean-spec init' to create a config file"
             defaultExpanded={true}
+            searchQuery={searchQuery}
+            projectRoot={context.projectRoot}
           />
 
           {/* Project Documentation */}
@@ -260,6 +347,8 @@ export function ContextClient({ context }: ContextClientProps) {
             emptyMessage="No project docs found"
             emptySuggestion="Create a README.md file in your project root"
             defaultExpanded={false}
+            searchQuery={searchQuery}
+            projectRoot={context.projectRoot}
           />
         </div>
 

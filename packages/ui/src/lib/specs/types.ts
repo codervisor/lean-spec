@@ -95,4 +95,5 @@ export interface ProjectContext {
   };
   projectDocs: ContextFile[];        // README.md, CONTRIBUTING.md, etc.
   totalTokens: number;
+  projectRoot: string;               // Absolute path to project root (for editor links)
 }
