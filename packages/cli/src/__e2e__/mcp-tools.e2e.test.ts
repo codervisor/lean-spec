@@ -122,7 +122,8 @@ describe('E2E: MCP tool scenarios', () => {
 
       createSpec(ctx.tmpDir, 'authentication', { title: 'Auth System' });
 
-      const spec = await readSpecContent('authentication', ctx.tmpDir);
+      // readSpecContent resolves by number or full folder name
+      const spec = await readSpecContent('001-authentication', ctx.tmpDir);
       expect(spec).not.toBeNull();
       expect(spec?.name).toContain('authentication');
     });

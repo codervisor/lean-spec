@@ -13,17 +13,5 @@
   },
   "templates": {
     "default": "spec-template.md"
-  },
-  "frontmatter": {
-    "custom": {
-      "issue": "string",
-      "pr": "string",
-      "milestone": "string",
-      "superseded-by": "string"
-    }
-  },
-  "variables": {
-    "project": "lean-spec",
-    "team": "Core Development"
   }
 }

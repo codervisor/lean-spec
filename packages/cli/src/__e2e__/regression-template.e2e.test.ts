@@ -34,7 +34,6 @@ import {
   readFile,
   writeFile,
   remove,
-  getTodayDate,
   parseFrontmatter,
   type E2EContext,
 } from './e2e-helpers.js';
@@ -105,12 +104,14 @@ describe('E2E: Regression tests template', () => {
     expect(await fileExists(agentsPath)).toBe(true);
 
     // 3. Output should indicate creation, not preservation
-    // (The actual assertion depends on the expected output)
+    // The output contains "What was preserved:" header which always appears,
+    // but "Your AGENTS.md" line should NOT appear since it was deleted and recreated.
     const output = result.stdout.toLowerCase();
-    if (output.includes('agents.md') && output.includes('preserved')) {
-      // Bug: should say "created" not "preserved"
-      throw new Error('Bug: init reported AGENTS.md was preserved but it was deleted');
-    }
+    
+    // Should say it was created/missing, not preserved
+    expect(output).toContain('agents.md created');
+    // "Your AGENTS.md" should NOT appear in the preserved section
+    expect(output).not.toContain('your agents.md');
   });
 
   /**
@@ -119,8 +120,8 @@ describe('E2E: Regression tests template', () => {
   it('REGRESSION: should preserve created date format after updates', async () => {
     // SETUP
     createSpec(ctx.tmpDir, 'date-test');
-    const today = getTodayDate();
-    const readmePath = path.join(ctx.tmpDir, 'specs', today, '001-date-test', 'README.md');
+    // Flat pattern: specs/001-date-test (not date-grouped)
+    const readmePath = path.join(ctx.tmpDir, 'specs', '001-date-test', 'README.md');
 
     // Get initial created date
     let content = await readFile(readmePath);

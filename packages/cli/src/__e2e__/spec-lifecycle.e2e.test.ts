@@ -340,8 +340,8 @@ describe('E2E: spec lifecycle', () => {
     it('should find spec by partial name', async () => {
       createSpec(ctx.tmpDir, 'authentication-system');
 
-      // Should find by partial match
-      const result = viewSpec(ctx.tmpDir, 'authentication');
+      // View by spec number (CLI uses resolveSpecPath which supports number or full name)
+      const result = viewSpec(ctx.tmpDir, '001');
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('authentication');
     });

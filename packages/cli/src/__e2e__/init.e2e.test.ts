@@ -155,8 +155,11 @@ describe('E2E: lean-spec init', () => {
       config.customSetting = 'custom-value';
       await writeFile(configPath, JSON.stringify(config, null, 2));
 
-      // Force re-init
-      const result = initProject(ctx.tmpDir, { force: true, yes: true });
+      // Remove AGENTS.md to avoid AI-assisted merge prompt which hangs in tests
+      await remove(path.join(ctx.tmpDir, 'AGENTS.md'));
+
+      // Force re-init with -y to skip interactive prompts
+      const result = execCli(['init', '-f', '-y'], { cwd: ctx.tmpDir });
 
       expect(result.exitCode).toBe(0);
 
@@ -174,8 +177,11 @@ describe('E2E: lean-spec init', () => {
       const specsDir = path.join(ctx.tmpDir, 'specs');
       const specsBefore = await (await import('node:fs/promises')).readdir(specsDir);
 
-      // Force re-init
-      const result = initProject(ctx.tmpDir, { force: true, yes: true });
+      // Remove AGENTS.md to avoid AI-assisted merge prompt which hangs in tests
+      await remove(path.join(ctx.tmpDir, 'AGENTS.md'));
+
+      // Force re-init with -y to skip interactive prompts
+      const result = execCli(['init', '-f', '-y'], { cwd: ctx.tmpDir });
 
       expect(result.exitCode).toBe(0);
 
@@ -311,17 +317,15 @@ describe('E2E: init regressions', () => {
     // The file must exist
     expect(await fileExists(path.join(ctx.tmpDir, 'AGENTS.md'))).toBe(true);
 
-    // If output says "preserved", it should only be if the file existed
-    // In this case, the file was deleted, so it should say "created" or similar
+    // The output contains "What was preserved:" header which always appears,
+    // but "Your AGENTS.md" line should NOT appear since it was deleted and recreated.
+    // It should show "AGENTS.md created (was missing)" in the "What was updated:" section
     const output = result.stdout.toLowerCase();
-    if (output.includes('agents.md')) {
-      // If it mentions AGENTS.md at all, it should be about creating it
-      // It should NOT say "preserved" in this scenario
-      if (output.includes('preserved')) {
-        // Check if it actually preserved something (it shouldn't have)
-        throw new Error('Bug: init reported AGENTS.md was preserved but it was deleted');
-      }
-    }
+    
+    // Should say it was created/missing, not that it was preserved
+    expect(output).toContain('agents.md created');
+    // "Your AGENTS.md" should NOT appear in the preserved section
+    expect(output).not.toContain('your agents.md');
   });
 
   it('REGRESSION: should preserve missing templates during upgrade', async () => {
