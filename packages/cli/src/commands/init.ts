@@ -283,6 +283,31 @@ async function upgradeConfig(cwd: string): Promise<void> {
     }
   }
   
+  // Check if AGENTS.md exists, create if missing
+  const agentsPath = path.join(cwd, 'AGENTS.md');
+  let agentsCreated = false;
+  let agentsPreserved = false;
+  
+  try {
+    await fs.access(agentsPath);
+    agentsPreserved = true;
+  } catch {
+    // AGENTS.md doesn't exist, create from template
+    const templateDir = path.join(TEMPLATES_DIR, 'standard');
+    const agentsSourcePath = path.join(templateDir, 'AGENTS.md');
+    
+    try {
+      const projectName = await getProjectName(cwd);
+      let agentsContent = await fs.readFile(agentsSourcePath, 'utf-8');
+      agentsContent = agentsContent.replace(/\{project_name\}/g, projectName);
+      await fs.writeFile(agentsPath, agentsContent, 'utf-8');
+      agentsCreated = true;
+      console.log(chalk.green('✓ Created missing AGENTS.md'));
+    } catch (error) {
+      console.log(chalk.yellow(`⚠ Could not create AGENTS.md: ${error}`));
+    }
+  }
+  
   // Save upgraded config
   await saveConfig(upgradedConfig, cwd);
   
@@ -294,10 +319,15 @@ async function upgradeConfig(cwd: string): Promise<void> {
   if (templatesUpdated) {
     console.log(chalk.gray('  - Missing templates added'));
   }
+  if (agentsCreated) {
+    console.log(chalk.gray('  - AGENTS.md created (was missing)'));
+  }
   console.log('');
   console.log(chalk.gray('What was preserved:'));
   console.log(chalk.gray('  - Your specs/ directory'));
-  console.log(chalk.gray('  - Your AGENTS.md'));
+  if (agentsPreserved) {
+    console.log(chalk.gray('  - Your AGENTS.md'));
+  }
   console.log(chalk.gray('  - Your custom settings'));
   console.log('');
 }

@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
 import { MainSidebar } from "@/components/main-sidebar";
@@ -23,12 +23,6 @@ export const metadata: Metadata = {
     description: "Browse and explore LeanSpec specifications in a rich, interactive format",
     type: "website",
   },
-};
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
 };
 
 export default async function RootLayout({
