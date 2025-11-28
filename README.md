@@ -6,19 +6,19 @@
 
 <p align="center">
   <a href="https://github.com/codervisor/lean-spec/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codervisor/lean-spec/ci.yml?branch=main" alt="CI Status"></a>
-  <a href="https://www.npmjs.com/package/lean-spec" target="_blank"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/lean-spec" target="_blank"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
+  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
 </p>
 
 <p align="center">
-  <a href="https://www.lean-spec.dev" target="_blank"><strong>Documentation</strong></a>
+  <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a>
   •
-  <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/" target="_blank"><strong>中文文档</strong></a>
+  <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/"><strong>中文文档</strong></a>
   •
-  <a href="https://web.lean-spec.dev" target="_blank"><strong>Live Examples</strong></a>
+  <a href="https://web.lean-spec.dev"><strong>Live Examples</strong></a>
   •
-  <a href="CHANGELOG.md"><strong>Changelog</strong></a>
+  <a href="https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai"><strong>Tutorials</strong></a>
 </p>
 
 ---
@@ -105,14 +105,16 @@ Works with any AI coding assistant via MCP or CLI:
 
 ## Community
 
-💬 [Discussions](https://github.com/codervisor/lean-spec/discussions) · 🐛 [Issues](https://github.com/codervisor/lean-spec/issues) · 🤝 [Contributing](CONTRIBUTING.md)
+💬 [Discussions](https://github.com/codervisor/lean-spec/discussions) · 🐛 [Issues](https://github.com/codervisor/lean-spec/issues) · 🤝 [Contributing](CONTRIBUTING.md) · 📋 [Changelog](CHANGELOG) · 📄 [LICENSE](LICENSE)
 
 ---
 
-### 联系我 (Contact Me)
+### Contact Me | 联系我
+
+If you find LeanSpec helpful, feel free to add me on WeChat (note "LeanSpec") to join the discussion group.
 
 如果您觉得 LeanSpec 对您有帮助，欢迎添加微信（备注 "LeanSpec"）加入交流群。
 
 <p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="微信联系" height="280">
+  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="WeChat Contact | 微信联系" height="280">
 </p>
