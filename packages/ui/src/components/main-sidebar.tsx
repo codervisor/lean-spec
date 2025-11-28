@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, FileText, BarChart3, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Home, FileText, BarChart3, BookOpen, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { ProjectSwitcher } from '@/components/project-switcher';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -151,6 +151,15 @@ export function MainSidebar() {
               isCollapsed={isCollapsed && !mobileOpen}
             >
               Stats
+            </SidebarLink>
+            <SidebarLink 
+              href="/context" 
+              icon={BookOpen} 
+              currentPath={pathname}
+              description={(!isCollapsed || mobileOpen) ? "Project Context" : undefined}
+              isCollapsed={isCollapsed && !mobileOpen}
+            >
+              Context
             </SidebarLink>
           </nav>}
 

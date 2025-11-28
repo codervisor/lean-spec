@@ -53,3 +53,46 @@ export interface CachedSpec<T = Spec | Spec[]> {
   data: T;
   expiresAt: number;
 }
+
+/**
+ * Context file representation for project context visibility
+ */
+export interface ContextFile {
+  name: string;
+  path: string;
+  content: string;
+  tokenCount: number;
+  lastModified: Date;
+}
+
+/**
+ * LeanSpec configuration (from .lean-spec/config.json)
+ */
+export interface LeanSpecConfig {
+  template?: string;
+  specsDir?: string;
+  structure?: {
+    pattern?: string;
+    prefix?: string;
+    dateFormat?: string;
+    sequenceDigits?: number;
+    defaultFile?: string;
+  };
+  features?: {
+    aiAgents?: boolean;
+  };
+  templates?: Record<string, string>;
+}
+
+/**
+ * Project context containing all contextual files
+ */
+export interface ProjectContext {
+  agentInstructions: ContextFile[];  // AGENTS.md, GEMINI.md, etc.
+  config: {
+    file: ContextFile | null;        // .lean-spec/config.json
+    parsed: LeanSpecConfig | null;   // Parsed config object
+  };
+  projectDocs: ContextFile[];        // README.md, CONTRIBUTING.md, etc.
+  totalTokens: number;
+}

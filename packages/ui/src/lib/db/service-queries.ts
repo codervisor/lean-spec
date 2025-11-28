@@ -5,9 +5,10 @@
 
 import { specsService } from '../specs/service';
 import type { Spec } from './schema';
+import type { ContextFile, ProjectContext, LeanSpecConfig } from '../specs/types';
 import { detectSubSpecs } from '../sub-specs';
-import { join, resolve } from 'path';
-import { readFileSync } from 'node:fs';
+import { join, resolve, dirname } from 'path';
+import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import matter from 'gray-matter';
 
 /**
@@ -235,5 +236,172 @@ export async function getStats(projectId?: string): Promise<StatsResult> {
     specsByStatus: Array.from(statusCounts.entries()).map(([status, count]) => ({ status, count })),
     specsByPriority: Array.from(priorityCounts.entries()).map(([priority, count]) => ({ priority, count })),
     completionRate: Math.round(completionRate * 10) / 10,
+  };
+}
+
+// ============================================================================
+// Project Context Functions (Spec 131)
+// ============================================================================
+
+/**
+ * Get the project root directory (parent of specs directory)
+ */
+function getProjectRootDir(): string {
+  const specsDir = getSpecsRootDir();
+  return dirname(specsDir);
+}
+
+/**
+ * Simple token estimation (approximation without tiktoken for browser compatibility)
+ * Uses the common heuristic of ~4 characters per token for English text
+ */
+function estimateTokens(text: string): number {
+  // More accurate estimation:
+  // - Count words (roughly 1.3 tokens per word for English)
+  // - Account for punctuation and special characters
+  const words = text.split(/\s+/).filter(w => w.length > 0).length;
+  const specialChars = (text.match(/[^a-zA-Z0-9\s]/g) || []).length;
+  return Math.ceil(words * 1.3 + specialChars * 0.5);
+}
+
+/**
+ * Read a context file and return its metadata
+ */
+function readContextFile(filePath: string, projectRoot: string): ContextFile | null {
+  try {
+    if (!existsSync(filePath)) return null;
+    
+    const stats = statSync(filePath);
+    const content = readFileSync(filePath, 'utf-8');
+    const relativePath = filePath.replace(projectRoot + '/', '');
+    
+    return {
+      name: relativePath.split('/').pop() || relativePath,
+      path: relativePath,
+      content,
+      tokenCount: estimateTokens(content),
+      lastModified: stats.mtime,
+    };
+  } catch (error) {
+    console.warn(`Unable to read context file: ${filePath}`, error);
+    return null;
+  }
+}
+
+/**
+ * Get agent instruction files (AGENTS.md, GEMINI.md, etc.)
+ */
+export async function getAgentInstructions(): Promise<ContextFile[]> {
+  const projectRoot = getProjectRootDir();
+  const files: ContextFile[] = [];
+  
+  // Primary agent instruction files in root
+  const rootAgentFiles = [
+    'AGENTS.md',
+    'GEMINI.md',
+    'CLAUDE.md',
+    'COPILOT.md',
+  ];
+  
+  for (const fileName of rootAgentFiles) {
+    const file = readContextFile(join(projectRoot, fileName), projectRoot);
+    if (file) files.push(file);
+  }
+  
+  // Check .github/copilot-instructions.md
+  const copilotInstructions = readContextFile(
+    join(projectRoot, '.github', 'copilot-instructions.md'),
+    projectRoot
+  );
+  if (copilotInstructions) files.push(copilotInstructions);
+  
+  // Check docs/agents/*.md
+  const agentsDocsDir = join(projectRoot, 'docs', 'agents');
+  if (existsSync(agentsDocsDir)) {
+    try {
+      const entries = readdirSync(agentsDocsDir);
+      for (const entry of entries) {
+        if (entry.endsWith('.md')) {
+          const file = readContextFile(join(agentsDocsDir, entry), projectRoot);
+          if (file) files.push(file);
+        }
+      }
+    } catch {
+      // Directory might not be accessible
+    }
+  }
+  
+  return files;
+}
+
+/**
+ * Get LeanSpec configuration
+ */
+export async function getProjectConfig(): Promise<{ file: ContextFile | null; parsed: LeanSpecConfig | null }> {
+  const projectRoot = getProjectRootDir();
+  const configPath = join(projectRoot, '.lean-spec', 'config.json');
+  
+  const file = readContextFile(configPath, projectRoot);
+  
+  if (!file) {
+    return { file: null, parsed: null };
+  }
+  
+  try {
+    const parsed = JSON.parse(file.content) as LeanSpecConfig;
+    return { file, parsed };
+  } catch {
+    return { file, parsed: null };
+  }
+}
+
+/**
+ * Get project documentation files (README, CONTRIBUTING, etc.)
+ */
+export async function getProjectDocs(): Promise<ContextFile[]> {
+  const projectRoot = getProjectRootDir();
+  const files: ContextFile[] = [];
+  
+  const docFiles = [
+    'README.md',
+    'CONTRIBUTING.md',
+    'CHANGELOG.md',
+  ];
+  
+  for (const fileName of docFiles) {
+    const file = readContextFile(join(projectRoot, fileName), projectRoot);
+    if (file) files.push(file);
+  }
+  
+  return files;
+}
+
+/**
+ * Get complete project context
+ */
+export async function getProjectContext(): Promise<ProjectContext> {
+  const [agentInstructions, config, projectDocs] = await Promise.all([
+    getAgentInstructions(),
+    getProjectConfig(),
+    getProjectDocs(),
+  ]);
+  
+  // Calculate total tokens
+  let totalTokens = 0;
+  for (const file of agentInstructions) {
+    totalTokens += file.tokenCount;
+  }
+  if (config.file) {
+    totalTokens += config.file.tokenCount;
+  }
+  for (const file of projectDocs) {
+    totalTokens += file.tokenCount;
+  }
+  
+  return {
+    agentInstructions,
+    config,
+    projectDocs,
+    totalTokens,
   };
 }
