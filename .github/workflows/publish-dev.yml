@@ -1,9 +1,13 @@
 name: Publish Dev Version to npm
 
 on:
-  push:
-    branches: [main, develop]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (skip actual publish)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   publish-dev:
@@ -57,19 +61,33 @@ jobs:
         run: pnpm pre-release
       
       - name: Publish CLI to npm with dev tag
+        if: ${{ !inputs.dry_run }}
         working-directory: packages/cli
         run: npm publish --tag dev --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish MCP wrapper to npm with dev tag
+        if: ${{ !inputs.dry_run }}
         working-directory: packages/mcp
         run: npm publish --tag dev --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish UI to npm with dev tag
+        if: ${{ !inputs.dry_run }}
         working-directory: packages/ui
         run: npm publish --tag dev --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "🧪 DRY RUN - No packages published"
+          echo "Would have published version: $DEV_VERSION"
+          echo ""
+          echo "Packages that would be published:"
+          echo "  - @codervisor/lean-spec (CLI)"
+          echo "  - @codervisor/lean-spec-mcp (MCP)"
+          echo "  - @codervisor/lean-spec-ui (UI)"
