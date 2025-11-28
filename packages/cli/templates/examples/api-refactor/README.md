@@ -1,6 +1,6 @@
 # API Refactor Demo
 
-> **Tutorial**: [Refactoring with Specs](https://leanspec.dev/docs/tutorials/refactoring-specs)
+> **Tutorial**: [Refactoring with Specs](https://lean-spec.dev/docs/tutorials/refactoring-specs)
 
 ## Scenario
 

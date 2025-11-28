@@ -1,6 +1,6 @@
 # Dark Theme Demo
 
-> **Tutorial**: [Adding Dark Theme Support](https://leanspec.dev/docs/tutorials/adding-dark-theme)
+> **Tutorial**: [Adding Dark Theme Support](https://lean-spec.dev/docs/tutorials/adding-dark-theme)
 
 ## Scenario
 

@@ -1,6 +1,6 @@
 # Dashboard Widgets Demo
 
-> **Tutorial**: [Managing Multiple Features](https://leanspec.dev/docs/tutorials/multiple-features)
+> **Tutorial**: [Managing Multiple Features](https://lean-spec.dev/docs/tutorials/multiple-features)
 
 ## Scenario
 

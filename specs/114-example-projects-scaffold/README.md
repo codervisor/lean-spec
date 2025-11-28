@@ -103,7 +103,7 @@ lean-spec init --example dark-theme
 # Next steps:
 # 1. cd dark-theme
 # 2. Open this project in your editor
-# 3. Follow the tutorial: https://leanspec.dev/docs/tutorials/first-spec-with-ai
+# 3. Follow the tutorial: https://lean-spec.dev/docs/tutorials/first-spec-with-ai
 # 4. Ask your AI: "Help me add dark theme support to this app using LeanSpec"
 ```
 

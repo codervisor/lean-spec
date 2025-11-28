@@ -196,7 +196,7 @@ Uses available LLM providers in priority order (with user permission):
    - Still functional, just less smart
 
 **LeanSpec Models API**:
-- Endpoint: `https://api.leanspec.dev/v1/analyze-project`
+- Endpoint: `https://api.lean-spec.dev/v1/analyze-project`
 - Method: POST with README content + project files list
 - Response: Structured ProjectContext JSON
 - Free tier: 100 requests/day per IP
