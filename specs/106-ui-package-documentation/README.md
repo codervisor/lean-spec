@@ -10,7 +10,8 @@ related:
   - 082-web-realtime-sync-architecture
   - 035-live-specs-showcase
   - 081-web-app-ux-redesign
-updated_at: '2025-11-26T06:04:10.662Z'
+  - 131-ui-project-context-visibility
+updated_at: '2025-11-28T03:30:16.691Z'
 transitions:
   - status: in-progress
     at: '2025-11-19T01:06:46.667Z'

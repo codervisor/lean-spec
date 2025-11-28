@@ -7,7 +7,7 @@ tags:
   - simplification
 priority: high
 created_at: '2025-11-18T06:55:41.560Z'
-updated_at: '2025-11-18T07:19:10.108Z'
+updated_at: '2025-11-28T03:30:16.690Z'
 transitions:
   - status: in-progress
     at: '2025-11-18T07:17:02.226Z'
@@ -15,6 +15,8 @@ transitions:
     at: '2025-11-18T07:19:10.108Z'
 completed_at: '2025-11-18T07:19:10.108Z'
 completed: '2025-11-18'
+related:
+  - 131-ui-edit-capabilities
 ---
 
 # UI Standalone Consolidation
