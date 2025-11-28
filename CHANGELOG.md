@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2025-11-28
+
 ### Added
-- **Safe re-initialization workflow** - Improved `lean-spec init` for existing projects
+- **Safe re-initialization workflow** ([spec 127](https://web.lean-spec.dev/specs/127)) - Improved `lean-spec init` for existing projects
   - New `-f, --force` flag to force re-initialization (resets config, preserves specs)
   - Interactive strategy selection when project is already initialized:
     - **Upgrade configuration** (recommended) - Merges config with latest defaults, preserves all user content
@@ -18,17 +20,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Safe defaults: `-y` flag defaults to upgrade (safest), `-f` flag resets config only
   - Shows spec count when re-initializing to inform user's decision
   - Confirmation required for destructive "full reset" option
+  - Auto-creates AGENTS.md if missing during init
+- **MCP `link` and `unlink` tools** ([spec 129](https://web.lean-spec.dev/specs/129)) - Manage spec relationships directly from AI agents
+  - `link` tool: Add `depends_on` or `related` relationships between specs
+  - `unlink` tool: Remove relationships with type filtering and `--all` support
+  - Enables AI agents to maintain spec dependencies without CLI commands
+  - Bidirectional link updates for `related` relationships
+- **Project context visibility in Web UI** ([spec 131](https://web.lean-spec.dev/specs/131)) - View project files from the web interface
+  - New `/context` page showing AGENTS.md, README.md, and project configuration
+  - File viewer with syntax highlighting and search functionality
+  - Quick links to open files in VS Code editor
+  - Accordion-based file browser for easy navigation
+- **Focus mode in spec detail view** - Distraction-free reading experience
+  - Toggle button to hide sidebar and expand content area
+  - Cleaner layout for reviewing spec content
+- **Directory-based template support** ([spec 128](https://web.lean-spec.dev/specs/128)) - Enhanced template handling
+  - Templates can now be organized in subdirectories
+  - Improved `lean-spec templates` listing with better organization
+  - Support for custom template directories
+
+### Changed
+- **Testing infrastructure overhaul** ([spec 130](https://web.lean-spec.dev/specs/130)) - Comprehensive test strategy documentation
+  - New regression test template for consistent test patterns
+  - Spec lifecycle tests for create/update/archive workflows
+  - E2E test improvements for AGENTS.md handling
+
+### Fixed
+- **Tutorial URLs** - Corrected links in examples and specifications
+- **Analytics tracking** - Use `ENABLE_ANALYTICS` env var for Vercel Analytics
+- **README improvements** - Fixed link formatting and removed unnecessary attributes
 
 ## [0.2.7] - 2025-11-26
 
 ### Added
-- **AI tool auto-detection** (spec 126) - Smart defaults for `lean-spec init`
+- **AI tool auto-detection** ([spec 126](https://web.lean-spec.dev/specs/126)) - Smart defaults for `lean-spec init`
   - Auto-detect installed AI CLI tools (Aider, Claude, Codex, Copilot, Cursor, Droid, Gemini, OpenCode, Windsurf)
   - Detection via CLI commands, config directories, and environment variables
   - Shows detected tools with reasons before AI tools prompt
   - Pre-selects detected tools in checkbox for better UX
   - Fallback to `copilot` only (AGENTS.md) when nothing detected
-- **MCP-first agent experience** (spec 121) - Enhanced AI agent workflow with better SDD compliance
+- **MCP-first agent experience** ([spec 121](https://web.lean-spec.dev/specs/121)) - Enhanced AI agent workflow with better SDD compliance
   - Multi-tool symlink support: `lean-spec init` now creates tool-specific symlinks (CLAUDE.md, GEMINI.md → AGENTS.md)
   - New `--agent-tools` flag for non-interactive mode (`--agent-tools all`, `--agent-tools claude,gemini`, `--agent-tools none`)
   - MCP-first AGENTS.md rewrite emphasizing MCP tools as primary method over CLI
@@ -36,14 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New MCP prompt: `create-spec` - Guided spec creation workflow with dependency linking
   - Stale spec warnings in board output
   - SDD Workflow Checkpoints section in AGENTS.md
-- **Dependency alignment validation** (spec 122) - Automated detection of content/frontmatter misalignment
+- **Dependency alignment validation** ([spec 122](https://web.lean-spec.dev/specs/122)) - Automated detection of content/frontmatter misalignment
   - New `--check-deps` flag for `lean-spec validate` command
   - `DependencyAlignmentValidator` scans spec content for references to other specs
   - Detects patterns like "spec 045", "depends on", "related to", "builds on", etc.
   - Outputs actionable fix commands (e.g., `lean-spec link <spec> --related 045`)
   - MCP `validate` tool now supports `checkDeps` option
   - Added Core Rule #8 in AGENTS.md: "ALWAYS link spec dependencies"
-- **Advanced search capabilities** (spec 124) - Enhanced search for power users
+- **Advanced search capabilities** ([spec 124](https://web.lean-spec.dev/specs/124)) - Enhanced search for power users
   - Cross-field term matching: queries now find specs where terms appear across any fields
   - Boolean operators support: `AND`, `OR`, `NOT` for complex queries
   - Field-specific search: `status:in-progress`, `tag:api`, `priority:high`, `assignee:name`
@@ -52,21 +83,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Combined query syntax: `tag:api status:planned created:>2025-11`
   - Search syntax help in `lean-spec search --help`
   - Query guidance for AI agents in AGENTS.md and MCP tool descriptions
-- **Native diagram rendering in Web UI** (spec 119) - Mermaid diagram support in spec detail view
+- **Native diagram rendering in Web UI** ([spec 119](https://web.lean-spec.dev/specs/119)) - Mermaid diagram support in spec detail view
   - Client-side Mermaid rendering for flowcharts, sequence diagrams, class diagrams, etc.
   - Dark mode theme support with automatic theme switching
   - Error handling with fallback to code block display
   - Lazy loading for optimal bundle size (only loads when diagrams present)
-- **Parallel spec implementation workflow** (spec 118) - Documentation for concurrent spec development
+- **Parallel spec implementation workflow** ([spec 118](https://web.lean-spec.dev/specs/118)) - Documentation for concurrent spec development
   - Git worktrees pattern for working on multiple specs simultaneously
   - Patterns for solo developers, teams, and experimental work
   - Best practices for worktree naming, branch strategy, and cleanup
   - Added to AGENTS.md FAQ section
-- **AI coding agent integration** (spec 123) - Enhanced workflow for remote coding agents
+- **AI coding agent integration** ([spec 123](https://web.lean-spec.dev/specs/123)) - Enhanced workflow for remote coding agents
   - Support for GitHub Copilot Coding Agent, OpenAI Codex Cloud, and similar tools
   - Guidance for spec-driven task delegation to cloud agents
   - Best practices for parallel development with remote agents
-- **Onboarding project context clarity** (spec 125) - Improved first-use experience
+- **Onboarding project context clarity** ([spec 125](https://web.lean-spec.dev/specs/125)) - Improved first-use experience
   - Clearer guidance on workspace context for AI agents
   - Enhanced AGENTS.md with project-specific context sections
 
@@ -84,13 +115,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.6] - 2025-11-25
 
 ### Added
-- **Example projects scaffold** (spec 114) - Quick-start tutorial projects with `lean-spec init --example`
+- **Example projects scaffold** ([spec 114](https://web.lean-spec.dev/specs/114)) - Quick-start tutorial projects with `lean-spec init --example`
   - Three complete example projects: dark-theme, dashboard-widgets, api-refactor
   - Instant setup with dependencies and realistic starter code
   - `lean-spec examples` command to list available examples
   - Interactive selection mode for scaffolding
   - Automatic LeanSpec initialization in scaffolded projects
-- **Chinese translation quality guidelines** (spec 115) - Professional localization standards
+- **Chinese translation quality guidelines** ([spec 115](https://web.lean-spec.dev/specs/115)) - Professional localization standards
   - Comprehensive translation guidelines in `docs-site/AGENTS.md`
   - Translation glossary with 40+ technical terms
   - Natural Chinese expression patterns for technical content
@@ -106,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `lean-spec gantt --json` - Gantt chart data export
 
 ### Changed
-- **Template system simplification** (spec 117) - Removed template engine for direct maintenance
+- **Template system simplification** ([spec 117](https://web.lean-spec.dev/specs/117)) - Removed template engine for direct maintenance
   - Eliminated Handlebars build layer and 15+ component files
   - Consolidated to 2 templates: `standard` (default) and `detailed` (sub-specs demo)
   - Shared AGENTS.md across templates for consistency
@@ -114,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved AI workflow with stronger CLI command emphasis
 
 ### Fixed
-- **Example project initialization** (spec 116) - Fixed missing LeanSpec files in scaffolded examples
+- **Example project initialization** ([spec 116](https://web.lean-spec.dev/specs/116)) - Fixed missing LeanSpec files in scaffolded examples
   - `lean-spec init --example` now properly initializes LeanSpec (AGENTS.md, .lean-spec/, specs/)
   - All LeanSpec CLI commands now work in scaffolded example projects
   - Tutorial workflows function correctly out of the box
@@ -128,23 +159,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.5] - 2025-11-18
 
 ### Added
-- **`@leanspec/mcp` standalone package** (spec 102) - Dedicated npm package for MCP server integration
+- **`@leanspec/mcp` standalone package** ([spec 102](https://web.lean-spec.dev/specs/102)) - Dedicated npm package for MCP server integration
   - Simpler onboarding: Use `npx @leanspec/mcp` directly in IDE configs
   - Better discoverability: Package name clearly indicates MCP functionality
   - Zero-config setup: Just copy-paste config snippet for Claude Desktop, Cline, or Zed
   - Automatic dependency management: npx handles installation of both `@leanspec/mcp` and `lean-spec`
   - Pure passthrough design: Delegates to `lean-spec mcp` with no additional logic
-- **Enhanced dependency commands** (spec 099) - Improved CLI and MCP tools for managing spec relationships
+- **Enhanced dependency commands** ([spec 99](https://web.lean-spec.dev/specs/99)) - Improved CLI and MCP tools for managing spec relationships
   - Better dependency graph visualization
   - Enhanced `link` and `unlink` commands for managing `depends_on` and `related` fields
   - Improved error handling and validation for circular dependencies
-- **GitHub Action for automated publishing** (spec 016 - partial implementation) - CI/CD workflow for dev releases
+- **GitHub Action for automated publishing** ([spec 16](https://web.lean-spec.dev/specs/16) - partial implementation) - CI/CD workflow for dev releases
   - Automated `@leanspec/mcp` publishing on npm with version suffix
   - Pre-release checks and validations
   - Package preparation scripts for handling workspace dependencies
 
 ### Changed
-- **UI Package Consolidation** (spec 103) - Merged `@leanspec/web` into `@leanspec/ui` for simpler architecture
+- **UI Package Consolidation** ([spec 103](https://web.lean-spec.dev/specs/103)) - Merged `@leanspec/web` into `@leanspec/ui` for simpler architecture
   - Single publishable Next.js app package instead of separate web + wrapper packages
   - Eliminated complex symlink handling and node_modules distribution issues
   - Simplified CLI launcher with direct Next.js standalone server execution
@@ -156,7 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated CI workflow for streamlined version synchronization
 
 ### Fixed
-- **`@leanspec/ui` packaging issue** (spec 104) - Fixed "Cannot find module 'next'" error in published package
+- **`@leanspec/ui` packaging issue** ([spec 104](https://web.lean-spec.dev/specs/104)) - Fixed "Cannot find module 'next'" error in published package
   - Root cause: npm pack doesn't follow symlinks by default, so `node_modules/` symlinks in standalone build weren't resolved
   - Solution: Include actual pnpm store location (`.next/standalone/node_modules/.pnpm/`) in published files
   - Package now correctly bundles all Next.js dependencies (~18.3 MB compressed, 65 MB unpacked)
@@ -178,9 +209,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.4] - 2025-11-17
 
 ### Fixed
-- **CLI `lean-spec ui` pnpm flow** (spec 087) - Removed `pnpm dlx --prefer-offline` forcing offline cache, so the UI command now fetches `@leanspec/ui` on demand and no longer fails when the package is missing locally.
+- **CLI `lean-spec ui` pnpm flow** ([spec 87](https://web.lean-spec.dev/specs/87)) - Removed `pnpm dlx --prefer-offline` forcing offline cache, so the UI command now fetches `@leanspec/ui` on demand and no longer fails when the package is missing locally.
 - **Web filesystem relationship parsing** - UI development mode now respects the `SPECS_DIR` environment variable, so relationships and sub-spec counts resolve correctly when serving specs from an external workspace (fixes ENOENT errors when pointing the UI at another repo).
-- **Web sidebar scroll position drift** (spec 101) - Eliminated scroll position jumping during navigation
+- **Web sidebar scroll position drift** ([spec 101](https://web.lean-spec.dev/specs/101)) - Eliminated scroll position jumping during navigation
   - Fixed React 19 `useSyncExternalStore` infinite loop by stabilizing server snapshot references
   - Isolated scroll persistence to prevent global store re-renders on every scroll event
   - Implemented component-local scroll management with `useIsomorphicLayoutEffect` for flicker-free restoration
@@ -200,13 +231,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.3] - 2025-11-17
 
 ### Added
-- **`lean-spec ui` command** (spec 087) - Launch web interface directly from CLI
+- **`lean-spec ui` command** ([spec 87](https://web.lean-spec.dev/specs/87)) - Launch web interface directly from CLI
   - Monorepo mode: Auto-detects and runs local web package
   - Package manager auto-detection (pnpm/yarn/npm)
   - Port validation and configuration
   - Auto-opens browser with graceful shutdown
   - Support for both filesystem and database-backed modes
-- **Web App Performance Optimizations** (spec 083) - Dramatically improved navigation speed
+- **Web App Performance Optimizations** ([spec 83](https://web.lean-spec.dev/specs/83)) - Dramatically improved navigation speed
   - Hybrid rendering: Server-side initial load, client-side navigation
   - Navigation latency reduced from 600ms-1.2s to <100ms
   - API routes with aggressive caching and prefetching
@@ -244,12 +275,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.2] - 2025-11-13
 
 ### Added
-- **Template Engine for AGENTS.md** (spec 073) - Dynamic template system for maintaining AGENTS.md with mechanical transformations
-- **Intelligent Search Engine** (spec 075) - Relevance-ranked search with TF-IDF scoring and content-based ranking
-- **Programmatic Spec Management** (spec 059, Phase 1-2) - `analyze`, `split`, `compact` commands for automated spec restructuring
-- **Programmatic Spec Relationships** (spec 076) - CLI and MCP tools for managing `depends_on` and `related` fields
-- **Sub-spec Template System** (spec 078) - Documentation for creating and managing multi-file spec structures
-- **Archiving Strategy** (spec 077) - Documentation for proper spec archival workflows
+- **Template Engine for AGENTS.md** ([spec 73](https://web.lean-spec.dev/specs/73)) - Dynamic template system for maintaining AGENTS.md with mechanical transformations
+- **Intelligent Search Engine** ([spec 75](https://web.lean-spec.dev/specs/75)) - Relevance-ranked search with TF-IDF scoring and content-based ranking
+- **Programmatic Spec Management** ([spec 59](https://web.lean-spec.dev/specs/59), Phase 1-2) - `analyze`, `split`, `compact` commands for automated spec restructuring
+- **Programmatic Spec Relationships** ([spec 76](https://web.lean-spec.dev/specs/76)) - CLI and MCP tools for managing `depends_on` and `related` fields
+- **Sub-spec Template System** ([spec 78](https://web.lean-spec.dev/specs/78)) - Documentation for creating and managing multi-file spec structures
+- **Archiving Strategy** ([spec 77](https://web.lean-spec.dev/specs/77)) - Documentation for proper spec archival workflows
 
 ### Changed
 - Search commands now use intelligent ranking algorithm prioritizing title/frontmatter matches
@@ -262,9 +293,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fix required: Use pnpm's `--no-workspace` flag or proper bundling configuration
 
 ### In Progress
-- Spec 059 (Programmatic Management) - Phases 1-2 complete, remaining phases in progress
-- Spec 072 (AI Agent First-Use Workflow) - Planning stage
-- Spec 074 (Content at Creation) - Specification stage
+- [Spec 59](https://web.lean-spec.dev/specs/59) (Programmatic Management) - Phases 1-2 complete, remaining phases in progress
+- [Spec 72](https://web.lean-spec.dev/specs/72) (AI Agent First-Use Workflow) - Planning stage
+- [Spec 74](https://web.lean-spec.dev/specs/74) (Content at Creation) - Specification stage
 
 ## [0.2.1] - 2025-11-13
 
@@ -281,7 +312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validator error handling for better user experience
 
 ### Changed
-- Complexity validation now uses token-based thresholds (spec 071)
+- Complexity validation now uses token-based thresholds ([spec 71](https://web.lean-spec.dev/specs/71))
 - Web package downgraded to Tailwind v3 for better compatibility
 - Enhanced spec detail pages with timeline and metadata display
 
@@ -450,23 +481,23 @@ This UAT release operationalizes LeanSpec's five first principles:
 5. **Progressive Disclosure** - Add complexity only when needed
 
 **Notable Completed Specs in this Release:**
-- 063: Migration from existing tools
-- 062: Documentation information architecture v2
-- 061: AI-assisted spec writing
-- 060: Core concepts coherence
-- 058: Docs overview polish
-- 057: Docs validation comprehensive
-- 056: Docs site accuracy audit
-- 055: README redesign (AI-first)
-- 054: Validate output (lint-style)
-- 052: Branding assets
-- 051: First principles documentation
-- 049: LeanSpec first principles foundation
-- 048: Spec complexity analysis
-- 047: Git backfill timestamps
-- 046: Stats dashboard refactor
-- 045: Unified dashboard
-- 044: Spec relationships clarity
+- [063](https://web.lean-spec.dev/specs/63): Migration from existing tools
+- [062](https://web.lean-spec.dev/specs/62): Documentation information architecture v2
+- [061](https://web.lean-spec.dev/specs/61): AI-assisted spec writing
+- [060](https://web.lean-spec.dev/specs/60): Core concepts coherence
+- [058](https://web.lean-spec.dev/specs/58): Docs overview polish
+- [057](https://web.lean-spec.dev/specs/57): Docs validation comprehensive
+- [056](https://web.lean-spec.dev/specs/56): Docs site accuracy audit
+- [055](https://web.lean-spec.dev/specs/55): README redesign (AI-first)
+- [054](https://web.lean-spec.dev/specs/54): Validate output (lint-style)
+- [052](https://web.lean-spec.dev/specs/52): Branding assets
+- [051](https://web.lean-spec.dev/specs/51): First principles documentation
+- [049](https://web.lean-spec.dev/specs/49): LeanSpec first principles foundation
+- [048](https://web.lean-spec.dev/specs/48): Spec complexity analysis
+- [047](https://web.lean-spec.dev/specs/47): Git backfill timestamps
+- [046](https://web.lean-spec.dev/specs/46): Stats dashboard refactor
+- [045](https://web.lean-spec.dev/specs/45): Unified dashboard
+- [044](https://web.lean-spec.dev/specs/44): Spec relationships clarity
 
 **Testing:**
 - All 261 tests passing (100% pass rate)
@@ -519,7 +550,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 
 ### Changed
 
-**BREAKING: `lspec validate` output format redesigned** (spec 054)
+**BREAKING: `lspec validate` output format redesigned** ([spec 54](https://web.lean-spec.dev/specs/54))
 - Output now follows mainstream lint tool conventions (ESLint, TypeScript, Prettier)
 - File-centric grouping: All issues for a spec are shown together
 - Quiet success by default: Only specs with issues are shown, passing specs are summarized
@@ -596,6 +627,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.8]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.8
 [0.2.7]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.7
 [0.2.6]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.6
 [0.2.5]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.5
