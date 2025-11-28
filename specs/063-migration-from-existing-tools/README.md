@@ -8,7 +8,7 @@ tags:
   - v0.2
 priority: high
 created_at: '2025-11-10T05:35:31.293Z'
-updated_at: '2025-11-10T06:48:06.343Z'
+updated_at: '2025-11-28T01:50:23.546Z'
 transitions:
   - status: in-progress
     at: '2025-11-10T06:39:58.417Z'
@@ -16,6 +16,8 @@ transitions:
     at: '2025-11-10T06:48:06.343Z'
 completed_at: '2025-11-10T06:48:06.343Z'
 completed: '2025-11-10'
+related:
+  - 128-constant-time-migration
 ---
 
 # Migration from Existing SDD Tools

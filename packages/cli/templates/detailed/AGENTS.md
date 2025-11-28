@@ -26,6 +26,8 @@ If you have LeanSpec MCP tools available, **ALWAYS use them**:
 | View a spec | `view` | Full content with formatting |
 | Create new spec | `create` | Auto-sequences, proper structure |
 | Update spec | `update` | Validates transitions, timestamps |
+| Link specs | `link` | Add relationships (depends_on, related) |
+| Unlink specs | `unlink` | Remove relationships |
 | Check dependencies | `deps` | Visual dependency graph |
 
 **Why MCP over CLI?**
@@ -44,6 +46,8 @@ lean-spec list               # See all specs
 lean-spec search "query"     # Find relevant specs
 lean-spec create <name>      # Create new spec
 lean-spec update <spec> --status <status>  # Update status
+lean-spec link <spec> --related <other>    # Add relationships
+lean-spec unlink <spec> --related <other>  # Remove relationships
 lean-spec deps <spec>        # Show dependencies
 ```
 
