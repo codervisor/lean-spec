@@ -48,9 +48,10 @@ interface SpecsNavSidebarProps {
   currentSpecId?: string;
   currentSubSpec?: string;
   onSpecHover?: (specId: string) => void;
+  className?: string;
 }
 
-export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSpec, onSpecHover }: SpecsNavSidebarProps) {
+export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSpec, onSpecHover, className }: SpecsNavSidebarProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
   const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
@@ -393,7 +394,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
         />
       )}
 
-      <div className="relative flex-shrink-0">
+      <div className={cn("relative flex-shrink-0", className)}>
         <aside className={cn(
           "border-r border-border bg-background flex flex-col overflow-hidden transition-all duration-300",
           // Desktop behavior

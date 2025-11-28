@@ -283,34 +283,34 @@ html.changing-theme * {
 .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
   font-weight: 600;
   line-height: 1.25;
-  margin-top: 2em;
-  margin-bottom: 0.75em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
   color: hsl(222.2 84% 4.9%);
   scroll-margin-top: 5rem;
 }
 
 .prose h1 { 
-  font-size: 2.25em; 
+  font-size: 2em; 
   margin-top: 0;
   border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
-  padding-bottom: 0.3em;
+  padding-bottom: 0.25em;
 }
 
 .prose h2 { 
-  font-size: 1.875em;
+  font-size: 1.65em;
   border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
-  padding-bottom: 0.3em;
+  padding-bottom: 0.25em;
 }
 
-.prose h3 { font-size: 1.5em; }
-.prose h4 { font-size: 1.25em; }
-.prose h5 { font-size: 1.125em; }
+.prose h3 { font-size: 1.35em; }
+.prose h4 { font-size: 1.15em; }
+.prose h5 { font-size: 1.05em; }
 .prose h6 { font-size: 1em; }
 
 .prose p {
-  margin-top: 1.25em;
-  margin-bottom: 1.25em;
-  line-height: 1.75;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  line-height: 1.7;
 }
 
 .prose a {
@@ -337,7 +337,7 @@ html.changing-theme * {
 }
 
 .prose pre {
-  margin: 1.75em 0;
+  margin: 1.25em 0;
   overflow-x: auto;
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -369,9 +369,9 @@ html.changing-theme * {
 .prose blockquote {
   border-left: 4px solid hsl(221 83% 53%);
   padding-left: 1em;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  margin: 1.5em 0;
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+  margin: 1em 0;
   background: hsl(210 40% 98%);
   border-radius: 0 0.25rem 0.25rem 0;
   color: hsl(215.4 16.3% 36.9%);

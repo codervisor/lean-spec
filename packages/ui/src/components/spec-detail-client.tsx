@@ -45,6 +45,7 @@ import {
   TrendingUp,
   Clock,
   Maximize2,
+  Minimize2,
   List as ListIcon
 } from 'lucide-react';
 import type { Plugin } from 'unified';
@@ -76,6 +77,8 @@ const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>
 interface SpecDetailClientProps {
   initialSpec: SpecWithMetadata;
   initialSubSpec?: string;
+  isFocusMode?: boolean;
+  onToggleFocusMode?: () => void;
 }
 
 // SWR fetcher with error handling
@@ -86,7 +89,7 @@ const fetcher = (url: string) => fetch(url).then((res) => {
   return res.json();
 });
 
-export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClientProps) {
+export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = false, onToggleFocusMode }: SpecDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSubSpec = searchParams.get('subspec') || initialSubSpec;
@@ -216,144 +219,188 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
     <>
       {/* Compact Header - sticky on desktop, static on mobile */}
       <header ref={headerRef} className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
-        <div className="px-3 sm:px-6 py-3 sm:py-4">
-          {/* Line 1: Spec number + H1 Title */}
-          <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-              {spec.specNumber && (
-                <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
-              )}
-              {displayTitle}
-            </h1>
-            
-            {/* Mobile Specs List Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-8 w-8 -mr-2 shrink-0 text-muted-foreground"
-              onClick={() => {
-                if (typeof window !== 'undefined' && window.toggleSpecsSidebar) {
-                  window.toggleSpecsSidebar();
-                }
-              }}
-            >
-              <ListIcon className="h-5 w-5" />
-              <span className="sr-only">Toggle specs list</span>
-            </Button>
-          </div>
-          
-          {/* Line 2: Status, Priority, Tags, Actions */}
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge status={spec.status || 'planned'} />
-            <PriorityBadge priority={spec.priority || 'medium'} />
-            
-            {tags.length > 0 && (
-              <>
-                <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
-                <div className="flex flex-wrap gap-1">
-                  {tags.slice(0, 5).map((tag: string) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {tags.length > 5 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{tags.length - 5} more
-                    </Badge>
+        <div className={cn("px-3 sm:px-6", isFocusMode ? "py-1.5" : "py-2 sm:py-3")}>
+          {/* Focus mode: Single compact row */}
+          {isFocusMode ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <h1 className="text-base font-semibold tracking-tight truncate">
+                  {spec.specNumber && (
+                    <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
                   )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Line 3: Small metadata row */}
-          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-2 sm:mt-3">
-            <span className="hidden sm:inline">Created: {formatDate(spec.createdAt)}</span>
-            <span className="hidden sm:inline">•</span>
-            <span>
-              Updated: {formatDate(spec.updatedAt)}
-              {spec.updatedAt && (
-                <span className="ml-1 text-[11px] text-muted-foreground/80">({updatedRelative})</span>
-              )}
-            </span>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden md:inline">Name: {spec.specName}</span>
-            {spec.assignee && (
-              <>
-                <span className="hidden sm:inline">•</span>
-                <span className="hidden sm:inline">Assignee: {spec.assignee}</span>
-              </>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
+                  {displayTitle}
+                </h1>
+                <StatusBadge status={spec.status || 'planned'} />
+                <PriorityBadge priority={spec.priority || 'medium'} />
+              </div>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                aria-haspopup="dialog"
-                aria-expanded={timelineDialogOpen}
-                onClick={() => setTimelineDialogOpen(true)}
-                className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                onClick={onToggleFocusMode}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                title="Exit focus mode"
               >
-                <Clock className="mr-1.5 h-3.5 w-3.5" />
-                View Timeline
-                <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                <Minimize2 className="h-4 w-4" />
               </Button>
-              <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Spec Timeline</DialogTitle>
-                  <DialogDescription>Created, updated, and completion milestones.</DialogDescription>
-                </DialogHeader>
-                <div className="rounded-xl border border-border bg-muted/30 p-4">
-                  <SpecTimeline
-                    createdAt={spec.createdAt}
-                    updatedAt={spec.updatedAt}
-                    completedAt={spec.completedAt}
-                    status={spec.status || 'planned'}
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={dependenciesDialogOpen} onOpenChange={setDependenciesDialogOpen}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                aria-haspopup="dialog"
-                aria-expanded={dependenciesDialogOpen}
-                onClick={() => setDependenciesDialogOpen(true)}
-                disabled={!hasRelationships}
-                className={cn(
-                  'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
-                  !hasRelationships && 'cursor-not-allowed opacity-50'
+            </div>
+          ) : (
+            /* Normal mode: Full multi-line header */
+            <>
+              {/* Line 1: Spec number + H1 Title */}
+              <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+                  {spec.specNumber && (
+                    <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+                  )}
+                  {displayTitle}
+                </h1>
+                
+                {/* Mobile Specs List Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden h-8 w-8 -mr-2 shrink-0 text-muted-foreground"
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && window.toggleSpecsSidebar) {
+                      window.toggleSpecsSidebar();
+                    }
+                  }}
+                >
+                  <ListIcon className="h-5 w-5" />
+                  <span className="sr-only">Toggle specs list</span>
+                </Button>
+              </div>
+              
+              {/* Line 2: Status, Priority, Tags, Actions */}
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={spec.status || 'planned'} />
+                <PriorityBadge priority={spec.priority || 'medium'} />
+                
+                {tags.length > 0 && (
+                  <>
+                    <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+                    <div className="flex flex-wrap gap-1">
+                      {tags.slice(0, 5).map((tag: string) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {tags.length > 5 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{tags.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </>
                 )}
-              >
-                <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-                View Dependencies
-                <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
-              <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
-                <DialogHeader>
-                  <DialogTitle>Dependency Graph</DialogTitle>
-                  <DialogDescription>
-                    Precedence requirements and connected specs rendered with automatic layout.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="min-h-0 flex-1">
-                  {completeRelationships && (
-                    <SpecDependencyGraph
-                      relationships={completeRelationships}
-                      specNumber={spec.specNumber}
-                      specTitle={displayTitle}
-                    />
+              </div>
+
+              {/* Line 3: Small metadata row */}
+              <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-1.5 sm:mt-2">
+                <span className="hidden sm:inline">Created: {formatDate(spec.createdAt)}</span>
+                <span className="hidden sm:inline">•</span>
+                <span>
+                  Updated: {formatDate(spec.updatedAt)}
+                  {spec.updatedAt && (
+                    <span className="ml-1 text-[11px] text-muted-foreground/80">({updatedRelative})</span>
                   )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                </span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden md:inline">Name: {spec.specName}</span>
+                {spec.assignee && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline">Assignee: {spec.assignee}</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-haspopup="dialog"
+                    aria-expanded={timelineDialogOpen}
+                    onClick={() => setTimelineDialogOpen(true)}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Clock className="mr-1.5 h-3.5 w-3.5" />
+                    View Timeline
+                    <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                  <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Spec Timeline</DialogTitle>
+                      <DialogDescription>Created, updated, and completion milestones.</DialogDescription>
+                    </DialogHeader>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4">
+                      <SpecTimeline
+                        createdAt={spec.createdAt}
+                        updatedAt={spec.updatedAt}
+                        completedAt={spec.completedAt}
+                        status={spec.status || 'planned'}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={dependenciesDialogOpen} onOpenChange={setDependenciesDialogOpen}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-haspopup="dialog"
+                    aria-expanded={dependenciesDialogOpen}
+                    onClick={() => setDependenciesDialogOpen(true)}
+                    disabled={!hasRelationships}
+                    className={cn(
+                      'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
+                      !hasRelationships && 'cursor-not-allowed opacity-50'
+                    )}
+                  >
+                    <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+                    View Dependencies
+                    <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                  <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
+                    <DialogHeader>
+                      <DialogTitle>Dependency Graph</DialogTitle>
+                      <DialogDescription>
+                        Precedence requirements and connected specs rendered with automatic layout.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="min-h-0 flex-1">
+                      {completeRelationships && (
+                        <SpecDependencyGraph
+                          relationships={completeRelationships}
+                          specNumber={spec.specNumber}
+                          specTitle={displayTitle}
+                        />
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Focus Mode Toggle - Desktop only */}
+                {onToggleFocusMode && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onToggleFocusMode}
+                    className="hidden lg:inline-flex h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    title="Enter focus mode"
+                  >
+                    <Maximize2 className="mr-1.5 h-3.5 w-3.5" />
+                    Focus
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Horizontal Tabs for Sub-specs (only if sub-specs exist) */}
@@ -401,8 +448,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
 
       {/* Main content with Sidebar */}
       <div className="flex flex-col xl:flex-row xl:items-start">
-        <main className="flex-1 px-3 sm:px-6 py-4 sm:py-8 min-w-0">
-          <div className="space-y-6">
+        <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
+          <div className="space-y-4">
             {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
             {error && <div className="text-sm text-destructive">Error loading spec</div>}
 
@@ -442,7 +489,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec }: SpecDetailClie
         </main>
 
         {/* Right Sidebar for TOC (Desktop only) */}
-        <aside className="hidden xl:block w-72 shrink-0 px-6 py-8 sticky top-40 h-[calc(100vh-10rem)] overflow-y-auto scrollbar-auto-hide">
+        <aside className="hidden xl:block w-72 shrink-0 px-6 py-6 sticky top-32 h-[calc(100vh-8rem)] overflow-y-auto scrollbar-auto-hide">
            <TableOfContentsSidebar content={displayContent} />
         </aside>
       </div>

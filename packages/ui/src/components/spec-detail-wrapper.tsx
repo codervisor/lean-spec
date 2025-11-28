@@ -9,6 +9,7 @@ import * as React from 'react';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
 import { SpecDetailClient } from '@/components/spec-detail-client';
 import { primeSpecsSidebar, setActiveSidebarSpec } from '@/lib/stores/specs-sidebar-store';
+import { cn } from '@/lib/utils';
 import type { SpecWithMetadata, SidebarSpec } from '@/types/specs';
 import type { ParsedSpec } from '@/lib/db/service-queries';
 
@@ -19,6 +20,22 @@ interface SpecDetailWrapperProps {
 }
 
 export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetailWrapperProps) {
+  const [isFocusMode, setIsFocusMode] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('spec-detail-focus-mode') === 'true';
+    }
+    return false;
+  });
+
+  // Persist focus mode preference
+  const handleToggleFocusMode = React.useCallback(() => {
+    setIsFocusMode(prev => {
+      const next = !prev;
+      localStorage.setItem('spec-detail-focus-mode', String(next));
+      return next;
+    });
+  }, []);
+
   const sidebarSpecs = React.useMemo<SidebarSpec[]>(() => (
     allSpecs.map((item) => ({
       id: item.id,
@@ -57,12 +74,15 @@ export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetail
         currentSpecId={spec.id}
         currentSubSpec={currentSubSpec}
         onSpecHover={handleSpecPrefetch}
+        className={cn(isFocusMode && 'hidden')}
       />
 
       <div className="flex-1 min-w-0">
         <SpecDetailClient 
           initialSpec={spec}
           initialSubSpec={currentSubSpec}
+          isFocusMode={isFocusMode}
+          onToggleFocusMode={handleToggleFocusMode}
         />
       </div>
     </div>
