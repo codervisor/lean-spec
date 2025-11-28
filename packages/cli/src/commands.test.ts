@@ -58,6 +58,32 @@ describe('createSpec', () => {
     expect(await dirExists(path.join(specsDir, '003-third-spec'))).toBe(true);
   });
 
+  it('should create specs with Chinese names and correct sequential numbers', async () => {
+    await createSpec('测试');
+    await createSpec('功能');
+    await createSpec('test-feature');
+
+    const today = getTestDate();
+    const specsDir = path.join(ctx.tmpDir, 'specs', today);
+
+    expect(await dirExists(path.join(specsDir, '001-测试'))).toBe(true);
+    expect(await dirExists(path.join(specsDir, '002-功能'))).toBe(true);
+    expect(await dirExists(path.join(specsDir, '003-test-feature'))).toBe(true);
+  });
+
+  it('should create specs with mixed Unicode and ASCII names', async () => {
+    await createSpec('测试-feature');
+    await createSpec('feature-测试');
+    await createSpec('テスト');
+
+    const today = getTestDate();
+    const specsDir = path.join(ctx.tmpDir, 'specs', today);
+
+    expect(await dirExists(path.join(specsDir, '001-测试-feature'))).toBe(true);
+    expect(await dirExists(path.join(specsDir, '002-feature-测试'))).toBe(true);
+    expect(await dirExists(path.join(specsDir, '003-テスト'))).toBe(true);
+  });
+
   it('should create spec with custom title', async () => {
     const specName = 'test-feature';
     const title = 'My Custom Feature Title';
