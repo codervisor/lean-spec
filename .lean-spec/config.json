@@ -1,8 +1,5 @@
 {
   "template": "spec-template.md",
-  "templates": {
-    "default": "spec-template.md"
-  },
   "specsDir": "specs",
   "structure": {
     "pattern": "flat",
@@ -13,6 +10,9 @@
   },
   "features": {
     "aiAgents": true
+  },
+  "templates": {
+    "default": "spec-template.md"
   },
   "frontmatter": {
     "custom": {

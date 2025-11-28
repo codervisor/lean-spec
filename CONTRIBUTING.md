@@ -139,20 +139,64 @@ turbo run build --filter=@leanspec/core
 
 ## Testing
 
-All code changes should include tests. We have comprehensive test coverage:
+All code changes should include tests. We have a comprehensive testing strategy:
 
-- Unit tests for individual functions
-- Integration tests for workflows
-- Test helpers for common patterns
+### Test Pyramid
 
-See existing test files for patterns.
+```
+         /\
+        /E2E\        ← CLI scenarios, real filesystem
+       /──────\
+      /Integration\   ← Cross-package, MCP tools
+     /──────────────\
+    /    Unit Tests   \  ← Pure function logic
+   /────────────────────\
+```
+
+### When to Write Which Test Type
+
+| Test Type | Use When | Location |
+|-----------|----------|----------|
+| **Unit** | Testing pure functions, validators, parsers | `*.test.ts` alongside source |
+| **Integration** | Testing workflows with mocked deps | `integration.test.ts`, `list-integration.test.ts` |
+| **E2E** | Testing user-facing CLI workflows | `__e2e__/*.e2e.test.ts` |
+| **Regression** | Fixing a bug (must fail before, pass after) | Add to relevant `__e2e__` file |
+
+### E2E Tests
+
+End-to-end tests live in `packages/cli/src/__e2e__/` and test real CLI commands against actual filesystems:
+
+- `init.e2e.test.ts` - Initialization scenarios
+- `spec-lifecycle.e2e.test.ts` - Create → update → link → archive workflows
+- `mcp-tools.e2e.test.ts` - MCP server tool integration
+
+E2E tests use helpers from `e2e-helpers.ts` to:
+- Create isolated temp directories
+- Execute real CLI commands
+- Verify filesystem state
+
+### Regression Tests
+
+When fixing a bug, **always add a regression test**:
+
+1. Name it: `REGRESSION #ISSUE: brief description`
+2. The test must **fail without your fix**
+3. The test must **pass with your fix**
+4. Add to the relevant `__e2e__` test file
+
+See `__e2e__/regression-template.e2e.test.ts` for the full template.
+
+### Running Tests
 
 ```bash
-# Run tests in watch mode
+# Run all tests in watch mode
 pnpm test
 
 # Run tests once (CI mode)
 pnpm test:run
+
+# Run only E2E tests
+pnpm test:run -- --testPathPattern="e2e"
 
 # Run with coverage
 pnpm test:coverage
@@ -160,6 +204,11 @@ pnpm test:coverage
 # Run with UI
 pnpm test:ui
 ```
+
+### Test Helpers
+
+- `packages/cli/src/test-helpers.ts` - Unit/integration test setup
+- `packages/cli/src/__e2e__/e2e-helpers.ts` - E2E test utilities
 
 ## Code Style
 
