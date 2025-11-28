@@ -6,6 +6,7 @@ import { loadConfig } from '../config.js';
 export interface MigrationOptions {
   inputPath: string;
   aiProvider?: 'copilot' | 'claude' | 'gemini';
+  auto?: boolean;
   dryRun?: boolean;
   batchSize?: number;
   skipValidation?: boolean;
@@ -16,7 +17,10 @@ export interface DocumentInfo {
   path: string;
   name: string;
   size: number;
+  format?: 'spec-kit' | 'openspec' | 'adr' | 'generic';
 }
+
+export type SourceFormat = 'spec-kit' | 'openspec' | 'generic';
 
 export function migrateCommand(): Command;
 export function migrateCommand(inputPath: string, options?: Partial<MigrationOptions>): Promise<void>;
@@ -26,14 +30,16 @@ export function migrateCommand(inputPath?: string, options: Partial<MigrationOpt
   }
 
   return new Command('migrate')
-    .description('Migrate specs from other SDD tools (ADR, RFC, OpenSpec, spec-kit, etc.)')
+    .description('Migrate specs from other SDD tools (OpenSpec, spec-kit, etc.)')
     .argument('<input-path>', 'Path to directory containing specs to migrate')
+    .option('--auto', 'Automatic migration: detect format, restructure, and backfill in one shot')
     .option('--with <provider>', 'AI-assisted migration (copilot, claude, gemini)')
     .option('--dry-run', 'Preview without making changes')
     .option('--batch-size <n>', 'Process N docs at a time', parseInt)
     .option('--skip-validation', "Don't validate after migration")
     .option('--backfill', 'Auto-run backfill after migration')
     .action(async (target: string, opts: {
+      auto?: boolean;
       with?: string;
       dryRun?: boolean;
       batchSize?: number;
@@ -45,6 +51,7 @@ export function migrateCommand(inputPath?: string, options: Partial<MigrationOpt
         process.exit(1);
       }
       await migrateSpecs(target, {
+        auto: opts.auto,
         aiProvider: opts.with as 'copilot' | 'claude' | 'gemini' | undefined,
         dryRun: opts.dryRun,
         batchSize: opts.batchSize,
@@ -84,12 +91,22 @@ export async function migrateSpecs(inputPath: string, options: Partial<Migration
   
   console.log(`\x1b[32m✓\x1b[0m Found ${documents.length} document${documents.length === 1 ? '' : 's'}\n`);
   
+  // Detect source format
+  const format = await detectSourceFormat(inputPath, documents);
+  console.log(`\x1b[36mDetected format:\x1b[0m ${format}\n`);
+  
+  // Auto mode: one-shot migration
+  if (options.auto) {
+    await migrateAuto(inputPath, documents, format, config, options);
+    return;
+  }
+  
   // If AI provider specified, verify and execute
   if (options.aiProvider) {
     await migrateWithAI(inputPath, documents, options as MigrationOptions);
   } else {
     // Default: Output manual migration instructions
-    await outputManualInstructions(inputPath, documents, config);
+    await outputManualInstructions(inputPath, documents, config, format);
   }
 }
 
@@ -129,12 +146,252 @@ export async function scanDocuments(dirPath: string): Promise<DocumentInfo[]> {
 }
 
 /**
+ * Detect source format based on directory structure and file patterns
+ */
+export async function detectSourceFormat(inputPath: string, documents: DocumentInfo[]): Promise<SourceFormat> {
+  // Check for spec-kit pattern: .specify/specs/ with spec.md files
+  const hasSpecKit = documents.some(d => 
+    d.path.includes('.specify') || d.name === 'spec.md'
+  );
+  if (hasSpecKit) {
+    return 'spec-kit';
+  }
+  
+  // Check for OpenSpec pattern: openspec/ directory with specs/ and changes/
+  const hasOpenSpec = documents.some(d => d.path.includes('openspec/'));
+  if (hasOpenSpec) {
+    return 'openspec';
+  }
+  
+  // Default to generic markdown
+  return 'generic';
+}
+
+/**
+ * Auto migration - one-shot migration with format detection
+ */
+async function migrateAuto(
+  inputPath: string,
+  documents: DocumentInfo[],
+  format: SourceFormat,
+  config: any,
+  options: Partial<MigrationOptions>
+): Promise<void> {
+  const specsDir = path.join(process.cwd(), config.specsDir || 'specs');
+  const startTime = Date.now();
+  
+  console.log('═'.repeat(70));
+  console.log('\x1b[1m\x1b[36m🚀 Auto Migration\x1b[0m');
+  console.log('═'.repeat(70));
+  console.log();
+  
+  if (options.dryRun) {
+    console.log('\x1b[33m⚠️  DRY RUN - No changes will be made\x1b[0m\n');
+  }
+  
+  // Ensure specs directory exists
+  if (!options.dryRun) {
+    await fs.mkdir(specsDir, { recursive: true });
+  }
+  
+  let migratedCount = 0;
+  let skippedCount = 0;
+  
+  // Get existing spec numbers for sequencing
+  let nextSeq = 1;
+  try {
+    const existingSpecs = await fs.readdir(specsDir);
+    const seqNumbers = existingSpecs
+      .map(name => {
+        const match = name.match(/^(\d+)-/);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter(n => n > 0);
+    if (seqNumbers.length > 0) {
+      nextSeq = Math.max(...seqNumbers) + 1;
+    }
+  } catch {
+    // specs dir doesn't exist yet
+  }
+  
+  // Batch operations based on format
+  if (format === 'spec-kit') {
+    // spec-kit: Folders already structured, just rename spec.md -> README.md
+    console.log('\x1b[36mMigrating spec-kit format...\x1b[0m\n');
+    
+    // Find all spec.md files and their parent directories
+    const specMdFiles = documents.filter(d => d.name === 'spec.md');
+    
+    for (const doc of specMdFiles) {
+      const sourceDir = path.dirname(doc.path);
+      const dirName = path.basename(sourceDir);
+      
+      // Check if already has sequence number
+      const hasSeq = /^\d{3}-/.test(dirName);
+      const targetDirName = hasSeq ? dirName : `${String(nextSeq).padStart(3, '0')}-${dirName}`;
+      const targetDir = path.join(specsDir, targetDirName);
+      
+      if (!options.dryRun) {
+        // Copy entire directory
+        await copyDirectory(sourceDir, targetDir);
+        
+        // Rename spec.md to README.md
+        const oldPath = path.join(targetDir, 'spec.md');
+        const newPath = path.join(targetDir, 'README.md');
+        try {
+          await fs.rename(oldPath, newPath);
+        } catch {
+          // spec.md might not exist if already README.md
+        }
+      }
+      
+      console.log(`  \x1b[32m✓\x1b[0m ${dirName} → ${targetDirName}/`);
+      migratedCount++;
+      if (!hasSeq) nextSeq++;
+    }
+  } else if (format === 'openspec') {
+    // OpenSpec: Merge specs/ and changes/archive/, restructure
+    console.log('\x1b[36mMigrating OpenSpec format...\x1b[0m\n');
+    
+    // Group documents by their containing folder
+    const folders = new Map<string, DocumentInfo[]>();
+    for (const doc of documents) {
+      const parentDir = path.dirname(doc.path);
+      const folderName = path.basename(parentDir);
+      if (!folders.has(folderName)) {
+        folders.set(folderName, []);
+      }
+      folders.get(folderName)!.push(doc);
+    }
+    
+    for (const [folderName, docs] of folders) {
+      // Skip if it's a container folder
+      if (['specs', 'archive', 'changes', 'openspec'].includes(folderName)) {
+        continue;
+      }
+      
+      const targetDirName = `${String(nextSeq).padStart(3, '0')}-${folderName}`;
+      const targetDir = path.join(specsDir, targetDirName);
+      
+      if (!options.dryRun) {
+        await fs.mkdir(targetDir, { recursive: true });
+        
+        for (const doc of docs) {
+          const targetName = doc.name === 'spec.md' ? 'README.md' : doc.name;
+          const targetPath = path.join(targetDir, targetName);
+          await fs.copyFile(doc.path, targetPath);
+        }
+      }
+      
+      console.log(`  \x1b[32m✓\x1b[0m ${folderName} → ${targetDirName}/`);
+      migratedCount++;
+      nextSeq++;
+    }
+  } else {
+    // Generic: Create folder for each markdown file
+    console.log('\x1b[36mMigrating generic markdown files...\x1b[0m\n');
+    
+    for (const doc of documents) {
+      // Extract name from filename (remove extension and leading numbers)
+      const baseName = path.basename(doc.name, path.extname(doc.name))
+        .replace(/^\d+-/, '')  // Remove leading numbers
+        .replace(/^[_-]+/, '') // Remove leading separators
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-') // Normalize to kebab-case
+        .replace(/-+$/, '');  // Remove trailing dashes
+      
+      if (!baseName) {
+        console.log(`  \x1b[33m⚠\x1b[0m Skipped: ${doc.name} (invalid name)`);
+        skippedCount++;
+        continue;
+      }
+      
+      const targetDirName = `${String(nextSeq).padStart(3, '0')}-${baseName}`;
+      const targetDir = path.join(specsDir, targetDirName);
+      const targetPath = path.join(targetDir, 'README.md');
+      
+      if (!options.dryRun) {
+        await fs.mkdir(targetDir, { recursive: true });
+        await fs.copyFile(doc.path, targetPath);
+      }
+      
+      console.log(`  \x1b[32m✓\x1b[0m ${doc.name} → ${targetDirName}/README.md`);
+      migratedCount++;
+      nextSeq++;
+    }
+  }
+  
+  console.log();
+  
+  // Run backfill if requested or in auto mode
+  if ((options.backfill || options.auto) && !options.dryRun) {
+    console.log('\x1b[36mRunning backfill...\x1b[0m');
+    try {
+      const { backfillCommand } = await import('./backfill.js');
+      // Create command and run with options
+      const cmd = backfillCommand();
+      await cmd.parseAsync(['node', 'lean-spec', '--all', '--assignee'], { from: 'user' });
+      console.log('\x1b[32m✓\x1b[0m Backfill complete\n');
+    } catch (error) {
+      console.log('\x1b[33m⚠\x1b[0m Backfill failed, run manually: lean-spec backfill --all\n');
+    }
+  }
+  
+  // Run validation if not skipped
+  if (!options.skipValidation && !options.dryRun) {
+    console.log('\x1b[36mValidating...\x1b[0m');
+    try {
+      const { validateSpecs } = await import('./validate.js');
+      await validateSpecs({});
+      console.log('\x1b[32m✓\x1b[0m Validation complete\n');
+    } catch {
+      console.log('\x1b[33m⚠\x1b[0m Validation had issues, run: lean-spec validate\n');
+    }
+  }
+  
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  
+  console.log('═'.repeat(70));
+  console.log(`\x1b[32m✓ Migration complete!\x1b[0m`);
+  console.log(`  Migrated: ${migratedCount} specs`);
+  if (skippedCount > 0) {
+    console.log(`  Skipped: ${skippedCount} files`);
+  }
+  console.log(`  Time: ${elapsed}s`);
+  console.log('═'.repeat(70));
+  console.log();
+  console.log('Next steps:');
+  console.log('  lean-spec board      # View your specs');
+  console.log('  lean-spec validate   # Check for issues');
+}
+
+/**
+ * Copy directory recursively
+ */
+async function copyDirectory(src: string, dest: string): Promise<void> {
+  await fs.mkdir(dest, { recursive: true });
+  const entries = await fs.readdir(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    
+    if (entry.isDirectory()) {
+      await copyDirectory(srcPath, destPath);
+    } else {
+      await fs.copyFile(srcPath, destPath);
+    }
+  }
+}
+
+/**
  * Output manual migration instructions (default mode)
  */
 async function outputManualInstructions(
   inputPath: string,
   documents: DocumentInfo[],
-  config: any
+  config: any,
+  format: SourceFormat
 ): Promise<void> {
   const specsDir = config.specsDir || 'specs';
   
@@ -144,6 +401,11 @@ async function outputManualInstructions(
   console.log();
   console.log('\x1b[1mSource Location:\x1b[0m');
   console.log(`  ${inputPath} (${documents.length} documents found)`);
+  console.log(`  Detected format: ${format}`);
+  console.log();
+  console.log('\x1b[1m💡 Quick Option:\x1b[0m');
+  console.log(`  \x1b[36mlean-spec migrate ${inputPath} --auto\x1b[0m`);
+  console.log('  This will automatically restructure and backfill in one shot.');
   console.log();
   console.log('\x1b[1mMigration Prompt:\x1b[0m');
   console.log('  Copy this prompt to your AI assistant (Copilot, Claude, ChatGPT, etc.):');
