@@ -1,0 +1,132 @@
+---
+id: index
+title: What is LeanSpec?
+sidebar_label: Overview
+sidebar_position: 1
+description: A lightweight Spec-Driven Development methodology for AI-powered development
+---
+
+# What is LeanSpec?
+
+**Ship faster with higher quality. Lean specs that both humans and AI understand.**
+
+LeanSpec brings agile principles to SDD (Spec-Driven Development)—small, focused documents (&lt;2,000 tokens) that keep you and your AI aligned.
+
+> **Think of it as "Markdown for Project Management"**: Simple, structured, and machine-readable.
+
+## Quick Start
+
+```bash
+# Try with a tutorial project
+npx lean-spec init --example dark-theme
+cd dark-theme && npm install && npm start
+
+# Or add to your existing project
+npm install -g lean-spec && lean-spec init
+```
+
+**Visualize your project:**
+
+```bash
+lean-spec board    # Kanban view
+lean-spec stats    # Project metrics
+lean-spec ui       # Web UI at localhost:3000
+```
+
+**Next:** [Your First Spec with AI](/docs/tutorials/first-spec-with-ai) (10 min tutorial)
+
+## Why LeanSpec?
+
+**High velocity + High quality.** Other SDD frameworks add process overhead (multi-step workflows, rigid templates). Vibe coding is fast but chaotic (no shared understanding). LeanSpec hits the sweet spot:
+
+- **Fast iteration** - Living documents that grow with your code
+- **AI performance** - Small specs = better AI output (context rot is real)
+- **Always current** - Lightweight enough that you actually update them
+
+📖 [Compare with Spec Kit, OpenSpec, Kiro →](/docs/guide/why-leanspec)
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **📊 Kanban Board** | `lean-spec board` - visual project tracking |
+| **🔍 Smart Search** | `lean-spec search` - find specs by content or metadata |
+| **🔗 Dependencies** | Track spec relationships with `depends_on` and `related` |
+| **🎨 Web UI** | `lean-spec ui` - browser-based dashboard |
+| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection |
+| **🤖 AI-Native** | MCP server + CLI for AI assistants |
+
+## AI Integration
+
+Works with any AI coding assistant via MCP or CLI:
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": { "command": "npx", "args": ["@leanspec/mcp"] }
+  }
+}
+```
+
+**Compatible with:** VS Code Copilot, Cursor, Windsurf, Claude Code, Gemini CLI, and more.
+
+📖 [Full AI integration guide →](/docs/guide/usage/ai-coding-workflow)
+
+## What You Get
+
+*   [**Core CLI**](/docs/guide/usage/cli/creating-managing): Manage specs, track status, and visualize dependencies.
+*   [**MCP Server**](/docs/guide/usage/mcp-integration): Give AI agents direct access to read and search your specs.
+*   [**Visual Mode**](/docs/guide/visual-mode): A beautiful web interface for browsing your project's spec graph.
+
+## A Simple Example
+
+A LeanSpec is just a Markdown file with frontmatter:
+
+```markdown title="./specs/001-user-auth-api/README.md"
+---
+status: in-progress
+created: 2025-11-07
+priority: high
+tags: [api, auth]
+---
+
+# User Authentication API
+
+## Goal
+Enable secure user login and session management for the mobile app.
+
+## Key Scenarios
+1. User logs in with email/password → receives JWT token
+2. User accesses protected endpoint with token → gets data
+3. User token expires → receives 401, must re-authenticate
+
+## Acceptance Criteria
+- [ ] Login endpoint returns valid JWT on success
+- [ ] JWT includes user ID and expiration
+- [ ] Protected endpoints verify JWT signature
+
+## Non-Goals
+- Social login (future feature)
+- Password reset (separate spec)
+```
+
+## Documentation
+
+📖 [Full Documentation](/docs/guide/) · [CLI Reference](/docs/reference/cli) · [First Principles](/docs/advanced/first-principles) · [FAQ](/docs/faq)
+
+## Community
+
+💬 [Discussions](https://github.com/codervisor/lean-spec/discussions) · 🐛 [Issues](https://github.com/codervisor/lean-spec/issues) · 🤝 [Contributing](https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md)
+
+## Next Steps
+
+*   **[Getting Started](/docs/guide/getting-started)**: Install the CLI and create your first spec.
+*   **[Why LeanSpec?](/docs/guide/why-leanspec)**: Understand the benefits of LeanSpec over other tools.
+*   **[Understanding LeanSpec](/docs/guide/understanding-leanspec)**: Dive deeper into the "Context Economy" philosophy.
+*   **[AI Integration](/docs/guide/usage/mcp-integration)**: Connect LeanSpec to your AI coding assistant.
+
+### Contact Me
+
+If you feel LeanSpec could benefit your daily work or your company, please add the author's Wechat account noting "LeanSpec" to enter the discussion group.
+
+![Contact Me on WeChat](/img/qr-code.png)

@@ -1,0 +1,279 @@
+---
+id: 'templates'
+title: '模板'
+sidebar_position: 7
+---
+# 模板
+
+LeanSpec 提供可自定义的模板以匹配您的工作流程和团队结构。
+
+## 概述
+
+模板是包含以下内容的完整工作模型：
+- Spec结构和示例
+- 用于 AI 代理集成的 `AGENTS.md`
+- 支持文件（CONTRIBUTING.md、检查清单等）
+- 项目特定配置
+
+## 可用模板
+
+### Standard（默认）
+
+大多数项目推荐 - 单文件 Spec 与 AGENTS.md。
+
+**最适合：** 单人开发者、小团队、简单到中等复杂度的 Spec
+
+**包括：**
+- 状态、标签、优先级字段
+- 用于 AI 集成的 AGENTS.md
+- 所有章节在单个 README.md 文件中
+- 何时拆分为子 Spec 的指导
+
+**示例 frontmatter：**
+```yaml
+---
+status: planned
+created: 2025-11-02
+tags: [api, feature]
+priority: high
+---
+```
+
+**章节：**
+- 概述
+- 设计
+- 计划
+- 测试
+- 注释
+
+### Detailed
+
+用于内容很多的复杂 Spec - 使用子 Spec 结构。
+
+**最适合：** 大型功能、架构变更、>3,500 Token 的 Spec
+
+**包括：**
+- 与 standard 相同的元数据
+- README.md 作为概述/导航
+- 独立的子 Spec 文件（DESIGN.md, PLAN.md, TEST.md）
+- 演示真实的子 Spec 模式
+- 帮助管理 AI 上下文的 Token 限制
+
+**示例 frontmatter：**
+```yaml
+---
+status: planned
+created: 2025-11-02
+tags: [architecture, refactor]
+priority: high
+---
+```
+
+**结构：**
+```
+specs/NNN-feature-name/
+├── README.md      # 概述 + 导航
+├── DESIGN.md      # 设计细节
+├── PLAN.md        # 实施计划
+└── TEST.md        # 测试策略
+```
+
+**使用：**
+```bash
+lean-spec init --template detailed
+```
+
+## 选择模板
+
+运行 `lean-spec init` 并选择"选择模板"：
+
+```bash
+lean-spec init
+```
+
+```
+? 您想如何设置？
+  ❯ 快速开始（推荐）
+    选择模板
+
+? 您想使用哪个模板？
+  ❯ standard - 推荐 - 单文件 Spec 与 AGENTS.md
+    detailed - 复杂 Spec 与子 Spec 结构（DESIGN, PLAN, TEST）
+```
+
+## 自定义模板
+
+您可以在 `.lean-spec/templates/` 中创建自己的模板。
+
+### 单文件模板
+
+适用于简单、一致的 Spec 结构：
+
+1. 创建模板文件：
+```bash
+mkdir -p .lean-spec/templates
+touch .lean-spec/templates/my-template.md
+```
+
+2. 使用占位符编辑模板：
+```markdown
+---
+status: planned
+created: {date}
+---
+
+# {name}
+
+**团队**：{team}
+**作者**：{author}
+
+## 概述
+
+[您的自定义章节...]
+```
+
+3. 在 `.lean-spec/config.json` 中注册：
+```json
+{
+  "template": "my-template.md",
+  "templates": {
+    "default": "spec-template.md",
+    "my-template": "my-template.md"
+  }
+}
+```
+
+或使用 CLI：
+```bash
+lean-spec templates add my-template my-template.md
+```
+
+### 目录模板（多文件）
+
+适用于需要多个文件的复杂 Spec（如 DESIGN.md、PLAN.md、TEST.md）：
+
+1. 创建模板目录：
+```bash
+mkdir -p .lean-spec/templates/api-spec
+```
+
+2. 创建主模板（必须包含 `README.md`）：
+```bash
+touch .lean-spec/templates/api-spec/README.md
+touch .lean-spec/templates/api-spec/ENDPOINTS.md
+touch .lean-spec/templates/api-spec/SCHEMAS.md
+```
+
+3. 注册目录：
+```json
+{
+  "templates": {
+    "default": "spec-template.md",
+    "api": "api-spec"
+  }
+}
+```
+
+或使用 CLI：
+```bash
+lean-spec templates add api api-spec
+```
+
+4. 使用模板：
+```bash
+lean-spec create my-api --template=api
+# 创建：specs/NNN-my-api/
+#   ├── README.md
+#   ├── ENDPOINTS.md
+#   └── SCHEMAS.md
+```
+
+使用目录模板时，所有 `.md` 文件都会被复制到新的 Spec 文件夹。
+
+### 可用变量
+
+- `{name}` - Spec名称
+- `{date}` - 创建日期（ISO 格式）
+- `{project_name}` - 来自 package.json
+- `{author}` - 来自 git config user.name
+- `{git_user}` - Git 用户名
+- `{git_email}` - Git 电子邮件
+- `{git_repo}` - 仓库名称
+
+在配置中添加自定义变量：
+```json
+{
+  "variables": {
+    "team": "平台工程",
+    "company": "Acme Corp"
+  }
+}
+```
+
+## 模板结构
+
+完整的模板包括：
+
+### 1. frontmatter
+```yaml
+---
+status: planned
+created: {date}
+tags: []
+priority: medium
+---
+```
+
+### 2. 视觉徽章
+```markdown
+> **Status**: 📅 计划中 · **Created**: {date}
+```
+
+### 3. 内容章节
+```markdown
+## 概述
+## 目标
+## 关键场景
+## 验收标准
+## 技术方法
+## 非目标
+```
+
+自定义章节以适应您的需求。
+
+## 切换模板
+
+要在项目中途更改模板：
+
+1. 更新 `.lean-spec/config.json`：
+```json
+{
+  "template": "new-template.md"
+}
+```
+
+2. 新Spec将使用新模板
+
+3. 现有Spec保持不变（如果需要手动更新）
+
+## 最佳实践
+
+:::tip 从简单开始
+从 standard 模板开始。仅当您有 >3,500 Token 的 Spec 或非常复杂的功能时才使用 detailed 模板。
+:::
+
+:::tip 迭代模板
+根据实际使用情况完善您的模板。删除未使用的章节。
+:::
+
+:::tip 保持章节可选
+并非每个Spec都需要每个章节。使用有价值的，跳过没有价值的。
+:::
+
+:::tip 共享模板
+导出您的 `.lean-spec/templates/` 目录以与其他团队或项目共享。
+:::
+
+---
+
+**下一步**：了解[frontmatter](/zh-Hans/docs/guide/usage/advanced-features/frontmatter)字段或探索[自定义字段](/zh-Hans/docs/guide/usage/advanced-features/custom-fields)。

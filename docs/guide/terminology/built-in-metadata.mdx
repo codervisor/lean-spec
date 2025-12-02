@@ -1,0 +1,65 @@
+---
+title: Built-in Metadata
+sidebar_position: 2
+---
+# Built-in Metadata
+
+LeanSpec specs store a small set of system-managed fields in frontmatter so humans, dashboards, and AI agents share the same truth. Keep these fields accurate—automation, Kanban boards, and MCP-powered workflows all rely on them.
+
+## Status Lifecycle
+1. **planned** — intent captured, implementation not started.
+2. **in-progress** — work is actively happening.
+3. **blocked** — external dependency is preventing progress.
+4. **complete** — implementation finished and validated.
+5. **archived** — historical reference only.
+
+Update status the moment implementation starts or stops; status tracks the work, not the spec writing process. Use `lean-spec update <spec> --status <value>` so every tool (and AI agent) sees the same state.
+
+## Relationships
+LeanSpec distinguishes between directional blockers and soft references:
+
+- **`depends_on`** — Hard dependency. Spec A cannot start until Spec B is complete.
+  ```yaml
+  depends_on:
+    - 082
+  ```
+  Appears as **→** in `lean-spec deps` and automatically adds a "Required By" entry on the dependency.
+- **`related`** — Informational link for parallel or adjacent work.
+  ```yaml
+  related:
+    - 043
+  ```
+  Shows as **⟷** in graphs and keeps context discoverable without blocking schedules.
+
+Default to `related`; escalate to `depends_on` only when sequencing truly matters.
+
+## Priority & Tags
+These fields make specs filterable and keep planning lightweight.
+
+- **priority** communicates urgency or impact. Typical values: `low`, `medium`, `high`, `critical`.
+- **tags** provide fast slicing across the portfolio. Stick to a shared vocabulary (for example `frontend`, `backend`, `docs`, `infra`).
+  ```yaml
+  priority: high
+  tags: [api, backend, security]
+  ```
+
+Aim for 2-4 tags per spec. Too many tags reduce signal and make search noisy.
+
+## Example Frontmatter
+```yaml
+---
+status: in-progress
+priority: high
+tags: [api, backend]
+depends_on: [082]
+related: [079, 084]
+created: '2025-11-16'
+---
+```
+
+## Why Metadata Discipline Matters
+- **Projects stay honest** — Boards, burndown charts, and roadmap exports use these fields directly.
+- **AI stays aligned** — Agents decide whether to edit a spec or start implementation based on `status`, `priority`, and dependencies.
+- **Context sharing improves** — Tags, relationships, and status transitions tell newcomers where to plug in without another meeting.
+
+Treat the frontmatter like code: update it as soon as reality changes and validate with `lean-spec validate` before merging.

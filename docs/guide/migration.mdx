@@ -1,0 +1,483 @@
+---
+id: 'migration'
+title: 'Migrating to LeanSpec'
+sidebar_position: 3
+---
+
+# Migrating to LeanSpec
+
+This guide helps you migrate from existing SDD tools and documentation systems to LeanSpec.
+
+## Quick Overview
+
+LeanSpec migration focuses on two main areas:
+
+1. **Metadata/Frontmatter** (PRIMARY) - Use `lean-spec backfill` to extract from git history
+2. **Folder Organization** (VARIES) - Depends on your source tool
+
+**Good news**: LeanSpec is flexible about content format—you can keep your existing writing style!
+
+## Migration by Source Tool
+
+### OpenSpec
+
+**Source**: `openspec/specs/` + `openspec/changes/archive/`
+
+OpenSpec is currently the most widely adopted SDD tool. Migration requires merging separate directories.
+
+**Quick migration with `--auto`**:
+```bash
+# One-shot automatic migration
+lean-spec migrate ./openspec --auto
+
+# Preview first
+lean-spec migrate ./openspec --auto --dry-run
+```
+
+**Manual migration steps**:
+```bash
+# 1. Copy and merge directories
+cp -r openspec/specs/* specs/
+cp -r openspec/changes/archive/* specs/
+
+# 2. Renumber specs sequentially
+mv specs/auth specs/001-user-authentication
+mv specs/api-gateway specs/002-api-gateway
+
+# 3. Rename spec.md → README.md
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 4. Generate frontmatter from git history
+lean-spec backfill --assignee --all
+
+# 5. Update AGENTS.md commands
+sed -i 's/openspec/lean-spec/g' AGENTS.md
+
+# 6. Validate
+lean-spec validate
+lean-spec board
+```
+
+**Time**: ~15-30 minutes for 20 specs (or < 1 minute with `--auto`)
+
+### GitHub Spec Kit
+
+**Source**: `.specify/specs/`
+
+**Already compatible!** spec-kit uses the same folder structure (`###-name/`).
+
+**Quick migration with `--auto`**:
+```bash
+lean-spec migrate ./.specify/specs --auto
+```
+
+**Manual migration steps**:
+```bash
+# 1. Move from .specify/specs to specs/
+mv .specify/specs specs/
+
+# 2. Rename spec.md → README.md
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 3. Generate frontmatter from git history
+lean-spec backfill --assignee --all
+
+# 4. Validate
+lean-spec validate
+lean-spec board
+```
+
+**Time**: ~5 minutes for 20 specs (or < 30 seconds with `--auto`)
+
+### AWS Kiro
+
+**Source**: `.kiro/specs/`
+
+Kiro uses a similar structure to spec-kit with some AWS-specific conventions.
+
+**Quick migration with `--auto`**:
+```bash
+lean-spec migrate ./.kiro/specs --auto
+```
+
+**Manual migration steps**:
+```bash
+# 1. Move from .kiro/specs to specs/
+mv .kiro/specs specs/
+
+# 2. Rename any spec.md files to README.md
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 3. Generate frontmatter from git history
+lean-spec backfill --assignee --all
+
+# 4. Validate
+lean-spec validate
+lean-spec board
+```
+
+**Time**: ~5 minutes for 20 specs
+
+### ADR/RFC (Generic Markdown)
+
+**Source**: `docs/adr/`, `docs/rfc/`, or similar
+
+For Architecture Decision Records or RFCs stored as flat markdown files:
+
+```bash
+# Auto migration handles generic markdown
+lean-spec migrate ./docs/adr --auto
+
+# Or manual: each ADR becomes a spec folder
+# 0001-use-typescript.md → specs/001-use-typescript/README.md
+```
+
+## The `lean-spec backfill` Command
+
+This is your primary migration tool for generating frontmatter from git history.
+
+### Basic Usage
+
+```bash
+# Extract timestamps from git history
+lean-spec backfill
+
+# Include assignee from git author
+lean-spec backfill --assignee
+
+# Extract all available metadata
+lean-spec backfill --all
+
+# Preview changes without applying
+lean-spec backfill --dry-run
+```
+
+### What It Extracts
+
+**From git history**:
+- `created_at` - First commit timestamp
+- `updated_at` - Last commit timestamp  
+- `completed_at` - When status changed to 'complete'
+- `assignee` - First commit author (with `--assignee`)
+- `transitions` - Full status change history (with `--transitions`)
+
+**Set manually after**:
+- `priority` - Defaults to 'medium', adjust with `lean-spec update --priority`
+- `tags` - Defaults from folder names, adjust with `lean-spec update --tags`
+- `status` - Inferred from content/history, adjust if needed
+
+### Example Output
+
+```yaml
+---
+status: complete
+created_at: '2024-03-15T10:23:45Z'
+updated_at: '2024-11-08T14:30:12Z'
+completed_at: '2024-03-20T16:45:00Z'
+assignee: Alice Chen
+priority: high
+tags:
+  - product
+  - mvp
+---
+```
+
+## Using `lean-spec migrate`
+
+For more complex migrations or AI-assisted workflows, use the `lean-spec migrate` command.
+
+### Auto Mode (Recommended) ✅
+
+One-shot migration that detects format, restructures, and backfills automatically:
+
+```bash
+# Automatic migration - detects format and handles everything
+lean-spec migrate ./openspec --auto
+
+# Preview without making changes
+lean-spec migrate ./openspec --auto --dry-run
+```
+
+**What `--auto` does**:
+1. Auto-detects source format (spec-kit, OpenSpec, or generic markdown)
+2. Bulk restructures files in one pass
+3. Runs backfill to populate timestamps and assignees
+4. Validates all specs at the end
+
+This is the recommended approach for most migrations.
+
+### Manual Mode (Default)
+
+Outputs migration instructions for any AI tool:
+
+```bash
+lean-spec migrate ./openspec
+```
+
+This generates a prompt you can copy to ChatGPT, Claude, Copilot, or any AI assistant:
+
+```
+You are helping migrate specification documents to LeanSpec format.
+
+Source: ./openspec (23 documents found)
+
+Your Task:
+1. Analyze the source documents
+2. Extract metadata (title, status, dates, priority)
+3. For each document:
+   - Run: lean-spec create <name>
+   - Run: lean-spec update <name> --status <status>
+   - Run: lean-spec update <name> --priority <priority>
+   - Edit content to match LeanSpec structure
+4. Preserve decision rationale and relationships
+5. Keep specs under 400 lines
+
+Execute migration commands now.
+```
+
+### AI-Assisted Mode
+
+Automated migration using AI CLI tools:
+
+```bash
+# Using GitHub Copilot CLI
+lean-spec migrate ./openspec --with copilot
+
+# Using Claude CLI
+lean-spec migrate ./openspec --with claude
+
+# Using Gemini CLI
+lean-spec migrate ./openspec --with gemini
+```
+
+**Prerequisites**:
+- AI CLI tool must be installed
+- Tool must be authenticated/configured
+
+**Options**:
+```bash
+# Preview without changes
+lean-spec migrate ./openspec --dry-run
+
+# Process in batches
+lean-spec migrate ./openspec --batch-size 10
+
+# Auto-run backfill after migration
+lean-spec migrate ./openspec --backfill
+```
+
+## Migration Checklist
+
+Use this checklist to ensure a complete migration:
+
+### Before Migration
+
+- [ ] Backup your existing documentation
+- [ ] Review source folder structure
+- [ ] Check git history is available (for `backfill`)
+- [ ] Install LeanSpec: `npm install -g lean-spec`
+- [ ] Initialize LeanSpec: `lean-spec init`
+
+### During Migration
+
+- [ ] Reorganize folders (if needed for your source tool)
+- [ ] Rename main spec files to `README.md`
+- [ ] Run `lean-spec backfill --assignee --all`
+- [ ] Manually adjust priorities if needed
+- [ ] Manually adjust tags if needed
+- [ ] Verify status values are correct
+
+### After Migration
+
+- [ ] Run `lean-spec validate` to check for issues
+- [ ] Run `lean-spec board` to visualize migration
+- [ ] Test spec discovery: `lean-spec list`, `lean-spec search`
+- [ ] Update any broken relationships (`depends_on`, `related`)
+- [ ] Migrate system prompts (AGENTS.md, .cursorrules)
+
+## Migrating System Prompts
+
+Don't forget to migrate AI guidance files!
+
+### Common Source Files
+
+```
+# Source tools often have:
+openspec/AGENTS.md
+.cursorrules
+.github/copilot-instructions.md
+CLAUDE.md
+```
+
+### LeanSpec Uses
+
+```
+AGENTS.md (in project root)
+```
+
+### Migration Strategy
+
+1. **Review existing AI guidance** from source tool
+2. **Preserve project-specific conventions**
+3. **Merge with LeanSpec AGENTS.md** (created by `lean-spec init`)
+4. **Update commands**: `openspec` → `lean-spec`, etc.
+5. **Keep team workflows intact**
+
+This ensures AI agents maintain continuity during the transition.
+
+## Common Migration Scenarios
+
+### Scenario 1: spec-kit with Multiple Files Per Feature
+
+**Source**:
+```
+.specify/specs/
+└── 001-task-management/
+    ├── spec.md
+    ├── plan.md
+    ├── tasks.md
+    └── contracts/
+        └── api.yml
+```
+
+**Options**:
+
+**Option A: Keep sub-specs** (recommended for complex features)
+```bash
+mv .specify/specs specs/
+mv specs/001-task-management/spec.md specs/001-task-management/README.md
+# Keep plan.md, tasks.md, contracts/ as-is
+lean-spec backfill --assignee --all
+```
+
+**Option B: Consolidate** (for simpler features)
+```bash
+# Merge spec.md + plan.md into README.md manually
+# Then run backfill
+lean-spec backfill --assignee --all
+```
+
+### Scenario 2: OpenSpec with Separate Directories
+
+**Source**:
+```
+openspec/
+├── specs/auth/spec.md
+└── changes/archive/2024-11-15-oauth/
+```
+
+**Migration**:
+```bash
+# 1. Merge directories
+cp -r openspec/specs/* specs/
+cp -r openspec/changes/archive/* specs/
+
+# 2. Renumber and rename
+mv specs/auth specs/001-authentication
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 3. Backfill metadata
+lean-spec backfill --assignee --all
+
+# 4. Update AGENTS.md commands
+sed -i 's/openspec/lean-spec/g' AGENTS.md
+```
+
+## Migrating from External Systems
+
+For systems like Linear, Jira, Confluence, or Notion:
+
+### Export First
+
+1. **Export to markdown or JSON** from your system
+2. **Place exports in a directory** (e.g., `./exports/`)
+3. **Run migration** on the exported files
+
+```bash
+# Export from Linear, Jira, etc. to ./exports/
+lean-spec migrate ./exports/
+```
+
+### Why No Direct API Integration?
+
+LeanSpec intentionally doesn't integrate with external system APIs because:
+
+- **Security**: No credential management needed
+- **Simplicity**: No authentication, API keys, rate limits
+- **Maintenance**: External APIs change, break, require updates
+- **Privacy**: Your data stays local
+
+Export workflows are well-established and let you maintain control.
+
+## Troubleshooting
+
+### Issue: No git history available
+
+**Solution**: Set timestamps manually or use current date
+```bash
+# backfill will use current timestamp for specs without git history
+lean-spec backfill --assignee --all
+
+# Or set manually
+lean-spec update 001 --priority high
+```
+
+### Issue: Duplicate sequence numbers
+
+**Solution**: Use `lean-spec check` to detect conflicts
+```bash
+lean-spec check
+# Fix conflicts by renaming folders manually
+```
+
+### Issue: Content format doesn't match template
+
+**Good news**: LeanSpec is flexible! Keep your existing format.
+
+You don't need to rewrite content to match a specific structure. LeanSpec's first principle is "Intent Over Implementation"—as long as the spec communicates intent clearly, the exact format doesn't matter.
+
+### Issue: Relationships broken after migration
+
+**Solution**: Update `depends_on` and `related` fields manually
+```bash
+# Edit frontmatter in README.md for each spec
+---
+depends_on: [002, 005]
+related: [010, 012]
+---
+
+# Verify relationships
+lean-spec deps 001
+```
+
+## Migration Time Estimates
+
+Based on real migrations:
+
+| Source Tool | Specs | Time (Manual) | Time (--auto) | Complexity |
+|-------------|-------|---------------|---------------|------------|
+| OpenSpec | 20 | 20 min | < 1 min | ⚠️ Moderate |
+| OpenSpec | 100 | 60 min | < 1 min | ⚠️ Moderate |
+| spec-kit | 20 | 5 min | < 30 sec | ✅ Easy |
+| spec-kit | 100 | 15 min | < 30 sec | ✅ Easy |
+| Kiro | 20 | 5 min | < 30 sec | ✅ Easy |
+| ADR/RFC | 20 | 10 min | < 30 sec | ✅ Easy |
+
+**Note**: Times include backfill and validation. Use `--auto` for fastest migration!
+
+## Getting Help
+
+Need migration support?
+
+- **GitHub Issues**: [Report migration issues](https://github.com/codervisor/lean-spec/issues)
+- **Examples**: See [spec 063](https://web.lean-spec.dev/specs/063-migration-from-existing-tools) for detailed examples
+- **Command Help**: Run `lean-spec migrate --help` or `lean-spec backfill --help`
+
+## Next Steps
+
+After migration:
+
+1. **Learn the workflow**: [Creating & Managing Specs](/docs/guide/usage/cli/creating-managing)
+2. **Set up AI integration**: [MCP Integration](/docs/guide/usage/mcp-integration)
+3. **Understand principles**: [First Principles](/docs/advanced/first-principles)
+4. **Configure for your team**: [Configuration Reference](/docs/reference/config)

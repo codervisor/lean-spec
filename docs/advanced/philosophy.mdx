@@ -1,0 +1,304 @@
+---
+id: 'philosophy'
+title: 'Philosophy & Mindset'
+sidebar_position: 6
+---
+# Philosophy & Mindset
+
+> "LeanSpec is a mindset, not a format."
+
+Beyond the [First Principles](/docs/advanced/first-principles), effective LeanSpec practice requires adopting key mental models and beliefs about how specs should work.
+
+## Mental Models for AI Co-Creation
+
+When AI assists in writing specs (not just implementing from them), three mental models guide how specs fit into your workflow:
+
+### Spec-as-Checkpoint (Primary Model)
+
+**What it is:** Formalize intent at key decision points in the development conversation.
+
+**Workflow:**
+1. **Converse with AI** - Explore options, clarify requirements, iterate on design
+2. **Recognize checkpoint** - When design is clear enough to formalize
+3. **Crystallize into spec** - AI drafts initial spec, human refines
+4. **Continue from spec** - Spec becomes contract for implementation
+
+**When to use:**
+- After clarifying complex design with AI
+- Before starting multi-phase implementation
+- When ready to commit to an approach
+- To capture decisions before moving forward
+
+**Example:** You discuss API design with AI for 15 minutes, clarify constraints and trade-offs, then formalize the agreed design as a spec before implementation begins.
+
+### Spec-as-Artifact (Formal Documentation)
+
+**What it is:** Durable documentation that persists beyond the immediate work.
+
+**Purpose:**
+- Reference for future modifications
+- Onboarding for new team members
+- Compliance and audit trails
+- Institutional knowledge capture
+
+**When to use:**
+- Architectural decisions affecting multiple systems
+- Features requiring regulatory documentation
+- Complex designs others will extend
+- Work that needs future reference
+
+**Example:** A payment processing spec that documents security decisions, PCI compliance approach, and integration patterns for future developers.
+
+### Spec-as-Context (Living Documentation)
+
+**What it is:** Evolving context that grows alongside implementation.
+
+**Characteristics:**
+- Updated iteratively as understanding grows
+- Reflects current reality, not just initial plans
+- Bridges ongoing human-AI collaboration
+- Captures learnings and refinements
+
+**When to use:**
+- SDD-style iterative development
+- Complex features with emergent requirements
+- Long-running work with multiple iterations
+- When spec serves as living project memory
+
+**Example:** A refactoring spec that evolves as you discover new patterns, documents decisions as you make them, and captures what worked vs. what didn't.
+
+---
+
+### Choosing Your Mental Model
+
+Most specs move through these phases:
+
+1. **Start as Checkpoint** - Formalize conversation into spec
+2. **Evolve as Context** - Update as implementation teaches you things
+3. **End as Artifact** - Archive as reference documentation
+
+**The key insight:** These aren't separate approaches—they're stages in a spec's lifecycle. Start simple (checkpoint), evolve naturally (context), finish as documentation (artifact).
+
+**For AI-assisted authoring:**
+- AI helps draft the checkpoint (structure your thoughts)
+- AI helps maintain context (update as you learn)
+- Humans ensure artifact quality (refine for clarity)
+
+---
+
+## The LeanSpec Mindset
+
+To practice LeanSpec effectively, adopt these core attitudes:
+
+### Start with Why
+
+Every spec should answer: "Why does this work exist?"
+
+- What problem are we solving?
+- Why is it important?
+- Why now?
+
+Without clear answers, the work may not be worth doing.
+
+### Embrace "Good Enough"
+
+Perfectionism is the enemy of lean specifications.
+
+- Ship a "good enough" spec quickly
+- Get feedback from real work
+- Refine based on what you learn
+- Iterate continuously
+
+A perfect spec that's never written is worthless. An imperfect spec that gets work moving is valuable.
+
+### Question Every Word
+
+Before writing anything, ask: "Does this add clarity?"
+
+If not, don't write it.
+
+- Verbose explanations → brief, clear statements
+- Exhaustive edge cases → critical scenarios only
+- Academic formality → conversational clarity
+- Comprehensive references → essential links
+
+### Think Living Document
+
+Specs are not contracts carved in stone. They're living guides that evolve.
+
+- Update specs as you learn
+- Capture decisions as you make them
+- Reflect reality, not just plans
+- Archive when work is complete
+
+A spec that's out of date is worse than no spec at all.
+
+### Design for Scanning
+
+People (and AI agents) scan before they read.
+
+Structure specs for quick comprehension:
+- Use clear headings
+- Keep sections short
+- Use bullet points
+- Highlight key information
+- Add visual elements (emojis, badges) where helpful
+
+If someone can't understand your spec in 2 minutes, it's probably too long.
+
+---
+
+## Core Beliefs
+
+The LeanSpec approach is guided by four foundational beliefs:
+
+### 1. Documentation is a Means, Not an End
+
+The goal isn't to create comprehensive documentation. The goal is to **enable effective action**.
+
+- Specs exist to facilitate understanding and decision-making
+- If nobody reads or uses a spec, it has failed—regardless of how thorough it is
+- Value delivered to users > documentation completeness
+
+### 2. Context Beats Comprehensiveness
+
+Capturing **why** something matters is more valuable than exhaustively documenting **what** it is.
+
+- Understanding the problem is more important than detailing the solution
+- The "why" rarely changes, but the "how" evolves constantly
+- Context enables good decisions; exhaustive details become outdated quickly
+
+### 3. Specs Should Reduce Burden, Not Create It
+
+Traditional specs often become a burden (too long to read, too complex to maintain, too rigid to adapt).
+
+LeanSpec specs should:
+- Take minutes to read
+- Be easy to keep current
+- Evolve with the project
+- Invite collaboration
+
+### 4. AI Changes Everything
+
+In the era of AI-assisted development, specs serve a dual purpose:
+- **Human Communication**: Align team understanding
+- **AI Context**: Provide clear direction for AI coding agents
+
+AI agents benefit from the same qualities humans do: clear, concise writing with concrete examples, explicit boundaries, and testable criteria.
+
+---
+
+## Balancing Lean and Complete
+
+The goal isn't to write as little as possible. The goal is to write **as much as necessary**.
+
+Some features are complex and require detailed specs. That's okay. The question isn't "How short can I make this?" but rather "What's essential for understanding?"
+
+### When to Add More Detail
+
+Add detail when:
+- Complexity demands it
+- Ambiguity would cause problems
+- Coordination across teams is needed
+- Technical constraints are critical
+- Failure has high consequences
+
+### When to Cut Detail
+
+Cut detail when:
+- It's obvious to your audience
+- It's easily discovered elsewhere
+- It might change before work begins
+- It's tangential to the core goal
+- It's implementation detail for later
+
+---
+
+## AI-Assisted Spec Authoring
+
+AI can help write specs, not just implement from them. This creates a collaborative workflow:
+
+**Human provides:**
+- Intent and context ("Why are we doing this?")
+- Constraints and trade-offs ("What limits exist?")
+- Success criteria ("How do we know it's done?")
+- Refinement and editing (enforce LeanSpec principles)
+
+**AI provides:**
+- Initial structure and draft
+- Expansion of brief notes into sections
+- Examples and test cases
+- Formatting and organization
+
+**Result:** Faster spec creation that still maintains human judgment on what matters. AI handles structure, humans ensure clarity and intent.
+
+**Critical:** First principles matter MORE in AI-assisted authoring. Without human review, AI tends toward verbosity (violating Signal-to-Noise) and implementation focus (violating Intent Over Implementation). Your role is to ensure specs remain lean and purposeful.
+
+---
+
+## Success Criteria
+
+How do you know if you're practicing LeanSpec effectively?
+
+### Self-Check Questions
+
+**Context Economy:**
+- [ ] Can someone read this spec in 5-10 minutes?
+- [ ] Is each spec file under 400 lines?
+- [ ] If not, is it split into focused sub-specs?
+
+**Signal-to-Noise:**
+- [ ] Does every sentence inform a decision?
+- [ ] Can I explain what decision each section enables?
+- [ ] Have I cut "nice to know" vs. "need to know"?
+
+**Intent Over Implementation:**
+- [ ] Is the "why" clear?
+- [ ] Are trade-offs explained?
+- [ ] Can someone make good decisions without me?
+
+**Bridge the Gap:**
+- [ ] Can both humans and AI understand this?
+- [ ] Is there clear structure + natural language?
+- [ ] Are examples included where needed?
+
+**Progressive Disclosure:**
+- [ ] Did I add only what I need now?
+- [ ] Am I solving current pain, not future "what ifs"?
+- [ ] Can this grow naturally without rewriting?
+
+### Your Specs Are Successful If:
+
+✅ **They get read** - People actually read them (all the way through)  
+✅ **They get used** - They inform actual development work  
+✅ **They stay current** - They're updated as the project evolves  
+✅ **They enable autonomy** - Developers can work without constant clarification  
+✅ **They facilitate AI** - AI agents can implement features from them  
+✅ **They age well** - They remain useful even after implementation
+
+### Your Specs Are Failing If:
+
+❌ People say "TL;DR" (too long; didn't read)  
+❌ Developers ignore them and ask for clarification  
+❌ They become outdated quickly  
+❌ They generate more questions than answers  
+❌ AI agents misinterpret them  
+❌ They're never referenced after initial review
+
+---
+
+## The Bottom Line
+
+LeanSpec is a **mindset**, not a format.
+
+Focus on:
+- **Why** over what
+- **Clarity** over completeness
+- **Action** over documentation
+- **Evolution** over perfection
+
+If your specs help people (and AI agents) build better software faster, you're doing LeanSpec right.
+
+---
+
+**Next**: Explore practical day-to-day techniques in [AI-Assisted Spec Writing](/docs/advanced/ai-assisted-spec-writing), or learn [When to Write Specs](/docs/guide/understanding-leanspec#when-to-write-a-spec) in LeanSpec.

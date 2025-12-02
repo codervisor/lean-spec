@@ -1,0 +1,71 @@
+---
+title: Understanding LeanSpec
+sidebar_position: 2
+---
+# Understanding LeanSpec
+
+LeanSpec is designed so both humans and AI agents can hold the full context for a piece of work. This page explains why the structure matters, how each concept connects, and how to evolve specs as complexity grows.
+
+## Core Principles
+
+LeanSpec is built on five key principles designed to bridge the gap between human intent and AI execution:
+
+1.  **Context Economy**: Keep specs small (&lt;2,000 tokens) to fit in working memory.
+2.  **Signal-to-Noise**: Every word must inform a decision.
+3.  **Intent Over Implementation**: Capture *why* and *what*, let *how* emerge.
+4.  **Bridge the Gap**: Write for both human understanding and AI parsing.
+5.  **Progressive Disclosure**: Start simple, add complexity only when pain is felt.
+
+## When to Write a Spec
+
+Write or update a spec when:
+- Intent needs clarification or multiple interpretations exist
+- Trade-offs, constraints, or success criteria matter
+- Work spans multiple files/systems or affects other teams
+- AI agents will implement part of the feature
+- Decisions should persist beyond a chat or meeting
+
+**Skip it when:** Fixing obvious bugs, performing mechanical refactors, or prototyping to learn.
+
+## Why the Structure Works
+LeanSpec optimizes for Context Economy and Signal-to-Noise:
+- **Frontmatter** keeps machine-readable truth about status, dependencies, and priority so boards and agents stay aligned.
+- **Overview** captures the problem, why now, and success criteria—enough intent for someone new to take action.
+- **Plan / Design** evolves as you learn. Add phases, trade-offs, or sub-spec links only when the main README would exceed ~2,000 tokens.
+- **Validation** proves the work is done, which lets AI safely propose next steps.
+
+When the README grows beyond working-memory limits, break detail into sub-spec files (`DESIGN.md`, `IMPLEMENTATION.md`, `TESTING.md`). This keeps the primary document scannable while still giving experts or agents the depth they need.
+
+## From Beginner to Advanced
+| Stage | What to Focus On | Signs You Should Level Up |
+| --- | --- | --- |
+| **Beginner** | Capture the problem, desired outcome, and definition of done. | You keep re-explaining context or repeating the same Q&A threads. |
+| **Intermediate** | Track dependencies, tags, and status accurately so teams & AI agents can juggle multiple specs. | Specs feel messy, or cross-team handoffs miss context. |
+| **Advanced** | Use phased plans, sub-specs, and token budgets to coordinate multi-week programs. | Separate audiences (execs vs. implementers) need different depth. |
+
+Progress by adding structure only when pain is felt—progressive disclosure keeps docs lean without hiding critical constraints.
+
+## Keeping Specs Alive
+- Update status as soon as implementation starts or stops—status tracks the work, not the writing.
+- Capture discoveries under `## Notes` or `## Evolution` so newcomers see how reality changed.
+- Re-run `lean-spec validate` and `lean-spec tokens <spec>` before shipping to catch missing metadata or oversize files.
+- Refresh links to dashboards, branches, and MCP commands so automation stays trustworthy.
+
+Use this quick health check before every review:
+- ☐ Still under ~2,000 tokens or split into sub-specs
+- ☐ Problem statement reflects today’s understanding
+- ☐ Success criteria remain testable
+- ☐ Dependencies represent real blockers
+- ☐ Related specs tell the rest of the story
+
+## Working with AI Agents
+1. Share the spec path or rely on MCP search so the agent can pull the right context files.
+2. Ask the agent to summarize the spec back—alignment check before code changes.
+3. Let the agent draft code, docs, or tests, then document deviations in the spec so the next agent stays grounded.
+4. Close the loop by verifying the Validation section and updating status to `complete`.
+
+## Where to Go Next
+- [Spec Concept](/docs/guide/terminology/spec) — anatomy plus when to create sub-specs.
+- [SDD Workflow](/docs/guide/terminology/sdd-workflow) — lifecycle from planned → complete.
+- [Built-in Metadata](/docs/guide/terminology/built-in-metadata) — how status, dependencies, and priority stay in sync.
+- [Your First Feature with AI](/docs/tutorials/first-spec-with-ai) — apply these ideas in a guided build.

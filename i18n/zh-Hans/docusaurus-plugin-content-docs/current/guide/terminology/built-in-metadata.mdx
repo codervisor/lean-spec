@@ -1,0 +1,65 @@
+---
+title: 内置元数据
+sidebar_position: 2
+---
+# 内置元数据
+
+LeanSpec Spec 在 frontmatter 中存储一小组系统管理的字段，以便人类、仪表板和 AI 代理共享同一事实。保持这些字段准确——自动化、看板、MCP 驱动的工作流都依赖于它们。
+
+## 状态生命周期
+1. **planned** — 意图已捕获，实现尚未开始。
+2. **in-progress** — 工作正在积极进行中。
+3. **blocked** — 外部依赖阻止进展。
+4. **complete** — 实现完成并验证。
+5. **archived** — 仅供历史参考。
+
+在实现开始或停止时立即更新状态；状态跟踪工作，而非 Spec 编写过程。使用 `lean-spec update <spec> --status <value>` 以便每个工具（和 AI 代理）看到相同的状态。
+
+## 关系
+LeanSpec 区分方向性阻塞和软引用：
+
+- **`depends_on`** — 硬依赖。Spec A 在 Spec B 完成之前无法开始。
+  ```yaml
+  depends_on:
+    - 082
+  ```
+  在 `lean-spec deps` 中显示为 **→**，并自动在依赖项上添加"Required By"条目。
+- **`related`** — 并行或相邻工作的信息链接。
+  ```yaml
+  related:
+    - 043
+  ```
+  在图表中显示为 **⟷**，保持上下文可发现而不阻塞计划。
+
+默认使用 `related`；仅在顺序真正重要时升级为 `depends_on`。
+
+## 优先级和标签
+这些字段使 Spec 可过滤并保持计划轻量级。
+
+- **priority** 传达紧急性或影响。典型值：`low`、`medium`、`high`、`critical`。
+- **tags** 提供跨组合的快速切片。坚持共享词汇表（例如 `frontend`、`backend`、`docs`、`infra`）。
+  ```yaml
+  priority: high
+  tags: [api, backend, security]
+  ```
+
+每个 Spec 目标 2-4 个标签。太多标签会降低信号并使搜索产生噪音。
+
+## 示例 Frontmatter
+```yaml
+---
+status: in-progress
+priority: high
+tags: [api, backend]
+depends_on: [082]
+related: [079, 084]
+created: '2025-11-16'
+---
+```
+
+## 为什么元数据Spec很重要
+- **项目保持诚实** — 看板、燃尽图和路线图导出直接使用这些字段。
+- **AI 保持一致** — 代理根据 `status`、`priority` 和依赖关系决定是编辑 Spec 还是开始实现。
+- **上下文共享改进** — 标签、关系和状态转换告诉新来者在哪里插入，无需另一次会议。
+
+将 frontmatter 视为代码：一旦现实发生变化就更新它，并在合并前使用 `lean-spec validate` 验证。

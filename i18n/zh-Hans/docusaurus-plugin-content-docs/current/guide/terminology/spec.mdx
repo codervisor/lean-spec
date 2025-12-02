@@ -1,0 +1,49 @@
+---
+title: Spec
+sidebar_position: 1
+---
+# Spec
+
+**Spec** 是一个轻量级检查点,捕获工作单元的意图、约束和成功标准。它告诉人类和 AI 代理接下来需要发生什么——以及为什么。
+
+## 为什么重要
+- 充当跨交接和 AI 会话的持久内存
+- 在实现开始之前强制问题清晰化
+- 通过概述成功标准和保障措施实现自主工作
+
+## 核心解剖
+1. **Frontmatter** — 机器可读的元数据（状态、优先级、标签、依赖关系）
+2. **概述** — 问题、为什么重要以及期望的结果
+3. **计划/设计** — 阶段、权衡或方法说明
+4. **验证** — 如何确认工作已完成
+
+保持 README 在约 2,000 Token 以下。当它超出工作记忆 (Working Memory) 限制时，将详细信息拆分到子 Spec 文件中并从计划部分链接它们。
+
+## 子 Spec：当深度很重要时
+子 Spec 是 Spec 目录内的附加 Markdown 文件（`DESIGN.md`、`IMPLEMENTATION.md`、`TESTING.md` 等）。它们通过保持主 README 可扫描同时存储特定受众的深入细节来保持 Context Economy。
+
+| 使用子 Spec 当… | 示例 |
+| --- | --- |
+| README 将超过约 2,000 Token | 架构图、多阶段推出计划 |
+| 不同受众需要不同深度 | README 中的执行摘要，其他地方的实现清单 |
+| 你需要专用工件 | `TESTING.md`、迁移手册、推出清单 |
+
+\`\`\`
+specs/082-web-sync/
+README.md          # 概述 + 决策上下文
+DESIGN.md          # 架构图和流程
+IMPLEMENTATION.md  # 阶段或任务列表
+TESTING.md         # 验证细节
+\`\`\`
+
+## 快速示例
+\`\`\`markdown
+# 042-api-rate-limiting
+实现Token桶速率限制（每分钟 100 个请求/API 密钥）
+以保护 API 免受 2% 重度用户的滥用。
+\`\`\`
+
+## 另见
+- [理解 LeanSpec](/docs/guide/understanding-leanspec)
+- [内置元数据](/docs/guide/terminology/built-in-metadata)
+- [Spec 结构](/docs/guide/usage/spec-structure)

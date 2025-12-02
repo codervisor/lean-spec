@@ -1,0 +1,279 @@
+---
+id: 'templates'
+title: 'Templates'
+sidebar_position: 7
+---
+# Templates
+
+LeanSpec provides customizable templates to match your workflow and team structure.
+
+## Overview
+
+Templates are complete working models that include:
+- Spec structure and examples
+- `AGENTS.md` for AI agent integration
+- Supporting files (CONTRIBUTING.md, checklists, etc.)
+- Project-specific configuration
+
+## Available Templates
+
+### Standard (Default)
+
+Recommended for most projects - single-file specs with AGENTS.md.
+
+**Best for:** Solo developers, small teams, simple to moderately complex specs
+
+**Includes:**
+- Status, tags, priority fields
+- AGENTS.md for AI integration
+- All sections in single README.md file
+- Guidance for when to split into sub-specs
+
+**Example frontmatter:**
+```yaml
+---
+status: planned
+created: 2025-11-02
+tags: [api, feature]
+priority: high
+---
+```
+
+**Sections:**
+- Overview
+- Design
+- Plan
+- Test
+- Notes
+
+### Detailed
+
+For complex specs with lots of content - uses sub-spec structure.
+
+**Best for:** Large features, architectural changes, specs with >3,500 tokens
+
+**Includes:**
+- Same metadata as standard
+- README.md as overview/navigation
+- Separate sub-spec files (DESIGN.md, PLAN.md, TEST.md)
+- Demonstrates real-world sub-spec pattern
+- Helps manage token limits for AI context
+
+**Example frontmatter:**
+```yaml
+---
+status: planned
+created: 2025-11-02
+tags: [architecture, refactor]
+priority: high
+---
+```
+
+**Structure:**
+```
+specs/NNN-feature-name/
+├── README.md      # Overview + navigation
+├── DESIGN.md      # Design details
+├── PLAN.md        # Implementation plan
+└── TEST.md        # Testing strategy
+```
+
+**Usage:**
+```bash
+lean-spec init --template detailed
+```
+
+## Choosing a Template
+
+Run `lean-spec init` and choose "Choose a template":
+
+```bash
+lean-spec init
+```
+
+```
+? How would you like to set up?
+  ❯ Quick start (recommended)
+    Choose a template
+
+? Which template would you like to use?
+  ❯ standard - Recommended - single-file specs with AGENTS.md
+    detailed - Complex specs with sub-spec structure (DESIGN, PLAN, TEST)
+```
+
+## Custom Templates
+
+You can create your own templates in `.lean-spec/templates/`.
+
+### Single-File Templates
+
+For simple, consistent spec structures:
+
+1. Create template file:
+```bash
+mkdir -p .lean-spec/templates
+touch .lean-spec/templates/my-template.md
+```
+
+2. Edit template with placeholders:
+```markdown
+---
+status: planned
+created: {date}
+---
+
+# {name}
+
+**Team**: {team}
+**Author**: {author}
+
+## Overview
+
+[Your custom sections...]
+```
+
+3. Register in `.lean-spec/config.json`:
+```json
+{
+  "template": "my-template.md",
+  "templates": {
+    "default": "spec-template.md",
+    "my-template": "my-template.md"
+  }
+}
+```
+
+Or use CLI:
+```bash
+lean-spec templates add my-template my-template.md
+```
+
+### Directory-Based Templates (Multi-File)
+
+For complex specs that need multiple files (like DESIGN.md, PLAN.md, TEST.md):
+
+1. Create template directory:
+```bash
+mkdir -p .lean-spec/templates/api-spec
+```
+
+2. Create the main template (`README.md` is required):
+```bash
+touch .lean-spec/templates/api-spec/README.md
+touch .lean-spec/templates/api-spec/ENDPOINTS.md
+touch .lean-spec/templates/api-spec/SCHEMAS.md
+```
+
+3. Register the directory:
+```json
+{
+  "templates": {
+    "default": "spec-template.md",
+    "api": "api-spec"
+  }
+}
+```
+
+Or use CLI:
+```bash
+lean-spec templates add api api-spec
+```
+
+4. Use the template:
+```bash
+lean-spec create my-api --template=api
+# Creates: specs/NNN-my-api/
+#   ├── README.md
+#   ├── ENDPOINTS.md
+#   └── SCHEMAS.md
+```
+
+When using a directory template, all `.md` files are copied to the new spec folder.
+
+### Available Variables
+
+- `{name}` - Spec name
+- `{date}` - Creation date (ISO format)
+- `{project_name}` - From package.json
+- `{author}` - From git config user.name
+- `{git_user}` - Git username
+- `{git_email}` - Git email
+- `{git_repo}` - Repository name
+
+Add custom variables in config:
+```json
+{
+  "variables": {
+    "team": "Platform Engineering",
+    "company": "Acme Corp"
+  }
+}
+```
+
+## Template Structure
+
+A complete template includes:
+
+### 1. Frontmatter
+```yaml
+---
+status: planned
+created: {date}
+tags: []
+priority: medium
+---
+```
+
+### 2. Visual Badges
+```markdown
+> **Status**: 📅 Planned · **Created**: {date}
+```
+
+### 3. Content Sections
+```markdown
+## Overview
+## Goal
+## Key Scenarios
+## Acceptance Criteria
+## Technical Approach
+## Non-Goals
+```
+
+Customize sections to fit your needs.
+
+## Switching Templates
+
+To change templates mid-project:
+
+1. Update `.lean-spec/config.json`:
+```json
+{
+  "template": "new-template.md"
+}
+```
+
+2. New specs will use the new template
+
+3. Existing specs remain unchanged (update manually if needed)
+
+## Best Practices
+
+:::tip Start Simple
+Begin with the standard template. Use detailed template only when you have specs with >3,500 tokens or very complex features.
+:::
+
+:::tip Iterate on Templates
+Refine your templates based on what actually gets used. Remove unused sections.
+:::
+
+:::tip Keep Sections Optional
+Not every spec needs every section. Use what adds value, skip what doesn't.
+:::
+
+:::tip Share Templates
+Export your `.lean-spec/templates/` directory to share with other teams or projects.
+:::
+
+---
+
+**Next**: Learn about [Frontmatter](/docs/guide/usage/advanced-features/frontmatter) fields or explore [Custom Fields](/docs/guide/usage/advanced-features/custom-fields).
