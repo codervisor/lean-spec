@@ -1,0 +1,12 @@
+packages:
+  - packages/*
+
+ignoredBuiltDependencies:
+  - core-js
+  - core-js-pure
+  - esbuild
+  - sharp
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - better-sqlite3
