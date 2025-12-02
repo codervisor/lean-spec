@@ -1,0 +1,262 @@
+---
+title: Your First Spec with AI
+sidebar_position: 1
+description: Build a complete feature from idea to working code with AI-assisted spec-driven development
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Your First Spec with AI
+
+Learn how LeanSpec helps you go from intent to implementation in minutes, not hours. You'll build a real feature—dark theme support—with AI doing the heavy lifting.
+
+**Time**: 10 minutes  
+**Outcome**: Working feature with a completed spec
+
+:::info Prerequisites
+- Completed [Getting Started](/docs/guide/getting-started) guide
+- AI coding tool (GitHub Copilot, Claude, etc.)
+:::
+
+## Try It Now
+
+Get hands-on with a pre-configured example project:
+
+```bash
+npx lean-spec init --example dark-theme
+cd dark-theme
+npm install
+npm start
+```
+
+Then prompt your AI tool:
+
+<Tabs groupId="ai-tool">
+  <TabItem value="claude" label="Claude Code">
+    In your terminal with Claude Code:
+
+    ```bash
+    # Make sure you have Claude Code installed
+    # macOS/Linux
+    curl -fsSL https://claude.ai/install.sh | bash
+    # Windows (PowerShell)
+    irm https://claude.ai/install.ps1 | iex
+
+    # Create soft link to CLAUDE.md from the system prompt AGENTS.md
+    ln -s AGENTS.md CLAUDE.md
+
+    # Send the prompt to Claude Code
+    claude "Help me add dark theme support with theme switcher"
+    ```
+  </TabItem>
+  <TabItem value="codex" label="Codex CLI">
+    In your terminal with OpenAI Codex CLI:
+
+    ```bash
+    # Make sure you have Codex CLI installed
+    npm install -g @openai/codex
+
+    # Send the prompt to Codex CLI
+    codex "Help me add dark theme support with theme switcher"
+    ```
+  </TabItem>
+  <TabItem value="gemini" label="Gemini CLI">
+    In your terminal with Gemini CLI:
+
+    ```bash
+    # Make sure you have Gemini CLI installed
+    npm install -g @anthropic-ai/gemini-cli
+
+    # Create soft link to GEMINI.md from the system prompt AGENTS.md
+    ln -s AGENTS.md GEMINI.md
+
+    # Send the prompt to Gemini CLI
+    gemini "Help me add dark theme support with theme switcher"
+    ```
+  </TabItem>
+  <TabItem value="copilot" label="GitHub Copilot CLI">
+    In your terminal with GitHub Copilot CLI:
+
+    ```bash
+    # Make sure you have GitHub Copilot CLI installed (requires Node.js v22+)
+    npm install -g @github/copilot
+
+    # Send the prompt to Copilot CLI (programmatic mode)
+    copilot -p "Help me add dark theme support with theme switcher" --allow-all-tools
+    ```
+  </TabItem>
+  <TabItem value="ide" label="IDE" default>
+    In your IDE with an AI coding assistant (GitHub Copilot, Claude, Cursor, etc.):
+
+    1. Open the project in your IDE
+    2. Open your AI assistant chat panel
+    3. Send the prompt: _"Help me add dark theme support with theme switcher"_
+  </TabItem>
+</Tabs>
+
+**Want to understand what happens under the hood?** The sections below walk through each step in detail.
+
+## The Scenario
+
+You're building a task manager web app. Users love it, but keep requesting dark mode for late-night work sessions. Currently, the app only has a bright light theme.
+
+Starting point:
+```
+your-project/
+├── src/
+│   ├── public/
+│   │   ├── index.html           # Task manager UI
+│   │   ├── style.css            # Current light theme
+│   │   └── app.js               # Task logic
+│   └── server.js                # Express server
+└── specs/                        # Your specs folder
+```
+
+## Creating the Spec
+
+In your AI tool, describe what you want:
+
+```
+Create a new spec for adding dark theme support to this task manager.
+The theme should:
+- Automatically detect system preference
+- Include a manual theme switcher button
+- Use accessible color contrast
+- Smooth transition between themes
+- Preserve the current design aesthetic
+
+Keep it simple and user-friendly.
+```
+
+The AI reads your project structure and creates a spec in `specs/015-dark-theme-support/`. Here's what it generates:
+
+```markdown title="specs/015-dark-theme-support/README.md"
+---
+status: planned
+created: '2025-11-24'
+priority: high
+---
+
+# Dark Theme Support
+
+> **Status**: 📅 Planned · **Priority**: High
+
+## Overview
+Add dark theme that automatically switches based on user's system preferences.
+Currently only light theme available, causing eye strain in low-light.
+
+## Design
+- Use CSS `prefers-color-scheme` media query for auto-detection
+- Add manual theme switcher button in UI
+- Define dark theme color palette (accessible contrast)
+- Smooth transitions between themes
+- Test with both light/dark system preferences
+
+## Plan
+- [ ] Define dark theme color variables
+- [ ] Add media query for dark theme
+- [ ] Create theme switcher button component
+- [ ] Update all color references to use variables
+- [ ] Test color contrast for accessibility
+
+## Test
+- [ ] Theme switches automatically with system preference
+- [ ] All colors meet WCAG AA contrast standards
+- [ ] Smooth transitions without flashing
+- [ ] Works in Chrome, Firefox, Safari
+```
+
+**What just happened?** The AI:
+1. Understood your intent
+2. Analyzed your existing CSS structure
+3. Created a focused spec with implementation plan
+4. Set status to `planned` (ready to build)
+
+## Implementation
+
+Now ask the AI to implement it:
+
+```
+Implement spec 015.
+```
+
+The AI will:
+- Read the spec requirements
+- Add CSS color variables for both themes
+- Implement the `prefers-color-scheme` media query
+- Update all hardcoded colors to use variables
+- Test the implementation
+
+You'll see updates like:
+```
+✓ Updated style.css: Added CSS variables for theming
+✓ Updated style.css: Added dark theme media query
+✓ Updated style.css: Converted colors to variables
+✓ Verified: Color contrast meets WCAG AA standards
+```
+
+## Review and Complete
+
+Test the feature locally:
+```bash
+npm start
+# Open http://localhost:3000
+# Toggle your system theme (macOS: System Settings > Appearance)
+```
+
+The app should smoothly switch between light and dark themes!
+
+Everything works? Tell your AI:
+```
+Mark spec 015 as complete.
+```
+
+Or run manually:
+```bash
+lean-spec update 015 --status complete
+```
+
+The spec now shows:
+```markdown
+---
+status: complete
+completed_at: '2025-11-24T16:45:00.000Z'
+---
+```
+
+## What Just Happened
+
+You experienced spec-driven development with AI:
+
+**Without LeanSpec:**
+- Dive into CSS, miss edge cases
+- Forget accessibility requirements
+- No record of color choices or rationale
+- Hard for others to understand decisions
+
+**With LeanSpec:**
+- Clear requirements captured upfront
+- AI implements with full context
+- Design decisions documented
+- Accessibility checklist tracked
+- Complete audit trail
+
+The spec becomes your **shared memory** between you, the AI, and your team. Everyone knows what was built and why.
+
+## Next Steps
+
+Try it yourself with these enhancements:
+- Save user preference in localStorage
+- Add more theme variants (high contrast, etc.)
+- Extract theme colors to config file
+- Add theme preview before switching
+
+Or pick a different feature from your backlog and follow the same workflow.
+
+**Learn more:**
+- [Managing Multiple Features →](./managing-multiple-features) - Handle 2-3 related specs
+- [AI Coding Workflow](/docs/guide/usage/ai-coding-workflow) - Best practices
+- [Spec Structure](/docs/guide/usage/spec-structure) - Organizing specs
+
+**Need help?** Check [FAQ](/docs/faq) or [file an issue](https://github.com/codervisor/lean-spec/issues).

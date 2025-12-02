@@ -1,0 +1,422 @@
+---
+id: 'project-management'
+title: 'Project Management'
+sidebar_position: 3
+---
+
+# Project Management
+
+Track project health, manage dependencies, and validate spec quality with LeanSpec's project management features.
+
+## Board & Stats {#board-stats}
+
+Get instant visibility into your project's health with board and stats commands.
+
+### Board Command
+
+Visual kanban view of your specs:
+
+```bash
+lean-spec board
+```
+
+Shows specs organized by status columns:
+- 📅 **Planned** - Specs ready to start
+- ⏳ **In Progress** - Active work
+- ✅ **Complete** - Finished specs
+
+#### Project Overview
+
+The board includes a project overview box:
+- Total specs count
+- Active vs Complete count
+- Completion percentage
+- Velocity metrics (cycle time, throughput)
+
+#### Filtering
+
+Filter the board view:
+
+```bash
+# Show only high priority specs
+lean-spec board --priority high
+
+# Show specs with specific tag
+lean-spec board --tag feature
+
+# Combine filters
+lean-spec board --priority high --tag api
+```
+
+### Stats Command
+
+Quick project metrics:
+
+```bash
+lean-spec stats
+```
+
+Shows:
+- **Overview**: Total specs, active count, completion rate
+- **Status**: Visual bar chart of status distribution
+- **Priority Focus**: Breakdown by priority
+- **Needs Attention**: Critical/High priority specs not started
+- **Velocity Summary**: Cycle time and throughput
+
+#### Full Analytics
+
+Get detailed analytics:
+
+```bash
+lean-spec stats --full
+```
+
+Provides comprehensive project insights:
+- Detailed status metrics
+- Priority breakdown
+- Tag frequency analysis
+- Completion trends
+- Average time in each status
+- Health indicators
+
+### Example Output
+
+```
+📋 Spec Kanban Board
+
+╔════════════════════════════════════════════════════════════╗
+║  Project Overview                                          ║
+║  72 total · 15 active · 57 complete (79%)                  ║
+║  🚀 Velocity: 0.5d avg cycle · 34.0/wk throughput          ║
+╚════════════════════════════════════════════════════════════╝
+
+📅 Planned (14)
+
+  🔴 Critical (1)
+    065-v03-planning #release #planning #milestone
+
+  🟠 High (5)
+    098-github-multi-project-integration #web #github
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏳ In Progress (1)
+
+  🟡 Medium (1)
+    105-docs-site-enhancements
+```
+
+### Common Workflows
+
+**Daily Standup:**
+```bash
+# Quick project overview
+lean-spec board
+
+# See what's in progress
+lean-spec board --status in-progress
+
+# Check high priority items
+lean-spec board --priority high
+```
+
+**Sprint Planning:**
+```bash
+# Review project health
+lean-spec stats --full
+
+# See what's ready to start
+lean-spec board --status planned
+
+# Check capacity
+lean-spec stats
+```
+
+**Weekly Review:**
+```bash
+# Overall project metrics
+lean-spec stats --full
+
+# Review completed work
+lean-spec board --status complete
+
+# Identify bottlenecks
+lean-spec board --status in-progress
+```
+
+### Project Health Indicators
+
+The board and stats commands help identify:
+
+**⚠️ Warning Signs:**
+- Too many in-progress specs (focus issues)
+- Old specs without updates (stale work)
+- High percentage of planned specs (execution gap)
+- Specs with unmet dependencies (check with `lean-spec deps`)
+
+**✅ Healthy Signals:**
+- Steady completion rate
+- Balanced status distribution
+- Active recent updates
+- Clear priority focus
+
+## Dependencies {#dependencies}
+
+Manage relationships between specs with dependency tracking.
+
+### Relationship Types
+
+LeanSpec has two types of relationships:
+
+#### `related` - Bidirectional Soft Reference
+- **Meaning**: Informational relationship (specs are connected/related)
+- **Behavior**: Automatically shown from both sides
+- **Symbol**: ⟷ (bidirectional arrow)
+
+#### `depends_on` - Directional Blocking Dependency
+- **Meaning**: Hard dependency - spec cannot start until dependencies complete
+- **Behavior**: Directional only (shows differently from each side)
+- **Symbol**: → (depends on) and ← (blocks)
+
+### Related Specs
+
+Use `related` for informational connections:
+
+```bash
+# Link spec 042 to 043 and 044
+lean-spec link 042 --related 043,044
+```
+
+Both sides see the relationship:
+
+```bash
+$ lean-spec deps 042
+Related Specs:
+  ⟷ 043-feature-launch [in-progress]
+  ⟷ 044-api-update [planned]
+
+$ lean-spec deps 043
+Related Specs:
+  ⟷ 042-error-handling [complete]  # Automatically shown!
+```
+
+**Use when:**
+- Specs cover related topics or features
+- Work is coordinated but not blocking
+- Context is helpful but not required
+
+### Blocking Dependencies
+
+Use `depends_on` for hard dependencies:
+
+```bash
+# Spec A depends on Spec B
+lean-spec link spec-a --depends-on spec-b
+```
+
+Shows differently from each side:
+
+```bash
+$ lean-spec deps spec-a
+Depends On:
+  → spec-b [in-progress]  # A depends on B
+
+$ lean-spec deps spec-b
+Required By:
+  ← spec-a [planned]  # B is required by A
+```
+
+**Use when:**
+- Spec truly cannot start until another completes
+- There's a clear dependency chain
+- Work must be done in specific order
+
+### Deps Command
+
+View all relationships for a spec:
+
+```bash
+lean-spec deps <spec>
+```
+
+Shows:
+- Specs this depends on (→)
+- Specs that depend on this (←)
+- Related specs (⟷)
+
+**Example Output:**
+
+```
+Dependency Graph for 043-feature-launch
+
+Depends On:
+  → 042-error-handling [complete] ✅
+  → 041-api-design [complete] ✅
+
+Required By:
+  ← 044-integration-test [planned]
+  ← 045-documentation [planned]
+
+Related Specs:
+  ⟷ 040-performance [in-progress]
+  ⟷ 039-security-audit [complete]
+```
+
+### Best Practices
+
+**1. Use `related` by Default**
+
+Most relationships are informational, not blocking:
+
+```bash
+# ✅ Good - Related specs for context
+lean-spec link feature-a --related feature-b
+
+# ❌ Overuse - Not a true blocking dependency
+lean-spec link feature-a --depends-on documentation-spec
+```
+
+**2. Reserve `depends_on` for True Blockers**
+
+Only use when work truly cannot start:
+
+```bash
+# ✅ Good - API must exist before integration
+lean-spec link integration --depends-on api-implementation
+
+# ❌ Bad - These can be done in parallel
+lean-spec link feature --depends-on docs-update
+```
+
+**3. Avoid Circular Dependencies**
+
+```bash
+# ❌ Bad - Circular dependency
+lean-spec link spec-a --depends-on spec-b
+lean-spec link spec-b --depends-on spec-a
+```
+
+LeanSpec will warn about circular dependencies.
+
+**4. Update Once, Show Everywhere**
+
+`related` only needs to be linked from one side:
+
+```bash
+# ✅ Good - Link from A to B
+lean-spec link spec-a --related spec-b
+
+# Spec B automatically shows relationship to A
+```
+
+### Dependency Workflows
+
+**Before Starting Work:**
+
+Check dependencies:
+
+```bash
+lean-spec deps <spec>
+```
+
+Ensure all `depends_on` specs are complete before starting.
+
+**During Planning:**
+
+Map relationships:
+
+```bash
+# View related work
+lean-spec deps feature-spec
+
+# Check what's blocked
+lean-spec board --status planned
+```
+
+**Identifying Bottlenecks:**
+
+Find specs blocking others:
+
+```bash
+# Check what depends on this
+lean-spec deps <in-progress-spec>
+
+# Look for "Required By" items
+```
+
+### Dependency Patterns
+
+**Sequential Work:**
+
+```bash
+# Phase 2 depends on Phase 1
+lean-spec link phase-2 --depends-on phase-1
+
+# Phase 3 depends on Phase 2
+lean-spec link phase-3 --depends-on phase-2
+```
+
+**Parallel Work with Coordination:**
+
+```bash
+# Link all related features
+lean-spec link feature-a --related feature-b,feature-c
+lean-spec link feature-b --related feature-c
+```
+
+**Integration Point:**
+
+```bash
+# Tests blocked until feature done
+lean-spec link tests --depends-on core-feature
+
+# Docs related but not blocked
+lean-spec link docs --related core-feature
+```
+
+### Managing Changes
+
+**Adding Dependencies:**
+
+```bash
+# Add dependency
+lean-spec link my-spec --depends-on prerequisite-spec
+```
+
+**Removing Dependencies:**
+
+When a dependency is no longer needed:
+
+```bash
+# Remove dependency
+lean-spec unlink my-spec --depends-on old-requirement
+
+# Replace with related (optional)
+lean-spec link my-spec --related old-requirement
+```
+
+## Best Practices
+
+### Board & Stats
+
+1. **Check daily** - Start your day with `lean-spec board`
+2. **Review weekly** - Use `lean-spec stats --full` for trends
+3. **Limit WIP** - Keep in-progress specs under control
+4. **Update regularly** - Keep status current with `lean-spec update`
+5. **Use priorities** - Focus on high-priority work first
+
+### Dependencies
+
+1. **Use `related` by default** - Most relationships aren't blocking
+2. **Reserve `depends_on`** - Only for true blockers
+3. **Check before starting** - Ensure dependencies are met
+4. **Avoid circular deps** - Keep dependency chains simple
+5. **Use CLI commands** - `lean-spec link`/`unlink`, not manual edits
+
+## Next Steps
+
+- **[Creating & Managing Specs](/docs/guide/usage/cli/creating-managing)** - Basic operations
+- **[Finding Specs](/docs/guide/usage/cli/finding-specs)** - Search and discovery
+- **[Validation](/docs/guide/usage/cli/validation)** - Check spec quality
+- **[Visual Mode](/docs/guide/visual-mode)** - Browse specs in web UI
+- **[CLI Reference](/docs/reference/cli)** - Complete command documentation

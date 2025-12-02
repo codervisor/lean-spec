@@ -1,0 +1,338 @@
+---
+id: 'creating-managing'
+title: 'Creating & Managing Specs'
+sidebar_position: 1
+---
+# Creating & Managing Specs
+
+Learn the essential operations for working with LeanSpec specs: creating, updating, viewing, and managing the spec lifecycle.
+
+## Creating a New Spec
+
+### Basic Creation
+
+```bash
+lean-spec create my-feature
+```
+
+This creates a new spec with:
+- Auto-generated unique ID (e.g., `042-my-feature`)
+- Initialized frontmatter (status: `planned`, created date)
+- Basic spec template in `specs/042-my-feature/README.md`
+
+### Interactive Creation
+
+```bash
+lean-spec create
+```
+
+Without a name, you'll be prompted interactively for:
+- Spec name
+- Optional description
+- Initial status (defaults to `planned`)
+
+### Advanced Options
+
+```bash
+# Create with initial status
+lean-spec create my-feature --status in-progress
+
+# Create with tags
+lean-spec create my-feature --tags api,backend
+
+# Create with priority
+lean-spec create my-feature --priority high
+```
+
+**See also**: [CLI Reference: create](/docs/reference/cli#lean-spec-create) for all options
+
+## Updating Specs
+
+### Status Updates
+
+**Update spec status** (REQUIRED - never edit frontmatter manually):
+
+```bash
+# Move to in-progress
+lean-spec update 042 --status in-progress
+
+# Mark as complete
+lean-spec update 042 --status complete
+
+# Archive when done
+lean-spec update 042 --status archived
+```
+
+**Available statuses**: `planned`, `in-progress`, `complete`, `archived`
+
+### Priority and Tags
+
+```bash
+# Set priority
+lean-spec update 042 --priority high
+
+# Add/update tags
+lean-spec update 042 --tags api,backend,refactor
+
+# Assign to someone
+lean-spec update 042 --assignee alice
+```
+
+**Important**: Always use `lean-spec update` for system-managed fields. Manual edits will corrupt metadata.
+
+**See also**: [CLI Reference: update](/docs/reference/cli#lean-spec-update)
+
+## Viewing Specs
+
+### Quick View
+
+```bash
+# View spec (formatted for reading)
+lean-spec view 042
+
+# View sub-spec file
+lean-spec view 042/DESIGN.md
+```
+
+### Raw Output
+
+```bash
+# Get raw markdown (for parsing)
+lean-spec view 042 --raw
+
+# Get structured JSON
+lean-spec view 042 --json
+```
+
+### Open in Editor
+
+```bash
+# Open in default editor
+lean-spec open 042
+
+# Open specific sub-spec
+lean-spec open 042/TESTING.md
+```
+
+**See also**: [CLI Reference: view](/docs/reference/cli#lean-spec-view)
+
+## Listing Specs
+
+### View All Specs
+
+```bash
+# List all specs
+lean-spec list
+
+# List by status
+lean-spec list --status in-progress
+
+# List by tag
+lean-spec list --tag api
+```
+
+### Kanban Board View
+
+```bash
+# Visual board view
+lean-spec board
+```
+
+Shows specs grouped by status with project health metrics.
+
+**See also**: [Board & Stats](/docs/guide/usage/cli/project-management#board-stats)
+
+## Managing Spec Files
+
+### Sub-Spec Files
+
+For complex specs, split into multiple files:
+
+```bash
+# List all files in a spec
+lean-spec files 042
+```
+
+Common sub-spec files:
+- `README.md` - Main spec (required)
+- `DESIGN.md` - Detailed design
+- `IMPLEMENTATION.md` - Implementation plan
+- `TESTING.md` - Test strategy
+- `CONFIGURATION.md` - Config examples
+
+**Why?** Keeps each file under 2,000 tokens (Context Economy principle).
+
+**See also**: [Sub-Spec Files](/docs/guide/usage/spec-structure#sub-spec-files)
+
+### Viewing File List
+
+```bash
+# Show all files in spec
+lean-spec files 042
+```
+
+Output:
+```
+📄 Files in 042-my-feature
+
+Required:
+  ✓ README.md        (234 lines)  Main spec
+
+Documents:
+  ✓ DESIGN.md        (187 lines)
+  ✓ TESTING.md       (145 lines)
+
+Total: 3 files, 566 lines
+```
+
+## Archiving Specs
+
+When work is complete and you want to move spec out of active view:
+
+```bash
+# Archive completed spec
+lean-spec update 042 --status archived
+```
+
+Archived specs:
+- Don't appear in default `lean-spec list`
+- Still searchable
+- Can be unarchived later
+
+## Dependencies and Relationships
+
+### Declaring Dependencies
+
+Use `lean-spec link` to manage relationships (do not edit frontmatter manually):
+
+```bash
+# Add hard dependency (blocking)
+lean-spec link 042 --depends-on 041
+
+# Add soft relationship (informational)
+lean-spec link 042 --related 043,044
+```
+
+### Viewing Dependencies
+
+```bash
+# Show dependency graph
+lean-spec deps 042
+```
+
+Output:
+```
+Dependency Graph for 042-my-feature
+
+Depends On:
+  → 041-authentication [complete]
+
+Required By:
+  ← 043-dashboard [in-progress]
+
+Related Specs:
+  ⟷ 044-api-refactor [planned]
+```
+
+**See also**: [Dependencies](/docs/guide/usage/cli/project-management#dependencies)
+
+## Validation
+
+Check spec structure and frontmatter:
+
+```bash
+# Validate all specs
+lean-spec validate
+
+# Validate specific spec
+lean-spec validate 042
+```
+
+Catches:
+- Invalid frontmatter structure
+- Missing required fields
+- Dependency cycles
+- Token count warnings (>3,500 tokens reduces AI effectiveness)
+
+**See also**: [Validation](/docs/guide/usage/cli/validation)
+
+## Search
+
+Find specs by content, name, or metadata:
+
+```bash
+# Search spec content
+lean-spec search "authentication"
+
+# Search with filters
+lean-spec search "API" --status in-progress --tag backend
+```
+
+**See also**: [Finding Specs](/docs/guide/usage/cli/finding-specs)
+
+## Common Workflows
+
+### Starting New Work
+
+```bash
+# 1. Create spec
+lean-spec create auth-refactor --tags security,backend
+
+# 2. Edit spec (define problem, solution, success criteria)
+lean-spec open 042
+
+# 3. Move to in-progress when ready
+lean-spec update 042 --status in-progress
+```
+
+### Completing Work
+
+```bash
+# 1. Mark complete
+lean-spec update 042 --status complete
+
+# 2. Validate everything still works
+lean-spec validate
+
+# 3. Optional: Archive if no longer needed
+lean-spec update 042 --status archived
+```
+
+### Complex Spec Management
+
+```bash
+# 1. Check if spec is getting too large
+lean-spec tokens 042
+
+# 2. If >3,500 tokens, split into sub-specs
+# Create DESIGN.md, TESTING.md, etc.
+
+# 3. Verify structure
+lean-spec files 042
+```
+
+## Best Practices
+
+**DO:**
+- ✅ Use `lean-spec update` for status/priority/tags (never edit frontmatter)
+- ✅ Use `lean-spec link` for relationships
+- ✅ Keep README.md focused (use sub-specs for detail)
+- ✅ Update status as work progresses
+- ✅ Archive completed specs to reduce clutter
+- ✅ Validate regularly (`lean-spec validate`)
+
+**DON'T:**
+- ❌ Manually edit system-managed frontmatter (status, priority, tags, assignee, transitions, timestamps, depends_on, related)
+- ❌ Let specs grow beyond 3,500 tokens without splitting
+- ❌ Leave specs in stale status
+- ❌ Skip validation before committing
+
+## Next Steps
+
+- [Finding Specs](/docs/guide/usage/cli/finding-specs) - Search and discovery
+- [Spec Structure](/docs/guide/usage/spec-structure) - Understanding spec anatomy
+- [Project Management](/docs/guide/usage/cli/project-management) - Board views and health tracking
+
+---
+
+**Reference**: [CLI Documentation](/docs/reference/cli) for complete command reference

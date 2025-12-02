@@ -1,0 +1,325 @@
+---
+title: 大型项目与多功能管理
+sidebar_position: 4
+description: 掌握项目管理工具，处理具有依赖关系、团队协作和多功能的复杂项目
+---
+
+# 大型项目与多功能管理
+
+当项目超出少数几个Spec时，您需要更好的工具来保持可见性和协调工作。学习在大规模工作中的关键项目管理命令。
+
+**时间**：15 分钟  
+**成果**：掌握大型代码库的项目管理工具
+
+:::tip 适用于高级用户
+本教程假设您熟悉基本的 LeanSpec 工作流程。如果您是新手，请从 [编写第一个Spec](./first-spec-with-ai) 开始。
+:::
+
+## 真实示例
+
+想要看到这些工具的实际应用？查看 **[LeanSpec 项目本身](https://web.lean-spec.dev)**——一个包含 100 多个Spec的实时示例，展示了真实的依赖关系、编号约定和项目组织。
+
+:::tip 亲自尝试
+为了获得最佳学习体验，将 LeanSpec 仓库克隆到本地并在可视化模式下探索：
+
+```bash
+git clone https://github.com/codervisor/lean-spec.git
+cd lean-spec
+npx @leanspec/cli ui
+```
+
+这为您提供对依赖关系图、过滤和所有 PM 工具的交互式访问。
+:::
+
+在本教程中，我们将引用 LeanSpec 代码库中的实际Spec，以展示这些模式在实践中的工作方式。
+
+## 关键 PM 工具
+
+LeanSpec 提供五个关键工具来管理大型项目：
+
+1. **`lean-spec board`** - 项目状态的看板视图
+2. **`lean-spec deps <spec>`** - 依赖关系分析
+3. **`lean-spec stats`** - 项目健康指标
+4. **`lean-spec list --tags <tags>`** - 按团队/功能过滤
+5. **`lean-spec search <query>`** - 跨Spec的语义搜索
+
+让我们探索每一个。
+
+## 1. 看板视图 - 项目概览
+
+看板为您提供整个项目的即时可见性：
+
+```bash
+lean-spec board
+```
+
+按状态列显示所有Spec：**计划中** → **进行中** → **完成** → **已归档**
+
+**来自 LeanSpec 项目的示例：**
+- 计划中：15 个Spec（新功能、增强）
+- 进行中：0 个Spec（当前没有活跃工作）
+- 完成：64 个Spec（已发布功能）
+- 已归档：0 个Spec
+
+看板还显示项目健康指标：
+- 完成率
+- 被阻塞的Spec数量（等待依赖项）
+- 最近活动
+
+**使用场景：** 开始一天的工作、冲刺规划、站会
+
+**专业提示：** 具有未满足 `depends_on` 关系的Spec会被标记为 "被阻塞"
+
+## 2. 依赖关系分析
+
+在进行更改之前了解Spec之间的关系：
+
+```bash
+lean-spec deps <spec> --mode complete
+```
+
+显示三种类型的关系：
+- **依赖项** (`depends_on`)：此Spec在开始之前需要什么
+- **被依赖项** (`required_by`)：哪些Spec需要这个
+- **相关项**：上下文相关的Spec
+
+**来自 LeanSpec 的真实示例：**
+
+```bash
+lean-spec deps 114  # 示例项目脚手架
+```
+
+显示：
+- **相关于**：113（教程简化）
+- 两个Spec共同改善教程体验
+
+### 影响分析
+
+在重构之前，检查影响范围：
+
+```bash
+lean-spec deps <spec> --mode impact
+```
+
+显示：
+- 直接依赖项（直接依赖此Spec的Spec）
+- 传递依赖项（下游受影响的Spec）
+- 总影响数
+
+**使用场景：** 规划重构、破坏性更改、架构决策
+
+**专业提示：** `--mode upstream` 仅显示依赖项，`--mode downstream` 仅显示被依赖项
+
+## 3. 项目统计
+
+获取整个项目的健康指标：
+
+```bash
+lean-spec stats
+```
+
+显示：
+- **状态分布**：每个状态中有多少Spec
+- **优先级分布**：关键工作与可选工作
+- **热门标签**：最常见的类别
+- **最近活动**：最新的Spec更新
+
+**使用场景：** 冲刺回顾、季度规划、跟踪速度
+
+**注意这些危险信号：**
+- 太多 "计划中" Spec（没有交付）
+- 太多 "进行中" Spec（工作未完成）
+- 无最近活动（项目停滞）
+
+## 4. 过滤和组织
+
+### 按标签
+
+按团队、功能领域或技术组织Spec：
+
+```bash
+# 查看团队的所有Spec
+lean-spec list --tags team-frontend
+
+# 查看功能领域的所有Spec
+lean-spec list --tags documentation
+
+# 查看里程碑的所有Spec
+lean-spec list --tags v0.3.0
+```
+
+**真实的 LeanSpec 标签：**
+- `web`、`cli`、`mcp`、`docs` - 组件领域
+- `ux`、`dx`、`performance` - 质量属性
+- `v0.2.0`、`v0.3.0` - 发布里程碑
+
+### 按优先级
+
+专注于关键工作：
+
+```bash
+lean-spec list --priority critical
+lean-spec list --priority high
+```
+
+### 按状态
+
+跟踪特定状态的工作：
+
+```bash
+lean-spec list --status planned      # 准备开始
+lean-spec list --status in-progress  # 当前活跃
+lean-spec list --status complete     # 已发布
+```
+
+## 5. 语义搜索
+
+按内容而不仅仅是名称查找Spec：
+
+```bash
+lean-spec search "authentication"
+lean-spec search "performance optimization"
+lean-spec search "dependency graph"
+```
+
+搜索使用语义匹配——它理解上下文，即使没有精确的关键词也能找到相关的Spec。
+
+**使用场景：** 查找相似模式、发现相关工作、发现现有解决方案
+
+## 组织模式
+
+### 编号约定
+
+LeanSpec 使用数字范围来分组相关工作：
+
+- **010-029**：项目设置和工具
+- **040-059**：核心功能和工作流  
+- **060-079**：高级功能和集成
+- **080-099**：基础设施和架构
+- **100+**：持续改进和完善
+
+**好处：**
+- 一眼看出功能领域
+- 轻松在逻辑位置插入新Spec
+- 在领域内保持时间顺序
+
+### 标签策略
+
+有效的标签跨多个维度组织工作：
+
+```bash
+# 组件标签
+web, cli, mcp, docs
+
+# 质量属性标签
+ux, dx, performance, security
+
+# 发布里程碑标签
+v0.2.0, v0.3.0, v0.4.0
+
+# 团队/所有权标签（如果是多团队）
+team-frontend, team-backend, team-infra
+```
+
+**专业提示：** 在整个项目中保持标签一致。在 README 中记录您的标签约定。
+
+## 使用依赖关系
+
+### 创建依赖关系
+
+当一个Spec阻塞另一个时链接Spec：
+
+```bash
+# Spec B 依赖于Spec A 首先完成
+lean-spec link B --depends-on A
+
+# Spec C 依赖于 A 和 B
+lean-spec link C --depends-on A,B
+```
+
+### 创建软引用
+
+链接相关Spec而不阻塞：
+
+```bash
+# 共享上下文但不相互阻塞的Spec
+lean-spec link A --related B,C
+```
+
+**关键区别：** `depends_on` 阻塞工作（硬依赖），`related` 提供上下文（软引用）
+
+### 移除链接
+
+清理过时的关系：
+
+```bash
+lean-spec unlink A --depends-on B    # 移除依赖关系
+lean-spec unlink A --related C       # 移除软引用
+```
+
+## 实时示例：LeanSpec Web UI
+
+在 **[web.lean-spec.dev](https://web.lean-spec.dev)** 查看所有这些工具的实际应用——LeanSpec 项目自己的Spec仪表板。
+
+您将看到：
+- 按状态组织的 100 多个Spec
+- 真实的依赖网络（例如，Spec 114 依赖于 113）
+- 实际的标签模式（`docs`、`cli`、`mcp`、`web`）
+- 项目中的优先级分布
+- 编号约定在实践中的工作方式
+
+这正是您的项目仪表板可以呈现的样子。
+
+## 成功技巧
+
+### 从简单开始
+
+不要从第一天就过度组织：
+1. 从基本状态跟踪开始
+2. 当需要集中工作时添加优先级
+3. 当需要更好的过滤时添加标签
+4. 当工作开始阻塞时添加依赖关系
+
+### 定期维护
+
+保持Spec健康：
+- **每天：** 更新活跃工作的状态
+- **每周：** 在站会/规划中回顾看板
+- **每月：** 检查停滞的Spec，更新优先级
+- **每季度：** 归档完成的工作，审核标签
+
+### 沟通模式
+
+使用Spec进行异步协调：
+- 在开始工作之前检查 `lean-spec deps`
+- 在站会中运行 `lean-spec board`
+- 在冲刺回顾中分享 `lean-spec stats`
+- 在提问之前使用 `lean-spec search` 查找上下文
+
+## 您学到了什么
+
+您现在知道如何：
+
+✅ 使用 `lean-spec board` 获得项目可见性  
+✅ 使用 `lean-spec deps` 分析依赖关系  
+✅ 使用 `lean-spec stats` 跟踪健康度  
+✅ 按标签、优先级和状态过滤Spec  
+✅ 使用 `lean-spec search` 进行语义搜索  
+✅ 使用编号和标签约定组织Spec  
+✅ 管理依赖关系而不创建瓶颈  
+
+## 下一步
+
+**应用到您的项目：**
+- 在下次站会中运行 `lean-spec board`
+- 在 README 中设置标签约定
+- 在开始新工作之前检查依赖关系
+- 每月审查 `lean-spec stats` 进行健康检查
+
+**探索高级功能：**
+- [自定义字段](/docs/guide/usage/advanced-features/custom-fields) - 添加项目特定的元数据
+- [模板](/docs/guide/usage/advanced-features/templates) - 标准化Spec结构
+- [验证](/docs/guide/usage/cli/validation) - 强制执行质量标准
+
+**需要帮助？** 查看 [常见问题解答](/docs/faq) 或 [提交问题](https://github.com/codervisor/lean-spec/issues)。
+

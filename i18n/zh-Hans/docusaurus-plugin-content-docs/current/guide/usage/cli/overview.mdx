@@ -1,0 +1,174 @@
+---
+id: 'overview'
+title: 'CLI 概览'
+sidebar_position: 0
+---
+
+# CLI 概览
+
+LeanSpec CLI 提供了管理项目Spec的完整工具集。无论您是直接工作的开发者还是自动化工作流的 AI 代理,CLI 都为Spec生命周期的每个阶段提供高效的命令。
+
+## 面向人类开发者
+
+CLI 为您提供对Spec的命令行控制:
+
+- **创建和管理** Spec,使用简单的命令
+- **搜索和发现** 相关工作,即时响应
+- **跟踪进度** 通过可视化面板和指标
+- **验证质量** 以维护Spec健康
+
+快速示例工作流:
+```bash
+# 创建新Spec
+lean-spec create auth-refactor --tags security
+
+# 开始工作
+lean-spec update 042 --status in-progress
+
+# 检查项目健康状况
+lean-spec board
+
+# 提交前验证
+lean-spec validate
+```
+
+## 面向 AI 代理
+
+CLI 被设计为 **AI 代理的工具集**,使它们能够:
+
+- **发现上下文** - 搜索和检索相关Spec以回答问题
+- **跟踪决策** - 访问过去的架构选择和理由
+- **管理工作** - 以编程方式创建、更新和链接Spec
+- **维护质量** - 验证Spec结构和Token计数
+
+AI 代理可以直接使用 LeanSpec CLI 命令作为工具:
+
+```bash
+# 代理搜索相关上下文
+lean-spec search "authentication decision"
+
+# 代理检索特定Spec
+lean-spec view 042
+
+# 代理检查依赖关系
+lean-spec deps 042
+
+# 代理在实现后更新状态
+lean-spec update 042 --status complete
+```
+
+**MCP 服务器集成**: 为实现无缝的 AI 代理访问,LeanSpec 提供 [MCP (Model Context Protocol) 服务器](/zh-Hans/docs/reference/mcp-server),将 CLI 功能作为结构化工具公开。
+
+## 命令类别
+
+CLI 将命令组织成逻辑组:
+
+### 创建和管理
+Spec生命周期的核心操作:
+- `create` - 开始新Spec
+- `update` - 修改状态、优先级、标签
+- `view` - 读取Spec内容
+- `open` - 在您喜欢的编辑器中编辑
+
+**了解更多**: [创建和管理Spec](/zh-Hans/docs/guide/usage/cli/creating-managing)
+
+### 查找Spec
+发现和导航Spec:
+- `list` - 查看所有Spec并使用过滤器
+- `search` - 按内容或元数据查找
+- `deps` - 探索关系
+
+**了解更多**: [查找Spec](/zh-Hans/docs/guide/usage/cli/finding-specs)
+
+### 项目管理
+跟踪健康状况并验证质量:
+- `board` - 可视化看板视图
+- `stats` - 项目指标
+- `validate` - 检查Spec质量
+
+**了解更多**: [项目管理](/zh-Hans/docs/guide/usage/cli/project-management) 和 [验证](/zh-Hans/docs/guide/usage/cli/validation)
+
+## 核心原则
+
+CLI 设计遵循 LeanSpec 的 [第一性原理](/zh-Hans/docs/advanced/first-principles):
+
+1. **上下文经济 (Context Economy)性** - 命令帮助管理Token预算(`tokens`、`validate`)
+2. **信噪比 (Signal-to-Noise)最大化** - 快速访问相关信息(`search`、`deps`)
+3. **意图优先于实现** - 专注于什么和为什么,而不仅仅是如何
+4. **桥接鸿沟** - 适用于人类和 AI 代理
+5. **渐进式披露 (Progressive Disclosure)** - 默认简单,需要时功能强大
+
+## 快速参考
+
+**最常用的命令:**
+
+```bash
+lean-spec create <name>           # 创建新Spec
+lean-spec list                    # 查看所有Spec
+lean-spec search "query"          # 查找相关Spec
+lean-spec view <spec>             # 读取Spec内容
+lean-spec update <spec> --status  # 更新状态
+lean-spec board                   # 可视化概览
+lean-spec validate                # 检查质量
+```
+
+**随时获取帮助:**
+```bash
+lean-spec --help                  # 所有命令
+lean-spec <command> --help        # 命令详情
+```
+
+## 集成点
+
+### 版本控制
+LeanSpec 与 Git 配合良好:
+- Spec是纯 Markdown 文件
+- 所有更改都可追溯
+- 在 PR 中易于审查
+
+### CI/CD
+自动化验证:
+```yaml
+# GitHub Actions 示例
+- run: lean-spec validate
+```
+
+### 编辑器
+在您喜欢的编辑器中打开Spec:
+```bash
+lean-spec open 042
+```
+
+### AI 工具
+- **直接 CLI 访问** - 代理可以调用命令
+- **MCP 服务器** - 结构化工具接口
+- **搜索集成** - 跨会话的语义记忆
+
+## 最佳实践
+
+**面向人类:**
+- 用 `lean-spec board` 开始您的一天
+- 使用 `lean-spec search` 而不是 grep
+- 提交前验证
+- 保持Spec在 3,500 个Token 以下
+
+**面向 AI 代理:**
+- 创建新Spec前先搜索
+- 开始工作前检查依赖关系
+- 实现后更新状态
+- 使用 `lean-spec deps` 获取上下文
+
+## 下一步
+
+深入了解具体工作流:
+
+1. **[创建和管理Spec](/zh-Hans/docs/guide/usage/cli/creating-managing)** - 掌握基本操作
+2. **[查找Spec](/zh-Hans/docs/guide/usage/cli/finding-specs)** - 学习搜索和发现
+3. **[项目管理](/zh-Hans/docs/guide/usage/cli/project-management)** - 跟踪项目健康状况
+4. **[验证](/zh-Hans/docs/guide/usage/cli/validation)** - 确保Spec质量
+
+**参考**: 查看 [CLI 参考](/zh-Hans/docs/reference/cli) 获取完整的命令文档。
+
+---
+
+**记住**: CLI 是人类开发者和 AI 代理的工具。无论您是在输入命令还是 AI 在执行命令,目标都是相同的:维护清晰、可操作的Spec,推动开发向前发展。

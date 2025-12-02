@@ -1,0 +1,30 @@
+---
+title: SDD Workflow
+sidebar_position: 3
+---
+# Spec-Driven Development (SDD)
+
+SDD is the operating rhythm for LeanSpec: capture intent in a spec, let humans and AI execute from it, and keep the spec in sync.
+
+## Five Loop Stages
+1. **Discover** — search existing specs before starting new work.
+2. **Plan** — create or update a spec so intent is unambiguous.
+3. **Implement** — humans and AI agents follow the spec to build.
+4. **Validate** — run tests and `lean-spec validate` to ensure quality.
+5. **Update** — mark the status, lessons, and follow-ups.
+
+The loop restarts whenever new information appears. Specs are living documents, not ceremonial paperwork.
+
+## Roles in the Workflow
+- **Author** clarifies the problem and desired outcome.
+- **Implementer** (human or AI) executes the plan.
+- **Reviewer** checks success criteria before status changes.
+
+## Tooling Support
+- `lean-spec list`, `search`, and `view` for discovery.
+- `lean-spec create` and `update` for planning/status.
+- `lean-spec validate` and the MCP server for automation.
+
+## See Also
+- [Understanding LeanSpec](/docs/guide/understanding-leanspec)
+- [AI-Assisted Spec Writing](/docs/advanced/ai-assisted-spec-writing)

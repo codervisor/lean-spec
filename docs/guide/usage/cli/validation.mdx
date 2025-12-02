@@ -1,0 +1,299 @@
+---
+id: 'validation'
+title: 'Validation'
+sidebar_position: 4
+---
+
+# Validation
+
+Ensure spec quality with LeanSpec's built-in validation system. Validate checks for structural issues, frontmatter correctness, and token count management to maintain optimal AI comprehension.
+
+## Validate Command
+
+Check specs for quality issues:
+
+```bash
+lean-spec validate
+```
+
+Validates all specs by default. Check specific specs:
+
+```bash
+lean-spec validate <spec-1> <spec-2>
+```
+
+## Quality Checks
+
+### Token Count Analysis
+
+Based on **Context Economy** principle - specs must fit in AI working memory:
+
+- **✅ Excellent**: \<2,000 tokens - 100% AI effectiveness
+- **👍 Good**: 2,000-3,500 tokens - 95% AI effectiveness
+- **⚠️ Warning**: 3,500-5,000 tokens - 85% AI effectiveness
+- **🔴 Error**: >5,000 tokens - 70% AI effectiveness, should split
+
+**Rationale**: 
+- AI context windows: Limited and expensive
+- Quality degradation starts before 50K token hard limits
+- Human + AI working memory: ~2-3K tokens for optimal comprehension
+- Physics + Biology + Economics = Hard limit
+
+**Line Count Backstop**:
+LeanSpec also checks line counts as a safety net (400 warning / 500 max), but **token count is the primary metric** since it directly measures AI working memory consumption.
+
+### Sub-Spec Validation
+
+Checks sub-spec files (DESIGN.md, TESTING.md, IMPLEMENTATION.md, etc.):
+
+- Each sub-spec also follows token limits
+- Total spec size (main + sub-specs) tracked
+- Recommends splitting if any file exceeds threshold
+
+### Frontmatter Validation
+
+Ensures required fields are present and valid:
+
+**Required Fields:**
+- `status`: Must be valid (planned, in-progress, complete, etc.)
+- `priority`: Must be valid (high, medium, low, none)
+- `created`: Valid date format
+
+**Optional Fields (validated if present):**
+- `tags`: Proper format
+- `depends_on`, `related`: Valid spec references
+- Custom fields: Proper types
+
+### Structure Validation
+
+Checks spec organization:
+
+- README.md exists (main spec file)
+- Sub-specs follow naming conventions
+- No orphaned or duplicate content
+
+## Validation Output
+
+### Clean Validation
+
+```bash
+$ lean-spec validate
+
+✅ All specs valid!
+
+Summary:
+  • 45 specs checked
+  • 0 errors
+  • 0 warnings
+```
+
+### With Warnings
+
+```bash
+$ lean-spec validate
+
+⚠️  Warnings found:
+
+058-docs-overview-polish/README.md
+  ⚠️  Token count: 4,200 tokens (85% AI effectiveness)
+  → Consider: Simplifying or splitting into sub-specs
+
+Summary:
+  • 45 specs checked
+  • 0 errors
+  • 1 warning
+```
+
+### With Errors
+
+```bash
+$ lean-spec validate
+
+❌ Errors found:
+
+042-complex-spec/README.md
+  🔴 Token count: 5,800 tokens (70% AI effectiveness)
+  → Action: Split into sub-specs to improve AI comprehension
+
+043-broken-spec/README.md
+  🔴 Invalid status: 'in_progress' (should be 'in-progress')
+  🔴 Missing required field: 'created'
+
+Summary:
+  • 45 specs checked
+  • 3 errors
+  • 0 warnings
+```
+
+## Custom Validation Options
+
+### Set Custom Thresholds
+
+```bash
+# Stricter token threshold
+lean-spec validate --warning-threshold 4000
+
+# More lenient threshold
+lean-spec validate --warning-threshold 6000
+
+# Custom line count backstop
+lean-spec validate --max-lines 500
+```
+
+### Validate Specific Aspects
+
+```bash
+# Only check complexity (tokens)
+lean-spec validate --check complexity
+
+# Only check frontmatter
+lean-spec validate --check frontmatter
+
+# Only check structure
+lean-spec validate --check structure
+```
+
+## Fixing Validation Issues
+
+### Token Count Violations
+
+**Problem**: Spec exceeds 5,000 tokens (70% AI effectiveness)
+
+**Solution**: Split using sub-specs
+
+```markdown
+# Before: Single 5,800-token spec
+README.md (5,800 tokens) 🔴 - 70% AI effectiveness
+
+# After: Split into focused sub-specs
+README.md (2,000 tokens) ✅ - Overview, decision, summary (100% effectiveness)
+DESIGN.md (1,500 tokens) ✅ - Detailed design (100% effectiveness)
+IMPLEMENTATION.md (1,500 tokens) ✅ - Implementation plan (100% effectiveness)
+```
+
+**Why this works**:
+- Each file stays under 2,000 tokens for optimal AI comprehension
+- AI can focus on one aspect at a time
+- Humans can navigate to relevant sections quickly
+
+### Invalid Frontmatter
+
+**Problem**: Invalid or missing frontmatter fields
+
+**Solution**: Use `lean-spec update` to fix:
+
+```bash
+# Fix status
+lean-spec update <spec> --status in-progress
+
+# Fix priority
+lean-spec update <spec> --priority high
+
+# Fix tags
+lean-spec update <spec> --tags feature,api
+```
+
+### Structure Issues
+
+**Problem**: Missing README.md or malformed sub-specs
+
+**Solution**: 
+- Ensure README.md exists as main spec file
+- Follow sub-spec naming: DESIGN.md, TESTING.md, etc.
+- Use proper frontmatter in all files
+
+## Validation Workflows
+
+### Pre-Commit Check
+
+Run before committing:
+
+```bash
+lean-spec validate
+```
+
+Fix any errors before committing changes.
+
+### CI/CD Integration
+
+Add to your CI pipeline:
+
+```yaml
+# .github/workflows/validate.yml
+name: Validate Specs
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g lean-spec
+      - run: lean-spec validate
+```
+
+### Regular Review
+
+Weekly spec health check:
+
+```bash
+# Check overall health
+lean-spec validate
+
+# Detailed analysis
+lean-spec stats --full
+
+# Review large specs (token focus)
+lean-spec tokens --all --include-sub-specs
+```
+
+## When to Split
+
+Split when:
+- ✅ Spec exceeds ~3,500 tokens (Context Economy warning)
+- ✅ Multiple distinct concerns (different topics)
+- ✅ Spec takes >10 minutes to read
+- ✅ Frequent editing causes confusion
+
+Don't split when:
+- ❌ Under ~2,000 tokens and focused
+- ❌ Single cohesive concept
+- ❌ Quick to read and understand
+
+## When to Simplify
+
+Simplify when:
+- Excessive detail for simple feature
+- Repeated information
+- Low signal-to-noise ratio
+- Future speculation
+
+## When to Accept Warnings
+
+Sometimes warnings are acceptable:
+- Temporarily high during active development
+- Complex feature needing comprehensive detail
+- Splitting would reduce clarity
+
+Always re-evaluate later.
+
+## Best Practices
+
+1. **Validate early** - Before committing
+2. **Fix warnings promptly** - Don't let them accumulate
+3. **Split around 3,500 tokens** - Use sub-specs for complex features
+4. **Automate** - Add to CI/CD pipeline
+5. **Regular reviews** - Weekly health checks
+
+## Next Steps
+
+- **[Creating & Managing Specs](/docs/guide/usage/cli/creating-managing)** - Basic operations
+- **[Finding Specs](/docs/guide/usage/cli/finding-specs)** - Search and discovery
+- **[Project Management](/docs/guide/usage/cli/project-management)** - Board views and dependencies
+- **[CLI Reference](/docs/reference/cli)** - Complete command documentation
+
+---
+
+**Reference**: See [First Principles](/docs/advanced/first-principles) for the rationale behind Context Economy and token management.

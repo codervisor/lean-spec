@@ -1,0 +1,332 @@
+---
+title: Refactoring with Specs
+sidebar_position: 3
+description: Document architectural changes and let AI assist with complex refactoring work
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Refactoring with Specs
+
+Not all specs are features. Learn how to use LeanSpec for refactoring and architectural changes where documentation is critical.
+
+**Time**: 15 minutes  
+**Outcome**: Complete a refactoring with clear documentation
+
+:::info Prerequisites
+- Completed [Managing Multiple Features](./managing-multiple-features)
+- Understanding of your codebase structure
+:::
+
+## Try It Now
+
+Get hands-on with a refactoring-ready project:
+
+```bash
+npx lean-spec init --example api-refactor
+cd api-refactor
+npm install
+npm start
+```
+
+Then prompt your AI tool:
+
+<Tabs groupId="ai-tool">
+  <TabItem value="claude" label="Claude Code">
+    In your terminal with Claude Code:
+
+    ```bash
+    # Make sure you have Claude Code installed
+    # macOS/Linux
+    curl -fsSL https://claude.ai/install.sh | bash
+    # Windows (PowerShell)
+    irm https://claude.ai/install.ps1 | iex
+
+    # Create soft link to CLAUDE.md from the system prompt AGENTS.md
+    ln -s AGENTS.md CLAUDE.md
+
+    # Send the prompt to Claude Code
+    claude "Help me refactor this app to extract a reusable API client"
+    ```
+  </TabItem>
+  <TabItem value="codex" label="Codex CLI">
+    In your terminal with OpenAI Codex CLI:
+
+    ```bash
+    # Make sure you have Codex CLI installed
+    npm install -g @openai/codex
+
+    # Send the prompt to Codex CLI
+    codex "Help me refactor this app to extract a reusable API client"
+    ```
+  </TabItem>
+  <TabItem value="gemini" label="Gemini CLI">
+    In your terminal with Gemini CLI:
+
+    ```bash
+    # Make sure you have Gemini CLI installed
+    npm install -g @anthropic-ai/gemini-cli
+
+    # Create soft link to GEMINI.md from the system prompt AGENTS.md
+    ln -s AGENTS.md GEMINI.md
+
+    # Send the prompt to Gemini CLI
+    gemini "Help me refactor this app to extract a reusable API client"
+    ```
+  </TabItem>
+  <TabItem value="copilot" label="GitHub Copilot CLI">
+    In your terminal with GitHub Copilot CLI:
+
+    ```bash
+    # Make sure you have GitHub Copilot CLI installed (requires Node.js v22+)
+    npm install -g @github/copilot
+
+    # Send the prompt to Copilot CLI (programmatic mode)
+    copilot -p "Help me refactor this app to extract a reusable API client" --allow-all-tools
+    ```
+  </TabItem>
+  <TabItem value="ide" label="IDE" default>
+    In your IDE with an AI coding assistant (GitHub Copilot, Claude, Cursor, etc.):
+
+    1. Open the project in your IDE
+    2. Open your AI assistant chat panel
+    3. Send the prompt: _"Help me refactor this app to extract a reusable API client"_
+  </TabItem>
+</Tabs>
+
+**Want to understand what happens under the hood?** The sections below walk through each step in detail.
+
+## The Scenario
+
+Your API client is scattered across the codebase. Every component imports Axios directly, making it hard to:
+- Add request/response interceptors
+- Switch HTTP libraries
+- Mock API calls in tests
+- Track API usage
+
+You need to extract a centralized `ApiClient` class. This is a refactoring, not a feature—no user-facing changes, but the architecture improves.
+
+Starting point:
+```
+your-project/
+├── src/
+│   ├── components/
+│   │   ├── UserProfile.tsx     # Direct axios import
+│   │   └── Dashboard.tsx       # Direct axios import
+│   └── services/
+│       ├── auth.service.ts     # Direct axios import
+│       └── data.service.ts     # Direct axios import
+└── specs/
+    └── (your existing specs)
+```
+
+## Creating a Technical Spec
+
+Ask your AI:
+
+```
+Create a spec for extracting a centralized API client.
+Move all axios calls to a single ApiClient class with:
+- Request/response interceptors
+- Error handling
+- Token management
+- Type-safe methods
+
+Tag it "refactoring" and "architecture".
+Set priority to high.
+```
+
+The AI creates `specs/024-centralize-api-client/README.md` with:
+
+```markdown
+---
+status: planned
+priority: high
+tags: ['refactoring', 'architecture']
+---
+
+# Centralize API Client
+
+## Overview
+Extract scattered Axios calls into a single ApiClient class.
+
+Current pain: 47 direct axios imports across codebase, no consistent 
+error handling, can't add auth interceptors globally, tests mock axios 
+instead of our API layer.
+
+Goal: Maintainable HTTP layer with centralized error handling and 
+interceptors. Single import point, easy to switch HTTP libraries, 
+better testability.
+
+## Design
+New ApiClient class with typed get/post methods and request/response 
+interceptors for auth token injection and error handling.
+
+(...diagrams or code snippets...)
+
+Migration strategy:
+1. Create ApiClient with basic methods
+2. Add auth interceptor
+3. Replace axios in services layer first (4 files)
+4. Replace axios in components (15 files)
+5. Update tests and remove axios dependency
+
+Non-goals: Not changing API endpoints or response data structures.
+
+## Plan
+- [ ] Create src/lib/api-client.ts with typed methods
+- [ ] Implement request/response interceptors
+- [ ] Migrate services layer
+- [ ] Migrate components layer
+- [ ] Update test mocks
+- [ ] Remove direct axios imports
+
+## Test
+- [ ] All existing tests pass
+- [ ] ApiClient tests cover error handling
+- [ ] Auth tokens properly injected in requests
+```
+
+**What's different here?** This is a technical spec:
+- Focuses on architecture, not user features
+- Includes migration strategy (order matters)
+- Explicit non-goals prevent scope creep
+- Detailed plan because refactoring is risky
+
+## Implementation
+
+Ask your AI:
+
+```
+Implement spec 024. Take it step by step:
+1. Create ApiClient first
+2. Show me the implementation before migrating
+3. Then migrate one service as a test
+4. Wait for my approval before continuing
+```
+
+The AI proceeds incrementally:
+
+**Step 1:** Creates `src/lib/api-client.ts`
+```typescript
+export class ApiClient {
+  private client: AxiosInstance;
+  
+  constructor() {
+    this.client = axios.create({ baseURL: process.env.API_BASE_URL });
+    // Auth interceptor adds token to requests
+  }
+  
+  async get<T>(path: string): Promise<T> { /* ... */ }
+  async post<T>(path: string, data: any): Promise<T> { /* ... */ }
+}
+```
+
+**Step 2:** Migrates one service as proof
+```typescript
+// src/services/auth.service.ts
+- import axios from 'axios';
++ import { apiClient } from '@/lib/api-client';
+
+- const { data } = await axios.post('/auth/login', credentials);
++ const data = await apiClient.post('/auth/login', credentials);
+```
+
+You review, test, and approve: "Looks good. Continue with remaining services and components."
+
+**Step 3:** AI migrates remaining files, updates tests, removes axios imports
+
+## Review and Complete
+
+Run the test suite:
+```bash
+npm test
+```
+
+All tests pass? Verify in dev:
+```bash
+npm run dev
+# Click around, check network tab
+```
+
+Everything works. Complete the spec:
+```bash
+lean-spec update 024 --status complete
+```
+
+The spec now documents **why** you made this change and **how** it was done. Future developers can read it to understand the architecture decision.
+
+## What Just Happened
+
+You documented and executed a complex refactoring:
+
+**Without LeanSpec:**
+- Refactoring rationale lost in PR description
+- Implementation details in git history (hard to find)
+- Future devs ask "Why did we do this?"
+- Scope creep: "While we're refactoring, let's also..."
+
+**With LeanSpec:**
+- Clear rationale captured before coding
+- Migration strategy documented
+- AI follows the plan step-by-step
+- Non-goals prevent feature creep
+- Completed spec = permanent record
+
+The spec becomes **architectural documentation** that explains past decisions to future maintainers.
+
+## When to Spec a Refactoring
+
+**Write a spec when:**
+- Refactoring affects >5 files
+- Architecture decision needs explanation
+- Migration order matters
+- Risk of breaking existing behavior
+
+**Skip the spec when:**
+- Renaming variables/files
+- Extracting a single function
+- Fixing code style
+- Obvious improvements
+
+**Refactoring spec checklist:**
+- [ ] "Why this matters" section explains pain
+- [ ] Design shows before/after structure
+- [ ] Migration strategy is explicit
+- [ ] Non-goals prevent scope creep
+- [ ] Test criteria ensure no regression
+
+## Key Patterns
+
+**Technical specs include:**
+- **Rationale**: Why we're doing this (pain points)
+- **Design**: Architecture changes (diagrams help)
+- **Migration**: Order of changes (critical for refactoring)
+- **Non-goals**: What we're NOT doing (scope control)
+- **Testing**: How to verify nothing broke
+
+**AI assistance works best with:**
+- Step-by-step instructions ("do X, wait for approval")
+- Clear migration order
+- Test-after-each-phase approach
+- Explicit file paths
+
+## Next Steps
+
+Try refactoring something in your codebase:
+- Pick a scattered concern (logging, errors, config)
+- Create a spec with migration strategy
+- Let AI implement step-by-step
+- Complete and document the decision
+
+**Learn more:**
+- [Spec Structure](/docs/guide/usage/spec-structure) - Organizing complex specs
+- [AI Coding Workflow](/docs/guide/usage/ai-coding-workflow) - Working with AI on large changes
+- [Context Engineering](/docs/advanced/context-engineering) - Managing AI memory for refactoring
+
+**Advanced:**
+- [First Principles](/docs/advanced/first-principles) - When to spec vs. not
+- [Philosophy](/docs/advanced/philosophy) - Design decisions and trade-offs
+
+**Questions?** See [FAQ](/docs/faq) or [start a discussion](https://github.com/codervisor/lean-spec/discussions).

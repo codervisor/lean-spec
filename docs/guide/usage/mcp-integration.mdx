@@ -1,0 +1,387 @@
+---
+id: 'mcp-integration'
+title: 'MCP Integration'
+sidebar_position: 3
+---
+# MCP Integration
+
+Learn how to integrate LeanSpec with AI assistants using the Model Context Protocol (MCP) for seamless spec access and semantic memory retrieval.
+
+## What is MCP?
+
+**Model Context Protocol (MCP)** is an open standard that enables AI assistants to access external tools and data sources. LeanSpec's MCP server lets AI agents:
+
+- **Search** specs semantically ("find authentication decisions")
+- **Retrieve** spec content directly into conversation context
+- **Create/Update** specs through natural language
+- **Navigate** dependencies and relationships automatically
+
+## Why Use MCP?
+
+### Before MCP (Manual References)
+
+```
+Human: "Read the authentication spec at specs/042-auth/README.md"
+
+AI: [Reads file, provides answer]
+
+[Next session]
+Human: "What did we decide about authentication?"
+
+AI: "I don't have that information in my current context."
+```
+
+**Problem**: Context doesn't persist, requires manual file references.
+
+### After MCP (Semantic Memory)
+
+```
+Human: "What did we decide about authentication?"
+
+AI: [Searches specs via MCP: "authentication"]
+    [Retrieves spec 042 automatically]
+    "Per spec 042, we chose JWT tokens for stateless auth..."
+```
+
+**Benefit**: AI has persistent semantic memory of project decisions.
+
+## Quick Setup
+
+### Option 1: Using @leanspec/mcp (Recommended)
+
+The simplest way to use LeanSpec with MCP is via the `@leanspec/mcp` package, which provides a dedicated entry point.
+
+**Standard config works in most MCP-compatible tools:**
+
+```json
+{
+  "mcpServers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+**Benefits:**
+- ✅ No installation required - npx auto-installs
+- ✅ Auto-detects workspace from where IDE runs
+- ✅ Simpler, more discoverable package name
+- ✅ Same functionality as `lean-spec mcp`
+
+### Supported Tools
+
+LeanSpec MCP server works with any tool that supports the Model Context Protocol:
+
+#### AI Coding Assistants
+- **[VS Code](https://code.visualstudio.com/)** - GitHub Copilot with MCP support
+- **[Cursor](https://cursor.sh/)** - AI-first code editor
+- **[Windsurf](https://codeium.com/windsurf)** - Codeium's AI editor
+- **[Cline](https://github.com/cline/cline)** - Autonomous coding agent
+- **[Roo Code](https://github.com/RooVetGit/Roo-Code)** - AI coding assistant
+- **[Amp](https://amp.build/)** - AI-powered development environment
+
+#### AI Chat Interfaces  
+- **[Claude Desktop](https://claude.ai/download)** - Anthropic's desktop app
+- **[Claude Code](https://claudecode.com/)** - Claude for coding
+- **[Codex](https://openai.com/index/openai-codex/)** - OpenAI's coding model
+- **[Goose](https://block.github.io/goose/)** - Square's AI assistant
+- **[Kiro](https://kiro.ai/)** - AI coding assistant
+
+#### Terminal & CLI Tools
+- **[Warp](https://www.warp.dev/)** - AI-powered terminal
+- **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** - Google's AI assistant
+
+#### Development Platforms
+- **[Factory](https://factory.ai/)** - AI software development platform
+- **[Qodo Gen](https://www.qodo.ai/products/qodo-gen/)** - AI code generation
+- **[opencode](https://opencode.dev/)** - Open-source AI coding
+- **[LM Studio](https://lmstudio.ai/)** - Local LLM interface
+
+### Configuration Examples
+
+#### Claude Desktop
+
+Edit your Claude Desktop config:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`  
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+#### VS Code (GitHub Copilot)
+
+Add to your VS Code `settings.json`:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+#### Cursor / Windsurf / Other MCP Tools
+
+Most tools use the standard MCP configuration format:
+
+```json
+{
+  "mcpServers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+Refer to your tool's documentation for the exact configuration file location.
+
+### Option 2: Direct lean-spec Command
+
+If you prefer to use the `lean-spec` CLI directly:
+
+```json
+{
+  "mcpServers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"]
+    }
+  }
+}
+```
+
+**Note**: For tools that support workspace variables (like VS Code), you can use `"cwd": "${workspaceFolder}"` to specify the project directory. For tools requiring absolute paths (like Claude Desktop), use `"cwd": "/absolute/path/to/your/project"`.
+
+### Test the Integration
+
+Ask your AI assistant:
+
+```
+List all specs in this project.
+```
+
+Expected: AI uses MCP to call `lean-spec list` and shows results.
+
+```
+What does spec 042 describe?
+```
+
+Expected: AI retrieves spec 042 via MCP and summarizes.
+
+## What MCP Enables
+
+### Semantic Search
+
+AI can find specs by topic, not just filename:
+
+```
+Human: "Where did we document the caching strategy?"
+
+AI: [Searches specs via MCP: "caching strategy"]
+    "Spec 038 covers caching with Redis..."
+```
+
+### Cross-Session Memory
+
+Decisions persist across conversations:
+
+```
+[Day 1]
+Human: "Why did we choose PostgreSQL?"
+AI: [Retrieves spec 023] "PostgreSQL chosen for ACID compliance..."
+
+[Day 7 - New session]
+Human: "Remind me why we're using PostgreSQL?"
+AI: [Retrieves spec 023 again] "Per spec 023, PostgreSQL..."
+```
+
+### Automatic Dependency Navigation
+
+AI follows relationships:
+
+```
+Human: "What needs to be done before we can start spec 045?"
+
+AI: [Calls deps tool via MCP]
+    "Spec 045 depends on:
+     - Spec 041 (complete) ✅
+     - Spec 044 (in-progress) ⏳"
+```
+
+### Project Health Awareness
+
+AI understands project state:
+
+```
+Human: "What's the project status?"
+
+AI: [Calls board tool via MCP]
+    "Project Completion: 60% (6/10 specs complete)
+     - 3 specs in-progress
+     - 7 planned
+     - 6 complete"
+```
+
+## Common MCP Workflows
+
+### Research Past Decisions
+
+```
+Human: "Why did we use JWT instead of sessions?"
+
+AI: [search_specs("JWT vs sessions")]
+    [Retrieves spec 042]
+    "Spec 042 documents the decision:
+     - JWT chosen for stateless scaling
+     - Avoid Redis dependency for sessions
+     - Trade-off: Can't revoke tokens instantly"
+```
+
+### Start New Work
+
+```
+Human: "Create a spec for rate limiting"
+
+AI: [create_spec tool via MCP]
+    "Created spec 048-rate-limiting.
+     Would you like me to draft the content?"
+```
+
+### Update Work Status
+
+```
+Human: "Mark spec 045 as complete"
+
+AI: [update_spec tool via MCP]
+    "Spec 045 status updated to 'complete'.
+     Marked complete at 2025-11-08T15:30:00Z"
+```
+
+### Discover Related Work
+
+```
+Human: "What other specs relate to authentication?"
+
+AI: [search_specs("authentication")]
+    "Found 3 specs:
+     - 042: JWT Authentication (complete)
+     - 043: OAuth Integration (planned)
+     - 047: Session Management (in-progress)"
+```
+
+## Benefits Over Manual References
+
+| Without MCP | With MCP |
+|------------|----------|
+| "Read specs/042-auth/README.md" | "What did we decide about auth?" |
+| No memory across sessions | Persistent semantic memory |
+| Manual file path references | Semantic search by topic |
+| Can't navigate dependencies | Auto-follows relationships |
+| Human looks up status | AI knows project state |
+
+## MCP Tools Available
+
+The LeanSpec MCP server provides these tools to AI assistants:
+
+**Discovery:**
+- `list` - List specs with filters (status, tag, priority)
+- `search` - Full-text search across specs
+- `deps` - Show dependencies and relationships
+
+**Viewing:**
+- `view` - Get spec content (formatted, raw, or JSON)
+- `files` - List files in a spec (sub-specs, assets)
+- `board` - Kanban view with project health
+- `stats` - Project statistics and metrics
+
+**Modification:**
+- `create` - Create new specs
+- `update` - Update status, priority, tags, assignee
+- `archive` - Archive completed specs
+
+**Validation:**
+- `validate` - Check spec structure and quality
+- `check` - Verify sequence numbers
+
+**See**: [MCP Server Reference](/docs/reference/mcp-server) for technical details
+
+## Troubleshooting
+
+### AI Says "I Don't Have Access to Specs"
+
+**Check:**
+1. MCP server is configured in settings
+2. `cwd` points to correct project directory
+3. Project has specs (run `lean-spec list` manually)
+4. Restart AI tool after config changes
+
+### MCP Commands Not Working
+
+**Try:**
+```bash
+# Test MCP server directly
+npx @leanspec/mcp
+# or
+npx lean-spec mcp
+
+# Verify it starts without errors
+```
+
+### AI Can't Find Specs
+
+**Verify:**
+```bash
+# Check specs exist
+lean-spec list
+
+# Check search works
+lean-spec search "test query"
+```
+
+## Best Practices
+
+**DO:**
+- ✅ Use semantic queries ("find auth decisions")
+- ✅ Let AI search specs for you (don't manually reference files)
+- ✅ Trust cross-session memory (AI will remember)
+- ✅ Ask about project health ("what's blocked?")
+
+**DON'T:**
+- ❌ Manually copy spec content into chat
+- ❌ Reference file paths explicitly  
+- ❌ Re-explain decisions AI can look up
+- ❌ Forget to configure MCP for new projects
+
+## Security Note
+
+The MCP server:
+- ✅ Only accesses the project directory configured in `cwd`
+- ✅ Only exposes LeanSpec commands (list, search, view, etc.)
+- ✅ Cannot execute arbitrary shell commands
+- ✅ Cannot access files outside the project
+
+## Next Steps
+
+- [AI Agent Memory](/docs/advanced/ai-agent-memory) - Understanding specs as semantic memory
+- [Agent Configuration](/docs/guide/usage/advanced-features/agent-configuration) - AGENTS.md setup
+- [MCP Server Reference](/docs/reference/mcp-server) - Technical documentation
+
+---
+
+**External Resource**: [Model Context Protocol](https://modelcontextprotocol.io/) - Official MCP documentation

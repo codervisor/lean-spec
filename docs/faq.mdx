@@ -1,0 +1,528 @@
+# Frequently Asked Questions
+
+## Getting Started
+
+### What is LeanSpec?
+
+LeanSpec is a lightweight spec framework optimized for AI-assisted development. It's a CLI tool + markdown files that live in your repo, helping you document technical decisions and guide AI coding tools while keeping specs within the 2,000-token sweet spot for optimal performance.
+
+**Key features:**
+- Numbered specs for easy reference
+- CLI tools for creating, searching, and managing specs
+- MCP server for AI tool integration (GitHub Copilot, Claude Code, Cursor, etc.)
+- Validation to ensure spec quality
+- Kanban board and stats for project visibility
+
+**5-minute setup:**
+
+```bash
+npm install -g lean-spec
+cd your-project
+lean-spec init
+lean-spec create my-first-spec
+```
+
+No configuration files, no database, no server. Works with any editor and any AI tool.
+
+### How do I get started with LeanSpec?
+
+This is the most common question! Here's your quickstart path:
+
+**Option 1: Try with tutorial project (recommended for first-timers)**
+```bash
+npx lean-spec init --example dark-theme
+cd dark-theme && npm install && npm start
+```
+
+**Option 2: Add to existing project**
+```bash
+npm install -g lean-spec
+cd your-project
+lean-spec init
+lean-spec create my-first-feature
+```
+
+**After setup:**
+1. Run `lean-spec board` to see the Kanban view
+2. Edit your spec at `specs/001-my-first-feature/README.md`
+3. Run `lean-spec update 001 --status in-progress` when you start coding
+4. Run `lean-spec update 001 --status complete` when done
+
+**Next steps:**
+- 📖 [Your First Spec with AI](/docs/tutorials/first-spec-with-ai) (10 min tutorial)
+- 📖 [Getting Started Guide](/docs/guide/getting-started)
+- 📖 [AI Coding Workflow](/docs/guide/usage/ai-coding-workflow)
+
+### Why use LeanSpec?
+
+**Use LeanSpec when you need:**
+- Team alignment on complex features
+- Documentation for design decisions
+- Context to reduce AI hallucinations
+- Onboarding materials for new team members
+
+**Skip LeanSpec for:**
+- Simple bug fixes
+- Throwaway prototypes
+- Solo projects with clear requirements
+
+**Philosophy:** Get 80% of vibe coding speed with 80% of structured spec benefits. Minimal overhead for maximum agility.
+
+### Can LeanSpec speed up my development?
+
+**Yes, but with nuance.** LeanSpec isn't about typing faster—it's about reducing rework and improving AI output quality.
+
+**How it speeds up development:**
+
+1. **Better AI output** - Specs provide focused context (&lt;2,000 tokens) that AI models process more accurately than scattered conversation history
+2. **Less rework** - Clear requirements upfront = fewer "that's not what I wanted" cycles
+3. **Faster onboarding** - New team members (or AI assistants) understand decisions immediately
+4. **Reduced context rot** - AI doesn't hallucinate when it has written specs to reference
+
+**Real-world impact:**
+- Single implementation attempts succeed more often (vs. 3-4 back-and-forth cycles)
+- Less time explaining the same decisions repeatedly
+- Team alignment happens once, not every sprint
+
+**When LeanSpec might slow you down:**
+- Simple bug fixes (skip the spec, just fix it)
+- Throwaway prototypes (vibe coding is faster)
+- Very clear, well-understood work
+
+**The formula:** `Time saved = (AI rework avoided) + (team sync avoided) - (spec writing time)`
+
+For complex features, this is almost always positive. For trivial changes, skip the spec.
+
+## Why the 2,000-token target?
+
+**Attention is the scarce resource, not storage.**
+
+Three reasons:
+1. **Human attention span** - Most people (and AI pairs) can only hold ~2-3K tokens in working memory at once
+2. **AI performance** - Context quality degrades long before the 50K-token hard limit
+3. **Working memory** - Token count correlates directly to cognitive load, while lines vary by formatting
+
+If your spec exceeds 3,500 tokens, split it into sub-spec files (`DESIGN.md`, `IMPLEMENTATION.md`, `TESTING.md`, etc.). Anything above 5,000 tokens should be broken down immediately. See [First Principles](/docs/advanced/first-principles#1-context-economy-) for details.
+
+## Comparisons
+
+### What's the difference between LeanSpec and other SDD frameworks?
+
+**LeanSpec vs Spec Kit vs OpenSpec:**
+
+| Aspect | LeanSpec | Spec Kit | OpenSpec |
+|--------|----------|----------|----------|
+| **Philosophy** | Lightweight, flexible | Structured governance | Formal proposals |
+| **Spec size** | &lt;2,000 tokens (optimized) | Longer context | Long system prompts |
+| **Workflow** | Flexible, adapt to team | 5-step required process | Proposal→Review→Archive |
+| **Templates** | Minimal, customizable | Rigid format | Rigid delta format |
+| **AI integration** | MCP + CLI | Slash commands | Slash commands |
+| **Visual UI** | ✅ Yes | ❌ CLI only | ❌ CLI only |
+| **Best for** | Teams wanting agility | Enterprise governance | Formal change tracking |
+
+**Key LeanSpec advantages:**
+- **Context Economy** - Optimized for AI working memory
+- **Editor-agnostic** - Works with any AI tool (Copilot, Claude, Cursor, etc.)
+- **Low cognitive load** - Start simple, grow as needed
+- **Visual mode** - Web UI for browsing and presenting specs
+
+**When to choose alternatives:**
+- **Spec Kit**: Enterprise teams needing structured 5-step governance
+- **OpenSpec**: Teams wanting formal proposal/review workflows
+- **Kiro**: Teams wanting an integrated AI IDE (but with vendor lock-in)
+
+📖 [Full comparison with detailed analysis →](/docs/guide/why-leanspec)
+
+## AI Integration
+
+### Is LeanSpec only suitable for Claude models?
+
+**No! LeanSpec works with any AI model or coding assistant.**
+
+LeanSpec is model-agnostic by design:
+
+**MCP-compatible tools (full integration):**
+- GitHub Copilot (VS Code)
+- Claude Code / Claude Desktop
+- Cursor
+- Windsurf
+- Cline
+- Gemini CLI
+- And many more...
+
+**Any AI tool (via file references):**
+```
+Read specs/042-my-feature/README.md and implement accordingly.
+```
+
+**Why it works everywhere:**
+- Specs are just markdown files in your repo
+- AI reads them like any other documentation
+- MCP provides richer integration but isn't required
+
+The 2,000-token limit is based on cognitive science and AI attention research—it helps *all* models, not just Claude.
+
+### How do I integrate LeanSpec with Claude Code?
+
+**Quick setup (2 minutes):**
+
+1. Create or edit your Claude Code MCP config:
+
+   **Location:**
+   - macOS: `~/.config/claude-code/mcp_settings.json`
+   - Linux: `~/.config/claude-code/mcp_settings.json`
+   - Windows: `%APPDATA%\claude-code\mcp_settings.json`
+
+2. Add the LeanSpec MCP server:
+
+```json
+{
+  "mcpServers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+3. Restart Claude Code
+
+**Test it:**
+```
+List all specs in this project.
+```
+
+Claude Code will now use MCP to access your specs with semantic search, dependency tracking, and more.
+
+📖 [Full MCP integration guide →](/docs/guide/usage/mcp-integration)
+
+### Why doesn't my AI agent follow the LeanSpec workflow?
+
+**Common causes and fixes:**
+
+**1. No AGENTS.md file**
+
+AI agents need explicit instructions. Create `AGENTS.md` at your project root:
+
+```bash
+lean-spec init  # Creates AGENTS.md automatically
+```
+
+Or copy from: [AGENTS.md template](https://github.com/codervisor/lean-spec/blob/main/AGENTS.md)
+
+**2. AGENTS.md not in context**
+
+AI tools have different ways of loading project files:
+- **VS Code Copilot**: Add `@workspace` to include project files
+- **Claude Code**: Auto-loads AGENTS.md via MCP
+- **Cursor**: Uses `.cursorrules` (copy AGENTS.md content there)
+
+**3. Instructions too long**
+
+If AGENTS.md is too long, AI may ignore parts. Keep it under 2,000 tokens.
+
+**4. Conflicting instructions**
+
+Check for other instruction files that might conflict:
+- `.github/copilot-instructions.md`
+- `.cursorrules`
+- System prompts in MCP config
+
+**5. AI doesn't have spec access**
+
+Ensure MCP is configured so AI can actually read specs:
+```json
+{
+  "mcpServers": {
+    "leanspec": {
+      "command": "npx",
+      "args": ["-y", "@leanspec/mcp"]
+    }
+  }
+}
+```
+
+**Debugging tip:** Ask the AI directly:
+```
+What instructions do you have about LeanSpec workflow?
+Can you list the specs in this project?
+```
+
+📖 [Agent configuration guide →](/docs/guide/usage/advanced-features/agent-configuration)
+
+## Using LeanSpec
+
+### How do I upgrade or re-initialize LeanSpec without losing my specs?
+
+**LeanSpec has safe re-initialization built in.** You don't need to delete anything manually.
+
+**Scenario 1: Upgrade to latest config (safest)**
+```bash
+lean-spec init -y
+```
+This merges your existing config with latest defaults. All specs and AGENTS.md are preserved.
+
+**Scenario 2: Reset config but keep specs**
+```bash
+lean-spec init -f
+```
+This resets `.lean-spec/` configuration but keeps your `specs/` directory intact.
+
+**Scenario 3: Interactive choice**
+```bash
+lean-spec init
+```
+When LeanSpec is already initialized, you'll see options:
+- **Upgrade configuration** (recommended) - Update config, keep everything
+- **Reset configuration** - Fresh config, keep specs
+- **Full reset** - Start completely fresh (requires confirmation)
+- **Cancel** - Exit without changes
+
+**What each option preserves:**
+
+| Option | `.lean-spec/` | `specs/` | `AGENTS.md` |
+|--------|---------------|----------|-------------|
+| Upgrade | Merged | ✅ Kept | ✅ Kept |
+| Reset config | Fresh | ✅ Kept | Re-created |
+| Full reset | Deleted | ❌ Deleted | ❌ Deleted |
+
+**Pro tip:** Always use `-y` for CI/CD pipelines - it defaults to the safest upgrade option.
+
+### How do I view the LeanSpec UI?
+
+**Start the web UI:**
+
+```bash
+lean-spec ui
+```
+
+This opens a browser at `http://localhost:3000` with:
+- **Spec browser** - Browse and search all specs
+- **Board view** - Kanban-style visualization
+- **Dependency graph** - Visual relationships between specs
+- **Project stats** - Dashboard with metrics
+
+**Alternative method (no CLI installation):**
+```bash
+npx @leanspec/ui
+```
+
+**Options:**
+```bash
+lean-spec ui --port 3100    # Custom port
+lean-spec ui --no-open      # Don't auto-open browser
+lean-spec ui --specs ./path # Custom specs directory
+```
+
+📖 [Visual Mode guide →](/docs/guide/visual-mode)
+
+### How do I use LeanSpec to manage multiple features?
+
+**LeanSpec excels at managing concurrent development:**
+
+**1. Create specs for each feature:**
+```bash
+lean-spec create user-auth --tags auth,api --priority high
+lean-spec create payment-flow --tags payments,api --priority high
+lean-spec create dashboard --tags frontend,ui --priority medium
+```
+
+**2. Track relationships:**
+```bash
+# Dashboard depends on auth being complete
+lean-spec link dashboard --depends-on user-auth
+
+# Payment and auth are related but independent
+lean-spec link payment-flow --related user-auth
+```
+
+**3. Visualize progress:**
+```bash
+lean-spec board          # Kanban view
+lean-spec stats          # Project metrics
+lean-spec deps dashboard # See what's blocking dashboard
+```
+
+**4. Filter by status or tags:**
+```bash
+lean-spec list --status in-progress    # What's being worked on?
+lean-spec list --tag api               # All API-related specs
+lean-spec list --assignee @alice       # Alice's work
+```
+
+**5. Use the UI for team visibility:**
+```bash
+lean-spec ui
+# Share http://localhost:3000 in team meetings
+```
+
+**Best practices for multiple features:**
+- Use tags consistently (`api`, `frontend`, `backend`, etc.)
+- Set priorities (`critical`, `high`, `medium`, `low`)
+- Update status religiously (`planned` → `in-progress` → `complete`)
+- Use `depends_on` sparingly (only for true blockers)
+- Use `related` for informational links
+
+### How do I deal with bugs in completed specs?
+
+**Bugs in implemented features need different handling based on severity:**
+
+**Option 1: Minor bug (quick fix)**
+
+Don't create a new spec. Just fix it:
+```bash
+# No spec needed for simple bug fixes
+git commit -m "fix: handle null user in auth flow (spec-042)"
+```
+
+Reference the original spec in commit message for traceability.
+
+**Option 2: Significant bug (design flaw)**
+
+Create a follow-up spec:
+```bash
+lean-spec create auth-token-refresh-fix --tags auth,bugfix --priority high
+```
+
+Link to original:
+```bash
+lean-spec link auth-token-refresh-fix --related user-auth
+```
+
+In the new spec, document:
+- What went wrong in the original implementation
+- Root cause analysis
+- Updated design decision
+
+**Option 3: Update the original spec**
+
+If the bug reveals a missing requirement:
+```bash
+lean-spec open user-auth
+# Add "Lessons Learned" section documenting the issue
+# Update relevant sections with corrected approach
+```
+
+**When to use each option:**
+
+| Bug Type | Action |
+|----------|--------|
+| Typo, off-by-one | Just fix it (no spec) |
+| Missing edge case | Add to original spec |
+| Design flaw | New follow-up spec |
+| Breaking change | New spec with migration plan |
+
+**Key principle:** Specs document *decisions*, not code. If the decision was wrong, update the spec. If the implementation was wrong, just fix the code.
+
+## Troubleshooting
+
+### My spec was corrupted by AI editing it
+
+**Cause:** Spec exceeded context window, AI lost track of structure.
+
+**Fix:**
+```bash
+git checkout HEAD -- specs/042-my-spec/  # Restore from git
+lean-spec validate                        # Check for issues
+```
+
+**Prevention:** Keep specs under 2,000 tokens (warning at 3,500, hard stop at 5,000). Run `lean-spec tokens <spec>` to check before editing.
+
+### `lean-spec update` says "spec not found"
+
+**Debug:**
+```bash
+lean-spec list          # See all active specs
+lean-spec list --all    # Include archived
+```
+
+**Common causes:**
+- Not in git repo with `specs/` directory
+- Typo in spec name/number
+- Spec was archived
+
+### Frontmatter validation failed
+
+**Common mistakes:**
+- Manually editing system-managed fields (`status`, `created_at`, `transitions`, etc.)
+- Invalid YAML syntax
+- Typos in field names
+
+**Fix:**
+```bash
+lean-spec validate      # See exactly what's wrong
+```
+
+**Always use CLI commands** to update metadata:
+```bash
+lean-spec update 042 --status in-progress
+lean-spec update 042 --priority high
+lean-spec update 042 --tags api,backend
+```
+
+### How do I recover deleted specs?
+
+Specs are just files in git:
+
+```bash
+git log --all --full-history -- "specs/042-my-spec/*"
+git checkout <commit> -- specs/042-my-spec/
+```
+
+Or restore from archived:
+
+```bash
+mv archived/042-my-spec specs/
+lean-spec update 042 --status in-progress
+```
+
+### CLI command not working
+
+**Check installation:**
+```bash
+which lean-spec
+lean-spec --version
+```
+
+**Reinstall if needed:**
+```bash
+npm install -g lean-spec
+```
+
+**Verify you're in a git repo:**
+```bash
+git rev-parse --git-dir
+```
+
+## Contributing & Support
+
+### How do I report bugs or request features?
+
+- **Bugs:** [GitHub Issues](https://github.com/codervisor/lean-spec/issues)
+- **Features:** [GitHub Discussions](https://github.com/codervisor/lean-spec/discussions)
+
+### Can I contribute?
+
+Yes! See [CONTRIBUTING.md](https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md).
+
+**Common contributions:**
+- Documentation improvements
+- Bug fixes
+- New templates
+- MCP server enhancements
+
+### Where can I get help?
+
+- **Documentation:** [Full guide](/docs/guide/)
+- **Discussions:** [GitHub Discussions](https://github.com/codervisor/lean-spec/discussions)
+- **Issues:** [Bug tracker](https://github.com/codervisor/lean-spec/issues)
+- **Twitter/X:** [@MarvinZhang89](https://x.com/MarvinZhang89)
+
+### What's the license?
+
+MIT License - free for commercial and personal use.
+
+---
+
+**More questions?** Check the [full documentation](/docs/guide/) or ask in [GitHub Discussions](https://github.com/codervisor/lean-spec/discussions).

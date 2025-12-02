@@ -1,0 +1,148 @@
+---
+id: 'getting-started'
+title: 'Getting Started'
+sidebar_position: 2
+---
+# Getting Started
+
+This guide will help you set up LeanSpec and adopt the SDD workflow for your project. It takes about 5 minutes.
+
+:::info Prerequisites
+- **Node.js**: Version 20 or higher. Download from [nodejs.org](https://nodejs.org/).
+- **AI Coding Tool**: Set up your preferred tool (e.g., [VS Code GitHub Copilot](https://github.com/features/copilot), [Claude Code](https://www.claude.com/product/claude-code), etc.)
+:::
+
+## Installation
+
+Install LeanSpec globally using npm:
+
+```bash
+npm install -g lean-spec
+```
+
+This makes the `lean-spec` command available system-wide.
+
+## Initialize Your Project
+
+Navigate to your project directory and run:
+
+```bash
+lean-spec init -y
+```
+
+After initialization, your project will have:
+
+```
+your-project/
+├── .lean-spec/        # LeanSpec configuration
+├── specs/             # All your specs live here
+├── AGENTS.md          # System prompts for AI agents
+└── ... (your project files)
+```
+
+## Create Your First Spec
+
+In your AI tool, prompt:
+
+```
+Create a new spec for the feature "my-feature" following these requirements:
+- [Requirement 1]
+- [Requirement 2]
+- ...
+```
+
+Or simply:
+
+```
+Create a new spec for "my-feature".
+```
+
+The AI will use the CLI or MCP (if configured) to create and populate the spec.
+
+This creates:
+- `specs/001-my-feature/` folder (flat structure with sequential numbering)
+- `README.md` with template content and frontmatter metadata
+- **Spec details filled out by AI** (no manual editing needed)
+
+The spec content looks like this:
+
+```markdown title="specs/001-my-feature/README.md"
+---
+status: planned
+created: '2025-11-02'
+priority: medium
+---
+
+# My Feature
+
+> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-02
+
+(... spec details filled out by AI ...)
+```
+
+## Implement the Spec
+
+Once the spec is created, review it and implement the feature according to the spec details.
+
+In your AI tool, ask:
+
+```
+Implement the feature "my-feature".
+```
+
+Or simply:
+
+```
+Implement spec 1.
+```
+
+The AI will read the spec and start implementing based on the requirements.
+
+In a typical agentic workflow, the AI will:
+1. Read the spec details
+2. Analyze the codebase
+3. Generate code changes to implement the feature
+4. Summarize changes and document progress in the spec
+
+:::tip Recommended AI Models
+While not required, we strongly recommend using advanced LLMs like [Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5), [GPT-5.1](https://openai.com/index/gpt-5-1/), or [Gemini 3](https://aistudio.google.com/models/gemini-3) for the best results with LeanSpec.
+:::
+
+## After Implementation
+
+Once the AI completes implementation, you can:
+- **Review**: Review the progress (reported by AI) and test the feature
+- **Continue**: If incomplete, start a new chat session and ask the AI to continue
+- **Feedback**: If unsatisfied with the implementation, provide feedback to the AI for improvements
+
+## What's Next?
+
+Now that you have LeanSpec set up, you can:
+
+**Try the Tutorials:**
+- [Your First Feature with AI](/docs/tutorials/first-spec-with-ai) - Build a complete feature (10 min)
+- [Managing Multiple Features](/docs/tutorials/managing-multiple-features) - Work with related specs (15 min)
+- [Refactoring with Specs](/docs/tutorials/refactoring-with-specs) - Document architectural changes (15 min)
+
+**Learn the Fundamentals:**
+- [Spec Concept](/docs/guide/terminology/spec) - Essential SDD terms explained
+- [First Principles](/docs/advanced/first-principles) - The 5 foundational principles
+- [Understanding LeanSpec](/docs/guide/understanding-leanspec) - Core concepts and when to use
+- [Context Engineering](/docs/advanced/context-engineering) - Managing AI working memory
+
+**Start Using LeanSpec:**
+- [Creating and Managing Specs](/docs/guide/usage/cli/creating-managing) - Basic operations
+- [Finding Specs](/docs/guide/usage/cli/finding-specs) - Search and discovery
+- [Spec Structure](/docs/guide/usage/spec-structure) - Organizing your specs
+
+**AI Integration:**
+- [MCP Integration](/docs/guide/usage/mcp-integration) - Connect AI tools
+- [AI Coding Workflow](/docs/guide/usage/ai-coding-workflow) - Best practices
+- [AI-Assisted Spec Writing](/docs/advanced/ai-assisted-spec-writing) - Co-create with AI
+
+## Need Help?
+
+- [FAQ](/docs/faq) - Frequently asked questions
+- [GitHub Issues](https://github.com/codervisor/lean-spec/issues) - Report bugs or request features
+- [Community Discussions](https://github.com/codervisor/lean-spec/discussions) - Ask questions and share ideas
+

@@ -1,0 +1,340 @@
+---
+id: 'mcp-server'
+title: 'MCP 服务器'
+sidebar_position: 4
+---
+# MCP 服务器
+
+LeanSpec MCP（模型上下文协议）服务器使 Claude Desktop、GitHub Copilot 和其他兼容 MCP 的客户端等 AI 助手能够直接与您的 LeanSpec 项目交互。
+
+## 概述
+
+MCP 服务器为 AI 助手提供：
+- **工具** - 列出、搜索、创建、更新Spec的操作
+- **资源** - 可浏览的内容（Spec、看板、统计）
+- **提示** - 常见工作流程的快速操作模板
+
+## 功能
+
+### 工具
+
+MCP 服务器向 AI 助手公开这些工具：
+
+- **list** - 列出所有Spec，可选过滤
+- **search** - 跨Spec的全文搜索
+- **view** - 查看Spec内容（格式化、原始 markdown 或 JSON）
+- **create** - 创建新Spec
+- **update** - 更新Spec元数据（状态、优先级、标签等）
+- **link** - 添加Spec之间的关系（depends_on、related）
+- **unlink** - 移除Spec之间的关系
+- **archive** - 将Spec移至 archived/ 目录
+- **stats** - 获取项目统计信息
+- **board** - 获取看板视图
+- **deps** - 显示Spec依赖关系
+- **files** - 列出Spec中的文件（用于探索子 Spec和资产）
+- **check** - 检查序列号冲突
+- **validate** - 验证Spec的质量问题（token 数、复杂性）
+- **backfill** - 从 git 历史回填时间戳和元数据
+- **tokens** - 统计Spec的 token 数量，用于 LLM 上下文管理
+
+### 资源
+
+AI 助手可访问的可浏览内容：
+
+- **spec://&lt;spec-name&gt;** - 单个Spec内容
+- **board://kanban** - 当前看板状态
+- **stats://overview** - 项目统计概览
+
+### 提示
+
+常见工作流程的快速操作模板：
+
+- **Create feature spec** - 引导式Spec创建
+- **Update spec status** - 快速状态更改
+- **Find related specs** - 依赖发现
+
+## 安装
+
+MCP 服务器包含在 LeanSpec 中。无需额外安装。
+
+```bash
+npm install -g lean-spec
+```
+
+## 配置
+
+### VS Code（GitHub Copilot）
+
+1. 打开 VS Code 设置（JSON）：
+   - 按 `Cmd/Ctrl + Shift + P`
+   - 输入 "Preferences: Open User Settings (JSON)"
+   - 或直接编辑 `~/.vscode/settings.json`
+
+2. 添加 LeanSpec MCP 服务器配置：
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+`${workspaceFolder}` 变量自动使用您当前的工作区根目录。对于特定的项目路径，请将其替换为绝对路径。
+
+:::tip 使用 npx
+使用 `npx` 确保您始终使用最新版本，并且无需全局安装即可工作。`-y` 标志自动确认安装提示。
+:::
+
+### Claude Desktop
+
+1. 打开您的 Claude Desktop 配置文件：
+   - **macOS**：`~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**：`%APPDATA%\Claude\claude_desktop_config.json`
+   - **Linux**：`~/.config/Claude/claude_desktop_config.json`
+
+2. 添加 LeanSpec MCP 服务器配置：
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "/path/to/your/lean-spec/project"
+    }
+  }
+}
+```
+
+将 `/path/to/your/lean-spec/project` 替换为您的 LeanSpec 项目目录的绝对路径。
+
+### 多个项目
+
+您可以配置多个 LeanSpec 项目：
+
+```json
+{
+  "mcpServers": {
+    "lean-spec-projectA": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "/path/to/projectA"
+    },
+    "lean-spec-projectB": {
+      "command": "npx",
+      "args": ["-y", "lean-spec", "mcp"],
+      "cwd": "/path/to/projectB"
+    }
+  }
+}
+```
+
+### 替代方案：使用全局安装
+
+如果您全局安装了 LeanSpec（`npm install -g lean-spec`），可以使用：
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "lean-spec",
+      "args": ["mcp"],
+      "cwd": "/path/to/your/lean-spec/project"
+    }
+  }
+}
+```
+
+### 其他 MCP 客户端
+
+对于其他兼容 MCP 的客户端，配置它们运行：
+- **命令**：`npx -y lean-spec mcp`（推荐）或 `lean-spec mcp`（如果全局安装）
+- **工作目录**：您的 LeanSpec 项目根目录
+- **传输**：stdio
+
+## 使用示例
+
+配置后，您可以通过 AI 助手与 LeanSpec 项目交互：
+
+### 列出Spec
+
+```
+List all specifications in my project
+```
+
+### 搜索Spec
+
+```
+Search for all specs related to "authentication"
+```
+
+### 读取Spec
+
+```
+View the spec for "001-user-authentication"
+```
+
+或获取原始 markdown：
+
+```
+View the spec for "001-user-authentication" in raw format
+```
+
+### 创建新Spec
+
+```
+Create a new spec called "api-redesign" with high priority and tags "api, backend"
+```
+
+### 获取项目统计信息
+
+```
+Show me the project statistics
+```
+
+### 查看看板
+
+```
+Show me the current Kanban board
+```
+
+### 归档Spec
+
+```
+Archive the spec "024-flat-structure-migration"
+```
+
+### 链接Spec
+
+```
+Link spec 045 as related to spec 047
+```
+
+或添加依赖：
+
+```
+Add spec 063 as a dependency of spec 128
+```
+
+### 取消链接Spec
+
+```
+Remove the related link between spec 045 and spec 047
+```
+
+### 列出Spec中的文件
+
+```
+Show me all files in spec 045
+```
+
+### 检查冲突
+
+```
+Check for sequence number conflicts
+```
+
+### 验证Spec
+
+```
+Validate all specs for quality issues
+```
+
+或验证特定Spec：
+
+```
+Validate specs 018 and 045 with a 3,500-token warning threshold
+```
+
+### 回填时间戳
+
+```
+Backfill missing timestamps from git history
+```
+
+或进行试运行：
+
+```
+Show me what would be backfilled without making changes
+```
+
+### 统计 Token 数量
+
+加载 Spec 前检查 token 数量：
+
+```
+How many tokens is spec 059?
+```
+
+包含子 Spec 文件：
+
+```
+Count tokens in spec 059 including all sub-specs
+```
+
+获取详细分类：
+
+```
+Show me detailed token breakdown for spec 066
+```
+
+这有助于您对上下文加载做出明智决策，避免上下文窗口溢出。
+
+## 故障排除
+
+### 服务器无法启动
+
+- 验证配置中的 `cwd` 路径指向有效的 LeanSpec 项目（有 `.lean-spec/config.json`）
+- 如果使用 `npx`，确保首次运行时有互联网访问
+- 如果使用全局安装，检查 `lean-spec` 是否在您的 PATH 中
+- 尝试直接从项目目录运行 `npx -y lean-spec mcp` 或 `lean-spec mcp`
+
+### 工具未出现
+
+- 配置更改后重新启动 MCP 客户端
+- 检查客户端日志是否有连接错误
+- 验证 LeanSpec 项目是否正确初始化（`lean-spec init`）
+
+### 权限错误
+
+- 确保工作目录可读/可写
+- 检查 specs 目录上的文件权限
+
+## 开发
+
+### 测试 MCP 服务器
+
+您可以使用 [MCP Inspector](https://github.com/modelcontextprotocol/inspector) 测试 MCP 服务器：
+
+```bash
+npx @modelcontextprotocol/inspector npx -y lean-spec mcp
+```
+
+或直接从您的项目测试：
+
+```bash
+cd /path/to/your/lean-spec/project
+npx -y lean-spec mcp
+# 或如果全局安装：
+lean-spec mcp
+```
+
+## 安全注意事项
+
+:::warning 安全
+- MCP 服务器以与您的用户帐户相同的权限运行
+- 它可以读取和修改 LeanSpec 项目中的文件
+- 仅向受信任的 MCP 客户端公开服务器
+- 在提交之前审查 AI 助手所做的更改
+:::
+
+## 了解更多
+
+- [模型上下文协议文档](https://modelcontextprotocol.io/)
+- [Claude Desktop MCP 设置](https://support.anthropic.com/en/articles/model-context-protocol)
+- **[使用 AI](/zh-Hans/docs/guide/usage/advanced-features/agent-configuration)** - LeanSpec AI 集成指南

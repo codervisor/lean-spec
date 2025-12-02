@@ -1,0 +1,254 @@
+---
+id: 'finding-specs'
+title: '查找Spec'
+sidebar_position: 2
+---
+# 查找Spec
+
+学习如何使用搜索、列表命令和 MCP 服务器发现和导航Spec以供 AI 代理访问。
+
+## 快速发现
+
+### 列出所有Spec
+
+```bash
+# 显示所有Spec
+lean-spec list
+```
+
+输出：
+```
+📋 Specs (18 total)
+
+┌─────┬────────────────────────┬──────────────┬──────────┐
+│ ID  │ Name                   │ Status       │ Priority │
+├─────┼────────────────────────┼──────────────┼──────────┤
+│ 042 │ auth-refactor          │ in-progress  │ high     │
+│ 043 │ api-redesign           │ planned      │ medium   │
+│ 044 │ dashboard-performance  │ complete     │ low      │
+└─────┴────────────────────────┴──────────────┴──────────┘
+```
+
+### 按状态过滤
+
+```bash
+# 仅显示进行中的Spec
+lean-spec list --status in-progress
+
+# 显示计划中的Spec
+lean-spec list --status planned
+
+# 显示已完成的Spec
+lean-spec list --status complete
+```
+
+### 按标签过滤
+
+```bash
+# 显示带特定标签的Spec
+lean-spec list --tag api
+
+# 显示带多个标签的Spec
+lean-spec list --tag api --tag backend
+```
+
+### 按优先级过滤
+
+```bash
+# 高优先级Spec
+lean-spec list --priority high
+
+# 低优先级Spec
+lean-spec list --priority low
+```
+
+## 按内容搜索
+
+### 基本搜索
+
+```bash
+# 搜索所有Spec内容
+lean-spec search "authentication"
+```
+
+搜索范围：
+- Spec标题和描述
+- 所有 README.md 内容
+- 子 Spec文件（DESIGN.md、TESTING.md 等）
+- frontmatter字段
+
+### 使用过滤器搜索
+
+```bash
+# 在特定状态中搜索
+lean-spec search "API" --status in-progress
+
+# 使用标签过滤器搜索
+lean-spec search "cache" --tag performance
+
+# 组合多个过滤器
+lean-spec search "refactor" --status planned --tag backend --priority high
+```
+
+### 不区分大小写搜索
+
+搜索默认不区分大小写：
+```bash
+lean-spec search "api"      # 匹配 "API"、"api"、"Api"
+lean-spec search "JWT"      # 匹配 "jwt"、"JWT"、"Jwt"
+```
+
+## 依赖导航
+
+```bash
+# 显示Spec的依赖关系
+lean-spec deps 042
+```
+
+输出：
+```
+042-auth-refactor 的依赖图 (Dependency Graph)
+
+依赖于：
+  → 041-jwt-library [complete]       # 开始前需要
+
+被需要：
+  ← 043-api-redesign [planned]       # 在 042 完成前被阻塞
+  ← 044-dashboard [planned]
+
+相关Spec：
+  ⟷ 045-security-audit [in-progress]  # 协调工作
+```
+
+导航关系：
+- **依赖于（→）**：此Spec在开始前需要什么
+- **被需要（←）**：等待此Spec的内容被阻塞
+- **相关（⟷）**：信息连接
+
+**另见**：[依赖关系](/zh-Hans/docs/guide/usage/cli/project-management#dependencies)
+
+## 高级过滤
+
+### 组合多个标准
+
+```bash
+# 计划中的高优先级后端工作
+lean-spec list --priority high --tag backend --status planned
+
+# 进行中的 API 工作
+lean-spec list --status in-progress --tag api
+
+# 已完成的安全工作
+lean-spec list --status complete --tag security
+```
+
+### 排除已归档
+
+默认情况下，`lean-spec list` 排除已归档的Spec：
+
+```bash
+# 默认：排除已归档
+lean-spec list
+
+# 包括已归档
+lean-spec list --archived
+```
+
+## 常见搜索模式
+
+### 查找要开始的工作
+
+```bash
+# 准备开始的工作是什么？
+lean-spec list --status planned --priority high
+```
+
+### 检查活动工作
+
+```bash
+# 进行中的是什么？
+lean-spec list --status in-progress
+
+# 谁在做什么？
+lean-spec list --status in-progress
+# （如果设置则显示负责人）
+```
+
+### 审查已完成的工作
+
+```bash
+# 最近完成的
+lean-spec list --status complete
+
+# 按标签完成的工作
+lean-spec list --status complete --tag api
+```
+
+### 检查依赖关系
+
+```bash
+# 准备开始的是什么？
+lean-spec list --status planned
+
+# 检查是否满足依赖关系
+lean-spec deps <spec-id>
+# （验证所需Spec已完成）
+```
+
+## 导航提示
+
+**做：**
+- ✅ 使用 `lean-spec search` 进行基于内容的发现
+- ✅ 使用带过滤器的 `lean-spec list` 进行聚焦视图
+- ✅ 使用 `lean-spec deps` 了解关系
+- ✅ 查看[看板与统计](/zh-Hans/docs/guide/usage/cli/project-management#board-stats)获得可视化概览
+
+**不要做：**
+- ❌ 手动 grep specs/ 目录
+- ❌ 依赖文件系统命名（改用 ID/搜索）
+- ❌ 忘记已归档的Spec存在（使用 --archived 包括它们）
+
+## 键盘驱动工作流程
+
+### 快速发现流程
+
+```bash
+# 1. 项目状态如何？
+lean-spec list --status in-progress
+
+# 2. 我应该做什么？
+lean-spec list --status planned --priority high
+
+# 3. 这个Spec是关于什么的？
+lean-spec view <spec-id>
+
+# 4. 开始工作
+lean-spec update <spec-id> --status in-progress
+lean-spec open <spec-id>
+```
+
+### 研究流程
+
+```bash
+# 1. 查找相关Spec
+lean-spec search "authentication"
+
+# 2. 查看有希望的Spec
+lean-spec view 042
+
+# 3. 检查相关工作
+lean-spec deps 042
+
+# 4. 阅读相关Spec
+lean-spec view 041
+```
+
+## 下一步
+
+- [创建和管理Spec](/zh-Hans/docs/guide/usage/cli/creating-managing) - 基本操作
+- [项目管理](/zh-Hans/docs/guide/usage/cli/project-management) - 看板视图和健康跟踪
+- [Spec结构](/zh-Hans/docs/guide/usage/spec-structure) - 了解Spec解剖
+
+---
+
+**参考**：[CLI 文档](/zh-Hans/docs/reference/cli)了解完整的命令选项

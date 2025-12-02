@@ -1,0 +1,324 @@
+---
+title: Large Project with Multiple Features
+sidebar_position: 4
+description: Master project management tools for handling complex projects with dependencies, team coordination, and multiple features
+---
+
+# Large Project with Multiple Features
+
+As projects grow beyond a handful of specs, you need better tools to maintain visibility and coordinate work. Learn the essential project management commands for working at scale.
+
+**Time**: 15 minutes  
+**Outcome**: Master project management tools for large codebases
+
+:::tip For Advanced Users
+This tutorial assumes you're comfortable with basic LeanSpec workflows. If you're new, start with [Your First Spec with AI](./first-spec-with-ai).
+:::
+
+## Real-World Example
+
+Want to see these tools in action? Check out the **[LeanSpec project itself](https://web.lean-spec.dev)**—a live example with 100+ specs showing real dependencies, numbering conventions, and project organization.
+
+:::tip Try It Yourself
+For the best learning experience, clone the LeanSpec repo locally and explore in visual mode:
+
+```bash
+git clone https://github.com/codervisor/lean-spec.git
+cd lean-spec
+npx @leanspec/cli ui
+```
+
+This gives you interactive access to the dependency graph, filtering, and all PM tools.
+:::
+
+Throughout this tutorial, we'll reference actual specs from the LeanSpec codebase to show how these patterns work in practice.
+
+## Essential PM Tools
+
+LeanSpec provides five key tools for managing large projects:
+
+1. **`lean-spec board`** - Kanban view of project status
+2. **`lean-spec deps <spec>`** - Dependency analysis
+3. **`lean-spec stats`** - Project health metrics
+4. **`lean-spec list --tags <tags>`** - Filter by team/feature
+5. **`lean-spec search <query>`** - Semantic search across specs
+
+Let's explore each one.
+
+## 1. Board View - Project Overview
+
+The board gives you instant visibility into what's happening across your entire project:
+
+```bash
+lean-spec board
+```
+
+Shows all specs organized by status columns: **Planned** → **In Progress** → **Complete** → **Archived**
+
+**Example from LeanSpec project:**
+- Planned: 15 specs (new features, enhancements)
+- In Progress: 0 specs (nothing actively being worked on)
+- Complete: 64 specs (shipped features)
+- Archived: 0 specs
+
+The board also shows project health metrics:
+- Completion rate
+- Number of blocked specs (waiting on dependencies)
+- Recent activity
+
+**Use when:** Starting your day, sprint planning, standup meetings
+
+**Pro tip:** Specs with unmet `depends_on` relationships are flagged as "blocked"
+
+## 2. Dependency Analysis
+
+Understand how specs relate before making changes:
+
+```bash
+lean-spec deps <spec> --mode complete
+```
+
+Shows three types of relationships:
+- **Dependencies** (`depends_on`): What this spec needs before starting
+- **Dependents** (`required_by`): What specs need this one
+- **Related**: Contextually connected specs
+
+**Real example from LeanSpec:**
+
+```bash
+lean-spec deps 114  # Example Projects Scaffold
+```
+
+Shows:
+- **Related to**: 113 (Tutorial Simplification)
+- Both specs work together to improve the tutorial experience
+
+### Impact Analysis
+
+Before refactoring, check the blast radius:
+
+```bash
+lean-spec deps <spec> --mode impact
+```
+
+Shows:
+- Direct dependents (specs that directly depend on this)
+- Transitive dependents (specs affected downstream)
+- Total impact count
+
+**Use when:** Planning refactors, breaking changes, architectural decisions
+
+**Pro tip:** `--mode upstream` shows only dependencies, `--mode downstream` shows only dependents
+
+## 3. Project Statistics
+
+Get health metrics for your entire project:
+
+```bash
+lean-spec stats
+```
+
+Shows:
+- **Status distribution**: How many specs in each state
+- **Priority breakdown**: Critical vs. nice-to-have work
+- **Top tags**: Most common categories
+- **Recent activity**: Latest spec updates
+
+**Use when:** Sprint reviews, quarterly planning, tracking velocity
+
+**Watch for these red flags:**
+- Too many "planned" specs (nothing shipping)
+- Too many "in-progress" specs (work not completing)
+- No recent activity (project stagnant)
+
+## 4. Filtering and Organization
+
+### By Tags
+
+Organize specs by team, feature area, or technology:
+
+```bash
+# See all specs for a team
+lean-spec list --tags team-frontend
+
+# See all specs for a feature area
+lean-spec list --tags documentation
+
+# See all specs for a milestone
+lean-spec list --tags v0.3.0
+```
+
+**Real LeanSpec tags:**
+- `web`, `cli`, `mcp`, `docs` - Component areas
+- `ux`, `dx`, `performance` - Quality attributes
+- `v0.2.0`, `v0.3.0` - Release milestones
+
+### By Priority
+
+Focus on critical work:
+
+```bash
+lean-spec list --priority critical
+lean-spec list --priority high
+```
+
+### By Status
+
+Track work in specific states:
+
+```bash
+lean-spec list --status planned      # Ready to start
+lean-spec list --status in-progress  # Currently active
+lean-spec list --status complete     # Shipped
+```
+
+## 5. Semantic Search
+
+Find specs by content, not just name:
+
+```bash
+lean-spec search "authentication"
+lean-spec search "performance optimization"
+lean-spec search "dependency graph"
+```
+
+Search uses semantic matching—it understands context and finds relevant specs even without exact keywords.
+
+**Use when:** Looking for similar patterns, finding related work, discovering existing solutions
+
+## Organization Patterns
+
+### Numbering Conventions
+
+LeanSpec uses number ranges to group related work:
+
+- **010-029**: Project setup and tooling
+- **040-059**: Core features and workflows  
+- **060-079**: Advanced features and integrations
+- **080-099**: Infrastructure and architecture
+- **100+**: Ongoing improvements and polish
+
+**Benefits:**
+- See feature area at a glance
+- Easy to insert new specs in logical places
+- Maintains chronological order within areas
+
+### Tagging Strategy
+
+Effective tags organize work across multiple dimensions:
+
+```bash
+# Component tags
+web, cli, mcp, docs
+
+# Quality attribute tags
+ux, dx, performance, security
+
+# Release milestone tags
+v0.2.0, v0.3.0, v0.4.0
+
+# Team/ownership tags (if multi-team)
+team-frontend, team-backend, team-infra
+```
+
+**Pro tip:** Keep tags consistent across your project. Document your tagging conventions in your README.
+
+## Working with Dependencies
+
+### Creating Dependencies
+
+Link specs when one blocks another:
+
+```bash
+# Spec B depends on Spec A completing first
+lean-spec link B --depends-on A
+
+# Spec C depends on both A and B
+lean-spec link C --depends-on A,B
+```
+
+### Creating Soft References
+
+Link related specs without blocking:
+
+```bash
+# Specs that share context but don't block each other
+lean-spec link A --related B,C
+```
+
+**Key difference:** `depends_on` blocks work (hard dependency), `related` provides context (soft reference)
+
+### Removing Links
+
+Clean up outdated relationships:
+
+```bash
+lean-spec unlink A --depends-on B    # Remove dependency
+lean-spec unlink A --related C       # Remove soft reference
+```
+
+## Live Example: LeanSpec Web UI
+
+See all these tools in action at **[web.lean-spec.dev](https://web.lean-spec.dev)**—the LeanSpec project's own spec dashboard.
+
+You'll see:
+- 100+ specs organized by status
+- Real dependency networks (e.g., spec 114 depends on 113)
+- Actual tagging patterns (`docs`, `cli`, `mcp`, `web`)
+- Priority distributions across the project
+- How numbering conventions work in practice
+
+This is exactly what your project dashboard can look like.
+
+## Tips for Success
+
+### Start Simple
+
+Don't over-organize from day one:
+1. Start with basic status tracking
+2. Add priority when you need to focus work
+3. Add tags when you need better filtering
+4. Add dependencies when work starts blocking
+
+### Regular Maintenance
+
+Keep your specs healthy:
+- **Daily:** Update status for active work
+- **Weekly:** Review board in standup/planning
+- **Monthly:** Check for stale specs, update priorities
+- **Quarterly:** Archive completed work, audit tags
+
+### Communication Patterns
+
+Use specs for async coordination:
+- Check `lean-spec deps` before starting work
+- Run `lean-spec board` in standups
+- Share `lean-spec stats` in sprint reviews
+- Use `lean-spec search` to find context before asking
+
+## What You Learned
+
+You now know how to:
+
+✅ Use `lean-spec board` for project visibility  
+✅ Analyze dependencies with `lean-spec deps`  
+✅ Track health with `lean-spec stats`  
+✅ Filter specs by tags, priority, and status  
+✅ Search semantically with `lean-spec search`  
+✅ Organize specs with numbering and tagging conventions  
+✅ Manage dependencies without creating bottlenecks  
+
+## Next Steps
+
+**Apply to your project:**
+- Run `lean-spec board` in your next standup
+- Set up a tagging convention in your README
+- Check dependencies before starting new work
+- Review `lean-spec stats` monthly for health checks
+
+**Explore advanced features:**
+- [Custom Fields](/docs/guide/usage/advanced-features/custom-fields) - Add project-specific metadata
+- [Templates](/docs/guide/usage/advanced-features/templates) - Standardize spec structure
+- [Validation](/docs/guide/usage/cli/validation) - Enforce quality standards
+
+**Need help?** Check [FAQ](/docs/faq) or [file an issue](https://github.com/codervisor/lean-spec/issues).

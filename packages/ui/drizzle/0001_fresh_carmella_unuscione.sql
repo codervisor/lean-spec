@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `unique_spec_number` ON `specs` (`project_id`,`spec_number`);

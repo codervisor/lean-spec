@@ -1,0 +1,483 @@
+---
+id: 'migration'
+title: '迁移到 LeanSpec'
+sidebar_position: 3
+---
+
+# 迁移到 LeanSpec
+
+本指南帮助你从现有的 SDD 工具和文档系统迁移到 LeanSpec。
+
+## 快速概述
+
+LeanSpec 迁移主要关注两个方面：
+
+1. **元数据/Frontmatter**（主要）- 使用 `lean-spec backfill` 从 git 历史中提取
+2. **文件夹组织**（因工具而异）- 取决于你的源工具
+
+**好消息**：LeanSpec 对内容格式很灵活——你可以保留现有的写作风格！
+
+## 按源工具分类的迁移
+
+### OpenSpec
+
+**源**：`openspec/specs/` + `openspec/changes/archive/`
+
+OpenSpec 是目前最广泛采用的 SDD 工具。迁移需要合并单独的目录。
+
+**使用 `--auto` 快速迁移**：
+```bash
+# 一键自动迁移
+lean-spec migrate ./openspec --auto
+
+# 先预览
+lean-spec migrate ./openspec --auto --dry-run
+```
+
+**手动迁移步骤**：
+```bash
+# 1. 复制并合并目录
+cp -r openspec/specs/* specs/
+cp -r openspec/changes/archive/* specs/
+
+# 2. 按顺序重新编号 Spec
+mv specs/auth specs/001-user-authentication
+mv specs/api-gateway specs/002-api-gateway
+
+# 3. 重命名 spec.md → README.md
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 4. 从 git 历史生成 frontmatter
+lean-spec backfill --assignee --all
+
+# 5. 更新 AGENTS.md 命令
+sed -i 's/openspec/lean-spec/g' AGENTS.md
+
+# 6. 验证
+lean-spec validate
+lean-spec board
+```
+
+**时间**：20 个 Spec 约 15-30 分钟（使用 `--auto` 则小于 1 分钟）
+
+### GitHub Spec Kit
+
+**源**：`.specify/specs/`
+
+**已经兼容！** spec-kit 使用相同的文件夹结构（`###-name/`）。
+
+**使用 `--auto` 快速迁移**：
+```bash
+lean-spec migrate ./.specify/specs --auto
+```
+
+**手动迁移步骤**：
+```bash
+# 1. 从 .specify/specs 移动到 specs/
+mv .specify/specs specs/
+
+# 2. 重命名 spec.md → README.md
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 3. 从 git 历史生成 frontmatter
+lean-spec backfill --assignee --all
+
+# 4. 验证
+lean-spec validate
+lean-spec board
+```
+
+**时间**：20 个 Spec 约 5 分钟（使用 `--auto` 则小于 30 秒）
+
+### AWS Kiro
+
+**源**：`.kiro/specs/`
+
+Kiro 使用类似 spec-kit 的结构，带有一些 AWS 特定的约定。
+
+**使用 `--auto` 快速迁移**：
+```bash
+lean-spec migrate ./.kiro/specs --auto
+```
+
+**手动迁移步骤**：
+```bash
+# 1. 从 .kiro/specs 移动到 specs/
+mv .kiro/specs specs/
+
+# 2. 重命名任何 spec.md 文件为 README.md
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 3. 从 git 历史生成 frontmatter
+lean-spec backfill --assignee --all
+
+# 4. 验证
+lean-spec validate
+lean-spec board
+```
+
+**时间**：20 个 Spec 约 5 分钟
+
+### ADR/RFC（通用 Markdown）
+
+**源**：`docs/adr/`、`docs/rfc/` 或类似目录
+
+对于以扁平 markdown 文件存储的架构决策记录或 RFC：
+
+```bash
+# 自动迁移处理通用 markdown
+lean-spec migrate ./docs/adr --auto
+
+# 或手动：每个 ADR 变成一个 spec 文件夹
+# 0001-use-typescript.md → specs/001-use-typescript/README.md
+```
+
+## `lean-spec backfill` 命令
+
+这是你从 git 历史生成 frontmatter 的主要迁移工具。
+
+### 基本用法
+
+```bash
+# 从 git 历史提取时间戳
+lean-spec backfill
+
+# 包含来自 git 作者的负责人
+lean-spec backfill --assignee
+
+# 提取所有可用元数据
+lean-spec backfill --all
+
+# 预览更改而不应用
+lean-spec backfill --dry-run
+```
+
+### 它提取什么
+
+**从 git 历史**：
+- `created_at` - 首次提交时间戳
+- `updated_at` - 最后提交时间戳
+- `completed_at` - 状态更改为 'complete' 的时间
+- `assignee` - 首次提交作者（使用 `--assignee`）
+- `transitions` - 完整状态更改历史（使用 `--transitions`）
+
+**之后手动设置**：
+- `priority` - 默认为 'medium'，使用 `lean-spec update --priority` 调整
+- `tags` - 默认从文件夹名称获取，使用 `lean-spec update --tags` 调整
+- `status` - 从内容/历史推断，必要时调整
+
+### 示例输出
+
+```yaml
+---
+status: complete
+created_at: '2024-03-15T10:23:45Z'
+updated_at: '2024-11-08T14:30:12Z'
+completed_at: '2024-03-20T16:45:00Z'
+assignee: Alice Chen
+priority: high
+tags:
+  - product
+  - mvp
+---
+```
+
+## 使用 `lean-spec migrate`
+
+对于更复杂的迁移或 AI 辅助工作流，使用 `lean-spec migrate` 命令。
+
+### 自动模式（推荐）✅
+
+一键式迁移，自动检测格式、重构和回填：
+
+```bash
+# 自动迁移 - 检测格式并处理所有事情
+lean-spec migrate ./openspec --auto
+
+# 预览而不做更改
+lean-spec migrate ./openspec --auto --dry-run
+```
+
+**`--auto` 做什么**：
+1. 自动检测源格式（spec-kit、OpenSpec 或通用 markdown）
+2. 一次性批量重构文件
+3. 运行 backfill 填充时间戳和负责人
+4. 最后验证所有 Spec
+
+这是大多数迁移的推荐方式。
+
+### 手动模式（默认）
+
+为任何 AI 工具输出迁移说明：
+
+```bash
+lean-spec migrate ./openspec
+```
+
+这会生成一个提示，你可以复制到 ChatGPT、Claude、Copilot 或任何 AI 助手：
+
+```
+你正在帮助将 Spec 文档迁移到 LeanSpec 格式。
+
+源：./openspec（找到 23 个文档）
+
+你的任务：
+1. 分析源文档
+2. 提取元数据（标题、状态、日期、优先级）
+3. 对于每个文档：
+   - 运行：lean-spec create <name>
+   - 运行：lean-spec update <name> --status <status>
+   - 运行：lean-spec update <name> --priority <priority>
+   - 编辑内容以匹配 LeanSpec 结构
+4. 保留决策理由和关系
+5. 保持 Spec 在 400 行以下
+
+现在执行迁移命令。
+```
+
+### AI 辅助模式
+
+使用 AI CLI 工具进行自动迁移：
+
+```bash
+# 使用 GitHub Copilot CLI
+lean-spec migrate ./openspec --with copilot
+
+# 使用 Claude CLI
+lean-spec migrate ./openspec --with claude
+
+# 使用 Gemini CLI
+lean-spec migrate ./openspec --with gemini
+```
+
+**先决条件**：
+- 必须安装 AI CLI 工具
+- 工具必须经过身份验证/配置
+
+**选项**：
+```bash
+# 预览而不更改
+lean-spec migrate ./openspec --dry-run
+
+# 分批处理
+lean-spec migrate ./openspec --batch-size 10
+
+# 迁移后自动运行 backfill
+lean-spec migrate ./openspec --backfill
+```
+
+## 迁移检查清单
+
+使用此检查清单确保完整迁移：
+
+### 迁移前
+
+- [ ] 备份现有文档
+- [ ] 审查源文件夹结构
+- [ ] 检查 git 历史是否可用（用于 `backfill`）
+- [ ] 安装 LeanSpec：`npm install -g lean-spec`
+- [ ] 初始化 LeanSpec：`lean-spec init`
+
+### 迁移期间
+
+- [ ] 重组文件夹（如果你的源工具需要）
+- [ ] 将主 Spec 文件重命名为 `README.md`
+- [ ] 运行 `lean-spec backfill --assignee --all`
+- [ ] 必要时手动调整优先级
+- [ ] 必要时手动调整标签
+- [ ] 验证状态值是否正确
+
+### 迁移后
+
+- [ ] 运行 `lean-spec validate` 检查问题
+- [ ] 运行 `lean-spec board` 可视化迁移
+- [ ] 测试 Spec 发现：`lean-spec list`、`lean-spec search`
+- [ ] 更新任何损坏的关系（`depends_on`、`related`）
+- [ ] 迁移系统提示（AGENTS.md、.cursorrules）
+
+## 迁移系统提示
+
+不要忘记迁移 AI 指导文件！
+
+### 常见源文件
+
+```
+# 源工具通常有：
+openspec/AGENTS.md
+.cursorrules
+.github/copilot-instructions.md
+CLAUDE.md
+```
+
+### LeanSpec 使用
+
+```
+AGENTS.md（在项目根目录）
+```
+
+### 迁移策略
+
+1. **审查源工具的现有 AI 指导**
+2. **保留项目特定的约定**
+3. **与 LeanSpec AGENTS.md 合并**（由 `lean-spec init` 创建）
+4. **更新命令**：`openspec` → `lean-spec` 等
+5. **保持团队工作流程完整**
+
+这确保 AI 代理在过渡期间保持连续性。
+
+## 常见迁移场景
+
+### 场景 1：spec-kit 每个功能有多个文件
+
+**源**：
+```
+.specify/specs/
+└── 001-task-management/
+    ├── spec.md
+    ├── plan.md
+    ├── tasks.md
+    └── contracts/
+        └── api.yml
+```
+
+**选项**：
+
+**选项 A：保留子 Spec**（推荐用于复杂功能）
+```bash
+mv .specify/specs specs/
+mv specs/001-task-management/spec.md specs/001-task-management/README.md
+# 保持 plan.md、tasks.md、contracts/ 不变
+lean-spec backfill --assignee --all
+```
+
+**选项 B：合并**（用于更简单的功能）
+```bash
+# 手动将 spec.md + plan.md 合并到 README.md
+# 然后运行 backfill
+lean-spec backfill --assignee --all
+```
+
+### 场景 2：OpenSpec 使用单独的目录
+
+**源**：
+```
+openspec/
+├── specs/auth/spec.md
+└── changes/archive/2024-11-15-oauth/
+```
+
+**迁移**：
+```bash
+# 1. 合并目录
+cp -r openspec/specs/* specs/
+cp -r openspec/changes/archive/* specs/
+
+# 2. 重新编号和重命名
+mv specs/auth specs/001-authentication
+find specs -name 'spec.md' -execdir mv {} README.md \;
+
+# 3. Backfill 元数据
+lean-spec backfill --assignee --all
+
+# 4. 更新 AGENTS.md 命令
+sed -i 's/openspec/lean-spec/g' AGENTS.md
+```
+
+## 从外部系统迁移
+
+对于 Linear、Jira、Confluence 或 Notion 等系统：
+
+### 先导出
+
+1. **从系统导出为 markdown 或 JSON**
+2. **将导出内容放在目录中**（例如，`./exports/`）
+3. **对导出的文件运行迁移**
+
+```bash
+# 从 Linear、Jira 等导出到 ./exports/
+lean-spec migrate ./exports/
+```
+
+### 为什么不直接 API 集成？
+
+LeanSpec 有意不与外部系统 API 集成，因为：
+
+- **安全性**：不需要凭证管理
+- **简单性**：无需身份验证、API 密钥、速率限制
+- **维护性**：外部 API 会更改、损坏，需要更新
+- **隐私**：你的数据保持本地
+
+导出工作流已经建立完善，让你保持控制。
+
+## 故障排除
+
+### 问题：没有可用的 git 历史
+
+**解决方案**：手动设置时间戳或使用当前日期
+```bash
+# backfill 将为没有 git 历史的 Spec使用当前时间戳
+lean-spec backfill --assignee --all
+
+# 或手动设置
+lean-spec update 001 --priority high
+```
+
+### 问题：重复的序列号
+
+**解决方案**：使用 `lean-spec check` 检测冲突
+```bash
+lean-spec check
+# 通过手动重命名文件夹修复冲突
+```
+
+### 问题：内容格式与模板不匹配
+
+**好消息**：LeanSpec 很灵活！保留你现有的格式。
+
+你不需要重写内容来匹配特定结构。LeanSpec 的首要原则是"意图重于实现"——只要 Spec 清晰地传达意图，确切的格式并不重要。
+
+### 问题：迁移后关系损坏
+
+**解决方案**：手动更新 `depends_on` 和 `related` 字段
+```bash
+# 为每个 Spec 编辑 README.md 中的 frontmatter
+---
+depends_on: [002, 005]
+related: [010, 012]
+---
+
+# 验证关系
+lean-spec deps 001
+```
+
+## 迁移时间估计
+
+基于实际迁移：
+
+| 源工具 | Spec 数 | 时间（手动） | 时间（--auto） | 复杂度 |
+|-------------|-------|--------------|----------------|------------|
+| OpenSpec | 20 | 20 分钟 | < 1 分钟 | ⚠️ 中等 |
+| OpenSpec | 100 | 60 分钟 | < 1 分钟 | ⚠️ 中等 |
+| spec-kit | 20 | 5 分钟 | < 30 秒 | ✅ 简单 |
+| spec-kit | 100 | 15 分钟 | < 30 秒 | ✅ 简单 |
+| Kiro | 20 | 5 分钟 | < 30 秒 | ✅ 简单 |
+| ADR/RFC | 20 | 10 分钟 | < 30 秒 | ✅ 简单 |
+
+**注意**：时间包括 backfill 和验证。使用 `--auto` 获得最快迁移！
+
+## 获取帮助
+
+需要迁移支持？
+
+- **GitHub Issues**：[报告迁移问题](https://github.com/codervisor/lean-spec/issues)
+- **示例**：查看 [spec 063](https://web.lean-spec.dev/specs/063-migration-from-existing-tools) 获取详细示例
+- **命令帮助**：运行 `lean-spec migrate --help` 或 `lean-spec backfill --help`
+
+## 下一步
+
+迁移后：
+
+1. **学习工作流**：[创建和管理 Spec](/docs/guide/usage/cli/creating-managing)
+2. **设置 AI 集成**：[MCP 集成](/docs/guide/usage/mcp-integration)
+3. **理解原则**：[第一性原理](/docs/advanced/first-principles)
+4. **为团队配置**：[配置参考](/docs/reference/config)
