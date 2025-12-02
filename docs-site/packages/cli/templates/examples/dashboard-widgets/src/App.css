@@ -1,0 +1,20 @@
+.app {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 30px;
+}
+
+header h1 {
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}

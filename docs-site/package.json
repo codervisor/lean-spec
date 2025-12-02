@@ -1,0 +1,57 @@
+{
+  "name": "lean-spec-monorepo",
+  "version": "0.2.8",
+  "private": true,
+  "type": "module",
+  "description": "Lightweight spec methodology for AI-powered development (monorepo root)",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "build": "turbo run build",
+    "sync-versions": "tsx scripts/sync-versions.ts",
+    "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/core",
+    "dev:web": "turbo run dev --filter=@leanspec/ui",
+    "dev:cli": "turbo run dev --filter=lean-spec",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "test": "turbo run test:run",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "prepare-publish": "tsx scripts/prepare-publish.ts",
+    "restore-packages": "tsx scripts/restore-packages.ts",
+    "pre-release": "pnpm sync-versions && pnpm typecheck && pnpm test:run && pnpm build && node bin/lean-spec.js validate --warnings-only",
+    "docs:dev": "pnpm --dir docs-site start",
+    "docs:build": "pnpm --dir docs-site build",
+    "docs:serve": "pnpm --dir docs-site serve"
+  },
+  "keywords": [
+    "spec",
+    "specification",
+    "documentation",
+    "ai",
+    "agent",
+    "sdd"
+  ],
+  "author": "Marvin Zhang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "homepage": "https://lean-spec.dev",
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.6",
+    "@vitest/ui": "^4.0.6",
+    "next": "16.0.1",
+    "prettier": "^3.1.1",
+    "tsx": "^4.19.2",
+    "turbo": "^2.6.1",
+    "vitest": "^4.0.6"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
