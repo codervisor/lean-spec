@@ -1,0 +1,251 @@
+---
+id: 'finding-specs'
+title: 'Finding Specs'
+sidebar_position: 2
+---
+# Finding Specs
+
+Learn how to discover and navigate specs using search, list commands, and the MCP server for AI agent access.
+
+## Quick Discovery
+
+### List All Specs
+
+```bash
+# Show all specs
+lean-spec list
+```
+
+Output:
+```
+📋 Spec List
+
+🟡 ✅ 107-ui-ux-refinements #ui #ux #lessons-learned
+🟡 ✅ 106-ui-package-documentation
+🟡 ⏳ 105-docs-site-enhancements
+🟠 ✅ 104-ui-packaging-fix #packaging #bug-fix
+```
+
+### Filter by Status
+
+```bash
+# Show only in-progress specs
+lean-spec list --status in-progress
+
+# Show planned specs
+lean-spec list --status planned
+
+# Show completed specs
+lean-spec list --status complete
+```
+
+### Filter by Tag
+
+```bash
+# Show specs with specific tag
+lean-spec list --tag api
+
+# Show specs with multiple tags
+lean-spec list --tag api --tag backend
+```
+
+### Filter by Priority
+
+```bash
+# High priority specs
+lean-spec list --priority high
+
+# Low priority specs
+lean-spec list --priority low
+```
+
+## Search by Content
+
+### Basic Search
+
+```bash
+# Search all spec content
+lean-spec search "authentication"
+```
+
+Searches across:
+- Spec titles and descriptions
+- All README.md content
+- Sub-spec files (DESIGN.md, TESTING.md, etc.)
+- Frontmatter fields
+
+### Search with Filters
+
+```bash
+# Search in specific status
+lean-spec search "API" --status in-progress
+
+# Search with tag filter
+lean-spec search "cache" --tag performance
+
+# Combine multiple filters
+lean-spec search "refactor" --status planned --tag backend --priority high
+```
+
+### Case-Insensitive Search
+
+Search is case-insensitive by default:
+```bash
+lean-spec search "api"      # Matches "API", "api", "Api"
+lean-spec search "JWT"      # Matches "jwt", "JWT", "Jwt"
+```
+
+## Dependency Navigation
+
+```bash
+# Show dependencies for a spec
+lean-spec deps 042
+```
+
+Output:
+```
+Dependency Graph for 042-auth-refactor
+
+Depends On:
+  → 041-jwt-library [complete]       # Required to start
+
+Required By:
+  ← 043-api-redesign [planned]       # Blocked until 042 done
+  ← 044-dashboard [planned]
+
+Related Specs:
+  ⟷ 045-security-audit [in-progress]  # Coordinated work
+```
+
+Navigate relationships:
+- **Depends On (→)**: What this spec requires before it can start
+- **Required By (←)**: What's blocked waiting for this
+- **Related (⟷)**: Informational connections
+
+**See also**: [Dependencies](/docs/guide/usage/cli/project-management#dependencies)
+
+## Advanced Filtering
+
+### Combine Multiple Criteria
+
+```bash
+# High-priority backend work that's planned
+lean-spec list --priority high --tag backend --status planned
+
+# In-progress API work
+lean-spec list --status in-progress --tag api
+
+# Completed security work
+lean-spec list --status complete --tag security
+```
+
+### Exclude Archived
+
+By default, archived specs are excluded from `lean-spec list`:
+
+```bash
+# Default: excludes archived
+lean-spec list
+
+# Include archived
+lean-spec list --archived
+```
+
+## Common Search Patterns
+
+### Find Work to Start
+
+```bash
+# What's ready to work on?
+lean-spec list --status planned --priority high
+```
+
+### Check Active Work
+
+```bash
+# What's in progress?
+lean-spec list --status in-progress
+
+# Who's working on what?
+lean-spec list --status in-progress
+# (shows assignee if set)
+```
+
+### Review Completed Work
+
+```bash
+# Recently completed
+lean-spec list --status complete
+
+# Completed work by tag
+lean-spec list --status complete --tag api
+```
+
+### Check Dependencies
+
+```bash
+# What's ready to start?
+lean-spec list --status planned
+
+# Check if dependencies are met
+lean-spec deps <spec-id>
+# (verify required specs are complete)
+```
+
+## Navigation Tips
+
+**DO:**
+- ✅ Use `lean-spec search` for content-based discovery
+- ✅ Use `lean-spec list` with filters for focused views
+- ✅ Use `lean-spec deps` to understand relationships
+- ✅ Check [Board & Stats](/docs/guide/usage/cli/project-management#board-stats) for visual overview
+
+**DON'T:**
+- ❌ Manually grep through specs/ directory
+- ❌ Rely on filesystem naming (use IDs/search instead)
+- ❌ Forget archived specs exist (use --archived to include them)
+
+## Keyboard-Driven Workflows
+
+### Quick Discovery Flow
+
+```bash
+# 1. What's the project state?
+lean-spec list --status in-progress
+
+# 2. What should I work on?
+lean-spec list --status planned --priority high
+
+# 3. What's this spec about?
+lean-spec view <spec-id>
+
+# 4. Start working
+lean-spec update <spec-id> --status in-progress
+lean-spec open <spec-id>
+```
+
+### Research Flow
+
+```bash
+# 1. Find relevant specs
+lean-spec search "authentication"
+
+# 2. View promising spec
+lean-spec view 042
+
+# 3. Check related work
+lean-spec deps 042
+
+# 4. Read related spec
+lean-spec view 041
+```
+
+## Next Steps
+
+- [Creating & Managing Specs](/docs/guide/usage/cli/creating-managing) - Basic operations
+- [Project Management](/docs/guide/usage/cli/project-management) - Board views and health tracking
+- [Spec Structure](/docs/guide/usage/spec-structure) - Understanding spec anatomy
+
+---
+
+**Reference**: [CLI Documentation](/docs/reference/cli) for complete command options

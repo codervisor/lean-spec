@@ -1,0 +1,146 @@
+---
+id: 'frontmatter'
+title: 'frontmatter字段'
+sidebar_position: 3
+---
+# frontmatter参考
+
+LeanSpec frontmatter字段的完整参考。
+
+本页提供所有可用字段的快速参考。有关使用示例和最佳实践，请参见主frontmatter文档。
+
+## 必需字段
+
+### status
+
+**类型：** `string`  
+**值：** `planned` | `in-progress` | `complete` | `archived`  
+**描述：** Spec的当前状态
+
+**图标：**
+- 📅 计划中
+- ⏳ 进行中
+- ✅ 已完成
+- 📦 已归档
+
+### created
+
+**类型：** `string`  
+**格式：** `YYYY-MM-DD`  
+**描述：** Spec创建的日期
+
+由 `lean-spec create` 自动填充。
+
+## 可选字段
+
+### tags
+
+**类型：** `array`  
+**描述：** 用于组织和过滤的类别
+
+**示例：**
+```yaml
+tags: [api, security, mvp]
+```
+
+### priority
+
+**类型：** `string`  
+**值：** `low` | `medium` | `high` | `critical`  
+**描述：** 重要性级别
+
+### related
+
+**类型：** `array`  
+**描述：** 相关Spec（双向软引用）
+
+此处列出的Spec在 `lean-spec deps` 中双向显示。如果Spec A 有 `related: [B]`，A 和 B 都将显示关系。
+
+**示例：**
+```yaml
+related: [042-mcp-error-handling, 037-docs-overhaul]
+```
+
+**符号：** ⟷（双向箭头）
+
+**使用时机：**
+- Spec涵盖相关主题或功能
+- 工作是协调的但不阻塞
+- 上下文有帮助但不是必需的
+
+### depends_on
+
+**类型：** `array`  
+**描述：** 硬依赖（方向阻塞）
+
+在依赖完成之前Spec无法开始。在 `lean-spec deps` 中方向显示。
+
+**示例：**
+```yaml
+depends_on: [018-spec-validation]
+```
+
+**符号：** →（依赖于）或 ←（阻塞）
+
+**使用时机：**
+- Spec真正无法在另一个完成之前开始
+- 有明确的依赖链
+- 工作必须按特定顺序完成
+
+### completed
+
+**类型：** `string`  
+**格式：** `YYYY-MM-DD`  
+**描述：** 工作完成的日期
+
+当状态设置为 `complete` 时自动添加。
+
+## 自定义字段
+
+在 `.lean-spec/config.json` 中定义：
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "assignee": "string",
+      "reviewer": "string",
+      "epic": "string",
+      "sprint": "number",
+      "estimate": "string",
+      "issue": "string"
+    }
+  }
+}
+```
+
+**支持的类型：**
+- `string` - 文本值
+- `number` - 数字值
+- `boolean` - true/false
+- `array` - 列表
+
+## 完整示例
+
+```yaml
+---
+status: in-progress
+created: 2025-11-02
+completed: 
+tags: [api, authentication, security]
+priority: high
+assignee: alice
+reviewer: bob
+epic: PROJ-123
+sprint: 42
+estimate: large
+needs_security_review: true
+---
+```
+
+---
+
+**另请参见：**
+- [frontmatter指南](/zh-Hans/docs/guide/usage/advanced-features/frontmatter) - 使用示例
+- [自定义字段](/zh-Hans/docs/guide/usage/advanced-features/custom-fields) - 定义自定义字段
+- [CLI 命令](/zh-Hans/docs/reference/cli) - 通过 CLI 管理frontmatter

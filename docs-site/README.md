@@ -1,120 +1,76 @@
-# LeanSpec
+# Website
 
-<p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/logo-with-bg.svg" alt="LeanSpec Logo" width="120" height="120">
-</p>
+This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-<p align="center">
-  <a href="https://github.com/codervisor/lean-spec/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codervisor/lean-spec/ci.yml?branch=main" alt="CI Status"></a>
-  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/v/lean-spec.svg" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/lean-spec"><img src="https://img.shields.io/npm/dm/lean-spec.svg" alt="npm downloads"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-</p>
-
-<p align="center">
-  <a href="https://www.lean-spec.dev"><strong>Documentation</strong></a>
-  •
-  <a href="https://www.lean-spec.dev/zh-Hans/docs/guide/"><strong>中文文档</strong></a>
-  •
-  <a href="https://web.lean-spec.dev"><strong>Live Examples</strong></a>
-  •
-  <a href="https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai"><strong>Tutorials</strong></a>
-</p>
-
----
-
-**Ship faster with higher quality. Lean specs that both humans and AI understand.**
-
-LeanSpec brings agile principles to SDD (Spec-Driven Development)—small, focused documents (<2,000 tokens) that keep you and your AI aligned.
-
----
-
-## Quick Start
+## Installation
 
 ```bash
-# Try with a tutorial project
-npx lean-spec init --example dark-theme
-cd dark-theme && npm install && npm start
-
-# Or add to your existing project
-npm install -g lean-spec && lean-spec init
+pnpm install
 ```
 
-**Visualize your project:**
+## Local Development
 
 ```bash
-lean-spec board    # Kanban view
-lean-spec stats    # Project metrics
-lean-spec ui       # Web UI at localhost:3000
+pnpm start
 ```
 
-**Next:** [Your First Spec with AI](https://www.lean-spec.dev/docs/tutorials/first-spec-with-ai) (10 min tutorial)
+This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
 
----
+## Build
 
-## Why LeanSpec?
-
-**High velocity + High quality.** Other SDD frameworks add process overhead (multi-step workflows, rigid templates). Vibe coding is fast but chaotic (no shared understanding). LeanSpec hits the sweet spot:
-
-- **Fast iteration** - Living documents that grow with your code
-- **AI performance** - Small specs = better AI output (context rot is real)
-- **Always current** - Lightweight enough that you actually update them
-
-📖 [Compare with Spec Kit, OpenSpec, Kiro →](https://www.lean-spec.dev/docs/guide/why-leanspec)
-
----
-
-## AI Integration
-
-Works with any AI coding assistant via MCP or CLI:
-
-```json
-{
-  "mcpServers": {
-    "lean-spec": { "command": "npx", "args": ["@leanspec/mcp"] }
-  }
-}
+```bash
+pnpm build
 ```
 
-**Compatible with:** VS Code Copilot, Cursor, Windsurf, Claude Code, Gemini CLI, and more.
+This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
-📖 [Full AI integration guide →](https://www.lean-spec.dev/docs/guide/usage/ai-coding-workflow)
+## Validation Scripts
 
----
+### Validate MDX Syntax
 
-## Features
+Validates source MDX files in Chinese documentation and blog posts for syntax issues that would cause build errors:
 
-| Feature | Description |
-|---------|-------------|
-| **📊 Kanban Board** | `lean-spec board` - visual project tracking |
-| **🔍 Smart Search** | `lean-spec search` - find specs by content or metadata |
-| **🔗 Dependencies** | Track spec relationships with `depends_on` and `related` |
-| **🎨 Web UI** | `lean-spec ui` - browser-based dashboard |
-| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection |
-| **🤖 AI-Native** | MCP server + CLI for AI assistants |
+```bash
+# Validate all content (docs + blogs) - recommended
+pnpm validate:mdx
 
-<p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
-</p>
+# Or use the script directly with options:
 
----
+# Validate only blogs
+node scripts/validate-mdx-syntax.js --type blog
 
-## Documentation
+# Validate only docs
+node scripts/validate-mdx-syntax.js --type docs
 
-📖 [Full Documentation](https://www.lean-spec.dev) · [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) · [First Principles](https://www.lean-spec.dev/docs/advanced/first-principles) · [FAQ](https://www.lean-spec.dev/docs/faq) · [中文文档](https://www.lean-spec.dev/zh-Hans/)
+# Validate specific file
+node scripts/validate-mdx-syntax.js --type docs --file guide/index.mdx
 
-## Community
+# Verbose output
+node scripts/validate-mdx-syntax.js --verbose
+```
 
-💬 [Discussions](https://github.com/codervisor/lean-spec/discussions) · 🐛 [Issues](https://github.com/codervisor/lean-spec/issues) · 🤝 [Contributing](CONTRIBUTING.md) · 📋 [Changelog](CHANGELOG) · 📄 [LICENSE](LICENSE)
+**Issues detected:**
+- Unescaped angle brackets `<` `>` (use `&lt;` `&gt;` or backticks)
+- Unescaped curly braces `{` `}` (use `\{` `\}` or backticks)
+- Bold formatting spacing in Chinese text
+- Bold text with quotes needing spacing
 
----
+**Fast:** Checks source files directly - no build or browser needed!
 
-### Contact Me | 联系我
+See `agents/documentation-quality-standards.md` for formatting rules.
 
-If you find LeanSpec helpful, feel free to add me on WeChat (note "LeanSpec") to join the discussion group.
+## Deployment
 
-如果您觉得 LeanSpec 对您有帮助，欢迎添加微信（备注 "LeanSpec"）加入交流群。
+Using SSH:
 
-<p align="center">
-  <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/qr-code.png" alt="WeChat Contact | 微信联系" height="280">
-</p>
+```bash
+USE_SSH=true yarn deploy
+```
+
+Not using SSH:
+
+```bash
+GIT_USER=<Your GitHub username> yarn deploy
+```
+
+If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.

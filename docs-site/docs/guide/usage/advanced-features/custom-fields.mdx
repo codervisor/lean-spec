@@ -1,0 +1,418 @@
+---
+id: 'custom-fields'
+title: 'Custom Fields'
+sidebar_position: 9
+---
+# Custom Fields & Variables
+
+LeanSpec supports powerful customization through custom frontmatter fields and template variables.
+
+## Custom Frontmatter Fields
+
+Add project-specific metadata to your specs.
+
+### Defining Custom Fields
+
+Edit `.lean-spec/config.json`:
+
+```json
+{
+  "frontmatter": {
+    "required": ["status", "created"],
+    "optional": ["tags", "priority"],
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "estimate": "string",
+      "reviewer": "string",
+      "issue": "string",
+      "team": "string"
+    }
+  }
+}
+```
+
+### Supported Types
+
+- `string` - Text values
+- `number` - Numeric values (integers or decimals)
+- `boolean` - true/false values
+- `array` - Lists of values
+
+### Using Custom Fields
+
+**When creating specs:**
+```bash
+lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
+```
+
+**When updating specs:**
+```bash
+lean-spec update 001 --field reviewer=alice --field estimate=large
+```
+
+**When filtering:**
+```bash
+lean-spec list --field epic=PROJ-123
+lean-spec list --field sprint=42
+lean-spec search "API" --field team=backend
+```
+
+### Example Configuration
+
+For JIRA/Linear integration:
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "issue": "string",
+      "epic": "string",
+      "story_points": "number"
+    }
+  }
+}
+```
+
+For team workflows:
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "assignee": "string",
+      "reviewer": "string",
+      "team": "string",
+      "estimate": "string"
+    }
+  }
+}
+```
+
+For sprints/iterations:
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "sprint": "number",
+      "quarter": "string",
+      "release": "string"
+    }
+  }
+}
+```
+
+## Template Variables
+
+Use variables in your spec templates for dynamic content.
+
+### Built-in Variables
+
+Available automatically:
+
+- `{name}` - Spec name
+- `{date}` - Creation date (ISO format: YYYY-MM-DD)
+- `{project_name}` - From package.json name field
+- `{author}` - From git config user.name
+- `{git_user}` - Git username
+- `{git_email}` - Git email address
+- `{git_repo}` - Repository name
+
+### Custom Variables
+
+Define in `.lean-spec/config.json`:
+
+```json
+{
+  "variables": {
+    "team": "Platform Engineering",
+    "company": "Acme Corp",
+    "default_reviewer": "alice",
+    "docs_url": "https://docs.acme.com"
+  }
+}
+```
+
+### Using Variables in Templates
+
+Create or edit `.lean-spec/templates/spec-template.md`:
+
+```markdown
+---
+status: planned
+created: {date}
+---
+
+# {name}
+
+**Team**: {team}  
+**Company**: {company}  
+**Author**: {author}  
+**Project**: {project_name}
+
+## Overview
+
+This spec was created on {date} by {author} ({git_email}).
+
+For questions, contact {default_reviewer}.
+
+Documentation: {docs_url}
+
+## Goal
+
+[What are we building and why?]
+```
+
+When you create a spec, all variables are automatically resolved:
+
+```bash
+lean-spec create user-authentication
+```
+
+Results in:
+
+```markdown
+---
+status: planned
+created: 2025-11-02
+---
+
+# user-authentication
+
+**Team**: Platform Engineering  
+**Company**: Acme Corp  
+**Author**: John Doe  
+**Project**: my-app
+
+## Overview
+
+This spec was created on 2025-11-02 by John Doe (john@example.com).
+
+For questions, contact alice.
+
+Documentation: https://docs.acme.com
+```
+
+## Advanced Examples
+
+### Creating Specs with Custom Fields
+
+**Basic custom field usage:**
+```bash
+lean-spec create user-authentication \
+  --field epic=AUTH-2024 \
+  --field sprint=5 \
+  --field estimate=3d \
+  --field reviewer=bob
+```
+
+**With all options:**
+```bash
+lean-spec create payment-integration \
+  --title "Stripe Payment Integration" \
+  --description "Integrate Stripe for subscription payments" \
+  --tags backend,payment,api \
+  --priority high \
+  --assignee alice \
+  --field epic=PAYMENT-2024 \
+  --field sprint=6 \
+  --field estimate=5d \
+  --field jira_id=PROJ-123 \
+  --field points=8
+```
+
+**Updating custom fields:**
+```bash
+# Update custom fields only
+lean-spec update 001-user-authentication \
+  --field sprint=6 \
+  --field estimate=2d
+
+# Update standard and custom fields together
+lean-spec update 001-user-authentication \
+  --status in-progress \
+  --priority high \
+  --field sprint=6
+```
+
+**Filtering by custom fields:**
+```bash
+# Filter by epic
+lean-spec list --field epic=AUTH-2024
+
+# Filter by sprint
+lean-spec list --field sprint=5
+
+# Combine with standard filters
+lean-spec list --status in-progress --field sprint=6
+
+# Multiple custom fields
+lean-spec list --field epic=AUTH-2024 --field sprint=6
+
+# Search with custom field filter
+lean-spec search "authentication" --field epic=AUTH-2024
+```
+
+### Agile Team Setup
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "sprint": "number",
+      "story_points": "number",
+      "jira_id": "string",
+      "team": "string"
+    }
+  },
+  "variables": {
+    "team": "Backend Squad",
+    "default_reviewer": "tech-lead",
+    "sprint_duration": "2 weeks"
+  }
+}
+```
+
+### Open Source Project
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "issue": "string",
+      "pr": "string",
+      "breaking": "boolean",
+      "version": "string"
+    }
+  },
+  "variables": {
+    "project": "open-source-tool",
+    "maintainer": "community"
+  }
+}
+```
+
+### Enterprise Team Setup
+
+```json
+{
+  "variables": {
+    "company": "Acme Corp",
+    "team": "Platform Engineering",
+    "compliance_contact": "security@acme.com",
+    "architecture_review": "https://wiki.acme.com/architecture-review"
+  },
+  "frontmatter": {
+    "custom": {
+      "epic": "string",
+      "issue": "string",
+      "assignee": "string",
+      "reviewer": "string",
+      "security_review": "boolean",
+      "architecture_review": "boolean"
+    }
+  }
+}
+```
+
+Template:
+```markdown
+---
+status: planned
+created: {date}
+epic: 
+issue: 
+assignee: {author}
+reviewer: 
+security_review: false
+architecture_review: false
+---
+
+# {name}
+
+**Company**: {company}  
+**Team**: {team}  
+**Author**: {author}
+
+## Compliance
+
+Security contact: {compliance_contact}  
+Architecture review process: {architecture_review}
+```
+
+### API-First Template
+
+```json
+{
+  "variables": {
+    "api_base_url": "https://api.acme.com",
+    "api_version": "v1",
+    "api_docs": "https://docs.acme.com/api"
+  },
+  "frontmatter": {
+    "custom": {
+      "endpoint": "string",
+      "method": "string",
+      "auth_required": "boolean"
+    }
+  }
+}
+```
+
+## Best Practices
+
+:::tip Start Minimal
+Don't add custom fields upfront. Add them when you feel the pain of not having them.
+:::
+
+:::tip Use Consistent Names
+Standardize field names across your organization. Use `assignee`, not `assigned_to` in some places and `owner` in others.
+:::
+
+:::tip Validate Field Types
+LeanSpec validates types automatically. Use correct types to catch errors early.
+:::
+
+:::tip Document Custom Fields
+Add comments in config.json explaining what each custom field is for.
+:::
+
+:::tip Keep Variables Simple
+Variables are for static values. Don't try to make them dynamic or computed.
+:::
+
+## Type Coercion
+
+LeanSpec automatically coerces values to the correct type:
+
+```bash
+# "42" is converted to number 42
+lean-spec create feature --field sprint=42
+
+# "true" is converted to boolean true
+lean-spec create feature --field needs_review=true
+
+# Arrays work with comma separation
+lean-spec create feature --field teams=backend,frontend
+```
+
+## Limitations
+
+- Variables are resolved at creation time only (not dynamically updated)
+- Custom fields must be defined before use
+- No computed or conditional variables
+- No nested objects in custom fields (flat structure only)
+
+## Migration
+
+If you add custom fields to existing specs:
+
+```bash
+# Update existing specs manually or with a script
+lean-spec update 001 --field epic=PROJ-123
+
+# Or edit frontmatter directly in each README.md
+```
+
+---
+
+**Next**: Explore [AI Integration](/docs/guide/usage/advanced-features/agent-configuration) or check the [Configuration Reference](/docs/reference/config).

@@ -1,0 +1,294 @@
+---
+id: 'variables'
+title: '变量'
+sidebar_position: 10
+---
+# 变量
+
+模板变量允许您在Spec中生成动态内容。
+
+## 概述
+
+变量是Spec模板中的占位符，在创建Spec时会被实际值替换。
+
+**示例：**
+```markdown
+# {name}
+
+由 {author} 创建于 {date}
+```
+
+变为：
+```markdown
+# user-authentication
+
+由 John Doe 创建于 2025-11-02
+```
+
+## 内置变量
+
+这些变量自动可用：
+
+### \{name\}
+
+提供给 `lean-spec create` 的Spec名称。
+
+```bash
+lean-spec create user-authentication
+```
+
+结果为：
+```markdown
+# user-authentication
+```
+
+### \{date\}
+
+ISO 8601 格式的当前日期（YYYY-MM-DD）。
+
+```markdown
+created: \{date\}
+```
+
+结果为：
+```markdown
+created: 2025-11-02
+```
+
+### \{project_name\}
+
+来自 `package.json` 的项目名称。
+
+```markdown
+**项目**：\{project_name\}
+```
+
+### \{author\}
+
+来自 git 配置（`user.name`）的用户名称。
+
+```markdown
+**作者**：\{author\}
+```
+
+### \{git_user\}
+
+来自 git 配置的 Git 用户名。
+
+```markdown
+**用户名**：\{git_user\}
+```
+
+### \{git_email\}
+
+来自 git 配置（`user.email`）的 Git 电子邮件。
+
+```markdown
+**联系方式**：\{git_email\}
+```
+
+### \{git_repo\}
+
+来自 git 远程 URL 的仓库名称。
+
+```markdown
+**仓库**：\{git_repo\}
+```
+
+## 自定义变量
+
+在 `.lean-spec/config.json` 中定义您自己的变量：
+
+```json
+{
+  "variables": {
+    "team": "平台工程",
+    "company": "Acme Corp",
+    "default_reviewer": "alice"
+  }
+}
+```
+
+在模板中使用：
+```markdown
+**团队**：\{team\}
+**公司**：\{company\}
+**审查者**：\{default_reviewer\}
+```
+
+## 在模板中使用变量
+
+### 1. 创建或编辑模板
+
+`.lean-spec/templates/spec-template.md`：
+
+```markdown
+---
+status: planned
+created: \{date\}
+---
+
+# \{name\}
+
+**团队**：\{team\}  
+**作者**：\{author\}  
+**创建时间**：\{date\}
+
+## 概述
+
+[\{name\} 是什么以及我们为什么要构建它？]
+
+## 联系方式
+
+有问题？联系 \{default_reviewer\} 或 \{git_email\}
+```
+
+### 2. 配置变量
+
+`.lean-spec/config.json`：
+
+```json
+{
+  "template": "spec-template.md",
+  "specsDir": "specs",
+  "variables": {
+    "team": "平台工程",
+    "default_reviewer": "alice"
+  }
+}
+```
+
+### 3. 创建Spec
+
+```bash
+lean-spec create user-authentication
+```
+
+### 4. 结果
+
+所有变量自动替换：
+
+```markdown
+---
+status: planned
+created: 2025-11-02
+---
+
+# user-authentication
+
+**团队**：平台工程  
+**作者**：John Doe  
+**创建时间**：2025-11-02
+
+## 概述
+
+[user-authentication 是什么以及我们为什么要构建它？]
+
+## 联系方式
+
+有问题？联系 alice 或 john@example.com
+```
+
+## 常见模式
+
+### 团队归属
+
+```json
+{
+  "variables": {
+    "team": "后端团队",
+    "team_lead": "Alice",
+    "team_email": "backend@company.com"
+  }
+}
+```
+
+### 文档链接
+
+```json
+{
+  "variables": {
+    "docs_url": "https://docs.company.com",
+    "wiki_url": "https://wiki.company.com",
+    "api_docs": "https://api.company.com/docs"
+  }
+}
+```
+
+### 公司信息
+
+```json
+{
+  "variables": {
+    "company": "Acme Corp",
+    "legal_entity": "Acme Corporation Inc.",
+    "compliance_contact": "compliance@acme.com"
+  }
+}
+```
+
+### 项目元数据
+
+```json
+{
+  "variables": {
+    "project_name": "MyApp",
+    "project_version": "2.0",
+    "support_email": "support@myapp.com"
+  }
+}
+```
+
+## 最佳实践
+
+:::tip 用于静态值
+变量最适合很少更改的信息（团队名称、URL、联系方式）。
+:::
+
+:::tip 保持名称描述性
+使用清晰的变量名称：`default_reviewer` 而不是 `dr`，`docs_url` 而不是 `url1`。
+:::
+
+:::tip 不要过度使用
+并非所有内容都需要成为变量。在它们增加价值的地方使用它们。
+:::
+
+:::tip 记录变量
+在配置中添加注释，解释每个变量的用途。
+:::
+
+## 限制
+
+- 变量仅在创建时解析
+- 没有动态或计算变量
+- 没有条件逻辑
+- 没有循环或迭代
+- 不能引用其他变量
+
+## 故障排除
+
+### 变量未替换
+
+**问题：** `\{my_var\}` 在Spec中按字面显示。
+
+**原因：**
+1. 配置中未定义变量
+2. 变量名称拼写错误
+3. 配置文件未保存
+
+**解决方案：** 检查 `.lean-spec/config.json` 是否定义了变量。
+
+### 错误的值
+
+**问题：** 变量具有意外的值。
+
+**原因：**
+1. Git 配置未设置（对于 git_* 变量）
+2. package.json 缺失（对于 project_name）
+3. 陈旧的配置缓存
+
+**解决方案：** 检查内置变量的来源，配置更改后重新启动。
+
+---
+
+**下一步**：了解[模板](/zh-Hans/docs/guide/usage/advanced-features/templates)或探索[配置参考](/zh-Hans/docs/reference/config)。

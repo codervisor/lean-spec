@@ -1,0 +1,132 @@
+---
+id: index
+title: 什么是 LeanSpec？
+sidebar_label: 概述
+sidebar_position: 1
+description: 为 AI 驱动开发设计的轻量级 Spec 驱动开发方法论
+---
+
+# 什么是 LeanSpec？
+
+**更快交付，更高质量。人类和 AI 都能理解的精简 Spec。**
+
+LeanSpec 将敏捷原则引入 SDD（Spec 驱动开发）——小而聚焦的文档（&lt;2,000 Token），让你和 AI 保持一致。
+
+> **可以将其视为"项目管理的 Markdown"**：简单、结构化、机器可读。
+
+## 快速开始
+
+```bash
+# 尝试教程项目
+npx lean-spec init --example dark-theme
+cd dark-theme && npm install && npm start
+
+# 或添加到现有项目
+npm install -g lean-spec && lean-spec init
+```
+
+**可视化你的项目：**
+
+```bash
+lean-spec board    # 看板视图
+lean-spec stats    # 项目指标
+lean-spec ui       # Web UI 在 localhost:3000
+```
+
+**下一步：** [使用 AI 创建第一个 Spec](/zh-Hans/docs/tutorials/first-spec-with-ai)（10 分钟教程）
+
+## 为什么选择 LeanSpec？
+
+**高速度 + 高质量。** 其他 SDD 框架增加了流程开销（多步骤工作流、僵化模板）。Vibe 编码很快但混乱（没有共识）。LeanSpec 找到了最佳平衡点：
+
+- **快速迭代** - 随代码一起成长的活文档
+- **AI 性能** - 小 Spec = 更好的 AI 输出（上下文腐化是真实存在的）
+- **始终最新** - 足够轻量，你真的会去更新它们
+
+📖 [与 Spec Kit、OpenSpec、Kiro 对比 →](/zh-Hans/docs/guide/why-leanspec)
+
+## 功能特性
+
+| 功能 | 描述 |
+|------|------|
+| **📊 看板** | \`lean-spec board\` - 可视化项目跟踪 |
+| **🔍 智能搜索** | \`lean-spec search\` - 按内容或元数据查找 Spec |
+| **🔗 依赖关系** | 使用 \`depends_on\` 和 \`related\` 跟踪 Spec 关系 |
+| **🎨 Web UI** | \`lean-spec ui\` - 基于浏览器的仪表板 |
+| **📈 项目统计** | \`lean-spec stats\` - 健康指标和瓶颈检测 |
+| **🤖 AI 原生** | MCP 服务器 + CLI 用于 AI 助手 |
+
+## AI 集成
+
+通过 MCP 或 CLI 与任何 AI 编码助手配合使用：
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": { "command": "npx", "args": ["@leanspec/mcp"] }
+  }
+}
+```
+
+**兼容：** VS Code Copilot、Cursor、Windsurf、Claude Code、Gemini CLI 等。
+
+📖 [完整 AI 集成指南 →](/zh-Hans/docs/guide/usage/ai-coding-workflow)
+
+## 你将获得什么
+
+*   [**核心 CLI**](/zh-Hans/docs/guide/usage/cli/creating-managing)：管理 Spec、跟踪状态并可视化依赖关系。
+*   [**MCP 服务器**](/zh-Hans/docs/guide/usage/mcp-integration)：让 AI 代理直接访问和搜索你的 Spec。
+*   [**可视化模式**](/zh-Hans/docs/guide/visual-mode)：用于浏览项目 Spec 图的精美 Web 界面。
+
+## 一个简单示例
+
+LeanSpec 只是一个带有 frontmatter 的 Markdown 文件：
+
+```markdown title="./specs/001-user-auth-api/README.md"
+---
+status: in-progress
+created: 2025-11-07
+priority: high
+tags: [api, auth]
+---
+
+# 用户认证 API
+
+## 目标
+为移动应用启用安全的用户登录和会话管理。
+
+## 关键场景
+1. 用户使用邮箱/密码登录 → 接收 JWT Token
+2. 用户使用 Token 访问受保护端点 → 获取数据
+3. 用户 Token 过期 → 接收 401，必须重新认证
+
+## 验收标准
+- [ ] 登录端点在成功时返回有效的 JWT
+- [ ] JWT 包含用户 ID 和过期时间
+- [ ] 受保护端点验证 JWT 签名
+
+## 非目标
+- 社交登录（未来功能）
+- 密码重置（单独的 Spec）
+```
+
+## 文档
+
+📖 [完整文档](/zh-Hans/docs/guide/) · [CLI 参考](/zh-Hans/docs/reference/cli) · [第一原则](/zh-Hans/docs/advanced/first-principles) · [常见问题](/zh-Hans/docs/faq)
+
+## 社区
+
+💬 [讨论区](https://github.com/codervisor/lean-spec/discussions) · 🐛 [问题反馈](https://github.com/codervisor/lean-spec/issues) · 🤝 [贡献指南](https://github.com/codervisor/lean-spec/blob/main/CONTRIBUTING.md)
+
+## 下一步
+
+*   **[快速开始](/zh-Hans/docs/guide/getting-started)**：安装 CLI 并创建你的第一个 Spec。
+*   **[为什么选择 LeanSpec？](/zh-Hans/docs/guide/why-leanspec)**：了解 LeanSpec 相对于其他工具的优势。
+*   **[理解 LeanSpec](/zh-Hans/docs/guide/understanding-leanspec)**：深入了解上下文经济 (Context Economy) 哲学。
+*   **[AI 集成](/zh-Hans/docs/guide/usage/mcp-integration)**：将 LeanSpec 连接到你的 AI 编码助手。
+
+### 联系我
+
+如果你觉得 LeanSpec 能够提升你的日常工作效率或对你的公司有帮助，请添加作者的微信账号并备注"LeanSpec"以加入讨论群。
+
+![联系我微信](/img/qr-code.png)

@@ -1,0 +1,262 @@
+---
+title: 完成第一个 Spec
+sidebar_position: 1
+description: 通过 AI 辅助的Spec驱动开发，从想法到工作代码构建完整功能
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 完成第一个 Spec
+
+了解 LeanSpec 如何帮助您在几分钟而非几小时内从意图到实现。您将构建一个真实功能——深色主题支持——由 AI 完成繁重工作。
+
+**时间**：10 分钟  
+**结果**：带有完整Spec的工作功能
+
+:::info 前置条件
+- 完成[快速开始](/docs/guide/getting-started)指南
+- AI 编程工具（GitHub Copilot、Claude 等）
+:::
+
+## 立即尝试
+
+使用预配置的示例项目快速上手：
+
+```bash
+npx lean-spec init --example dark-theme
+cd dark-theme
+npm install
+npm start
+```
+
+然后向 AI 工具发送提示：
+
+<Tabs groupId="ai-tool">
+  <TabItem value="claude" label="Claude Code">
+    在终端中使用 Claude Code：
+
+    ```bash
+    # 确保已安装 Claude Code
+    # macOS/Linux
+    curl -fsSL https://claude.ai/install.sh | bash
+    # Windows (PowerShell)
+    irm https://claude.ai/install.ps1 | iex
+
+    # 为系统提示 AGENTS.md 创建软链 CLAUDE.md
+    ln -s AGENTS.md CLAUDE.md
+
+    # 向 Claude Code 发送提示
+    claude "帮我为这个应用添加带主题切换的深色主题支持"
+    ```
+  </TabItem>
+  <TabItem value="codex" label="Codex CLI">
+    在终端中使用 OpenAI Codex CLI：
+
+    ```bash
+    # 确保已安装 Codex CLI
+    npm install -g @openai/codex
+
+    # 向 Codex CLI 发送提示
+    codex "帮我为这个应用添加带主题切换的深色主题支持"
+    ```
+  </TabItem>
+  <TabItem value="gemini" label="Gemini CLI">
+    在终端中使用 Gemini CLI：
+
+    ```bash
+    # 确保已安装 Gemini CLI
+    npm install -g @anthropic-ai/gemini-cli
+
+    # 为系统提示 AGENTS.md 创建软链 GEMINI.md
+    ln -s AGENTS.md GEMINI.md
+
+    # 向 Gemini CLI 发送提示
+    gemini "帮我为这个应用添加带主题切换的深色主题支持"
+    ```
+  </TabItem>
+  <TabItem value="copilot" label="GitHub Copilot CLI">
+    在终端中使用 GitHub Copilot CLI：
+
+    ```bash
+    # 确保已安装 GitHub Copilot CLI（需要 Node.js v22+）
+    npm install -g @github/copilot
+
+    # 向 Copilot CLI 发送提示（编程模式）
+    copilot -p "帮我为这个应用添加带主题切换的深色主题支持" --allow-all-tools
+    ```
+  </TabItem>
+  <TabItem value="ide" label="IDE" default>
+    在 IDE 中使用 AI 编码助手（GitHub Copilot、Claude、Cursor 等）：
+
+    1. 在 IDE 中打开项目
+    2. 打开 AI 助手聊天面板
+    3. 发送提示：_"帮我为这个应用添加带主题切换的深色主题支持"_
+  </TabItem>
+</Tabs>
+
+**想了解底层发生了什么？** 下面的章节将详细介绍每个步骤。
+
+## 场景
+
+您正在构建一个任务管理器 Web 应用。用户喜欢它，但一直要求提供深色模式以便在深夜工作时使用。目前，该应用仅有明亮的浅色主题。
+
+起点：
+```
+your-project/
+├── src/
+│   ├── public/
+│   │   ├── index.html           # 任务管理器 UI
+│   │   ├── style.css            # 当前的浅色主题
+│   │   └── app.js               # 任务逻辑
+│   └── server.js                # Express 服务器
+└── specs/                       # 您的 Spec 文件夹
+```
+
+## 创建Spec
+
+在您的 AI 工具中，描述您想要什么：
+
+```
+为这个任务管理器创建一个添加深色主题支持的新Spec。
+主题应该：
+- 自动检测系统偏好
+- 包含手动主题切换按钮
+- 使用可访问的颜色对比度
+- 主题之间平滑过渡
+- 保留当前的设计美学
+
+保持简单和用户友好。
+```
+
+AI 读取您的项目结构并在 `specs/015-dark-theme-support/` 中创建Spec。以下是它生成的内容：
+
+```markdown title="specs/015-dark-theme-support/README.md"
+---
+status: planned
+created: '2025-11-24'
+priority: high
+---
+
+# 深色主题支持
+
+> ** 状态 **：📅 已计划 · ** 优先级 **：高
+
+## 概览
+添加根据用户系统偏好自动切换的深色主题。
+目前仅有浅色主题，在弱光下会导致眼睛疲劳。
+
+## 设计
+- 使用 CSS `prefers-color-scheme` 媒体查询进行自动检测
+- 在 UI 中添加手动主题切换按钮
+- 定义深色主题调色板（可访问对比度）
+- 主题之间平滑过渡
+- 测试浅色/深色系统偏好
+
+## 计划
+- [ ] 定义深色主题颜色变量
+- [ ] 为深色主题添加媒体查询
+- [ ] 创建主题切换按钮组件
+- [ ] 更新所有颜色引用以使用变量
+- [ ] 测试可访问性的颜色对比度
+
+## 测试
+- [ ] 主题根据系统偏好自动切换
+- [ ] 所有颜色符合 WCAG AA 对比度标准
+- [ ] 平滑过渡无闪烁
+- [ ] 在 Chrome、Firefox、Safari 中工作
+```
+
+**刚才发生了什么？** AI：
+1. 理解了您的意图
+2. 分析了您现有的 CSS 结构
+3. 创建了一个带有实施计划的集中Spec
+4. 将状态设置为 `planned`（准备构建）
+
+## 实施
+
+现在让 AI 实施它：
+
+```
+实施Spec 015。
+```
+
+AI 将：
+- 读取Spec要求
+- 为两个主题添加 CSS 颜色变量
+- 实施 `prefers-color-scheme` 媒体查询
+- 将所有硬编码颜色更新为使用变量
+- 测试实施
+
+您会看到类似这样的更新：
+```
+✓ 更新了 style.css：添加了主题 CSS 变量
+✓ 更新了 style.css：添加了深色主题媒体查询
+✓ 更新了 style.css：将颜色转换为变量
+✓ 已验证：颜色对比度符合 WCAG AA 标准
+```
+
+## 审查和完成
+
+在本地测试功能：
+```bash
+npm start
+# 打开 http://localhost:3000
+# 切换您的系统主题（macOS：系统设置 > 外观）
+```
+
+应用应该在浅色和深色主题之间平滑切换！
+
+一切正常？告诉您的 AI：
+```
+将Spec 015 标记为完成。
+```
+
+或手动运行：
+```bash
+lean-spec update 015 --status complete
+```
+
+Spec现在显示：
+```markdown
+---
+status: complete
+completed_at: '2025-11-24T16:45:00.000Z'
+---
+```
+
+## 刚才发生了什么
+
+您体验了使用 AI 的Spec驱动开发：
+
+**没有 LeanSpec：**
+- 直接修改 CSS，遗漏边缘情况
+- 忘记可访问性要求
+- 没有颜色选择或理由的记录
+- 其他人难以理解决策
+
+**有了 LeanSpec：**
+- 预先捕获清晰的要求
+- AI 使用完整上下文实施
+- 记录设计决策
+- 跟踪可访问性检查清单
+- 完整的审计跟踪
+
+Spec成为您、AI 和团队之间的 **共享内存**。每个人都知道构建了什么以及为什么。
+
+## 下一步
+
+尝试这些增强功能：
+- 在 localStorage 中保存用户偏好
+- 添加更多主题变体（高对比度等）
+- 将主题颜色提取到配置文件
+- 添加切换前的主题预览
+
+或从您的待办事项中选择不同的功能并遵循相同的工作流程。
+
+**了解更多：**
+- [管理多个功能 →](./managing-multiple-features) - 处理 2-3 个相关Spec
+- [AI 编码工作流](/zh-Hans/docs/guide/usage/ai-coding-workflow) - 最佳实践
+- [Spec结构](/zh-Hans/docs/guide/usage/spec-structure) - 组织Spec
+
+**需要帮助？** 查看[常见问题](/zh-Hans/docs/faq)或[提交问题](https://github.com/codervisor/lean-spec/issues)。

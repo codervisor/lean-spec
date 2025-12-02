@@ -1,0 +1,870 @@
+---
+id: 'cli'
+title: 'CLI 参考'
+sidebar_position: 1
+---
+# CLI 命令
+
+所有 LeanSpec CLI 命令的完整参考。
+
+## 全局选项
+
+适用于所有命令：
+
+- `--help` - 显示命令帮助
+- `--version` - 显示 LeanSpec 版本
+
+## 命令
+
+### `lean-spec init`
+
+在您的项目中初始化 LeanSpec。
+
+```bash
+lean-spec init [options]
+```
+
+**交互式提示（新项目）：**
+1. 选择设置路径（快速开始、选择模板或自定义）
+2. 处理现有文件（合并、备份或跳过）
+3. 配置初始设置
+
+**交互式提示（已初始化项目）：**
+当 LeanSpec 已经初始化时，系统会询问如何处理：
+1. **升级配置** （推荐）- 更新配置到最新版本，保留 Spec 和 AGENTS.md
+2. **重置配置** - 使用模板创建新配置，保留 `specs/` 目录
+3. **完全重置** - 删除所有内容重新开始（需要确认）
+4. **取消** - 退出不做任何更改
+
+**创建内容：**
+- `.lean-spec/config.json` - 配置文件
+- `.lean-spec/templates/` - 自定义模板目录
+- `specs/` - Spec 目录
+- `AGENTS.md` - AI 代理集成指导（如果不存在）
+
+**选项：**
+- `-y, --yes` - 跳过提示并使用默认值（使用标准模板快速开始）
+- `-f, --force` - 强制重新初始化（重置配置，保留 Spec）
+- `--template <name>` - 使用特定模板（`standard` 或 `detailed`）
+- `--agent-tools <tools>` - 创建 AI 工具符号链接（逗号分隔：`claude,gemini,copilot` 或 `all` 或 `none`）
+
+**示例：**
+
+```bash
+# 交互式初始化
+lean-spec init
+
+# 使用默认值快速开始
+lean-spec init -y
+
+# 强制重新初始化（重置配置，保留 Spec）
+lean-spec init -f
+
+# 使用详细模板
+lean-spec init --template detailed
+
+# 为所有 AI 工具创建符号链接
+lean-spec init --agent-tools all
+```
+
+**重新初始化行为：**
+- `-y` 标志：安全升级配置（保留所有内容）
+- `-f` 标志：仅重置配置（保留 `specs/` 目录）
+- 交互模式：在完整上下文中选择策略（显示 Spec 数量）
+
+---
+
+### `lean-spec create`
+
+创建新Spec。
+
+```bash
+lean-spec create <name> [options]
+```
+
+**参数：**
+- `<name>` - Spec名称（必需）
+
+**选项：**
+- `--title <title>` - 设置自定义标题
+- `--description <desc>` - 设置初始描述
+- `--tags <tags>` - 逗号分隔的标签
+- `--priority <priority>` - 设置优先级（`low`、`medium`、`high`、`critical`）
+- `--assignee <name>` - 设置受让人
+- `--template <template>` - 使用特定模板
+- `--field <name=value>` - 设置自定义字段（可多次使用）
+- `--no-prefix` - 即使配置了也跳过日期前缀
+
+**示例：**
+
+```bash
+# 基本Spec
+lean-spec create user-authentication
+
+# 带元数据的Spec
+lean-spec create user-auth --status=planned --priority=high --tags=security,api
+
+# 带自定义字段的Spec
+lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
+```
+
+**输出：**
+```
+✓ 已创建：specs/001-user-authentication/
+  编辑：specs/001-user-authentication/README.md
+```
+
+**行为：**
+- 创建 `specs/NNN-name/` 目录（扁平结构，全局编号）
+- 从模板生成 `README.md`
+- 分配顺序编号（NNN），在所有Spec中全局编号
+- 使用元数据设置frontmatter
+
+**注意**：默认为扁平结构。对于基于日期的分组，在 `.lean-spec/config.json` 中配置 `pattern: "custom"`。
+
+---
+
+### `lean-spec list`
+
+列出所有Spec并可选过滤。
+
+```bash
+lean-spec list [options]
+```
+
+**选项：**
+- `--archived` - 包括已归档的Spec
+- `--status <status>` - 按状态过滤（`planned`、`in-progress`、`complete`、`archived`）
+- `--priority <priority>` - 按优先级过滤（`low`、`medium`、`high`、`critical`）
+- `--tag <tag>` - 按标签过滤（对多个标签使用多个 --tag 标志）
+- `--assignee <name>` - 按受让人过滤
+- `--field <name=value>` - 按自定义字段过滤（可指定多个）
+- `--sort <field>` - 按字段排序（`id`、`created`、`name`、`status`、`priority`）（默认：`id`）
+- `--order <order>` - 排序顺序（`asc`、`desc`）（默认：`desc`）
+- `--json` - 以 JSON 格式输出
+
+**示例：**
+
+```bash
+# 列出所有Spec
+lean-spec list
+
+# 按状态过滤
+lean-spec list --status=in-progress
+lean-spec list --status=planned
+
+# 按优先级过滤
+lean-spec list --priority=high
+
+# 按标签过滤
+lean-spec list --tag api
+
+# 按多个标签过滤
+lean-spec list --tag api --tag backend
+
+# 组合过滤器
+lean-spec list --status planned --priority high --tag api
+
+# 按自定义字段过滤
+lean-spec list --field epic=PROJ-123
+
+# JSON 输出用于程序化使用
+lean-spec list --json
+lean-spec list --status planned --json
+```
+
+**输出：**
+```
+=== Spec ===
+
+📅 specs/001-user-authentication
+   创建：2025-11-02 · 优先级：high · 标签：security, api
+
+⏳ specs/002-password-reset
+   创建：2025-11-02 · 优先级：medium
+```
+
+**注意**：输出显示扁平结构（默认）。配置日期分组后，路径将为 `specs/YYYYMMDD/NNN-name/`。
+
+**状态图标：**
+- 📅 计划中
+- ⏳ 进行中
+- ✅ 完成
+- 📦 已归档
+
+---
+
+### `lean-spec update`
+
+更新Spec元数据。
+
+```bash
+lean-spec update <spec> [options]
+```
+
+**参数：**
+- `<spec>` - Spec标识符（必需）。可以是：
+  - Spec编号：`42` 或 `042`
+  - Spec名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+
+**选项：**
+- `--status <status>` - 更新状态（`planned`、`in-progress`、`complete`、`archived`）
+- `--priority <priority>` - 更新优先级（`low`、`medium`、`high`、`critical`）
+- `--tags <tags>` - 更新标签（逗号分隔，替换现有标签）
+- `--assignee <name>` - 设置受让人
+- `--field <name=value>` - 更新自定义字段（可多次使用）
+
+**示例：**
+
+```bash
+# 更新状态（使用Spec编号）
+lean-spec update 1 --status=in-progress
+
+# 更新优先级（使用Spec名称）
+lean-spec update user-auth --priority=critical
+
+# 更新标签
+lean-spec update 001-user-auth --tags=security,api,mvp
+
+# 更新自定义字段
+lean-spec update 1 --field epic=PROJ-123
+
+# 更新多个字段
+lean-spec update 1 --status=complete --priority=high
+```
+
+**输出：**
+```
+✓ 已更新：specs/001-user-auth
+  字段：status, priority
+```
+
+**特殊行为：**
+- 将状态设置为 `complete` 会自动添加 `completed` 时间戳
+- README.md 中的可视徽章自动更新
+- frontmatter和徽章保持同步
+
+---
+
+### `lean-spec search`
+
+跨所有Spec全文搜索。
+
+```bash
+lean-spec search <query> [options]
+```
+
+**参数：**
+- `<query>` - 搜索查询（必需）
+
+**选项：**
+- `--status <status>` - 按状态过滤结果
+- `--priority <priority>` - 按优先级过滤结果
+- `--tag <tag>` - 按标签过滤结果
+- `--assignee <name>` - 按受让人过滤结果
+- `--field <name=value>` - 按自定义字段过滤结果（可指定多个）
+
+**示例：**
+
+```bash
+# 基本搜索
+lean-spec search "authentication"
+
+# 带过滤器的搜索
+lean-spec search "JWT token" --status=in-progress
+lean-spec search "API" --tag=security
+lean-spec search "password" --field epic=PROJ-123
+```
+
+**输出：**
+```
+找到 2 个匹配 "authentication" 的Spec：
+
+📅 specs/001-user-authentication
+   创建：2025-11-02
+   匹配位置：概述、关键场景
+
+⏳ specs/003-two-factor-auth
+   创建：2025-11-02
+   匹配位置：技术方法
+```
+
+**搜索行为：**
+- 搜索Spec内容（README.md）
+- 不区分大小写
+- 搜索标题、概述、场景、标准等
+- 不搜索frontmatter
+
+---
+
+### `lean-spec archive`
+
+归档已完成的Spec。
+
+```bash
+lean-spec archive <spec>
+```
+
+**参数：**
+- `<spec>` - Spec标识符（必需）。可以是：
+  - Spec编号：`42` 或 `042`
+  - Spec名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+
+**示例：**
+
+```bash
+# 按Spec编号归档
+lean-spec archive 1
+
+# 按名称归档
+lean-spec archive user-auth
+```
+
+**输出：**
+```
+✓ 已归档：specs/001-user-auth
+  移至：specs/archived/001-user-auth
+```
+
+**行为：**
+- 将Spec从 `specs/` 移至 `specs/archived/`
+- 保留目录结构
+- 保留所有元数据
+- Spec不再默认出现在 `lean-spec list` 中
+
+**最佳实践：**
+- 归档前将状态更新为 `complete`
+- 工作完全完成后归档Spec
+- 用于保持活动工作区清洁
+
+---
+
+### `lean-spec view`
+
+查看Spec内容。
+
+```bash
+lean-spec view <spec> [options]
+```
+
+**参数：**
+- `<spec>` - Spec标识符（必需）。可以是：
+  - Spec编号：`42` 或 `042`
+  - Spec名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+
+**选项：**
+- `--raw` - 输出原始 markdown（用于管道/脚本）
+- `--json` - 输出为 JSON
+- `--no-color` - 禁用颜色
+
+**示例：**
+
+```bash
+# 查看格式化的Spec
+lean-spec view 001-user-authentication
+
+# 获取原始 markdown（用于脚本）
+lean-spec view 001-user-auth --raw | grep "TODO"
+
+# 获取结构化 JSON
+lean-spec view 001-user-auth --json | jq '.frontmatter.status'
+```
+
+**默认输出（格式化）：**
+```
+━━━ 001-user-authentication ━━━
+
+📅 状态：planned
+🟡 优先级：high
+📆 创建：2025-11-02
+🏷️  标签：#security #api
+
+────────────────────────────────────────────────────────────
+
+# 用户身份验证
+
+## 概述
+...
+```
+
+**原始输出（`--raw`）：**
+```markdown
+---
+status: planned
+priority: high
+created: 2025-11-02
+tags:
+  - security
+  - api
+---
+
+# 用户身份验证
+
+## 概述
+...
+```
+
+**JSON 输出（`--json`）：**
+```json
+{
+  "name": "001-user-authentication",
+  "path": "specs/001-user-authentication",
+  "frontmatter": {
+    "status": "planned",
+    "priority": "high",
+    "created": "2025-11-02",
+    "tags": ["security", "api"]
+  },
+  "content": "# 用户身份验证\n\n## 概述\n..."
+}
+```
+
+**用例：**
+- **默认**：人类可读的Spec查看
+- **`--raw`**：管道到其他工具、AI 上下文、版本控制差异
+- **`--json`**：程序化访问、CI/CD、集成
+
+---
+
+### `lean-spec open`
+
+在编辑器中打开Spec。
+
+```bash
+lean-spec open <spec> [options]
+```
+
+**参数：**
+- `<spec>` - Spec标识符（必需）。可以是：
+  - Spec编号：`42` 或 `042`
+  - Spec名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+
+**选项：**
+- `--editor <editor>` - 指定编辑器命令
+
+**示例：**
+
+```bash
+# 在默认编辑器中打开
+lean-spec open 001-user-authentication
+
+# 在特定编辑器中打开
+lean-spec open 001-user-auth --editor=code
+lean-spec open 001-user-auth --editor=vim
+```
+
+**编辑器选择：**
+1. 如果提供了 `--editor` 标志
+2. `$VISUAL` 环境变量
+3. `$EDITOR` 环境变量
+4. 系统默认（macOS 上的 `open`、Linux 上的 `xdg-open`、Windows 上的 `start`）
+
+**行为：**
+- 打开Spec的 `README.md` 文件
+- GUI 编辑器（VS Code、Atom）不会阻塞终端
+- 终端编辑器（vim、nano）在关闭前阻塞
+
+---
+
+### `lean-spec templates`
+
+管理 Spec 模板。
+
+```bash
+lean-spec templates [command]
+```
+
+**子命令：**
+
+#### `lean-spec templates` 或 `lean-spec templates list`
+
+列出可用模板。
+
+```bash
+lean-spec templates
+lean-spec templates list
+```
+
+**输出：**
+```
+=== Project Templates ===
+
+Registered:
+  default: spec-template.md ✓ (default)
+  detailed: detailed/
+    Files: README.md, DESIGN.md, PLAN.md, TEST.md
+
+Available files:
+  spec-template.md (1.2 KB)
+
+Available directories (multi-file templates):
+  detailed/ (4 files: README.md, DESIGN.md, PLAN.md, TEST.md)
+
+Use templates with: lean-spec create <name> --template=<template-name>
+```
+
+#### `lean-spec templates show <name>`
+
+显示模板内容。
+
+```bash
+lean-spec templates show default
+lean-spec templates show detailed
+```
+
+对于目录模板，显示模板中的所有文件。
+
+#### `lean-spec templates add <name> <file>`
+
+注册模板。
+
+```bash
+# 单文件模板
+lean-spec templates add api api-spec.md
+
+# 目录多文件模板
+lean-spec templates add enterprise enterprise/
+```
+
+目录模板必须包含 `README.md` 文件作为主模板。
+
+#### `lean-spec templates remove <name>`
+
+取消注册模板（不删除文件）。
+
+```bash
+lean-spec templates remove api
+```
+
+#### `lean-spec templates copy <source> <target>`
+
+复制模板以创建新模板。
+
+```bash
+lean-spec templates copy default api-spec
+```
+
+**模板类型：**
+
+1. **单文件模板**（如 `spec-template.md`）
+   - 创建 Spec 时只使用该文件
+   - 适合简单、一致的 Spec 结构
+
+2. **目录模板**（如 `detailed/`）
+   - 创建 Spec 时复制目录中的所有 `.md` 文件
+   - 必须包含 `README.md` 作为主模板
+   - 适合包含多个子 Spec 文件的复杂 Spec
+
+---
+
+### `lean-spec stats`
+
+显示Spec统计信息。
+
+```bash
+lean-spec stats
+```
+
+**输出：**
+```
+=== Spec统计 ===
+
+总Spec数：15
+  计划中：5
+  进行中：7
+  完成：3
+
+按优先级：
+  关键：2
+  高：6
+  中：5
+  低：2
+
+按标签：
+  api：8
+  security：5
+  ui：3
+```
+
+---
+
+### `lean-spec board`
+
+按状态查看Spec（看板风格）。
+
+```bash
+lean-spec board
+```
+
+**输出：**
+```
+╔═══════════════════════════════════════════════════════════╗
+║                    LeanSpec 看板                          ║
+╠═══════════════════════════════════════════════════════════╣
+║ 计划中           进行中              完成                 ║
+╠─────────────────┬────────────────────┬────────────────────╣
+║ user-auth       │ api-gateway        │ login-ui           ║
+║ rate-limiting   │ database-setup     │ password-hash      ║
+║ oauth-provider  │ error-handling     │ session-mgmt       ║
+║                 │                    │                    ║
+║ 3 个Spec        │ 3 个Spec           │ 3 个Spec           ║
+╚═════════════════╧════════════════════╧════════════════════╝
+```
+
+---
+
+### `lean-spec tokens`
+
+为 LLM 上下文管理统计Spec的Token数。
+
+```bash
+lean-spec tokens [spec] [options]
+```
+
+**参数：**
+- `[spec]` - Spec标识符（可选）。可以是：
+  - Spec编号：`42` 或 `042`
+  - Spec名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+  - 省略时显示所有Spec的Token统计
+
+**选项：**
+- `--detailed` - 显示内容拆分（正文、代码、表格、frontmatter）
+- `--include-sub-specs` - 在计数中包含子 Spec文件
+- `--all` - 显示所有Spec（不仅限于活动状态）
+- `--sort-by <field>` - 排序字段：`tokens`、`lines`、`name`（默认：`tokens`）
+- `--json` - 以 JSON 输出
+
+**示例：**
+
+```bash
+# 统计特定Spec
+lean-spec tokens 045
+lean-spec tokens unified-dashboard
+
+# 查看详细拆分
+lean-spec tokens 045 --detailed
+
+# 包含子 Spec文件
+lean-spec tokens 045 --include-sub-specs
+
+# 按Token数查看所有Spec
+lean-spec tokens
+lean-spec tokens --all
+
+# 用于脚本的 JSON 输出
+lean-spec tokens 045 --json
+```
+
+**输出：**
+```
+📊 Token统计：045-unified-dashboard
+
+  总计：2,847 Token ✅
+
+文件：
+
+  README.md                 1,923 Token (287 行)
+  DESIGN.md                   654 Token (98 行)
+  TESTING.md                  270 Token (41 行)
+
+内容拆分：
+
+  正文        2,145 Token  (75%)
+  代码          523 Token  (18%)
+  表格          156 Token  (5%)
+  frontmatter      23 Token  (1%)
+```
+
+**性能指示：**
+- ✅ 优秀 (&lt;2,000 Token) - 基线 AI 表现（100% 有效）
+- 👍 良好 (2,000-3,500 Token) - 轻微退化，可接受（95% 有效）
+- ⚠️ 警告 (3,500-5,000 Token) - 考虑拆分或精简（85% 有效）
+- 🔴 问题 (&gt;5,000 Token) - 应拆分（70% 有效）
+
+**使用场景：**
+- 检查Spec是否适合 AI 上下文窗口
+- 识别需要拆分的Spec
+- 在加载到 AI 工具前了解Token成本
+- 监控Spec复杂度随时间的变化
+- 验证Spec是否符合上下文经济 (Context Economy)阈值
+
+**为什么关心Token数：**
+- Token是 LLM 上下文衡量的行业标准
+- 研究表明质量在达到上下文极限之前就会下降
+- 代码更密集（≈3 字符/Token）而正文更稀疏（≈4 字符/Token）
+- 高低TokenSpec之间存在 6 倍的成本差异
+
+---
+
+### `lean-spec deps`
+
+显示Spec的依赖关系（即将推出）。
+
+```bash
+lean-spec deps <spec>
+```
+
+**参数：**
+- `<spec>` - Spec标识符。可以是：
+  - Spec编号：`42` 或 `042`
+  - Spec名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+
+**注意：**此功能已计划但尚未实现。
+
+---
+
+### `lean-spec ui`
+
+启动本地网页 UI 进行可视化Spec管理。
+
+```bash
+lean-spec ui [选项]
+```
+
+**选项：**
+- `-s, --specs <dir>` - Spec目录（如果省略则自动检测）
+- `-p, --port <port>` - 运行端口（默认：3000）
+- `--no-open` - 不自动打开浏览器
+- `--dev` - 开发模式（仅限 LeanSpec monorepo）
+- `--dry-run` - 显示命令而不执行
+
+**示例：**
+
+```bash
+# 自动检测Spec，在 3000 端口打开
+lean-spec ui
+
+# 自定义目录和端口
+lean-spec ui --specs ./docs/specs --port 3100
+
+# 不自动打开浏览器
+lean-spec ui --no-open
+
+# 查看将运行的命令
+lean-spec ui --dry-run
+```
+
+**功能特性：**
+- **Spec浏览器**：列出、搜索和筛选所有Spec
+- **依赖关系图**：可视化Spec之间的关系
+- **看板视图**：按状态组织的看板式视图
+- **丰富格式**：带语法高亮的完整 markdown 渲染
+- **实时更新**：更改自动显示（60秒缓存）
+
+**工作原理：**
+
+在外部项目中：
+- 委托给 `npx @leanspec/ui`
+- 无需额外安装
+- 使用文件系统模式（直接文件读取）
+
+在 LeanSpec monorepo 中：
+- 在开发中运行本地 `packages/web`
+- 用于测试 UI 更改
+
+**自动检测：**
+
+命令自动搜索您的Spec目录：
+1. `--specs` 选项（如果提供）
+2. 当前目录中的 `specs/`
+3. `../specs/`（父目录）
+4. `../../specs/`（祖父目录）
+
+**浏览器控制：**
+
+默认情况下，命令会打开您的默认浏览器。使用 `--no-open` 来阻止这一行为，然后手动导航到 `http://localhost:3000`（或您的自定义端口）。
+
+**端口冲突：**
+
+如果端口 3000 已被使用：
+```bash
+# 使用不同端口
+lean-spec ui --port 3100
+
+# 或停止使用端口 3000 的进程
+# macOS/Linux：
+lsof -ti:3000 | xargs kill
+# Windows：
+netstat -ano | findstr :3000
+# 然后：taskkill /PID <PID> /F
+```
+
+**用例：**
+- 可视化探索和发现Spec
+- 团队演示和展示
+- 利益相关者审查
+- 依赖关系分析
+- 无需 CLI 命令的快速Spec浏览
+
+→ **了解更多**：查看[可视化模式指南](/docs/guide/visual-mode)了解详细使用方法，查看 [UI 包参考](/docs/reference/ui-package)了解技术细节。
+
+---
+
+## Spec标识符
+
+接受 `<spec>` 参数的所有命令都支持灵活格式：
+
+```bash
+# Spec编号（带或不带填充）
+42
+042
+
+# Spec名称
+unified-dashboard
+
+# 完整文件夹名称
+045-unified-dashboard
+
+# 使用旧的基于日期的结构（仍然支持）
+specs/20251102/001-user-auth
+20251102/001-user-auth
+001-user-auth
+```
+
+无论使用哪种格式，LeanSpec 都会找到Spec。
+
+---
+
+## 配置
+
+命令遵循 `.lean-spec/config.json` 中的设置：
+
+```json
+{
+  "template": "spec-template.md",
+  "specsDir": "specs",
+  "structure": {
+    "pattern": "flat",
+    "sequenceDigits": 3,
+    "defaultFile": "README.md"
+  },
+  "frontmatter": {
+    "required": ["status", "created"],
+    "optional": ["tags", "priority"],
+    "custom": {
+      "epic": "string",
+      "sprint": "number"
+    }
+  }
+}
+```
+
+详见[配置参考](/zh-Hans/docs/reference/config)。
+
+---
+
+## 退出代码
+
+- `0` - 成功
+- `1` - 错误（无效参数、文件未找到等）
+- `2` - 用户取消操作
+
+---
+
+**下一步**：探索[配置](/zh-Hans/docs/reference/config)或了解[自定义字段](/zh-Hans/docs/guide/usage/advanced-features/custom-fields)。

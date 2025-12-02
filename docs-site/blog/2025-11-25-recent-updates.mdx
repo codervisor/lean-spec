@@ -1,0 +1,219 @@
+---
+slug: recent-updates-getting-started
+title: "LeanSpec Updates: Example Projects, Better Tooling, and Your Path to Getting Started"
+authors: [marvin]
+tags: [release, getting-started, tutorials]
+---
+
+We've been busy making LeanSpec easier to adopt and more powerful to use. Whether you're exploring spec-driven development for the first time or scaling to enterprise workflows, these updates accelerate your journey from intent to working code.
+
+**What's new**: Example projects for instant hands-on learning, JSON output for automation, simplified templates, and major improvements to our MCP server integration.
+
+{/* truncate */}
+
+## 🚀 Example Projects: Start Learning in Seconds
+
+The best way to understand LeanSpec is to use it. That's why we built **example project scaffolding**—complete tutorial projects you can spin up instantly.
+
+### Three Ready-to-Use Examples
+
+```bash
+# See what's available
+npx lean-spec examples
+
+# Scaffold an example project
+npx lean-spec init --example dark-theme
+cd dark-theme
+npm install
+npm start
+```
+
+Each example comes with:
+- ✅ **Complete starter code** - A working React app you can immediately build on
+- ✅ **LeanSpec already initialized** - Specs, templates, and configuration ready to go
+- ✅ **Realistic feature specs** - Real-world examples you can follow
+- ✅ **Tutorial-ready** - Designed to work with our [hands-on tutorials](/docs/tutorials/first-spec-with-ai)
+
+#### Available Examples
+
+**`dark-theme`** - Add dark mode to a React app  
+Perfect first project. Learn the basics: create a spec, work with AI, track progress.
+
+**`dashboard-widgets`** - Build a customizable dashboard  
+Multi-component feature. Practice splitting specs, managing complexity, using sub-specs.
+
+**`api-refactor`** - Modernize a REST API to GraphQL  
+Backend-focused example. See how LeanSpec handles architecture changes and migrations.
+
+### Why This Matters
+
+Before example projects:
+- "How do I structure a spec?" → Read docs, guess, iterate
+- "What does a real spec look like?" → Browse GitHub, adapt to your project
+- "Does this work with my AI tool?" → Try, debug, troubleshoot
+
+**After example projects:**
+- Clone. Run. Start coding.
+- Follow the tutorial with working code.
+- See exactly how specs guide AI agents.
+
+No more blank-page syndrome. No more "where do I start?" Just hands-on learning with immediate results.
+
+## 🤖 Better AI Integration
+
+### MCP Server as Standalone Package
+
+We extracted `@leanspec/mcp` into its own npm package. Setup is now cleaner:
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["@leanspec/mcp"]
+    }
+  }
+}
+```
+
+Works with Claude Desktop, Cline, Zed, and any MCP-compatible tool. The server gives AI agents direct access to your specs—no copy-paste, no context limits.
+
+### Enhanced Dependency Management
+
+New commands make relationship management clearer:
+
+```bash
+# Link specs with clear dependencies
+lean-spec link feature-123 --depends-on auth-system
+
+# See the full dependency graph
+lean-spec deps feature-123
+
+# Remove relationships
+lean-spec unlink feature-123 --from auth-system
+```
+
+Better validation catches circular dependencies before they cause problems.
+
+## 🔧 JSON Output for Automation
+
+Every major command now supports `--json` for programmatic use:
+
+```bash
+# Integrate with dashboards
+lean-spec board --json | jq '.columns[] | select(.status=="in-progress")'
+
+# Build custom workflows
+lean-spec list --json --status=complete | jq -r '.[] | .name'
+
+# Export for reporting
+lean-spec timeline --json > project-timeline.json
+```
+
+Use LeanSpec data in your CI/CD pipelines, project dashboards, or custom tooling.
+
+## 📝 Simplified Templates
+
+We removed the Handlebars templating layer. Templates are now **just markdown files** you can edit directly.
+
+**Before**: Edit `.hbs` files → Run build → Test  
+**After**: Edit `.md` files → Test
+
+Two templates cover everything:
+- **`standard`** (default) - Single-file spec for most features
+- **`detailed`** - Multi-file example showing sub-specs in action
+
+No build step, no template engine learning curve. Just markdown.
+
+## 🌏 Professional Chinese Translations
+
+If you're working with Chinese-speaking teams, our docs are now fully localized with professional translations. We've established strict quality guidelines:
+
+- Technical terms stay in English (Spec, CLI, Token, MCP)
+- Natural Chinese expression (not word-by-word translation)
+- Consistent terminology across all documentation
+- Full coverage of guides, tutorials, and API reference
+
+Visit [lean-spec.dev/zh-Hans](https://lean-spec.dev/zh-Hans) to see the Chinese documentation.
+
+## 🎯 Your Path to Getting Started
+
+Not sure where to begin? Here's the recommended path:
+
+### 1. Understand the Why (5 minutes)
+
+Read [Why Your AI Agent Gets Dumber with Large Specs](/blog/ai-agent-performance) to understand the context engineering principles behind LeanSpec.
+
+**Key takeaway**: It's not about fitting in context windows—it's about maintaining AI performance as projects scale.
+
+### 2. Spin Up an Example (2 minutes)
+
+```bash
+npx lean-spec init --example dark-theme
+cd dark-theme
+npm install
+```
+
+You now have a working React app with LeanSpec already configured.
+
+### 3. Follow the Tutorial (10 minutes)
+
+Open the [Your First Spec with AI](/docs/tutorials/first-spec-with-ai) tutorial. It walks you through:
+
+- Creating your first spec
+- Working with AI to implement the feature
+- Tracking progress and completing work
+- Seeing how specs guide AI behavior
+
+**Use the example project** you just scaffolded—it's designed for this tutorial.
+
+### 4. Try Your Own Project (whenever you're ready)
+
+```bash
+cd your-existing-project
+npx lean-spec init
+lean-spec create user-authentication
+```
+
+Now apply what you learned. Start simple (status + created), add structure as needed (tags, priority, custom fields).
+
+### Need More Guidance?
+
+- **Small features**: [Your First Spec](/docs/tutorials/first-spec-with-ai)
+- **Multiple related features**: [Managing Multiple Features](/docs/tutorials/managing-multiple-features)
+- **Large projects**: [Large Project Management](/docs/tutorials/large-project-management)
+- **Legacy codebases**: [Refactoring with Specs](/docs/tutorials/refactoring-with-specs)
+
+## What's Next
+
+We're focused on making LeanSpec work seamlessly with more AI tools and development workflows:
+
+- **GitHub Copilot Workspace integration** - Native spec support in Copilot's task planning
+- **VS Code extension** - Inline spec viewing, validation, and status tracking
+- **Project management integrations** - Jira, Linear, and GitHub Projects sync
+- **More example projects** - Backend APIs, mobile apps, infrastructure
+
+**Feedback shapes the roadmap**. What would make LeanSpec more useful for your workflow? [Open an issue](https://github.com/codervisor/lean-spec/issues) or [join the discussion](https://github.com/codervisor/lean-spec/discussions).
+
+## Try It Today
+
+```bash
+# Install globally
+npm install -g lean-spec
+
+# Or use npx for one-off commands
+npx lean-spec init --example dark-theme
+```
+
+The fastest way to learn is to build. Pick an example, follow a tutorial, see how AI-assisted spec-driven development changes your workflow.
+
+---
+
+**Links**:
+- [Documentation](https://lean-spec.dev)
+- [GitHub Repository](https://github.com/codervisor/lean-spec)
+- [Example Projects](https://lean-spec.dev/docs/tutorials/first-spec-with-ai#quick-start)
+- [Getting Started Guide](https://lean-spec.dev/docs/guide/getting-started)
+- [Full Tutorial Collection](https://lean-spec.dev/docs/tutorials/first-spec-with-ai)
+
+**Changelog**: See [CHANGELOG.md](https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md) for detailed version history.

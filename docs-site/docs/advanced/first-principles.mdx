@@ -1,0 +1,285 @@
+---
+id: 'first-principles'
+title: 'First Principles'
+sidebar_position: 3
+---
+# First Principles
+
+> "These aren't principles we chose—they're constraints we discovered."
+
+From three immutable constraints (physics, biology, economics), five first principles emerge. They define what LeanSpec IS at its core and guide all decisions.
+
+:::info Terminology Note
+Terms like **Context**, **Tokens**, **Signal-to-Noise** are defined in [Terminology](/docs/guide/terminology/spec). This page explains the principles built on those terms.
+:::
+
+## The Constraints We Discovered
+
+LeanSpec is built on three unchangeable constraints:
+
+### 1. Physics: Context Windows Degrade with Length
+- AI models have finite token limits (128K-200K tokens)
+- **Quality degrades significantly** beyond 20-50K effective tokens
+- Even within limits, longer context = worse performance
+- Large context increases error rates and "lost in the middle" effects
+
+### 2. Biology: Attention Is the Scarce Resource
+- Humans can hold ~7 items in working memory
+- Attention spans are 5-10 minutes for focused reading
+- Cognitive load compounds with complexity
+- **Attention, not storage, is the bottleneck**
+
+### 3. Economics: Time & Tokens Cost Money
+- Token costs accumulate quickly
+- Engineer time is expensive
+- Maintenance burden grows with document size
+
+**These constraints are unchangeable.** LeanSpec doesn't fight them—it works within them.
+
+## The Five First Principles
+
+From these constraints, five first principles emerge:
+
+### 1. Context Economy 🧠
+**Specs must fit in working memory—both human and AI.**
+
+**What This Means:**
+This isn't about exceeding token limits (like running out of memory). It's about **attention and cognitive capacity**:
+- Even within token limits, AI performance **degrades** with longer context
+- Humans can't hold more than ~7 concepts in working memory at once
+- **Attention is the scarce resource**, not storage
+
+**Why 400 Lines?**
+- 600 lines ≈ 15-20K tokens = entire effective working memory for ONE spec
+- Quality degrades beyond 50K tokens (even with 200K limit)
+- Takes >10 minutes to read (attention span exceeded)
+- Can't hold entire spec structure in mind
+
+**In Practice:**
+- **Target**: &lt;2,000 tokens per spec file
+- **Warning**: 2,000-3,500 tokens (acceptable but watch complexity)
+- **Problem**: >3,500 tokens (consider splitting)
+
+**The Test:**
+> "Can this be read and understood in 5-10 minutes? Can you hold the entire structure in your head?"
+
+If no, it violates Context Economy.
+
+**Example:**
+```markdown
+❌ Bad: 650-line spec covering feature, testing, config, examples
+✅ Good: 250-line README + 150-line TESTING.md + 100-line CONFIG.md
+```
+
+**Why This Is #1:**
+Nothing else matters if the spec doesn't fit in working memory. Perfect signal-to-noise in an 800-line spec is still useless.
+
+**Contrast with Signal-to-Noise:**
+- **Context Economy** = Can you hold it all in mind? (cognitive capacity)
+- **Signal-to-Noise** = Does each word inform decisions? (information density)
+
+---
+
+### 2. Signal-to-Noise Maximization 📡
+**Every word must inform decisions or be cut.**
+
+**What This Means:**
+While Context Economy asks "Can you hold it all?", Signal-to-Noise asks "Is each piece worth holding?"
+- Token costs penalize verbosity (AI processing)
+- Cognitive load penalizes noise (human reading)
+- Maintenance burden compounds (keeping docs current)
+
+**The Test:**
+> "What decision does this sentence inform?"
+
+If the answer is "none" or "maybe future," cut it.
+
+**Examples:**
+
+❌ **Low Signal-to-Noise:**
+```markdown
+The user authentication system, which will be implemented using 
+industry-standard security practices and methodologies, will provide 
+a secure mechanism for users to authenticate themselves...
+```
+
+✅ **High Signal-to-Noise:**
+```markdown
+Users log in with email/password. System validates against database 
+and returns JWT token (24h expiry).
+```
+
+**When to Add Detail:**
+- Explains a trade-off decision
+- Clarifies a constraint
+- Defines success criteria
+- Shows a critical example
+
+**When to Cut:**
+- Obvious to your audience
+- Easily discovered elsewhere
+- Might change before implementation
+- "Nice to know" vs. "need to know"
+
+---
+
+### 3. Intent Over Implementation 🎯
+**Capture "why" and "what," let "how" emerge.**
+
+**The Constraint:**
+- Intent is stable, implementation changes
+- AI needs "why" to make good decisions
+- Developers need context, not prescriptions
+
+**In Practice:**
+- **Must have**: Problem, intent, success criteria
+- **Should have**: Design rationale, trade-offs
+- **Could have**: Implementation details, examples
+
+**The Test:**
+> "Is the rationale clear? Can someone make good decisions without me?"
+
+**Example:**
+```markdown
+❌ Bad (Just Implementation):
+Use Redis for caching. Configure 1GB max memory with LRU eviction.
+
+✅ Good (Intent + Implementation):
+**Intent**: Sub-100ms API response for dashboard.
+**Constraint**: 10k+ users querying same data repeatedly.
+**Approach**: Redis cache with LRU eviction (reduces DB load 90%).
+**Trade-off**: Added complexity vs. performance requirement.
+```
+
+The second explains WHY Redis, WHY 100ms matters, and what trade-off we're making.
+
+---
+
+### 4. Bridge the Gap 🌉
+**Specs exist to align human intent with machine execution.**
+
+**The Constraint:**
+- Humans think in goals and context
+- Machines need clear, unambiguous instructions
+- The gap between them must be bridged
+
+**In Practice:**
+- **For humans**: Overview, context, rationale
+- **For AI**: Clear structure, requirements, examples
+- **Both need**: Natural language + structured data
+
+**The Test:**
+> "Can both human and AI parse and reason about this?"
+
+**Example:**
+```markdown
+✅ Good (Bridges the Gap):
+## Goal
+Reduce API latency to &lt;100ms for dashboard (currently 2-3 seconds).
+
+## Why It Matters
+Users abandon after 3 seconds. We're losing 40% of traffic.
+
+## Technical Approach
+- Cache dashboard data in Redis (TTL: 5 minutes)
+- Lazy-load widgets instead of blocking on all data
+- Use CDN for static assets
+
+## Success Criteria
+- [ ] Dashboard loads in &lt;100ms (measured at p95)
+- [ ] Cache hit rate >80%
+- [ ] Zero cache-related bugs after 2 weeks
+```
+
+**Human sees**: Why it matters, the goal, the approach  
+**AI sees**: Clear requirements, success criteria, technical approach
+
+---
+
+### 5. Progressive Disclosure 📈
+**Start simple, add structure only when pain is felt.**
+
+**The Constraint:**
+- Teams evolve over time
+- Requirements emerge, don't exist upfront
+- Premature abstraction is waste
+
+**In Practice:**
+
+**Day 1 (Solo dev):**
+```yaml
+status: planned
+created: 2025-11-01
+```
+
+**Week 2 (Small team):**
+```yaml
+status: in-progress
+created: 2025-11-01
+tags: [api, backend]
+priority: high
+```
+
+**Month 3 (Enterprise):**
+```yaml
+status: in-progress
+created: 2025-11-01
+tags: [api, backend]
+priority: high
+assignee: alice
+epic: PROJ-123
+sprint: sprint-10
+reviewer: bob
+```
+
+**The Test:**
+> "Do we feel pain without this feature?"
+
+If no, don't add it yet.
+
+**Why This Works:**
+You never need to rewrite your specs. Just add fields as you need them.
+
+---
+
+## Conflict Resolution Framework
+
+When practices conflict, apply principles in **priority order**:
+
+1. **Context Economy** - If it doesn't fit in working memory, split it
+2. **Signal-to-Noise** - If it doesn't inform decisions, remove it
+3. **Intent Over Implementation** - Capture why, not just how
+4. **Bridge the Gap** - Both human and AI must understand
+5. **Progressive Disclosure** - Add structure when pain is felt
+
+### Real-World Examples
+
+**Q: "Should I split this 450-line spec?"**  
+→ **Yes** (Context Economy at 400 lines overrides completeness)
+
+**Q: "Should I document every edge case?"**  
+→ **Only if it informs current decisions** (Signal-to-Noise test)
+
+**Q: "Should I add custom fields upfront?"**  
+→ **Only if you feel pain without them** (Progressive Disclosure)
+
+**Q: "Should I keep implementation details in spec?"**  
+→ **Only if rationale/constraints matter** (Intent Over Implementation)
+
+**Q: "Which is more important: Complete documentation or staying under 400 lines?"**  
+→ **Staying under 400 lines** (Context Economy is #1 principle)
+
+---
+
+## The Bottom Line
+
+These five first principles aren't arbitrary guidelines—they emerge from immutable constraints:
+- **Physics** (context windows are limited)
+- **Biology** (working memory is small)  
+- **Economics** (time and tokens cost money)
+
+Apply them in priority order. When in doubt, Context Economy always wins.
+
+---
+
+**Next**: Explore [Context Engineering](/docs/advanced/context-engineering) to see how these principles are applied programmatically, or learn about [Philosophy & Mindset](/docs/advanced/philosophy) for the broader mental models.
