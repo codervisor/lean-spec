@@ -1,0 +1,1290 @@
+---
+id: 'cli'
+title: 'CLI Reference'
+sidebar_position: 1
+---
+# CLI Commands
+
+Complete reference for all LeanSpec CLI commands.
+
+## Global Options
+
+Available for all commands:
+
+- `--help` - Show help for a command
+- `--version` - Show LeanSpec version
+
+## Commands
+
+### `lean-spec init`
+
+Initialize LeanSpec in your project.
+
+```bash
+lean-spec init [options]
+```
+
+**Interactive prompts (new project):**
+1. Choose setup path (quick start, choose template, or customize)
+2. Handle existing files (merge, backup, or skip)
+3. Configure initial settings
+
+**Interactive prompts (existing project):**
+When LeanSpec is already initialized, you'll be asked how to proceed:
+1. **Upgrade configuration** (recommended) - Update config to latest version, keeps specs and AGENTS.md
+2. **Reset configuration** - Fresh config from template, keeps `specs/` directory
+3. **Full reset** - Remove everything and start fresh (requires confirmation)
+4. **Cancel** - Exit without changes
+
+**What it creates:**
+- `.lean-spec/config.json` - Configuration file
+- `.lean-spec/templates/` - Custom templates directory
+- `specs/` - Specs directory
+- `AGENTS.md` - AI agent integration guidance (if not present)
+
+**Options:**
+- `-y, --yes` - Skip prompts and use defaults (quick start with standard template)
+- `-f, --force` - Force re-initialization (resets config, keeps specs)
+- `--template <name>` - Use specific template (`standard` or `detailed`)
+- `--agent-tools <tools>` - AI tools to create symlinks for (comma-separated: `claude,gemini,copilot` or `all` or `none`)
+
+**Examples:**
+
+```bash
+# Interactive initialization
+lean-spec init
+
+# Quick start with defaults
+lean-spec init -y
+
+# Force re-init (resets config, keeps specs)
+lean-spec init -f
+
+# Use detailed template
+lean-spec init --template detailed
+
+# Create symlinks for all AI tools
+lean-spec init --agent-tools all
+```
+
+**Re-initialization behavior:**
+- `-y` flag: Safely upgrades config (preserves everything)
+- `-f` flag: Resets config only (preserves `specs/` directory)
+- Interactive: Choose your strategy with full context (shows spec count)
+
+---
+
+### `lean-spec create`
+
+Create a new spec.
+
+```bash
+lean-spec create <name> [options]
+```
+
+**Arguments:**
+- `<name>` - Spec name (required)
+
+**Options:**
+- `--title <title>` - Set custom title
+- `--description <desc>` - Set initial description
+- `--tags <tags>` - Comma-separated tags
+- `--priority <priority>` - Set priority (`low`, `medium`, `high`, `critical`)
+- `--assignee <name>` - Set assignee
+- `--template <template>` - Use a specific template
+- `--field <name=value>` - Set custom field (can be used multiple times)
+- `--no-prefix` - Skip date prefix even if configured
+
+**Examples:**
+
+```bash
+# Basic spec
+lean-spec create user-authentication
+
+# Spec with metadata
+lean-spec create user-auth --status=planned --priority=high --tags=security,api
+
+# Spec with custom fields
+lean-spec create user-auth --field epic=PROJ-123 --field sprint=42
+```
+
+**Output:**
+```
+✓ Created: specs/001-user-authentication/
+  Edit: specs/001-user-authentication/README.md
+```
+
+**Behavior:**
+- Creates `specs/NNN-name/` directory (flat structure with global numbering)
+- Generates `README.md` from template
+- Assigns sequential number (NNN) globally across all specs
+- Sets frontmatter with metadata
+
+**Note**: Default is flat structure. For date-based grouping, configure `pattern: "custom"` in `.lean-spec/config.json`.
+
+---
+
+### `lean-spec list`
+
+List all specs with optional filtering.
+
+```bash
+lean-spec list [options]
+```
+
+**Options:**
+- `--archived` - Include archived specs
+- `--status <status>` - Filter by status (`planned`, `in-progress`, `complete`, `archived`)
+- `--priority <priority>` - Filter by priority (`low`, `medium`, `high`, `critical`)
+- `--tag <tag>` - Filter by tag (use multiple --tag flags for multiple tags)
+- `--assignee <name>` - Filter by assignee
+- `--field <name=value>` - Filter by custom field (can specify multiple)
+- `--sort <field>` - Sort by field (`id`, `created`, `name`, `status`, `priority`) (default: `id`)
+- `--order <order>` - Sort order (`asc`, `desc`) (default: `desc`)
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# List all specs
+lean-spec list
+
+# Filter by status
+lean-spec list --status=in-progress
+lean-spec list --status=planned
+
+# Filter by priority
+lean-spec list --priority=high
+
+# Filter by tag
+lean-spec list --tag api
+
+# Filter by multiple tags
+lean-spec list --tag api --tag backend
+
+# Combine filters
+lean-spec list --status planned --priority high --tag api
+
+# Filter by custom field
+lean-spec list --field epic=PROJ-123
+
+# JSON output for programmatic use
+lean-spec list --json
+lean-spec list --status planned --json
+```
+
+**Output:**
+```
+=== Specs ===
+
+📅 specs/001-user-authentication
+   Created: 2025-11-02 · Priority: high · Tags: security, api
+
+⏳ specs/002-password-reset
+   Created: 2025-11-02 · Priority: medium
+```
+
+**Note**: Output shows flat structure (default). With date-grouping configured, paths would be `specs/YYYYMMDD/NNN-name/`.
+
+**Status Icons:**
+- 📅 Planned
+- ⏳ In progress
+- ✅ Complete
+- 📦 Archived
+
+---
+
+### `lean-spec update`
+
+Update spec metadata.
+
+```bash
+lean-spec update <spec> [options]
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Options:**
+- `--status <status>` - Update status (`planned`, `in-progress`, `complete`, `archived`)
+- `--priority <priority>` - Update priority (`low`, `medium`, `high`, `critical`)
+- `--tags <tags>` - Update tags (comma-separated, replaces existing)
+- `--assignee <name>` - Set assignee
+- `--field <name=value>` - Update custom field (can be used multiple times)
+
+**Examples:**
+
+```bash
+# Update status (using spec number)
+lean-spec update 1 --status=in-progress
+
+# Update priority (using spec name)
+lean-spec update user-auth --priority=critical
+
+# Update tags
+lean-spec update 001-user-auth --tags=security,api,mvp
+
+# Update custom fields
+lean-spec update 1 --field epic=PROJ-123
+
+# Update multiple fields
+lean-spec update 1 --status=complete --priority=high
+```
+
+**Output:**
+```
+✓ Updated: specs/001-user-auth
+  Fields: status, priority
+```
+
+**Special Behavior:**
+- Setting status to `complete` automatically adds `completed` timestamp
+- Visual badges in README.md are auto-updated
+- Both frontmatter and badges stay in sync
+
+---
+
+### `lean-spec search`
+
+Full-text search across all specs.
+
+```bash
+lean-spec search <query> [options]
+```
+
+**Arguments:**
+- `<query>` - Search query (required)
+
+**Options:**
+- `--status <status>` - Filter results by status
+- `--priority <priority>` - Filter results by priority
+- `--tag <tag>` - Filter results by tag
+- `--assignee <name>` - Filter results by assignee
+- `--field <name=value>` - Filter results by custom field (can specify multiple)
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Basic search
+lean-spec search "authentication"
+
+# Search with filters
+lean-spec search "JWT token" --status=in-progress
+lean-spec search "API" --tag=security
+lean-spec search "password" --field epic=PROJ-123
+
+# JSON output for programmatic use
+lean-spec search "authentication" --json
+```
+
+**Output:**
+```
+Found 2 specs matching "authentication":
+
+📅 specs/001-user-authentication
+   Created: 2025-11-02
+   Matches in: Overview, Key Scenarios
+
+⏳ specs/003-two-factor-auth
+   Created: 2025-11-02
+   Matches in: Technical Approach
+```
+
+**Search Behavior:**
+- Searches in spec content (README.md)
+- Case-insensitive
+- Searches title, overview, scenarios, criteria, etc.
+- Does not search frontmatter metadata
+
+---
+
+### `lean-spec archive`
+
+Archive completed specs.
+
+```bash
+lean-spec archive <spec>
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Examples:**
+
+```bash
+# Archive by spec number
+lean-spec archive 1
+
+# Archive by name
+lean-spec archive user-auth
+```
+
+**Output:**
+```
+✓ Archived: specs/001-user-auth
+  Moved to: specs/archived/001-user-auth
+```
+
+**Behavior:**
+- Moves spec from `specs/` to `specs/archived/`
+- Preserves directory structure
+- Keeps all metadata
+- Spec no longer appears in `lean-spec list` by default
+
+**Best Practice:**
+- Update status to `complete` before archiving
+- Archive specs when work is fully done
+- Use to keep active workspace clean
+
+---
+
+### `lean-spec view`
+
+View spec content.
+
+```bash
+lean-spec view <spec> [options]
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Options:**
+- `--raw` - Output raw markdown (for piping/scripting)
+- `--json` - Output as JSON
+- `--no-color` - Disable colors
+
+**Examples:**
+
+```bash
+# View formatted spec
+lean-spec view 001-user-authentication
+
+# Get raw markdown (for scripting)
+lean-spec view 001-user-auth --raw | grep "TODO"
+
+# Get structured JSON
+lean-spec view 001-user-auth --json | jq '.frontmatter.status'
+```
+
+**Default Output (formatted):**
+```
+━━━ 001-user-authentication ━━━
+
+📅 Status: planned
+🟡 Priority: high
+📆 Created: 2025-11-02
+🏷️  Tags: #security #api
+
+────────────────────────────────────────────────────────────
+
+# User Authentication
+
+## Overview
+...
+```
+
+**Raw Output (`--raw`):**
+```markdown
+---
+status: planned
+priority: high
+created: 2025-11-02
+tags:
+  - security
+  - api
+---
+
+# User Authentication
+
+## Overview
+...
+```
+
+**JSON Output (`--json`):**
+```json
+{
+  "name": "001-user-authentication",
+  "path": "specs/001-user-authentication",
+  "frontmatter": {
+    "status": "planned",
+    "priority": "high",
+    "created": "2025-11-02",
+    "tags": ["security", "api"]
+  },
+  "content": "# User Authentication\n\n## Overview\n..."
+}
+```
+
+**Use Cases:**
+- **Default**: Human-readable spec viewing
+- **`--raw`**: Piping to other tools, AI context, version control diffs
+- **`--json`**: Programmatic access, CI/CD, integrations
+
+---
+
+### `lean-spec open`
+
+Open spec in editor.
+
+```bash
+lean-spec open <spec> [options]
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Options:**
+- `--editor <editor>` - Specify editor command
+
+**Examples:**
+
+```bash
+# Open in default editor
+lean-spec open 001-user-authentication
+
+# Open in specific editor
+lean-spec open 001-user-auth --editor=code
+lean-spec open 001-user-auth --editor=vim
+```
+
+**Editor Selection:**
+1. `--editor` flag if provided
+2. `$VISUAL` environment variable
+3. `$EDITOR` environment variable
+4. System default (`open` on macOS, `xdg-open` on Linux, `start` on Windows)
+
+**Behavior:**
+- Opens the spec's `README.md` file
+- GUI editors (VS Code, Atom) don't block terminal
+- Terminal editors (vim, nano) block until closed
+
+---
+
+### `lean-spec templates`
+
+Manage spec templates.
+
+```bash
+lean-spec templates [command]
+```
+
+**Subcommands:**
+
+#### `lean-spec templates` or `lean-spec templates list`
+
+List available templates.
+
+```bash
+lean-spec templates
+lean-spec templates list
+```
+
+**Output:**
+```
+=== Project Templates ===
+
+Registered:
+  default: spec-template.md ✓ (default)
+  detailed: detailed/
+    Files: README.md, DESIGN.md, PLAN.md, TEST.md
+
+Available files:
+  spec-template.md (1.2 KB)
+
+Available directories (multi-file templates):
+  detailed/ (4 files: README.md, DESIGN.md, PLAN.md, TEST.md)
+
+Use templates with: lean-spec create <name> --template=<template-name>
+```
+
+#### `lean-spec templates show <name>`
+
+Show template content.
+
+```bash
+lean-spec templates show default
+lean-spec templates show detailed
+```
+
+For directory-based templates, shows all files in the template.
+
+#### `lean-spec templates add <name> <file>`
+
+Register a template.
+
+```bash
+# Single-file template
+lean-spec templates add api api-spec.md
+
+# Directory-based multi-file template
+lean-spec templates add enterprise enterprise/
+```
+
+For directory templates, the directory must contain a `README.md` file as the main template.
+
+#### `lean-spec templates remove <name>`
+
+Unregister a template (does not delete the file).
+
+```bash
+lean-spec templates remove api
+```
+
+#### `lean-spec templates copy <source> <target>`
+
+Copy a template to create a new one.
+
+```bash
+lean-spec templates copy default api-spec
+```
+
+**Template Types:**
+
+1. **Single-file templates** (e.g., `spec-template.md`)
+   - Only that file is used when creating specs
+   - Best for simple, consistent spec structures
+
+2. **Directory-based templates** (e.g., `detailed/`)
+   - All `.md` files in the directory are copied when creating specs
+   - Must contain `README.md` as the main template
+   - Best for complex specs with multiple sub-spec files
+
+---
+
+### `lean-spec stats`
+
+Show statistics about specs.
+
+```bash
+lean-spec stats [options]
+```
+
+**Options:**
+- `--tag <tag>` - Filter by tag
+- `--assignee <name>` - Filter by assignee
+- `--json` - Output as JSON
+- `--full` - Show full detailed analytics
+- `--timeline` - Show only timeline section
+- `--velocity` - Show only velocity section
+
+**Output:**
+```
+=== Spec Statistics ===
+
+Total Specs: 15
+  Planned: 5
+  In Progress: 7
+  Complete: 3
+
+By Priority:
+  Critical: 2
+  High: 6
+  Medium: 5
+  Low: 2
+
+By Tag:
+  api: 8
+  security: 5
+  ui: 3
+```
+
+---
+
+### `lean-spec board`
+
+View specs organized by status (Kanban-style).
+
+```bash
+lean-spec board [options]
+```
+
+**Options:**
+- `--complete` - Include complete specs (hidden by default)
+- `--simple` - Hide completion summary
+- `--completion-only` - Show only completion summary
+- `--tag <tag>` - Filter by tag
+- `--assignee <name>` - Filter by assignee
+- `--json` - Output as JSON
+
+**Output:**
+```
+╔═══════════════════════════════════════════════════════════╗
+║                    LeanSpec Board                         ║
+╠═══════════════════════════════════════════════════════════╣
+║ PLANNED          IN PROGRESS         COMPLETE             ║
+╠─────────────────┬────────────────────┬────────────────────╣
+║ user-auth       │ api-gateway        │ login-ui           ║
+║ rate-limiting   │ database-setup     │ password-hash      ║
+║ oauth-provider  │ error-handling     │ session-mgmt       ║
+║                 │                    │                    ║
+║ 3 specs         │ 3 specs            │ 3 specs            ║
+╚═════════════════╧════════════════════╧════════════════════╝
+```
+
+---
+
+### `lean-spec tokens`
+
+Count tokens in specifications for LLM context management.
+
+```bash
+lean-spec tokens [spec] [options]
+```
+
+**Arguments:**
+- `[spec]` - Spec identifier (optional). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+  - If omitted, shows token counts for all specs
+
+**Options:**
+- `--detailed` - Show content breakdown (prose, code, tables, frontmatter)
+- `--include-sub-specs` - Include sub-spec files in count
+- `--all` - Show all specs (not just active)
+- `--sort-by <field>` - Sort by: `tokens`, `lines`, `name` (default: `tokens`)
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Count tokens in a specific spec
+lean-spec tokens 045
+lean-spec tokens unified-dashboard
+
+# Show detailed breakdown
+lean-spec tokens 045 --detailed
+
+# Include sub-spec files
+lean-spec tokens 045 --include-sub-specs
+
+# Show all specs sorted by token count
+lean-spec tokens
+lean-spec tokens --all
+
+# JSON output for programmatic use
+lean-spec tokens 045 --json
+```
+
+**Output:**
+```
+📊 Token Count: 045-unified-dashboard
+
+  Total: 2,847 tokens ✅
+
+Files:
+
+  README.md                 1,923 tokens (287 lines)
+  DESIGN.md                   654 tokens (98 lines)
+  TESTING.md                  270 tokens (41 lines)
+
+Content Breakdown:
+
+  Prose       2,145 tokens  (75%)
+  Code          523 tokens  (18%)
+  Tables        156 tokens  (5%)
+  Frontmatter    23 tokens  (1%)
+```
+
+**Performance Indicators:**
+- ✅ Excellent (&lt;2,000 tokens) - Baseline AI performance (100% effectiveness)
+- 👍 Good (2,000-3,500 tokens) - Slight degradation, acceptable (95% effectiveness)
+- ⚠️ Warning (3,500-5,000 tokens) - Consider simplification (85% effectiveness)
+- 🔴 Problem (&gt;5,000 tokens) - Should split (70% effectiveness)
+
+**Use Cases:**
+- Check if spec fits in AI context window
+- Identify specs that need splitting
+- Understand token cost before loading into AI tools
+- Monitor spec complexity over time
+- Validate specs meet Context Economy thresholds
+
+**Why Token Count Matters:**
+- Token count is the industry standard for LLM context measurement
+- Research shows quality degradation starts well before context limits
+- Code is denser (~3 chars/token) than prose (~4 chars/token)
+- 6x cost difference between high and low token count specs
+
+---
+
+### `lean-spec deps`
+
+Show dependency graph for a spec.
+
+```bash
+lean-spec deps <spec> [options]
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Options:**
+- `--depth <n>` - Show N levels deep (default: 3)
+- `--graph` - ASCII graph visualization
+- `--json` - Output as JSON
+- `--complete` - Show complete graph (all relationships)
+- `--upstream` - Show only upstream dependencies
+- `--downstream` - Show only downstream dependents
+- `--impact` - Show impact radius (all affected specs)
+
+**Examples:**
+
+```bash
+# Show all relationships
+lean-spec deps 085
+
+# Show only upstream dependencies
+lean-spec deps 085 --upstream
+
+# Show impact radius
+lean-spec deps 085 --impact
+
+# JSON output for programmatic use
+lean-spec deps 085 --json
+```
+
+**Output:**
+```
+📦 Dependencies for 085-cli-relationship-commands
+
+Depends On:
+  → 042-spec-frontmatter-metadata ✅
+  → 035-mcp-tools-expansion ✅
+
+Required By:
+  ← 099-enhanced-dependency-commands-cli-mcp ✅
+
+Related Specs:
+  ⟷ 076-programmatic-spec-relationships ✅
+```
+
+---
+
+### `lean-spec validate`
+
+Validate specs for quality issues using token-based thresholds.
+
+```bash
+lean-spec validate [specs...] [options]
+```
+
+**Arguments:**
+- `[specs...]` - Specific specs to validate (optional). If omitted, validates all specs.
+
+**Options:**
+- `--verbose` - Show passing specs in addition to warnings/errors
+- `--quiet` - Suppress warnings, only show errors
+- `--format <format>` - Output format: `default`, `json`, `compact` (default: `default`)
+- `--json` - Output as JSON (shorthand for `--format json`)
+- `--rule <rule>` - Filter by specific rule name (e.g., `complexity`, `frontmatter`, `structure`)
+
+**Examples:**
+
+```bash
+# Validate all specs
+lean-spec validate
+
+# Validate specific specs
+lean-spec validate 045 unified-dashboard
+
+# Show all specs including passing
+lean-spec validate --verbose
+
+# Only show errors (suppress warnings)
+lean-spec validate --quiet
+
+# JSON output for CI/CD
+lean-spec validate --format json
+
+# Check specific validation rule
+lean-spec validate --rule complexity
+lean-spec validate --rule frontmatter
+```
+
+**Output:**
+```
+✓ Validating specs...
+
+✅ 045-unified-dashboard
+   Token count: 2,847 (Good)
+   Structure: 32 sections, 6 sub-specs
+
+⚠️ 059-programmatic-spec-management
+   Token count: 4,203 (Warning - consider simplification)
+   Suggestion: Consider splitting or using sub-specs
+
+🔴 016-github-action
+   Token count: 6,450 (Should split)
+   Suggestion: Split for Context Economy
+
+Summary:
+  Passed: 1
+  Warnings: 1
+  Errors: 1
+```
+
+**Validation Rules:**
+
+1. **Complexity** (token-based)
+   - Checks token count against research-backed thresholds
+   - Evaluates structure quality (sectioning, sub-specs)
+   - Identifies specs that need splitting
+
+2. **Frontmatter**
+   - Validates required fields (status, created)
+   - Checks field types and values
+   - Ensures metadata consistency
+
+3. **Structure**
+   - Checks for proper heading hierarchy
+   - Validates section organization
+   - Ensures required sections present
+
+4. **Sub-specs**
+   - Validates sub-spec file naming
+   - Checks cross-references
+   - Ensures sub-spec consistency
+
+5. **Corruption**
+   - Detects malformed frontmatter
+   - Identifies parsing issues
+   - Flags inconsistent metadata
+
+**Token Thresholds:**
+- ✅ Excellent: &lt;2,000 tokens (100% AI effectiveness)
+- 👍 Good: 2,000-3,500 tokens (95% AI effectiveness)
+- ⚠️ Warning: 3,500-5,000 tokens (85% AI effectiveness)
+- 🔴 Error: &gt;5,000 tokens (70% AI effectiveness, should split)
+
+**Use Cases:**
+- Pre-commit validation in CI/CD
+- Quality checks before marking specs complete
+- Identifying specs that need refactoring
+- Ensuring consistent spec quality across project
+
+---
+
+### `lean-spec files`
+
+List files in a spec directory.
+
+```bash
+lean-spec files <spec> [options]
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Options:**
+- `--type <type>` - Filter by type: `docs`, `assets`
+- `--tree` - Show tree structure
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# List all files
+lean-spec files 045
+
+# Filter by type
+lean-spec files 045 --type docs
+
+# JSON output
+lean-spec files 045 --json
+```
+
+**Output:**
+```
+📄 Files in 045-unified-dashboard
+
+Required:
+  ✓ README.md              (11.5 KB, ~2,847 tokens)  Main spec
+
+Documents:
+  ✓ DESIGN.md              (6.2 KB, ~654 tokens)
+  ✓ TESTING.md             (2.8 KB, ~270 tokens)
+
+Assets:
+  ✓ architecture.png       (45.3 KB)
+
+Total: 4 files, 65.8 KB
+```
+
+---
+
+### `lean-spec check`
+
+Check for sequence conflicts in spec numbering.
+
+```bash
+lean-spec check [options]
+```
+
+**Options:**
+- `-q, --quiet` - Brief output
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Check for conflicts
+lean-spec check
+
+# JSON output for CI/CD
+lean-spec check --json
+```
+
+**Output (no conflicts):**
+```
+✓ No sequence conflicts detected
+```
+
+**Output (with conflicts):**
+```
+⚠️  Sequence conflicts detected:
+
+  Sequence 042:
+    - 042-user-auth
+    - 042-api-gateway
+
+Tip: Use date prefix to prevent conflicts:
+  Edit .lean-spec/config.json → structure.prefix: "{YYYYMMDD}-"
+
+Or rename folders manually to resolve.
+```
+
+**Use Cases:**
+- Pre-commit validation
+- CI/CD pipeline checks
+- Ensuring unique spec numbering
+
+---
+
+### `lean-spec backfill`
+
+Backfill timestamps from git history.
+
+```bash
+lean-spec backfill [specs...] [options]
+```
+
+**Arguments:**
+- `[specs...]` - Specific specs to backfill (optional). If omitted, processes all specs.
+
+**Options:**
+- `--dry-run` - Show what would be updated without making changes
+- `--force` - Overwrite existing timestamp values
+- `--assignee` - Include assignee from first commit author
+- `--transitions` - Include full status transition history
+- `--all` - Include all optional fields (assignee + transitions)
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Backfill all specs (dry run)
+lean-spec backfill --dry-run
+
+# Backfill specific specs
+lean-spec backfill 045 unified-dashboard
+
+# Backfill with all metadata
+lean-spec backfill --all
+
+# JSON output
+lean-spec backfill --json
+```
+
+**Output:**
+```
+Analyzing git history for 118 specs...
+
+✓ 045-unified-dashboard
+  created_at: 2025-11-02T10:30:00.000Z (from git)
+  completed_at: 2025-11-05T14:20:00.000Z (from git)
+
+✓ 046-dashboard-widgets
+  created_at: 2025-11-03T09:15:00.000Z (from git)
+  (no completed_at - spec still in progress)
+
+Summary:
+  Updated: 2 specs
+  Skipped: 116 specs (already have timestamps)
+```
+
+**Use Cases:**
+- Migrating to LeanSpec from other systems
+- Recovering missing timestamp data
+- Ensuring accurate spec history
+
+---
+
+### `lean-spec timeline`
+
+Show creation/completion timeline over time.
+
+```bash
+lean-spec timeline [options]
+```
+
+**Options:**
+- `--days <n>` - Show last N days (default: 30)
+- `--by-tag` - Group by tag
+- `--by-assignee` - Group by assignee
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Show last 30 days
+lean-spec timeline
+
+# Show last 90 days
+lean-spec timeline --days 90
+
+# Group by tag
+lean-spec timeline --by-tag
+
+# JSON output
+lean-spec timeline --json
+```
+
+**Output:**
+```
+📈 Spec Timeline
+
+Activity (Last 30 Days)
+
+Date          Created  Completed
+────────────  ───────  ─────────
+2025-11-24    ████ 4   ███ 3
+2025-11-23    ██ 2     █ 1
+2025-11-22    ███ 3    ██ 2
+2025-11-21    █ 1      █ 1
+```
+
+**Use Cases:**
+- Track team velocity
+- Monitor project activity
+- Identify productivity patterns
+
+---
+
+### `lean-spec gantt`
+
+Show timeline with dependencies (Gantt chart style).
+
+```bash
+lean-spec gantt [options]
+```
+
+**Options:**
+- `--weeks <n>` - Show N weeks (default: 4)
+- `--show-complete` - Include completed specs
+- `--critical-path` - Highlight critical path
+- `--json` - Output as JSON
+
+**Examples:**
+
+```bash
+# Show next 4 weeks
+lean-spec gantt
+
+# Show next 8 weeks with completed specs
+lean-spec gantt --weeks 8 --show-complete
+
+# JSON output
+lean-spec gantt --json
+```
+
+**Output:**
+```
+📅 Gantt Chart (Next 4 Weeks)
+
+Spec                          Week 1  Week 2  Week 3  Week 4
+────────────────────────────  ──────  ──────  ──────  ──────
+🔴 042-user-auth               ████████████
+🟠 043-api-gateway                     ████████████
+🟡 044-dashboard-ui                            ████████████
+
+Legend:
+  🔴 Critical  🟠 High  🟡 Medium  🟢 Low
+  ████ In Progress  ░░░░ Planned
+```
+
+**Use Cases:**
+- Sprint planning
+- Project timeline visualization
+- Dependency management
+
+---
+
+### `lean-spec ui`
+
+Start a local web UI for visual spec management.
+
+```bash
+lean-spec ui [options]
+```
+
+**Options:**
+- `-s, --specs <dir>` - Specs directory (auto-detected if omitted)
+- `-p, --port <port>` - Port to run on (default: 3000)
+- `--no-open` - Don't open browser automatically
+- `--dev` - Development mode (LeanSpec monorepo only)
+- `--dry-run` - Show command without executing
+
+**Examples:**
+
+```bash
+# Auto-detect specs, open on port 3000
+lean-spec ui
+
+# Custom directory and port
+lean-spec ui --specs ./docs/specs --port 3100
+
+# Don't open browser automatically
+lean-spec ui --no-open
+
+# See what command would run
+lean-spec ui --dry-run
+```
+
+**Features:**
+- **Spec Browser**: List, search, and filter all specs
+- **Dependency Graph**: Visualize relationships between specs
+- **Board View**: Kanban-style view organized by status
+- **Rich Formatting**: Full markdown rendering with syntax highlighting
+- **Realtime Updates**: Changes appear automatically (60s cache)
+
+**How It Works:**
+
+In external projects:
+- Delegates to `npx @leanspec/ui` 
+- No additional installation required
+- Uses filesystem mode (direct file reads)
+
+In LeanSpec monorepo:
+- Runs local `packages/web` in development
+- Useful for testing UI changes
+
+**Auto-Detection:**
+
+The command automatically searches for your specs directory:
+1. `--specs` option (if provided)
+2. `specs/` in current directory
+3. `../specs/` (parent directory)
+4. `../../specs/` (grandparent directory)
+
+**Browser Control:**
+
+By default, the command opens your default browser. Use `--no-open` to prevent this, then manually navigate to `http://localhost:3000` (or your custom port).
+
+**Port Conflicts:**
+
+If port 3000 is already in use:
+```bash
+# Use a different port
+lean-spec ui --port 3100
+
+# Or stop the process using port 3000
+# macOS/Linux:
+lsof -ti:3000 | xargs kill
+# Windows:
+netstat -ano | findstr :3000
+# Then: taskkill /PID <PID> /F
+```
+
+**Use Cases:**
+- Visual exploration and discovery of specs
+- Team presentations and demos
+- Stakeholder reviews
+- Dependency analysis
+- Quick spec browsing without CLI commands
+
+→ **Learn More**: See [Visual Mode Guide](/docs/guide/visual-mode) for detailed usage and [UI Package Reference](/docs/reference/ui-package) for technical details.
+
+---
+
+## Spec Identifiers
+
+All commands that accept a `<spec>` argument support flexible formats:
+
+```bash
+# Spec number (with or without padding)
+42
+042
+
+# Spec name
+unified-dashboard
+
+# Full folder name
+045-unified-dashboard
+
+# With old date-based structure (still supported)
+specs/20251102/001-user-auth
+20251102/001-user-auth
+001-user-auth
+```
+
+LeanSpec will find the spec regardless of which format you use.
+
+---
+
+## Configuration
+
+Commands respect settings in `.lean-spec/config.json`:
+
+```json
+{
+  "template": "spec-template.md",
+  "specsDir": "specs",
+  "structure": {
+    "pattern": "flat",
+    "sequenceDigits": 3,
+    "defaultFile": "README.md"
+  },
+  "frontmatter": {
+    "required": ["status", "created"],
+    "optional": ["tags", "priority"],
+    "custom": {
+      "epic": "string",
+      "sprint": "number"
+    }
+  }
+}
+```
+
+See [Configuration Reference](/docs/reference/config) for details.
+
+---
+
+## Exit Codes
+
+- `0` - Success
+- `1` - Error (invalid arguments, file not found, etc.)
+- `2` - User cancelled operation
+
+---
+
+**Next**: Explore [Configuration](/docs/reference/config) or learn about [Custom Fields](/docs/guide/usage/advanced-features/custom-fields).

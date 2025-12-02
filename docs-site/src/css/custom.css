@@ -1,0 +1,61 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+/* LeanSpec Brand Colors: Dark #1a1a2e, Light #ffffff, Accent #00d9ff */
+:root {
+  /* Use darker cyan for better contrast on light backgrounds */
+  --ifm-color-primary: #0097b3;
+  --ifm-color-primary-dark: #00889f;
+  --ifm-color-primary-darker: #008096;
+  --ifm-color-primary-darkest: #006a7a;
+  --ifm-color-primary-light: #00a6c7;
+  --ifm-color-primary-lighter: #00aed0;
+  --ifm-color-primary-lightest: #00c3e6;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 151, 179, 0.1);
+  
+  /* Hero section styling for light mode */
+  --ifm-hero-background-color: #1a1a2e;
+  --ifm-hero-text-color: #ffffff;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  /* Use brighter cyan on dark backgrounds */
+  --ifm-color-primary: #00d9ff;
+  --ifm-color-primary-dark: #00c3e6;
+  --ifm-color-primary-darker: #00b8d9;
+  --ifm-color-primary-darkest: #0097b3;
+  --ifm-color-primary-light: #1ae0ff;
+  --ifm-color-primary-lighter: #2ee3ff;
+  --ifm-color-primary-lightest: #5ce8ff;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 217, 255, 0.15);
+  --ifm-background-color: #1a1a2e;
+  --ifm-navbar-background-color: #1a1a2e;
+}
+
+/* Hero section - dark background with bright cyan accent */
+.hero {
+  background-color: #1a1a2e !important;
+  background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 100%) !important;
+}
+
+.hero__title,
+.hero__subtitle {
+  color: #ffffff !important;
+}
+
+/* Ensure hero works in both light and dark mode */
+[data-theme='light'] .hero {
+  background-color: #1a1a2e !important;
+  background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 100%) !important;
+}
+
+[data-theme='dark'] .hero {
+  background-color: #1a1a2e !important;
+  background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 100%) !important;
+}

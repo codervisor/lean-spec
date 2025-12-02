@@ -1,0 +1,146 @@
+---
+id: 'frontmatter'
+title: 'Frontmatter Fields'
+sidebar_position: 3
+---
+# Frontmatter Reference
+
+Complete reference for LeanSpec frontmatter fields.
+
+This page provides a quick reference of all available fields. For usage examples and best practices, see the main frontmatter documentation.
+
+## Required Fields
+
+### status
+
+**Type:** `string`  
+**Values:** `planned` | `in-progress` | `complete` | `archived`  
+**Description:** Current state of the spec
+
+**Icons:**
+- 📅 Planned
+- ⏳ In progress
+- ✅ Complete
+- 📦 Archived
+
+### created
+
+**Type:** `string`  
+**Format:** `YYYY-MM-DD`  
+**Description:** Date when spec was created
+
+Auto-filled by `lean-spec create`.
+
+## Optional Fields
+
+### tags
+
+**Type:** `array`  
+**Description:** Categories for organization and filtering
+
+**Example:**
+```yaml
+tags: [api, security, mvp]
+```
+
+### priority
+
+**Type:** `string`  
+**Values:** `low` | `medium` | `high` | `critical`  
+**Description:** Importance level
+
+### related
+
+**Type:** `array`  
+**Description:** Related specs (bidirectional soft reference)
+
+Specs listed here are shown bidirectionally in `lean-spec deps`. If spec A has `related: [B]`, both A and B will show the relationship.
+
+**Example:**
+```yaml
+related: [042-mcp-error-handling, 037-docs-overhaul]
+```
+
+**Symbol:** ⟷ (bidirectional arrow)
+
+**Use when:**
+- Specs cover related topics or features
+- Work is coordinated but not blocking
+- Context is helpful but not required
+
+### depends_on
+
+**Type:** `array`  
+**Description:** Hard dependencies (directional blocking)
+
+Spec cannot start until dependencies complete. Shows directionally in `lean-spec deps`.
+
+**Example:**
+```yaml
+depends_on: [018-spec-validation]
+```
+
+**Symbol:** → (depends on) or ← (blocks)
+
+**Use when:**
+- Spec truly cannot start until another completes
+- There's a clear dependency chain
+- Work must be done in specific order
+
+### completed
+
+**Type:** `string`  
+**Format:** `YYYY-MM-DD`  
+**Description:** Date when work was completed
+
+Auto-added when status is set to `complete`.
+
+## Custom Fields
+
+Define in `.lean-spec/config.json`:
+
+```json
+{
+  "frontmatter": {
+    "custom": {
+      "assignee": "string",
+      "reviewer": "string",
+      "epic": "string",
+      "sprint": "number",
+      "estimate": "string",
+      "issue": "string"
+    }
+  }
+}
+```
+
+**Supported types:**
+- `string` - Text values
+- `number` - Numeric values
+- `boolean` - true/false
+- `array` - Lists
+
+## Complete Example
+
+```yaml
+---
+status: in-progress
+created: 2025-11-02
+completed: 
+tags: [api, authentication, security]
+priority: high
+assignee: alice
+reviewer: bob
+epic: PROJ-123
+sprint: 42
+estimate: large
+needs_security_review: true
+---
+```
+
+---
+
+**See also:**
+- [Frontmatter Guide](/docs/guide/usage/advanced-features/frontmatter) - Usage examples
+- [Custom Fields](/docs/guide/usage/advanced-features/custom-fields) - Defining custom fields
+- [CLI Commands](/docs/reference/cli) - Managing frontmatter via CLI

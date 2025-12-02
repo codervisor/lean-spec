@@ -1,0 +1,147 @@
+---
+id: 'getting-started'
+title: '快速开始'
+sidebar_position: 2
+---
+# 快速开始
+
+本指南将帮助你设置 LeanSpec 并采用 SDD 工作流程。大约需要 5 分钟。
+
+:::info 前置条件
+- **Node.js**：版本 20 或更高。从 [nodejs.org](https://nodejs.org/) 下载。
+- **AI 编码工具**：设置你喜欢的工具（例如 [VS Code GitHub Copilot](https://github.com/features/copilot)、[Claude Code](https://www.claude.com/product/claude-code) 等）
+:::
+
+## 安装
+
+使用 npm 全局安装 LeanSpec：
+
+```bash
+npm install -g lean-spec
+```
+
+这会使 `lean-spec` 命令在全系统可用。
+
+## 初始化项目
+
+导航到你的项目目录并运行：
+
+```bash
+lean-spec init -y
+```
+
+初始化后，你的项目将包含：
+
+```
+your-project/
+├── .lean-spec/        # LeanSpec 配置
+├── specs/             # 所有 Spec 都放在这里
+├── AGENTS.md          # AI 代理的系统提示
+└── ... （你的项目文件）
+```
+
+## 创建第一个 Spec
+
+在你的 AI 工具中，输入提示：
+
+```
+为 "my-feature" 功能创建新 Spec，需满足以下要求：
+- [要求 1]
+- [要求 2]
+- ...
+```
+
+或者简单地：
+
+```
+为 "my-feature" 创建新 Spec。
+```
+
+AI 将使用 CLI 或 MCP（如果已配置）来创建并填充 Spec。
+
+这将创建：
+- `specs/001-my-feature/` 文件夹（扁平结构与顺序编号）
+- 包含模板内容和 frontmatter 的 `README.md`
+- **由 AI 填写的 Spec 详情**（无需手动编辑）
+
+Spec 内容如下所示：
+
+```markdown title="specs/001-my-feature/README.md"
+---
+status: planned
+created: '2025-11-02'
+priority: medium
+---
+
+# My Feature
+
+> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-11-02
+
+(... 由 AI 填写的 Spec 详情 ...)
+```
+
+## 开发 Spec
+
+创建 Spec 后，审查它并根据 Spec 详情实施功能。
+
+在你的 AI 工具中，询问：
+
+```
+实施 "my-feature" 功能。
+```
+
+或者简单地：
+
+```
+实施 Spec 1。
+```
+
+AI 将读取 Spec 并根据要求开始实施。
+
+在典型的代理工作流程中，AI 将：
+1. 读取 Spec 详情
+2. 分析代码库
+3. 生成代码更改以实施功能
+4. 总结更改并在 Spec 中记录进度
+
+:::tip 推荐的 AI 模型
+虽然不是必需的，但我们强烈建议使用高级 LLM，如 [Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5)、[GPT-5.1](https://openai.com/index/gpt-5-1/) 或 [Gemini 3](https://aistudio.google.com/models/gemini-3)，以获得 LeanSpec 的最佳效果。
+:::
+
+## 开发之后
+
+AI 完成实施后，你可以：
+1. **审核**: 审查进度（由 AI 报告）并测试功能
+2. **继续**: 如果未完成，开始新的聊天会话并要求 AI 继续
+3. **反馈**: 如果对实施不满意，向 AI 提供反馈以改进
+
+## 下一步
+
+现在你已经设置好了 LeanSpec，你可以：
+
+**尝试教程：**
+- [使用 AI 完成第一个功能](/zh-Hans/docs/tutorials/first-spec-with-ai) - 构建完整功能（10 分钟）
+- [管理多个功能](/docs/tutorials/managing-multiple-features) - 处理相关 Spec（15 分钟）
+- [使用 Spec 重构](/docs/tutorials/refactoring-with-specs) - 记录架构变更（15 分钟）
+
+**学习基础知识：**
+- [Spec 概念](/docs/guide/terminology/spec) - 解释基本 SDD 术语
+- [第一性原理](/docs/advanced/first-principles) - 5 个基本原则
+- [理解 LeanSpec](/docs/guide/understanding-leanspec) - 核心概念和使用时机
+- [上下文工程](/docs/advanced/context-engineering) - 管理 AI 工作记忆 (Working Memory)
+
+**开始使用 LeanSpec：**
+- [创建和管理 Spec](/docs/guide/usage/cli/creating-managing) - 基本操作
+- [查找 Spec](/docs/guide/usage/cli/finding-specs) - 搜索和发现
+- [Spec 结构](/docs/guide/usage/spec-structure) - 组织你的 Spec
+
+**AI 集成：**
+- [MCP 集成](/docs/guide/usage/mcp-integration) - 连接 AI 工具
+- [AI 编码工作流程](/docs/guide/usage/ai-coding-workflow) - 最佳实践
+- [AI 辅助 Spec 编写](/docs/advanced/ai-assisted-spec-writing) - 与 AI 共同创建
+
+## 需要帮助？
+
+- [常见问题](/docs/faq) - 常见问题解答
+- [GitHub 问题](https://github.com/codervisor/lean-spec/issues) - 报告问题或请求功能
+- [社区讨论](https://github.com/codervisor/lean-spec/discussions) - 提问和分享想法

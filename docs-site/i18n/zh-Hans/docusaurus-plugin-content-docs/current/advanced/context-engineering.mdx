@@ -1,0 +1,323 @@
+---
+id: 'context-engineering'
+title: '上下文工程'
+sidebar_position: 4
+---
+# 上下文工程
+
+> "更大的上下文窗口 ≠ 更好的结果。智能策展 > 原始容量。"
+
+上下文工程是管理 AI 工作记忆 (Working Memory)以最大化效果的实践。LeanSpec 将上下文工程原则应用于Spec管理，确保Spec适应工作记忆并提供高信噪比 (Signal-to-Noise)。
+
+## 核心问题
+
+### 上下文是有限的
+
+即使有 1M+ token 窗口：
+- **注意力随长度下降**（上下文腐烂）
+- **N^2 复杂度**在 transformer 注意力中
+- **训练偏见**偏向较短序列
+- **成本线性增长**随 tokens 数量
+
+**关键见解**：更大的窗口并不能解决问题。智能策展可以。
+
+### LeanSpec 的联系
+
+LeanSpec 存在是因为：
+1. **上下文经济 (Context Economy)** - Spec必须适应工作记忆（人类 + AI）
+2. **信噪比** - 每个字都必须提供决策信息
+3. **上下文失败**发生在我们违反这些原则时
+
+本页解释：**如何以编程方式维护上下文经济**
+
+## 四种上下文工程策略
+
+基于 [LangChain](https://blog.langchain.com/context-engineering-for-agents/) 和 [Anthropic](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) 的研究：
+
+### 1. 分区（Partitioning，写入和选择）
+
+**什么**：将内容分割到多个上下文中，有选择地加载
+
+**LeanSpec 应用**：
+```markdown
+# 不是一个 11K-token 的Spec：
+specs/045/README.md          (~1,200 Token - 概述)
+specs/045/DESIGN.md          (~2,200 Token - 设计)
+specs/045/IMPLEMENTATION.md  (~900 Token - 计划)
+specs/045/TESTING.md         (~1,100 Token - 测试)
+
+# AI 仅加载当前任务需要的内容
+```
+
+**机制**：
+- **子 Spec文件**（README + DESIGN + TESTING + CONFIG）
+- **延迟加载**（按需读取文件）
+- **渐进式披露 (Progressive Disclosure)**（概述 → 细节）
+
+**何时使用**：
+- ✅ Spec >3,500 Token
+- ✅ 多个不同关注点（设计 + 测试 + 配置）
+- ✅ 不同关注点独立访问
+
+**好处**：
+- ✅ 每个文件 &lt;2,000 Token（适应工作记忆）
+- ✅ 减少无关上下文（仅加载需要的部分）
+- ✅ 并行工作（编辑 DESIGN 不影响 TESTING）
+
+### 2. 压实（Compaction，删除冗余）
+
+**什么**：消除重复或可推断的内容
+
+**LeanSpec 应用**：
+```markdown
+# 压实前（冗长）：
+## 认证
+认证系统使用 JWT tokens。JWT tokens 是
+行业标准，提供无状态认证。
+JWT tokens 的好处是它们不需要服务器端
+会话存储...
+
+## 实现
+我们将实现 JWT 认证。选择 JWT 是因为...
+[重复相同理由]
+
+# 压实后（简洁）：
+## 认证
+使用 JWT tokens（无状态，无会话存储）。
+
+## 实现
+[链接到认证部分以获取理由]
+```
+
+**机制**：
+- **重复检测**（多处相同内容）
+- **推断删除**（从上下文显而易见）
+- **引用合并**（一个Spec来源，其他引用）
+
+**何时使用**：
+- ✅ 跨部分重复解释
+- ✅ 明确说明显而易见/可推断的信息
+- ✅ "为了完整性"部分但决策价值很小
+
+**好处**：
+- ✅ 更少 tokens = 更快处理
+- ✅ 更少分心 = 更好注意力
+- ✅ 更易维护 = 单一真相来源
+
+### 3. 压缩（Compression，总结）
+
+**什么**：在保留基本信息的同时进行压缩
+
+**LeanSpec 应用**：
+```markdown
+# 压缩前：
+## 阶段 1：基础设施设置
+设置项目结构：
+- 创建 src/ 目录
+- 创建 tests/ 目录
+- 使用 tsconfig.json 配置 TypeScript
+- 使用 .eslintrc 设置 ESLint
+- 使用 .prettierrc 配置 Prettier
+- 添加 npm 脚本用于构建、测试、检查
+- 使用 GitHub Actions 设置 CI 管道
+[约 1,000 Token 的详细步骤...]
+
+# 压缩后（已完成阶段）：
+## ✅ 阶段 1：基础设施设置（已完成 2025-10-15）
+项目结构已建立，包含 TypeScript、测试和 CI。
+查看 git 提交 abc123 以获取实现细节。
+```
+
+**机制**：
+- **历史总结**（已完成工作 → 摘要）
+- **阶段汇总**（详细步骤 → 结果）
+- **选择性细节**（保留决策，总结执行）
+
+**何时使用**：
+- ✅ 已完成阶段（结果重要，细节不重要）
+- ✅ 历史背景（需要知道发生了，不需要知道如何）
+- ✅ 接近 token 阈值（保留信号，减少噪音）
+
+**好处**：
+- ✅ 保持项目历史而不膨胀
+- ✅ 专注于活跃工作，而非过去细节
+- ✅ 需要时易于扩展
+
+### 4. 隔离（Isolation，移至单独上下文）
+
+**什么**：将不相关的关注点拆分到单独的Spec中
+
+**LeanSpec 应用**：
+```markdown
+# 隔离前（一个Spec）：
+specs/045-unified-dashboard/README.md
+  - 仪表板实现
+  - 速度跟踪算法
+  - 健康评分系统
+  - 图表库评估
+  - 指标端点的 API 设计
+  [约 11K tokens 涵盖 5 个不同关注点]
+
+# 隔离后（多个Spec）：
+specs/045-unified-dashboard/       # 仪表板 UI
+specs/060-velocity-algorithm/      # 速度跟踪
+specs/061-health-scoring/          # 健康指标
+specs/062-metrics-api/             # API 端点
+  [每个Spec <2,000 Token，独立生命周期]
+```
+
+**机制**：
+- **关注点提取**（识别不相关主题）
+- **依赖关系分析**（什么必须保持在一起？）
+- **Spec创建**（移至新Spec并交叉引用）
+
+**何时使用**：
+- ✅ 多个关注点具有不同生命周期
+- ✅ 部分可以是独立功能
+- ✅ 部分由不同人/团队更新
+- ✅ 分区后Spec仍 >3,500 Token
+
+**好处**：
+- ✅ 独立演进（算法更改 ≠ UI 更改）
+- ✅ 清晰所有权（不同关注点，不同所有者）
+- ✅ 更易审查（每个Spec聚焦范围）
+
+## 四种上下文失败模式
+
+基于 [Drew Breunig](https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html) 的研究：
+
+### 1. 上下文中毒（Context Poisoning）
+
+**定义**：幻觉或错误内容进入上下文并被反复引用
+
+**LeanSpec 中的症状**：
+```markdown
+# AI 在编辑时产生幻觉：
+"认证模块使用 Redis 进行会话存储"
+  （现实：我们使用 JWT tokens，而非 Redis 会话）
+
+# 幻觉被保存到Spec
+
+# 稍后，AI 读取Spec并建立在幻觉之上：
+"Redis 配置应使用集群模式实现高可用性"
+  （建立在原始错误之上）
+
+# 上下文现在被中毒 - 错误信息复合
+```
+
+**缓解措施**：
+- ✅ 编程验证（保存前捕获）
+- ✅ 定期Spec-代码同步检查
+- ✅ 立即删除损坏的部分
+
+### 2. 上下文分心（Context Distraction）
+
+**定义**：上下文增长得太大，模型忽略训练并重复历史
+
+**LeanSpec 中的症状**：
+```markdown
+# Spec增长超过 4,000 Token，包含大量历史
+
+# AI 行为改变：
+- 重复Spec历史中的过去操作
+- 忽略训练知识
+- 建议Spec中记录的过时方法
+- 无法综合新解决方案
+```
+
+**缓解措施**：
+- ✅ 在 3,500 Token 之前拆分（上下文经济）
+- ✅ 压缩历史部分
+- ✅ 按关注点分区
+
+**研究**：Databricks 发现 Llama 3.1 405b 在约 32k tokens 时开始下降，较小模型更早
+
+### 3. 上下文混淆（Context Confusion）
+
+**定义**：多余内容影响模型做出错误决策
+
+**LeanSpec 中的症状**：
+```markdown
+# Spec包含 20 个集成的 MCP 工具定义
+# (GitHub, Jira, Slack, Linear, Notion, Asana, ...)
+
+# 任务："更新 GitHub issue 状态"
+
+# AI 行为：
+- 对使用哪个工具感到困惑
+- 有时调用错误工具（Jira 而非 GitHub）
+- 处理速度较慢（评估无关选项）
+- 准确性降低
+```
+
+**缓解措施**：
+- ✅ AI 处理前删除无关部分
+- ✅ 使用选择性加载（仅相关子 Spec）
+- ✅ 清晰的关注点分离
+
+**研究**：Berkeley Function-Calling Leaderboard 确认所有模型在 >1 个工具时性能更差
+
+### 4. 上下文冲突（Context Clash）
+
+**定义**：同一上下文中的冲突信息
+
+**LeanSpec 中的症状**：
+```markdown
+# Spec早期：
+"我们将使用 PostgreSQL 进行数据存储"
+
+# Spec中间（讨论后）：
+"实际上，MongoDB 对这个用例更好"
+
+# Spec后期（忘记更新）：
+"PostgreSQL 模式设计：..."
+
+# AI 看到冲突信息 - 可能混合方法
+```
+
+**缓解措施**：
+- ✅ 每个决策单一真相来源
+- ✅ 明确标记被取代的决策
+- ✅ 使用压实删除过时信息
+
+**研究**：Microsoft/Salesforce 论文显示当信息跨多个回合收集时性能下降 39%
+
+## 策略选择框架
+
+| 情况 | 主要策略 | 次要 | 原因 |
+|-----------|-----------------|-----------|-----|
+| Spec >3,500 Token，多个关注点 | 分区 | 压实 | 分离关注点，删除冗余 |
+| Spec冗长但单一关注点 | 压实 | 压缩 | 删除冗余，仍长则总结 |
+| 历史阶段膨胀Spec | 压缩 | - | 保留结果，删除细节 |
+| 同一Spec中的不相关关注点 | 隔离 | 分区 | 移至单独Spec，然后分区 |
+| Spec接近 3,500 Token | 压实 | - | 达到限制前主动清理 |
+
+### 组合策略
+
+通常多种策略一起应用：
+
+**示例：大型Spec（约 11K tokens）**：
+1. **分区**：拆分为 README + DESIGN + IMPLEMENTATION + TESTING
+2. **压实**：删除每个文件中的冗余
+3. **压缩**：总结已完成的研究阶段
+4. **隔离**：考虑将算法移至单独Spec
+
+**结果**：
+- 之前：约 11K tokens（3 倍限制）
+- 之后：最大文件约 2,200 Token（在限制内）
+
+## 底线
+
+上下文工程是 **使用 AI 构建时的 #1 工作**。这些不仅仅是优化技术——它们是使 AI 辅助的Spec管理工作的基础。
+
+**关键见解**：LeanSpec 是用于软件Spec人机协作的上下文工程方法论。
+
+**记住**：
+- 更大的上下文窗口并不能解决问题
+- 智能策展（分区、压实、压缩、隔离）可以
+- 主动应用策略以防止上下文失败
+- 监控警告信号（>3,500 Token、重复、混淆、冲突）
+
+---
+
+**相关**：查看 [第一性原理](/docs/advanced/first-principles) 了解基础约束，或探索 [子 Spec文件](/docs/guide/usage/spec-structure#sub-spec-files) 了解分区的实际实现。

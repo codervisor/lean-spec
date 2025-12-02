@@ -1,0 +1,323 @@
+---
+id: 'context-engineering'
+title: 'Context Engineering'
+sidebar_position: 4
+---
+# Context Engineering
+
+> "Bigger context windows ≠ better results. Smart curation > raw capacity."
+
+Context engineering is the practice of managing AI working memory to maximize effectiveness. LeanSpec applies context engineering principles to spec management, ensuring specs fit in working memory and deliver high signal-to-noise ratio.
+
+## The Core Problem
+
+### Context is Finite
+
+Even with 1M+ token windows:
+- **Attention degrades** with length (context rot)
+- **N² complexity** in transformer attention
+- **Training bias** toward shorter sequences
+- **Cost scales** linearly with tokens
+
+**Key Insight**: Bigger windows don't solve the problem. Smart curation does.
+
+### The LeanSpec Connection
+
+LeanSpec exists because:
+1. **Context Economy** - Specs must fit in working memory (human + AI)
+2. **Signal-to-Noise** - Every word must inform decisions
+3. **Context failures** happen when we violate these principles
+
+This page explains: **How to maintain Context Economy programmatically**
+
+## Four Context Engineering Strategies
+
+Based on research from [LangChain](https://blog.langchain.com/context-engineering-for-agents/) and [Anthropic](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents):
+
+### 1. Partitioning (Write & Select)
+
+**What**: Split content across multiple contexts with selective loading
+
+**LeanSpec Application**:
+```markdown
+# Instead of one 11K-token spec:
+specs/045/README.md          (~1,200 tokens - overview)
+specs/045/DESIGN.md          (~2,200 tokens - design)
+specs/045/IMPLEMENTATION.md  (~900 tokens - plan)
+specs/045/TESTING.md         (~1,100 tokens - tests)
+
+# AI loads only what it needs for current task
+```
+
+**Mechanisms**:
+- **Sub-spec files** (README + DESIGN + TESTING + CONFIG)
+- **Lazy loading** (read files on demand)
+- **Progressive disclosure** (overview → details)
+
+**When to Use**:
+- ✅ Spec >3,500 tokens
+- ✅ Multiple distinct concerns (design + testing + config)
+- ✅ Different concerns accessed independently
+
+**Benefits**:
+- ✅ Each file &lt;2,000 tokens (fits in working memory)
+- ✅ Reduce irrelevant context (only load needed sections)
+- ✅ Parallel work (edit DESIGN without affecting TESTING)
+
+### 2. Compaction (Remove Redundancy)
+
+**What**: Eliminate duplicate or inferable content
+
+**LeanSpec Application**:
+```markdown
+# Before compaction (verbose):
+## Authentication
+The authentication system uses JWT tokens. JWT tokens are 
+industry-standard and provide stateless authentication. The 
+benefit of JWT tokens is that they don't require server-side 
+session storage...
+
+## Implementation
+We'll implement JWT authentication. JWT was chosen because...
+[repeats same rationale]
+
+# After compaction (concise):
+## Authentication
+Uses JWT tokens (stateless, no session storage).
+
+## Implementation
+[links to Authentication section for rationale]
+```
+
+**Mechanisms**:
+- **Duplicate detection** (same content in multiple places)
+- **Inference removal** (obvious from context)
+- **Reference consolidation** (one canonical source, others link)
+
+**When to Use**:
+- ✅ Repeated explanations across sections
+- ✅ Obvious/inferable information stated explicitly
+- ✅ "For completeness" sections with little decision value
+
+**Benefits**:
+- ✅ Fewer tokens = faster processing
+- ✅ Less distraction = better attention
+- ✅ Easier maintenance = single source of truth
+
+### 3. Compression (Summarize)
+
+**What**: Condense while preserving essential information
+
+**LeanSpec Application**:
+```markdown
+# Before compression:
+## Phase 1: Infrastructure Setup
+Set up project structure:
+- Create src/ directory
+- Create tests/ directory
+- Configure TypeScript with tsconfig.json
+- Set up ESLint with .eslintrc
+- Configure Prettier with .prettierrc
+- Add npm scripts for build, test, lint
+- Set up CI pipeline with GitHub Actions
+[~1,000 tokens of detailed steps...]
+
+# After compression (completed phase):
+## ✅ Phase 1: Infrastructure Setup (Completed 2025-10-15)
+Project structure established with TypeScript, testing, and CI.
+See git commit abc123 for implementation details.
+```
+
+**Mechanisms**:
+- **Historical summarization** (completed work → summary)
+- **Phase rollup** (detailed steps → outcomes)
+- **Selective detail** (keep decisions, summarize execution)
+
+**When to Use**:
+- ✅ Completed phases (outcomes matter, details don't)
+- ✅ Historical context (need to know it happened, not how)
+- ✅ Approaching token thresholds (preserve signal, reduce noise)
+
+**Benefits**:
+- ✅ Maintain project history without bloat
+- ✅ Focus on active work, not past details
+- ✅ Easy to expand if details needed later
+
+### 4. Isolation (Move to Separate Context)
+
+**What**: Split unrelated concerns into separate specs
+
+**LeanSpec Application**:
+```markdown
+# Before isolation (one spec):
+specs/045-unified-dashboard/README.md
+  - Dashboard implementation
+  - Velocity tracking algorithm
+  - Health scoring system
+  - Chart library evaluation
+  - API design for metrics endpoint
+  [~11K tokens covering 5 distinct concerns]
+
+# After isolation (multiple specs):
+specs/045-unified-dashboard/       # Dashboard UI
+specs/060-velocity-algorithm/      # Velocity tracking
+specs/061-health-scoring/          # Health metrics
+specs/062-metrics-api/             # API endpoint
+  [Each spec &lt;2,000 tokens, independent lifecycle]
+```
+
+**Mechanisms**:
+- **Concern extraction** (identify unrelated topics)
+- **Dependency analysis** (what must stay together?)
+- **Spec creation** (move to new spec with cross-references)
+
+**When to Use**:
+- ✅ Multiple concerns with different lifecycles
+- ✅ Sections could be standalone features
+- ✅ Parts updated by different people/teams
+- ✅ Spec still >3,500 tokens after partitioning
+
+**Benefits**:
+- ✅ Independent evolution (algorithms change ≠ UI changes)
+- ✅ Clear ownership (different concerns, different owners)
+- ✅ Easier review (focused scope per spec)
+
+## Four Context Failure Modes
+
+Based on research from [Drew Breunig](https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html):
+
+### 1. Context Poisoning
+
+**Definition**: Hallucinated or erroneous content makes it into context and gets repeatedly referenced
+
+**Symptoms in LeanSpec**:
+```markdown
+# AI hallucinates during edit:
+"The authentication module uses Redis for session storage"
+  (Reality: We use JWT tokens, not Redis sessions)
+
+# Hallucination gets saved to spec
+
+# Later, AI reads the spec and builds on the hallucination:
+"Redis configuration should use cluster mode for HA"
+  (Building on the original error)
+
+# Context is now poisoned - wrong info compounds
+```
+
+**Mitigation**:
+- ✅ Programmatic validation (catch before save)
+- ✅ Regular spec-code sync checks
+- ✅ Remove corrupted sections immediately
+
+### 2. Context Distraction
+
+**Definition**: Context grows so large the model ignores training and repeats history
+
+**Symptoms in LeanSpec**:
+```markdown
+# Spec grows beyond 4,000 tokens with extensive history
+
+# AI behavior changes:
+- Repeats past actions from spec history
+- Ignores training knowledge
+- Suggests outdated approaches documented in spec
+- Fails to synthesize new solutions
+```
+
+**Mitigation**:
+- ✅ Split before 3,500 tokens (Context Economy)
+- ✅ Compress historical sections
+- ✅ Partition by concern
+
+**Research**: Databricks found degradation starts ~32k tokens for Llama 3.1 405b, earlier for smaller models
+
+### 3. Context Confusion
+
+**Definition**: Superfluous content influences model to make wrong decisions
+
+**Symptoms in LeanSpec**:
+```markdown
+# Spec includes MCP tool definitions for 20 integrations
+# (GitHub, Jira, Slack, Linear, Notion, Asana, ...)
+
+# Task: "Update the GitHub issue status"
+
+# AI behavior:
+- Confused about which tool to use
+- Sometimes calls wrong tool (Jira instead of GitHub)
+- Slower processing (evaluating irrelevant options)
+- Lower accuracy
+```
+
+**Mitigation**:
+- ✅ Remove irrelevant sections before AI processing
+- ✅ Use selective loading (only relevant sub-specs)
+- ✅ Clear separation of concerns
+
+**Research**: Berkeley Function-Calling Leaderboard confirms ALL models perform worse with >1 tool
+
+### 4. Context Clash
+
+**Definition**: Conflicting information within same context
+
+**Symptoms in LeanSpec**:
+```markdown
+# Early in spec:
+"We'll use PostgreSQL for data storage"
+
+# Middle of spec (after discussion):
+"Actually, MongoDB is better for this use case"
+
+# Later in spec (forgot to update):
+"PostgreSQL schema design: ..."
+
+# AI sees conflicting info - may mix approaches
+```
+
+**Mitigation**:
+- ✅ Single source of truth per decision
+- ✅ Mark superseded decisions clearly
+- ✅ Use compaction to remove outdated info
+
+**Research**: Microsoft/Salesforce paper showed 39% performance drop when information gathered across multiple turns
+
+## Strategy Selection Framework
+
+| Situation | Primary Strategy | Secondary | Why |
+|-----------|-----------------|-----------|-----|
+| Spec >3,500 tokens, multiple concerns | Partition | Compaction | Separate concerns, remove redundancy |
+| Spec verbose but single concern | Compaction | Compression | Remove redundancy, summarize if still long |
+| Historical phases bloating spec | Compression | - | Keep outcomes, drop details |
+| Unrelated concerns in same spec | Isolation | Partition | Move to separate spec, then partition |
+| Spec approaching 3,500 tokens | Compaction | - | Proactive cleanup before hitting limit |
+
+### Combining Strategies
+
+Often multiple strategies apply together:
+
+**Example: Large spec (~11K tokens)**:
+1. **Partition**: Split into README + DESIGN + IMPLEMENTATION + TESTING
+2. **Compaction**: Remove redundancy within each file
+3. **Compression**: Summarize completed research phase
+4. **Isolation**: Consider moving algorithms to separate specs
+
+**Result**: 
+- Before: ~11K tokens (3x limit)
+- After: Largest file ~2,200 tokens (within limit)
+
+## The Bottom Line
+
+Context engineering is **the #1 job** when building with AI. These aren't just optimization techniques—they're fundamental to making AI-assisted spec management work.
+
+**Key Insight**: LeanSpec is a context engineering methodology for human-AI collaboration on software specs.
+
+**Remember**:
+- Bigger context windows don't solve the problem
+- Smart curation (partitioning, compaction, compression, isolation) does
+- Apply strategies proactively to prevent context failures
+- Monitor for warning signs (>3,500 tokens, repetition, confusion, conflicts)
+
+---
+
+**Related**: See [First Principles](/docs/advanced/first-principles) for the foundational constraints, or explore [Sub-Spec Files](/docs/guide/usage/spec-structure#sub-spec-files) for practical implementation of partitioning.

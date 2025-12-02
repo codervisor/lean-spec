@@ -1,0 +1,174 @@
+---
+id: 'overview'
+title: 'CLI Overview'
+sidebar_position: 0
+---
+
+# CLI Overview
+
+The LeanSpec CLI provides a complete toolkit for managing specifications in your project. Whether you're a developer working directly or an AI agent automating workflows, the CLI offers efficient commands for every stage of the spec lifecycle.
+
+## For Human Developers
+
+The CLI gives you command-line control over your specs:
+
+- **Create and manage** specs with simple commands
+- **Search and discover** related work instantly
+- **Track progress** with visual boards and metrics
+- **Validate quality** to maintain spec health
+
+Quick example workflow:
+```bash
+# Create new spec
+lean-spec create auth-refactor --tags security
+
+# Start working
+lean-spec update 042 --status in-progress
+
+# Check project health
+lean-spec board
+
+# Validate before committing
+lean-spec validate
+```
+
+## For AI Agents
+
+The CLI is designed as a **toolset for AI agents**, enabling them to:
+
+- **Discover context** - Search and retrieve relevant specs to answer questions
+- **Track decisions** - Access past architectural choices and rationale
+- **Manage work** - Create, update, and link specs programmatically
+- **Maintain quality** - Validate spec structure and token counts
+
+AI agents can use LeanSpec CLI commands directly as tools:
+
+```bash
+# Agent searches for relevant context
+lean-spec search "authentication decision"
+
+# Agent retrieves specific spec
+lean-spec view 042
+
+# Agent checks dependencies
+lean-spec deps 042
+
+# Agent updates status after implementation
+lean-spec update 042 --status complete
+```
+
+**MCP Server Integration**: For seamless AI agent access, LeanSpec provides an [MCP (Model Context Protocol) server](/docs/reference/mcp-server) that exposes CLI functionality as structured tools.
+
+## Command Categories
+
+The CLI organizes commands into logical groups:
+
+### Creating & Managing
+Core operations for spec lifecycle:
+- `create` - Start new specs
+- `update` - Modify status, priority, tags
+- `view` - Read spec content
+- `open` - Edit in your preferred editor
+
+**Learn more**: [Creating & Managing Specs](/docs/guide/usage/cli/creating-managing)
+
+### Finding Specs
+Discover and navigate specifications:
+- `list` - View all specs with filters
+- `search` - Find by content or metadata
+- `deps` - Explore relationships
+
+**Learn more**: [Finding Specs](/docs/guide/usage/cli/finding-specs)
+
+### Project Management
+Track health and validate quality:
+- `board` - Visual Kanban view
+- `stats` - Project metrics
+- `validate` - Check spec quality
+
+**Learn more**: [Project Management](/docs/guide/usage/cli/project-management) and [Validation](/docs/guide/usage/cli/validation)
+
+## Core Principles
+
+The CLI design follows LeanSpec's [First Principles](/docs/advanced/first-principles):
+
+1. **Context Economy** - Commands help manage token budgets (`tokens`, `validate`)
+2. **Signal-to-Noise** - Quick access to relevant information (`search`, `deps`)
+3. **Intent Over Implementation** - Focus on what and why, not just how
+4. **Bridge the Gap** - Works for both humans and AI agents
+5. **Progressive Disclosure** - Simple by default, powerful when needed
+
+## Quick Reference
+
+**Most common commands:**
+
+```bash
+lean-spec create <name>           # Create new spec
+lean-spec list                    # View all specs
+lean-spec search "query"          # Find relevant specs
+lean-spec view <spec>             # Read spec content
+lean-spec update <spec> --status  # Update status
+lean-spec board                   # Visual overview
+lean-spec validate                # Check quality
+```
+
+**Get help anytime:**
+```bash
+lean-spec --help                  # All commands
+lean-spec <command> --help        # Command details
+```
+
+## Integration Points
+
+### Version Control
+LeanSpec plays well with Git:
+- Specs are plain markdown files
+- All changes are traceable
+- Easy to review in PRs
+
+### CI/CD
+Automate validation:
+```yaml
+# GitHub Actions example
+- run: lean-spec validate
+```
+
+### Editors
+Open specs in your preferred editor:
+```bash
+lean-spec open 042
+```
+
+### AI Tools
+- **Direct CLI access** - Agents can call commands
+- **MCP Server** - Structured tool interface
+- **Search integration** - Semantic memory across sessions
+
+## Best Practices
+
+**For Humans:**
+- Start your day with `lean-spec board`
+- Use `lean-spec search` instead of grep
+- Validate before committing
+- Keep specs under 3,500 tokens
+
+**For AI Agents:**
+- Search before creating new specs
+- Check dependencies before starting work
+- Update status after implementation
+- Use `lean-spec deps` for context
+
+## Next Steps
+
+Dive into specific workflows:
+
+1. **[Creating & Managing Specs](/docs/guide/usage/cli/creating-managing)** - Master basic operations
+2. **[Finding Specs](/docs/guide/usage/cli/finding-specs)** - Learn search and discovery
+3. **[Project Management](/docs/guide/usage/cli/project-management)** - Track project health
+4. **[Validation](/docs/guide/usage/cli/validation)** - Ensure spec quality
+
+**Reference**: See [CLI Reference](/docs/reference/cli) for complete command documentation.
+
+---
+
+**Remember**: The CLI is a tool for both human developers and AI agents. Whether you're typing commands or an AI is executing them, the goal is the same: maintain clear, actionable specifications that drive development forward.

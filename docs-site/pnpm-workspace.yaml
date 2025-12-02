@@ -1,12 +1,4 @@
+# This file prevents pnpm from using the parent workspace
+# docs-site is a standalone submodule project
 packages:
-  - packages/*
-
-ignoredBuiltDependencies:
-  - core-js
-  - core-js-pure
-  - esbuild
-  - sharp
-  - unrs-resolver
-
-onlyBuiltDependencies:
-  - better-sqlite3
+  - '.'
