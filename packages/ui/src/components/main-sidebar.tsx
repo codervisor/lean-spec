@@ -7,6 +7,7 @@ import { ProjectSwitcher } from '@/components/project-switcher';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
+import { useProject } from '@/contexts/project-context';
 
 interface SidebarLinkProps {
   href: string;
@@ -45,6 +46,7 @@ function SidebarLink({ href, icon: Icon, children, description, currentPath, isC
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const { mode, currentProject } = useProject();
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('main-sidebar-collapsed');
@@ -84,6 +86,15 @@ export function MainSidebar() {
       window.toggleMainSidebar = undefined;
     };
   }, []);
+
+  // Build project-scoped URLs when in multi-project mode
+  const getNavUrl = (path: string) => {
+    if (mode === 'multi-project' && currentProject) {
+      if (path === '/') return `/projects/${currentProject.id}`;
+      return `/projects/${currentProject.id}${path}`;
+    }
+    return path;
+  };
 
   return (
     <>
@@ -126,7 +137,7 @@ export function MainSidebar() {
               <ProjectSwitcher collapsed={isCollapsed && !mobileOpen} />
             </div>
             <SidebarLink 
-              href="/" 
+              href={getNavUrl('/')} 
               icon={Home} 
               currentPath={pathname}
               description={(!isCollapsed || mobileOpen) ? "Dashboard" : undefined}
@@ -135,7 +146,7 @@ export function MainSidebar() {
               Home
             </SidebarLink>
             <SidebarLink 
-              href="/specs" 
+              href={getNavUrl('/specs')} 
               icon={FileText} 
               currentPath={pathname}
               description={(!isCollapsed || mobileOpen) ? "All Specifications" : undefined}
@@ -144,7 +155,7 @@ export function MainSidebar() {
               Specs
             </SidebarLink>
             <SidebarLink 
-              href="/dependencies" 
+              href={getNavUrl('/dependencies')} 
               icon={Network} 
               currentPath={pathname}
               description={(!isCollapsed || mobileOpen) ? "Dependency Graph" : undefined}
@@ -153,7 +164,7 @@ export function MainSidebar() {
               Dependencies
             </SidebarLink>
             <SidebarLink 
-              href="/stats" 
+              href={getNavUrl('/stats')} 
               icon={BarChart3} 
               currentPath={pathname}
               description={(!isCollapsed || mobileOpen) ? "Analytics" : undefined}
@@ -162,7 +173,7 @@ export function MainSidebar() {
               Stats
             </SidebarLink>
             <SidebarLink 
-              href="/context" 
+              href={getNavUrl('/context')} 
               icon={BookOpen} 
               currentPath={pathname}
               description={(!isCollapsed || mobileOpen) ? "Project Context" : undefined}
