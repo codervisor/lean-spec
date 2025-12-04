@@ -25,7 +25,7 @@ The MCP server exposes these tools to AI assistants:
 - **view** - View specification content (formatted, raw markdown, or JSON)
 - **create** - Create new specifications
 - **update** - Update specification metadata (status, priority, tags, etc.)
-- **link** - Add relationships between specs (depends_on, related)
+- **link** - Add dependencies between specs (depends_on)
 - **unlink** - Remove relationships between specs
 - **archive** - Move specifications to archived/ directory
 - **stats** - Get project statistics
@@ -211,11 +211,7 @@ Archive the spec "024-flat-structure-migration"
 
 ### Link specifications
 
-```
-Link spec 045 as related to spec 047
-```
-
-Or add a dependency:
+Add a dependency:
 
 ```
 Add spec 063 as a dependency of spec 128
@@ -224,7 +220,7 @@ Add spec 063 as a dependency of spec 128
 ### Unlink specifications
 
 ```
-Remove the related link between spec 045 and spec 047
+Remove the dependency between spec 045 and spec 047
 ```
 
 ### List files in a spec

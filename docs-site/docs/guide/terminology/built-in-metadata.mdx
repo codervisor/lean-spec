@@ -16,22 +16,16 @@ LeanSpec specs store a small set of system-managed fields in frontmatter so huma
 Update status the moment implementation starts or stops; status tracks the work, not the spec writing process. Use `lean-spec update <spec> --status <value>` so every tool (and AI agent) sees the same state.
 
 ## Relationships
-LeanSpec distinguishes between directional blockers and soft references:
+LeanSpec uses **`depends_on`** to capture blocking dependencies:
 
-- **`depends_on`** — Hard dependency. Spec A cannot start until Spec B is complete.
+- **`depends_on`** — Directional dependency. Spec A cannot start until Spec B is complete.
   ```yaml
   depends_on:
     - 082
   ```
   Appears as **→** in `lean-spec deps` and automatically adds a "Required By" entry on the dependency.
-- **`related`** — Informational link for parallel or adjacent work.
-  ```yaml
-  related:
-    - 043
-  ```
-  Shows as **⟷** in graphs and keeps context discoverable without blocking schedules.
 
-Default to `related`; escalate to `depends_on` only when sequencing truly matters.
+Use `depends_on` when work truly must be done in a specific order. For loosely related specs that share context but don't block each other, document the relationship in the spec content instead.
 
 ## Priority & Tags
 These fields make specs filterable and keep planning lightweight.
@@ -52,7 +46,6 @@ status: in-progress
 priority: high
 tags: [api, backend]
 depends_on: [082]
-related: [079, 084]
 created: '2025-11-16'
 ---
 ```
