@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import type { SpecNode, FocusedNodeDetails } from './types';
+import type { SpecNode, FocusedNodeDetails, SpecsByDepth } from './types';
 
 interface SpecListItemProps {
   spec: SpecNode;
@@ -41,6 +41,47 @@ function SpecListItem({ spec, type, onClick }: SpecListItemProps) {
       </div>
       <p className="text-[11px] text-foreground truncate leading-tight mt-0.5">{spec.name}</p>
     </button>
+  );
+}
+
+interface DepthGroupProps {
+  group: SpecsByDepth;
+  type: 'upstream' | 'downstream';
+  onSelectSpec: (specId: string) => void;
+}
+
+function DepthGroup({ group, type, onSelectSpec }: DepthGroupProps) {
+  const [isExpanded, setIsExpanded] = React.useState(group.depth === 1);
+  const depthLabel = group.depth === 1 ? 'Direct' : `Level ${group.depth}`;
+
+  return (
+    <div className="space-y-1">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-1.5 w-full text-left text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span className={cn(
+          'transition-transform text-[8px]',
+          isExpanded ? 'rotate-90' : 'rotate-0'
+        )}>
+          ▶
+        </span>
+        <span className="font-medium">{depthLabel}</span>
+        <span className="opacity-60">({group.specs.length})</span>
+      </button>
+      {isExpanded && (
+        <div className="space-y-1 ml-2">
+          {group.specs.map((spec) => (
+            <SpecListItem
+              key={spec.id}
+              spec={spec}
+              type={type}
+              onClick={() => onSelectSpec(spec.id)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -109,17 +150,17 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Depends On ({upstream.length})
+              Depends On ({upstream.reduce((sum, g) => sum + g.specs.length, 0)})
             </span>
           </div>
           {upstream.length > 0 ? (
-            <div className="space-y-1.5">
-              {upstream.map((spec) => (
-                <SpecListItem
-                  key={spec.id}
-                  spec={spec}
+            <div className="space-y-2">
+              {upstream.map((group) => (
+                <DepthGroup
+                  key={group.depth}
+                  group={group}
                   type="upstream"
-                  onClick={() => onSelectSpec(spec.id)}
+                  onSelectSpec={onSelectSpec}
                 />
               ))}
             </div>
@@ -133,17 +174,17 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Required By ({downstream.length})
+              Required By ({downstream.reduce((sum, g) => sum + g.specs.length, 0)})
             </span>
           </div>
           {downstream.length > 0 ? (
-            <div className="space-y-1.5">
-              {downstream.map((spec) => (
-                <SpecListItem
-                  key={spec.id}
-                  spec={spec}
+            <div className="space-y-2">
+              {downstream.map((group) => (
+                <DepthGroup
+                  key={group.depth}
+                  group={group}
                   type="downstream"
-                  onClick={() => onSelectSpec(spec.id)}
+                  onSelectSpec={onSelectSpec}
                 />
               ))}
             </div>
