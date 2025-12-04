@@ -13,7 +13,7 @@ export interface ProjectDependencyGraph {
   edges: Array<{
     source: string;
     target: string;
-    type: 'dependsOn' | 'related';
+    type: 'dependsOn';
   }>;
 }
 
@@ -51,6 +51,7 @@ export async function GET() {
     specs.forEach(spec => {
       if (!spec.specNumber) return;
       
+      // Only process dependsOn relationships (no related)
       spec.relationships.dependsOn.forEach(dep => {
         const depTrimmed = dep.trim();
         const match = depTrimmed.match(/^(\d+)/);
@@ -64,29 +65,6 @@ export async function GET() {
             target: spec.id,
             type: 'dependsOn',
           });
-        }
-      });
-
-      spec.relationships.related.forEach(rel => {
-        const relTrimmed = rel.trim();
-        const match = relTrimmed.match(/^(\d+)/);
-        const targetId = match
-          ? specIdByFolder.get(match[1]) || specIdByFolder.get(match[1].padStart(3, '0'))
-          : specIdByFolder.get(relTrimmed);
-        
-        if (targetId && targetId !== spec.id) {
-          const existingEdge = edges.find(
-            e => (e.source === spec.id && e.target === targetId) ||
-                 (e.source === targetId && e.target === spec.id)
-          );
-          
-          if (!existingEdge) {
-            edges.push({
-              source: spec.id,
-              target: targetId,
-              type: 'related',
-            });
-          }
         }
       });
     });

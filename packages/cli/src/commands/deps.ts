@@ -24,7 +24,7 @@ export function depsCommand(specPath?: string, options: DepsOptions = {}): Comma
   }
 
   return new Command('deps')
-    .description('Show dependency graph for a spec. Related specs (⟷) are shown bidirectionally, depends_on (→) are directional.')
+    .description('Show dependency graph for a spec. Shows upstream dependencies (→) and downstream dependents (←).')
     .argument('<spec>', 'Spec to show dependencies for')
     .option('--depth <n>', 'Show N levels deep (default: 3)', parseInt)
     .option('--graph', 'ASCII graph visualization')
@@ -82,13 +82,11 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
   // Get dependency information based on mode
   let dependsOn: SpecInfo[] = [];
   let requiredBy: SpecInfo[] = [];
-  let related: SpecInfo[] = [];
   
   if (mode === 'complete') {
     const completeGraph = graph.getCompleteGraph(spec.path);
     dependsOn = completeGraph.dependsOn;
     requiredBy = completeGraph.requiredBy;
-    related = completeGraph.related;
   } else if (mode === 'upstream') {
     dependsOn = graph.getUpstream(spec.path, options.depth || 3);
   } else if (mode === 'downstream') {
@@ -97,7 +95,6 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
     const impact = graph.getImpactRadius(spec.path, options.depth || 3);
     dependsOn = impact.upstream;
     requiredBy = impact.downstream;
-    related = impact.related;
   }
 
   // Output as JSON if requested
@@ -115,10 +112,6 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
       data.requiredBy = requiredBy.map(s => ({ path: s.path, status: s.frontmatter.status }));
     }
     
-    if (mode === 'complete' || mode === 'impact') {
-      data.related = related.map(s => ({ path: s.path, status: s.frontmatter.status }));
-    }
-    
     if (mode === 'complete' && (options.graph || dependsOn.length > 0)) {
       data.chain = buildDependencyChain(spec, specMap, options.depth || 3);
     }
@@ -132,11 +125,11 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
   console.log(chalk.green(`📦 Dependencies for ${chalk.cyan(sanitizeUserInput(spec.path))}`));
   console.log('');
 
-  // Check if there are any relationships at all
-  const hasAnyRelationships = dependsOn.length > 0 || requiredBy.length > 0 || related.length > 0;
+  // Check if there are any dependencies at all
+  const hasAnyDependencies = dependsOn.length > 0 || requiredBy.length > 0;
   
-  if (!hasAnyRelationships) {
-    console.log(chalk.gray('  No dependencies or relationships'));
+  if (!hasAnyDependencies) {
+    console.log(chalk.gray('  No dependencies'));
     console.log('');
     return;
   }
@@ -163,16 +156,6 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
     console.log('');
   }
 
-  // Related Specs section (bidirectional)
-  if ((mode === 'complete' || mode === 'impact') && related.length > 0) {
-    console.log(chalk.bold('Related Specs:'));
-    for (const rel of related) {
-      const status = getStatusIndicator(rel.frontmatter.status);
-      console.log(`  ⟷ ${sanitizeUserInput(rel.path)} ${status}`);
-    }
-    console.log('');
-  }
-
   // Dependency chain (tree view) - only for complete mode or when graph is requested
   if (mode === 'complete' && (options.graph || dependsOn.length > 0)) {
     console.log(chalk.bold('Dependency Chain:'));
@@ -183,10 +166,10 @@ export async function showDeps(specPath: string, options: DepsOptions = {}): Pro
   
   // Impact summary for impact mode
   if (mode === 'impact') {
-    const total = dependsOn.length + requiredBy.length + related.length;
+    const total = dependsOn.length + requiredBy.length;
     console.log(chalk.bold(`Impact Summary:`));
     console.log(`  Changing this spec affects ${chalk.yellow(total)} specs total`);
-    console.log(`    Upstream: ${dependsOn.length} | Downstream: ${requiredBy.length} | Related: ${related.length}`);
+    console.log(`    Upstream: ${dependsOn.length} | Downstream: ${requiredBy.length}`);
     console.log('');
   }
 }

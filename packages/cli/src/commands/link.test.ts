@@ -84,22 +84,6 @@ describe('link and unlink commands', () => {
       expect(frontmatter.depends_on).toContain('003-spec-c');
     });
 
-    it('should add related specs bidirectionally', async () => {
-      await createSpec('spec-a');
-      await createSpec('spec-b');
-
-      // Link spec-a as related to spec-b
-      await linkSpec('001-spec-a', { related: '002-spec-b' });
-
-      // Verify spec-a has spec-b as related
-      const frontmatterA = await getFrontmatter('001-spec-a');
-      expect(frontmatterA.related).toContain('002-spec-b');
-
-      // Verify spec-b has spec-a as related (bidirectional)
-      const frontmatterB = await getFrontmatter('002-spec-b');
-      expect(frontmatterB.related).toContain('001-spec-a');
-    });
-
     it('should be idempotent when adding existing dependency', async () => {
       await createSpec('spec-a');
       await createSpec('spec-b');
@@ -156,23 +140,6 @@ describe('link and unlink commands', () => {
       // Verify dependency was removed
       const frontmatter = await getFrontmatter('001-spec-a');
       expect(frontmatter.depends_on || []).not.toContain('002-spec-b');
-    });
-
-    it('should remove related specs bidirectionally', async () => {
-      await createSpec('spec-a');
-      await createSpec('spec-b');
-
-      // Add then remove related
-      await linkSpec('001-spec-a', { related: '002-spec-b' });
-      await unlinkSpec('001-spec-a', { related: '002-spec-b' });
-
-      // Verify spec-a no longer has spec-b as related
-      const frontmatterA = await getFrontmatter('001-spec-a');
-      expect(frontmatterA.related || []).not.toContain('002-spec-b');
-
-      // Verify spec-b no longer has spec-a as related (bidirectional)
-      const frontmatterB = await getFrontmatter('002-spec-b');
-      expect(frontmatterB.related || []).not.toContain('001-spec-a');
     });
 
     it('should remove all dependencies with --all flag', async () => {

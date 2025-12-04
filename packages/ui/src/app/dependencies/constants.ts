@@ -6,7 +6,6 @@ export const COMPACT_NODE_HEIGHT = 40;
 
 // Edge colors
 export const DEPENDS_ON_COLOR = '#f59e0b';
-export const RELATED_COLOR = '#38bdf8'; // sky-400
 
 // Status tone classes for node styling (aligned with StatusBadge component)
 export const toneClasses: Record<string, string> = {

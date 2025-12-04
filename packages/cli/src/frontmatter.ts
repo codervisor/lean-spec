@@ -28,7 +28,6 @@ export interface SpecFrontmatter {
   priority?: SpecPriority;
 
   // Power user fields
-  related?: string[];
   depends_on?: string[];
   updated?: string;
   completed?: string;
@@ -254,7 +253,7 @@ export async function parseFrontmatter(
     
     // Warn about unknown fields (informational only)
     const knownFields = [
-      'status', 'created', 'tags', 'priority', 'related', 'depends_on',
+      'status', 'created', 'tags', 'priority', 'depends_on',
       'updated', 'completed', 'assignee', 'reviewer', 'issue', 'pr', 'epic', 'breaking', 'due',
       'created_at', 'updated_at', 'completed_at', 'transitions'
     ];

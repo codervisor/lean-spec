@@ -243,27 +243,6 @@ describe('E2E: MCP tool scenarios', () => {
 
       expect(frontmatter.depends_on).toContain('001-base-spec');
     });
-
-    it('should link specs bidirectionally with related', async () => {
-      const { linkSpec } = await import('../commands/link.js');
-
-      createSpec(ctx.tmpDir, 'spec-a');
-      createSpec(ctx.tmpDir, 'spec-b');
-
-      await linkSpec('001-spec-a', {
-        related: '002-spec-b',
-      });
-
-      // Check both specs have the relationship
-      const contentA = await readFile(path.join(ctx.tmpDir, 'specs', '001-spec-a', 'README.md'));
-      const contentB = await readFile(path.join(ctx.tmpDir, 'specs', '002-spec-b', 'README.md'));
-
-      const fmA = parseFrontmatter(contentA);
-      const fmB = parseFrontmatter(contentB);
-
-      expect(fmA.related).toContain('002-spec-b');
-      expect(fmB.related).toContain('001-spec-a');
-    });
   });
 
   describe('deps tool', () => {

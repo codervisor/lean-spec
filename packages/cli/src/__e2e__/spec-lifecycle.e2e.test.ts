@@ -4,7 +4,7 @@
  * Tests the full lifecycle of specs from creation through archival:
  * - Create specs with various options
  * - Update status, priority, tags
- * - Link specs together (depends_on, related)
+ * - Link specs together (depends_on)
  * - Archive completed specs
  *
  * These tests verify that multi-command workflows work correctly
@@ -211,29 +211,6 @@ describe('E2E: spec lifecycle', () => {
       expect(frontmatter.depends_on).toContain('001-database');
     });
 
-    it('should link specs with related (bidirectional)', async () => {
-      createSpec(ctx.tmpDir, 'frontend');
-      createSpec(ctx.tmpDir, 'backend');
-
-      // Link as related (should be bidirectional)
-      const result = linkSpecs(ctx.tmpDir, '001-frontend', { related: '002-backend' });
-      expect(result.exitCode).toBe(0);
-
-      // Check frontend has backend as related
-      const frontendContent = await readFile(
-        path.join(ctx.tmpDir, 'specs', '001-frontend', 'README.md')
-      );
-      const frontendFm = parseFrontmatter(frontendContent);
-      expect(frontendFm.related).toContain('002-backend');
-
-      // Check backend has frontend as related (bidirectional)
-      const backendContent = await readFile(
-        path.join(ctx.tmpDir, 'specs', '002-backend', 'README.md')
-      );
-      const backendFm = parseFrontmatter(backendContent);
-      expect(backendFm.related).toContain('001-frontend');
-    });
-
     it('should create dependency chain', async () => {
       createSpec(ctx.tmpDir, 'database');
       createSpec(ctx.tmpDir, 'api');
@@ -392,22 +369,5 @@ describe('E2E: spec lifecycle regressions', () => {
     createSpec(ctx.tmpDir, 'my-cool_feature');
 
     expect(await dirExists(path.join(ctx.tmpDir, 'specs', '001-my-cool_feature'))).toBe(true);
-  });
-
-  it('REGRESSION: bidirectional links should update both specs', async () => {
-    createSpec(ctx.tmpDir, 'spec-a');
-    createSpec(ctx.tmpDir, 'spec-b');
-
-    linkSpecs(ctx.tmpDir, '001-spec-a', { related: '002-spec-b' });
-
-    // Both should have the link
-    const contentA = await readFile(path.join(ctx.tmpDir, 'specs', '001-spec-a', 'README.md'));
-    const contentB = await readFile(path.join(ctx.tmpDir, 'specs', '002-spec-b', 'README.md'));
-
-    const fmA = parseFrontmatter(contentA);
-    const fmB = parseFrontmatter(contentB);
-
-    expect(fmA.related).toContain('002-spec-b');
-    expect(fmB.related).toContain('001-spec-a');
   });
 });

@@ -253,10 +253,9 @@ export function updateSpec(cwd: string, specPath: string, options: Record<string
 /**
  * Link specs using the CLI
  */
-export function linkSpecs(cwd: string, specPath: string, options: { dependsOn?: string; related?: string }): ExecResult {
+export function linkSpecs(cwd: string, specPath: string, options: { dependsOn?: string }): ExecResult {
   const args = ['link', specPath];
   if (options.dependsOn) args.push('--depends-on', options.dependsOn);
-  if (options.related) args.push('--related', options.related);
   return execCli(args, { cwd });
 }
 

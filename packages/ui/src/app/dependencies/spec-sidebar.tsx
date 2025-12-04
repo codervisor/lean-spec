@@ -6,7 +6,7 @@ import type { SpecNode, FocusedNodeDetails } from './types';
 
 interface SpecListItemProps {
   spec: SpecNode;
-  type: 'upstream' | 'downstream' | 'related';
+  type: 'upstream' | 'downstream';
   onClick: () => void;
 }
 
@@ -14,7 +14,6 @@ function SpecListItem({ spec, type, onClick }: SpecListItemProps) {
   const typeColors = {
     upstream: 'border-l-amber-500',
     downstream: 'border-l-emerald-500',
-    related: 'border-l-sky-500',
   };
 
   return (
@@ -68,14 +67,14 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
               </svg>
             </div>
             <p className="text-sm font-medium">Select a spec</p>
-            <p className="text-xs mt-1">Click on a spec to see its dependencies and related specs</p>
+            <p className="text-xs mt-1">Click on a spec to see its dependencies</p>
           </div>
         </div>
       </div>
     );
   }
 
-  const { node, upstream, downstream, related } = focusedDetails;
+  const { node, upstream, downstream } = focusedDetails;
 
   return (
     <div className="w-64 shrink-0 rounded-lg border border-border bg-background/95 overflow-hidden flex flex-col">
@@ -150,30 +149,6 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
             </div>
           ) : (
             <p className="text-xs text-muted-foreground/60 italic">No specs depend on this</p>
-          )}
-        </div>
-
-        {/* Related Specs */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-sky-500" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Related ({related.length})
-            </span>
-          </div>
-          {related.length > 0 ? (
-            <div className="space-y-1.5">
-              {related.map((spec) => (
-                <SpecListItem
-                  key={spec.id}
-                  spec={spec}
-                  type="related"
-                  onClick={() => onSelectSpec(spec.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground/60 italic">No related specs</p>
           )}
         </div>
       </div>

@@ -18,10 +18,9 @@ import type { ProjectDependencyGraph } from '@/app/api/dependencies/route';
 
 import { nodeTypes } from './spec-node';
 import { SpecSidebar } from './spec-sidebar';
-import { ViewToggle } from './view-toggle';
 import { getConnectionDepths, layoutGraph } from './utils';
-import { DEPENDS_ON_COLOR, RELATED_COLOR, toneBgColors } from './constants';
-import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats, ViewMode } from './types';
+import { DEPENDS_ON_COLOR, toneBgColors } from './constants';
+import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from './types';
 
 interface ProjectDependencyGraphClientProps {
   data: ProjectDependencyGraph;
@@ -35,30 +34,18 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
   const [searchQuery, setSearchQuery] = React.useState('');
   const [focusedNodeId, setFocusedNodeId] = React.useState<string | null>(null);
   const [isCompact, setIsCompact] = React.useState(data.nodes.length > 30);
-  const [viewMode, setViewMode] = React.useState<ViewMode>('dag');
 
-  // Only use dependsOn edges for DAG view, both types for network view
+  // Only use dependsOn edges (DAG only - no related edges)
   const dependsOnEdges = React.useMemo(
     () => data.edges.filter((e) => e.type === 'dependsOn'),
     [data.edges]
   );
 
-  const relatedEdges = React.useMemo(
-    () => data.edges.filter((e) => e.type === 'related'),
-    [data.edges]
-  );
-
-  // Edges to use based on view mode
-  const activeEdges = React.useMemo(
-    () => (viewMode === 'network' ? data.edges : dependsOnEdges),
-    [viewMode, data.edges, dependsOnEdges]
-  );
-
   // Get connection depths for focused node
   const connectionDepths = React.useMemo(() => {
     if (!focusedNodeId) return null;
-    return getConnectionDepths(focusedNodeId, activeEdges, 2);
-  }, [focusedNodeId, activeEdges]);
+    return getConnectionDepths(focusedNodeId, dependsOnEdges, 2);
+  }, [focusedNodeId, dependsOnEdges]);
 
   // Get detailed info for focused node (for sidebar)
   const focusedNodeDetails = React.useMemo((): FocusedNodeDetails | null => {
@@ -66,25 +53,18 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     const node = data.nodes.find((n) => n.id === focusedNodeId);
     if (!node) return null;
 
-    const upstreamIds = data.edges
-      .filter((e) => e.target === focusedNodeId && e.type === 'dependsOn')
+    const upstreamIds = dependsOnEdges
+      .filter((e) => e.target === focusedNodeId)
       .map((e) => e.source);
     const upstream = data.nodes.filter((n) => upstreamIds.includes(n.id));
 
-    const downstreamIds = data.edges
-      .filter((e) => e.source === focusedNodeId && e.type === 'dependsOn')
+    const downstreamIds = dependsOnEdges
+      .filter((e) => e.source === focusedNodeId)
       .map((e) => e.target);
     const downstream = data.nodes.filter((n) => downstreamIds.includes(n.id));
 
-    const relatedIds = data.edges
-      .filter(
-        (e) => e.type === 'related' && (e.source === focusedNodeId || e.target === focusedNodeId)
-      )
-      .map((e) => (e.source === focusedNodeId ? e.target : e.source));
-    const related = data.nodes.filter((n) => relatedIds.includes(n.id));
-
-    return { node, upstream, downstream, related };
-  }, [focusedNodeId, data.nodes, data.edges]);
+    return { node, upstream, downstream };
+  }, [focusedNodeId, data.nodes, dependsOnEdges]);
 
   // Build the graph
   const graph = React.useMemo(() => {
@@ -105,19 +85,9 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
     
     // Filter dependsOn edges
-    const filteredDependsOnEdges = dependsOnEdges.filter(
+    const filteredEdges = dependsOnEdges.filter(
       (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
     );
-    
-    // Filter related edges (only used in network view)
-    const filteredRelatedEdges = relatedEdges.filter(
-      (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
-    );
-
-    // Determine which edges to use based on view mode
-    const filteredEdges = viewMode === 'network' 
-      ? [...filteredDependsOnEdges, ...filteredRelatedEdges]
-      : filteredDependsOnEdges;
 
     // Filter to nodes with dependencies unless showStandalone
     let visibleNodes = filteredNodes;
@@ -170,7 +140,6 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     const edges: Edge[] = filteredEdges
       .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
       .map((edge) => {
-        const isRelated = edge.type === 'related';
         let isHighlighted = true;
         let opacity = 0.7;
 
@@ -188,37 +157,30 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
             : 0.1;
         }
 
-        const edgeColor = isRelated ? RELATED_COLOR : DEPENDS_ON_COLOR;
-
         return {
-          id: `${edge.source}-${edge.target}-${edge.type}`,
+          id: `${edge.source}-${edge.target}-dependsOn`,
           source: edge.source,
           target: edge.target,
           type: 'smoothstep',
-          animated: isHighlighted && focusedNodeId !== null && !isRelated,
-          markerEnd: isRelated
-            ? undefined
-            : {
-                type: MarkerType.ArrowClosed,
-                color: DEPENDS_ON_COLOR,
-                width: 18,
-                height: 18,
-              },
+          animated: isHighlighted && focusedNodeId !== null,
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: DEPENDS_ON_COLOR,
+            width: 18,
+            height: 18,
+          },
           style: {
-            stroke: edgeColor,
+            stroke: DEPENDS_ON_COLOR,
             strokeWidth: isHighlighted ? 2.5 : 1.5,
-            strokeDasharray: isRelated ? '5 5' : undefined,
             opacity,
           },
         };
       });
 
-    return layoutGraph(nodes, edges, isCompact, showStandalone, viewMode);
+    return layoutGraph(nodes, edges, isCompact, showStandalone);
   }, [
     data,
     dependsOnEdges,
-    relatedEdges,
-    viewMode,
     statusFilter,
     searchQuery,
     focusedNodeId,
@@ -262,7 +224,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
       instance.fitView({ padding: 0.15, duration: 300 });
     }, 50);
     return () => clearTimeout(timer);
-  }, [instance, graph.nodes.length, statusFilter, searchQuery, showStandalone, viewMode]);
+  }, [instance, graph.nodes.length, statusFilter, searchQuery, showStandalone]);
 
   const handleNodeClick = React.useCallback(
     (event: React.MouseEvent, node: Node<SpecNodeData>) => {
@@ -314,19 +276,12 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
                       <span className="text-muted-foreground">{connectionStats.standalone} standalone</span>
                     </>
                   )}
-                  {viewMode === 'network' && relatedEdges.length > 0 && (
-                    <>
-                      {' • '}
-                      <span className="text-sky-400">{relatedEdges.length} related</span>
-                    </>
-                  )}
                 </>
               ) : (
                 <span className="text-muted-foreground">No dependencies defined</span>
               )}
             </p>
           </div>
-          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
 
         {/* Search */}
@@ -480,17 +435,6 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
           <span className="inline-block h-0.5 w-6 bg-amber-400 rounded" />
           Depends On (arrow shows direction)
         </span>
-        {viewMode === 'network' && (
-          <span className="inline-flex items-center gap-1.5">
-            <span 
-              className="inline-block h-0.5 w-6 rounded" 
-              style={{ 
-                background: `repeating-linear-gradient(to right, ${RELATED_COLOR} 0, ${RELATED_COLOR} 3px, transparent 3px, transparent 6px)` 
-              }} 
-            />
-            Related (bidirectional)
-          </span>
-        )}
         <span className="text-muted-foreground/50 ml-auto">
           Click: select • Double-click: open • Drag to rearrange
         </span>
