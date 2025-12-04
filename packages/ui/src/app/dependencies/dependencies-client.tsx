@@ -18,9 +18,10 @@ import type { ProjectDependencyGraph } from '@/app/api/dependencies/route';
 
 import { nodeTypes } from './spec-node';
 import { SpecSidebar } from './spec-sidebar';
+import { ViewToggle } from './view-toggle';
 import { getConnectionDepths, layoutGraph } from './utils';
-import { DEPENDS_ON_COLOR, toneBgColors } from './constants';
-import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from './types';
+import { DEPENDS_ON_COLOR, RELATED_COLOR, toneBgColors } from './constants';
+import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats, ViewMode } from './types';
 
 interface ProjectDependencyGraphClientProps {
   data: ProjectDependencyGraph;
@@ -34,18 +35,30 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
   const [searchQuery, setSearchQuery] = React.useState('');
   const [focusedNodeId, setFocusedNodeId] = React.useState<string | null>(null);
   const [isCompact, setIsCompact] = React.useState(data.nodes.length > 30);
+  const [viewMode, setViewMode] = React.useState<ViewMode>('dag');
 
-  // Only use dependsOn edges for the graph (not related)
+  // Only use dependsOn edges for DAG view, both types for network view
   const dependsOnEdges = React.useMemo(
     () => data.edges.filter((e) => e.type === 'dependsOn'),
     [data.edges]
   );
 
+  const relatedEdges = React.useMemo(
+    () => data.edges.filter((e) => e.type === 'related'),
+    [data.edges]
+  );
+
+  // Edges to use based on view mode
+  const activeEdges = React.useMemo(
+    () => (viewMode === 'network' ? data.edges : dependsOnEdges),
+    [viewMode, data.edges, dependsOnEdges]
+  );
+
   // Get connection depths for focused node
   const connectionDepths = React.useMemo(() => {
     if (!focusedNodeId) return null;
-    return getConnectionDepths(focusedNodeId, dependsOnEdges, 2);
-  }, [focusedNodeId, dependsOnEdges]);
+    return getConnectionDepths(focusedNodeId, activeEdges, 2);
+  }, [focusedNodeId, activeEdges]);
 
   // Get detailed info for focused node (for sidebar)
   const focusedNodeDetails = React.useMemo((): FocusedNodeDetails | null => {
@@ -90,9 +103,21 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     }
 
     const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
-    const filteredEdges = dependsOnEdges.filter(
+    
+    // Filter dependsOn edges
+    const filteredDependsOnEdges = dependsOnEdges.filter(
       (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
     );
+    
+    // Filter related edges (only used in network view)
+    const filteredRelatedEdges = relatedEdges.filter(
+      (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
+    );
+
+    // Determine which edges to use based on view mode
+    const filteredEdges = viewMode === 'network' 
+      ? [...filteredDependsOnEdges, ...filteredRelatedEdges]
+      : filteredDependsOnEdges;
 
     // Filter to nodes with dependencies unless showStandalone
     let visibleNodes = filteredNodes;
@@ -145,6 +170,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     const edges: Edge[] = filteredEdges
       .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
       .map((edge) => {
+        const isRelated = edge.type === 'related';
         let isHighlighted = true;
         let opacity = 0.7;
 
@@ -162,30 +188,37 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
             : 0.1;
         }
 
+        const edgeColor = isRelated ? RELATED_COLOR : DEPENDS_ON_COLOR;
+
         return {
-          id: `${edge.source}-${edge.target}`,
+          id: `${edge.source}-${edge.target}-${edge.type}`,
           source: edge.source,
           target: edge.target,
           type: 'smoothstep',
-          animated: isHighlighted && focusedNodeId !== null,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: DEPENDS_ON_COLOR,
-            width: 18,
-            height: 18,
-          },
+          animated: isHighlighted && focusedNodeId !== null && !isRelated,
+          markerEnd: isRelated
+            ? undefined
+            : {
+                type: MarkerType.ArrowClosed,
+                color: DEPENDS_ON_COLOR,
+                width: 18,
+                height: 18,
+              },
           style: {
-            stroke: DEPENDS_ON_COLOR,
+            stroke: edgeColor,
             strokeWidth: isHighlighted ? 2.5 : 1.5,
+            strokeDasharray: isRelated ? '5 5' : undefined,
             opacity,
           },
         };
       });
 
-    return layoutGraph(nodes, edges, isCompact, showStandalone);
+    return layoutGraph(nodes, edges, isCompact, showStandalone, viewMode);
   }, [
     data,
     dependsOnEdges,
+    relatedEdges,
+    viewMode,
     statusFilter,
     searchQuery,
     focusedNodeId,
@@ -229,7 +262,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
       instance.fitView({ padding: 0.15, duration: 300 });
     }, 50);
     return () => clearTimeout(timer);
-  }, [instance, graph.nodes.length, statusFilter, searchQuery, showStandalone]);
+  }, [instance, graph.nodes.length, statusFilter, searchQuery, showStandalone, viewMode]);
 
   const handleNodeClick = React.useCallback(
     (event: React.MouseEvent, node: Node<SpecNodeData>) => {
@@ -266,25 +299,34 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     <div className="flex h-full flex-col gap-2">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Dependency Graph
-          </p>
-          <p className="text-sm text-foreground">
-            {connectionStats.connected > 0 ? (
-              <>
-                <span className="text-emerald-400">{connectionStats.connected} specs with dependencies</span>
-                {connectionStats.standalone > 0 && (
-                  <>
-                    {' • '}
-                    <span className="text-muted-foreground">{connectionStats.standalone} standalone</span>
-                  </>
-                )}
-              </>
-            ) : (
-              <span className="text-muted-foreground">No dependencies defined</span>
-            )}
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Dependency Graph
+            </p>
+            <p className="text-sm text-foreground">
+              {connectionStats.connected > 0 ? (
+                <>
+                  <span className="text-emerald-400">{connectionStats.connected} specs with dependencies</span>
+                  {connectionStats.standalone > 0 && (
+                    <>
+                      {' • '}
+                      <span className="text-muted-foreground">{connectionStats.standalone} standalone</span>
+                    </>
+                  )}
+                  {viewMode === 'network' && relatedEdges.length > 0 && (
+                    <>
+                      {' • '}
+                      <span className="text-sky-400">{relatedEdges.length} related</span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground">No dependencies defined</span>
+              )}
+            </p>
+          </div>
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
 
         {/* Search */}
@@ -438,6 +480,17 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
           <span className="inline-block h-0.5 w-6 bg-amber-400 rounded" />
           Depends On (arrow shows direction)
         </span>
+        {viewMode === 'network' && (
+          <span className="inline-flex items-center gap-1.5">
+            <span 
+              className="inline-block h-0.5 w-6 rounded" 
+              style={{ 
+                background: `repeating-linear-gradient(to right, ${RELATED_COLOR} 0, ${RELATED_COLOR} 3px, transparent 3px, transparent 6px)` 
+              }} 
+            />
+            Related (bidirectional)
+          </span>
+        )}
         <span className="text-muted-foreground/50 ml-auto">
           Click: select • Double-click: open • Drag to rearrange
         </span>

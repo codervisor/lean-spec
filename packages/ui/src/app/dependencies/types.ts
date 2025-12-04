@@ -2,6 +2,8 @@ import type { ProjectDependencyGraph } from '@/app/api/dependencies/route';
 
 export type GraphTone = 'planned' | 'in-progress' | 'complete' | 'archived';
 
+export type ViewMode = 'dag' | 'network';
+
 export interface SpecNodeData {
   label: string;
   shortLabel: string;
