@@ -99,9 +99,21 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
   const [timelineDialogOpen, setTimelineDialogOpen] = React.useState(false);
   const [dependenciesDialogOpen, setDependenciesDialogOpen] = React.useState(false);
   
+  // Get project context for API URLs
+  const { getSpecUrl, projectId } = useProjectUrl();
+  
+  // Build API URLs based on project context
+  const specApiUrl = projectId 
+    ? `/api/projects/${projectId}/specs/${initialSpec.specNumber || initialSpec.id}`
+    : `/api/specs/${initialSpec.specNumber || initialSpec.id}`;
+  
+  const depGraphApiUrl = projectId
+    ? `/api/projects/${projectId}/specs/${initialSpec.specNumber || initialSpec.id}/dependency-graph`
+    : `/api/specs/${initialSpec.specNumber || initialSpec.id}/dependency-graph`;
+  
   // Use SWR for client-side caching with the initial spec as fallback
   const { data: specData, error, isLoading } = useSWR<{ spec: SpecWithMetadata }>(
-    `/api/specs/${initialSpec.specNumber || initialSpec.id}`,
+    specApiUrl,
     fetcher,
     {
       fallbackData: { spec: initialSpec },
@@ -116,7 +128,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
     dependsOn: { specName: string; specNumber?: number }[];
     requiredBy: { specName: string; specNumber?: number }[];
   }>(
-    dependenciesDialogOpen ? `/api/specs/${initialSpec.specNumber || initialSpec.id}/dependency-graph` : null,
+    dependenciesDialogOpen ? depGraphApiUrl : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -175,8 +187,6 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
   };
 
   // Handle sub-spec switching with optimistic UI (instant, no network)
-  const { getSpecUrl, projectId } = useProjectUrl();
-  
   const handleSubSpecSwitch = (file: string | null) => {
     const newUrl = file 
       ? getSpecUrl(spec.specNumber || spec.id, file)
