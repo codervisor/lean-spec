@@ -49,25 +49,6 @@ tags: [api, security, mvp]
 **Values:** `low` | `medium` | `high` | `critical`  
 **Description:** Importance level
 
-### related
-
-**Type:** `array`  
-**Description:** Related specs (bidirectional soft reference)
-
-Specs listed here are shown bidirectionally in `lean-spec deps`. If spec A has `related: [B]`, both A and B will show the relationship.
-
-**Example:**
-```yaml
-related: [042-mcp-error-handling, 037-docs-overhaul]
-```
-
-**Symbol:** ⟷ (bidirectional arrow)
-
-**Use when:**
-- Specs cover related topics or features
-- Work is coordinated but not blocking
-- Context is helpful but not required
-
 ### depends_on
 
 **Type:** `array`  
@@ -129,6 +110,7 @@ created: 2025-11-02
 completed: 
 tags: [api, authentication, security]
 priority: high
+depends_on: [037]
 assignee: alice
 reviewer: bob
 epic: PROJ-123
