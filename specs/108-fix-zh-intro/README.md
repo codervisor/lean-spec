@@ -19,7 +19,6 @@ transitions:
     at: '2025-11-20T05:55:15.423Z'
 completed_at: '2025-11-20T05:43:57.355Z'
 completed: '2025-11-20'
-  - 105-docs-site-enhancements
 ---
 
 # Fix Outdated Chinese Documentation Content

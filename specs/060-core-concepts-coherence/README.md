@@ -15,7 +15,6 @@ transitions:
     at: '2025-11-07T12:25:39.409Z'
 completed_at: '2025-11-07T12:25:39.409Z'
 completed: '2025-11-07'
-  - 062-docs-info-architecture-v2
 ---
 
 # Core Concepts Documentation Coherence

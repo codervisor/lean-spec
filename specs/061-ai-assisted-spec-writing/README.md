@@ -15,7 +15,6 @@ transitions:
     at: '2025-11-10T07:22:30.312Z'
 completed_at: '2025-11-10T07:22:30.312Z'
 completed: '2025-11-10'
-  - 072-ai-agent-first-use-workflow
 ---
 
 # AI-Assisted Spec Writing

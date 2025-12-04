@@ -17,7 +17,6 @@ transitions:
     at: '2025-11-16T14:00:10.316Z'
 completed_at: '2025-11-16T14:00:10.316Z'
 completed: '2025-11-16'
-  - 080-mcp-server-modular-architecture
 ---
 
 # Sub-Spec File Visibility in MCP Tools and Commands

@@ -16,7 +16,6 @@ transitions:
     at: '2025-11-17T09:14:54.020Z'
 completed_at: '2025-11-17T02:12:47.445Z'
 completed: '2025-11-17'
-  - 122-ai-agent-deps-management-fix
 ---
 
 # LeanSpec Dogfooding: Real SDD Case Studies

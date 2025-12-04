@@ -18,7 +18,6 @@ depends_on:
   - 082-web-realtime-sync-architecture
 completed_at: '2025-11-17T10:02:22.453Z'
 completed: '2025-11-17'
-  - 138-ui-dependencies-dual-view
 ---
 
 # Replace Manual DAG with Visualization Library

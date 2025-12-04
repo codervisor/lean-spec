@@ -15,7 +15,6 @@ transitions:
     at: '2025-11-18T07:19:10.108Z'
 completed_at: '2025-11-18T07:19:10.108Z'
 completed: '2025-11-18'
-  - 131-ui-edit-capabilities
 ---
 
 # UI Standalone Consolidation

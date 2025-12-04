@@ -15,7 +15,6 @@ transitions:
     at: '2025-11-17T07:51:43.434Z'
 completed_at: '2025-11-17T07:51:43.434Z'
 completed: '2025-11-17'
-  - 094-ai-chatbot-web-integration
 ---
 
 # Migrate docs-site to separate repository as submodule

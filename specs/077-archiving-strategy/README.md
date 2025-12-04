@@ -9,7 +9,6 @@ tags:
 priority: high
 created_at: '2025-11-13T13:08:46.014Z'
 updated_at: '2025-11-26T06:03:50.934Z'
-  - 065-v03-planning
 ---
 
 # archiving-strategy

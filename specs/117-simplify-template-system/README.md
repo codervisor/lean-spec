@@ -14,7 +14,6 @@ transitions:
     at: '2025-11-24T07:54:57.954Z'
 completed_at: '2025-11-24T07:54:57.954Z'
 completed: '2025-11-24'
-  - 086-template-component-deduplication
 ---
 
 # Simplify Template System to Standard + Detailed

@@ -16,7 +16,6 @@ transitions:
     at: '2025-11-17T09:14:41.790Z'
 completed_at: '2025-11-17T02:11:45.698Z'
 completed: '2025-11-17'
-  - 095-pr-migration-verification
 ---
 
 # Step-by-Step SDD Tutorials for Real Practice

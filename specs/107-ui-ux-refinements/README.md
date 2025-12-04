@@ -10,7 +10,6 @@ created_at: '2025-11-20T02:27:35.059Z'
 completed_at: '2025-11-20T02:30:00.000Z'
 updated_at: '2025-11-28T03:37:36.873Z'
 completed: '2025-11-20'
-  - 133-ui-web-code-editor
 ---
 
 # UI/UX Refinements - Spec Detail & List Views

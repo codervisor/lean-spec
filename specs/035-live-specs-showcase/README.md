@@ -19,7 +19,6 @@ transitions:
     at: '2025-11-17T08:18:56.995Z'
 completed_at: '2025-11-17T08:18:56.995Z'
 completed: '2025-11-17'
-  - 106-ui-package-documentation
 ---
 
 # LeanSpec Web: Fullstack Spec Showcase Platform
