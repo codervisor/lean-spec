@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { extractH1Title } from '@/lib/utils';
 import { PriorityBadge, getPriorityLabel } from './priority-badge';
 import { formatRelativeTime } from '@/lib/date-utils';
 import {
@@ -292,9 +291,8 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
     const spec = sortedSpecs[index];
     const isCurrentSpec = spec.id === resolvedCurrentSpecId;
 
-    // Extract H1 title, fallback to title or name
-    const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
-    const displayTitle = h1Title || spec.title || spec.specName;
+    // Use title from server-side extraction, fallback to name
+    const displayTitle = spec.title || spec.specName;
     const specUrl = getSpecUrl(spec.specNumber || spec.id);
 
     return (

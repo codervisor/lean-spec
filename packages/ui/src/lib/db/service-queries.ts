@@ -18,6 +18,20 @@ export type ParsedSpec = Omit<Spec, 'tags'> & {
   tags: string[] | null;
 };
 
+/**
+ * Lightweight spec for list views (excludes contentMd to reduce payload size)
+ * The full contentMd can be 1MB+ for all specs combined
+ */
+export type LightweightSpec = Omit<ParsedSpec, 'contentMd' | 'contentHtml'>;
+
+/**
+ * Strip contentMd from a spec to create a lightweight version
+ */
+function toLightweightSpec<T extends ParsedSpec>(spec: T): Omit<T, 'contentMd' | 'contentHtml'> {
+  const { contentMd, contentHtml, ...rest } = spec;
+  return rest;
+}
+
 const DEFAULT_SPECS_DIR = resolve(process.cwd(), '../../specs');
 
 function getSpecsRootDir(): string {
@@ -112,41 +126,44 @@ function countSubSpecs(specDirPath: string): number {
 
 /**
  * Get all specs (uses filesystem by default, database if projectId provided)
+ * Returns lightweight specs without contentMd for list views
  */
-export async function getSpecs(projectId?: string): Promise<ParsedSpec[]> {
+export async function getSpecs(projectId?: string): Promise<LightweightSpec[]> {
   const specs = await specsService.getAllSpecs(projectId);
-  return specs.map(parseSpecTags);
+  return specs.map(spec => toLightweightSpec(parseSpecTags(spec)));
 }
 
 /**
  * Get all specs with sub-spec count (for sidebar)
+ * Returns lightweight specs without contentMd
  */
-export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(ParsedSpec & { subSpecsCount: number })[]> {
+export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(LightweightSpec & { subSpecsCount: number })[]> {
   const specs = await specsService.getAllSpecs(projectId);
   
   // Only count sub-specs for filesystem mode
   if (projectId) {
-    return specs.map(spec => ({ ...parseSpecTags(spec), subSpecsCount: 0 }));
+    return specs.map(spec => ({ ...toLightweightSpec(parseSpecTags(spec)), subSpecsCount: 0 }));
   }
   
   return specs.map(spec => {
     const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecsCount = countSubSpecs(specDirPath);
-    return { ...parseSpecTags(spec), subSpecsCount };
+    return { ...toLightweightSpec(parseSpecTags(spec)), subSpecsCount };
   });
 }
 
 /**
  * Get all specs with sub-spec count and relationships (for comprehensive list view)
  * Builds the full dependency graph to compute requiredBy (reverse dependencies)
+ * Returns lightweight specs without contentMd
  */
-export async function getSpecsWithMetadata(projectId?: string): Promise<(ParsedSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
+export async function getSpecsWithMetadata(projectId?: string): Promise<(LightweightSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
   const specs = await specsService.getAllSpecs(projectId);
   
   // Only count sub-specs and relationships for filesystem mode
   if (projectId) {
     return specs.map(spec => ({ 
-      ...parseSpecTags(spec), 
+      ...toLightweightSpec(parseSpecTags(spec)), 
       subSpecsCount: 0,
       relationships: { dependsOn: [], requiredBy: [] }
     }));
@@ -175,7 +192,7 @@ export async function getSpecsWithMetadata(projectId?: string): Promise<(ParsedS
     const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecsCount = countSubSpecs(specDirPath);
     const relationships = specRelationshipsMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
-    return { ...parseSpecTags(spec), subSpecsCount, relationships };
+    return { ...toLightweightSpec(parseSpecTags(spec)), subSpecsCount, relationships };
   });
 }
 
@@ -217,21 +234,23 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
 
 /**
  * Get specs by status
+ * Returns lightweight specs without contentMd
  */
 export async function getSpecsByStatus(
   status: 'planned' | 'in-progress' | 'complete' | 'archived',
   projectId?: string
-): Promise<ParsedSpec[]> {
+): Promise<LightweightSpec[]> {
   const specs = await specsService.getSpecsByStatus(status, projectId);
-  return specs.map(parseSpecTags);
+  return specs.map(spec => toLightweightSpec(parseSpecTags(spec)));
 }
 
 /**
  * Search specs
+ * Returns lightweight specs without contentMd (search happens server-side)
  */
-export async function searchSpecs(query: string, projectId?: string): Promise<ParsedSpec[]> {
+export async function searchSpecs(query: string, projectId?: string): Promise<LightweightSpec[]> {
   const specs = await specsService.searchSpecs(query, projectId);
-  return specs.map(parseSpecTags);
+  return specs.map(spec => toLightweightSpec(parseSpecTags(spec)));
 }
 
 /**

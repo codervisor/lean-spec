@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useProject } from '@/contexts/project-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +22,10 @@ interface CreateProjectDialogProps {
 }
 
 export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
-  const { addProject, switchProject } = useProject();
+  const { addProject } = useProject();
   const [path, setPath] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');
-  const router = useRouter();
 
   useEffect(() => {
     if (open) {
@@ -40,10 +38,10 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
     try {
       setIsLoading(true);
       const project = await addProject(projectPath);
-      await switchProject(project.id);
       toast.success('Project added successfully');
       onOpenChange(false);
-      router.push('/'); // Navigate to dashboard
+      // Full page navigation - ensures clean state for new project
+      window.location.href = `/projects/${project.id}/specs`;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to add project';
       toast.error(message);
