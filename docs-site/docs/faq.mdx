@@ -332,9 +332,6 @@ lean-spec create dashboard --tags frontend,ui --priority medium
 ```bash
 # Dashboard depends on auth being complete
 lean-spec link dashboard --depends-on user-auth
-
-# Payment and auth are related but independent
-lean-spec link payment-flow --related user-auth
 ```
 
 **3. Visualize progress:**
@@ -361,8 +358,8 @@ lean-spec ui
 - Use tags consistently (`api`, `frontend`, `backend`, etc.)
 - Set priorities (`critical`, `high`, `medium`, `low`)
 - Update status religiously (`planned` → `in-progress` → `complete`)
-- Use `depends_on` sparingly (only for true blockers)
-- Use `related` for informational links
+- Use `depends_on` only for true blockers
+- Document other relationships in spec content
 
 ### How do I deal with bugs in completed specs?
 
@@ -387,7 +384,7 @@ lean-spec create auth-token-refresh-fix --tags auth,bugfix --priority high
 
 Link to original:
 ```bash
-lean-spec link auth-token-refresh-fix --related user-auth
+lean-spec link auth-token-refresh-fix --depends-on user-auth
 ```
 
 In the new spec, document:
