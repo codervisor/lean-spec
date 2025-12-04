@@ -6,7 +6,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, ChevronsUpDown, Plus, FolderOpen, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Check, ChevronsUpDown, Plus, FolderOpen, Star, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,7 @@ interface ProjectSwitcherProps {
 }
 
 export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
+  const router = useRouter();
   const {
     mode,
     currentProject,
@@ -128,6 +130,16 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Project
+                </CommandItem>
+                <CommandItem
+                  className="cursor-pointer"
+                  onSelect={() => {
+                    setOpen(false);
+                    router.push('/projects');
+                  }}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Manage Projects
                 </CommandItem>
               </CommandGroup>
             </CommandList>
