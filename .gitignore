@@ -16,3 +16,6 @@ tmp/
 *.tgz
 GEMINI.md
 .worktrees/
+
+# Generated during npm publish (copied from root README.md)
+packages/cli/README.md
