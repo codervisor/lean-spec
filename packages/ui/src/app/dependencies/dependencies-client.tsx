@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ReactFlow, {
   Background,
   Controls,
@@ -28,6 +28,9 @@ interface ProjectDependencyGraphClientProps {
 
 export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const specParam = searchParams.get('spec');
+  
   const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
   const [showStandalone, setShowStandalone] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
@@ -36,6 +39,17 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
   const [selectorOpen, setSelectorOpen] = React.useState(false);
   const [selectorQuery, setSelectorQuery] = React.useState('');
   const selectorRef = React.useRef<HTMLDivElement>(null);
+
+  // Initialize focused node from URL param on first load
+  React.useEffect(() => {
+    if (specParam && !focusedNodeId) {
+      // Find the node by spec number
+      const node = data.nodes.find((n) => n.number.toString() === specParam);
+      if (node) {
+        setFocusedNodeId(node.id);
+      }
+    }
+  }, [specParam, data.nodes, focusedNodeId]);
 
   // Only use dependsOn edges (DAG only - no related edges)
   const dependsOnEdges = React.useMemo(
@@ -293,6 +307,21 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     }, 50);
     return () => clearTimeout(timer);
   }, [instance, graph.nodes.length, statusFilter, showStandalone]);
+
+  // Center on focused node when set from URL param
+  React.useEffect(() => {
+    if (!instance || !focusedNodeId || !specParam) return;
+    const node = graph.nodes.find((n) => n.id === focusedNodeId);
+    if (node) {
+      const timer = setTimeout(() => {
+        instance.setCenter(node.position.x + 80, node.position.y + 30, {
+          duration: 400,
+          zoom: 1,
+        });
+      }, 400); // Wait for initial fitView to complete
+      return () => clearTimeout(timer);
+    }
+  }, [instance, focusedNodeId, specParam, graph.nodes]);
 
   // Close selector dropdown when clicking outside
   React.useEffect(() => {

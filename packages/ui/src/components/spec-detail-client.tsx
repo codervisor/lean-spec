@@ -46,8 +46,10 @@ import {
   Clock,
   Maximize2,
   Minimize2,
-  List as ListIcon
+  List as ListIcon,
+  ExternalLink
 } from 'lucide-react';
+import Link from 'next/link';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
 import type { Html, Root } from 'mdast';
@@ -368,8 +370,16 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                   <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
                     <DialogHeader>
                       <DialogTitle>Dependency Graph</DialogTitle>
-                      <DialogDescription>
-                        Precedence requirements and connected specs rendered with automatic layout.
+                      <DialogDescription className="flex flex-col gap-2">
+                        <span>Precedence requirements and connected specs rendered with automatic layout.</span>
+                        <Link 
+                          href={`/dependencies?spec=${spec.specNumber || spec.id}`}
+                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline w-fit"
+                          onClick={() => setDependenciesDialogOpen(false)}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          View in full dependencies page
+                        </Link>
                       </DialogDescription>
                     </DialogHeader>
                     <div className="min-h-0 flex-1">
