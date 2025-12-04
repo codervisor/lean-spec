@@ -80,6 +80,7 @@ interface SpecDependencyGraphProps {
   relationships: SpecRelationships;
   specNumber?: number | null;
   specTitle: string;
+  projectId?: string;
 }
 
 interface GraphPayload {
@@ -97,13 +98,15 @@ function formatRelationshipLabel(value: string) {
   return remainder ? `#${number} ${remainder}` : `#${number}`;
 }
 
-function buildRelationshipHref(value: string) {
+function buildRelationshipHref(value: string, projectId?: string) {
   const trimmed = value.trim();
   const match = trimmed.match(/^(\d+)/);
-  if (match) {
-    return `/specs/${parseInt(match[1], 10)}`;
+  const specNumber = match ? parseInt(match[1], 10) : trimmed;
+  
+  if (projectId) {
+    return `/projects/${projectId}/specs/${specNumber}`;
   }
-  return `/specs/${trimmed}`;
+  return `/specs/${specNumber}`;
 }
 
 function nodeId(prefix: string, value: string, index: number) {
@@ -135,7 +138,7 @@ function layoutGraph(nodes: Node<SpecNodeData>[], edges: Edge[]): GraphPayload {
   return { nodes: layoutedNodes, edges };
 }
 
-function buildGraph(relationships: SpecRelationships, specNumber: number | null | undefined, specTitle: string) {
+function buildGraph(relationships: SpecRelationships, specNumber: number | null | undefined, specTitle: string, projectId?: string) {
   const nodes: Node<SpecNodeData>[] = [];
   const edges: Edge[] = [];
   const centerLabel = specNumber ? `#${specNumber.toString().padStart(3, '0')} ${specTitle}` : specTitle;
@@ -170,7 +173,7 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
         badge: 'Depends On',
         subtitle: 'Must complete first',
         tone: 'precedence',
-        href: buildRelationshipHref(value),
+        href: buildRelationshipHref(value, projectId),
         interactive: true,
       },
       position: { x: 0, y: 0 },
@@ -209,7 +212,7 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
         badge: 'Required By',
         subtitle: 'Blocked by this spec',
         tone: 'required-by',
-        href: buildRelationshipHref(value),
+        href: buildRelationshipHref(value, projectId),
         interactive: true,
       },
       position: { x: 0, y: 0 },
@@ -240,11 +243,11 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
   return layoutGraph(nodes, edges);
 }
 
-export function SpecDependencyGraph({ relationships, specNumber, specTitle }: SpecDependencyGraphProps) {
+export function SpecDependencyGraph({ relationships, specNumber, specTitle, projectId }: SpecDependencyGraphProps) {
   const router = useRouter();
   const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
 
-  const graph = React.useMemo(() => buildGraph(relationships, specNumber, specTitle), [relationships, specNumber, specTitle]);
+  const graph = React.useMemo(() => buildGraph(relationships, specNumber, specTitle, projectId), [relationships, specNumber, specTitle, projectId]);
 
   const handleInit = React.useCallback((flowInstance: ReactFlowInstance) => {
     setInstance(flowInstance);

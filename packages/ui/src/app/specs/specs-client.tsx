@@ -111,6 +111,17 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // Helper to generate project-scoped URLs
+  const getSpecUrl = useCallback((specId: string | number) => {
+    return projectId 
+      ? `/projects/${projectId}/specs/${specId}`
+      : `/specs/${specId}`;
+  }, [projectId]);
+
+  const getSpecsBaseUrl = useCallback(() => {
+    return projectId ? `/projects/${projectId}/specs` : '/specs';
+  }, [projectId]);
+
   const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
   const [pendingSpecIds, setPendingSpecIds] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,13 +212,13 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
     }
     const search = current.toString();
     const query = search ? `?${search}` : '';
-    router.replace(`/specs${query}`, { scroll: false });
+    router.replace(`${getSpecsBaseUrl()}${query}`, { scroll: false });
 
     // Persist to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('specs-view-mode', viewMode);
     }
-  }, [viewMode, router]);
+  }, [viewMode, router, getSpecsBaseUrl]);
 
   const filteredAndSortedSpecs = useMemo(() => {
     const filtered = specs.filter(spec => {
@@ -370,7 +381,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
         )}>
           {viewMode === 'list' ? (
             <div className="w-full">
-              <ListView specs={filteredAndSortedSpecs} />
+              <ListView specs={filteredAndSortedSpecs} getSpecUrl={getSpecUrl} />
             </div>
           ) : (
             <BoardView
@@ -379,6 +390,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
               pendingSpecIds={pendingSpecIds}
               showArchived={showArchivedBoard}
               onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
+              getSpecUrl={getSpecUrl}
             />
           )}
         </div>
@@ -387,7 +399,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   );
 }
 
-function ListView({ specs }: { specs: Spec[] }) {
+function ListView({ specs, getSpecUrl }: { specs: Spec[]; getSpecUrl: (specId: string | number) => string }) {
   return (
     <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4 pb-2 sm:pb-4 md:pb-8">
       {specs.map(spec => {
@@ -400,6 +412,7 @@ function ListView({ specs }: { specs: Spec[] }) {
         const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
         const hasDependencies = spec.relationships && spec.relationships.dependsOn.length > 0;
         const hasSubSpecs = !!(spec.subSpecsCount && spec.subSpecsCount > 0);
+        const specUrl = getSpecUrl(spec.specNumber || spec.id);
 
         return (
           <Card
@@ -408,13 +421,13 @@ function ListView({ specs }: { specs: Spec[] }) {
               "hover:shadow-lg active:shadow-xl transition-all duration-150 hover:scale-[1.01] active:scale-[0.99] border-l-4 cursor-pointer touch-manipulation",
               borderColor
             )}
-            onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
+            onClick={() => window.location.href = specUrl}
           >
             {/* Mobile-optimized layout */}
             <CardHeader className="pb-2 sm:pb-2.5 md:pb-3 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-4">
                 <div className="flex-1 min-w-0">
-                  <Link href={`/specs/${spec.specNumber || spec.id}`}>
+                  <Link href={specUrl}>
                     <CardTitle className="text-sm sm:text-base md:text-lg font-semibold hover:text-primary transition-colors flex items-start flex-wrap gap-1.5 sm:gap-2 leading-snug sm:leading-normal">
                       {spec.specNumber ? (
                         <span className="font-mono text-xs sm:text-sm md:text-base font-normal text-muted-foreground flex-shrink-0">
@@ -494,9 +507,10 @@ interface BoardViewProps {
   pendingSpecIds: Record<string, boolean>;
   showArchived: boolean;
   onToggleArchived: () => void;
+  getSpecUrl: (specId: string | number) => string;
 }
 
-function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived }: BoardViewProps) {
+function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived, getSpecUrl }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
@@ -644,6 +658,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                   };
                   const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
                   const isUpdating = Boolean(pendingSpecIds[spec.id]);
+                  const specUrl = getSpecUrl(spec.specNumber || spec.id);
 
                   return (
                     <Card
@@ -663,7 +678,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                         borderColor,
                         isUpdating && 'opacity-60 cursor-wait'
                       )}
-                      onClick={() => window.location.href = `/specs/${spec.specNumber || spec.id}`}
+                      onClick={() => window.location.href = specUrl}
                     >
                       {isUpdating && (
                         <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs sm:text-sm font-medium z-10">
@@ -676,7 +691,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                             {spec.specNumber ? `#${spec.specNumber}` : ''}
                           </span>
                         </div>
-                        <Link href={`/specs/${spec.specNumber || spec.id}`} className="block">
+                        <Link href={specUrl} className="block">
                           <CardTitle className="text-xs sm:text-sm font-semibold leading-snug hover:text-primary transition-colors line-clamp-3">
                             {spec.title || spec.specName}
                           </CardTitle>

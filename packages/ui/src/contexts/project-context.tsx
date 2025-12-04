@@ -227,3 +227,27 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
     </ProjectContext.Provider>
   );
 }
+
+/**
+ * Hook to generate project-scoped URLs
+ * Automatically uses project prefix in multi-project mode
+ */
+export function useProjectUrl() {
+  const { mode, currentProject } = useProject();
+  
+  const getUrl = useCallback((path: string) => {
+    if (mode === 'multi-project' && currentProject) {
+      // Ensure path starts with /
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      return `/projects/${currentProject.id}${normalizedPath}`;
+    }
+    return path.startsWith('/') ? path : `/${path}`;
+  }, [mode, currentProject]);
+
+  const getSpecUrl = useCallback((specId: string | number, subSpec?: string) => {
+    const base = getUrl(`/specs/${specId}`);
+    return subSpec ? `${base}?subspec=${subSpec}` : base;
+  }, [getUrl]);
+
+  return { getUrl, getSpecUrl, isMultiProject: mode === 'multi-project', projectId: currentProject?.id };
+}

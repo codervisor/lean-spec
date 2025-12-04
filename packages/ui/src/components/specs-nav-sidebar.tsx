@@ -37,6 +37,7 @@ import {
   getSidebarScrollTop,
   updateSidebarScrollTop,
 } from '@/lib/stores/specs-sidebar-store';
+import { useProjectUrl } from '@/contexts/project-context';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined'
   ? React.useLayoutEffect
@@ -284,6 +285,8 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
   }, []);
 
   // Virtual list row renderer (rowProps will be passed by react-window)
+  const { getSpecUrl } = useProjectUrl();
+  
   const RowComponent = React.useCallback((rowProps: { index: number; style: React.CSSProperties }) => {
     const { index, style } = rowProps;
     const spec = sortedSpecs[index];
@@ -292,6 +295,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
     // Extract H1 title, fallback to title or name
     const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
     const displayTitle = h1Title || spec.title || spec.specName;
+    const specUrl = getSpecUrl(spec.specNumber || spec.id);
 
     return (
       <div style={style} className="px-1">
@@ -302,7 +306,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
               <TooltipTrigger asChild>
                 <Link
                   ref={isCurrentSpec && !currentSubSpec ? activeItemRef : null}
-                  href={`/specs/${spec.specNumber || spec.id}`}
+                  href={specUrl}
                   onMouseEnter={() => onSpecHover?.(spec.specNumber?.toString() || spec.id)}
                   className={cn(
                     'w-full flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
@@ -368,7 +372,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
         </div>
       </div>
     );
-  }, [sortedSpecs, resolvedCurrentSpecId, currentSubSpec, onSpecHover]);
+  }, [sortedSpecs, resolvedCurrentSpecId, currentSubSpec, onSpecHover, getSpecUrl]);
 
   // Calculate list height
   const listHeight = React.useMemo(() => {

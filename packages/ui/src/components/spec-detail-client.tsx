@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { extractH1Title, cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/date-utils';
+import { useProjectUrl } from '@/contexts/project-context';
 import type { SpecWithMetadata } from '@/types/specs';
 import { 
   FileText, 
@@ -174,10 +175,12 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
   };
 
   // Handle sub-spec switching with optimistic UI (instant, no network)
+  const { getSpecUrl, projectId } = useProjectUrl();
+  
   const handleSubSpecSwitch = (file: string | null) => {
     const newUrl = file 
-      ? `/specs/${spec.specNumber || spec.id}?subspec=${file}`
-      : `/specs/${spec.specNumber || spec.id}`;
+      ? getSpecUrl(spec.specNumber || spec.id, file)
+      : getSpecUrl(spec.specNumber || spec.id);
     
     // Use shallow routing to avoid full page reload
     router.push(newUrl, { scroll: false });
@@ -389,6 +392,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                           relationships={completeRelationships}
                           specNumber={spec.specNumber}
                           specTitle={displayTitle}
+                          projectId={projectId}
                         />
                       )}
                     </div>
@@ -469,7 +473,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                 remarkPlugins={[remarkGfm, remarkStripHtmlComments]}
                 rehypePlugins={[rehypeHighlight, rehypeSlug]}
                 components={{
-                  a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} />,
+                  a: (props) => <MarkdownLink {...props} currentSpecNumber={spec.specNumber || undefined} projectId={projectId} />,
                   pre: ({ children, ...props }) => {
                     // Safely get the first child element
                     const childArray = React.Children.toArray(children);

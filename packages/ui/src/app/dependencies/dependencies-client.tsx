@@ -24,14 +24,20 @@ import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } fro
 
 interface ProjectDependencyGraphClientProps {
   data: ProjectDependencyGraph;
+  projectId?: string;
 }
 
-export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphClientProps) {
+export function ProjectDependencyGraphClient({ data, projectId }: ProjectDependencyGraphClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const specParam = searchParams.get('spec');
-  
+    // Helper to generate project-scoped URLs
+  const getSpecUrl = React.useCallback((specNumber: number | string) => {
+    return projectId 
+      ? `/projects/${projectId}/specs/${specNumber}`
+      : `/specs/${specNumber}`;
+  }, [projectId]);
   const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
   const [showStandalone, setShowStandalone] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
@@ -244,7 +250,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
           badge: node.status === 'in-progress' ? 'WIP' : node.status.slice(0, 3).toUpperCase(),
           number: node.number,
           tone: node.status as GraphTone,
-          href: `/specs/${node.number}`,
+          href: getSpecUrl(node.number),
           interactive: true,
           isFocused,
           connectionDepth,
@@ -675,7 +681,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
         <SpecSidebar
           focusedDetails={focusedNodeDetails}
           onSelectSpec={setFocusedNodeId}
-          onOpenSpec={(num) => router.push(`/specs/${num}`)}
+          onOpenSpec={(num) => router.push(getSpecUrl(num))}
         />
       </div>
 

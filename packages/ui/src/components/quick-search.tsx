@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/command"
 import { StatusBadge } from "@/components/status-badge"
 import { PriorityBadge } from "@/components/priority-badge"
+import { useProjectUrl } from "@/contexts/project-context"
 
 interface Spec {
   id: string
@@ -32,6 +33,7 @@ interface QuickSearchProps {
 
 export function QuickSearch({ specs }: QuickSearchProps) {
   const router = useRouter()
+  const { getSpecUrl } = useProjectUrl()
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [recentSearches, setRecentSearches] = React.useState<string[]>([])
@@ -85,7 +87,7 @@ export function QuickSearch({ specs }: QuickSearchProps) {
     localStorage.setItem("leanspec-recent-searches", JSON.stringify(updated))
 
     // Navigate
-    router.push(`/specs/${specId}`)
+    router.push(getSpecUrl(specId))
     setOpen(false)
     setSearch("")
   }

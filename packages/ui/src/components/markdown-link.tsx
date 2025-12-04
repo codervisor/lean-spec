@@ -9,23 +9,30 @@ interface MarkdownLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   href?: string;
   children?: React.ReactNode;
   currentSpecNumber?: number;
+  projectId?: string;
 }
 
 /**
  * Transform internal spec links to proper web app routes
  * Examples:
- * - ../048-spec-complexity-analysis/ -> /specs/48
+ * - ../048-spec-complexity-analysis/ -> /specs/48 (or /projects/[projectId]/specs/48)
  * - ../048-spec-complexity-analysis/README.md -> /specs/48
  * - ../048-spec-complexity-analysis/DESIGN.md -> /specs/48?subspec=DESIGN.md
  * - ./DESIGN.md -> current spec with ?subspec=DESIGN.md
  * - #heading -> #heading (anchor links unchanged)
  * - https://... -> https://... (external links unchanged)
  */
-function transformSpecLink(href: string, currentSpecNumber?: number): string {
+function transformSpecLink(href: string, currentSpecNumber?: number, projectId?: string): string {
   // Don't transform anchor links or external URLs
   if (href.startsWith('#') || href.startsWith('http://') || href.startsWith('https://')) {
     return href;
   }
+
+  // Helper to build project-scoped URLs
+  const buildSpecUrl = (specNumber: number, subSpec?: string): string => {
+    const base = projectId ? `/projects/${projectId}/specs/${specNumber}` : `/specs/${specNumber}`;
+    return subSpec ? `${base}?subspec=${subSpec}` : base;
+  };
 
   // Match same-directory sub-spec links: ./FILE.md
   const sameDirectoryPattern = /^\.\/([^/]+\.md)$/;
@@ -34,9 +41,9 @@ function transformSpecLink(href: string, currentSpecNumber?: number): string {
   if (sameDirectoryMatch && currentSpecNumber) {
     const subSpecFile = sameDirectoryMatch[1];
     if (subSpecFile !== 'README.md') {
-      return `/specs/${currentSpecNumber}?subspec=${subSpecFile}`;
+      return buildSpecUrl(currentSpecNumber, subSpecFile);
     } else {
-      return `/specs/${currentSpecNumber}`;
+      return buildSpecUrl(currentSpecNumber);
     }
   }
 
@@ -51,10 +58,10 @@ function transformSpecLink(href: string, currentSpecNumber?: number): string {
 
     if (subSpecFile && subSpecFile !== 'README.md') {
       // Sub-spec link (e.g., DESIGN.md, IMPLEMENTATION.md)
-      return `/specs/${specNumber}?subspec=${subSpecFile}`;
+      return buildSpecUrl(specNumber, subSpecFile);
     } else {
       // Main spec link (README.md or just the directory)
-      return `/specs/${specNumber}`;
+      return buildSpecUrl(specNumber);
     }
   }
 
@@ -62,12 +69,12 @@ function transformSpecLink(href: string, currentSpecNumber?: number): string {
   return href;
 }
 
-export function MarkdownLink({ href, children, currentSpecNumber, ...props }: MarkdownLinkProps) {
+export function MarkdownLink({ href, children, currentSpecNumber, projectId, ...props }: MarkdownLinkProps) {
   if (!href) {
     return <a {...props}>{children}</a>;
   }
 
-  const transformedHref = transformSpecLink(href, currentSpecNumber);
+  const transformedHref = transformSpecLink(href, currentSpecNumber, projectId);
 
   // External links or anchor links - use regular <a> tag
   const isExternal = transformedHref.startsWith('http://') || transformedHref.startsWith('https://');
