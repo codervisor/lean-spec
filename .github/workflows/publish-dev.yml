@@ -63,21 +63,51 @@ jobs:
       - name: Publish CLI to npm with dev tag
         if: ${{ !inputs.dry_run }}
         working-directory: packages/cli
-        run: npm publish --tag dev --provenance --access public
+        run: |
+          OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish MCP wrapper to npm with dev tag
         if: ${{ !inputs.dry_run }}
         working-directory: packages/mcp
-        run: npm publish --tag dev --provenance --access public
+        run: |
+          OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish UI to npm with dev tag
         if: ${{ !inputs.dry_run }}
         working-directory: packages/ui
-        run: npm publish --tag dev --provenance --access public
+        run: |
+          OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
