@@ -3,8 +3,7 @@ import type { SubSpec } from '@/lib/sub-specs';
 
 export interface SpecRelationships {
   dependsOn: string[];
-  related: string[];
-  requiredBy?: string[]; // Downstream dependents (specs that depend on this one)
+  requiredBy: string[]; // Downstream dependents (specs that depend on this one)
 }
 
 export type SpecWithMetadata = ParsedSpec & {

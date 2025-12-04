@@ -37,7 +37,7 @@ function buildSpecDirPath(filePath: string): string {
 
 interface SpecRelationships {
   dependsOn: string[];
-  related: string[];
+  requiredBy: string[];
 }
 function normalizeRelationshipList(value: unknown): string[] {
   if (!value) return [];
@@ -56,14 +56,14 @@ function getFilesystemRelationships(specDirPath: string): SpecRelationships {
     const raw = readFileSync(readmePath, 'utf-8');
     const { data } = matter(raw);
     const dependsOn = normalizeRelationshipList(data?.depends_on ?? data?.dependsOn);
-    const related = normalizeRelationshipList(data?.related);
+    // Note: requiredBy is computed from the dependency graph, not stored in frontmatter
     return {
       dependsOn,
-      related,
+      requiredBy: [],
     };
   } catch (error) {
     console.warn('Unable to parse spec relationships', error);
-    return { dependsOn: [], related: [] };
+    return { dependsOn: [], requiredBy: [] };
   }
 }
 
@@ -138,6 +138,7 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Par
 
 /**
  * Get all specs with sub-spec count and relationships (for comprehensive list view)
+ * Builds the full dependency graph to compute requiredBy (reverse dependencies)
  */
 export async function getSpecsWithMetadata(projectId?: string): Promise<(ParsedSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
   const specs = await specsService.getAllSpecs(projectId);
@@ -147,20 +148,40 @@ export async function getSpecsWithMetadata(projectId?: string): Promise<(ParsedS
     return specs.map(spec => ({ 
       ...parseSpecTags(spec), 
       subSpecsCount: 0,
-      relationships: { dependsOn: [], related: [] }
+      relationships: { dependsOn: [], requiredBy: [] }
     }));
+  }
+  
+  // First pass: collect all dependsOn relationships
+  const specRelationshipsMap = new Map<string, { dependsOn: string[]; requiredBy: string[] }>();
+  
+  for (const spec of specs) {
+    const specDirPath = buildSpecDirPath(spec.filePath);
+    const { dependsOn } = getFilesystemRelationships(specDirPath);
+    specRelationshipsMap.set(spec.specName, { dependsOn, requiredBy: [] });
+  }
+  
+  // Second pass: compute requiredBy (reverse lookup)
+  for (const [specName, rels] of specRelationshipsMap.entries()) {
+    for (const dep of rels.dependsOn) {
+      const depRels = specRelationshipsMap.get(dep);
+      if (depRels) {
+        depRels.requiredBy.push(specName);
+      }
+    }
   }
   
   return specs.map(spec => {
     const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecsCount = countSubSpecs(specDirPath);
-    const relationships = getFilesystemRelationships(specDirPath);
+    const relationships = specRelationshipsMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
     return { ...parseSpecTags(spec), subSpecsCount, relationships };
   });
 }
 
 /**
  * Get a spec by ID (number or UUID)
+ * Computes requiredBy by scanning all specs for reverse dependencies
  */
 export async function getSpecById(id: string, projectId?: string): Promise<(ParsedSpec & { subSpecs?: import('../sub-specs').SubSpec[]; relationships?: SpecRelationships }) | null> {
   const spec = await specsService.getSpec(id, projectId);
@@ -173,8 +194,22 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
   if (!projectId) {
     const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecs = detectSubSpecs(specDirPath);
-    const relationships = getFilesystemRelationships(specDirPath);
-    return { ...parsedSpec, subSpecs, relationships };
+    const { dependsOn } = getFilesystemRelationships(specDirPath);
+    
+    // Compute requiredBy by scanning all specs
+    const allSpecs = await specsService.getAllSpecs();
+    const requiredBy: string[] = [];
+    
+    for (const otherSpec of allSpecs) {
+      if (otherSpec.specName === spec.specName) continue;
+      const otherSpecDirPath = buildSpecDirPath(otherSpec.filePath);
+      const otherRels = getFilesystemRelationships(otherSpecDirPath);
+      if (otherRels.dependsOn.includes(spec.specName)) {
+        requiredBy.push(otherSpec.specName);
+      }
+    }
+    
+    return { ...parsedSpec, subSpecs, relationships: { dependsOn, requiredBy } };
   }
 
   return parsedSpec;

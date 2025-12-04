@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Search, FolderOpen, Star, MoreVertical, Trash2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Plus, Search, FolderOpen, Star, MoreVertical, Trash2, Pencil, RefreshCw, Check, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useProject } from '@/contexts/project-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,18 +16,31 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CreateProjectDialog } from '@/components/create-project-dialog';
+import { ColorPicker } from '@/components/color-picker';
+import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
+// Track validation status per project
+type ValidationStatus = 'unknown' | 'validating' | 'valid' | 'invalid';
+interface ProjectValidationState {
+  status: ValidationStatus;
+  error?: string;
+}
+
 export default function ProjectsPage() {
-  const { projects, switchProject, toggleFavorite, removeProject } = useProject();
+  const { projects, switchProject, toggleFavorite, removeProject, updateProject } = useProject();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [validationStates, setValidationStates] = useState<Record<string, ProjectValidationState>>({});
 
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -36,6 +49,99 @@ export default function ProjectsPage() {
   const handleProjectClick = async (projectId: string) => {
     await switchProject(projectId);
     // Optionally navigate to dashboard, but switchProject might handle it or we stay here
+  };
+
+  const startEditing = (projectId: string, currentName: string) => {
+    setEditingProjectId(projectId);
+    setEditingName(currentName);
+  };
+
+  const cancelEditing = () => {
+    setEditingProjectId(null);
+    setEditingName('');
+  };
+
+  const saveProjectName = async (projectId: string) => {
+    if (!editingName.trim()) {
+      toast.error('Project name cannot be empty');
+      return;
+    }
+    try {
+      await updateProject(projectId, { name: editingName.trim() });
+      toast.success('Project name updated');
+      setEditingProjectId(null);
+      setEditingName('');
+    } catch {
+      toast.error('Failed to update project name');
+    }
+  };
+
+  const handleColorChange = async (projectId: string, color: string) => {
+    try {
+      await updateProject(projectId, { color });
+      toast.success('Project color updated');
+    } catch {
+      toast.error('Failed to update project color');
+    }
+  };
+
+  const handleValidate = useCallback(async (projectId: string) => {
+    setValidationStates(prev => ({
+      ...prev,
+      [projectId]: { status: 'validating' }
+    }));
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/validate`, {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Validation request failed');
+      }
+
+      const data = await response.json();
+      
+      setValidationStates(prev => ({
+        ...prev,
+        [projectId]: {
+          status: data.validation.isValid ? 'valid' : 'invalid',
+          error: data.validation.error
+        }
+      }));
+
+      if (data.validation.isValid) {
+        toast.success('Project path is valid');
+      } else {
+        toast.error(`Project path invalid: ${data.validation.error || 'Unknown error'}`);
+      }
+    } catch {
+      setValidationStates(prev => ({
+        ...prev,
+        [projectId]: { status: 'invalid', error: 'Failed to validate' }
+      }));
+      toast.error('Failed to validate project');
+    }
+  }, []);
+
+  const getValidationIcon = (projectId: string) => {
+    const state = validationStates[projectId];
+    if (!state || state.status === 'unknown') return null;
+    
+    if (state.status === 'validating') {
+      return <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />;
+    }
+    if (state.status === 'valid') {
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    }
+    if (state.status === 'invalid') {
+      return (
+        <span title={state.error || 'Invalid project'}>
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -71,22 +177,52 @@ export default function ProjectsPage() {
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-2">
-                  <div
-                    className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: project.color || '#666' }}
-                  >
-                    {project.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="space-y-1">
-                    <CardTitle className="text-base leading-none">
-                      <button
-                        onClick={() => handleProjectClick(project.id)}
-                        className="hover:underline focus:outline-none"
-                      >
-                        {project.name}
-                      </button>
-                    </CardTitle>
-                    <CardDescription className="text-xs truncate max-w-[150px]">
+                  <ColorPicker
+                    value={project.color}
+                    onChange={(color) => handleColorChange(project.id, color)}
+                  />
+                  <div className="space-y-1 flex-1 min-w-0">
+                    {editingProjectId === project.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="h-7 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveProjectName(project.id);
+                            if (e.key === 'Escape') cancelEditing();
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => saveProjectName(project.id)}
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={cancelEditing}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <CardTitle className="text-base leading-none flex items-center gap-2">
+                        <button
+                          onClick={() => handleProjectClick(project.id)}
+                          className="hover:underline focus:outline-none truncate"
+                        >
+                          {project.name}
+                        </button>
+                        {getValidationIcon(project.id)}
+                      </CardTitle>
+                    )}
+                    <CardDescription className="text-xs truncate max-w-[180px]" title={project.path}>
                       {project.path}
                     </CardDescription>
                   </div>
@@ -99,10 +235,19 @@ export default function ProjectsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => startEditing(project.id, project.name)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Rename
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => toggleFavorite(project.id)}>
                       <Star className="mr-2 h-4 w-4" />
                       {project.favorite ? 'Unfavorite' : 'Favorite'}
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleValidate(project.id)}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Validate Path
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-destructive" onClick={() => removeProject(project.id)}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Remove

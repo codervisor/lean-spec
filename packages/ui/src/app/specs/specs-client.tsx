@@ -77,10 +77,7 @@ const STATUS_CONFIG: Record<SpecStatus, {
 
 const BOARD_STATUSES: SpecStatus[] = ['planned', 'in-progress', 'complete', 'archived'];
 
-interface SpecRelationships {
-  dependsOn: string[];
-  related: string[];
-}
+import type { SpecRelationships } from '@/types/specs';
 
 interface Spec {
   id: string;
@@ -401,7 +398,7 @@ function ListView({ specs }: { specs: Spec[] }) {
           'low': 'border-l-gray-400'
         };
         const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
-        const hasDependencies = spec.relationships && (spec.relationships.dependsOn.length > 0 || spec.relationships.related.length > 0);
+        const hasDependencies = spec.relationships && spec.relationships.dependsOn.length > 0;
         const hasSubSpecs = !!(spec.subSpecsCount && spec.subSpecsCount > 0);
 
         return (
@@ -462,9 +459,7 @@ function ListView({ specs }: { specs: Spec[] }) {
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           <GitBranch className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
                           <span className="whitespace-nowrap">
-                            {spec.relationships!.dependsOn.length > 0 && `${spec.relationships!.dependsOn.length} deps`}
-                            {spec.relationships!.dependsOn.length > 0 && spec.relationships!.related.length > 0 && ', '}
-                            {spec.relationships!.related.length > 0 && `${spec.relationships!.related.length} related`}
+                            {spec.relationships!.dependsOn.length} deps
                           </span>
                         </div>
                       )}

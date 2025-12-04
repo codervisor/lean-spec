@@ -114,7 +114,6 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
     current: { specName: string; specNumber?: number };
     dependsOn: { specName: string; specNumber?: number }[];
     requiredBy: { specName: string; specNumber?: number }[];
-    related: { specName: string; specNumber?: number }[];
   }>(
     dependenciesDialogOpen ? `/api/specs/${initialSpec.specNumber || initialSpec.id}/dependency-graph` : null,
     fetcher,
@@ -134,12 +133,14 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
     ? {
         dependsOn: dependencyGraphData.dependsOn.map(s => s.specName),
         requiredBy: dependencyGraphData.requiredBy.map(s => s.specName),
-        related: dependencyGraphData.related.map(s => s.specName),
       }
     : relationships;
   
   const hasRelationships = Boolean(
-    relationships && ((relationships.dependsOn?.length ?? 0) > 0 || (relationships.related?.length ?? 0) > 0)
+    relationships && (
+      (relationships.dependsOn?.length ?? 0) > 0 || 
+      (relationships.requiredBy?.length ?? 0) > 0
+    )
   );
 
   React.useEffect(() => {

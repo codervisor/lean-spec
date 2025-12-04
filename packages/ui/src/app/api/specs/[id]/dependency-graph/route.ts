@@ -50,14 +50,6 @@ function loadAllSpecsWithRelationships(specsDir: string): SpecInfo[] {
           frontmatter.depends_on = [];
         }
         
-        if (data.related) {
-          frontmatter.related = Array.isArray(data.related) 
-            ? data.related 
-            : [data.related];
-        } else {
-          frontmatter.related = [];
-        }
-        
         // Add optional fields
         if (data.priority) frontmatter.priority = data.priority;
         if (data.tags) frontmatter.tags = data.tags;
@@ -140,13 +132,6 @@ export async function GET(
         priority: s.frontmatter.priority,
       })),
       requiredBy: completeGraph.requiredBy.map(s => ({
-        specNumber: getSpecNumber(s.name),
-        specName: s.name,
-        title: getTitle(s.name),
-        status: s.frontmatter.status,
-        priority: s.frontmatter.priority,
-      })),
-      related: completeGraph.related.map(s => ({
         specNumber: getSpecNumber(s.name),
         specName: s.name,
         title: getTitle(s.name),
