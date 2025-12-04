@@ -9,7 +9,9 @@ import {
 } from './constants';
 
 /**
- * Get nodes at various depths from a starting node (BFS)
+ * Get nodes at various depths from a starting node (directional BFS)
+ * Only includes upstream (specs this depends on) and downstream (specs that depend on this)
+ * Edge direction: source depends_on target (A→B means A depends on B)
  */
 export function getConnectionDepths(
   startId: string,
@@ -19,29 +21,60 @@ export function getConnectionDepths(
   const depths = new Map<string, number>();
   depths.set(startId, 0);
 
-  const adjacency = new Map<string, Set<string>>();
+  // Build directional adjacency maps
+  // upstreamMap: source → targets (specs that source depends on)
+  // downstreamMap: target → sources (specs that depend on target)
+  const upstreamMap = new Map<string, Set<string>>();
+  const downstreamMap = new Map<string, Set<string>>();
+  
   edges.forEach((e) => {
-    if (!adjacency.has(e.source)) adjacency.set(e.source, new Set());
-    if (!adjacency.has(e.target)) adjacency.set(e.target, new Set());
-    adjacency.get(e.source)!.add(e.target);
-    adjacency.get(e.target)!.add(e.source);
+    // source depends on target, so target is upstream of source
+    if (!upstreamMap.has(e.source)) upstreamMap.set(e.source, new Set());
+    upstreamMap.get(e.source)!.add(e.target);
+    
+    // source depends on target, so source is downstream of target
+    if (!downstreamMap.has(e.target)) downstreamMap.set(e.target, new Set());
+    downstreamMap.get(e.target)!.add(e.source);
   });
 
+  // BFS upstream (specs this depends on, directly or transitively)
   let currentLevel = new Set([startId]);
-  for (let depth = 1; depth <= maxDepth; depth++) {
+  let depth = 1;
+  while (currentLevel.size > 0 && depth <= maxDepth) {
     const nextLevel = new Set<string>();
     currentLevel.forEach((nodeId) => {
-      const neighbors = adjacency.get(nodeId);
-      if (neighbors) {
-        neighbors.forEach((neighbor) => {
-          if (!depths.has(neighbor)) {
-            depths.set(neighbor, depth);
-            nextLevel.add(neighbor);
+      const upstreamNodes = upstreamMap.get(nodeId);
+      if (upstreamNodes) {
+        upstreamNodes.forEach((upstream) => {
+          if (!depths.has(upstream)) {
+            depths.set(upstream, depth);
+            nextLevel.add(upstream);
           }
         });
       }
     });
     currentLevel = nextLevel;
+    depth++;
+  }
+
+  // BFS downstream (specs that depend on this, directly or transitively)
+  currentLevel = new Set([startId]);
+  depth = 1;
+  while (currentLevel.size > 0 && depth <= maxDepth) {
+    const nextLevel = new Set<string>();
+    currentLevel.forEach((nodeId) => {
+      const downstreamNodes = downstreamMap.get(nodeId);
+      if (downstreamNodes) {
+        downstreamNodes.forEach((downstream) => {
+          if (!depths.has(downstream)) {
+            depths.set(downstream, depth);
+            nextLevel.add(downstream);
+          }
+        });
+      }
+    });
+    currentLevel = nextLevel;
+    depth++;
   }
 
   return depths;

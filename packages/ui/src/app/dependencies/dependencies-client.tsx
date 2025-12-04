@@ -41,27 +41,73 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     [data.edges]
   );
 
-  // Get connection depths for focused node
+  // Get connection depths for focused node (all transitive deps)
   const connectionDepths = React.useMemo(() => {
     if (!focusedNodeId) return null;
-    return getConnectionDepths(focusedNodeId, dependsOnEdges, 2);
+    return getConnectionDepths(focusedNodeId, dependsOnEdges, Infinity);
   }, [focusedNodeId, dependsOnEdges]);
 
   // Get detailed info for focused node (for sidebar)
+  // Edge direction: source depends_on target (A→B means A depends on B)
+  // Upstream = specs THIS spec depends on (where focused is source, get target)
+  // Downstream = specs that depend on THIS spec (where focused is target, get source)
   const focusedNodeDetails = React.useMemo((): FocusedNodeDetails | null => {
     if (!focusedNodeId) return null;
     const node = data.nodes.find((n) => n.id === focusedNodeId);
     if (!node) return null;
 
-    const upstreamIds = dependsOnEdges
-      .filter((e) => e.target === focusedNodeId)
-      .map((e) => e.source);
-    const upstream = data.nodes.filter((n) => upstreamIds.includes(n.id));
+    const nodeMap = new Map(data.nodes.map((n) => [n.id, n]));
 
-    const downstreamIds = dependsOnEdges
-      .filter((e) => e.source === focusedNodeId)
-      .map((e) => e.target);
-    const downstream = data.nodes.filter((n) => downstreamIds.includes(n.id));
+    // Build directional adjacency maps
+    const upstreamMap = new Map<string, Set<string>>();
+    const downstreamMap = new Map<string, Set<string>>();
+    dependsOnEdges.forEach((e) => {
+      if (!upstreamMap.has(e.source)) upstreamMap.set(e.source, new Set());
+      upstreamMap.get(e.source)!.add(e.target);
+      if (!downstreamMap.has(e.target)) downstreamMap.set(e.target, new Set());
+      downstreamMap.get(e.target)!.add(e.source);
+    });
+
+    // BFS to get all upstream specs grouped by depth
+    const getTransitiveDeps = (
+      startId: string,
+      adjacencyMap: Map<string, Set<string>>
+    ): { depth: number; specs: typeof data.nodes }[] => {
+      const visited = new Set<string>([startId]);
+      const result: { depth: number; specs: typeof data.nodes }[] = [];
+      let currentLevel = new Set([startId]);
+      let depth = 1;
+
+      while (currentLevel.size > 0) {
+        const nextLevel = new Set<string>();
+        const specsAtDepth: typeof data.nodes = [];
+
+        currentLevel.forEach((nodeId) => {
+          const neighbors = adjacencyMap.get(nodeId);
+          if (neighbors) {
+            neighbors.forEach((neighborId) => {
+              if (!visited.has(neighborId)) {
+                visited.add(neighborId);
+                nextLevel.add(neighborId);
+                const spec = nodeMap.get(neighborId);
+                if (spec) specsAtDepth.push(spec);
+              }
+            });
+          }
+        });
+
+        if (specsAtDepth.length > 0) {
+          result.push({ depth, specs: specsAtDepth });
+        }
+        currentLevel = nextLevel;
+        depth++;
+      }
+
+      return result;
+    };
+
+    const upstream = getTransitiveDeps(focusedNodeId, upstreamMap);
+    const downstream = getTransitiveDeps(focusedNodeId, downstreamMap);
 
     return { node, upstream, downstream };
   }, [focusedNodeId, data.nodes, dependsOnEdges]);
