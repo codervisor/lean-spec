@@ -8,7 +8,10 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-28T05:14:14.341Z'
-updated_at: '2025-11-28T05:15:08.052Z'
+updated_at: '2025-12-04T13:44:45.386Z'
+depends_on:
+  - 085-cli-relationship-commands
+  - 137-ui-dependencies-page
 ---
 
 # UI Lightweight Metadata Editing
@@ -38,6 +41,7 @@ Add inline editing controls for metadata fields in the spec detail view:
 - **Priority**: Dropdown selector (low, medium, high, critical)
 - **Tags**: Tag input with autocomplete from existing tags
 - **Assignee**: Text input or dropdown from known assignees
+- **Dependencies**: Add/remove `depends_on` relationships with spec picker
 
 ### Non-Goals
 
@@ -58,6 +62,24 @@ interface MetadataUpdateRequest {
   priority?: 'low' | 'medium' | 'high' | 'critical';
   tags?: string[];
   assignee?: string;
+  dependsOn?: string[];  // Spec IDs to depend on
+}
+```
+
+**New API Route for Dependencies**: `POST /api/specs/[id]/dependencies`
+
+```typescript
+// app/api/specs/[id]/dependencies/route.ts
+interface DependencyUpdateRequest {
+  add?: string[];     // Spec IDs to add as dependencies
+  remove?: string[];  // Spec IDs to remove from dependencies
+}
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  const { add, remove } = await req.json();
+  // Validate spec IDs exist
+  // Call lean-spec link/unlink commands
+  // Return updated spec with new dependencies
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -82,6 +104,24 @@ export async function updateSpecMetadata(specId: string, updates: MetadataUpdate
   if (updates.tags) args.push(`--tags ${updates.tags.join(',')}`);
   
   await exec(`lean-spec update ${specId} ${args.join(' ')}`);
+}
+```
+
+**Dependency Updates via CLI**:
+```typescript
+export async function updateSpecDependencies(
+  specId: string, 
+  add?: string[], 
+  remove?: string[]
+) {
+  // Add new dependencies
+  if (add?.length) {
+    await exec(`lean-spec link ${specId} --depends-on ${add.join(',')}`);
+  }
+  // Remove dependencies
+  if (remove?.length) {
+    await exec(`lean-spec unlink ${specId} --depends-on ${remove.join(',')}`);
+  }
 }
 ```
 
@@ -130,6 +170,22 @@ interface StatusEditorProps {
 - Generic wrapper for edit mode toggle
 - Shows view mode by default, click to edit
 - Save/Cancel buttons or click-outside to save
+
+**5. Dependencies Editor** (`spec-dependencies-editor.tsx`)
+```tsx
+interface DependenciesEditorProps {
+  specId: string;
+  currentDependencies: string[];  // Current depends_on spec IDs
+  allSpecs: Spec[];               // All specs for picker dropdown
+  onUpdate: (add: string[], remove: string[]) => void;
+}
+```
+- Display current dependencies as chips/badges
+- "X" button to remove each dependency
+- "+" button opens spec picker dropdown
+- Spec picker shows searchable list of all specs (excluding self and existing deps)
+- Shows spec name + status badge in dropdown for context
+- Prevents circular dependencies (can't depend on specs that depend on this)
 
 ### Integration Point
 
@@ -198,6 +254,7 @@ const mutation = useMutation({
 - [ ] Create `StatusEditor` component with dropdown
 - [ ] Create `PriorityEditor` component
 - [ ] Create `TagsEditor` with autocomplete
+- [ ] Create `DependenciesEditor` with spec picker
 - [ ] Add edit mode toggle to `spec-metadata.tsx`
 
 ### Phase 3: State & UX
@@ -234,6 +291,9 @@ const mutation = useMutation({
 - [ ] Empty tags array handled correctly
 - [ ] Very long assignee names truncated
 - [ ] Special characters in tags escaped properly
+- [ ] Circular dependency prevention works correctly
+- [ ] Removing last dependency leaves empty array (not undefined)
+- [ ] Adding same dependency twice is idempotent
 
 ## Notes
 
@@ -259,3 +319,5 @@ Metadata editing covers the common workflow: updating status during standups, ad
 - **Spec 131**: Project context visibility (read-only complement)
 - **Spec 107**: UI/UX refinements (design patterns)
 - **Spec 017**: VS Code extension (full editing capability)
+- **Spec 137-138**: Dependencies visualization (shows deps, this spec enables editing them)
+- **Spec 085**: CLI relationship commands (`link`/`unlink` that backend will invoke)
