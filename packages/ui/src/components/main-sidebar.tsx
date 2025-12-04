@@ -19,7 +19,12 @@ interface SidebarLinkProps {
 }
 
 function SidebarLink({ href, icon: Icon, children, description, currentPath, isCollapsed }: SidebarLinkProps) {
-  const isActive = currentPath === href || (href !== '/' && currentPath.startsWith(href));
+  // For home links (ending with / or /projects/xxx), require exact match
+  // For other links, check if path starts with href
+  const isHomeLink = href === '/' || /^\/projects\/[^/]+$/.test(href);
+  const isActive = isHomeLink 
+    ? currentPath === href 
+    : currentPath.startsWith(href);
   
   return (
     <Link

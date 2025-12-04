@@ -43,6 +43,7 @@ interface Stats {
 interface DashboardClientProps {
   initialSpecs: Spec[];
   initialStats: Stats;
+  projectId?: string;
 }
 
 function formatRelativeTime(date: Date | null): string {
@@ -60,14 +61,17 @@ function formatRelativeTime(date: Date | null): string {
   return date.toLocaleDateString();
 }
 
-function SpecListItem({ spec }: { spec: Spec }) {
+function SpecListItem({ spec, projectId }: { spec: Spec; projectId?: string }) {
   // Extract H1 title from content if available, fallback to title or name
   const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
   const displayTitle = h1Title || spec.title || spec.specName;
+  const specUrl = projectId 
+    ? `/projects/${projectId}/specs/${spec.specNumber}`
+    : `/specs/${spec.specNumber}`;
   
   return (
     <Link 
-      href={`/specs/${spec.specNumber}`}
+      href={specUrl}
       className="block p-3 rounded-lg hover:bg-accent transition-colors"
       title={spec.specName} /* Show name as tooltip */
     >
@@ -108,9 +112,12 @@ function SpecListItem({ spec }: { spec: Spec }) {
   );
 }
 
-function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time: Date | null }) {
+function ActivityItem({ spec, action, time, projectId }: { spec: Spec; action: string; time: Date | null; projectId?: string }) {
   const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
   const displayTitle = h1Title || spec.title || spec.specName;
+  const specUrl = projectId 
+    ? `/projects/${projectId}/specs/${spec.specNumber}`
+    : `/specs/${spec.specNumber}`;
   
   return (
     <div className="flex items-start gap-3 py-2">
@@ -118,7 +125,7 @@ function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time
       <div className="flex-1 min-w-0">
         <p className="text-sm">
           <Link 
-            href={`/specs/${spec.specNumber}`}
+            href={specUrl}
             className="font-medium hover:underline"
             title={spec.specName}
           >
@@ -135,11 +142,14 @@ function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time
   );
 }
 
-export function DashboardClient({ initialSpecs, initialStats }: DashboardClientProps) {
+export function DashboardClient({ initialSpecs, initialStats, projectId }: DashboardClientProps) {
   const { mode, currentProject, isLoading: isProjectLoading } = useProject();
   const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
   const [stats, setStats] = useState<Stats>(initialStats);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  
+  // Determine effective projectId - from prop or current project context
+  const effectiveProjectId = projectId || (mode === 'multi-project' ? currentProject?.id : undefined);
 
   useEffect(() => {
     if (mode === 'multi-project') {
@@ -324,7 +334,7 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
             </CardHeader>
             <CardContent className="space-y-1">
               {recentlyAdded.slice(0, 5).map(spec => (
-                <SpecListItem key={spec.id} spec={spec} />
+                <SpecListItem key={spec.id} spec={spec} projectId={effectiveProjectId} />
               ))}
             </CardContent>
           </Card>
@@ -340,7 +350,7 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
             <CardContent className="space-y-1">
               {plannedSpecs.length > 0 ? (
                 plannedSpecs.map(spec => (
-                  <SpecListItem key={spec.id} spec={spec} />
+                  <SpecListItem key={spec.id} spec={spec} projectId={effectiveProjectId} />
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground py-4 text-center">
@@ -361,7 +371,7 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
             <CardContent className="space-y-1">
               {inProgressSpecs.length > 0 ? (
                 inProgressSpecs.map(spec => (
-                  <SpecListItem key={spec.id} spec={spec} />
+                  <SpecListItem key={spec.id} spec={spec} projectId={effectiveProjectId} />
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground py-4 text-center">
@@ -385,6 +395,7 @@ export function DashboardClient({ initialSpecs, initialStats }: DashboardClientP
                   spec={spec}
                   action="updated"
                   time={spec.updatedAt}
+                  projectId={effectiveProjectId}
                 />
               ))}
             </div>
