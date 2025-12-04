@@ -25,7 +25,6 @@ export interface SpecFrontmatter {
   priority?: SpecPriority;
 
   // Power user fields
-  related?: string[];
   depends_on?: string[];
   updated?: string;
   completed?: string;

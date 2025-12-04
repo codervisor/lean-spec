@@ -1,11 +1,10 @@
 /**
  * Dependency Graph for LeanSpec
  * 
- * Builds an in-memory graph of all spec relationships for efficient querying.
- * Handles three types of relationships:
+ * Builds an in-memory graph of all spec dependencies for efficient querying.
+ * Handles two types of relationships:
  * - dependsOn: Upstream dependencies (current spec depends on these)
  * - requiredBy: Downstream dependents (these specs depend on current)
- * - related: Bidirectional informational connections
  */
 
 import type { SpecInfo } from '../types/spec.js';
@@ -16,7 +15,6 @@ import type { SpecInfo } from '../types/spec.js';
 interface DependencyNode {
   dependsOn: Set<string>;    // Upstream (current depends on these)
   requiredBy: Set<string>;   // Downstream (these depend on current)
-  related: Set<string>;      // Bidirectional connections
 }
 
 /**
@@ -26,7 +24,6 @@ export interface CompleteDependencyGraph {
   current: SpecInfo;
   dependsOn: SpecInfo[];      // Upstream (current depends on these)
   requiredBy: SpecInfo[];     // Downstream (these depend on current)
-  related: SpecInfo[];        // Bidirectional (includes both directions)
 }
 
 /**
@@ -36,7 +33,6 @@ export interface ImpactRadius {
   current: SpecInfo;
   upstream: SpecInfo[];       // What this spec needs
   downstream: SpecInfo[];     // What needs this spec
-  related: SpecInfo[];        // Connected work
 }
 
 /**
@@ -62,7 +58,6 @@ export class SpecDependencyGraph {
       this.graph.set(spec.path, {
         dependsOn: new Set(spec.frontmatter.depends_on || []),
         requiredBy: new Set(),
-        related: new Set(spec.frontmatter.related || []),
       });
     }
 
@@ -73,14 +68,6 @@ export class SpecDependencyGraph {
         const depNode = this.graph.get(dep);
         if (depNode) {
           depNode.requiredBy.add(specPath);
-        }
-      }
-      
-      // For each related, add bidirectional link
-      for (const rel of node.related) {
-        const relNode = this.graph.get(rel);
-        if (relNode) {
-          relNode.related.add(specPath);
         }
       }
     }
@@ -104,7 +91,6 @@ export class SpecDependencyGraph {
       current: spec,
       dependsOn: this.getSpecsByPaths(Array.from(node.dependsOn)),
       requiredBy: this.getSpecsByPaths(Array.from(node.requiredBy)),
-      related: this.getSpecsByPaths(Array.from(node.related)),
     };
   }
 
@@ -180,7 +166,7 @@ export class SpecDependencyGraph {
 
   /**
    * Get impact radius - all specs affected by changes to this spec
-   * Includes upstream dependencies, downstream dependents, and related specs
+   * Includes upstream dependencies and downstream dependents
    */
   getImpactRadius(specPath: string, maxDepth: number = 3): ImpactRadius {
     const spec = this.specs.get(specPath);
@@ -188,16 +174,10 @@ export class SpecDependencyGraph {
       throw new Error(`Spec not found: ${specPath}`);
     }
 
-    const node = this.graph.get(specPath);
-    if (!node) {
-      throw new Error(`Graph node not found: ${specPath}`);
-    }
-
     return {
       current: spec,
       upstream: this.getUpstream(specPath, maxDepth),
       downstream: this.getDownstream(specPath, maxDepth),
-      related: this.getSpecsByPaths(Array.from(node.related)),
     };
   }
 

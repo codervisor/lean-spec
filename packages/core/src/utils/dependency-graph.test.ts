@@ -3,7 +3,7 @@ import { SpecDependencyGraph } from './dependency-graph.js';
 import type { SpecInfo } from '../types/spec.js';
 
 // Helper to create test specs
-function createSpec(path: string, dependsOn: string[] = [], related: string[] = []): SpecInfo {
+function createSpec(path: string, dependsOn: string[] = []): SpecInfo {
   return {
     path,
     fullPath: `/test/${path}`,
@@ -13,7 +13,6 @@ function createSpec(path: string, dependsOn: string[] = [], related: string[] = 
       status: 'planned',
       created: '2025-01-01',
       depends_on: dependsOn,
-      related,
     },
   };
 }
@@ -49,34 +48,14 @@ describe('SpecDependencyGraph', () => {
       expect(baseGraph.requiredBy).toHaveLength(1);
       expect(baseGraph.requiredBy[0].path).toBe('002-depends-on-base');
     });
-
-    it('should build bidirectional related links', () => {
-      const specs = [
-        createSpec('001-spec-a', [], ['002-spec-b']),
-        createSpec('002-spec-b'),
-      ];
-
-      const graph = new SpecDependencyGraph(specs);
-      const graphA = graph.getCompleteGraph('001-spec-a');
-      const graphB = graph.getCompleteGraph('002-spec-b');
-      
-      // A lists B as related
-      expect(graphA.related).toHaveLength(1);
-      expect(graphA.related[0].path).toBe('002-spec-b');
-      
-      // B also sees A as related (bidirectional)
-      expect(graphB.related).toHaveLength(1);
-      expect(graphB.related[0].path).toBe('001-spec-a');
-    });
   });
 
   describe('getCompleteGraph', () => {
     it('should return complete graph for spec', () => {
       const specs = [
         createSpec('001-base'),
-        createSpec('002-middle', ['001-base'], ['004-related']),
+        createSpec('002-middle', ['001-base']),
         createSpec('003-top', ['002-middle']),
-        createSpec('004-related'),
       ];
 
       const graph = new SpecDependencyGraph(specs);
@@ -87,8 +66,6 @@ describe('SpecDependencyGraph', () => {
       expect(middleGraph.dependsOn[0].path).toBe('001-base');
       expect(middleGraph.requiredBy).toHaveLength(1);
       expect(middleGraph.requiredBy[0].path).toBe('003-top');
-      expect(middleGraph.related).toHaveLength(1);
-      expect(middleGraph.related[0].path).toBe('004-related');
     });
 
     it('should throw error for non-existent spec', () => {
@@ -104,7 +81,6 @@ describe('SpecDependencyGraph', () => {
       
       expect(isolated.dependsOn).toHaveLength(0);
       expect(isolated.requiredBy).toHaveLength(0);
-      expect(isolated.related).toHaveLength(0);
     });
   });
 
@@ -220,9 +196,8 @@ describe('SpecDependencyGraph', () => {
     it('should return all affected specs', () => {
       const specs = [
         createSpec('001-base'),
-        createSpec('002-middle', ['001-base'], ['004-related']),
+        createSpec('002-middle', ['001-base']),
         createSpec('003-top', ['002-middle']),
-        createSpec('004-related'),
       ];
 
       const graph = new SpecDependencyGraph(specs);
@@ -233,8 +208,6 @@ describe('SpecDependencyGraph', () => {
       expect(impact.upstream[0].path).toBe('001-base');
       expect(impact.downstream).toHaveLength(1);
       expect(impact.downstream[0].path).toBe('003-top');
-      expect(impact.related).toHaveLength(1);
-      expect(impact.related[0].path).toBe('004-related');
     });
 
     it('should throw error for non-existent spec', () => {
@@ -308,18 +281,6 @@ describe('SpecDependencyGraph', () => {
       
       // Should not include missing dependency
       expect(complete.dependsOn).toHaveLength(0);
-    });
-
-    it('should handle missing related specs gracefully', () => {
-      const specs = [
-        createSpec('001-spec', [], ['999-missing']),
-      ];
-
-      const graph = new SpecDependencyGraph(specs);
-      const complete = graph.getCompleteGraph('001-spec');
-      
-      // Should not include missing related spec
-      expect(complete.related).toHaveLength(0);
     });
 
     it('should deduplicate multiple paths to same spec', () => {

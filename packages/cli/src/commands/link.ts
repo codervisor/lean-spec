@@ -9,20 +9,18 @@ import { sanitizeUserInput } from '../utils/ui.js';
 import { loadAllSpecs } from '../spec-loader.js';
 
 /**
- * Link command - add relationships between specs
+ * Link command - add dependencies between specs
  */
 export function linkCommand(): Command {
   return new Command('link')
-    .description('Add relationships between specs (depends_on, related)')
+    .description('Add dependencies between specs')
     .argument('<spec>', 'Spec to update')
     .option('--depends-on <specs>', 'Add dependencies (comma-separated spec numbers or names)')
-    .option('--related <specs>', 'Add related specs (comma-separated spec numbers or names)')
     .action(async (specPath: string, options: {
       dependsOn?: string;
-      related?: string;
     }) => {
-      if (!options.dependsOn && !options.related) {
-        console.error('Error: At least one relationship type required (--depends-on or --related)');
+      if (!options.dependsOn) {
+        console.error('Error: --depends-on is required');
         process.exit(1);
       }
 
@@ -34,7 +32,6 @@ export async function linkSpec(
   specPath: string,
   options: {
     dependsOn?: string;
-    related?: string;
   }
 ): Promise<void> {
   // Auto-check for conflicts before update
@@ -60,121 +57,67 @@ export async function linkSpec(
   const allSpecs = await loadAllSpecs({ includeArchived: true });
   const specMap = new Map(allSpecs.map(s => [s.path, s]));
 
-  // Parse relationship specs
+  // Parse dependency specs
   const dependsOnSpecs = options.dependsOn ? options.dependsOn.split(',').map(s => s.trim()) : [];
-  const relatedSpecs = options.related ? options.related.split(',').map(s => s.trim()) : [];
 
   // Get the target spec's short name for self-reference check
   const targetSpecName = path.basename(resolvedPath);
 
-  // Validate all relationship specs exist and aren't self-references
-  const allRelationshipSpecs = [...dependsOnSpecs, ...relatedSpecs];
-  const resolvedRelationships = new Map<string, string>();
+  // Validate all dependency specs exist and aren't self-references
+  const resolvedDependencies = new Map<string, string>();
 
-  for (const relSpec of allRelationshipSpecs) {
+  for (const depSpec of dependsOnSpecs) {
     // Check for self-reference
-    if (relSpec === targetSpecName || relSpec === specPath) {
-      throw new Error(`Cannot link spec to itself: ${sanitizeUserInput(relSpec)}`);
+    if (depSpec === targetSpecName || depSpec === specPath) {
+      throw new Error(`Cannot link spec to itself: ${sanitizeUserInput(depSpec)}`);
     }
 
-    const relResolvedPath = await resolveSpecPath(relSpec, cwd, specsDir);
-    if (!relResolvedPath) {
-      throw new Error(`Spec not found: ${sanitizeUserInput(relSpec)}`);
+    const depResolvedPath = await resolveSpecPath(depSpec, cwd, specsDir);
+    if (!depResolvedPath) {
+      throw new Error(`Spec not found: ${sanitizeUserInput(depSpec)}`);
     }
 
     // Check for self-reference after resolution
-    if (relResolvedPath === resolvedPath) {
-      throw new Error(`Cannot link spec to itself: ${sanitizeUserInput(relSpec)}`);
+    if (depResolvedPath === resolvedPath) {
+      throw new Error(`Cannot link spec to itself: ${sanitizeUserInput(depSpec)}`);
     }
 
-    const relSpecName = path.basename(relResolvedPath);
-    resolvedRelationships.set(relSpec, relSpecName);
+    const depSpecName = path.basename(depResolvedPath);
+    resolvedDependencies.set(depSpec, depSpecName);
   }
 
-  // Read current frontmatter to get existing relationships
+  // Read current frontmatter to get existing dependencies
   const { parseFrontmatter } = await import('../frontmatter.js');
   const currentFrontmatter = await parseFrontmatter(specFile);
   const currentDependsOn = currentFrontmatter?.depends_on || [];
-  const currentRelated = currentFrontmatter?.related || [];
 
-  // Build updated relationships (add new ones, keep existing)
-  const updates: { depends_on?: string[]; related?: string[] } = {};
-
-  if (dependsOnSpecs.length > 0) {
-    const newDependsOn = [...currentDependsOn];
-    let added = 0;
-    for (const spec of dependsOnSpecs) {
-      const resolvedName = resolvedRelationships.get(spec);
-      if (resolvedName && !newDependsOn.includes(resolvedName)) {
-        newDependsOn.push(resolvedName);
-        added++;
-      }
-    }
-    updates.depends_on = newDependsOn;
-    if (added === 0) {
-      console.log(chalk.gray(`ℹ Dependencies already exist, no changes made`));
+  // Build updated dependencies (add new ones, keep existing)
+  const newDependsOn = [...currentDependsOn];
+  let added = 0;
+  for (const spec of dependsOnSpecs) {
+    const resolvedName = resolvedDependencies.get(spec);
+    if (resolvedName && !newDependsOn.includes(resolvedName)) {
+      newDependsOn.push(resolvedName);
+      added++;
     }
   }
 
-  if (relatedSpecs.length > 0) {
-    const newRelated = [...currentRelated];
-    let added = 0;
-    const bidirectionalUpdates: string[] = [];
-
-    for (const spec of relatedSpecs) {
-      const resolvedName = resolvedRelationships.get(spec);
-      if (resolvedName && !newRelated.includes(resolvedName)) {
-        newRelated.push(resolvedName);
-        added++;
-        bidirectionalUpdates.push(resolvedName);
-      }
-    }
-    updates.related = newRelated;
-
-    // Update related specs bidirectionally
-    for (const relSpecName of bidirectionalUpdates) {
-      const relSpecPath = await resolveSpecPath(relSpecName, cwd, specsDir);
-      if (relSpecPath) {
-        const relSpecFile = await getSpecFile(relSpecPath, config.structure.defaultFile);
-        if (relSpecFile) {
-          const relFrontmatter = await parseFrontmatter(relSpecFile);
-          const relCurrentRelated = relFrontmatter?.related || [];
-          if (!relCurrentRelated.includes(targetSpecName)) {
-            await updateFrontmatter(relSpecFile, {
-              related: [...relCurrentRelated, targetSpecName],
-            });
-            console.log(chalk.gray(`  Updated: ${sanitizeUserInput(relSpecName)} (bidirectional)`));
-          }
-        }
-      }
-    }
-
-    if (added === 0) {
-      console.log(chalk.gray(`ℹ Related specs already exist, no changes made`));
-    }
+  if (added === 0) {
+    console.log(chalk.gray(`ℹ Dependencies already exist, no changes made`));
+    return;
   }
 
   // Check for dependency cycles (warn, don't block)
-  if (updates.depends_on && updates.depends_on.length > 0) {
-    const cycles = detectCycles(targetSpecName, updates.depends_on, specMap);
-    if (cycles.length > 0) {
-      console.log(chalk.yellow(`⚠️  Dependency cycle detected: ${cycles.join(' → ')}`));
-    }
+  const cycles = detectCycles(targetSpecName, newDependsOn, specMap);
+  if (cycles.length > 0) {
+    console.log(chalk.yellow(`⚠️  Dependency cycle detected: ${cycles.join(' → ')}`));
   }
 
   // Update frontmatter
-  await updateFrontmatter(specFile, updates);
+  await updateFrontmatter(specFile, { depends_on: newDependsOn });
 
   // Success message
-  const updatedFields: string[] = [];
-  if (dependsOnSpecs.length > 0) {
-    updatedFields.push(`depends_on: ${dependsOnSpecs.join(', ')}`);
-  }
-  if (relatedSpecs.length > 0) {
-    updatedFields.push(`related: ${relatedSpecs.join(', ')}`);
-  }
-
-  console.log(chalk.green(`✓ Added relationships: ${updatedFields.join(', ')}`));
+  console.log(chalk.green(`✓ Added dependencies: ${dependsOnSpecs.join(', ')}`));
   console.log(chalk.gray(`  Updated: ${sanitizeUserInput(path.relative(cwd, resolvedPath))}`));
 }
 
