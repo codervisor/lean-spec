@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Search, FolderOpen, Star, MoreVertical, Trash2, Pencil, RefreshCw, Check, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useProject } from '@/contexts/project-context';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ interface ProjectValidationState {
 }
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const { projects, switchProject, toggleFavorite, removeProject, updateProject } = useProject();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -48,7 +50,7 @@ export default function ProjectsPage() {
 
   const handleProjectClick = async (projectId: string) => {
     await switchProject(projectId);
-    // Optionally navigate to dashboard, but switchProject might handle it or we stay here
+    router.push(`/projects/${projectId}/specs`);
   };
 
   const startEditing = (projectId: string, currentName: string) => {

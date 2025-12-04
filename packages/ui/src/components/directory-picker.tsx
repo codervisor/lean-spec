@@ -114,6 +114,7 @@ export function DirectoryPicker({ onSelect, onCancel, initialPath, actionLabel =
         <div 
           ref={scrollContainerRef}
           className="flex-1 overflow-x-auto whitespace-nowrap flex items-center scrollbar-hide px-1 min-w-0"
+          title={currentPath}
         >
           <button 
             onClick={() => handleNavigate('/')}
