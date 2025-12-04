@@ -34,9 +34,10 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
         <span
           className={cn(
             'text-[8px] px-1 py-0.5 rounded font-medium uppercase',
-            spec.status === 'planned' && 'bg-amber-500/20 text-amber-400',
-            spec.status === 'in-progress' && 'bg-sky-500/20 text-sky-400',
-            spec.status === 'complete' && 'bg-emerald-500/20 text-emerald-400'
+            spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+            spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+            spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
+            spec.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
           )}
         >
           {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
@@ -91,9 +92,10 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
           <span
             className={cn(
               'px-1.5 py-0.5 rounded text-[10px] font-medium uppercase',
-              node.status === 'planned' && 'bg-amber-500/20 text-amber-300',
-              node.status === 'in-progress' && 'bg-sky-500/20 text-sky-300',
-              node.status === 'complete' && 'bg-emerald-500/20 text-emerald-300'
+              node.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-300',
+              node.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-300',
+              node.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-300',
+              node.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-300'
             )}
           >
             {node.status}

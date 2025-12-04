@@ -32,9 +32,9 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
       className={cn(
         'flex flex-col rounded-lg shadow-lg transition-all duration-200',
         toneClasses[data.tone],
-        data.interactive && 'cursor-pointer hover:scale-105 hover:shadow-xl hover:border-white/50',
-        data.isFocused && 'ring-2 ring-white ring-offset-2 ring-offset-background scale-110 z-50',
-        data.connectionDepth === 1 && 'ring-1 ring-white/40',
+        data.interactive && 'cursor-pointer hover:scale-105 hover:shadow-xl hover:border-gray-400 dark:hover:border-white/50',
+        data.isFocused && 'ring-2 ring-gray-800 dark:ring-white ring-offset-2 ring-offset-background scale-110 z-50',
+        data.connectionDepth === 1 && 'ring-1 ring-gray-400 dark:ring-white/40',
         isCompact ? 'px-2 py-1 gap-0.5' : 'px-2.5 py-1.5 gap-0.5',
         isSecondary ? 'border border-dashed' : 'border-2'
       )}
@@ -46,17 +46,17 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
     >
       <Handle type="target" position={Position.Left} className="opacity-0" />
       <div className="flex items-center justify-between gap-1">
-        <span className={cn('font-bold text-white/90', isCompact ? 'text-[9px]' : 'text-[10px]')}>
+        <span className={cn('font-bold', isCompact ? 'text-[9px]' : 'text-[10px]')}>
           #{data.number.toString().padStart(3, '0')}
         </span>
         <span
           className={cn(
             'font-medium uppercase tracking-wide rounded',
             isCompact ? 'text-[7px] px-0.5 py-0.5' : 'text-[8px] px-1 py-0.5',
-            data.tone === 'planned' && 'bg-blue-500/30 text-blue-300',
-            data.tone === 'in-progress' && 'bg-orange-500/30 text-orange-300',
-            data.tone === 'complete' && 'bg-green-500/30 text-green-300',
-            data.tone === 'archived' && 'bg-gray-500/30 text-gray-400'
+            data.tone === 'planned' && 'bg-blue-500/30 text-blue-700 dark:text-blue-300',
+            data.tone === 'in-progress' && 'bg-orange-500/30 text-orange-700 dark:text-orange-300',
+            data.tone === 'complete' && 'bg-green-500/30 text-green-700 dark:text-green-300',
+            data.tone === 'archived' && 'bg-gray-500/30 text-gray-600 dark:text-gray-400'
           )}
         >
           {data.badge}

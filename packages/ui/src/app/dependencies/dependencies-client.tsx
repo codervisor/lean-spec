@@ -437,7 +437,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
             <p className="text-sm text-foreground">
               {connectionStats.connected > 0 ? (
                 <>
-                  <span className="text-emerald-400">{connectionStats.connected} specs with dependencies</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">{connectionStats.connected} specs with dependencies</span>
                   {connectionStats.standalone > 0 && (
                     <>
                       {' • '}
@@ -516,10 +516,10 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
                       <span
                         className={cn(
                           'text-[9px] px-1 py-0.5 rounded uppercase font-medium',
-                          spec.status === 'planned' && 'bg-blue-500/20 text-blue-400',
-                          spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-400',
-                          spec.status === 'complete' && 'bg-green-500/20 text-green-400',
-                          spec.status === 'archived' && 'bg-gray-500/20 text-gray-400'
+                          spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+                          spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+                          spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
+                          spec.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
                         )}
                       >
                         {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
@@ -547,10 +547,10 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
               onClick={() => toggleStatus(status)}
               className={cn(
                 'rounded border px-2 py-1 font-medium transition-colors',
-                isActive && status === 'planned' && 'border-blue-500/60 bg-blue-500/20 text-blue-300',
-                isActive && status === 'in-progress' && 'border-orange-500/60 bg-orange-500/20 text-orange-300',
-                isActive && status === 'complete' && 'border-green-500/60 bg-green-500/20 text-green-300',
-                isActive && status === 'archived' && 'border-gray-500/60 bg-gray-500/20 text-gray-300',
+                isActive && status === 'planned' && 'border-blue-500/60 bg-blue-500/20 text-blue-700 dark:text-blue-300',
+                isActive && status === 'in-progress' && 'border-orange-500/60 bg-orange-500/20 text-orange-700 dark:text-orange-300',
+                isActive && status === 'complete' && 'border-green-500/60 bg-green-500/20 text-green-700 dark:text-green-300',
+                isActive && status === 'archived' && 'border-gray-500/60 bg-gray-500/20 text-gray-600 dark:text-gray-300',
                 !isActive && 'border-border bg-background text-muted-foreground/40'
               )}
             >
@@ -567,7 +567,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
           className={cn(
             'rounded border px-2 py-1 font-medium transition-colors',
             showStandalone
-              ? 'border-violet-500/60 bg-violet-500/20 text-violet-300'
+              ? 'border-violet-500/60 bg-violet-500/20 text-violet-700 dark:text-violet-300'
               : 'border-border bg-background hover:bg-accent text-muted-foreground'
           )}
         >
@@ -605,7 +605,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
       {/* Main content */}
       <div className="flex flex-1 gap-3 min-h-0">
         {/* Graph */}
-        <div className="flex-1 overflow-hidden rounded-lg border border-border bg-[#080c14]">
+        <div className="flex-1 overflow-hidden rounded-lg border border-border bg-gray-50 dark:bg-[#080c14]">
           {graph.nodes.length > 0 ? (
             <ReactFlow
               nodes={graph.nodes}
@@ -632,10 +632,10 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
               <MiniMap
                 nodeColor={(node) => {
                   const d = node.data as SpecNodeData;
-                  return toneBgColors[d.tone] || '#1f2937';
+                  return toneBgColors[d.tone] || '#6b7280';
                 }}
-                maskColor="rgba(0, 0, 0, 0.85)"
-                className="!bg-background/95 !border-border !rounded-md"
+                maskColor="rgba(128, 128, 128, 0.6)"
+                className="!bg-white/95 dark:!bg-background/95 !border-border !rounded-md"
                 style={{ width: 120, height: 80 }}
                 pannable
                 zoomable
