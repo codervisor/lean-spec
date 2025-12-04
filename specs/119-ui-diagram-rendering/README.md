@@ -8,7 +8,7 @@ tags:
   - visualization
 priority: high
 created_at: '2025-11-25T09:18:07.795Z'
-updated_at: '2025-11-28T03:37:36.874Z'
+updated_at: '2025-12-04T04:11:31.602Z'
 transitions:
   - status: in-progress
     at: '2025-11-25T09:46:08.354Z'
@@ -20,6 +20,7 @@ related:
   - 120-mermaid-diagram-showcase
   - 131-ui-project-context-visibility
   - 133-ui-web-code-editor
+  - 137-ui-dependencies-page
 ---
 
 # Native Diagram Rendering in Spec Detail View
