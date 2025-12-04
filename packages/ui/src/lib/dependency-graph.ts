@@ -7,7 +7,6 @@ export interface SpecFrontmatter {
   status: string;
   created: string;
   depends_on?: string[];
-  related?: string[];
   priority?: string;
   tags?: string[];
   assignee?: string;
@@ -24,14 +23,12 @@ export interface SpecInfo {
 interface DependencyNode {
   dependsOn: Set<string>;
   requiredBy: Set<string>;
-  related: Set<string>;
 }
 
 export interface CompleteDependencyGraph {
   current: SpecInfo;
   dependsOn: SpecInfo[];
   requiredBy: SpecInfo[];
-  related: SpecInfo[];
 }
 
 /**
@@ -54,7 +51,6 @@ export class SpecDependencyGraph {
       this.graph.set(spec.path, {
         dependsOn: new Set(spec.frontmatter.depends_on || []),
         requiredBy: new Set(),
-        related: new Set(spec.frontmatter.related || []),
       });
     }
 
@@ -65,14 +61,6 @@ export class SpecDependencyGraph {
         const depNode = this.graph.get(dep);
         if (depNode) {
           depNode.requiredBy.add(specPath);
-        }
-      }
-      
-      // For each related, add bidirectional link
-      for (const rel of node.related) {
-        const relNode = this.graph.get(rel);
-        if (relNode) {
-          relNode.related.add(specPath);
         }
       }
     }
@@ -93,7 +81,6 @@ export class SpecDependencyGraph {
       current: spec,
       dependsOn: this.getSpecsByPaths(Array.from(node.dependsOn)),
       requiredBy: this.getSpecsByPaths(Array.from(node.requiredBy)),
-      related: this.getSpecsByPaths(Array.from(node.related)),
     };
   }
 

@@ -30,12 +30,10 @@ describe('Dependency Graph API', () => {
     expect(data).toHaveProperty('current');
     expect(data).toHaveProperty('dependsOn');
     expect(data).toHaveProperty('requiredBy');
-    expect(data).toHaveProperty('related');
     
     // Verify arrays
     expect(data.dependsOn).toBeInstanceOf(Array);
     expect(data.requiredBy).toBeInstanceOf(Array);
-    expect(data.related).toBeInstanceOf(Array);
   });
 
   it('should return 404 for non-existent spec', async () => {
