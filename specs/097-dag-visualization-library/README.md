@@ -8,7 +8,7 @@ tags:
   - technical-debt
 priority: high
 created_at: '2025-11-17T08:02:23.227Z'
-updated_at: '2025-11-17T10:02:22.453Z'
+updated_at: '2025-12-04T04:11:31.599Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T08:39:56.385Z'
@@ -18,6 +18,8 @@ depends_on:
   - 082-web-realtime-sync-architecture
 completed_at: '2025-11-17T10:02:22.453Z'
 completed: '2025-11-17'
+related:
+  - 137-ui-dependencies-page
 ---
 
 # Replace Manual DAG with Visualization Library
