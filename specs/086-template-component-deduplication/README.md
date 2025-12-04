@@ -15,7 +15,6 @@ transitions:
     at: '2025-11-17T01:40:10.673Z'
 completed_at: '2025-11-17T01:40:10.673Z'
 completed: '2025-11-17'
-  - 117-simplify-template-system
 ---
 
 # template-component-deduplication

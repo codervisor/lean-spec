@@ -9,7 +9,6 @@ priority: high
 created_at: '2025-11-17T06:39:54.583Z'
 updated_at: '2025-11-26T06:04:04.952Z'
 completed: '2025-11-17'
-  - 091-chinese-localization-strategy
 ---
 
 # PR Migration Verification: docs-site → lean-spec-docs

@@ -16,7 +16,6 @@ transitions:
     at: '2025-11-25T09:50:35.092Z'
 completed_at: '2025-11-25T09:50:35.092Z'
 completed: '2025-11-25'
-  - 137-ui-dependencies-page
 ---
 
 # Native Diagram Rendering in Spec Detail View

@@ -12,7 +12,6 @@ transitions:
     at: '2025-11-17T08:18:21.205Z'
 completed_at: '2025-11-17T08:18:21.205Z'
 completed: '2025-11-17'
-  - 094-ai-chatbot-web-integration
 ---
 
 # spec-detail-ui-improvements

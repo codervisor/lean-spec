@@ -15,7 +15,6 @@ transitions:
     at: '2025-11-17T08:35:19.888Z'
 completed_at: '2025-11-17T08:35:19.888Z'
 completed: '2025-11-17'
-  - 092-docs-site-submodule-migration
 ---
 
 # Documentation: Beginner-First Reorganization

@@ -16,7 +16,6 @@ transitions:
     at: '2025-11-17T09:14:30.117Z'
 completed_at: '2025-11-17T02:10:43.845Z'
 completed: '2025-11-17'
-  - 095-pr-migration-verification
 ---
 
 # Core Concepts: Real SDD Terminology Only

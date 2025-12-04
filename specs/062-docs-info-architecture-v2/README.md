@@ -16,7 +16,6 @@ transitions:
     at: '2025-11-10T07:12:35.179Z'
 completed_at: '2025-11-10T07:12:35.179Z'
 completed: '2025-11-10'
-  - 043-official-launch-02
 ---
 
 # Documentation Information Architecture v2
