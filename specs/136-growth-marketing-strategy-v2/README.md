@@ -28,6 +28,63 @@ Address declining traction (78 stars, 4k→1k npm downloads) with differentiated
 
 ## Diagnosis
 
+### Unique Selling Proposition (USP)
+
+**Current problem:** LeanSpec is "just another SDD tool" in a crowded market.
+
+**Solution:** Position LeanSpec + AgentRelay + Devlog as an **integrated AI development platform**:
+
+| Component | Role | Competitor Gap |
+|-----------|------|----------------|
+| **LeanSpec** | "The Brain" - What to build (specs, intent, memory) | Spec Kit/OpenSpec don't have execution or observability |
+| **AgentRelay** | "The Hands" - How to execute (orchestration, terminals, agents) | No spec integration or observability |
+| **Devlog** | "The Eyes" - What happened (observability, analytics, audit) | No spec or orchestration integration |
+| **Together** | Full-stack AI dev platform: Define → Execute → Observe → Iterate | **No competitor has all three** |
+
+### The "Codervisor" Platform Story
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CODERVISOR PLATFORM                                 │
+│                "The Complete AI Development Stack"                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌───────────────┐    ┌───────────────┐    ┌───────────────┐              │
+│   │   LeanSpec    │───►│  AgentRelay   │───►│    Devlog     │              │
+│   │   (Brain)     │    │   (Hands)     │    │    (Eyes)     │              │
+│   │               │    │               │    │               │              │
+│   │ • Specs       │    │ • HQ Server   │    │ • Activity    │              │
+│   │ • MCP Server  │    │ • Runners     │    │ • Analytics   │              │
+│   │ • Validation  │    │ • PTY/Terminal│    │ • Audit Trail │              │
+│   │ • Web UI      │    │ • Web UI      │    │ • Web UI      │              │
+│   └───────────────┘    └───────────────┘    └───────────────┘              │
+│                                                                             │
+│   "Define intent"      "Execute with AI"    "See what happened"            │
+│                                                                             │
+│                    ◄──────── Feedback Loop ────────►                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Why this is defensible:**
+1. **Complete stack** - No competitor has spec + orchestration + observability
+2. **Network effect** - Users of any tool benefit from the others
+3. **Integration moat** - Seamless Define→Execute→Observe workflow
+4. **Platform narrative** - "Codervisor" > individual tools
+5. **Multiple entry points** - Users can start with any tool
+
+### USP Messaging
+
+**Tagline options:**
+- "The complete AI development stack: Define → Execute → Observe"
+- "From spec to shipped to analyzed. AI agents you can actually trust."
+- "Codervisor: Intent. Execution. Observability."
+
+**Elevator pitch:**
+> "Codervisor is an open-source AI development platform. LeanSpec captures what you want to build. AgentRelay orchestrates AI agents to build it. Devlog shows you exactly what happened. Together, they close the loop from intent to execution to insight."
+
+---
+
 ### Why Existing Users Don't Switch
 
 | Barrier | Impact | Mitigation |
@@ -48,25 +105,30 @@ Address declining traction (78 stars, 4k→1k npm downloads) with differentiated
 
 ## Strategy
 
-### Pivot: From "Tool Launch" to "Movement Building"
+### Pivot: From "Tool Launch" to "Platform Story"
 
-**Old approach (failed):** "Here's a cool tool, try it"  
-**New approach:** "Here's a philosophy that works—tool is just the implementation"
+**Old approach (failed):** "Here's a cool SDD tool, try it"  
+**New approach:** "Here's an AI development platform: LeanSpec (brain) + AgentRelay (hands)"
 
 ### Three Pillars
 
-**1. Content-Led Growth** (Primary)
-- Educational content about AI coding pitfalls and solutions
-- Not "use LeanSpec" but "here's how to think about AI-assisted dev"
-- Tool discovery happens organically through credibility
+**1. Platform-Led Growth** (NEW - Primary)
+- Market "Codervisor" as the umbrella brand
+- Demo the full loop: Spec → AgentRelay → Execution → Iterate
+- Each tool drives discovery of the other
 
-**2. Integration-Led Growth** (Secondary)
+**2. Video & Visual Content** (Primary)
+- Full workflow demos showing both tools together
+- "Watch AI build a feature from spec" videos
+- Short-form content on AI coding pitfalls
+
+**3. Integration-Led Growth** (Secondary)
 - Deep integrations with AI tools people already use
 - Partner content with Cursor/Windsurf/Claude communities
-- "LeanSpec + [Tool X]" guides for specific workflows
+- "Codervisor + [Tool X]" guides for specific workflows
 
-**3. Community-Led Growth** (Long-term)
-- Build around the "First Principles SDD" philosophy
+**4. Community-Led Growth** (Long-term)
+- Build around "AI-native development" philosophy
 - Contributors become evangelists
 - Success stories from real projects
 
@@ -74,18 +136,23 @@ Address declining traction (78 stars, 4k→1k npm downloads) with differentiated
 
 ### Phase 1: Video & Visual Content (Weeks 1-4)
 
-**Goal:** Reach audiences that don't read long-form (Medium/Dev.to already tried)
+**Goal:** Showcase the platform story that differentiates from competitors
 
-**Video content:**
-- [ ] YouTube: "5-min demo: Spec-driven AI coding" (screen recording)
+**Hero content (Platform demo):**
+- [ ] YouTube: "The Complete AI Dev Stack in 10 minutes" (LeanSpec → AgentRelay → Devlog full loop)
+- [ ] YouTube: "What AI agents actually do to your code" (Devlog observability showcase)
+- [ ] Landing page video: 90-sec "What is Codervisor?" explainer (all 3 tools)
+
+**Supporting content:**
 - [ ] YouTube Shorts / TikTok: "AI broke my code again" series (15-60s pain points)
-- [ ] Loom-style walkthrough for README/docs landing page
-- [ ] Cursor/Windsurf integration tutorial video
+- [ ] "Watch AI build a feature" real-time demo (AgentRelay terminals)
+- [ ] "See what Copilot actually did" (Devlog analytics demo)
+- [ ] Cursor/Windsurf integration tutorial video (LeanSpec MCP)
 
 **Visual content:**
-- [ ] Infographic: "Vibe Coding vs Spec-Driven" comparison
+- [ ] Infographic: "The AI Development Stack" (Codervisor 3-tool diagram)
 - [ ] GIF demos for Twitter/X threads
-- [ ] Before/after code diff screenshots
+- [ ] Before/after: blind AI coding vs spec-driven with observability
 
 **Distribution:**
 - YouTube (searchable, evergreen)
@@ -131,19 +198,25 @@ Address declining traction (78 stars, 4k→1k npm downloads) with differentiated
 ### Old Messaging (Generic)
 > "LeanSpec is a lightweight SDD framework for AI-powered teams"
 
-### New Messaging (Specific)
+### New Messaging (Platform Story)
+
+**Platform pitch:**
+> "Codervisor: The open-source AI development stack. LeanSpec (intent) + AgentRelay (execution) + Devlog (observability)."
 
 **For frustrated AI users:**
-> "Stop re-prompting. One spec = one perfect output."
+> "Stop re-prompting. Define specs, let agents execute, see exactly what happened."
 
 **For skeptics:**
-> "Not another AI tool. It's a thinking framework that happens to be a tool."
+> "Not another AI wrapper. It's infrastructure: specs + orchestration + observability."
 
 **For teams:**
-> "Your AI assistant has amnesia. Specs are its memory."
+> "Your AI agents need specs like your code needs tests. And audit trails like your deploys need logs. We provide all three."
 
 **For solo devs:**
-> "Vibe coding got me 80% there. Specs got me the last 20% that actually matters."
+> "Vibe coding got me 80% there. Spec-driven orchestration with full observability got me to production."
+
+**For enterprise:**
+> "Complete audit trails for AI-assisted development. Know what your AI agents did, why, and how well."
 
 ## Distribution Channels (Revised)
 
@@ -208,14 +281,32 @@ Success criteria at 90-day checkpoint:
 
 Spec Kit (GitHub) and OpenSpec (Fission-AI) have **institutional backing**. Competing head-to-head loses.
 
-**LeanSpec's edge:**
-1. **Philosophy-first** - First principles > feature lists
-2. **Agility** - No committee approval for changes
-3. **AI-native from day 1** - MCP server, token optimization built-in
-4. **Local-first, zero lock-in** - Trust signal for skeptics
+**LeanSpec's edge (as standalone tool):**
+1. Philosophy-first - First principles > feature lists
+2. Agility - No committee approval for changes
+3. AI-native from day 1 - MCP server, token optimization built-in
+4. Local-first, zero lock-in - Trust signal for skeptics
+
+**Codervisor's edge (as platform):**
+1. **Complete stack** - No competitor has spec + orchestration + observability
+2. **Multiple entry points** - Start with LeanSpec, AgentRelay, OR Devlog
+3. **Network effect** - Each tool drives the others
+4. **"Full stack for AI dev"** - New category, not competing in existing ones
+5. **Trust through transparency** - Devlog provides audit trails others lack
+
+### Platform Integration Roadmap
+
+| Phase | LeanSpec ↔ AgentRelay | LeanSpec ↔ Devlog | AgentRelay ↔ Devlog |
+|-------|----------------------|-------------------|---------------------|
+| **Now** | Manual workflow | Manual workflow | Manual workflow |
+| **v1** | AgentRelay reads specs | Devlog links events to specs | Devlog captures AgentRelay sessions |
+| **v2** | AgentRelay updates spec status | Spec completion triggers analytics | Real-time agent monitoring |
+| **v3** | LeanSpec MCP triggers AgentRelay | AI recommendations from Devlog insights | Unified dashboard |
 
 ### Open Questions
 
-- Should we rename/rebrand to distance from "spec" category?
-- Is there a niche (solo devs? specific language?) to dominate first?
+- Should we rebrand under "Codervisor" umbrella immediately?
+- Which tool is the best "entry point" for new users?
 - What's the activation moment that hooks users?
+- How to demo the full LeanSpec → AgentRelay → Devlog loop compellingly?
+- Should we prioritize Devlog completion (40-45%) before platform marketing?
