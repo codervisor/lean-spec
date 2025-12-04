@@ -26,6 +26,7 @@ interface ForceNode extends SimulationNodeDatum {
 interface ForceLink extends SimulationLinkDatum<ForceNode> {
   source: string | ForceNode;
   target: string | ForceNode;
+  isDependsOn?: boolean;
 }
 
 /**
@@ -78,43 +79,102 @@ function forceLayout(
 ): Node<SpecNodeData>[] {
   if (nodes.length === 0) return [];
 
+  const nodeCount = nodes.length;
   const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
-  const height = isCompact ? COMPACT_NODE_HEIGHT : NODE_HEIGHT;
+  
+  // Scale parameters based on node count for better layouts
+  const scaleFactor = Math.sqrt(nodeCount);
+  const baseRadius = Math.max(300, nodeCount * 15);
+  
+  // Create force simulation nodes with initial positions in a spiral
+  // Spiral layout provides better initial positions than a circle for larger graphs
+  const forceNodes: ForceNode[] = nodes.map((n, i) => {
+    const angle = (i / nodeCount) * Math.PI * 6; // More turns for larger graphs
+    const radius = 50 + (i / nodeCount) * baseRadius;
+    return {
+      id: n.id,
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    };
+  });
 
-  // Create force simulation nodes with initial positions
-  const forceNodes: ForceNode[] = nodes.map((n, i) => ({
-    id: n.id,
-    x: Math.cos((2 * Math.PI * i) / nodes.length) * 300 + 500,
-    y: Math.sin((2 * Math.PI * i) / nodes.length) * 300 + 400,
-  }));
+  // Separate edges by type for different link strengths
+  const dependsOnEdges = new Set(
+    edges.filter((e) => e.id.includes('dependsOn')).map((e) => `${e.source}-${e.target}`)
+  );
 
   const forceLinks: ForceLink[] = edges.map((e) => ({
     source: e.source,
     target: e.target,
+    isDependsOn: dependsOnEdges.has(`${e.source}-${e.target}`),
   }));
 
   const nodeById = new Map(forceNodes.map((n) => [n.id, n]));
 
-  // Create and run simulation
+  // Calculate node degree for better positioning
+  const nodeDegree = new Map<string, number>();
+  edges.forEach((e) => {
+    nodeDegree.set(e.source, (nodeDegree.get(e.source) || 0) + 1);
+    nodeDegree.set(e.target, (nodeDegree.get(e.target) || 0) + 1);
+  });
+
+  // Adaptive parameters based on graph size
+  const linkDistance = isCompact 
+    ? Math.max(100, 80 + scaleFactor * 10)
+    : Math.max(150, 120 + scaleFactor * 15);
+  
+  const chargeStrength = isCompact
+    ? -Math.max(400, 200 + nodeCount * 8)
+    : -Math.max(600, 300 + nodeCount * 12);
+
+  const collideRadius = isCompact
+    ? width * 0.9
+    : width * 1.1;
+
+  // Create and run simulation with tuned parameters
   const simulation = forceSimulation<ForceNode>(forceNodes)
     .force(
       'link',
-      forceLink<ForceNode, ForceLink>(forceLinks)
+      forceLink<ForceNode, ForceLink & { isDependsOn?: boolean }>(forceLinks)
         .id((d) => d.id)
-        .distance(isCompact ? 120 : 180)
-        .strength(0.3)
+        .distance((d) => {
+          // Shorter distance for dependsOn edges (tighter coupling)
+          return d.isDependsOn ? linkDistance * 0.8 : linkDistance * 1.2;
+        })
+        .strength((d) => {
+          // Stronger links for dependsOn relationships
+          return d.isDependsOn ? 0.7 : 0.4;
+        })
     )
-    .force('charge', forceManyBody<ForceNode>().strength(isCompact ? -300 : -500))
-    .force('center', forceCenter(500, 400))
-    .force('collide', forceCollide<ForceNode>().radius(isCompact ? width * 0.8 : width))
+    .force(
+      'charge',
+      forceManyBody<ForceNode>()
+        .strength((d) => {
+          // Nodes with more connections get stronger repulsion
+          const degree = nodeDegree.get(d.id) || 1;
+          return chargeStrength * (1 + Math.log(degree) * 0.3);
+        })
+        .distanceMax(isCompact ? 400 : 600)
+    )
+    .force('center', forceCenter(0, 0))
+    .force(
+      'collide',
+      forceCollide<ForceNode>()
+        .radius(collideRadius)
+        .strength(0.8)
+        .iterations(2)
+    )
+    .alphaDecay(0.02) // Slower decay for better convergence
+    .velocityDecay(0.3) // Moderate velocity decay
     .stop();
 
-  // Run simulation synchronously
-  for (let i = 0; i < 300; i++) {
+  // Run simulation synchronously with more iterations for larger graphs
+  const iterations = Math.min(500, 200 + nodeCount * 2);
+  for (let i = 0; i < iterations; i++) {
     simulation.tick();
   }
 
-  // Normalize positions (move to positive quadrant starting from 0,0)
+  // Normalize positions (move to positive quadrant starting from padding)
   let minX = Infinity;
   let minY = Infinity;
   forceNodes.forEach((n) => {
@@ -122,14 +182,16 @@ function forceLayout(
     minY = Math.min(minY, n.y ?? 0);
   });
 
+  const padding = 60;
+
   // Map back to ReactFlow nodes
   return nodes.map((node) => {
     const forceNode = nodeById.get(node.id);
     return {
       ...node,
       position: {
-        x: (forceNode?.x ?? 0) - minX + 40,
-        y: (forceNode?.y ?? 0) - minY + 40,
+        x: (forceNode?.x ?? 0) - minX + padding,
+        y: (forceNode?.y ?? 0) - minY + padding,
       },
     };
   });
