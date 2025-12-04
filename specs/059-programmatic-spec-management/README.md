@@ -13,19 +13,6 @@ created_at: '2025-11-07T11:28:43.206Z'
 depends_on:
   - 067-monorepo-core-extraction
   - 069-token-counting-utils
-related:
-  - 048-spec-complexity-analysis
-  - 049-leanspec-first-principles
-  - 018-spec-validation
-  - 012-sub-spec-files
-  - 066-context-economy-thresholds-refinement
-  - 045-unified-dashboard
-  - 060-core-concepts-coherence
-  - 035-live-specs-showcase
-  - 062-docs-info-architecture-v2
-  - 077-archiving-strategy
-  - 082-web-realtime-sync-architecture
-  - 085-cli-relationship-commands
 updated_at: '2025-11-26T06:03:58.539Z'
 transitions:
   - status: in-progress

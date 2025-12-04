@@ -25,11 +25,6 @@ depends_on:
   - 045-unified-dashboard
   - 086-template-component-deduplication
   - 073-template-engine-agents-md
-related:
-  - 072-ai-agent-first-use-workflow
-  - 110-project-aware-agents-generation
-  - 071-simplified-token-validation
-  - 090-leanspec-sdd-case-studies
   - 121-mcp-first-agent-experience
 ---
 

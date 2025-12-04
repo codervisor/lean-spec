@@ -8,12 +8,6 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-28T03:30:16.605Z'
-related:
-  - 119-ui-diagram-rendering
-  - 107-ui-ux-refinements
-  - 106-ui-package-documentation
-  - 133-ui-web-code-editor
-  - 134-ui-metadata-editing
 updated_at: '2025-11-28T08:57:36.497Z'
 completed_at: '2025-11-28T08:57:36.497Z'
 completed: '2025-11-28'

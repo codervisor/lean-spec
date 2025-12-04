@@ -9,11 +9,7 @@ tags:
   - automation
 priority: high
 created_at: '2025-11-27T03:18:24.101Z'
-related:
-  - 126-ai-tool-auto-detection
-  - 072-ai-agent-first-use-workflow
-  - 125-onboarding-project-context-clarity
-updated_at: '2025-11-27T05:56:46.920Z'
+updated_at: '2025-12-04T06:46:29.580Z'
 transitions:
   - status: in-progress
     at: '2025-11-27T03:19:29.290Z'
@@ -21,6 +17,8 @@ transitions:
     at: '2025-11-27T05:56:46.920Z'
 completed_at: '2025-11-27T05:56:46.920Z'
 completed: '2025-11-27'
+depends_on:
+  - 126-ai-tool-auto-detection
 ---
 
 # Automated AGENTS.md Merge with AI CLI Detection

@@ -7,14 +7,6 @@ tags:
   - architecture
 priority: medium
 created_at: '2025-11-13T14:18:24.298Z'
-related:
-  - 079
-  - 066-context-economy-thresholds-refinement
-  - 067-monorepo-core-extraction
-  - 071-simplified-token-validation
-  - 084-sub-spec-visibility-in-tools
-  - 085-cli-relationship-commands
-  - 099-enhanced-dependency-commands-cli-mcp
 updated_at: '2025-11-26T06:04:10.374Z'
 completed_at: '2025-11-13T14:40:44.061Z'
 completed: '2025-11-13'

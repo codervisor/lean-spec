@@ -9,12 +9,10 @@ tags:
   - sub-specs
 priority: medium
 created_at: '2025-11-13T13:31:48.324Z'
-related:
-  - 073-template-engine-agents-md
+updated_at: '2025-12-04T06:46:17.075Z'
+depends_on:
   - 012-sub-spec-files
-  - 072-ai-agent-first-use-workflow
-  - 074-content-at-creation
-updated_at: '2025-11-26T06:03:51.204Z'
+  - 073-template-engine-agents-md
 ---
 
 # sub-spec-template-system

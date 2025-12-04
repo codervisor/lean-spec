@@ -8,14 +8,14 @@ tags:
   - visualization
 priority: medium
 created_at: '2025-11-25T12:52:24.676Z'
-related:
-  - 119-ui-diagram-rendering
-updated_at: '2025-11-26T08:24:39.899Z'
+updated_at: '2025-12-04T06:46:29.000Z'
 completed_at: '2025-11-26T08:24:39.899Z'
 completed: '2025-11-26'
 transitions:
   - status: complete
     at: '2025-11-26T08:24:39.899Z'
+depends_on:
+  - 119-ui-diagram-rendering
 ---
 
 # Mermaid Diagram Showcase

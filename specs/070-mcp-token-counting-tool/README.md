@@ -11,10 +11,6 @@ assignee: marvin
 created_at: '2025-11-13T02:56:09.580Z'
 depends_on:
   - 069-token-counting-utils
-related:
-  - 059-programmatic-spec-management
-  - 066-context-economy-thresholds-refinement
-  - 072-ai-agent-first-use-workflow
 updated_at: '2025-11-26T06:03:45.112Z'
 completed_at: '2025-11-13T08:55:34.796Z'
 completed: '2025-11-13'

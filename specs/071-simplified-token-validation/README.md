@@ -8,15 +8,6 @@ tags:
 priority: high
 assignee: marvin
 created_at: '2025-11-13T03:11:29.739Z'
-related:
-  - 066-context-economy-thresholds-refinement
-  - 069-token-counting-utils
-  - 090-leanspec-sdd-case-studies
-  - 049-leanspec-first-principles
-  - 016-github-action
-  - 080-mcp-server-modular-architecture
-  - 095-pr-migration-verification
-  - 122-ai-agent-deps-management-fix
 updated_at: '2025-11-26T06:04:18.724Z'
 completed_at: '2025-11-13T03:54:24.312Z'
 completed: '2025-11-13'

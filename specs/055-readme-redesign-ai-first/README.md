@@ -8,9 +8,6 @@ tags:
   - marketing
 priority: high
 created_at: '2025-11-06T14:15:28.191Z'
-related:
-  - 049-leanspec-first-principles
-  - 043-official-launch-02
 updated_at: '2025-11-07T03:20:42.344Z'
 completed_at: '2025-11-07T03:20:42.344Z'
 completed: '2025-11-07'

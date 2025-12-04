@@ -6,9 +6,6 @@ tags:
   - launch
   - v0.2.0
 priority: high
-related:
-  - 053-spec-assets-philosophy
-  - 043-official-launch-02
 created_at: '2025-11-26T02:35:37.768Z'
 updated_at: '2025-11-26T06:03:31.642Z'
 ---

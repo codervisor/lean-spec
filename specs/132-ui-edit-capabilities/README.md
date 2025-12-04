@@ -8,10 +8,6 @@ tags:
   - crud
 priority: medium
 created_at: '2025-11-28T03:30:16.617Z'
-related:
-  - 119-ui-diagram-rendering
-  - 107-ui-ux-refinements
-  - 103-ui-standalone-consolidation
 updated_at: '2025-11-28T03:30:16.691Z'
 ---
 

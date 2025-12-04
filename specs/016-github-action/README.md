@@ -8,10 +8,6 @@ tags:
 priority: low
 depends_on:
   - 067-monorepo-core-extraction
-related:
-  - 066-context-economy-thresholds-refinement
-  - 069-token-counting-utils
-  - 071-simplified-token-validation
 created_at: '2025-11-26T06:03:38.663Z'
 updated_at: '2025-11-26T06:03:44.837Z'
 ---

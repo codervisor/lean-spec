@@ -15,13 +15,6 @@ depends_on:
   - 067-monorepo-core-extraction
   - 035-live-specs-showcase
   - 075-intelligent-search-engine
-related:
-  - 043-official-launch-02
-  - 034-copilot-slash-commands
-  - 036-pm-integrations
-  - 035-live-specs-showcase
-  - 067-monorepo-core-extraction
-  - 077-archiving-strategy
 updated_at: '2025-11-26T06:03:50.934Z'
 ---
 

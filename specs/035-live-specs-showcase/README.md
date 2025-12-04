@@ -8,9 +8,10 @@ tags:
   - v0.3.0-launch
 priority: high
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-26T06:04:10.660Z'
+updated_at: '2025-12-04T06:46:06.455Z'
 depends_on:
   - 067-monorepo-core-extraction
+  - 059-programmatic-spec-management
 transitions:
   - status: in-progress
     at: '2025-11-11T15:21:48.941Z'
@@ -18,15 +19,6 @@ transitions:
     at: '2025-11-17T08:18:56.995Z'
 completed_at: '2025-11-17T08:18:56.995Z'
 completed: '2025-11-17'
-related:
-  - 105-docs-site-enhancements
-  - 068-live-specs-ux-enhancements
-  - 059-programmatic-spec-management
-  - 065-v03-planning
-  - 043-official-launch-02
-  - 067-monorepo-core-extraction
-  - 083-web-navigation-performance
-  - 094-ai-chatbot-web-integration
   - 106-ui-package-documentation
 ---
 

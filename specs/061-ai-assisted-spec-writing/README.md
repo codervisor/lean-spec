@@ -15,11 +15,6 @@ transitions:
     at: '2025-11-10T07:22:30.312Z'
 completed_at: '2025-11-10T07:22:30.312Z'
 completed: '2025-11-10'
-related:
-  - '43'
-  - 043-official-launch-02
-  - 062-docs-info-architecture-v2
-  - 049-leanspec-first-principles
   - 072-ai-agent-first-use-workflow
 ---
 

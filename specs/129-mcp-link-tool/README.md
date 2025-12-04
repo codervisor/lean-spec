@@ -8,10 +8,7 @@ tags:
   - ai-agents
 priority: high
 created_at: '2025-11-28T01:27:53.890Z'
-related:
-  - 085-cli-relationship-commands
-  - 128-constant-time-migration
-updated_at: '2025-11-28T01:50:23.786Z'
+updated_at: '2025-12-04T06:46:39.035Z'
 transitions:
   - status: in-progress
     at: '2025-11-28T01:37:15.477Z'
@@ -19,6 +16,8 @@ transitions:
     at: '2025-11-28T01:41:34.563Z'
 completed_at: '2025-11-28T01:41:34.563Z'
 completed: '2025-11-28'
+depends_on:
+  - 085-cli-relationship-commands
 ---
 
 # Add `link` and `unlink` MCP Tools

@@ -16,10 +16,6 @@ transitions:
     at: '2025-11-17T09:14:41.790Z'
 completed_at: '2025-11-17T02:11:45.698Z'
 completed: '2025-11-17'
-related:
-  - 091-chinese-localization-strategy
-  - 096-docs-beginner-first-reorg
-  - 088-core-concepts-terminology-only
   - 095-pr-migration-verification
 ---
 

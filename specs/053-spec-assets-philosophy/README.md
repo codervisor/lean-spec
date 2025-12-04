@@ -6,9 +6,6 @@ tags:
   - documentation
   - guidelines
 priority: low
-related:
-  - 049-leanspec-first-principles
-  - 052-branding-assets
 created_at: '2025-11-26T02:35:37.510Z'
 updated_at: '2025-11-26T02:35:37.772Z'
 ---

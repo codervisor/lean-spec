@@ -15,8 +15,6 @@ transitions:
     at: '2025-11-07T12:25:39.409Z'
 completed_at: '2025-11-07T12:25:39.409Z'
 completed: '2025-11-07'
-related:
-  - 059-programmatic-spec-management
   - 062-docs-info-architecture-v2
 ---
 

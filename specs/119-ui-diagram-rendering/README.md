@@ -16,10 +16,6 @@ transitions:
     at: '2025-11-25T09:50:35.092Z'
 completed_at: '2025-11-25T09:50:35.092Z'
 completed: '2025-11-25'
-related:
-  - 120-mermaid-diagram-showcase
-  - 131-ui-project-context-visibility
-  - 133-ui-web-code-editor
   - 137-ui-dependencies-page
 ---
 

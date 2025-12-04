@@ -15,11 +15,6 @@ transitions:
     at: '2025-11-17T08:35:19.888Z'
 completed_at: '2025-11-17T08:35:19.888Z'
 completed: '2025-11-17'
-related:
-  - 088-core-concepts-terminology-only
-  - 089-sdd-practical-tutorials
-  - 090-leanspec-sdd-case-studies
-  - 091-chinese-localization-strategy
   - 092-docs-site-submodule-migration
 ---
 

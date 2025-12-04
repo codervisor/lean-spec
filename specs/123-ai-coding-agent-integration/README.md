@@ -10,11 +10,7 @@ tags:
   - parallel-development
 priority: high
 created_at: '2025-11-26T06:25:37.182Z'
-related:
-  - 118-parallel-spec-implementation
-  - 072-ai-agent-first-use-workflow
-  - 110-project-aware-agents-generation
-updated_at: '2025-11-26T06:52:56.582Z'
+updated_at: '2025-12-04T06:46:29.291Z'
 transitions:
   - status: in-progress
     at: '2025-11-26T06:51:40.423Z'
@@ -22,6 +18,8 @@ transitions:
     at: '2025-11-26T06:52:56.582Z'
 completed_at: '2025-11-26T06:52:56.582Z'
 completed: '2025-11-26'
+depends_on:
+  - 118-parallel-spec-implementation
 ---
 
 # AI Coding Agent Integration for Automated Spec Orchestration

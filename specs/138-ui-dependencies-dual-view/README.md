@@ -10,11 +10,7 @@ tags:
   - network-graph
 priority: medium
 created_at: '2025-12-04T05:59:26.398Z'
-related:
-  - 137-ui-dependencies-page
-  - 097-dag-visualization-library
-  - 099-enhanced-dependency-commands-cli-mcp
-updated_at: '2025-12-04T06:09:28.543Z'
+updated_at: '2025-12-04T06:46:39.615Z'
 transitions:
   - status: in-progress
     at: '2025-12-04T06:03:54.801Z'
@@ -22,6 +18,9 @@ transitions:
     at: '2025-12-04T06:09:28.543Z'
 completed_at: '2025-12-04T06:09:28.543Z'
 completed: '2025-12-04'
+depends_on:
+  - 137-ui-dependencies-page
+  - 097-dag-visualization-library
 ---
 
 # UI Dependencies Page: Dual View (DAG + Network)
