@@ -12,6 +12,7 @@ import {
 
 export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>) {
   const isCompact = data.isCompact;
+  const isSecondary = data.isSecondary;
   const depthOpacity =
     data.connectionDepth === 0
       ? 1
@@ -23,19 +24,23 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
       ? 0.15
       : 1;
 
+  // Secondary nodes (shown due to critical path) are slightly transparent
+  const baseOpacity = isSecondary ? 0.65 : 1;
+
   return (
     <div
       className={cn(
-        'flex flex-col rounded-lg border-2 shadow-lg transition-all duration-200',
+        'flex flex-col rounded-lg shadow-lg transition-all duration-200',
         toneClasses[data.tone],
         data.interactive && 'cursor-pointer hover:scale-105 hover:shadow-xl hover:border-white/50',
         data.isFocused && 'ring-2 ring-white ring-offset-2 ring-offset-background scale-110 z-50',
         data.connectionDepth === 1 && 'ring-1 ring-white/40',
-        isCompact ? 'px-2 py-1 gap-0.5' : 'px-2.5 py-1.5 gap-0.5'
+        isCompact ? 'px-2 py-1 gap-0.5' : 'px-2.5 py-1.5 gap-0.5',
+        isSecondary ? 'border border-dashed' : 'border-2'
       )}
       style={{
         width: isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH,
-        opacity: depthOpacity,
+        opacity: depthOpacity * baseOpacity,
         transform: data.isDimmed ? 'scale(0.9)' : undefined,
       }}
     >

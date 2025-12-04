@@ -31,9 +31,11 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
   const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
   const [showStandalone, setShowStandalone] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
   const [focusedNodeId, setFocusedNodeId] = React.useState<string | null>(null);
   const [isCompact, setIsCompact] = React.useState(data.nodes.length > 30);
+  const [selectorOpen, setSelectorOpen] = React.useState(false);
+  const [selectorQuery, setSelectorQuery] = React.useState('');
+  const selectorRef = React.useRef<HTMLDivElement>(null);
 
   // Only use dependsOn edges (DAG only - no related edges)
   const dependsOnEdges = React.useMemo(
@@ -114,42 +116,62 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
 
   // Build the graph
   const graph = React.useMemo(() => {
-    let filteredNodes = data.nodes.filter(
+    // Primary nodes: those matching the status filter
+    const primaryNodes = data.nodes.filter(
       (node) => statusFilter.length === 0 || statusFilter.includes(node.status)
     );
+    const primaryNodeIds = new Set(primaryNodes.map((n) => n.id));
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filteredNodes = filteredNodes.filter(
-        (node) =>
-          node.name.toLowerCase().includes(query) ||
-          node.number.toString().includes(query) ||
-          node.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
+    // Find all nodes in the critical path (connected to primary nodes via dependencies)
+    // This includes nodes with filtered-out statuses if they're part of dependency chains
+    const criticalPathIds = new Set<string>(primaryNodeIds);
+    
+    // BFS to find all connected nodes through dependencies
+    const queue = [...primaryNodeIds];
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      dependsOnEdges.forEach((e) => {
+        // Check both directions - upstream and downstream dependencies
+        if (e.source === nodeId && !criticalPathIds.has(e.target)) {
+          criticalPathIds.add(e.target);
+          queue.push(e.target);
+        }
+        if (e.target === nodeId && !criticalPathIds.has(e.source)) {
+          criticalPathIds.add(e.source);
+          queue.push(e.source);
+        }
+      });
     }
 
-    const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
+    // Get all nodes in critical path
+    const criticalPathNodes = data.nodes.filter((n) => criticalPathIds.has(n.id));
     
-    // Filter dependsOn edges
+    // Filter edges to only those between critical path nodes
     const filteredEdges = dependsOnEdges.filter(
-      (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
+      (e) => criticalPathIds.has(e.source) && criticalPathIds.has(e.target)
     );
 
     // Filter to nodes with dependencies unless showStandalone
-    let visibleNodes = filteredNodes;
+    let visibleNodes = criticalPathNodes;
     if (!showStandalone) {
       const nodesWithDeps = new Set<string>();
       filteredEdges.forEach((e) => {
         nodesWithDeps.add(e.source);
         nodesWithDeps.add(e.target);
       });
-      visibleNodes = filteredNodes.filter((n) => nodesWithDeps.has(n.id));
+      visibleNodes = criticalPathNodes.filter((n) => nodesWithDeps.has(n.id));
     }
 
     const visibleNodeIds = new Set(visibleNodes.map((n) => n.id));
+    
+    // Track which nodes are "secondary" (shown due to critical path, not primary filter)
+    const secondaryNodeIds = new Set(
+      [...visibleNodeIds].filter((id) => !primaryNodeIds.has(id))
+    );
 
     const nodes: Node<SpecNodeData>[] = visibleNodes.map((node) => {
       const isFocused = focusedNodeId === node.id;
+      const isSecondary = secondaryNodeIds.has(node.id);
 
       let connectionDepth: number | undefined;
       let isDimmed = false;
@@ -174,6 +196,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
           connectionDepth,
           isDimmed,
           isCompact,
+          isSecondary,
         },
         position: { x: 0, y: 0 },
         draggable: true,
@@ -228,7 +251,6 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
     data,
     dependsOnEdges,
     statusFilter,
-    searchQuery,
     focusedNodeId,
     connectionDepths,
     isCompact,
@@ -270,7 +292,38 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
       instance.fitView({ padding: 0.15, duration: 300 });
     }, 50);
     return () => clearTimeout(timer);
-  }, [instance, graph.nodes.length, statusFilter, searchQuery, showStandalone]);
+  }, [instance, graph.nodes.length, statusFilter, showStandalone]);
+
+  // Close selector dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (selectorRef.current && !selectorRef.current.contains(e.target as globalThis.Node)) {
+        setSelectorOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter specs for selector dropdown
+  const filteredSpecs = React.useMemo(() => {
+    if (!selectorQuery.trim()) return data.nodes.slice(0, 15);
+    const q = selectorQuery.toLowerCase();
+    return data.nodes
+      .filter(
+        (n) =>
+          n.name.toLowerCase().includes(q) ||
+          n.number.toString().includes(q) ||
+          n.tags.some((t) => t.toLowerCase().includes(q))
+      )
+      .slice(0, 15);
+  }, [data.nodes, selectorQuery]);
+
+  // Get focused spec name for display
+  const focusedSpec = React.useMemo(
+    () => (focusedNodeId ? data.nodes.find((n) => n.id === focusedNodeId) : null),
+    [focusedNodeId, data.nodes]
+  );
 
   const handleNodeClick = React.useCallback(
     (event: React.MouseEvent, node: Node<SpecNodeData>) => {
@@ -297,11 +350,27 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
 
   const clearFilters = () => {
     setStatusFilter([]);
-    setSearchQuery('');
     setFocusedNodeId(null);
+    setSelectorQuery('');
   };
 
-  const hasFilters = statusFilter.length > 0 || searchQuery.trim() || focusedNodeId;
+  const handleSelectSpec = (specId: string) => {
+    setFocusedNodeId(specId);
+    setSelectorOpen(false);
+    setSelectorQuery('');
+    // Center on the selected node
+    if (instance) {
+      const node = graph.nodes.find((n) => n.id === specId);
+      if (node) {
+        instance.setCenter(node.position.x + 80, node.position.y + 30, {
+          duration: 400,
+          zoom: 1,
+        });
+      }
+    }
+  };
+
+  const hasFilters = statusFilter.length > 0 || focusedNodeId;
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -330,29 +399,94 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search specs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 w-44 rounded-md border border-border bg-background px-2.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm"
-            >
-              ×
-            </button>
+        {/* Spec Selector */}
+        <div className="relative" ref={selectorRef}>
+          <button
+            onClick={() => setSelectorOpen(!selectorOpen)}
+            className={cn(
+              'h-7 w-52 rounded-md border bg-background px-2.5 text-xs text-left flex items-center gap-2 transition-colors',
+              focusedNodeId
+                ? 'border-primary/60 bg-primary/10'
+                : 'border-border hover:border-primary/40'
+            )}
+          >
+            {focusedSpec ? (
+              <>
+                <span className="text-muted-foreground">#{focusedSpec.number.toString().padStart(3, '0')}</span>
+                <span className="truncate flex-1 text-foreground">{focusedSpec.name}</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">Select spec to highlight...</span>
+            )}
+            <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {selectorOpen && (
+            <div className="absolute right-0 top-8 z-50 w-64 rounded-md border border-border bg-background shadow-lg overflow-hidden">
+              <div className="p-2 border-b border-border">
+                <input
+                  type="text"
+                  placeholder="Type to filter..."
+                  value={selectorQuery}
+                  onChange={(e) => setSelectorQuery(e.target.value)}
+                  className="w-full h-7 rounded border border-border bg-muted/30 px-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
+              <div className="max-h-64 overflow-auto">
+                {focusedNodeId && (
+                  <button
+                    onClick={() => {
+                      setFocusedNodeId(null);
+                      setSelectorOpen(false);
+                      setSelectorQuery('');
+                    }}
+                    className="w-full px-3 py-2 text-xs text-left hover:bg-muted/50 border-b border-border text-muted-foreground flex items-center gap-2"
+                  >
+                    <span className="text-red-400">×</span> Clear selection
+                  </button>
+                )}
+                {filteredSpecs.length > 0 ? (
+                  filteredSpecs.map((spec) => (
+                    <button
+                      key={spec.id}
+                      onClick={() => handleSelectSpec(spec.id)}
+                      className={cn(
+                        'w-full px-3 py-2 text-xs text-left hover:bg-muted/50 flex items-center gap-2',
+                        focusedNodeId === spec.id && 'bg-primary/20'
+                      )}
+                    >
+                      <span className="text-muted-foreground font-mono">#{spec.number.toString().padStart(3, '0')}</span>
+                      <span className="truncate flex-1">{spec.name}</span>
+                      <span
+                        className={cn(
+                          'text-[9px] px-1 py-0.5 rounded uppercase font-medium',
+                          spec.status === 'planned' && 'bg-blue-500/20 text-blue-400',
+                          spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-400',
+                          spec.status === 'complete' && 'bg-green-500/20 text-green-400',
+                          spec.status === 'archived' && 'bg-gray-500/20 text-gray-400'
+                        )}
+                      >
+                        {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-4 text-xs text-muted-foreground text-center">
+                    No specs found
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
-        {(['planned', 'in-progress', 'complete'] as const).map((status) => {
+        {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => {
           const isActive = statusFilter.length === 0 || statusFilter.includes(status);
           return (
             <button
@@ -363,6 +497,7 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
                 isActive && status === 'planned' && 'border-blue-500/60 bg-blue-500/20 text-blue-300',
                 isActive && status === 'in-progress' && 'border-orange-500/60 bg-orange-500/20 text-orange-300',
                 isActive && status === 'complete' && 'border-green-500/60 bg-green-500/20 text-green-300',
+                isActive && status === 'archived' && 'border-gray-500/60 bg-gray-500/20 text-gray-300',
                 !isActive && 'border-border bg-background text-muted-foreground/40'
               )}
             >

@@ -14,6 +14,7 @@ export interface SpecNodeData {
   connectionDepth?: number;
   isDimmed?: boolean;
   isCompact?: boolean;
+  isSecondary?: boolean; // Shown due to critical path, not primary filter
 }
 
 export type SpecNode = ProjectDependencyGraph['nodes'][0];
