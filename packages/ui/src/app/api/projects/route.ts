@@ -1,15 +1,22 @@
 /**
  * GET /api/projects - List all projects
+ * 
+ * Modes:
+ * - filesystem (default): returns a single virtual project for the local specs
+ * - multi-project: reads from project registry (filesystem-based)
+ * 
+ * Database mode was planned for external GitHub repos (spec 035/082) but not yet implemented.
  */
 
 import { NextResponse } from 'next/server';
-import { getProjects } from '@/lib/db/queries';
 import { projectRegistry } from '@/lib/projects/registry';
 
 export async function GET() {
   try {
-    // Check if running in multi-project mode
-    if (process.env.SPECS_MODE === 'multi-project') {
+    const specsMode = process.env.SPECS_MODE || 'filesystem';
+
+    // Multi-project mode: use project registry (filesystem-based)
+    if (specsMode === 'multi-project') {
       const projects = await projectRegistry.getProjects();
       const recentProjects = await projectRegistry.getRecentProjects();
       const favoriteProjects = await projectRegistry.getFavoriteProjects();
@@ -21,10 +28,16 @@ export async function GET() {
       });
     }
 
-    const projects = await getProjects();
+    // Filesystem mode: return a virtual single project (no database needed)
+    const specsDir = process.env.SPECS_DIR || 'specs';
     return NextResponse.json({ 
       mode: 'single-project',
-      projects 
+      projects: [{
+        id: 'local',
+        displayName: 'Local Project',
+        specsDir,
+        isFeatured: true,
+      }]
     });
   } catch (error) {
     console.error('Error fetching projects:', error);

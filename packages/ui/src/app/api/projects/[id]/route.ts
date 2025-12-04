@@ -1,5 +1,11 @@
+/**
+ * Project API routes
+ * 
+ * Uses filesystem-based project registry for all modes.
+ * Database mode was planned for external GitHub repos (spec 035/082) but not yet implemented.
+ */
+
 import { NextResponse } from 'next/server';
-import { getProjectById } from '@/lib/db/queries';
 import { projectRegistry } from '@/lib/projects/registry';
 
 export async function GET(
@@ -8,8 +14,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const specsMode = process.env.SPECS_MODE || 'filesystem';
 
-    if (process.env.SPECS_MODE === 'multi-project') {
+    if (specsMode === 'multi-project') {
       const project = await projectRegistry.getProject(id);
       if (!project) {
         return NextResponse.json(
@@ -22,14 +29,23 @@ export async function GET(
       return NextResponse.json({ project });
     }
 
-    const project = await getProjectById(id);
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      );
+    // Filesystem mode: return a virtual single project
+    if (id === 'local') {
+      const specsDir = process.env.SPECS_DIR || 'specs';
+      return NextResponse.json({ 
+        project: {
+          id: 'local',
+          displayName: 'Local Project',
+          specsDir,
+          isFeatured: true,
+        }
+      });
     }
-    return NextResponse.json({ project });
+
+    return NextResponse.json(
+      { error: 'Project not found' },
+      { status: 404 }
+    );
   } catch (error) {
     console.error('Error fetching project:', error);
     return NextResponse.json(

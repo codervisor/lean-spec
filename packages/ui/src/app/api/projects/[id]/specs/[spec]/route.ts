@@ -1,6 +1,12 @@
+/**
+ * GET /api/projects/[id]/specs/[spec] - Get a single spec
+ * 
+ * Uses filesystem-based service-queries for all modes.
+ * Database mode was planned for external GitHub repos (spec 035/082) but not yet implemented.
+ */
+
 import { NextResponse } from 'next/server';
-import { getSpecById } from '@/lib/db/queries';
-import { specsService } from '@/lib/specs/service';
+import { getSpecById } from '@/lib/db/service-queries';
 
 export async function GET(
   request: Request,
@@ -8,25 +14,19 @@ export async function GET(
 ) {
   try {
     const { id, spec: specId } = await params;
+    const specsMode = process.env.SPECS_MODE || 'filesystem';
 
-    if (process.env.SPECS_MODE === 'multi-project') {
-      const spec = await specsService.getSpec(specId, id);
-      if (!spec) {
-        return NextResponse.json(
-          { error: 'Spec not found' },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json({ spec });
-    }
-
-    const spec = await getSpecById(specId);
+    // Pass projectId only for multi-project mode
+    const projectId = specsMode === 'multi-project' ? id : undefined;
+    const spec = await getSpecById(specId, projectId);
+    
     if (!spec) {
       return NextResponse.json(
         { error: 'Spec not found' },
         { status: 404 }
       );
     }
+    
     return NextResponse.json({ spec });
   } catch (error) {
     console.error('Error fetching spec:', error);
