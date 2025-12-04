@@ -5,8 +5,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Check, ChevronsUpDown, Plus, FolderOpen, Star, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -34,11 +34,11 @@ interface ProjectSwitcherProps {
 
 export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const {
     mode,
     currentProject,
     projects,
-    switchProject,
   } = useProject();
   
   const [open, setOpen] = useState(false);
@@ -48,11 +48,16 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     return null;
   }
 
-  const handleProjectSelect = async (projectId: string) => {
-    await switchProject(projectId);
+  const handleProjectSelect = (projectId: string) => {
     setOpen(false);
-    // Navigate to the new project's home page
-    router.push(`/projects/${projectId}`);
+    
+    // Extract the path after /projects/{currentProjectId}
+    // Pattern: /projects/{projectId} or /projects/{projectId}/... 
+    const projectPathMatch = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
+    const subPath = projectPathMatch?.[1] || ''; // Empty string = project home page
+    
+    // Full page navigation - ensures clean state for new project
+    window.location.href = `/projects/${projectId}${subPath}`;
   };
 
   const sortedProjects = [...projects].sort((a, b) => {

@@ -19,7 +19,6 @@ import {
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { Badge } from '@/components/ui/badge';
-import { extractH1Title } from '@/lib/utils';
 
 interface Spec {
   id: string;
@@ -31,7 +30,6 @@ interface Spec {
   tags: string[] | null;
   createdAt: Date | null;
   updatedAt: Date | null;
-  contentMd?: string;
 }
 
 interface Stats {
@@ -62,9 +60,8 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 function SpecListItem({ spec, projectId }: { spec: Spec; projectId?: string }) {
-  // Extract H1 title from content if available, fallback to title or name
-  const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
-  const displayTitle = h1Title || spec.title || spec.specName;
+  // Use title from server-side extraction, fallback to name
+  const displayTitle = spec.title || spec.specName;
   const specUrl = projectId 
     ? `/projects/${projectId}/specs/${spec.specNumber}`
     : `/specs/${spec.specNumber}`;
@@ -113,8 +110,7 @@ function SpecListItem({ spec, projectId }: { spec: Spec; projectId?: string }) {
 }
 
 function ActivityItem({ spec, action, time, projectId }: { spec: Spec; action: string; time: Date | null; projectId?: string }) {
-  const h1Title = spec.contentMd ? extractH1Title(spec.contentMd) : null;
-  const displayTitle = h1Title || spec.title || spec.specName;
+  const displayTitle = spec.title || spec.specName;
   const specUrl = projectId 
     ? `/projects/${projectId}/specs/${spec.specNumber}`
     : `/specs/${spec.specNumber}`;
@@ -146,51 +142,19 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
   const { mode, currentProject, isLoading: isProjectLoading } = useProject();
   const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
   const [stats, setStats] = useState<Stats>(initialStats);
-  const [isLoadingData, setIsLoadingData] = useState(false);
   
-  // Determine effective projectId - from prop or current project context
-  const effectiveProjectId = projectId || (mode === 'multi-project' ? currentProject?.id : undefined);
+  // Use the projectId prop directly - it comes from the URL via server component
+  // and is always reliable, unlike currentProject from context during transitions
+  const effectiveProjectId = projectId;
 
+  // Update state when initialSpecs/initialStats change (e.g., on navigation)
   useEffect(() => {
-    if (mode === 'multi-project') {
-      if (currentProject) {
-        fetchProjectData(currentProject.id);
-      } else {
-        setSpecs([]);
-        setStats({ totalSpecs: 0, completionRate: 0, specsByStatus: [] });
-      }
-    }
-  }, [mode, currentProject]);
+    setSpecs(initialSpecs);
+    setStats(initialStats);
+  }, [initialSpecs, initialStats]);
 
-  const fetchProjectData = async (projectId: string) => {
-    setIsLoadingData(true);
-    try {
-      const [specsRes, statsRes] = await Promise.all([
-        fetch(`/api/projects/${projectId}/specs`),
-        fetch(`/api/projects/${projectId}/stats`)
-      ]);
-      
-      if (specsRes.ok && statsRes.ok) {
-        const specsData = await specsRes.json();
-        const statsData = await statsRes.json();
-        
-        const parsedSpecs = specsData.specs.map((s: any) => ({
-            ...s,
-            createdAt: s.createdAt ? new Date(s.createdAt) : null,
-            updatedAt: s.updatedAt ? new Date(s.updatedAt) : null,
-        }));
-
-        setSpecs(parsedSpecs);
-        setStats(statsData.stats);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
-
-  if (mode === 'multi-project' && !currentProject) {
+  // Show loading state only when in multi-project mode and no project selected
+  if (mode === 'multi-project' && !projectId && !currentProject) {
      if (isProjectLoading) {
          return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
      }
@@ -200,10 +164,6 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
              <p className="text-muted-foreground mb-4">Select a project from the sidebar or create a new one to get started.</p>
          </div>
      );
-  }
-
-  if (isLoadingData) {
-      return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
   }
   
   // Get specs by status

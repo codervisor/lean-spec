@@ -1,4 +1,4 @@
-import type { ParsedSpec } from '@/lib/db/service-queries';
+import type { ParsedSpec, LightweightSpec } from '@/lib/db/service-queries';
 import type { SubSpec } from '@/lib/sub-specs';
 
 export interface SpecRelationships {
@@ -11,7 +11,10 @@ export type SpecWithMetadata = ParsedSpec & {
   relationships?: SpecRelationships;
 };
 
-export type SidebarSpec = Pick<SpecWithMetadata, 'id' | 'specNumber' | 'title' | 'specName' | 'status' | 'priority' | 'contentMd' | 'updatedAt'> & {
+/**
+ * Lightweight spec type for sidebar (no contentMd for performance)
+ */
+export type SidebarSpec = Pick<LightweightSpec, 'id' | 'specNumber' | 'title' | 'specName' | 'status' | 'priority' | 'updatedAt'> & {
   tags: string[] | null;
   subSpecsCount?: number;
 };

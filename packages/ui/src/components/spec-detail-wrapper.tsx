@@ -11,11 +11,11 @@ import { SpecDetailClient } from '@/components/spec-detail-client';
 import { primeSpecsSidebar, setActiveSidebarSpec } from '@/lib/stores/specs-sidebar-store';
 import { cn } from '@/lib/utils';
 import type { SpecWithMetadata, SidebarSpec } from '@/types/specs';
-import type { ParsedSpec } from '@/lib/db/service-queries';
+import type { LightweightSpec } from '@/lib/db/service-queries';
 
 interface SpecDetailWrapperProps {
   spec: SpecWithMetadata;
-  allSpecs: ParsedSpec[];
+  allSpecs: LightweightSpec[];
   currentSubSpec?: string;
 }
 
@@ -45,9 +45,8 @@ export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetail
       status: item.status,
       priority: item.priority,
       tags: item.tags,
-      contentMd: item.contentMd,
       updatedAt: item.updatedAt,
-      subSpecsCount: ('subSpecsCount' in item) ? (item as any).subSpecsCount : undefined,
+      subSpecsCount: ('subSpecsCount' in item) ? (item as unknown as { subSpecsCount: number }).subSpecsCount : undefined,
     }))
   ), [allSpecs]);
 
