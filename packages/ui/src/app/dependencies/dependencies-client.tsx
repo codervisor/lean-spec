@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import ReactFlow, {
   Background,
   Controls,
@@ -28,6 +28,7 @@ interface ProjectDependencyGraphClientProps {
 
 export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const specParam = searchParams.get('spec');
   
@@ -39,17 +40,40 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
   const [selectorOpen, setSelectorOpen] = React.useState(false);
   const [selectorQuery, setSelectorQuery] = React.useState('');
   const selectorRef = React.useRef<HTMLDivElement>(null);
+  const initialSpecProcessed = React.useRef(false);
 
-  // Initialize focused node from URL param on first load
+  // Initialize focused node from URL param on first load only
   React.useEffect(() => {
-    if (specParam && !focusedNodeId) {
+    if (specParam && !initialSpecProcessed.current) {
       // Find the node by spec number
       const node = data.nodes.find((n) => n.number.toString() === specParam);
       if (node) {
         setFocusedNodeId(node.id);
       }
+      initialSpecProcessed.current = true;
     }
-  }, [specParam, data.nodes, focusedNodeId]);
+  }, [specParam, data.nodes]);
+
+  // Sync URL with focused node state
+  React.useEffect(() => {
+    // Skip during initial load
+    if (!initialSpecProcessed.current) return;
+    
+    const focusedNode = focusedNodeId ? data.nodes.find((n) => n.id === focusedNodeId) : null;
+    const newSpecParam = focusedNode ? focusedNode.number.toString() : null;
+    
+    // Only update if different from current URL
+    if (newSpecParam !== specParam) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (newSpecParam) {
+        params.set('spec', newSpecParam);
+      } else {
+        params.delete('spec');
+      }
+      const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [focusedNodeId, data.nodes, specParam, pathname, router, searchParams]);
 
   // Only use dependsOn edges (DAG only - no related edges)
   const dependsOnEdges = React.useMemo(
