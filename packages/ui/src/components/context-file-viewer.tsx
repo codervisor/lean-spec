@@ -1,13 +1,14 @@
 /**
  * Context File Viewer Component
  * Displays a single context file with token count, copy button, and syntax highlighting
+ * Uses the same rich markdown rendering as spec detail page (including Mermaid diagrams)
  * Phase 1 & 4: Spec 131 - UI Project Context Visibility
  */
 
 'use client';
 
 import * as React from 'react';
-import { Copy, Check, FileText, Clock, Coins, ExternalLink } from 'lucide-react';
+import { Copy, Check, FileText, Clock, Coins, ExternalLink, Maximize2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,8 @@ import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeSlug from 'rehype-slug';
+import { MermaidDiagram } from '@/components/mermaid-diagram';
 
 interface ContextFileViewerProps {
   name: string;
@@ -27,6 +30,7 @@ interface ContextFileViewerProps {
   className?: string;
   searchQuery?: string;
   projectRoot?: string;
+  onViewDetail?: () => void;
 }
 
 /**
@@ -113,6 +117,7 @@ export function ContextFileViewer({
   className,
   searchQuery,
   projectRoot,
+  onViewDetail,
 }: ContextFileViewerProps) {
   const [copied, setCopied] = React.useState(false);
   const matchCount = searchQuery ? countMatches(content, searchQuery) : 0;
@@ -133,6 +138,11 @@ export function ContextFileViewer({
     if (projectRoot) {
       window.open(getVSCodeUri(projectRoot, path), '_blank');
     }
+  };
+
+  const handleViewDetail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onViewDetail?.();
   };
 
   const isJson = name.endsWith('.json');
@@ -176,6 +186,17 @@ export function ContextFileViewer({
             <span className="text-xs text-muted-foreground hidden sm:inline">
               {getTokenStatus(tokenCount)}
             </span>
+            {onViewDetail && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={handleViewDetail}
+                title="View full page"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {projectRoot && (
               <Button
                 variant="ghost"
@@ -261,6 +282,7 @@ export function ContextFileCard({
   className,
   searchQuery,
   projectRoot,
+  onViewDetail,
 }: Omit<ContextFileViewerProps, 'isExpanded' | 'onToggle'>) {
   const [expanded, setExpanded] = React.useState(false);
 
@@ -286,6 +308,7 @@ export function ContextFileCard({
       className={className}
       searchQuery={searchQuery}
       projectRoot={projectRoot}
+      onViewDetail={onViewDetail}
     />
   );
 }

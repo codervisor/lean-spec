@@ -1,18 +1,20 @@
 /**
  * Project Context Client Component
  * Displays project-level context files (AGENTS.md, config, README, etc.)
+ * Uses sidebar + content layout similar to spec detail page
  * Phases 2 & 4: Spec 131 - UI Project Context Visibility
  */
 
 'use client';
 
 import * as React from 'react';
-import { BookOpen, Settings, FileText, Copy, Check, AlertCircle, Coins, Info, Search, X } from 'lucide-react';
+import { BookOpen, Settings, FileText, Copy, Check, AlertCircle, Coins, Info, Search, X, ChevronRight, ChevronDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ContextFileCard, countMatches } from '@/components/context-file-viewer';
+import { ContextFileDetail } from '@/components/context-file-detail';
 import type { ProjectContext, ContextFile } from '@/lib/specs/types';
 import { cn } from '@/lib/utils';
 
@@ -69,6 +71,7 @@ function ContextSection({
   defaultExpanded = true,
   searchQuery,
   projectRoot,
+  onFileSelect,
 }: {
   title: string;
   description: string;
@@ -79,6 +82,7 @@ function ContextSection({
   defaultExpanded?: boolean;
   searchQuery?: string;
   projectRoot?: string;
+  onFileSelect?: (file: ContextFile) => void;
 }) {
   const totalTokens = files.reduce((sum, f) => sum + f.tokenCount, 0);
   
@@ -149,6 +153,7 @@ function ContextSection({
                 lastModified={file.lastModified}
                 searchQuery={searchQuery}
                 projectRoot={projectRoot}
+                onViewDetail={onFileSelect ? () => onFileSelect(file) : undefined}
               />
             ))}
           </div>
@@ -161,6 +166,7 @@ function ContextSection({
 export function ContextClient({ context }: ContextClientProps) {
   const [copiedAll, setCopiedAll] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [selectedFile, setSelectedFile] = React.useState<ContextFile | null>(null);
 
   // Collect all content for "Copy All" feature
   const handleCopyAll = async () => {
@@ -210,6 +216,19 @@ export function ContextClient({ context }: ContextClientProps) {
     }
     return total;
   }, [context, searchQuery]);
+
+  // If a file is selected, show the detail view
+  if (selectedFile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <ContextFileDetail
+          file={selectedFile}
+          projectRoot={context.projectRoot}
+          onBack={() => setSelectedFile(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -323,6 +342,7 @@ export function ContextClient({ context }: ContextClientProps) {
             defaultExpanded={context.agentInstructions.length <= 2}
             searchQuery={searchQuery}
             projectRoot={context.projectRoot}
+            onFileSelect={setSelectedFile}
           />
 
           {/* Configuration */}
@@ -336,6 +356,7 @@ export function ContextClient({ context }: ContextClientProps) {
             defaultExpanded={true}
             searchQuery={searchQuery}
             projectRoot={context.projectRoot}
+            onFileSelect={setSelectedFile}
           />
 
           {/* Project Documentation */}
@@ -349,6 +370,7 @@ export function ContextClient({ context }: ContextClientProps) {
             defaultExpanded={false}
             searchQuery={searchQuery}
             projectRoot={context.projectRoot}
+            onFileSelect={setSelectedFile}
           />
         </div>
 
