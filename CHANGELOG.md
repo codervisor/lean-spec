@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.9] - 2025-12-04
+
+### Added
+- **Project-wide dependency visualization** ([spec 137](https://web.lean-spec.dev/specs/137)) - New `/dependencies` page in Web UI
+  - Bird's-eye view of entire project's dependency structure using DAG layout
+  - Interactive ReactFlow graph with zoom/pan controls
+  - Click nodes to navigate directly to spec details
+  - Filter by status, priority, and tags
+  - Color-coded nodes by status (amber=planned, blue=in-progress, green=complete)
+  - Spec selector dropdown to focus on specific spec's dependency chain
+  - Critical path highlighting for transitive dependencies
+  - Sidebar showing focused spec details and connections
+- **Enhanced context file viewer** - Improved file browsing in Web UI
+  - New `ContextFileDetail` component for better file inspection
+  - Dynamic file icons and colors based on file type (markdown, yaml, json, etc.)
+
+### Changed
+- **Simplified spec relationships** ([spec 139](https://web.lean-spec.dev/specs/139)) - Removed `related` field, keeping only `depends_on`
+  - **Breaking**: `related` field is deprecated and will be ignored
+  - Cleaner DAG-only visualization (no more cluttered network graphs)
+  - Simpler mental model: every edge means "blocking dependency"
+  - Tags + search now recommended for discovery instead of explicit `related` links
+  - Better AI agent guidance with single relationship type
+  - Removed `--related` flag from `lean-spec link` and `lean-spec unlink` commands
+- **Turbo updated** to v2.6.2
+
+### Fixed
+- **Chinese/Unicode spec name support** ([spec 135](https://web.lean-spec.dev/specs/135)) - Fixed sequence number detection for non-ASCII spec names
+  - Specs with Chinese characters (e.g., `001-测试`) now correctly detected
+  - Japanese, Korean, and other Unicode scripts supported
+- **Spec frontmatter validation** - Fixed YAML parsing errors from orphaned array items in some specs
+- **Docs-site integration** - Converted from submodule to direct inclusion for simpler maintenance
+
 ## [0.2.8] - 2025-11-28
 
 ### Added
@@ -627,6 +660,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.9]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.9
 [0.2.8]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.8
 [0.2.7]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.7
 [0.2.6]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.6
