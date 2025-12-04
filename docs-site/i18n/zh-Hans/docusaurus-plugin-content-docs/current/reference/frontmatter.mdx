@@ -49,25 +49,6 @@ tags: [api, security, mvp]
 **值：** `low` | `medium` | `high` | `critical`  
 **描述：** 重要性级别
 
-### related
-
-**类型：** `array`  
-**描述：** 相关Spec（双向软引用）
-
-此处列出的Spec在 `lean-spec deps` 中双向显示。如果Spec A 有 `related: [B]`，A 和 B 都将显示关系。
-
-**示例：**
-```yaml
-related: [042-mcp-error-handling, 037-docs-overhaul]
-```
-
-**符号：** ⟷（双向箭头）
-
-**使用时机：**
-- Spec涵盖相关主题或功能
-- 工作是协调的但不阻塞
-- 上下文有帮助但不是必需的
-
 ### depends_on
 
 **类型：** `array`  

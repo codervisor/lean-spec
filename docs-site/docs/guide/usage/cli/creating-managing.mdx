@@ -203,14 +203,11 @@ Archived specs:
 
 ### Declaring Dependencies
 
-Use `lean-spec link` to manage relationships (do not edit frontmatter manually):
+Use `lean-spec link` to manage dependencies (do not edit frontmatter manually):
 
 ```bash
-# Add hard dependency (blocking)
+# Add dependency (blocking)
 lean-spec link 042 --depends-on 041
-
-# Add soft relationship (informational)
-lean-spec link 042 --related 043,044
 ```
 
 ### Viewing Dependencies
@@ -229,9 +226,6 @@ Depends On:
 
 Required By:
   ← 043-dashboard [in-progress]
-
-Related Specs:
-  ⟷ 044-api-refactor [planned]
 ```
 
 **See also**: [Dependencies](/docs/guide/usage/cli/project-management#dependencies)

@@ -237,24 +237,12 @@ lean-spec link B --depends-on A
 lean-spec link C --depends-on A,B
 ```
 
-### Creating Soft References
-
-Link related specs without blocking:
-
-```bash
-# Specs that share context but don't block each other
-lean-spec link A --related B,C
-```
-
-**Key difference:** `depends_on` blocks work (hard dependency), `related` provides context (soft reference)
-
 ### Removing Links
 
-Clean up outdated relationships:
+Clean up outdated dependencies:
 
 ```bash
 lean-spec unlink A --depends-on B    # Remove dependency
-lean-spec unlink A --related C       # Remove soft reference
 ```
 
 ## Live Example: LeanSpec Web UI

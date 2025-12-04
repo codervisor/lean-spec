@@ -16,22 +16,16 @@ LeanSpec Spec 在 frontmatter 中存储一小组系统管理的字段，以便�
 在实现开始或停止时立即更新状态；状态跟踪工作，而非 Spec 编写过程。使用 `lean-spec update <spec> --status <value>` 以便每个工具（和 AI 代理）看到相同的状态。
 
 ## 关系
-LeanSpec 区分方向性阻塞和软引用：
+LeanSpec 使用 **`depends_on`** 来捕获阻塞性依赖：
 
-- **`depends_on`** — 硬依赖。Spec A 在 Spec B 完成之前无法开始。
+- **`depends_on`** — 方向性依赖。Spec A 在 Spec B 完成之前无法开始。
   ```yaml
   depends_on:
     - 082
   ```
   在 `lean-spec deps` 中显示为 **→**，并自动在依赖项上添加"Required By"条目。
-- **`related`** — 并行或相邻工作的信息链接。
-  ```yaml
-  related:
-    - 043
-  ```
-  在图表中显示为 **⟷**，保持上下文可发现而不阻塞计划。
 
-默认使用 `related`；仅在顺序真正重要时升级为 `depends_on`。
+仅当工作确实必须按特定顺序完成时才使用 `depends_on`。对于共享上下文但不互相阻塞的松散相关 Spec，请在 Spec 内容中记录关系，而不是使用元数据。
 
 ## 优先级和标签
 这些字段使 Spec 可过滤并保持计划轻量级。
@@ -52,7 +46,6 @@ status: in-progress
 priority: high
 tags: [api, backend]
 depends_on: [082]
-related: [079, 084]
 created: '2025-11-16'
 ---
 ```
