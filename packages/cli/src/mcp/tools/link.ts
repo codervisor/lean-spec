@@ -15,11 +15,10 @@ export function linkTool(): ToolDefinition {
     'link',
     {
       title: 'Link Specs',
-      description: 'Add relationships between specs (depends_on for dependencies, related for bidirectional links). Use this after creating a spec to connect it to related specs, or to add relationships to existing specs.',
+      description: 'Add dependency relationships between specs. Use this after creating a spec to connect it to specs it depends on, or to add dependencies to existing specs.',
       inputSchema: {
-        specPath: z.string().describe('The spec to add relationships to. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
-        dependsOn: z.string().optional().describe('Comma-separated specs this depends on (e.g., "045,046" or "api-design,database"). Creates upstream dependencies.'),
-        related: z.string().optional().describe('Comma-separated related specs (e.g., "047,frontend"). Creates bidirectional relationships - both specs will reference each other.'),
+        specPath: z.string().describe('The spec to add dependencies to. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
+        dependsOn: z.string().describe('Comma-separated specs this depends on (e.g., "045,046" or "api-design,database"). Creates upstream dependencies.'),
       },
       outputSchema: {
         success: z.boolean(),
@@ -30,11 +29,11 @@ export function linkTool(): ToolDefinition {
     async (input, _extra) => {
       const originalLog = console.log;
       try {
-        // Validate at least one relationship type is provided
-        if (!input.dependsOn && !input.related) {
+        // Validate dependsOn is provided
+        if (!input.dependsOn) {
           const output = {
             success: false,
-            message: 'At least one relationship type required (dependsOn or related)',
+            message: 'dependsOn is required',
           };
           return {
             content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
@@ -57,7 +56,6 @@ export function linkTool(): ToolDefinition {
 
         await linkSpec(input.specPath, {
           dependsOn: input.dependsOn,
-          related: input.related,
         });
 
         const output = {

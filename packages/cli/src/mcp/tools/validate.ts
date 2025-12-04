@@ -19,7 +19,7 @@ export function validateTool(): ToolDefinition {
       inputSchema: {
         specs: z.array(z.string()).optional().describe('Specific specs to validate. If omitted, validates all specs in the project.'),
         maxLines: z.number().optional().describe('Custom line limit for complexity checks (default: 400 lines).'),
-        checkDeps: z.boolean().optional().describe('Check for content/frontmatter dependency alignment. Detects when spec content references other specs but those references are not in frontmatter depends_on/related fields.'),
+        checkDeps: z.boolean().optional().describe('Check for content/frontmatter dependency alignment. Detects when spec content references other specs but those references are not in frontmatter depends_on fields.'),
       },
       outputSchema: {
         passed: z.boolean(),

@@ -26,8 +26,8 @@ If you have LeanSpec MCP tools available, **ALWAYS use them**:
 | View a spec | `view` | Full content with formatting |
 | Create new spec | `create` | Auto-sequences, proper structure |
 | Update spec | `update` | Validates transitions, timestamps |
-| Link specs | `link` | Add relationships (depends_on, related) |
-| Unlink specs | `unlink` | Remove relationships |
+| Link specs | `link` | Add dependencies (depends_on) |
+| Unlink specs | `unlink` | Remove dependencies |
 | Check dependencies | `deps` | Visual dependency graph |
 
 **Why MCP over CLI?**
@@ -46,8 +46,8 @@ lean-spec list               # See all specs
 lean-spec search "query"     # Find relevant specs
 lean-spec create <name>      # Create new spec
 lean-spec update <spec> --status <status>  # Update status
-lean-spec link <spec> --related <other>    # Add relationships
-lean-spec unlink <spec> --related <other>  # Remove relationships
+lean-spec link <spec> --depends-on <other>   # Add dependencies
+lean-spec unlink <spec> --depends-on <other> # Remove dependencies
 lean-spec deps <spec>        # Show dependencies
 ```
 
@@ -65,7 +65,7 @@ lean-spec deps <spec>        # Show dependencies
 
 4. 📊 **Update status to `in-progress`** BEFORE coding
 5. 📝 **Document decisions** in the spec as you work
-6. 🔗 **Link related specs** if you discover connections
+6. 🔗 **Link dependencies** if you discover blocking relationships
 
 ### After Completing Work
 
@@ -106,17 +106,17 @@ lean-spec deps <spec>        # Show dependencies
 - Trivial changes
 - Self-explanatory refactors
 
-## Spec Relationships
+## Spec Dependencies
 
-### `related` - Bidirectional Soft Reference
-Informational relationship between specs. Shown from both sides.
-**Use when:** Related topics, coordinated but not blocking work.
+### `depends_on` - Blocking Dependency
+Directional dependency - this spec cannot start until dependencies are complete.
+**Use when:** True blocking dependency, work order matters, one spec builds on another.
 
-### `depends_on` - Directional Blocking Dependency
-Hard dependency - spec cannot start until dependencies complete.
-**Use when:** True blocking dependency, work order matters.
+```bash
+lean-spec link <spec> --depends-on <other-spec>
+```
 
-**Default:** Use `related`. Reserve `depends_on` for true blockers.
+**Note:** Only use `depends_on` for actual blocking dependencies. Don't link specs just because they're "related" - link them when one truly blocks the other.
 
 ## Quality Standards
 

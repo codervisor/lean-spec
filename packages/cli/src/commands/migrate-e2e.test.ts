@@ -382,9 +382,8 @@ describe('End-to-end migration workflows', () => {
         expect(output).toContain('NEVER edit frontmatter manually');
         expect(output).toContain('lean-spec update');
 
-        // Should explain manual edits for relationships
-        expect(output).toContain('related');
-        expect(output).toContain('manual frontmatter edit');
+        // Should explain how to link dependencies
+        expect(output).toContain('depends-on');
       } finally {
         console.log = originalLog;
       }

@@ -15,12 +15,11 @@ export function unlinkTool(): ToolDefinition {
     'unlink',
     {
       title: 'Unlink Specs',
-      description: 'Remove relationships between specs. Can remove specific relationships or all relationships of a type. Related links are removed bidirectionally (from both specs).',
+      description: 'Remove dependency relationships between specs. Can remove specific dependencies or all dependencies.',
       inputSchema: {
-        specPath: z.string().describe('The spec to remove relationships from. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
+        specPath: z.string().describe('The spec to remove dependencies from. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
         dependsOn: z.string().optional().describe('Comma-separated dependencies to remove (e.g., "045,046"). Leave empty with removeAll=true to remove all dependencies.'),
-        related: z.string().optional().describe('Comma-separated related specs to remove (e.g., "047,frontend"). Removes bidirectionally. Leave empty with removeAll=true to remove all.'),
-        removeAll: z.boolean().optional().describe('When true, removes ALL relationships of the specified type(s). Use with dependsOn or related to clear all of that type.'),
+        removeAll: z.boolean().optional().describe('When true, removes ALL dependencies. Use with dependsOn to clear all.'),
       },
       outputSchema: {
         success: z.boolean(),
@@ -32,11 +31,11 @@ export function unlinkTool(): ToolDefinition {
     async (input, _extra) => {
       const originalLog = console.log;
       try {
-        // Validate at least one relationship type is provided
-        if (!input.dependsOn && !input.related && !input.removeAll) {
+        // Validate at least one option is provided
+        if (!input.dependsOn && !input.removeAll) {
           const output = {
             success: false,
-            message: 'At least one relationship type required (dependsOn or related)',
+            message: 'Either dependsOn or removeAll is required',
           };
           return {
             content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
@@ -66,7 +65,6 @@ export function unlinkTool(): ToolDefinition {
         // Build options for unlinkSpec
         const options: {
           dependsOn?: string | boolean;
-          related?: string | boolean;
           all?: boolean;
         } = {
           all: input.removeAll,
@@ -76,12 +74,7 @@ export function unlinkTool(): ToolDefinition {
         if (input.dependsOn !== undefined) {
           options.dependsOn = input.dependsOn || true;
         } else if (input.removeAll) {
-          // If removeAll without specific field, we need explicit opt-in
-        }
-
-        // Handle related similarly
-        if (input.related !== undefined) {
-          options.related = input.related || true;
+          options.dependsOn = true;
         }
 
         await unlinkSpec(input.specPath, options);
