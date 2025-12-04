@@ -11,7 +11,7 @@ created_at: '2025-11-17T08:45:47.025Z'
 depends_on:
   - 097-dag-visualization-library
   - 067-monorepo-core-extraction
-updated_at: '2025-11-26T06:04:10.377Z'
+updated_at: '2025-12-04T05:59:26.451Z'
 completed_at: '2025-11-17T09:13:14.295Z'
 completed: '2025-11-17'
 transitions:
@@ -22,6 +22,7 @@ related:
   - 080-mcp-server-modular-architecture
   - 081-web-app-ux-redesign
   - 083-web-navigation-performance
+  - 138-ui-dependencies-dual-view
 ---
 
 # Enhanced Dependency Commands for CLI/MCP
