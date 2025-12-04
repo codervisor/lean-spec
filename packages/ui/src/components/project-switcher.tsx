@@ -51,6 +51,8 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
   const handleProjectSelect = async (projectId: string) => {
     await switchProject(projectId);
     setOpen(false);
+    // Navigate to the new project's home page
+    router.push(`/projects/${projectId}`);
   };
 
   const sortedProjects = [...projects].sort((a, b) => {

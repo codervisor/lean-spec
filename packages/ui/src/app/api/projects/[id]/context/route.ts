@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getProjectContext } from '@/lib/db/service-queries';
+import { projectRegistry } from '@/lib/projects/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,20 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Note: getProjectContext is filesystem-based and doesn't use projectId yet
-    // In multi-project mode, it reads from the current project's filesystem
-    const context = await getProjectContext();
+    const { id } = await params;
+    
+    // Get the project to find its path
+    const project = await projectRegistry.getProject(id);
+    
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Get context from the project's directory
+    const context = await getProjectContext(project.path);
     return NextResponse.json(context);
   } catch (error) {
     console.error('Error fetching project context:', error);

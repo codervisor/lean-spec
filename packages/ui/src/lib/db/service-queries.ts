@@ -325,8 +325,8 @@ function readContextFile(filePath: string, projectRoot: string): ContextFile | n
 /**
  * Get agent instruction files (AGENTS.md, GEMINI.md, etc.)
  */
-export async function getAgentInstructions(): Promise<ContextFile[]> {
-  const projectRoot = getProjectRootDir();
+export async function getAgentInstructions(projectRootOverride?: string): Promise<ContextFile[]> {
+  const projectRoot = projectRootOverride || getProjectRootDir();
   const files: ContextFile[] = [];
   
   // Primary agent instruction files in root
@@ -371,8 +371,8 @@ export async function getAgentInstructions(): Promise<ContextFile[]> {
 /**
  * Get LeanSpec configuration
  */
-export async function getProjectConfig(): Promise<{ file: ContextFile | null; parsed: LeanSpecConfig | null }> {
-  const projectRoot = getProjectRootDir();
+export async function getProjectConfig(projectRootOverride?: string): Promise<{ file: ContextFile | null; parsed: LeanSpecConfig | null }> {
+  const projectRoot = projectRootOverride || getProjectRootDir();
   const configPath = join(projectRoot, '.lean-spec', 'config.json');
   
   const file = readContextFile(configPath, projectRoot);
@@ -392,8 +392,8 @@ export async function getProjectConfig(): Promise<{ file: ContextFile | null; pa
 /**
  * Get project documentation files (README, CONTRIBUTING, etc.)
  */
-export async function getProjectDocs(): Promise<ContextFile[]> {
-  const projectRoot = getProjectRootDir();
+export async function getProjectDocs(projectRootOverride?: string): Promise<ContextFile[]> {
+  const projectRoot = projectRootOverride || getProjectRootDir();
   const files: ContextFile[] = [];
   
   const docFiles = [
@@ -413,12 +413,12 @@ export async function getProjectDocs(): Promise<ContextFile[]> {
 /**
  * Get complete project context
  */
-export async function getProjectContext(): Promise<ProjectContext> {
-  const projectRoot = getProjectRootDir();
+export async function getProjectContext(projectRootOverride?: string): Promise<ProjectContext> {
+  const projectRoot = projectRootOverride || getProjectRootDir();
   const [agentInstructions, config, projectDocs] = await Promise.all([
-    getAgentInstructions(),
-    getProjectConfig(),
-    getProjectDocs(),
+    getAgentInstructions(projectRoot),
+    getProjectConfig(projectRoot),
+    getProjectDocs(projectRoot),
   ]);
   
   // Calculate total tokens
