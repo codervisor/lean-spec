@@ -42,12 +42,12 @@ create {
 \`\`\`
 
 ### Step 3: Link Dependencies (CRITICAL)
-After creating, **immediately** link any referenced specs:
+After creating, **immediately** link any specs this depends on:
 
-For each spec mentioned in content:
-- "Depends on spec 045" → \`link { "spec": "your-spec", "dependsOn": ["045"] }\`
-- "Related to spec 072" → \`link { "spec": "your-spec", "related": ["072"] }\`
-- "See spec 110" → \`link { "spec": "your-spec", "related": ["110"] }\`
+For each dependency mentioned in content:
+- "Depends on spec 045" → \`link { "spec": "your-spec", "dependsOn": "045" }\`
+- "Blocked by spec 072" → \`link { "spec": "your-spec", "dependsOn": "072" }\`
+- "Requires spec 110" → \`link { "spec": "your-spec", "dependsOn": "110" }\`
 
 ### Step 4: Verify
 Use \`deps\` to verify all links are in place:
@@ -68,9 +68,8 @@ validate { "specs": ["your-spec"], "checkDeps": true }
 | Content Pattern | Link Type |
 |----------------|-----------|
 | "depends on", "blocked by", "requires" | dependsOn |
-| "related to", "see also", "similar to" | related |
-| "builds on" | dependsOn (if blocking) or related |
-| "## Related Specs" section | related (link each one) |
+| "builds on", "extends" | dependsOn |
+| "after spec X is complete" | dependsOn |
 
 **Remember:** Content and frontmatter must stay aligned!`,
           },

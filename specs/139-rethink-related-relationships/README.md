@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-04'
 tags:
   - philosophy
@@ -9,17 +9,21 @@ tags:
   - discussion
 priority: high
 created_at: '2025-12-04T06:14:09.463Z'
-updated_at: '2025-12-04T06:46:39.892Z'
+updated_at: '2025-12-04T06:50:34.836Z'
 transitions:
   - status: in-progress
     at: '2025-12-04T06:19:32.562Z'
+  - status: complete
+    at: '2025-12-04T06:50:34.836Z'
 depends_on:
   - 138-ui-dependencies-dual-view
+completed_at: '2025-12-04T06:50:34.836Z'
+completed: '2025-12-04'
 ---
 
 # Rethink: Do We Need `related` as Soft Dependency?
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-04 · **Tags**: philosophy, ux, relationships, architecture, discussion
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-04 · **Tags**: philosophy, ux, relationships, architecture, discussion
 
 ## Overview
 

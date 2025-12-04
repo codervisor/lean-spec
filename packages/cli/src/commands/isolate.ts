@@ -249,10 +249,10 @@ async function executeIsolate(
   
   // 6. Update frontmatter relationships if source has frontmatter
   if (sourceFrontmatter && options.addReference) {
-    // Add to related specs
+    // Add to depends_on (new spec depends on source since it was extracted from it)
     const updatedSourceFrontmatter: Frontmatter = {
       ...sourceFrontmatter,
-      related: [...(sourceFrontmatter.related || []), targetSpecName],
+      depends_on: [...(sourceFrontmatter.depends_on || []), targetSpecName],
     };
     
     const { content: finalSourceWithFrontmatter } = createUpdatedFrontmatter(
@@ -261,7 +261,7 @@ async function executeIsolate(
     );
     
     await writeFile(sourceReadmePath, finalSourceWithFrontmatter, 'utf-8');
-    console.log(chalk.green(`✓ Updated frontmatter (related field)`));
+    console.log(chalk.green(`✓ Updated frontmatter (depends_on field)`));
   }
   
   console.log('');

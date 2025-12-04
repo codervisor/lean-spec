@@ -452,7 +452,7 @@ async function outputManualInstructions(
   console.log('\x1b[1mImportant Rules:\x1b[0m');
   console.log('- Preserve decision rationale and context');
   console.log('- Map status appropriately to LeanSpec states');
-  console.log('- Link related specs using `related` field (manual frontmatter edit)');
+  console.log('- Link dependencies using `lean-spec link --depends-on`');
   console.log('- Follow LeanSpec first principles: clarity over completeness');
   console.log('- Keep specs under 400 lines (split if needed)');
   console.log();

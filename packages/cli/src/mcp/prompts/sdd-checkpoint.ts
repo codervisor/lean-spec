@@ -39,7 +39,7 @@ For the work you're currently doing:
 For any specs you've worked on:
 1. Update status if changed (\`planned\` → \`in-progress\` → \`complete\`)
 2. Document key decisions or changes in the spec content
-3. Link related specs if you discovered connections
+3. Link dependencies if you discover blocking relationships
 
 ### Step 4: Validate (Before Completing)
 Before marking any spec as complete, run validation:

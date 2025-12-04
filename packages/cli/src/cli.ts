@@ -75,7 +75,6 @@ Examples:
   $ lean-spec list --status in-progress
   $ lean-spec view 042
   $ lean-spec link 085 --depends-on 042,035
-  $ lean-spec link 085 --related 082
   $ lean-spec unlink 085 --depends-on 042
   $ lean-spec deps 085
   $ lean-spec backfill --dry-run

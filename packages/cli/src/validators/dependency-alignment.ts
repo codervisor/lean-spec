@@ -2,7 +2,7 @@
  * Dependency Alignment Validator
  * 
  * Detects when spec content references other specs but those references
- * are not reflected in frontmatter depends_on/related fields.
+ * are not reflected in frontmatter depends_on fields.
  * 
  * This catches a common AI agent failure mode: writing content that mentions
  * dependencies but forgetting to use `lean-spec link` to add them to frontmatter.
@@ -39,23 +39,13 @@ const DEPENDS_ON_PATTERNS = [
   /requires[:\s]+.*?spec[:\s]*(\d{3})\b/gi,
   /prerequisite[:\s]+.*?\b(\d{3})\b/gi,
   /after[:\s]+.*?spec[:\s]*(\d{3})\b/gi,
-];
-
-/**
- * Patterns that indicate soft relationships (related)
- */
-const RELATED_PATTERNS = [
-  /related to[:\s]+.*?\b(\d{3})\b/gi,
-  /see (also )?spec[:\s]*(\d{3})\b/gi,
   /builds on[:\s]+.*?\b(\d{3})\b/gi,
-  /similar to[:\s]+.*?\b(\d{3})\b/gi,
-  /complements[:\s]+.*?\b(\d{3})\b/gi,
-  /\brelated[:\s]+\[?(\d{3})/gi,
+  /extends[:\s]+.*?\b(\d{3})\b/gi,
 ];
 
 interface DetectedRef {
   specNumber: string;
-  type: 'depends_on' | 'related' | 'unknown';
+  type: 'depends_on';
   context: string;
 }
 
@@ -100,8 +90,6 @@ export class DependencyAlignmentValidator implements ValidationRule {
 
     // Get current frontmatter dependencies
     const currentDependsOn = this.normalizeDeps(frontmatter.depends_on);
-    const currentRelated = this.normalizeDeps(frontmatter.related);
-    const allCurrentDeps = new Set([...currentDependsOn, ...currentRelated]);
 
     // Get this spec's number to exclude self-references
     const selfNumber = this.extractSpecNumber(spec.name);
@@ -111,41 +99,23 @@ export class DependencyAlignmentValidator implements ValidationRule {
 
     // Find missing dependencies (only for specs that exist)
     const missingDependsOn: DetectedRef[] = [];
-    const missingRelated: DetectedRef[] = [];
 
     for (const ref of detectedRefs) {
       // Skip if already linked
-      if (allCurrentDeps.has(ref.specNumber)) continue;
+      if (currentDependsOn.includes(ref.specNumber)) continue;
       
       // Skip if we have existing spec numbers and this one doesn't exist
       if (this.existingSpecNumbers && !this.existingSpecNumbers.has(ref.specNumber)) continue;
 
-      if (ref.type === 'depends_on') {
-        missingDependsOn.push(ref);
-      } else {
-        missingRelated.push(ref);
-      }
+      missingDependsOn.push(ref);
     }
 
     // Generate warnings/errors for missing deps
     if (missingDependsOn.length > 0) {
       const specNumbers = [...new Set(missingDependsOn.map(r => r.specNumber))];
       const issue = {
-        message: `Content references blocking dependencies not in frontmatter: ${specNumbers.join(', ')}`,
-        suggestion: `Run: lean-spec link ${spec.name} --depends-on ${specNumbers.join(' ')}`,
-      };
-      if (this.strict) {
-        errors.push(issue);
-      } else {
-        warnings.push(issue);
-      }
-    }
-
-    if (missingRelated.length > 0) {
-      const specNumbers = [...new Set(missingRelated.map(r => r.specNumber))];
-      const issue = {
-        message: `Content references related specs not in frontmatter: ${specNumbers.join(', ')}`,
-        suggestion: `Run: lean-spec link ${spec.name} --related ${specNumbers.join(' ')}`,
+        message: `Content references dependencies not in frontmatter: ${specNumbers.join(', ')}`,
+        suggestion: `Run: lean-spec link ${spec.name} --depends-on ${specNumbers.join(',')}`,
       };
       if (this.strict) {
         errors.push(issue);
@@ -185,13 +155,13 @@ export class DependencyAlignmentValidator implements ValidationRule {
   }
 
   /**
-   * Detect spec references in content
+   * Detect spec references in content that indicate dependencies
    */
   private detectReferences(content: string, selfNumber: string | null): DetectedRef[] {
     const refs: DetectedRef[] = [];
     const seenNumbers = new Set<string>();
 
-    // First check for explicit dependency patterns
+    // Check for explicit dependency patterns
     for (const pattern of DEPENDS_ON_PATTERNS) {
       const matches = content.matchAll(new RegExp(pattern));
       for (const match of matches) {
@@ -201,39 +171,6 @@ export class DependencyAlignmentValidator implements ValidationRule {
           refs.push({
             specNumber,
             type: 'depends_on',
-            context: match[0].substring(0, 50),
-          });
-        }
-      }
-    }
-
-    // Check for explicit related patterns
-    for (const pattern of RELATED_PATTERNS) {
-      const matches = content.matchAll(new RegExp(pattern));
-      for (const match of matches) {
-        // Some patterns have the number in group 1, some in group 2
-        const specNumber = match[2] || match[1];
-        if (specNumber && specNumber !== selfNumber && !seenNumbers.has(specNumber)) {
-          seenNumbers.add(specNumber);
-          refs.push({
-            specNumber,
-            type: 'related',
-            context: match[0].substring(0, 50),
-          });
-        }
-      }
-    }
-
-    // Check for general spec references (default to related)
-    for (const pattern of SPEC_REF_PATTERNS) {
-      const matches = content.matchAll(new RegExp(pattern));
-      for (const match of matches) {
-        const specNumber = match[1];
-        if (specNumber && specNumber !== selfNumber && !seenNumbers.has(specNumber)) {
-          seenNumbers.add(specNumber);
-          refs.push({
-            specNumber,
-            type: 'related', // Default to related for ambiguous refs
             context: match[0].substring(0, 50),
           });
         }

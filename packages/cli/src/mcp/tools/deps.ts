@@ -53,11 +53,6 @@ export async function getDepsData(specPath: string, mode: string = 'complete'): 
         status: s.frontmatter.status,
         priority: s.frontmatter.priority,
       })),
-      related: completeGraph.related.map(s => ({
-        path: s.path,
-        status: s.frontmatter.status,
-        priority: s.frontmatter.priority,
-      })),
     };
   } else if (mode === 'upstream') {
     const upstream = graph.getUpstream(spec.path, 3);
@@ -105,12 +100,7 @@ export async function getDepsData(specPath: string, mode: string = 'complete'): 
         status: s.frontmatter.status,
         priority: s.frontmatter.priority,
       })),
-      related: impact.related.map(s => ({
-        path: s.path,
-        status: s.frontmatter.status,
-        priority: s.frontmatter.priority,
-      })),
-      total: impact.upstream.length + impact.downstream.length + impact.related.length,
+      total: impact.upstream.length + impact.downstream.length,
     };
   }
   
@@ -126,7 +116,7 @@ export function depsTool(): ToolDefinition {
     'deps',
     {
       title: 'Get Dependencies',
-      description: 'Analyze complete spec dependency graph (upstream, downstream, bidirectional). Shows which specs this depends on (dependsOn), which depend on this spec (requiredBy), and related work (related). Use this to understand impact of changes and work order.',
+      description: 'Analyze spec dependency graph (upstream and downstream). Shows which specs this depends on (dependsOn) and which depend on this spec (requiredBy). Use this to understand impact of changes and work order.',
       inputSchema: {
         specPath: z.string().describe('The spec to analyze. Can be: spec name (e.g., "unified-dashboard"), sequence number (e.g., "045" or "45"), or full folder name (e.g., "045-unified-dashboard").'),
         mode: z.enum(['complete', 'upstream', 'downstream', 'impact']).optional().describe('View mode: complete (all relationships), upstream (dependencies only), downstream (dependents only), impact (full impact radius with summary). Defaults to complete.'),

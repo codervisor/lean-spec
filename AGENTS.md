@@ -32,8 +32,8 @@ Lightweight spec methodology for AI-powered development.
 | View spec | `view` | `lean-spec view <spec>` |
 | Create spec | `create` | `lean-spec create <name>` |
 | Update spec | `update` | `lean-spec update <spec> --status <status>` |
-| Link specs | `link` | `lean-spec link <spec> --related <other>` |
-| Unlink specs | `unlink` | `lean-spec unlink <spec> --related <other>` |
+| Link specs | `link` | `lean-spec link <spec> --depends-on <other>` |
+| Unlink specs | `unlink` | `lean-spec unlink <spec> --depends-on <other>` |
 | Dependencies | `deps` | `lean-spec deps <spec>` |
 | Token count | `tokens` | `lean-spec tokens <spec>` |
 
@@ -43,8 +43,8 @@ Lightweight spec methodology for AI-powered development.
 
 | Rule | Details |
 |------|---------|
-| **NEVER edit frontmatter manually** | Use `update`, `link`, `unlink` for: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on`, `related` |
-| **ALWAYS link spec references** | Content mentions another spec → `lean-spec link <spec> --related <other>` or `--depends-on <other>` |
+| **NEVER edit frontmatter manually** | Use `update`, `link`, `unlink` for: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on` |
+| **ALWAYS link spec references** | Content mentions another spec → `lean-spec link <spec> --depends-on <other>` |
 | **Track status transitions** | `planned` → `in-progress` (before coding) → `complete` (after done) |
 | **No nested code blocks** | Use indentation instead |
 
@@ -61,20 +61,21 @@ Lightweight spec methodology for AI-powered development.
 
 ```
 BEFORE: board → search → check existing specs
-DURING: update status to in-progress → code → document decisions → link related specs
+DURING: update status to in-progress → code → document decisions → link dependencies
 AFTER:  update status to complete → document learnings
 ```
 
 **Status tracks implementation, NOT spec writing.**
 
-## Spec Relationships
+## Spec Dependencies
 
-| Type | Direction | Use When |
-|------|-----------|----------|
-| `related` | Bidirectional | Related topics, coordinated work |
-| `depends_on` | Directional | True blocker, work order matters |
+Use `depends_on` to express blocking relationships between specs:
+- **`depends_on`** = True blocker, work order matters, directional (A depends on B)
 
-**Default to `related`**. Reserve `depends_on` for true blockers.
+Link dependencies when one spec builds on another:
+```bash
+lean-spec link <spec> --depends-on <other-spec>
+```
 
 ## When to Use Specs
 

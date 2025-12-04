@@ -30,7 +30,7 @@ export function planProjectRoadmapPrompt() {
 3. **Identify Tasks**: List key tasks and work items for each phase
 4. **Map Dependencies**: Establish dependencies between tasks (what must be done first)
 5. **Create Specs**: Create specification documents for major work items using the \`create\` tool
-6. **Set Relationships**: Use \`link\` tool to establish \`depends_on\` and \`related\` relationships
+6. **Set Dependencies**: Use \`link\` tool to establish \`depends_on\` relationships between specs
 7. **Timeline Estimation**: Provide realistic timeline based on task complexity and project velocity
 8. **Risk Analysis**: Identify risks, unknowns, and mitigation strategies
 
