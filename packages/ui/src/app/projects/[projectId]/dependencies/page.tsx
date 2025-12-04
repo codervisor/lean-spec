@@ -37,7 +37,7 @@ export default async function ProjectDependenciesPage({
 
   return (
     <div className="container mx-auto p-6 h-[calc(100vh-7rem)]">
-      <ProjectDependencyGraphClient data={data} />
+      <ProjectDependencyGraphClient data={data} projectId={projectId} />
     </div>
   );
 }
