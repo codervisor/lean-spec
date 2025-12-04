@@ -2,19 +2,22 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import type { SpecNode, FocusedNodeDetails, SpecsByDepth } from './types';
+import type { SpecNode, FocusedNodeDetails } from './types';
 
 interface SpecListItemProps {
   spec: SpecNode;
   type: 'upstream' | 'downstream';
+  depth: number;
   onClick: () => void;
 }
 
-function SpecListItem({ spec, type, onClick }: SpecListItemProps) {
+function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
   const typeColors = {
     upstream: 'border-l-amber-500',
     downstream: 'border-l-emerald-500',
   };
+
+  const depthLabel = depth === 1 ? 'Direct' : `L${depth}`;
 
   return (
     <button
@@ -38,50 +41,12 @@ function SpecListItem({ spec, type, onClick }: SpecListItemProps) {
         >
           {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
         </span>
+        <span className="text-[8px] px-1 py-0.5 rounded bg-muted text-muted-foreground font-medium ml-auto">
+          {depthLabel}
+        </span>
       </div>
       <p className="text-[11px] text-foreground truncate leading-tight mt-0.5">{spec.name}</p>
     </button>
-  );
-}
-
-interface DepthGroupProps {
-  group: SpecsByDepth;
-  type: 'upstream' | 'downstream';
-  onSelectSpec: (specId: string) => void;
-}
-
-function DepthGroup({ group, type, onSelectSpec }: DepthGroupProps) {
-  const [isExpanded, setIsExpanded] = React.useState(group.depth === 1);
-  const depthLabel = group.depth === 1 ? 'Direct' : `Level ${group.depth}`;
-
-  return (
-    <div className="space-y-1">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-1.5 w-full text-left text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <span className={cn(
-          'transition-transform text-[8px]',
-          isExpanded ? 'rotate-90' : 'rotate-0'
-        )}>
-          ▶
-        </span>
-        <span className="font-medium">{depthLabel}</span>
-        <span className="opacity-60">({group.specs.length})</span>
-      </button>
-      {isExpanded && (
-        <div className="space-y-1 ml-2">
-          {group.specs.map((spec) => (
-            <SpecListItem
-              key={spec.id}
-              spec={spec}
-              type={type}
-              onClick={() => onSelectSpec(spec.id)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -154,15 +119,18 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
             </span>
           </div>
           {upstream.length > 0 ? (
-            <div className="space-y-2">
-              {upstream.map((group) => (
-                <DepthGroup
-                  key={group.depth}
-                  group={group}
-                  type="upstream"
-                  onSelectSpec={onSelectSpec}
-                />
-              ))}
+            <div className="space-y-1.5">
+              {upstream.flatMap((group) =>
+                group.specs.map((spec) => (
+                  <SpecListItem
+                    key={spec.id}
+                    spec={spec}
+                    type="upstream"
+                    depth={group.depth}
+                    onClick={() => onSelectSpec(spec.id)}
+                  />
+                ))
+              )}
             </div>
           ) : (
             <p className="text-xs text-muted-foreground/60 italic">No upstream dependencies</p>
@@ -178,15 +146,18 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
             </span>
           </div>
           {downstream.length > 0 ? (
-            <div className="space-y-2">
-              {downstream.map((group) => (
-                <DepthGroup
-                  key={group.depth}
-                  group={group}
-                  type="downstream"
-                  onSelectSpec={onSelectSpec}
-                />
-              ))}
+            <div className="space-y-1.5">
+              {downstream.flatMap((group) =>
+                group.specs.map((spec) => (
+                  <SpecListItem
+                    key={spec.id}
+                    spec={spec}
+                    type="downstream"
+                    depth={group.depth}
+                    onClick={() => onSelectSpec(spec.id)}
+                  />
+                ))
+              )}
             </div>
           ) : (
             <p className="text-xs text-muted-foreground/60 italic">No specs depend on this</p>
