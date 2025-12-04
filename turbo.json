@@ -11,7 +11,8 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR"]
     },
     "typecheck": {
       "dependsOn": ["^build"],
