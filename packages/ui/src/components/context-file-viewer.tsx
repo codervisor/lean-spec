@@ -8,7 +8,25 @@
 'use client';
 
 import * as React from 'react';
-import { Copy, Check, FileText, Clock, Coins, ExternalLink, Maximize2 } from 'lucide-react';
+import { 
+  Copy, 
+  Check, 
+  FileText, 
+  Clock, 
+  Coins, 
+  ExternalLink, 
+  Maximize2,
+  Bot,
+  BookOpen,
+  ScrollText,
+  FileCode,
+  Settings,
+  History,
+  Users,
+  Shield,
+  Scale,
+  Sparkles,
+} from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +49,56 @@ interface ContextFileViewerProps {
   searchQuery?: string;
   projectRoot?: string;
   onViewDetail?: () => void;
+}
+
+/**
+ * Get icon for file based on name
+ */
+function getFileIcon(fileName: string): React.ComponentType<{ className?: string }> {
+  const name = fileName.toLowerCase();
+  
+  // Agent instruction files
+  if (name === 'agents.md' || name.includes('agent')) return Bot;
+  if (name === 'gemini.md') return Sparkles;
+  if (name === 'claude.md') return Bot;
+  if (name === 'copilot.md' || name === 'copilot-instructions.md') return Bot;
+  
+  // Project documentation
+  if (name === 'readme.md') return BookOpen;
+  if (name === 'contributing.md') return Users;
+  if (name === 'changelog.md') return History;
+  if (name === 'license.md' || name === 'license') return Scale;
+  if (name === 'security.md') return Shield;
+  
+  // Config files
+  if (name.endsWith('.json')) return Settings;
+  if (name === 'config.json') return Settings;
+  
+  // Code-related
+  if (name.includes('api') || name.includes('spec')) return FileCode;
+  
+  // Default
+  return ScrollText;
+}
+
+/**
+ * Get icon color class for file based on name
+ */
+function getFileIconColor(fileName: string): string {
+  const name = fileName.toLowerCase();
+  
+  if (name === 'agents.md' || name.includes('agent')) return 'text-purple-500';
+  if (name === 'gemini.md') return 'text-blue-500';
+  if (name === 'claude.md') return 'text-orange-500';
+  if (name === 'copilot.md' || name === 'copilot-instructions.md') return 'text-sky-500';
+  if (name === 'readme.md') return 'text-green-500';
+  if (name === 'contributing.md') return 'text-pink-500';
+  if (name === 'changelog.md') return 'text-amber-500';
+  if (name === 'license.md' || name === 'license') return 'text-slate-500';
+  if (name === 'security.md') return 'text-red-500';
+  if (name.endsWith('.json')) return 'text-yellow-500';
+  
+  return 'text-muted-foreground';
 }
 
 /**
@@ -147,6 +215,9 @@ export function ContextFileViewer({
 
   const isJson = name.endsWith('.json');
   const isMarkdown = name.endsWith('.md');
+  
+  const FileIcon = getFileIcon(name);
+  const iconColor = getFileIconColor(name);
 
   // For non-markdown content with search, highlight matches
   const renderPlainContent = (text: string) => {
@@ -167,7 +238,7 @@ export function ContextFileViewer({
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <FileIcon className={cn('h-4 w-4 shrink-0', iconColor)} />
             <div className="min-w-0">
               <CardTitle className="text-sm font-medium truncate">{name}</CardTitle>
               <p className="text-xs text-muted-foreground truncate">{path}</p>

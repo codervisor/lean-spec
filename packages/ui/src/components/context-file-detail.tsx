@@ -11,7 +11,24 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
-import { Copy, Check, Clock, Coins, ExternalLink, ArrowLeft } from 'lucide-react';
+import { 
+  Copy, 
+  Check, 
+  Clock, 
+  Coins, 
+  ExternalLink, 
+  ArrowLeft,
+  Bot,
+  BookOpen,
+  ScrollText,
+  FileCode,
+  Settings,
+  History,
+  Users,
+  Shield,
+  Scale,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TableOfContentsSidebar, TableOfContents } from '@/components/table-of-contents';
@@ -24,6 +41,56 @@ interface ContextFileDetailProps {
   file: ContextFile;
   projectRoot?: string;
   onBack: () => void;
+}
+
+/**
+ * Get icon for file based on name
+ */
+function getFileIcon(fileName: string): React.ComponentType<{ className?: string }> {
+  const name = fileName.toLowerCase();
+  
+  // Agent instruction files
+  if (name === 'agents.md' || name.includes('agent')) return Bot;
+  if (name === 'gemini.md') return Sparkles;
+  if (name === 'claude.md') return Bot;
+  if (name === 'copilot.md' || name === 'copilot-instructions.md') return Bot;
+  
+  // Project documentation
+  if (name === 'readme.md') return BookOpen;
+  if (name === 'contributing.md') return Users;
+  if (name === 'changelog.md') return History;
+  if (name === 'license.md' || name === 'license') return Scale;
+  if (name === 'security.md') return Shield;
+  
+  // Config files
+  if (name.endsWith('.json')) return Settings;
+  if (name === 'config.json') return Settings;
+  
+  // Code-related
+  if (name.includes('api') || name.includes('spec')) return FileCode;
+  
+  // Default
+  return ScrollText;
+}
+
+/**
+ * Get icon color class for file based on name
+ */
+function getFileIconColor(fileName: string): string {
+  const name = fileName.toLowerCase();
+  
+  if (name === 'agents.md' || name.includes('agent')) return 'text-purple-500';
+  if (name === 'gemini.md') return 'text-blue-500';
+  if (name === 'claude.md') return 'text-orange-500';
+  if (name === 'copilot.md' || name === 'copilot-instructions.md') return 'text-sky-500';
+  if (name === 'readme.md') return 'text-green-500';
+  if (name === 'contributing.md') return 'text-pink-500';
+  if (name === 'changelog.md') return 'text-amber-500';
+  if (name === 'license.md' || name === 'license') return 'text-slate-500';
+  if (name === 'security.md') return 'text-red-500';
+  if (name.endsWith('.json')) return 'text-yellow-500';
+  
+  return 'text-muted-foreground';
 }
 
 /**
@@ -68,6 +135,9 @@ function getVSCodeUri(projectRoot: string, filePath: string): string {
 
 export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDetailProps) {
   const [copied, setCopied] = React.useState(false);
+  
+  const FileIcon = getFileIcon(file.name);
+  const iconColor = getFileIconColor(file.name);
 
   const handleCopy = async () => {
     try {
@@ -104,6 +174,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back
             </Button>
+            <FileIcon className={cn('h-5 w-5 shrink-0', iconColor)} />
             <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">
               {file.name}
             </h1>
