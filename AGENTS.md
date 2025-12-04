@@ -111,6 +111,8 @@ node bin/lean-spec.js validate --check-deps # Verify dependencies
 cd docs-site && npm run build               # Test docs build
 ```
 
+See [docs/agents/RULES.md](docs/agents/RULES.md) for development rules.
+
 ## Publishing Releases
 
 See [docs/agents/PUBLISHING.md](docs/agents/PUBLISHING.md).
