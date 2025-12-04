@@ -51,6 +51,13 @@ function main() {
     }
   }
 
+  // Remove copied README.md from CLI package (it's copied from root during prepare-publish)
+  const cliReadme = join(ROOT, 'packages/cli/README.md');
+  if (existsSync(cliReadme)) {
+    unlinkSync(cliReadme);
+    console.log('\n📄 Removed packages/cli/README.md (copied from root)');
+  }
+
   if (restored > 0) {
     console.log(`\n✅ Restored ${restored} package(s)`);
   } else {

@@ -11,10 +11,11 @@
  * 1. Finds all workspace:* dependencies in packages
  * 2. Resolves actual versions from local package.json files
  * 3. Creates temporary package.json files with resolved versions
- * 4. After publish, restore original package.json files
+ * 4. Copies root README.md to CLI package for npm display
+ * 5. After publish, restore original package.json files
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -127,6 +128,15 @@ function main() {
     if (processPackage(pkg)) {
       modified.push(pkg);
     }
+  }
+
+  // Copy root README.md to CLI package for npm display
+  const rootReadme = join(ROOT, 'README.md');
+  const cliReadme = join(ROOT, 'packages/cli/README.md');
+  if (existsSync(rootReadme)) {
+    copyFileSync(rootReadme, cliReadme);
+    console.log('\n📄 Copied root README.md to packages/cli/README.md');
+    modified.push('packages/cli/README.md');
   }
 
   if (modified.length > 0) {
