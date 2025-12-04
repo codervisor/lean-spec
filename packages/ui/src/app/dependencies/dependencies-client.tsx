@@ -40,24 +40,40 @@ export function ProjectDependencyGraphClient({ data }: ProjectDependencyGraphCli
   const [selectorOpen, setSelectorOpen] = React.useState(false);
   const [selectorQuery, setSelectorQuery] = React.useState('');
   const selectorRef = React.useRef<HTMLDivElement>(null);
-  const initialSpecProcessed = React.useRef(false);
+  // Track if we've completed initial URL-to-state sync
+  const initialSyncComplete = React.useRef(false);
+  // Track the expected focusedNodeId after URL initialization (to avoid URL update race)
+  const initialFocusedNodeId = React.useRef<string | null>(null);
 
-  // Initialize focused node from URL param on first load only
+  // Initialize focused node from URL param on mount
   React.useEffect(() => {
-    if (specParam && !initialSpecProcessed.current) {
-      // Find the node by spec number
-      const node = data.nodes.find((n) => n.number.toString() === specParam);
-      if (node) {
-        setFocusedNodeId(node.id);
+    if (!initialSyncComplete.current) {
+      if (specParam) {
+        const node = data.nodes.find((n) => n.number.toString() === specParam);
+        if (node) {
+          initialFocusedNodeId.current = node.id;
+          setFocusedNodeId(node.id);
+        }
       }
-      initialSpecProcessed.current = true;
+      initialSyncComplete.current = true;
     }
   }, [specParam, data.nodes]);
 
   // Sync URL with focused node state
   React.useEffect(() => {
-    // Skip during initial load
-    if (!initialSpecProcessed.current) return;
+    // Skip if initial sync hasn't completed
+    if (!initialSyncComplete.current) return;
+    
+    // Skip if this is the initial focusedNodeId set from URL
+    if (initialFocusedNodeId.current !== null) {
+      if (focusedNodeId === initialFocusedNodeId.current) {
+        // This is the initial sync, clear the ref but don't update URL
+        initialFocusedNodeId.current = null;
+        return;
+      }
+      // focusedNodeId changed to something else, clear the ref
+      initialFocusedNodeId.current = null;
+    }
     
     const focusedNode = focusedNodeId ? data.nodes.find((n) => n.id === focusedNodeId) : null;
     const newSpecParam = focusedNode ? focusedNode.number.toString() : null;
