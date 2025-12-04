@@ -9,11 +9,7 @@ tags:
   - dependencies
 priority: medium
 created_at: '2025-12-04T04:11:31.522Z'
-related:
-  - 097-dag-visualization-library
-  - 119-ui-diagram-rendering
-  - 138-ui-dependencies-dual-view
-updated_at: '2025-12-04T05:59:26.447Z'
+updated_at: '2025-12-04T06:46:39.332Z'
 transitions:
   - status: in-progress
     at: '2025-12-04T04:15:40.867Z'
@@ -21,6 +17,8 @@ transitions:
     at: '2025-12-04T04:20:19.953Z'
 completed_at: '2025-12-04T04:20:19.953Z'
 completed: '2025-12-04'
+depends_on:
+  - 097-dag-visualization-library
 ---
 
 # UI Dependencies Page - Project-Wide Dependency Visualization

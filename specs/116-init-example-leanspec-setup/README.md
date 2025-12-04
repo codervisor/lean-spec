@@ -8,10 +8,7 @@ tags:
   - init
 priority: high
 created_at: '2025-11-24T06:11:04.198Z'
-related:
-  - '114'
-  - 114-example-projects-scaffold
-updated_at: '2025-11-24T06:28:37.554Z'
+updated_at: '2025-12-04T06:46:28.678Z'
 transitions:
   - status: in-progress
     at: '2025-11-24T06:12:17.567Z'
@@ -19,6 +16,8 @@ transitions:
     at: '2025-11-24T06:28:37.554Z'
 completed_at: '2025-11-24T06:28:37.554Z'
 completed: '2025-11-24'
+depends_on:
+  - 114-example-projects-scaffold
 ---
 
 # Fix: `lean-spec init --example` Missing LeanSpec Files

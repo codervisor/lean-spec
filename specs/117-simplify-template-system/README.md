@@ -14,8 +14,6 @@ transitions:
     at: '2025-11-24T07:54:57.954Z'
 completed_at: '2025-11-24T07:54:57.954Z'
 completed: '2025-11-24'
-related:
-  - 073-template-engine-agents-md
   - 086-template-component-deduplication
 ---
 

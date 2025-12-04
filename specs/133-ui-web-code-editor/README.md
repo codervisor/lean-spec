@@ -9,11 +9,6 @@ tags:
   - dx
 priority: low
 created_at: '2025-11-28T03:37:36.843Z'
-related:
-  - 131-ui-project-context-visibility
-  - 107-ui-ux-refinements
-  - 119-ui-diagram-rendering
-  - 134-ui-metadata-editing
 updated_at: '2025-12-04T04:10:12.737Z'
 ---
 

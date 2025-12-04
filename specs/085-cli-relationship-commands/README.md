@@ -11,15 +11,6 @@ created_at: '2025-11-16T13:33:40.858Z'
 depends_on:
   - 035-live-specs-showcase
 updated_at: '2025-11-28T01:27:53.930Z'
-related:
-  - 076-programmatic-spec-relationships
-  - 081-web-app-ux-redesign
-  - 068-live-specs-ux-enhancements
-  - 082-web-realtime-sync-architecture
-  - 080-mcp-server-modular-architecture
-  - 059-programmatic-spec-management
-  - 086-template-component-deduplication
-  - 129-mcp-link-tool
 completed_at: '2025-11-16T14:08:51.283Z'
 completed: '2025-11-16'
 transitions:

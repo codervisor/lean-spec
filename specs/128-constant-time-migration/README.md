@@ -9,10 +9,6 @@ tags:
 priority: high
 created_at: '2025-11-28T01:21:44.679Z'
 updated_at: '2025-11-28T01:50:23.783Z'
-related:
-  - 047-git-backfill-timestamps
-  - 063-migration-from-existing-tools
-  - 129-mcp-link-tool
 transitions:
   - status: in-progress
     at: '2025-11-28T01:37:15.462Z'

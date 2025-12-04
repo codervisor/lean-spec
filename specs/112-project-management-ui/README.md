@@ -4,9 +4,9 @@ created: '2025-11-20'
 tags: []
 priority: medium
 created_at: '2025-11-20T08:12:59.970Z'
-related:
+updated_at: '2025-12-04T06:46:17.892Z'
+depends_on:
   - 109-local-project-switching
-updated_at: '2025-11-20T08:35:51.780Z'
 ---
 
 # project-management-ui

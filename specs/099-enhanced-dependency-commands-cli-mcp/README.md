@@ -17,11 +17,6 @@ completed: '2025-11-17'
 transitions:
   - status: complete
     at: '2025-11-17T09:13:14.295Z'
-related:
-  - 082-web-realtime-sync-architecture
-  - 080-mcp-server-modular-architecture
-  - 081-web-app-ux-redesign
-  - 083-web-navigation-performance
   - 138-ui-dependencies-dual-view
 ---
 

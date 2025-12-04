@@ -6,10 +6,6 @@ tags:
   - polish
   - v0.2.0
 priority: high
-related:
-  - 043-official-launch-02
-  - 026-init-pattern-selection
-  - 025-template-config-updates
 created_at: '2025-11-03T00:00:00Z'
 updated_at: '2025-11-26T02:36:00.269Z'
 completed_at: '2025-11-05T05:43:43.501Z'

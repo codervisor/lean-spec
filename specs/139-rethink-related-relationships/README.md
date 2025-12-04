@@ -9,14 +9,12 @@ tags:
   - discussion
 priority: high
 created_at: '2025-12-04T06:14:09.463Z'
-related:
-  - 138-ui-dependencies-dual-view
-  - 099-enhanced-dependency-commands-cli-mcp
-  - 097-dag-visualization-library
-updated_at: '2025-12-04T06:19:32.562Z'
+updated_at: '2025-12-04T06:46:39.892Z'
 transitions:
   - status: in-progress
     at: '2025-12-04T06:19:32.562Z'
+depends_on:
+  - 138-ui-dependencies-dual-view
 ---
 
 # Rethink: Do We Need `related` as Soft Dependency?

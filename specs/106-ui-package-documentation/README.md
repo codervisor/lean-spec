@@ -4,13 +4,6 @@ created: '2025-11-18'
 tags: []
 priority: medium
 created_at: '2025-11-18T14:33:07.663Z'
-related:
-  - 105-docs-site-enhancements
-  - 087-cli-ui-command
-  - 082-web-realtime-sync-architecture
-  - 035-live-specs-showcase
-  - 081-web-app-ux-redesign
-  - 131-ui-project-context-visibility
 updated_at: '2025-11-28T03:30:16.691Z'
 transitions:
   - status: in-progress

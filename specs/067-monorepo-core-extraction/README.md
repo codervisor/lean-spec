@@ -14,11 +14,6 @@ completed: '2025-11-11'
 transitions:
   - status: complete
     at: '2025-11-11T14:06:01.220Z'
-related:
-  - 090-leanspec-sdd-case-studies
-  - 035-live-specs-showcase
-  - 065-v03-planning
-  - 080-mcp-server-modular-architecture
   - 095-pr-migration-verification
 ---
 

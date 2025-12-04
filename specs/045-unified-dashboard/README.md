@@ -19,12 +19,6 @@ transitions:
     at: '2025-11-06T06:55:31.151Z'
   - status: complete
     at: '2025-11-07T00:00:00Z'
-related:
-  - 048-spec-complexity-analysis
-  - 059-programmatic-spec-management
-  - 043-official-launch-02
-  - 054-validate-output-lint-style
-  - 109-local-project-switching
   - 121-mcp-first-agent-experience
 ---
 

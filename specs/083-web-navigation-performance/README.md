@@ -14,11 +14,6 @@ completed: '2025-11-17'
 transitions:
   - status: complete
     at: '2025-11-17T01:09:49.197Z'
-related:
-  - 082-web-realtime-sync-architecture
-  - 081-web-app-ux-redesign
-  - 068-live-specs-ux-enhancements
-  - 035-live-specs-showcase
   - 099-enhanced-dependency-commands-cli-mcp
 ---
 

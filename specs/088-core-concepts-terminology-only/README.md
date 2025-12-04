@@ -16,9 +16,6 @@ transitions:
     at: '2025-11-17T09:14:30.117Z'
 completed_at: '2025-11-17T02:10:43.845Z'
 completed: '2025-11-17'
-related:
-  - 096-docs-beginner-first-reorg
-  - 089-sdd-practical-tutorials
   - 095-pr-migration-verification
 ---
 

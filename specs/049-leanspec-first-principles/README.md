@@ -8,18 +8,10 @@ tags:
   - foundation
   - principles
 priority: critical
-related:
-  - 048-spec-complexity-analysis
-  - 043-official-launch-02
-  - 012-sub-spec-files
-  - 053-spec-assets-philosophy
-  - 071-simplified-token-validation
-  - 057-docs-validation-comprehensive
-  - 061-ai-assisted-spec-writing
-  - 062-docs-info-architecture-v2
-  - 069-token-counting-utils
 created_at: '2025-11-26T02:35:37.506Z'
-updated_at: '2025-11-26T06:03:44.576Z'
+updated_at: '2025-12-04T06:46:07.013Z'
+depends_on:
+  - 048-spec-complexity-analysis
 ---
 
 # LeanSpec First Principles (第一性原理)

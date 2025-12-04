@@ -16,12 +16,6 @@ transitions:
     at: '2025-11-10T07:12:35.179Z'
 completed_at: '2025-11-10T07:12:35.179Z'
 completed: '2025-11-10'
-related:
-  - 061-ai-assisted-spec-writing
-  - 059-programmatic-spec-management
-  - 060-core-concepts-coherence
-  - 058-docs-overview-polish
-  - 049-leanspec-first-principles
   - 043-official-launch-02
 ---
 

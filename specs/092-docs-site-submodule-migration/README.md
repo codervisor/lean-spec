@@ -15,8 +15,6 @@ transitions:
     at: '2025-11-17T07:51:43.434Z'
 completed_at: '2025-11-17T07:51:43.434Z'
 completed: '2025-11-17'
-related:
-  - 096-docs-beginner-first-reorg
   - 094-ai-chatbot-web-integration
 ---
 

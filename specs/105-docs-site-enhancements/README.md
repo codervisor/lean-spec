@@ -4,11 +4,6 @@ created: '2025-11-18'
 tags: []
 priority: medium
 created_at: '2025-11-18T13:42:51.756Z'
-related:
-  - 106-ui-package-documentation
-  - 087-cli-ui-command
-  - 035-live-specs-showcase
-  - 108-fix-zh-intro
 updated_at: '2025-11-20T05:50:42.004Z'
 transitions:
   - status: in-progress

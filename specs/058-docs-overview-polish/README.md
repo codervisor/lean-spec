@@ -7,12 +7,6 @@ tags:
   - restructure
   - first-principles
 priority: high
-related:
-  - '056'
-  - '057'
-  - 049
-  - 043-official-launch-02
-  - 062-docs-info-architecture-v2
 depends_on:
   - 049
 created_at: '2025-11-07T01:53:09.673Z'

@@ -7,17 +7,6 @@ tags:
   - context-economy
   - quality
 priority: high
-related:
-  - 048-spec-complexity-analysis
-  - 049-leanspec-first-principles
-  - 018-spec-validation
-  - 059-programmatic-spec-management
-  - 069-token-counting-utils
-  - 075-intelligent-search-engine
-  - 016-github-action
-  - 051-docs-system-prompt-principles
-  - 080-mcp-server-modular-architecture
-  - 084-sub-spec-visibility-in-tools
 created_at: '2025-11-11T06:58:44.846Z'
 updated_at: '2025-11-26T06:03:57.996Z'
 completed_at: '2025-11-11T15:00:26.886Z'

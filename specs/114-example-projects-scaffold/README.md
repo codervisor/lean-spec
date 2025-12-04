@@ -14,8 +14,6 @@ completed: '2025-11-24'
 transitions:
   - status: complete
     at: '2025-11-24T05:03:27.523Z'
-related:
-  - 116-init-example-leanspec-setup
   - 113-tutorial-simplification
 ---
 

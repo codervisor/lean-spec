@@ -9,15 +9,6 @@ tags:
 priority: high
 assignee: marvin
 created_at: '2025-11-20T05:48:22.711Z'
-related:
-  - 017-vscode-extension
-  - 036-pm-integrations
-  - 087-cli-ui-command
-  - 112-project-management-ui
-  - 082-web-realtime-sync-architecture
-  - 081-web-app-ux-redesign
-  - 094-ai-chatbot-web-integration
-  - 045-unified-dashboard
 updated_at: '2025-11-26T06:04:10.962Z'
 transitions:
   - status: in-progress

@@ -16,13 +16,6 @@ transitions:
     at: '2025-11-17T09:14:54.020Z'
 completed_at: '2025-11-17T02:12:47.445Z'
 completed: '2025-11-17'
-related:
-  - 071-simplified-token-validation
-  - 082-web-realtime-sync-architecture
-  - 067-monorepo-core-extraction
-  - 043-official-launch-02
-  - 096-docs-beginner-first-reorg
-  - 095-pr-migration-verification
   - 122-ai-agent-deps-management-fix
 ---
 

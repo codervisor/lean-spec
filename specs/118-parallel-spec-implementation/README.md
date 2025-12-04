@@ -17,8 +17,6 @@ completed_at: '2025-11-25T06:59:12.413Z'
 completed: '2025-11-25'
 depends_on:
   - 045-unified-dashboard
-related:
-  - 047-git-backfill-timestamps
   - 048-spec-complexity-analysis
 ---
 

@@ -7,10 +7,6 @@ tags:
   - launch
   - v0.2.0
 priority: high
-related:
-  - '043'
-  - 043-official-launch-02
-  - 051-docs-system-prompt-principles
 created_at: '2025-11-06T16:05:09.955Z'
 completed: '2025-11-06'
 updated_at: '2025-11-26T06:03:32.190Z'

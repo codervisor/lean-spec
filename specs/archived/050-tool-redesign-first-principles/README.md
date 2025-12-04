@@ -10,10 +10,6 @@ tags:
   - dx
   - v0.3.0
 priority: medium
-related:
-  - 049-leanspec-first-principles
-  - 048-spec-complexity-analysis
-  - 043-official-launch-02
 created_at: '2025-11-05T00:00:00Z'
 updated_at: '2025-11-10T07:50:03.476Z'
 transitions:

@@ -11,16 +11,6 @@ created_at: '2025-11-14T03:21:43.076Z'
 depends_on:
   - 068
   - 082-web-realtime-sync-architecture
-related:
-  - 052-branding-assets
-  - 068-live-specs-ux-enhancements
-  - 094-ai-chatbot-web-integration
-  - 018-spec-validation
-  - 083-web-navigation-performance
-  - 085-cli-relationship-commands
-  - 099-enhanced-dependency-commands-cli-mcp
-  - 106-ui-package-documentation
-  - 109-local-project-switching
 updated_at: '2025-11-26T06:04:10.958Z'
 transitions:
   - status: in-progress

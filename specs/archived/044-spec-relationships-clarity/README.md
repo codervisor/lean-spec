@@ -8,8 +8,6 @@ tags:
   - relationships
   - v0.2.0
 priority: high
-related:
-  - 043-official-launch-02
 created_at: '2025-11-04T00:00:00Z'
 updated_at: '2025-11-11T04:26:08.272Z'
 completed_at: '2025-11-06T06:35:03.913Z'

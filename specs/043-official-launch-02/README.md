@@ -7,25 +7,6 @@ tags:
   - milestone
   - stability
 priority: critical
-related:
-  - '054'
-  - 090-leanspec-sdd-case-studies
-  - 058-docs-overview-polish
-  - 065-v03-planning
-  - 049-leanspec-first-principles
-  - 048-spec-complexity-analysis
-  - 051-docs-system-prompt-principles
-  - 018-spec-validation
-  - 035-live-specs-showcase
-  - 034-copilot-slash-commands
-  - 056-docs-site-accuracy-audit
-  - 045-unified-dashboard
-  - 052-branding-assets
-  - 026-init-pattern-selection
-  - 024-pattern-aware-list-grouping
-  - 061-ai-assisted-spec-writing
-  - 062-docs-info-architecture-v2
-  - 095-pr-migration-verification
 created_at: '2025-11-04T00:00:00Z'
 updated_at: '2025-11-26T06:04:04.947Z'
 completed_at: '2025-11-11T06:41:01.866Z'

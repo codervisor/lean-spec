@@ -6,8 +6,6 @@ tags:
   - architecture
   - maintenance
 priority: medium
-related:
-  - 20251101/006-cli-ux-enhancement
 completed: '2025-11-02'
 ---
 

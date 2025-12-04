@@ -9,9 +9,6 @@ tags:
 priority: high
 created_at: '2025-11-13T13:08:46.014Z'
 updated_at: '2025-11-26T06:03:50.934Z'
-related:
-  - 073-template-engine-agents-md
-  - 059-programmatic-spec-management
   - 065-v03-planning
 ---
 

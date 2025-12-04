@@ -8,15 +8,7 @@ tags:
   - integration
 priority: medium
 created_at: '2025-11-17T01:31:21.397Z'
-related:
-  - 035-live-specs-showcase
-  - 081-web-app-ux-redesign
-  - 082-web-realtime-sync-architecture
-  - 105-docs-site-enhancements
-  - 109-local-project-switching
-  - 017-vscode-extension
-  - 106-ui-package-documentation
-updated_at: '2025-11-26T06:04:10.654Z'
+updated_at: '2025-12-04T06:46:17.622Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T01:59:34.354Z'
@@ -24,6 +16,9 @@ transitions:
     at: '2025-11-17T06:12:03.020Z'
 completed_at: '2025-11-17T02:00:24.131Z'
 completed: '2025-11-17'
+depends_on:
+  - 082-web-realtime-sync-architecture
+  - 035-live-specs-showcase
 ---
 
 # CLI UI Command: `lean-spec ui`

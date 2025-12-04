@@ -13,7 +13,6 @@ completed: '2025-11-24'
 transitions:
   - status: complete
     at: '2025-11-24T03:14:19.419Z'
-related:
   - 114-example-projects-scaffold
 ---
 

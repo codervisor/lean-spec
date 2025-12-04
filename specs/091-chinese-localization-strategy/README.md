@@ -20,9 +20,6 @@ completed_at: '2025-11-17T02:14:06.656Z'
 completed: '2025-11-17'
 depends_on:
   - 064-docs-site-zh-translation
-related:
-  - 089-sdd-practical-tutorials
-  - 096-docs-beginner-first-reorg
   - 095-pr-migration-verification
 ---
 

@@ -8,9 +8,6 @@ tags:
 priority: low
 depends_on:
   - 067-monorepo-core-extraction
-related:
-  - 109-local-project-switching
-  - 087-cli-ui-command
 created_at: '2025-11-20T05:50:48.128Z'
 updated_at: '2025-11-26T06:04:04.065Z'
 ---

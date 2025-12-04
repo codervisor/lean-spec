@@ -9,29 +9,16 @@ tags:
   - v0.3.0
 priority: critical
 created_at: '2025-11-14T05:33:26.170Z'
-updated_at: '2025-11-26T06:04:10.952Z'
+updated_at: '2025-12-04T06:46:17.344Z'
 transitions:
   - status: in-progress
     at: '2025-11-14T05:35:02.854Z'
   - status: complete
     at: '2025-11-17T08:18:56.781Z'
-related:
-  - 035-live-specs-showcase
-  - 081-web-app-ux-redesign
-  - 068-live-specs-ux-enhancements
-  - 065-v03-planning
-  - 094-ai-chatbot-web-integration
-  - 090-leanspec-sdd-case-studies
-  - 083-web-navigation-performance
-  - 059-programmatic-spec-management
-  - 084-sub-spec-visibility-in-tools
-  - 085-cli-relationship-commands
-  - 095-pr-migration-verification
-  - 099-enhanced-dependency-commands-cli-mcp
-  - 106-ui-package-documentation
-  - 109-local-project-switching
 completed_at: '2025-11-17T08:18:56.781Z'
 completed: '2025-11-17'
+depends_on:
+  - 035-live-specs-showcase
 ---
 
 # Web App Realtime Spec Sync Architecture

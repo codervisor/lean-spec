@@ -14,15 +14,6 @@ transitions:
     at: '2025-11-13T08:21:45.345Z'
   - status: planned
     at: '2025-11-17T08:18:44.417Z'
-related:
-  - 121-mcp-first-agent-experience
-  - 110-project-aware-agents-generation
-  - 061-ai-assisted-spec-writing
-  - 034-copilot-slash-commands
-  - 070-mcp-token-counting-tool
-  - 076-programmatic-spec-relationships
-  - 078-sub-spec-template-system
-  - 094-ai-chatbot-web-integration
   - 122-ai-agent-deps-management-fix
 ---
 

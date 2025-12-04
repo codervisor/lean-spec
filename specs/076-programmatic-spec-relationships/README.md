@@ -15,9 +15,6 @@ completed: '2025-11-17'
 transitions:
   - status: complete
     at: '2025-11-17T01:11:49.548Z'
-related:
-  - 085-cli-relationship-commands
-  - 072-ai-agent-first-use-workflow
 depends_on:
   - 073-template-engine-agents-md
   - 074-content-at-creation
