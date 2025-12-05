@@ -145,10 +145,15 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
   const relationships = spec.relationships;
   
   // Use complete graph if available, otherwise fall back to basic relationships
+  // Format: "087-cli-ui-command" (number-name) for proper label formatting
   const completeRelationships = dependencyGraphData
     ? {
-        dependsOn: dependencyGraphData.dependsOn.map(s => s.specName),
-        requiredBy: dependencyGraphData.requiredBy.map(s => s.specName),
+        dependsOn: dependencyGraphData.dependsOn.map(s => 
+          s.specNumber ? `${s.specNumber}-${s.specName}` : s.specName
+        ),
+        requiredBy: dependencyGraphData.requiredBy.map(s => 
+          s.specNumber ? `${s.specNumber}-${s.specName}` : s.specName
+        ),
       }
     : relationships;
   
