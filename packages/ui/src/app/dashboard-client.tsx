@@ -201,10 +201,20 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Project overview and recent activity
-          </p>
+          <div className="flex items-center gap-3">
+            {currentProject?.color && (
+              <div
+                className="h-8 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: currentProject.color }}
+              />
+            )}
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground mt-2">
+                {currentProject ? `${currentProject.name} — overview and recent activity` : 'Project overview and recent activity'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}

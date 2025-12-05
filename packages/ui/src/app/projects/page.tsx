@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, FolderOpen, Star, MoreVertical, Trash2, Pencil, RefreshCw, Check, X, AlertTriangle, CheckCircle2, FileText, ArrowLeft } from 'lucide-react';
+import { Plus, Search, FolderOpen, Star, MoreVertical, Trash2, Pencil, RefreshCw, Check, X, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useProject } from '@/contexts/project-context';
 import { Button } from '@/components/ui/button';
@@ -10,17 +10,8 @@ import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,7 +50,6 @@ export default function ProjectsPage() {
   const [editingName, setEditingName] = useState('');
   const [validationStates, setValidationStates] = useState<Record<string, ProjectValidationState>>({});
   const [statsCache, setStatsCache] = useState<Record<string, ProjectStats>>({});
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -233,115 +223,108 @@ export default function ProjectsPage() {
     return null;
   };
 
-  const getSpecCount = (projectId: string) => {
-    const stats = statsCache[projectId];
-    return stats?.totalSpecs ?? null;
-  };
-
-  const selectedProjectData = selectedProject ? projects.find(p => p.id === selectedProject) : null;
-  const selectedProjectStats = selectedProject ? statsCache[selectedProject] : null;
-
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-muted/30">
-      <div className="container max-w-5xl py-8 space-y-8">
-        {/* Back navigation */}
-        {currentProject && (
-          <Link 
-            href={`/projects/${currentProject.id}/specs`}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to {currentProject.name}
-          </Link>
-        )}
+    <div className="min-h-screen bg-background">
+      {/* Header Section */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container max-w-7xl mx-auto py-6 space-y-6">
+          {/* Back navigation */}
+          {currentProject && (
+            <Link 
+              href={`/projects/${currentProject.id}/specs`}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to {currentProject.name}
+            </Link>
+          )}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage your LeanSpec projects and workspaces.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Projects</h1>
+              <p className="text-muted-foreground mt-1 text-lg">
+                Manage your LeanSpec projects and workspaces.
+              </p>
+            </div>
+            <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Project
-          </Button>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
+          <div className="flex items-center space-x-2 max-w-md">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background/50"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => (
+      <div className="container max-w-7xl mx-auto py-8">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredProjects.map((project) => {
+            const stats = statsCache[project.id];
+            return (
             <Card 
               key={project.id} 
-              className="group relative hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
-              onClick={() => setSelectedProject(project.id)}
+              className="group relative flex flex-col transition-all duration-200 hover:shadow-md hover:border-primary/20 overflow-hidden cursor-pointer bg-card"
+              onClick={() => handleProjectClick(project.id)}
             >
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ColorPicker
-                      value={project.color}
-                      onChange={(color) => {
-                        handleColorChange(project.id, color);
-                      }}
-                    />
-                    <div className="space-y-1 flex-1 min-w-0">
-                      {editingProjectId === project.id ? (
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Input
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            className="h-7 text-sm"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') saveProjectName(project.id);
-                              if (e.key === 'Escape') cancelEditing();
-                            }}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => saveProjectName(project.id)}
-                          >
-                            <Check className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={cancelEditing}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <CardTitle className="text-base leading-none flex items-center gap-2">
-                          <span className="truncate">
-                            {project.name}
-                          </span>
-                          {getValidationIcon(project.id)}
-                        </CardTitle>
-                      )}
-                      <CardDescription className="text-xs truncate max-w-[180px]" title={project.path}>
-                        {project.path}
-                      </CardDescription>
-                    </div>
+              <div className="h-1 w-full" style={{ backgroundColor: project.color || 'hsl(var(--primary))' }} />
+              
+              <CardHeader className="px-4 pt-4 pb-2 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {editingProjectId === project.id ? (
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="h-7 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveProjectName(project.id);
+                            if (e.key === 'Escape') cancelEditing();
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => saveProjectName(project.id)}
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={cancelEditing}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-base leading-none truncate" title={project.name}>
+                          {project.name}
+                        </h3>
+                        {getValidationIcon(project.id)}
+                      </div>
+                    )}
+                    <p className="text-[10px] font-mono text-muted-foreground truncate" title={project.path}>
+                      {project.path}
+                    </p>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                         <MoreVertical className="h-4 w-4" />
                         <span className="sr-only">Open menu</span>
                       </Button>
@@ -351,6 +334,17 @@ export default function ProjectsPage() {
                         <Pencil className="mr-2 h-4 w-4" />
                         Rename
                       </DropdownMenuItem>
+                      <div className="p-2" onClick={(e) => e.stopPropagation()}>
+                        <p className="text-xs text-muted-foreground mb-2 px-2">Project Color</p>
+                        <div className="flex flex-wrap gap-1 px-2">
+                           {/* Simple color selection in menu */}
+                           <ColorPicker
+                              value={project.color}
+                              onChange={(color) => handleColorChange(project.id, color)}
+                           />
+                        </div>
+                      </div>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleFavorite(project.id); }}>
                         <Star className="mr-2 h-4 w-4" />
                         {project.favorite ? 'Unfavorite' : 'Favorite'}
@@ -368,113 +362,57 @@ export default function ProjectsPage() {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              <CardContent className="pb-4">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center">
-                      <FolderOpen className="mr-1 h-3 w-3" />
-                      <span className="text-xs">Local</span>
+              
+              <CardContent className="px-4 pb-4 flex-1">
+                 <div className="flex items-center gap-4 py-1">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Specs</span>
+                      <span className="text-lg font-bold tracking-tight">{stats?.totalSpecs || 0}</span>
                     </div>
-                    {getSpecCount(project.id) !== null && (
-                      <div className="flex items-center">
-                        <FileText className="mr-1 h-3 w-3" />
-                        <span className="text-xs">{getSpecCount(project.id)} specs</span>
-                      </div>
-                    )}
-                  </div>
-                  {project.lastAccessed && (
-                    <span className="text-xs">
-                      {dayjs(project.lastAccessed).fromNow()}
-                    </span>
-                  )}
-                </div>
+                    <div className="w-px h-8 bg-border" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Completion</span>
+                      <span className="text-lg font-bold tracking-tight">{stats?.completionRate || 0}%</span>
+                    </div>
+                 </div>
               </CardContent>
+
+              <div className="px-4 py-2 bg-muted/20 border-t flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
+                 <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || '#666' }} />
+                    <span>Local</span>
+                 </div>
+                 {project.lastAccessed && (
+                    <span>{dayjs(project.lastAccessed).fromNow()}</span>
+                 )}
+              </div>
+              
               {project.favorite && (
-                <div className="absolute top-2 right-10 text-yellow-500">
-                  <Star className="h-4 w-4 fill-current" />
+                <div className="absolute top-0 right-0 p-2 pointer-events-none">
+                   <div className="bg-background/80 backdrop-blur-sm p-1.5 rounded-bl-lg border-b border-l shadow-sm">
+                      <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                   </div>
                 </div>
               )}
             </Card>
-          ))}
+          )})}
           
           {filteredProjects.length === 0 && !isLoading && (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center border rounded-lg border-dashed bg-background">
-              <FolderOpen className="h-10 w-10 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No projects found</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">
-                {searchQuery ? "Try adjusting your search query." : "Get started by adding your first project."}
+            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-xl bg-muted/10">
+              <div className="bg-muted/30 p-4 rounded-full mb-4">
+                <FolderOpen className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold">No projects found</h3>
+              <p className="text-muted-foreground mt-2 mb-6 max-w-sm">
+                {searchQuery ? "We couldn't find any projects matching your search." : "Get started by creating your first LeanSpec project."}
               </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Project
+                Create Project
               </Button>
             </div>
           )}
         </div>
-
-        {/* Project Detail Modal */}
-        <Dialog open={!!selectedProject} onOpenChange={(open) => !open && setSelectedProject(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {selectedProjectData?.name}
-                {selectedProject && getValidationIcon(selectedProject)}
-              </DialogTitle>
-              <DialogDescription>
-                {selectedProjectData?.path}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              {/* Stats */}
-              {selectedProjectStats && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-lg border p-3">
-                    <div className="text-2xl font-bold">{selectedProjectStats.totalSpecs}</div>
-                    <div className="text-xs text-muted-foreground">Total Specs</div>
-                  </div>
-                  <div className="rounded-lg border p-3">
-                    <div className="text-2xl font-bold">{selectedProjectStats.completionRate}%</div>
-                    <div className="text-xs text-muted-foreground">Completion</div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Status breakdown */}
-              {selectedProjectStats?.specsByStatus && selectedProjectStats.specsByStatus.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">By Status</div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedProjectStats.specsByStatus.map(({ status, count }) => (
-                      <div key={status} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
-                        <span className="font-medium">{count}</span>
-                        <span className="text-muted-foreground">{status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Last accessed */}
-              {selectedProjectData?.lastAccessed && (
-                <div className="text-xs text-muted-foreground">
-                  Last opened {dayjs(selectedProjectData.lastAccessed).fromNow()}
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setSelectedProject(null)}>
-                Close
-              </Button>
-              <Button onClick={() => {
-                if (selectedProject) {
-                  handleProjectClick(selectedProject);
-                }
-              }}>
-                Open Project
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <CreateProjectDialog 
           open={isCreateDialogOpen} 
