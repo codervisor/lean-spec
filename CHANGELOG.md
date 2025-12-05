@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `/api/projects/[id]/specs/[spec]/dependency-graph` API endpoint
 - **MCP `deps` tool fails to find spec by sequence number** - Now correctly resolves spec paths
 - **Duplicate icons in Status/Priority editors** - Fixed SelectValue to display explicit labels
+- **Dependencies page light theme contrast** - Updated node styling for light/dark mode compatibility
+  - Fixed unreadable nodes and edges in light theme
+  - Consistent color palette across both themes
 - **Command references updated** - Fixed `lspec` → `lean-spec` in documentation and code
 - **Project switcher navigation** - Uses `window.location.assign` for better state management
 
