@@ -1,15 +1,23 @@
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Command } from 'commander';
 import { loadAllSpecs, getSpec, type SpecInfo } from '../spec-loader.js';
-import { updateFrontmatter, type SpecFrontmatter } from '../frontmatter.js';
+import { updateFrontmatter, type SpecFrontmatter, type SpecStatus } from '../frontmatter.js';
 import { loadConfig } from '../config.js';
 import { 
   isGitRepository,
   extractGitTimestamps,
   fileExistsInGit,
+  getFirstCommitTimestamp,
   type GitTimestampData,
 } from '../utils/git-timestamps.js';
 import { resolveSpecPath } from '../utils/path-helpers.js';
+import { 
+  loadSpecsForBootstrap, 
+  type BootstrapSpecInfo,
+  inferStatusFromContent,
+  inferCreatedFromContent,
+} from '../utils/bootstrap-helpers.js';
 
 export interface BackfillResult {
   specPath: string;
@@ -19,8 +27,9 @@ export interface BackfillResult {
   completed_at?: string;
   assignee?: string;
   transitionsCount?: number;
-  source: 'git' | 'existing' | 'skipped';
+  source: 'git' | 'existing' | 'skipped' | 'bootstrapped';
   reason?: string;
+  bootstrapped?: boolean; // Was frontmatter created from scratch?
 }
 
 export interface BackfillOptions {
@@ -30,6 +39,7 @@ export interface BackfillOptions {
   includeTransitions?: boolean;
   specs?: string[]; // specific specs to target
   json?: boolean;
+  bootstrap?: boolean; // Create frontmatter for files without it
 }
 
 /**
@@ -44,6 +54,7 @@ export function backfillCommand(): Command {
     .option('--assignee', 'Include assignee from first commit author')
     .option('--transitions', 'Include full status transition history')
     .option('--all', 'Include all optional fields (assignee + transitions)')
+    .option('--bootstrap', 'Create frontmatter for files without valid frontmatter')
     .option('--json', 'Output as JSON')
     .action(async (specs: string[] | undefined, options: {
       dryRun?: boolean;
@@ -52,6 +63,7 @@ export function backfillCommand(): Command {
       transitions?: boolean;
       all?: boolean;
       json?: boolean;
+      bootstrap?: boolean;
     }) => {
       await backfillTimestamps({
         dryRun: options.dryRun,
@@ -60,6 +72,7 @@ export function backfillCommand(): Command {
         includeTransitions: options.transitions || options.all,
         specs: specs && specs.length > 0 ? specs : undefined,
         json: options.json,
+        bootstrap: options.bootstrap,
       });
     });
 }
@@ -77,15 +90,41 @@ export async function backfillTimestamps(options: BackfillOptions = {}): Promise
     process.exit(1);
   }
   
-  // Load specs to process
+  const config = await loadConfig();
+  const cwd = process.cwd();
+  const specsDir = path.join(cwd, config.specsDir);
+  
+  // Bootstrap mode: also load specs without valid frontmatter
+  if (options.bootstrap) {
+    console.log('\x1b[36m🔧 Bootstrap mode - will create frontmatter for files without it\x1b[0m\n');
+    
+    const bootstrapSpecs = await loadSpecsForBootstrap(specsDir, {
+      includeArchived: true,
+      targetSpecs: options.specs,
+    });
+    
+    if (bootstrapSpecs.length === 0) {
+      console.log('No specs found to bootstrap');
+      return results;
+    }
+    
+    console.log(`Analyzing git history for ${bootstrapSpecs.length} spec${bootstrapSpecs.length === 1 ? '' : 's'}...\n`);
+    
+    for (const spec of bootstrapSpecs) {
+      const result = await bootstrapSpec(spec, options);
+      results.push(result);
+    }
+    
+    printSummary(results, options);
+    return results;
+  }
+  
+  // Normal mode: load specs with valid frontmatter only
   let specs: SpecInfo[];
   
   if (options.specs && options.specs.length > 0) {
     // Load specific specs
     specs = [];
-    const config = await loadConfig();
-    const cwd = process.cwd();
-    const specsDir = path.join(cwd, config.specsDir);
     
     for (const specPath of options.specs) {
       const resolved = await resolveSpecPath(specPath, cwd, specsDir);
@@ -105,6 +144,7 @@ export async function backfillTimestamps(options: BackfillOptions = {}): Promise
   
   if (specs.length === 0) {
     console.log('No specs found to backfill');
+    console.log('\x1b[36mℹ\x1b[0m  Use --bootstrap to create frontmatter for files without it');
     return results;
   }
   
@@ -255,6 +295,121 @@ async function backfillSpecTimestamps(
 }
 
 /**
+ * Bootstrap a spec file with missing or incomplete frontmatter
+ */
+async function bootstrapSpec(
+  spec: BootstrapSpecInfo,
+  options: BackfillOptions
+): Promise<BackfillResult> {
+  const result: BackfillResult = {
+    specPath: spec.path,
+    specName: spec.name,
+    source: 'skipped',
+    bootstrapped: false,
+  };
+  
+  // Skip specs that already have valid frontmatter (unless --force)
+  if (spec.hasValidFrontmatter && !options.force) {
+    // Still run normal backfill logic for timestamps
+    result.reason = 'Already has valid frontmatter';
+    console.log(`\x1b[90m✓\x1b[0m ${spec.name} - Already valid`);
+    return result;
+  }
+  
+  // Build frontmatter from existing + inferred data
+  const frontmatter: Partial<SpecFrontmatter> = {
+    ...(spec.existingFrontmatter || {}),
+    status: spec.inferredStatus || 'planned',
+    created: spec.inferredCreated || new Date().toISOString().split('T')[0],
+  };
+  
+  // Get git timestamps
+  if (fileExistsInGit(spec.filePath)) {
+    const gitData = extractGitTimestamps(spec.filePath, {
+      includeAssignee: options.includeAssignee,
+      includeTransitions: options.includeTransitions,
+    });
+    
+    if (gitData.created_at) {
+      frontmatter.created_at = gitData.created_at;
+      result.created_at = gitData.created_at;
+    }
+    if (gitData.updated_at) {
+      frontmatter.updated_at = gitData.updated_at;
+      result.updated_at = gitData.updated_at;
+    }
+    if (gitData.completed_at) {
+      frontmatter.completed_at = gitData.completed_at;
+      result.completed_at = gitData.completed_at;
+    }
+    if (options.includeAssignee && gitData.assignee) {
+      frontmatter.assignee = gitData.assignee;
+      result.assignee = gitData.assignee;
+    }
+    if (options.includeTransitions && gitData.transitions && gitData.transitions.length > 0) {
+      frontmatter.transitions = gitData.transitions;
+      result.transitionsCount = gitData.transitions.length;
+    }
+  }
+  
+  // Determine source labels for output
+  const statusSource = spec.existingFrontmatter?.status ? 'existing' : 
+                       (spec.content.match(/\*\*Status\*\*/i) ? 'content' : 'default');
+  const createdSource = spec.existingFrontmatter?.created ? 'existing' :
+                        (spec.content.match(/\*\*Created\*\*/i) ? 'content' : 
+                        (fileExistsInGit(spec.filePath) ? 'git' : 'default'));
+  
+  if (!options.dryRun) {
+    try {
+      await writeBootstrapFrontmatter(spec.filePath, spec.content, frontmatter);
+      result.source = 'bootstrapped';
+      result.bootstrapped = true;
+      console.log(`\x1b[32m✓\x1b[0m ${spec.name} - Bootstrapped`);
+      console.log(`  status: ${frontmatter.status} (${statusSource})`);
+      console.log(`  created: ${frontmatter.created} (${createdSource})`);
+    } catch (error) {
+      result.source = 'skipped';
+      result.reason = `Error: ${error instanceof Error ? error.message : String(error)}`;
+      console.log(`\x1b[31m✗\x1b[0m ${spec.name} - Failed: ${result.reason}`);
+    }
+  } else {
+    result.source = 'bootstrapped';
+    result.bootstrapped = true;
+    console.log(`\x1b[36m→\x1b[0m ${spec.name} - Would bootstrap`);
+    console.log(`  status: ${frontmatter.status} (${statusSource})`);
+    console.log(`  created: ${frontmatter.created} (${createdSource})`);
+    if (frontmatter.created_at) console.log(`  created_at: ${frontmatter.created_at} (git)`);
+    if (frontmatter.updated_at) console.log(`  updated_at: ${frontmatter.updated_at} (git)`);
+    if (frontmatter.completed_at) console.log(`  completed_at: ${frontmatter.completed_at} (git)`);
+    if (frontmatter.assignee) console.log(`  assignee: ${frontmatter.assignee} (git)`);
+    if (frontmatter.transitions) console.log(`  transitions: ${frontmatter.transitions.length} (git)`);
+  }
+  
+  return result;
+}
+
+/**
+ * Write or update frontmatter in a spec file
+ */
+async function writeBootstrapFrontmatter(
+  filePath: string,
+  originalContent: string,
+  frontmatter: Partial<SpecFrontmatter>
+): Promise<void> {
+  const matter = await import('gray-matter');
+  
+  // Parse existing content (may or may not have frontmatter)
+  const parsed = matter.default(originalContent);
+  
+  // Merge new frontmatter with any existing
+  const newData = { ...parsed.data, ...frontmatter };
+  
+  // Write back
+  const newContent = matter.default.stringify(parsed.content, newData);
+  await fs.writeFile(filePath, newContent, 'utf-8');
+}
+
+/**
  * Print summary of backfill results
  */
 function printSummary(results: BackfillResult[], options: BackfillOptions): void {
@@ -263,24 +418,28 @@ function printSummary(results: BackfillResult[], options: BackfillOptions): void
   
   const total = results.length;
   const updated = results.filter(r => r.source === 'git').length;
+  const bootstrapped = results.filter(r => r.source === 'bootstrapped').length;
   const existing = results.filter(r => r.source === 'existing').length;
   const skipped = results.filter(r => r.source === 'skipped').length;
   
   const timestampUpdates = results.filter(r => 
-    r.source === 'git' && (r.created_at || r.updated_at || r.completed_at)
+    (r.source === 'git' || r.source === 'bootstrapped') && (r.created_at || r.updated_at || r.completed_at)
   ).length;
   
   const assigneeUpdates = results.filter(r => 
-    r.source === 'git' && r.assignee
+    (r.source === 'git' || r.source === 'bootstrapped') && r.assignee
   ).length;
   
   const transitionUpdates = results.filter(r => 
-    r.source === 'git' && r.transitionsCount
+    (r.source === 'git' || r.source === 'bootstrapped') && r.transitionsCount
   ).length;
   
   console.log(`  ${total} specs analyzed`);
   
   if (options.dryRun) {
+    if (options.bootstrap) {
+      console.log(`  ${bootstrapped} would be bootstrapped`);
+    }
     console.log(`  ${updated} would be updated`);
     if (timestampUpdates > 0) {
       console.log(`    └─ ${timestampUpdates} with timestamps`);
@@ -292,6 +451,9 @@ function printSummary(results: BackfillResult[], options: BackfillOptions): void
       console.log(`    └─ ${transitionUpdates} with transitions`);
     }
   } else {
+    if (options.bootstrap) {
+      console.log(`  ${bootstrapped} bootstrapped`);
+    }
     console.log(`  ${updated} updated`);
   }
   
@@ -319,7 +481,11 @@ function printSummary(results: BackfillResult[], options: BackfillOptions): void
     if (!options.includeAssignee || !options.includeTransitions) {
       console.log('\x1b[36mℹ\x1b[0m  Use --all to include optional fields (assignee, transitions)');
     }
-  } else if (updated > 0) {
+    
+    if (!options.bootstrap && skipped > 0) {
+      console.log('\x1b[36mℹ\x1b[0m  Use --bootstrap to create frontmatter for files without it');
+    }
+  } else if (updated > 0 || bootstrapped > 0) {
     console.log('\n\x1b[32m✓\x1b[0m Backfill complete!');
     console.log('  Run \x1b[36mlspec stats\x1b[0m to see velocity metrics');
   }
