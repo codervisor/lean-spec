@@ -1,18 +1,5 @@
 import { ProjectDependencyGraphClient } from './dependencies-client';
-import type { ProjectDependencyGraph } from '@/app/api/dependencies/route';
-
-async function getDependencyGraph(): Promise<ProjectDependencyGraph> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/dependencies`, {
-    cache: 'no-store',
-  });
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch dependency graph');
-  }
-
-  return res.json();
-}
+import { getDependencyGraph } from '@/lib/db/service-queries';
 
 export default async function DependenciesPage() {
   const data = await getDependencyGraph();

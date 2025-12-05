@@ -14,7 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { cn } from '@/lib/utils';
-import type { ProjectDependencyGraph } from '@/app/api/dependencies/route';
+import type { DependencyGraph } from '@/lib/db/service-queries';
 
 import { nodeTypes } from './spec-node';
 import { SpecSidebar } from './spec-sidebar';
@@ -23,7 +23,7 @@ import { DEPENDS_ON_COLOR, toneBgColors } from './constants';
 import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from './types';
 
 interface ProjectDependencyGraphClientProps {
-  data: ProjectDependencyGraph;
+  data: DependencyGraph;
   projectId?: string;
 }
 
