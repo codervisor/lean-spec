@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Check, ChevronsUpDown, Plus, FolderOpen, Star, Settings, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, Star, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -113,7 +113,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
               isSwitching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <FolderOpen className="h-4 w-4" />
+                <div
+                  className="h-4 w-4 rounded-full border"
+                  style={{ backgroundColor: currentProject?.color || 'hsl(var(--primary))' }}
+                />
               )
             ) : (
               <>
@@ -121,7 +124,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                   {isSwitching ? (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                   ) : (
-                    <FolderOpen className="h-4 w-4 shrink-0 opacity-50" />
+                    <div
+                      className="h-4 w-4 rounded-full border shrink-0"
+                      style={{ backgroundColor: currentProject?.color || 'hsl(var(--primary))' }}
+                    />
                   )}
                   <span className="truncate">
                     {isSwitching ? "Switching..." : (currentProject?.name || "Select project...")}
@@ -152,6 +158,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                             ? "opacity-100"
                             : "opacity-0"
                         )}
+                      />
+                      <div
+                        className="h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: project.color || 'hsl(var(--primary))' }}
                       />
                       <span className="truncate flex-1">{project.name}</span>
                       {project.favorite && (

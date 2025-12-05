@@ -253,7 +253,22 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
     return { ...parsedSpec, subSpecs, relationships: { dependsOn, requiredBy } };
   }
 
-  return parsedSpec;
+  // Multi-project mode: extract relationships from spec content and compute requiredBy
+  const { dependsOn } = getRelationshipsFromContent(spec.contentMd);
+  
+  // Compute requiredBy by scanning all specs in the project
+  const allSpecs = await specsService.getAllSpecs(projectId);
+  const requiredBy: string[] = [];
+  
+  for (const otherSpec of allSpecs) {
+    if (otherSpec.specName === spec.specName) continue;
+    const otherRels = getRelationshipsFromContent(otherSpec.contentMd);
+    if (otherRels.dependsOn.includes(spec.specName)) {
+      requiredBy.push(otherSpec.specName);
+    }
+  }
+
+  return { ...parsedSpec, relationships: { dependsOn, requiredBy } };
 }
 
 /**

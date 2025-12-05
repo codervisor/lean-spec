@@ -63,6 +63,16 @@ Bug fixes and UX improvements for the UI package related to multi-project specs 
 **Root Cause**: Multi-project source not properly returning dependency data  
 **Solution**: Fix dependency graph data loading for multi-project mode
 
+### 6b. Spec Detail Page Dependencies Not Available
+**Location**: Spec detail page → "View Dependencies" button/dialog  
+**Problem**: Dependencies button is always disabled in multi-project mode  
+**Root Cause**: 
+1. `getSpecById()` in service-queries.ts didn't compute relationships for multi-project mode
+2. No API endpoint existed for `/api/projects/[id]/specs/[spec]/dependency-graph`
+**Solution**: 
+- Updated `getSpecById()` to extract relationships from contentMd (frontmatter) and compute `requiredBy` for multi-project mode
+- Created new API route `/api/projects/[id]/specs/[spec]/dependency-graph/route.ts`
+
 ### 7. Project Switcher Flash
 **Location**: Project switcher dropdown  
 **Problem**: Brief flash/flicker when switching projects  
@@ -107,10 +117,12 @@ Bug fixes and UX improvements for the UI package related to multi-project specs 
 - [x] Add deduplication logic for tags
 - [x] Update `TagsInput` component with suggestions
 
-### Phase 4: Dependencies Fix (Issue 6)
+### Phase 4: Dependencies Fix (Issue 6, 6b)
 - [x] Debug dependency data flow in multi-project source
 - [x] Ensure DAG receives proper data structure
 - [x] Test with projects containing dependencies
+- [x] Fix `getSpecById()` to return relationships in multi-project mode
+- [x] Create `/api/projects/[id]/specs/[spec]/dependency-graph` API endpoint
 
 ### Phase 5: Manage Projects Overhaul (Issue 8)
 - [x] Add auto-validation for project paths
@@ -128,6 +140,7 @@ Bug fixes and UX improvements for the UI package related to multi-project specs 
 - [x] Tag input shows autocomplete suggestions
 - [x] Adding duplicate tag is prevented
 - [x] Dependencies page shows correct DAG diagram
+- [x] Spec detail page "View Dependencies" button works in multi-project mode
 - [x] Project switcher has no flash during transitions
 - [x] Manage projects page has proper layout and padding
 - [x] Clicking project shows detail modal with stats
