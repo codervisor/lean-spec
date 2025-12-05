@@ -153,6 +153,24 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Lig
 }
 
 /**
+ * Extract relationships from spec content (contentMd contains frontmatter)
+ * Used for multi-project mode where we can't read from filesystem
+ */
+function getRelationshipsFromContent(contentMd: string): SpecRelationships {
+  try {
+    const { data } = matter(contentMd);
+    const dependsOn = normalizeRelationshipList(data?.depends_on ?? data?.dependsOn);
+    return {
+      dependsOn,
+      requiredBy: [],
+    };
+  } catch (error) {
+    console.warn('Unable to parse spec relationships from content', error);
+    return { dependsOn: [], requiredBy: [] };
+  }
+}
+
+/**
  * Get all specs with sub-spec count and relationships (for comprehensive list view)
  * Builds the full dependency graph to compute requiredBy (reverse dependencies)
  * Returns lightweight specs without contentMd
@@ -160,21 +178,14 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Lig
 export async function getSpecsWithMetadata(projectId?: string): Promise<(LightweightSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
   const specs = await specsService.getAllSpecs(projectId);
   
-  // Only count sub-specs and relationships for filesystem mode
-  if (projectId) {
-    return specs.map(spec => ({ 
-      ...toLightweightSpec(parseSpecTags(spec)), 
-      subSpecsCount: 0,
-      relationships: { dependsOn: [], requiredBy: [] }
-    }));
-  }
-  
   // First pass: collect all dependsOn relationships
   const specRelationshipsMap = new Map<string, { dependsOn: string[]; requiredBy: string[] }>();
   
   for (const spec of specs) {
-    const specDirPath = buildSpecDirPath(spec.filePath);
-    const { dependsOn } = getFilesystemRelationships(specDirPath);
+    // For multi-project mode, extract from contentMd; for filesystem mode, read from disk
+    const { dependsOn } = projectId 
+      ? getRelationshipsFromContent(spec.contentMd)
+      : getFilesystemRelationships(buildSpecDirPath(spec.filePath));
     specRelationshipsMap.set(spec.specName, { dependsOn, requiredBy: [] });
   }
   
@@ -189,8 +200,8 @@ export async function getSpecsWithMetadata(projectId?: string): Promise<(Lightwe
   }
   
   return specs.map(spec => {
-    const specDirPath = buildSpecDirPath(spec.filePath);
-    const subSpecsCount = countSubSpecs(specDirPath);
+    // Sub-specs count only available in filesystem mode
+    const subSpecsCount = projectId ? 0 : countSubSpecs(buildSpecDirPath(spec.filePath));
     const relationships = specRelationshipsMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
     return { ...toLightweightSpec(parseSpecTags(spec)), subSpecsCount, relationships };
   });
