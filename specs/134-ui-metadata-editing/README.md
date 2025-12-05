@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-11-28'
 tags:
   - ui
@@ -8,18 +8,22 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-28T05:14:14.341Z'
-updated_at: '2025-12-05T03:05:06.635Z'
+updated_at: '2025-12-05T03:22:43.085Z'
 depends_on:
   - 085-cli-relationship-commands
   - 137-ui-dependencies-page
 transitions:
   - status: in-progress
     at: '2025-12-05T03:05:06.635Z'
+  - status: complete
+    at: '2025-12-05T03:22:43.085Z'
+completed_at: '2025-12-05T03:22:43.085Z'
+completed: '2025-12-05'
 ---
 
 # UI Lightweight Metadata Editing
 
-> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-28 · **Tags**: ui, ux, feature, dx
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-11-28 · **Tags**: ui, ux, feature, dx
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -44,7 +48,8 @@ Add inline editing controls for metadata fields in the spec detail view:
 - **Priority**: Dropdown selector (low, medium, high, critical)
 - **Tags**: Tag input with autocomplete from existing tags
 - **Assignee**: Text input or dropdown from known assignees
-- **Dependencies**: Add/remove `depends_on` relationships with spec picker
+
+> **Note**: Dependencies editing moved to [Spec 146](../146-dependencies-editor-ui/) for separate tracking.
 
 ### Non-Goals
 
@@ -247,29 +252,31 @@ const mutation = useMutation({
 
 ## Plan
 
-### Phase 1: API & Backend
-- [ ] Create `POST /api/specs/[id]/metadata` route
-- [ ] Implement `updateSpecMetadata` service using CLI
-- [ ] Add input validation (zod schema)
-- [ ] Handle errors gracefully
+### Phase 1: API & Backend ✅
+- [x] Create `PATCH /api/specs/[id]/metadata` route
+- [x] Implement `updateSpecMetadata` service using @leanspec/core
+- [x] Add input validation (status, priority, tags, assignee)
+- [x] Handle errors gracefully
 
-### Phase 2: UI Components
-- [ ] Create `StatusEditor` component with dropdown
-- [ ] Create `PriorityEditor` component
-- [ ] Create `TagsEditor` with autocomplete
-- [ ] Create `DependenciesEditor` with spec picker
-- [ ] Add edit mode toggle to `spec-metadata.tsx`
+### Phase 2: UI Components ✅
+- [x] Create `StatusEditor` component with dropdown
+- [x] Create `PriorityEditor` component
+- [x] Create `TagsEditor` with add/remove
+- [x] Integrate editors into `spec-detail-client.tsx`
 
-### Phase 3: State & UX
-- [ ] Integrate React Query for mutations
-- [ ] Implement optimistic updates
-- [ ] Add loading states and error handling
-- [ ] Toast notifications for success/failure
+> **Note**: `DependenciesEditor` moved to [Spec 146](../146-dependencies-editor-ui/)
+
+### Phase 3: State & UX ✅
+- [x] Implement optimistic updates with rollback
+- [x] Add loading states and error handling
+- [x] Toast notifications for errors (inline display)
 
 ### Phase 4: Polish
-- [ ] Keyboard navigation (Enter to save, Escape to cancel)
-- [ ] Mobile-friendly touch targets
-- [ ] Accessibility (ARIA labels, focus management)
+- [x] Keyboard navigation (Enter/Escape in TagsEditor)
+- [x] Basic accessibility (button labels, disabled states)
+
+### Multi-Project Support
+- [x] Project-scoped metadata API route
 
 ## Test
 

@@ -52,7 +52,7 @@ export const AI_TOOL_CONFIGS: Record<AIToolKey, AIToolConfig> = {
   claude: {
     file: 'CLAUDE.md',
     description: 'Claude Code (CLAUDE.md)',
-    default: true,
+    default: false,
     usesSymlink: true,
     detection: {
       commands: ['claude'],

@@ -9,6 +9,7 @@ import { X, Plus, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
 import {
   Popover,
   PopoverContent,
@@ -61,9 +62,12 @@ export function TagsEditor({
       }
 
       onUpdate?.(newTags);
+      toast.success('Tags updated');
     } catch (err) {
       setTags(previousTags); // Rollback
-      setError(err instanceof Error ? err.message : 'Failed to update');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update';
+      setError(errorMessage);
+      toast.error('Failed to update tags', { description: errorMessage });
       console.error('Tags update failed:', err);
     } finally {
       setIsUpdating(false);
@@ -132,6 +136,7 @@ export function TagsEditor({
                 size="sm"
                 className="h-6 px-2 text-xs"
                 disabled={isUpdating}
+                aria-label="Add new tag"
               >
                 {isUpdating ? (
                   <Loader2 className="h-3 w-3 animate-spin" />

@@ -39,8 +39,8 @@ export type McpToolKey = 'claude' | 'vscode' | 'cursor' | 'windsurf';
 export const MCP_TOOL_CONFIGS: Record<McpToolKey, McpToolConfig> = {
   'claude': {
     id: 'claude',
-    name: 'Claude',
-    description: 'Claude (.mcp.json)',
+    name: 'Claude Code',
+    description: 'Claude Code (.mcp.json)',
     configPath: '.mcp.json',
     configLocation: 'workspace',
     usesProjectVariable: true,
@@ -328,8 +328,8 @@ export async function getDefaultMcpToolSelection(
     return { defaults: detectedTools, detected: detectionResults };
   }
 
-  // Default to Claude if nothing detected (most common for LeanSpec users)
-  return { defaults: ['claude'], detected: detectionResults };
+  // No tools detected - don't assume any default, let user select
+  return { defaults: [], detected: detectionResults };
 }
 
 /**
