@@ -50,6 +50,17 @@ Mandatory rules for AI agents and developers working on LeanSpec.
 'bg-gray-500/20 text-gray-600 dark:text-gray-400'
 ```
 
+## Spec Relationships
+
+**Only `depends_on` is supported.** The `related` field has been removed for simpler management.
+
+| ❌ Removed | ✅ Use Instead |
+|------------|----------------|
+| `related: ["047-feature"]` | `depends_on: ["047-feature"]` |
+| `lean-spec link --related` | `lean-spec link --depends-on` |
+
+**Rationale:** `related` was ambiguous ("somewhat connected") and rarely actionable. `depends_on` expresses clear blocking relationships with defined work order.
+
 ## Code Style
 
 - Use TypeScript for type safety
