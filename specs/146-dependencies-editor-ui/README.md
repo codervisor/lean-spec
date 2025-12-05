@@ -41,7 +41,6 @@ Add a `DependenciesEditor` component to the spec detail header, following the ex
 
 ### Non-Goals
 
-- Editing `related` relationships (different semantics, can be phase 2)
 - Bulk dependency editing across multiple specs
 - Visual dependency graph editing (use dedicated `/dependencies` page)
 
@@ -201,7 +200,7 @@ The spec detail page currently receives `relationships.dependsOn` but doesn't ha
 
 **Recommendation**: Option 1 (fetch on demand) keeps component self-contained.
 
-### Related Specs
+### Depends On
 
 - [134-ui-metadata-editing](../134-ui-metadata-editing/) - Parent spec, provides patterns
 - [137-ui-dependencies-page](../137-ui-dependencies-page/) - Shows dependencies in graph view
