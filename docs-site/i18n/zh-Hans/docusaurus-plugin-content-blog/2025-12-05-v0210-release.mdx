@@ -1,0 +1,209 @@
+---
+slug: v0210-inline-editing-mcp-autosetup
+title: "LeanSpec 0.2.10：内联元数据编辑、MCP 自动配置和多项目改进"
+authors: [marvin]
+tags: [release, web-ui, mcp, multi-project]
+---
+
+LeanSpec 0.2.10 带来了更具交互性的 Web 体验：内联元数据编辑、初始化时零配置 MCP 设置，以及多项目管理的重大改进。本次发布专注于减少摩擦——无论您是在浏览器中管理 Spec、设置 AI Agent 集成，还是跨多个项目工作。
+
+**亮点**：直接在浏览器中编辑 Spec 元数据、AI 工具的自动 MCP 配置、遗留 Spec 的 Bootstrap 模式，以及更完善的多项目工作流。
+
+{/* truncate */}
+
+## ✏️ Web UI 内联元数据编辑
+
+无需再在 Web 界面和命令行之间切换来更新 Spec 元数据。现在您可以直接在浏览器中编辑所有内容：
+
+![Spec 详情视图中的内联元数据编辑](/img/blog/v0210/inline-metadata-editing.png)
+
+### 可编辑的内容
+
+- **Status（状态）** - 点击状态徽章可在 planned、in-progress、complete 和 archived 之间切换
+- **Priority（优先级）** - 单击即可更新优先级（low、medium、high、critical）
+- **Tags（标签）** - 添加、删除标签，支持自动补全建议
+- **Dependencies（依赖）** - 无需离开 Spec 视图即可管理 `depends_on` 关系
+
+### 工作原理
+
+更改采用**乐观更新 (Optimistic Update)** ——UI 立即更新，保存在后台进行。如果出现问题，更改会自动回滚并显示清晰的错误消息。
+
+这在文件系统模式（本地开发）和多项目模式（团队仪表板）中都能正常工作。
+
+```bash
+# 启动 Web UI
+lean-spec ui
+
+# 或使用自定义端口
+lean-spec ui --port 3001
+```
+
+打开任意 Spec，您将在右侧看到可编辑的元数据面板。
+
+## 🔧 Init 时 MCP 自动配置
+
+设置 MCP 服务器集成过去需要手动配置。现在 `lean-spec init` 会自动处理。
+
+### 自动检测
+
+运行 `lean-spec init` 时，LeanSpec 会检测您的 AI 工具并提供 MCP 配置：
+
+```bash
+$ lean-spec init
+
+✔ Detected AI tools: Claude Code, VS Code, Cursor
+
+? Configure MCP server for detected tools? (Y/n) y
+
+✔ Created .mcp.json for Claude Code
+✔ Created .vscode/mcp.json for VS Code  
+✔ Created .cursor/mcp.json for Cursor
+```
+
+### 零手动配置
+
+每个配置文件都使用正确的格式和绝对路径：
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["@leanspec/mcp"],
+      "cwd": "/absolute/path/to/your/project"
+    }
+  }
+}
+```
+
+您的 AI Agent 可以立即访问 LeanSpec 工具——无需从文档复制粘贴，无需排查路径问题。
+
+### 支持的工具
+
+- **Claude Code** - `.mcp.json`
+- **VS Code** - `.vscode/mcp.json`
+- **Cursor** - `.cursor/mcp.json`
+
+更多工具将根据需求陆续支持。
+
+## 🔄 遗留 Spec 的 Bootstrap 模式
+
+迁移缺少 frontmatter 的现有 Spec？新的 `--bootstrap` 标志让这变得轻松：
+
+```bash
+# 为没有 frontmatter 的 Spec 创建 frontmatter
+lean-spec backfill --bootstrap
+```
+
+### Bootstrap 做了什么
+
+1. **扫描缺失的 frontmatter** - 识别没有 YAML 元数据的 Spec
+2. **从 git 历史推断状态** - 使用提交模式推测当前状态
+3. **从首次提交设置创建日期** - 从 git 日志获取准确的时间戳
+4. **处理遗留格式** - 识别 ADR、RFC 和内联元数据模式
+
+### 遗留格式支持
+
+Bootstrap 理解常见的文档模式：
+
+- **ADR 状态行**：`Status: Accepted` → `status: complete`
+- **RFC 头部**：`Status: Proposed` → `status: planned`
+- **内联元数据**：`**Status**: Complete` → `status: complete`
+
+```bash
+# 预览将要更改的内容
+lean-spec backfill --bootstrap --dry-run
+
+# 应用更改
+lean-spec backfill --bootstrap
+```
+
+## 📁 多项目管理优化
+
+对于通过 Web UI 管理多个项目的团队，我们做了多项改进：
+
+### 快速访问项目管理
+
+项目切换下拉菜单现在包含"管理项目"选项——无需再寻找项目页面。
+
+### 内联项目编辑
+
+直接在 `/projects` 页面编辑项目名称和颜色。点击项目名称即可重命名，或使用颜色选择器自定义视觉标识。
+
+### 更好的路径处理
+
+- 长路径不再溢出添加项目对话框
+- 路径验证显示清晰的状态（有效/无效/缺失）
+- 无效路径在保存前会高亮显示
+
+### 更智能的导航
+
+当您从 Spec 详情页切换项目时，现在会重定向到该项目的 Spec 列表，而不是显示 404。
+
+## 📊 依赖图（v0.2.9 功能回顾）
+
+如果您错过了上个版本，新的 `/dependencies` 页面让您可以鸟瞰整个项目的依赖结构：
+
+![项目级依赖图可视化](/img/blog/v0210/dependency-graph.png)
+
+- **交互式 DAG 布局** - 支持缩放、平移和小地图导航
+- **按状态筛选** - 专注于 planned、in-progress 或 complete 的 Spec
+- **点击导航** - 双击任意节点打开 Spec 详情
+- **高亮依赖链** - 选择一个 Spec 查看其完整的依赖路径
+
+## 🐛 Bug 修复
+
+### 依赖页面支持自定义端口
+
+之前，`lean-spec ui --port 3002` 会导致依赖页面因硬编码的 localhost:3000 调用而无法工作。已修复——该页面现在支持任意端口。
+
+### 多项目依赖已修复
+
+Spec 详情页上的"查看依赖"按钮现在在多项目模式下正常工作，使用了新的专用 API 端点。
+
+### MCP `deps` 工具正确查找 Spec
+
+`deps` MCP 工具现在可以正确通过序号解析 Spec（例如，`045` 可以找到 `045-feature-name`）。
+
+### 浅色主题对比度
+
+依赖页面的节点现在在浅色主题下可读。我们更新了颜色方案，确保在两种主题下都有适当的对比度。
+
+## ⚡ 性能：更轻量的 Spec 列表
+
+Spec 列表 API 不再返回每个 Spec 的完整 `contentMd`。对于有许多 Spec 的项目，这将初始页面加载大小减少了约 90%。
+
+完整内容在您打开 Spec 详情页时按需加载。
+
+## 升级
+
+```bash
+# 更新全局安装
+npm install -g lean-spec@latest
+
+# 或使用 npx（始终获取最新版本）
+npx lean-spec@latest board
+```
+
+如果您使用 MCP 服务器：
+
+```bash
+# 更新 MCP 包
+npm install -g @leanspec/mcp@latest
+```
+
+## 下一步计划
+
+- **VS Code 扩展** - 在编辑器中原生管理 Spec
+- **GitHub Action** - CI 中的自动化 Spec 验证
+- **更多 MCP 工具改进** - 根据您的反馈
+
+**有想法？** [提交 Issue](https://github.com/codervisor/lean-spec/issues) 或[发起讨论](https://github.com/codervisor/lean-spec/discussions)。
+
+---
+
+**链接**：
+- [文档](https://lean-spec.dev/zh-Hans)
+- [GitHub 仓库](https://github.com/codervisor/lean-spec)
+- [完整更新日志](https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md)
+- [快速开始指南](https://lean-spec.dev/zh-Hans/docs/guide/getting-started)

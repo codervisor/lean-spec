@@ -10,7 +10,8 @@ priority: high
 created_at: '2025-11-17T08:19:16.821Z'
 depends_on:
   - 082-web-realtime-sync-architecture
-updated_at: '2025-11-17T08:19:22.898Z'
+  - 151-multi-project-architecture-refactoring
+updated_at: '2025-12-05T07:13:42.491Z'
 ---
 
 # GitHub Multi-Project Integration

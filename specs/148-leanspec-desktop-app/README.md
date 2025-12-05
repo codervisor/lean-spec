@@ -12,12 +12,13 @@ created_at: '2025-12-05T04:48:36.682Z'
 depends_on:
   - 087-cli-ui-command
   - 109-local-project-switching
-updated_at: '2025-12-05T05:02:25.770Z'
+  - 151-multi-project-architecture-refactoring
+updated_at: '2025-12-05T07:13:42.493Z'
 ---
 
 # LeanSpec Desktop App for Multi-Project Management
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-12-05 · **Tags**: desktop, tauri, ui, multi-project, dx
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-05 · **Tags**: desktop, tauri, ui, multi-project, dx
 
 ## Overview
 
