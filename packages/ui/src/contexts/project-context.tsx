@@ -1,12 +1,21 @@
 /**
  * Project Context
  * Manages the current project state for multi-project mode
+ * 
+ * Architecture: Project-centric, mode-agnostic
+ * - Single-project mode is treated as having one project with DEFAULT_PROJECT_ID
+ * - Multi-project mode has multiple explicit projects
+ * - Components receive projectId, mode is derived internally
  */
 
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { LocalProject } from '@/lib/projects/types';
+import { DEFAULT_PROJECT_ID, isDefaultProject, normalizeProjectId } from '@/lib/projects/constants';
+
+// Re-export for convenience
+export { DEFAULT_PROJECT_ID, isDefaultProject, normalizeProjectId };
 
 interface ProjectContextType {
   mode: 'multi-project' | 'single-project';
@@ -16,6 +25,8 @@ interface ProjectContextType {
   favoriteProjects: LocalProject[];
   isLoading: boolean;
   error: string | null;
+  /** Current project ID, or 'default' for single-project mode */
+  currentProjectId: string;
   switchProject: (projectId: string) => Promise<void>;
   addProject: (path: string, options?: { favorite?: boolean; color?: string }) => Promise<LocalProject>;
   removeProject: (projectId: string) => Promise<void>;
@@ -205,6 +216,9 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
     refreshProjects();
   }, [refreshProjects]);
 
+  // Compute currentProjectId - always have a value for consistency
+  const currentProjectId = currentProject?.id || 'default';
+
   const value: ProjectContextType = {
     mode,
     currentProject,
@@ -213,6 +227,7 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
     favoriteProjects,
     isLoading,
     error,
+    currentProjectId,
     switchProject,
     addProject,
     removeProject,
@@ -231,9 +246,10 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
 /**
  * Hook to generate project-scoped URLs
  * Automatically uses project prefix in multi-project mode
+ * Returns currentProjectId which is always defined (uses 'default' for single-project mode)
  */
 export function useProjectUrl() {
-  const { mode, currentProject } = useProject();
+  const { mode, currentProject, currentProjectId } = useProject();
   
   const getUrl = useCallback((path: string) => {
     if (mode === 'multi-project' && currentProject) {
@@ -249,5 +265,10 @@ export function useProjectUrl() {
     return subSpec ? `${base}?subspec=${subSpec}` : base;
   }, [getUrl]);
 
-  return { getUrl, getSpecUrl, isMultiProject: mode === 'multi-project', projectId: currentProject?.id };
+  return { 
+    getUrl, 
+    getSpecUrl, 
+    isMultiProject: mode === 'multi-project', 
+    projectId: currentProjectId,  // Always defined, 'default' for single-project
+  };
 }

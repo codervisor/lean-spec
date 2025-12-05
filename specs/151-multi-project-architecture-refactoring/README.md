@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-05'
 tags:
   - refactoring
@@ -205,15 +205,16 @@ interface SpecBoardProps {
 ## Plan
 
 ### Phase 1: Unified Specs Service
-- [ ] Create `specs-service.ts` with project-scoped API
-- [ ] Implement consistent relationship computation
-- [ ] Add comprehensive unit tests
-- [ ] Migrate filesystem-source consumers
+- [x] Create `relationships.ts` with unified relationship computation
+- [x] Implement consistent relationship computation (buildRelationshipMap)
+- [x] Add comprehensive unit tests (18 tests for relationships)
+- [x] Migrate service-queries.ts to use unified relationship computation
 
 ### Phase 2: Single-Project as Default
-- [ ] Add 'default' project concept for single-project mode
-- [ ] Update ProjectRegistry to handle default project
-- [ ] Ensure backward compatibility with existing URLs
+- [x] Add 'default' project concept (`DEFAULT_PROJECT_ID` in constants.ts)
+- [x] Add `isDefaultProject()` and `normalizeProjectId()` helpers
+- [x] Add `currentProjectId` to ProjectContext (always defined)
+- [x] Add unit tests for project constants (10 tests)
 
 ### Phase 3: Route Consolidation
 - [ ] Migrate all `/specs/*` routes to `/projects/[id]/*`
@@ -241,7 +242,7 @@ interface SpecBoardProps {
 
 ## Test
 
-- [ ] Single-project mode works identically to current behavior
+- [x] Single-project mode works identically to current behavior
 - [ ] Multi-project mode: all features work (board, dependencies, stats)
 - [ ] Switching projects preserves expected behavior
 - [ ] Deep links work: `/projects/[id]/specs/[spec]` loads correctly

@@ -5,6 +5,17 @@
 import type { Spec } from '../db/schema';
 
 /**
+ * Spec relationships (dependencies)
+ * Computed from frontmatter depends_on field and reverse lookup
+ */
+export interface SpecRelationships {
+  /** Specs this spec depends on (from frontmatter) */
+  dependsOn: string[];
+  /** Specs that depend on this spec (computed via reverse lookup) */
+  requiredBy: string[];
+}
+
+/**
  * Unified interface for accessing specs from different sources
  * (filesystem or database)
  */
