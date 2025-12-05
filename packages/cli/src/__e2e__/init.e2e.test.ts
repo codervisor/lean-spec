@@ -258,6 +258,94 @@ describe('E2E: lean-spec init', () => {
     });
   });
 
+  describe('MCP configuration', () => {
+    it('should create .mcp.json by default with -y flag', async () => {
+      const result = execCli(['init', '-y'], { cwd: ctx.tmpDir });
+
+      expect(result.exitCode).toBe(0);
+
+      // Claude MCP config should be created by default
+      const mcpConfigPath = path.join(ctx.tmpDir, '.mcp.json');
+      expect(await fileExists(mcpConfigPath)).toBe(true);
+
+      const mcpContent = await readFile(mcpConfigPath);
+      const mcpConfig = JSON.parse(mcpContent);
+      expect(mcpConfig.mcpServers).toBeDefined();
+      expect(mcpConfig.mcpServers['lean-spec']).toBeDefined();
+      expect(mcpConfig.mcpServers['lean-spec'].command).toBe('npx');
+      expect(mcpConfig.mcpServers['lean-spec'].args).toContain('@leanspec/mcp');
+    });
+
+    it('should create VS Code MCP config with --mcp-config vscode', async () => {
+      const result = execCli(['init', '-y', '--mcp-config', 'vscode'], { cwd: ctx.tmpDir });
+
+      expect(result.exitCode).toBe(0);
+
+      const mcpConfigPath = path.join(ctx.tmpDir, '.vscode', 'mcp.json');
+      expect(await fileExists(mcpConfigPath)).toBe(true);
+
+      const mcpContent = await readFile(mcpConfigPath);
+      const mcpConfig = JSON.parse(mcpContent);
+      expect(mcpConfig.mcpServers['lean-spec']).toBeDefined();
+    });
+
+    it('should create Cursor MCP config with --mcp-config cursor', async () => {
+      const result = execCli(['init', '-y', '--mcp-config', 'cursor'], { cwd: ctx.tmpDir });
+
+      expect(result.exitCode).toBe(0);
+
+      const mcpConfigPath = path.join(ctx.tmpDir, '.cursor', 'mcp.json');
+      expect(await fileExists(mcpConfigPath)).toBe(true);
+    });
+
+    it('should create multiple MCP configs with comma-separated list', async () => {
+      const result = execCli(['init', '-y', '--mcp-config', 'claude,vscode,cursor'], { cwd: ctx.tmpDir });
+
+      expect(result.exitCode).toBe(0);
+
+      // All three should exist
+      expect(await fileExists(path.join(ctx.tmpDir, '.mcp.json'))).toBe(true);
+      expect(await fileExists(path.join(ctx.tmpDir, '.vscode', 'mcp.json'))).toBe(true);
+      expect(await fileExists(path.join(ctx.tmpDir, '.cursor', 'mcp.json'))).toBe(true);
+    });
+
+    it('should not create MCP config with --mcp-config none', async () => {
+      const result = execCli(['init', '-y', '--mcp-config', 'none'], { cwd: ctx.tmpDir });
+
+      expect(result.exitCode).toBe(0);
+
+      // No MCP configs should be created
+      expect(await fileExists(path.join(ctx.tmpDir, '.mcp.json'))).toBe(false);
+      expect(await fileExists(path.join(ctx.tmpDir, '.vscode', 'mcp.json'))).toBe(false);
+      expect(await fileExists(path.join(ctx.tmpDir, '.cursor', 'mcp.json'))).toBe(false);
+    });
+
+    it('should merge with existing MCP config', async () => {
+      // Create existing MCP config with another server
+      const existingConfig = {
+        mcpServers: {
+          'other-server': {
+            command: 'node',
+            args: ['other-server.js'],
+          },
+        },
+      };
+      const mcpConfigPath = path.join(ctx.tmpDir, '.mcp.json');
+      await writeFile(mcpConfigPath, JSON.stringify(existingConfig, null, 2));
+
+      const result = execCli(['init', '-y', '--mcp-config', 'claude'], { cwd: ctx.tmpDir });
+
+      expect(result.exitCode).toBe(0);
+
+      const mcpContent = await readFile(mcpConfigPath);
+      const mcpConfig = JSON.parse(mcpContent);
+
+      // Both servers should be present
+      expect(mcpConfig.mcpServers['other-server']).toBeDefined();
+      expect(mcpConfig.mcpServers['lean-spec']).toBeDefined();
+    });
+  });
+
   describe('error handling', () => {
     it('should fail gracefully on permission error', async () => {
       // Skip on non-Unix systems

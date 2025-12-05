@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-12-05'
 tags:
   - init
@@ -11,12 +11,19 @@ priority: high
 created_at: '2025-12-05T02:38:41.988Z'
 depends_on:
   - 121-mcp-first-agent-experience
-updated_at: '2025-12-05T02:38:42.030Z'
+updated_at: '2025-12-05T03:13:34.496Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-05T03:11:45.997Z'
+  - status: complete
+    at: '2025-12-05T03:13:34.496Z'
+completed_at: '2025-12-05T03:13:34.496Z'
+completed: '2025-12-05'
 ---
 
 # MCP Config Auto-Setup During Init
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-05 · **Tags**: init, mcp, onboarding, dx, ai-agents
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-05 · **Tags**: init, mcp, onboarding, dx, ai-agents
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -58,7 +65,7 @@ After implementation:
 
 | AI Tool | Config File Location | Format | Notes |
 |---------|---------------------|--------|-------|
-| Claude Code | `.mcp.json` (project, git-tracked) | JSON | Most popular; also `~/.claude.json` for user scope |
+| Claude | `.mcp.json` (project, git-tracked) | JSON | Most popular; also `~/.claude.json` for user scope |
 | VS Code (Copilot) | `.vscode/mcp.json` (workspace) | JSON | |
 | Cursor | `.cursor/mcp.json` (workspace) | JSON | |
 | Windsurf | `.windsurf/mcp.json` (workspace) | JSON | |
@@ -68,13 +75,13 @@ After implementation:
 
 ### MCP Server Entry Format
 
-**Claude Code** (project-scoped `.mcp.json`):
+**Claude** (project-scoped `.mcp.json`):
 ```json
 {
   "mcpServers": {
     "lean-spec": {
       "command": "npx",
-      "args": ["-y", "@anthropic/lean-spec-mcp", "--project", "${PWD}"]
+      "args": ["-y", "@leanspec/mcp", "--project", "${PWD}"]
     }
   }
 }
@@ -86,7 +93,7 @@ After implementation:
   "mcpServers": {
     "lean-spec": {
       "command": "npx",
-      "args": ["-y", "@anthropic/lean-spec-mcp", "--project", "/absolute/path/to/project"]
+      "args": ["-y", "@leanspec/mcp", "--project", "/absolute/path/to/project"]
     }
   }
 }
@@ -100,7 +107,7 @@ $ lean-spec init
 Welcome to LeanSpec! 🚀
 
 ? Which AI tools do you use?
-  ◉ Claude Code
+  ◉ Claude
   ◉ VS Code (GitHub Copilot)
   ◯ Cursor
   ◯ Windsurf
@@ -117,7 +124,7 @@ Creating LeanSpec project...
     No - I'll configure manually later
 
 Configuring MCP...
-  ✓ Claude Code: Created .mcp.json
+  ✓ Claude: Created .mcp.json
   ✓ VS Code: Created .vscode/mcp.json
   ℹ OpenAI Codex: Uses AGENTS.md (already created)
 
@@ -128,10 +135,10 @@ Next: Open your AI tool and ask "Show me the project board"
 
 ### Configuration Strategies
 
-**Strategy 1: Project-Scoped Config (Auto) - Claude Code**
+**Strategy 1: Project-Scoped Config (Auto) - Claude**
 - Creates `.mcp.json` at project root
 - Git-trackable (team can share config)
-- Claude Code supports `${PWD}` for relative paths
+- Claude supports `${PWD}` for relative paths
 
 **Strategy 2: Workspace-Local Config (Auto)**
 - Tools: VS Code, Cursor, Windsurf
@@ -204,14 +211,14 @@ const mcpConfig = {
 - [ ] Backup is created before modifying existing config
 
 ### Integration Tests
-- [ ] `lean-spec init` with Claude Code creates `.mcp.json`
+- [ ] `lean-spec init` with Claude creates `.mcp.json`
 - [ ] `lean-spec init` with VS Code creates `.vscode/mcp.json`
 - [ ] `lean-spec init` with Cursor creates `.cursor/mcp.json`
 - [ ] `lean-spec init --mcp-config vscode` works non-interactively
 - [ ] Existing config is merged, not overwritten
 
 ### End-to-End Tests
-- [ ] Claude Code with configured MCP can use lean-spec tools
+- [ ] Claude with configured MCP can use lean-spec tools
 - [ ] VS Code with configured MCP can use lean-spec tools
 - [ ] Cursor with configured MCP can use lean-spec tools
 

@@ -18,6 +18,15 @@ import {
   getDisplayCommand,
   type AIToolKey,
 } from '../utils/template-helpers.js';
+import {
+  MCP_TOOL_CONFIGS,
+  detectMcpTools,
+  createMcpConfigs,
+  printMcpConfigResults,
+  getDefaultMcpToolSelection,
+  parseMcpConfigFlag,
+  type McpToolKey,
+} from '../utils/mcp-config.js';
 import { 
   getExamplesList, 
   getExample, 
@@ -345,7 +354,8 @@ export function initCommand(): Command {
     .option('--name <dirname>', 'Custom directory name for example project')
     .option('--list', 'List available example projects')
     .option('--agent-tools <tools>', 'AI tools to create symlinks for (comma-separated: claude,gemini,copilot or "all" or "none")')
-    .action(async (options: { yes?: boolean; force?: boolean; template?: string; example?: string; name?: string; list?: boolean; agentTools?: string }) => {
+    .option('--mcp-config <tools>', 'Configure MCP server for AI tools (comma-separated: claude-code,vscode,cursor,windsurf or "all" or "none")')
+    .action(async (options: { yes?: boolean; force?: boolean; template?: string; example?: string; name?: string; list?: boolean; agentTools?: string; mcpConfig?: string }) => {
       if (options.list) {
         await listExamples();
         return;
@@ -356,11 +366,11 @@ export function initCommand(): Command {
         return;
       }
       
-      await initProject(options.yes, options.template, options.agentTools, options.force);
+      await initProject(options.yes, options.template, options.agentTools, options.force, options.mcpConfig);
     });
 }
 
-export async function initProject(skipPrompts = false, templateOption?: string, agentToolsOption?: string, forceReinit = false): Promise<void> {
+export async function initProject(skipPrompts = false, templateOption?: string, agentToolsOption?: string, forceReinit = false, mcpConfigOption?: string): Promise<void> {
   const cwd = process.cwd();
 
   // Check if already initialized
@@ -403,6 +413,7 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   let setupMode = 'quick';
   let templateName = templateOption || 'standard'; // Use provided template or default to standard
   let selectedAgentTools: AIToolKey[] = [];
+  let selectedMcpTools: McpToolKey[] = [];
 
   // Parse agent tools option if provided
   if (agentToolsOption) {
@@ -415,12 +426,28 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
     }
   }
 
+  // Parse MCP config option if provided
+  if (mcpConfigOption) {
+    const parsed = parseMcpConfigFlag(mcpConfigOption);
+    if (parsed === 'all') {
+      selectedMcpTools = Object.keys(MCP_TOOL_CONFIGS) as McpToolKey[];
+    } else if (parsed === 'none') {
+      selectedMcpTools = [];
+    } else {
+      selectedMcpTools = parsed;
+    }
+  }
+
   // Skip prompts if -y flag is used
   if (skipPrompts) {
     console.log(chalk.gray('Using defaults: quick start with standard template'));
     // Default to Copilot only (AGENTS.md) when using -y
     if (!agentToolsOption) {
       selectedAgentTools = ['copilot'];
+    }
+    // Default to Claude MCP config when using -y (unless explicitly set)
+    if (!mcpConfigOption) {
+      selectedMcpTools = ['claude'];
     }
     console.log('');
   } else if (!templateOption) {
@@ -593,6 +620,44 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
       selectedAgentTools = symlinkSelection;
     } else {
       selectedAgentTools = [];
+    }
+
+    // MCP configuration prompt (only if not already provided via flag)
+    if (!mcpConfigOption) {
+      // Auto-detect MCP tools
+      const { defaults: mcpDefaults, detected: mcpDetectionResults } = await getDefaultMcpToolSelection(cwd);
+      const anyMcpDetected = mcpDetectionResults.some(r => r.detected);
+
+      // Show detection info
+      if (anyMcpDetected) {
+        console.log('');
+        console.log(chalk.cyan('🔍 Detected MCP-capable tools:'));
+        for (const result of mcpDetectionResults) {
+          if (result.detected) {
+            console.log(chalk.gray(`   ${MCP_TOOL_CONFIGS[result.tool].description}`));
+            for (const reason of result.reasons) {
+              console.log(chalk.gray(`      └─ ${reason}`));
+            }
+          }
+        }
+      }
+
+      console.log('');
+      console.log(chalk.gray('MCP (Model Context Protocol) provides richer AI integration than CLI alone.'));
+      console.log(chalk.gray('Configure MCP server to enable structured data exchange with your AI tools.'));
+      console.log('');
+
+      const mcpToolChoices = Object.entries(MCP_TOOL_CONFIGS).map(([key, config]) => ({
+        name: config.description,
+        value: key as McpToolKey,
+        checked: mcpDefaults.includes(key as McpToolKey),
+      }));
+
+      const mcpSelection = await checkbox({
+        message: 'Configure MCP server for which tools?',
+        choices: mcpToolChoices,
+      });
+      selectedMcpTools = mcpSelection;
     }
   }
 
@@ -768,6 +833,14 @@ export async function initProject(skipPrompts = false, templateOption?: string, 
   } catch (error) {
     console.error(chalk.red('Error creating specs directory:'), error);
     process.exit(1);
+  }
+
+  // Configure MCP server for selected tools
+  if (selectedMcpTools.length > 0) {
+    console.log('');
+    console.log(chalk.cyan('Configuring MCP server...'));
+    const mcpResults = await createMcpConfigs(cwd, selectedMcpTools);
+    printMcpConfigResults(mcpResults);
   }
 
   console.log('');
