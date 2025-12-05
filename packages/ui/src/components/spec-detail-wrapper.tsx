@@ -23,12 +23,15 @@ interface SpecDetailWrapperProps {
 export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetailWrapperProps) {
   const { projectId } = useProjectUrl();
   
-  const [isFocusMode, setIsFocusMode] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('spec-detail-focus-mode') === 'true';
+  const [isFocusMode, setIsFocusMode] = React.useState(false);
+
+  // Initialize focus mode from localStorage after mount to avoid hydration mismatch
+  React.useEffect(() => {
+    const saved = localStorage.getItem('spec-detail-focus-mode');
+    if (saved === 'true') {
+      setIsFocusMode(true);
     }
-    return false;
-  });
+  }, []);
 
   // Persist focus mode preference
   const handleToggleFocusMode = React.useCallback(() => {

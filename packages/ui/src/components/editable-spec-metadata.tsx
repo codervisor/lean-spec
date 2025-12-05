@@ -11,6 +11,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { StatusEditor } from '@/components/status-editor';
 import { PriorityEditor } from '@/components/priority-editor';
 import { TagsEditor } from '@/components/tags-editor';
+import { ClientOnly } from '@/components/client-only';
+import { StatusBadge } from '@/components/status-badge';
+import { PriorityBadge } from '@/components/priority-badge';
 import { formatDate, formatRelativeTime } from '@/lib/date-utils';
 import type { Spec } from '@/lib/db/schema';
 
@@ -33,12 +36,14 @@ export function EditableSpecMetadata({ spec, projectId, onMetadataUpdate }: Edit
               Status
             </dt>
             <dd>
-              <StatusEditor
-                specId={specIdentifier}
-                currentStatus={spec.status || 'planned'}
-                projectId={projectId}
-                onUpdate={(newStatus) => onMetadataUpdate?.('status', newStatus)}
-              />
+              <ClientOnly fallback={<StatusBadge status={spec.status || 'planned'} />}>
+                <StatusEditor
+                  specId={specIdentifier}
+                  currentStatus={spec.status || 'planned'}
+                  projectId={projectId}
+                  onUpdate={(newStatus) => onMetadataUpdate?.('status', newStatus)}
+                />
+              </ClientOnly>
             </dd>
           </div>
 
@@ -48,12 +53,14 @@ export function EditableSpecMetadata({ spec, projectId, onMetadataUpdate }: Edit
               Priority
             </dt>
             <dd>
-              <PriorityEditor
-                specId={specIdentifier}
-                currentPriority={spec.priority || 'medium'}
-                projectId={projectId}
-                onUpdate={(newPriority) => onMetadataUpdate?.('priority', newPriority)}
-              />
+              <ClientOnly fallback={<PriorityBadge priority={spec.priority || 'medium'} />}>
+                <PriorityEditor
+                  specId={specIdentifier}
+                  currentPriority={spec.priority || 'medium'}
+                  projectId={projectId}
+                  onUpdate={(newPriority) => onMetadataUpdate?.('priority', newPriority)}
+                />
+              </ClientOnly>
             </dd>
           </div>
 
@@ -116,12 +123,14 @@ export function EditableSpecMetadata({ spec, projectId, onMetadataUpdate }: Edit
               Tags
             </dt>
             <dd>
-              <TagsEditor
-                specId={specIdentifier}
-                currentTags={spec.tags || []}
-                projectId={projectId}
-                onUpdate={(newTags) => onMetadataUpdate?.('tags', newTags)}
-              />
+              <ClientOnly>
+                <TagsEditor
+                  specId={specIdentifier}
+                  currentTags={spec.tags || []}
+                  projectId={projectId}
+                  onUpdate={(newTags) => onMetadataUpdate?.('tags', newTags)}
+                />
+              </ClientOnly>
             </dd>
           </div>
 

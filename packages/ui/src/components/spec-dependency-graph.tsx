@@ -316,10 +316,6 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle, proj
           <span className="inline-block h-2.5 w-8 rounded-full bg-red-400/80" />
           Required By ← blocked by this spec
         </span>
-        <span className="inline-flex items-center gap-2 font-medium">
-          <span className="inline-block h-2.5 w-8 rounded-full bg-sky-400/80" />
-          Related ↔ connected work (bidirectional)
-        </span>
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-2.5 w-8 rounded-full bg-primary/60" />
           Drag to pan • Scroll / pinch to zoom.

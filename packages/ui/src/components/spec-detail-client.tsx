@@ -19,6 +19,7 @@ import { PriorityBadge } from '@/components/priority-badge';
 import { StatusEditor } from '@/components/status-editor';
 import { PriorityEditor } from '@/components/priority-editor';
 import { TagsEditor } from '@/components/tags-editor';
+import { ClientOnly } from '@/components/client-only';
 import { MarkdownLink } from '@/components/markdown-link';
 import { TableOfContents, TableOfContentsSidebar } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
@@ -297,23 +298,29 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
               
               {/* Line 2: Status, Priority, Tags, Actions */}
               <div className="flex flex-wrap items-center gap-2">
-                <StatusEditor
-                  specId={spec.specNumber?.toString() || spec.id}
-                  currentStatus={spec.status || 'planned'}
-                  projectId={projectId}
-                />
-                <PriorityEditor
-                  specId={spec.specNumber?.toString() || spec.id}
-                  currentPriority={spec.priority || 'medium'}
-                  projectId={projectId}
-                />
+                <ClientOnly fallback={<StatusBadge status={spec.status || 'planned'} />}>
+                  <StatusEditor
+                    specId={spec.specNumber?.toString() || spec.id}
+                    currentStatus={spec.status || 'planned'}
+                    projectId={projectId}
+                  />
+                </ClientOnly>
+                <ClientOnly fallback={<PriorityBadge priority={spec.priority || 'medium'} />}>
+                  <PriorityEditor
+                    specId={spec.specNumber?.toString() || spec.id}
+                    currentPriority={spec.priority || 'medium'}
+                    projectId={projectId}
+                  />
+                </ClientOnly>
                 
                 <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
-                <TagsEditor
-                  specId={spec.specNumber?.toString() || spec.id}
-                  currentTags={tags}
-                  projectId={projectId}
-                />
+                <ClientOnly>
+                  <TagsEditor
+                    specId={spec.specNumber?.toString() || spec.id}
+                    currentTags={tags}
+                    projectId={projectId}
+                  />
+                </ClientOnly>
               </div>
 
               {/* Line 3: Small metadata row */}
