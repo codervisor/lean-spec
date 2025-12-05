@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Inline metadata editing in Web UI** ([spec 134](https://web.lean-spec.dev/specs/134)) - Edit spec metadata directly in the browser
+  - Status dropdown with color-coded badges (planned, in-progress, complete, archived)
+  - Priority selector (low, medium, high, critical)
+  - Tags editor with add/remove functionality
+  - Optimistic updates with automatic rollback on error
+  - Works in both filesystem and multi-project modes
+- **MCP config auto-setup during init** ([spec 145](https://web.lean-spec.dev/specs/145)) - Automatic MCP configuration
+  - `lean-spec init` now offers to configure MCP for detected AI tools
+  - Supports Claude Code (`.mcp.json`), VS Code (`.vscode/mcp.json`), Cursor (`.cursor/mcp.json`)
+  - Generates correct MCP config entries with proper absolute paths
+  - Zero manual configuration needed after init for workspace-local tools
+- **Backfill command bootstrap mode** ([spec 144](https://web.lean-spec.dev/specs/144)) - Robust migration support
+  - New `--bootstrap` flag creates frontmatter for specs without any
+  - Auto-infers `status` and `created` from git history
+  - Supports legacy formats (ADR, RFC, inline metadata like `**Status**: Complete`)
+  - Maps ADR statuses: accepted→complete, proposed→planned, superseded→archived
+
+### Changed
+- **Multi-project mode improvements** ([spec 142](https://web.lean-spec.dev/specs/142)) - Critical UX fixes
+  - All navigation links now use project-scoped URLs (`/projects/[id]/specs`)
+  - Added SSR for multi-project dependencies, stats, and context pages
+  - Projects page has dedicated layout without sidebar
+  - Fixed path overflow in Add Project dialog with proper truncation
+- **Lightweight specs for list views** - Performance optimization
+  - Spec list API no longer returns full `contentMd` (can be 1MB+ total)
+  - Reduces initial page load size by ~90% for projects with many specs
+
+### Fixed
+- **Dependencies page fails on custom ports** - `lean-spec ui --port 3002` now works
+  - Pages now call data functions directly instead of fetching from hardcoded localhost:3000
+  - Multi-project dependencies correctly parse `depends_on` from frontmatter
+- **MCP `deps` tool fails to find spec by sequence number** - Now correctly resolves spec paths
+- **Command references updated** - Fixed `lspec` → `lean-spec` in documentation
+
 ## [0.2.9] - 2025-12-04
 
 ### Added
