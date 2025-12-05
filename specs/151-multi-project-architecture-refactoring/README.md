@@ -217,10 +217,11 @@ interface SpecBoardProps {
 - [x] Add unit tests for project constants (10 tests)
 
 ### Phase 3: Route Consolidation
-- [ ] Migrate all `/specs/*` routes to `/projects/[id]/*`
-- [ ] Add redirect middleware for legacy URLs
-- [ ] Update all internal links to use new structure
-- [ ] Verify SSR works consistently across all routes
+- [x] Migrate all `/specs/*` routes to `/projects/[id]/*`
+- [x] Add redirect middleware for legacy URLs
+- [x] Update all internal links to use new structure
+- [x] Verify SSR works consistently across all routes
+- [x] Update API routes to handle 'default' projectId
 
 ### Phase 4: Component Cleanup
 - [ ] Audit components for mode checks
@@ -245,8 +246,8 @@ interface SpecBoardProps {
 - [x] Single-project mode works identically to current behavior
 - [ ] Multi-project mode: all features work (board, dependencies, stats)
 - [ ] Switching projects preserves expected behavior
-- [ ] Deep links work: `/projects/[id]/specs/[spec]` loads correctly
-- [ ] Legacy URLs (`/specs/*`) redirect correctly
+- [x] Deep links work: `/projects/[id]/specs/[spec]` loads correctly
+- [x] Legacy URLs (`/specs/*`) redirect correctly
 - [ ] Drag-drop on board works in both modes
 - [ ] "View Dependencies" works in both modes
 - [ ] Metadata editing works in both modes

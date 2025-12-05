@@ -48,10 +48,10 @@ export class SpecsService {
   constructor() {
     this.mode = (process.env.SPECS_MODE as SpecsMode) || 'filesystem';
 
-    if (this.mode === 'filesystem' || this.mode === 'both') {
-      const specsDir = process.env.SPECS_DIR;
-      this.filesystemSource = new FilesystemSource(specsDir);
-    }
+    // Always create filesystem source for 'default' project support
+    // This enables /projects/default/* routes in all modes (spec 151)
+    const specsDir = process.env.SPECS_DIR;
+    this.filesystemSource = new FilesystemSource(specsDir);
 
     if (this.mode === 'multi-project') {
       this.multiProjectSource = new MultiProjectFilesystemSource();
@@ -138,23 +138,31 @@ export class SpecsService {
    * Get the appropriate source based on projectId and mode
    * 
    * For unified routing (spec 151), 'default' projectId is treated as
-   * the filesystem source in single-project mode.
+   * the filesystem source in single-project mode, even when in multi-project mode.
+   * This enables unified URLs (/projects/default/specs) to work in all modes.
    */
   private async getSource(projectId?: string): Promise<SpecSource> {
-    // Multi-project mode: use multi-project source
-    if (this.mode === 'multi-project' && this.multiProjectSource) {
+    // Treat 'default' projectId as undefined (single-project filesystem)
+    // This must be checked FIRST, even in multi-project mode
+    const effectiveProjectId = isDefaultProject(projectId) ? undefined : projectId;
+
+    // If no effective projectId (undefined or 'default'), use filesystem source
+    // This enables /projects/default/* routes to work in both single and multi-project modes
+    if (!effectiveProjectId && this.filesystemSource) {
+      return this.filesystemSource;
+    }
+
+    // Multi-project mode with actual projectId: use multi-project source
+    if (this.mode === 'multi-project' && this.multiProjectSource && effectiveProjectId) {
       return this.multiProjectSource;
     }
 
-    // Treat 'default' projectId as undefined (single-project filesystem)
-    const effectiveProjectId = isDefaultProject(projectId) ? undefined : projectId;
-
-    // If projectId provided and not 'default', use database (external repo)
+    // If projectId provided and in database mode, use database (external repo)
     if (effectiveProjectId && (this.mode === 'database' || this.mode === 'both')) {
       return await this.getDatabaseSource();
     }
 
-    // Otherwise use filesystem (LeanSpec's own specs)
+    // Fallback to filesystem (LeanSpec's own specs)
     if (this.filesystemSource) {
       return this.filesystemSource;
     }

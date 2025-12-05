@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { QuickSearch } from '@/components/quick-search';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useProjectUrl } from '@/contexts/project-context';
 
 interface Spec {
   id: string
@@ -50,50 +51,111 @@ function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
   );
 }
 
-function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
-  if (pathname === '/') {
-    return [{ label: 'Home' }];
+/**
+ * Parse pathname to extract project context and page info
+ * Handles both legacy (/specs/*) and project-scoped (/projects/[id]/*) URLs
+ */
+function parsePathname(pathname: string): { projectId?: string; page: string; specId?: string; query?: string } {
+  // Project-scoped URL: /projects/[projectId]/...
+  const projectMatch = pathname.match(/^\/projects\/([^/]+)(?:\/(.*))?$/);
+  if (projectMatch) {
+    const projectId = projectMatch[1];
+    const rest = projectMatch[2] || '';
+    
+    // Parse the page within the project
+    if (!rest) {
+      return { projectId, page: 'home' };
+    }
+    if (rest === 'specs' || rest.startsWith('specs?')) {
+      return { projectId, page: 'specs', query: rest.split('?')[1] };
+    }
+    if (rest.startsWith('specs/')) {
+      return { projectId, page: 'spec-detail', specId: rest.split('/')[1] };
+    }
+    if (rest === 'stats') {
+      return { projectId, page: 'stats' };
+    }
+    if (rest === 'dependencies') {
+      return { projectId, page: 'dependencies' };
+    }
+    if (rest === 'context') {
+      return { projectId, page: 'context' };
+    }
+    return { projectId, page: 'unknown' };
   }
   
-  if (pathname === '/stats') {
-    return [
-      { label: 'Home', href: '/' },
-      { label: 'Stats' }
-    ];
-  }
-  
+  // Legacy URLs (single-project mode)
+  if (pathname === '/') return { page: 'home' };
+  if (pathname === '/stats') return { page: 'stats' };
+  if (pathname === '/dependencies') return { page: 'dependencies' };
+  if (pathname === '/context') return { page: 'context' };
   if (pathname === '/specs' || pathname.startsWith('/specs?')) {
-    const searchParams = new URLSearchParams(pathname.split('?')[1] || '');
-    const view = searchParams.get('view');
-    const viewLabel = view === 'board' ? 'Board View' : 'List View';
-    return [
-      { label: 'Home', href: '/' },
-      { label: `Specs (${viewLabel})` }
-    ];
+    return { page: 'specs', query: pathname.split('?')[1] };
   }
-  
   if (pathname.startsWith('/specs/')) {
-    const specId = pathname.split('/')[2];
-    return [
-      { label: 'Home', href: '/' },
-      { label: 'Specs', href: '/specs' },
-      { label: specId }
-    ];
+    return { page: 'spec-detail', specId: pathname.split('/')[2] };
   }
   
-  if (pathname === '/board') {
-    return [
-      { label: 'Home', href: '/' },
-      { label: 'Board' }
-    ];
-  }
+  return { page: 'unknown' };
+}
+
+/**
+ * Generate breadcrumbs using project-scoped URLs
+ */
+function useBreadcrumbs(): BreadcrumbItem[] {
+  const pathname = usePathname();
+  const { getUrl } = useProjectUrl();
   
-  return [{ label: 'Home', href: '/' }];
+  const parsed = parsePathname(pathname);
+  const homeUrl = getUrl('/');
+  const specsUrl = getUrl('/specs');
+  
+  switch (parsed.page) {
+    case 'home':
+      return [{ label: 'Home' }];
+    
+    case 'stats':
+      return [
+        { label: 'Home', href: homeUrl },
+        { label: 'Stats' }
+      ];
+    
+    case 'dependencies':
+      return [
+        { label: 'Home', href: homeUrl },
+        { label: 'Dependencies' }
+      ];
+    
+    case 'context':
+      return [
+        { label: 'Home', href: homeUrl },
+        { label: 'Context' }
+      ];
+    
+    case 'specs': {
+      const searchParams = new URLSearchParams(parsed.query || '');
+      const view = searchParams.get('view');
+      const viewLabel = view === 'board' ? 'Board View' : 'List View';
+      return [
+        { label: 'Home', href: homeUrl },
+        { label: `Specs (${viewLabel})` }
+      ];
+    }
+    
+    case 'spec-detail':
+      return [
+        { label: 'Home', href: homeUrl },
+        { label: 'Specs', href: specsUrl },
+        { label: parsed.specId || '' }
+      ];
+    
+    default:
+      return [{ label: 'Home', href: homeUrl }];
+  }
 }
 
 export function Navigation({ specs }: NavigationProps) {
-  const pathname = usePathname();
-  const breadcrumbs = getBreadcrumbs(pathname);
+  const breadcrumbs = useBreadcrumbs();
 
   const toggleSidebar = () => {
     if (typeof window !== 'undefined' && window.toggleMainSidebar) {

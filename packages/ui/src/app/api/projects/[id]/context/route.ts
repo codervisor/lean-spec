@@ -1,11 +1,16 @@
 /**
  * API endpoint for project context data
  * Spec 131 - UI Project Context Visibility
+ * 
+ * For unified routing (spec 151):
+ * - 'default' projectId is treated as single-project mode
+ * - Other projectIds use project registry
  */
 
 import { NextResponse } from 'next/server';
 import { getProjectContext } from '@/lib/db/service-queries';
 import { projectRegistry } from '@/lib/projects/registry';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +21,13 @@ export async function GET(
   try {
     const { id } = await params;
     
-    // Get the project to find its path
+    // For default project, use current working directory
+    if (isDefaultProject(id)) {
+      const context = await getProjectContext();
+      return NextResponse.json(context);
+    }
+    
+    // For multi-project mode, get project from registry
     const project = await projectRegistry.getProject(id);
     
     if (!project) {
