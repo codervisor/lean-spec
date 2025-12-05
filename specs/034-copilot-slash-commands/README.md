@@ -39,7 +39,7 @@ Add LeanSpec integration directly into VS Code via GitHub Copilot Chat using sla
 - Context-aware: can reference open files, workspace, current work
 
 **Option B: Slash Commands**
-- Register commands like `/lspec-search`, `/lspec-create`, `/lspec-status`
+- Register commands like `/lean-spec-search`, `/lean-spec-create`, `/lean-spec-status`
 - More structured but less conversational
 - Fallback if participant API has limitations
 

@@ -88,8 +88,8 @@ lean-spec init
 1. **Automated**: Run `./test-integration.sh` for basic checks
 2. **Manual**: 
    ```bash
-   cd /tmp/lspec-test-existing
-   node /path/to/lean-spec/bin/lspec.js init
+   cd /tmp/lean-spec-test-existing
+   node /path/to/lean-spec/bin/lean-spec.js init
    # Test each mode: merge, backup, skip
    ```
 

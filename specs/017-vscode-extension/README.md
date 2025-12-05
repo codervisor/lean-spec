@@ -80,9 +80,9 @@ LEANSPEC SPECS
 - Hover tooltips showing field descriptions
 
 **Snippets:**
-- `lspec-spec` → Full spec template
-- `lspec-front` → Frontmatter block
-- `lspec-plan` → Plan section with checkboxes
+- `lean-spec-spec` → Full spec template
+- `lean-spec-front` → Frontmatter block
+- `lean-spec-plan` → Plan section with checkboxes
 
 **CodeLens:**
 ```markdown
@@ -131,7 +131,7 @@ src/
 ├── views/
 │   └── statsWebview.ts       # Stats dashboard
 └── utils/
-    └── lspecClient.ts        # Wrap CLI commands
+    └── leanSpecClient.ts     # Wrap CLI commands
 ```
 
 ### 5. Configuration
