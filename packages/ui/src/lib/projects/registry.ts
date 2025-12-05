@@ -90,7 +90,7 @@ export class ProjectRegistry {
 
     const yamlContent = yaml.dump(serializable, {
       indent: 2,
-      lineWidth: 100,
+      lineWidth: -1, // Disable line wrapping to prevent YAML corruption
     });
 
     await fs.writeFile(PROJECTS_CONFIG_FILE, yamlContent, 'utf-8');
