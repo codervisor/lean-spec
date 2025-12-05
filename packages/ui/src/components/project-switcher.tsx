@@ -82,7 +82,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     }
     
     // Full page navigation - ensures clean state for new project
-    window.location.href = `/projects/${projectId}${subPath}`;
+    window.location.assign(`/projects/${projectId}${subPath}`);
   };
 
   const sortedProjects = [...projects].sort((a, b) => {
