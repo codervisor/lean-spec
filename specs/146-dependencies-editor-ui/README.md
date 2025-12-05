@@ -9,7 +9,8 @@ priority: medium
 created_at: '2025-12-05T03:19:35.444Z'
 depends_on:
   - 134-ui-metadata-editing
-updated_at: '2025-12-05T03:19:35.470Z'
+  - 151-multi-project-architecture-refactoring
+updated_at: '2025-12-05T07:13:42.493Z'
 ---
 
 # Dependencies Editor Component for UI

@@ -1,0 +1,209 @@
+---
+slug: v0210-inline-editing-mcp-autosetup
+title: "LeanSpec 0.2.10: Inline Metadata Editing, MCP Auto-Setup, and Multi-Project Improvements"
+authors: [marvin]
+tags: [release, web-ui, mcp, multi-project]
+---
+
+LeanSpec 0.2.10 brings a more interactive web experience with inline metadata editing, zero-config MCP setup during initialization, and significant improvements to multi-project management. This release focuses on reducing friction—whether you're managing specs in the browser, setting up AI agent integrations, or working across multiple projects.
+
+**Highlights**: Edit spec metadata directly in the browser, automatic MCP configuration for your AI tools, bootstrap mode for legacy specs, and polished multi-project workflows.
+
+{/* truncate */}
+
+## ✏️ Inline Metadata Editing in Web UI
+
+No more switching between the web interface and command line to update spec metadata. You can now edit everything directly in the browser:
+
+![Inline metadata editing in spec detail view](/img/blog/v0210/inline-metadata-editing.png)
+
+### What You Can Edit
+
+- **Status** - Click the status badge to change between planned, in-progress, complete, and archived
+- **Priority** - Update priority levels (low, medium, high, critical) with a single click
+- **Tags** - Add, remove, and search tags with autocomplete suggestions
+- **Dependencies** - Manage `depends_on` relationships without leaving the spec view
+
+### How It Works
+
+Changes are **optimistic**—the UI updates immediately while the save happens in the background. If something fails, changes roll back automatically with a clear error message.
+
+This works in both filesystem mode (local development) and multi-project mode (team dashboards).
+
+```bash
+# Launch the web UI
+lean-spec ui
+
+# Or with a custom port
+lean-spec ui --port 3001
+```
+
+Open any spec, and you'll see the editable metadata panel on the right side.
+
+## 🔧 MCP Auto-Setup During Init
+
+Setting up MCP server integration used to require manual configuration. Now `lean-spec init` handles it automatically.
+
+### Automatic Detection
+
+When you run `lean-spec init`, LeanSpec detects your AI tools and offers to configure MCP:
+
+```bash
+$ lean-spec init
+
+✔ Detected AI tools: Claude Code, VS Code, Cursor
+
+? Configure MCP server for detected tools? (Y/n) y
+
+✔ Created .mcp.json for Claude Code
+✔ Created .vscode/mcp.json for VS Code  
+✔ Created .cursor/mcp.json for Cursor
+```
+
+### Zero Manual Config
+
+Each configuration file gets the correct format with absolute paths:
+
+```json
+{
+  "mcpServers": {
+    "lean-spec": {
+      "command": "npx",
+      "args": ["@leanspec/mcp"],
+      "cwd": "/absolute/path/to/your/project"
+    }
+  }
+}
+```
+
+Your AI agents can immediately access LeanSpec tools—no copy-paste from docs, no path troubleshooting.
+
+### Supported Tools
+
+- **Claude Code** - `.mcp.json`
+- **VS Code** - `.vscode/mcp.json`
+- **Cursor** - `.cursor/mcp.json`
+
+More tools coming soon based on demand.
+
+## 🔄 Bootstrap Mode for Legacy Specs
+
+Migrating existing specs that lack frontmatter? The new `--bootstrap` flag makes it painless:
+
+```bash
+# Create frontmatter for specs that don't have any
+lean-spec backfill --bootstrap
+```
+
+### What Bootstrap Does
+
+1. **Scans for missing frontmatter** - Identifies specs without YAML metadata
+2. **Infers status from git history** - Uses commit patterns to guess current state
+3. **Sets created date from first commit** - Accurate timestamps from your git log
+4. **Handles legacy formats** - Recognizes ADR, RFC, and inline metadata patterns
+
+### Legacy Format Support
+
+Bootstrap understands common documentation patterns:
+
+- **ADR status lines**: `Status: Accepted` → `status: complete`
+- **RFC headers**: `Status: Proposed` → `status: planned`
+- **Inline metadata**: `**Status**: Complete` → `status: complete`
+
+```bash
+# Preview what would change
+lean-spec backfill --bootstrap --dry-run
+
+# Apply changes
+lean-spec backfill --bootstrap
+```
+
+## 📁 Multi-Project Management Polish
+
+For teams managing multiple projects through the web UI, we've made several improvements:
+
+### Quick Access to Project Management
+
+The project switcher dropdown now includes a "Manage Projects" option—no more hunting for the projects page.
+
+### Inline Project Editing
+
+Edit project names and colors directly on the `/projects` page. Click a project name to rename it, or use the color picker to customize the visual indicator.
+
+### Better Path Handling
+
+- Long paths no longer overflow the Add Project dialog
+- Path validation shows clear status (valid/invalid/missing)
+- Invalid paths are highlighted before you try to save
+
+### Smarter Navigation
+
+When you switch projects from a spec detail page, you're now redirected to that project's spec list instead of getting a 404.
+
+## 📊 Dependency Graph (v0.2.9 Bonus)
+
+If you missed it in the previous release, the new `/dependencies` page gives you a bird's-eye view of your entire project's dependency structure:
+
+![Project-wide dependency graph visualization](/img/blog/v0210/dependency-graph.png)
+
+- **Interactive DAG layout** with zoom, pan, and mini-map navigation
+- **Filter by status** - Focus on planned, in-progress, or complete specs
+- **Click to navigate** - Double-click any node to open the spec detail
+- **Highlight chains** - Select a spec to see its full dependency path
+
+## 🐛 Bug Fixes
+
+### Dependencies Page Works on Custom Ports
+
+Previously, `lean-spec ui --port 3002` would break the dependencies page due to hardcoded localhost:3000 calls. Fixed—the page now works on any port.
+
+### Multi-Project Dependencies Fixed
+
+The "View Dependencies" button on spec detail pages now works correctly in multi-project mode with a new dedicated API endpoint.
+
+### MCP `deps` Tool Finds Specs Correctly
+
+The `deps` MCP tool now correctly resolves specs by sequence number (e.g., `045` finds `045-feature-name`).
+
+### Light Theme Contrast
+
+Dependencies page nodes are now readable in light theme. We updated the color palette for proper contrast in both themes.
+
+## ⚡ Performance: Lighter Spec Lists
+
+Spec list APIs no longer return full `contentMd` for each spec. For projects with many specs, this reduces initial page load size by ~90%.
+
+Full content loads on-demand when you open a spec detail page.
+
+## Upgrade
+
+```bash
+# Update global installation
+npm install -g lean-spec@latest
+
+# Or use npx (always gets latest)
+npx lean-spec@latest board
+```
+
+If you're using the MCP server:
+
+```bash
+# Update MCP package
+npm install -g @leanspec/mcp@latest
+```
+
+## What's Next
+
+- **VS Code extension** - Native spec management in your editor
+- **GitHub Action** - Automated spec validation in CI
+- **More MCP tool improvements** - Based on your feedback
+
+**Have ideas?** [Open an issue](https://github.com/codervisor/lean-spec/issues) or [start a discussion](https://github.com/codervisor/lean-spec/discussions).
+
+---
+
+**Links**:
+- [Documentation](https://lean-spec.dev)
+- [GitHub Repository](https://github.com/codervisor/lean-spec)
+- [Full Changelog](https://github.com/codervisor/lean-spec/blob/main/CHANGELOG.md)
+- [Getting Started Guide](https://lean-spec.dev/docs/guide/getting-started)
