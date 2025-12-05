@@ -2,6 +2,19 @@
 
 Mandatory rules for AI agents and developers working on LeanSpec.
 
+## AI Tool Support
+
+**Supported AI tools for MCP/agent integration:**
+- ✅ Claude Code (most popular - uses `.mcp.json` and `claude mcp add`)
+- ✅ GitHub Copilot (VS Code)
+- ✅ Cursor
+- ✅ Windsurf
+- ✅ OpenAI Codex (uses `AGENTS.md` for instructions)
+- ✅ Gemini CLI
+
+**Not supported:**
+- ❌ Cline - Not officially supported; do not add Cline-specific features or configurations
+
 ## UI Development (@leanspec/ui)
 
 ### Light/Dark Theme Compatibility
