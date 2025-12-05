@@ -69,7 +69,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
         </DialogHeader>
         
         {mode === 'picker' ? (
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0 overflow-hidden">
             <DirectoryPicker 
               onSelect={handleAddProject} 
               onCancel={() => onOpenChange(false)} 
