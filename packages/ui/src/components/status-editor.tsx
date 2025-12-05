@@ -48,7 +48,7 @@ interface StatusEditorProps {
   currentStatus: string;
   onUpdate?: (newStatus: string) => void;
   disabled?: boolean;
-  projectId?: string;
+  projectId: string;
 }
 
 export function StatusEditor({ 
@@ -71,9 +71,7 @@ export function StatusEditor({
     setError(null);
 
     try {
-      const apiUrl = projectId
-        ? `/api/projects/${projectId}/specs/${specId}/metadata`
-        : `/api/specs/${specId}/metadata`;
+      const apiUrl = `/api/projects/${projectId}/specs/${specId}/metadata`;
       
       const response = await fetch(apiUrl, {
         method: 'PATCH',

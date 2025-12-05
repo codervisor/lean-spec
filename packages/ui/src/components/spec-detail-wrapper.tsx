@@ -9,6 +9,7 @@ import * as React from 'react';
 import { SpecsNavSidebar } from '@/components/specs-nav-sidebar';
 import { SpecDetailClient } from '@/components/spec-detail-client';
 import { primeSpecsSidebar, setActiveSidebarSpec } from '@/lib/stores/specs-sidebar-store';
+import { useProjectUrl } from '@/contexts/project-context';
 import { cn } from '@/lib/utils';
 import type { SpecWithMetadata, SidebarSpec } from '@/types/specs';
 import type { LightweightSpec } from '@/lib/db/service-queries';
@@ -20,6 +21,8 @@ interface SpecDetailWrapperProps {
 }
 
 export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetailWrapperProps) {
+  const { projectId } = useProjectUrl();
+  
   const [isFocusMode, setIsFocusMode] = React.useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('spec-detail-focus-mode') === 'true';
@@ -59,12 +62,13 @@ export function SpecDetailWrapper({ spec, allSpecs, currentSubSpec }: SpecDetail
     setActiveSidebarSpec(spec.id);
   }, [spec.id]);
 
-  // Prefetch spec data on hover
+  // Prefetch spec data on hover using project-scoped API
   const handleSpecPrefetch = React.useCallback((specId: string) => {
-    fetch(`/api/specs/${specId}`).catch(() => {
+    const apiUrl = `/api/projects/${projectId}/specs/${specId}`;
+    fetch(apiUrl).catch(() => {
       // Prefetch is opportunistic, ignore failures
     });
-  }, []);
+  }, [projectId]);
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] w-full min-w-0">

@@ -1,4 +1,4 @@
-import { ProjectDependencyGraphClient } from '@/app/dependencies/dependencies-client';
+import { ProjectDependencyGraphClient } from '@/components/dependencies/dependencies-client';
 import { getDependencyGraph } from '@/lib/db/service-queries';
 
 export default async function ProjectDependenciesPage({

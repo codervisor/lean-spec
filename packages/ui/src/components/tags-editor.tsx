@@ -30,7 +30,7 @@ interface TagsEditorProps {
   currentTags: string[];
   onUpdate?: (newTags: string[]) => void;
   disabled?: boolean;
-  projectId?: string;
+  projectId: string;
 }
 
 export function TagsEditor({ 
@@ -52,7 +52,7 @@ export function TagsEditor({
     if (isOpen && allTags.length === 0) {
       const fetchTags = async () => {
         try {
-          const apiUrl = projectId ? `/api/projects/${projectId}/tags` : '/api/tags';
+          const apiUrl = `/api/projects/${projectId}/tags`;
           const response = await fetch(apiUrl);
           if (response.ok) {
             const data = await response.json();
@@ -73,9 +73,7 @@ export function TagsEditor({
     setError(null);
 
     try {
-      const apiUrl = projectId
-        ? `/api/projects/${projectId}/specs/${specId}/metadata`
-        : `/api/specs/${specId}/metadata`;
+      const apiUrl = `/api/projects/${projectId}/specs/${specId}/metadata`;
       
       const response = await fetch(apiUrl, {
         method: 'PATCH',

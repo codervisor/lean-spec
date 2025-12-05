@@ -17,11 +17,13 @@ import type { NextRequest } from 'next/server';
 
 /**
  * Legacy routes that should redirect to project-scoped routes
+ * These routes no longer exist - redirects handle external links/bookmarks
  */
 const LEGACY_ROUTE_PATTERNS = [
   { pattern: /^\/specs(?:\/(.*))?$/, target: (match: RegExpMatchArray) => `/projects/default/specs${match[1] ? `/${match[1]}` : ''}` },
   { pattern: /^\/dependencies$/, target: () => '/projects/default/dependencies' },
   { pattern: /^\/stats$/, target: () => '/projects/default/stats' },
+  { pattern: /^\/context$/, target: () => '/projects/default/context' },
 ];
 
 export function middleware(request: NextRequest) {
@@ -49,10 +51,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Match routes that might need redirection
+  // Match legacy routes for redirection to unified project routes
   matcher: [
     '/specs/:path*',
     '/dependencies',
     '/stats',
+    '/context',
   ],
 };
