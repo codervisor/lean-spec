@@ -387,7 +387,10 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                       <DialogDescription className="flex flex-col gap-2">
                         <span>Precedence requirements and connected specs rendered with automatic layout.</span>
                         <Link 
-                          href={`/dependencies?spec=${spec.specNumber || spec.id}`}
+                          href={projectId 
+                            ? `/projects/${projectId}/dependencies?spec=${spec.specNumber || spec.id}`
+                            : `/dependencies?spec=${spec.specNumber || spec.id}`
+                          }
                           className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline w-fit"
                           onClick={() => setDependenciesDialogOpen(false)}
                         >
