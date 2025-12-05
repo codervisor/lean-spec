@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Inline metadata editing in Web UI** ([spec 134](https://web.lean-spec.dev/specs/134)) - Edit spec metadata directly in the browser
   - Status dropdown with color-coded badges (planned, in-progress, complete, archived)
   - Priority selector (low, medium, high, critical)
-  - Tags editor with add/remove functionality
+  - Tags editor with add/remove functionality and autocomplete suggestions
+  - Inline dependency editor with add/remove support
   - Optimistic updates with automatic rollback on error
   - Works in both filesystem and multi-project modes
 - **MCP config auto-setup during init** ([spec 145](https://web.lean-spec.dev/specs/145)) - Automatic MCP configuration
@@ -24,23 +25,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Auto-infers `status` and `created` from git history
   - Supports legacy formats (ADR, RFC, inline metadata like `**Status**: Complete`)
   - Maps ADR statuses: accepted→complete, proposed→planned, superseded→archived
+- **Multi-project management UI improvements** ([spec 141](https://web.lean-spec.dev/specs/141)) - Enhanced project management
+  - "Manage Projects" option in project switcher dropdown for quick access
+  - Inline project name editing on /projects page
+  - Color picker for project customization
+  - Project path validation with status indicators (valid/invalid/missing)
 
 ### Changed
-- **Multi-project mode improvements** ([spec 142](https://web.lean-spec.dev/specs/142)) - Critical UX fixes
+- **Multi-project mode improvements** ([spec 142](https://web.lean-spec.dev/specs/142), [spec 149](https://web.lean-spec.dev/specs/149)) - Critical UX fixes
   - All navigation links now use project-scoped URLs (`/projects/[id]/specs`)
   - Added SSR for multi-project dependencies, stats, and context pages
-  - Projects page has dedicated layout without sidebar
+  - Projects page has dedicated layout without sidebar (cleaner management UX)
   - Fixed path overflow in Add Project dialog with proper truncation
+  - Auto-redirect to specs list when switching projects from spec detail page
+  - URL format detection with auto-redirect between single/multi-project modes
+  - Dependency graph now works in multi-project mode (new API endpoint)
 - **Lightweight specs for list views** - Performance optimization
   - Spec list API no longer returns full `contentMd` (can be 1MB+ total)
   - Reduces initial page load size by ~90% for projects with many specs
+- **Frontmatter validation improvements** - Enhanced date parsing and validation
+  - Multi-project filesystem source validates frontmatter on load
+  - Better handling of malformed or missing dates
 
 ### Fixed
 - **Dependencies page fails on custom ports** - `lean-spec ui --port 3002` now works
   - Pages now call data functions directly instead of fetching from hardcoded localhost:3000
   - Multi-project dependencies correctly parse `depends_on` from frontmatter
+- **Spec detail dependencies not available in multi-project mode** - "View Dependencies" button now works
+  - Added relationship extraction from spec content for multi-project mode
+  - New `/api/projects/[id]/specs/[spec]/dependency-graph` API endpoint
 - **MCP `deps` tool fails to find spec by sequence number** - Now correctly resolves spec paths
-- **Command references updated** - Fixed `lspec` → `lean-spec` in documentation
+- **Duplicate icons in Status/Priority editors** - Fixed SelectValue to display explicit labels
+- **Command references updated** - Fixed `lspec` → `lean-spec` in documentation and code
+- **Project switcher navigation** - Uses `window.location.assign` for better state management
 
 ## [0.2.9] - 2025-12-04
 
