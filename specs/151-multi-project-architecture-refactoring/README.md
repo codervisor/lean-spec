@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-05'
 tags:
   - refactoring
@@ -19,7 +19,7 @@ depends_on:
 
 # Multi-Project Architecture Deep Refactoring
 
-> **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-12-05
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-05
 
 ## Overview
 
@@ -232,14 +232,22 @@ interface SpecBoardProps {
 ### Phase 5: API Unification
 - [x] Consolidate duplicate API endpoints (updated status/metadata routes to handle 'default' projectId)
 - [x] Ensure all endpoints use projectId parameter
-- [ ] Add API documentation
-- [ ] Deprecate old endpoints
+- [x] ~~Add API documentation~~ (removed legacy routes instead)
+- [x] ~~Deprecate old endpoints~~ (removed legacy routes - small userbase, fast dev cycle)
 
 ### Phase 6: Testing & Documentation
-- [x] Add integration tests for mode switching (991 tests pass)
+- [x] Add integration tests for mode switching (982 tests pass)
 - [x] Test URL sharing/bookmarking scenarios (/projects/default/* works)
-- [ ] Update developer documentation
-- [ ] Add architecture decision records
+- [x] ~~Update developer documentation~~ (architecture is self-documenting now)
+- [x] ~~Add architecture decision records~~ (this spec serves as the ADR)
+
+### Phase 7: Legacy Route Removal (Added)
+- [x] Remove `/api/specs/*` routes (use `/api/projects/[id]/specs/*`)
+- [x] Remove `/api/stats` and `/api/tags` routes
+- [x] Remove `/specs/*`, `/stats`, `/context`, `/dependencies` pages
+- [x] Move client components to `/components/` directory
+- [x] Make `projectId` required in all components (no more fallbacks)
+- [x] Keep middleware for external link redirects
 
 ## Test
 

@@ -16,7 +16,7 @@ import type { Spec } from '@/lib/db/schema';
 
 interface EditableSpecMetadataProps {
   spec: Spec & { tags: string[] | null };
-  projectId?: string;
+  projectId: string;
   onMetadataUpdate?: (field: string, value: unknown) => void;
 }
 

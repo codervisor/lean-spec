@@ -3,7 +3,7 @@
  */
 
 import { getStats, getSpecs } from '@/lib/db/service-queries';
-import { StatsClient } from '@/app/stats/stats-client';
+import { StatsClient } from '@/components/stats-client';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';

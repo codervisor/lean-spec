@@ -101,7 +101,7 @@ interface Stats {
 interface SpecsClientProps {
   initialSpecs: Spec[];
   initialStats: Stats;
-  projectId?: string;
+  projectId: string;
 }
 
 type ViewMode = 'list' | 'board';
@@ -113,13 +113,11 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
 
   // Helper to generate project-scoped URLs
   const getSpecUrl = useCallback((specId: string | number) => {
-    return projectId 
-      ? `/projects/${projectId}/specs/${specId}`
-      : `/specs/${specId}`;
+    return `/projects/${projectId}/specs/${specId}`;
   }, [projectId]);
 
   const getSpecsBaseUrl = useCallback(() => {
-    return projectId ? `/projects/${projectId}/specs` : '/specs';
+    return `/projects/${projectId}/specs`;
   }, [projectId]);
 
   const [specs, setSpecs] = useState<Spec[]>(initialSpecs);
@@ -158,9 +156,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
     setSpecs((prev) => prev.map(item => item.id === spec.id ? { ...item, status: nextStatus } : item));
 
     try {
-      const url = projectId 
-        ? `/api/projects/${projectId}/specs/${encodeURIComponent(spec.specName)}/status`
-        : `/api/specs/${encodeURIComponent(spec.specName)}/status`;
+      const url = `/api/projects/${projectId}/specs/${encodeURIComponent(spec.specName)}/status`;
 
       const response = await fetch(url, {
         method: 'PATCH',

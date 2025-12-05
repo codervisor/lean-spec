@@ -1,5 +1,5 @@
 import { getSpecsWithMetadata, getStats } from '@/lib/db/service-queries';
-import { SpecsClient } from '@/app/specs/specs-client';
+import { SpecsClient } from '@/components/specs-client';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';

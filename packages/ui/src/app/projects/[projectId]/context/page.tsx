@@ -5,7 +5,7 @@
  */
 
 import { getProjectContext } from '@/lib/db/service-queries';
-import { ContextClient } from '@/app/context/context-client';
+import { ContextClient } from '@/components/context-client';
 import { projectRegistry } from '@/lib/projects/registry';
 
 // Force dynamic rendering - this page needs runtime data

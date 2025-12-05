@@ -48,7 +48,7 @@ interface PriorityEditorProps {
   currentPriority: string;
   onUpdate?: (newPriority: string) => void;
   disabled?: boolean;
-  projectId?: string;
+  projectId: string;
 }
 
 export function PriorityEditor({ 
@@ -71,9 +71,7 @@ export function PriorityEditor({
     setError(null);
 
     try {
-      const apiUrl = projectId
-        ? `/api/projects/${projectId}/specs/${specId}/metadata`
-        : `/api/specs/${specId}/metadata`;
+      const apiUrl = `/api/projects/${projectId}/specs/${specId}/metadata`;
       
       const response = await fetch(apiUrl, {
         method: 'PATCH',
