@@ -123,7 +123,9 @@ export function PriorityEditor({
             ) : (
               <Icon className="h-3.5 w-3.5" />
             )}
-            <SelectValue />
+            <SelectValue>
+              {config.label}
+            </SelectValue>
           </div>
         </SelectTrigger>
         <SelectContent>
@@ -131,10 +133,10 @@ export function PriorityEditor({
             const cfg = priorityConfig[p];
             const ItemIcon = cfg.icon;
             return (
-              <SelectItem key={p} value={p}>
+              <SelectItem key={p} value={p} className="pl-2">
                 <div className="flex items-center gap-2">
                   <ItemIcon className="h-4 w-4" />
-                  {cfg.label}
+                  <span>{cfg.label}</span>
                 </div>
               </SelectItem>
             );
