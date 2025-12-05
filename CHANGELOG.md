@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.10] - 2025-12-05
+
 ### Added
 - **Inline metadata editing in Web UI** ([spec 134](https://web.lean-spec.dev/specs/134)) - Edit spec metadata directly in the browser
   - Status dropdown with color-coded badges (planned, in-progress, complete, archived)
@@ -715,6 +717,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.10]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.10
 [0.2.9]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.9
 [0.2.8]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.8
 [0.2.7]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.7
