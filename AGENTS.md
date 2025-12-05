@@ -138,4 +138,4 @@ See [docs/agents/WORKFLOWS.md](docs/agents/WORKFLOWS.md) for patterns.
 
 ---
 
-**Remember**: Context Economy → Signal-to-Noise → Intent → Bridge Gap → Progressive Disclosure
+**Remember:** LeanSpec tracks what you're building. Keep specs in sync with your work!
