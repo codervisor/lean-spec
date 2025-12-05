@@ -339,6 +339,11 @@ export async function updateFrontmatter(
 
 // Update visual metadata badges in content
 function updateVisualMetadata(content: string, frontmatter: SpecFrontmatter): string {
+  // Skip visual metadata update if required fields are missing
+  if (!frontmatter.status || !frontmatter.created) {
+    return content;
+  }
+  
   const statusEmoji = getStatusEmojiPlain(frontmatter.status);
   const statusLabel = frontmatter.status.charAt(0).toUpperCase() + frontmatter.status.slice(1).replace('-', ' ');
   

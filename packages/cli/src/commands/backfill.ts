@@ -140,6 +140,13 @@ async function backfillSpecTimestamps(
     source: 'skipped',
   };
   
+  // Skip specs without valid frontmatter (missing required fields)
+  if (!spec.frontmatter.status || !spec.frontmatter.created) {
+    result.reason = 'Missing required frontmatter (status or created)';
+    console.log(`\x1b[33m⊘\x1b[0m ${spec.name} - Missing required frontmatter`);
+    return result;
+  }
+  
   // Check if file exists in git history
   if (!fileExistsInGit(spec.filePath)) {
     result.reason = 'Not in git history';
