@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { Clock, PlayCircle, CheckCircle2, Archive, Loader2 } from 'lucide-react';
+import { toast } from '@/components/ui/toast';
 import {
   Select,
   SelectContent,
@@ -86,9 +87,12 @@ export function StatusEditor({
       }
 
       onUpdate?.(newStatus);
+      toast.success('Status updated');
     } catch (err) {
       setStatus(previousStatus); // Rollback
-      setError(err instanceof Error ? err.message : 'Failed to update');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update';
+      setError(errorMessage);
+      toast.error('Failed to update status', { description: errorMessage });
       console.error('Status update failed:', err);
     } finally {
       setIsUpdating(false);
@@ -111,6 +115,7 @@ export function StatusEditor({
             config.className,
             isUpdating && 'opacity-70'
           )}
+          aria-label="Change spec status"
         >
           <div className="flex items-center gap-1.5">
             {isUpdating ? (

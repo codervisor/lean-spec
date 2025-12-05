@@ -65,17 +65,18 @@ After implementation:
 
 | AI Tool | Config File Location | Format | Notes |
 |---------|---------------------|--------|-------|
-| Claude | `.mcp.json` (project, git-tracked) | JSON | Most popular; also `~/.claude.json` for user scope |
+| Claude Code | `.mcp.json` (project, git-tracked) | JSON | Also supports `~/.claude.json` for user scope |
 | VS Code (Copilot) | `.vscode/mcp.json` (workspace) | JSON | |
 | Cursor | `.cursor/mcp.json` (workspace) | JSON | |
 | Windsurf | `.windsurf/mcp.json` (workspace) | JSON | |
+| Gemini CLI | `.gemini/settings.json` (user scope) | JSON | User-level config at `~/.gemini/settings.json` |
 | OpenAI Codex | N/A - uses `AGENTS.md` | Markdown | No local MCP; uses remote MCP via API |
 
 **Note on OpenAI Codex**: Codex reads `AGENTS.md` files for instructions (same as our existing approach). For MCP, it uses remote HTTP servers via the OpenAI API, not local configuration files. Our `AGENTS.md` already works with Codex.
 
 ### MCP Server Entry Format
 
-**Claude** (project-scoped `.mcp.json`):
+**Claude Code** (project-scoped `.mcp.json`):
 ```json
 {
   "mcpServers": {
@@ -106,27 +107,26 @@ $ lean-spec init
 
 Welcome to LeanSpec! 🚀
 
-? Which AI tools do you use?
-  ◉ Claude
-  ◉ VS Code (GitHub Copilot)
+? Which AI tools do you use? (auto-detected tools will be pre-selected)
+  ◯ Claude Code
+  ◯ VS Code (GitHub Copilot)
   ◯ Cursor
   ◯ Windsurf
+  ◯ Gemini CLI
   ◯ OpenAI Codex
 
 Creating LeanSpec project...
   ✓ .lean-spec/config.json
   ✓ specs/
   ✓ AGENTS.md
-  ✓ CLAUDE.md → AGENTS.md
+  ✓ Tool-specific symlinks (based on selection)
 
 ? Configure MCP server for your AI tools? (Recommended)
   ❯ Yes - Auto-configure where possible
     No - I'll configure manually later
 
 Configuring MCP...
-  ✓ Claude: Created .mcp.json
-  ✓ VS Code: Created .vscode/mcp.json
-  ℹ OpenAI Codex: Uses AGENTS.md (already created)
+  ✓ [Configured for each selected tool]
 
 🎉 LeanSpec initialized!
 
@@ -135,15 +135,19 @@ Next: Open your AI tool and ask "Show me the project board"
 
 ### Configuration Strategies
 
-**Strategy 1: Project-Scoped Config (Auto) - Claude**
+**Strategy 1: Project-Scoped Config (Auto) - Claude Code**
 - Creates `.mcp.json` at project root
 - Git-trackable (team can share config)
-- Claude supports `${PWD}` for relative paths
+- Claude Code supports `${PWD}` for relative paths
 
 **Strategy 2: Workspace-Local Config (Auto)**
 - Tools: VS Code, Cursor, Windsurf
 - Create config file in project directory (`.vscode/mcp.json`, etc.)
 - Fully automated, no user intervention needed
+
+**Strategy 2b: User-Scoped Config (Auto) - Gemini CLI**
+- Creates `~/.gemini/settings.json` in user home directory
+- Merge with existing settings if present
 
 **Strategy 3: AGENTS.md Only (No MCP Config Needed)**
 - Tools: OpenAI Codex
@@ -211,16 +215,18 @@ const mcpConfig = {
 - [ ] Backup is created before modifying existing config
 
 ### Integration Tests
-- [ ] `lean-spec init` with Claude creates `.mcp.json`
+- [ ] `lean-spec init` with Claude Code creates `.mcp.json`
 - [ ] `lean-spec init` with VS Code creates `.vscode/mcp.json`
 - [ ] `lean-spec init` with Cursor creates `.cursor/mcp.json`
+- [ ] `lean-spec init` with Gemini CLI creates `~/.gemini/settings.json`
 - [ ] `lean-spec init --mcp-config vscode` works non-interactively
 - [ ] Existing config is merged, not overwritten
 
 ### End-to-End Tests
-- [ ] Claude with configured MCP can use lean-spec tools
+- [ ] Claude Code with configured MCP can use lean-spec tools
 - [ ] VS Code with configured MCP can use lean-spec tools
 - [ ] Cursor with configured MCP can use lean-spec tools
+- [ ] Gemini CLI with configured MCP can use lean-spec tools
 
 ### Success Metrics
 - [ ] User can use MCP tools immediately after init (no manual steps for workspace-local tools)
@@ -251,7 +257,7 @@ MCP should be the **default** path, not an advanced option.
 
 1. **Should we auto-detect installed AI tools?**
    - Check for `.vscode/`, `.cursor/` directories
-   - Detect Claude Desktop installation
+   - Detect Claude Code installation
    - Auto-select tools in init prompt
 
 2. **Should MCP config include project name?**

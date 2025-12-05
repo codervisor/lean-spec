@@ -291,10 +291,10 @@ describe('MCP Config File Operations', () => {
       expect(defaults).toContain('cursor');
     });
 
-    it('should default to claude when nothing detected', async () => {
+    it('should return empty defaults when nothing detected', async () => {
       const { defaults } = await getDefaultMcpToolSelection(testDir);
       
-      expect(defaults).toEqual(['claude']);
+      expect(defaults).toEqual([]);
     });
   });
 });
