@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-12-05'
 tags:
   - cli
@@ -7,11 +7,19 @@ tags:
   - migration
 priority: medium
 created_at: '2025-12-05T01:15:49.898Z'
+updated_at: '2025-12-05T01:25:42.283Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-05T01:25:35.845Z'
+  - status: complete
+    at: '2025-12-05T01:25:42.283Z'
+completed_at: '2025-12-05T01:25:42.283Z'
+completed: '2025-12-05'
 ---
 
 # Backfill Command Robustness
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-12-05
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-12-05 · **Tags**: cli, backfill, migration
 
 ## What
 
@@ -60,21 +68,55 @@ Enhance backfill to:
 
 ## Plan
 
-- [ ] Add `--bootstrap` flag to backfill command
-- [ ] Implement `inferStatusFromGit()` - detect if spec ever had status changes
-- [ ] Implement `inferCreatedFromGit()` - use first commit date as fallback
-- [ ] Add frontmatter creation for files without any frontmatter
-- [ ] Support legacy inline metadata parsing (`**Status**: ...`)
-- [ ] Add `--format` option to detect source format (adr, rfc, plain)
+- [x] Add `--bootstrap` flag to backfill command
+- [x] Implement `inferStatusFromGit()` - detect if spec ever had status changes
+- [x] Implement `inferCreatedFromGit()` - use first commit date as fallback
+- [x] Add frontmatter creation for files without any frontmatter
+- [x] Support legacy inline metadata parsing (`**Status**: ...`)
+- [ ] Add `--format` option to detect source format (adr, rfc, plain) *(deferred)*
 
 ## Test
 
-- [ ] Backfill plain markdown file → creates valid frontmatter
-- [ ] Backfill file with only `status` → adds `created` from git
-- [ ] Backfill file with only `created` → adds `status: planned`
-- [ ] Backfill legacy inline format → converts to YAML frontmatter
-- [ ] Backfill with `--dry-run` shows what would be added
-- [ ] No crashes on any malformed input
+- [x] Backfill plain markdown file → creates valid frontmatter
+- [x] Backfill file with only `status` → adds `created` from git
+- [x] Backfill file with only `created` → adds `status: planned`
+- [x] Backfill legacy inline format → converts to YAML frontmatter
+- [x] Backfill with `--dry-run` shows what would be added
+- [x] No crashes on any malformed input
+
+## Implementation Summary
+
+### New Files
+- `packages/cli/src/utils/bootstrap-helpers.ts` - Bootstrap utilities:
+  - `loadSpecsForBootstrap()` - Load specs without requiring valid frontmatter
+  - `inferStatusFromContent()` - Parse status from inline metadata patterns
+  - `inferStatusFromGit()` - Get last known status from git history
+  - `inferCreatedFromContent()` - Parse created date from various formats
+  - `inferCreatedFromGit()` - Use first commit date as fallback
+
+### Modified Files
+- `packages/cli/src/commands/backfill.ts`:
+  - Added `--bootstrap` flag
+  - New `bootstrapSpec()` function for creating frontmatter
+  - Updated summary to show bootstrapped count
+  - Hint to use `--bootstrap` when specs are skipped
+
+- `packages/cli/src/frontmatter.ts`:
+  - Guard in `updateVisualMetadata()` for missing status/created
+
+### Supported Input Formats
+1. **Plain markdown** - No frontmatter at all
+2. **LeanSpec inline** - `**Status**: Complete`, `**Created**: 2025-01-15`
+3. **Simple format** - `Status: Complete`, `Created: 2025-01-15`
+4. **ADR format** - `## Status\n\nAccepted`
+5. **Partial frontmatter** - Missing status or created fields
+
+### Status Mapping
+ADR/RFC statuses are mapped to LeanSpec statuses:
+- `accepted`, `approved`, `done` → `complete`
+- `proposed`, `pending`, `draft` → `planned`
+- `superseded`, `deprecated`, `rejected` → `archived`
+- `wip`, `working`, `active` → `in-progress`
 
 ## Notes
 
