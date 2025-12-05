@@ -95,9 +95,9 @@ export function DirectoryPicker({ onSelect, onCancel, initialPath, actionLabel =
   const segments = getPathSegments(currentPath);
 
   return (
-    <div className="flex flex-col h-[400px] gap-4 min-w-0">
+    <div className="flex flex-col h-[400px] gap-4 min-w-0 overflow-hidden">
       {/* Navigation Bar */}
-      <div className="flex items-center border rounded-md p-1 gap-1 bg-muted/30">
+      <div className="flex items-center border rounded-md p-1 gap-1 bg-muted/30 min-w-0 overflow-hidden">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -109,7 +109,7 @@ export function DirectoryPicker({ onSelect, onCancel, initialPath, actionLabel =
           <ArrowLeft className="h-4 w-4" />
         </Button>
 
-        <div className="w-px h-5 bg-border mx-1" />
+        <div className="w-px h-5 bg-border mx-1 shrink-0" />
 
         <div 
           ref={scrollContainerRef}
