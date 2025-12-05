@@ -19,12 +19,26 @@ interface SidebarLinkProps {
 }
 
 function SidebarLink({ href, icon: Icon, children, description, currentPath, isCollapsed }: SidebarLinkProps) {
-  // For home links (ending with / or /projects/xxx), require exact match
+  // Normalize paths by removing trailing slashes for comparison
+  const normalizedHref = href.replace(/\/$/, '') || '/';
+  const normalizedPath = currentPath.replace(/\/$/, '') || '/';
+  
+  // Extract the path portion after /projects/[projectId] for comparison
+  // This ensures matching works even when project context isn't loaded yet
+  const getPathWithoutProject = (path: string) => {
+    const match = path.match(/^\/projects\/[^/]+(\/.*)?$/);
+    return match ? (match[1] || '/') : path;
+  };
+  
+  const hrefPathPortion = getPathWithoutProject(normalizedHref);
+  const currentPathPortion = getPathWithoutProject(normalizedPath);
+  
+  // For home links (root or just /projects/xxx with no sub-path), require exact match
   // For other links, check if path starts with href
-  const isHomeLink = href === '/' || /^\/projects\/[^/]+$/.test(href);
+  const isHomeLink = hrefPathPortion === '/' || hrefPathPortion === '';
   const isActive = isHomeLink 
-    ? currentPath === href 
-    : currentPath.startsWith(href);
+    ? currentPathPortion === '/' || currentPathPortion === ''
+    : currentPathPortion.startsWith(hrefPathPortion);
   
   return (
     <Link

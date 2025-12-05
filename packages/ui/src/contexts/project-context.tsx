@@ -256,6 +256,10 @@ export function useProjectUrl() {
   const getUrl = useCallback((path: string) => {
     // Always use project-scoped URLs
     const projectId = currentProject?.id || DEFAULT_PROJECT_ID;
+    // Handle root path specially - don't add trailing slash
+    if (path === '/' || path === '') {
+      return `/projects/${projectId}`;
+    }
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     return `/projects/${projectId}${normalizedPath}`;
   }, [currentProject]);
