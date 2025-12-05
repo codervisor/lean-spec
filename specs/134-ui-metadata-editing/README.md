@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-28'
 tags:
   - ui
@@ -8,15 +8,18 @@ tags:
   - dx
 priority: medium
 created_at: '2025-11-28T05:14:14.341Z'
-updated_at: '2025-12-04T13:44:45.386Z'
+updated_at: '2025-12-05T03:05:06.635Z'
 depends_on:
   - 085-cli-relationship-commands
   - 137-ui-dependencies-page
+transitions:
+  - status: in-progress
+    at: '2025-12-05T03:05:06.635Z'
 ---
 
 # UI Lightweight Metadata Editing
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-28 · **Tags**: ui, ux, feature, dx
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-11-28 · **Tags**: ui, ux, feature, dx
 
 **Project**: lean-spec  
 **Team**: Core Development

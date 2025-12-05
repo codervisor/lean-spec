@@ -17,6 +17,9 @@ import { Button } from '@/components/ui/button';
 import { SpecTimeline } from '@/components/spec-timeline';
 import { StatusBadge } from '@/components/status-badge';
 import { PriorityBadge } from '@/components/priority-badge';
+import { StatusEditor } from '@/components/status-editor';
+import { PriorityEditor } from '@/components/priority-editor';
+import { TagsEditor } from '@/components/tags-editor';
 import { MarkdownLink } from '@/components/markdown-link';
 import { TableOfContents, TableOfContentsSidebar } from '@/components/table-of-contents';
 import { BackToTop } from '@/components/back-to-top';
@@ -290,26 +293,23 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
               
               {/* Line 2: Status, Priority, Tags, Actions */}
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={spec.status || 'planned'} />
-                <PriorityBadge priority={spec.priority || 'medium'} />
+                <StatusEditor
+                  specId={spec.specNumber?.toString() || spec.id}
+                  currentStatus={spec.status || 'planned'}
+                  projectId={projectId}
+                />
+                <PriorityEditor
+                  specId={spec.specNumber?.toString() || spec.id}
+                  currentPriority={spec.priority || 'medium'}
+                  projectId={projectId}
+                />
                 
-                {tags.length > 0 && (
-                  <>
-                    <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
-                    <div className="flex flex-wrap gap-1">
-                      {tags.slice(0, 5).map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {tags.length > 5 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{tags.length - 5} more
-                        </Badge>
-                      )}
-                    </div>
-                  </>
-                )}
+                <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+                <TagsEditor
+                  specId={spec.specNumber?.toString() || spec.id}
+                  currentTags={tags}
+                  projectId={projectId}
+                />
               </div>
 
               {/* Line 3: Small metadata row */}
