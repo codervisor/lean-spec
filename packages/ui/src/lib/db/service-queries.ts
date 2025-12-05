@@ -5,7 +5,8 @@
 
 import { specsService } from '../specs/service';
 import type { Spec } from './schema';
-import type { ContextFile, ProjectContext, LeanSpecConfig } from '../specs/types';
+import type { ContextFile, ProjectContext, LeanSpecConfig, SpecRelationships } from '../specs/types';
+import { buildRelationshipMap } from '../specs/relationships';
 import { detectSubSpecs } from '../sub-specs';
 import { join, resolve, dirname } from 'path';
 import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
@@ -48,38 +49,6 @@ function buildSpecDirPath(filePath: string): string {
     .replace(/^specs\//, '')
     .replace(/\/README\.md$/, '');
   return join(getSpecsRootDir(), normalized);
-}
-
-interface SpecRelationships {
-  dependsOn: string[];
-  requiredBy: string[];
-}
-function normalizeRelationshipList(value: unknown): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) {
-    return value.map((entry) => String(entry));
-  }
-  if (typeof value === 'string') {
-    return [value];
-  }
-  return [];
-}
-
-function getFilesystemRelationships(specDirPath: string): SpecRelationships {
-  try {
-    const readmePath = join(specDirPath, 'README.md');
-    const raw = readFileSync(readmePath, 'utf-8');
-    const { data } = matter(raw);
-    const dependsOn = normalizeRelationshipList(data?.depends_on ?? data?.dependsOn);
-    // Note: requiredBy is computed from the dependency graph, not stored in frontmatter
-    return {
-      dependsOn,
-      requiredBy: [],
-    };
-  } catch (error) {
-    console.warn('Unable to parse spec relationships', error);
-    return { dependsOn: [], requiredBy: [] };
-  }
 }
 
 /**
@@ -166,24 +135,6 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Lig
 }
 
 /**
- * Extract relationships from spec content (contentMd contains frontmatter)
- * Used for multi-project mode where we can't read from filesystem
- */
-function getRelationshipsFromContent(contentMd: string): SpecRelationships {
-  try {
-    const { data } = matter(contentMd);
-    const dependsOn = normalizeRelationshipList(data?.depends_on ?? data?.dependsOn);
-    return {
-      dependsOn,
-      requiredBy: [],
-    };
-  } catch (error) {
-    console.warn('Unable to parse spec relationships from content', error);
-    return { dependsOn: [], requiredBy: [] };
-  }
-}
-
-/**
  * Get all specs with sub-spec count and relationships (for comprehensive list view)
  * Builds the full dependency graph to compute requiredBy (reverse dependencies)
  * Returns lightweight specs without contentMd
@@ -191,38 +142,20 @@ function getRelationshipsFromContent(contentMd: string): SpecRelationships {
 export async function getSpecsWithMetadata(projectId?: string): Promise<(LightweightSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
   const specs = await specsService.getAllSpecs(projectId);
   
-  // First pass: collect all dependsOn relationships
-  const specRelationshipsMap = new Map<string, { dependsOn: string[]; requiredBy: string[] }>();
-  
-  for (const spec of specs) {
-    // For multi-project mode, extract from contentMd; for filesystem mode, read from disk
-    const { dependsOn } = projectId 
-      ? getRelationshipsFromContent(spec.contentMd)
-      : getFilesystemRelationships(buildSpecDirPath(spec.filePath));
-    specRelationshipsMap.set(spec.specName, { dependsOn, requiredBy: [] });
-  }
-  
-  // Second pass: compute requiredBy (reverse lookup)
-  for (const [specName, rels] of specRelationshipsMap.entries()) {
-    for (const dep of rels.dependsOn) {
-      const depRels = specRelationshipsMap.get(dep);
-      if (depRels) {
-        depRels.requiredBy.push(specName);
-      }
-    }
-  }
+  // Use the unified relationship map builder
+  const relationshipMap = buildRelationshipMap(specs);
   
   return specs.map(spec => {
     // Sub-specs count only available in filesystem mode
     const subSpecsCount = projectId ? 0 : countSubSpecs(buildSpecDirPath(spec.filePath));
-    const relationships = specRelationshipsMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
+    const relationships = relationshipMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
     return { ...toLightweightSpec(parseSpecTags(spec)), subSpecsCount, relationships };
   });
 }
 
 /**
  * Get a spec by ID (number or UUID)
- * Computes requiredBy by scanning all specs for reverse dependencies
+ * Uses unified relationship computation for both single and multi-project modes
  */
 export async function getSpecById(id: string, projectId?: string): Promise<(ParsedSpec & { subSpecs?: import('../sub-specs').SubSpec[]; relationships?: SpecRelationships }) | null> {
   const spec = await specsService.getSpec(id, projectId);
@@ -230,45 +163,20 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
   if (!spec) return null;
 
   const parsedSpec = parseSpecTags(spec);
+  
+  // Get all specs and build relationship map (unified approach for both modes)
+  const allSpecs = await specsService.getAllSpecs(projectId);
+  const relationshipMap = buildRelationshipMap(allSpecs);
+  const relationships = relationshipMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
 
   // Detect sub-specs from filesystem (only for filesystem mode)
   if (!projectId) {
     const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecs = detectSubSpecs(specDirPath);
-    const { dependsOn } = getFilesystemRelationships(specDirPath);
-    
-    // Compute requiredBy by scanning all specs
-    const allSpecs = await specsService.getAllSpecs();
-    const requiredBy: string[] = [];
-    
-    for (const otherSpec of allSpecs) {
-      if (otherSpec.specName === spec.specName) continue;
-      const otherSpecDirPath = buildSpecDirPath(otherSpec.filePath);
-      const otherRels = getFilesystemRelationships(otherSpecDirPath);
-      if (otherRels.dependsOn.includes(spec.specName)) {
-        requiredBy.push(otherSpec.specName);
-      }
-    }
-    
-    return { ...parsedSpec, subSpecs, relationships: { dependsOn, requiredBy } };
+    return { ...parsedSpec, subSpecs, relationships };
   }
 
-  // Multi-project mode: extract relationships from spec content and compute requiredBy
-  const { dependsOn } = getRelationshipsFromContent(spec.contentMd);
-  
-  // Compute requiredBy by scanning all specs in the project
-  const allSpecs = await specsService.getAllSpecs(projectId);
-  const requiredBy: string[] = [];
-  
-  for (const otherSpec of allSpecs) {
-    if (otherSpec.specName === spec.specName) continue;
-    const otherRels = getRelationshipsFromContent(otherSpec.contentMd);
-    if (otherRels.dependsOn.includes(spec.specName)) {
-      requiredBy.push(otherSpec.specName);
-    }
-  }
-
-  return { ...parsedSpec, relationships: { dependsOn, requiredBy } };
+  return { ...parsedSpec, relationships };
 }
 
 /**

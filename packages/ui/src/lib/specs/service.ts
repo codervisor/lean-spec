@@ -1,12 +1,20 @@
 /**
  * Unified specs service
  * Routes requests to filesystem or database source based on configuration
+ * 
+ * Architecture: Project-centric, mode-agnostic
+ * - Single-project mode uses DEFAULT_PROJECT_ID ('default')
+ * - Multi-project mode uses actual project IDs
+ * - All operations are project-scoped
  */
 
 import { FilesystemSource } from './sources/filesystem-source';
 import { MultiProjectFilesystemSource } from './sources/multi-project-source';
 import type { SpecSource } from './types';
 import type { Spec } from '../db/schema';
+
+// Re-export project constants for convenience
+export { DEFAULT_PROJECT_ID, isDefaultProject, normalizeProjectId } from '../projects/constants';
 
 // Lazy import DatabaseSource to avoid DB connection issues in filesystem mode
 type DatabaseSourceConstructor = new () => SpecSource;
@@ -24,6 +32,11 @@ type SpecsMode = 'filesystem' | 'multi-project' | 'database' | 'both';
 /**
  * Unified specs service
  * Provides a single interface for accessing specs from different sources
+ * 
+ * Project-centric architecture:
+ * - All operations accept projectId
+ * - Single-project mode (filesystem) treats undefined/default as DEFAULT_PROJECT_ID
+ * - Multi-project mode requires explicit projectId
  */
 export class SpecsService {
   private filesystemSource?: FilesystemSource;
@@ -44,6 +57,21 @@ export class SpecsService {
     }
 
     // Don't instantiate database source here - do it lazily
+  }
+
+  /**
+   * Get the current operating mode
+   * Useful for components that need to know if multi-project features are available
+   */
+  getMode(): SpecsMode {
+    return this.mode;
+  }
+
+  /**
+   * Check if running in multi-project mode
+   */
+  isMultiProjectMode(): boolean {
+    return this.mode === 'multi-project';
   }
 
   /**
