@@ -381,19 +381,19 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
           <CardContent>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/specs">
+                <Link href={effectiveProjectId ? `/projects/${effectiveProjectId}/specs` : '/specs'}>
                   <List className="h-4 w-4 mr-2" />
                   View All Specs
                 </Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/specs?view=board">
+                <Link href={effectiveProjectId ? `/projects/${effectiveProjectId}/specs?view=board` : '/specs?view=board'}>
                   <LayoutGrid className="h-4 w-4 mr-2" />
                   Board View
                 </Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/stats">
+                <Link href={effectiveProjectId ? `/projects/${effectiveProjectId}/stats` : '/stats'}>
                   <TrendingUp className="h-4 w-4 mr-2" />
                   View Stats
                 </Link>
