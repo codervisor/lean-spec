@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-05'
 tags:
   - ui
@@ -12,15 +12,19 @@ created_at: '2025-12-05T05:13:59.838Z'
 depends_on:
   - 142-multi-project-mode-fixes
   - 134-ui-metadata-editing
-updated_at: '2025-12-05T05:15:20.655Z'
+updated_at: '2025-12-05T07:39:34.648Z'
 transitions:
   - status: in-progress
     at: '2025-12-05T05:15:20.655Z'
+  - status: complete
+    at: '2025-12-05T07:39:34.648Z'
+completed_at: '2025-12-05T07:39:34.648Z'
+completed: '2025-12-05'
 ---
 
 # UI Multi-Project Mode Improvements and Bug Fixes
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-05 · **Tags**: ui, multi-project, bug-fix, ux, metadata-editing
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-05 · **Tags**: ui, multi-project, bug-fix, ux, metadata-editing
 
 ## Overview
 
