@@ -1,12 +1,45 @@
+/**
+ * PATCH /api/projects/[id]/specs/[spec]/status - Update spec status
+ * 
+ * For unified routing (spec 151):
+ * - 'default' projectId is treated as single-project mode (filesystem)
+ * - Other projectIds use multi-project source
+ */
+
 import { NextResponse } from 'next/server';
 import path from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createUpdatedFrontmatter } from '@leanspec/core';
 import { projectRegistry } from '@/lib/projects/registry';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 const ALLOWED_STATUSES = ['planned', 'in-progress', 'complete', 'archived'] as const;
 type AllowedStatus = (typeof ALLOWED_STATUSES)[number];
+
+/**
+ * Resolve the project root for single-project (default) mode
+ */
+function resolveProjectRoot(): string {
+  if (process.env.LEANSPEC_REPO_ROOT) {
+    return process.env.LEANSPEC_REPO_ROOT;
+  }
+
+  let currentDir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    if (existsSync(path.join(currentDir, '.lean-spec'))) {
+      return currentDir;
+    }
+    const parentDir = path.resolve(currentDir, '..');
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+  }
+
+  // Fallback to repo root relative to UI package
+  return path.resolve(process.cwd(), '..', '..');
+}
 
 async function findSpecDirectory(specsDir: string, specIdentifier: string): Promise<string | null> {
   if (!existsSync(specsDir)) {
@@ -53,13 +86,26 @@ export async function PATCH(
   try {
     const { id: projectId, spec: specId } = await params;
     
-    if (process.env.SPECS_MODE !== 'multi-project') {
-      return NextResponse.json({ error: 'Multi-project mode not enabled' }, { status: 400 });
-    }
-
-    const project = await projectRegistry.getProject(projectId);
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    // Determine specsDir based on project ID
+    let specsDir: string;
+    
+    if (isDefaultProject(projectId)) {
+      // Single-project mode (default project): use filesystem
+      const projectRoot = resolveProjectRoot();
+      specsDir = process.env.SPECS_DIR 
+        ? path.resolve(process.env.SPECS_DIR)
+        : path.join(projectRoot, 'specs');
+    } else {
+      // Multi-project mode: get specsDir from project registry
+      if (process.env.SPECS_MODE !== 'multi-project') {
+        return NextResponse.json({ error: 'Multi-project mode not enabled' }, { status: 400 });
+      }
+      
+      const project = await projectRegistry.getProject(projectId);
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+      specsDir = project.specsDir;
     }
 
     let payload: { status?: AllowedStatus } = {};
@@ -75,7 +121,7 @@ export async function PATCH(
     }
 
     const specIdentifier = decodeURIComponent(specId);
-    const specDir = await findSpecDirectory(project.specsDir, specIdentifier);
+    const specDir = await findSpecDirectory(specsDir, specIdentifier);
     
     if (!specDir) {
       return NextResponse.json({ error: 'Spec not found' }, { status: 404 });
