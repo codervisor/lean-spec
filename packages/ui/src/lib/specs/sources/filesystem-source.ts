@@ -256,7 +256,7 @@ export class FilesystemSource implements SpecSource {
         priority: frontmatter.priority || null,
         tags: frontmatter.tags ? JSON.stringify(frontmatter.tags) : null,
         assignee: frontmatter.assignee || null,
-        contentMd: markdownContent, // Use parsed content without frontmatter
+        contentMd: rawContent, // Keep full content with frontmatter for relationship extraction
         contentHtml: null, // Not pre-rendered for filesystem mode
         createdAt: toDate(createdValue),
         updatedAt: toDate(updatedValue),
