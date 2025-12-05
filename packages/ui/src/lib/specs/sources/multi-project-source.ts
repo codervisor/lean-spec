@@ -227,9 +227,25 @@ export class MultiProjectFilesystemSource implements SpecSource {
     try {
       const { data: frontmatter, content: markdown } = matter(content);
 
+      // Validate frontmatter has required status field
+      if (!frontmatter || !frontmatter.status) {
+        return null;
+      }
+
       // Extract title from markdown (first h1)
       const titleMatch = markdown.match(/^#\s+(.+)$/m);
       const title = titleMatch ? titleMatch[1] : frontmatter.title || specName;
+
+      // Handle both created_at/created and updated_at/updated aliases
+      const createdValue = frontmatter.created_at ?? frontmatter.created;
+      const updatedValue = frontmatter.updated_at ?? frontmatter.updated;
+      const completedValue = frontmatter.completed_at ?? frontmatter.completed;
+
+      const toDate = (value: unknown): Date | null => {
+        if (!value) return null;
+        const parsed = new Date(value as string | number | Date);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      };
 
       return {
         id: `${projectId}:${specNum.toString().padStart(3, '0')}`,
@@ -238,14 +254,14 @@ export class MultiProjectFilesystemSource implements SpecSource {
         specName,
         title,
         status: frontmatter.status,
-        priority: frontmatter.priority,
+        priority: frontmatter.priority || null,
         tags: frontmatter.tags ? JSON.stringify(frontmatter.tags) : null,
         assignee: frontmatter.assignee || null,
-        contentMd: content,
+        contentMd: markdown, // Use parsed content without frontmatter
         contentHtml: null,
-        createdAt: frontmatter.created_at ? new Date(frontmatter.created_at) : null,
-        updatedAt: frontmatter.updated_at ? new Date(frontmatter.updated_at) : null,
-        completedAt: frontmatter.completed_at ? new Date(frontmatter.completed_at) : null,
+        createdAt: toDate(createdValue),
+        updatedAt: toDate(updatedValue),
+        completedAt: toDate(completedValue),
         filePath,
         githubUrl: null,
         syncedAt: new Date(),
