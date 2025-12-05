@@ -30,11 +30,12 @@ export async function GET(
     }
 
     // Filesystem mode: return a virtual single project
-    if (id === 'local') {
+    // 'default' is the canonical ID (spec 151), 'local' kept for backward compatibility
+    if (id === 'default' || id === 'local') {
       const specsDir = process.env.SPECS_DIR || 'specs';
       return NextResponse.json({ 
         project: {
-          id: 'local',
+          id: 'default',
           displayName: 'Local Project',
           specsDir,
           isFeatured: true,
