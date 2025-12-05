@@ -149,6 +149,7 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
 
   // Update state when initialSpecs/initialStats change (e.g., on navigation)
   useEffect(() => {
+    // @eslint-disable-next-line react-hooks/exhaustive-deps
     setSpecs(initialSpecs);
     setStats(initialStats);
   }, [initialSpecs, initialStats]);
@@ -235,6 +236,24 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
             </CardContent>
           </Card>
 
+          {/* Planned */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent" />
+            <CardHeader className="relative pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Planned
+                </CardTitle>
+                <Clock className="h-5 w-5 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">
+                {stats.specsByStatus.find(s => s.status === 'planned')?.count || 0}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* In Progress */}
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
@@ -270,24 +289,6 @@ export function DashboardClient({ initialSpecs, initialStats, projectId }: Dashb
                 <TrendingUp className="h-3 w-3" />
                 {stats.completionRate.toFixed(1)}% completion rate
               </p>
-            </CardContent>
-          </Card>
-
-          {/* Planned */}
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent" />
-            <CardHeader className="relative pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Planned
-                </CardTitle>
-                <Clock className="h-5 w-5 text-purple-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold">
-                {stats.specsByStatus.find(s => s.status === 'planned')?.count || 0}
-              </div>
             </CardContent>
           </Card>
         </div>
