@@ -30,7 +30,8 @@ export async function getDepsData(specPath: string, mode: string = 'complete'): 
   const graph = new SpecDependencyGraph(allSpecs);
   
   // Get dependency information based on mode
-  const spec = allSpecs.find(s => s.path === resolvedPath);
+  // Match by fullPath (absolute) or path (relative)
+  const spec = allSpecs.find(s => s.fullPath === resolvedPath || s.path === resolvedPath);
   if (!spec) {
     throw new Error(`Spec not found: ${specPath}`);
   }
