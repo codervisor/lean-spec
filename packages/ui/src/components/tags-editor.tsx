@@ -1,11 +1,11 @@
 /**
- * Tags editor component with add/remove functionality
+ * Tags editor component with add/remove functionality and autocomplete
  */
 
 'use client';
 
 import * as React from 'react';
-import { X, Plus, Loader2 } from 'lucide-react';
+import { X, Plus, Loader2, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 
 interface TagsEditorProps {
@@ -33,11 +41,30 @@ export function TagsEditor({
   projectId 
 }: TagsEditorProps) {
   const [tags, setTags] = React.useState<string[]>(currentTags || []);
+  const [allTags, setAllTags] = React.useState<string[]>([]);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [newTag, setNewTag] = React.useState('');
   const [isOpen, setIsOpen] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [searchValue, setSearchValue] = React.useState('');
+
+  // Fetch all available tags for autocomplete when popover opens
+  React.useEffect(() => {
+    if (isOpen && allTags.length === 0) {
+      const fetchTags = async () => {
+        try {
+          const apiUrl = projectId ? `/api/projects/${projectId}/tags` : '/api/tags';
+          const response = await fetch(apiUrl);
+          if (response.ok) {
+            const data = await response.json();
+            setAllTags(data.tags || []);
+          }
+        } catch (err) {
+          console.error('Failed to fetch tags:', err);
+        }
+      };
+      fetchTags();
+    }
+  }, [isOpen, allTags.length, projectId]);
 
   const updateTags = async (newTags: string[]) => {
     const previousTags = tags;
@@ -74,8 +101,8 @@ export function TagsEditor({
     }
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = newTag.trim().toLowerCase();
+  const handleAddTag = (tag: string) => {
+    const trimmedTag = tag.trim().toLowerCase();
     if (!trimmedTag) return;
     if (tags.includes(trimmedTag)) {
       setError('Tag already exists');
@@ -84,7 +111,7 @@ export function TagsEditor({
     
     const newTags = [...tags, trimmedTag];
     updateTags(newTags);
-    setNewTag('');
+    setSearchValue('');
     setIsOpen(false);
   };
 
@@ -93,14 +120,18 @@ export function TagsEditor({
     updateTags(newTags);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  };
+  // Filter available tags: show tags that aren't already added and match search
+  const availableTags = React.useMemo(() => {
+    const lowercaseSearch = searchValue.toLowerCase();
+    return allTags
+      .filter(tag => !tags.includes(tag))
+      .filter(tag => !lowercaseSearch || tag.toLowerCase().includes(lowercaseSearch));
+  }, [allTags, tags, searchValue]);
+
+  // Check if search value could be a new tag (not in available tags)
+  const canCreateNewTag = searchValue.trim() && 
+    !tags.includes(searchValue.trim().toLowerCase()) &&
+    !allTags.includes(searchValue.trim().toLowerCase());
 
   return (
     <div className="relative">
@@ -145,31 +176,58 @@ export function TagsEditor({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-2" align="start">
-              <div className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  value={newTag}
-                  onChange={(e) => {
-                    setNewTag(e.target.value);
-                    setError(null);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Add tag..."
-                  className="h-8 text-sm"
-                  autoFocus
+            <PopoverContent className="w-56 p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search or create tag..." 
+                  value={searchValue}
+                  onValueChange={setSearchValue}
                 />
-                <Button
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={handleAddTag}
-                  disabled={!newTag.trim()}
-                >
-                  Add
-                </Button>
-              </div>
+                <CommandList>
+                  <CommandEmpty>
+                    {canCreateNewTag ? (
+                      <CommandItem
+                        onSelect={() => handleAddTag(searchValue)}
+                        className="cursor-pointer"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create &quot;{searchValue.trim().toLowerCase()}&quot;
+                      </CommandItem>
+                    ) : (
+                      <span className="text-muted-foreground px-2 py-1.5 text-sm">
+                        No tags found.
+                      </span>
+                    )}
+                  </CommandEmpty>
+                  {availableTags.length > 0 && (
+                    <CommandGroup heading="Existing tags">
+                      {availableTags.slice(0, 10).map((tag) => (
+                        <CommandItem
+                          key={tag}
+                          value={tag}
+                          onSelect={() => handleAddTag(tag)}
+                          className="cursor-pointer"
+                        >
+                          {tag}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  {canCreateNewTag && availableTags.length > 0 && (
+                    <CommandGroup heading="Create new">
+                      <CommandItem
+                        onSelect={() => handleAddTag(searchValue)}
+                        className="cursor-pointer"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create &quot;{searchValue.trim().toLowerCase()}&quot;
+                      </CommandItem>
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
               {error && (
-                <p className="text-xs text-destructive mt-1">{error}</p>
+                <p className="text-xs text-destructive px-2 pb-2">{error}</p>
               )}
             </PopoverContent>
           </Popover>

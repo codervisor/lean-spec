@@ -257,7 +257,7 @@ export class MultiProjectFilesystemSource implements SpecSource {
         priority: frontmatter.priority || null,
         tags: frontmatter.tags ? JSON.stringify(frontmatter.tags) : null,
         assignee: frontmatter.assignee || null,
-        contentMd: markdown, // Use parsed content without frontmatter
+        contentMd: content, // Keep full content with frontmatter for relationship extraction
         contentHtml: null,
         createdAt: toDate(createdValue),
         updatedAt: toDate(updatedValue),

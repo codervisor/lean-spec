@@ -17,22 +17,29 @@ async function findSpecDirectory(specsDir: string, specIdentifier: string): Prom
   const entries = await readdir(specsDir, { withFileTypes: true });
   
   // Match by spec number or full directory name
-  const specPattern = /^(\d{2,})-/;
+  const specPattern = /^(\d{2,})-(.+)$/;
   const specNum = parseInt(specIdentifier.split('-')[0], 10);
   
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     
-    // Match by full name or by spec number
+    // Match by full name
     if (entry.name === specIdentifier) {
       return path.join(specsDir, entry.name);
     }
     
+    // Match by spec number
     if (!isNaN(specNum) && specPattern.test(entry.name)) {
       const dirNum = parseInt(entry.name.split('-')[0], 10);
       if (dirNum === specNum) {
         return path.join(specsDir, entry.name);
       }
+    }
+    
+    // Match by name portion (for multi-project mode where specName doesn't include number)
+    const match = entry.name.match(specPattern);
+    if (match && match[2] === specIdentifier) {
+      return path.join(specsDir, entry.name);
     }
   }
   

@@ -91,47 +91,47 @@ Bug fixes and UX improvements for the UI package related to multi-project specs 
 ## Plan
 
 ### Phase 1: Navigation & URL Fixes (Issues 1, 2)
-- [ ] Add project change detection in spec detail page
-- [ ] Implement redirect to specs list on project switch
-- [ ] Add URL format detection and auto-redirect logic
-- [ ] Handle edge cases (invalid URLs, missing projects)
+- [x] Add project change detection in spec detail page
+- [x] Implement redirect to specs list on project switch
+- [x] Add URL format detection and auto-redirect logic
+- [x] Handle edge cases (invalid URLs, missing projects)
 
 ### Phase 2: Visual Polish (Issues 3, 7)
 - [x] Fix duplicate icons in StatusEditor and PriorityEditor
-- [ ] Add loading skeleton to project switcher
-- [ ] Smooth out project switching transitions
+- [x] Add loading skeleton to project switcher
+- [x] Smooth out project switching transitions
 
 ### Phase 3: Board & Metadata Fixes (Issues 4, 5)
-- [ ] Debug and fix spec lookup in drag-drop handler
-- [ ] Implement tag autocomplete component
-- [ ] Add deduplication logic for tags
-- [ ] Update `TagsInput` component with suggestions
+- [x] Debug and fix spec lookup in drag-drop handler
+- [x] Implement tag autocomplete component
+- [x] Add deduplication logic for tags
+- [x] Update `TagsInput` component with suggestions
 
 ### Phase 4: Dependencies Fix (Issue 6)
-- [ ] Debug dependency data flow in multi-project source
-- [ ] Ensure DAG receives proper data structure
-- [ ] Test with projects containing dependencies
+- [x] Debug dependency data flow in multi-project source
+- [x] Ensure DAG receives proper data structure
+- [x] Test with projects containing dependencies
 
 ### Phase 5: Manage Projects Overhaul (Issue 8)
-- [ ] Add auto-validation for project paths
-- [ ] Redesign layout with proper spacing and cards
-- [ ] Implement project detail modal component
-- [ ] Fetch and display project metadata (spec count, description)
-- [ ] Add layout variant that hides sidebar
+- [x] Add auto-validation for project paths
+- [x] Redesign layout with proper spacing and cards
+- [x] Implement project detail modal component
+- [x] Fetch and display project metadata (spec count, description)
+- [x] Add layout variant that hides sidebar
 
 ## Test
 
-- [ ] Switch projects on spec detail page → redirects to specs list
-- [ ] Navigate to single-project URL in multi-project mode → auto-redirects
+- [x] Switch projects on spec detail page → redirects to specs list
+- [x] Navigate to single-project URL in multi-project mode → auto-redirects
 - [x] Spec detail header shows single icon per status/priority (no duplicates)
-- [ ] Drag and drop specs on board works without errors
-- [ ] Tag input shows autocomplete suggestions
-- [ ] Adding duplicate tag is prevented
-- [ ] Dependencies page shows correct DAG diagram
-- [ ] Project switcher has no flash during transitions
-- [ ] Manage projects page has proper layout and padding
-- [ ] Clicking project shows detail modal with stats
-- [ ] Sidebar is hidden on manage projects page
+- [x] Drag and drop specs on board works without errors
+- [x] Tag input shows autocomplete suggestions
+- [x] Adding duplicate tag is prevented
+- [x] Dependencies page shows correct DAG diagram
+- [x] Project switcher has no flash during transitions
+- [x] Manage projects page has proper layout and padding
+- [x] Clicking project shows detail modal with stats
+- [x] Sidebar is hidden on manage projects page
 
 ## Notes
 

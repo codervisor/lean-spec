@@ -28,6 +28,7 @@ export type LightweightSpec = Omit<ParsedSpec, 'contentMd' | 'contentHtml'>;
  * Strip contentMd from a spec to create a lightweight version
  */
 function toLightweightSpec<T extends ParsedSpec>(spec: T): Omit<T, 'contentMd' | 'contentHtml'> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { contentMd, contentHtml, ...rest } = spec;
   return rest;
 }
@@ -82,11 +83,23 @@ function getFilesystemRelationships(specDirPath: string): SpecRelationships {
 }
 
 /**
- * Parse tags from JSON string to array
+ * Parse tags from JSON string to array and strip frontmatter from contentMd
  */
 function parseSpecTags(spec: Spec): ParsedSpec {
+  // Strip frontmatter from contentMd if present
+  let contentMd = spec.contentMd;
+  if (contentMd.startsWith('---')) {
+    try {
+      const { content } = matter(contentMd);
+      contentMd = content;
+    } catch {
+      // If parsing fails, use original content
+    }
+  }
+  
   return {
     ...spec,
+    contentMd,
     tags: spec.tags ? (typeof spec.tags === 'string' ? JSON.parse(spec.tags) : spec.tags) : null,
   };
 }
@@ -301,6 +314,26 @@ export async function getStats(projectId?: string): Promise<StatsResult> {
     specsByPriority: Array.from(priorityCounts.entries()).map(([priority, count]) => ({ priority, count })),
     completionRate: Math.round(completionRate * 10) / 10,
   };
+}
+
+/**
+ * Get all unique tags from specs in a project
+ * Returns sorted array of unique tag strings
+ */
+export async function getAllTags(projectId?: string): Promise<string[]> {
+  const specs = await specsService.getAllSpecs(projectId);
+  const tagSet = new Set<string>();
+  
+  for (const spec of specs) {
+    const parsedSpec = parseSpecTags(spec);
+    if (parsedSpec.tags && Array.isArray(parsedSpec.tags)) {
+      for (const tag of parsedSpec.tags) {
+        tagSet.add(tag);
+      }
+    }
+  }
+  
+  return Array.from(tagSet).sort();
 }
 
 // ============================================================================
