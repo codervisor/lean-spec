@@ -1,21 +1,24 @@
 /**
  * GET /api/projects/[id]/tags - Get all unique tags from specs in a project
+ * 
+ * For unified routing (spec 151):
+ * - 'default' projectId is treated as single-project mode
+ * - Other projectIds use multi-project source
  */
 
 import { NextResponse } from 'next/server';
 import { getAllTags } from '@/lib/db/service-queries';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: projectId } = await params;
+    const { id } = await params;
     
-    if (process.env.SPECS_MODE !== 'multi-project') {
-      return NextResponse.json({ error: 'Multi-project mode not enabled' }, { status: 400 });
-    }
-    
+    // Use 'default' project as undefined for backward compatibility
+    const projectId = isDefaultProject(id) ? undefined : id;
     const tags = await getAllTags(projectId);
     return NextResponse.json({ tags });
   } catch (error) {

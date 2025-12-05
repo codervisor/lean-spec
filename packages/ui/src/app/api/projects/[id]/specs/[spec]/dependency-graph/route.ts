@@ -1,12 +1,16 @@
 /**
- * GET /api/projects/[id]/specs/[spec]/dependency-graph - Get complete dependency graph for a spec (multi-project mode)
+ * GET /api/projects/[id]/specs/[spec]/dependency-graph - Get complete dependency graph for a spec
  * 
- * Returns upstream dependencies, downstream dependents for the specified spec
- * in multi-project mode where specs are loaded from project registries.
+ * Returns upstream dependencies, downstream dependents for the specified spec.
+ * 
+ * For unified routing (spec 151):
+ * - 'default' projectId is treated as single-project mode
+ * - Other projectIds use multi-project source
  */
 
 import { NextResponse } from 'next/server';
 import { getSpecById, getSpecsWithMetadata } from '@/lib/db/service-queries';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 /**
  * Helper to extract title from name
@@ -24,7 +28,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string; spec: string }> }
 ) {
   try {
-    const { id: projectId, spec: specId } = await params;
+    const { id, spec: specId } = await params;
+    
+    // Use 'default' project as undefined for backward compatibility
+    const projectId = isDefaultProject(id) ? undefined : id;
     
     // Get the target spec
     const spec = await getSpecById(specId, projectId);

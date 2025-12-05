@@ -7,7 +7,7 @@ import { ProjectSwitcher } from '@/components/project-switcher';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
-import { useProject } from '@/contexts/project-context';
+import { useProjectUrl } from '@/contexts/project-context';
 
 interface SidebarLinkProps {
   href: string;
@@ -51,7 +51,7 @@ function SidebarLink({ href, icon: Icon, children, description, currentPath, isC
 
 export function MainSidebar() {
   const pathname = usePathname();
-  const { mode, currentProject } = useProject();
+  const { getUrl } = useProjectUrl();
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('main-sidebar-collapsed');
@@ -92,13 +92,10 @@ export function MainSidebar() {
     };
   }, []);
 
-  // Build project-scoped URLs when in multi-project mode
+  // Build project-scoped URLs - always use getUrl from useProjectUrl
+  // This handles both single-project (uses 'default') and multi-project modes
   const getNavUrl = (path: string) => {
-    if (mode === 'multi-project' && currentProject) {
-      if (path === '/') return `/projects/${currentProject.id}`;
-      return `/projects/${currentProject.id}${path}`;
-    }
-    return path;
+    return getUrl(path);
   };
 
   // Hide sidebar on settings/management pages like /projects (manage projects page)
