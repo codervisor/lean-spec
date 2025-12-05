@@ -153,7 +153,7 @@ export class MultiProjectFilesystemSource implements SpecSource {
         }
 
         const specNum = parseInt(match[1], 10);
-        const specName = match[2];
+        const specName = entry.name; // Full directory name for consistent relationship matching
         const specDir = path.join(specsDir, entry.name);
         const readmePath = path.join(specDir, 'README.md');
 
@@ -198,7 +198,7 @@ export class MultiProjectFilesystemSource implements SpecSource {
 
         const entryNum = parseInt(match[1], 10);
         if (entryNum === specNum) {
-          const specName = match[2];
+          const specName = entry.name; // Full directory name for consistent relationship matching
           const specDir = path.join(specsDir, entry.name);
           const readmePath = path.join(specDir, 'README.md');
 
