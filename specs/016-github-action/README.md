@@ -38,7 +38,7 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 
 **Option A: Single Flexible Action**
 ```yaml
-- uses: codervisor/lspec-action@v1
+- uses: codervisor/lean-spec-action@v1
   with:
     command: validate  # or: stats, board, search, check-status
     filters: '--status=in-progress'
@@ -47,9 +47,9 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 
 **Option B: Multiple Specific Actions**
 ```yaml
-- uses: codervisor/lspec-validate@v1
-- uses: codervisor/lspec-stats@v1
-- uses: codervisor/lspec-check-status@v1
+- uses: codervisor/lean-spec-validate@v1
+- uses: codervisor/lean-spec-stats@v1
+- uses: codervisor/lean-spec-check-status@v1
 ```
 
 **Recommendation**: Option A (single flexible action) for v1, easier to maintain.
@@ -58,7 +58,7 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 
 **1. Spec Validation**
 ```yaml
-- uses: codervisor/lspec-action@v1
+- uses: codervisor/lean-spec-action@v1
   with:
     command: validate
     rules: |
@@ -69,7 +69,7 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 
 **2. Status Checks**
 ```yaml
-- uses: codervisor/lspec-action@v1
+- uses: codervisor/lean-spec-action@v1
   with:
     command: check-status
     fail-if: 'in-progress'
@@ -78,7 +78,7 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 
 **3. PR Comments**
 ```yaml
-- uses: codervisor/lspec-action@v1
+- uses: codervisor/lean-spec-action@v1
   with:
     command: stats
     output: pr-comment
@@ -87,7 +87,7 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 
 **4. Metrics Export**
 ```yaml
-- uses: codervisor/lspec-action@v1
+- uses: codervisor/lean-spec-action@v1
   with:
     command: export-metrics
     format: json
@@ -97,7 +97,7 @@ Create a GitHub Action to automate LeanSpec workflows in CI/CD pipelines. Enable
 ### 3. Action Structure
 
 ```
-lspec-action/
+lean-spec-action/
 ├── action.yml          # Action metadata
 ├── dist/
 │   └── index.js       # Bundled action code (ncc)
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: codervisor/lspec-action@v1
+      - uses: codervisor/lean-spec-action@v1
         with:
           command: validate
           fail-on-error: true
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: codervisor/lspec-action@v1
+      - uses: codervisor/lean-spec-action@v1
         with:
           command: check-status
           allow-status: 'planned,complete'
@@ -161,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: codervisor/lspec-action@v1
+      - uses: codervisor/lean-spec-action@v1
         with:
           command: stats
           output: pr-comment
@@ -221,7 +221,7 @@ outputs:
 ## Plan
 
 ### Phase 1: Setup & Core Infrastructure
-- [ ] Create `lspec-action` repository
+- [ ] Create `lean-spec-action` repository
 - [ ] Set up TypeScript build with @vercel/ncc for bundling
 - [ ] Create action.yml with inputs/outputs
 - [ ] Set up GitHub Actions workflow for testing action itself
@@ -305,7 +305,7 @@ outputs:
 **Alternative: Reusable Workflow**
 Instead of GitHub Action, could provide reusable workflow:
 ```yaml
-# .github/workflows/lspec-validate.yml
+# .github/workflows/lean-spec-validate.yml
 on:
   workflow_call:
     inputs:

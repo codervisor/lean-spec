@@ -39,7 +39,7 @@ Add LeanSpec integration directly into Cursor IDE via slash commands, enabling d
 
 **Option B: Custom Slash Commands** 
 - Implement via Cursor's custom slash command API (if available)
-- Register commands like `/lspec-search`, `/lspec-create`, `/lspec-board`
+- Register commands like `/lean-spec-search`, `/lean-spec-create`, `/lean-spec-board`
 
 **Option C: MCP Integration** (Recommended)
 - Cursor supports MCP servers natively
@@ -47,11 +47,11 @@ Add LeanSpec integration directly into Cursor IDE via slash commands, enabling d
 - Users just need to configure MCP in Cursor settings
 
 **Proposed Commands:**
-- `/lspec-board` - Show Kanban board of specs
-- `/lspec-search <query>` - Search specs
-- `/lspec-create <name>` - Create new spec
-- `/lspec-view <spec>` - View spec content
-- `/lspec-update <spec> --status <status>` - Update spec status
+- `/lean-spec-board` - Show Kanban board of specs
+- `/lean-spec-search <query>` - Search specs
+- `/lean-spec-create <name>` - Create new spec
+- `/lean-spec-view <spec>` - View spec content
+- `/lean-spec-update <spec> --status <status>` - Update spec status
 
 ## Plan
 

@@ -95,7 +95,7 @@ src/commands/*.ts (unchanged)
 
 ### Phase 4: Cutover (30 min)
 - [ ] Replace `src/cli.ts` with new implementation
-- [ ] Update `bin/lspec.js` if needed
+- [ ] Update `bin/lean-spec.js` if needed
 - [ ] Run integration tests
 - [ ] Update README with new examples
 

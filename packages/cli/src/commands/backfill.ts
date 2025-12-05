@@ -487,6 +487,6 @@ function printSummary(results: BackfillResult[], options: BackfillOptions): void
     }
   } else if (updated > 0 || bootstrapped > 0) {
     console.log('\n\x1b[32m✓\x1b[0m Backfill complete!');
-    console.log('  Run \x1b[36mlspec stats\x1b[0m to see velocity metrics');
+    console.log('  Run \x1b[36mlean-spec stats\x1b[0m to see velocity metrics');
   }
 }

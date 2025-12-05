@@ -60,7 +60,7 @@ Publish LeanSpec to npm registry to make it available for global installation an
 ```
 lean-spec/
 ├── bin/              # CLI entry point ✅
-│   └── lspec.js
+│   └── lean-spec.js
 ├── dist/             # Compiled JS (tsup output) ✅
 │   ├── cli.js
 │   ├── commands/
@@ -147,7 +147,7 @@ git push origin v0.1.0
 ### Phase 2: Build Verification
 - [x] Clean build: `rm -rf dist && pnpm build` ✅ Success
 - [x] Verify dist/ contains all necessary files
-- [x] Test CLI after build: `node bin/lspec.js --help`
+- [x] Test CLI after build: `node bin/lean-spec.js --help`
 - [x] Run full test suite: `pnpm test:run` ✅ 62 tests passing
 - [x] Check for TypeScript errors: `pnpm typecheck` ✅ No errors
 - [x] Dry run pack: `npm pack --dry-run` ✅ 58.6 KB package
@@ -181,7 +181,7 @@ git push origin v0.1.0
 - [x] Package size is reasonable (< 5MB) ✅ 58.6 KB
 - [x] All necessary files are included in tarball ✅
 - [x] No sensitive files included (.env, .lean-spec/, specs/) ✅
-- [x] bin/lspec.js has correct shebang: `#!/usr/bin/env node` ✅
+- [x] bin/lean-spec.js has correct shebang: `#!/usr/bin/env node` ✅
 
 ### Post-Publishing Tests
 - [x] `npm link` for local testing ✅

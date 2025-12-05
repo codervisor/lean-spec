@@ -54,7 +54,7 @@ Basic test script created: `test-integration.sh`
 
 Manual testing:
 ```bash
-cd /tmp/lspec-test-existing
+cd /tmp/lean-spec-test-existing
 node /path/to/lean-spec init
 # Choose merge/backup/skip and verify behavior
 ```
