@@ -101,6 +101,12 @@ export function MainSidebar() {
     return path;
   };
 
+  // Hide sidebar on settings/management pages like /projects (manage projects page)
+  const isSettingsPage = pathname === '/projects';
+  if (isSettingsPage) {
+    return null;
+  }
+
   return (
     <>
       {/* Mobile overlay backdrop */}

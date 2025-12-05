@@ -188,7 +188,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
         return next;
       });
     }
-  }, []);
+  }, [projectId]);
 
   // Auto-show archived column when filtering by archived status in board view
   useEffect(() => {

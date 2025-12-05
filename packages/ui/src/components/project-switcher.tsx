@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Check, ChevronsUpDown, Plus, FolderOpen, Star, Settings } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, FolderOpen, Star, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useProject } from '@/contexts/project-context';
 import { CreateProjectDialog } from '@/components/create-project-dialog';
 
@@ -39,22 +40,46 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     mode,
     currentProject,
     projects,
+    isLoading,
   } = useProject();
   
   const [open, setOpen] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
+
+  // Show skeleton during initial load
+  if (isLoading) {
+    return (
+      <Skeleton className={cn(
+        "w-full",
+        collapsed ? "h-9 w-9" : "h-10"
+      )} />
+    );
+  }
 
   if (mode !== 'multi-project') {
     return null;
   }
 
   const handleProjectSelect = (projectId: string) => {
+    if (projectId === currentProject?.id) {
+      setOpen(false);
+      return;
+    }
+    
+    setIsSwitching(true);
     setOpen(false);
     
     // Extract the path after /projects/{currentProjectId}
     // Pattern: /projects/{projectId} or /projects/{projectId}/... 
     const projectPathMatch = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
-    const subPath = projectPathMatch?.[1] || ''; // Empty string = project home page
+    let subPath = projectPathMatch?.[1] || ''; // Empty string = project home page
+    
+    // If on a spec detail page (/specs/{specId}), redirect to specs list instead
+    // because the same spec ID might not exist in the other project
+    if (subPath.match(/^\/specs\/[^/]+$/)) {
+      subPath = '/specs';
+    }
     
     // Full page navigation - ensures clean state for new project
     window.location.href = `/projects/${projectId}${subPath}`;
@@ -77,19 +102,29 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={isSwitching}
             className={cn(
-              "w-full justify-between",
-              collapsed ? "h-9 w-9 p-0 justify-center" : "px-3"
+              "w-full justify-between transition-opacity",
+              collapsed ? "h-9 w-9 p-0 justify-center" : "px-3",
+              isSwitching && "opacity-70"
             )}
           >
             {collapsed ? (
-              <FolderOpen className="h-4 w-4" />
+              isSwitching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FolderOpen className="h-4 w-4" />
+              )
             ) : (
               <>
                 <div className="flex items-center gap-2 truncate">
-                  <FolderOpen className="h-4 w-4 shrink-0 opacity-50" />
+                  {isSwitching ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                  ) : (
+                    <FolderOpen className="h-4 w-4 shrink-0 opacity-50" />
+                  )}
                   <span className="truncate">
-                    {currentProject?.name || "Select project..."}
+                    {isSwitching ? "Switching..." : (currentProject?.name || "Select project...")}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
