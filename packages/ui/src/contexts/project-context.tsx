@@ -245,20 +245,20 @@ export function ProjectProvider({ children, initialProjectId }: ProjectProviderP
 
 /**
  * Hook to generate project-scoped URLs
- * Automatically uses project prefix in multi-project mode
+ * 
+ * Phase 3 of spec 151: Always generate project-scoped URLs
+ * In single-project mode, uses 'default' as the project ID
  * Returns currentProjectId which is always defined (uses 'default' for single-project mode)
  */
 export function useProjectUrl() {
   const { mode, currentProject, currentProjectId } = useProject();
   
   const getUrl = useCallback((path: string) => {
-    if (mode === 'multi-project' && currentProject) {
-      // Ensure path starts with /
-      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-      return `/projects/${currentProject.id}${normalizedPath}`;
-    }
-    return path.startsWith('/') ? path : `/${path}`;
-  }, [mode, currentProject]);
+    // Always use project-scoped URLs
+    const projectId = currentProject?.id || DEFAULT_PROJECT_ID;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `/projects/${projectId}${normalizedPath}`;
+  }, [currentProject]);
 
   const getSpecUrl = useCallback((specId: string | number, subSpec?: string) => {
     const base = getUrl(`/specs/${specId}`);

@@ -15,6 +15,7 @@ import type { Spec } from '../db/schema';
 
 // Re-export project constants for convenience
 export { DEFAULT_PROJECT_ID, isDefaultProject, normalizeProjectId } from '../projects/constants';
+import { isDefaultProject } from '../projects/constants';
 
 // Lazy import DatabaseSource to avoid DB connection issues in filesystem mode
 type DatabaseSourceConstructor = new () => SpecSource;
@@ -135,6 +136,9 @@ export class SpecsService {
 
   /**
    * Get the appropriate source based on projectId and mode
+   * 
+   * For unified routing (spec 151), 'default' projectId is treated as
+   * the filesystem source in single-project mode.
    */
   private async getSource(projectId?: string): Promise<SpecSource> {
     // Multi-project mode: use multi-project source
@@ -142,8 +146,11 @@ export class SpecsService {
       return this.multiProjectSource;
     }
 
-    // If projectId provided, use database (external repo)
-    if (projectId && (this.mode === 'database' || this.mode === 'both')) {
+    // Treat 'default' projectId as undefined (single-project filesystem)
+    const effectiveProjectId = isDefaultProject(projectId) ? undefined : projectId;
+
+    // If projectId provided and not 'default', use database (external repo)
+    if (effectiveProjectId && (this.mode === 'database' || this.mode === 'both')) {
       return await this.getDatabaseSource();
     }
 
