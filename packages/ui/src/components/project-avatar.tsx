@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 interface ProjectAvatarProps {
   name: string;
   color?: string;
-  icon?: string; // Optional icon URL/path for future use
+  icon?: string; // Optional icon URL/path
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
