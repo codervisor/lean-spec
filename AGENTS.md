@@ -69,15 +69,6 @@ AFTER:  document completion → update status to complete
 
 **Status tracks implementation, NOT spec writing.**
 
-### 📝 Document Before Completing
-
-**MANDATORY**: Before marking any spec as complete, update the spec with:
-
-- **What was implemented** - Progress summary, key changes
-- **Learnings** - Challenges and solutions
-
-**Why?** Preserves context, documents AI patterns, refines prompts, creates searchable knowledge.
-
 ## Spec Dependencies
 
 Use `depends_on` to express blocking relationships between specs:
