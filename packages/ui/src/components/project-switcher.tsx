@@ -27,6 +27,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProject } from '@/contexts/project-context';
 import { CreateProjectDialog } from '@/components/create-project-dialog';
+import { ProjectAvatar } from '@/components/project-avatar';
 
 interface ProjectSwitcherProps {
   collapsed?: boolean;
@@ -113,9 +114,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
               isSwitching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <div
-                  className="h-4 w-4 rounded-full border"
-                  style={{ backgroundColor: currentProject?.color || 'hsl(var(--primary))' }}
+                <ProjectAvatar 
+                  name={currentProject?.name || ''}
+                  color={currentProject?.color}
+                  size="sm"
                 />
               )
             ) : (
@@ -124,9 +126,11 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                   {isSwitching ? (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                   ) : (
-                    <div
-                      className="h-4 w-4 rounded-full border shrink-0"
-                      style={{ backgroundColor: currentProject?.color || 'hsl(var(--primary))' }}
+                    <ProjectAvatar 
+                      name={currentProject?.name || ''}
+                      color={currentProject?.color}
+                      size="sm"
+                      className="shrink-0"
                     />
                   )}
                   <span className="truncate">
@@ -159,9 +163,11 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                             : "opacity-0"
                         )}
                       />
-                      <div
-                        className="h-3 w-3 rounded-full shrink-0"
-                        style={{ backgroundColor: project.color || 'hsl(var(--primary))' }}
+                      <ProjectAvatar 
+                        name={project.name}
+                        color={project.color}
+                        size="sm"
+                        className="shrink-0"
                       />
                       <span className="truncate flex-1">{project.name}</span>
                       {project.favorite && (
