@@ -80,14 +80,22 @@ function getIconForSubSpec(fileName: string): { iconName: string; color: string 
 }
 
 /**
- * Convert filename to display name (e.g., "DESIGN.md" -> "Design")
+ * Convert filename to display name (e.g., "DESIGN.md" -> "Design", "UI.md" -> "UI")
  */
 function formatSubSpecName(fileName: string): string {
   const baseName = fileName.replace(/\.md$/i, '');
-  // Convert to title case: "API-DESIGN" -> "Api Design", "TESTING" -> "Testing"
+  // Convert to title case: "API-DESIGN" -> "API Design", "TESTING" -> "Testing"
+  // Preserve all-uppercase acronyms (2-4 chars like "UI", "API", "QA")
   return baseName
     .split(/[-_]/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(word => {
+      // Preserve short all-uppercase words (likely acronyms)
+      if (word.length <= 4 && word === word.toUpperCase()) {
+        return word;
+      }
+      // Otherwise convert to title case
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
     .join(' ');
 }
 
