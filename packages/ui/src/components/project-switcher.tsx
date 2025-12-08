@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Check, ChevronsUpDown, Plus, Star, Settings, Loader2 } from 'lucide-react';
+import { ChevronsUpDown, Plus, Star, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -148,34 +148,32 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
             <CommandList>
               <CommandEmpty>No project found.</CommandEmpty>
               <CommandGroup heading="Projects">
-                {sortedProjects.map((project) => (
-                  <CommandItem
-                    key={project.id}
-                    onSelect={() => handleProjectSelect(project.id)}
-                    className="text-sm"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          currentProject?.id === project.id
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <ProjectAvatar 
-                        name={project.name}
-                        color={project.color}
-                        size="sm"
-                        className="shrink-0"
-                      />
-                      <span className="truncate flex-1">{project.name}</span>
-                      {project.favorite && (
-                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                {sortedProjects.map((project) => {
+                  const isActive = currentProject?.id === project.id;
+                  return (
+                    <CommandItem
+                      key={project.id}
+                      onSelect={() => handleProjectSelect(project.id)}
+                      className={cn(
+                        "text-sm",
+                        isActive && "bg-accent"
                       )}
-                    </div>
-                  </CommandItem>
-                ))}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ProjectAvatar 
+                          name={project.name}
+                          color={project.color}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                        <span className="truncate flex-1">{project.name}</span>
+                        {project.favorite && (
+                          <Star className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
               <CommandSeparator />
               <CommandGroup>

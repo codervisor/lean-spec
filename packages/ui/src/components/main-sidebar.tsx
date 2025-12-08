@@ -155,7 +155,7 @@ export function MainSidebar() {
 
           {/* Navigation */}
           {mounted && <nav className="flex-1 px-2 py-4 space-y-1">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center justify-center">
               <ProjectSwitcher collapsed={isCollapsed && !mobileOpen} />
             </div>
             <SidebarLink 
