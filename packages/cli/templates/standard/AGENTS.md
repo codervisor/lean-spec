@@ -28,7 +28,7 @@
 | Unlink specs | `unlink` | `lean-spec unlink <spec> --depends-on <other>` |
 | Dependencies | `deps` | `lean-spec deps <spec>` |
 | Token count | `tokens` | `lean-spec tokens <spec>` |
-
+| Validate specs | `validate` | `lean-spec validate` |
 ## ⚠️ Core Rules
 
 | Rule | Details |
@@ -83,6 +83,20 @@ lean-spec link <spec> --depends-on <other-spec>
 | 2,000-3,500 | ✅ Good |
 | 3,500-5,000 | ⚠️ Consider splitting |
 | >5,000 | 🔴 Must split |
+
+## Quality Validation
+
+Before completing work, validate spec quality:
+```bash
+lean-spec validate              # Check structure and quality
+lean-spec validate --check-deps # Verify dependency alignment
+```
+
+Validation checks:
+- Missing required sections
+- Excessive length (>400 lines)
+- Content/frontmatter dependency misalignment
+- Invalid frontmatter fields
 
 ## First Principles (Priority Order)
 

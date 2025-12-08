@@ -35,8 +35,7 @@ Lightweight spec methodology for AI-powered development.
 | Link specs | `link` | `lean-spec link <spec> --depends-on <other>` |
 | Unlink specs | `unlink` | `lean-spec unlink <spec> --depends-on <other>` |
 | Dependencies | `deps` | `lean-spec deps <spec>` |
-| Token count | `tokens` | `lean-spec tokens <spec>` |
-
+| Token count | `tokens` | `lean-spec tokens <spec>` || Validate specs | `validate` | `lean-spec validate` |
 **Local Development:** Use `node bin/lean-spec.js <command>` instead of `npx lean-spec`. Build first with `pnpm build`.
 
 ## ⚠️ Core Rules
@@ -104,12 +103,18 @@ lean-spec link <spec> --depends-on <other-spec>
 
 ## Quality Validation
 
-Before completing work:
+Before completing work, validate spec quality:
 ```bash
-node bin/lean-spec.js validate              # Check structure
-node bin/lean-spec.js validate --check-deps # Verify dependencies
-cd docs-site && npm run build               # Test docs build
+node bin/lean-spec.js validate              # Check structure and quality
+node bin/lean-spec.js validate --check-deps # Verify dependency alignment
+cd docs-site && npm run build               # Test docs build (if applicable)
 ```
+
+Validation checks:
+- Missing required sections
+- Excessive length (>400 lines)
+- Content/frontmatter dependency misalignment
+- Invalid frontmatter fields
 
 See [docs/agents/RULES.md](docs/agents/RULES.md) for development rules.
 
