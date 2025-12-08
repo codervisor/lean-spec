@@ -42,6 +42,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
   const [showStandalone, setShowStandalone] = React.useState(false);
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [focusedNodeId, setFocusedNodeId] = React.useState<string | null>(null);
+  const [viewMode, setViewMode] = React.useState<'graph' | 'focus'>('graph');
   const [isCompact, setIsCompact] = React.useState(data.nodes.length > 30);
   const [selectorOpen, setSelectorOpen] = React.useState(false);
   const [selectorQuery, setSelectorQuery] = React.useState('');
@@ -103,11 +104,32 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
     [data.edges]
   );
 
+  const adjacencyMaps = React.useMemo(() => {
+    const upstream = new Map<string, Set<string>>();
+    const downstream = new Map<string, Set<string>>();
+
+    dependsOnEdges.forEach((e) => {
+      if (!upstream.has(e.source)) upstream.set(e.source, new Set());
+      upstream.get(e.source)!.add(e.target);
+
+      if (!downstream.has(e.target)) downstream.set(e.target, new Set());
+      downstream.get(e.target)!.add(e.source);
+    });
+
+    return { upstream, downstream };
+  }, [dependsOnEdges]);
+
   // Get connection depths for focused node (all transitive deps)
   const connectionDepths = React.useMemo(() => {
-    if (!focusedNodeId) return null;
+    if (!focusedNodeId || viewMode === 'focus') return null;
     return getConnectionDepths(focusedNodeId, dependsOnEdges, Infinity);
-  }, [focusedNodeId, dependsOnEdges]);
+  }, [focusedNodeId, dependsOnEdges, viewMode]);
+
+  React.useEffect(() => {
+    if (!focusedNodeId && viewMode === 'focus') {
+      setViewMode('graph');
+    }
+  }, [focusedNodeId, viewMode]);
 
   // Get detailed info for focused node (for sidebar)
   // Edge direction: source depends_on target (A→B means A depends on B)
@@ -119,16 +141,6 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
     if (!node) return null;
 
     const nodeMap = new Map(data.nodes.map((n) => [n.id, n]));
-
-    // Build directional adjacency maps
-    const upstreamMap = new Map<string, Set<string>>();
-    const downstreamMap = new Map<string, Set<string>>();
-    dependsOnEdges.forEach((e) => {
-      if (!upstreamMap.has(e.source)) upstreamMap.set(e.source, new Set());
-      upstreamMap.get(e.source)!.add(e.target);
-      if (!downstreamMap.has(e.target)) downstreamMap.set(e.target, new Set());
-      downstreamMap.get(e.target)!.add(e.source);
-    });
 
     // BFS to get all upstream specs grouped by depth
     const getTransitiveDeps = (
@@ -168,14 +180,84 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
       return result;
     };
 
-    const upstream = getTransitiveDeps(focusedNodeId, upstreamMap);
-    const downstream = getTransitiveDeps(focusedNodeId, downstreamMap);
+    const upstream = getTransitiveDeps(focusedNodeId, adjacencyMaps.upstream);
+    const downstream = getTransitiveDeps(focusedNodeId, adjacencyMaps.downstream);
 
     return { node, upstream, downstream };
-  }, [focusedNodeId, data.nodes, dependsOnEdges]);
+  }, [focusedNodeId, data.nodes, adjacencyMaps]);
 
   // Build the graph
   const graph = React.useMemo(() => {
+    const isFocusMode = viewMode === 'focus' && !!focusedNodeId;
+
+    if (isFocusMode && focusedNodeId) {
+      const upstreamIds = adjacencyMaps.upstream.get(focusedNodeId) ?? new Set<string>();
+      const downstreamIds = adjacencyMaps.downstream.get(focusedNodeId) ?? new Set<string>();
+      const visibleNodeIds = new Set<string>([focusedNodeId, ...upstreamIds, ...downstreamIds]);
+
+      const visibleNodes = data.nodes.filter((n) => visibleNodeIds.has(n.id));
+
+      const nodes: Node<SpecNodeData>[] = visibleNodes.map((node) => {
+        const isFocused = focusedNodeId === node.id;
+
+        return {
+          id: node.id,
+          type: 'specNode',
+          data: {
+            label: node.name,
+            shortLabel: node.name.length > 14 ? node.name.slice(0, 12) + '…' : node.name,
+            badge: node.status === 'in-progress' ? 'WIP' : node.status.slice(0, 3).toUpperCase(),
+            number: node.number,
+            tone: node.status as GraphTone,
+            href: getSpecUrl(node.number),
+            interactive: true,
+            isFocused,
+            connectionDepth: isFocused ? 0 : 1,
+            isDimmed: false,
+            isCompact,
+            isSecondary: false,
+          },
+          position: { x: 0, y: 0 },
+          draggable: true,
+          selectable: true,
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+        };
+      });
+
+      const edges: Edge[] = dependsOnEdges
+        .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+        .map((edge) => {
+          const isHighlighted = edge.source === focusedNodeId || edge.target === focusedNodeId;
+
+          return {
+            id: `${edge.source}-${edge.target}-dependsOn`,
+            source: edge.source,
+            target: edge.target,
+            type: 'smoothstep',
+            animated: isHighlighted,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: DEPENDS_ON_COLOR,
+              width: 18,
+              height: 18,
+            },
+            style: {
+              stroke: DEPENDS_ON_COLOR,
+              strokeWidth: isHighlighted ? 2.75 : 2,
+              opacity: 1,
+            },
+          };
+        });
+
+      return layoutGraph(nodes, edges, isCompact, false, {
+        mode: 'focus',
+        focusedNodeId,
+        upstreamIds,
+        downstreamIds,
+      });
+    }
+
     // Primary nodes: those matching the status filter
     const primaryNodes = data.nodes.filter(
       (node) => statusFilter.length === 0 || statusFilter.includes(node.status)
@@ -306,7 +388,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
         };
       });
 
-    return layoutGraph(nodes, edges, isCompact, showStandalone);
+      return layoutGraph(nodes, edges, isCompact, showStandalone, { mode: 'graph' });
   }, [
     data,
     dependsOnEdges,
@@ -315,6 +397,9 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
     connectionDepths,
     isCompact,
     showStandalone,
+      adjacencyMaps,
+      viewMode,
+      getSpecUrl,
   ]);
 
   // Connection stats
@@ -352,7 +437,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
       instance.fitView({ padding: 0.15, duration: 300 });
     }, 50);
     return () => clearTimeout(timer);
-  }, [instance, graph.nodes.length, statusFilter, showStandalone]);
+  }, [instance, graph, statusFilter, showStandalone]);
 
   // Center on focused node when set from URL param
   React.useEffect(() => {
@@ -623,6 +708,47 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
           </>
         )}
       </div>
+
+      {focusedSpec && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5">
+            <button
+              onClick={() => setViewMode('graph')}
+              className={cn(
+                'px-2 py-1 rounded-sm font-semibold transition-colors',
+                viewMode === 'graph'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              )}
+            >
+              Graph View
+            </button>
+            <button
+              onClick={() => setViewMode('focus')}
+              className={cn(
+                'px-2 py-1 rounded-sm font-semibold transition-colors',
+                viewMode === 'focus'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              )}
+            >
+              Focus Mode
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span className="font-semibold text-foreground">Selected:</span>
+            <span className="font-mono text-foreground">#{focusedSpec.number.toString().padStart(3, '0')}</span>
+            <span className="text-foreground truncate max-w-[220px]">{focusedSpec.name}</span>
+            <button
+              onClick={() => setFocusedNodeId(null)}
+              className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[11px] text-foreground hover:bg-muted"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex flex-1 gap-3 min-h-0">

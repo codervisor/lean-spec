@@ -87,9 +87,27 @@ export function layoutGraph(
   nodes: Node<SpecNodeData>[],
   edges: Edge[],
   isCompact: boolean,
-  showStandalone: boolean
+  showStandalone: boolean,
+  options: {
+    mode?: 'graph' | 'focus';
+    focusedNodeId?: string | null;
+    upstreamIds?: Set<string>;
+    downstreamIds?: Set<string>;
+  } = {}
 ): { nodes: Node<SpecNodeData>[]; edges: Edge[] } {
   if (nodes.length === 0) return { nodes: [], edges: [] };
+
+  const mode = options.mode ?? 'graph';
+  const upstreamIds = options.upstreamIds ?? new Set<string>();
+  const downstreamIds = options.downstreamIds ?? new Set<string>();
+
+  if (mode === 'focus' && options.focusedNodeId) {
+    return layeredLayout(nodes, edges, isCompact, {
+      focusedNodeId: options.focusedNodeId,
+      upstreamIds,
+      downstreamIds,
+    });
+  }
 
   const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
   const height = isCompact ? COMPACT_NODE_HEIGHT : NODE_HEIGHT;
@@ -191,4 +209,51 @@ export function layoutGraph(
   }
 
   return { nodes: allLayoutedNodes, edges };
+}
+
+function layeredLayout(
+  nodes: Node<SpecNodeData>[],
+  edges: Edge[],
+  isCompact: boolean,
+  params: {
+    focusedNodeId: string;
+    upstreamIds: Set<string>;
+    downstreamIds: Set<string>;
+  }
+): { nodes: Node<SpecNodeData>[]; edges: Edge[] } {
+  const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
+  const height = isCompact ? COMPACT_NODE_HEIGHT : NODE_HEIGHT;
+  const horizontalGap = isCompact ? 40 : 70;
+  const verticalGap = isCompact ? 110 : 150;
+
+  const upstream = nodes.filter((n) => params.upstreamIds.has(n.id));
+  const downstream = nodes.filter((n) => params.downstreamIds.has(n.id));
+  const focused = nodes.find((n) => n.id === params.focusedNodeId);
+
+  const rows: Node<SpecNodeData>[][] = [upstream, focused ? [focused] : [], downstream];
+
+  const rowWidths = rows.map((row) =>
+    row.length === 0 ? width : row.length * width + (row.length - 1) * horizontalGap
+  );
+  const maxWidth = Math.max(...rowWidths);
+
+  const layoutedNodes: Node<SpecNodeData>[] = [];
+
+  rows.forEach((row, rowIndex) => {
+    const rowWidth = rowWidths[rowIndex];
+    const startX = Math.max(0, (maxWidth - rowWidth) / 2);
+    const y = rowIndex * (height + verticalGap);
+
+    row.forEach((node, i) => {
+      layoutedNodes.push({
+        ...node,
+        position: {
+          x: startX + i * (width + horizontalGap),
+          y,
+        },
+      });
+    });
+  });
+
+  return { nodes: layoutedNodes, edges };
 }
