@@ -74,9 +74,6 @@ AFTER:  document completion → update status to complete
 **MANDATORY**: Before marking any spec as complete, update the spec with:
 
 - **What was implemented** - Progress summary, key changes
-- **System prompts** - AI prompts used/modified during work
-- **Template prompts** - Template changes or new templates
-- **Design decisions** - Why specific approaches were chosen
 - **Learnings** - Challenges and solutions
 
 **Why?** Preserves context, documents AI patterns, refines prompts, creates searchable knowledge.

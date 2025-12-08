@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
+import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SpecNodeData } from './types';
 import {
@@ -9,6 +10,20 @@ import {
   COMPACT_NODE_WIDTH,
   toneClasses,
 } from './constants';
+
+const statusIcons = {
+  'planned': Clock,
+  'in-progress': PlayCircle,
+  'complete': CheckCircle2,
+  'archived': Archive,
+};
+
+const priorityIcons = {
+  'critical': AlertCircle,
+  'high': ArrowUp,
+  'medium': Minus,
+  'low': ArrowDown,
+};
 
 export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>) {
   const isCompact = data.isCompact;
@@ -26,6 +41,9 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
 
   // Secondary nodes (shown due to critical path) are slightly transparent
   const baseOpacity = isSecondary ? 0.65 : 1;
+
+  const StatusIcon = statusIcons[data.tone as keyof typeof statusIcons] || Clock;
+  const PriorityIcon = priorityIcons[data.priority as keyof typeof priorityIcons] || Minus;
 
   return (
     <div
@@ -49,18 +67,48 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
         <span className={cn('font-bold', isCompact ? 'text-[9px]' : 'text-[10px]')}>
           #{data.number.toString().padStart(3, '0')}
         </span>
-        <span
-          className={cn(
-            'font-medium uppercase tracking-wide rounded',
-            isCompact ? 'text-[7px] px-0.5 py-0.5' : 'text-[8px] px-1 py-0.5',
-            data.tone === 'planned' && 'bg-blue-500/30 text-blue-700 dark:text-blue-300',
-            data.tone === 'in-progress' && 'bg-orange-500/30 text-orange-700 dark:text-orange-300',
-            data.tone === 'complete' && 'bg-green-500/30 text-green-700 dark:text-green-300',
-            data.tone === 'archived' && 'bg-gray-500/30 text-gray-600 dark:text-gray-400'
+        <div className="flex items-center gap-0.5">
+          {/* Status icon */}
+          <div
+            className={cn(
+              'rounded flex items-center justify-center',
+              isCompact ? 'p-0.5' : 'p-1',
+              data.tone === 'planned' && 'bg-blue-500/30',
+              data.tone === 'in-progress' && 'bg-orange-500/30',
+              data.tone === 'complete' && 'bg-green-500/30',
+              data.tone === 'archived' && 'bg-gray-500/30'
+            )}
+            title={data.tone}
+          >
+            <StatusIcon className={cn(isCompact ? 'h-2 w-2' : 'h-2.5 w-2.5')} />
+          </div>
+          {/* Priority icon */}
+          <div
+            className={cn(
+              'rounded flex items-center justify-center',
+              isCompact ? 'p-0.5' : 'p-1',
+              data.priority === 'critical' && 'bg-red-500/30',
+              data.priority === 'high' && 'bg-orange-500/30',
+              data.priority === 'medium' && 'bg-blue-500/30',
+              data.priority === 'low' && 'bg-gray-500/30'
+            )}
+            title={data.priority}
+          >
+            <PriorityIcon className={cn(isCompact ? 'h-2 w-2' : 'h-2.5 w-2.5')} />
+          </div>
+          {/* Level indicator */}
+          {data.connectionDepth !== undefined && data.connectionDepth > 0 && (
+            <span
+              className={cn(
+                'font-medium rounded bg-muted/50 text-muted-foreground',
+                isCompact ? 'text-[7px] px-0.5 py-0.5' : 'text-[8px] px-1 py-0.5'
+              )}
+              title={`Level ${data.connectionDepth}`}
+            >
+              L{data.connectionDepth}
+            </span>
           )}
-        >
-          {data.badge}
-        </span>
+        </div>
       </div>
       <span
         className={cn('font-medium leading-tight truncate', isCompact ? 'text-[8px]' : 'text-[10px]')}

@@ -121,15 +121,34 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
 
   // Get connection depths for focused node (all transitive deps)
   const connectionDepths = React.useMemo(() => {
-    if (!focusedNodeId || viewMode === 'focus') return null;
+    if (!focusedNodeId) return null;
     return getConnectionDepths(focusedNodeId, dependsOnEdges, Infinity);
-  }, [focusedNodeId, dependsOnEdges, viewMode]);
+  }, [focusedNodeId, dependsOnEdges]);
 
   React.useEffect(() => {
     if (!focusedNodeId && viewMode === 'focus') {
       setViewMode('graph');
     }
   }, [focusedNodeId, viewMode]);
+
+  // Helper to get all transitive IDs
+  const getAllTransitiveIds = React.useCallback((startId: string, adjacencyMap: Map<string, Set<string>>) => {
+    const visited = new Set<string>();
+    const queue = [startId];
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      const neighbors = adjacencyMap.get(id);
+      if (neighbors) {
+        neighbors.forEach(n => {
+          if (!visited.has(n)) {
+            visited.add(n);
+            queue.push(n);
+          }
+        });
+      }
+    }
+    return visited;
+  }, []);
 
   // Get detailed info for focused node (for sidebar)
   // Edge direction: source depends_on target (A→B means A depends on B)
@@ -191,8 +210,8 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
     const isFocusMode = viewMode === 'focus' && !!focusedNodeId;
 
     if (isFocusMode && focusedNodeId) {
-      const upstreamIds = adjacencyMaps.upstream.get(focusedNodeId) ?? new Set<string>();
-      const downstreamIds = adjacencyMaps.downstream.get(focusedNodeId) ?? new Set<string>();
+      const upstreamIds = getAllTransitiveIds(focusedNodeId, adjacencyMaps.upstream);
+      const downstreamIds = getAllTransitiveIds(focusedNodeId, adjacencyMaps.downstream);
       const visibleNodeIds = new Set<string>([focusedNodeId, ...upstreamIds, ...downstreamIds]);
 
       const visibleNodes = data.nodes.filter((n) => visibleNodeIds.has(n.id));
@@ -209,6 +228,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
             badge: node.status === 'in-progress' ? 'WIP' : node.status.slice(0, 3).toUpperCase(),
             number: node.number,
             tone: node.status as GraphTone,
+            priority: node.priority,
             href: getSpecUrl(node.number),
             interactive: true,
             isFocused,
@@ -332,6 +352,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
           badge: node.status === 'in-progress' ? 'WIP' : node.status.slice(0, 3).toUpperCase(),
           number: node.number,
           tone: node.status as GraphTone,
+          priority: node.priority,
           href: getSpecUrl(node.number),
           interactive: true,
           isFocused,
@@ -696,6 +717,20 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
           Compact
         </button>
 
+        {focusedNodeId && (
+          <button
+            onClick={() => setViewMode((prev) => (prev === 'graph' ? 'focus' : 'graph'))}
+            className={cn(
+              'rounded border px-2 py-1 font-medium transition-colors',
+              viewMode === 'focus'
+                ? 'border-primary/60 bg-primary/20 text-primary'
+                : 'border-border bg-background hover:bg-accent text-muted-foreground'
+            )}
+          >
+            Focus Mode
+          </button>
+        )}
+
         {hasFilters && (
           <>
             <span className="h-3 w-px bg-border" />
@@ -708,47 +743,6 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
           </>
         )}
       </div>
-
-      {focusedSpec && (
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5">
-            <button
-              onClick={() => setViewMode('graph')}
-              className={cn(
-                'px-2 py-1 rounded-sm font-semibold transition-colors',
-                viewMode === 'graph'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted'
-              )}
-            >
-              Graph View
-            </button>
-            <button
-              onClick={() => setViewMode('focus')}
-              className={cn(
-                'px-2 py-1 rounded-sm font-semibold transition-colors',
-                viewMode === 'focus'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted'
-              )}
-            >
-              Focus Mode
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <span className="font-semibold text-foreground">Selected:</span>
-            <span className="font-mono text-foreground">#{focusedSpec.number.toString().padStart(3, '0')}</span>
-            <span className="text-foreground truncate max-w-[220px]">{focusedSpec.name}</span>
-            <button
-              onClick={() => setFocusedNodeId(null)}
-              className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[11px] text-foreground hover:bg-muted"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main content */}
       <div className="flex flex-1 gap-3 min-h-0">

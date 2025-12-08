@@ -4,6 +4,7 @@
 
 import { getStats, getSpecs } from '@/lib/db/service-queries';
 import { DashboardClient } from '@/app/dashboard-client';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 // Force dynamic rendering - this page needs runtime data
 export const dynamic = 'force-dynamic';
@@ -15,11 +16,12 @@ export default async function ProjectPage({
 }) {
   const { projectId } = await params;
   
-  // TODO: In future, use projectId to fetch project-specific data
-  // For now, we use the same data source as single-project mode
+  // Convert 'default' project to undefined for filesystem mode
+  const actualProjectId = isDefaultProject(projectId) ? undefined : projectId;
+  
   const [stats, specs] = await Promise.all([
-    getStats(projectId),
-    getSpecs(projectId),
+    getStats(actualProjectId),
+    getSpecs(actualProjectId),
   ]);
 
   return <DashboardClient initialSpecs={specs} initialStats={stats} projectId={projectId} />;

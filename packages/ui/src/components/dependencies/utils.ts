@@ -221,38 +221,51 @@ function layeredLayout(
     downstreamIds: Set<string>;
   }
 ): { nodes: Node<SpecNodeData>[]; edges: Edge[] } {
+  // Use dagre for consistent hierarchical layout
+  // This preserves the structure of complex dependency chains (A->B->C)
+  // instead of flattening them into just "upstream" and "downstream" buckets
+  
   const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
   const height = isCompact ? COMPACT_NODE_HEIGHT : NODE_HEIGHT;
-  const horizontalGap = isCompact ? 40 : 70;
-  const verticalGap = isCompact ? 110 : 150;
+  
+  const graph = new dagre.graphlib.Graph();
+  graph.setGraph({
+    rankdir: 'LR', // Consistent with main graph
+    align: 'UL',
+    nodesep: isCompact ? 30 : 50,
+    ranksep: isCompact ? 80 : 120,
+    marginx: 40,
+    marginy: 40,
+  });
+  graph.setDefaultEdgeLabel(() => ({}));
 
-  const upstream = nodes.filter((n) => params.upstreamIds.has(n.id));
-  const downstream = nodes.filter((n) => params.downstreamIds.has(n.id));
-  const focused = nodes.find((n) => n.id === params.focusedNodeId);
+  nodes.forEach((node) => {
+    graph.setNode(node.id, { width, height });
+  });
 
-  const rows: Node<SpecNodeData>[][] = [upstream, focused ? [focused] : [], downstream];
+  edges.forEach((edge) => {
+    graph.setEdge(edge.source, edge.target);
+  });
 
-  const rowWidths = rows.map((row) =>
-    row.length === 0 ? width : row.length * width + (row.length - 1) * horizontalGap
-  );
-  const maxWidth = Math.max(...rowWidths);
+  dagre.layout(graph);
 
-  const layoutedNodes: Node<SpecNodeData>[] = [];
+  // Find bounds to normalize coordinates (start at 0,0)
+  let minX = Infinity, minY = Infinity;
+  nodes.forEach((node) => {
+    const pos = graph.node(node.id);
+    minX = Math.min(minX, pos.x - width / 2);
+    minY = Math.min(minY, pos.y - height / 2);
+  });
 
-  rows.forEach((row, rowIndex) => {
-    const rowWidth = rowWidths[rowIndex];
-    const startX = Math.max(0, (maxWidth - rowWidth) / 2);
-    const y = rowIndex * (height + verticalGap);
-
-    row.forEach((node, i) => {
-      layoutedNodes.push({
-        ...node,
-        position: {
-          x: startX + i * (width + horizontalGap),
-          y,
-        },
-      });
-    });
+  const layoutedNodes = nodes.map((node) => {
+    const pos = graph.node(node.id);
+    return {
+      ...node,
+      position: {
+        x: pos.x - minX,
+        y: pos.y - minY,
+      },
+    };
   });
 
   return { nodes: layoutedNodes, edges };

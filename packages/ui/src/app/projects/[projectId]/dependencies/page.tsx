@@ -1,5 +1,6 @@
 import { ProjectDependencyGraphClient } from '@/components/dependencies/dependencies-client';
 import { getDependencyGraph } from '@/lib/db/service-queries';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 export default async function ProjectDependenciesPage({
   params,
@@ -7,7 +8,10 @@ export default async function ProjectDependenciesPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const data = await getDependencyGraph(projectId);
+  
+  // Convert 'default' project to undefined for filesystem mode
+  const actualProjectId = isDefaultProject(projectId) ? undefined : projectId;
+  const data = await getDependencyGraph(actualProjectId);
 
   if (data.nodes.length === 0) {
     return (

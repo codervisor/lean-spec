@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getSpecById, getSpecsWithSubSpecCount } from '@/lib/db/service-queries';
 import { SpecDetailWrapper } from '@/components/spec-detail-wrapper';
+import { isDefaultProject } from '@/lib/projects/constants';
 
 export const revalidate = 0; // No caching for local dev
 export const dynamic = 'force-dynamic';
@@ -15,9 +16,12 @@ export default async function ProjectSpecDetailPage({
   const { projectId, specId } = await params;
   const { subspec: currentSubSpec } = await searchParams;
   
+  // Convert 'default' project to undefined for filesystem mode (which loads sub-specs)
+  const actualProjectId = isDefaultProject(projectId) ? undefined : projectId;
+  
   const [spec, allSpecs] = await Promise.all([
-    getSpecById(specId, projectId),
-    getSpecsWithSubSpecCount(projectId)
+    getSpecById(specId, actualProjectId),
+    getSpecsWithSubSpecCount(actualProjectId)
   ]);
 
   if (!spec) {
