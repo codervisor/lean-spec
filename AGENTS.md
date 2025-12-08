@@ -35,7 +35,9 @@ Lightweight spec methodology for AI-powered development.
 | Link specs | `link` | `lean-spec link <spec> --depends-on <other>` |
 | Unlink specs | `unlink` | `lean-spec unlink <spec> --depends-on <other>` |
 | Dependencies | `deps` | `lean-spec deps <spec>` |
-| Token count | `tokens` | `lean-spec tokens <spec>` || Validate specs | `validate` | `lean-spec validate` |
+| Token count | `tokens` | `lean-spec tokens <spec>` |
+| Validate specs | `validate` | `lean-spec validate` |
+
 **Local Development:** Use `node bin/lean-spec.js <command>` instead of `npx lean-spec`. Build first with `pnpm build`.
 
 ## ⚠️ Core Rules
@@ -55,16 +57,29 @@ Lightweight spec methodology for AI-powered development.
 | Skip discovery | Run `board` and `search` first |
 | Leave status as "planned" | Update to `in-progress` before coding |
 | Edit frontmatter manually | Use `update` tool |
+| Complete spec without documentation | Document progress, prompts, learnings first |
 
 ## 📋 SDD Workflow
 
 ```
 BEFORE: board → search → check existing specs
 DURING: update status to in-progress → code → document decisions → link dependencies
-AFTER:  update status to complete → document learnings
+AFTER:  document completion → update status to complete
 ```
 
 **Status tracks implementation, NOT spec writing.**
+
+### 📝 Document Before Completing
+
+**MANDATORY**: Before marking any spec as complete, update the spec with:
+
+- **What was implemented** - Progress summary, key changes
+- **System prompts** - AI prompts used/modified during work
+- **Template prompts** - Template changes or new templates
+- **Design decisions** - Why specific approaches were chosen
+- **Learnings** - Challenges and solutions
+
+**Why?** Preserves context, documents AI patterns, refines prompts, creates searchable knowledge.
 
 ## Spec Dependencies
 
