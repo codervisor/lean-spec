@@ -34,7 +34,8 @@ function toLightweightSpec<T extends ParsedSpec>(spec: T): Omit<T, 'contentMd' |
   return rest;
 }
 
-const DEFAULT_SPECS_DIR = resolve(process.cwd(), '../../specs');
+// Specs live at repo root /specs relative to the UI package when running in dev.
+const DEFAULT_SPECS_DIR = resolve(process.cwd(), 'specs');
 
 function getSpecsRootDir(): string {
   const envDir = process.env.SPECS_DIR;
@@ -45,6 +46,12 @@ function getSpecsRootDir(): string {
 }
 
 function buildSpecDirPath(filePath: string): string {
+  // If we already have an absolute path (multi-project source returns absolute),
+  // use its directory directly. Otherwise, resolve relative to specs root.
+  if (filePath.startsWith('/')) {
+    return dirname(filePath);
+  }
+
   const normalized = filePath
     .replace(/^specs\//, '')
     .replace(/\/README\.md$/, '');
@@ -158,25 +165,31 @@ export async function getSpecsWithMetadata(projectId?: string): Promise<(Lightwe
  * Uses unified relationship computation for both single and multi-project modes
  */
 export async function getSpecById(id: string, projectId?: string): Promise<(ParsedSpec & { subSpecs?: import('../sub-specs').SubSpec[]; relationships?: SpecRelationships }) | null> {
-  const spec = await specsService.getSpec(id, projectId);
+  // Try project-scoped lookup first; if missing, fall back to default filesystem specs
+  let spec = await specsService.getSpec(id, projectId);
+  let effectiveProjectId = projectId;
+
+  if (!spec && projectId) {
+    spec = await specsService.getSpec(id, undefined);
+    effectiveProjectId = undefined;
+  }
 
   if (!spec) return null;
 
   const parsedSpec = parseSpecTags(spec);
   
   // Get all specs and build relationship map (unified approach for both modes)
-  const allSpecs = await specsService.getAllSpecs(projectId);
+  const allSpecs = await specsService.getAllSpecs(effectiveProjectId);
   const relationshipMap = buildRelationshipMap(allSpecs);
   const relationships = relationshipMap.get(spec.specName) || { dependsOn: [], requiredBy: [] };
 
-  // Detect sub-specs from filesystem (only for filesystem mode)
-  if (!projectId) {
-    const specDirPath = buildSpecDirPath(spec.filePath);
-    const subSpecs = detectSubSpecs(specDirPath);
-    return { ...parsedSpec, subSpecs, relationships };
-  }
+  // Detect sub-specs from filesystem when the files are available locally.
+  // We do this even when projectId is set (e.g., multi-project local mode) so
+  // the spec detail page can render tabs for sub-spec sections.
+  const specDirPath = buildSpecDirPath(spec.filePath);
+  const subSpecs = detectSubSpecs(specDirPath);
 
-  return { ...parsedSpec, relationships };
+  return { ...parsedSpec, subSpecs, relationships };
 }
 
 /**

@@ -23,8 +23,8 @@ export class FilesystemSource implements SpecSource {
   private specsDir: string;
 
   constructor(specsDir?: string) {
-    // Default to ../../specs relative to the web package
-    this.specsDir = specsDir || path.join(process.cwd(), '../../specs');
+    // Default to repo-level specs directory relative to current working dir
+    this.specsDir = specsDir || path.join(process.cwd(), 'specs');
   }
 
   /**

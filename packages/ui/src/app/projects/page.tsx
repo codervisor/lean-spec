@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreateProjectDialog } from '@/components/create-project-dialog';
 import { ColorPicker } from '@/components/color-picker';
+import { ProjectAvatar } from '@/components/project-avatar';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -276,12 +277,17 @@ export default function ProjectsPage() {
               className="group relative flex flex-col transition-all duration-200 hover:shadow-md hover:border-primary/20 overflow-hidden cursor-pointer bg-card"
               onClick={() => handleProjectClick(project.id)}
             >
-              <div className="h-1 w-full" style={{ backgroundColor: project.color || 'hsl(var(--primary))' }} />
-              
               <CardHeader className="px-4 pt-4 pb-2 space-y-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    {editingProjectId === project.id ? (
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <ProjectAvatar 
+                      name={project.name}
+                      color={project.color}
+                      size="lg"
+                      className="shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      {editingProjectId === project.id ? (
                       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <Input
                           value={editingName}
@@ -321,6 +327,7 @@ export default function ProjectsPage() {
                     <p className="text-[10px] font-mono text-muted-foreground truncate" title={project.path}>
                       {project.path}
                     </p>
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
