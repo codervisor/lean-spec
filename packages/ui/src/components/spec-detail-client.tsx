@@ -127,9 +127,9 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
 
   // Fetch complete dependency graph when dialog opens
   const { data: dependencyGraphData } = useSWR<{
-    current: { specName: string; specNumber?: number };
-    dependsOn: { specName: string; specNumber?: number }[];
-    requiredBy: { specName: string; specNumber?: number }[];
+    current: { specName: string; specNumber?: number; status?: string; priority?: string };
+    dependsOn: { specName: string; specNumber?: number; title?: string; status?: string; priority?: string }[];
+    requiredBy: { specName: string; specNumber?: number; title?: string; status?: string; priority?: string }[];
   }>(
     dependenciesDialogOpen ? depGraphApiUrl : null,
     fetcher,
@@ -144,18 +144,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
   const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : 'N/A';
   const relationships = spec.relationships;
   
-  // Use complete graph if available, otherwise fall back to basic relationships
-  // Format: "087-cli-ui-command" (number-name) for proper label formatting
-  const completeRelationships = dependencyGraphData
-    ? {
-        dependsOn: dependencyGraphData.dependsOn.map(s => 
-          s.specNumber ? `${s.specNumber}-${s.specName}` : s.specName
-        ),
-        requiredBy: dependencyGraphData.requiredBy.map(s => 
-          s.specNumber ? `${s.specNumber}-${s.specName}` : s.specName
-        ),
-      }
-    : relationships;
+  // Use complete graph data directly (already in the format expected by SpecDependencyGraph)
+  const completeRelationships = dependencyGraphData;
   
   const hasRelationships = Boolean(
     relationships && (

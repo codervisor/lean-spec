@@ -15,7 +15,8 @@ import ReactFlow, {
   ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import type { SpecRelationships } from '@/types/specs';
+import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
+import type { CompleteSpecRelationships, SpecRelationshipNode } from '@/types/specs';
 import { cn } from '@/lib/utils';
 
 const NODE_WIDTH = 280;
@@ -30,9 +31,25 @@ interface SpecNodeData {
   badge: string;
   subtitle?: string;
   tone: GraphTone;
+  status?: string;
+  priority?: string;
   href?: string;
   interactive?: boolean;
 }
+
+const statusIcons = {
+  'planned': Clock,
+  'in-progress': PlayCircle,
+  'complete': CheckCircle2,
+  'archived': Archive,
+};
+
+const priorityIcons = {
+  'critical': AlertCircle,
+  'high': ArrowUp,
+  'medium': Minus,
+  'low': ArrowDown,
+};
 
 const toneClasses: Record<GraphTone, string> = {
   current: 'border-primary/70 bg-primary/5 text-foreground',
@@ -50,6 +67,9 @@ const dagreConfig: dagre.GraphLabel = {
 };
 
 const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>) {
+  const StatusIcon = data.status ? statusIcons[data.status as keyof typeof statusIcons] || Clock : null;
+  const PriorityIcon = data.priority ? priorityIcons[data.priority as keyof typeof priorityIcons] || Minus : null;
+
   return (
     <div
       className={cn(
@@ -59,9 +79,59 @@ const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>)
       )}
     >
       <Handle type="target" position={Position.Left} className="opacity-0" />
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-        {data.badge}
-      </span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+          {data.badge}
+        </span>
+        {(StatusIcon || PriorityIcon) && (
+          <div className="flex items-center gap-1">
+            {StatusIcon && (
+              <div
+                className={cn(
+                  'rounded p-1 flex items-center justify-center',
+                  data.status === 'planned' && 'bg-blue-500/20',
+                  data.status === 'in-progress' && 'bg-orange-500/20',
+                  data.status === 'complete' && 'bg-green-500/20',
+                  data.status === 'archived' && 'bg-gray-500/20'
+                )}
+                title={data.status}
+              >
+                <StatusIcon
+                  className={cn(
+                    'h-3 w-3',
+                    data.status === 'planned' && 'text-blue-600 dark:text-blue-400',
+                    data.status === 'in-progress' && 'text-orange-600 dark:text-orange-400',
+                    data.status === 'complete' && 'text-green-600 dark:text-green-400',
+                    data.status === 'archived' && 'text-gray-500 dark:text-gray-400'
+                  )}
+                />
+              </div>
+            )}
+            {PriorityIcon && (
+              <div
+                className={cn(
+                  'rounded p-1 flex items-center justify-center',
+                  data.priority === 'critical' && 'bg-red-500/20',
+                  data.priority === 'high' && 'bg-orange-500/20',
+                  data.priority === 'medium' && 'bg-blue-500/20',
+                  data.priority === 'low' && 'bg-gray-500/20'
+                )}
+                title={data.priority}
+              >
+                <PriorityIcon
+                  className={cn(
+                    'h-3 w-3',
+                    data.priority === 'critical' && 'text-red-600 dark:text-red-400',
+                    data.priority === 'high' && 'text-orange-600 dark:text-orange-400',
+                    data.priority === 'medium' && 'text-blue-600 dark:text-blue-400',
+                    data.priority === 'low' && 'text-gray-500 dark:text-gray-400'
+                  )}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <span className="text-base font-semibold leading-snug">{data.label}</span>
       {data.subtitle && (
         <span className="text-sm text-muted-foreground/80">{data.subtitle}</span>
@@ -77,7 +147,7 @@ const nodeTypes = {
 };
 
 interface SpecDependencyGraphProps {
-  relationships: SpecRelationships;
+  relationships: CompleteSpecRelationships;
   specNumber?: number | null;
   specTitle: string;
   projectId?: string;
@@ -88,20 +158,17 @@ interface GraphPayload {
   edges: Edge[];
 }
 
-function formatRelationshipLabel(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return 'Unknown Spec';
-  const match = trimmed.match(/^(\d+)[-_]?(.*)$/);
-  if (!match) return trimmed;
-  const number = match[1].padStart(3, '0');
-  const remainder = match[2]?.replace(/[-_]/g, ' ').trim();
-  return remainder ? `#${number} ${remainder}` : `#${number}`;
+function formatRelationshipLabel(node: SpecRelationshipNode) {
+  if (node.specNumber) {
+    const number = node.specNumber.toString().padStart(3, '0');
+    const title = node.title || node.specName.replace(/[-_]/g, ' ').trim();
+    return `#${number} ${title}`;
+  }
+  return node.title || node.specName;
 }
 
-function buildRelationshipHref(value: string, projectId?: string) {
-  const trimmed = value.trim();
-  const match = trimmed.match(/^(\d+)/);
-  const specNumber = match ? parseInt(match[1], 10) : trimmed;
+function buildRelationshipHref(node: SpecRelationshipNode, projectId?: string) {
+  const specNumber = node.specNumber || node.specName.match(/^(\d+)/)?.[1];
   
   if (projectId) {
     return `/projects/${projectId}/specs/${specNumber}`;
@@ -138,7 +205,7 @@ function layoutGraph(nodes: Node<SpecNodeData>[], edges: Edge[]): GraphPayload {
   return { nodes: layoutedNodes, edges };
 }
 
-function buildGraph(relationships: SpecRelationships, specNumber: number | null | undefined, specTitle: string, projectId?: string) {
+function buildGraph(relationships: CompleteSpecRelationships, specNumber: number | null | undefined, specTitle: string, projectId?: string) {
   const nodes: Node<SpecNodeData>[] = [];
   const edges: Edge[] = [];
   const centerLabel = specNumber ? `#${specNumber.toString().padStart(3, '0')} ${specTitle}` : specTitle;
@@ -151,6 +218,8 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
       badge: 'Current Spec',
       subtitle: 'This spec',
       tone: 'current',
+      status: relationships.current.status,
+      priority: relationships.current.priority,
       interactive: false,
     },
     position: { x: 0, y: 0 },
@@ -163,17 +232,19 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
   nodes.push(currentNode);
 
   // Precedence: Specs this one depends on (upstream, blocking)
-  relationships.dependsOn?.forEach((value, index) => {
-    const id = nodeId('precedence', value, index);
+  relationships.dependsOn?.forEach((node: SpecRelationshipNode, index: number) => {
+    const id = nodeId('precedence', node.specName, index);
     nodes.push({
       id,
       type: 'specNode',
       data: {
-        label: formatRelationshipLabel(value),
+        label: formatRelationshipLabel(node),
         badge: 'Depends On',
         subtitle: 'Must complete first',
         tone: 'precedence',
-        href: buildRelationshipHref(value, projectId),
+        status: node.status,
+        priority: node.priority,
+        href: buildRelationshipHref(node, projectId),
         interactive: true,
       },
       position: { x: 0, y: 0 },
@@ -202,17 +273,19 @@ function buildGraph(relationships: SpecRelationships, specNumber: number | null 
   });
 
   // Required By: Specs that depend on this one (downstream, blocked)
-  relationships.requiredBy?.forEach((value, index) => {
-    const id = nodeId('required-by', value, index);
+  relationships.requiredBy?.forEach((node: SpecRelationshipNode, index: number) => {
+    const id = nodeId('required-by', node.specName, index);
     nodes.push({
       id,
       type: 'specNode',
       data: {
-        label: formatRelationshipLabel(value),
+        label: formatRelationshipLabel(node),
         badge: 'Required By',
         subtitle: 'Blocked by this spec',
         tone: 'required-by',
-        href: buildRelationshipHref(value, projectId),
+        status: node.status,
+        priority: node.priority,
+        href: buildRelationshipHref(node, projectId),
         interactive: true,
       },
       position: { x: 0, y: 0 },

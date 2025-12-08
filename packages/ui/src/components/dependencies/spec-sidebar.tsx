@@ -1,8 +1,23 @@
 'use client';
 
 import * as React from 'react';
+import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SpecNode, FocusedNodeDetails } from './types';
+
+const statusIcons = {
+  'planned': Clock,
+  'in-progress': PlayCircle,
+  'complete': CheckCircle2,
+  'archived': Archive,
+};
+
+const priorityIcons = {
+  'critical': AlertCircle,
+  'high': ArrowUp,
+  'medium': Minus,
+  'low': ArrowDown,
+};
 
 interface SpecListItemProps {
   spec: SpecNode;
@@ -18,6 +33,9 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
   };
 
   const depthLabel = depth === 1 ? 'Direct' : `L${depth}`;
+  
+  const StatusIcon = statusIcons[spec.status as keyof typeof statusIcons] || Clock;
+  const PriorityIcon = priorityIcons[spec.priority as keyof typeof priorityIcons] || Minus;
 
   return (
     <button
@@ -31,17 +49,48 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
         <span className="text-[10px] font-bold text-muted-foreground">
           #{spec.number.toString().padStart(3, '0')}
         </span>
-        <span
+        {/* Status icon */}
+        <div
           className={cn(
-            'text-[8px] px-1 py-0.5 rounded font-medium uppercase',
-            spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-            spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
-            spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
-            spec.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
+            'rounded p-0.5 flex items-center justify-center',
+            spec.status === 'planned' && 'bg-blue-500/20',
+            spec.status === 'in-progress' && 'bg-orange-500/20',
+            spec.status === 'complete' && 'bg-green-500/20',
+            spec.status === 'archived' && 'bg-gray-500/20'
           )}
+          title={spec.status}
         >
-          {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
-        </span>
+          <StatusIcon
+            className={cn(
+              'h-2.5 w-2.5',
+              spec.status === 'planned' && 'text-blue-600 dark:text-blue-400',
+              spec.status === 'in-progress' && 'text-orange-600 dark:text-orange-400',
+              spec.status === 'complete' && 'text-green-600 dark:text-green-400',
+              spec.status === 'archived' && 'text-gray-500 dark:text-gray-400'
+            )}
+          />
+        </div>
+        {/* Priority icon */}
+        <div
+          className={cn(
+            'rounded p-0.5 flex items-center justify-center',
+            spec.priority === 'critical' && 'bg-red-500/20',
+            spec.priority === 'high' && 'bg-orange-500/20',
+            spec.priority === 'medium' && 'bg-blue-500/20',
+            spec.priority === 'low' && 'bg-gray-500/20'
+          )}
+          title={spec.priority}
+        >
+          <PriorityIcon
+            className={cn(
+              'h-2.5 w-2.5',
+              spec.priority === 'critical' && 'text-red-600 dark:text-red-400',
+              spec.priority === 'high' && 'text-orange-600 dark:text-orange-400',
+              spec.priority === 'medium' && 'text-blue-600 dark:text-blue-400',
+              spec.priority === 'low' && 'text-gray-500 dark:text-gray-400'
+            )}
+          />
+        </div>
         <span className="text-[8px] px-1 py-0.5 rounded bg-muted text-muted-foreground font-medium ml-auto">
           {depthLabel}
         </span>
@@ -82,6 +131,9 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
   }
 
   const { node, upstream, downstream } = focusedDetails;
+  
+  const StatusIcon = statusIcons[node.status as keyof typeof statusIcons] || Clock;
+  const PriorityIcon = priorityIcons[node.priority as keyof typeof priorityIcons] || Minus;
 
   return (
     <div className="w-64 shrink-0 rounded-lg border border-border bg-background/95 overflow-hidden flex flex-col">
@@ -89,17 +141,48 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
       <div className="p-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-bold text-sm">#{node.number.toString().padStart(3, '0')}</span>
-          <span
+          {/* Status icon */}
+          <div
             className={cn(
-              'px-1.5 py-0.5 rounded text-[10px] font-medium uppercase',
-              node.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-300',
-              node.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-300',
-              node.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-300',
-              node.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-300'
+              'rounded p-1 flex items-center justify-center',
+              node.status === 'planned' && 'bg-blue-500/20',
+              node.status === 'in-progress' && 'bg-orange-500/20',
+              node.status === 'complete' && 'bg-green-500/20',
+              node.status === 'archived' && 'bg-gray-500/20'
             )}
+            title={node.status}
           >
-            {node.status}
-          </span>
+            <StatusIcon
+              className={cn(
+                'h-3 w-3',
+                node.status === 'planned' && 'text-blue-600 dark:text-blue-300',
+                node.status === 'in-progress' && 'text-orange-600 dark:text-orange-300',
+                node.status === 'complete' && 'text-green-600 dark:text-green-300',
+                node.status === 'archived' && 'text-gray-500 dark:text-gray-300'
+              )}
+            />
+          </div>
+          {/* Priority icon */}
+          <div
+            className={cn(
+              'rounded p-1 flex items-center justify-center',
+              node.priority === 'critical' && 'bg-red-500/20',
+              node.priority === 'high' && 'bg-orange-500/20',
+              node.priority === 'medium' && 'bg-blue-500/20',
+              node.priority === 'low' && 'bg-gray-500/20'
+            )}
+            title={node.priority}
+          >
+            <PriorityIcon
+              className={cn(
+                'h-3 w-3',
+                node.priority === 'critical' && 'text-red-600 dark:text-red-300',
+                node.priority === 'high' && 'text-orange-600 dark:text-orange-300',
+                node.priority === 'medium' && 'text-blue-600 dark:text-blue-300',
+                node.priority === 'low' && 'text-gray-500 dark:text-gray-300'
+              )}
+            />
+          </div>
         </div>
         <p className="text-sm font-medium text-foreground leading-snug">{node.name}</p>
         <button

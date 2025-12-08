@@ -8,6 +8,7 @@ export interface SpecNodeData {
   badge: string;
   number: number;
   tone: GraphTone;
+  priority: string;
   href?: string;
   interactive?: boolean;
   isFocused?: boolean;

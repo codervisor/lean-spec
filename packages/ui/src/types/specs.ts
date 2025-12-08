@@ -6,6 +6,20 @@ export interface SpecRelationships {
   requiredBy: string[]; // Downstream dependents (specs that depend on this one)
 }
 
+export interface SpecRelationshipNode {
+  specNumber?: number;
+  specName: string;
+  title?: string;
+  status?: string;
+  priority?: string;
+}
+
+export interface CompleteSpecRelationships {
+  current: SpecRelationshipNode;
+  dependsOn: SpecRelationshipNode[];
+  requiredBy: SpecRelationshipNode[];
+}
+
 export type SpecWithMetadata = ParsedSpec & {
   subSpecs?: SubSpec[];
   relationships?: SpecRelationships;
