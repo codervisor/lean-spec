@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-09'
 tags:
   - ai-agents
@@ -8,15 +8,19 @@ tags:
   - integration
 priority: medium
 created_at: '2025-12-09T14:04:30.946Z'
-updated_at: '2025-12-09T14:05:13.368Z'
+updated_at: '2025-12-09T14:08:16.894Z'
 transitions:
   - status: in-progress
     at: '2025-12-09T14:05:13.368Z'
+  - status: complete
+    at: '2025-12-09T14:08:16.894Z'
+completed_at: '2025-12-09T14:08:16.894Z'
+completed: '2025-12-09'
 ---
 
 # Add Cursor Agent Support
 
-> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-12-09 · **Tags**: ai-agents, cursor, cli, integration
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-12-09 · **Tags**: ai-agents, cursor, cli, integration
 
 ## Overview
 
@@ -49,19 +53,39 @@ Cursor can be invoked via CLI using `cursor <file>` to open files. For spec impl
 ## Plan
 
 - [x] Create spec for Cursor agent support
-- [ ] Update AgentType to include 'cursor'
-- [ ] Add Cursor configuration to DEFAULT_AGENTS
-- [ ] Update MCP tool schema to include 'cursor' option
-- [ ] Update error messages to include cursor in available agents list
-- [ ] Test cursor agent list command
-- [ ] Test cursor agent run command (dry-run)
+- [x] Update AgentType to include 'cursor'
+- [x] Add Cursor configuration to DEFAULT_AGENTS
+- [x] Update MCP tool schema to include 'cursor' option
+- [x] Update error messages to include cursor in available agents list
+- [x] Update agent.test.ts to verify cursor agent presence
+- [x] Test cursor agent list command
+- [x] Test cursor agent run command (dry-run)
+- [x] Test cursor agent config command
+- [x] Verify error messages include cursor
 
 ## Test
 
-- [ ] `lean-spec agent list` shows cursor as an available agent
-- [ ] `lean-spec agent run <spec> --agent cursor --dry-run` succeeds
-- [ ] `lean-spec agent run <spec> --agent cursor` opens spec in Cursor (if installed)
-- [ ] Error messages include 'cursor' in available agents list
+- [x] `lean-spec agent list` shows cursor as an available agent
+- [x] `lean-spec agent run <spec> --agent cursor --dry-run` succeeds
+- [x] `lean-spec agent run <spec> --agent cursor` opens spec in Cursor (if installed)
+- [x] Error messages include 'cursor' in available agents list
+- [x] `lean-spec agent config cursor` sets cursor as default agent
+
+## Implementation Summary
+
+The following changes were made to add Cursor agent support:
+
+1. **AgentType** - Added 'cursor' to the union type in `packages/cli/src/commands/agent.ts`
+2. **DEFAULT_AGENTS** - Added cursor configuration with CLI command and context template
+3. **Error messages** - Updated all error messages to include 'cursor' in available agents
+4. **MCP tool schema** - Updated the agent_run tool schema in `packages/cli/src/mcp/tools/agent.ts`
+5. **Tests** - Updated `agent.test.ts` to verify cursor agent is present in the list
+
+All tests pass and manual verification confirms cursor can be:
+- Listed as an available agent
+- Set as the default agent
+- Used with the `agent run` command
+- Included in error messages for invalid agents
 
 ## Notes
 
