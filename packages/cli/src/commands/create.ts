@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import { Command } from 'commander';
+import { atomicWriteFile } from '@leanspec/core';
 import { loadConfig, extractGroup, resolvePrefix } from '../config.js';
 import { getGlobalNextSeq } from '../utils/path-helpers.js';
 import { buildVariableContext, resolveVariables, type VariableContext } from '../utils/variable-resolver.js';
@@ -263,7 +264,7 @@ export async function createSpec(name: string, options: {
     throw new Error(`Template not found: ${templatePath}. Run: lean-spec init`);
   }
 
-  await fs.writeFile(specFile, content, 'utf-8');
+  await atomicWriteFile(specFile, content);
 
   // Copy additional template files if template is a directory
   // This supports multi-file templates (e.g., detailed template with DESIGN.md, PLAN.md, TEST.md)
@@ -290,7 +291,7 @@ export async function createSpec(name: string, options: {
         fileContent = resolveVariables(fileContent, varContext);
         
         // Write to spec directory
-        await fs.writeFile(destPath, fileContent, 'utf-8');
+        await atomicWriteFile(destPath, fileContent);
       }
       console.log(chalk.green(`✓ Created: ${sanitizeUserInput(specDir)}/`));
       console.log(chalk.gray(`  Files: ${config.structure.defaultFile}, ${additionalFiles.join(', ')}`));
