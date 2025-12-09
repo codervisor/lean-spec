@@ -68,7 +68,9 @@ Most early LeanSpec users come from China. Without Chinese localization, we're c
 
 **Translation requirements**:
 - Professional quality (AI-assisted + human review)
-- Technical terminology consistency (SDD glossary)
+- Technical terminology consistency (follow spec 115 guidelines)
+- Natural Chinese expression (avoid literal word-by-word translation)
+- Keep core technical terms in English (Spec, Token, Agent, etc.)
 - Cultural adaptation where needed
 - Maintain separate language versions (not side-by-side bilingual)
 
@@ -135,18 +137,39 @@ packages/cli/src/locales/
 **Recommendation**: Start with option 3 (AI + human review), move to option 2 if community grows
 
 ### 4. Terminology Glossary
-Use SDD terminology glossary (created in spec 064):
-- Spec → 规格说明 (guīgé shuōmíng)
-- Context → 上下文 (shàngxià wén)
-- Token → 令牌 (lìngpái) or 标记 (biāojì)
-- Agent → 代理 (dàilǐ) or AI 助手
-- Status → 状态 (zhuàngtài)
-- Maintain consistency across all translations
+
+**Translation Principles** (established in spec 115):
+
+**Keep in English** (technical terms with established English usage):
+- Spec (NOT 规格说明)
+- Token (NOT 令牌/标记)
+- Agent (when referring to AI agents, use "AI Agent" or "智能体" for natural Chinese)
+- LeanSpec, CLI, README, frontmatter, MCP
+- Commands: `lean-spec create`, etc.
+- Status values: `planned`, `in-progress`, `complete`, `archived`
+
+**Translate with English Reference** (first use):
+- Context Economy → 上下文经济 (Context Economy)
+- Signal-to-Noise → 信噪比 (Signal-to-Noise)
+- Progressive Disclosure → 渐进式披露 (Progressive Disclosure)
+- Dependency Graph → 依赖图 (Dependency Graph)
+- Working Memory → 工作记忆 (Working Memory)
+- Spec-Driven Development → 规格驱动开发 (Spec-Driven Development, SDD)
+
+**Natural Chinese** (common terms, no English reference):
+- Overview → 概述
+- Getting Started → 快速开始
+- Tutorial → 教程
+- Status → 状态
+- Priority → 优先级
+
+Maintain consistency across all translations
 
 ## Plan
 
 **Phase 1: Foundation**
 - [x] Create SDD terminology glossary (Chinese) - Done in spec 064
+- [x] Establish natural translation guidelines - Done in spec 115
 - [x] Set up Docusaurus i18n configuration - Done in spec 064
 - [ ] Set up web app i18n infrastructure (react-i18next)
 - [ ] Set up CLI i18n infrastructure
@@ -211,9 +234,10 @@ Use SDD terminology glossary (created in spec 064):
 - CLI has no i18n infrastructure yet
 
 **Translation challenges**:
-- SDD is new methodology - no established Chinese terminology
-- Need to balance literal translation vs cultural adaptation
-- Technical terms (tokens, context, agents) have multiple Chinese translations
+- SDD is new methodology - keep core terms in English for clarity
+- Balance natural Chinese expression with technical precision
+- Avoid literal word-by-word translation (e.g., NOT 规格说明, 令牌)
+- Maintain consistency with established guidelines (spec 115)
 - CLI localization needs system locale detection
 
 **User-created specs**:
