@@ -111,6 +111,7 @@ Use natural Chinese expressions instead of word-by-word translation:
 
 **Keep in English:**
 - Spec, LeanSpec, CLI, Token, README, frontmatter
+- Agent (use "AI Agent" or "智能体" when translating to Chinese)
 - Commands: `lean-spec create`, `lean-spec update`, etc.
 - File extensions: `.md`, `.mdx`, `.json`
 - Status values: `planned`, `in-progress`, `complete`
