@@ -107,25 +107,47 @@ Use natural Chinese expressions instead of word-by-word translation:
 
 ## Notes
 
-### Translation Glossary (Initial)
+### Translation Glossary
 
-**Keep in English:**
-- Spec, LeanSpec, CLI, Token, README, frontmatter
-- Agent (use "AI Agent" or "智能体" when translating to Chinese)
-- Commands: `lean-spec create`, `lean-spec update`, etc.
-- File extensions: `.md`, `.mdx`, `.json`
-- Status values: `planned`, `in-progress`, `complete`
+**Full glossary in `docs-site/AGENTS.md` - Key terms below:**
 
-**Translate with English Reference:**
-- Context Economy → 上下文经济 (Context Economy)
-- Signal-to-Noise → 信噪比 (Signal-to-Noise)
-- Progressive Disclosure → 渐进式披露 (Progressive Disclosure)
-- Dependency Graph → 依赖图 (Dependency Graph)
-- Working Memory → 工作记忆 (Working Memory)
+**Always Keep in English:**
 
-**Natural Chinese (No English Reference):**
-- Overview → 概述
-- Getting Started → 快速开始
-- Tutorial → 教程
-- Examples → 示例
-- Installation → 安装
+| English | Chinese (Don't Use) | Usage |
+|---------|-------------------|--------|
+| Spec | ❌ 规格/规范 | "创建新 Spec" ✅ |
+| LeanSpec | ❌ 精益规范 | "LeanSpec 方法论" ✅ |
+| CLI | ❌ 命令行界面 | "使用 CLI 命令" ✅ |
+| Token | ❌ 令牌/标记 | "Token 数量" ✅ |
+| README | ❌ 说明文件 | "README.md 文件" ✅ |
+| frontmatter | ❌ 前置元数据 | "frontmatter 配置" ✅ |
+| MCP | ❌ 模型上下文协议 | "MCP 服务器" ✅ |
+| Agent | ⚠️ Use "AI Agent" or "智能体" | For AI agents, use "AI Agent" in technical contexts or "智能体" for natural Chinese |
+
+**Translate with English Reference (First Use):**
+
+| English | Chinese Translation | First Use Example |
+|---------|-------------------|------------------|
+| Context Economy | 上下文经济 | "上下文经济 (Context Economy) 原则" |
+| Signal-to-Noise | 信噪比 | "信噪比 (Signal-to-Noise) 最大化" |
+| Progressive Disclosure | 渐进式披露 | "渐进式披露 (Progressive Disclosure)" |
+| Dependency Graph | 依赖图 | "查看依赖图 (Dependency Graph)" |
+| Working Memory | 工作记忆 | "适应工作记忆 (Working Memory)" |
+| Intent Over Implementation | 意图优于实现 | "意图优于实现 (Intent Over Implementation)" |
+| Bridge the Gap | 弥合差距 | "弥合差距 (Bridge the Gap)" |
+| Spec-Driven Development | 规格驱动开发 | "规格驱动开发 (Spec-Driven Development, SDD)" |
+
+**Pure Chinese Translation (Common Terms):**
+
+| English | Chinese | Notes |
+|---------|---------|-------|
+| Overview | 概述 | Common, no English needed |
+| Getting Started | 快速开始 | Standard phrase |
+| Tutorial | 教程 | Common term |
+| Examples | 示例 | Common term |
+| Installation | 安装 | Common action |
+| Configuration | 配置 | Common term |
+| Usage | 使用 | Common term |
+| Reference | 参考 | Common term |
+| FAQ | 常见问题 | Common term |
+| Best Practices | 最佳实践 | Common phrase |
