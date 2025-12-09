@@ -8,9 +8,9 @@
 
 import { NextResponse } from 'next/server';
 import path from 'node:path';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createUpdatedFrontmatter } from '@leanspec/core';
+import { createUpdatedFrontmatter, atomicWriteFile } from '@leanspec/core';
 import { projectRegistry } from '@/lib/projects/registry';
 import { isDefaultProject } from '@/lib/projects/constants';
 
@@ -193,8 +193,8 @@ export async function PATCH(
     // Update frontmatter using @leanspec/core
     const { content: updatedContent, frontmatter } = createUpdatedFrontmatter(currentContent, updates);
     
-    // Write back to file
-    await writeFile(readmePath, updatedContent, 'utf-8');
+    // Write back to file atomically
+    await atomicWriteFile(readmePath, updatedContent);
 
     return NextResponse.json({ 
       success: true,

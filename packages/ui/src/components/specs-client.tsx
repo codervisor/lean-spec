@@ -141,10 +141,22 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   });
 
   const isFirstRender = useRef(true);
+  const prevProjectIdRef = useRef(projectId);
 
+  // Reset all state when switching projects
   useEffect(() => {
-    setSpecs(initialSpecs);
-  }, [initialSpecs]);
+    if (prevProjectIdRef.current !== projectId) {
+      setSpecs(initialSpecs);
+      setPendingSpecIds({});
+      setSearchQuery('');
+      setStatusFilter('all');
+      setPriorityFilter('all');
+      setShowArchivedBoard(false);
+      prevProjectIdRef.current = projectId;
+    } else {
+      setSpecs(initialSpecs);
+    }
+  }, [initialSpecs, projectId]);
 
   const handleStatusChange = useCallback(async (spec: Spec, nextStatus: SpecStatus) => {
     if (spec.status === nextStatus) {
@@ -377,7 +389,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
         )}>
           {viewMode === 'list' ? (
             <div className="w-full">
-              <ListView specs={filteredAndSortedSpecs} getSpecUrl={getSpecUrl} />
+              <ListView specs={filteredAndSortedSpecs} getSpecUrl={getSpecUrl} projectId={projectId} />
             </div>
           ) : (
             <BoardView
@@ -387,6 +399,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
               showArchived={showArchivedBoard}
               onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
               getSpecUrl={getSpecUrl}
+              projectId={projectId}
             />
           )}
         </div>
@@ -395,7 +408,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   );
 }
 
-function ListView({ specs, getSpecUrl }: { specs: Spec[]; getSpecUrl: (specId: string | number) => string }) {
+function ListView({ specs, getSpecUrl, projectId }: { specs: Spec[]; getSpecUrl: (specId: string | number) => string; projectId: string }) {
   return (
     <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4 pb-2 sm:pb-4 md:pb-8">
       {specs.map(spec => {
@@ -409,10 +422,12 @@ function ListView({ specs, getSpecUrl }: { specs: Spec[]; getSpecUrl: (specId: s
         const hasDependencies = spec.relationships && spec.relationships.dependsOn.length > 0;
         const hasSubSpecs = !!(spec.subSpecsCount && spec.subSpecsCount > 0);
         const specUrl = getSpecUrl(spec.specNumber || spec.id);
+        // Use projectId + spec.id to ensure uniqueness across project switches
+        const uniqueKey = `${projectId}:${spec.id}`;
 
         return (
           <Card
-            key={spec.id}
+            key={uniqueKey}
             className={cn(
               "hover:shadow-lg active:shadow-xl transition-all duration-150 hover:scale-[1.01] active:scale-[0.99] border-l-4 cursor-pointer touch-manipulation",
               borderColor
@@ -504,9 +519,10 @@ interface BoardViewProps {
   showArchived: boolean;
   onToggleArchived: () => void;
   getSpecUrl: (specId: string | number) => string;
+  projectId: string;
 }
 
-function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived, getSpecUrl }: BoardViewProps) {
+function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived, getSpecUrl, projectId }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
@@ -655,10 +671,12 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                   const borderColor = priorityColors[spec.priority as keyof typeof priorityColors] || 'border-l-gray-300';
                   const isUpdating = Boolean(pendingSpecIds[spec.id]);
                   const specUrl = getSpecUrl(spec.specNumber || spec.id);
+                  // Use projectId + spec.id to ensure uniqueness across project switches
+                  const uniqueKey = `${projectId}:${spec.id}`;
 
                   return (
                     <Card
-                      key={spec.id}
+                      key={uniqueKey}
                       draggable={!isUpdating}
                       onDragStart={(event) => {
                         if (isUpdating) {

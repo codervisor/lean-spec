@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import dayjs from 'dayjs';
+import { atomicWriteFile } from '@leanspec/core';
 import type { LeanSpecConfig } from './config.js';
 
 // Valid status values
@@ -334,7 +335,7 @@ export async function updateFrontmatter(
 
   // Stringify back to file
   const newContent = matter.stringify(updatedContent, newData);
-  await fs.writeFile(filePath, newContent, 'utf-8');
+  await atomicWriteFile(filePath, newContent);
 }
 
 // Update visual metadata badges in content

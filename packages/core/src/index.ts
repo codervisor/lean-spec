@@ -57,6 +57,7 @@ export {
   type CompleteDependencyGraph,
   type ImpactRadius,
 } from './utils/dependency-graph.js';
+export { atomicWriteFile } from './utils/atomic-file.js';
 
 // Search
 export {
