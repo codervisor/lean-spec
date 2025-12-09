@@ -138,30 +138,42 @@ packages/cli/src/locales/
 
 ### 4. Terminology Glossary
 
-**Translation Principles** (established in spec 115):
+**Translation Principles** (established in spec 115, documented in docs-site/AGENTS.md):
 
-**Keep in English** (technical terms with established English usage):
-- Spec (NOT 规格说明)
-- Token (NOT 令牌/标记)
-- Agent (when referring to AI agents, use "AI Agent" or "智能体" for natural Chinese)
-- LeanSpec, CLI, README, frontmatter, MCP
-- Commands: `lean-spec create`, etc.
+**Always Keep in English:**
+- Spec (❌ NOT 规格/规范)
+- LeanSpec (❌ NOT 精益规范)
+- CLI (❌ NOT 命令行界面)
+- Token (❌ NOT 令牌/标记)
+- README (❌ NOT 说明文件)
+- frontmatter (❌ NOT 前置元数据)
+- MCP (❌ NOT 模型上下文协议)
+- Agent (⚠️ Use "AI Agent" or "智能体" - for AI agents, use "AI Agent" in technical contexts or "智能体" for natural Chinese)
+- Commands: `lean-spec create`, `lean-spec update`, etc.
 - Status values: `planned`, `in-progress`, `complete`, `archived`
+- File types: `.md`, `.mdx`, `.json`, `.yaml`
 
-**Translate with English Reference** (first use):
+**Translate with English Reference** (first use only, then Chinese only):
 - Context Economy → 上下文经济 (Context Economy)
-- Signal-to-Noise → 信噪比 (Signal-to-Noise)
+- Signal-to-Noise → 信噪比 (Signal-to-Noise Ratio)
 - Progressive Disclosure → 渐进式披露 (Progressive Disclosure)
 - Dependency Graph → 依赖图 (Dependency Graph)
 - Working Memory → 工作记忆 (Working Memory)
+- Intent Over Implementation → 意图优于实现 (Intent Over Implementation)
+- Bridge the Gap → 弥合差距 (Bridge the Gap)
 - Spec-Driven Development → 规格驱动开发 (Spec-Driven Development, SDD)
 
-**Natural Chinese** (common terms, no English reference):
+**Pure Chinese Translation** (common terms, no English reference needed):
 - Overview → 概述
 - Getting Started → 快速开始
 - Tutorial → 教程
-- Status → 状态
-- Priority → 优先级
+- Examples → 示例
+- Installation → 安装
+- Configuration → 配置
+- Usage → 使用
+- Reference → 参考
+- FAQ → 常见问题
+- Best Practices → 最佳实践
 
 Maintain consistency across all translations
 
