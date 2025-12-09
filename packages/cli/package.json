@@ -48,6 +48,7 @@
     "commander": "^14.0.2",
     "dayjs": "^1.11.19",
     "gray-matter": "^4.0.3",
+    "i18next": "^25.7.2",
     "ink": "^6.4.0",
     "ink-gradient": "^3.0.0",
     "ink-progress-bar": "^3.0.0",

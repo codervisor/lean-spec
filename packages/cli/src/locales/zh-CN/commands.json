@@ -1,0 +1,141 @@
+{
+  "description": "管理 LeanSpec 文档",
+  "commandGroups": {
+    "coreWorkflow": "核心工作流",
+    "discoverySearch": "发现与搜索",
+    "projectAnalytics": "项目分析",
+    "qualityOptimization": "质量与优化",
+    "advancedEditing": "高级编辑",
+    "configuration": "配置",
+    "integration": "集成"
+  },
+  "commands": {
+    "archive": {
+      "description": "将 Spec 移动到 archived/ 目录",
+      "usage": "archive <spec>"
+    },
+    "backfill": {
+      "description": "从 git 历史回填时间戳",
+      "usage": "backfill [specs...]"
+    },
+    "create": {
+      "description": "创建新的 Spec",
+      "usage": "create <name>"
+    },
+    "examples": {
+      "description": "列出教程示例项目",
+      "usage": "examples"
+    },
+    "init": {
+      "description": "在当前目录初始化 LeanSpec",
+      "usage": "init"
+    },
+    "link": {
+      "description": "在 Spec 之间添加关联关系",
+      "usage": "link <spec>"
+    },
+    "migrate": {
+      "description": "从其他 SDD 工具迁移 Spec",
+      "usage": "migrate <input-path>"
+    },
+    "unlink": {
+      "description": "移除 Spec 之间的关联关系",
+      "usage": "unlink <spec>"
+    },
+    "update": {
+      "description": "更新 Spec 元数据",
+      "usage": "update <spec>"
+    },
+    "files": {
+      "description": "列出 Spec 中的文件",
+      "usage": "files <spec>"
+    },
+    "list": {
+      "description": "列出所有 Spec",
+      "usage": "list"
+    },
+    "open": {
+      "description": "在编辑器中打开 Spec",
+      "usage": "open <spec>"
+    },
+    "search": {
+      "description": "使用元数据过滤器进行全文搜索",
+      "usage": "search <query>"
+    },
+    "view": {
+      "description": "查看 Spec 内容",
+      "usage": "view <spec>"
+    },
+    "board": {
+      "description": "显示看板视图",
+      "usage": "board"
+    },
+    "deps": {
+      "description": "显示 Spec 的依赖图",
+      "usage": "deps <spec>"
+    },
+    "gantt": {
+      "description": "显示带依赖关系的时间线",
+      "usage": "gantt"
+    },
+    "stats": {
+      "description": "显示汇总统计信息",
+      "usage": "stats"
+    },
+    "timeline": {
+      "description": "显示创建/完成时间线",
+      "usage": "timeline"
+    },
+    "analyze": {
+      "description": "分析 Spec 复杂度和结构",
+      "usage": "analyze <spec>"
+    },
+    "check": {
+      "description": "检查序列冲突",
+      "usage": "check"
+    },
+    "tokens": {
+      "description": "统计 LLM 上下文管理的 Token 数",
+      "usage": "tokens [spec]"
+    },
+    "validate": {
+      "description": "验证 Spec 是否存在质量问题",
+      "usage": "validate [specs...]"
+    },
+    "compact": {
+      "description": "从 Spec 中移除指定行范围",
+      "usage": "compact <spec>"
+    },
+    "split": {
+      "description": "将 Spec 拆分为多个文件",
+      "usage": "split <spec>"
+    },
+    "templates": {
+      "description": "管理 Spec 模板",
+      "usage": "templates"
+    },
+    "agent": {
+      "description": "将 Spec 分派给 AI 编码代理",
+      "usage": "agent"
+    },
+    "mcp": {
+      "description": "启动用于 AI 助手的 MCP 服务器",
+      "usage": "mcp"
+    },
+    "ui": {
+      "description": "启动本地 Web UI 进行 Spec 管理",
+      "usage": "ui"
+    }
+  },
+  "options": {
+    "help": "显示命令帮助",
+    "version": "输出版本号",
+    "priority": "设置优先级 (critical, high, medium, low)",
+    "status": "设置状态 (planned, in-progress, complete, archived)",
+    "tag": "按标签过滤",
+    "dryRun": "预览更改而不应用",
+    "json": "以 JSON 格式输出",
+    "port": "端口号",
+    "noOpen": "不自动打开浏览器"
+  }
+}

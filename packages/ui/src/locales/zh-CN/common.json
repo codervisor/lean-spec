@@ -1,0 +1,80 @@
+{
+  "navigation": {
+    "home": "首页",
+    "specs": "Specs",
+    "dependencies": "依赖关系",
+    "stats": "统计",
+    "context": "上下文",
+    "collapse": "收起",
+    "closeMenu": "关闭菜单",
+    "dashboard": "仪表板",
+    "allSpecifications": "所有 Spec",
+    "dependencyGraph": "依赖图",
+    "analytics": "数据分析",
+    "projectContext": "项目上下文"
+  },
+  "search": {
+    "placeholder": "搜索 Spec...",
+    "noResults": "未找到结果",
+    "searchSpecs": "搜索 Spec"
+  },
+  "status": {
+    "planned": "已计划",
+    "inProgress": "进行中",
+    "complete": "已完成",
+    "archived": "已归档",
+    "blocked": "阻塞中"
+  },
+  "priority": {
+    "critical": "紧急",
+    "high": "高",
+    "medium": "中",
+    "low": "低"
+  },
+  "actions": {
+    "create": "创建",
+    "update": "更新",
+    "delete": "删除",
+    "archive": "归档",
+    "view": "查看",
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一步",
+    "loading": "加载中...",
+    "search": "搜索"
+  },
+  "spec": {
+    "spec": "Spec",
+    "specs": "Specs",
+    "specification": "Spec",
+    "specifications": "Specs",
+    "title": "标题",
+    "description": "描述",
+    "tags": "标签",
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间",
+    "completedAt": "完成时间"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "toggleTheme": "切换主题"
+  },
+  "language": {
+    "english": "English",
+    "chinese": "中文",
+    "changeLanguage": "切换语言"
+  },
+  "projects": {
+    "project": "项目",
+    "projects": "项目",
+    "switchProject": "切换项目",
+    "createProject": "创建项目",
+    "manageProjects": "管理项目",
+    "selectProject": "选择项目"
+  }
+}

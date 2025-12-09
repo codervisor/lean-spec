@@ -1,0 +1,11 @@
+{
+  "specNotFound": "Spec 未找到: {{spec}}",
+  "invalidSpecName": "无效的 Spec 名称: {{name}}",
+  "fileNotFound": "文件未找到: {{file}}",
+  "directoryNotFound": "目录未找到: {{dir}}",
+  "invalidInput": "无效输入: {{input}}",
+  "operationFailed": "操作失败: {{operation}}",
+  "noSpecsFound": "未找到 Spec",
+  "gitNotAvailable": "Git 不可用",
+  "unknownError": "发生未知错误"
+}
