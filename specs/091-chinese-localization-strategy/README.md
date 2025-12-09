@@ -1,10 +1,10 @@
 ---
-status: planned
+status: in-progress
 created: '2025-11-17'
 tags: []
 priority: high
 created_at: '2025-11-17T02:12:58.531Z'
-updated_at: '2025-11-26T06:04:04.951Z'
+updated_at: '2025-12-09T14:08:31.796Z'
 transitions:
   - status: in-progress
     at: '2025-11-17T02:14:06.440Z'
@@ -16,6 +16,8 @@ transitions:
     at: '2025-11-17T09:15:05.884Z'
   - status: planned
     at: '2025-11-17T12:52:05.092Z'
+  - status: in-progress
+    at: '2025-12-09T14:08:31.796Z'
 completed_at: '2025-11-17T02:14:06.656Z'
 completed: '2025-11-17'
 depends_on:
@@ -25,7 +27,7 @@ depends_on:
 
 # Comprehensive Chinese Localization for LeanSpec
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-11-17
 
 **Project**: lean-spec  
 **Team**: Core Development
