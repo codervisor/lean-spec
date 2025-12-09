@@ -79,6 +79,7 @@ created: '{date}'
         expect(agents).toHaveProperty('copilot');
         expect(agents).toHaveProperty('aider');
         expect(agents).toHaveProperty('gh-coding');
+        expect(agents).toHaveProperty('cursor');
         
         // Check agent structure
         expect(agents.claude).toHaveProperty('type', 'cli');
@@ -86,6 +87,7 @@ created: '{date}'
         expect(agents.claude).toHaveProperty('isDefault');
         
         expect(agents['gh-coding']).toHaveProperty('type', 'cloud');
+        expect(agents.cursor).toHaveProperty('type', 'cli');
       } finally {
         console.log = originalLog;
       }
