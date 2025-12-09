@@ -25,7 +25,7 @@ import { getStatusIndicator } from '../utils/colors.js';
 /**
  * Supported agent types
  */
-export type AgentType = 'claude' | 'copilot' | 'aider' | 'gemini' | 'gh-coding' | 'continue';
+export type AgentType = 'claude' | 'copilot' | 'aider' | 'gemini' | 'gh-coding' | 'continue' | 'cursor';
 
 /**
  * Agent execution mode
@@ -114,6 +114,17 @@ Please follow the spec's design, plan, and test sections. Update the spec status
     type: 'cli',
     command: 'continue',
     contextTemplate: `{spec_content}`,
+  },
+  cursor: {
+    type: 'cli',
+    command: 'cursor',
+    contextTemplate: `Implement the following LeanSpec specification:
+
+---
+{spec_content}
+---
+
+Please follow the spec's design, plan, and test sections. Update the spec status to 'complete' when done.`,
   },
 };
 
@@ -323,7 +334,7 @@ export function agentCommand(): Command {
   cmd.command('run')
     .description('Dispatch spec(s) to an AI coding agent')
     .argument('<specs...>', 'Spec(s) to dispatch (e.g., "045" or "045 047 048")')
-    .option('--agent <type>', 'Agent type (claude, copilot, aider, gemini, gh-coding)', 'claude')
+    .option('--agent <type>', 'Agent type (claude, copilot, aider, gemini, gh-coding, continue, cursor)', 'claude')
     .option('--parallel', 'Create worktrees for parallel implementation')
     .option('--no-status-update', 'Do not update spec status to in-progress')
     .option('--dry-run', 'Show what would be done without executing')
@@ -391,7 +402,7 @@ export async function runAgent(
   
   if (!agentConfig) {
     console.error(chalk.red(`Unknown agent: ${agentName}`));
-    console.log(chalk.gray('Available agents: claude, copilot, aider, gemini, gh-coding'));
+    console.log(chalk.gray('Available agents: claude, copilot, aider, gemini, gh-coding, continue, cursor'));
     process.exit(1);
   }
   
@@ -694,7 +705,7 @@ export async function setDefaultAgent(agent: string): Promise<void> {
   const agentConfig = await getAgentConfig(agent, config);
   if (!agentConfig) {
     console.error(chalk.red(`Unknown agent: ${agent}`));
-    console.log(chalk.gray('Available agents: claude, copilot, aider, gemini, gh-coding'));
+    console.log(chalk.gray('Available agents: claude, copilot, aider, gemini, gh-coding, continue, cursor'));
     process.exit(1);
   }
   
