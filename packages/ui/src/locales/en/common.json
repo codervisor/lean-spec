@@ -1,0 +1,80 @@
+{
+  "navigation": {
+    "home": "Home",
+    "specs": "Specs",
+    "dependencies": "Dependencies",
+    "stats": "Stats",
+    "context": "Context",
+    "collapse": "Collapse",
+    "closeMenu": "Close menu",
+    "dashboard": "Dashboard",
+    "allSpecifications": "All Specifications",
+    "dependencyGraph": "Dependency Graph",
+    "analytics": "Analytics",
+    "projectContext": "Project Context"
+  },
+  "search": {
+    "placeholder": "Search specs...",
+    "noResults": "No results found",
+    "searchSpecs": "Search Specs"
+  },
+  "status": {
+    "planned": "Planned",
+    "inProgress": "In Progress",
+    "complete": "Complete",
+    "archived": "Archived",
+    "blocked": "Blocked"
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "actions": {
+    "create": "Create",
+    "update": "Update",
+    "delete": "Delete",
+    "archive": "Archive",
+    "view": "View",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "search": "Search"
+  },
+  "spec": {
+    "spec": "Spec",
+    "specs": "Specs",
+    "specification": "Specification",
+    "specifications": "Specifications",
+    "title": "Title",
+    "description": "Description",
+    "tags": "Tags",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "completedAt": "Completed"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "toggleTheme": "Toggle theme"
+  },
+  "language": {
+    "english": "English",
+    "chinese": "中文",
+    "changeLanguage": "Change language"
+  },
+  "projects": {
+    "project": "Project",
+    "projects": "Projects",
+    "switchProject": "Switch Project",
+    "createProject": "Create Project",
+    "manageProjects": "Manage Projects",
+    "selectProject": "Select Project"
+  }
+}

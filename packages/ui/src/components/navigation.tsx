@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, Menu, BookOpen } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { QuickSearch } from '@/components/quick-search';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -201,10 +202,21 @@ export function Navigation({ specs }: NavigationProps) {
           </div>
         </div>
         
-        {/* Right: Search + Theme + Docs + GitHub */}
+        {/* Right: Search + Language + Theme + Docs + GitHub */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <QuickSearch specs={specs} />
           <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <LanguageSwitcher />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Change language</p>
+              </TooltipContent>
+            </Tooltip>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
