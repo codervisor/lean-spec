@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 import { useProjectUrl } from '@/contexts/project-context';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarLinkProps {
   href: string;
@@ -66,6 +67,7 @@ function SidebarLink({ href, icon: Icon, children, description, currentPath, isC
 export function MainSidebar() {
   const pathname = usePathname();
   const { getUrl } = useProjectUrl();
+  const { t } = useTranslation('common');
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('main-sidebar-collapsed');
@@ -149,7 +151,7 @@ export function MainSidebar() {
               className="h-8 w-8 p-0"
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Close menu</span>
+              <span className="sr-only">{t('navigation.closeMenu')}</span>
             </Button>
           </div>
 
@@ -162,46 +164,46 @@ export function MainSidebar() {
               href={getNavUrl('/')} 
               icon={Home} 
               currentPath={pathname}
-              description={(!isCollapsed || mobileOpen) ? "Dashboard" : undefined}
+              description={(!isCollapsed || mobileOpen) ? t('navigation.dashboard') : undefined}
               isCollapsed={isCollapsed && !mobileOpen}
             >
-              Home
+              {t('navigation.home')}
             </SidebarLink>
             <SidebarLink 
               href={getNavUrl('/specs')} 
               icon={FileText} 
               currentPath={pathname}
-              description={(!isCollapsed || mobileOpen) ? "All Specifications" : undefined}
+              description={(!isCollapsed || mobileOpen) ? t('navigation.allSpecifications') : undefined}
               isCollapsed={isCollapsed && !mobileOpen}
             >
-              Specs
+              {t('navigation.specs')}
             </SidebarLink>
             <SidebarLink 
               href={getNavUrl('/dependencies')} 
               icon={Network} 
               currentPath={pathname}
-              description={(!isCollapsed || mobileOpen) ? "Dependency Graph" : undefined}
+              description={(!isCollapsed || mobileOpen) ? t('navigation.dependencyGraph') : undefined}
               isCollapsed={isCollapsed && !mobileOpen}
             >
-              Dependencies
+              {t('navigation.dependencies')}
             </SidebarLink>
             <SidebarLink 
               href={getNavUrl('/stats')} 
               icon={BarChart3} 
               currentPath={pathname}
-              description={(!isCollapsed || mobileOpen) ? "Analytics" : undefined}
+              description={(!isCollapsed || mobileOpen) ? t('navigation.analytics') : undefined}
               isCollapsed={isCollapsed && !mobileOpen}
             >
-              Stats
+              {t('navigation.stats')}
             </SidebarLink>
             <SidebarLink 
               href={getNavUrl('/context')} 
               icon={BookOpen} 
               currentPath={pathname}
-              description={(!isCollapsed || mobileOpen) ? "Project Context" : undefined}
+              description={(!isCollapsed || mobileOpen) ? t('navigation.projectContext') : undefined}
               isCollapsed={isCollapsed && !mobileOpen}
             >
-              Context
+              {t('navigation.context')}
             </SidebarLink>
           </nav>}
 
@@ -218,7 +220,7 @@ export function MainSidebar() {
               ) : (
                 <>
                   <ChevronLeft className="h-4 w-4 mr-2" />
-                  <span className="text-xs">Collapse</span>
+                  <span className="text-xs">{t('navigation.collapse')}</span>
                 </>
               )}
             </Button>
