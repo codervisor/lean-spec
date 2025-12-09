@@ -25,7 +25,7 @@ export function agentRunTool(): ToolDefinition {
       description: 'Dispatch spec(s) to an AI coding agent for implementation. The agent will receive the spec content as context and can start working on the implementation.',
       inputSchema: {
         specs: z.array(z.string()).describe('Spec(s) to dispatch (e.g., ["045", "047"])'),
-        agent: z.enum(['claude', 'copilot', 'aider', 'gemini', 'gh-coding', 'continue']).optional().describe('Agent type to use. Defaults to configured default agent.'),
+        agent: z.enum(['claude', 'copilot', 'aider', 'gemini', 'gh-coding', 'continue', 'cursor']).optional().describe('Agent type to use. Defaults to configured default agent.'),
         parallel: z.boolean().optional().describe('Create git worktrees for parallel implementation'),
         statusUpdate: z.boolean().optional().describe('Update spec status to in-progress (default: true)'),
         dryRun: z.boolean().optional().describe('Show what would be done without executing'),
