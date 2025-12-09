@@ -23,6 +23,8 @@ export function createCommand(): Command {
     .argument('<name>', 'Name of the spec')
     .option('--title <title>', 'Set custom title')
     .option('--description <desc>', 'Set initial description')
+    .option('--content <text>', 'Full markdown body content to use instead of template')
+    .option('--file <path>', 'Read content from file')
     .option('--tags <tags>', 'Set tags (comma-separated)')
     .option('--priority <priority>', 'Set priority (low, medium, high, critical)')
     .option('--assignee <name>', 'Set assignee')
@@ -33,6 +35,8 @@ export function createCommand(): Command {
     .action(async (name: string, options: {
       title?: string;
       description?: string;
+      content?: string;
+      file?: string;
       tags?: string;
       priority?: SpecPriority;
       assignee?: string;
@@ -42,9 +46,26 @@ export function createCommand(): Command {
       dependsOn?: string;
     }) => {
       const customFields = parseCustomFieldOptions(options.field);
+      
+      // Check for stdin if no content/file specified
+      let stdinContent: string | undefined;
+      if (!options.content && !options.file && !options.description && !process.stdin.isTTY) {
+        // Read from stdin
+        const chunks: Buffer[] = [];
+        for await (const chunk of process.stdin) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        if (buffer.length > 0) {
+          stdinContent = buffer.toString('utf-8');
+        }
+      }
+      
       const createOptions: {
         title?: string;
         description?: string;
+        content?: string;
+        filePath?: string;
         tags?: string[];
         priority?: SpecPriority;
         assignee?: string;
@@ -55,6 +76,8 @@ export function createCommand(): Command {
       } = {
         title: options.title,
         description: options.description,
+        content: options.content || stdinContent,
+        filePath: options.file,
         tags: options.tags ? options.tags.split(',').map(t => t.trim()) : undefined,
         priority: options.priority,
         assignee: options.assignee,
@@ -70,6 +93,8 @@ export function createCommand(): Command {
 export async function createSpec(name: string, options: { 
   title?: string; 
   description?: string;
+  content?: string;
+  filePath?: string;
   tags?: string[];
   priority?: SpecPriority;
   assignee?: string;
@@ -196,6 +221,35 @@ export async function createSpec(name: string, options: {
   let content: string;
   let varContext: VariableContext;
   
+  // Determine content source based on precedence: --file > --content > --description > template
+  let sourceContent: string | undefined;
+  let useProvidedContent = false;
+  
+  // Highest precedence: --file option
+  if (options.filePath) {
+    const absolutePath = path.isAbsolute(options.filePath) 
+      ? options.filePath 
+      : path.join(cwd, options.filePath);
+    
+    try {
+      sourceContent = await fs.readFile(absolutePath, 'utf-8');
+      useProvidedContent = true;
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`File not found: ${sanitizeUserInput(options.filePath)}`);
+      } else if (error.code === 'EISDIR') {
+        throw new Error(`Path is a directory, not a file: ${sanitizeUserInput(options.filePath)}`);
+      } else {
+        throw new Error(`Failed to read file ${sanitizeUserInput(options.filePath)}: ${error.message}`);
+      }
+    }
+  }
+  // Second precedence: --content option (only if not empty)
+  else if (options.content !== undefined && options.content !== '') {
+    sourceContent = options.content;
+    useProvidedContent = true;
+  }
+  
   try {
     const template = await fs.readFile(templatePath, 'utf-8');
     const date = new Date().toISOString().split('T')[0];
@@ -203,21 +257,46 @@ export async function createSpec(name: string, options: {
     
     // Build variable context and resolve all variables in template
     varContext = await buildVariableContext(config, { name: title, date });
-    content = resolveVariables(template, varContext);
     
-    // Parse frontmatter to get the resolved values (always needed for variable resolution)
-    // Even with no custom options, we need to parse frontmatter to resolve variables like
-    // {status}, {priority} in the body content with their default values from the template
-    const parsed = matter(content, {
-      engines: {
-        yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+    let parsed: matter.GrayMatterFile<string>;
+    
+    if (useProvidedContent && sourceContent) {
+      // Use provided content - parse it to extract any frontmatter
+      parsed = matter(sourceContent, {
+        engines: {
+          yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+        }
+      });
+      
+      // Ensure date fields remain as strings
+      normalizeDateFields(parsed.data);
+      
+      // If no frontmatter in provided content, initialize with template defaults
+      if (Object.keys(parsed.data).length === 0) {
+        const templateParsed = matter(resolveVariables(template, varContext), {
+          engines: {
+            yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+          }
+        });
+        normalizeDateFields(templateParsed.data);
+        parsed.data = templateParsed.data;
       }
-    });
+    } else {
+      // Use template content
+      content = resolveVariables(template, varContext);
+      
+      // Parse frontmatter to get the resolved values
+      parsed = matter(content, {
+        engines: {
+          yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+        }
+      });
+      
+      // Ensure date fields remain as strings
+      normalizeDateFields(parsed.data);
+    }
     
-    // Ensure date fields remain as strings (gray-matter auto-parses YYYY-MM-DD as Date objects)
-    normalizeDateFields(parsed.data);
-    
-    // Update frontmatter with provided metadata and custom fields (if any)
+    // CLI options override content frontmatter (applied after parsing)
     if (options.tags && options.tags.length > 0) {
       parsed.data.tags = options.tags;
     }
@@ -237,8 +316,6 @@ export async function createSpec(name: string, options: {
     }
     
     // Resolve frontmatter variables in the body content
-    // This ensures that variables like {status}, {priority}, {tags} in the body
-    // are replaced with the actual frontmatter values
     const contextWithFrontmatter = {
       ...varContext,
       frontmatter: parsed.data,
@@ -252,8 +329,9 @@ export async function createSpec(name: string, options: {
     // Stringify back with updated frontmatter and resolved body content
     content = matter.stringify(parsed.content, parsed.data);
     
-    // Add description to Overview section if provided
-    if (options.description) {
+    // Add description to Overview section if provided and not using full content
+    // (description has lower precedence than content/file)
+    if (options.description && !useProvidedContent) {
       content = content.replace(
         /## Overview\s+<!-- What are we solving\? Why now\? -->/,
         `## Overview\n\n${options.description}`
