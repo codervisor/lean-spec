@@ -5,6 +5,7 @@ import { MainSidebar } from "@/components/main-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toast } from "@/components/ui/toast";
 import { ProjectProvider } from "@/contexts/project-context";
+import { I18nProvider } from "@/components/i18n-provider";
 import { getSpecs } from "@/lib/db/service-queries";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -46,23 +47,25 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased bg-background overflow-x-hidden">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ProjectProvider>
-            <Navigation specs={specsForSearch} />
-            <div className="flex w-full min-w-0">
-              <MainSidebar />
-              <main className="flex-1 min-h-[calc(100vh-3.5rem)] min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))]">
-                {children}
-              </main>
-            </div>
-            <Toast />
-          </ProjectProvider>
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ProjectProvider>
+              <Navigation specs={specsForSearch} />
+              <div className="flex w-full min-w-0">
+                <MainSidebar />
+                <main className="flex-1 min-h-[calc(100vh-3.5rem)] min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))]">
+                  {children}
+                </main>
+              </div>
+              <Toast />
+            </ProjectProvider>
+          </ThemeProvider>
+        </I18nProvider>
         {/* Analytics enabled via ENABLE_ANALYTICS env var in Vercel */}
         {process.env.ENABLE_ANALYTICS === 'true' && <Analytics />}
       </body>

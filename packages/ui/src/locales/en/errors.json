@@ -1,0 +1,11 @@
+{
+  "fileNotFound": "File not found",
+  "specNotFound": "Spec not found",
+  "projectNotFound": "Project not found",
+  "loadingError": "Error loading data",
+  "invalidInput": "Invalid input",
+  "networkError": "Network error",
+  "unknownError": "An unknown error occurred",
+  "permissionDenied": "Permission denied",
+  "operationFailed": "Operation failed"
+}

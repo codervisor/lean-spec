@@ -1,0 +1,141 @@
+{
+  "description": "Manage LeanSpec documents",
+  "commandGroups": {
+    "coreWorkflow": "Core Workflow",
+    "discoverySearch": "Discovery & Search",
+    "projectAnalytics": "Project Analytics",
+    "qualityOptimization": "Quality & Optimization",
+    "advancedEditing": "Advanced Editing",
+    "configuration": "Configuration",
+    "integration": "Integration"
+  },
+  "commands": {
+    "archive": {
+      "description": "Move spec to archived/",
+      "usage": "archive <spec>"
+    },
+    "backfill": {
+      "description": "Backfill timestamps from git history",
+      "usage": "backfill [specs...]"
+    },
+    "create": {
+      "description": "Create new spec",
+      "usage": "create <name>"
+    },
+    "examples": {
+      "description": "List example projects for tutorials",
+      "usage": "examples"
+    },
+    "init": {
+      "description": "Initialize LeanSpec in current directory",
+      "usage": "init"
+    },
+    "link": {
+      "description": "Add relationships between specs",
+      "usage": "link <spec>"
+    },
+    "migrate": {
+      "description": "Migrate specs from other SDD tools",
+      "usage": "migrate <input-path>"
+    },
+    "unlink": {
+      "description": "Remove relationships between specs",
+      "usage": "unlink <spec>"
+    },
+    "update": {
+      "description": "Update spec metadata",
+      "usage": "update <spec>"
+    },
+    "files": {
+      "description": "List files in a spec",
+      "usage": "files <spec>"
+    },
+    "list": {
+      "description": "List all specs",
+      "usage": "list"
+    },
+    "open": {
+      "description": "Open spec in editor",
+      "usage": "open <spec>"
+    },
+    "search": {
+      "description": "Full-text search with metadata filters",
+      "usage": "search <query>"
+    },
+    "view": {
+      "description": "View spec content",
+      "usage": "view <spec>"
+    },
+    "board": {
+      "description": "Show Kanban-style board view",
+      "usage": "board"
+    },
+    "deps": {
+      "description": "Show dependency graph for a spec",
+      "usage": "deps <spec>"
+    },
+    "gantt": {
+      "description": "Show timeline with dependencies",
+      "usage": "gantt"
+    },
+    "stats": {
+      "description": "Show aggregate statistics",
+      "usage": "stats"
+    },
+    "timeline": {
+      "description": "Show creation/completion over time",
+      "usage": "timeline"
+    },
+    "analyze": {
+      "description": "Analyze spec complexity and structure",
+      "usage": "analyze <spec>"
+    },
+    "check": {
+      "description": "Check for sequence conflicts",
+      "usage": "check"
+    },
+    "tokens": {
+      "description": "Count tokens for LLM context management",
+      "usage": "tokens [spec]"
+    },
+    "validate": {
+      "description": "Validate specs for quality issues",
+      "usage": "validate [specs...]"
+    },
+    "compact": {
+      "description": "Remove specified line ranges from spec",
+      "usage": "compact <spec>"
+    },
+    "split": {
+      "description": "Split spec into multiple files",
+      "usage": "split <spec>"
+    },
+    "templates": {
+      "description": "Manage spec templates",
+      "usage": "templates"
+    },
+    "agent": {
+      "description": "Dispatch specs to AI coding agents",
+      "usage": "agent"
+    },
+    "mcp": {
+      "description": "Start MCP server for AI assistants",
+      "usage": "mcp"
+    },
+    "ui": {
+      "description": "Start local web UI for spec management",
+      "usage": "ui"
+    }
+  },
+  "options": {
+    "help": "Display help for command",
+    "version": "Output the version number",
+    "priority": "Set priority (critical, high, medium, low)",
+    "status": "Set status (planned, in-progress, complete, archived)",
+    "tag": "Filter by tag",
+    "dryRun": "Preview changes without applying them",
+    "json": "Output in JSON format",
+    "port": "Port number",
+    "noOpen": "Don't open browser automatically"
+  }
+}
