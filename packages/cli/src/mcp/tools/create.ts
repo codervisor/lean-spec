@@ -20,7 +20,9 @@ export function createTool(): ToolDefinition {
       inputSchema: {
         name: z.string().describe('The spec name/slug only (e.g., "unified-dashboard"). Do NOT include sequence numbers like "045-". The system automatically prepends the next sequence number.'),
         title: z.string().optional().describe('Human-readable title for the spec. If omitted, the name is used as the title.'),
-        description: z.string().optional().describe('Initial description text to add to the Overview section.'),
+        description: z.string().optional().describe('Initial description text to add to the Overview section. Lower precedence than content/filePath.'),
+        content: z.string().optional().describe('Full markdown body content to use instead of template. Replaces template body (after frontmatter).'),
+        filePath: z.string().optional().describe('Path to file containing content (relative to workspace). Highest precedence. Precedence: filePath > content > description > template.'),
         tags: z.array(z.string()).optional().describe('Tags to categorize the spec (e.g., ["api", "frontend", "v2.0"]).'),
         priority: z.enum(['low', 'medium', 'high', 'critical']).optional().describe('Priority level for the spec. Defaults to "medium" if not specified.'),
         assignee: z.string().optional().describe('Person responsible for this spec.'),
@@ -46,6 +48,8 @@ export function createTool(): ToolDefinition {
         await createSpec(input.name, {
           title: input.title,
           description: input.description,
+          content: input.content,
+          filePath: input.filePath,
           tags: input.tags,
           priority: input.priority as SpecPriority | undefined,
           assignee: input.assignee,
