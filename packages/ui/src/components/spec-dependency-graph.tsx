@@ -18,6 +18,7 @@ import 'reactflow/dist/style.css';
 import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import type { CompleteSpecRelationships, SpecRelationshipNode } from '@/types/specs';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 110;
@@ -69,6 +70,7 @@ const dagreConfig: dagre.GraphLabel = {
 const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>) {
   const StatusIcon = data.status ? statusIcons[data.status as keyof typeof statusIcons] || Clock : null;
   const PriorityIcon = data.priority ? priorityIcons[data.priority as keyof typeof priorityIcons] || Minus : null;
+  const { t } = useTranslation('common');
 
   return (
     <div
@@ -94,7 +96,7 @@ const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>)
                   data.status === 'complete' && 'bg-green-500/20',
                   data.status === 'archived' && 'bg-gray-500/20'
                 )}
-                title={data.status}
+                title={data.status ? t(`status.${data.status}` as `status.${string}`) : undefined}
               >
                 <StatusIcon
                   className={cn(
@@ -116,7 +118,7 @@ const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>)
                   data.priority === 'medium' && 'bg-blue-500/20',
                   data.priority === 'low' && 'bg-gray-500/20'
                 )}
-                title={data.priority}
+                title={data.priority ? t(`priority.${data.priority}` as `priority.${string}`) : undefined}
               >
                 <PriorityIcon
                   className={cn(
@@ -156,6 +158,15 @@ interface SpecDependencyGraphProps {
 interface GraphPayload {
   nodes: Node<SpecNodeData>[];
   edges: Edge[];
+}
+
+interface GraphCopy {
+  currentBadge: string;
+  currentSubtitle: string;
+  dependsOnBadge: string;
+  dependsOnSubtitle: string;
+  requiredByBadge: string;
+  requiredBySubtitle: string;
 }
 
 function formatRelationshipLabel(node: SpecRelationshipNode) {
@@ -205,7 +216,13 @@ function layoutGraph(nodes: Node<SpecNodeData>[], edges: Edge[]): GraphPayload {
   return { nodes: layoutedNodes, edges };
 }
 
-function buildGraph(relationships: CompleteSpecRelationships, specNumber: number | null | undefined, specTitle: string, projectId?: string) {
+function buildGraph(
+  relationships: CompleteSpecRelationships,
+  specNumber: number | null | undefined,
+  specTitle: string,
+  projectId: string | undefined,
+  copy: GraphCopy
+) {
   const nodes: Node<SpecNodeData>[] = [];
   const edges: Edge[] = [];
   const centerLabel = specNumber ? `#${specNumber.toString().padStart(3, '0')} ${specTitle}` : specTitle;
@@ -215,8 +232,8 @@ function buildGraph(relationships: CompleteSpecRelationships, specNumber: number
     type: 'specNode',
     data: {
       label: centerLabel,
-      badge: 'Current Spec',
-      subtitle: 'This spec',
+      badge: copy.currentBadge,
+      subtitle: copy.currentSubtitle,
       tone: 'current',
       status: relationships.current.status,
       priority: relationships.current.priority,
@@ -239,8 +256,8 @@ function buildGraph(relationships: CompleteSpecRelationships, specNumber: number
       type: 'specNode',
       data: {
         label: formatRelationshipLabel(node),
-        badge: 'Depends On',
-        subtitle: 'Must complete first',
+        badge: copy.dependsOnBadge,
+        subtitle: copy.dependsOnSubtitle,
         tone: 'precedence',
         status: node.status,
         priority: node.priority,
@@ -280,8 +297,8 @@ function buildGraph(relationships: CompleteSpecRelationships, specNumber: number
       type: 'specNode',
       data: {
         label: formatRelationshipLabel(node),
-        badge: 'Required By',
-        subtitle: 'Blocked by this spec',
+        badge: copy.requiredByBadge,
+        subtitle: copy.requiredBySubtitle,
         tone: 'required-by',
         status: node.status,
         priority: node.priority,
@@ -319,8 +336,16 @@ function buildGraph(relationships: CompleteSpecRelationships, specNumber: number
 export function SpecDependencyGraph({ relationships, specNumber, specTitle, projectId }: SpecDependencyGraphProps) {
   const router = useRouter();
   const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
+  const { t, i18n } = useTranslation('common');
 
-  const graph = React.useMemo(() => buildGraph(relationships, specNumber, specTitle, projectId), [relationships, specNumber, specTitle, projectId]);
+  const graph = React.useMemo(() => buildGraph(relationships, specNumber, specTitle, projectId, {
+    currentBadge: t('dependencyGraph.badges.current'),
+    currentSubtitle: t('dependencyGraph.badges.currentSubtitle'),
+    dependsOnBadge: t('dependencyGraph.badges.dependsOn'),
+    dependsOnSubtitle: t('dependencyGraph.badges.dependsOnSubtitle'),
+    requiredByBadge: t('dependencyGraph.badges.requiredBy'),
+    requiredBySubtitle: t('dependencyGraph.badges.requiredBySubtitle'),
+  }), [relationships, specNumber, specTitle, projectId, t, i18n.language]);
 
   const handleInit = React.useCallback((flowInstance: ReactFlowInstance) => {
     setInstance(flowInstance);
@@ -347,11 +372,11 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle, proj
     <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide">Dependency Map</p>
-          <p className="text-base text-foreground">Explore precedence and connected work</p>
+          <p className="text-xs font-semibold uppercase tracking-wide">{t('dependencyGraph.header.title')}</p>
+          <p className="text-base text-foreground">{t('dependencyGraph.header.subtitle')}</p>
         </div>
         <div className="rounded-full border border-border px-3 py-1.5 text-sm font-medium uppercase tracking-wide">
-          React Flow DAG
+          {t('dependencyGraph.header.badge')}
         </div>
       </div>
 
@@ -383,15 +408,15 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle, proj
       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="inline-block h-2.5 w-8 rounded-full bg-amber-400/80" />
-          Depends On → blocks until complete
+          {t('dependencyGraph.legend.dependsOn')}
         </span>
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="inline-block h-2.5 w-8 rounded-full bg-red-400/80" />
-          Required By ← blocked by this spec
+          {t('dependencyGraph.legend.requiredBy')}
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-2.5 w-8 rounded-full bg-primary/60" />
-          Drag to pan • Scroll / pinch to zoom.
+          {t('dependencyGraph.legend.interactions')}
         </span>
       </div>
     </div>

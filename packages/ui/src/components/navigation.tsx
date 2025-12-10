@@ -10,6 +10,7 @@ import { QuickSearch } from '@/components/quick-search';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProjectUrl } from '@/contexts/project-context';
+import { useTranslation } from 'react-i18next';
 
 interface Spec {
   id: string
@@ -106,6 +107,12 @@ function parsePathname(pathname: string): { projectId?: string; page: string; sp
 function useBreadcrumbs(): BreadcrumbItem[] {
   const pathname = usePathname();
   const { getUrl } = useProjectUrl();
+  const { t } = useTranslation('common');
+  const homeLabel = t('navigation.home');
+  const specsLabel = t('navigation.specs');
+  const statsLabel = t('navigation.stats');
+  const depsLabel = t('navigation.dependencies');
+  const contextLabel = t('navigation.context');
   
   const parsed = parsePathname(pathname);
   const homeUrl = getUrl('/');
@@ -113,50 +120,53 @@ function useBreadcrumbs(): BreadcrumbItem[] {
   
   switch (parsed.page) {
     case 'home':
-      return [{ label: 'Home' }];
+      return [{ label: homeLabel }];
     
     case 'stats':
       return [
-        { label: 'Home', href: homeUrl },
-        { label: 'Stats' }
+        { label: homeLabel, href: homeUrl },
+        { label: statsLabel }
       ];
     
     case 'dependencies':
       return [
-        { label: 'Home', href: homeUrl },
-        { label: 'Dependencies' }
+        { label: homeLabel, href: homeUrl },
+        { label: depsLabel }
       ];
     
     case 'context':
       return [
-        { label: 'Home', href: homeUrl },
-        { label: 'Context' }
+        { label: homeLabel, href: homeUrl },
+        { label: contextLabel }
       ];
     
     case 'specs': {
       const searchParams = new URLSearchParams(parsed.query || '');
       const view = searchParams.get('view');
-      const viewLabel = view === 'board' ? 'Board View' : 'List View';
+      const viewLabel = view === 'board' 
+        ? t('specsPage.views.boardTooltip')
+        : t('specsPage.views.listTooltip');
       return [
-        { label: 'Home', href: homeUrl },
-        { label: `Specs (${viewLabel})` }
+        { label: homeLabel, href: homeUrl },
+        { label: `${specsLabel} (${viewLabel})` }
       ];
     }
     
     case 'spec-detail':
       return [
-        { label: 'Home', href: homeUrl },
-        { label: 'Specs', href: specsUrl },
+        { label: homeLabel, href: homeUrl },
+        { label: specsLabel, href: specsUrl },
         { label: parsed.specId || '' }
       ];
     
     default:
-      return [{ label: 'Home', href: homeUrl }];
+      return [{ label: homeLabel, href: homeUrl }];
   }
 }
 
 export function Navigation({ specs }: NavigationProps) {
   const breadcrumbs = useBreadcrumbs();
+  const { t } = useTranslation('common');
 
   const toggleSidebar = () => {
     if (typeof window !== 'undefined' && window.toggleMainSidebar) {
@@ -177,7 +187,7 @@ export function Navigation({ specs }: NavigationProps) {
             className="lg:hidden h-9 w-9 shrink-0"
           >
             <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
+            <span className="sr-only">{t('navigation.toggleMenu')}</span>
           </Button>
 
           <Link href="/" className="flex items-center space-x-2 shrink-0">
@@ -213,7 +223,7 @@ export function Navigation({ specs }: NavigationProps) {
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Change language</p>
+                <p>{t('language.changeLanguage')}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -224,7 +234,7 @@ export function Navigation({ specs }: NavigationProps) {
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Toggle theme</p>
+                <p>{t('theme.toggleTheme')}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -235,14 +245,14 @@ export function Navigation({ specs }: NavigationProps) {
                     href="https://www.lean-spec.dev" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Documentation"
+                    aria-label={t('navigation.docsTooltip')}
                   >
                     <BookOpen className="h-5 w-5" />
                   </a>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Documentation</p>
+                <p>{t('navigation.docsTooltip')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -253,7 +263,7 @@ export function Navigation({ specs }: NavigationProps) {
                     href="https://github.com/codervisor/lean-spec" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="GitHub repository"
+                    aria-label={t('navigation.githubTooltip')}
                   >
                     <Image
                       src="/github-mark-white.svg"
@@ -273,7 +283,7 @@ export function Navigation({ specs }: NavigationProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>GitHub repository</p>
+                <p>{t('navigation.githubTooltip')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

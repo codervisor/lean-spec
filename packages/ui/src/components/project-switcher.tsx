@@ -28,6 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProject } from '@/contexts/project-context';
 import { CreateProjectDialog } from '@/components/create-project-dialog';
 import { ProjectAvatar } from '@/components/project-avatar';
+import { useTranslation } from 'react-i18next';
 
 interface ProjectSwitcherProps {
   collapsed?: boolean;
@@ -43,6 +44,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     projects,
     isLoading,
   } = useProject();
+  const { t } = useTranslation('common');
   
   const [open, setOpen] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
@@ -134,7 +136,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                     />
                   )}
                   <span className="truncate">
-                    {isSwitching ? "Switching..." : (currentProject?.name || "Select project...")}
+                    {isSwitching ? t('projectSwitcher.switching') : (currentProject?.name || t('projectSwitcher.placeholder'))}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -144,10 +146,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0" align="start">
           <Command>
-            <CommandInput placeholder="Search projects..." />
+            <CommandInput placeholder={t('projectSwitcher.searchPlaceholder')} />
             <CommandList>
-              <CommandEmpty>No project found.</CommandEmpty>
-              <CommandGroup heading="Projects">
+              <CommandEmpty>{t('projectSwitcher.noProject')}</CommandEmpty>
+              <CommandGroup heading={t('projects.projects')}>
                 {sortedProjects.map((project) => {
                   const isActive = currentProject?.id === project.id;
                   return (
@@ -185,7 +187,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                   }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Project
+                  {t('projects.createProject')}
                 </CommandItem>
                 <CommandItem
                   className="cursor-pointer"
@@ -195,7 +197,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                   }}
                 >
                   <Settings className="mr-2 h-4 w-4" />
-                  Manage Projects
+                  {t('projects.manageProjects')}
                 </CommandItem>
               </CommandGroup>
             </CommandList>

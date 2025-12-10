@@ -16,29 +16,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const STATUSES = ['planned', 'in-progress', 'complete', 'archived'] as const;
 type Status = (typeof STATUSES)[number];
 
-const statusConfig: Record<Status, { icon: React.ComponentType<{ className?: string }>; label: string; className: string }> = {
+const statusConfig: Record<Status, { icon: React.ComponentType<{ className?: string }>; labelKey: `status.${string}`; className: string }> = {
   'planned': {
     icon: Clock,
-    label: 'Planned',
+    labelKey: 'status.planned',
     className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
   },
   'in-progress': {
     icon: PlayCircle,
-    label: 'In Progress',
+    labelKey: 'status.inProgress',
     className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
   },
   'complete': {
     icon: CheckCircle2,
-    label: 'Complete',
+    labelKey: 'status.complete',
     className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
   },
   'archived': {
     icon: Archive,
-    label: 'Archived',
+    labelKey: 'status.archived',
     className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
   }
 };
@@ -61,6 +62,7 @@ export function StatusEditor({
   const [status, setStatus] = React.useState<Status>(currentStatus as Status || 'planned');
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const { t } = useTranslation('common');
 
   const handleChange = async (newStatus: Status) => {
     if (newStatus === status) return;
@@ -85,12 +87,12 @@ export function StatusEditor({
       }
 
       onUpdate?.(newStatus);
-      toast.success('Status updated');
+      toast.success(t('editors.statusSuccess'));
     } catch (err) {
       setStatus(previousStatus); // Rollback
       const errorMessage = err instanceof Error ? err.message : 'Failed to update';
       setError(errorMessage);
-      toast.error('Failed to update status', { description: errorMessage });
+      toast.error(t('editors.statusError'), { description: errorMessage });
       console.error('Status update failed:', err);
     } finally {
       setIsUpdating(false);
@@ -99,6 +101,7 @@ export function StatusEditor({
 
   const config = statusConfig[status] || statusConfig.planned;
   const Icon = config.icon;
+  const label = t(config.labelKey);
 
   return (
     <div className="relative">
@@ -113,7 +116,7 @@ export function StatusEditor({
             config.className,
             isUpdating && 'opacity-70'
           )}
-          aria-label="Change spec status"
+          aria-label={t('editors.changeStatus')}
         >
           <div className="flex items-center gap-1.5">
             {isUpdating ? (
@@ -122,7 +125,7 @@ export function StatusEditor({
               <Icon className="h-3.5 w-3.5" />
             )}
             <SelectValue>
-              {config.label}
+              {label}
             </SelectValue>
           </div>
         </SelectTrigger>
@@ -134,7 +137,7 @@ export function StatusEditor({
               <SelectItem key={s} value={s} className="pl-2">
                 <div className="flex items-center gap-2">
                   <ItemIcon className="h-4 w-4" />
-                  <span>{cfg.label}</span>
+                  <span>{t(cfg.labelKey)}</span>
                 </div>
               </SelectItem>
             );

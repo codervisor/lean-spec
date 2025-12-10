@@ -5,6 +5,7 @@
 import { Clock, PlayCircle, CheckCircle2, Archive, Circle } from 'lucide-react';
 import { formatRelativeTime, formatDuration } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface TimelineEvent {
   label: string;
@@ -30,12 +31,13 @@ export function SpecTimeline({
   status,
   className 
 }: SpecTimelineProps) {
+  const { t } = useTranslation('common');
   const events: TimelineEvent[] = [];
 
   // Always include created
   if (createdAt) {
     events.push({
-      label: 'Created',
+      label: t('specTimeline.events.created'),
       date: createdAt,
       isActive: true,
       isFuture: false,
@@ -47,7 +49,7 @@ export function SpecTimeline({
   // Add in-progress
   if (status === 'in-progress' || status === 'complete' || status === 'archived') {
     events.push({
-      label: 'In Progress',
+      label: t('specTimeline.events.inProgress'),
       date: updatedAt || createdAt,
       isActive: true,
       isFuture: false,
@@ -56,7 +58,7 @@ export function SpecTimeline({
     });
   } else {
     events.push({
-      label: 'In Progress',
+      label: t('specTimeline.events.inProgress'),
       date: null,
       isActive: false,
       isFuture: true,
@@ -68,7 +70,7 @@ export function SpecTimeline({
   // Add completed
   if (status === 'complete' || status === 'archived') {
     events.push({
-      label: 'Complete',
+      label: t('specTimeline.events.complete'),
       date: completedAt || updatedAt,
       isActive: true,
       isFuture: false,
@@ -77,7 +79,7 @@ export function SpecTimeline({
     });
   } else {
     events.push({
-      label: 'Complete',
+      label: t('specTimeline.events.complete'),
       date: null,
       isActive: false,
       isFuture: true,
@@ -89,7 +91,7 @@ export function SpecTimeline({
   // Add archived if status is archived
   if (status === 'archived') {
     events.push({
-      label: 'Archived',
+      label: t('specTimeline.events.archived'),
       date: updatedAt,
       isActive: true,
       isFuture: false,
@@ -149,13 +151,13 @@ export function SpecTimeline({
                   <span className="text-muted-foreground">{formatRelativeTime(event.date)}</span>
                 )}
                 {!event.date && event.isFuture && (
-                  <span className="text-muted-foreground/70">Awaiting start</span>
+                  <span className="text-muted-foreground/70">{t('specTimeline.state.awaiting')}</span>
                 )}
                 {event.date && event.isFuture && (
-                  <span className="text-muted-foreground/70">Queued</span>
+                  <span className="text-muted-foreground/70">{t('specTimeline.state.queued')}</span>
                 )}
                 {!event.date && !event.isFuture && (
-                  <span className="text-muted-foreground/60">Pending update</span>
+                  <span className="text-muted-foreground/60">{t('specTimeline.state.pending')}</span>
                 )}
               </div>
             </div>

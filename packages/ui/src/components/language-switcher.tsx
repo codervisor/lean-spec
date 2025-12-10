@@ -11,25 +11,26 @@ import {
 import { Languages } from 'lucide-react';
 
 const languages = [
-  { code: 'en', name: 'English' },
-  { code: 'zh-CN', name: '中文' },
+  { code: 'en', labelKey: 'language.english' },
+  { code: 'zh-CN', labelKey: 'language.chinese' },
 ];
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation('common');
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLanguageLabel = t(currentLanguage.labelKey);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-9 w-9">
           <Languages className="h-4 w-4" />
-          <span className="sr-only">{currentLanguage.name}</span>
+          <span className="sr-only">{t('language.changeLanguage')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -39,7 +40,7 @@ export function LanguageSwitcher() {
             onClick={() => changeLanguage(language.code)}
             className={i18n.language === language.code ? 'bg-accent' : ''}
           >
-            {language.name}
+            {t(language.labelKey)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

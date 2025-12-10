@@ -16,6 +16,7 @@ import {
 import { StatusBadge } from "@/components/status-badge"
 import { PriorityBadge } from "@/components/priority-badge"
 import { useProjectUrl } from "@/contexts/project-context"
+import { useTranslation } from "react-i18next"
 
 interface Spec {
   id: string
@@ -37,6 +38,7 @@ export function QuickSearch({ specs }: QuickSearchProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const [recentSearches, setRecentSearches] = React.useState<string[]>([])
+  const { t } = useTranslation('common')
 
   // Load recent searches from localStorage
   React.useEffect(() => {
@@ -97,9 +99,10 @@ export function QuickSearch({ specs }: QuickSearchProps) {
       <button
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-2 sm:px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors border rounded-md hover:border-foreground/20"
+        aria-label={t('quickSearch.open')}
       >
         <Search className="h-4 w-4" />
-        <span className="hidden sm:inline">Quick search...</span>
+        <span className="hidden sm:inline">{t('quickSearch.button')}</span>
         <kbd className="hidden md:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
           <span className="text-xs">⌘</span>K
         </kbd>
@@ -107,15 +110,15 @@ export function QuickSearch({ specs }: QuickSearchProps) {
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="Search specs by title, number, or tags..."
+          placeholder={t('quickSearch.placeholder')}
           value={search}
           onValueChange={setSearch}
         />
         <CommandList>
-          <CommandEmpty>No specs found.</CommandEmpty>
+          <CommandEmpty>{t('search.noResults')}</CommandEmpty>
 
           {!search && recentSearches.length > 0 && (
-            <CommandGroup heading="Recent Searches">
+            <CommandGroup heading={t('quickSearch.recentSearches')}>
               {recentSearches.map((recent) => (
                 <CommandItem
                   key={recent}
@@ -131,7 +134,7 @@ export function QuickSearch({ specs }: QuickSearchProps) {
             </CommandGroup>
           )}
 
-          <CommandGroup heading="Specs">
+          <CommandGroup heading={t('spec.specs')}>
             {results.map((spec) => (
               <CommandItem
                 key={spec.id}
@@ -156,7 +159,7 @@ export function QuickSearch({ specs }: QuickSearchProps) {
           </CommandGroup>
 
           {search && (
-            <CommandGroup heading="Filter by Tag">
+            <CommandGroup heading={t('quickSearch.filterHeading')}>
               {Array.from(new Set(specs.flatMap((s) => s.tags)))
                 .filter((tag) => tag.toLowerCase().includes(search.toLowerCase()))
                 .slice(0, 5)
@@ -170,7 +173,7 @@ export function QuickSearch({ specs }: QuickSearchProps) {
                     }}
                   >
                     <Tag className="mr-2 h-4 w-4" />
-                    Filter by: <span className="ml-1 font-medium">{tag}</span>
+                    {t('quickSearch.filterPrefix')} <span className="ml-1 font-medium">{tag}</span>
                   </CommandItem>
                 ))}
             </CommandGroup>

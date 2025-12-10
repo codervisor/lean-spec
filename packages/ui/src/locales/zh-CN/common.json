@@ -11,7 +11,10 @@
     "allSpecifications": "所有 Spec",
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
-    "projectContext": "项目上下文"
+    "projectContext": "项目上下文",
+    "toggleMenu": "切换菜单",
+    "docsTooltip": "查看文档",
+    "githubTooltip": "GitHub 仓库"
   },
   "search": {
     "placeholder": "搜索 Spec...",
@@ -76,5 +79,159 @@
     "createProject": "创建项目",
     "manageProjects": "管理项目",
     "selectProject": "选择项目"
+  },
+  "quickSearch": {
+    "button": "快速搜索...",
+    "placeholder": "按标题、编号或标签搜索 Spec...",
+    "recentSearches": "最近搜索",
+    "filterHeading": "按标签筛选",
+    "filterPrefix": "筛选：",
+    "open": "打开快速搜索"
+  },
+  "projectSwitcher": {
+    "switching": "正在切换...",
+    "placeholder": "选择项目...",
+    "searchPlaceholder": "搜索项目...",
+    "noProject": "未找到项目。"
+  },
+  "createProject": {
+    "title": "添加项目",
+    "descriptionPicker": "浏览并选择项目目录。",
+    "descriptionManual": "请输入本地项目目录的绝对路径。",
+    "enterManually": "手动输入路径",
+    "pathLabel": "项目路径",
+    "pathPlaceholder": "/path/to/your/project",
+    "pathHelp": "选择项目根目录。",
+    "browseFolders": "浏览文件夹",
+    "action": "添加项目",
+    "adding": "正在添加...",
+    "toastSuccess": "项目添加成功",
+    "toastError": "无法添加项目"
+  },
+  "specSidebar": {
+    "title": "全部 Specs",
+    "searchPlaceholder": "搜索 Spec...",
+    "empty": "没有匹配的 Spec",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏"
+  },
+  "specsPage": {
+    "title": "Spec 列表",
+    "count": "共 {{count}} 个 Spec",
+    "views": {
+      "list": "列表",
+      "board": "看板",
+      "listTooltip": "列表视图",
+      "boardTooltip": "看板视图"
+    },
+    "wideMode": {
+      "enter": "进入宽屏模式",
+      "exit": "退出宽屏模式"
+    },
+    "searchPlaceholder": "搜索 Spec...",
+    "filters": {
+      "status": "状态",
+      "priority": "优先级",
+      "sort": "排序",
+      "statusAll": "全部状态",
+      "priorityAll": "全部优先级",
+      "sortOptions": {
+        "id-desc": "最新优先",
+        "id-asc": "最旧优先",
+        "updated-desc": "最近更新",
+        "title-asc": "标题 (A-Z)"
+      }
+    },
+    "metadata": {
+      "updated": "更新于 {{time}}",
+      "files": "+{{count}} 个文件",
+      "dependencies": "{{count}} 个依赖",
+      "none": "暂无元信息"
+    },
+    "list": {
+      "empty": "没有匹配的 Spec"
+    },
+    "board": {
+      "dropHere": "拖放到此移动 Spec",
+      "updating": "正在更新...",
+      "archivedCollapsed": "已归档"
+    },
+    "toasts": {
+      "statusUpdated": "已将 {{spec}} 移动到 {{status}}",
+      "statusError": "无法更新状态，请稍后重试。"
+    }
+  },
+  "specDetail": {
+    "toggleSidebar": "展开或收起 Spec 列表",
+    "metadata": {
+      "created": "创建时间",
+      "updated": "更新时间",
+      "name": "名称",
+      "assignee": "责任人"
+    },
+    "buttons": {
+      "viewTimeline": "查看时间线",
+      "viewDependencies": "查看依赖",
+      "focus": "专注模式",
+      "exitFocus": "退出专注模式"
+    },
+    "dialogs": {
+      "timelineTitle": "Spec 时间线",
+      "timelineDescription": "查看创建、更新和完成节点。",
+      "dependenciesTitle": "依赖关系图",
+      "dependenciesDescription": "展示前置关系与关联 Spec。",
+      "dependenciesLink": "在依赖页面中查看"
+    }
+  },
+  "specTimeline": {
+    "events": {
+      "created": "创建",
+      "inProgress": "进行中",
+      "complete": "已完成",
+      "archived": "已归档"
+    },
+    "state": {
+      "awaiting": "等待开始",
+      "queued": "排队中",
+      "pending": "等待更新"
+    }
+  },
+  "dependencyGraph": {
+    "header": {
+      "title": "依赖地图",
+      "subtitle": "探索前置工作与关联项",
+      "badge": "React Flow DAG"
+    },
+    "badges": {
+      "current": "当前 Spec",
+      "currentSubtitle": "本 Spec",
+      "dependsOn": "依赖",
+      "dependsOnSubtitle": "必须先完成",
+      "requiredBy": "被依赖",
+      "requiredBySubtitle": "受此 Spec 阻塞"
+    },
+    "legend": {
+      "dependsOn": "依赖 → 完成后才可继续",
+      "requiredBy": "被依赖 ← 阻塞后续工作",
+      "interactions": "拖动平移 • 滚动或捏合进行缩放。"
+    }
+  },
+  "editors": {
+    "changeStatus": "修改 Spec 状态",
+    "statusSuccess": "状态已更新",
+    "statusError": "无法更新状态",
+    "changePriority": "修改 Spec 优先级",
+    "prioritySuccess": "优先级已更新",
+    "priorityError": "无法更新优先级",
+    "addTag": "新增标签",
+    "tagExists": "该标签已存在",
+    "tagsSuccess": "标签已更新",
+    "tagsError": "无法更新标签",
+    "searchTag": "搜索或创建标签...",
+    "noTagResults": "没有可用的标签。",
+    "existingTags": "已有标签",
+    "createSection": "创建新标签",
+    "createTag": "创建「{{tag}}」",
+    "removeTag": "移除 {{tag}} 标签"
   }
 }

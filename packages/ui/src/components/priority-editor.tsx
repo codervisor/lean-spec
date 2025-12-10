@@ -16,29 +16,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 type Priority = (typeof PRIORITIES)[number];
 
-const priorityConfig: Record<Priority, { icon: React.ComponentType<{ className?: string }>; label: string; className: string }> = {
+const priorityConfig: Record<Priority, { icon: React.ComponentType<{ className?: string }>; labelKey: `priority.${string}`; className: string }> = {
   'critical': {
     icon: AlertCircle,
-    label: 'Critical',
+    labelKey: 'priority.critical',
     className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
   },
   'high': {
     icon: ArrowUp,
-    label: 'High',
+    labelKey: 'priority.high',
     className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
   },
   'medium': {
     icon: Minus,
-    label: 'Medium',
+    labelKey: 'priority.medium',
     className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
   },
   'low': {
     icon: ArrowDown,
-    label: 'Low',
+    labelKey: 'priority.low',
     className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
   }
 };
@@ -61,6 +62,7 @@ export function PriorityEditor({
   const [priority, setPriority] = React.useState<Priority>(currentPriority as Priority || 'medium');
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const { t } = useTranslation('common');
 
   const handleChange = async (newPriority: Priority) => {
     if (newPriority === priority) return;
@@ -85,12 +87,12 @@ export function PriorityEditor({
       }
 
       onUpdate?.(newPriority);
-      toast.success('Priority updated');
+      toast.success(t('editors.prioritySuccess'));
     } catch (err) {
       setPriority(previousPriority); // Rollback
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update';
+      const errorMessage = err instanceof Error ? err.message : t('editors.priorityError');
       setError(errorMessage);
-      toast.error('Failed to update priority', { description: errorMessage });
+      toast.error(t('editors.priorityError'), { description: errorMessage });
       console.error('Priority update failed:', err);
     } finally {
       setIsUpdating(false);
@@ -99,6 +101,7 @@ export function PriorityEditor({
 
   const config = priorityConfig[priority] || priorityConfig.medium;
   const Icon = config.icon;
+  const label = t(config.labelKey);
 
   return (
     <div className="relative">
@@ -113,7 +116,7 @@ export function PriorityEditor({
             config.className,
             isUpdating && 'opacity-70'
           )}
-          aria-label="Change spec priority"
+          aria-label={t('editors.changePriority')}
         >
           <div className="flex items-center gap-1.5">
             {isUpdating ? (
@@ -122,7 +125,7 @@ export function PriorityEditor({
               <Icon className="h-3.5 w-3.5" />
             )}
             <SelectValue>
-              {config.label}
+              {label}
             </SelectValue>
           </div>
         </SelectTrigger>
@@ -134,7 +137,7 @@ export function PriorityEditor({
               <SelectItem key={p} value={p} className="pl-2">
                 <div className="flex items-center gap-2">
                   <ItemIcon className="h-4 w-4" />
-                  <span>{cfg.label}</span>
+                  <span>{t(cfg.labelKey)}</span>
                 </div>
               </SelectItem>
             );

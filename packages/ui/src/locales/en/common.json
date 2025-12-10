@@ -11,7 +11,10 @@
     "allSpecifications": "All Specifications",
     "dependencyGraph": "Dependency Graph",
     "analytics": "Analytics",
-    "projectContext": "Project Context"
+    "projectContext": "Project Context",
+    "toggleMenu": "Toggle menu",
+    "docsTooltip": "Documentation",
+    "githubTooltip": "GitHub repository"
   },
   "search": {
     "placeholder": "Search specs...",
@@ -76,5 +79,159 @@
     "createProject": "Create Project",
     "manageProjects": "Manage Projects",
     "selectProject": "Select Project"
+  },
+  "quickSearch": {
+    "button": "Quick search...",
+    "placeholder": "Search specs by title, number, or tags...",
+    "recentSearches": "Recent Searches",
+    "filterHeading": "Filter by Tag",
+    "filterPrefix": "Filter by:",
+    "open": "Open quick search"
+  },
+  "projectSwitcher": {
+    "switching": "Switching...",
+    "placeholder": "Select project...",
+    "searchPlaceholder": "Search projects...",
+    "noProject": "No project found."
+  },
+  "createProject": {
+    "title": "Add Project",
+    "descriptionPicker": "Browse and select the project directory.",
+    "descriptionManual": "Enter the absolute path to your local project directory.",
+    "enterManually": "Enter path manually",
+    "pathLabel": "Project Path",
+    "pathPlaceholder": "/path/to/your/project",
+    "pathHelp": "Select the root directory of your project.",
+    "browseFolders": "Browse folders",
+    "action": "Add Project",
+    "adding": "Adding...",
+    "toastSuccess": "Project added successfully",
+    "toastError": "Failed to add project"
+  },
+  "specSidebar": {
+    "title": "All Specs",
+    "searchPlaceholder": "Search specs...",
+    "empty": "No specs found",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "specsPage": {
+    "title": "Specifications",
+    "count": "{{count}} specs",
+    "views": {
+      "list": "List",
+      "board": "Board",
+      "listTooltip": "List view",
+      "boardTooltip": "Board view"
+    },
+    "wideMode": {
+      "enter": "Enter wide mode",
+      "exit": "Exit wide mode"
+    },
+    "searchPlaceholder": "Search specs...",
+    "filters": {
+      "status": "Status",
+      "priority": "Priority",
+      "sort": "Sort by",
+      "statusAll": "All Status",
+      "priorityAll": "All Priority",
+      "sortOptions": {
+        "id-desc": "Newest First",
+        "id-asc": "Oldest First",
+        "updated-desc": "Recently Updated",
+        "title-asc": "Title (A-Z)"
+      }
+    },
+    "metadata": {
+      "updated": "Updated {{time}}",
+      "files": "+{{count}} files",
+      "dependencies": "{{count}} deps",
+      "none": "No metadata"
+    },
+    "list": {
+      "empty": "No specs found"
+    },
+    "board": {
+      "dropHere": "Drop here to move specs",
+      "updating": "Updating...",
+      "archivedCollapsed": "Archived"
+    },
+    "toasts": {
+      "statusUpdated": "Moved {{spec}} to {{status}}",
+      "statusError": "Unable to update status. Please try again."
+    }
+  },
+  "specDetail": {
+    "toggleSidebar": "Toggle specs list",
+    "metadata": {
+      "created": "Created",
+      "updated": "Updated",
+      "name": "Name",
+      "assignee": "Assignee"
+    },
+    "buttons": {
+      "viewTimeline": "View Timeline",
+      "viewDependencies": "View Dependencies",
+      "focus": "Focus",
+      "exitFocus": "Exit focus mode"
+    },
+    "dialogs": {
+      "timelineTitle": "Spec Timeline",
+      "timelineDescription": "Created, updated, and completion milestones.",
+      "dependenciesTitle": "Dependency Graph",
+      "dependenciesDescription": "Precedence requirements and connected specs rendered with automatic layout.",
+      "dependenciesLink": "View in full dependencies page"
+    }
+  },
+  "specTimeline": {
+    "events": {
+      "created": "Created",
+      "inProgress": "In Progress",
+      "complete": "Complete",
+      "archived": "Archived"
+    },
+    "state": {
+      "awaiting": "Awaiting start",
+      "queued": "Queued",
+      "pending": "Pending update"
+    }
+  },
+  "dependencyGraph": {
+    "header": {
+      "title": "Dependency Map",
+      "subtitle": "Explore precedence and connected work",
+      "badge": "React Flow DAG"
+    },
+    "badges": {
+      "current": "Current Spec",
+      "currentSubtitle": "This spec",
+      "dependsOn": "Depends On",
+      "dependsOnSubtitle": "Must complete first",
+      "requiredBy": "Required By",
+      "requiredBySubtitle": "Blocked by this spec"
+    },
+    "legend": {
+      "dependsOn": "Depends On → blocks until complete",
+      "requiredBy": "Required By ← blocked by this spec",
+      "interactions": "Drag to pan • Scroll / pinch to zoom."
+    }
+  },
+  "editors": {
+    "changeStatus": "Change spec status",
+    "statusSuccess": "Status updated",
+    "statusError": "Failed to update status",
+    "changePriority": "Change spec priority",
+    "prioritySuccess": "Priority updated",
+    "priorityError": "Failed to update priority",
+    "addTag": "Add new tag",
+    "tagExists": "Tag already exists",
+    "tagsSuccess": "Tags updated",
+    "tagsError": "Failed to update tags",
+    "searchTag": "Search or create tag...",
+    "noTagResults": "No tags found.",
+    "existingTags": "Existing tags",
+    "createSection": "Create new",
+    "createTag": "Create \"{{tag}}\"",
+    "removeTag": "Remove {{tag}} tag"
   }
 }
