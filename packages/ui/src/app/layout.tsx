@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toast } from "@/components/ui/toast";
 import { ProjectProvider } from "@/contexts/project-context";
 import { I18nProvider } from "@/components/i18n-provider";
+import { DesktopBridge } from "@/components/desktop-bridge";
 import { getSpecs } from "@/lib/db/service-queries";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -63,6 +64,7 @@ export default async function RootLayout({
                 </main>
               </div>
               <Toast />
+              <DesktopBridge />
             </ProjectProvider>
           </ThemeProvider>
         </I18nProvider>

@@ -61,6 +61,19 @@ export function QuickSearch({ specs }: QuickSearchProps) {
     return () => document.removeEventListener("keydown", down)
   }, [])
 
+  // Desktop menu integration
+  React.useEffect(() => {
+    const handler = (event: Event) => {
+      const desktopEvent = event as CustomEvent<{ action?: string }>
+      if (desktopEvent.detail?.action === "desktop://menu-find") {
+        setOpen(true)
+      }
+    }
+
+    window.addEventListener("leanspec:desktop-menu", handler as EventListener)
+    return () => window.removeEventListener("leanspec:desktop-menu", handler as EventListener)
+  }, [])
+
   // Setup fuzzy search
   const fuse = React.useMemo(
     () =>
