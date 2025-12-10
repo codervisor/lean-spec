@@ -4,8 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use dunce::canonicalize;
 use parking_lot::Mutex;
 use portpicker::pick_unused_port;
-use tauri::api::path::resolve_path;
-use tauri::{AppHandle, Manager};
+use tauri::{path::BaseDirectory, AppHandle};
 
 use crate::projects::DesktopProject;
 
@@ -137,7 +136,7 @@ fn find_embedded_standalone_dir(app: &AppHandle) -> Result<PathBuf> {
         }
     }
 
-    let resource = resolve_path(&app.config(), app.package_info(), &app.env(), "ui-standalone", None)?;
+    let resource = app.path().resolve("ui-standalone", BaseDirectory::Resource)?;
     if resource.exists() {
         return Ok(resource);
     }

@@ -4,9 +4,9 @@ import TitleBar from './components/TitleBar';
 import { useProjects } from './hooks/useProjects';
 import styles from './app.module.css';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { getVersion } from '@tauri-apps/api/app';
 import { appLogDir } from '@tauri-apps/api/path';
-import { open } from '@tauri-apps/api/shell';
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
+import { getDesktopVersion } from './lib/ipc';
 
 const App = () => {
   const { projects, activeProjectId, uiUrl, loading, error, switchProject, addProject, refreshProjects } = useProjects();
@@ -51,7 +51,7 @@ const App = () => {
     if (versionCache.current) {
       return versionCache.current;
     }
-    const resolved = await getVersion();
+    const resolved = await getDesktopVersion();
     versionCache.current = resolved;
     return resolved;
   }, []);
@@ -98,7 +98,7 @@ const App = () => {
           ensureLogDirectory()
             .then((dir) => {
               if (dir) {
-                open(dir).catch((error) => console.error(error));
+                revealItemInDir(dir).catch((error) => console.error(error));
               }
             })
             .catch((error) => console.error(error));

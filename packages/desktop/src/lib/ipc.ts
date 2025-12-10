@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import type { DesktopBootstrapPayload } from '../types';
 
 export async function bootstrapDesktop(): Promise<DesktopBootstrapPayload> {
@@ -19,4 +19,8 @@ export async function openAddProjectDialog(): Promise<DesktopBootstrapPayload> {
 
 export async function checkForUpdates(): Promise<void> {
   return invoke('desktop_check_updates');
+}
+
+export async function getDesktopVersion(): Promise<string> {
+  return invoke<string>('desktop_version');
 }

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-10'
 tags:
   - desktop
@@ -12,12 +12,15 @@ priority: high
 created_at: '2025-12-10T14:17:07.220Z'
 depends_on:
   - 148-leanspec-desktop-app
-updated_at: '2025-12-10T14:17:07.303Z'
+updated_at: '2025-12-10T14:19:51.380Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-10T14:19:51.380Z'
 ---
 
 # Migrate Desktop App from Tauri v1 to v2
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-10 · **Tags**: desktop, tauri, migration, breaking-change, v2, bundling
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-10 · **Tags**: desktop, tauri, migration, breaking-change, v2, bundling
 
 ## Overview
 
