@@ -21,3 +21,4 @@ GEMINI.md
 # Generated during npm publish (copied from root README.md)
 packages/cli/README.md
 packages/desktop/src-tauri/ui-standalone
+packages/desktop/src-tauri/target

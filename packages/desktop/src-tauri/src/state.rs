@@ -1,4 +1,3 @@
-pub struct DesktopState {
 use crate::projects::ProjectStore;
 use crate::ui_server::UiServerManager;
 
