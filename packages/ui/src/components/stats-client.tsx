@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileText, CheckCircle2, PlayCircle, Clock } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface Stats {
   totalSpecs: number;
@@ -40,6 +41,27 @@ const PRIORITY_COLORS = {
 };
 
 export function StatsClient({ stats, specs }: StatsClientProps) {
+  const { t, i18n } = useTranslation('common');
+  const locale = i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US';
+
+  const formatTitleCase = (value: string) =>
+    value
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+  const getStatusLabel = (status: string) =>
+    t(`status.${status}` as `status.${string}`, {
+      defaultValue: formatTitleCase(status),
+    });
+
+  const getPriorityLabel = (priority: string) =>
+    priority === 'unknown'
+      ? t('priority.unknown')
+      : t(`priority.${priority}` as `priority.${string}`, {
+          defaultValue: formatTitleCase(priority),
+        });
+
   // Calculate priority breakdown
   const priorityBreakdown = specs.reduce((acc, spec) => {
     const priority = spec.priority || 'unknown';
@@ -48,14 +70,14 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
   }, {} as Record<string, number>);
 
   const priorityData = Object.entries(priorityBreakdown).map(([priority, count]) => ({
-    name: priority.charAt(0).toUpperCase() + priority.slice(1),
+    name: getPriorityLabel(priority),
     value: count,
     color: PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || '#6B7280',
   }));
 
   // Calculate status data for charts
   const statusData = stats.specsByStatus.map(item => ({
-    name: item.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    name: getStatusLabel(item.status),
     value: item.count,
     color: STATUS_COLORS[item.status as keyof typeof STATUS_COLORS] || '#6B7280',
   }));
@@ -74,10 +96,11 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
     .map(([tag, count]) => ({ tag, count }));
 
   // Calculate monthly trends (last 6 months)
+  const monthFormatter = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short' });
   const monthlyTrends = specs
     .filter(spec => spec.createdAt)
     .reduce((acc, spec) => {
-      const month = new Date(spec.createdAt!).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+      const month = monthFormatter.format(new Date(spec.createdAt!));
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -90,8 +113,8 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight">Project Statistics</h1>
-          <p className="text-muted-foreground mt-2">Comprehensive metrics and insights</p>
+          <h1 className="text-4xl font-bold tracking-tight">{t('statsPage.title')}</h1>
+          <p className="text-muted-foreground mt-2">{t('statsPage.description')}</p>
         </div>
 
         {/* Summary Cards */}
@@ -101,13 +124,13 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Specs</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('statsPage.cards.total.title')}</CardTitle>
                 <FileText className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
             <CardContent className="relative">
               <div className="text-3xl font-bold">{stats.totalSpecs}</div>
-              <p className="text-xs text-muted-foreground mt-1">All specifications</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('statsPage.cards.total.subtitle')}</p>
             </CardContent>
           </Card>
 
@@ -116,7 +139,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('statsPage.cards.completed.title')}</CardTitle>
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
               </div>
             </CardHeader>
@@ -125,7 +148,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
                 {stats.specsByStatus.find(s => s.status === 'complete')?.count || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                <span className="text-green-600 font-medium">{stats.completionRate}%</span> completion rate
+                <span className="text-green-600 font-medium">{stats.completionRate}%</span> {t('statsPage.cards.completed.subtitle')}
               </p>
             </CardContent>
           </Card>
@@ -135,7 +158,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('statsPage.cards.inProgress.title')}</CardTitle>
                 <PlayCircle className="h-5 w-5 text-orange-600" />
               </div>
             </CardHeader>
@@ -143,7 +166,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
               <div className="text-3xl font-bold">
                 {stats.specsByStatus.find(s => s.status === 'in-progress')?.count || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Active work</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('statsPage.cards.inProgress.subtitle')}</p>
             </CardContent>
           </Card>
 
@@ -152,7 +175,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Planned</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t('statsPage.cards.planned.title')}</CardTitle>
                 <Clock className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
@@ -160,7 +183,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
               <div className="text-3xl font-bold">
                 {stats.specsByStatus.find(s => s.status === 'planned')?.count || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Upcoming work</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('statsPage.cards.planned.subtitle')}</p>
             </CardContent>
           </Card>
         </div>
@@ -170,8 +193,8 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
           {/* Status Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Status Distribution</CardTitle>
-              <CardDescription>Breakdown of specs by status</CardDescription>
+              <CardTitle>{t('statsPage.charts.status.title')}</CardTitle>
+              <CardDescription>{t('statsPage.charts.status.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -181,7 +204,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
+                    label={({ name, value }) => t('statsPage.charts.label', { name, value })}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -199,8 +222,8 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
           {/* Priority Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Priority Distribution</CardTitle>
-              <CardDescription>Breakdown of specs by priority</CardDescription>
+              <CardTitle>{t('statsPage.charts.priority.title')}</CardTitle>
+              <CardDescription>{t('statsPage.charts.priority.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -210,7 +233,7 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
+                    label={({ name, value }) => t('statsPage.charts.label', { name, value })}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -232,8 +255,8 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
           {trendData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Creation Trend</CardTitle>
-                <CardDescription>Specs created over time</CardDescription>
+                <CardTitle>{t('statsPage.charts.creation.title')}</CardTitle>
+                <CardDescription>{t('statsPage.charts.creation.description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -253,8 +276,8 @@ export function StatsClient({ stats, specs }: StatsClientProps) {
           {topTags.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Top Tags</CardTitle>
-                <CardDescription>Most frequently used tags</CardDescription>
+                <CardTitle>{t('statsPage.charts.topTags.title')}</CardTitle>
+                <CardDescription>{t('statsPage.charts.topTags.description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">

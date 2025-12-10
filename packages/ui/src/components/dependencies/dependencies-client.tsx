@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
   Controls,
@@ -31,6 +32,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useTranslation('common');
   const specParam = searchParams.get('spec');
     // Helper to generate project-scoped URLs
   const getSpecUrl = React.useCallback((specNumber: number | string) => {
@@ -560,21 +562,25 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
         <div className="flex items-center gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Dependency Graph
+              {t('dependenciesPage.header.title')}
             </p>
             <p className="text-sm text-foreground">
               {connectionStats.connected > 0 ? (
                 <>
-                  <span className="text-emerald-600 dark:text-emerald-400">{connectionStats.connected} specs with dependencies</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {t('dependenciesPage.header.summary.connected', { count: connectionStats.connected })}
+                  </span>
                   {connectionStats.standalone > 0 && (
                     <>
                       {' • '}
-                      <span className="text-muted-foreground">{connectionStats.standalone} standalone</span>
+                      <span className="text-muted-foreground">
+                        {t('dependenciesPage.header.summary.standalone', { count: connectionStats.standalone })}
+                      </span>
                     </>
                   )}
                 </>
               ) : (
-                <span className="text-muted-foreground">No dependencies defined</span>
+                <span className="text-muted-foreground">{t('dependenciesPage.header.summary.none')}</span>
               )}
             </p>
           </div>
@@ -597,7 +603,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
                 <span className="truncate flex-1 text-foreground">{focusedSpec.name}</span>
               </>
             ) : (
-              <span className="text-muted-foreground">Select spec to highlight...</span>
+              <span className="text-muted-foreground">{t('dependenciesPage.selector.placeholder')}</span>
             )}
             <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -609,7 +615,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
               <div className="p-2 border-b border-border">
                 <input
                   type="text"
-                  placeholder="Type to filter..."
+                  placeholder={t('dependenciesPage.selector.filterPlaceholder')}
                   value={selectorQuery}
                   onChange={(e) => setSelectorQuery(e.target.value)}
                   className="w-full h-7 rounded border border-border bg-muted/30 px-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -626,7 +632,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
                     }}
                     className="w-full px-3 py-2 text-xs text-left hover:bg-muted/50 border-b border-border text-muted-foreground flex items-center gap-2"
                   >
-                    <span className="text-red-400">×</span> Clear selection
+                    <span className="text-red-400">×</span> {t('dependenciesPage.selector.clearSelection')}
                   </button>
                 )}
                 {filteredSpecs.length > 0 ? (
@@ -656,7 +662,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
                   ))
                 ) : (
                   <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-                    No specs found
+                    {t('dependenciesPage.selector.empty')}
                   </div>
                 )}
               </div>
@@ -669,6 +675,8 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
         {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => {
           const isActive = statusFilter.length === 0 || statusFilter.includes(status);
+          const label = t(`status.${status}` as `status.${string}`);
+          const count = statusCounts[status] || 0;
           return (
             <button
               key={status}
@@ -682,8 +690,8 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
                 !isActive && 'border-border bg-background text-muted-foreground/40'
               )}
             >
-              {status === 'in-progress' ? 'WIP' : status.charAt(0).toUpperCase() + status.slice(1)}
-              <span className="ml-1 opacity-60">({statusCounts[status] || 0})</span>
+              {label}
+              <span className="ml-1 opacity-60">{t('dependenciesPage.filters.count', { count })}</span>
             </button>
           );
         })}
@@ -699,8 +707,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
               : 'border-border bg-background hover:bg-accent text-muted-foreground'
           )}
         >
-          Show Standalone
-          <span className="ml-1 opacity-60">({connectionStats.standalone})</span>
+          {t('dependenciesPage.filters.showStandalone', { count: connectionStats.standalone })}
         </button>
 
         <span className="h-3 w-px bg-border" />
@@ -714,7 +721,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
               : 'border-border bg-background hover:bg-accent text-muted-foreground'
           )}
         >
-          Compact
+          {t('dependenciesPage.filters.compact')}
         </button>
 
         {focusedNodeId && (
@@ -727,7 +734,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
                 : 'border-border bg-background hover:bg-accent text-muted-foreground'
             )}
           >
-            Focus Mode
+            {t('dependenciesPage.filters.focusMode')}
           </button>
         )}
 
@@ -738,7 +745,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
               onClick={clearFilters}
               className="rounded border border-red-500/40 bg-red-500/10 px-2 py-1 font-medium text-red-400 hover:bg-red-500/20"
             >
-              Clear
+              {t('dependenciesPage.filters.clear')}
             </button>
           </>
         )}
@@ -786,11 +793,11 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               <div className="text-center">
-                <p className="text-sm font-medium">No dependencies to display</p>
+                <p className="text-sm font-medium">{t('dependenciesPage.empty.title')}</p>
                 <p className="text-xs mt-1">
                   {showStandalone
-                    ? 'No specs match the current filters'
-                    : 'Enable "Show Standalone" to see specs without dependencies'}
+                    ? t('dependenciesPage.empty.filters')
+                    : t('dependenciesPage.empty.standaloneHint')}
                 </p>
               </div>
             </div>
@@ -809,10 +816,10 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
       <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-0.5 w-6 bg-amber-400 rounded" />
-          Depends On (arrow shows direction)
+          {t('dependenciesPage.legend.dependsOn')}
         </span>
         <span className="text-muted-foreground/50 ml-auto">
-          Click: select • Double-click: open • Drag to rearrange
+          {t('dependenciesPage.legend.instructions')}
         </span>
       </div>
     </div>

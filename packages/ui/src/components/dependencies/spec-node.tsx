@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { SpecNodeData } from './types';
 import {
@@ -26,6 +27,7 @@ const priorityIcons = {
 };
 
 export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>) {
+  const { t } = useTranslation('common');
   const isCompact = data.isCompact;
   const isSecondary = data.isSecondary;
   const depthOpacity =
@@ -78,7 +80,7 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
               data.tone === 'complete' && 'bg-green-500/30',
               data.tone === 'archived' && 'bg-gray-500/30'
             )}
-            title={data.tone}
+            title={t(`status.${data.tone}` as `status.${string}`)}
           >
             <StatusIcon className={cn(isCompact ? 'h-2 w-2' : 'h-2.5 w-2.5')} />
           </div>
@@ -92,7 +94,7 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
               data.priority === 'medium' && 'bg-blue-500/30',
               data.priority === 'low' && 'bg-gray-500/30'
             )}
-            title={data.priority}
+            title={data.priority ? t(`priority.${data.priority}` as `priority.${string}`) : undefined}
           >
             <PriorityIcon className={cn(isCompact ? 'h-2 w-2' : 'h-2.5 w-2.5')} />
           </div>
@@ -103,9 +105,9 @@ export const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNod
                 'font-medium rounded bg-muted/50 text-muted-foreground',
                 isCompact ? 'text-[7px] px-0.5 py-0.5' : 'text-[8px] px-1 py-0.5'
               )}
-              title={`Level ${data.connectionDepth}`}
+              title={t('dependenciesPage.graph.levelTitle', { depth: data.connectionDepth })}
             >
-              L{data.connectionDepth}
+              {t('dependenciesPage.graph.levelBadge', { depth: data.connectionDepth })}
             </span>
           )}
         </div>

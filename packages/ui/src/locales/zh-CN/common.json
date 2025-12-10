@@ -24,6 +24,7 @@
   "status": {
     "planned": "已计划",
     "inProgress": "进行中",
+    "in-progress": "进行中",
     "complete": "已完成",
     "archived": "已归档",
     "blocked": "阻塞中"
@@ -32,7 +33,8 @@
     "critical": "紧急",
     "high": "高",
     "medium": "中",
-    "low": "低"
+    "low": "低",
+    "unknown": "未知"
   },
   "actions": {
     "create": "创建",
@@ -183,6 +185,47 @@
       "dependenciesLink": "在依赖页面中查看"
     }
   },
+  "statsPage": {
+    "title": "项目统计",
+    "description": "查看项目的整体指标与洞察",
+    "cards": {
+      "total": {
+        "title": "Spec 总数",
+        "subtitle": "全部 Spec"
+      },
+      "completed": {
+        "title": "已完成",
+        "subtitle": "完成率"
+      },
+      "inProgress": {
+        "title": "进行中",
+        "subtitle": "活跃中的工作"
+      },
+      "planned": {
+        "title": "已计划",
+        "subtitle": "即将开始的工作"
+      }
+    },
+    "charts": {
+      "status": {
+        "title": "状态分布",
+        "description": "按状态划分的 Spec 数量"
+      },
+      "priority": {
+        "title": "优先级分布",
+        "description": "按优先级划分的 Spec 数量"
+      },
+      "creation": {
+        "title": "创建趋势",
+        "description": "最近新建的 Spec 数量走势"
+      },
+      "topTags": {
+        "title": "热门标签",
+        "description": "使用最频繁的标签"
+      },
+      "label": "{{name}}：{{value}}"
+    }
+  },
   "contextPage": {
     "title": "项目上下文",
     "description": "查看驱动 AI 工具与开发流程的项目级上下文文件",
@@ -287,6 +330,55 @@
       "dependsOn": "依赖 → 完成后才可继续",
       "requiredBy": "被依赖 ← 阻塞后续工作",
       "interactions": "拖动平移 • 滚动或捏合进行缩放。"
+    }
+  },
+  "dependenciesPage": {
+    "header": {
+      "title": "依赖关系图",
+      "summary": {
+        "connected": "{{count}} 个 Spec 存在依赖",
+        "standalone": "{{count}} 个独立项",
+        "none": "暂未配置依赖关系"
+      }
+    },
+    "selector": {
+      "placeholder": "选择要高亮的 Spec...",
+      "filterPlaceholder": "输入以筛选...",
+      "clearSelection": "清除选择",
+      "empty": "没有匹配的 Spec"
+    },
+    "filters": {
+      "showStandalone": "显示独立项 ({{count}})",
+      "compact": "紧凑视图",
+      "focusMode": "焦点模式",
+      "clear": "重置",
+      "count": "({{count}})"
+    },
+    "empty": {
+      "title": "暂无依赖可显示",
+      "filters": "没有 Spec 满足当前筛选条件",
+      "standaloneHint": "开启「显示独立项」即可查看未建立依赖的 Spec"
+    },
+    "legend": {
+      "dependsOn": "依赖方向（箭头表示指向）",
+      "instructions": "点击：选中 • 双击：打开 • 拖动：重新布局"
+    },
+    "graph": {
+      "levelTitle": "第 {{depth}} 层",
+      "levelBadge": "L{{depth}}"
+    },
+    "sidebar": {
+      "emptyTitle": "请选择一个 Spec",
+      "emptyDescription": "点击节点即可查看它的依赖关系",
+      "openSpec": "打开 Spec →",
+      "dependsOnHeading": "上游依赖 ({{count}})",
+      "requiredByHeading": "下游被依赖 ({{count}})",
+      "emptyUpstream": "没有上游依赖",
+      "emptyDownstream": "没有下游依赖此 Spec",
+      "depth": {
+        "direct": "直接关系",
+        "level": "第 {{depth}} 层"
+      }
     }
   },
   "editors": {
