@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, FolderOpenDot, Loader2, LucideIcon, Plus, RotateCcw } from 'lucide-react';
-import { appWindow } from '@tauri-apps/api/window';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import type { DesktopProject } from '../types';
 import WindowControls from './WindowControls';
 import styles from './title-bar.module.css';
+
+const desktopWindow = WebviewWindow.getCurrent();
 
 interface TitleBarProps {
   projects: DesktopProject[];
@@ -47,7 +49,7 @@ const TitleBar = ({
       <div className={styles.leftSection}>
         <button
           className={styles.logoButton}
-          onClick={() => appWindow.show()}
+          onClick={() => desktopWindow.show()}
           title="LeanSpec Desktop"
         >
           <span className={styles.logoGlyph}>LS</span>

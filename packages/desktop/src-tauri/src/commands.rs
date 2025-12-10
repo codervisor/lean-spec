@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Result};
 use serde::Serialize;
-use tauri::{
-    api::{dialog::blocking::FileDialogBuilder, notification::Notification},
-    AppHandle, Manager, State,
-};
+use tauri::{AppHandle, Manager, State};
+use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_notification::NotificationExt;
+use tauri_plugin_updater::UpdaterExt;
 
 use crate::config::{mutate_config, read_config};
 use crate::projects::DesktopProject;
@@ -55,22 +55,22 @@ pub async fn desktop_switch_project(
 
 #[tauri::command]
 pub async fn desktop_add_project(app: AppHandle, state: State<'_, DesktopState>) -> Result<DesktopBootstrapPayload, String> {
-    let selection = FileDialogBuilder::new().set_title("Add LeanSpec Project").pick_folder();
+    if let Some(folder) = app.dialog().file().set_title("Add LeanSpec Project").blocking_pick_folder() {
+        if let Ok(path) = folder.into_path() {
+            let project = state
+                .project_store
+                .add_project(path.as_path())
+                .map_err(|error| error.to_string())?;
 
-    if let Some(folder) = selection {
-        let project = state
-            .project_store
-            .add_project(folder.as_path())
-            .map_err(|error| error.to_string())?;
+            state.project_store.set_active(&project.id);
 
-        state.project_store.set_active(&project.id);
+            mutate_config(|config| {
+                config.active_project_id = Some(project.id.clone());
+            });
+            state.ui_server.stop();
 
-        mutate_config(|config| {
-            config.active_project_id = Some(project.id.clone());
-        });
-        state.ui_server.stop();
-
-        notify(&app, "Project added", &format!("{} is now available", project.name));
+            notify(&app, "Project added", &format!("{} is now available", project.name));
+        }
     }
 
     build_and_publish(&app, &state).map_err(|error| error.to_string())
@@ -80,14 +80,20 @@ pub async fn desktop_add_project(app: AppHandle, state: State<'_, DesktopState>)
 pub async fn desktop_check_updates(app: AppHandle) -> Result<(), String> {
     app.updater()
         .check()
-    .await
-    .map(|_| ())
-    .map_err(|error| error.to_string())
+        .await
+        .map(|_| ())
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn desktop_version(app: AppHandle) -> Result<String, String> {
+    Ok(app.package_info().version.to_string())
 }
 
 fn build_and_publish(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstrapPayload> {
     let payload = build_payload(app, state)?;
-    tray::rebuild_tray(app, &payload.projects);
+    tray::rebuild_tray(app, &payload.projects)
+        .map_err(|error| anyhow!(error.to_string()))?;
     app.emit_all("desktop://state-updated", payload.clone())
         .map_err(|error| anyhow!(error.to_string()))?;
     Ok(payload)
@@ -116,6 +122,10 @@ fn build_payload(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstr
 }
 
 fn notify(app: &AppHandle, title: &str, body: &str) {
-    let identifier = app.config().tauri.bundle.identifier.clone();
-    let _ = Notification::new(&identifier).title(title).body(body).show();
+    let _ = app
+        .notification()
+        .builder()
+        .title(title)
+        .body(body)
+        .show();
 }

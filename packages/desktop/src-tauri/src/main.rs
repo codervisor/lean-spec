@@ -15,6 +15,7 @@ use commands::{
     desktop_add_project,
     desktop_bootstrap,
     desktop_check_updates,
+    desktop_version,
     desktop_refresh_projects,
     desktop_switch_project,
 };
@@ -23,15 +24,18 @@ use state::DesktopState;
 
 fn main() {
     let desktop_state = DesktopState::new();
-    let initial_projects = desktop_state.project_store.all();
+    let tray_projects = desktop_state.project_store.all();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .menu(menu::build_native_menu())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .menu(|app| menu::build_native_menu(app))
         .on_menu_event(menu::handle_menu_event)
-        .system_tray(tray::system_tray(&initial_projects))
-        .on_system_tray_event(tray::handle_event)
         .manage(desktop_state)
         .on_window_event(|event| {
             if let WindowEvent::CloseRequested { api, .. } = event.event() {
@@ -41,8 +45,9 @@ fn main() {
                 }
             }
         })
-        .setup(|app| {
+        .setup(move |app| {
             register_shortcuts(&app.handle());
+            tray::init_tray(&app.handle(), &tray_projects)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -50,7 +55,8 @@ fn main() {
             desktop_refresh_projects,
             desktop_switch_project,
             desktop_add_project,
-            desktop_check_updates
+            desktop_check_updates,
+            desktop_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running LeanSpec Desktop");
