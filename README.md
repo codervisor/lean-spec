@@ -92,10 +92,35 @@ Works with any AI coding assistant via MCP or CLI:
 | **🎨 Web UI** | `lean-spec ui` - browser-based dashboard |
 | **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection |
 | **🤖 AI-Native** | MCP server + CLI for AI assistants |
+| **🖥️ Desktop App** | Native Tauri shell with tray + shortcuts (`pnpm dev:desktop`) |
 
 <p align="center">
   <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
 </p>
+
+---
+
+## Desktop App
+
+The new `@leanspec/desktop` package wraps the Next.js UI in a lightweight Tauri shell for local, multi-project workflows:
+
+```bash
+# Launch the desktop shell with hot reload
+pnpm install
+pnpm dev:desktop
+
+# Produce signed installers + embedded UI bundle
+pnpm build:desktop
+```
+
+Key capabilities:
+- Frameless window with custom title bar + native controls
+- Global shortcuts (`Cmd/Ctrl+Shift+L` to toggle, `Cmd/Ctrl+Shift+K` to open the project switcher, `Cmd/Ctrl+Shift+N` to add a spec)
+- Shared project registry + native folder picker backed by `~/.lean-spec/projects.json`
+- System tray with recent projects, background notifications, and update checks
+- Embedded Next.js standalone build for offline packaging (macOS `.dmg`, Windows `.msi/.exe`, Linux `.AppImage/.deb/.rpm`)
+
+See [packages/desktop/README.md](packages/desktop/README.md) for configuration details.
 
 ---
 

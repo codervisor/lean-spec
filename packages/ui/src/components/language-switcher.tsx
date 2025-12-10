@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,11 @@ const languages = [
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation('common');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -25,6 +31,14 @@ export function LanguageSwitcher() {
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
   const currentLanguageLabel = t(currentLanguage.labelKey);
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="sm" className="h-9 gap-1.5 px-2" aria-hidden>
+        <Languages className="h-4 w-4" />
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

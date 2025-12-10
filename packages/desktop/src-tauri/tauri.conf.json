@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "package": {
+    "productName": "LeanSpec Desktop",
+    "version": "0.1.0"
+  },
+  "build": {
+    "beforeDevCommand": "pnpm --dir .. dev",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist",
+    "beforeBuildCommand": "pnpm --dir .. build && pnpm --dir .. prepare:ui"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "endpoints": ["https://updates.lean-spec.dev/desktop.json"],
+      "pubkey": ""
+    },
+    "windows": [
+      {
+        "title": "LeanSpec Desktop",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": true
+      }
+    ],
+    "systemTray": {
+      "iconPath": "icons/tray-icon.png",
+      "iconAsTemplate": true
+    },
+    "bundle": {
+      "identifier": "dev.leanspec.desktop",
+      "resources": [
+        "ui-standalone"
+      ],
+      "icon": [
+        "icons/icon.icns",
+        "icons/icon.ico",
+        "icons/128x128.png",
+        "icons/128x128@2x.png"
+      ],
+      "targets": "all",
+      "macOS": {
+        "minimumSystemVersion": "11.0",
+        "exceptionDomain": "localhost",
+        "signingIdentity": null
+      },
+      "windows": {
+        "digestAlgorithm": "sha256",
+        "wix": {
+          "language": "en-US",
+          "bannerPath": "icons/banner.bmp"
+        }
+      }
+    }
+  }
+}

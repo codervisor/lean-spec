@@ -1,0 +1,24 @@
+:root {
+  color: #f5f7fb;
+  background-color: #080b12;
+  font-family: "Space Grotesk", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #080b12;
+  color: #f5f7fb;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+a {
+  color: inherit;
+}
