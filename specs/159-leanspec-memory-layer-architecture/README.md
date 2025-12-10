@@ -9,6 +9,9 @@ tags:
   - agent-relay
 priority: critical
 created_at: '2025-12-10T06:08:47.689Z'
+depends_on:
+  - 123-ai-coding-agent-integration
+  - 158-persistent-agent-sessions
 ---
 
 # LeanSpec as Memory Layer for AI Agent Orchestration
@@ -18,6 +21,8 @@ created_at: '2025-12-10T06:08:47.689Z'
 ## Overview
 
 **Core Thesis**: LeanSpec is the **memory and intent layer** for AI agents, not an orchestration engine. Agent orchestration engines like **agent-relay** handle execution, session management, and multi-agent coordination, while LeanSpec provides persistent context, specifications, and historical memory.
+
+**Current State**: This architectural clarification is documented in specs but not yet reflected in system prompts (AGENTS.md) since agent-relay is still alpha. LeanSpec continues to provide basic agent dispatch functionality while the orchestration engine matures.
 
 ### The Architectural Separation
 
@@ -273,13 +278,19 @@ interface AgentSession {
 
 ## Plan
 
-### Phase 1: Document Architecture (Current)
+### Phase 1: Document Architecture ✅
 - [x] Create spec 159 defining separation of concerns
-- [ ] Update spec 123 (AI Agent Integration) to clarify LeanSpec's role
-- [ ] Update spec 158 to reference agent-relay for session management
-- [ ] Document integration patterns
+- [x] Update spec 123 (AI Agent Integration) to clarify LeanSpec's role
+- [x] Update spec 158 to reference agent-relay for session management
+- [x] Document integration patterns
 
-### Phase 2: Refactor Existing Specs
+### Phase 2: Update AGENTS.md and Documentation (Deferred)
+- [ ] Update root AGENTS.md to reference agent-relay for orchestration (deferred until agent-relay production-ready)
+- [ ] Add integration guide to docs-site
+- [ ] Create examples of LeanSpec + agent-relay workflows
+- [ ] Document MCP integration patterns
+
+**Note**: AGENTS.md updates deferred until agent-relay reaches production readiness. Current LeanSpec agent commands work for simple dispatch; agent-relay integration will be added when the orchestration engine is stable.
 - [ ] Move orchestration concerns from spec 123 to agent-relay repo
 - [ ] Keep MCP integration in LeanSpec (read-only context provider)
 - [ ] Simplify `lean-spec agent run` to dispatch to agent-relay
@@ -290,13 +301,17 @@ interface AgentSession {
 - [ ] agent-relay → Devlog: Session activity streams
 - [ ] Devlog → LeanSpec: Link events to specs
 
-### Phase 4: agent-relay Implementation
-- [ ] Implement spec 158 concepts in agent-relay:
-  - [ ] Session persistence
-  - [ ] Phase-based workflows
-  - [ ] Multi-session management
-- [ ] Integrate with LeanSpec MCP for spec context
-- [ ] Stream activity to Devlog
+### Phase 5: Integration Points Implementation
+- [ ] LeanSpec → agent-relay: Spec context API (MCP tools)
+- [ ] agent-relay → LeanSpec: Status update callbacks (MCP tools)
+- [ ] agent-relay → Devlog: Session activity streams
+- [ ] Devlog → LeanSpec: Link events to specs
+
+### Phase 6: Testing & Documentation
+- [ ] Test LeanSpec + agent-relay integration end-to-end
+- [ ] Document workflow examples
+- [ ] Create video tutorials
+- [ ] Update marketing materials (spec 136)
 
 ## Test
 
@@ -363,8 +378,8 @@ interface AgentSession {
 - ✅ Spec storage and CRUD
 - ✅ MCP integration
 - ✅ Search and discovery
-- ⏳ agent-relay integration
-- ⏳ Simplified `agent run` (dispatch to agent-relay)
+- ✅ Basic agent dispatch (`lean-spec agent run`)
+- ⏳ agent-relay integration (deferred until agent-relay production-ready)
 
 ### Related Specs
 

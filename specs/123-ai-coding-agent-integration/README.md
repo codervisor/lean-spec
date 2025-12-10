@@ -26,27 +26,63 @@ depends_on:
 
 > **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-11-26 · **Tags**: ai-agents, workflow, automation, cli, integration, parallel-development
 
+> **⚠️ ARCHITECTURAL UPDATE (2025-12-10)**: See **spec 159** for architectural clarification. This spec implements LeanSpec's **dispatch interface** (the "what" and "context"), while actual agent orchestration (sessions, PTY, multi-agent coordination) should be handled by **[agent-relay](https://github.com/codervisor/agent-relay)**. Current implementation provides basic CLI dispatching; production orchestration belongs in agent-relay.
+
 **Project**: lean-spec  
 **Team**: Core Development
 
 ## Overview
 
-Integrate AI coding agents (GitHub Copilot CLI, Claude Code, Gemini CLI, OpenChat, GitHub Coding Agent, etc.) directly into LeanSpec to automate spec implementation orchestration. Currently users manually manage agent sessions, branch creation, and spec status updates. This spec extends the parallel spec implementation work (spec 118) to enable seamless agent-driven development without manual coordination.
+Integrate AI coding agents (GitHub Copilot CLI, Claude Code, Gemini CLI, etc.) with LeanSpec to enable spec-driven development. LeanSpec provides the **dispatch interface and context management**, while agent orchestration engines like [agent-relay](https://github.com/codervisor/agent-relay) handle execution, session management, and multi-agent coordination.
 
 **Problem**:
 - Users manually orchestrate AI agents to implement specs (copy context, manage branches, update status)
-- No unified interface across different agent types (CLI-based vs cloud-based)
-- Parallel spec implementation (spec 118) requires manual worktree management
+- No unified interface to dispatch specs to agents
 - Agent sessions are disconnected from spec lifecycle (status, dependencies, completion)
 
-**Goals**:
-1. Unified interface to dispatch specs to various AI coding agents
-2. Automatic environment setup (branches, worktrees) based on spec requirements
-3. Bi-directional sync between agent progress and spec status
-4. Support both CLI agents (local) and cloud agents (GitHub Coding Agent)
-5. Enable parallel spec implementation with minimal manual coordination
+**LeanSpec's Role** (see spec 159):
+1. Provide spec content and context to agents
+2. Simple CLI dispatch interface (`lean-spec agent run`)
+3. Track spec status updates
+4. Expose specs via MCP for AI-to-AI orchestration
+
+**agent-relay's Role** (see spec 159):
+- Agent session management and persistence
+- Multi-agent coordination and parallel execution
+- PTY/terminal streaming
+- WebSocket infrastructure
+- Phase-based workflows
 
 ## Design
+
+### LeanSpec's Dispatch Interface (Current Implementation)
+
+**What LeanSpec Provides**:
+
+1. **Spec Context for Agents**
+   - Read spec content, dependencies, metadata
+   - Token counting for context budgeting
+   - MCP tools for AI-to-AI communication
+
+2. **Simple CLI Dispatch**
+   - `lean-spec agent run <spec> --agent <type>`
+   - Opens agent with spec context
+   - Updates spec status (planned → in-progress)
+   - Basic parallel support via worktrees (spec 118)
+
+3. **Agent Registry**
+   - List available agents
+   - Configure default agent
+   - Detect agent availability
+
+**What LeanSpec Does NOT Do** (see spec 159):
+- ❌ Session persistence across multiple invocations
+- ❌ PTY/terminal management
+- ❌ Multi-agent coordination
+- ❌ WebSocket infrastructure
+- ❌ Phase-based workflows
+
+**These belong in agent-relay** ([github.com/codervisor/agent-relay](https://github.com/codervisor/agent-relay))
 
 ### Supported Agent Types
 
@@ -65,20 +101,30 @@ Integrate AI coding agents (GitHub Copilot CLI, Claude Code, Gemini CLI, OpenCha
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    LeanSpec CLI / MCP                        │
+│                    LeanSpec (Dispatch Layer)                 │
 ├─────────────────────────────────────────────────────────────┤
-│                   Agent Orchestrator                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ CLI Adapter  │  │Cloud Adapter │  │ Status Sync  │      │
-│  │ (local exec) │  │  (API/GH)    │  │  (webhooks)  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│  • Spec storage & retrieval                                 │
+│  • Context injection (spec content → agent)                 │
+│  • Status tracking (planned → in-progress → complete)       │
+│  • Simple CLI dispatch                                      │
+│  • MCP tools for AI-to-AI communication                     │
+└─────────────────────────────────────────────────────────────┘
+                            ↓ dispatches to
+┌─────────────────────────────────────────────────────────────┐
+│              agent-relay (Orchestration Engine)              │
 ├─────────────────────────────────────────────────────────────┤
-│              Environment Manager                             │
-│  • Git worktree creation (parallel specs)                   │
-│  • Branch strategy enforcement                              │
-│  • Context injection (spec content → agent prompt)          │
+│  • Session management & persistence                         │
+│  • Multi-agent coordination                                 │
+│  • PTY/terminal streaming                                   │
+│  • WebSocket infrastructure                                 │
+│  • Phase-based workflows (design → impl → test → docs)      │
+│  • Runner management (distributed execution)                │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Current State**: LeanSpec implements basic dispatch. For production orchestration, use agent-relay.
+
+**Future**: `lean-spec agent run` becomes a thin wrapper that dispatches to agent-relay if available.
 
 ### Proposed Commands
 
@@ -113,35 +159,38 @@ mcp_lean-spec_agent_list    // List available agents
 
 ### Workflow Integration
 
-**Single Spec → Agent**:
+**Simple Dispatch (Current Implementation)**:
 ```bash
 lean-spec agent run 045 --agent claude
 # 1. Updates spec status to in-progress
-# 2. Creates feature branch (feature/045-dashboard)
-# 3. Injects spec content as agent context
-# 4. Launches agent with appropriate prompt
-# 5. Monitors for completion (optional webhook/polling)
-# 6. Updates spec status on completion
+# 2. Reads spec content and dependencies
+# 3. Opens agent (Claude/Copilot/etc.) with spec context
+# 4. Agent works in current directory
+# 5. User manually updates spec status when done
 ```
 
-**Parallel Specs → Agents (extends spec 118)**:
+**With agent-relay (Future/Recommended)**:
+```bash
+# LeanSpec provides context, agent-relay handles execution
+agent-relay dispatch \
+  --spec lean-spec://specs/045-dashboard \
+  --agent claude \
+  --runner dev-machine-01
+
+# agent-relay:
+# 1. Reads spec from LeanSpec (via MCP or filesystem)
+# 2. Creates session with spec context
+# 3. Spawns runner with PTY streaming
+# 4. Manages multi-phase workflow (design → impl → test)
+# 5. Updates LeanSpec status via MCP callbacks
+# 6. Logs activity to Devlog
+```
+
+**Parallel Specs (spec 118 integration)**:
 ```bash
 lean-spec agent run 045 047 048 --parallel --agent claude
-# 1. Creates .worktrees/ for each spec
-# 2. Updates all specs to in-progress
-# 3. Dispatches agent to each worktree (separate sessions)
-# 4. Monitors all sessions
-# 5. Reports completion status
-```
-
-**Cloud Agent (GitHub Coding Agent)**:
-```bash
-lean-spec agent run 045 --agent gh-coding
-# 1. Creates GitHub issue from spec (if not exists)
-# 2. Triggers GitHub Coding Agent via API
-# 3. Agent creates branch + PR automatically
-# 4. LeanSpec monitors PR status via webhooks
-# 5. Updates spec status when PR merged
+# Basic implementation: Creates worktrees, opens separate agent sessions
+# With agent-relay: Full multi-agent coordination with session persistence
 ```
 
 ### Configuration
@@ -249,7 +298,29 @@ lean-spec agent config <agent>
 
 ## Notes
 
-**Open Questions**:
+### Architectural Clarification (2025-12-10)
+
+See **spec 159** for detailed separation of concerns:
+
+**LeanSpec's Scope** (this spec):
+- ✅ Spec storage, retrieval, search
+- ✅ Context injection for agents
+- ✅ Simple CLI dispatch to agents
+- ✅ Status tracking
+- ✅ MCP tools for AI-to-AI communication
+
+**agent-relay's Scope** (separate project):
+- ✅ Session persistence and management
+- ✅ Multi-agent coordination
+- ✅ PTY/terminal streaming
+- ✅ Phase-based workflows
+- ✅ Distributed runners
+
+**Current Implementation**: Basic CLI dispatch in LeanSpec works for simple use cases. For production orchestration, complex workflows, or multi-phase implementation, use agent-relay.
+
+**Migration Path**: `lean-spec agent run` can become a proxy to agent-relay when installed, falling back to simple dispatch otherwise.
+
+### Open Questions
 - How to handle agent authentication (API keys, OAuth)?
 - Should we support custom agent prompts per spec/project?
 - How to handle long-running agents (timeout, checkpoints)?
@@ -268,11 +339,14 @@ lean-spec agent config <agent>
 - Aider integration patterns
 
 **Related Work**:
-- Spec 118: Git worktrees for parallel development (foundation)
-- Spec 072: AI agent first-use workflow (onboarding)
-- Spec 110: Project-aware AGENTS.md generation (context)
+- **Spec 118**: Git worktrees for parallel development (foundation)
+- **Spec 158**: Persistent agent sessions (concepts moved to agent-relay)
+- **Spec 159**: LeanSpec as memory layer architecture
+- **Spec 072**: AI agent first-use workflow (onboarding)
+- **Spec 110**: Project-aware AGENTS.md generation (context)
+- **agent-relay**: [github.com/codervisor/agent-relay](https://github.com/codervisor/agent-relay) (orchestration engine)
 
 **Alternatives Considered**:
+- Full orchestration in LeanSpec - violates single responsibility (moved to agent-relay)
 - IDE-only integration (VS Code tasks) - too narrow
 - Shell scripts only - not portable, hard to maintain
-- Full orchestration platform - too complex for LeanSpec's lean philosophy
