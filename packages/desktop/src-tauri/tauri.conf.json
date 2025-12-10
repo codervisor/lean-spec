@@ -6,7 +6,7 @@
   },
   "build": {
     "beforeDevCommand": "pnpm --dir ../.. dev",
-    "devPath": "http://localhost:1420",
+    "devPath": "http://localhost:3000",
     "distDir": "../dist",
     "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui"
   },

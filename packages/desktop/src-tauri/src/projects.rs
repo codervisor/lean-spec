@@ -79,15 +79,19 @@ impl ProjectStore {
 
     pub fn set_active(&self, project_id: &str) -> Option<DesktopProject> {
         let mut guard = self.data.write();
-        if let Some(project) = guard.projects.iter_mut().find(|project| project.id == project_id) {
-            project.last_accessed = Utc::now().to_rfc3339();
-            guard.recent_projects.retain(|id| id != project_id);
-            guard.recent_projects.insert(0, project_id.to_string());
-            let snapshot = project.clone();
-            let _ = write_projects(&self.path_json, &guard);
-            return Some(snapshot);
-        }
-        None
+        let snapshot = guard
+            .projects
+            .iter_mut()
+            .find(|project| project.id == project_id)
+            .map(|project| {
+                project.last_accessed = Utc::now().to_rfc3339();
+                project.clone()
+            })?;
+
+        guard.recent_projects.retain(|id| id != project_id);
+        guard.recent_projects.insert(0, project_id.to_string());
+        let _ = write_projects(&self.path_json, &guard);
+        Some(snapshot)
     }
 
     pub fn add_project(&self, project_path: &Path) -> Result<DesktopProject> {
@@ -202,7 +206,7 @@ fn infer_description(root: &Path) -> Option<String> {
 fn hash_path(path: &Path) -> String {
     let mut hasher = Sha256::new();
     hasher.update(path.display().to_string().as_bytes());
-    hex::encode(hasher.finalize())[0..12].to_string()
+    encode(hasher.finalize())[0..12].to_string()
 }
 
 pub fn discover_projects(root: &Path, limit: usize) -> Vec<PathBuf> {
