@@ -183,6 +183,79 @@
       "dependenciesLink": "View in full dependencies page"
     }
   },
+  "contextPage": {
+    "title": "Project Context",
+    "description": "View project-level context files that inform AI agents and development workflows",
+    "copyAll": "Copy All",
+    "copyAllSuccess": "Copied!",
+    "searchPlaceholder": "Search within context files...",
+    "searchNoMatches": "No matches found for \"{{query}}\"",
+    "summary": {
+      "totalTokens": "{{count}} total tokens",
+      "contextBudget": "Context budget for AI agents"
+    },
+    "badges": {
+      "matchesSingular": "{{count}} match",
+      "matchesPlural": "{{count}} matches",
+      "matchesFoundSingular": "{{count}} match found",
+      "matchesFoundPlural": "{{count}} matches found",
+      "filesSingular": "{{count}} file",
+      "filesPlural": "{{count}} files",
+      "filesFiltered": "{{count}}/{{total}} files",
+      "tokens": "{{count}} tokens"
+    },
+    "sections": {
+      "agents": {
+        "title": "Agent Instructions",
+        "description": "System prompts and guidelines for AI agents",
+        "empty": "No agent instructions found",
+        "suggestion": "Create an AGENTS.md file in your project root"
+      },
+      "config": {
+        "title": "Configuration",
+        "description": "LeanSpec project configuration and settings",
+        "empty": "No configuration found",
+        "suggestion": "Run 'lean-spec init' to create a config file"
+      },
+      "docs": {
+        "title": "Project Documentation",
+        "description": "README, contributing guidelines, and changelog",
+        "empty": "No project docs found",
+        "suggestion": "Create a README.md file in your project root"
+      }
+    },
+    "emptyState": {
+      "title": "No project context found",
+      "description": "This project doesn't have any context files yet. Context files help AI agents understand your project better.",
+      "suggestion": "Start by creating AGENTS.md or running 'lean-spec init'"
+    },
+    "search": {
+      "noMatchesTitle": "No matches found",
+      "noMatchesDescription": "Try a different search term",
+      "noFilesDescription": "No files found in this category"
+    },
+    "viewer": {
+      "modified": "Modified {{date}}",
+      "lines": "{{count}} lines",
+      "viewFull": "View full page",
+      "openInEditor": "Open in VS Code",
+      "copyContent": "Copy content",
+      "tokenStatus": {
+        "optimal": "Optimal",
+        "good": "Good",
+        "large": "Large",
+        "veryLarge": "Very Large"
+      }
+    },
+    "detail": {
+      "back": "Back",
+      "openInEditor": "Open in Editor",
+      "copy": "Copy",
+      "copySuccess": "Copied!",
+      "lines": "{{count}} lines",
+      "modified": "Modified {{date}}"
+    }
+  },
   "specTimeline": {
     "events": {
       "created": "Created",

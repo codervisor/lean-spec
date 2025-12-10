@@ -216,17 +216,7 @@ export function Navigation({ specs }: NavigationProps) {
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <QuickSearch specs={specs} />
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <LanguageSwitcher />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('language.changeLanguage')}</p>
-              </TooltipContent>
-            </Tooltip>
-            
+            <LanguageSwitcher />
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>

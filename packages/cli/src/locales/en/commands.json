@@ -137,5 +137,10 @@
     "json": "Output in JSON format",
     "port": "Port number",
     "noOpen": "Don't open browser automatically"
+  },
+  "help": {
+    "commandGroupsTitle": "Command Groups",
+    "optionsTitle": "Options",
+    "examplesTitle": "Examples"
   }
 }

@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
-import { 
+import {
   Copy, 
   Check, 
   Clock, 
@@ -36,6 +36,7 @@ import { BackToTop } from '@/components/back-to-top';
 import { MermaidDiagram } from '@/components/mermaid-diagram';
 import { cn } from '@/lib/utils';
 import type { ContextFile } from '@/lib/specs/types';
+import { useTranslation } from 'react-i18next';
 
 interface ContextFileDetailProps {
   file: ContextFile;
@@ -104,13 +105,13 @@ function getTokenColor(tokens: number): string {
 }
 
 /**
- * Get token status label
+ * Get token status key for localization
  */
-function getTokenStatus(tokens: number): string {
-  if (tokens < 2000) return 'Optimal';
-  if (tokens < 3500) return 'Good';
-  if (tokens < 5000) return 'Large';
-  return 'Very Large';
+function getTokenStatusKey(tokens: number): 'optimal' | 'good' | 'large' | 'veryLarge' {
+  if (tokens < 2000) return 'optimal';
+  if (tokens < 3500) return 'good';
+  if (tokens < 5000) return 'large';
+  return 'veryLarge';
 }
 
 /**
@@ -118,7 +119,7 @@ function getTokenStatus(tokens: number): string {
  */
 function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -135,6 +136,9 @@ function getVSCodeUri(projectRoot: string, filePath: string): string {
 
 export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDetailProps) {
   const [copied, setCopied] = React.useState(false);
+  const { t } = useTranslation();
+  const tokenStatusLabel = t(`contextPage.viewer.tokenStatus.${getTokenStatusKey(file.tokenCount)}`);
+  const tokenCountLabel = t('contextPage.badges.tokens', { count: file.tokenCount.toLocaleString() });
   
   const FileIcon = getFileIcon(file.name);
   const iconColor = getFileIconColor(file.name);
@@ -172,7 +176,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
               className="h-8 px-2 -ml-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              {t('contextPage.detail.back')}
             </Button>
             <FileIcon className={cn('h-5 w-5 shrink-0', iconColor)} />
             <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">
@@ -184,19 +188,19 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className={cn('text-xs', getTokenColor(file.tokenCount))}>
               <Coins className="h-3 w-3 mr-1" />
-              {file.tokenCount.toLocaleString()} tokens
+              {tokenCountLabel}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              {getTokenStatus(file.tokenCount)}
+              {tokenStatusLabel}
             </span>
             <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              Modified {formatDate(file.lastModified)}
+              {t('contextPage.detail.modified', { date: formatDate(file.lastModified) })}
             </span>
             <span className="text-xs text-muted-foreground">•</span>
             <span className="text-xs text-muted-foreground">
-              {file.content.split('\n').length} lines
+              {t('contextPage.detail.lines', { count: file.content.split('\n').length })}
             </span>
           </div>
 
@@ -210,10 +214,9 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
                   size="sm"
                   className="h-7 px-2 text-xs"
                   onClick={handleOpenInEditor}
-                  title="Open in VS Code"
                 >
                   <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                  Open in Editor
+                  {t('contextPage.detail.openInEditor')}
                 </Button>
               )}
               <Button
@@ -221,17 +224,16 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
                 size="sm"
                 className="h-7 px-2 text-xs"
                 onClick={handleCopy}
-                title="Copy content"
               >
                 {copied ? (
                   <>
                     <Check className="h-3.5 w-3.5 mr-1 text-green-600" />
-                    Copied!
+                    {t('contextPage.detail.copySuccess')}
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5 mr-1" />
-                    Copy
+                    {t('contextPage.detail.copy')}
                   </>
                 )}
               </Button>

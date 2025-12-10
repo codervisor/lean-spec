@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,8 +12,8 @@ import {
 import { Languages } from 'lucide-react';
 
 const languages = [
-  { code: 'en', labelKey: 'language.english' },
-  { code: 'zh-CN', labelKey: 'language.chinese' },
+  { code: 'en', labelKey: 'language.english', shortLabel: 'EN' },
+  { code: 'zh-CN', labelKey: 'language.chinese', shortLabel: '中文' },
 ];
 
 export function LanguageSwitcher() {
@@ -28,8 +29,9 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
+        <Button variant="ghost" size="sm" className="h-9 gap-1.5 px-2">
           <Languages className="h-4 w-4" />
+          <span className="text-xs font-medium">{currentLanguage.shortLabel}</span>
           <span className="sr-only">{t('language.changeLanguage')}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -38,7 +40,7 @@ export function LanguageSwitcher() {
           <DropdownMenuItem
             key={language.code}
             onClick={() => changeLanguage(language.code)}
-            className={i18n.language === language.code ? 'bg-accent' : ''}
+            className={clsx('cursor-pointer', i18n.language === language.code && 'bg-accent')}
           >
             {t(language.labelKey)}
           </DropdownMenuItem>
