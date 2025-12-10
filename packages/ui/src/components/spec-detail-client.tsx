@@ -99,7 +99,7 @@ const fetcher = (url: string) => fetch(url).then((res) => {
 export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = false, onToggleFocusMode }: SpecDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const currentSubSpec = searchParams.get('subspec') || initialSubSpec;
   const [timelineDialogOpen, setTimelineDialogOpen] = React.useState(false);
   const [dependenciesDialogOpen, setDependenciesDialogOpen] = React.useState(false);
@@ -143,7 +143,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
 
   const spec = specData?.spec || initialSpec;
   const tags = React.useMemo(() => spec.tags || [], [spec.tags]);
-  const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : 'N/A';
+  const updatedRelative = spec.updatedAt ? formatRelativeTime(spec.updatedAt) : null;
   const relationships = spec.relationships;
   
   // Use complete graph data directly (already in the format expected by SpecDependencyGraph)
@@ -177,14 +177,21 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
   }
 
   // Format dates
-  const formatDate = (date: Date | string | number | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
+  const formatDate = React.useCallback((date: Date | string | number | null) => {
+    if (!date) {
+      return t('specDetail.metadata.notAvailable');
+    }
+
+    try {
+      return new Intl.DateTimeFormat(i18n.language || 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(new Date(date));
+    } catch {
+      return t('specDetail.metadata.notAvailable');
+    }
+  }, [i18n.language, t]);
 
   // Handle sub-spec switching with optimistic UI (instant, no network)
   const handleSubSpecSwitch = (file: string | null) => {
@@ -449,7 +456,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                   }`}
                 >
                   <Home className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
+                  <span className="hidden sm:inline">{t('specDetail.tabs.overview')}</span>
                 </button>
 
                 
@@ -481,8 +488,8 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
       <div className="flex flex-col xl:flex-row xl:items-start">
         <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
           <div className="space-y-4">
-            {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
-            {error && <div className="text-sm text-destructive">Error loading spec</div>}
+            {isLoading && <div className="text-sm text-muted-foreground">{t('specDetail.state.loading')}</div>}
+            {error && <div className="text-sm text-destructive">{t('specDetail.state.error')}</div>}
 
             <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
               <ReactMarkdown

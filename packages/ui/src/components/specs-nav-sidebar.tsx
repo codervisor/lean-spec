@@ -37,6 +37,7 @@ import {
   updateSidebarScrollTop,
 } from '@/lib/stores/specs-sidebar-store';
 import { useProjectUrl } from '@/contexts/project-context';
+import { useTranslation } from 'react-i18next';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined'
   ? React.useLayoutEffect
@@ -52,6 +53,7 @@ interface SpecsNavSidebarProps {
 }
 
 export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSpec, onSpecHover, className }: SpecsNavSidebarProps) {
+  const { t } = useTranslation('common');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
   const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
@@ -348,7 +350,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
                     )}
                     {typeof spec.subSpecsCount === 'number' && spec.subSpecsCount > 0 && (
                       <span className="text-[10px] text-muted-foreground">
-                        +{spec.subSpecsCount} files
+                        {t('specsNavSidebar.badges.subSpecs', { count: spec.subSpecsCount })}
                       </span>
                     )}
                     {spec.updatedAt && (
@@ -370,7 +372,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
         </div>
       </div>
     );
-  }, [sortedSpecs, resolvedCurrentSpecId, currentSubSpec, onSpecHover, getSpecUrl]);
+  }, [sortedSpecs, resolvedCurrentSpecId, currentSubSpec, onSpecHover, getSpecUrl, t]);
 
   // Calculate list height
   const listHeight = React.useMemo(() => {
@@ -407,7 +409,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
         )}>
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-sm">Specifications</h2>
+              <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
               <div className="flex items-center gap-1">
                 {/* Filter toggle button */}
                 <Tooltip>
@@ -422,7 +424,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {showFilters ? 'Hide filters' : 'Show filters'}
+                    {showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
                   </TooltipContent>
                 </Tooltip>
                 {/* Mobile close button */}
@@ -450,7 +452,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             {showFilters && (
               <div className="space-y-2 mb-3 pb-3 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Filters</span>
+                  <span className="text-xs font-medium text-muted-foreground">{t('specsNavSidebar.filtersLabel')}</span>
                   {hasActiveFilters && (
                     <Button
                       variant="ghost"
@@ -458,44 +460,44 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
                       onClick={resetFilters}
                       className="h-5 text-xs px-2 py-0"
                     >
-                      Clear
+                      {t('specsNavSidebar.clearFilters')}
                     </Button>
                   )}
                 </div>
                 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={t('specsNavSidebar.select.status.label')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="planned">Planned</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="complete">Complete</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="all">{t('specsNavSidebar.select.status.all')}</SelectItem>
+                    <SelectItem value="planned">{t('status.planned')}</SelectItem>
+                    <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
+                    <SelectItem value="complete">{t('status.complete')}</SelectItem>
+                    <SelectItem value="archived">{t('status.archived')}</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                   <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Priority" />
+                    <SelectValue placeholder={t('specsNavSidebar.select.priority.label')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="all">{t('specsNavSidebar.select.priority.all')}</SelectItem>
+                    <SelectItem value="low">{t('priority.low')}</SelectItem>
+                    <SelectItem value="medium">{t('priority.medium')}</SelectItem>
+                    <SelectItem value="high">{t('priority.high')}</SelectItem>
+                    <SelectItem value="critical">{t('priority.critical')}</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {allTags.length > 0 && (
                   <Select value={tagFilter} onValueChange={setTagFilter}>
                     <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Tag" />
+                      <SelectValue placeholder={t('specsNavSidebar.select.tag.label')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Tags</SelectItem>
+                      <SelectItem value="all">{t('specsNavSidebar.select.tag.all')}</SelectItem>
                       {allTags.map((tag) => (
                         <SelectItem key={tag} value={tag}>
                           {tag}
@@ -510,7 +512,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search specs..."
+                placeholder={t('specsNavSidebar.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-9 border-border"
@@ -521,7 +523,7 @@ export function SpecsNavSidebar({ initialSpecs = [], currentSpecId, currentSubSp
           <div className="flex-1 overflow-hidden">
             {sortedSpecs.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
-                No specs found
+                {t('specsNavSidebar.noResults')}
               </div>
             ) : (
               <MemoizedList

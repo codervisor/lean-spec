@@ -117,6 +117,34 @@
     "collapse": "收起侧边栏",
     "expand": "展开侧边栏"
   },
+  "specsNavSidebar": {
+    "title": "Spec 列表",
+    "searchPlaceholder": "搜索 Spec...",
+    "noResults": "没有匹配的 Spec",
+    "filtersLabel": "筛选",
+    "toggleFilters": {
+      "show": "展开筛选",
+      "hide": "收起筛选"
+    },
+    "clearFilters": "重置",
+    "select": {
+      "status": {
+        "label": "状态",
+        "all": "全部状态"
+      },
+      "priority": {
+        "label": "优先级",
+        "all": "全部优先级"
+      },
+      "tag": {
+        "label": "标签",
+        "all": "全部标签"
+      }
+    },
+    "badges": {
+      "subSpecs": "+{{count}} 个文件"
+    }
+  },
   "specsPage": {
     "title": "Spec 列表",
     "count": "共 {{count}} 个 Spec",
@@ -169,7 +197,8 @@
       "created": "创建时间",
       "updated": "更新时间",
       "name": "名称",
-      "assignee": "责任人"
+      "assignee": "责任人",
+      "notAvailable": "暂无数据"
     },
     "buttons": {
       "viewTimeline": "查看时间线",
@@ -183,6 +212,13 @@
       "dependenciesTitle": "依赖关系图",
       "dependenciesDescription": "展示前置关系与关联 Spec。",
       "dependenciesLink": "在依赖页面中查看"
+    },
+    "tabs": {
+      "overview": "概览"
+    },
+    "state": {
+      "loading": "正在加载...",
+      "error": "无法加载 Spec"
     }
   },
   "statsPage": {

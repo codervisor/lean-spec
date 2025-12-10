@@ -117,6 +117,34 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar"
   },
+  "specsNavSidebar": {
+    "title": "Specifications",
+    "searchPlaceholder": "Search specs...",
+    "noResults": "No specs found",
+    "filtersLabel": "Filters",
+    "toggleFilters": {
+      "show": "Show filters",
+      "hide": "Hide filters"
+    },
+    "clearFilters": "Clear",
+    "select": {
+      "status": {
+        "label": "Status",
+        "all": "All Status"
+      },
+      "priority": {
+        "label": "Priority",
+        "all": "All Priority"
+      },
+      "tag": {
+        "label": "Tag",
+        "all": "All Tags"
+      }
+    },
+    "badges": {
+      "subSpecs": "+{{count}} files"
+    }
+  },
   "specsPage": {
     "title": "Specifications",
     "count": "{{count}} specs",
@@ -169,7 +197,8 @@
       "created": "Created",
       "updated": "Updated",
       "name": "Name",
-      "assignee": "Assignee"
+      "assignee": "Assignee",
+      "notAvailable": "Not available"
     },
     "buttons": {
       "viewTimeline": "View Timeline",
@@ -183,6 +212,13 @@
       "dependenciesTitle": "Dependency Graph",
       "dependenciesDescription": "Precedence requirements and connected specs rendered with automatic layout.",
       "dependenciesLink": "View in full dependencies page"
+    },
+    "tabs": {
+      "overview": "Overview"
+    },
+    "state": {
+      "loading": "Loading...",
+      "error": "Error loading spec"
     }
   },
   "statsPage": {
