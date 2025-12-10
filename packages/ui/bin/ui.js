@@ -3,11 +3,11 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import open from 'open';
-import yaml from 'js-yaml';
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseLeanYaml } from '../shared/lean-yaml-parser.js';
 
 const program = new Command();
 
@@ -116,8 +116,8 @@ function readConfigSpecsDir(cwd) {
     const yamlPath = join(cwd, file);
     if (existsSync(yamlPath)) {
       try {
-        const parsed = yaml.load(readFileSync(yamlPath, 'utf-8'));
-        if (parsed && typeof parsed === 'object' && 'specsDir' in parsed) {
+        const parsed = parseLeanYaml(readFileSync(yamlPath, 'utf-8'));
+        if (parsed && typeof parsed === 'object' && 'specsDir' in parsed && typeof parsed.specsDir === 'string') {
           const resolved = resolve(cwd, parsed.specsDir);
           if (existsSync(resolved)) {
             return resolved;

@@ -7,16 +7,34 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
-import yaml from 'js-yaml';
+import { parseLeanYaml } from '../../../shared/lean-yaml-parser.js';
 import type { LocalProject, ProjectsConfig, ProjectValidation } from './types';
 
-const PROJECTS_CONFIG_FILE = path.join(homedir(), '.lean-spec', 'projects.yaml');
+const LEAN_SPEC_FILES = ['leanspec.yaml', 'leanspec.yml', 'lean-spec.yaml', 'lean-spec.yml'];
+const DEFAULT_CONFIG_DIR = path.join(homedir(), '.lean-spec');
+
+type StoredProject = Omit<LocalProject, 'lastAccessed'> & { lastAccessed?: string | Date };
+interface StoredProjectsFile {
+  projects?: StoredProject[];
+  recentProjects?: unknown;
+}
 
 /**
  * Project Registry - manages local filesystem projects
  */
 export class ProjectRegistry {
+  private readonly configDir: string;
+  private readonly jsonConfigFile: string;
+  private readonly legacyConfigFile: string;
+  private readonly legacyBackupFile: string;
   private config: ProjectsConfig | null = null;
+
+  constructor(configDir: string = DEFAULT_CONFIG_DIR) {
+    this.configDir = configDir;
+    this.jsonConfigFile = path.join(configDir, 'projects.json');
+    this.legacyConfigFile = path.join(configDir, 'projects.yaml');
+    this.legacyBackupFile = `${this.legacyConfigFile}.bak`;
+  }
 
   /**
    * Generate a unique ID for a project based on its path
@@ -35,35 +53,24 @@ export class ProjectRegistry {
     if (this.config) {
       return this.config;
     }
+    await fs.mkdir(this.configDir, { recursive: true });
 
-    try {
-      const configDir = path.dirname(PROJECTS_CONFIG_FILE);
-      await fs.mkdir(configDir, { recursive: true });
-
-      const fileContent = await fs.readFile(PROJECTS_CONFIG_FILE, 'utf-8');
-      const parsed = yaml.load(fileContent) as any;
-      
-      // Convert date strings back to Date objects
-      const projects = (parsed.projects || []).map((p: any) => ({
-        ...p,
-        lastAccessed: p.lastAccessed ? new Date(p.lastAccessed) : new Date(),
-      }));
-
-      this.config = {
-        projects,
-        recentProjects: parsed.recentProjects || [],
-      };
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        // File doesn't exist, create empty config
-        this.config = {
-          projects: [],
-          recentProjects: [],
-        };
-      } else {
-        throw error;
-      }
+    const existing = await this.loadFromJson();
+    if (existing) {
+      this.config = existing;
+      return existing;
     }
+
+    const migrated = await this.migrateLegacyConfig();
+    if (migrated) {
+      this.config = migrated;
+      return migrated;
+    }
+
+    this.config = {
+      projects: [],
+      recentProjects: [],
+    };
 
     return this.config;
   }
@@ -76,8 +83,7 @@ export class ProjectRegistry {
       return;
     }
 
-    const configDir = path.dirname(PROJECTS_CONFIG_FILE);
-    await fs.mkdir(configDir, { recursive: true });
+    await fs.mkdir(this.configDir, { recursive: true });
 
     // Convert Date objects to ISO strings for serialization
     const serializable = {
@@ -88,12 +94,144 @@ export class ProjectRegistry {
       recentProjects: this.config.recentProjects,
     };
 
-    const yamlContent = yaml.dump(serializable, {
-      indent: 2,
-      lineWidth: -1, // Disable line wrapping to prevent YAML corruption
-    });
+    await fs.writeFile(this.jsonConfigFile, JSON.stringify(serializable, null, 2), 'utf-8');
+  }
 
-    await fs.writeFile(PROJECTS_CONFIG_FILE, yamlContent, 'utf-8');
+  private async loadFromJson(): Promise<ProjectsConfig | null> {
+    try {
+      const content = await fs.readFile(this.jsonConfigFile, 'utf-8');
+      const parsed = JSON.parse(content) as StoredProjectsFile;
+      return this.normalizeConfig(parsed);
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        return null;
+      }
+
+      if (error instanceof SyntaxError) {
+        throw new Error(`Failed to parse ${this.jsonConfigFile}: ${error.message}`);
+      }
+
+      throw error;
+    }
+  }
+
+  private normalizeConfig(input?: StoredProjectsFile | null): ProjectsConfig {
+    if (!input) {
+      return { projects: [], recentProjects: [] };
+    }
+
+    const projects = Array.isArray(input.projects)
+      ? input.projects
+          .map((project) => this.normalizeProject(project))
+          .filter((project): project is LocalProject => project !== null)
+      : [];
+
+    const recentProjects = Array.isArray(input.recentProjects)
+      ? input.recentProjects.filter((id): id is string => typeof id === 'string')
+      : [];
+
+    const projectIds = new Set(projects.map((project) => project.id));
+    const filteredRecent = recentProjects.filter((id) => projectIds.has(id));
+
+    return { projects, recentProjects: filteredRecent };
+  }
+
+  private normalizeProject(project: StoredProject | null | undefined): LocalProject | null {
+    if (!project || typeof project !== 'object') {
+      return null;
+    }
+
+    if (typeof project.id !== 'string' || typeof project.path !== 'string' || typeof project.specsDir !== 'string') {
+      return null;
+    }
+
+    return {
+      id: project.id,
+      name:
+        typeof project.name === 'string' && project.name.trim().length > 0
+          ? project.name
+          : path.basename(project.path),
+      path: project.path,
+      specsDir: project.specsDir,
+      lastAccessed: this.parseDate(project.lastAccessed),
+      favorite: typeof project.favorite === 'boolean' ? project.favorite : false,
+      color: typeof project.color === 'string' ? project.color : undefined,
+      description: typeof project.description === 'string' ? project.description : undefined,
+    };
+  }
+
+  private parseDate(value: unknown): Date {
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    } else if (value instanceof Date) {
+      return value;
+    }
+
+    return new Date();
+  }
+
+  private async migrateLegacyConfig(): Promise<ProjectsConfig | null> {
+    try {
+        const content = await fs.readFile(this.legacyConfigFile, 'utf-8');
+      const parsed = parseLeanYaml<StoredProjectsFile>(content);
+      const config = this.normalizeConfig(parsed);
+
+      this.config = config;
+      await this.saveConfig();
+      await this.backupLegacyFile();
+
+      return config;
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        return null;
+      }
+
+        throw new Error(`Failed to migrate ${this.legacyConfigFile}: ${error.message ?? error}`);
+    }
+  }
+
+  private async backupLegacyFile(): Promise<void> {
+    try {
+        await fs.rename(this.legacyConfigFile, this.legacyBackupFile);
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        return;
+      }
+
+      if (error?.code === 'EEXIST') {
+          await fs.unlink(this.legacyConfigFile).catch(() => undefined);
+        return;
+      }
+
+      console.warn(`Unable to archive legacy projects.yaml: ${error.message ?? error}`);
+    }
+  }
+
+  private async readLeanSpecMetadata(projectRoot: string): Promise<{ name?: string; description?: string }> {
+    for (const fileName of LEAN_SPEC_FILES) {
+      const filePath = path.join(projectRoot, fileName);
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const parsed = parseLeanYaml<Record<string, unknown>>(content);
+        const name = typeof parsed.name === 'string' ? parsed.name : undefined;
+        const description = typeof parsed.description === 'string' ? parsed.description : undefined;
+
+        if (name || description) {
+          return { name, description };
+        }
+      } catch (error: any) {
+        if (error?.code === 'ENOENT') {
+          continue;
+        }
+
+        console.warn(`Failed to parse ${filePath}: ${error.message ?? error}`);
+      }
+    }
+
+    return {};
   }
 
   /**
@@ -146,21 +284,21 @@ export class ProjectRegistry {
       let name = path.basename(normalizedPath);
       let description: string | undefined;
 
-      // Try leanspec.yaml
-      try {
-        const leanspecYaml = path.join(normalizedPath, 'leanspec.yaml');
-        const content = await fs.readFile(leanspecYaml, 'utf-8');
-        const config = yaml.load(content) as any;
-        if (config.name) name = config.name;
-        if (config.description) description = config.description;
-      } catch {
-        // Try package.json
+      const leanSpecConfig = await this.readLeanSpecMetadata(normalizedPath);
+      if (leanSpecConfig.name) {
+        name = leanSpecConfig.name;
+      }
+      if (leanSpecConfig.description) {
+        description = leanSpecConfig.description;
+      }
+
+      if (!leanSpecConfig.name || !leanSpecConfig.description) {
         try {
           const packageJson = path.join(normalizedPath, 'package.json');
           const content = await fs.readFile(packageJson, 'utf-8');
           const pkg = JSON.parse(content);
-          if (pkg.name) name = pkg.name;
-          if (pkg.description) description = pkg.description;
+          if (!leanSpecConfig.name && pkg.name) name = pkg.name;
+          if (!leanSpecConfig.description && pkg.description) description = pkg.description;
         } catch {
           // Use directory name as fallback
         }

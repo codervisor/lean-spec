@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: '2025-12-05'
 tags:
   - ui
@@ -7,11 +7,18 @@ tags:
   - breaking-change
 priority: medium
 created_at: '2025-12-05T04:42:31.397Z'
+updated_at: '2025-12-10T06:49:33.725Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-10T06:28:34.525Z'
+  - status: complete
+    at: '2025-12-10T14:48:30.000Z'
+completed: '2025-12-10'
 ---
 
 # Switch UI Config from YAML to JSON
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-12-05
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-12-05 · **Tags**: ui, config, breaking-change
 
 ## Overview
 
@@ -41,20 +48,22 @@ YAML's `js-yaml` library uses line wrapping by default that can corrupt multi-li
 
 ## Plan
 
-- [ ] Update `registry.ts` to use JSON format
-- [ ] Add migration logic: detect `.yaml` → convert → save as `.json`
-- [ ] Remove `js-yaml` dependency from `packages/ui/package.json`
-- [ ] Test with fresh install (no config)
-- [ ] Test migration from existing YAML config
+- [x] Update `registry.ts` to use JSON format
+- [x] Add migration logic: detect `.yaml` → convert → save as `.json`
+- [x] Remove `js-yaml` dependency from `packages/ui/package.json`
+- [x] Test with fresh install (no config)
+- [x] Test migration from existing YAML config
 
 ## Test
 
-- [ ] Fresh start creates `projects.json`
-- [ ] Existing `projects.yaml` migrates to `projects.json`
-- [ ] Long descriptions don't corrupt the config
-- [ ] All project operations (add, remove, update) work correctly
+- [x] Fresh start creates `projects.json`
+- [x] Existing `projects.yaml` migrates to `projects.json`
+- [x] Long descriptions don't corrupt the config
+- [x] All project operations (add, remove, update) work correctly
 
 ## Notes
 
 - Breaking change for users with existing YAML configs (migration handles this)
 - JSON is less human-editable but config editing is rare (UI-managed)
+- Added shared lightweight parser (`packages/ui/shared/lean-yaml-parser.js`) so both the UI server and CLI launcher can still read `leanspec.yaml` files without `js-yaml`
+- Vitest coverage lives in `packages/ui/src/lib/utils/__tests__/leanYaml.test.ts` and `packages/ui/src/lib/projects/__tests__/registry.test.ts`
