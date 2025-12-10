@@ -429,5 +429,57 @@
     "createSection": "Create new",
     "createTag": "Create \"{{tag}}\"",
     "removeTag": "Remove {{tag}} tag"
+  },
+  "desktopMenu": {
+    "close": "Close",
+    "newSpec": {
+      "title": "Create New Spec",
+      "description": "Generate a new spec inside the active project with the LeanSpec CLI.",
+      "slugLabel": "Spec slug",
+      "slugPlaceholder": "e.g. desktop-native-menu",
+      "titleLabel": "Display title (optional)",
+      "titlePlaceholder": "Human-friendly title",
+      "commandLabel": "CLI command",
+      "commandPlaceholder": "Enter a spec slug to preview the command…",
+      "hint": "Run this command inside {{project}} (or your project root) to scaffold the spec files.",
+      "projectFallback": "your project",
+      "copyButton": "Copy command",
+      "copied": "Copied!"
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "description": "Native menu entries mirror these shortcuts.",
+      "sections": {
+        "global": "Desktop shell",
+        "view": "View",
+        "help": "Help"
+      },
+      "items": {
+        "toggleWindow": "Toggle desktop window",
+        "quickSwitch": "Open project switcher",
+        "newSpec": "Create new spec",
+        "refreshProjects": "Refresh projects",
+        "toggleSidebar": "Toggle sidebar",
+        "quickFind": "Find in specs",
+        "shortcuts": "Show shortcuts",
+        "docs": "Open documentation"
+      }
+    },
+    "logs": {
+      "title": "Desktop Logs",
+      "description": "Logs stay on your machine. Share them when reporting an issue.",
+      "pathLabel": "Log directory",
+      "pathPlaceholder": "Waiting for the desktop app to provide the log path…",
+      "hint": "You can also choose Help → View Logs from the native menu.",
+      "copyPath": "Copy path",
+      "openButton": "Open log folder"
+    },
+    "about": {
+      "title": "About LeanSpec Desktop",
+      "description": "LeanSpec UI with native integrations for local projects and automation.",
+      "version": "Version",
+      "website": "Website",
+      "support": "Support"
+    }
   }
 }

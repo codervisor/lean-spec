@@ -429,5 +429,57 @@
     "createSection": "创建新标签",
     "createTag": "创建「{{tag}}」",
     "removeTag": "移除 {{tag}} 标签"
+  },
+  "desktopMenu": {
+    "close": "关闭",
+    "newSpec": {
+      "title": "创建新 Spec",
+      "description": "通过 LeanSpec CLI 在当前项目中生成新的 Spec。",
+      "slugLabel": "Spec slug",
+      "slugPlaceholder": "例如 desktop-native-menu",
+      "titleLabel": "显示标题（可选）",
+      "titlePlaceholder": "便于识别的标题",
+      "commandLabel": "CLI 命令",
+      "commandPlaceholder": "输入 Spec slug 即可预览命令…",
+      "hint": "在 {{project}}（或项目根目录）执行该命令即可生成 Spec 文件。",
+      "projectFallback": "项目根目录",
+      "copyButton": "复制命令",
+      "copied": "已复制"
+    },
+    "shortcuts": {
+      "title": "键盘快捷键",
+      "description": "原生菜单与这些快捷键保持同步。",
+      "sections": {
+        "global": "桌面外壳",
+        "view": "视图",
+        "help": "帮助"
+      },
+      "items": {
+        "toggleWindow": "显示/隐藏桌面窗口",
+        "quickSwitch": "打开项目切换器",
+        "newSpec": "创建新 Spec",
+        "refreshProjects": "刷新项目",
+        "toggleSidebar": "切换侧边栏",
+        "quickFind": "查找 Spec",
+        "shortcuts": "显示快捷键",
+        "docs": "打开文档"
+      }
+    },
+    "logs": {
+      "title": "桌面日志",
+      "description": "日志仅保存在本机，报告问题时可以分享。",
+      "pathLabel": "日志目录",
+      "pathPlaceholder": "正在等待桌面应用返回日志路径…",
+      "hint": "也可以在原生菜单中选择 Help → View Logs。",
+      "copyPath": "复制路径",
+      "openButton": "打开日志文件夹"
+    },
+    "about": {
+      "title": "关于 LeanSpec Desktop",
+      "description": "LeanSpec UI + 原生集成，专为多项目与自动化场景打造。",
+      "version": "版本",
+      "website": "网站",
+      "support": "支持"
+    }
   }
 }

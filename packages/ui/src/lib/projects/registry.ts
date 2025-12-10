@@ -28,6 +28,7 @@ export class ProjectRegistry {
   private readonly legacyConfigFile: string;
   private readonly legacyBackupFile: string;
   private config: ProjectsConfig | null = null;
+  private configFileMtime: number | null = null;
 
   constructor(configDir: string = DEFAULT_CONFIG_DIR) {
     this.configDir = configDir;
@@ -50,20 +51,29 @@ export class ProjectRegistry {
    * Load projects configuration from disk
    */
   private async loadConfig(): Promise<ProjectsConfig> {
-    if (this.config) {
+    await fs.mkdir(this.configDir, { recursive: true });
+
+    const jsonMtime = await this.getConfigFileMtime();
+
+    if (
+      this.config &&
+      ((jsonMtime === null && this.configFileMtime === null) ||
+        (jsonMtime !== null && this.configFileMtime === jsonMtime))
+    ) {
       return this.config;
     }
-    await fs.mkdir(this.configDir, { recursive: true });
 
     const existing = await this.loadFromJson();
     if (existing) {
       this.config = existing;
+      this.configFileMtime = jsonMtime;
       return existing;
     }
 
     const migrated = await this.migrateLegacyConfig();
     if (migrated) {
       this.config = migrated;
+      this.configFileMtime = await this.getConfigFileMtime();
       return migrated;
     }
 
@@ -71,6 +81,7 @@ export class ProjectRegistry {
       projects: [],
       recentProjects: [],
     };
+    this.configFileMtime = jsonMtime;
 
     return this.config;
   }
@@ -95,6 +106,19 @@ export class ProjectRegistry {
     };
 
     await fs.writeFile(this.jsonConfigFile, JSON.stringify(serializable, null, 2), 'utf-8');
+    this.configFileMtime = await this.getConfigFileMtime();
+  }
+
+  private async getConfigFileMtime(): Promise<number | null> {
+    try {
+      const stats = await fs.stat(this.jsonConfigFile);
+      return stats.mtimeMs;
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        return null;
+      }
+      throw error;
+    }
   }
 
   private async loadFromJson(): Promise<ProjectsConfig | null> {
@@ -598,6 +622,7 @@ export class ProjectRegistry {
    */
   invalidateCache(): void {
     this.config = null;
+    this.configFileMtime = null;
   }
 }
 

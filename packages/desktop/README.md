@@ -27,6 +27,7 @@ The packaging workflow builds the Next.js UI (`pnpm --filter @leanspec/ui build`
 ## Features
 
 - Frameless shell with custom title bar and window controls
+- Native OS menu bar (File/Edit/View/Help) with accelerators and command routing
 - Project switcher connected to the global LeanSpec registry
 - Native folder picker + validation for onboarding new projects
 - Background Next.js server lifecycle managed via Rust

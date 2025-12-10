@@ -2,6 +2,7 @@
 
 mod commands;
 mod config;
+mod menu;
 mod projects;
 mod shortcuts;
 mod state;
@@ -27,6 +28,8 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .menu(menu::build_native_menu())
+        .on_menu_event(menu::handle_menu_event)
         .system_tray(tray::system_tray(&initial_projects))
         .on_system_tray_event(tray::handle_event)
         .manage(desktop_state)
