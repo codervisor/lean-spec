@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
   const [path, setPath] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     if (open) {
@@ -38,13 +40,13 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
     try {
       setIsLoading(true);
       const project = await addProject(projectPath);
-      toast.success('Project added successfully');
+      toast.success(t('createProject.toastSuccess'));
       onOpenChange(false);
       // Full page navigation - ensures clean state for new project
       window.location.href = `/projects/${project.id}/specs`;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add project';
-      toast.error(message);
+      const message = error instanceof Error ? error.message : t('createProject.toastError');
+      toast.error(t('createProject.toastError'), { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -60,11 +62,11 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add Project</DialogTitle>
+          <DialogTitle>{t('createProject.title')}</DialogTitle>
           <DialogDescription>
             {mode === 'picker' 
-              ? 'Browse and select the project directory.' 
-              : 'Enter the absolute path to your local project directory.'}
+              ? t('createProject.descriptionPicker')
+              : t('createProject.descriptionManual')}
           </DialogDescription>
         </DialogHeader>
         
@@ -74,7 +76,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
               onSelect={handleAddProject} 
               onCancel={() => onOpenChange(false)} 
               initialPath={path}
-              actionLabel={isLoading ? "Adding..." : "Add Project"}
+              actionLabel={isLoading ? t('createProject.adding') : t('createProject.action')}
               isLoading={isLoading}
             />
             <div className="flex justify-center">
@@ -84,7 +86,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
                 onClick={() => setMode('manual')}
                 className="text-muted-foreground"
               >
-                Enter path manually
+                {t('createProject.enterManually')}
               </Button>
             </div>
           </div>
@@ -93,20 +95,20 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <label htmlFor="path" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Project Path
+                  {t('createProject.pathLabel')}
                 </label>
                 <div className="flex gap-2">
                   <Input
                     id="path"
                     value={path}
                     onChange={(e) => setPath(e.target.value)}
-                    placeholder="/path/to/your/project"
+                    placeholder={t('createProject.pathPlaceholder')}
                     className="flex-1"
                     disabled={isLoading}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Select the root directory of your project.
+                  {t('createProject.pathHelp')}
                 </p>
               </div>
             </div>
@@ -119,14 +121,14 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
                   onClick={() => setMode('picker')}
                 >
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  Browse folders
+                  {t('createProject.browseFolders')}
                 </Button>
               </div>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-                Cancel
+                {t('actions.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading || !path}>
-                {isLoading ? 'Adding...' : 'Add Project'}
+                {isLoading ? t('createProject.adding') : t('createProject.action')}
               </Button>
             </DialogFooter>
           </form>

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-09'
 tags:
   - i18n
@@ -9,12 +9,15 @@ priority: high
 created_at: '2025-12-09T14:27:09.883Z'
 depends_on:
   - 091-chinese-localization-strategy
-updated_at: '2025-12-09T14:27:09.942Z'
+updated_at: '2025-12-09T14:29:54.700Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-09T14:29:54.700Z'
 ---
 
 # Complete UI and CLI Chinese Translation Implementation
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-09 · **Tags**: i18n, ux, chinese-market
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-09 · **Tags**: i18n, ux, chinese-market
 
 ## Overview
 

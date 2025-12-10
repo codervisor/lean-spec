@@ -24,6 +24,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface TagsEditorProps {
   specId: string;
@@ -46,6 +47,7 @@ export function TagsEditor({
   const [error, setError] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
+  const { t } = useTranslation('common');
 
   // Fetch all available tags for autocomplete when popover opens
   React.useEffect(() => {
@@ -87,12 +89,12 @@ export function TagsEditor({
       }
 
       onUpdate?.(newTags);
-      toast.success('Tags updated');
+      toast.success(t('editors.tagsSuccess'));
     } catch (err) {
       setTags(previousTags); // Rollback
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update';
+      const errorMessage = err instanceof Error ? err.message : t('editors.tagsError');
       setError(errorMessage);
-      toast.error('Failed to update tags', { description: errorMessage });
+      toast.error(t('editors.tagsError'), { description: errorMessage });
       console.error('Tags update failed:', err);
     } finally {
       setIsUpdating(false);
@@ -103,7 +105,7 @@ export function TagsEditor({
     const trimmedTag = tag.trim().toLowerCase();
     if (!trimmedTag) return;
     if (tags.includes(trimmedTag)) {
-      setError('Tag already exists');
+      setError(t('editors.tagExists'));
       return;
     }
     
@@ -149,7 +151,7 @@ export function TagsEditor({
                 onClick={() => handleRemoveTag(tag)}
                 disabled={isUpdating}
                 className="ml-1 rounded-full hover:bg-muted p-0.5 transition-colors"
-                aria-label={`Remove ${tag} tag`}
+                aria-label={t('editors.removeTag', { tag })}
               >
                 <X className="h-3 w-3" />
               </button>
@@ -165,7 +167,7 @@ export function TagsEditor({
                 size="sm"
                 className="h-6 px-2 text-xs"
                 disabled={isUpdating}
-                aria-label="Add new tag"
+                aria-label={t('editors.addTag')}
               >
                 {isUpdating ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -177,7 +179,7 @@ export function TagsEditor({
             <PopoverContent className="w-56 p-0" align="start">
               <Command>
                 <CommandInput 
-                  placeholder="Search or create tag..." 
+                  placeholder={t('editors.searchTag')}
                   value={searchValue}
                   onValueChange={setSearchValue}
                 />
@@ -189,16 +191,16 @@ export function TagsEditor({
                         className="cursor-pointer"
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Create &quot;{searchValue.trim().toLowerCase()}&quot;
+                        {t('editors.createTag', { tag: searchValue.trim().toLowerCase() })}
                       </CommandItem>
                     ) : (
                       <span className="text-muted-foreground px-2 py-1.5 text-sm">
-                        No tags found.
+                        {t('editors.noTagResults')}
                       </span>
                     )}
                   </CommandEmpty>
                   {availableTags.length > 0 && (
-                    <CommandGroup heading="Existing tags">
+                    <CommandGroup heading={t('editors.existingTags')}>
                       {availableTags.slice(0, 10).map((tag) => (
                         <CommandItem
                           key={tag}
@@ -212,13 +214,13 @@ export function TagsEditor({
                     </CommandGroup>
                   )}
                   {canCreateNewTag && availableTags.length > 0 && (
-                    <CommandGroup heading="Create new">
+                    <CommandGroup heading={t('editors.createSection')}>
                       <CommandItem
                         onSelect={() => handleAddTag(searchValue)}
                         className="cursor-pointer"
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Create &quot;{searchValue.trim().toLowerCase()}&quot;
+                        {t('editors.createTag', { tag: searchValue.trim().toLowerCase() })}
                       </CommandItem>
                     </CommandGroup>
                   )}

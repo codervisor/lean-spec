@@ -57,6 +57,7 @@ import Link from 'next/link';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
 import type { Html, Root } from 'mdast';
+import { useTranslation } from 'react-i18next';
 
 const remarkStripHtmlComments: Plugin<[], Root> = () => (tree: Root) => {
   visit(tree, 'html', (node: Html) => {
@@ -98,6 +99,7 @@ const fetcher = (url: string) => fetch(url).then((res) => {
 export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = false, onToggleFocusMode }: SpecDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation('common');
   const currentSubSpec = searchParams.get('subspec') || initialSubSpec;
   const [timelineDialogOpen, setTimelineDialogOpen] = React.useState(false);
   const [dependenciesDialogOpen, setDependenciesDialogOpen] = React.useState(false);
@@ -253,7 +255,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                 size="sm"
                 onClick={onToggleFocusMode}
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground shrink-0"
-                title="Exit focus mode"
+                  title={t('specDetail.buttons.exitFocus')}
               >
                 <Minimize2 className="h-4 w-4" />
               </Button>
@@ -282,7 +284,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                   }}
                 >
                   <ListIcon className="h-5 w-5" />
-                  <span className="sr-only">Toggle specs list</span>
+                  <span className="sr-only">{t('specDetail.toggleSidebar')}</span>
                 </Button>
               </div>
               
@@ -315,20 +317,20 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
 
               {/* Line 3: Small metadata row */}
               <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-1.5 sm:mt-2">
-                <span className="hidden sm:inline">Created: {formatDate(spec.createdAt)}</span>
+                <span className="hidden sm:inline">{t('specDetail.metadata.created')}: {formatDate(spec.createdAt)}</span>
                 <span className="hidden sm:inline">•</span>
                 <span>
-                  Updated: {formatDate(spec.updatedAt)}
+                  {t('specDetail.metadata.updated')}: {formatDate(spec.updatedAt)}
                   {spec.updatedAt && (
                     <span className="ml-1 text-[11px] text-muted-foreground/80">({updatedRelative})</span>
                   )}
                 </span>
                 <span className="hidden sm:inline">•</span>
-                <span className="hidden md:inline">Name: {spec.specName}</span>
+                <span className="hidden md:inline">{t('specDetail.metadata.name')}: {spec.specName}</span>
                 {spec.assignee && (
                   <>
                     <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline">Assignee: {spec.assignee}</span>
+                    <span className="hidden sm:inline">{t('specDetail.metadata.assignee')}: {spec.assignee}</span>
                   </>
                 )}
               </div>
@@ -345,13 +347,13 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                     className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Clock className="mr-1.5 h-3.5 w-3.5" />
-                    View Timeline
+                    {t('specDetail.buttons.viewTimeline')}
                     <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                   <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Spec Timeline</DialogTitle>
-                      <DialogDescription>Created, updated, and completion milestones.</DialogDescription>
+                      <DialogTitle>{t('specDetail.dialogs.timelineTitle')}</DialogTitle>
+                      <DialogDescription>{t('specDetail.dialogs.timelineDescription')}</DialogDescription>
                     </DialogHeader>
                     <div className="rounded-xl border border-border bg-muted/30 p-4">
                       <SpecTimeline
@@ -379,14 +381,14 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                     )}
                   >
                     <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-                    View Dependencies
+                    {t('specDetail.buttons.viewDependencies')}
                     <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                   <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
                     <DialogHeader>
-                      <DialogTitle>Dependency Graph</DialogTitle>
+                      <DialogTitle>{t('specDetail.dialogs.dependenciesTitle')}</DialogTitle>
                       <DialogDescription className="flex flex-col gap-2">
-                        <span>Precedence requirements and connected specs rendered with automatic layout.</span>
+                        <span>{t('specDetail.dialogs.dependenciesDescription')}</span>
                         <Link 
                           href={projectId 
                             ? `/projects/${projectId}/dependencies?spec=${spec.specNumber || spec.id}`
@@ -396,7 +398,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                           onClick={() => setDependenciesDialogOpen(false)}
                         >
                           <ExternalLink className="h-3 w-3" />
-                          View in full dependencies page
+                          {t('specDetail.dialogs.dependenciesLink')}
                         </Link>
                       </DialogDescription>
                     </DialogHeader>
@@ -421,10 +423,10 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
                     size="sm"
                     onClick={onToggleFocusMode}
                     className="hidden lg:inline-flex h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    title="Enter focus mode"
+                    title={t('specDetail.buttons.focus')}
                   >
                     <Maximize2 className="mr-1.5 h-3.5 w-3.5" />
-                    Focus
+                    {t('specDetail.buttons.focus')}
                   </Button>
                 )}
               </div>

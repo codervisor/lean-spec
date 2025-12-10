@@ -35,40 +35,41 @@ import { PriorityBadge } from '@/components/priority-badge';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/date-utils';
 import { toast } from '@/components/ui/toast';
+import { useTranslation } from 'react-i18next';
 
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 
 const STATUS_CONFIG: Record<SpecStatus, {
   icon: typeof Clock;
-  title: string;
+  titleKey: `status.${string}`;
   colorClass: string;
   bgClass: string;
   borderClass: string;
 }> = {
   'planned': {
     icon: Clock,
-    title: 'Planned',
+    titleKey: 'status.planned',
     colorClass: 'text-blue-600 dark:text-blue-400',
     bgClass: 'bg-blue-50 dark:bg-blue-900/20',
     borderClass: 'border-blue-200 dark:border-blue-800'
   },
   'in-progress': {
     icon: PlayCircle,
-    title: 'In Progress',
+    titleKey: 'status.inProgress',
     colorClass: 'text-orange-600 dark:text-orange-400',
     bgClass: 'bg-orange-50 dark:bg-orange-900/20',
     borderClass: 'border-orange-200 dark:border-orange-800'
   },
   'complete': {
     icon: CheckCircle2,
-    title: 'Complete',
+    titleKey: 'status.complete',
     colorClass: 'text-green-600 dark:text-green-400',
     bgClass: 'bg-green-50 dark:bg-green-900/20',
     borderClass: 'border-green-200 dark:border-green-800'
   },
   'archived': {
     icon: Archive,
-    title: 'Archived',
+    titleKey: 'status.archived',
     colorClass: 'text-gray-600 dark:text-gray-400',
     bgClass: 'bg-gray-50 dark:bg-gray-900/20',
     borderClass: 'border-gray-200 dark:border-gray-800'
@@ -110,6 +111,7 @@ type SortBy = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useTranslation('common');
 
   // Helper to generate project-scoped URLs
   const getSpecUrl = useCallback((specId: string | number) => {
@@ -184,11 +186,12 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
       }
 
       const displayName = spec.specNumber ? `#${spec.specNumber}` : spec.specName;
-      toast.success(`Moved ${displayName} to ${STATUS_CONFIG[nextStatus].title}`);
+      const statusLabel = t(STATUS_CONFIG[nextStatus].titleKey);
+      toast.success(t('specsPage.toasts.statusUpdated', { spec: displayName, status: statusLabel }));
     } catch (error) {
       console.error('Failed to update spec status', error);
       setSpecs((prev) => prev.map(item => item.id === spec.id ? { ...item, status: previousStatus } : item));
-      toast.error('Unable to update status. Please try again.');
+      toast.error(t('specsPage.toasts.statusError'));
     } finally {
       setPendingSpecIds((prev) => {
         const next = { ...prev };
@@ -283,9 +286,9 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
             {/* Title and Controls Row */}
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Specifications</h1>
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">{t('specsPage.title')}</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  {filteredAndSortedSpecs.length} specs
+                  {t('specsPage.count', { count: filteredAndSortedSpecs.length })}
                 </p>
               </div>
 
@@ -296,20 +299,20 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
                     size="sm"
                     onClick={() => setViewMode('list')}
                     className="h-7 sm:h-8 px-2 sm:px-3"
-                    title="List view"
+                    title={t('specsPage.views.listTooltip')}
                   >
                     <ListIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="hidden lg:inline ml-2">List</span>
+                    <span className="hidden lg:inline ml-2">{t('specsPage.views.list')}</span>
                   </Button>
                   <Button
                     variant={viewMode === 'board' ? 'secondary' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('board')}
                     className="h-7 sm:h-8 px-2 sm:px-3"
-                    title="Board view"
+                    title={t('specsPage.views.boardTooltip')}
                   >
                     <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="hidden lg:inline ml-2">Board</span>
+                    <span className="hidden lg:inline ml-2">{t('specsPage.views.board')}</span>
                   </Button>
                 </div>
 
@@ -318,7 +321,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
                   size="icon"
                   onClick={() => setIsWideMode(!isWideMode)}
                   className="hidden md:flex h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground"
-                  title={isWideMode ? "Exit wide mode" : "Enter wide mode"}
+                  title={isWideMode ? t('specsPage.wideMode.exit') : t('specsPage.wideMode.enter')}
                 >
                   {isWideMode ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                 </Button>
@@ -331,7 +334,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
               <div className="relative w-full">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground pointer-events-none" />
                 <Input
-                  placeholder="Search specs..."
+                  placeholder={t('specsPage.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 sm:pl-9 h-9 sm:h-10 w-full text-sm"
@@ -342,39 +345,39 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
               <div className="flex items-center gap-2 overflow-x-auto snap-x snap-mandatory pb-1 -mx-2 px-2 sm:mx-0 sm:px-0 sm:pb-0 scrollbar-thin">
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpecStatus | 'all')}>
                   <SelectTrigger className="w-[110px] sm:w-[130px] h-9 sm:h-10 flex-shrink-0 snap-start text-xs sm:text-sm">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={t('specsPage.filters.status')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="planned">Planned</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="complete">Complete</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="all">{t('specsPage.filters.statusAll')}</SelectItem>
+                    <SelectItem value="planned">{t('status.planned')}</SelectItem>
+                    <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
+                    <SelectItem value="complete">{t('status.complete')}</SelectItem>
+                    <SelectItem value="archived">{t('status.archived')}</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                   <SelectTrigger className="w-[110px] sm:w-[130px] h-9 sm:h-10 flex-shrink-0 snap-start text-xs sm:text-sm">
-                    <SelectValue placeholder="Priority" />
+                    <SelectValue placeholder={t('specsPage.filters.priority')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="all">{t('specsPage.filters.priorityAll')}</SelectItem>
+                    <SelectItem value="critical">{t('priority.critical')}</SelectItem>
+                    <SelectItem value="high">{t('priority.high')}</SelectItem>
+                    <SelectItem value="medium">{t('priority.medium')}</SelectItem>
+                    <SelectItem value="low">{t('priority.low')}</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
                   <SelectTrigger className="w-[130px] sm:w-[170px] h-9 sm:h-10 flex-shrink-0 snap-start text-xs sm:text-sm">
-                    <SelectValue placeholder="Sort by" />
+                    <SelectValue placeholder={t('specsPage.filters.sort')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="id-desc">Newest First</SelectItem>
-                    <SelectItem value="id-asc">Oldest First</SelectItem>
-                    <SelectItem value="updated-desc">Recently Updated</SelectItem>
-                    <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                    <SelectItem value="id-desc">{t('specsPage.filters.sortOptions.id-desc')}</SelectItem>
+                    <SelectItem value="id-asc">{t('specsPage.filters.sortOptions.id-asc')}</SelectItem>
+                    <SelectItem value="updated-desc">{t('specsPage.filters.sortOptions.updated-desc')}</SelectItem>
+                    <SelectItem value="title-asc">{t('specsPage.filters.sortOptions.title-asc')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -409,6 +412,7 @@ export function SpecsClient({ initialSpecs, projectId }: SpecsClientProps) {
 }
 
 function ListView({ specs, getSpecUrl, projectId }: { specs: Spec[]; getSpecUrl: (specId: string | number) => string; projectId: string }) {
+  const { t } = useTranslation('common');
   return (
     <div className="grid grid-cols-1 gap-2 sm:gap-3 md:gap-4 pb-2 sm:pb-4 md:pb-8">
       {specs.map(spec => {
@@ -470,26 +474,26 @@ function ListView({ specs, getSpecUrl, projectId }: { specs: Spec[]; getSpecUrl:
                       {spec.updatedAt && (
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                          <span className="whitespace-nowrap">Updated {formatRelativeTime(spec.updatedAt)}</span>
+                          <span className="whitespace-nowrap">{t('specsPage.metadata.updated', { time: formatRelativeTime(spec.updatedAt) })}</span>
                         </div>
                       )}
                       {hasSubSpecs && (
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                          <span className="whitespace-nowrap">+{spec.subSpecsCount} files</span>
+                          <span className="whitespace-nowrap">{t('specsPage.metadata.files', { count: spec.subSpecsCount })}</span>
                         </div>
                       )}
                       {hasDependencies && (
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           <GitBranch className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
                           <span className="whitespace-nowrap">
-                            {spec.relationships!.dependsOn.length} deps
+                            {t('specsPage.metadata.dependencies', { count: spec.relationships!.dependsOn.length })}
                           </span>
                         </div>
                       )}
                     </>
                   ) : (
-                    <span className="invisible hidden md:inline">No metadata</span> /* Keep height consistent on desktop */
+                    <span className="invisible hidden md:inline">{t('specsPage.metadata.none')}</span> /* Keep height consistent on desktop */
                   )}
                 </div>
 
@@ -523,6 +527,7 @@ interface BoardViewProps {
 }
 
 function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onToggleArchived, getSpecUrl, projectId }: BoardViewProps) {
+  const { t } = useTranslation('common');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
@@ -597,6 +602,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
         const Icon = column.config.icon;
         const isArchivedColumn = column.status === 'archived';
         const isCollapsed = collapsedColumns[column.status];
+        const columnTitle = t(column.config.titleKey);
 
         return (
           <div key={column.status} className={cn(
@@ -633,13 +639,13 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                 {isArchivedColumn && !showArchived ? (
                   <>
                     <span className="vertical-text text-xs sm:text-sm whitespace-nowrap">
-                      {column.config.title}
+                      {columnTitle}
                     </span>
                     <Badge variant="outline" className="text-[10px] sm:text-xs px-1 sm:px-2 h-4 sm:h-5">{column.specs.length}</Badge>
                   </>
                 ) : (
                   <>
-                    <span className="truncate flex-1">{column.config.title}</span>
+                    <span className="truncate flex-1">{columnTitle}</span>
                     <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 h-4 sm:h-5 flex-shrink-0">{column.specs.length}</Badge>
                     {/* Mobile collapse indicator */}
                     <div className="md:hidden ml-2 text-muted-foreground/50">
@@ -696,7 +702,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                     >
                       {isUpdating && (
                         <div className="absolute inset-0 rounded-lg bg-background/80 flex items-center justify-center text-xs sm:text-sm font-medium z-10">
-                          Updating...
+                          {t('specsPage.board.updating')}
                         </div>
                       )}
                       <CardHeader className="p-3 sm:p-4 pb-1.5 sm:pb-2 space-y-1 sm:space-y-1.5">
@@ -747,7 +753,7 @@ function BoardView({ specs, onStatusChange, pendingSpecIds, showArchived, onTogg
                   <Card className="border-dashed border-gray-300 dark:border-gray-700 bg-transparent">
                     <CardContent className="py-6 sm:py-8 text-center px-2">
                       <Icon className={cn('mx-auto h-6 w-6 sm:h-8 sm:w-8 mb-1.5 sm:mb-2', column.config.colorClass, 'opacity-50')} />
-                      <p className="text-xs sm:text-sm text-muted-foreground">Drop here to move specs</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t('specsPage.board.dropHere')}</p>
                     </CardContent>
                   </Card>
                 )}

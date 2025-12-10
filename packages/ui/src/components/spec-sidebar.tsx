@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 interface Spec {
   id: string
@@ -25,6 +26,7 @@ interface SpecSidebarProps {
 export function SpecSidebar({ specs, currentSpecId }: SpecSidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
+  const { t } = useTranslation('common')
 
   const filteredSpecs = React.useMemo(() => {
     if (!searchQuery) return specs
@@ -47,7 +49,7 @@ export function SpecSidebar({ specs, currentSpecId }: SpecSidebarProps) {
           className="h-8 w-8 p-0"
         >
           <ChevronRight className="h-4 w-4" />
-          <span className="sr-only">Expand sidebar</span>
+          <span className="sr-only">{t('specSidebar.expand')}</span>
         </Button>
       </div>
     )
@@ -56,7 +58,7 @@ export function SpecSidebar({ specs, currentSpecId }: SpecSidebarProps) {
   return (
     <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-64 border-r bg-background flex flex-col">
       <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-semibold text-sm">All Specs</h2>
+        <h2 className="font-semibold text-sm">{t('specSidebar.title')}</h2>
         <Button
           variant="ghost"
           size="sm"
@@ -64,7 +66,7 @@ export function SpecSidebar({ specs, currentSpecId }: SpecSidebarProps) {
           className="h-8 w-8 p-0"
         >
           <ChevronLeft className="h-4 w-4" />
-          <span className="sr-only">Collapse sidebar</span>
+          <span className="sr-only">{t('specSidebar.collapse')}</span>
         </Button>
       </div>
 
@@ -72,7 +74,7 @@ export function SpecSidebar({ specs, currentSpecId }: SpecSidebarProps) {
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search specs..."
+            placeholder={t('specSidebar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-8 h-9"
@@ -84,7 +86,7 @@ export function SpecSidebar({ specs, currentSpecId }: SpecSidebarProps) {
         <div className="p-2">
           {filteredSpecs.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              No specs found
+              {t('specSidebar.empty')}
             </div>
           ) : (
             filteredSpecs.map((spec) => {
