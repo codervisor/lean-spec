@@ -20,7 +20,7 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 thiserror = "1.0"
 tokio = { version = "1.41", features = ["rt-multi-thread", "macros"] }
-tauri = { version = "1.6", features = [
+tauri = { version = "1.5", features = [
   "api-all",
   "system-tray",
   "updater",
@@ -37,4 +37,4 @@ default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 
 [build-dependencies]
-tauri-build = { version = "1.6", features = [] }
+tauri-build = { version = "1.5", features = [] }
