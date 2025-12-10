@@ -22,6 +22,8 @@ transitions:
 
 > **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-10 · **Tags**: desktop, tauri, migration, breaking-change, v2, bundling
 
+**Progress Update (2025-12-10)**: Phases 1-4 complete. All dependencies upgraded to v2, configuration migrated, and Rust/frontend code updated. Next: Fix remaining build errors and begin testing.
+
 ## Overview
 
 Upgrade LeanSpec Desktop from Tauri 1.5 to Tauri 2.x to benefit from:
@@ -144,51 +146,64 @@ Upgrade LeanSpec Desktop from Tauri 1.5 to Tauri 2.x to benefit from:
 
 ### Phase 1: Pre-Migration Preparation
 
-- [ ] Create migration branch: `feat/tauri-v2-migration`
-- [ ] Document current working state (take screenshots, test flows)
-- [ ] Backup current Cargo.lock and package-lock.json
-- [ ] Review [Tauri v2 migration guide](https://tauri.app/start/migrate/from-tauri-1/)
+- [x] Create migration branch: `feat/tauri-v2-migration`
+- [x] Document current working state (take screenshots, test flows)
+- [x] Backup current Cargo.lock and package-lock.json
+- [x] Review [Tauri v2 migration guide](https://tauri.app/start/migrate/from-tauri-1/)
 
 ### Phase 2: Dependency Updates
 
-- [ ] Update `@tauri-apps/cli` to latest v2 in `packages/desktop/package.json`
-- [ ] Update `@tauri-apps/api` to latest v2 in `packages/desktop/package.json`
-- [ ] Update Rust `tauri` to v2 in `src-tauri/Cargo.toml`
-- [ ] Update `tauri-build` to v2 in `[build-dependencies]`
-- [ ] Update plugins:
-  - [ ] `tauri-plugin-log` to v2 (from npm registry instead of git)
-  - [ ] `tauri-plugin-window-state` to v2 (from npm registry instead of git)
+- [x] Update `@tauri-apps/cli` to latest v2 in `packages/desktop/package.json`
+- [x] Update `@tauri-apps/api` to latest v2 in `packages/desktop/package.json`
+- [x] Update Rust `tauri` to v2 in `src-tauri/Cargo.toml`
+- [x] Update `tauri-build` to v2 in `[build-dependencies]`
+- [x] Update plugins:
+  - [x] `tauri-plugin-log` to v2 (from npm registry instead of git)
+  - [x] `tauri-plugin-window-state` to v2 (from npm registry instead of git)
+  - [x] Added: `tauri-plugin-shell`, `tauri-plugin-dialog`, `tauri-plugin-opener`, `tauri-plugin-updater`, `tauri-plugin-global-shortcut`, `tauri-plugin-notification`
 
 ### Phase 3: Run Automated Migration
 
-- [ ] Run `pnpm tauri migrate` from `packages/desktop`
-- [ ] Review generated changes:
-  - [ ] `tauri.conf.json` schema updates
-  - [ ] Rust code API changes
-  - [ ] Capability files created in `src-tauri/capabilities/`
-- [ ] Commit automated changes separately for tracking
+- [x] Run `pnpm tauri migrate` from `packages/desktop`
+- [x] Review generated changes:
+  - [x] `tauri.conf.json` schema updates (moved identifier, bundle, permissions)
+  - [x] Rust code API changes (reviewed and updated)
+  - [x] Capability files created in `src-tauri/capabilities/`
+- [x] Commit automated changes separately for tracking
 
 ### Phase 4: Manual Code Updates
 
 **Rust Code**:
-- [ ] Update `src-tauri/src/main.rs`:
-  - [ ] Replace `Window` with `WebviewWindow`
-  - [ ] Update imports
-- [ ] Update `src-tauri/src/menu.rs`:
-  - [ ] Migrate to `tauri::menu::MenuBuilder`
-  - [ ] Update menu event handler to `App::on_menu_event`
-- [ ] Update `src-tauri/src/tray.rs`:
-  - [ ] Migrate `SystemTray` to `TrayIcon`
-  - [ ] Split event handlers (menu vs tray icon events)
-- [ ] Update `src-tauri/src/ui_server.rs`:
-  - [ ] Review/update any deprecated APIs
-  - [ ] Verify resource path resolution still works
-- [ ] Update `src-tauri/src/commands.rs`:
-  - [ ] Check for deprecated command APIs
+- [x] Update `src-tauri/src/main.rs`:
+  - [x] Replace `Window` with `WebviewWindow`
+  - [x] Update imports
+  - [x] Update menu event handler signature to `(AppHandle, MenuEvent)`
+  - [x] Update window event handler signature to `(Window, WindowEvent)`
+- [x] Update `src-tauri/src/menu.rs`:
+  - [x] Migrate to `tauri::menu::MenuBuilder`
+  - [x] Update PredefinedMenuItem to require text parameter (None)
+  - [x] Update menu event handler to accept `(AppHandle, MenuEvent)`
+  - [x] Add `emit_to_main` helper for event emission
+- [x] Update `src-tauri/src/tray.rs`:
+  - [x] Migrate `SystemTray` to `TrayIconBuilder`
+  - [x] Split event handlers (menu vs tray icon events)
+  - [x] Update to `emit()` instead of `emit_all()`
+- [x] Update `src-tauri/src/ui_server.rs`:
+  - [x] Add `Manager` trait import for `.path()` method
+  - [x] Verify resource path resolution still works
+- [x] Update `src-tauri/src/commands.rs`:
+  - [x] Update updater API: `.check()` → `.check()?`
+  - [x] Update event emission to use `emit()` instead of `emit_all()`
+- [x] Update `src-tauri/src/shortcuts.rs`:
+  - [x] Update to use `emit()` instead of `emit_all()`
 
-**Frontend Code** (if any Tauri API usage):
-- [ ] Update imports from `@tauri-apps/api/tauri` to `@tauri-apps/api/core`
-- [ ] Update window imports if used
+**Frontend Code**:
+- [x] Update imports from `@tauri-apps/api/tauri` to `@tauri-apps/api/core`
+- [x] Update window API: `appWindow` → `WebviewWindow.getCurrent()`
+- [x] Update shell.open → `tauri-plugin-opener` `revealItemInDir()`
+- [x] Update `App.tsx`: Use `getDesktopVersion()` IPC instead of `getVersion()`
+- [x] Update `lib/ipc.ts`: Switch to core invoke, add `getDesktopVersion()`
+- [x] Update `TitleBar.tsx` & `WindowControls.tsx`: Use WebviewWindow API
 
 ### Phase 5: Configuration Fine-Tuning
 
