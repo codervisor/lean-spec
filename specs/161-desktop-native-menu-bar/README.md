@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-10'
 tags:
   - desktop
@@ -11,12 +11,15 @@ priority: medium
 created_at: '2025-12-10T08:41:06.205Z'
 depends_on:
   - 148-leanspec-desktop-app
-updated_at: '2025-12-10T08:41:06.262Z'
+updated_at: '2025-12-10T08:51:47.855Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-10T08:51:47.855Z'
 ---
 
 # Native Menu Bar for Desktop App
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-12-10 · **Tags**: desktop, ui, ux, os-integration, tauri
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-12-10 · **Tags**: desktop, ui, ux, os-integration, tauri
 
 ## Overview
 
@@ -340,7 +343,7 @@ Desktop App
    - Automatic JSON serialization
 
 3. **Sync with desktop config:**
-   - Mirror important prefs to `~/.lean-spec/desktop.yaml`
+   - Mirror important prefs to `~/.lean-spec/desktop.json` (see spec 162)
    - Share preferences across web/desktop
 
 **Decision for this spec:** Keep current localStorage behavior as-is. Menu bar interactions don't need new storage.
