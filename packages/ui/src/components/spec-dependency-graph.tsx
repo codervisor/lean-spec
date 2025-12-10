@@ -22,8 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 110;
-const precedenceColor = '#f59e0b';
-const requiredByColor = '#ef4444'; // Red color for downstream dependents
+const edgeColor = '#64748b'; // Neutral slate color for all edges
 
 type GraphTone = 'precedence' | 'current' | 'required-by';
 
@@ -36,6 +35,7 @@ interface SpecNodeData {
   priority?: string;
   href?: string;
   interactive?: boolean;
+  isCurrent?: boolean;
 }
 
 const statusIcons = {
@@ -52,10 +52,11 @@ const priorityIcons = {
   'low': ArrowDown,
 };
 
-const toneClasses: Record<GraphTone, string> = {
-  current: 'border-primary/70 bg-primary/5 text-foreground',
-  precedence: 'border-amber-400/70 bg-amber-400/10 text-amber-900 dark:text-amber-200',
-  'required-by': 'border-red-400/70 bg-red-400/10 text-red-900 dark:text-red-200',
+const toneClasses: Record<string, string> = {
+  'planned': 'border-blue-400/70 bg-blue-400/10 text-blue-900 dark:text-blue-200',
+  'in-progress': 'border-orange-400/70 bg-orange-400/10 text-orange-900 dark:text-orange-200',
+  'complete': 'border-green-400/70 bg-green-400/10 text-green-900 dark:text-green-200',
+  'archived': 'border-gray-400/70 bg-gray-400/10 text-gray-600 dark:text-gray-300',
 };
 
 const dagreConfig: dagre.GraphLabel = {
@@ -72,11 +73,16 @@ const SpecNode = React.memo(function SpecNode({ data }: NodeProps<SpecNodeData>)
   const PriorityIcon = data.priority ? priorityIcons[data.priority as keyof typeof priorityIcons] || Minus : null;
   const { t } = useTranslation('common');
 
+  // All nodes use status-based colors, but current spec gets enhanced styling
+  const baseClass = toneClasses[data.status || data.tone] || toneClasses['planned'];
+  const currentSpecEnhancement = data.tone === 'current' ? 'ring-2 ring-primary/40 shadow-lg' : '';
+
   return (
     <div
       className={cn(
         'flex w-[280px] flex-col gap-1.5 rounded-xl border-2 px-5 py-4 text-base shadow-md transition-colors',
-        toneClasses[data.tone],
+        baseClass,
+        currentSpecEnhancement,
         data.interactive && 'cursor-pointer hover:border-primary/70 hover:shadow-lg'
       )}
     >
@@ -234,10 +240,11 @@ function buildGraph(
       label: centerLabel,
       badge: copy.currentBadge,
       subtitle: copy.currentSubtitle,
-      tone: 'current',
+      tone: 'current', // Keep tone as 'current' for identification
       status: relationships.current.status,
       priority: relationships.current.priority,
       interactive: false,
+      isCurrent: true, // Add flag to identify current spec
     },
     position: { x: 0, y: 0 },
     draggable: false,
@@ -251,13 +258,26 @@ function buildGraph(
   // Precedence: Specs this one depends on (upstream, blocking)
   relationships.dependsOn?.forEach((node: SpecRelationshipNode, index: number) => {
     const id = nodeId('precedence', node.specName, index);
+    
+    // Generate status-based subtitle
+    let subtitle = copy.dependsOnSubtitle; // fallback
+    if (node.status === 'complete') {
+      subtitle = 'Completed';
+    } else if (node.status === 'in-progress') {
+      subtitle = 'In progress';
+    } else if (node.status === 'planned') {
+      subtitle = 'Must complete first';
+    } else if (node.status === 'archived') {
+      subtitle = 'Archived';
+    }
+    
     nodes.push({
       id,
       type: 'specNode',
       data: {
         label: formatRelationshipLabel(node),
         badge: copy.dependsOnBadge,
-        subtitle: copy.dependsOnSubtitle,
+        subtitle,
         tone: 'precedence',
         status: node.status,
         priority: node.priority,
@@ -278,12 +298,12 @@ function buildGraph(
       type: 'smoothstep',
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: precedenceColor,
+        color: edgeColor,
         width: 28,
         height: 28,
       },
       style: {
-        stroke: precedenceColor,
+        stroke: edgeColor,
         strokeWidth: 3,
       },
     });
@@ -292,13 +312,28 @@ function buildGraph(
   // Required By: Specs that depend on this one (downstream, blocked)
   relationships.requiredBy?.forEach((node: SpecRelationshipNode, index: number) => {
     const id = nodeId('required-by', node.specName, index);
+    
+    // Generate context-aware subtitle based on both current and dependency spec status
+    let subtitle = copy.requiredBySubtitle; // fallback
+    const currentIsComplete = relationships.current.status === 'complete' || relationships.current.status === 'archived';
+    
+    if (node.status === 'complete') {
+      subtitle = 'Completed';
+    } else if (node.status === 'in-progress') {
+      subtitle = 'In progress';
+    } else if (node.status === 'planned') {
+      subtitle = currentIsComplete ? 'Can proceed' : 'Blocked by this spec';
+    } else if (node.status === 'archived') {
+      subtitle = 'Archived';
+    }
+    
     nodes.push({
       id,
       type: 'specNode',
       data: {
         label: formatRelationshipLabel(node),
         badge: copy.requiredByBadge,
-        subtitle: copy.requiredBySubtitle,
+        subtitle,
         tone: 'required-by',
         status: node.status,
         priority: node.priority,
@@ -319,12 +354,12 @@ function buildGraph(
       type: 'smoothstep',
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: requiredByColor,
+        color: edgeColor,
         width: 28,
         height: 28,
       },
       style: {
-        stroke: requiredByColor,
+        stroke: edgeColor,
         strokeWidth: 3,
       },
     });
@@ -403,21 +438,6 @@ export function SpecDependencyGraph({ relationships, specNumber, specTitle, proj
           <Background gap={24} size={1} color="rgba(148, 163, 184, 0.3)" />
           <Controls showInteractive={false} />
         </ReactFlow>
-      </div>
-
-      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-        <span className="inline-flex items-center gap-2 font-medium">
-          <span className="inline-block h-2.5 w-8 rounded-full bg-amber-400/80" />
-          {t('dependencyGraph.legend.dependsOn')}
-        </span>
-        <span className="inline-flex items-center gap-2 font-medium">
-          <span className="inline-block h-2.5 w-8 rounded-full bg-red-400/80" />
-          {t('dependencyGraph.legend.requiredBy')}
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span className="inline-block h-2.5 w-8 rounded-full bg-primary/60" />
-          {t('dependencyGraph.legend.interactions')}
-        </span>
       </div>
     </div>
   );

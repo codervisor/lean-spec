@@ -138,7 +138,11 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
   const [copied, setCopied] = React.useState(false);
   const { t } = useTranslation();
   const tokenStatusLabel = t(`contextPage.viewer.tokenStatus.${getTokenStatusKey(file.tokenCount)}`);
-  const tokenCountLabel = t('contextPage.badges.tokens', { count: file.tokenCount.toLocaleString() });
+  const formattedTokenCount = file.tokenCount.toLocaleString();
+  const tokenCountLabel = t('contextPage.badges.tokens', {
+    count: file.tokenCount,
+    formattedCount: formattedTokenCount,
+  });
   
   const FileIcon = getFileIcon(file.name);
   const iconColor = getFileIconColor(file.name);

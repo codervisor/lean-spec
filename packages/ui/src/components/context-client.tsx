@@ -113,7 +113,11 @@ function ContextSection({
         ? t('contextPage.badges.filesSingular', { count: filteredCount })
         : t('contextPage.badges.filesPlural', { count: filteredCount }))
     : t('contextPage.badges.filesFiltered', { count: filteredCount, total: files.length });
-  const tokensLabel = t('contextPage.badges.tokens', { count: totalTokens.toLocaleString() });
+  const formattedTokenCount = totalTokens.toLocaleString();
+  const tokensLabel = t('contextPage.badges.tokens', {
+    count: totalTokens,
+    formattedCount: formattedTokenCount,
+  });
 
   return (
     <Card>
@@ -332,8 +336,9 @@ export function ContextClient({ context }: ContextClientProps) {
                       <span className="text-sm">
                         <strong className={getTotalTokenColor(context.totalTokens)}>
                           {t('contextPage.summary.totalTokens', {
-                            count: context.totalTokens.toLocaleString(),
-                          })}
+                              count: context.totalTokens,
+                              formattedCount: context.totalTokens.toLocaleString(),
+                            })}
                         </strong>
                       </span>
                     </div>

@@ -27,7 +27,6 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_notification::init())
         .system_tray(tray::system_tray(&initial_projects))
         .on_system_tray_event(tray::handle_event)
         .manage(desktop_state)

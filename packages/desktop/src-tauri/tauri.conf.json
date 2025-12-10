@@ -5,10 +5,10 @@
     "version": "0.1.0"
   },
   "build": {
-    "beforeDevCommand": "pnpm --dir .. dev",
+    "beforeDevCommand": "pnpm --dir ../.. dev",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
-    "beforeBuildCommand": "pnpm --dir .. build && pnpm --dir .. prepare:ui"
+    "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui"
   },
   "tauri": {
     "allowlist": {
@@ -28,8 +28,7 @@
         "resizable": true,
         "fullscreen": false,
         "decorations": false,
-        "transparent": true,
-        "shadow": true
+        "transparent": true
       }
     ],
     "systemTray": {
