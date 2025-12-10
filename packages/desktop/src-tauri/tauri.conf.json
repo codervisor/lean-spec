@@ -27,8 +27,8 @@
         "height": 900,
         "resizable": true,
         "fullscreen": false,
-        "decorations": false,
-        "transparent": true
+        "decorations": true,
+        "transparent": false
       }
     ],
     "systemTray": {

@@ -4,9 +4,11 @@
   justify-content: space-between;
   padding: 0 12px;
   height: 48px;
-  background: rgba(8, 11, 18, 0.92);
+  background: rgba(8, 11, 18, 0.98);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px);
+  z-index: 1000;
+  flex-shrink: 0;
 }
 
 .leftSection {
