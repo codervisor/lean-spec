@@ -8,7 +8,7 @@ mod state;
 mod tray;
 mod ui_server;
 
-use tauri::{Manager, Runtime, WindowEvent};
+use tauri::WindowEvent;
 
 use commands::{
     desktop_add_project,
@@ -39,7 +39,7 @@ fn main() {
             }
         })
         .setup(|app| {
-            register_shortcuts(app);
+            register_shortcuts(&app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

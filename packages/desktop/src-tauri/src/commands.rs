@@ -6,7 +6,7 @@ use tauri::{
 };
 
 use crate::config::{mutate_config, read_config};
-use crate::projects::{DesktopProject, ProjectStore};
+use crate::projects::DesktopProject;
 use crate::state::DesktopState;
 use crate::tray;
 
@@ -80,8 +80,9 @@ pub async fn desktop_add_project(app: AppHandle, state: State<'_, DesktopState>)
 pub async fn desktop_check_updates(app: AppHandle) -> Result<(), String> {
     app.updater()
         .check()
-        .await
-        .map_err(|error| error.to_string())
+    .await
+    .map(|_| ())
+    .map_err(|error| error.to_string())
 }
 
 fn build_and_publish(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstrapPayload> {
@@ -104,7 +105,7 @@ fn build_payload(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstr
     let ui_url = state
         .ui_server
         .ensure_running(app, active_project.as_ref())
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| anyhow!(error.to_string()))?;
 
     Ok(DesktopBootstrapPayload {
         ui_url,
