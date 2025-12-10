@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "prepare:ui": "node ./scripts/sync-ui-build.mjs",
     "dev:desktop": "tauri dev",
-    "build:desktop": "pnpm --filter @leanspec/ui build && pnpm prepare:ui && tauri build"
+    "build:desktop": "pnpm --filter @leanspec/ui build && pnpm prepare:ui && tauri build --bundles app"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.6",
