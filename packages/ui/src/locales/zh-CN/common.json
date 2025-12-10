@@ -270,7 +270,7 @@
     "searchPlaceholder": "在上下文文件中搜索...",
     "searchNoMatches": "没有找到包含「{{query}}」的内容",
     "summary": {
-      "totalTokens": "共 {{count}} 个 Token",
+      "totalTokens": "共 {{formattedCount}} 个 Token",
       "contextBudget": "用于 AI 工具的上下文预算"
     },
     "badges": {
@@ -281,7 +281,7 @@
       "filesSingular": "{{count}} 个文件",
       "filesPlural": "{{count}} 个文件",
       "filesFiltered": "{{count}}/{{total}} 个文件",
-      "tokens": "{{count}} 个 Token"
+      "tokens": "{{formattedCount}} 个 Token"
     },
     "sections": {
       "agents": {
@@ -361,11 +361,6 @@
       "dependsOnSubtitle": "必须先完成",
       "requiredBy": "被依赖",
       "requiredBySubtitle": "受此 Spec 阻塞"
-    },
-    "legend": {
-      "dependsOn": "依赖 → 完成后才可继续",
-      "requiredBy": "被依赖 ← 阻塞后续工作",
-      "interactions": "拖动平移 • 滚动或捏合进行缩放。"
     }
   },
   "dependenciesPage": {

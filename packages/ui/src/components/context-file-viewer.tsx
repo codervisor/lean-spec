@@ -192,7 +192,11 @@ export function ContextFileViewer({
   const matchCount = searchQuery ? countMatches(content, searchQuery) : 0;
   const { t } = useTranslation();
   const tokenStatusLabel = t(`contextPage.viewer.tokenStatus.${getTokenStatusKey(tokenCount)}`);
-  const tokenCountLabel = t('contextPage.badges.tokens', { count: tokenCount.toLocaleString() });
+  const formattedTokenCount = tokenCount.toLocaleString();
+  const tokenCountLabel = t('contextPage.badges.tokens', {
+    count: tokenCount,
+    formattedCount: formattedTokenCount,
+  });
   const matchLabel = matchCount === 1
     ? t('contextPage.badges.matchesSingular', { count: matchCount })
     : t('contextPage.badges.matchesPlural', { count: matchCount });

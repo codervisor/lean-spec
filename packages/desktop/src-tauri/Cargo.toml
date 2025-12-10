@@ -26,12 +26,15 @@ tauri = { version = "1.6", features = [
   "updater",
   "global-shortcut"
 ] }
-tauri-plugin-log = "0.2"
-tauri-plugin-notification = "0.2"
-tauri-plugin-window-state = "0.1"
+tauri-plugin-log = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1", package = "tauri-plugin-log" }
+tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1", package = "tauri-plugin-window-state" }
 walkdir = "2.5"
 sha2 = "0.10"
 uuid = { version = "1.10", features = ["v4"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
 
 [build-dependencies]
 tauri-build = { version = "1.6", features = [] }

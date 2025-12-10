@@ -48,6 +48,7 @@ Lightweight spec methodology for AI-powered development.
 | **ALWAYS link spec references** | Content mentions another spec → `lean-spec link <spec> --depends-on <other>` |
 | **Track status transitions** | `planned` → `in-progress` (before coding) → `complete` (after done) |
 | **No nested code blocks** | Use indentation instead |
+| **Update all translations** | UI/MCP/CLI changes: Update both `en/common.json` and `zh-CN/common.json` in `packages/ui/src/locales/` and `packages/mcp/src/locales/` |
 
 ### 🚫 Common Mistakes
 
@@ -58,6 +59,7 @@ Lightweight spec methodology for AI-powered development.
 | Leave status as "planned" | Update to `in-progress` before coding |
 | Edit frontmatter manually | Use `update` tool |
 | Complete spec without documentation | Document progress, prompts, learnings first |
+| Update only English translations | Update both `en` and `zh-CN` locales |
 
 ## 📋 SDD Workflow
 

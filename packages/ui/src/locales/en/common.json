@@ -270,7 +270,7 @@
     "searchPlaceholder": "Search within context files...",
     "searchNoMatches": "No matches found for \"{{query}}\"",
     "summary": {
-      "totalTokens": "{{count}} total tokens",
+      "totalTokens": "{{formattedCount}} total tokens",
       "contextBudget": "Context budget for AI agents"
     },
     "badges": {
@@ -281,7 +281,7 @@
       "filesSingular": "{{count}} file",
       "filesPlural": "{{count}} files",
       "filesFiltered": "{{count}}/{{total}} files",
-      "tokens": "{{count}} tokens"
+      "tokens": "{{formattedCount}} tokens"
     },
     "sections": {
       "agents": {
@@ -361,11 +361,6 @@
       "dependsOnSubtitle": "Must complete first",
       "requiredBy": "Required By",
       "requiredBySubtitle": "Blocked by this spec"
-    },
-    "legend": {
-      "dependsOn": "Depends On → blocks until complete",
-      "requiredBy": "Required By ← blocked by this spec",
-      "interactions": "Drag to pan • Scroll / pinch to zoom."
     }
   },
   "dependenciesPage": {
