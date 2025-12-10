@@ -137,5 +137,10 @@
     "json": "以 JSON 格式输出",
     "port": "端口号",
     "noOpen": "不自动打开浏览器"
+  },
+  "help": {
+    "commandGroupsTitle": "命令分组",
+    "optionsTitle": "常用选项",
+    "examplesTitle": "示例"
   }
 }

@@ -17,6 +17,7 @@ import { ContextFileCard, countMatches } from '@/components/context-file-viewer'
 import { ContextFileDetail } from '@/components/context-file-detail';
 import type { ProjectContext, ContextFile } from '@/lib/specs/types';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface ContextClientProps {
   context: ProjectContext;
@@ -84,6 +85,7 @@ function ContextSection({
   projectRoot?: string;
   onFileSelect?: (file: ContextFile) => void;
 }) {
+  const { t } = useTranslation();
   const totalTokens = files.reduce((sum, f) => sum + f.tokenCount, 0);
   
   // Filter files by search if query exists
@@ -102,6 +104,17 @@ function ContextSection({
     return filteredFiles.reduce((sum, file) => sum + countMatches(file.content, searchQuery), 0);
   }, [filteredFiles, searchQuery]);
 
+  const filteredCount = filteredFiles.length;
+  const matchesLabel = totalMatches === 1
+    ? t('contextPage.badges.matchesSingular', { count: totalMatches })
+    : t('contextPage.badges.matchesPlural', { count: totalMatches });
+  const filesLabel = filteredCount === files.length
+    ? (filteredCount === 1
+        ? t('contextPage.badges.filesSingular', { count: filteredCount })
+        : t('contextPage.badges.filesPlural', { count: filteredCount }))
+    : t('contextPage.badges.filesFiltered', { count: filteredCount, total: files.length });
+  const tokensLabel = t('contextPage.badges.tokens', { count: totalTokens.toLocaleString() });
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -119,15 +132,15 @@ function ContextSection({
             <div className="flex items-center gap-2">
               {searchQuery && totalMatches > 0 && (
                 <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                  {totalMatches} match{totalMatches !== 1 ? 'es' : ''}
+                  {matchesLabel}
                 </Badge>
               )}
               <Badge variant="secondary" className="text-xs">
-                {filteredFiles.length}{filteredFiles.length !== files.length ? `/${files.length}` : ''} file{files.length !== 1 ? 's' : ''}
+                {filesLabel}
               </Badge>
               <Badge variant="outline" className={cn('text-xs', getTotalTokenColor(totalTokens))}>
                 <Coins className="h-3 w-3 mr-1" />
-                {totalTokens.toLocaleString()} tokens
+                {tokensLabel}
               </Badge>
             </div>
           )}
@@ -137,8 +150,8 @@ function ContextSection({
         {filteredFiles.length === 0 ? (
           <EmptyState
             icon={AlertCircle}
-            title={searchQuery ? "No matches found" : emptyMessage}
-            description={searchQuery ? "Try a different search term" : "No files found in this category"}
+            title={searchQuery ? t('contextPage.search.noMatchesTitle') : emptyMessage}
+            description={searchQuery ? t('contextPage.search.noMatchesDescription') : t('contextPage.search.noFilesDescription')}
             suggestion={searchQuery ? undefined : emptySuggestion}
           />
         ) : (
@@ -167,6 +180,7 @@ export function ContextClient({ context }: ContextClientProps) {
   const [copiedAll, setCopiedAll] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedFile, setSelectedFile] = React.useState<ContextFile | null>(null);
+  const { t } = useTranslation();
 
   // Collect all content for "Copy All" feature
   const handleCopyAll = async () => {
@@ -239,10 +253,10 @@ export function ContextClient({ context }: ContextClientProps) {
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
                 <BookOpen className="h-8 w-8 text-primary" />
-                Project Context
+                {t('contextPage.title')}
               </h1>
               <p className="text-muted-foreground mt-2">
-                View project-level context files that inform AI agents and development workflows
+                {t('contextPage.description')}
               </p>
             </div>
             {hasAnyContent && (
@@ -255,12 +269,12 @@ export function ContextClient({ context }: ContextClientProps) {
                 {copiedAll ? (
                   <>
                     <Check className="h-4 w-4 mr-2 text-green-600" />
-                    Copied!
+                    {t('contextPage.copyAllSuccess')}
                   </>
                 ) : (
                   <>
                     <Copy className="h-4 w-4 mr-2" />
-                    Copy All
+                    {t('contextPage.copyAll')}
                   </>
                 )}
               </Button>
@@ -275,7 +289,7 @@ export function ContextClient({ context }: ContextClientProps) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search within context files..."
+                  placeholder={t('contextPage.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-10"
@@ -297,10 +311,14 @@ export function ContextClient({ context }: ContextClientProps) {
                 <div className="flex items-center gap-2 text-sm">
                   {totalMatches > 0 ? (
                     <Badge variant="secondary" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                      {totalMatches} match{totalMatches !== 1 ? 'es' : ''} found
+                      {totalMatches === 1
+                        ? t('contextPage.badges.matchesFoundSingular', { count: totalMatches })
+                        : t('contextPage.badges.matchesFoundPlural', { count: totalMatches })}
                     </Badge>
                   ) : (
-                    <span className="text-muted-foreground">No matches found for &quot;{searchQuery}&quot;</span>
+                    <span className="text-muted-foreground">
+                      {t('contextPage.searchNoMatches', { query: searchQuery })}
+                    </span>
                   )}
                 </div>
               )}
@@ -313,14 +331,15 @@ export function ContextClient({ context }: ContextClientProps) {
                       <Coins className={cn('h-5 w-5', getTotalTokenColor(context.totalTokens))} />
                       <span className="text-sm">
                         <strong className={getTotalTokenColor(context.totalTokens)}>
-                          {context.totalTokens.toLocaleString()}
+                          {t('contextPage.summary.totalTokens', {
+                            count: context.totalTokens.toLocaleString(),
+                          })}
                         </strong>
-                        {' '}total tokens
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Info className="h-4 w-4" />
-                      Context budget for AI agents
+                      {t('contextPage.summary.contextBudget')}
                     </div>
                   </div>
                 </CardContent>
@@ -333,12 +352,12 @@ export function ContextClient({ context }: ContextClientProps) {
         <div className="space-y-6">
           {/* Agent Instructions */}
           <ContextSection
-            title="Agent Instructions"
-            description="System prompts and guidelines for AI agents"
+            title={t('contextPage.sections.agents.title')}
+            description={t('contextPage.sections.agents.description')}
             icon={BookOpen}
             files={context.agentInstructions}
-            emptyMessage="No agent instructions found"
-            emptySuggestion="Create an AGENTS.md file in your project root"
+            emptyMessage={t('contextPage.sections.agents.empty')}
+            emptySuggestion={t('contextPage.sections.agents.suggestion')}
             defaultExpanded={context.agentInstructions.length <= 2}
             searchQuery={searchQuery}
             projectRoot={context.projectRoot}
@@ -347,12 +366,12 @@ export function ContextClient({ context }: ContextClientProps) {
 
           {/* Configuration */}
           <ContextSection
-            title="Configuration"
-            description="LeanSpec project configuration and settings"
+            title={t('contextPage.sections.config.title')}
+            description={t('contextPage.sections.config.description')}
             icon={Settings}
             files={context.config.file ? [context.config.file] : []}
-            emptyMessage="No configuration found"
-            emptySuggestion="Run 'lean-spec init' to create a config file"
+            emptyMessage={t('contextPage.sections.config.empty')}
+            emptySuggestion={t('contextPage.sections.config.suggestion')}
             defaultExpanded={true}
             searchQuery={searchQuery}
             projectRoot={context.projectRoot}
@@ -361,12 +380,12 @@ export function ContextClient({ context }: ContextClientProps) {
 
           {/* Project Documentation */}
           <ContextSection
-            title="Project Documentation"
-            description="README, contributing guidelines, and changelog"
+            title={t('contextPage.sections.docs.title')}
+            description={t('contextPage.sections.docs.description')}
             icon={FileText}
             files={context.projectDocs}
-            emptyMessage="No project docs found"
-            emptySuggestion="Create a README.md file in your project root"
+            emptyMessage={t('contextPage.sections.docs.empty')}
+            emptySuggestion={t('contextPage.sections.docs.suggestion')}
             defaultExpanded={false}
             searchQuery={searchQuery}
             projectRoot={context.projectRoot}
@@ -380,9 +399,9 @@ export function ContextClient({ context }: ContextClientProps) {
             <CardContent className="py-12">
               <EmptyState
                 icon={BookOpen}
-                title="No project context found"
-                description="This project doesn't have any context files yet. Context files help AI agents understand your project better."
-                suggestion="Start by creating AGENTS.md or running 'lean-spec init'"
+                title={t('contextPage.emptyState.title')}
+                description={t('contextPage.emptyState.description')}
+                suggestion={t('contextPage.emptyState.suggestion')}
               />
             </CardContent>
           </Card>

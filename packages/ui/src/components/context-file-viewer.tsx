@@ -8,7 +8,7 @@
 'use client';
 
 import * as React from 'react';
-import { 
+import {
   Copy, 
   Check, 
   FileText, 
@@ -36,6 +36,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import { MermaidDiagram } from '@/components/mermaid-diagram';
+import { useTranslation } from 'react-i18next';
 
 interface ContextFileViewerProps {
   name: string;
@@ -112,13 +113,13 @@ function getTokenColor(tokens: number): string {
 }
 
 /**
- * Get token status label
+ * Get token status key for localization
  */
-function getTokenStatus(tokens: number): string {
-  if (tokens < 2000) return 'Optimal';
-  if (tokens < 3500) return 'Good';
-  if (tokens < 5000) return 'Large';
-  return 'Very Large';
+function getTokenStatusKey(tokens: number): 'optimal' | 'good' | 'large' | 'veryLarge' {
+  if (tokens < 2000) return 'optimal';
+  if (tokens < 3500) return 'good';
+  if (tokens < 5000) return 'large';
+  return 'veryLarge';
 }
 
 /**
@@ -126,7 +127,7 @@ function getTokenStatus(tokens: number): string {
  */
 function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -189,6 +190,12 @@ export function ContextFileViewer({
 }: ContextFileViewerProps) {
   const [copied, setCopied] = React.useState(false);
   const matchCount = searchQuery ? countMatches(content, searchQuery) : 0;
+  const { t } = useTranslation();
+  const tokenStatusLabel = t(`contextPage.viewer.tokenStatus.${getTokenStatusKey(tokenCount)}`);
+  const tokenCountLabel = t('contextPage.badges.tokens', { count: tokenCount.toLocaleString() });
+  const matchLabel = matchCount === 1
+    ? t('contextPage.badges.matchesSingular', { count: matchCount })
+    : t('contextPage.badges.matchesPlural', { count: matchCount });
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -247,15 +254,15 @@ export function ContextFileViewer({
           <div className="flex items-center gap-2 shrink-0">
             {searchQuery && matchCount > 0 && (
               <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                {matchCount} match{matchCount !== 1 ? 'es' : ''}
+                {matchLabel}
               </Badge>
             )}
             <Badge variant="outline" className={cn('text-xs', getTokenColor(tokenCount))}>
               <Coins className="h-3 w-3 mr-1" />
-              {tokenCount.toLocaleString()} tokens
+              {tokenCountLabel}
             </Badge>
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              {getTokenStatus(tokenCount)}
+              {tokenStatusLabel}
             </span>
             {onViewDetail && (
               <Button
@@ -263,7 +270,7 @@ export function ContextFileViewer({
                 size="sm"
                 className="h-7 w-7 p-0"
                 onClick={handleViewDetail}
-                title="View full page"
+                title={t('contextPage.viewer.viewFull')}
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </Button>
@@ -274,7 +281,7 @@ export function ContextFileViewer({
                 size="sm"
                 className="h-7 w-7 p-0"
                 onClick={handleOpenInEditor}
-                title="Open in VS Code"
+                title={t('contextPage.viewer.openInEditor')}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -284,7 +291,7 @@ export function ContextFileViewer({
               size="sm"
               className="h-7 w-7 p-0"
               onClick={handleCopy}
-              title="Copy content"
+              title={t('contextPage.viewer.copyContent')}
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-green-600" />
@@ -302,9 +309,9 @@ export function ContextFileViewer({
           <div className="flex items-center gap-4 px-4 py-2 bg-muted/30 text-xs text-muted-foreground border-b">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              Modified {formatDate(lastModified)}
+              {t('contextPage.viewer.modified', { date: formatDate(lastModified) })}
             </span>
-            <span>{content.split('\n').length} lines</span>
+            <span>{t('contextPage.viewer.lines', { count: content.split('\n').length })}</span>
           </div>
 
           {/* Content area */}

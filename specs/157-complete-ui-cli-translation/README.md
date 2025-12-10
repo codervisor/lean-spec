@@ -145,22 +145,25 @@ Follow spec 115 and docs-site/AGENTS.md:
 
 **Phase 2: Translation File Updates** (2 days)
 - [ ] Add missing keys to `packages/ui/src/locales/zh-CN/*.json`
+  - [x] Context viewer + summary strings (2025-12-10)
 - [ ] Add missing keys to `packages/cli/src/locales/zh-CN/*.json`
+  - [x] Help/command group headings (2025-12-10)
 - [ ] Organize keys by component/feature
 - [ ] Verify consistency with spec 115 guidelines
 
 **Phase 3: UI Component Integration** (3-4 days)
 - [ ] High priority components (navigation, spec pages, badges)
 - [ ] Medium priority components (stats, dependencies, timeline)
+  - [x] Project context (context-client, context-file-viewer, context-file-detail) localized (2025-12-10)
 - [ ] Low priority components (tooltips, labels)
 - [ ] Add 'use client' directive where needed
 - [ ] Test each component after integration
 
 **Phase 4: CLI Command Integration** (2 days)
-- [ ] Update all command descriptions
+- [x] Update all command descriptions
 - [ ] Update error messages in commands
 - [ ] Update output messages (success/warning text)
-- [ ] Update help text
+- [x] Update help text
 - [ ] Test each command with zh-CN locale
 
 **Phase 5: Testing & Polish** (1 day)
@@ -210,6 +213,11 @@ Follow spec 115 and docs-site/AGENTS.md:
 - [ ] No performance degradation
 
 ## Notes
+
+### Progress Log
+- **2025-12-10**
+  - Localized the project context surfaces (context-client, context-file-viewer, context-file-detail) and expanded both en/zh locale files with dedicated context keys.
+  - Introduced CLI localization helpers so every registered command pulls its description/usage from `commands.json`, auto-localizes standard option descriptions, and rebuilds the grouped help/Examples section from translated metadata.
 
 **Component Audit Summary**:
 

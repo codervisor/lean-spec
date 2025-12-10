@@ -183,6 +183,79 @@
       "dependenciesLink": "在依赖页面中查看"
     }
   },
+  "contextPage": {
+    "title": "项目上下文",
+    "description": "查看驱动 AI 工具与开发流程的项目级上下文文件",
+    "copyAll": "复制全部",
+    "copyAllSuccess": "已复制！",
+    "searchPlaceholder": "在上下文文件中搜索...",
+    "searchNoMatches": "没有找到包含「{{query}}」的内容",
+    "summary": {
+      "totalTokens": "共 {{count}} 个 Token",
+      "contextBudget": "用于 AI 工具的上下文预算"
+    },
+    "badges": {
+      "matchesSingular": "{{count}} 个匹配",
+      "matchesPlural": "{{count}} 个匹配",
+      "matchesFoundSingular": "找到 {{count}} 个匹配",
+      "matchesFoundPlural": "找到 {{count}} 个匹配",
+      "filesSingular": "{{count}} 个文件",
+      "filesPlural": "{{count}} 个文件",
+      "filesFiltered": "{{count}}/{{total}} 个文件",
+      "tokens": "{{count}} 个 Token"
+    },
+    "sections": {
+      "agents": {
+        "title": "Agent 指令",
+        "description": "提供给 AI Agent 的系统提示与使用指南",
+        "empty": "当前没有 Agent 指令",
+        "suggestion": "在项目根目录创建 AGENTS.md"
+      },
+      "config": {
+        "title": "配置",
+        "description": "LeanSpec 项目配置与设置",
+        "empty": "没有找到配置文件",
+        "suggestion": "运行 'lean-spec init' 生成配置文件"
+      },
+      "docs": {
+        "title": "项目文档",
+        "description": "README、贡献指南与变更日志",
+        "empty": "没有找到项目文档",
+        "suggestion": "在项目根目录创建 README.md"
+      }
+    },
+    "emptyState": {
+      "title": "未检测到项目上下文",
+      "description": "该项目暂未配置任何上下文文件，AI Agent 无法了解项目背景。",
+      "suggestion": "先创建 AGENTS.md 或执行 'lean-spec init'"
+    },
+    "search": {
+      "noMatchesTitle": "未找到匹配项",
+      "noMatchesDescription": "试试其他关键词",
+      "noFilesDescription": "该分类下没有文件"
+    },
+    "viewer": {
+      "modified": "更新于 {{date}}",
+      "lines": "{{count}} 行",
+      "viewFull": "查看全页",
+      "openInEditor": "在 VS Code 中打开",
+      "copyContent": "复制内容",
+      "tokenStatus": {
+        "optimal": "最佳",
+        "good": "良好",
+        "large": "偏大",
+        "veryLarge": "非常大"
+      }
+    },
+    "detail": {
+      "back": "返回",
+      "openInEditor": "在编辑器中打开",
+      "copy": "复制",
+      "copySuccess": "已复制！",
+      "lines": "{{count}} 行",
+      "modified": "更新于 {{date}}"
+    }
+  },
   "specTimeline": {
     "events": {
       "created": "创建",
