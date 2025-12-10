@@ -24,6 +24,7 @@
   "status": {
     "planned": "Planned",
     "inProgress": "In Progress",
+    "in-progress": "In Progress",
     "complete": "Complete",
     "archived": "Archived",
     "blocked": "Blocked"
@@ -32,7 +33,8 @@
     "critical": "Critical",
     "high": "High",
     "medium": "Medium",
-    "low": "Low"
+    "low": "Low",
+    "unknown": "Unknown"
   },
   "actions": {
     "create": "Create",
@@ -183,6 +185,47 @@
       "dependenciesLink": "View in full dependencies page"
     }
   },
+  "statsPage": {
+    "title": "Project Statistics",
+    "description": "Comprehensive metrics and insights",
+    "cards": {
+      "total": {
+        "title": "Total Specs",
+        "subtitle": "All specifications"
+      },
+      "completed": {
+        "title": "Completed",
+        "subtitle": "completion rate"
+      },
+      "inProgress": {
+        "title": "In Progress",
+        "subtitle": "Active work"
+      },
+      "planned": {
+        "title": "Planned",
+        "subtitle": "Upcoming work"
+      }
+    },
+    "charts": {
+      "status": {
+        "title": "Status Distribution",
+        "description": "Breakdown of specs by status"
+      },
+      "priority": {
+        "title": "Priority Distribution",
+        "description": "Breakdown of specs by priority"
+      },
+      "creation": {
+        "title": "Creation Trend",
+        "description": "Specs created over time"
+      },
+      "topTags": {
+        "title": "Top Tags",
+        "description": "Most frequently used tags"
+      },
+      "label": "{{name}}: {{value}}"
+    }
+  },
   "contextPage": {
     "title": "Project Context",
     "description": "View project-level context files that inform AI agents and development workflows",
@@ -287,6 +330,55 @@
       "dependsOn": "Depends On → blocks until complete",
       "requiredBy": "Required By ← blocked by this spec",
       "interactions": "Drag to pan • Scroll / pinch to zoom."
+    }
+  },
+  "dependenciesPage": {
+    "header": {
+      "title": "Dependency Graph",
+      "summary": {
+        "connected": "{{count}} specs with dependencies",
+        "standalone": "{{count}} standalone",
+        "none": "No dependencies defined"
+      }
+    },
+    "selector": {
+      "placeholder": "Select spec to highlight...",
+      "filterPlaceholder": "Type to filter...",
+      "clearSelection": "Clear selection",
+      "empty": "No specs found"
+    },
+    "filters": {
+      "showStandalone": "Show Standalone ({{count}})",
+      "compact": "Compact",
+      "focusMode": "Focus Mode",
+      "clear": "Clear",
+      "count": "({{count}})"
+    },
+    "empty": {
+      "title": "No dependencies to display",
+      "filters": "No specs match the current filters",
+      "standaloneHint": "Enable \"Show Standalone\" to see specs without dependencies"
+    },
+    "legend": {
+      "dependsOn": "Depends On (arrow shows direction)",
+      "instructions": "Click: select • Double-click: open • Drag to rearrange"
+    },
+    "graph": {
+      "levelTitle": "Level {{depth}}",
+      "levelBadge": "L{{depth}}"
+    },
+    "sidebar": {
+      "emptyTitle": "Select a spec",
+      "emptyDescription": "Click on a spec to see its dependencies",
+      "openSpec": "Open Spec →",
+      "dependsOnHeading": "Depends On ({{count}})",
+      "requiredByHeading": "Required By ({{count}})",
+      "emptyUpstream": "No upstream dependencies",
+      "emptyDownstream": "No specs depend on this",
+      "depth": {
+        "direct": "Direct",
+        "level": "L{{depth}}"
+      }
     }
   },
   "editors": {

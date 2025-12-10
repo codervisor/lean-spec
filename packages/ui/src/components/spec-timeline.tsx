@@ -31,7 +31,7 @@ export function SpecTimeline({
   status,
   className 
 }: SpecTimelineProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const events: TimelineEvent[] = [];
 
   // Always include created
@@ -109,7 +109,7 @@ export function SpecTimeline({
         const isLast = i === events.length - 1;
         const nextEvent = !isLast ? events[i + 1] : null;
         const duration = event.date && nextEvent?.date && !nextEvent.isFuture
-          ? formatDuration(event.date, nextEvent.date)
+          ? formatDuration(event.date, nextEvent.date, i18n.language)
           : '';
         
         return (
@@ -148,7 +148,7 @@ export function SpecTimeline({
               {/* Date row - reserve space even when pending */}
               <div className="text-[10px] text-center min-h-[14px]">
                 {event.date && !event.isFuture && (
-                  <span className="text-muted-foreground">{formatRelativeTime(event.date)}</span>
+                  <span className="text-muted-foreground">{formatRelativeTime(event.date, i18n.language)}</span>
                 )}
                 {!event.date && event.isFuture && (
                   <span className="text-muted-foreground/70">{t('specTimeline.state.awaiting')}</span>

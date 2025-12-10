@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { SpecNode, FocusedNodeDetails } from './types';
 
@@ -27,12 +28,15 @@ interface SpecListItemProps {
 }
 
 function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
+  const { t } = useTranslation('common');
   const typeColors = {
     upstream: 'border-l-amber-500',
     downstream: 'border-l-emerald-500',
   };
 
-  const depthLabel = depth === 1 ? 'Direct' : `L${depth}`;
+  const depthLabel = depth === 1
+    ? t('dependenciesPage.sidebar.depth.direct')
+    : t('dependenciesPage.sidebar.depth.level', { depth });
   
   const StatusIcon = statusIcons[spec.status as keyof typeof statusIcons] || Clock;
   const PriorityIcon = priorityIcons[spec.priority as keyof typeof priorityIcons] || Minus;
@@ -58,7 +62,7 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
             spec.status === 'complete' && 'bg-green-500/20',
             spec.status === 'archived' && 'bg-gray-500/20'
           )}
-          title={spec.status}
+          title={t(`status.${spec.status}` as `status.${string}`)}
         >
           <StatusIcon
             className={cn(
@@ -79,7 +83,7 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
             spec.priority === 'medium' && 'bg-blue-500/20',
             spec.priority === 'low' && 'bg-gray-500/20'
           )}
-          title={spec.priority}
+          title={spec.priority ? t(`priority.${spec.priority}` as `priority.${string}`) : undefined}
         >
           <PriorityIcon
             className={cn(
@@ -107,6 +111,7 @@ interface SpecSidebarProps {
 }
 
 export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSidebarProps) {
+  const { t } = useTranslation('common');
   if (!focusedDetails) {
     return (
       <div className="w-64 shrink-0 rounded-lg border border-border bg-background/95 overflow-hidden flex flex-col">
@@ -122,8 +127,8 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium">Select a spec</p>
-            <p className="text-xs mt-1">Click on a spec to see its dependencies</p>
+            <p className="text-sm font-medium">{t('dependenciesPage.sidebar.emptyTitle')}</p>
+            <p className="text-xs mt-1">{t('dependenciesPage.sidebar.emptyDescription')}</p>
           </div>
         </div>
       </div>
@@ -189,7 +194,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
           onClick={() => onOpenSpec(node.number)}
           className="mt-2 w-full rounded bg-primary/20 border border-primary/40 px-2 py-1.5 text-xs text-primary hover:bg-primary/30 font-medium"
         >
-          Open Spec →
+          {t('dependenciesPage.sidebar.openSpec')}
         </button>
       </div>
 
@@ -200,7 +205,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Depends On ({upstream.reduce((sum, g) => sum + g.specs.length, 0)})
+              {t('dependenciesPage.sidebar.dependsOnHeading', { count: upstream.reduce((sum, g) => sum + g.specs.length, 0) })}
             </span>
           </div>
           {upstream.length > 0 ? (
@@ -218,7 +223,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
               )}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground/60 italic">No upstream dependencies</p>
+            <p className="text-xs text-muted-foreground/60 italic">{t('dependenciesPage.sidebar.emptyUpstream')}</p>
           )}
         </div>
 
@@ -227,7 +232,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Required By ({downstream.reduce((sum, g) => sum + g.specs.length, 0)})
+              {t('dependenciesPage.sidebar.requiredByHeading', { count: downstream.reduce((sum, g) => sum + g.specs.length, 0) })}
             </span>
           </div>
           {downstream.length > 0 ? (
@@ -245,7 +250,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
               )}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground/60 italic">No specs depend on this</p>
+            <p className="text-xs text-muted-foreground/60 italic">{t('dependenciesPage.sidebar.emptyDownstream')}</p>
           )}
         </div>
       </div>

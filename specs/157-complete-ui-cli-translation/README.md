@@ -146,6 +146,8 @@ Follow spec 115 and docs-site/AGENTS.md:
 **Phase 2: Translation File Updates** (2 days)
 - [ ] Add missing keys to `packages/ui/src/locales/zh-CN/*.json`
   - [x] Context viewer + summary strings (2025-12-10)
+  - [x] Stats dashboard metrics copy (2025-12-10)
+  - [x] Dependency graph filters + sidebar copy (2025-12-10)
 - [ ] Add missing keys to `packages/cli/src/locales/zh-CN/*.json`
   - [x] Help/command group headings (2025-12-10)
 - [ ] Organize keys by component/feature
@@ -153,8 +155,11 @@ Follow spec 115 and docs-site/AGENTS.md:
 
 **Phase 3: UI Component Integration** (3-4 days)
 - [ ] High priority components (navigation, spec pages, badges)
-- [ ] Medium priority components (stats, dependencies, timeline)
+ - [x] Medium priority components (stats, dependencies, timeline)
   - [x] Project context (context-client, context-file-viewer, context-file-detail) localized (2025-12-10)
+  - [x] Stats dashboard localized (2025-12-10)
+  - [x] Dependency graph (filters, minimap, sidebar) localized (2025-12-10)
+  - [x] Timeline widgets use locale-aware formatting (2025-12-10)
 - [ ] Low priority components (tooltips, labels)
 - [ ] Add 'use client' directive where needed
 - [ ] Test each component after integration
@@ -218,6 +223,9 @@ Follow spec 115 and docs-site/AGENTS.md:
 - **2025-12-10**
   - Localized the project context surfaces (context-client, context-file-viewer, context-file-detail) and expanded both en/zh locale files with dedicated context keys.
   - Introduced CLI localization helpers so every registered command pulls its description/usage from `commands.json`, auto-localizes standard option descriptions, and rebuilds the grouped help/Examples section from translated metadata.
+  - Localized the stats dashboard (summary cards, charts, and tooltips) plus added the supporting en/zh copy blocks so the analytics view switches languages cleanly.
+  - Localized the dependency graph dashboard (filters, selector, sidebar) and added the shared `dependenciesPage.*` copy so both locales render consistent tooling and helper text.
+  - Updated the spec timeline to reuse locale-aware relative time and duration helpers so zh-CN reads naturally across the widget.
 
 **Component Audit Summary**:
 
