@@ -1,0 +1,13 @@
+.desktop {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top, rgba(27, 34, 63, 0.85), rgba(3, 6, 12, 0.95));
+}
+
+.content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
