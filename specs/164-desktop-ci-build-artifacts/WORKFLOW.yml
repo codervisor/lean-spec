@@ -1,0 +1,242 @@
+# GitHub Actions Workflow for Desktop Builds
+# File: .github/workflows/desktop-build.yml
+
+name: Desktop Build
+
+on:
+  # Trigger on version tags
+  push:
+    tags:
+      - 'v*.*.*'
+  
+  # Trigger when GitHub Release is published
+  release:
+    types: [published]
+  
+  # Manual trigger for testing/ad-hoc builds
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (overrides package.json)'
+        required: false
+        type: string
+      platforms:
+        description: 'Platforms to build (comma-separated: macos,windows,linux, or "all")'
+        required: false
+        default: 'all'
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  RUST_VERSION: 'stable'
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS (Intel)
+          - platform: macos
+            os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: 'leanspec-desktop-macos-x64'
+            artifact_ext: 'dmg'
+          
+          # Windows (x64)
+          - platform: windows
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: 'leanspec-desktop-windows-x64'
+            artifact_ext: 'msi'
+          
+          # Linux (x64) - AppImage
+          - platform: linux-appimage
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: 'leanspec-desktop-linux-x64'
+            artifact_ext: 'AppImage'
+          
+          # Linux (x64) - Debian package
+          - platform: linux-deb
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: 'leanspec-desktop-linux-x64'
+            artifact_ext: 'deb'
+    
+    # Skip platforms not specified in manual dispatch
+    if: |
+      github.event_name != 'workflow_dispatch' || 
+      inputs.platforms == 'all' || 
+      contains(inputs.platforms, matrix.platform) || 
+      (contains(inputs.platforms, 'linux') && startsWith(matrix.platform, 'linux'))
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: ${{ matrix.target }}
+      
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+      
+      - name: Install Windows dependencies (WiX)
+        if: runner.os == 'Windows'
+        run: dotnet tool install --global wix
+        shell: pwsh
+      
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            packages/desktop/src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build desktop app
+        run: pnpm build:desktop
+        env:
+          # Disable telemetry during CI builds
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      
+      - name: Find build artifacts
+        id: artifacts
+        shell: bash
+        run: |
+          # Find the generated installer/package
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            ARTIFACT_PATH=$(find packages/desktop/src-tauri/target/release/bundle/dmg -name "*.dmg" -type f | head -n 1)
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            ARTIFACT_PATH=$(find packages/desktop/src-tauri/target/release/bundle/msi -name "*.msi" -type f | head -n 1)
+          elif [ "${{ matrix.platform }}" = "linux-appimage" ]; then
+            ARTIFACT_PATH=$(find packages/desktop/src-tauri/target/release/bundle/appimage -name "*.AppImage" -type f | head -n 1)
+          elif [ "${{ matrix.platform }}" = "linux-deb" ]; then
+            ARTIFACT_PATH=$(find packages/desktop/src-tauri/target/release/bundle/deb -name "*.deb" -type f | head -n 1)
+          fi
+          
+          echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+          
+          # Get version from package.json or workflow input
+          VERSION=${{ inputs.version }}
+          if [ -z "$VERSION" ]; then
+            VERSION=$(node -p "require('./packages/desktop/package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Generate checksums
+        id: checksums
+        shell: bash
+        run: |
+          ARTIFACT_PATH="${{ steps.artifacts.outputs.artifact_path }}"
+          
+          if [ -f "$ARTIFACT_PATH" ]; then
+            # Generate SHA256 checksum
+            if [ "${{ runner.os }}" = "macOS" ]; then
+              CHECKSUM=$(shasum -a 256 "$ARTIFACT_PATH" | awk '{print $1}')
+            else
+              CHECKSUM=$(sha256sum "$ARTIFACT_PATH" | awk '{print $1}')
+            fi
+            
+            echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
+            echo "$CHECKSUM  $(basename "$ARTIFACT_PATH")" > "$ARTIFACT_PATH.sha256"
+          fi
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ steps.artifacts.outputs.version }}
+          path: |
+            ${{ steps.artifacts.outputs.artifact_path }}
+            ${{ steps.artifacts.outputs.artifact_path }}.sha256
+          retention-days: ${{ github.event_name == 'workflow_dispatch' && 30 || 90 }}
+          if-no-files-found: error
+      
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ steps.artifacts.outputs.artifact_path }}
+            ${{ steps.artifacts.outputs.artifact_path }}.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  # Summary job for release builds
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Download all artifacts metadata
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Generate build summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            let summary = `## 🏗️ Desktop Build Complete\n\n`;
+            
+            if (context.eventName === 'release') {
+              summary += `Built for release: **${context.payload.release.tag_name}**\n\n`;
+              summary += `Artifacts have been uploaded to the [release page](${context.payload.release.html_url}).\n\n`;
+            } else {
+              summary += `Manual build triggered.\n\n`;
+              summary += `Download artifacts from the [Actions tab](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).\n\n`;
+            }
+            
+            summary += `### Build Matrix\n\n`;
+            summary += `| Platform | Status |\n`;
+            summary += `|----------|--------|\n`;
+            summary += `| 🍎 macOS x64 | ✅ Built |\n`;
+            summary += `| 🪟 Windows x64 | ✅ Built |\n`;
+            summary += `| 🐧 Linux AppImage | ✅ Built |\n`;
+            summary += `| 🐧 Linux DEB | ✅ Built |\n`;
+            
+            summary += `\n### Testing Instructions\n\n`;
+            summary += `**macOS:** Right-click → Open (unsigned app)\n`;
+            summary += `**Windows:** Click "More info" → "Run anyway" (SmartScreen)\n`;
+            summary += `**Linux:** \`chmod +x *.AppImage && ./leanspec-desktop*.AppImage\`\n`;
+            
+            core.summary.addRaw(summary).write();

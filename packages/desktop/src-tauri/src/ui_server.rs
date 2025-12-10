@@ -87,9 +87,9 @@ fn spawn_dev_server(port: u16, project: Option<&DesktopProject>) -> Result<Child
 
 fn spawn_embedded_server(app: &AppHandle, port: u16, project: Option<&DesktopProject>) -> Result<Child> {
     let standalone = find_embedded_standalone_dir(app)?;
-    let server = standalone.join("server.js");
+    let server = standalone.join("packages/ui/server.js");
     if !server.exists() {
-        return Err(anyhow!("Missing server.js in embedded UI build"));
+        return Err(anyhow!("Missing server.js in embedded UI build at {:?}", server));
     }
 
     let mut command = Command::new("node");

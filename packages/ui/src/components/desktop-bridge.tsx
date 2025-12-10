@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useProject } from "@/contexts/project-context";
 import {
   Dialog,
@@ -28,7 +28,7 @@ type DesktopDialogs = {
   about: boolean;
 };
 
-export function DesktopBridge() {
+function DesktopBridgeInner() {
   const searchParams = useSearchParams();
   const isDesktop = searchParams?.get("desktop") === "1";
   const [dialogs, setDialogs] = useState<DesktopDialogs>({ newSpec: false, shortcuts: false, logs: false, about: false });
@@ -345,5 +345,13 @@ export function DesktopBridge() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+export function DesktopBridge() {
+  return (
+    <Suspense fallback={null}>
+      <DesktopBridgeInner />
+    </Suspense>
   );
 }
