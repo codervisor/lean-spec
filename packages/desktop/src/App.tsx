@@ -12,8 +12,8 @@ const App = () => {
   const { projects, activeProjectId, uiUrl, loading, error, switchProject, addProject, refreshProjects } = useProjects();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pendingMenuEvents = useRef<string[]>([]);
-  const versionCache = useRef<string>();
-  const logDirCache = useRef<string>();
+  const versionCache = useRef<string>('');
+  const logDirCache = useRef<string>('');
 
   const postToIframe = useCallback((payload: Record<string, unknown>) => {
     const target = iframeRef.current?.contentWindow;
@@ -170,7 +170,25 @@ const App = () => {
       }
     >
       {loading && <div className={styles.centerState}>Loading desktop environment…</div>}
-      {error && <div className={styles.errorState}>{error}</div>}
+      {error && (
+        <div className={styles.errorState}>
+          <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to start UI server</div>
+          <div>{error}</div>
+          {error.includes('Node.js') && (
+            <div style={{ marginTop: '1rem', fontSize: '0.9em', color: 'rgba(255, 255, 255, 0.7)' }}>
+              <p>
+                <strong>Ubuntu/Debian:</strong> <code>sudo apt install nodejs</code>
+              </p>
+              <p>
+                <strong>Fedora/RHEL:</strong> <code>sudo dnf install nodejs</code>
+              </p>
+              <p>
+                <strong>Arch:</strong> <code>sudo pacman -S nodejs</code>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       {iframeSrc && !error && (
         <iframe
           key={iframeSrc}

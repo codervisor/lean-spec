@@ -12,8 +12,8 @@
     "prepare:ui": "node ./scripts/sync-ui-build.mjs",
     "dev:desktop": "tauri dev",
     "build:desktop": "tauri build",
-    "bundle:linux": "tauri build --bundles deb appimage",
-    "bundle:all": "tauri build --bundles deb appimage"
+    "bundle:linux": "tauri build --bundles deb",
+    "bundle:all": "tauri build --bundles deb"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
