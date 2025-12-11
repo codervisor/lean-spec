@@ -2,6 +2,27 @@
 
 Tauri v2 shell around `@leanspec/ui` for local multi-project management. The desktop chrome adds a frameless window, menu bar, tray, notifications, and global shortcuts while reusing the existing Next.js UI (served locally by the Rust host).
 
+## Prerequisites
+
+**Linux**: Install system dependencies before building:
+
+```bash
+sudo apt-get update && sudo apt-get install -y \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  libsoup-3.0-dev \
+  libjavascriptcoregtk-4.1-dev \
+  webkit2gtk-4.1-dev
+```
+
+**macOS**: Xcode Command Line Tools
+
+```bash
+xcode-select --install
+```
+
+**Windows**: Visual Studio Build Tools with C++ desktop development workload
+
 ## Local development
 
 ```bash
@@ -19,13 +40,16 @@ pnpm dev:desktop
 pnpm build:desktop
 ```
 
-`tauri build --bundles app` relies on `src-tauri/tauri.conf.json` hooks to:
+`tauri build` relies on `src-tauri/tauri.conf.json` hooks to:
 
 1) build `@leanspec/ui` and sync its standalone output into `src-tauri/ui-standalone`
 2) build the desktop Vite shell to `dist/`
-3) produce platform bundles (e.g., `.app` on macOS) in `src-tauri/target/release/bundle`
+3) produce platform-specific bundles in `src-tauri/target/release/bundle`:
+   - macOS: `.app` bundle in `bundle/macos/`
+   - Linux: `.deb`, `.rpm`, and `.AppImage` in `bundle/deb/`, `bundle/rpm/`, `bundle/appimage/`
+   - Windows: `.msi` installer in `bundle/msi/`
 
-System requirements: Xcode CLT on macOS, Visual Studio Build Tools on Windows, and `libgtk`, `ayatana-appindicator`, and WebKit 4.1 stack on Linux. The bundle includes the standalone UI, so Node.js is not required on end-user machines.
+The bundle includes the standalone UI, so Node.js is not required on end-user machines. See Prerequisites section above for build-time system dependencies.
 
 ## Capabilities and permissions
 

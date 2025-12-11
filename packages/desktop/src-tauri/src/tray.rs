@@ -1,6 +1,7 @@
 use serde::Serialize;
 use tauri::{
     menu::{Menu, MenuBuilder, MenuItemBuilder},
+use tauri::Emitter;
     tray::TrayIconBuilder,
     AppHandle, Manager,
 };
@@ -38,7 +39,7 @@ pub fn rebuild_tray(app: &AppHandle, projects: &[DesktopProject]) -> tauri::Resu
     Ok(())
 }
 
-fn build_menu(app: &AppHandle, projects: &[DesktopProject]) -> tauri::Result<Menu> {
+fn build_menu<R: tauri::Runtime>(app: &AppHandle<R>, projects: &[DesktopProject]) -> tauri::Result<Menu<R>> {
     let open = MenuItemBuilder::with_id(TRAY_ID_OPEN, "Open LeanSpec").build(app)?;
     let add_project = MenuItemBuilder::with_id(TRAY_ID_ADD_PROJECT, "Add project…").build(app)?;
     let refresh = MenuItemBuilder::with_id(TRAY_ID_REFRESH, "Refresh projects").build(app)?;
