@@ -47,6 +47,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
+    "baseline-browser-mapping": "^2.9.6",
     "next": "16.0.1",
     "prettier": "^3.1.1",
     "tsx": "^4.19.2",
