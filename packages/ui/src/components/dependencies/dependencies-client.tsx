@@ -220,6 +220,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
 
       const nodes: Node<SpecNodeData>[] = visibleNodes.map((node) => {
         const isFocused = focusedNodeId === node.id;
+        const connectionDepth = isFocused ? 0 : connectionDepths?.get(node.id);
 
         return {
           id: node.id,
@@ -234,7 +235,7 @@ export function ProjectDependencyGraphClient({ data, projectId }: ProjectDepende
             href: getSpecUrl(node.number),
             interactive: true,
             isFocused,
-            connectionDepth: isFocused ? 0 : 1,
+            connectionDepth,
             isDimmed: false,
             isCompact,
             isSecondary: false,
