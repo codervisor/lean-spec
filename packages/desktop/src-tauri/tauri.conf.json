@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "lean-spec-desktop",
+  "productName": "LeanSpec",
   "version": "0.1.0",
   "identifier": "dev.lean-spec.desktop",
   "mainBinaryName": "lean-spec-desktop",
