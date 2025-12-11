@@ -41,9 +41,7 @@
       "icons/128x128.png",
       "icons/128x128@2x.png"
     ],
-    "targets": [
-      "app"
-    ],
+    "targets": "all",
     "createUpdaterArtifacts": "v1Compatible",
     "macOS": {
       "minimumSystemVersion": "11.0",

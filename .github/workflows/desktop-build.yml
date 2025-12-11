@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -41,13 +41,12 @@ jobs:
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libsoup-3.0-dev webkit2gtk-4.1
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev webkit2gtk-4.1-dev
 
       - name: Build desktop bundle
         uses: tauri-apps/tauri-action@v0
         with:
           projectPath: packages/desktop
-          args: --bundles app
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
