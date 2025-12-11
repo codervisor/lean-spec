@@ -1,4 +1,4 @@
-use std::{env, net::TcpStream, path::PathBuf, process::{Child, Command, Stdio}, thread, time::Duration};
+use std::{env, net::TcpStream, path::{Path, PathBuf}, process::{Child, Command, Stdio}, thread, time::Duration};
 
 use anyhow::{anyhow, Context, Result};
 use dunce::canonicalize;
@@ -92,7 +92,7 @@ fn spawn_embedded_server(app: &AppHandle, port: u16, project: Option<&DesktopPro
     }
 
     // Try to find Node.js executable
-    let node_exe = find_node_executable()?;
+    let node_exe = find_node_executable(app)?;
     
     let mut command = Command::new(node_exe);
     command.arg(&server).env("PORT", port.to_string()).env("HOSTNAME", "127.0.0.1");
@@ -147,8 +147,20 @@ fn find_embedded_standalone_dir(app: &AppHandle) -> Result<PathBuf> {
     Err(anyhow!("Unable to locate embedded UI standalone build"))
 }
 
-fn find_node_executable() -> Result<String> {
-    // Try common locations for Node.js on Linux
+fn find_node_executable(app: &AppHandle) -> Result<String> {
+    // Highest priority: explicit override
+    if let Ok(path) = env::var("LEAN_SPEC_NODE_PATH") {
+        if Path::new(&path).exists() {
+            return Ok(path);
+        }
+    }
+
+    // Next: bundled runtime inside resources
+    if let Some(path) = bundled_node_path(app) {
+        return Ok(path);
+    }
+
+    // Fallback: system-installed Node.js
     let node_paths = if cfg!(target_os = "linux") {
         vec![
             "node",                              // In PATH
@@ -186,4 +198,24 @@ fn find_node_executable() -> Result<String> {
         On Fedora/RHEL: sudo dnf install nodejs\n\
         On Arch: sudo pacman -S nodejs"
     ))
+}
+
+fn bundled_node_path(app: &AppHandle) -> Option<String> {
+    // Map OS/arch to resource folder names used by the bundling script
+    let target = match (env::consts::OS, env::consts::ARCH) {
+        ("linux", "x86_64") => "linux-x64",
+        ("linux", "aarch64") => "linux-arm64",
+        _ => return None,
+    };
+
+    let candidate = app
+        .path()
+        .resolve(format!("node/{target}/node"), BaseDirectory::Resource)
+        .ok()?;
+
+    if candidate.exists() {
+        Some(candidate.to_string_lossy().to_string())
+    } else {
+        None
+    }
 }
