@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use dunce::canonicalize;
 use parking_lot::Mutex;
 use portpicker::pick_unused_port;
-use tauri::{path::BaseDirectory, AppHandle};
+use tauri::{path::BaseDirectory, AppHandle, Manager};
 
 use crate::projects::DesktopProject;
 

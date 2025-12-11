@@ -1,6 +1,6 @@
 use tauri::{
     menu::{Menu, MenuBuilder, MenuEvent, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder},
-    AppHandle, Runtime,
+    AppHandle, Emitter, Manager, Runtime,
 };
 use tauri_plugin_opener::OpenerExt;
 

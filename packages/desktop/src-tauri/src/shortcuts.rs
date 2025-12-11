@@ -1,5 +1,5 @@
 use serde::Serialize;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 use crate::config::read_config;
@@ -41,7 +41,7 @@ pub fn register_shortcuts(app: &AppHandle) {
     });
 }
 
-fn emit_to_main<T: Serialize>(app: &AppHandle, event: &str, payload: T) {
+fn emit_to_main<T: Serialize + Clone>(app: &AppHandle, event: &str, payload: T) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.emit(event, payload);
     }
