@@ -91,11 +91,14 @@ fn spawn_embedded_server(app: &AppHandle, port: u16, project: Option<&DesktopPro
         return Err(anyhow!("Missing server.js in embedded UI build at {:?}", server));
     }
 
-    let mut command = Command::new("node");
+    // Try to find Node.js executable
+    let node_exe = find_node_executable()?;
+    
+    let mut command = Command::new(node_exe);
     command.arg(&server).env("PORT", port.to_string()).env("HOSTNAME", "127.0.0.1");
     apply_env(&mut command, project);
     command.stdout(Stdio::null()).stderr(Stdio::null());
-    command.spawn().context("Failed to start embedded UI server")
+    command.spawn().context("Failed to start embedded UI server. Please ensure Node.js >= 20 is installed.")
 }
 
 fn apply_env(command: &mut Command, project: Option<&DesktopProject>) {
@@ -142,4 +145,45 @@ fn find_embedded_standalone_dir(app: &AppHandle) -> Result<PathBuf> {
     }
 
     Err(anyhow!("Unable to locate embedded UI standalone build"))
+}
+
+fn find_node_executable() -> Result<String> {
+    // Try common locations for Node.js on Linux
+    let node_paths = if cfg!(target_os = "linux") {
+        vec![
+            "node",                              // In PATH
+            "/usr/bin/node",                     // Standard location
+            "/usr/local/bin/node",               // Alternative location
+            "/opt/nodejs/bin/node",              // Optional location
+            "/snap/bin/node",                    // Snap package
+        ]
+    } else if cfg!(target_os = "macos") {
+        vec![
+            "node",                              // In PATH
+            "/usr/local/bin/node",               // Homebrew
+            "/opt/homebrew/bin/node",            // Apple Silicon Homebrew
+        ]
+    } else if cfg!(target_os = "windows") {
+        vec![
+            "node.exe",                          // In PATH
+            "C:\\Program Files\\nodejs\\node.exe",
+        ]
+    } else {
+        vec!["node"]
+    };
+
+    for path in node_paths {
+        if let Ok(output) = Command::new(path).arg("--version").output() {
+            if output.status.success() {
+                return Ok(path.to_string());
+            }
+        }
+    }
+
+    Err(anyhow!(
+        "Node.js not found. Please install Node.js >= 20 from https://nodejs.org/ or your system package manager.\n\
+        On Debian/Ubuntu: sudo apt install nodejs\n\
+        On Fedora/RHEL: sudo dnf install nodejs\n\
+        On Arch: sudo pacman -S nodejs"
+    ))
 }

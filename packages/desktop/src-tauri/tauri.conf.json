@@ -1,9 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "LeanSpec Desktop",
+  "productName": "lean-spec-desktop",
   "version": "0.1.0",
-  "identifier": "dev.leanspec.desktop",
-  "mainBinaryName": "leanspec-desktop",
+  "identifier": "dev.lean-spec.desktop",
+  "mainBinaryName": "lean-spec-desktop",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui && pnpm build",
@@ -42,7 +42,11 @@
       "icons/128x128@2x.png"
     ],
     "targets": "all",
-    "createUpdaterArtifacts": "v1Compatible",
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    },
     "macOS": {
       "minimumSystemVersion": "11.0",
       "exceptionDomain": "localhost",

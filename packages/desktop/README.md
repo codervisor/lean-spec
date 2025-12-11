@@ -49,7 +49,35 @@ pnpm build:desktop
    - Linux: `.deb`, `.rpm`, and `.AppImage` in `bundle/deb/`, `bundle/rpm/`, `bundle/appimage/`
    - Windows: `.msi` installer in `bundle/msi/`
 
-The bundle includes the standalone UI, so Node.js is not required on end-user machines. See Prerequisites section above for build-time system dependencies.
+**IMPORTANT**: The bundle includes the standalone Next.js UI, which **requires Node.js >= 20 on the end-user machine**. 
+
+### End-User Requirements
+
+Users installing LeanSpec Desktop must have Node.js installed:
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt install nodejs
+
+# Fedora/RHEL
+sudo dnf install nodejs
+
+# Arch
+sudo pacman -S nodejs
+```
+
+**macOS:**
+```bash
+brew install node
+```
+
+**Windows:**
+Download from [nodejs.org](https://nodejs.org/)
+
+The `.deb` package lists `nodejs (>= 20)` as a dependency, so it will be installed automatically on Debian/Ubuntu systems when using `apt install`.
+
+See Prerequisites section above for build-time system dependencies.
 
 ## Capabilities and permissions
 
