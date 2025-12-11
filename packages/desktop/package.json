@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "tauri": "tauri",
     "prepare:ui": "node ./scripts/sync-ui-build.mjs",
     "download:node": "node ./scripts/download-node.mjs",
     "dev:desktop": "tauri dev",

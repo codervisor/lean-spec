@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-11'
 tags:
   - desktop
@@ -13,15 +13,19 @@ depends_on:
   - 165-tauri-v2-migration
   - 148-leanspec-desktop-app
 created_at: '2025-12-11T09:12:02.693Z'
-updated_at: '2025-12-11T09:15:31.843Z'
+updated_at: '2025-12-11T09:52:45.161Z'
 transitions:
   - status: in-progress
     at: '2025-12-11T09:12:00.000Z'
+  - status: complete
+    at: '2025-12-11T09:52:45.161Z'
+completed_at: '2025-12-11T09:52:45.161Z'
+completed: '2025-12-11'
 ---
 
 # Desktop UI Server Bundling Fix - pnpm Dependencies
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-11 · **Tags**: desktop, tauri, bundling, node-modules, pnpm, nextjs
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-11 · **Tags**: desktop, tauri, bundling, node-modules, pnpm, nextjs
 
 ## Overview
 
