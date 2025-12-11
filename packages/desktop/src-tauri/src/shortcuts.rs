@@ -1,3 +1,4 @@
+use serde::Serialize;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
@@ -27,7 +28,7 @@ pub fn register_shortcuts(app: &AppHandle) {
     let quick_handle = app.clone();
     let _ = shortcuts.on_shortcut(quick.as_str(), move |_, _, event| {
         if event.state == ShortcutState::Pressed {
-            let _ = quick_handle.emit_all("desktop://shortcut-quick-switcher", ());
+            emit_to_main(&quick_handle, "desktop://shortcut-quick-switcher", ());
         }
     });
 
@@ -35,7 +36,13 @@ pub fn register_shortcuts(app: &AppHandle) {
     let new_spec_handle = app.clone();
     let _ = shortcuts.on_shortcut(new_spec.as_str(), move |_, _, event| {
         if event.state == ShortcutState::Pressed {
-            let _ = new_spec_handle.emit_all("desktop://shortcut-new-spec", ());
+            emit_to_main(&new_spec_handle, "desktop://shortcut-new-spec", ());
         }
     });
+}
+
+fn emit_to_main<T: Serialize>(app: &AppHandle, event: &str, payload: T) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit(event, payload);
+    }
 }

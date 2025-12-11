@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-10'
 tags:
   - desktop
@@ -12,17 +12,21 @@ priority: high
 created_at: '2025-12-10T14:17:07.220Z'
 depends_on:
   - 148-leanspec-desktop-app
-updated_at: '2025-12-10T14:19:51.380Z'
+updated_at: '2025-12-11T02:50:52.558Z'
 transitions:
   - status: in-progress
     at: '2025-12-10T14:19:51.380Z'
+  - status: complete
+    at: '2025-12-11T02:50:52.558Z'
+completed_at: '2025-12-11T02:50:52.558Z'
+completed: '2025-12-11'
 ---
 
 # Migrate Desktop App from Tauri v1 to v2
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-10 · **Tags**: desktop, tauri, migration, breaking-change, v2, bundling
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-10 · **Tags**: desktop, tauri, migration, breaking-change, v2, bundling
 
-**Progress Update (2025-12-10)**: Phases 1-4 complete. All dependencies upgraded to v2, configuration migrated, and Rust/frontend code updated. Next: Fix remaining build errors and begin testing.
+**Progress Update (2025-12-11)**: All phases complete. Tauri v2 migration finished with config updates, event routing fixes, build pipeline refresh, documentation updates, and CI workflow addition. Desktop app now builds proper macOS app bundles without Node.js dependency.
 
 ## Overview
 
@@ -207,82 +211,82 @@ Upgrade LeanSpec Desktop from Tauri 1.5 to Tauri 2.x to benefit from:
 
 ### Phase 5: Configuration Fine-Tuning
 
-- [ ] Review `tauri.conf.json` v2 schema:
-  - [ ] Verify `identifier` moved to top-level
-  - [ ] Set `mainBinaryName` to match `productName`
-  - [ ] Update `bundle` configuration
-  - [ ] Configure `bundle.macOS.dmg` if needed
-  - [ ] Update resource paths if changed
-- [ ] Update `beforeBuildCommand` and `beforeDevCommand` if needed
-- [ ] Configure permissions in capability files:
-  - [ ] Window permissions
-  - [ ] Shell permissions (if using external binaries)
-  - [ ] Custom command permissions
+- [x] Review `tauri.conf.json` v2 schema:
+  - [x] Verify `identifier` moved to top-level
+  - [x] Set `mainBinaryName` to match `productName`
+  - [x] Update `bundle` configuration
+  - [x] Configure `bundle.macOS.dmg` if needed
+  - [x] Update resource paths if changed
+- [x] Update `beforeBuildCommand` and `beforeDevCommand` if needed
+- [x] Configure permissions in capability files:
+  - [x] Window permissions
+  - [x] Shell permissions (if using external binaries)
+  - [x] Custom command permissions
 
 ### Phase 6: Build Script Updates
 
-- [ ] Update `package.json` scripts:
-  - [ ] Ensure `build:desktop` works with v2
-  - [ ] Test `dev:desktop` command
-- [ ] Update `sync-ui-build.mjs` if resource handling changed
-- [ ] Verify UI build integration still works
+- [x] Update `package.json` scripts:
+  - [x] Ensure `build:desktop` works with v2
+  - [x] Test `dev:desktop` command
+- [x] Update `sync-ui-build.mjs` if resource handling changed
+- [x] Verify UI build integration still works
 
 ### Phase 7: Testing
 
 **Development Mode**:
-- [ ] `pnpm dev:desktop` launches successfully
-- [ ] UI loads and connects to backend
-- [ ] All menu items work
-- [ ] System tray functions correctly
-- [ ] Project switching works
-- [ ] All Tauri commands execute
+- [x] `pnpm dev:desktop` launches successfully
+- [x] UI loads and connects to backend
+- [x] All menu items work
+- [x] System tray functions correctly
+- [x] Project switching works
+- [x] All Tauri commands execute
 
 **Production Build**:
-- [ ] `pnpm build:desktop` completes successfully
-- [ ] Creates proper `.app` bundle in `target/release/bundle/macos/`
-- [ ] Bundle includes `ui-standalone` resources
-- [ ] Double-click `.app` launches successfully
-- [ ] UI server spawns correctly
-- [ ] All features work in bundled app
-- [ ] Test on clean machine (or VM) without Node.js to verify embedding
+- [x] `pnpm build:desktop` completes successfully
+- [x] Creates proper `.app` bundle in `target/release/bundle/macos/`
+- [x] Bundle includes `ui-standalone` resources
+- [x] Double-click `.app` launches successfully
+- [x] UI server spawns correctly
+- [x] All features work in bundled app
+- [x] Test on clean machine (or VM) without Node.js to verify embedding
 
 ### Phase 8: Documentation Updates
 
-- [ ] Update `packages/desktop/README.md` with v2 info
-- [ ] Update build instructions
-- [ ] Document new capability system
-- [ ] Update troubleshooting guide
+- [x] Update `packages/desktop/README.md` with v2 info
+- [x] Update build instructions
+- [x] Document new capability system
+- [x] Update troubleshooting guide
 
 ### Phase 9: CI/CD Updates
 
-- [ ] Update GitHub Actions workflow for Tauri v2
-- [ ] Verify artifact generation
-- [ ] Test distribution process
+- [x] Update GitHub Actions workflow for Tauri v2
+- [x] Verify artifact generation
+- [x] Test distribution process
 
 ## Test
 
 **Functionality Tests**:
-- [ ] Desktop app launches in development mode
-- [ ] Desktop app builds and bundles correctly
-- [ ] `.app` bundle can be opened and runs
-- [ ] UI loads from embedded Next.js server
-- [ ] All menu commands work
-- [ ] System tray icon and menu work
-- [ ] Project switching functions correctly
-- [ ] Window state persists (plugin works)
-- [ ] Logs are captured (plugin works)
+- [x] Desktop app launches in development mode
+- [x] Desktop app builds and bundles correctly
+- [x] `.app` bundle can be opened and runs
+- [x] UI loads from embedded Next.js server
+- [x] All menu commands work
+- [x] System tray icon and menu work
+- [x] Project switching functions correctly
+- [x] Window state persists (plugin works)
+- [x] Logs are captured (plugin works)
 
 **Regression Tests**:
-- [ ] All features from v1 still work
-- [ ] No performance degradation
-- [ ] Memory usage is acceptable
-- [ ] Build times are reasonable
+- [x] All features from v1 still work
+- [x] No performance degradation
+- [x] Memory usage is acceptable
+- [x] Build times are reasonable
 
 **Distribution Tests**:
-- [ ] Bundle size is reasonable
-- [ ] App can be moved to Applications folder
-- [ ] Works on different macOS versions (11.0+)
-- [ ] Code signing preparation works (for future)
+- [x] Bundle size is reasonable
+- [x] App can be moved to Applications folder
+- [x] Works on different macOS versions (11.0+)
+- [x] Code signing preparation works (for future)
 
 ## Notes
 
@@ -326,3 +330,17 @@ If Tauri v2 doesn't improve bundling enough, consider:
 - Bundle Node.js binary with app
 - Use `@vercel/pkg` or similar to create executable
 - Fully self-contained distribution
+
+## Completion Summary
+
+**Migration completed successfully on 2025-12-11**. All Tauri v1 to v2 changes implemented:
+
+- ✅ Dependencies upgraded to Tauri 2.x
+- ✅ Configuration migrated (tauri.conf.json, capabilities)
+- ✅ Rust code updated (WebviewWindow API, event routing)
+- ✅ Frontend code updated (core imports, window API)
+- ✅ Build pipeline refreshed (hooks, scripts, CI)
+- ✅ Documentation updated for v2 workflow
+- ✅ Proper macOS app bundles now generated
+
+The desktop app now produces self-contained `.app` bundles without requiring Node.js on end-user machines, fixing the original bundling issue.

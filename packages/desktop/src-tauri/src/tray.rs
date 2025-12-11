@@ -1,3 +1,4 @@
+use serde::Serialize;
 use tauri::{
     menu::{Menu, MenuBuilder, MenuItemBuilder},
     tray::TrayIconBuilder,
@@ -78,23 +79,23 @@ fn handle_menu_selection(app: &AppHandle, id: &str) {
             }
         }
         TRAY_ID_ADD_PROJECT => {
-            let _ = app.emit_all("desktop://tray-add-project", ());
+            emit_to_main(app, "desktop://tray-add-project", ());
         }
         TRAY_ID_REFRESH => {
-            let _ = app.emit_all("desktop://tray-refresh-projects", ());
+            emit_to_main(app, "desktop://tray-refresh-projects", ());
         }
         TRAY_ID_PREFERENCES => {
-            let _ = app.emit_all("desktop://tray-preferences", ());
+            emit_to_main(app, "desktop://tray-preferences", ());
         }
         TRAY_ID_CHECK_UPDATES => {
-            let _ = app.emit_all("desktop://tray-check-updates", ());
+            emit_to_main(app, "desktop://tray-check-updates", ());
         }
         TRAY_ID_QUIT => {
             std::process::exit(0);
         }
         project if project.starts_with("project-") => {
             let project_id = project.trim_start_matches("project-");
-            let _ = app.emit_all("desktop://tray-switch-project", project_id.to_string());
+            emit_to_main(app, "desktop://tray-switch-project", project_id.to_string());
         }
         _ => {}
     }
@@ -102,4 +103,10 @@ fn handle_menu_selection(app: &AppHandle, id: &str) {
 
 fn project_menu_id(project_id: &str) -> String {
     format!("project-{project_id}")
+}
+
+fn emit_to_main<T: Serialize>(app: &AppHandle, event: &str, payload: T) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit(event, payload);
+    }
 }

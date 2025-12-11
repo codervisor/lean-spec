@@ -3,11 +3,11 @@
   "productName": "LeanSpec Desktop",
   "version": "0.1.0",
   "identifier": "dev.leanspec.desktop",
-  "mainBinaryName": "LeanSpec Desktop",
+  "mainBinaryName": "leanspec-desktop",
   "build": {
-    "beforeDevCommand": "pnpm --dir ../.. dev",
-    "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui",
-    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui && pnpm build",
+    "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"
   },
   "app": {
@@ -41,7 +41,9 @@
       "icons/128x128.png",
       "icons/128x128@2x.png"
     ],
-    "targets": "all",
+    "targets": [
+      "app"
+    ],
     "createUpdaterArtifacts": "v1Compatible",
     "macOS": {
       "minimumSystemVersion": "11.0",
