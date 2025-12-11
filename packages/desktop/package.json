@@ -15,7 +15,8 @@
     "dev:desktop": "tauri dev",
     "build:desktop": "tauri build",
     "bundle:linux": "tauri build --bundles deb",
-    "bundle:all": "tauri build --bundles deb"
+    "bundle:macos": "tauri build --bundles dmg",
+    "bundle:windows": "tauri build --bundles msix"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
