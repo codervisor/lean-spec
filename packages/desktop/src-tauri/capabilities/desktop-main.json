@@ -2,18 +2,25 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "desktop-main",
   "description": "Primary desktop window capabilities",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
-    "core:window:allow-hide",
     "core:window:allow-show",
+    "core:window:allow-hide",
     "core:window:allow-set-focus",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "log:default",
     "dialog:default",
     "notification:default",
     "opener:default",
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "global-shortcut:allow-unregister-all",
+    "window-state:default",
     "updater:default"
   ]
 }

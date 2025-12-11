@@ -77,7 +77,7 @@ html.changing-theme * {
 .hljs {
   background: hsl(220 13% 96%);
   color: hsl(220 14% 10%);
-  padding: 1.25rem;
+  padding: 0;
   border-radius: 0.5rem;
   overflow-x: auto;
   font-size: 0.875rem;

@@ -94,8 +94,14 @@ fn build_and_publish(app: &AppHandle, state: &DesktopState) -> Result<DesktopBoo
     let payload = build_payload(app, state)?;
     tray::rebuild_tray(app, &payload.projects)
         .map_err(|error| anyhow!(error.to_string()))?;
-    app.emit_all("desktop://state-updated", payload.clone())
-        .map_err(|error| anyhow!(error.to_string()))?;
+    if let Some(window) = app.get_webview_window("main") {
+        window
+            .emit("desktop://state-updated", payload.clone())
+            .map_err(|error| anyhow!(error.to_string()))?;
+    } else {
+        app.emit("desktop://state-updated", payload.clone())
+            .map_err(|error| anyhow!(error.to_string()))?;
+    }
     Ok(payload)
 }
 

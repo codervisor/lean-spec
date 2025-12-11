@@ -1,0 +1,56 @@
+name: Desktop Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/desktop/**'
+      - 'packages/ui/**'
+      - '.github/workflows/desktop-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/desktop/**'
+      - 'packages/ui/**'
+      - '.github/workflows/desktop-build.yml'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libsoup-3.0-dev webkit2gtk-4.1
+
+      - name: Build desktop bundle
+        uses: tauri-apps/tauri-action@v0
+        with:
+          projectPath: packages/desktop
+          args: --bundles app
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: leanspec-desktop-${{ matrix.os }}
+          path: packages/desktop/src-tauri/target/release/bundle

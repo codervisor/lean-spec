@@ -6,7 +6,7 @@ import styles from './app.module.css';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { appLogDir } from '@tauri-apps/api/path';
 import { revealItemInDir } from '@tauri-apps/plugin-opener';
-import { getDesktopVersion } from './lib/ipc';
+import { checkForUpdates, getDesktopVersion } from './lib/ipc';
 
 const App = () => {
   const { projects, activeProjectId, uiUrl, loading, error, switchProject, addProject, refreshProjects } = useProjects();
@@ -66,21 +66,29 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const events = [
-      'desktop://menu-new-spec',
-      'desktop://menu-find',
-      'desktop://menu-toggle-sidebar',
-      'desktop://menu-shortcuts',
-      'desktop://menu-logs',
-      'desktop://menu-about',
-    ];
+    const menuHandlers: Record<string, () => void> = {
+      'desktop://menu-new-spec': () => forwardMenuAction('desktop://menu-new-spec'),
+      'desktop://menu-open-project': () => addProject(),
+      'desktop://menu-switch-project': () => forwardMenuAction('desktop://menu-switch-project'),
+      'desktop://menu-find': () => forwardMenuAction('desktop://menu-find'),
+      'desktop://menu-refresh': () => refreshProjects(),
+      'desktop://menu-toggle-sidebar': () => forwardMenuAction('desktop://menu-toggle-sidebar'),
+      'desktop://menu-shortcuts': () => forwardMenuAction('desktop://menu-shortcuts'),
+      'desktop://menu-logs': () => forwardMenuAction('desktop://menu-logs'),
+      'desktop://menu-about': () => forwardMenuAction('desktop://menu-about'),
+      'desktop://menu-updates': () => {
+        checkForUpdates().catch((error) => console.error(error));
+      },
+    };
 
-    const subscription = Promise.all(events.map((name) => listen(name, () => forwardMenuAction(name))));
+    const subscription = Promise.all(
+      Object.entries(menuHandlers).map(([name, handler]) => listen(name, handler)),
+    );
 
     return () => {
       subscription.then((handlers: UnlistenFn[]) => handlers.forEach((dispose) => dispose()));
     };
-  }, [forwardMenuAction]);
+  }, [addProject, forwardMenuAction, refreshProjects]);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
