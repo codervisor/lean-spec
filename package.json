@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Lightweight spec methodology for AI-powered development (monorepo root)",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.25.0",
   "scripts": {
     "build": "turbo run build",
     "sync-versions": "tsx scripts/sync-versions.ts",
