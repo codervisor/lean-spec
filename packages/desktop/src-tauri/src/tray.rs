@@ -1,9 +1,8 @@
 use serde::Serialize;
 use tauri::{
     menu::{Menu, MenuBuilder, MenuItemBuilder},
-use tauri::Emitter;
     tray::TrayIconBuilder,
-    AppHandle, Manager,
+    AppHandle, Emitter, Manager,
 };
 
 use crate::projects::DesktopProject;
@@ -106,7 +105,7 @@ fn project_menu_id(project_id: &str) -> String {
     format!("project-{project_id}")
 }
 
-fn emit_to_main<T: Serialize>(app: &AppHandle, event: &str, payload: T) {
+fn emit_to_main<T: Serialize + Clone>(app: &AppHandle, event: &str, payload: T) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.emit(event, payload);
     }

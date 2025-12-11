@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use serde::Serialize;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::UpdaterExt;
@@ -79,6 +79,7 @@ pub async fn desktop_add_project(app: AppHandle, state: State<'_, DesktopState>)
 #[tauri::command]
 pub async fn desktop_check_updates(app: AppHandle) -> Result<(), String> {
     app.updater()
+        .map_err(|error| error.to_string())?
         .check()
         .await
         .map(|_| ())

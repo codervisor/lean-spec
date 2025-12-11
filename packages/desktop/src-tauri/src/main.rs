@@ -37,11 +37,11 @@ fn main() {
         .menu(|app| menu::build_native_menu(app))
         .on_menu_event(menu::handle_menu_event)
         .manage(desktop_state)
-        .on_window_event(|event| {
-            if let WindowEvent::CloseRequested { api, .. } = event.event() {
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
                 if config::read_config().behavior.minimize_to_tray {
                     api.prevent_close();
-                    let _ = event.window().hide();
+                    let _ = window.hide();
                 }
             }
         })

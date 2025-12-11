@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "prepare:ui": "node ./scripts/sync-ui-build.mjs",
     "dev:desktop": "tauri dev",
-    "build:desktop": "tauri build"
+    "build:desktop": "tauri build",
+    "bundle:linux": "tauri build --bundles deb appimage",
+    "bundle:all": "tauri build --bundles deb appimage"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
