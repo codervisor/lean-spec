@@ -13,7 +13,23 @@ async function copyDir(source, destination) {
   for (const entry of entries) {
     const src = path.join(source, entry.name);
     const dest = path.join(destination, entry.name);
-    if (entry.isDirectory()) {
+    
+    if (entry.isSymbolicLink()) {
+      try {
+        // Resolve and copy the symlink target to ensure it works after packaging
+        const target = await fs.readlink(src);
+        const absoluteTarget = path.resolve(path.dirname(src), target);
+        const stats = await fs.stat(absoluteTarget);
+        
+        if (stats.isDirectory()) {
+          await copyDir(absoluteTarget, dest);
+        } else if (stats.isFile()) {
+          await fs.copyFile(absoluteTarget, dest);
+        }
+      } catch (error) {
+        console.warn(`Skipping broken symlink: ${src}`);
+      }
+    } else if (entry.isDirectory()) {
       await copyDir(src, dest);
     } else if (entry.isFile()) {
       await fs.copyFile(src, dest);

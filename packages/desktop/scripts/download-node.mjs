@@ -41,12 +41,19 @@ async function main() {
   console.log(`Saved tarball to ${tarPath}`);
 
   console.log('Extracting node binary...');
-  const stripPrefix = `node-v${version}-linux-${arch}/bin/node`;
-  await exec('tar', ['-xJf', tarPath, stripPrefix, '--strip-components', '2', '-C', destDir]);
-
+  const extractDir = path.join(os.tmpdir(), `node-extract-${Date.now()}`);
+  await fs.mkdir(extractDir, { recursive: true });
+  
+  await exec('tar', ['-xJf', tarPath, '-C', extractDir]);
+  
+  const nodeBinary = path.join(extractDir, `node-v${version}-linux-${arch}`, 'bin', 'node');
   const nodePath = path.join(destDir, 'node');
+  
+  await fs.copyFile(nodeBinary, nodePath);
   await fs.chmod(nodePath, 0o755);
+  
   await fs.rm(tarPath, { force: true });
+  await fs.rm(extractDir, { recursive: true, force: true });
 
   console.log(`Bundled Node ready at ${nodePath}`);
 }

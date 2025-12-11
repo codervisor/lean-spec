@@ -65,9 +65,16 @@ impl Drop for UiServerManager {
 
 fn spawn_dev_server(port: u16, project: Option<&DesktopProject>) -> Result<Child> {
     let pnpm = env::var("PNPM_PATH").unwrap_or_else(|_| "pnpm".into());
+    let project_root = project_root()?;
+    
+    eprintln!("[DEBUG] Starting dev server:");
+    eprintln!("[DEBUG]   pnpm: {}", pnpm);
+    eprintln!("[DEBUG]   cwd: {:?}", project_root);
+    eprintln!("[DEBUG]   port: {}", port);
+    
     let mut command = Command::new(pnpm);
     command
-        .current_dir(project_root()?)
+        .current_dir(&project_root)
         .arg("--filter")
         .arg("@leanspec/ui")
         .arg("dev")
@@ -79,26 +86,66 @@ fn spawn_dev_server(port: u16, project: Option<&DesktopProject>) -> Result<Child
 
     apply_env(&mut command, project);
 
-    command.stdout(Stdio::null()).stderr(Stdio::null());
+    command.stdout(Stdio::null()).stderr(Stdio::inherit());
 
     command.spawn().context("Failed to start pnpm dev server")
 }
 
 fn spawn_embedded_server(app: &AppHandle, port: u16, project: Option<&DesktopProject>) -> Result<Child> {
     let standalone = find_embedded_standalone_dir(app)?;
+    eprintln!("[DEBUG] Standalone dir: {:?}", standalone);
+    
     let server = standalone.join("packages/ui/server.js");
+    eprintln!("[DEBUG] Server.js path: {:?}", server);
+    eprintln!("[DEBUG] Server.js exists: {}", server.exists());
+    
     if !server.exists() {
         return Err(anyhow!("Missing server.js in embedded UI build at {:?}", server));
     }
 
     // Try to find Node.js executable
     let node_exe = find_node_executable(app)?;
+    eprintln!("[DEBUG] Node executable: {}", node_exe);
     
-    let mut command = Command::new(node_exe);
-    command.arg(&server).env("PORT", port.to_string()).env("HOSTNAME", "127.0.0.1");
+    // Get the directory containing server.js
+    let server_dir = standalone.join("packages/ui");
+    eprintln!("[DEBUG] Server working dir: {:?}", server_dir);
+    eprintln!("[DEBUG] Server dir exists: {}", server_dir.exists());
+    
+    // Check for .next directory
+    let next_dir = server_dir.join(".next");
+    eprintln!("[DEBUG] .next dir: {:?}", next_dir);
+    eprintln!("[DEBUG] .next exists: {}", next_dir.exists());
+    
+    // Set NODE_PATH to include the pnpm module structure
+    let pnpm_modules = standalone.join("node_modules/.pnpm");
+    eprintln!("[DEBUG] PNPM modules dir: {:?}", pnpm_modules);
+    
+    let mut command = Command::new(&node_exe);
+    command
+        .current_dir(&server_dir)
+        .arg("server.js")
+        .env("PORT", port.to_string())
+        .env("HOSTNAME", "127.0.0.1");
+    
+    // Add NODE_PATH to help Node.js find dependencies in pnpm structure
+    if pnpm_modules.exists() {
+        command.env("NODE_PATH", pnpm_modules.to_string_lossy().to_string());
+        eprintln!("[DEBUG] Set NODE_PATH to: {:?}", pnpm_modules);
+    }
+    
     apply_env(&mut command, project);
-    command.stdout(Stdio::null()).stderr(Stdio::null());
-    command.spawn().context("Failed to start embedded UI server. Please ensure Node.js >= 20 is installed.")
+    
+    eprintln!("[DEBUG] Starting server with command: {:?}", command);
+    eprintln!("[DEBUG] Environment PORT={}, HOSTNAME=127.0.0.1", port);
+    
+    // Capture stderr to see any startup errors
+    command.stdout(Stdio::inherit()).stderr(Stdio::inherit());
+    
+    let child = command.spawn().context("Failed to start embedded UI server. Please ensure Node.js >= 20 is installed.")?;
+    eprintln!("[DEBUG] Server process spawned with PID: {:?}", child.id());
+    
+    Ok(child)
 }
 
 fn apply_env(command: &mut Command, project: Option<&DesktopProject>) {
@@ -111,14 +158,21 @@ fn apply_env(command: &mut Command, project: Option<&DesktopProject>) {
 
 fn wait_for_server(port: u16) -> Result<()> {
     let address = format!("127.0.0.1:{port}");
-    for _ in 0..80 {
+    eprintln!("[DEBUG] Waiting for server on {}", address);
+    
+    for attempt in 0..80 {
         if TcpStream::connect(&address).is_ok() {
+            eprintln!("[DEBUG] Server is ready after {} attempts", attempt + 1);
             return Ok(());
+        }
+        if attempt % 10 == 0 {
+            eprintln!("[DEBUG] Still waiting... (attempt {}/80)", attempt + 1);
         }
         thread::sleep(Duration::from_millis(150));
     }
 
-    Err(anyhow!("UI server did not become ready"))
+    eprintln!("[ERROR] UI server did not become ready after 80 attempts (12 seconds)");
+    Err(anyhow!("UI server did not become ready on {}", address))
 }
 
 fn project_root() -> Result<PathBuf> {
@@ -148,19 +202,28 @@ fn find_embedded_standalone_dir(app: &AppHandle) -> Result<PathBuf> {
 }
 
 fn find_node_executable(app: &AppHandle) -> Result<String> {
+    eprintln!("[DEBUG] Searching for Node.js executable...");
+    
     // Highest priority: explicit override
     if let Ok(path) = env::var("LEAN_SPEC_NODE_PATH") {
+        eprintln!("[DEBUG] Checking LEAN_SPEC_NODE_PATH: {}", path);
         if Path::new(&path).exists() {
+            eprintln!("[DEBUG] Using Node from LEAN_SPEC_NODE_PATH");
             return Ok(path);
         }
+        eprintln!("[DEBUG] LEAN_SPEC_NODE_PATH does not exist");
     }
 
     // Next: bundled runtime inside resources
+    eprintln!("[DEBUG] Checking for bundled Node.js...");
     if let Some(path) = bundled_node_path(app) {
+        eprintln!("[DEBUG] Found bundled Node.js at: {}", path);
         return Ok(path);
     }
+    eprintln!("[DEBUG] No bundled Node.js found");
 
     // Fallback: system-installed Node.js
+    eprintln!("[DEBUG] Checking system Node.js...");
     let node_paths = if cfg!(target_os = "linux") {
         vec![
             "node",                              // In PATH
@@ -185,12 +248,17 @@ fn find_node_executable(app: &AppHandle) -> Result<String> {
     };
 
     for path in node_paths {
+        eprintln!("[DEBUG] Trying Node.js path: {}", path);
         if let Ok(output) = Command::new(path).arg("--version").output() {
             if output.status.success() {
+                let version = String::from_utf8_lossy(&output.stdout);
+                eprintln!("[DEBUG] Found Node.js at {} (version: {})", path, version.trim());
                 return Ok(path.to_string());
             }
         }
     }
+
+    eprintln!("[ERROR] No Node.js executable found in any location");
 
     Err(anyhow!(
         "Node.js not found. Please install Node.js >= 20 from https://nodejs.org/ or your system package manager.\n\
@@ -205,17 +273,25 @@ fn bundled_node_path(app: &AppHandle) -> Option<String> {
     let target = match (env::consts::OS, env::consts::ARCH) {
         ("linux", "x86_64") => "linux-x64",
         ("linux", "aarch64") => "linux-arm64",
-        _ => return None,
+        _ => {
+            eprintln!("[DEBUG] No bundled Node for OS={}, ARCH={}", env::consts::OS, env::consts::ARCH);
+            return None;
+        }
     };
+    
+    eprintln!("[DEBUG] Looking for bundled node/{}/node", target);
 
     let candidate = app
         .path()
         .resolve(format!("node/{target}/node"), BaseDirectory::Resource)
         .ok()?;
 
+    eprintln!("[DEBUG] Bundled node candidate: {:?}", candidate);
     if candidate.exists() {
+        eprintln!("[DEBUG] Bundled node exists");
         Some(candidate.to_string_lossy().to_string())
     } else {
+        eprintln!("[DEBUG] Bundled node does not exist at {:?}", candidate);
         None
     }
 }

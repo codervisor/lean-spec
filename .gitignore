@@ -22,3 +22,4 @@ GEMINI.md
 packages/cli/README.md
 packages/desktop/src-tauri/ui-standalone
 packages/desktop/src-tauri/target
+packages/desktop/src-tauri/resources
