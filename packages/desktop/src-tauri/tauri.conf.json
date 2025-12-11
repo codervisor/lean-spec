@@ -6,7 +6,7 @@
   "mainBinaryName": "lean-spec-desktop",
   "build": {
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui && pnpm build",
+    "beforeBuildCommand": "pnpm --dir ../.. --filter @leanspec/ui build && pnpm prepare:ui && pnpm download:node && pnpm build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"
   },
@@ -33,7 +33,8 @@
   },
   "bundle": {
     "resources": [
-      "ui-standalone"
+      "ui-standalone",
+      "resources/node"
     ],
     "icon": [
       "icons/icon.icns",
