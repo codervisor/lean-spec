@@ -279,11 +279,12 @@ fn bundled_node_path(app: &AppHandle) -> Option<String> {
         }
     };
     
-    eprintln!("[DEBUG] Looking for bundled node/{}/node", target);
+    eprintln!("[DEBUG] Looking for bundled resources/node/{}/node", target);
 
     let candidate = app
         .path()
-        .resolve(format!("node/{target}/node"), BaseDirectory::Resource)
+        .resolve(format!("resources/node/{target}/node"), BaseDirectory::Resource)
+        .or_else(|_| app.path().resolve(format!("node/{target}/node"), BaseDirectory::Resource))
         .ok()?;
 
     eprintln!("[DEBUG] Bundled node candidate: {:?}", candidate);
