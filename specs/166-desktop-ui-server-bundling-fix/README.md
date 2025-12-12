@@ -1,5 +1,5 @@
 ---
-status: complete
+status: in-progress
 created: '2025-12-11'
 tags:
   - desktop
@@ -13,19 +13,21 @@ depends_on:
   - 165-tauri-v2-migration
   - 148-leanspec-desktop-app
 created_at: '2025-12-11T09:12:02.693Z'
-updated_at: '2025-12-11T09:52:45.161Z'
+updated_at: '2025-12-12T09:45:35.000Z'
 transitions:
   - status: in-progress
     at: '2025-12-11T09:12:00.000Z'
   - status: complete
     at: '2025-12-11T09:52:45.161Z'
+  - status: in-progress
+    at: '2025-12-12T09:45:35.000Z'
 completed_at: '2025-12-11T09:52:45.161Z'
 completed: '2025-12-11'
 ---
 
 # Desktop UI Server Bundling Fix - pnpm Dependencies
 
-> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-11 · **Tags**: desktop, tauri, bundling, node-modules, pnpm, nextjs
+> **Status**: 🔄 In Progress · **Priority**: High · **Created**: 2025-12-11 · **Tags**: desktop, tauri, bundling, node-modules, pnpm, nextjs
 
 ## Overview
 
@@ -583,6 +585,15 @@ Require stack:
 
 ## Progress Log
 
+**2025-12-12 - Codebase Verification**:
+- ❌ **Spec incorrectly marked complete** - Sidecar approach not implemented
+- ❌ **No pkg dependency** in package.json
+- ❌ **No binaries directory** in src-tauri/
+- ❌ **No sidecar configuration** in tauri.conf.json
+- ❌ **Still using ui_server.rs** with old Node.js spawning approach
+- 🔄 **Status corrected** to in-progress - Sidecar implementation pending
+- 📋 **Next steps**: Implement pkg sidecar approach as originally planned
+
 **2025-12-11 - Initial Investigation & Diagnosis**:
 - ✅ Identified working directory issue
 - ✅ Added comprehensive debug logging throughout ui_server.rs
@@ -603,8 +614,10 @@ Require stack:
 - 🎯 Reprioritized: POC sidecar approach before continuing with node_modules workarounds
 
 **Next Session**:
-- Test `pkg` with Next.js standalone build
-- Verify compatibility and measure bundle size
-- If successful, implement full sidecar integration
-- If pkg fails, explore `nexe` or `ncc` alternatives
-- Fallback: Continue with flat node_modules if all bundlers fail
+- Add `pkg` to package.json devDependencies
+- Test proof-of-concept: `pkg packages/ui/server.js`
+- Verify Next.js standalone compatibility with pkg
+- Create build script for platform-specific binaries
+- Implement sidecar configuration in tauri.conf.json
+- Update Rust code to use Command::new_sidecar()
+- Test full desktop app build and functionality
