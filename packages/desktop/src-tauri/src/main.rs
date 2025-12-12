@@ -17,6 +17,10 @@ use commands::{
     desktop_version,
     desktop_refresh_projects,
     desktop_switch_project,
+    desktop_validate_project,
+    desktop_toggle_favorite,
+    desktop_remove_project,
+    desktop_rename_project,
 };
 use shortcuts::register_shortcuts;
 use state::DesktopState;
@@ -54,7 +58,11 @@ fn main() {
             desktop_switch_project,
             desktop_add_project,
             desktop_check_updates,
-            desktop_version
+            desktop_version,
+            desktop_validate_project,
+            desktop_toggle_favorite,
+            desktop_remove_project,
+            desktop_rename_project
         ])
         .run(tauri::generate_context!())
         .expect("error while running LeanSpec Desktop");

@@ -111,7 +111,42 @@ impl ProjectStore {
         let _ = write_projects(&self.path_json, &guard);
         Ok(candidate)
     }
-}
+
+    pub fn toggle_favorite(&self, project_id: &str) -> Result<()> {
+        let mut guard = self.data.write();
+        if let Some(project) = guard.projects.iter_mut().find(|p| p.id == project_id) {
+            project.favorite = !project.favorite;
+            let _ = write_projects(&self.path_json, &guard);
+            Ok(())
+        } else {
+            Err(anyhow!("Project not found"))
+        }
+    }
+
+    pub fn remove_project(&self, project_id: &str) -> Result<()> {
+        let mut guard = self.data.write();
+        let initial_len = guard.projects.len();
+        guard.projects.retain(|p| p.id != project_id);
+        guard.recent_projects.retain(|id| id != project_id);
+        
+        if guard.projects.len() == initial_len {
+            return Err(anyhow!("Project not found"));
+        }
+        
+        let _ = write_projects(&self.path_json, &guard);
+        Ok(())
+    }
+
+    pub fn rename_project(&self, project_id: &str, new_name: &str) -> Result<()> {
+        let mut guard = self.data.write();
+        if let Some(project) = guard.projects.iter_mut().find(|p| p.id == project_id) {
+            project.name = new_name.to_string();
+            let _ = write_projects(&self.path_json, &guard);
+            Ok(())
+        } else {
+            Err(anyhow!("Project not found"))
+        }
+    }
 
 impl Default for ProjectStore {
     fn default() -> Self {
