@@ -49,11 +49,17 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Build desktop bundle
-        run: 
-          ${{ matrix.os == 'macos-latest' && 'pnpm --filter @leanspec/desktop bundle:macos' || '' }}
-          ${{ matrix.os == 'ubuntu-latest' && 'pnpm --filter @leanspec/desktop bundle:linux' || '' }}
-          ${{ matrix.os == 'windows-latest' && 'pnpm --filter @leanspec/desktop bundle:windows' || '' }}
+      - name: Build desktop bundle (macOS)
+        if: matrix.os == 'macos-latest'
+        run: pnpm --filter @leanspec/desktop bundle:macos
+
+      - name: Build desktop bundle (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm --filter @leanspec/desktop bundle:linux
+
+      - name: Build desktop bundle (Windows)
+        if: matrix.os == 'windows-latest'
+        run: pnpm --filter @leanspec/desktop bundle:windows
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

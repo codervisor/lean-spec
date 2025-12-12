@@ -55,9 +55,12 @@
     },
     "windows": {
       "digestAlgorithm": "sha256",
-      "wix": {
-        "language": "en-US",
-        "bannerPath": "icons/banner.bmp"
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["en-US"]
       }
     }
   },
