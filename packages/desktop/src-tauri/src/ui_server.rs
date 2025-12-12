@@ -273,18 +273,33 @@ fn bundled_node_path(app: &AppHandle) -> Option<String> {
     let target = match (env::consts::OS, env::consts::ARCH) {
         ("linux", "x86_64") => "linux-x64",
         ("linux", "aarch64") => "linux-arm64",
+        ("macos", "x86_64") => "macos-x64",
+        ("macos", "aarch64") => "macos-arm64",
+        ("windows", "x86_64") => "windows-x64",
+        ("windows", "aarch64") => "windows-arm64",
         _ => {
             eprintln!("[DEBUG] No bundled Node for OS={}, ARCH={}", env::consts::OS, env::consts::ARCH);
             return None;
         }
     };
-    
-    eprintln!("[DEBUG] Looking for bundled resources/node/{}/node", target);
+
+    let exe_name = if cfg!(target_os = "windows") { "node.exe" } else { "node" };
+
+    eprintln!(
+        "[DEBUG] Looking for bundled resources/node/{}/{}",
+        target, exe_name
+    );
 
     let candidate = app
         .path()
-        .resolve(format!("resources/node/{target}/node"), BaseDirectory::Resource)
-        .or_else(|_| app.path().resolve(format!("node/{target}/node"), BaseDirectory::Resource))
+        .resolve(
+            format!("resources/node/{target}/{exe_name}"),
+            BaseDirectory::Resource,
+        )
+        .or_else(|_| {
+            app.path()
+                .resolve(format!("node/{target}/{exe_name}"), BaseDirectory::Resource)
+        })
         .ok()?;
 
     eprintln!("[DEBUG] Bundled node candidate: {:?}", candidate);
