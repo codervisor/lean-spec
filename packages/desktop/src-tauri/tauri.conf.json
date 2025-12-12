@@ -68,6 +68,9 @@
     "updater": {
       "endpoints": ["https://updates.lean-spec.dev/desktop.json"],
       "pubkey": ""
+    },
+    "shell": {
+      "sidecar": true
     }
   }
 }

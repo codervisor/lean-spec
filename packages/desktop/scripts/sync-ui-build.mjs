@@ -59,23 +59,90 @@ async function flattenNodeModules(standaloneRoot) {
   await fs.mkdir(flatNodeModules, { recursive: true });
 
   const storeEntries = await fs.readdir(pnpmStore, { withFileTypes: true });
+  const copiedPackages = new Map(); // Map of pkg name -> whether it has package.json
+
   for (const entry of storeEntries) {
     if (!entry.isDirectory()) continue;
+    // Skip the hoisted node_modules inside .pnpm
+    if (entry.name === 'node_modules') continue;
 
     const packageNodeModules = path.join(pnpmStore, entry.name, 'node_modules');
     if (!(await pathExists(packageNodeModules))) continue;
 
-    const packages = await fs.readdir(packageNodeModules);
-    for (const pkg of packages) {
-      const src = path.join(packageNodeModules, pkg);
-      const dest = path.join(flatNodeModules, pkg);
+    let packages;
+    try {
+      packages = await fs.readdir(packageNodeModules, { withFileTypes: true });
+    } catch {
+      continue;
+    }
 
-      await fs.rm(dest, { recursive: true, force: true });
-      await fs.cp(src, dest, { recursive: true, dereference: true });
+    for (const pkg of packages) {
+      // Skip .pnpm directory and hidden files
+      if (pkg.name === '.pnpm' || pkg.name.startsWith('.')) continue;
+
+      const src = path.join(packageNodeModules, pkg.name);
+      const dest = path.join(flatNodeModules, pkg.name);
+
+      try {
+        // Check source exists before copying
+        try {
+          await fs.stat(src);
+        } catch {
+          continue;
+        }
+
+        // Handle scoped packages (@org/pkg)
+        if (pkg.name.startsWith('@')) {
+          const scopeDir = path.join(flatNodeModules, pkg.name);
+          await fs.mkdir(scopeDir, { recursive: true });
+          
+          let scopePackages;
+          try {
+            scopePackages = await fs.readdir(src, { withFileTypes: true });
+          } catch {
+            continue;
+          }
+          
+          for (const scopePkg of scopePackages) {
+            const scopeSrc = path.join(src, scopePkg.name);
+            const scopeDest = path.join(scopeDir, scopePkg.name);
+            const scopeKey = `${pkg.name}/${scopePkg.name}`;
+            
+            // Check if this version has package.json (more complete)
+            const hasPackageJson = await pathExists(path.join(scopeSrc, 'package.json'));
+            const existingHasPackageJson = copiedPackages.get(scopeKey);
+            
+            // Copy if not already copied, or if this version has package.json and previous didn't
+            if (!copiedPackages.has(scopeKey) || (hasPackageJson && !existingHasPackageJson)) {
+              try {
+                await fs.stat(scopeSrc);
+                await fs.rm(scopeDest, { recursive: true, force: true });
+                await fs.cp(scopeSrc, scopeDest, { recursive: true, dereference: true });
+                copiedPackages.set(scopeKey, hasPackageJson);
+              } catch {
+                // Skip if source doesn't exist
+              }
+            }
+          }
+        } else {
+          // Check if this version has package.json (more complete)
+          const hasPackageJson = await pathExists(path.join(src, 'package.json'));
+          const existingHasPackageJson = copiedPackages.get(pkg.name);
+          
+          // Copy if not already copied, or if this version has package.json and previous didn't
+          if (!copiedPackages.has(pkg.name) || (hasPackageJson && !existingHasPackageJson)) {
+            await fs.rm(dest, { recursive: true, force: true });
+            await fs.cp(src, dest, { recursive: true, dereference: true });
+            copiedPackages.set(pkg.name, hasPackageJson);
+          }
+        }
+      } catch (error) {
+        console.warn(`  ⚠ Failed to copy ${pkg.name}: ${error.message}`);
+      }
     }
   }
 
-  console.log('✓ Flattened pnpm node_modules for embedded UI');
+  console.log(`✓ Flattened ${copiedPackages.size} pnpm packages for embedded UI`);
 }
 
 async function main() {

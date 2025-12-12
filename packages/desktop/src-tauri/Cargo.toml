@@ -26,6 +26,7 @@ tauri-plugin-global-shortcut = { version = "2" }
 tauri-plugin-log = { version = "2" }
 tauri-plugin-notification = { version = "2" }
 tauri-plugin-opener = { version = "2" }
+tauri-plugin-shell = { version = "2" }
 tauri-plugin-updater = { version = "2" }
 tauri-plugin-window-state = { version = "2" }
 walkdir = "2.5"

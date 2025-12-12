@@ -21,6 +21,10 @@
     "global-shortcut:allow-unregister",
     "global-shortcut:allow-unregister-all",
     "window-state:default",
-    "updater:default"
+    "updater:default",
+    "shell:allow-execute",
+    "shell:allow-spawn",
+    "shell:allow-stdin-write",
+    "shell:allow-kill"
   ]
 }
