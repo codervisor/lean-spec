@@ -3,11 +3,11 @@
 //! These commands expose the Rust spec operations library to the UI frontend,
 //! replacing the need for Next.js API routes.
 
-use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::State;
 
 use crate::specs::{
+    constants::VALID_STATUSES,
     reader::{LightweightSpec, Spec, SpecReader},
     stats::{calculate_stats, StatsResult},
     dependencies::{build_dependency_graph, get_spec_dependencies, DependencyGraph, SpecDependencies},
@@ -207,12 +207,11 @@ pub async fn update_spec_status(
     use chrono::Utc;
 
     // Validate status
-    let valid_statuses = ["planned", "in-progress", "complete", "archived"];
-    if !valid_statuses.contains(&new_status.as_str()) {
+    if !VALID_STATUSES.contains(&new_status.as_str()) {
         return Err(format!(
             "Invalid status '{}'. Must be one of: {}",
             new_status,
-            valid_statuses.join(", ")
+            VALID_STATUSES.join(", ")
         ));
     }
 
@@ -226,11 +225,12 @@ pub async fn update_spec_status(
         .load_spec(&spec_id)
         .ok_or_else(|| format!("Spec '{}' not found", spec_id))?;
 
-    // Read the spec file
+    // Read the spec file - construct proper path from specs_dir and spec_name
+    // The file_path is relative like "specs/169-name/README.md"
+    // We need to join specs_dir with the spec directory and README.md
     let spec_path = Path::new(&project.specs_dir)
-        .parent()
-        .unwrap_or(Path::new(&project.specs_dir))
-        .join(&spec.file_path.replace("specs/", ""));
+        .join(&spec.spec_name)
+        .join("README.md");
     
     let content = fs::read_to_string(&spec_path)
         .map_err(|e| format!("Failed to read spec file: {}", e))?;
@@ -267,12 +267,13 @@ fn update_frontmatter_field(content: &str, field: &str, value: &str) -> Result<S
         
         // Simple field replacement (works for simple values)
         let field_pattern = format!("{}:", field);
-        let mut lines: Vec<&str> = yaml_content.lines().collect();
+        let new_line = format!("{}: {}", field, value);
+        let mut lines: Vec<String> = yaml_content.lines().map(String::from).collect();
         let mut found = false;
         
         for line in lines.iter_mut() {
             if line.trim_start().starts_with(&field_pattern) {
-                *line = &format!("{}: {}", field, value).leak(); // Safe: short-lived
+                *line = new_line.clone();
                 found = true;
                 break;
             }

@@ -4,6 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::specs::constants::{VALID_STATUSES, VALID_PRIORITIES};
 use crate::specs::frontmatter::parse_frontmatter;
 use crate::specs::reader::Spec;
 
@@ -54,15 +55,14 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
 
     // Check valid status values
     if let Some(status) = &frontmatter.status {
-        let valid_statuses = ["planned", "in-progress", "complete", "archived"];
-        if !valid_statuses.contains(&status.as_str()) {
+        if !VALID_STATUSES.contains(&status.as_str()) {
             issues.push(ValidationIssue {
                 severity: IssueSeverity::Error,
                 code: "invalid-status".to_string(),
                 message: format!(
                     "Invalid status '{}'. Must be one of: {}",
                     status,
-                    valid_statuses.join(", ")
+                    VALID_STATUSES.join(", ")
                 ),
                 line: None,
             });
@@ -71,15 +71,14 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
 
     // Check valid priority values
     if let Some(priority) = &frontmatter.priority {
-        let valid_priorities = ["critical", "high", "medium", "low"];
-        if !valid_priorities.contains(&priority.as_str()) {
+        if !VALID_PRIORITIES.contains(&priority.as_str()) {
             issues.push(ValidationIssue {
                 severity: IssueSeverity::Warning,
                 code: "invalid-priority".to_string(),
                 message: format!(
                     "Invalid priority '{}'. Recommended: {}",
                     priority,
-                    valid_priorities.join(", ")
+                    VALID_PRIORITIES.join(", ")
                 ),
                 line: None,
             });
@@ -226,11 +225,11 @@ pub fn validate_all_specs(specs: &[Spec]) -> Vec<ValidationResult> {
 /// Estimate token count for content
 /// Uses a rough heuristic of ~4 characters per token for English text
 fn estimate_tokens(content: &str) -> i32 {
-    let words: Vec<&str> = content.split_whitespace().collect();
+    let word_count = content.split_whitespace().count();
     let special_chars = content.chars().filter(|c| !c.is_alphanumeric() && !c.is_whitespace()).count();
     
     // Roughly 1.3 tokens per word + 0.5 for special chars
-    ((words.len() as f64 * 1.3) + (special_chars as f64 * 0.5)).ceil() as i32
+    ((word_count as f64 * 1.3) + (special_chars as f64 * 0.5)).ceil() as i32
 }
 
 #[cfg(test)]
