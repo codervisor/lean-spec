@@ -23,3 +23,7 @@
   background: rgba(255, 95, 95, 0.2);
   border-color: rgba(255, 95, 95, 0.4);
 }
+
+.restoreButton {
+  transform: scaleX(-1);
+}

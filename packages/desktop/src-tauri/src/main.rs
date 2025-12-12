@@ -2,7 +2,6 @@
 
 mod commands;
 mod config;
-mod menu;
 mod projects;
 mod shortcuts;
 mod state;
@@ -35,8 +34,6 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .menu(|app| menu::build_native_menu(app))
-        .on_menu_event(menu::handle_menu_event)
         .manage(desktop_state)
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
