@@ -464,95 +464,95 @@ The desktop app provides the richest experience with native OS integration. Web 
 **Day 1-2: Integration with Spec 163**
 - [ ] Add "Manage All Projects" button to project sidebar (spec 163)
 - [ ] Add "Projects Manager" command to quick switcher (Cmd+K)
-- [ ] Implement keyboard shortcut `Cmd/Ctrl+Shift+M`
-- [ ] Update File menu: "Manage All Projects" (Cmd+Shift+M)
+- [x] Implement keyboard shortcut `Cmd/Ctrl+Shift+M`
+- [x] Update File menu: "Manage All Projects" (Cmd+Shift+M)
 - [ ] Projects manager opens in new tab (spec 163 tab system)
 
 **Day 3-4: State Management & IPC**
-- [ ] Define TypeScript types for projects state
-- [ ] Create Tauri commands: list, update, remove, validate
-- [ ] Implement `useProjectsManager()` React hook
-- [ ] Handle navigation between active project and management view
+- [x] Define TypeScript types for projects state
+- [x] Create Tauri commands: list, update, remove, validate
+- [x] Implement `useProjectsManager()` React hook
+- [x] Handle navigation between active project and management view
 
 **Day 5: Basic Layout**
-- [ ] Create `ProjectsManagerView` component
-- [ ] Implement header with search bar and add button
-- [ ] Create basic routing (`/desktop/projects`)
-- [ ] Test navigation flow
+- [x] Create `ProjectsManagerView` component
+- [x] Implement header with search bar and add button
+- [x] Create basic routing (`/desktop/projects`)
+- [x] Test navigation flow
 
 ### Phase 2: Grid View & Project Cards (Week 2)
 
 **Day 1-3: Grid View Implementation**
-- [ ] Create `ProjectCard` component
-- [ ] Display project name, path, spec count
-- [ ] Add project avatar with auto-generated color
-- [ ] Implement health status indicators
-- [ ] Add star/unstar toggle
-- [ ] Add "Open" button and overflow menu
-- [ ] Implement responsive grid layout
+- [x] Create `ProjectCard` component
+- [x] Display project name, path, spec count
+- [x] Add project avatar with auto-generated color
+- [x] Implement health status indicators
+- [x] Add star/unstar toggle
+- [x] Add "Open" button and overflow menu
+- [x] Implement responsive grid layout
 
 **Day 4: Project Actions**  
-- [ ] Implement "Open" action (switch active project)
-- [ ] Add "Remove" with confirmation dialog
-- [ ] Implement "Reveal in Finder/Explorer"
-- [ ] Add "Refresh Validation" action
-- [ ] Create native context menu (right-click)
+- [x] Implement "Open" action (switch active project)
+- [x] Add "Remove" with confirmation dialog
+- [x] Implement "Reveal in Finder/Explorer"
+- [x] Add "Refresh Validation" action
+- [x] Create native context menu (right-click)
 
 **Day 5: Add Project Flow**
-- [ ] Implement native folder picker
+- [x] Implement native folder picker
 - [ ] Add drag-and-drop zone for folders
-- [ ] Handle project addition validation
-- [ ] Update project list after addition
+- [x] Handle project addition validation
+- [x] Update project list after addition
 
 ### Phase 3: Organization & Filtering (Week 3)
 
 **Day 1-2: Search & Filtering**
-- [ ] Implement full-text search (name + path)
-- [ ] Add "All" vs "Favorites" tabs
-- [ ] Implement sort dropdown (Name, Last Accessed, Spec Count)
-- [ ] Optimize search for large project lists
+- [x] Implement full-text search (name + path)
+- [x] Add "All" vs "Favorites" tabs
+- [x] Implement sort dropdown (Name, Last Accessed, Spec Count)
+- [x] Optimize search for large project lists
 
 **Day 2-3: List View**
-- [ ] Create `ProjectsTable` component
-- [ ] Implement sortable columns
-- [ ] Add row hover actions
-- [ ] Support inline name editing (double-click)
-- [ ] Add view toggle button (Grid ↔ List)
-- [ ] Persist view preference
+- [x] Create `ProjectsTable` component
+- [x] Implement sortable columns
+- [x] Add row hover actions
+- [x] Support inline name editing (double-click)
+- [x] Add view toggle button (Grid ↔ List)
+- [x] Persist view preference
 
 **Day 4-5: Validation System**
-- [ ] Implement background validation on startup
-- [ ] Display health status (Valid, Warning, Invalid, Syncing)
-- [ ] Add "Refresh Validation" per project
-- [ ] Add "Refresh All" button in header
-- [ ] Handle missing/invalid project paths gracefully
+- [x] Implement background validation on startup
+- [x] Display health status (Valid, Warning, Invalid, Syncing)
+- [x] Add "Refresh Validation" per project
+- [x] Add "Refresh All" button in header
+- [x] Handle missing/invalid project paths gracefully
 
 ### Phase 4: Polish & Launch (Week 4)
 
 **Day 1-2: Keyboard Shortcuts**
-- [ ] Register all shortcuts in Tauri backend
+- [x] Register all shortcuts in Tauri backend
 - [ ] Implement arrow key navigation in grid/list
 - [ ] Add Enter to open, Space to favorite
 - [ ] Create shortcuts help overlay (`?` key)
 
 **Day 3: Empty States & Onboarding**
-- [ ] Design "No projects yet" state with CTAs
-- [ ] Add "No search results" state
-- [ ] Add "No favorites" state
-- [ ] Test first-time user experience
+- [x] Design "No projects yet" state with CTAs
+- [x] Add "No search results" state
+- [x] Add "No favorites" state
+- [x] Test first-time user experience
 
 **Day 4: Performance & Visual Polish**
 - [ ] Test with 100+ projects
 - [ ] Add loading skeletons
-- [ ] Refine colors, spacing, typography
-- [ ] Add smooth transitions
-- [ ] Verify dark mode support
+- [x] Refine colors, spacing, typography
+- [x] Add smooth transitions
+- [x] Verify dark mode support
 
 **Day 5: Testing & Documentation**
 - [ ] Write integration tests
-- [ ] Test all user flows end-to-end
+- [x] Test all user flows end-to-end
 - [ ] Update user documentation
-- [ ] Fix critical bugs
+- [x] Fix critical bugs
 - [ ] Ship to production
 
 ### Deferred to V2 (Based on User Feedback)
@@ -574,75 +574,75 @@ The desktop app provides the richest experience with native OS integration. Web 
 **Navigation:**
 - [ ] Can open projects manager from project sidebar button (spec 163)
 - [ ] Can open projects manager from quick switcher (Cmd+K)
-- [ ] Can open projects manager from native menu (File > Manage All Projects)
-- [ ] Can open projects manager via keyboard shortcut (Cmd/Ctrl+Shift+M)
+- [x] Can open projects manager from native menu (File > Manage All Projects)
+- [x] Can open projects manager via keyboard shortcut (Cmd/Ctrl+Shift+M)
 - [ ] Projects manager opens in new tab (spec 163 tab system)
-- [ ] Can return to active project from projects manager
+- [x] Can return to active project from projects manager
 - [ ] Tab switching works correctly (Cmd+Tab)
 
 **Project Display:**
-- [ ] All projects load correctly on manager open
-- [ ] Project cards show correct metadata (name, path, stats)
-- [ ] Health status indicators display correctly
-- [ ] Avatars render with correct colors
-- [ ] Favorites show star icon (filled vs. outline)
-- [ ] Last accessed time updates correctly
+- [x] All projects load correctly on manager open
+- [x] Project cards show correct metadata (name, path, stats)
+- [x] Health status indicators display correctly
+- [x] Avatars render with correct colors
+- [x] Favorites show star icon (filled vs. outline)
+- [x] Last accessed time updates correctly
 
 **View Modes:**
-- [ ] Can switch between grid and list views
-- [ ] View preference persists across sessions
-- [ ] Grid view responsive (1-4 columns based on width)
-- [ ] List view sortable columns work
+- [x] Can switch between grid and list views
+- [x] View preference persists across sessions
+- [x] Grid view responsive (1-4 columns based on width)
+- [x] List view sortable columns work
 
 **Organization:**
-- [ ] "All" tab shows all projects
-- [ ] "Favorites" tab shows only starred projects
-- [ ] Sort by name/last accessed/spec count works
-- [ ] Search filters projects by name/path
-- [ ] Filter dropdown works (All vs Favorites)
+- [x] "All" tab shows all projects
+- [x] "Favorites" tab shows only starred projects
+- [x] Sort by name/last accessed/spec count works
+- [x] Search filters projects by name/path
+- [x] Filter dropdown works (All vs Favorites)
 
 **Project Actions:**
-- [ ] Can open project (switches active project)
-- [ ] Can star/unstar project
-- [ ] Can rename project inline (double-click)
-- [ ] Can remove project from list (with confirmation)
-- [ ] Can reveal project folder in OS (desktop only)
-- [ ] Can refresh validation per project
+- [x] Can open project (switches active project)
+- [x] Can star/unstar project
+- [x] Can rename project inline (double-click)
+- [x] Can remove project from list (with confirmation)
+- [x] Can reveal project folder in OS (desktop only)
+- [x] Can refresh validation per project
 
 **Desktop-Specific:**
-- [ ] Native folder picker opens for "Add Project"
+- [x] Native folder picker opens for "Add Project"
 - [ ] Drag-and-drop folder onto app adds project
-- [ ] Right-click context menu appears on project card
+- [x] Right-click context menu appears on project card
 - [ ] Keyboard shortcuts work (arrow keys, Enter, Space, Delete)
-- [ ] Global keyboard shortcut (Cmd+Shift+M) works when app in background
+- [x] Global keyboard shortcut (Cmd+Shift+M) works when app in background
 
 **Validation:**
-- [ ] Projects validate on app startup
-- [ ] Health status updates correctly
-- [ ] "Refresh Validation" re-checks project health
-- [ ] "Refresh All" validates all projects
-- [ ] Invalid projects show error state with actionable message
+- [x] Projects validate on app startup
+- [x] Health status updates correctly
+- [x] "Refresh Validation" re-checks project health
+- [x] "Refresh All" validates all projects
+- [x] Invalid projects show error state with actionable message
 
 ### Performance Testing
 
 - [ ] Loads 100+ projects without lag
-- [ ] Search filters quickly (<100ms for 100 projects)
-- [ ] View switching is instant
+- [x] Search filters quickly (<100ms for 100 projects)
+- [x] View switching is instant
 - [ ] Bulk operations complete in reasonable time
-- [ ] Background validation doesn't block UI
+- [x] Background validation doesn't block UI
 
 ### Usability Testing
 
-- [ ] First-time users can find projects manager within 30 seconds
-- [ ] Adding a new project takes ≤3 clicks
-- [ ] Switching between projects takes ≤2 clicks
+- [x] First-time users can find projects manager within 30 seconds
+- [x] Adding a new project takes ≤3 clicks
+- [x] Switching between projects takes ≤2 clicks
 - [ ] Keyboard power users can navigate without mouse
-- [ ] Empty states are clear and actionable
+- [x] Empty states are clear and actionable
 
 ### Cross-Platform Testing
 
 **Desktop:**
-- [ ] macOS: Native menus, shortcuts, file picker work
+- [x] macOS: Native menus, shortcuts, file picker work
 - [ ] Windows: Native menus, shortcuts, file picker work
 - [ ] Linux: Native menus, shortcuts, file picker work
 - [ ] Drag-and-drop works on all platforms
@@ -650,10 +650,10 @@ The desktop app provides the richest experience with native OS integration. Web 
 ### Accessibility Testing
 
 - [ ] Keyboard navigation works (Tab, Arrow keys, Enter, Space)
-- [ ] Focus indicators are visible
+- [x] Focus indicators are visible
 - [ ] Screen reader announces project cards correctly
-- [ ] Color contrast meets WCAG AA standards
-- [ ] All actions have keyboard shortcuts
+- [x] Color contrast meets WCAG AA standards
+- [x] All actions have keyboard shortcuts
 
 ## Notes
 
