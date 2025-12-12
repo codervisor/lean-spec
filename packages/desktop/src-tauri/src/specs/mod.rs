@@ -4,6 +4,7 @@
 //! that replace the Node.js/TypeScript API routes.
 
 pub mod commands;
+pub mod constants;
 pub mod frontmatter;
 pub mod reader;
 pub mod stats;

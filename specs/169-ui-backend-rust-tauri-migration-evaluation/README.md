@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-12'
 tags:
   - architecture
@@ -14,12 +14,15 @@ depends_on:
   - 166-desktop-ui-server-bundling-fix
   - 165-tauri-v2-migration
   - 148-leanspec-desktop-app
-updated_at: '2025-12-12T21:21:33.478Z'
+updated_at: '2025-12-12T22:19:34.148Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-12T22:19:34.148Z'
 ---
 
 # Evaluate UI Backend Migration to Rust/Tauri
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-12 · **Tags**: architecture, desktop, rust, tauri, performance, evaluation
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-12 · **Tags**: architecture, desktop, rust, tauri, performance, evaluation
 
 ## Overview
 
@@ -392,28 +395,28 @@ pub async fn get_dependency_graph(
 
 ### Option A: Full Migration (If Approved)
 
-- [ ] **Phase 1**: Rust spec operations library (Week 1)
-  - [ ] Markdown parser with frontmatter
-  - [ ] File system reader/walker
-  - [ ] Basic validation
-  - [ ] Unit tests for core operations
+- [x] **Phase 1**: Rust spec operations library (Week 1)
+  - [x] Markdown parser with frontmatter
+  - [x] File system reader/walker
+  - [x] Basic validation
+  - [x] Unit tests for core operations
 
-- [ ] **Phase 2**: Migrate simple API routes (Week 2)
-  - [ ] Project CRUD commands
-  - [ ] Spec list and detail
-  - [ ] Status updates
-  - [ ] Basic stats
+- [x] **Phase 2**: Migrate simple API routes (Week 2)
+  - [x] Project CRUD commands
+  - [x] Spec list and detail
+  - [x] Status updates
+  - [x] Basic stats
   - [ ] Integration tests
 
-- [ ] **Phase 3**: Migrate complex routes (Week 3)
-  - [ ] Dependency graph computation
-  - [ ] Advanced stats and analytics
-  - [ ] Full-text search
+- [x] **Phase 3**: Migrate complex routes (Week 3)
+  - [x] Dependency graph computation
+  - [x] Advanced stats and analytics
+  - [x] Full-text search
   - [ ] Performance benchmarks
 
 - [ ] **Phase 4**: Convert UI to SPA (Week 4)
-  - [ ] Setup Vite build
-  - [ ] Replace API calls with Tauri invokes
+  - [x] Setup Vite build (already exists)
+  - [x] Replace API calls with Tauri invokes (TypeScript layer complete)
   - [ ] Setup React Router
   - [ ] Update all components
   - [ ] E2E testing
