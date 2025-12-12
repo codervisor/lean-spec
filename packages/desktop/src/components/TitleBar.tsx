@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, FolderOpenDot, Loader2, LucideIcon, Plus, RotateCcw } from 'lucide-react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { listen, emit, type UnlistenFn } from '@tauri-apps/api/event';
 import type { DesktopProject } from '../types';
 import WindowControls from './WindowControls';
+import DesktopMenu from './DesktopMenu';
 import styles from './title-bar.module.css';
 
 const desktopWindow = WebviewWindow.getCurrent();
@@ -26,6 +28,7 @@ const TitleBar = ({
   isLoading,
 }: TitleBarProps) => {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const projectSwitcherRef = useRef<HTMLDivElement>(null);
   const activeProject = projects.find((project) => project.id === activeProjectId);
 
   const handleProjectPick = (projectId: string) => {
@@ -44,19 +47,30 @@ const TitleBar = ({
     };
   }, [onAddProject]);
 
-  return (
-    <header className={styles.titleBar} data-tauri-drag-region="true">
-      <div className={styles.leftSection}>
-        <button
-          className={styles.logoButton}
-          onClick={() => desktopWindow.show()}
-          title="LeanSpec Desktop"
-        >
-          <span className={styles.logoGlyph}>LS</span>
-          <span className={styles.logoText}>LeanSpec</span>
-        </button>
 
-        <div className={styles.projectSwitcher}>
+
+  return (
+    <>
+      {projectMenuOpen && createPortal(
+        <div 
+          className={styles.backdrop} 
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setProjectMenuOpen(false);
+          }}
+          data-tauri-drag-region="false"
+        />,
+        document.body
+      )}
+      <header className={styles.titleBar} data-tauri-drag-region="true">
+        <div className={styles.leftSection}>
+        <DesktopMenu 
+          onAddProject={onAddProject}
+          onRefresh={onRefresh}
+        />
+
+        <div ref={projectSwitcherRef} className={styles.projectSwitcher}>
           <button
             className={styles.projectButton}
             onClick={() => setProjectMenuOpen((value) => !value)}
@@ -82,10 +96,16 @@ const TitleBar = ({
                 </button>
               ))}
               <div className={styles.projectMenuFooter}>
-                <button className={styles.secondaryAction} onClick={onAddProject}>
+                <button className={styles.secondaryAction} onClick={() => {
+                  setProjectMenuOpen(false);
+                  onAddProject();
+                }}>
                   <Plus size={14} /> Add project
                 </button>
-                <button className={styles.secondaryAction} onClick={onRefresh}>
+                <button className={styles.secondaryAction} onClick={() => {
+                  setProjectMenuOpen(false);
+                  onRefresh();
+                }}>
                   <RotateCcw size={14} /> Refresh
                 </button>
               </div>
@@ -94,18 +114,11 @@ const TitleBar = ({
         </div>
       </div>
 
-      <div className={styles.rightSection}>
-        <button className={styles.secondaryAction} onClick={onRefresh} disabled={isLoading}>
-          {isLoading ? <Loader2 size={14} className={styles.spin} /> : <RotateCcw size={14} />}
-          <span>Reload</span>
-        </button>
-        <button className={styles.primaryAction} onClick={onAddProject}>
-          <Plus size={14} />
-          <span>Add Project</span>
-        </button>
-        <WindowControls />
-      </div>
-    </header>
+        <div className={styles.rightSection}>
+          <WindowControls />
+        </div>
+      </header>
+    </>
   );
 };
 
