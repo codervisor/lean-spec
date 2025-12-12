@@ -511,7 +511,8 @@ pub async fn get_dependency_graph(
 **Markdown & Frontmatter**:
 - `pulldown-cmark` - Fast CommonMark parser
 - `serde_yaml` - YAML parsing (already in use)
-- `gray_matter` equivalent needed
+- Custom frontmatter: `pulldown-cmark` + `serde_yaml` (split on `---` delimiters)
+- Alternative: `markdown-frontmatter-parser` crate if available
 
 **File System**:
 - `walkdir` - Already in use, proven
