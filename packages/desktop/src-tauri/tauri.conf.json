@@ -60,7 +60,7 @@
       },
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["en-US"]
+        "languages": ["English"]
       }
     }
   },
