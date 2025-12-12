@@ -527,7 +527,7 @@ export function SpecDetailClient({ initialSpec, initialSubSpec, isFocusMode = fa
         </main>
 
         {/* Right Sidebar for TOC (Desktop only) */}
-        <aside className="hidden xl:block w-72 shrink-0 px-6 py-6 sticky top-32 h-[calc(100vh-8rem)] overflow-y-auto scrollbar-auto-hide">
+        <aside className={cn("hidden xl:block w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide", spec.subSpecs && spec.subSpecs.length > 0 ? "top-[16.375rem] h-[calc(100vh-16.375rem)]" : "top-[13.125rem] h-[calc(100vh-13.125rem)]")}>
            <TableOfContentsSidebar content={displayContent} />
         </aside>
       </div>
