@@ -4,6 +4,7 @@ mod commands;
 mod config;
 mod projects;
 mod shortcuts;
+mod specs;
 mod state;
 mod tray;
 mod ui_server;
@@ -21,6 +22,19 @@ use commands::{
     desktop_toggle_favorite,
     desktop_remove_project,
     desktop_rename_project,
+};
+use specs::{
+    get_specs,
+    get_spec_detail,
+    get_project_stats,
+    get_dependency_graph,
+    get_spec_dependencies_cmd,
+    search_specs,
+    get_specs_by_status,
+    get_all_tags,
+    validate_spec_cmd,
+    validate_all_specs_cmd,
+    update_spec_status,
 };
 use shortcuts::register_shortcuts;
 use state::DesktopState;
@@ -53,6 +67,7 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // Desktop commands
             desktop_bootstrap,
             desktop_refresh_projects,
             desktop_switch_project,
@@ -62,7 +77,19 @@ fn main() {
             desktop_validate_project,
             desktop_toggle_favorite,
             desktop_remove_project,
-            desktop_rename_project
+            desktop_rename_project,
+            // Spec commands (Phase 1 & 2 of spec 169)
+            get_specs,
+            get_spec_detail,
+            get_project_stats,
+            get_dependency_graph,
+            get_spec_dependencies_cmd,
+            search_specs,
+            get_specs_by_status,
+            get_all_tags,
+            validate_spec_cmd,
+            validate_all_specs_cmd,
+            update_spec_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running LeanSpec Desktop");
