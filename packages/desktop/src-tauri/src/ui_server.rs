@@ -117,22 +117,12 @@ fn spawn_embedded_server(app: &AppHandle, port: u16, project: Option<&DesktopPro
     eprintln!("[DEBUG] .next dir: {:?}", next_dir);
     eprintln!("[DEBUG] .next exists: {}", next_dir.exists());
     
-    // Set NODE_PATH to include the pnpm module structure
-    let pnpm_modules = standalone.join("node_modules/.pnpm");
-    eprintln!("[DEBUG] PNPM modules dir: {:?}", pnpm_modules);
-    
     let mut command = Command::new(&node_exe);
     command
         .current_dir(&server_dir)
         .arg("server.js")
         .env("PORT", port.to_string())
         .env("HOSTNAME", "127.0.0.1");
-    
-    // Add NODE_PATH to help Node.js find dependencies in pnpm structure
-    if pnpm_modules.exists() {
-        command.env("NODE_PATH", pnpm_modules.to_string_lossy().to_string());
-        eprintln!("[DEBUG] Set NODE_PATH to: {:?}", pnpm_modules);
-    }
     
     apply_env(&mut command, project);
     
