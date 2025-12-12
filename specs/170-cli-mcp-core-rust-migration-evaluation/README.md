@@ -210,8 +210,8 @@ struct SpecFrontmatter {
 pub fn parse_frontmatter(content: &str) -> Result<(SpecFrontmatter, String), Error> {
     let matter = Matter::<YAML>::new();
     let result = matter.parse(content);
-    let frontmatter: SpecFrontmatter = result.data.ok_or("No frontmatter")?
-        .deserialize()?;
+    let data = result.data.ok_or("No frontmatter")?;
+    let frontmatter: SpecFrontmatter = serde_yaml::from_value(data)?;
     Ok((frontmatter, result.content))
 }
 ```
