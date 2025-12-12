@@ -1,0 +1,660 @@
+---
+status: planned
+created: '2025-12-12'
+tags:
+  - architecture
+  - rust
+  - cli
+  - mcp
+  - core
+  - code-unification
+  - evaluation
+priority: high
+created_at: '2025-12-12T21:46:32.672Z'
+depends_on:
+  - 169-ui-backend-rust-tauri-migration-evaluation
+updated_at: '2025-12-12T21:46:32.807Z'
+---
+
+# Evaluate CLI/MCP/Core Migration to Rust for Unified Codebase
+
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-12 · **Tags**: architecture, rust, cli, mcp, core, code-unification, evaluation
+
+## Overview
+
+### Problem Statement
+
+Following the approval of **spec 169** (full migration of desktop UI backend to Rust), we now have an opportunity to **unify the entire LeanSpec codebase** by migrating the remaining Node.js components to Rust.
+
+**Current Architecture Issues**:
+- Code duplication between packages (CLI, MCP, Core, Desktop)
+- Same spec parsing/validation logic written twice (TypeScript in Core + future Rust in Desktop)
+- Dependency graph computation duplicated
+- File system operations duplicated
+- Multiple maintenance burdens (TypeScript + Rust)
+
+**Affected Components**:
+- `@leanspec/core` - Platform-agnostic parsing, validation, utilities (TypeScript)
+- `lean-spec` CLI - Command-line interface (TypeScript/Node.js)
+- `@leanspec/mcp` - MCP server (TypeScript/Node.js wrapper)
+- `@leanspec/ui` - Web UI launcher (Node.js wrapper for Next.js)
+
+**What Would Remain Node.js**:
+- Desktop frontend (React + Vite) - UI rendering
+- Web UI frontend (Next.js) - SSR for SEO
+- Thin Node.js CLI wrapper for npm distribution
+- npm package scaffolding
+
+### Value Proposition
+
+**Code Unification Benefits**:
+- Single source of truth for spec logic
+- One codebase to maintain, test, and debug
+- Consistent behavior across CLI, MCP, Desktop
+- Performance improvements across all interfaces
+- Smaller binary sizes for CLI distribution
+
+**Performance Gains** (estimated):
+```
+CLI Operations:
+- Spec validation: 200ms → 20ms (10x faster)
+- Dependency graph: 500ms → 50ms (10x faster)
+- Search (1000 specs): 800ms → 80ms (10x faster)
+
+Binary Size:
+- CLI package: ~50MB (with Node.js) → ~10MB (Rust binary)
+- Startup time: ~200ms → ~10ms
+```
+
+**Developer Experience**:
+- Rust's type system catches more bugs at compile time
+- Better error messages than TypeScript
+- Built-in testing and benchmarking
+- Ecosystem aligned (Tauri already Rust)
+
+### Scope of Migration
+
+**In Scope**:
+1. **Core Library** → Rust crate (`leanspec-core`)
+   - Frontmatter parsing (gray-matter → serde_yaml)
+   - Spec validation
+   - Statistics and insights
+   - Dependency graph computation
+   - File system operations
+
+2. **CLI** → Rust binary (`lean-spec`)
+   - All commands (list, create, update, validate, etc.)
+   - Terminal formatting and output
+   - Configuration management
+   - Error handling
+
+3. **MCP Server** → Rust MCP implementation
+   - MCP protocol handling
+   - Tool definitions
+   - Integration with core library
+
+**Out of Scope** (Stays Node.js):
+- Desktop UI frontend (React components)
+- Web UI (Next.js application for SSR/SEO)
+- npm package wrapper (`npx lean-spec` → calls Rust binary)
+- Distribution infrastructure
+
+### Why After Spec 169?
+
+**Logical Dependency**:
+- Spec 169 validates Rust implementation approach
+- Proves we can rewrite TypeScript logic in Rust successfully
+- Desktop backend serves as proof-of-concept
+- Learning from desktop migration informs CLI/MCP migration
+
+**Risk Reduction**:
+- Desktop migration is smaller scope (UI backend only)
+- If desktop migration fails, CLI/MCP stay TypeScript
+- If desktop succeeds, CLI/MCP migration is lower risk
+
+**Code Reuse**:
+- Rust spec parsing from desktop can be extracted to `leanspec-core` crate
+- CLI/MCP can consume the same crate
+- No duplication between desktop and CLI
+
+## Design
+
+### Architecture Overview
+
+**Target Architecture**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     LeanSpec Rust Core                      │
+│                    (leanspec-core crate)                    │
+│                                                             │
+│  • Frontmatter parsing      • Dependency graphs            │
+│  • Spec validation          • Statistics & insights        │
+│  • File system operations   • Search & filtering           │
+└───────────────┬─────────────────────────┬───────────────────┘
+                │                         │
+        ┌───────▼─────────┐       ┌──────▼──────────┐
+        │  CLI Binary     │       │  Desktop Backend │
+        │  (lean-spec)    │       │  (Tauri Rust)    │
+        │                 │       │                  │
+        │  • Commands     │       │  • Tauri API     │
+        │  • Terminal UI  │       │  • Native menus  │
+        │  • Config       │       │  • IPC handlers  │
+        └────────┬────────┘       └──────────────────┘
+                 │
+        ┌────────▼─────────┐
+        │  MCP Server      │
+        │  (Rust MCP impl) │
+        │                  │
+        │  • MCP protocol  │
+        │  • Tool handlers │
+        └──────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                   Node.js Wrappers (Thin)                   │
+│                                                             │
+│  • npm package for distribution                             │
+│  • Calls Rust binary (platform-specific)                    │
+│  • Web UI launcher (Next.js SSR)                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Package Structure
+
+**New Structure**:
+```
+packages/
+├── core/              - REMOVED (merged into Rust)
+├── cli/               - Thin Node.js wrapper
+│   ├── bin/
+│   │   └── lean-spec  - Calls platform-specific Rust binary
+│   └── binaries/
+│       ├── lean-spec-linux
+│       ├── lean-spec-macos
+│       └── lean-spec-windows.exe
+├── mcp/               - Thin Node.js wrapper
+│   └── bin/
+│       └── mcp        - Calls Rust MCP binary
+├── ui/                - Stays Node.js (Next.js SSR)
+└── desktop/           - Consumes leanspec-core
+
+rust/
+├── leanspec-core/     - NEW: Shared Rust library
+├── leanspec-cli/      - NEW: CLI binary
+└── leanspec-mcp/      - NEW: MCP server binary
+```
+
+### Key Technical Decisions
+
+**1. Frontmatter Parsing**
+
+Current (TypeScript):
+```typescript
+import matter from 'gray-matter';
+const { data, content } = matter(markdown);
+```
+
+Rust Equivalent:
+```rust
+use gray_matter::{Matter, engine::YAML};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+struct SpecFrontmatter {
+    status: String,
+    created: String,
+    tags: Vec<String>,
+    priority: String,
+    depends_on: Option<Vec<String>>,
+}
+
+pub fn parse_frontmatter(content: &str) -> Result<(SpecFrontmatter, String), Error> {
+    let matter = Matter::<YAML>::new();
+    let result = matter.parse(content);
+    let frontmatter: SpecFrontmatter = result.data.ok_or("No frontmatter")?
+        .deserialize()?;
+    Ok((frontmatter, result.content))
+}
+```
+
+**2. File System Operations**
+
+Current (TypeScript):
+```typescript
+import { readdir, readFile } from 'fs/promises';
+import { join } from 'path';
+
+const specs = await readdir(specsDir);
+for (const spec of specs) {
+  const content = await readFile(join(specsDir, spec, 'README.md'), 'utf-8');
+  // process...
+}
+```
+
+Rust Equivalent:
+```rust
+use std::fs;
+use std::path::Path;
+use walkdir::WalkDir;
+
+pub fn read_all_specs(specs_dir: &Path) -> Result<Vec<SpecInfo>, Error> {
+    WalkDir::new(specs_dir)
+        .max_depth(2)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_name() == "README.md")
+        .map(|entry| {
+            let content = fs::read_to_string(entry.path())?;
+            parse_spec(&content)
+        })
+        .collect()
+}
+```
+
+**3. CLI Framework**
+
+Use `clap` (industry standard):
+```rust
+use clap::{Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(name = "lean-spec")]
+#[command(about = "Lightweight spec methodology for AI-powered development")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    List {
+        #[arg(short, long)]
+        status: Option<String>,
+    },
+    Create {
+        name: String,
+        #[arg(short, long)]
+        title: Option<String>,
+    },
+    // ... other commands
+}
+```
+
+**4. MCP Server**
+
+Implement MCP protocol in Rust:
+```rust
+// Use existing Rust MCP crates or implement protocol
+use serde_json::json;
+
+pub async fn handle_mcp_request(request: McpRequest) -> McpResponse {
+    match request.method.as_str() {
+        "tools/list" => list_tools(),
+        "tools/call" => {
+            let tool_name = request.params["name"].as_str().unwrap();
+            match tool_name {
+                "list" => call_list_tool(request.params),
+                "create" => call_create_tool(request.params),
+                // ... other tools
+            }
+        }
+    }
+}
+```
+
+**5. Distribution Strategy**
+
+**npm Package** (stays):
+```json
+{
+  "name": "lean-spec",
+  "bin": {
+    "lean-spec": "./bin/lean-spec"
+  },
+  "optionalDependencies": {
+    "lean-spec-darwin-x64": "^0.3.0",
+    "lean-spec-darwin-arm64": "^0.3.0",
+    "lean-spec-linux-x64": "^0.3.0",
+    "lean-spec-windows-x64": "^0.3.0"
+  }
+}
+```
+
+**Binary wrapper** (Node.js):
+```javascript
+#!/usr/bin/env node
+const { spawn } = require('child_process');
+const path = require('path');
+
+// Detect platform and architecture
+const platform = process.platform;
+const arch = process.arch;
+
+// Map to binary path
+const binaryName = `lean-spec-${platform}-${arch}`;
+const binaryPath = path.join(__dirname, '..', 'binaries', binaryName);
+
+// Spawn Rust binary with args
+spawn(binaryPath, process.argv.slice(2), {
+  stdio: 'inherit',
+}).on('exit', (code) => process.exit(code));
+```
+
+### Crate Dependencies
+
+**Core Crate** (`leanspec-core`):
+- `serde` + `serde_yaml` - Frontmatter parsing
+- `gray_matter` - Markdown frontmatter (if available, else custom)
+- `walkdir` - File system traversal
+- `petgraph` - Dependency graph computation
+- `regex` - Pattern matching
+- `chrono` - Date/time handling
+
+**CLI Binary** (`leanspec-cli`):
+- `leanspec-core` - Core functionality
+- `clap` - CLI parsing
+- `colored` - Terminal colors (ANSI)
+- `dialoguer` - Interactive prompts
+- `indicatif` - Progress bars
+- `tokio` - Async runtime
+
+**MCP Binary** (`leanspec-mcp`):
+- `leanspec-core` - Core functionality
+- `tokio` - Async runtime
+- `serde_json` - JSON serialization
+- MCP protocol library (TBD - may need custom implementation)
+
+### Migration Phases
+
+**Phase 1: Core Library** (Week 1-2)
+1. Create `rust/leanspec-core` crate
+2. Migrate frontmatter parsing
+3. Migrate file system operations
+4. Migrate validation logic
+5. Migrate dependency graph computation
+6. Unit tests for all functionality
+
+**Phase 2: CLI Binary** (Week 3-4)
+1. Create `rust/leanspec-cli` binary
+2. Implement command parsing with clap
+3. Migrate each command:
+   - list, create, update, validate
+   - board, search, view, link/unlink
+   - deps, tokens, stats
+4. Terminal formatting and colors
+5. Integration tests
+
+**Phase 3: MCP Server** (Week 5)
+1. Create `rust/leanspec-mcp` binary
+2. Implement MCP protocol handling
+3. Migrate tool definitions
+4. Test with Claude Desktop, Cline, etc.
+
+**Phase 4: npm Distribution** (Week 6)
+1. Build Rust binaries for all platforms (CI)
+2. Create platform-specific npm packages
+3. Update main package to call binaries
+4. Test installation flow
+5. Update documentation
+
+**Phase 5: Deprecate TypeScript** (Week 7)
+1. Archive `packages/core`
+2. Remove TypeScript CLI code
+3. Keep only wrapper scripts
+4. Update README and docs
+5. Migration guide for contributors
+
+### Backward Compatibility
+
+**User-Facing**:
+- All CLI commands work identically
+- Same flags, same output format
+- Same configuration files
+- Same spec format
+- **Zero breaking changes**
+
+**Developer-Facing**:
+- `@leanspec/core` TypeScript package deprecated
+- Contributors need Rust toolchain
+- Build process changes
+- Testing framework changes
+
+**Migration Path**:
+- Users: `npm update lean-spec` - automatic
+- Contributors: Install Rust, update workflow
+- CI: Update build scripts for Rust
+
+## Plan
+
+### Decision Point
+
+**This spec is for evaluation only.** Implementation requires explicit approval.
+
+### Option A: Full Migration (Recommended)
+
+- [ ] **Phase 1**: Core Library Migration (Week 1-2)
+  - [ ] Setup Rust workspace and crate structure
+  - [ ] Migrate frontmatter parsing with tests
+  - [ ] Migrate file system operations
+  - [ ] Migrate validation logic
+  - [ ] Migrate dependency graph computation
+  - [ ] Migrate statistics and insights
+  - [ ] Comprehensive unit tests
+  - [ ] Documentation for core API
+
+- [ ] **Phase 2**: CLI Binary (Week 3-4)
+  - [ ] Setup clap-based CLI structure
+  - [ ] Migrate basic commands (list, view)
+  - [ ] Migrate CRUD commands (create, update, delete)
+  - [ ] Migrate analysis commands (validate, tokens, stats)
+  - [ ] Migrate linking commands (link, unlink, deps)
+  - [ ] Migrate search and board commands
+  - [ ] Terminal formatting and colors
+  - [ ] Configuration file handling
+  - [ ] Integration tests for all commands
+  - [ ] Performance benchmarks
+
+- [ ] **Phase 3**: MCP Server (Week 5)
+  - [ ] Research MCP protocol implementation
+  - [ ] Implement MCP server in Rust
+  - [ ] Migrate all MCP tools
+  - [ ] Test with Claude Desktop
+  - [ ] Test with Cline
+  - [ ] Test with Zed
+  - [ ] Documentation for MCP setup
+
+- [ ] **Phase 4**: Distribution (Week 6)
+  - [ ] Setup cross-compilation in CI
+  - [ ] Build binaries for all platforms:
+    - [ ] macOS (Intel + Apple Silicon)
+    - [ ] Linux (x64, arm64)
+    - [ ] Windows (x64)
+  - [ ] Create platform-specific npm packages
+  - [ ] Update main package with binary wrapper
+  - [ ] Test installation on all platforms
+  - [ ] Update npm scripts
+
+- [ ] **Phase 5**: Documentation & Cleanup (Week 7)
+  - [ ] Update README with Rust info
+  - [ ] Create migration guide for contributors
+  - [ ] Update CONTRIBUTING.md
+  - [ ] Archive TypeScript core package
+  - [ ] Remove unused TypeScript code
+  - [ ] Update CI/CD workflows
+  - [ ] Release notes and changelog
+
+### Option B: Hybrid Approach
+
+Keep TypeScript CLI, only migrate shared logic:
+- [ ] Create Rust core library
+- [ ] Call Rust library from Node.js (via NAPI or bindings)
+- [ ] Keep CLI in TypeScript
+- [ ] Keep MCP in TypeScript
+
+**Why Not**: Adds complexity without eliminating Node.js dependency.
+
+### Option C: Status Quo
+
+- [ ] Keep all CLI/MCP/Core in TypeScript
+- [ ] Accept code duplication with desktop Rust
+- [ ] Maintain two implementations
+
+**Why Not**: Defeats the purpose of spec 169 migration.
+
+## Test
+
+### Functional Parity
+
+**CLI Commands**:
+- [ ] All commands produce identical output to TypeScript version
+- [ ] All flags and options work identically
+- [ ] Error messages are equivalent or better
+- [ ] Configuration files parsed correctly
+- [ ] All edge cases handled
+
+**MCP Server**:
+- [ ] All tools work identically in Claude Desktop
+- [ ] All tools work identically in Cline
+- [ ] All tools work identically in Zed
+- [ ] Error handling matches TypeScript version
+- [ ] Performance meets or exceeds TypeScript
+
+### Performance Benchmarks
+
+**Must Meet or Exceed**:
+- [ ] Spec validation: <50ms (vs ~200ms TypeScript)
+- [ ] List 1000 specs: <100ms (vs ~500ms TypeScript)
+- [ ] Dependency graph: <100ms (vs ~500ms TypeScript)
+- [ ] Search 1000 specs: <100ms (vs ~800ms TypeScript)
+- [ ] CLI startup: <50ms (vs ~200ms Node.js)
+
+**Binary Size**:
+- [ ] CLI binary: <15MB per platform
+- [ ] MCP binary: <15MB per platform
+- [ ] Total npm package: <80MB (vs ~50MB with Node.js)
+
+### Cross-Platform Testing
+
+- [ ] macOS Intel - CLI works
+- [ ] macOS Apple Silicon - CLI works
+- [ ] Linux x64 - CLI works
+- [ ] Linux arm64 - CLI works
+- [ ] Windows x64 - CLI works
+- [ ] All platforms - MCP works
+
+### Installation Testing
+
+- [ ] Fresh install via `npm install -g lean-spec`
+- [ ] Update from TypeScript version
+- [ ] Binary detection works on all platforms
+- [ ] Fallback handling if binary missing
+- [ ] npx usage works
+
+### Integration Testing
+
+- [ ] Works with existing spec repositories
+- [ ] Works with all AI agents (Claude, Cline, Zed, etc.)
+- [ ] Works with desktop app (shared crate)
+- [ ] Works with CI/CD pipelines
+- [ ] Documentation site builds correctly
+
+## Notes
+
+### Decision Framework
+
+**Recommend Full Migration (Option A) If**:
+- Spec 169 desktop migration is successful
+- Team is comfortable with Rust
+- Code unification is strategic priority
+- 6-7 week timeline acceptable
+
+**Recommend Hybrid Approach (Option B) If**:
+- Want to validate Rust core first
+- Concerned about MCP protocol complexity
+- Need faster time to market
+- Want incremental migration path
+
+**Recommend Status Quo (Option C) If**:
+- Spec 169 fails or is too complex
+- Team doesn't want Rust maintenance burden
+- Code duplication is acceptable
+- Other priorities take precedence
+
+### Why Rust?
+
+**Technical Reasons**:
+1. **Type Safety**: Rust's type system prevents entire classes of bugs
+2. **Performance**: 10-100x faster than Node.js for file/parsing operations
+3. **Binary Size**: Single binary vs Node.js + dependencies
+4. **Memory Safety**: No GC pauses, predictable performance
+5. **Ecosystem Alignment**: Desktop already Rust (Tauri)
+
+**Practical Reasons**:
+1. **Code Unification**: Single codebase for all platforms
+2. **Reduced Maintenance**: One implementation to maintain
+3. **Better Testing**: Rust's testing framework superior
+4. **Compile-Time Guarantees**: Many bugs caught at compile time
+
+### Risks & Mitigations
+
+**Risk: Rust Learning Curve**
+- Mitigation: Desktop migration (spec 169) provides learning
+- Mitigation: Extract reusable patterns from desktop
+- Mitigation: Pair programming for complex areas
+
+**Risk: MCP Protocol Complexity**
+- Mitigation: Research existing Rust MCP implementations
+- Mitigation: Start with simple stdio protocol
+- Mitigation: Fall back to Node.js wrapper if needed
+
+**Risk: Binary Distribution**
+- Mitigation: Use proven pattern (esbuild, swc, etc.)
+- Mitigation: Platform-specific npm packages well-established
+- Mitigation: GitHub Actions supports cross-compilation
+
+**Risk: Breaking CLI Changes**
+- Mitigation: Extensive integration testing
+- Mitigation: Beta period with power users
+- Mitigation: Keep TypeScript version for rollback
+
+### Alternatives Considered
+
+**1. Keep TypeScript, Use WASM**
+- Compile TypeScript to WASM for performance
+- Why Not: Still requires JavaScript runtime, limited FS access
+
+**2. Go Instead of Rust**
+- Similar benefits (performance, single binary)
+- Why Not: Larger binaries, GC overhead, desktop is Rust
+
+**3. Keep Everything Separate**
+- Desktop in Rust, CLI/MCP in TypeScript
+- Why Not: Code duplication, maintenance burden
+
+### Success Criteria
+
+**Must Have**:
+- Zero user-facing breaking changes
+- Performance meets benchmarks
+- All platforms supported
+- Installation works reliably
+
+**Nice to Have**:
+- Better error messages than TypeScript
+- Additional performance improvements
+- Smaller binary sizes than estimated
+
+**Optional**:
+- Language server integration
+- Watch mode improvements
+- Additional CLI features
+
+### Timeline Estimate
+
+**Optimistic**: 5 weeks (experienced Rust team)
+**Realistic**: 7 weeks (learning + migration)
+**Pessimistic**: 10 weeks (unexpected issues)
+
+Assumes:
+- Spec 169 completed first
+- Single developer full-time
+- Core patterns established in desktop migration
