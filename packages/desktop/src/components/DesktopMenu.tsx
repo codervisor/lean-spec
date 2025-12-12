@@ -7,6 +7,7 @@ import styles from './desktop-menu.module.css';
 interface DesktopMenuProps {
   onAddProject: () => void;
   onRefresh: () => void;
+  onManageProjects: () => void;
 }
 
 interface MenuItemConfig {
@@ -16,7 +17,7 @@ interface MenuItemConfig {
   separator?: boolean;
 }
 
-const DesktopMenu = ({ onAddProject, onRefresh }: DesktopMenuProps) => {
+const DesktopMenu = ({ onAddProject, onRefresh, onManageProjects }: DesktopMenuProps) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +41,7 @@ const DesktopMenu = ({ onAddProject, onRefresh }: DesktopMenuProps) => {
       { label: 'New Spec...', shortcut: '⌘N', action: () => emitMenuAction('desktop://menu-new-spec') },
       { label: 'Open Project...', shortcut: '⌘O', action: () => { onAddProject(); closeMenu(); } },
       { label: 'Switch Project...', shortcut: '⌘⇧K', action: () => emitMenuAction('desktop://menu-switch-project') },
+      { label: 'Manage All Projects...', shortcut: '⌘⇧M', action: () => { onManageProjects(); closeMenu(); } },
       { separator: true, label: '', action: () => {} },
       { label: 'Close Window', shortcut: '⌘W', action: () => { closeMenu(); } },
       { label: 'Quit', shortcut: '⌘Q', action: () => { closeMenu(); } },

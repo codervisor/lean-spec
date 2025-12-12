@@ -151,6 +151,7 @@ pub fn read_config() -> DesktopConfig {
     CONFIG.read().clone()
 }
 
+#[allow(dead_code)]
 pub fn update_config(update: DesktopConfig) {
     {
         let mut guard = CONFIG.write();

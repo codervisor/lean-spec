@@ -6,7 +6,10 @@ import {
   checkForUpdates,
   openAddProjectDialog,
   refreshProjects,
+  renameProject,
+  removeProject,
   switchProject,
+  toggleFavorite,
 } from '../lib/ipc';
 
 interface UseProjectsState {
@@ -74,6 +77,42 @@ export function useProjects() {
     }
   }, [applyPayload]);
 
+  const handleToggleFavorite = useCallback(
+    async (projectId: string) => {
+      try {
+        const payload = await toggleFavorite(projectId);
+        applyPayload(payload);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [applyPayload],
+  );
+
+  const handleRemoveProject = useCallback(
+    async (projectId: string) => {
+      try {
+        const payload = await removeProject(projectId);
+        applyPayload(payload);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [applyPayload],
+  );
+
+  const handleRenameProject = useCallback(
+    async (projectId: string, newName: string) => {
+      try {
+        const payload = await renameProject(projectId, newName);
+        applyPayload(payload);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [applyPayload],
+  );
+
   const handleCheckUpdates = useCallback(async () => {
     try {
       await checkForUpdates();
@@ -123,5 +162,8 @@ export function useProjects() {
     switchProject: handleSwitch,
     refreshProjects: handleRefresh,
     addProject: handleAddProject,
+    toggleFavorite: handleToggleFavorite,
+    removeProject: handleRemoveProject,
+    renameProject: handleRenameProject,
   };
 }

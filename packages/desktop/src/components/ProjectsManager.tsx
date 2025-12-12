@@ -103,8 +103,11 @@ export function ProjectsManager({
           <div className={styles.headerActions}>
             <button
               className={styles.iconButton}
-              onClick={() => manager.validateAllProjects()}
-              title="Refresh All Validation"
+              onClick={() => {
+                onRefresh();
+                manager.validateAllProjects();
+              }}
+              title="Refresh All"
             >
               <RefreshCw size={16} />
             </button>
@@ -146,6 +149,13 @@ export function ProjectsManager({
               <Star size={14} />
               Favorites
               <span className={styles.tabCount}>({manager.favoriteCount})</span>
+            </button>
+            <button
+              className={`${styles.tab} ${manager.filterTab === 'recent' ? styles.tabActive : ''}`}
+              onClick={() => manager.setFilterTab('recent')}
+            >
+              Recent
+              <span className={styles.tabCount}>({manager.recentCount})</span>
             </button>
           </div>
 
@@ -267,6 +277,20 @@ function EmptyState({ hasProjects, searchQuery, filterTab, onAddProject, onClear
         <h3 className={styles.emptyTitle}>No favorite projects</h3>
         <p className={styles.emptyDescription}>
           Star projects to see them here for quick access
+        </p>
+      </div>
+    );
+  }
+
+  if (filterTab === 'recent') {
+    return (
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}>
+          <FolderOpen size={28} />
+        </div>
+        <h3 className={styles.emptyTitle}>No recent projects</h3>
+        <p className={styles.emptyDescription}>
+          Open a project to have it show up here
         </p>
       </div>
     );

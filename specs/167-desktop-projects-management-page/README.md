@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-12'
 tags:
   - desktop
@@ -15,7 +15,10 @@ depends_on:
   - 112-project-management-ui
   - 141-multi-project-management-ui-improvements
   - 163-multi-tasking-ui-enhancements
-updated_at: '2025-12-12T05:54:52.050Z'
+updated_at: '2025-12-12T07:50:44.038Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-12T07:50:44.038Z'
 ---
 ## Overview
 
