@@ -87,6 +87,64 @@ pub async fn desktop_check_updates(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn desktop_validate_project(
+    state: State<'_, DesktopState>,
+    project_id: String,
+) -> Result<bool, String> {
+    let project = state.project_store.find(&project_id)
+        .ok_or_else(|| "Project not found".to_string())?;
+    
+    let path = std::path::Path::new(&project.path);
+    let specs_path = std::path::Path::new(&project.specs_dir);
+    
+    Ok(path.exists() && specs_path.exists())
+}
+
+#[tauri::command]
+pub async fn desktop_toggle_favorite(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
+    project_id: String,
+) -> Result<DesktopBootstrapPayload, String> {
+    state.project_store.toggle_favorite(&project_id)
+        .map_err(|error| error.to_string())?;
+    build_and_publish(&app, &state).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn desktop_remove_project(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
+    project_id: String,
+) -> Result<DesktopBootstrapPayload, String> {
+    state.project_store.remove_project(&project_id)
+        .map_err(|error| error.to_string())?;
+    
+    // If we removed the active project, clear it
+    let config = read_config();
+    if config.active_project_id.as_deref() == Some(project_id.as_str()) {
+        mutate_config(|config| {
+            config.active_project_id = None;
+        });
+        state.ui_server.stop();
+    }
+    
+    build_and_publish(&app, &state).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn desktop_rename_project(
+    app: AppHandle,
+    state: State<'_, DesktopState>,
+    project_id: String,
+    new_name: String,
+) -> Result<DesktopBootstrapPayload, String> {
+    state.project_store.rename_project(&project_id, &new_name)
+        .map_err(|error| error.to_string())?;
+    build_and_publish(&app, &state).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 pub async fn desktop_version(app: AppHandle) -> Result<String, String> {
     Ok(app.package_info().version.to_string())
 }
