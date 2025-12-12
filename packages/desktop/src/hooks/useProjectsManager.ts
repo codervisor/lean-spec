@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import type { DesktopProject } from '../types';
 
 export type ValidationStatus = 'unknown' | 'validating' | 'valid' | 'invalid';
@@ -118,7 +119,6 @@ export function useProjectsManager(projects: DesktopProject[]) {
 
         try {
           // Check if path exists by trying to access the specs dir
-          const { invoke } = await import('@tauri-apps/api/core');
           const isValid = await invoke<boolean>('desktop_validate_project', { projectId: project.id });
           setValidationState(project.id, { 
             status: isValid ? 'valid' : 'invalid',
@@ -142,7 +142,6 @@ export function useProjectsManager(projects: DesktopProject[]) {
     setValidationState(projectId, { status: 'validating' });
 
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
       const isValid = await invoke<boolean>('desktop_validate_project', { projectId });
       setValidationState(projectId, {
         status: isValid ? 'valid' : 'invalid',
