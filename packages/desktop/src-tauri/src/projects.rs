@@ -148,6 +148,8 @@ impl ProjectStore {
         }
     }
 
+}
+
 impl Default for ProjectStore {
     fn default() -> Self {
         Self::load()
@@ -244,6 +246,7 @@ fn hash_path(path: &Path) -> String {
     encode(hasher.finalize())[0..12].to_string()
 }
 
+#[allow(dead_code)]
 pub fn discover_projects(root: &Path, limit: usize) -> Vec<PathBuf> {
     let mut found = Vec::new();
     let mut queue = VecDeque::new();

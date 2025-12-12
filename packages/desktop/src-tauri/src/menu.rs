@@ -14,6 +14,9 @@ pub fn build_native_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R
     let switch_project = MenuItemBuilder::with_id("switch_project", "Switch Project...")
         .accelerator("CmdOrCtrl+Shift+K")
         .build(app)?;
+    let manage_projects = MenuItemBuilder::with_id("manage_projects", "Manage All Projects...")
+        .accelerator("CmdOrCtrl+Shift+M")
+        .build(app)?;
     let close_window = PredefinedMenuItem::close_window(app, None)?;
     let quit = PredefinedMenuItem::quit(app, None)?;
 
@@ -39,7 +42,7 @@ pub fn build_native_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R
     let about = MenuItemBuilder::with_id("about", "About LeanSpec").build(app)?;
 
     let file_menu = SubmenuBuilder::new(app, "File")
-        .items(&[&new_spec, &open_project, &switch_project])
+        .items(&[&new_spec, &open_project, &switch_project, &manage_projects])
         .separator()
         .item(&close_window)
         .item(&quit)
@@ -75,6 +78,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, event: MenuEvent) {
         "new_spec" => emit_to_main(app, "desktop://menu-new-spec"),
         "open_project" => emit_to_main(app, "desktop://menu-open-project"),
         "switch_project" => emit_to_main(app, "desktop://menu-switch-project"),
+        "manage_projects" => emit_to_main(app, "desktop://menu-manage-projects"),
         "find" => emit_to_main(app, "desktop://menu-find"),
         "refresh" => emit_to_main(app, "desktop://menu-refresh"),
         "toggle_sidebar" => emit_to_main(app, "desktop://menu-toggle-sidebar"),

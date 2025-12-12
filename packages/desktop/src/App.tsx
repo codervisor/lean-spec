@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DesktopLayout from './components/DesktopLayout';
 import TitleBar from './components/TitleBar';
+import { ProjectsManager } from './components/ProjectsManager';
 import { useProjects } from './hooks/useProjects';
 import styles from './app.module.css';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
@@ -9,11 +10,24 @@ import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { checkForUpdates, getDesktopVersion } from './lib/ipc';
 
 const App = () => {
-  const { projects, activeProjectId, uiUrl, loading, error, switchProject, addProject, refreshProjects } = useProjects();
+  const {
+    projects,
+    activeProjectId,
+    uiUrl,
+    loading,
+    error,
+    switchProject,
+    addProject,
+    refreshProjects,
+    toggleFavorite,
+    removeProject,
+    renameProject,
+  } = useProjects();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pendingMenuEvents = useRef<string[]>([]);
   const versionCache = useRef<string>('');
   const logDirCache = useRef<string>('');
+  const [projectsManagerOpen, setProjectsManagerOpen] = useState(false);
 
   const postToIframe = useCallback((payload: Record<string, unknown>) => {
     const target = iframeRef.current?.contentWindow;
@@ -73,6 +87,7 @@ const App = () => {
       'desktop://menu-find': () => forwardMenuAction('desktop://menu-find'),
       'desktop://menu-refresh': () => refreshProjects(),
       'desktop://menu-toggle-sidebar': () => forwardMenuAction('desktop://menu-toggle-sidebar'),
+      'desktop://menu-manage-projects': () => setProjectsManagerOpen(true),
       'desktop://menu-shortcuts': () => forwardMenuAction('desktop://menu-shortcuts'),
       'desktop://menu-logs': () => forwardMenuAction('desktop://menu-logs'),
       'desktop://menu-about': () => forwardMenuAction('desktop://menu-about'),
@@ -89,6 +104,18 @@ const App = () => {
       subscription.then((handlers: UnlistenFn[]) => handlers.forEach((dispose) => dispose()));
     };
   }, [addProject, forwardMenuAction, refreshProjects]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'm') {
+        event.preventDefault();
+        setProjectsManagerOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -165,6 +192,7 @@ const App = () => {
           onProjectSelect={switchProject}
           onAddProject={addProject}
           onRefresh={refreshProjects}
+          onManageProjects={() => setProjectsManagerOpen(true)}
           isLoading={loading}
         />
       }
@@ -189,7 +217,23 @@ const App = () => {
           )}
         </div>
       )}
-      {iframeSrc && !error && (
+      {projectsManagerOpen && !loading && (
+        <ProjectsManager
+          projects={projects}
+          activeProjectId={activeProjectId}
+          onClose={() => setProjectsManagerOpen(false)}
+          onOpenProject={(projectId) => {
+            switchProject(projectId);
+            setProjectsManagerOpen(false);
+          }}
+          onAddProject={addProject}
+          onRefresh={refreshProjects}
+          onToggleFavorite={toggleFavorite}
+          onRemoveProject={removeProject}
+          onRenameProject={renameProject}
+        />
+      )}
+      {iframeSrc && !error && !projectsManagerOpen && (
         <iframe
           key={iframeSrc}
           ref={iframeRef}

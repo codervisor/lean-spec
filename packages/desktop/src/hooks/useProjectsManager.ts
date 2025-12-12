@@ -10,7 +10,7 @@ export interface ProjectValidationState {
 
 export type ViewMode = 'grid' | 'list';
 export type SortOption = 'name' | 'lastAccessed' | 'specCount';
-export type FilterTab = 'all' | 'favorites';
+export type FilterTab = 'all' | 'favorites' | 'recent';
 
 interface UseProjectsManagerState {
   searchQuery: string;
@@ -69,6 +69,11 @@ export function useProjectsManager(projects: DesktopProject[]) {
       filtered = filtered.filter((p) => p.favorite);
     }
 
+    if (state.filterTab === 'recent') {
+      filtered.sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
+      filtered = filtered.slice(0, 20);
+    }
+
     // Apply search filter
     if (state.searchQuery.trim()) {
       const query = state.searchQuery.toLowerCase();
@@ -79,20 +84,22 @@ export function useProjectsManager(projects: DesktopProject[]) {
       );
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (state.sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'lastAccessed':
-          return new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime();
-        case 'specCount':
-          // TODO: When we have spec counts from validation
-          return 0;
-        default:
-          return 0;
-      }
-    });
+    // Apply sorting (keep recent tab pinned to lastAccessed)
+    if (state.filterTab !== 'recent') {
+      filtered.sort((a, b) => {
+        switch (state.sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'lastAccessed':
+            return new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime();
+          case 'specCount':
+            // TODO: When we have spec counts from validation
+            return 0;
+          default:
+            return 0;
+        }
+      });
+    }
 
     return filtered;
   }, [projects, state.searchQuery, state.sortBy, state.filterTab]);
@@ -169,5 +176,6 @@ export function useProjectsManager(projects: DesktopProject[]) {
     validateAllProjects,
     projectCount: projects.length,
     favoriteCount: projects.filter((p) => p.favorite).length,
+    recentCount: Math.min(20, projects.length),
   };
 }

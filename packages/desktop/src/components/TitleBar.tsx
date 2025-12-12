@@ -16,6 +16,7 @@ interface TitleBarProps {
   onProjectSelect: (projectId: string) => void;
   onAddProject: () => void;
   onRefresh: () => void;
+  onManageProjects: () => void;
   isLoading: boolean;
 }
 
@@ -25,6 +26,7 @@ const TitleBar = ({
   onProjectSelect,
   onAddProject,
   onRefresh,
+  onManageProjects,
   isLoading,
 }: TitleBarProps) => {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
@@ -68,6 +70,7 @@ const TitleBar = ({
         <DesktopMenu 
           onAddProject={onAddProject}
           onRefresh={onRefresh}
+          onManageProjects={onManageProjects}
         />
 
         <div ref={projectSwitcherRef} className={styles.projectSwitcher}>
@@ -96,6 +99,12 @@ const TitleBar = ({
                 </button>
               ))}
               <div className={styles.projectMenuFooter}>
+                <button className={styles.secondaryAction} onClick={() => {
+                  setProjectMenuOpen(false);
+                  onManageProjects();
+                }}>
+                  Manage projects
+                </button>
                 <button className={styles.secondaryAction} onClick={() => {
                   setProjectMenuOpen(false);
                   onAddProject();

@@ -17,6 +17,18 @@ export async function openAddProjectDialog(): Promise<DesktopBootstrapPayload> {
   return invoke<DesktopBootstrapPayload>('desktop_add_project');
 }
 
+export async function toggleFavorite(projectId: string): Promise<DesktopBootstrapPayload> {
+  return invoke<DesktopBootstrapPayload>('desktop_toggle_favorite', { projectId });
+}
+
+export async function removeProject(projectId: string): Promise<DesktopBootstrapPayload> {
+  return invoke<DesktopBootstrapPayload>('desktop_remove_project', { projectId });
+}
+
+export async function renameProject(projectId: string, newName: string): Promise<DesktopBootstrapPayload> {
+  return invoke<DesktopBootstrapPayload>('desktop_rename_project', { projectId, newName });
+}
+
 export async function checkForUpdates(): Promise<void> {
   return invoke('desktop_check_updates');
 }
