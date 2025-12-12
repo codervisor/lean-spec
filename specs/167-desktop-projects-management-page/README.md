@@ -20,6 +20,9 @@ transitions:
   - status: in-progress
     at: '2025-12-12T07:50:44.038Z'
 ---
+
+# Desktop Projects Management Page
+
 ## Overview
 
 The LeanSpec desktop app currently lacks a dedicated, easily accessible projects management interface. While the web UI has a `/projects` page (from specs 112 and 141), the desktop app embeds this in an iframe without providing clear navigation or desktop-native enhancements. Users have no intuitive way to:
