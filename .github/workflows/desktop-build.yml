@@ -43,6 +43,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev webkit2gtk-4.1-dev
 
+      - name: Download Node.js for Desktop
+        run: pnpm --filter @leanspec/desktop download:node
+
       - name: Build packages
         run: pnpm build
 
