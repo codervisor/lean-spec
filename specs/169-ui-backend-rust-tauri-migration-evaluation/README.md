@@ -590,3 +590,40 @@ Could compile `@leanspec/core` TypeScript to WASM:
 **Unaffected Specs**:
 - **087-cli-ui-command**: Web UI keeps Next.js
 - **082-web-deployment**: Remote deployment separate
+
+### Implementation Progress
+
+**Completed (2025-12-12)**:
+
+1. **Rust Spec Operations Library** (`packages/desktop/src-tauri/src/specs/`):
+   - `frontmatter.rs` - YAML frontmatter parsing (gray-matter pattern)
+   - `reader.rs` - File system reader/walker with caching
+   - `stats.rs` - Statistics calculation
+   - `dependencies.rs` - Dependency graph computation
+   - `validation.rs` - Spec validation with error checking
+   - `constants.rs` - Shared constants for status/priority values
+   - `commands.rs` - Tauri commands exposing all operations
+
+2. **Tauri Commands Implemented**:
+   - `get_specs` - List all specs for a project
+   - `get_spec_detail` - Get single spec with full content
+   - `get_project_stats` - Calculate project statistics
+   - `get_dependency_graph` - Build visualization graph
+   - `get_spec_dependencies_cmd` - Get spec relationships
+   - `search_specs` - Full-text search
+   - `get_specs_by_status` - Filter by status
+   - `get_all_tags` - Aggregate unique tags
+   - `validate_spec_cmd` / `validate_all_specs_cmd` - Validation
+   - `update_spec_status` - Update status with file write
+
+3. **TypeScript Integration** (`packages/desktop/src/`):
+   - `types.ts` - TypeScript types for all spec data structures
+   - `lib/ipc.ts` - Tauri invoke wrapper functions
+   - `hooks/useSpecs.ts` - React hooks for state management
+
+**Remaining Work**:
+- Full UI component migration from @leanspec/ui to desktop package
+- React Router setup for client-side routing
+- Performance benchmarks
+- Packaging updates to remove Node.js bundling
+- Documentation
