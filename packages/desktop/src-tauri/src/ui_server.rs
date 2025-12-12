@@ -13,6 +13,7 @@ const DEV_SERVER_DEFAULT_PORT: u16 = 4319;
 pub struct UiServerManager {
     child: Mutex<Option<Child>>,
     url: Mutex<Option<String>>,
+    start_lock: Mutex<()>,
 }
 
 impl UiServerManager {
@@ -20,6 +21,7 @@ impl UiServerManager {
         Self {
             child: Mutex::new(None),
             url: Mutex::new(None),
+            start_lock: Mutex::new(()),
         }
     }
 
@@ -35,6 +37,11 @@ impl UiServerManager {
             *self.url.lock() = Some(url.clone());
             return Ok(url);
         }
+
+        // Prevent concurrent callers from starting multiple dev servers.
+        // Without this guard, two `ensure_running` calls can race before `self.url` is set,
+        // which causes multiple `next dev` instances and a `.next/dev/lock` failure.
+        let _start_guard = self.start_lock.lock();
 
         if let Some(existing) = self.url.lock().clone() {
             return Ok(existing);
@@ -78,7 +85,6 @@ fn spawn_dev_server(port: u16, project: Option<&DesktopProject>) -> Result<Child
         .arg("--filter")
         .arg("@leanspec/ui")
         .arg("dev")
-        .arg("--")
         .arg("--hostname")
         .arg("127.0.0.1")
         .arg("--port")
