@@ -1,0 +1,225 @@
+/* StatsPage CSS Module */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  padding: 1.5rem;
+  background: var(--bg-primary, #0d1117);
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #f0f6fc);
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #8b949e);
+  margin: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 8px;
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #f0f6fc);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #8b949e);
+  margin-top: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.section {
+  margin-top: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #f0f6fc);
+  margin: 0 0 1rem;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.statusCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.statusCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.statusCard.status-planned {
+  border-left: 4px solid #58a6ff;
+}
+
+.statusCard.status-in-progress {
+  border-left: 4px solid #f0883e;
+}
+
+.statusCard.status-complete {
+  border-left: 4px solid #3fb950;
+}
+
+.statusCard.status-archived {
+  border-left: 4px solid #6e7681;
+}
+
+.statusCount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary, #f0f6fc);
+}
+
+.statusLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #8b949e);
+  margin-top: 0.25rem;
+}
+
+.priorityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.priorityCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.priorityCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.priorityCard.priority-critical {
+  border-left: 4px solid #f85149;
+}
+
+.priorityCard.priority-high {
+  border-left: 4px solid #f0883e;
+}
+
+.priorityCard.priority-medium {
+  border-left: 4px solid #58a6ff;
+}
+
+.priorityCard.priority-low {
+  border-left: 4px solid #6e7681;
+}
+
+.priorityCount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary, #f0f6fc);
+}
+
+.priorityLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #8b949e);
+  margin-top: 0.25rem;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metricItem {
+  padding: 1rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 8px;
+}
+
+.metricItem dt {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6e7681);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metricItem dd {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary, #f0f6fc);
+  margin: 0.25rem 0 0;
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.error button {
+  padding: 0.5rem 1rem;
+  background: var(--accent, #58a6ff);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}

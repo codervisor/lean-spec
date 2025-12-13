@@ -1,0 +1,323 @@
+/* SpecsPage CSS Module */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 1rem;
+  background: var(--bg-primary, #0d1117);
+}
+
+.header {
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #f0f6fc);
+  margin: 0;
+}
+
+.count {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.statsBar {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b949e);
+  margin-bottom: 1rem;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.viewToggle {
+  display: flex;
+  background: var(--bg-secondary, #161b22);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.viewToggle button {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #8b949e);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
+}
+
+.viewToggle button:hover {
+  color: var(--text-primary, #f0f6fc);
+}
+
+.viewToggle button.active {
+  background: var(--accent-subtle, #1f6feb33);
+  color: var(--accent, #58a6ff);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  color: var(--text-primary, #f0f6fc);
+  font-size: 0.875rem;
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted, #6e7681);
+}
+
+.select {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  color: var(--text-primary, #f0f6fc);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* List View */
+.listView {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.specCard {
+  display: block;
+  padding: 1rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-left: 4px solid var(--border, #30363d);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.15s ease;
+}
+
+.specCard:hover {
+  border-color: var(--accent, #58a6ff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.specCard.priority-critical { border-left-color: #f85149; }
+.specCard.priority-high { border-left-color: #f0883e; }
+.specCard.priority-medium { border-left-color: #58a6ff; }
+.specCard.priority-low { border-left-color: #6e7681; }
+
+.cardHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.specNumber {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted, #6e7681);
+}
+
+.specTitle {
+  font-weight: 600;
+  color: var(--text-primary, #f0f6fc);
+}
+
+.specName {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted, #6e7681);
+  margin: 0.25rem 0;
+}
+
+.cardMeta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.statusBadge,
+.priorityBadge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-planned { background: #1f6feb33; color: #58a6ff; }
+.status-in-progress { background: #f0883e33; color: #f0883e; }
+.status-complete { background: #23863533; color: #3fb950; }
+.status-archived { background: #6e768133; color: #8b949e; }
+
+.priority-critical { background: #f8514933; color: #f85149; }
+.priority-high { background: #f0883e33; color: #f0883e; }
+.priority-medium { background: #1f6feb33; color: #58a6ff; }
+.priority-low { background: #6e768133; color: #8b949e; }
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.tag {
+  padding: 0.125rem 0.375rem;
+  background: var(--bg-tertiary, #21262d);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.625rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.tagMore {
+  color: var(--text-muted, #6e7681);
+  font-size: 0.625rem;
+}
+
+.cardFooter {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.dependency,
+.subSpecs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Board View */
+.boardView {
+  display: flex;
+  gap: 1rem;
+  height: 100%;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.boardColumn {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px 6px 0 0;
+}
+
+.columnTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary, #f0f6fc);
+}
+
+.columnCount {
+  padding: 0.125rem 0.5rem;
+  background: var(--bg-tertiary, #21262d);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.columnContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-tertiary, #21262d);
+  border: 1px solid var(--border, #30363d);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  overflow-y: auto;
+}
+
+.specCard.compact {
+  padding: 0.75rem;
+}
+
+.specCard.compact .cardHeader {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.specCard.compact .specTitle {
+  font-size: 0.875rem;
+}
+
+.emptyColumn {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted, #6e7681);
+  font-size: 0.875rem;
+}
+
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary, #8b949e);
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.error button {
+  padding: 0.5rem 1rem;
+  background: var(--accent, #58a6ff);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
