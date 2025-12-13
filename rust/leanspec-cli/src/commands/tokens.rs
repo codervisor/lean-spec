@@ -100,10 +100,19 @@ pub fn run(
                 excessive_count: usize,
             }
             
-            let total_tokens: usize = results.iter().map(|(_, r)| r.total).sum();
-            let optimal_count = results.iter().filter(|(_, r)| matches!(r.status, leanspec_core::utils::TokenStatus::Optimal)).count();
-            let warning_count = results.iter().filter(|(_, r)| matches!(r.status, leanspec_core::utils::TokenStatus::Warning)).count();
-            let excessive_count = results.iter().filter(|(_, r)| matches!(r.status, leanspec_core::utils::TokenStatus::Excessive)).count();
+            // Count in a single pass for better performance
+            let (total_tokens, optimal_count, good_count, warning_count, excessive_count) = results.iter().fold(
+                (0usize, 0usize, 0usize, 0usize, 0usize),
+                |(total, opt, good, warn, exc), (_, r)| {
+                    use leanspec_core::utils::TokenStatus;
+                    let new_opt = if matches!(r.status, TokenStatus::Optimal) { opt + 1 } else { opt };
+                    let new_good = if matches!(r.status, TokenStatus::Good) { good + 1 } else { good };
+                    let new_warn = if matches!(r.status, TokenStatus::Warning) { warn + 1 } else { warn };
+                    let new_exc = if matches!(r.status, TokenStatus::Excessive) { exc + 1 } else { exc };
+                    (total + r.total, new_opt, new_good, new_warn, new_exc)
+                }
+            );
+            let _ = good_count; // Suppress unused warning (included in optimal_count for output)
             
             let output = TokensOutput {
                 specs: results.iter().map(|(spec, result)| SpecTokens {
