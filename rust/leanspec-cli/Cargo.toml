@@ -1,0 +1,30 @@
+[package]
+name = "leanspec-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Command-line interface for LeanSpec"
+
+[[bin]]
+name = "lean-spec"
+path = "src/main.rs"
+
+[dependencies]
+leanspec-core = { path = "../leanspec-core" }
+clap.workspace = true
+colored.workspace = true
+dialoguer.workspace = true
+indicatif.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+pretty_assertions.workspace = true
