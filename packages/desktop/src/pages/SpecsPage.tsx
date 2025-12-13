@@ -6,10 +6,9 @@
  * (Phase 4 of spec 169)
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { useSpecs } from '../hooks/useSpecs';
-import { useProjectStats } from '../hooks/useSpecs';
+import { useSpecs, useProjectStats } from '../hooks/useSpecs';
 import type { LightweightSpec } from '../types';
 import styles from './specs-page.module.css';
 
