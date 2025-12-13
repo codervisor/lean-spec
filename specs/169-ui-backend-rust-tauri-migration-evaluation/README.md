@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: '2025-12-12'
 tags:
   - architecture
@@ -14,12 +14,15 @@ depends_on:
   - 166-desktop-ui-server-bundling-fix
   - 165-tauri-v2-migration
   - 148-leanspec-desktop-app
-updated_at: '2025-12-12T21:21:33.478Z'
+updated_at: '2025-12-12T22:19:34.148Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-12T22:19:34.148Z'
 ---
 
 # Evaluate UI Backend Migration to Rust/Tauri
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-12 · **Tags**: architecture, desktop, rust, tauri, performance, evaluation
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-12 · **Tags**: architecture, desktop, rust, tauri, performance, evaluation
 
 ## Overview
 
@@ -392,28 +395,28 @@ pub async fn get_dependency_graph(
 
 ### Option A: Full Migration (If Approved)
 
-- [ ] **Phase 1**: Rust spec operations library (Week 1)
-  - [ ] Markdown parser with frontmatter
-  - [ ] File system reader/walker
-  - [ ] Basic validation
-  - [ ] Unit tests for core operations
+- [x] **Phase 1**: Rust spec operations library (Week 1)
+  - [x] Markdown parser with frontmatter
+  - [x] File system reader/walker
+  - [x] Basic validation
+  - [x] Unit tests for core operations
 
-- [ ] **Phase 2**: Migrate simple API routes (Week 2)
-  - [ ] Project CRUD commands
-  - [ ] Spec list and detail
-  - [ ] Status updates
-  - [ ] Basic stats
+- [x] **Phase 2**: Migrate simple API routes (Week 2)
+  - [x] Project CRUD commands
+  - [x] Spec list and detail
+  - [x] Status updates
+  - [x] Basic stats
   - [ ] Integration tests
 
-- [ ] **Phase 3**: Migrate complex routes (Week 3)
-  - [ ] Dependency graph computation
-  - [ ] Advanced stats and analytics
-  - [ ] Full-text search
+- [x] **Phase 3**: Migrate complex routes (Week 3)
+  - [x] Dependency graph computation
+  - [x] Advanced stats and analytics
+  - [x] Full-text search
   - [ ] Performance benchmarks
 
 - [ ] **Phase 4**: Convert UI to SPA (Week 4)
-  - [ ] Setup Vite build
-  - [ ] Replace API calls with Tauri invokes
+  - [x] Setup Vite build (already exists)
+  - [x] Replace API calls with Tauri invokes (TypeScript layer complete)
   - [ ] Setup React Router
   - [ ] Update all components
   - [ ] E2E testing
@@ -587,3 +590,40 @@ Could compile `@leanspec/core` TypeScript to WASM:
 **Unaffected Specs**:
 - **087-cli-ui-command**: Web UI keeps Next.js
 - **082-web-deployment**: Remote deployment separate
+
+### Implementation Progress
+
+**Completed (2025-12-12)**:
+
+1. **Rust Spec Operations Library** (`packages/desktop/src-tauri/src/specs/`):
+   - `frontmatter.rs` - YAML frontmatter parsing (gray-matter pattern)
+   - `reader.rs` - File system reader/walker with caching
+   - `stats.rs` - Statistics calculation
+   - `dependencies.rs` - Dependency graph computation
+   - `validation.rs` - Spec validation with error checking
+   - `constants.rs` - Shared constants for status/priority values
+   - `commands.rs` - Tauri commands exposing all operations
+
+2. **Tauri Commands Implemented**:
+   - `get_specs` - List all specs for a project
+   - `get_spec_detail` - Get single spec with full content
+   - `get_project_stats` - Calculate project statistics
+   - `get_dependency_graph` - Build visualization graph
+   - `get_spec_dependencies_cmd` - Get spec relationships
+   - `search_specs` - Full-text search
+   - `get_specs_by_status` - Filter by status
+   - `get_all_tags` - Aggregate unique tags
+   - `validate_spec_cmd` / `validate_all_specs_cmd` - Validation
+   - `update_spec_status` - Update status with file write
+
+3. **TypeScript Integration** (`packages/desktop/src/`):
+   - `types.ts` - TypeScript types for all spec data structures
+   - `lib/ipc.ts` - Tauri invoke wrapper functions
+   - `hooks/useSpecs.ts` - React hooks for state management
+
+**Remaining Work**:
+- Full UI component migration from @leanspec/ui to desktop package
+- React Router setup for client-side routing
+- Performance benchmarks
+- Packaging updates to remove Node.js bundling
+- Documentation
