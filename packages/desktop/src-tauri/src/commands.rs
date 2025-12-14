@@ -177,10 +177,16 @@ fn build_payload(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstr
     // Native SPA mode (spec 169 Phase 5) - no Node.js server needed
     // UI server only used if explicitly enabled via environment variable
     let ui_url = std::env::var("LEANSPEC_ENABLE_UI_SERVER").ok().and_then(|_| {
-        state
-            .ui_server
-            .ensure_running(app, active_project.as_ref())
-            .ok()
+        match state.ui_server.ensure_running(app, active_project.as_ref()) {
+            Ok(url) => {
+                eprintln!("Legacy UI server started at: {}", url);
+                Some(url)
+            }
+            Err(e) => {
+                eprintln!("Failed to start legacy UI server (this is normal in native SPA mode): {}", e);
+                None
+            }
+        }
     });
 
     Ok(DesktopBootstrapPayload {

@@ -190,8 +190,10 @@ impl SpecReader {
             format!("specs/{}/README.md", spec_name)
         };
 
-        // TODO: Add sub-specs tracking in the future if needed
-        // (currently we just load individual spec files)
+        // TODO: Implement sub-specs tracking feature
+        // Sub-specs are additional .md files in a spec directory beyond README.md
+        // This would allow specs to be broken into multiple documents
+        // Track in a future spec once the use case is validated
 
         Some(Spec {
             id,
