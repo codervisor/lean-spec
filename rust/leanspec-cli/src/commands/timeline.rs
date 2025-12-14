@@ -6,6 +6,7 @@ use colored::Colorize;
 use leanspec_core::{SpecLoader, SpecStatus};
 use std::collections::BTreeMap;
 use std::error::Error;
+use chrono::NaiveDate;
 
 pub fn run(
     specs_dir: &str,
@@ -21,12 +22,10 @@ pub fn run(
     for spec in &specs {
         let created = &spec.frontmatter.created;
         
-        // Parse YYYY-MM-DD format to get YYYY-MM
-        let month = if created.len() >= 7 {
-            created[..7].to_string()
-        } else {
-            "unknown".to_string()
-        };
+        // Parse date properly using chrono
+        let month = NaiveDate::parse_from_str(created, "%Y-%m-%d")
+            .map(|d| d.format("%Y-%m").to_string())
+            .unwrap_or_else(|_| "unknown".to_string());
         
         let entry = by_month.entry(month).or_insert(MonthStats::default());
         entry.created += 1;
@@ -39,12 +38,8 @@ pub fn run(
         // Check if completed this month based on transitions
         for transition in &spec.frontmatter.transitions {
             if transition.status == SpecStatus::Complete {
-                let at_str = transition.at.to_rfc3339();
-                let completed_month = if at_str.len() >= 7 {
-                    at_str[..7].to_string()
-                } else {
-                    continue;
-                };
+                // Use chrono format for year-month extraction
+                let completed_month = transition.at.format("%Y-%m").to_string();
                 let completed_entry = by_month.entry(completed_month).or_insert(MonthStats::default());
                 completed_entry.completed_this_month += 1;
             }

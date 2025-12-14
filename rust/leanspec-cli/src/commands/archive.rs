@@ -64,18 +64,19 @@ pub fn run(
         return Err(format!("Target already exists: {}", target_dir.display()).into());
     }
     
-    // Update status to archived in the file
-    let content = fs::read_to_string(&spec_info.file_path)?;
+    // Move the directory first to avoid race condition
+    fs::rename(spec_dir, &target_dir)?;
+    
+    // Now update status to archived in the file at the new location
+    let new_file_path = target_dir.join("README.md");
+    let content = fs::read_to_string(&new_file_path)?;
     let parser = FrontmatterParser::new();
     
     let mut updates: HashMap<String, serde_yaml::Value> = HashMap::new();
     updates.insert("status".to_string(), serde_yaml::Value::String("archived".to_string()));
     
     let updated_content = parser.update_frontmatter(&content, &updates)?;
-    fs::write(&spec_info.file_path, &updated_content)?;
-    
-    // Move the directory
-    fs::rename(spec_dir, &target_dir)?;
+    fs::write(&new_file_path, &updated_content)?;
     
     println!();
     println!("{} Archived: {}", "✓".green(), spec_info.path.cyan());
