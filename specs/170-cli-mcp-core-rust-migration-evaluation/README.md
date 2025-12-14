@@ -691,24 +691,24 @@ All core functionality (parsing, validation, dependencies, stats) tested
 ### CLI Command Completeness Analysis
 
 **TypeScript CLI Commands**: 33 total
-**Rust CLI Commands**: 13 implemented (39% coverage)
+**Rust CLI Commands**: 21 implemented (64% coverage)
 
-#### Implemented Commands (13) ✅
-- board, create, deps, link, list, search, stats, tokens, unlink, update, validate, view
+#### Implemented Commands (21) ✅
+- analyze, archive, board, check, create, deps, examples, files, gantt, init, link, list, open, search, stats, timeline, tokens, unlink, update, validate, view
 
-#### Missing Commands (20+) ❌
+#### Missing Commands (12) ❌
 
 Critical missing commands:
-- **init** - Project initialization (CRITICAL for new users)
 - **agent** - AI agent dispatch (core workflow)
+- **mcp** - MCP server launcher (AI integration)
 - **migrate** - Migration from other tools (adoption feature)
 - **ui** - Web UI launcher (user experience)
 - **templates** - Template management (developer experience)
 
 Advanced missing commands:
-- analyze, archive, backfill, check, compact, compress, examples, files, gantt, isolate, open, registry, split, timeline
+- backfill, compact, compress, isolate, registry, split
 
-**Impact**: CLI is not feature-complete enough for general use. Missing ~60% of functionality.
+**Impact**: CLI is now ~64% feature-complete. Core commands work, but advanced commands and integrations are missing.
 
 ### MCP Server Status
 
@@ -727,21 +727,21 @@ Issues identified:
 
 | Phase | Status | Completion % | Notes |
 |-------|--------|--------------|-------|
-| Phase 1 (Core) | ⚠️ Partial | 70% | Core library good, missing features |
-| Phase 2 (CLI) | ⚠️ Partial | 40% | Only 13/33 commands implemented |
-| Phase 3 (MCP) | ❌ Failed | 10% | Protocol not functional |
+| Phase 1 (Core) | ⚠️ Partial | 75% | Core library good, TokenStatus now exported |
+| Phase 2 (CLI) | ⚠️ Partial | 64% | 21/33 commands implemented |
+| Phase 3 (MCP) | ❌ Partial | 15% | Protocol functional but needs testing |
 | Phase 4 (Distribution) | ❌ Not Started | 0% | Not attempted |
 | Phase 5 (Docs) | ❌ Not Started | 0% | Not attempted |
 
-**Overall Progress**: ~30-40% complete
+**Overall Progress**: ~45-50% complete
 
 ### Test Section Compliance
 
 From spec requirements:
 
-**Functional Parity**: ❌ FAILED
-- [ ] CLI: Only 39% of commands implemented
-- [ ] MCP: Not functional
+**Functional Parity**: ⚠️ IMPROVED
+- [x] CLI: 64% of commands implemented (was 39%)
+- [ ] MCP: Needs testing with Claude Desktop, Cline, Zed
 - [ ] Configuration files not tested
 - [ ] Error messages not compared
 - [ ] Edge cases not handled
