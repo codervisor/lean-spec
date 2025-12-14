@@ -42,6 +42,6 @@ pub use parsers::FrontmatterParser;
 pub use validators::{FrontmatterValidator, StructureValidator, LineCountValidator};
 pub use utils::{
     DependencyGraph, CompleteDependencyGraph, ImpactRadius,
-    TokenCounter, TokenCount,
+    TokenCounter, TokenCount, TokenStatus,
     SpecLoader, SpecStats, Insights,
 };

@@ -15,7 +15,7 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 | Spec | Title | Claimed Status | Actual Status | Completion % |
 |------|-------|----------------|---------------|--------------|
 | 169 | UI Backend Rust/Tauri Migration | In Progress | In Progress ✅ | ~60-70% |
-| 170 | CLI/MCP/Core Rust Migration | In Progress | In Progress ✅ | ~30-40% |
+| 170 | CLI/MCP/Core Rust Migration | In Progress | In Progress ✅ | ~45-50% |
 
 ### Key Findings
 
@@ -28,7 +28,7 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 
 ❌ **Critical Gaps:**
 - Spec 169: Missing Phases 5-6 (Packaging, Documentation)
-- Spec 170: CLI missing 60% of commands, MCP server non-functional
+- Spec 170: CLI missing 36% of commands (was 60%), MCP server needs testing
 - Performance benchmarks: COMPLETED (see Addendum) - 31-182x faster! ✅
 - No integration tests
 - No cross-platform testing
@@ -74,17 +74,17 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 
 ### Spec 170: CLI/MCP/Core Rust Migration Evaluation
 
-**Overall Grade**: D (30-40% complete)
+**Overall Grade**: C- (45-50% complete)
 
 #### Phase Completion
-- ⚠️ Phase 1: Core Library (70% - missing features)
-- ⚠️ Phase 2: CLI Binary (40% - only 13/33 commands)
-- ❌ Phase 3: MCP Server (10% - non-functional)
+- ⚠️ Phase 1: Core Library (75% - TokenStatus exported)
+- ⚠️ Phase 2: CLI Binary (64% - 21/33 commands implemented)
+- ⚠️ Phase 3: MCP Server (15% - needs testing)
 - ❌ Phase 4: Distribution (0%)
 - ❌ Phase 5: Documentation & Cleanup (0%)
 
 #### Test Section Compliance
-- Functional Parity: ❌ CLI only 39% complete
+- Functional Parity: ⚠️ CLI 64% complete (was 39%)
 - Performance Benchmarks: ✅ CLI benchmarks completed (4/5) - See Addendum
 - Binary Size: ✅ Measured (4.1 MB, 3.9 MB) - See Addendum
 - Cross-Platform Testing: ❌ 0/5 platforms tested
@@ -93,25 +93,24 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 
 #### Command Implementation Status
 
-**Implemented (13 commands)**: ✅
+**Implemented (21 commands)**: ✅
 ```
-board, create, deps, link, list, search, stats, 
-tokens, unlink, update, validate, view
+analyze, archive, board, check, create, deps, examples,
+files, gantt, init, link, list, open, search, stats,
+timeline, tokens, unlink, update, validate, view
 ```
 
-**Missing (20+ commands)**: ❌
+**Missing (12 commands)**: ⚠️
 ```
 Critical:
-- init (onboarding)
 - agent (AI dispatch)
+- mcp (MCP server launcher)
 - ui (web interface)
 - migrate (tool migration)
 - templates (scaffolding)
 
 Additional:
-- analyze, archive, backfill, check, compact, compress,
-  examples, files, gantt, isolate, open, registry,
-  split, timeline
+- backfill, compact, compress, isolate, registry, split
 ```
 
 #### Strengths
