@@ -7,9 +7,8 @@ use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
-use crate::specs::frontmatter::{parse_frontmatter, extract_title, Frontmatter};
+use crate::specs::frontmatter::{parse_frontmatter, extract_title};
 
 /// A full spec with all content
 #[derive(Debug, Clone, Serialize, Deserialize)]
