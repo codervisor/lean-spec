@@ -15,7 +15,7 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 | Spec | Completion | Status | Production Ready |
 |------|-----------|--------|------------------|
 | 169  | ~60-70%   | ✅ In Progress | ❌ No (Phases 5-6 pending) |
-| 170  | ~30-40%   | ✅ In Progress | ❌ No (60% of CLI missing) |
+| 170  | ~45-50%   | ✅ In Progress | ❌ No (36% of CLI missing) |
 
 ---
 
@@ -56,9 +56,10 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 - ❌ Desktop app performance not benchmarked
 
 ### Spec 170: CLI/MCP/Core Rust Migration
-- ❌ CLI: 20+ commands missing (60% incomplete)
-  - Missing critical: init, agent, ui, migrate, templates
-- ❌ MCP server: Non-functional (protocol incomplete)
+- ⚠️ CLI: 12 commands missing (36% incomplete) - was 60% incomplete
+  - Missing critical: agent, ui, migrate, templates, mcp
+  - Missing advanced: backfill, compact, compress, isolate, registry, split
+- ⚠️ MCP server: Needs testing with AI clients
 - ❌ Integration tests: None
 - ❌ Cross-platform testing: Not done
 - ❌ Documentation: Incomplete
@@ -86,14 +87,14 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
    - 3.9 MB for MCP (vs 15 MB target)
    - Total 9.4 MB (vs 80 MB target)
 
-### What Needs Work ❌
-1. **CLI Completeness**: Only 13/33 commands (39%)
-   - Implemented: board, create, deps, link, list, search, stats, tokens, unlink, update, validate, view
-   - Missing: agent, analyze, archive, backfill, check, compact, compress, examples, files, gantt, init, isolate, migrate, open, registry, split, templates, timeline, ui
+### What Needs Work ⚠️
+1. **CLI Completeness**: 21/33 commands (64%) - improved from 39%
+   - Implemented: analyze, archive, board, check, create, deps, examples, files, gantt, init, link, list, open, search, stats, timeline, tokens, unlink, update, validate, view
+   - Missing: agent, backfill, compact, compress, isolate, mcp, migrate, registry, split, templates, ui
 
-2. **MCP Server**: Not functional
-   - Protocol implementation incomplete
-   - Cannot verify with AI clients
+2. **MCP Server**: Needs testing
+   - Protocol implementation exists
+   - Needs verification with Claude Desktop, Cline, Zed
    - No integration tests
 
 3. **Testing**: Unit tests only
