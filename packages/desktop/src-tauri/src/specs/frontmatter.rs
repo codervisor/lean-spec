@@ -44,6 +44,7 @@ impl Frontmatter {
     }
 
     /// Get the priority with a default of "medium"
+    #[allow(dead_code)]
     pub fn priority_or_default(&self) -> &str {
         self.priority.as_deref().unwrap_or("medium")
     }

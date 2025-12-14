@@ -13,7 +13,8 @@ use crate::tray;
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DesktopBootstrapPayload {
-    pub ui_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ui_url: Option<String>,
     pub active_project_id: Option<String>,
     pub config: crate::config::DesktopConfig,
     pub projects: Vec<DesktopProject>,
@@ -173,10 +174,14 @@ fn build_payload(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstr
         .and_then(|id| state.project_store.find(id));
     let active_project_id = active_project.as_ref().map(|project| project.id.clone());
 
-    let ui_url = state
-        .ui_server
-        .ensure_running(app, active_project.as_ref())
-        .map_err(|error| anyhow!(error.to_string()))?;
+    // Native SPA mode (spec 169 Phase 5) - no Node.js server needed
+    // UI server only used if explicitly enabled via environment variable
+    let ui_url = std::env::var("LEANSPEC_ENABLE_UI_SERVER").ok().and_then(|_| {
+        state
+            .ui_server
+            .ensure_running(app, active_project.as_ref())
+            .ok()
+    });
 
     Ok(DesktopBootstrapPayload {
         ui_url,

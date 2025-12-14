@@ -192,7 +192,7 @@ impl SpecReader {
         };
 
         // Count sub-specs (other .md files in the directory)
-        let sub_specs_count = self.count_sub_specs(spec_dir);
+        let _sub_specs_count = self.count_sub_specs(spec_dir);
 
         Some(Spec {
             id,
