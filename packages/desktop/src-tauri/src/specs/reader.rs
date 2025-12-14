@@ -190,8 +190,8 @@ impl SpecReader {
             format!("specs/{}/README.md", spec_name)
         };
 
-        // Count sub-specs (other .md files in the directory)
-        let _sub_specs_count = self.count_sub_specs(spec_dir);
+        // TODO: Add sub-specs tracking in the future if needed
+        // (currently we just load individual spec files)
 
         Some(Spec {
             id,
@@ -219,6 +219,9 @@ impl SpecReader {
     }
 
     /// Count sub-spec files in a directory
+    /// 
+    /// Currently unused but may be useful for future sub-spec tracking features.
+    #[allow(dead_code)]
     fn count_sub_specs(&self, spec_dir: &Path) -> i32 {
         let mut count = 0;
         if let Ok(entries) = fs::read_dir(spec_dir) {

@@ -109,11 +109,9 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
         });
     }
 
-    // Check for required sections (Overview, Design, Plan, Test, Notes)
+    // Check for required sections
     let has_overview = body.contains("## Overview") || body.contains("## overview");
-    let _has_design = body.contains("## Design") || body.contains("## design");
-    let _has_plan = body.contains("## Plan") || body.contains("## plan");
-    let _has_test = body.contains("## Test") || body.contains("## test");
+    // TODO: Add validation for Design, Plan, Test sections in the future if needed
 
     if !has_overview {
         issues.push(ValidationIssue {
