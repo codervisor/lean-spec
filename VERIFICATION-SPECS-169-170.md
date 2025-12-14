@@ -124,7 +124,7 @@ Additional:
 - CLI missing 60% of functionality
 - MCP server protocol incomplete and non-functional
 - No integration tests
-- No performance benchmarks
+- Desktop app performance benchmarks not done (CLI benchmarks completed)
 - Cannot verify AI assistant integration
 - No distribution strategy
 
@@ -162,7 +162,9 @@ Additional:
 
 ### Tests NOT Performed (Required by Specs)
 
-- ❌ Performance benchmarks
+- ✅ Performance benchmarks for CLI (COMPLETED - see Addendum)
+- ✅ Binary size measurements (COMPLETED - see Addendum)
+- ❌ Performance benchmarks for desktop app
 - ❌ Memory usage measurements
 - ❌ Cross-platform builds
 - ❌ Integration tests
