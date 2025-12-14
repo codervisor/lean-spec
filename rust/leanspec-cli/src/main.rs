@@ -203,6 +203,79 @@ enum Commands {
         #[arg(short, long)]
         detailed: bool,
     },
+    
+    // New commands
+    
+    /// Initialize LeanSpec in current directory
+    Init {
+        /// Skip prompts and use defaults
+        #[arg(short, long)]
+        yes: bool,
+        
+        /// Template to use for initialization
+        #[arg(short, long)]
+        template: Option<String>,
+    },
+    
+    /// Open spec in editor
+    Open {
+        /// Spec path or number
+        spec: String,
+        
+        /// Editor to use (default: $EDITOR or platform default)
+        #[arg(short, long)]
+        editor: Option<String>,
+    },
+    
+    /// List files in a spec directory
+    Files {
+        /// Spec path or number
+        spec: String,
+        
+        /// Show file sizes
+        #[arg(short, long)]
+        size: bool,
+    },
+    
+    /// Check for sequence conflicts
+    Check {
+        /// Attempt to fix conflicts
+        #[arg(long)]
+        fix: bool,
+    },
+    
+    /// Move spec to archived/
+    Archive {
+        /// Spec path or number
+        spec: String,
+        
+        /// Preview changes without applying
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Analyze spec complexity and structure
+    Analyze {
+        /// Spec path or number
+        spec: String,
+    },
+    
+    /// Show creation/completion timeline
+    Timeline {
+        /// Number of months to show
+        #[arg(short, long, default_value = "6")]
+        months: usize,
+    },
+    
+    /// Show timeline with dependencies
+    Gantt {
+        /// Filter by status
+        #[arg(short, long)]
+        status: Option<String>,
+    },
+    
+    /// List example projects
+    Examples,
 }
 
 fn main() -> ExitCode {
@@ -247,6 +320,34 @@ fn main() -> ExitCode {
         }
         Commands::Stats { detailed } => {
             commands::stats::run(&specs_dir, detailed, &cli.output)
+        }
+        // New commands
+        Commands::Init { yes, template } => {
+            commands::init::run(&specs_dir, yes, template)
+        }
+        Commands::Open { spec, editor } => {
+            commands::open::run(&specs_dir, &spec, editor)
+        }
+        Commands::Files { spec, size } => {
+            commands::files::run(&specs_dir, &spec, size, &cli.output)
+        }
+        Commands::Check { fix } => {
+            commands::check::run(&specs_dir, fix, &cli.output)
+        }
+        Commands::Archive { spec, dry_run } => {
+            commands::archive::run(&specs_dir, &spec, dry_run)
+        }
+        Commands::Analyze { spec } => {
+            commands::analyze::run(&specs_dir, &spec, &cli.output)
+        }
+        Commands::Timeline { months } => {
+            commands::timeline::run(&specs_dir, months, &cli.output)
+        }
+        Commands::Gantt { status } => {
+            commands::gantt::run(&specs_dir, status, &cli.output)
+        }
+        Commands::Examples => {
+            commands::examples::run(&cli.output)
         }
     };
     
