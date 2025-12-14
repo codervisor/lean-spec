@@ -29,7 +29,7 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 ❌ **Critical Gaps:**
 - Spec 169: Missing Phases 5-6 (Packaging, Documentation)
 - Spec 170: CLI missing 60% of commands, MCP server non-functional
-- No performance benchmarks conducted
+- Performance benchmarks: COMPLETED (see Addendum) - 31-182x faster! ✅
 - No integration tests
 - No cross-platform testing
 - No distribution setup
@@ -428,12 +428,12 @@ search          ~500ms      Search specs (estimated)
 | Command  | Rust | TypeScript | Speedup | Pass/Fail |
 |----------|------|------------|---------|-----------|
 | list     | 19ms | 591ms      | 31x     | ✅ PASS   |
-| validate | 83ms | 15,088ms   | 182x    | ✅ PASS   |
+| validate | 83ms | 15,088ms   | 182x    | ⚠️ CLOSE (83ms vs 50ms target) |
 | board    | 13ms | 600ms      | 46x     | ✅ PASS   |
 | Average  | 38ms | 5,426ms    | 143x    | ✅ PASS   |
 
 **Spec 170 Performance Requirements**:
-- [x] Spec validation: <50ms (actual: 83ms) ⚠️ CLOSE (still 182x faster)
+- [ ] Spec validation: <50ms (actual: 83ms) ⚠️ MISSED TARGET (but still 182x faster!)
 - [x] List 1000 specs: <100ms (actual: 19ms for 135) ✅ PASS
 - [x] Dependency graph: <100ms (actual: 13ms for board) ✅ PASS
 - [x] CLI startup: <50ms (actual: ~19ms) ✅ PASS
