@@ -276,6 +276,162 @@ enum Commands {
     
     /// List example projects
     Examples,
+    
+    // Additional commands (spec 170)
+    
+    /// Manage spec templates
+    Templates {
+        /// Action: list, show, add, remove
+        #[arg(short, long)]
+        action: Option<String>,
+        
+        /// Template name (for show, add, remove)
+        name: Option<String>,
+    },
+    
+    /// Backfill timestamps from git history
+    Backfill {
+        /// Specific specs to backfill
+        specs: Option<Vec<String>>,
+        
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+        
+        /// Overwrite existing values
+        #[arg(long)]
+        force: bool,
+        
+        /// Include assignee from git author
+        #[arg(long)]
+        assignee: bool,
+        
+        /// Include status transitions
+        #[arg(long)]
+        transitions: bool,
+        
+        /// Include all optional fields
+        #[arg(long)]
+        all: bool,
+        
+        /// Create frontmatter for files without it
+        #[arg(long)]
+        bootstrap: bool,
+    },
+    
+    /// Remove specified line ranges from spec
+    Compact {
+        /// Spec to compact
+        spec: String,
+        
+        /// Line range to remove (e.g., 145-153)
+        #[arg(long = "remove")]
+        removes: Vec<String>,
+        
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Split spec into multiple files
+    Split {
+        /// Spec to split
+        spec: String,
+        
+        /// Output file with line range (e.g., README.md:1-150)
+        #[arg(long = "output")]
+        outputs: Vec<String>,
+        
+        /// Update cross-references in README
+        #[arg(long)]
+        update_refs: bool,
+        
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Migrate specs from other SDD tools
+    Migrate {
+        /// Path to directory containing specs to migrate
+        input_path: String,
+        
+        /// Automatic migration
+        #[arg(long)]
+        auto: bool,
+        
+        /// AI-assisted migration (copilot, claude, gemini)
+        #[arg(long = "with")]
+        ai_provider: Option<String>,
+        
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+        
+        /// Process N docs at a time
+        #[arg(long)]
+        batch_size: Option<usize>,
+        
+        /// Don't validate after migration
+        #[arg(long)]
+        skip_validation: bool,
+        
+        /// Auto-run backfill after migration
+        #[arg(long)]
+        backfill: bool,
+    },
+    
+    /// Dispatch specs to AI coding agents
+    Agent {
+        /// Action: run, list, status, config
+        #[arg(default_value = "help")]
+        action: String,
+        
+        /// Specs to dispatch (for run action)
+        specs: Option<Vec<String>>,
+        
+        /// Agent type (claude, copilot, aider, gemini, cursor, continue)
+        #[arg(long, default_value = "claude")]
+        agent: Option<String>,
+        
+        /// Create worktrees for parallel implementation
+        #[arg(long)]
+        parallel: bool,
+        
+        /// Do not update spec status to in-progress
+        #[arg(long)]
+        no_status_update: bool,
+        
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Start local web UI for spec management
+    Ui {
+        /// Port to run on
+        #[arg(short, long, default_value = "3000")]
+        port: String,
+        
+        /// Don't open browser automatically
+        #[arg(long)]
+        no_open: bool,
+        
+        /// Enable multi-project mode
+        #[arg(long)]
+        multi_project: bool,
+        
+        /// Run in development mode (LeanSpec monorepo only)
+        #[arg(long)]
+        dev: bool,
+        
+        /// Preview without running
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Start MCP server for AI assistants
+    Mcp,
 }
 
 fn main() -> ExitCode {
@@ -348,6 +504,40 @@ fn main() -> ExitCode {
         }
         Commands::Examples => {
             commands::examples::run(&cli.output)
+        }
+        // Additional commands (spec 170)
+        Commands::Templates { action, name } => {
+            commands::templates::run(&specs_dir, action.as_deref(), name.as_deref(), &cli.output)
+        }
+        Commands::Backfill { specs, dry_run, force, assignee, transitions, all, bootstrap } => {
+            commands::backfill::run(
+                &specs_dir,
+                specs,
+                dry_run,
+                force,
+                assignee || all,
+                transitions || all,
+                bootstrap,
+                &cli.output,
+            )
+        }
+        Commands::Compact { spec, removes, dry_run } => {
+            commands::compact::run(&specs_dir, &spec, removes, dry_run, &cli.output)
+        }
+        Commands::Split { spec, outputs, update_refs, dry_run } => {
+            commands::split::run(&specs_dir, &spec, outputs, update_refs, dry_run, &cli.output)
+        }
+        Commands::Migrate { input_path, auto, ai_provider, dry_run, batch_size, skip_validation, backfill } => {
+            commands::migrate::run(&specs_dir, &input_path, auto, ai_provider, dry_run, batch_size, skip_validation, backfill, &cli.output)
+        }
+        Commands::Agent { action, specs, agent, parallel, no_status_update, dry_run } => {
+            commands::agent::run(&specs_dir, &action, specs, agent, parallel, no_status_update, dry_run, &cli.output)
+        }
+        Commands::Ui { port, no_open, multi_project, dev, dry_run } => {
+            commands::ui::run(&specs_dir, &port, no_open, multi_project, dev, dry_run)
+        }
+        Commands::Mcp => {
+            commands::mcp::run(&specs_dir)
         }
     };
     
