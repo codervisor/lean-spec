@@ -42,7 +42,6 @@ pub fn run(
             let next_section = lines.iter()
                 .skip(i + 1)
                 .position(|l| l.starts_with("## ") || l.starts_with("# "))
-                .map(|p| p)
                 .unwrap_or(lines.len() - i - 1);
             (title, next_section)
         })
