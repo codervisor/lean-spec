@@ -279,13 +279,28 @@ fn get_agent_command(agent: &str) -> String {
 }
 
 fn is_command_available(command: &str) -> bool {
-    Command::new("which")
-        .arg(command)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+    // Cross-platform command existence check
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("where")
+            .arg(command)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new("which")
+            .arg(command)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+    }
 }
 
 fn launch_agent(agent: &str, _spec_name: &str, content: &str) -> Result<(), Box<dyn Error>> {
