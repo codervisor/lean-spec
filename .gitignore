@@ -24,3 +24,6 @@ packages/desktop/src-tauri/ui-standalone
 packages/desktop/src-tauri/target
 packages/desktop/src-tauri/resources
 packages/desktop/src-tauri/binaries/ui-server-*
+
+# Rust build artifacts
+rust/target/
