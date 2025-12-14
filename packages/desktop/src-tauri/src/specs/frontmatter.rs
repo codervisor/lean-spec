@@ -44,6 +44,9 @@ impl Frontmatter {
     }
 
     /// Get the priority with a default of "medium"
+    /// 
+    /// Currently unused but provided for consistency with status_or_default.
+    /// May be used for filtering or sorting specs by priority in the future.
     #[allow(dead_code)]
     pub fn priority_or_default(&self) -> &str {
         self.priority.as_deref().unwrap_or("medium")

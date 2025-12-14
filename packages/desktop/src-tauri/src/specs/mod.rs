@@ -3,8 +3,6 @@
 //! This module provides Rust implementations of spec operations
 //! that replace the Node.js/TypeScript API routes.
 
-#![allow(unused_imports)]
-
 pub mod commands;
 pub mod constants;
 pub mod frontmatter;
@@ -13,17 +11,7 @@ pub mod stats;
 pub mod dependencies;
 pub mod validation;
 
-// Re-export main types
-pub use frontmatter::{Frontmatter, parse_frontmatter};
-pub use reader::{Spec, SpecReader, LightweightSpec};
-pub use stats::{StatsResult, calculate_stats};
-pub use dependencies::{DependencyGraph, DependencyNode, DependencyEdge, build_dependency_graph};
-pub use validation::{ValidationResult, ValidationIssue};
-
-// Re-export functions (used in commands)
-pub use validation::{validate_spec, validate_all_specs};
-
-// Re-export commands
+// Re-export commands for convenience
 pub use commands::{
     get_specs,
     get_spec_detail,
