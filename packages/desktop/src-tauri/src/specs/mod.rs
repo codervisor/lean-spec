@@ -11,14 +11,7 @@ pub mod stats;
 pub mod dependencies;
 pub mod validation;
 
-// Re-export main types
-pub use frontmatter::{Frontmatter, parse_frontmatter};
-pub use reader::{Spec, SpecReader, LightweightSpec};
-pub use stats::{StatsResult, calculate_stats};
-pub use dependencies::{DependencyGraph, DependencyNode, DependencyEdge, build_dependency_graph};
-pub use validation::{ValidationResult, ValidationIssue, validate_spec, validate_all_specs};
-
-// Re-export commands
+// Re-export commands for convenience
 pub use commands::{
     get_specs,
     get_spec_detail,
