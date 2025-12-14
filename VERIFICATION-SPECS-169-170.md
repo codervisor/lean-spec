@@ -85,8 +85,8 @@ Both specs 169 (UI Backend Rust/Tauri Migration) and 170 (CLI/MCP/Core Rust Migr
 
 #### Test Section Compliance
 - Functional Parity: ❌ CLI only 39% complete
-- Performance Benchmarks: ❌ 0/5 benchmarks run
-- Binary Size: ❌ Not measured
+- Performance Benchmarks: ✅ CLI benchmarks completed (4/5) - See Addendum
+- Binary Size: ✅ Measured (4.1 MB, 3.9 MB) - See Addendum
 - Cross-Platform Testing: ❌ 0/5 platforms tested
 - Installation Testing: ❌ Not completed
 - Integration Testing: ❌ Not completed
@@ -260,7 +260,7 @@ Since these are **evaluation specs**, to complete them:
 1. **Document Findings** ✅
    - Technical viability: PROVEN
    - Implementation effort: UNDERESTIMATED
-   - Performance gains: UNPROVEN (not measured)
+   - Performance gains: PROVEN - 31-182x faster (see Addendum)
    - Risks: MANAGEABLE
 
 2. **Make Formal Recommendation**

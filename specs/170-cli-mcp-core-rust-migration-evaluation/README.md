@@ -861,7 +861,7 @@ This spec is an **evaluation spec**, so to complete it:
    - Technical viability: PROVEN (core library works) ✅
    - CLI migration feasibility: VIABLE but incomplete ⚠️
    - MCP migration feasibility: QUESTIONABLE (protocol issues) ❌
-   - Performance gains: UNPROVEN (no measurements) ⚠️
+   - Performance gains: PROVEN - 31-182x faster (see performance section below) ✅
 
 2. **Make Recommendation**
    - Option A (Full Migration): NOT RECOMMENDED without 2-3 more months work
