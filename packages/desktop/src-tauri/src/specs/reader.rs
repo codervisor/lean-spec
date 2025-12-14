@@ -7,9 +7,8 @@ use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
-use crate::specs::frontmatter::{parse_frontmatter, extract_title, Frontmatter};
+use crate::specs::frontmatter::{parse_frontmatter, extract_title};
 
 /// A full spec with all content
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -191,8 +190,10 @@ impl SpecReader {
             format!("specs/{}/README.md", spec_name)
         };
 
-        // Count sub-specs (other .md files in the directory)
-        let sub_specs_count = self.count_sub_specs(spec_dir);
+        // TODO: Implement sub-specs tracking feature
+        // Sub-specs are additional .md files in a spec directory beyond README.md
+        // This would allow specs to be broken into multiple documents
+        // Track in a future spec once the use case is validated
 
         Some(Spec {
             id,
@@ -220,6 +221,9 @@ impl SpecReader {
     }
 
     /// Count sub-spec files in a directory
+    /// 
+    /// Currently unused but may be useful for future sub-spec tracking features.
+    #[allow(dead_code)]
     fn count_sub_specs(&self, spec_dir: &Path) -> i32 {
         let mut count = 0;
         if let Ok(entries) = fs::read_dir(spec_dir) {

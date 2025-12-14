@@ -109,11 +109,11 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
         });
     }
 
-    // Check for required sections (Overview, Design, Plan, Test, Notes)
+    // Check for required sections
     let has_overview = body.contains("## Overview") || body.contains("## overview");
-    let has_design = body.contains("## Design") || body.contains("## design");
-    let has_plan = body.contains("## Plan") || body.contains("## plan");
-    let has_test = body.contains("## Test") || body.contains("## test");
+    // Note: Validation for Design, Plan, Test sections was removed as these are
+    // optional sections per LeanSpec philosophy (minimal required structure).
+    // Only Overview section check remains as it's the core requirement.
 
     if !has_overview {
         issues.push(ValidationIssue {
