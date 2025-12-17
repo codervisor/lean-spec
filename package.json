@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Lightweight spec methodology for AI-powered development (monorepo root)",
-  "packageManager": "pnpm@10.25.0",
+  "packageManager": "pnpm@10.26.0",
   "scripts": {
     "build": "turbo run build",
     "sync-versions": "tsx scripts/sync-versions.ts",
@@ -24,7 +24,17 @@
     "pre-release": "pnpm sync-versions && pnpm typecheck && pnpm test:run && pnpm build && node bin/lean-spec.js validate --warnings-only",
     "docs:dev": "pnpm --dir docs-site start",
     "docs:build": "pnpm --dir docs-site build",
-    "docs:serve": "pnpm --dir docs-site serve"
+    "docs:serve": "pnpm --dir docs-site serve",
+    "rust:build": "cargo build --release --manifest-path rust/Cargo.toml",
+    "rust:build:dev": "cargo build --manifest-path rust/Cargo.toml",
+    "rust:test": "cargo test --manifest-path rust/Cargo.toml",
+    "rust:test:watch": "cargo watch -x 'test --manifest-path rust/Cargo.toml'",
+    "rust:check": "cargo check --manifest-path rust/Cargo.toml",
+    "rust:clippy": "cargo clippy --manifest-path rust/Cargo.toml -- -D warnings",
+    "rust:fmt": "cargo fmt --manifest-path rust/Cargo.toml",
+    "rust:fmt:check": "cargo fmt --manifest-path rust/Cargo.toml -- --check",
+    "rust:clean": "cargo clean --manifest-path rust/Cargo.toml",
+    "cli": "node bin/lean-spec.js"
   },
   "keywords": [
     "spec",

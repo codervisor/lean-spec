@@ -124,6 +124,53 @@ See [packages/desktop/README.md](packages/desktop/README.md) for configuration d
 
 ---
 
+## Developer Workflow
+
+Common development tasks using `pnpm`:
+
+```bash
+# Development
+pnpm install             # Install dependencies
+pnpm build               # Build all packages
+pnpm dev                 # Start dev mode (UI + Core)
+pnpm dev:web             # UI only
+pnpm dev:cli             # CLI only
+pnpm dev:desktop         # Desktop app
+
+# Testing
+pnpm test                # Run all tests
+pnpm test:ui             # Tests with UI
+pnpm test:coverage       # Coverage report
+pnpm typecheck           # Type check all packages
+
+# Rust
+pnpm rust:build          # Build Rust packages (release)
+pnpm rust:build:dev      # Build Rust (dev, faster)
+pnpm rust:test           # Run Rust tests
+pnpm rust:check          # Quick Rust check
+pnpm rust:clippy         # Rust linting
+pnpm rust:fmt            # Format Rust code
+
+# CLI (run locally)
+pnpm cli board           # Show spec board
+pnpm cli list            # List specs
+pnpm cli create my-feat  # Create new spec
+pnpm cli validate        # Validate specs
+
+# Documentation
+pnpm docs:dev            # Start docs site
+pnpm docs:build          # Build docs
+
+# Release
+pnpm pre-release         # Run all pre-release checks
+pnpm prepare-publish     # Prepare for npm publish
+pnpm restore-packages    # Restore after publish
+```
+
+See [package.json](package.json) for all available scripts.
+
+---
+
 ## Documentation
 
 📖 [Full Documentation](https://www.lean-spec.dev) · [CLI Reference](https://www.lean-spec.dev/docs/reference/cli) · [First Principles](https://www.lean-spec.dev/docs/advanced/first-principles) · [FAQ](https://www.lean-spec.dev/docs/faq) · [中文文档](https://www.lean-spec.dev/zh-Hans/)
