@@ -102,7 +102,17 @@ Binary Size:
 - npm package wrapper (`npx lean-spec` → calls Rust binary)
 - Distribution infrastructure
 
-### Why After Spec 169?
+### Related Context
+
+**Foundation Specs**:
+- **169-ui-backend-rust-tauri-migration-evaluation**: Completed desktop Rust migration
+
+**Implementation Specs** (Created from this evaluation):
+- **172-rust-cli-mcp-npm-distribution**: npm packaging and distribution infrastructure
+- **173-rust-binaries-ci-cd-pipeline**: Cross-platform build automation
+
+**Related**:
+- **164-desktop-ci-build-artifacts**: Desktop distribution patterns (reference)
 
 **Logical Dependency**:
 - Spec 169 validates Rust implementation approach
@@ -632,6 +642,14 @@ Keep TypeScript CLI, only migrate shared logic:
 **3. Keep Everything Separate**
 - Desktop in Rust, CLI/MCP in TypeScript
 - Why Not: Code duplication, maintenance burden
+
+### Implementation Specs
+
+Following approval of this evaluation, implement via:
+- **Spec 172-rust-cli-mcp-npm-distribution**: npm distribution infrastructure (platform packages, wrappers, publishing workflow)
+- **Spec 173-rust-binaries-ci-cd-pipeline**: CI/CD pipeline (cross-platform builds, caching, automation)
+
+These specs provide detailed implementation guidance for Phase 4 (Distribution) of this evaluation.
 
 ### Success Criteria
 
