@@ -7,7 +7,7 @@
  * @see spec 181-typescript-deprecation-rust-migration
  */
 import matter from 'gray-matter';
-import yaml from 'js-yaml';
+import { load, FAILSAFE_SCHEMA } from 'js-yaml';
 
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -170,7 +170,9 @@ export function createUpdatedFrontmatter(
 ): { content: string; frontmatter: SpecFrontmatter } {
   const parsed = matter(existingContent, {
     engines: {
-      yaml: (str) => yaml.load(str, { schema: yaml.FAILSAFE_SCHEMA }) as Record<string, unknown>
+      // FAILSAFE_SCHEMA is the safest option - only allows strings, arrays, and objects
+      // This prevents any code execution vulnerabilities from YAML parsing
+      yaml: (str) => load(str, { schema: FAILSAFE_SCHEMA }) as Record<string, unknown>
     }
   });
 

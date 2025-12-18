@@ -1,6 +1,16 @@
 # Publishing Releases
 
-**Publish both CLI and UI packages to npm with synchronized versions:**
+**Publish CLI and UI packages to npm with synchronized versions:**
+
+## Architecture Overview
+
+With the Rust migration complete (spec 181):
+- **CLI** (`lean-spec`) - JavaScript wrapper that invokes Rust binary
+- **MCP** (`@leanspec/mcp`) - JavaScript wrapper that invokes Rust MCP binary  
+- **UI** (`@leanspec/ui`) - Next.js app with inlined utilities
+- **Platform packages** - Rust binaries for each platform (published separately)
+
+The Rust binaries are distributed via optional dependencies (e.g., `lean-spec-darwin-arm64`).
 
 ## Publishing Dev Versions
 
@@ -48,12 +58,12 @@ The `.github/workflows/publish-dev.yml` workflow will automatically:
 
 ⚠️ **CRITICAL**: All steps must be completed in order. Do NOT skip steps.
 
-1. **Version bump**: Update version in all package.json files (root, cli, core, ui, mcp) for consistency
+1. **Version bump**: Update version in all package.json files (root, cli, ui, mcp) for consistency
 2. **Update CHANGELOG.md**: Add release notes with date and version
 3. **Type check**: Run `pnpm typecheck` to catch type errors (REQUIRED before release)
-4. **Test**: Run `pnpm test:run` to ensure tests pass (web DB tests may fail - that's OK)
+4. **Test**: Run `pnpm test:run` to ensure tests pass
 5. **Build**: Run `pnpm build` to build all packages
-6. **Validate**: Run `node bin/lean-spec.js validate` and `cd docs-site && npm run build` to ensure everything works
+6. **Validate**: Run `node bin/lean-spec.js validate --warnings-only` and `cd docs-site && npm run build` to ensure everything works
 7. **Commit & Tag**: 
    ```bash
    git add -A && git commit -m "feat: release version X.Y.Z with [brief description]"
@@ -64,10 +74,9 @@ The `.github/workflows/publish-dev.yml` workflow will automatically:
    - ⚠️ **CRITICAL**: This step prevents `workspace:*` from leaking into npm packages
    - Creates backups of original package.json files
    - Replaces all `workspace:*` dependencies with actual versions
-9. **Publish to npm**: For each package (core, cli, mcp, ui):
+9. **Publish to npm**: For each package (cli, mcp, ui):
    ```bash
-   cd packages/core && npm publish --access public
-   cd ../cli && npm publish --access public
+   cd packages/cli && npm publish --access public
    cd ../mcp && npm publish --access public
    cd ../ui && npm publish --access public
    ```
@@ -90,7 +99,6 @@ The `.github/workflows/publish-dev.yml` workflow will automatically:
    [List enhancements]
    
    ### 📦 Published Packages
-   - `@leanspec/core@X.Y.Z`
    - `lean-spec@X.Y.Z`
    - `@leanspec/mcp@X.Y.Z`
    - `@leanspec/ui@X.Y.Z`
@@ -119,14 +127,12 @@ The `.github/workflows/publish-dev.yml` workflow will automatically:
 
 ## Critical - Workspace Dependencies
 
-- The `@leanspec/core` package MUST NOT be in `packages/cli/package.json` dependencies
-- tsup config has `noExternal: ['@leanspec/core']` which bundles the core package
-- NEVER add `@leanspec/core` back to dependencies - it will cause `workspace:*` errors
+- The CLI package is now a thin wrapper for Rust binaries - no need for bundling
 - If you see `workspace:*` in published dependencies, the package is broken and must be republished
 
 ## Package Publication Notes
 
 **Important**: 
-- Do NOT publish `@leanspec/core` or `@leanspec/web` - they are internal packages
 - The `@leanspec/ui` package IS published to npm as a public scoped package
 - Both `lean-spec` (CLI) and `@leanspec/ui` are published automatically via GitHub Actions when a release is created
+- Platform-specific binary packages (e.g., `lean-spec-darwin-arm64`) are published separately via the rust-binaries workflow

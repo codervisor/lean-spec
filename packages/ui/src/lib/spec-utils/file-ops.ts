@@ -44,7 +44,8 @@ export async function atomicWriteFile(
     try {
       await unlink(tmpPath);
     } catch {
-      // Ignore cleanup errors (file might not exist)
+      // Intentionally ignored: cleanup errors should not mask the original error
+      // The temp file might not exist if the write failed before creating it
     }
     
     // Re-throw original error

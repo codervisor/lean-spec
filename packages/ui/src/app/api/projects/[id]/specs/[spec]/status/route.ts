@@ -136,7 +136,7 @@ export async function PATCH(
     // Read current content
     const currentContent = await readFile(readmePath, 'utf-8');
     
-    // Update frontmatter using @leanspec/core
+    // Update frontmatter using inlined utilities (formerly @leanspec/core)
     const { content: updatedContent } = createUpdatedFrontmatter(currentContent, { status });
     
     // Write back to file

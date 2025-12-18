@@ -190,7 +190,7 @@ export async function PATCH(
     if (payload.tags !== undefined) updates.tags = payload.tags;
     if (payload.assignee !== undefined) updates.assignee = payload.assignee || undefined;
     
-    // Update frontmatter using @leanspec/core
+    // Update frontmatter using inlined utilities (formerly @leanspec/core)
     const { content: updatedContent, frontmatter } = createUpdatedFrontmatter(currentContent, updates);
     
     // Write back to file atomically

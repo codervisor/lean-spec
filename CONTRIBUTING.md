@@ -36,10 +36,10 @@ pnpm typecheck    # Type check all packages (with caching)
 All packages in the monorepo maintain synchronized versions automatically. The root `package.json` serves as the single source of truth.
 
 **Packages:**
-- `lean-spec` (CLI package)
-- `@leanspec/core` (shared core library)
+- `lean-spec` (CLI package - wrapper for Rust binary)
 - `@leanspec/ui` (web UI package)
 - `@leanspec/mcp` (MCP server wrapper)
+- `@leanspec/desktop` (Tauri desktop app)
 
 ### Automated Version Sync
 
@@ -121,9 +121,10 @@ This project uses [Turborepo](https://turbo.build/) to manage the monorepo with 
 - **Task dependencies** - Dependencies built first automatically
 
 **Packages:**
-- `packages/cli` - Main CLI tool (published as `lean-spec`)
-- `packages/core` - Core spec parsing/validation library (internal)
-- `packages/web` - Live specs showcase (Next.js app)
+- `packages/cli` - CLI wrapper for Rust binary (published as `lean-spec`)
+- `packages/mcp` - MCP server wrapper (published as `@leanspec/mcp`)
+- `packages/ui` - Web UI bundle (published as `@leanspec/ui`)
+- `packages/desktop` - Tauri desktop app (not published to npm)
 - `docs-site/` - Git submodule pointing to `codervisor/lean-spec-docs` (Docusaurus)
 
 **Key files:**
@@ -134,7 +135,19 @@ This project uses [Turborepo](https://turbo.build/) to manage the monorepo with 
 **Build specific package:**
 ```bash
 turbo run build --filter=lean-spec
-turbo run build --filter=@leanspec/core
+turbo run build --filter=@leanspec/ui
+```
+
+**Rust Development:**
+```bash
+# Build Rust binaries
+pnpm rust:build
+
+# Run Rust tests
+pnpm rust:test
+
+# Copy binaries to packages
+pnpm rust:copy
 ```
 
 ## Testing

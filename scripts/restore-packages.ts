@@ -38,7 +38,6 @@ function main() {
   console.log('🔄 Restoring original package.json files...\n');
 
   const packages = [
-    'packages/core/package.json',
     'packages/cli/package.json',
     'packages/mcp/package.json',
     'packages/ui/package.json',
