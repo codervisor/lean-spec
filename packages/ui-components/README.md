@@ -47,12 +47,18 @@ function MyComponent() {
 - `TagBadge` - Display a single tag
 - `TagList` - Display multiple tags with truncation
 
+### Project Components
+
+- `ProjectAvatar` - Avatar with initials and color from project name
+
 ### UI Components
 
+- `Avatar` - Avatar with image and fallback
 - `Badge` - Base badge component with variants
 - `Button` - Button with variants (default, destructive, outline, secondary, ghost, link)
 - `Card` - Card container with header, content, footer
 - `Input` - Form input field
+- `Separator` - Horizontal or vertical divider
 - `Skeleton` - Loading placeholder
 
 ### Layout Components
@@ -79,6 +85,10 @@ function MyComponent() {
 - `formatDateTime` - Format date with time
 - `formatRelativeTime` - Format relative time (e.g., "2 days ago")
 - `formatDuration` - Format duration between dates
+- `getColorFromString` - Generate consistent color from string
+- `getContrastColor` - Get contrasting text color for background
+- `getInitials` - Get initials from name string
+- `PROJECT_COLORS` - Predefined color palette
 
 ## Types
 

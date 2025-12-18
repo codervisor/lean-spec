@@ -156,15 +156,16 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [ ] Extract SearchResults
 - [ ] Add keyboard shortcuts
 
-### Phase 6: Extract Project Management (Day 6-7)
+### Phase 6: Extract Project Management (Day 6-7) 🚧 Partial
 - [ ] Extract ProjectSwitcher (recent, favorites)
 - [ ] Extract ProjectCard
+- [x] Extract ProjectAvatar
 - [ ] Create ProjectDialog (new/edit)
 
 ### Phase 7: Extract Layout (Day 7) ✅
 - [x] Extract EmptyState component
 - [x] Extract loading skeletons (SpecList, SpecDetail, Stats, Kanban, Project, Sidebar)
-- [x] Extract base UI components (Button, Card, Input, Skeleton)
+- [x] Extract base UI components (Button, Card, Input, Skeleton, Separator, Avatar)
 - [ ] Ensure responsive design
 - [ ] Test dark mode
 
@@ -270,8 +271,18 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - `EmptyState` - Empty state placeholder with icon, title, description, action
 - Loading skeletons: `SpecListSkeleton`, `SpecDetailSkeleton`, `StatsCardSkeleton`, `KanbanBoardSkeleton`, `ProjectCardSkeleton`, `SidebarSkeleton`, `ContentSkeleton`
 
+**New Project Components:**
+- `ProjectAvatar` - Avatar with initials and color from project name
+
+**New Utilities:**
+- `getColorFromString()` - Generate consistent color from string
+- `getContrastColor()` - Get contrasting text color for background
+- `getInitials()` - Get initials from name string
+- `PROJECT_COLORS` - Predefined color palette
+
 **New Storybook Stories:**
 - EmptyState stories (NoSpecs, NoProjects, NoResults, WithLink)
 - LoadingSkeletons stories (all skeleton types)
 - SpecCard stories (default, planned, complete, selected, many tags, grid)
 - TagBadge stories (default, with icon, clickable, removable, list)
+- ProjectAvatar stories (default, sizes, colors)
