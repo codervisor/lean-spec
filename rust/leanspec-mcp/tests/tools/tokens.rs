@@ -12,7 +12,7 @@ async fn test_tokens_single_spec() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("tokens", json!({ "spec": "001" })).await;
+    let result = call_tool("tokens", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -61,7 +61,7 @@ async fn test_tokens_spec_not_found() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("tokens", json!({ "spec": "999" })).await;
+    let result = call_tool("tokens", json!({ "specPath": "999" })).await;
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("not found"));
 }
@@ -71,7 +71,7 @@ async fn test_tokens_single_spec_output() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("tokens", json!({ "spec": "001" })).await;
+    let result = call_tool("tokens", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -110,7 +110,7 @@ async fn test_tokens_status_indication() {
     let temp = create_test_project(&[("001-short", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("tokens", json!({ "spec": "001" })).await;
+    let result = call_tool("tokens", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -136,7 +136,7 @@ async fn test_tokens_large_spec() {
     std::fs::write(spec_dir.join("README.md"), large_content).unwrap();
     set_specs_dir_env(&temp);
 
-    let result = call_tool("tokens", json!({ "spec": "001" })).await;
+    let result = call_tool("tokens", json!({ "specPath": "001" })).await;
     // May fail if spec can't be loaded
     if result.is_err() {
         return;

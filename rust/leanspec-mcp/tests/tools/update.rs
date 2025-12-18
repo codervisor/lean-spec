@@ -15,7 +15,7 @@ async fn test_update_status() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "status": "in-progress"
         }),
     )
@@ -37,7 +37,7 @@ async fn test_update_priority() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "priority": "high"
         }),
     )
@@ -58,7 +58,7 @@ async fn test_update_assignee() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "assignee": "developer@example.com"
         }),
     )
@@ -79,7 +79,7 @@ async fn test_update_add_tags() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "addTags": ["new-tag", "another-tag"]
         }),
     )
@@ -99,7 +99,7 @@ async fn test_update_remove_tags() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "removeTags": ["test"]
         }),
     )
@@ -116,7 +116,7 @@ async fn test_update_combined() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "status": "in-progress",
             "priority": "critical",
             "addTags": ["urgent"]
@@ -138,7 +138,7 @@ async fn test_update_spec_not_found() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "999",
+            "specPath": "999",
             "status": "complete"
         }),
     )
@@ -162,7 +162,7 @@ async fn test_update_no_changes() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("update", json!({ "spec": "001" })).await;
+    let result = call_tool("update", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 }
 
@@ -175,7 +175,7 @@ async fn test_update_duplicate_tag_ignored() {
     let result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "addTags": ["test"]
         }),
     )

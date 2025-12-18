@@ -15,7 +15,7 @@ async fn test_deps_show_dependencies() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "002" })).await;
+    let result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -32,7 +32,7 @@ async fn test_deps_show_required_by() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "001" })).await;
+    let result = call_tool("deps", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -46,7 +46,7 @@ async fn test_deps_no_dependencies() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "001" })).await;
+    let result = call_tool("deps", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -63,7 +63,7 @@ async fn test_deps_with_depth() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "003", "depth": 2 })).await;
+    let result = call_tool("deps", json!({ "specPath": "003", "depth": 2 })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -97,7 +97,7 @@ async fn test_deps_circular_detection() {
 
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "001" })).await;
+    let result = call_tool("deps", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -109,7 +109,7 @@ async fn test_deps_spec_not_found() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "999" })).await;
+    let result = call_tool("deps", json!({ "specPath": "999" })).await;
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("not found"));
 }
@@ -132,7 +132,7 @@ async fn test_deps_output_structure() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("deps", json!({ "spec": "002" })).await;
+    let result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();

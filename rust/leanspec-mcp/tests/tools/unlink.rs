@@ -18,7 +18,7 @@ async fn test_unlink_dependency() {
     let result = call_tool(
         "unlink",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "dependsOn": "001"
         }),
     )
@@ -42,7 +42,7 @@ async fn test_unlink_nonexistent_dependency() {
     let result = call_tool(
         "unlink",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "dependsOn": "001"
         }),
     )
@@ -59,7 +59,7 @@ async fn test_unlink_spec_not_found() {
     let result = call_tool(
         "unlink",
         json!({
-            "spec": "999",
+            "specPath": "999",
             "dependsOn": "001"
         }),
     )
@@ -83,7 +83,7 @@ async fn test_unlink_missing_depends_on_param() {
     let temp = create_test_project(&[("001-base", "complete", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("unlink", json!({ "spec": "001" })).await;
+    let result = call_tool("unlink", json!({ "specPath": "001" })).await;
     assert!(result.is_err());
     assert!(result
         .unwrap_err()
@@ -102,7 +102,7 @@ async fn test_unlink_one_of_multiple() {
     let result = call_tool(
         "unlink",
         json!({
-            "spec": "003",
+            "specPath": "003",
             "dependsOn": "001"
         }),
     )
@@ -128,7 +128,7 @@ async fn test_unlink_by_partial_match() {
     let result = call_tool(
         "unlink",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "dependsOn": "001-base-feature"
         }),
     )

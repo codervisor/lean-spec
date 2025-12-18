@@ -1,5 +1,5 @@
 ---
-status: complete
+status: planned
 created: 2025-12-18
 priority: high
 tags:
@@ -10,7 +10,7 @@ tags:
 depends_on:
 - 175-rust-cli-e2e-test-suite
 created_at: 2025-12-18T05:58:43.559844758Z
-updated_at: 2025-12-18T05:59:47.235985898Z
+updated_at: 2025-12-18T07:46:51.770905946Z
 ---
 
 # Rust MCP Server Test Suite
@@ -78,7 +78,7 @@ The MCP server has unique requirements:
 ## Plan
 
 ### Phase 1: Test Infrastructure
-- [ ] Add test dependencies to `Cargo.toml`:
+- [x] Add test dependencies to `Cargo.toml`:
   ```toml
   [dev-dependencies]
   tempfile.workspace = true
@@ -87,19 +87,19 @@ The MCP server has unique requirements:
   assert-json-diff = "2.0"     # JSON comparison
   serde_json.workspace = true  # JSON handling
   ```
-- [ ] Create test helpers (`tests/helpers/`):
+- [x] Create test helpers (`tests/helpers/`):
   - `mock_transport.rs` - Mock stdio for testing
   - `json_rpc.rs` - JSON-RPC message builders
   - `assertions.rs` - Custom assertions for MCP
   - `fixtures.rs` - Sample projects and data
-- [ ] Set up test fixtures:
+- [x] Set up test fixtures:
   - Sample project structures (minimal, complex, with-deps)
   - Mock AI assistant requests
   - Expected tool responses
   - Error scenarios
 
 ### Phase 2: Protocol Tests
-- [ ] **JSON-RPC 2.0 Compliance** (`tests/protocol/json_rpc.rs`)
+- [x] **JSON-RPC 2.0 Compliance** (`tests/protocol/json_rpc.rs`)
   - Valid request parsing
   - Response formatting (success)
   - Error response formatting
@@ -107,13 +107,13 @@ The MCP server has unique requirements:
   - Invalid JSON handling
   - Missing required fields
   - Batch requests (if supported)
-- [ ] **MCP Protocol Initialization** (`tests/protocol/handshake.rs`)
+- [x] **MCP Protocol Initialization** (`tests/protocol/handshake.rs`)
   - Initialize request/response
   - Capability negotiation
   - Protocol version compatibility
   - Client info exchange
   - Server info response
-- [ ] **Transport Layer** (`tests/protocol/transport.rs`)
+- [x] **Transport Layer** (`tests/protocol/transport.rs`)
   - Stdio message reading (line-by-line)
   - Message framing
   - Message buffering
@@ -124,7 +124,7 @@ The MCP server has unique requirements:
 ### Phase 3: Tool Tests
 Test each MCP tool individually with valid/invalid inputs:
 
-- [ ] **`list` tool** (`tests/tools/list.rs`)
+- [x] **`list` tool** (`tests/tools/list.rs`)
   - List all specs (no filters)
   - Filter by status
   - Filter by tags
@@ -134,7 +134,7 @@ Test each MCP tool individually with valid/invalid inputs:
   - Empty result handling
   - Invalid filter values
   
-- [ ] **`view` tool** (`tests/tools/view.rs`)
+- [x] **`view` tool** (`tests/tools/view.rs`)
   - View spec by number
   - View spec by name
   - View with sub-spec file
@@ -143,7 +143,7 @@ Test each MCP tool individually with valid/invalid inputs:
   - Invalid spec path
   - Missing spec
   
-- [ ] **`create` tool** (`tests/tools/create.rs`)
+- [x] **`create` tool** (`tests/tools/create.rs`)
   - Create with name only
   - Create with title
   - Create with template
@@ -152,7 +152,7 @@ Test each MCP tool individually with valid/invalid inputs:
   - Duplicate name handling
   - Invalid name characters
   
-- [ ] **`update` tool** (`tests/tools/update.rs`)
+- [x] **`update` tool** (`tests/tools/update.rs`)
   - Update status
   - Update priority
   - Update assignee
@@ -162,7 +162,7 @@ Test each MCP tool individually with valid/invalid inputs:
   - Invalid spec
   - Invalid field values
   
-- [ ] **`validate` tool** (`tests/tools/validate.rs`)
+- [x] **`validate` tool** (`tests/tools/validate.rs`)
   - Validate single spec
   - Validate all specs
   - Check dependencies flag
@@ -170,7 +170,7 @@ Test each MCP tool individually with valid/invalid inputs:
   - Warnings only mode
   - Return validation results
   
-- [ ] **`deps` tool** (`tests/tools/deps.rs`)
+- [x] **`deps` tool** (`tests/tools/deps.rs`)
   - Show dependencies (default)
   - Upstream only
   - Downstream only
@@ -178,27 +178,27 @@ Test each MCP tool individually with valid/invalid inputs:
   - Circular dependency detection
   - Invalid spec
   
-- [ ] **`link` tool** (`tests/tools/link.rs`)
+- [x] **`link` tool** (`tests/tools/link.rs`)
   - Link two specs (depends_on)
   - Multiple dependencies
   - Circular dependency prevention
   - Invalid spec IDs
   - Already linked handling
   
-- [ ] **`unlink` tool** (`tests/tools/unlink.rs`)
+- [x] **`unlink` tool** (`tests/tools/unlink.rs`)
   - Unlink single dependency
   - Remove all dependencies
   - Invalid spec
   - Non-existent link
   
-- [ ] **`board` tool** (`tests/tools/board.rs`)
+- [x] **`board` tool** (`tests/tools/board.rs`)
   - Group by status (default)
   - Group by priority
   - Group by assignee
   - Group by tag
   - JSON output format
   
-- [ ] **`search` tool** (`tests/tools/search.rs`)
+- [x] **`search` tool** (`tests/tools/search.rs`)
   - Simple text search
   - Advanced search syntax
   - Limit results
@@ -207,14 +207,14 @@ Test each MCP tool individually with valid/invalid inputs:
   - Fuzzy matching
   - Empty query handling
   
-- [ ] **`tokens` tool** (`tests/tools/tokens.rs`)
+- [x] **`tokens` tool** (`tests/tools/tokens.rs`)
   - Count single spec
   - Count all specs
   - Include sub-specs
   - Detailed breakdown
   - Invalid spec
   
-- [ ] **`stats` tool** (`tests/tools/stats.rs`)
+- [x] **`stats` tool** (`tests/tools/stats.rs`)
   - Basic statistics
   - Detailed statistics
   - Count by status/priority
@@ -222,39 +222,39 @@ Test each MCP tool individually with valid/invalid inputs:
   - Empty project handling
 
 ### Phase 4: Integration Tests
-- [ ] **End-to-end Workflows** (`tests/integration/workflows.rs`)
+- [x] **End-to-end Workflows** (`tests/integration/workflows.rs`)
   - Create→link→update→validate sequence
   - Search→view workflow
   - Board→list→view workflow
   - Multiple tool calls in session
   - State consistency across tools
-- [ ] **Multi-tool Sessions** (`tests/integration/sessions.rs`)
+- [x] **Multi-tool Sessions** (`tests/integration/sessions.rs`)
   - Initialize once, call multiple tools
   - Tool state isolation
   - Shared spec directory access
   - Error recovery between tools
-- [ ] **Concurrent Requests** (`tests/integration/concurrency.rs`)
+- [x] **Concurrent Requests** (`tests/integration/concurrency.rs`)
   - Multiple tool calls in parallel
   - Read/write conflict handling
   - File system locking if needed
   - Race condition testing
 
 ### Phase 5: Error Handling
-- [ ] **Protocol-level Errors** (`tests/protocol/errors.rs`)
+- [x] **Protocol-level Errors** (`tests/protocol/errors.rs`)
   - Invalid JSON
   - Malformed requests (missing id, method)
   - Unsupported methods
   - Invalid parameters type
   - Parse errors
   - Internal errors
-- [ ] **Tool-level Errors** (`tests/tools/error_cases.rs`)
+- [x] **Tool-level Errors** (`tests/tools/error_cases.rs`)
   - Missing required parameters
   - Invalid parameter types
   - File system errors (permissions)
   - Missing spec directory
   - Corrupted spec files
   - Git repository errors (for backfill)
-- [ ] **Error Response Formatting** (`tests/protocol/error_format.rs`)
+- [x] **Error Response Formatting** (`tests/protocol/error_format.rs`)
   - Standard JSON-RPC error codes
   - Custom error codes for MCP
   - Error messages are clear

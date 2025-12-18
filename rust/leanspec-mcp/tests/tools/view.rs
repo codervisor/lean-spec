@@ -12,7 +12,7 @@ async fn test_view_spec_by_number() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("view", json!({ "spec": "001" })).await;
+    let result = call_tool("view", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -25,7 +25,7 @@ async fn test_view_spec_by_full_path() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("view", json!({ "spec": "001-feature-a" })).await;
+    let result = call_tool("view", json!({ "specPath": "001-feature-a" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -37,7 +37,7 @@ async fn test_view_spec_not_found() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("view", json!({ "spec": "999" })).await;
+    let result = call_tool("view", json!({ "specPath": "999" })).await;
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("not found"));
 }
@@ -57,7 +57,7 @@ async fn test_view_output_structure() {
     let temp = create_test_project(&[("001-feature-a", "planned", Some("high"))]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("view", json!({ "spec": "001" })).await;
+    let result = call_tool("view", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -79,7 +79,7 @@ async fn test_view_with_dependencies() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("view", json!({ "spec": "002" })).await;
+    let result = call_tool("view", json!({ "specPath": "002" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -97,7 +97,7 @@ async fn test_view_partial_name_match() {
     set_specs_dir_env(&temp);
 
     // Should find by partial match
-    let result = call_tool("view", json!({ "spec": "001-feature" })).await;
+    let result = call_tool("view", json!({ "specPath": "001-feature" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();

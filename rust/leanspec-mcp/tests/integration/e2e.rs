@@ -115,7 +115,7 @@ async fn test_tool_error() {
         "params": {
             "name": "view",
             "arguments": {
-                "spec": "nonexistent"
+                "specPath": "nonexistent"
             }
         }
     }))

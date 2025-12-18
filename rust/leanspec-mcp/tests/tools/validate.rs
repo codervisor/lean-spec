@@ -30,7 +30,7 @@ async fn test_validate_single_spec() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("validate", json!({ "spec": "001" })).await;
+    let result = call_tool("validate", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
     // Should validate only the specified spec
     let output = result.unwrap();
@@ -52,7 +52,7 @@ async fn test_validate_spec_not_found() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("validate", json!({ "spec": "999" })).await;
+    let result = call_tool("validate", json!({ "specPath": "999" })).await;
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("not found"));
 }

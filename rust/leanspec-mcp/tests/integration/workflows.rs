@@ -28,7 +28,7 @@ async fn test_create_link_update_validate_workflow() {
     let update_result = call_tool(
         "update",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "status": "in-progress"
         }),
     )
@@ -62,14 +62,14 @@ async fn test_search_view_update_workflow() {
     }
 
     // Step 2: View by spec number instead of path from search
-    let view_result = call_tool("view", json!({ "spec": "001" })).await;
+    let view_result = call_tool("view", json!({ "specPath": "001" })).await;
     assert!(view_result.is_ok());
 
     // Step 3: Update the viewed spec
     let update_result = call_tool(
         "update",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "status": "in-progress",
             "addTags": ["security"]
         }),
@@ -101,7 +101,7 @@ async fn test_board_list_view_workflow() {
     assert!(list_output["count"].is_number());
 
     // Step 3: View a known spec
-    let view_result = call_tool("view", json!({ "spec": "001" })).await;
+    let view_result = call_tool("view", json!({ "specPath": "001" })).await;
     assert!(view_result.is_ok());
 }
 
@@ -141,7 +141,7 @@ async fn test_link_deps_unlink_workflow() {
     let link_result = call_tool(
         "link",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "dependsOn": "001"
         }),
     )
@@ -149,7 +149,7 @@ async fn test_link_deps_unlink_workflow() {
     assert!(link_result.is_ok());
 
     // Step 2: Check dependencies
-    let deps_result = call_tool("deps", json!({ "spec": "002" })).await;
+    let deps_result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(deps_result.is_ok());
 
     let deps_output: serde_json::Value =
@@ -161,7 +161,7 @@ async fn test_link_deps_unlink_workflow() {
     let unlink_result = call_tool(
         "unlink",
         json!({
-            "spec": "002-feature",
+            "specPath": "002-feature",
             "dependsOn": "001-base"
         }),
     )

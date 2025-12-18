@@ -18,7 +18,7 @@ async fn test_link_two_specs() {
     let result = call_tool(
         "link",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "dependsOn": "001"
         }),
     )
@@ -43,7 +43,7 @@ async fn test_link_already_linked() {
     let result = call_tool(
         "link",
         json!({
-            "spec": "002",
+            "specPath": "002",
             "dependsOn": "001"
         }),
     )
@@ -60,7 +60,7 @@ async fn test_link_spec_not_found() {
     let result = call_tool(
         "link",
         json!({
-            "spec": "999",
+            "specPath": "999",
             "dependsOn": "001"
         }),
     )
@@ -77,7 +77,7 @@ async fn test_link_target_not_found() {
     let result = call_tool(
         "link",
         json!({
-            "spec": "001",
+            "specPath": "001",
             "dependsOn": "999"
         }),
     )
@@ -101,7 +101,7 @@ async fn test_link_missing_depends_on_param() {
     let temp = create_test_project(&[("001-base", "complete", None)]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool("link", json!({ "spec": "001" })).await;
+    let result = call_tool("link", json!({ "specPath": "001" })).await;
     assert!(result.is_err());
     assert!(result
         .unwrap_err()
@@ -121,7 +121,7 @@ async fn test_link_multiple_dependencies() {
     let result1 = call_tool(
         "link",
         json!({
-            "spec": "003",
+            "specPath": "003",
             "dependsOn": "001"
         }),
     )
@@ -132,7 +132,7 @@ async fn test_link_multiple_dependencies() {
     let result2 = call_tool(
         "link",
         json!({
-            "spec": "003",
+            "specPath": "003",
             "dependsOn": "002"
         }),
     )
@@ -157,7 +157,7 @@ async fn test_link_by_full_path() {
     let result = call_tool(
         "link",
         json!({
-            "spec": "002-feature",
+            "specPath": "002-feature",
             "dependsOn": "001-base"
         }),
     )

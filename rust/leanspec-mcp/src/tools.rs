@@ -38,12 +38,12 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Spec path or number (e.g., '170' or '170-cli-mcp')"
                     }
                 },
-                "required": ["spec"],
+                "required": ["specPath"],
                 "additionalProperties": false
             }),
         },
@@ -88,7 +88,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Spec path or number"
                     },
@@ -117,7 +117,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                         "description": "Tags to remove"
                     }
                 },
-                "required": ["spec"],
+                "required": ["specPath"],
                 "additionalProperties": false
             }),
         },
@@ -127,7 +127,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Specific spec to validate (validates all if not provided)"
                     },
@@ -146,7 +146,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Spec path or number"
                     },
@@ -156,7 +156,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                         "default": 3
                     }
                 },
-                "required": ["spec"],
+                "required": ["specPath"],
                 "additionalProperties": false
             }),
         },
@@ -166,7 +166,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Spec to link from"
                     },
@@ -175,7 +175,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                         "description": "Spec to depend on"
                     }
                 },
-                "required": ["spec", "dependsOn"],
+                "required": ["specPath", "dependsOn"],
                 "additionalProperties": false
             }),
         },
@@ -185,7 +185,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Spec to unlink from"
                     },
@@ -194,7 +194,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                         "description": "Spec to remove from dependencies"
                     }
                 },
-                "required": ["spec", "dependsOn"],
+                "required": ["specPath", "dependsOn"],
                 "additionalProperties": false
             }),
         },
@@ -240,7 +240,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "spec": {
+                    "specPath": {
                         "type": "string",
                         "description": "Specific spec (counts all if not provided)"
                     }
@@ -325,9 +325,9 @@ fn tool_list(specs_dir: &str, args: Value) -> Result<String, String> {
 }
 
 fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("spec")
+    let spec_path = args.get("specPath")
         .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: spec")?;
+        .ok_or("Missing required parameter: specPath")?;
     
     let loader = SpecLoader::new(specs_dir);
     let spec = loader.load(spec_path).map_err(|e| e.to_string())?
@@ -389,9 +389,9 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
 }
 
 fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("spec")
+    let spec_path = args.get("specPath")
         .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: spec")?;
+        .ok_or("Missing required parameter: specPath")?;
     
     let loader = SpecLoader::new(specs_dir);
     let spec = loader.load(spec_path).map_err(|e| e.to_string())?
@@ -475,7 +475,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
     
     let mut issues = Vec::new();
     
-    let specs_to_validate = if let Some(spec_path) = args.get("spec").and_then(|v| v.as_str()) {
+    let specs_to_validate = if let Some(spec_path) = args.get("specPath").and_then(|v| v.as_str()) {
         let spec = loader.load(spec_path).map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
         vec![spec]
@@ -509,9 +509,9 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
 }
 
 fn tool_deps(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("spec")
+    let spec_path = args.get("specPath")
         .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: spec")?;
+        .ok_or("Missing required parameter: specPath")?;
     
     let _depth = args.get("depth").and_then(|v| v.as_u64()).unwrap_or(3) as usize;
     
@@ -545,9 +545,9 @@ fn tool_deps(specs_dir: &str, args: Value) -> Result<String, String> {
 }
 
 fn tool_link(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("spec")
+    let spec_path = args.get("specPath")
         .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: spec")?;
+        .ok_or("Missing required parameter: specPath")?;
     
     let depends_on = args.get("dependsOn")
         .and_then(|v| v.as_str())
@@ -587,9 +587,9 @@ fn tool_link(specs_dir: &str, args: Value) -> Result<String, String> {
 }
 
 fn tool_unlink(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("spec")
+    let spec_path = args.get("specPath")
         .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: spec")?;
+        .ok_or("Missing required parameter: specPath")?;
     
     let depends_on = args.get("dependsOn")
         .and_then(|v| v.as_str())
@@ -736,7 +736,7 @@ fn tool_tokens(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let counter = TokenCounter::new();
     
-    if let Some(spec_path) = args.get("spec").and_then(|v| v.as_str()) {
+    if let Some(spec_path) = args.get("specPath").and_then(|v| v.as_str()) {
         let spec = loader.load(spec_path).map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
         
