@@ -1,5 +1,5 @@
 {
-  "name": "lean-spec-darwin-arm64",
+  "name": "@leanspec/cli-darwin-arm64",
   "version": "0.2.10",
   "description": "LeanSpec CLI binary for macOS ARM64",
   "os": ["darwin"],

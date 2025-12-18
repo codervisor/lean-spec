@@ -1,5 +1,5 @@
 {
-  "name": "lean-spec-windows-x64",
+  "name": "@leanspec/cli-windows-x64",
   "version": "0.2.10",
   "description": "LeanSpec CLI binary for Windows x64",
   "os": ["win32"],

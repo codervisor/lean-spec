@@ -1,5 +1,5 @@
 {
-  "name": "lean-spec-linux-x64",
+  "name": "@leanspec/cli-linux-x64",
   "version": "0.2.10",
   "description": "LeanSpec CLI binary for Linux x64",
   "os": ["linux"],
