@@ -4,7 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "docs-site"
+			"path": "../agent-relay"
+		},
+		{
+			"path": "../devlog"
 		}
 	],
 	"settings": {
