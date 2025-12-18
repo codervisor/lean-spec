@@ -20,6 +20,10 @@ const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Debug mode - enable with LEANSPEC_DEBUG=1
+const DEBUG = process.env.LEANSPEC_DEBUG === '1';
+const debug = (...args) => DEBUG && console.error('[lean-spec debug]', ...args);
+
 // Platform detection mapping
 const PLATFORM_MAP = {
   darwin: { x64: 'darwin-x64', arm64: 'darwin-arm64' },
@@ -31,6 +35,8 @@ function getBinaryPath() {
   const platform = process.platform;
   const arch = process.arch;
   
+  debug('Platform detection:', { platform, arch });
+  
   const platformKey = PLATFORM_MAP[platform]?.[arch];
   if (!platformKey) {
     console.error(`Unsupported platform: ${platform}-${arch}`);
@@ -41,21 +47,38 @@ function getBinaryPath() {
   const isWindows = platform === 'win32';
   const binaryName = isWindows ? 'lean-spec.exe' : 'lean-spec';
   const packageName = `lean-spec-${platformKey}`;
+  
+  debug('Binary info:', { platformKey, binaryName, packageName });
 
   // Try to resolve platform package
   try {
-    return require.resolve(`${packageName}/${binaryName}`);
+    const resolvedPath = require.resolve(`${packageName}/${binaryName}`);
+    debug('Found platform package binary:', resolvedPath);
+    return resolvedPath;
   } catch (e) {
-    // Platform package not found
+    debug('Platform package not found:', packageName, '-', e.message);
   }
 
   // Try local binaries directory (for development/testing)
   try {
     const localPath = join(__dirname, '..', 'binaries', platformKey, binaryName);
+    debug('Trying local binary:', localPath);
     accessSync(localPath);
+    debug('Found local binary:', localPath);
     return localPath;
   } catch (e) {
-    // Local binary not found
+    debug('Local binary not found:', e.message);
+  }
+
+  // Try rust/target/release directory (for local development)
+  try {
+    const rustTargetPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
+    debug('Trying rust target binary:', rustTargetPath);
+    accessSync(rustTargetPath);
+    debug('Found rust target binary:', rustTargetPath);
+    return rustTargetPath;
+  } catch (e) {
+    debug('Rust target binary not found:', e.message);
   }
 
   console.error(`Binary not found for ${platform}-${arch}`);
@@ -71,16 +94,23 @@ function getBinaryPath() {
 
 // Execute binary
 const binaryPath = getBinaryPath();
-const child = spawn(binaryPath, process.argv.slice(2), {
+const args = process.argv.slice(2);
+
+debug('Spawning binary:', binaryPath);
+debug('Arguments:', args);
+
+const child = spawn(binaryPath, args, {
   stdio: 'inherit',
   windowsHide: true,
 });
 
 child.on('exit', (code) => {
+  debug('Binary exited with code:', code);
   process.exit(code ?? 1);
 });
 
 child.on('error', (err) => {
   console.error('Failed to start lean-spec:', err.message);
+  debug('Spawn error:', err);
   process.exit(1);
 });
