@@ -2120,6 +2120,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-updater",
  "tauri-plugin-window-state",
+ "tempfile",
  "thiserror 1.0.69",
  "tokio",
  "uuid",

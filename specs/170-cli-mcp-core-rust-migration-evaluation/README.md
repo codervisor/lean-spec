@@ -926,3 +926,44 @@ Rust CLI Help:
 - MCP tools: 12/12 verified ✅
 - Build time: ~21 seconds (release)
 - Binary sizes: CLI 4.3MB, MCP 3.9MB
+
+### Migration Activated (2025-12-18)
+
+**Status**: ✅ **RUST MIGRATION COMPLETE AND ACTIVE**
+
+The Rust implementation is now the **default CLI** for all users:
+- [`bin/lean-spec.js`](../../bin/lean-spec.js) now imports the Rust wrapper
+- All CLI commands route through Rust binaries
+- TypeScript CLI deprecated (remains as fallback only)
+
+**What Changed**:
+```javascript
+// Before (TypeScript CLI)
+#!/usr/bin/env node
+import '../packages/cli/dist/cli.js';
+
+// After (Rust CLI)
+#!/usr/bin/env node
+import '../packages/cli/bin/lean-spec-rust.js';
+```
+
+**Impact**:
+- Users get 31-182x performance improvements automatically
+- Binary size reduced from ~50MB (Node.js) to ~4MB (Rust)
+- Startup time: 200ms → 19ms
+- No breaking changes in CLI interface
+
+**Verification**:
+```bash
+# Test the Rust CLI is active
+node bin/lean-spec.js --version  # Should show Rust version
+node bin/lean-spec.js list       # Uses Rust implementation
+```
+
+**Next Steps** (per specs 172-173):
+- Distribution infrastructure (spec 172): Complete ✅
+- CI/CD pipeline (spec 173): In progress
+- Cross-platform testing: Pending
+- npm publishing workflow: Pending
+
+**Recommendation**: The Rust migration evaluation is **complete and successful**. The implementation is now active as the default CLI. Focus shifts to distribution and cross-platform verification.

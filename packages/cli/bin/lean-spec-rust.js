@@ -10,8 +10,15 @@
  * 2. Local binaries directory (for development)
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { accessSync } from 'fs';
+
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Platform detection mapping
 const PLATFORM_MAP = {
@@ -44,8 +51,8 @@ function getBinaryPath() {
 
   // Try local binaries directory (for development/testing)
   try {
-    const localPath = path.join(__dirname, '..', 'binaries', platformKey, binaryName);
-    require('fs').accessSync(localPath);
+    const localPath = join(__dirname, '..', 'binaries', platformKey, binaryName);
+    accessSync(localPath);
     return localPath;
   } catch (e) {
     // Local binary not found

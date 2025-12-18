@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import '../packages/cli/dist/cli.js';
+import '../packages/cli/bin/lean-spec-rust.js';

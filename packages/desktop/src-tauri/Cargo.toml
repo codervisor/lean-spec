@@ -32,6 +32,7 @@ tauri-plugin-window-state = { version = "2" }
 walkdir = "2.5"
 sha2 = "0.10"
 uuid = { version = "1.10", features = ["v4"] }
+tempfile = "3.23.0"
 
 [features]
 default = ["custom-protocol"]
