@@ -191,3 +191,55 @@ async fn test_create_spec_all_options() {
     assert!(content.contains("# Full Feature Implementation"));
     assert!(content.contains("status: planned"));
 }
+
+#[tokio::test]
+async fn test_create_spec_uses_template_content() {
+    let temp = create_empty_project();
+    set_specs_dir_env(&temp);
+
+    let result = call_tool("create", json!({ "name": "template-check" })).await;
+    assert!(result.is_ok());
+
+    let specs_dir = temp.path().join("specs");
+    let entry = std::fs::read_dir(&specs_dir)
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap();
+
+    let content = std::fs::read_to_string(entry.path().join("README.md")).unwrap();
+    assert!(content.contains("## Design"), "Template body should be present");
+    assert!(content.contains("priority: medium"), "Template priority should remain when not overridden");
+    assert!(content.contains("# Template Check"));
+}
+
+#[tokio::test]
+async fn test_create_spec_with_content_override_includes_frontmatter() {
+    let temp = create_empty_project();
+    set_specs_dir_env(&temp);
+
+    let result = call_tool(
+        "create",
+        json!({
+            "name": "custom-body",
+            "content": "# Custom Title\n\nBody text.",
+            "priority": "high"
+        }),
+    )
+    .await;
+    assert!(result.is_ok());
+
+    let specs_dir = temp.path().join("specs");
+    let entry = std::fs::read_dir(&specs_dir)
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap();
+    let content = std::fs::read_to_string(entry.path().join("README.md")).unwrap();
+
+    assert!(content.starts_with("---"));
+    assert!(content.contains("status: planned"));
+    assert!(content.contains("priority: high"));
+    assert!(content.contains("Custom Title"));
+    assert!(content.contains("Body text."));
+}

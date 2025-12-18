@@ -5,6 +5,32 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tempfile::TempDir;
 
+const DEFAULT_TEMPLATE: &str = r"---
+status: planned
+created: '{date}'
+tags: []
+priority: medium
+---
+
+# {name}
+
+> **Status**: {status} · **Priority**: {priority} · **Created**: {date}
+
+## Overview
+
+## Design
+
+## Plan
+
+- [ ] Task 1
+
+## Test
+
+- [ ] Test 1
+
+## Notes
+";
+
 static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Creates a test project with sample specs
@@ -12,6 +38,8 @@ pub fn create_test_project(specs: &[(&str, &str, Option<&str>)]) -> TempDir {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let specs_dir = temp_dir.path().join("specs");
     std::fs::create_dir_all(&specs_dir).expect("Failed to create specs dir");
+
+    seed_template_dir(temp_dir.path());
 
     for (name, status, priority) in specs {
         let spec_dir = specs_dir.join(name);
@@ -42,6 +70,8 @@ pub fn create_project_with_deps(
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let specs_dir = temp_dir.path().join("specs");
     std::fs::create_dir_all(&specs_dir).expect("Failed to create specs dir");
+
+    seed_template_dir(temp_dir.path());
 
     for (name, status, deps) in specs {
         let spec_dir = specs_dir.join(name);
@@ -76,7 +106,17 @@ pub fn create_empty_project() -> TempDir {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let specs_dir = temp_dir.path().join("specs");
     std::fs::create_dir_all(&specs_dir).expect("Failed to create specs dir");
+    seed_template_dir(temp_dir.path());
     temp_dir
+}
+
+fn seed_template_dir(root: &std::path::Path) {
+    let templates_dir = root.join(".lean-spec").join("templates");
+    std::fs::create_dir_all(&templates_dir).expect("Failed to create templates dir");
+    let template_path = templates_dir.join("spec-template.md");
+    if !template_path.exists() {
+        std::fs::write(&template_path, DEFAULT_TEMPLATE).expect("Failed to write default template");
+    }
 }
 
 /// Build a JSON-RPC request

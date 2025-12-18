@@ -1,8 +1,15 @@
 //! MCP Tool implementations
 
 use crate::protocol::ToolDefinition;
-use leanspec_core::{SpecLoader, SpecStats, DependencyGraph, TokenCounter};
+use chrono::Utc;
+use leanspec_core::{
+    SpecLoader, SpecStats, DependencyGraph, TokenCounter,
+    FrontmatterParser, SpecFrontmatter, SpecPriority, SpecStatus,
+    TemplateLoader, LeanSpecConfig,
+};
+use leanspec_core::parsers::ParseError;
 use serde_json::{json, Value};
+use std::path::{Path, PathBuf};
 
 /// Get all tool definitions
 pub fn get_tool_definitions() -> Vec<ToolDefinition> {
@@ -71,6 +78,14 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                         "type": "string",
                         "description": "Priority level",
                         "enum": ["low", "medium", "high", "critical"]
+                    },
+                    "template": {
+                        "type": "string",
+                        "description": "Template name to load from .lean-spec/templates"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Full markdown content to use instead of template"
                     },
                     "tags": {
                         "type": "array",
@@ -358,38 +373,40 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: name")?;
     
-    let title = args.get("title").and_then(|v| v.as_str());
+    let title_input = args.get("title").and_then(|v| v.as_str());
     let status = args.get("status").and_then(|v| v.as_str()).unwrap_or("planned");
     let priority = args.get("priority").and_then(|v| v.as_str());
+    let template_name = args.get("template").and_then(|v| v.as_str());
+    let content_override = args.get("content").and_then(|v| v.as_str());
     let tags: Vec<String> = args.get("tags")
         .and_then(|v| v.as_array())
         .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
         .unwrap_or_default();
-    
-    // Generate spec number
+
     let next_number = get_next_spec_number(specs_dir)?;
     let spec_name = format!("{:03}-{}", next_number, name);
-    
-    let title = title.map(String::from).unwrap_or_else(|| {
-        name.split('-')
-            .map(|w| {
-                let mut chars = w.chars();
-                match chars.next() {
-                    Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
-                    None => String::new(),
-                }
-            })
-            .collect::<Vec<_>>()
-            .join(" ")
-    });
-    
-    // Create directory and file
+
+    let title = title_input.map(String::from).unwrap_or_else(|| to_title_case(name));
+    let now = Utc::now();
+    let created_date = now.format("%Y-%m-%d").to_string();
+
+    let base_content = if let Some(content) = content_override {
+        content.to_string()
+    } else {
+        let project_root = resolve_project_root(specs_dir)?;
+        let config = load_config(&project_root);
+        let loader = TemplateLoader::with_config(&project_root, config);
+        let template = loader.load(template_name)
+            .map_err(|e| format!("Failed to load template: {}", e))?;
+        resolve_template_variables(&template, &title, status, priority, &created_date)
+    };
+
+    let content = merge_frontmatter(&base_content, status, priority, &tags, &created_date, now)?;
+
     let spec_dir = std::path::Path::new(specs_dir).join(&spec_name);
     std::fs::create_dir_all(&spec_dir).map_err(|e| e.to_string())?;
-    
-    let content = generate_spec_content(&title, status, priority, &tags);
     std::fs::write(spec_dir.join("README.md"), &content).map_err(|e| e.to_string())?;
-    
+
     Ok(format!("Created spec: {}", spec_name))
 }
 
@@ -865,46 +882,145 @@ fn get_next_spec_number(specs_dir: &str) -> Result<u32, String> {
     Ok(max_number + 1)
 }
 
-fn generate_spec_content(
+fn resolve_project_root(specs_dir: &str) -> Result<PathBuf, String> {
+    let specs_path = Path::new(specs_dir);
+    let absolute = if specs_path.is_absolute() {
+        specs_path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map_err(|e| e.to_string())?
+            .join(specs_path)
+    };
+
+    Ok(absolute.parent().map(PathBuf::from).unwrap_or(absolute))
+}
+
+fn load_config(project_root: &Path) -> LeanSpecConfig {
+    let config_path = project_root.join(".lean-spec").join("config.yaml");
+    if config_path.exists() {
+        LeanSpecConfig::load(&config_path).unwrap_or_default()
+    } else {
+        LeanSpecConfig::default()
+    }
+}
+
+fn resolve_template_variables(
+    template: &str,
     title: &str,
     status: &str,
     priority: Option<&str>,
-    tags: &[String],
+    created_date: &str,
 ) -> String {
-    let now = chrono::Utc::now();
-    let created_date = now.format("%Y-%m-%d").to_string();
-    let created_at = now.to_rfc3339();
-    
-    let mut frontmatter = format!(
-        "---\nstatus: {}\ncreated: '{}'\n",
-        status, created_date
-    );
-    
-    if !tags.is_empty() {
-        frontmatter.push_str("tags:\n");
-        for tag in tags {
-            frontmatter.push_str(&format!("  - {}\n", tag));
+    let resolved_priority = priority.unwrap_or("medium");
+    let mut content = template.to_string();
+
+    for (key, value) in [
+        ("name", title),
+        ("title", title),
+        ("status", status),
+        ("priority", resolved_priority),
+        ("date", created_date),
+        ("created", created_date),
+    ] {
+        content = content.replace(&format!("{{{{{}}}}}", key), value);
+        content = content.replace(&format!("{{{}}}", key), value);
+    }
+
+    content
+}
+
+fn merge_frontmatter(
+    content: &str,
+    status: &str,
+    priority: Option<&str>,
+    tags: &[String],
+    created_date: &str,
+    now: chrono::DateTime<Utc>,
+) -> Result<String, String> {
+    let parser = FrontmatterParser::new();
+    let status_parsed: SpecStatus = status
+        .parse()
+        .map_err(|_| format!("Invalid status: {}", status))?;
+
+    let priority_parsed: Option<SpecPriority> = priority
+        .map(|p| p.parse().map_err(|_| format!("Invalid priority: {}", p)))
+        .transpose()?;
+
+    match parser.parse(content) {
+        Ok((mut fm, body)) => {
+            fm.status = status_parsed;
+            if let Some(p) = priority_parsed {
+                fm.priority = Some(p);
+            }
+            if !tags.is_empty() {
+                fm.tags = tags.to_vec();
+            }
+            if fm.created.trim().is_empty() {
+                fm.created = created_date.to_string();
+            }
+            if fm.created_at.is_none() {
+                fm.created_at = Some(now);
+            }
+            fm.updated_at = Some(now);
+
+            Ok(parser.stringify(&fm, &body))
         }
+        Err(ParseError::NoFrontmatter) => build_frontmatter_from_scratch(
+            content,
+            status_parsed,
+            priority_parsed,
+            tags,
+            created_date,
+            now,
+        ),
+        Err(e) => Err(e.to_string()),
     }
-    
-    if let Some(p) = priority {
-        frontmatter.push_str(&format!("priority: {}\n", p));
-    }
-    
-    frontmatter.push_str(&format!("created_at: '{}'\n---\n\n", created_at));
-    
-    let status_emoji = match status {
-        "planned" => "🗓️",
-        "in-progress" => "⏳",
-        "complete" => "✅",
-        "archived" => "📦",
-        _ => "📄",
+}
+
+fn build_frontmatter_from_scratch(
+    content: &str,
+    status: SpecStatus,
+    priority: Option<SpecPriority>,
+    tags: &[String],
+    created_date: &str,
+    now: chrono::DateTime<Utc>,
+) -> Result<String, String> {
+    let frontmatter = SpecFrontmatter {
+        status,
+        created: created_date.to_string(),
+        priority,
+        tags: tags.to_vec(),
+        depends_on: Vec::new(),
+        assignee: None,
+        reviewer: None,
+        issue: None,
+        pr: None,
+        epic: None,
+        breaking: None,
+        due: None,
+        updated: None,
+        completed: None,
+        created_at: Some(now),
+        updated_at: Some(now),
+        completed_at: None,
+        transitions: Vec::new(),
+        custom: std::collections::HashMap::new(),
     };
-    
-    format!(
-        "{}# {}\n\n> **Status**: {} {} · **Created**: {}\n\n## Overview\n\n_Describe the problem._\n\n## Plan\n\n- [ ] _Task 1_\n\n## Notes\n\n_Additional context._\n",
-        frontmatter, title, status_emoji,
-        status.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_default() + &status[1..],
-        created_date
-    )
+
+    let parser = FrontmatterParser::new();
+    Ok(parser.stringify(&frontmatter, content.trim_start()))
+}
+
+fn to_title_case(name: &str) -> String {
+    name
+        .split('-')
+        .map(|w| {
+            let mut chars = w.chars();
+            match chars.next() {
+                Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }

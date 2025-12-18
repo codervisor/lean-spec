@@ -44,5 +44,5 @@ pub use validators::{FrontmatterValidator, StructureValidator, LineCountValidato
 pub use utils::{
     DependencyGraph, CompleteDependencyGraph, ImpactRadius,
     TokenCounter, TokenCount, TokenStatus,
-    SpecLoader, SpecStats, Insights,
+    SpecLoader, SpecStats, Insights, TemplateLoader, TemplateError,
 };

@@ -2,4 +2,4 @@
 
 mod frontmatter;
 
-pub use frontmatter::FrontmatterParser;
+pub use frontmatter::{FrontmatterParser, ParseError};
