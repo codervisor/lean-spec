@@ -28,21 +28,22 @@
 //! }
 //! ```
 
-pub mod types;
 pub mod parsers;
-pub mod validators;
+pub mod types;
 pub mod utils;
+pub mod validators;
 
 // Re-exports for convenience
-pub use types::{
-    SpecInfo, SpecFrontmatter, SpecStatus, SpecPriority, StatusTransition,
-    SpecFilterOptions, LeanSpecConfig, ValidationResult, ValidationIssue, IssueSeverity,
-    CheckboxItem, Progress, CompletionVerificationResult,
-};
 pub use parsers::FrontmatterParser;
-pub use validators::{FrontmatterValidator, StructureValidator, LineCountValidator, CompletionVerifier};
+pub use types::{
+    CheckboxItem, CompletionVerificationResult, IssueSeverity, LeanSpecConfig, Progress,
+    SpecFilterOptions, SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus, StatusTransition,
+    ValidationIssue, ValidationResult,
+};
 pub use utils::{
-    DependencyGraph, CompleteDependencyGraph, ImpactRadius,
-    TokenCounter, TokenCount, TokenStatus,
-    SpecLoader, SpecStats, Insights, TemplateLoader, TemplateError,
+    CompleteDependencyGraph, DependencyGraph, ImpactRadius, Insights, SpecLoader, SpecStats,
+    TemplateError, TemplateLoader, TokenCount, TokenCounter, TokenStatus,
+};
+pub use validators::{
+    CompletionVerifier, FrontmatterValidator, LineCountValidator, StructureValidator,
 };

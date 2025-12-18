@@ -1,6 +1,6 @@
 //! Structure validation for spec content
 
-use crate::types::{SpecInfo, ValidationResult, ValidationIssue, IssueSeverity};
+use crate::types::{IssueSeverity, SpecInfo, ValidationIssue, ValidationResult};
 use regex::Regex;
 
 /// Options for structure validation
@@ -8,10 +8,10 @@ use regex::Regex;
 pub struct StructureOptions {
     /// Required sections (case-insensitive)
     pub required_sections: Vec<String>,
-    
+
     /// Check for orphan spec sections (h3 not under h2)
     pub check_heading_hierarchy: bool,
-    
+
     /// Require title (h1) to match spec name
     pub validate_title_match: bool,
 }
@@ -19,10 +19,7 @@ pub struct StructureOptions {
 impl Default for StructureOptions {
     fn default() -> Self {
         Self {
-            required_sections: vec![
-                "Overview".to_string(),
-                "Plan".to_string(),
-            ],
+            required_sections: vec!["Overview".to_string(), "Plan".to_string()],
             check_heading_hierarchy: true,
             validate_title_match: false,
         }
@@ -41,40 +38,40 @@ impl StructureValidator {
             options: StructureOptions::default(),
         }
     }
-    
+
     /// Create a validator with custom options
     pub fn with_options(options: StructureOptions) -> Self {
         Self { options }
     }
-    
+
     /// Validate a spec's content structure
     pub fn validate(&self, spec: &SpecInfo) -> ValidationResult {
         let mut result = ValidationResult::new(&spec.path);
-        
+
         // Extract all headings from content
         let headings = self.extract_headings(&spec.content);
-        
+
         // Check for required title (h1)
         self.validate_title(&headings, spec, &mut result);
-        
+
         // Check for required sections
         self.validate_required_sections(&headings, &mut result);
-        
+
         // Check heading hierarchy if enabled
         if self.options.check_heading_hierarchy {
             self.validate_heading_hierarchy(&headings, &mut result);
         }
-        
+
         // Check for empty sections
         self.validate_section_content(spec, &headings, &mut result);
-        
+
         result
     }
-    
+
     /// Extract all headings from markdown content
     fn extract_headings(&self, content: &str) -> Vec<Heading> {
         let heading_regex = Regex::new(r"^(#{1,6})\s+(.+)$").unwrap();
-        
+
         content
             .lines()
             .enumerate()
@@ -91,53 +88,59 @@ impl StructureValidator {
             })
             .collect()
     }
-    
+
     fn validate_title(&self, headings: &[Heading], spec: &SpecInfo, result: &mut ValidationResult) {
         // Check that there's exactly one h1
         let h1_count = headings.iter().filter(|h| h.level == 1).count();
-        
+
         if h1_count == 0 {
             result.add_error("structure", "Missing title (# heading)");
         } else if h1_count > 1 {
-            result.add_warning("structure", "Multiple h1 headings found. Specs should have a single title.");
+            result.add_warning(
+                "structure",
+                "Multiple h1 headings found. Specs should have a single title.",
+            );
         }
-        
+
         // Validate title matches spec name if required
         if self.options.validate_title_match {
             if let Some(h1) = headings.iter().find(|h| h.level == 1) {
                 let expected_title = spec.path.split('-').skip(1).collect::<Vec<_>>().join(" ");
                 let expected_title_kebab = expected_title.to_lowercase().replace(' ', "-");
                 let actual_title_kebab = h1.text.to_lowercase().replace(' ', "-");
-                
+
                 if !actual_title_kebab.contains(&expected_title_kebab) {
                     result.add_info(
                         "structure",
-                        format!("Title '{}' doesn't match spec path '{}'", h1.text, spec.path)
+                        format!(
+                            "Title '{}' doesn't match spec path '{}'",
+                            h1.text, spec.path
+                        ),
                     );
                 }
             }
         }
     }
-    
+
     fn validate_required_sections(&self, headings: &[Heading], result: &mut ValidationResult) {
         for required in &self.options.required_sections {
             let required_lower = required.to_lowercase();
-            let found = headings.iter().any(|h| {
-                h.level == 2 && h.text.to_lowercase() == required_lower
-            });
-            
+            let found = headings
+                .iter()
+                .any(|h| h.level == 2 && h.text.to_lowercase() == required_lower);
+
             if !found {
                 result.add_warning(
                     "structure",
-                    format!("Missing recommended section: ## {}", required)
+                    format!("Missing recommended section: ## {}", required),
                 );
             }
         }
     }
-    
+
     fn validate_heading_hierarchy(&self, headings: &[Heading], result: &mut ValidationResult) {
         let mut in_h2 = false;
-        
+
         for heading in headings {
             match heading.level {
                 1 => in_h2 = false,
@@ -149,7 +152,9 @@ impl StructureValidator {
                             message: format!("h3 '{}' not under an h2 section", heading.text),
                             line: Some(heading.line),
                             category: "structure".to_string(),
-                            suggestion: Some("Consider restructuring headings or adding a parent h2".to_string()),
+                            suggestion: Some(
+                                "Consider restructuring headings or adding a parent h2".to_string(),
+                            ),
                         });
                     }
                 }
@@ -157,10 +162,15 @@ impl StructureValidator {
             }
         }
     }
-    
-    fn validate_section_content(&self, spec: &SpecInfo, headings: &[Heading], result: &mut ValidationResult) {
+
+    fn validate_section_content(
+        &self,
+        spec: &SpecInfo,
+        headings: &[Heading],
+        result: &mut ValidationResult,
+    ) {
         let lines: Vec<&str> = spec.content.lines().collect();
-        
+
         for (i, heading) in headings.iter().enumerate() {
             // Find content until next heading
             let start_line = heading.line;
@@ -168,7 +178,7 @@ impl StructureValidator {
                 .get(i + 1)
                 .map(|h| h.line)
                 .unwrap_or(lines.len() + 1);
-            
+
             // Count non-empty lines between headings
             let content_lines: usize = lines
                 .iter()
@@ -176,12 +186,9 @@ impl StructureValidator {
                 .take(end_line - start_line - 1)
                 .filter(|line| !line.trim().is_empty())
                 .count();
-            
+
             if content_lines == 0 && heading.level == 2 {
-                result.add_warning(
-                    "structure",
-                    format!("Empty section: ## {}", heading.text)
-                );
+                result.add_warning("structure", format!("Empty section: ## {}", heading.text));
             }
         }
     }
@@ -205,7 +212,7 @@ mod tests {
     use super::*;
     use crate::types::{SpecFrontmatter, SpecStatus};
     use std::path::PathBuf;
-    
+
     fn create_test_spec(content: &str) -> SpecInfo {
         SpecInfo {
             path: "test-spec".to_string(),
@@ -237,7 +244,7 @@ mod tests {
             parent_spec: None,
         }
     }
-    
+
     #[test]
     fn test_valid_structure() {
         let content = r#"# Test Spec
@@ -251,29 +258,29 @@ This is the overview section.
 - [ ] Step 1
 - [ ] Step 2
 "#;
-        
+
         let spec = create_test_spec(content);
         let validator = StructureValidator::new();
         let result = validator.validate(&spec);
-        
+
         assert!(result.is_valid());
     }
-    
+
     #[test]
     fn test_missing_title() {
         let content = r#"## Overview
 
 This is the overview.
 "#;
-        
+
         let spec = create_test_spec(content);
         let validator = StructureValidator::new();
         let result = validator.validate(&spec);
-        
+
         assert!(!result.is_valid());
         assert!(result.errors().any(|e| e.message.contains("Missing title")));
     }
-    
+
     #[test]
     fn test_missing_required_section() {
         let content = r#"# Test Spec
@@ -282,16 +289,16 @@ This is the overview.
 
 This is the overview.
 "#;
-        
+
         let spec = create_test_spec(content);
         let validator = StructureValidator::new();
         let result = validator.validate(&spec);
-        
+
         // Should have warning for missing Plan section
         assert!(result.has_warnings());
         assert!(result.warnings().any(|w| w.message.contains("Plan")));
     }
-    
+
     #[test]
     fn test_empty_section() {
         let content = r#"# Test Spec
@@ -302,12 +309,14 @@ This is the overview.
 
 - [ ] Step 1
 "#;
-        
+
         let spec = create_test_spec(content);
         let validator = StructureValidator::new();
         let result = validator.validate(&spec);
-        
+
         // Should have warning for empty Overview section
-        assert!(result.warnings().any(|w| w.message.contains("Empty section")));
+        assert!(result
+            .warnings()
+            .any(|w| w.message.contains("Empty section")));
     }
 }

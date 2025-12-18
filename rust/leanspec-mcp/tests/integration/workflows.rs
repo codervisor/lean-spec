@@ -53,9 +53,8 @@ async fn test_search_view_update_workflow() {
     let search_result = call_tool("search", json!({ "query": "auth" })).await;
     assert!(search_result.is_ok());
 
-    let search_output: serde_json::Value =
-        serde_json::from_str(&search_result.unwrap()).unwrap();
-    
+    let search_output: serde_json::Value = serde_json::from_str(&search_result.unwrap()).unwrap();
+
     // Skip if no results (search might not match)
     if search_output["count"].as_u64().unwrap() == 0 {
         return;
@@ -95,8 +94,7 @@ async fn test_board_list_view_workflow() {
     let list_result = call_tool("list", json!({ "status": "in-progress" })).await;
     assert!(list_result.is_ok());
 
-    let list_output: serde_json::Value =
-        serde_json::from_str(&list_result.unwrap()).unwrap();
+    let list_output: serde_json::Value = serde_json::from_str(&list_result.unwrap()).unwrap();
     // May be 0 or more depending on how list filters work
     assert!(list_output["count"].is_number());
 
@@ -118,8 +116,7 @@ async fn test_stats_tokens_workflow() {
     let stats_result = call_tool("stats", json!({})).await;
     assert!(stats_result.is_ok());
 
-    let stats_output: serde_json::Value =
-        serde_json::from_str(&stats_result.unwrap()).unwrap();
+    let stats_output: serde_json::Value = serde_json::from_str(&stats_result.unwrap()).unwrap();
     assert_eq!(stats_output["total"], 2);
 
     // Step 2: Get token counts (may fail if tiktoken not available)
@@ -152,8 +149,7 @@ async fn test_link_deps_unlink_workflow() {
     let deps_result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(deps_result.is_ok());
 
-    let deps_output: serde_json::Value =
-        serde_json::from_str(&deps_result.unwrap()).unwrap();
+    let deps_output: serde_json::Value = serde_json::from_str(&deps_result.unwrap()).unwrap();
     // Dependencies might be in dependsOn field
     assert!(deps_output["dependsOn"].is_array());
 
@@ -189,7 +185,6 @@ async fn test_state_consistency_across_calls() {
     let list_result = call_tool("list", json!({})).await;
     assert!(list_result.is_ok());
 
-    let list_output: serde_json::Value =
-        serde_json::from_str(&list_result.unwrap()).unwrap();
+    let list_output: serde_json::Value = serde_json::from_str(&list_result.unwrap()).unwrap();
     assert!(list_output["count"].as_u64().unwrap() >= 1);
 }

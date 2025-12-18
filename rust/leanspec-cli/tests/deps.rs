@@ -5,7 +5,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_deps_single_dependency() {
     let ctx = TestContext::new();

@@ -3,57 +3,56 @@
 //! Analyzes spec complexity and structure.
 
 use colored::Colorize;
-use leanspec_core::{SpecLoader, TokenCounter, TokenStatus, DependencyGraph};
+use leanspec_core::{DependencyGraph, SpecLoader, TokenCounter, TokenStatus};
 use std::error::Error;
 
-pub fn run(
-    specs_dir: &str,
-    spec: &str,
-    output_format: &str,
-) -> Result<(), Box<dyn Error>> {
+pub fn run(specs_dir: &str, spec: &str, output_format: &str) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
     let all_specs = loader.load_all()?;
-    
-    let spec_info = loader.load(spec)?
+
+    let spec_info = loader
+        .load(spec)?
         .ok_or_else(|| format!("Spec not found: {}", spec))?;
-    
+
     // Read full content for analysis
     let content = std::fs::read_to_string(&spec_info.file_path)?;
-    
+
     // Token counting
     let token_counter = TokenCounter::new();
     let token_result = token_counter.count_spec(&content);
-    
+
     // Dependency analysis
     let dep_graph = DependencyGraph::new(&all_specs);
     let complete_deps = dep_graph.get_complete_graph(&spec_info.path);
-    
+
     // Structure analysis
     let lines: Vec<&str> = content.lines().collect();
     let total_lines = lines.len();
-    
+
     // Count sections (h2 headers)
-    let sections: Vec<(String, usize)> = lines.iter()
+    let sections: Vec<(String, usize)> = lines
+        .iter()
         .enumerate()
         .filter(|(_, line)| line.starts_with("## "))
         .map(|(i, line)| {
             let title = line.trim_start_matches("## ").to_string();
             // Count lines until next section
-            let next_section = lines.iter()
+            let next_section = lines
+                .iter()
                 .skip(i + 1)
                 .position(|l| l.starts_with("## ") || l.starts_with("# "))
                 .unwrap_or(lines.len() - i - 1);
             (title, next_section)
         })
         .collect();
-    
+
     // Code block analysis
     let code_blocks: Vec<(&str, usize)> = {
         let mut blocks = Vec::new();
         let mut in_block = false;
         let mut block_lang = "";
         let mut block_lines = 0;
-        
+
         for line in &lines {
             if line.starts_with("```") {
                 if in_block {
@@ -62,7 +61,11 @@ pub fn run(
                     block_lines = 0;
                 } else {
                     in_block = true;
-                    block_lang = line.trim_start_matches("```").split_whitespace().next().unwrap_or("");
+                    block_lang = line
+                        .trim_start_matches("```")
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or("");
                 }
             } else if in_block {
                 block_lines += 1;
@@ -70,30 +73,36 @@ pub fn run(
         }
         blocks
     };
-    
+
     // Checklist analysis
     let checkboxes: (usize, usize) = {
-        let completed = lines.iter().filter(|l| l.contains("[x]") || l.contains("[X]")).count();
+        let completed = lines
+            .iter()
+            .filter(|l| l.contains("[x]") || l.contains("[X]"))
+            .count();
         let incomplete = lines.iter().filter(|l| l.contains("[ ]")).count();
         (completed, completed + incomplete)
     };
-    
+
     // Calculate complexity score (0-100)
     let complexity_score = calculate_complexity(
         total_lines,
         token_result.total,
         sections.len(),
-        complete_deps.as_ref().map(|d| d.depends_on.len()).unwrap_or(0),
+        complete_deps
+            .as_ref()
+            .map(|d| d.depends_on.len())
+            .unwrap_or(0),
         code_blocks.len(),
     );
-    
+
     let complexity_label = match complexity_score {
         0..=30 => "Low",
         31..=60 => "Medium",
         61..=80 => "High",
         _ => "Very High",
     };
-    
+
     if output_format == "json" {
         #[derive(serde::Serialize)]
         struct Output {
@@ -104,13 +113,13 @@ pub fn run(
             structure: StructureOutput,
             dependencies: DependencyOutput,
         }
-        
+
         #[derive(serde::Serialize)]
         struct ComplexityOutput {
             score: u32,
             label: String,
         }
-        
+
         #[derive(serde::Serialize)]
         struct TokenOutput {
             total: usize,
@@ -118,7 +127,7 @@ pub fn run(
             content: usize,
             status: String,
         }
-        
+
         #[derive(serde::Serialize)]
         struct StructureOutput {
             total_lines: usize,
@@ -128,20 +137,20 @@ pub fn run(
             checkboxes_completed: usize,
             checkboxes_total: usize,
         }
-        
+
         #[derive(serde::Serialize)]
         struct SectionOutput {
             title: String,
             lines: usize,
         }
-        
+
         #[derive(serde::Serialize)]
         struct DependencyOutput {
             depends_on_count: usize,
             required_by_count: usize,
             has_circular: bool,
         }
-        
+
         let output = Output {
             spec: spec_info.path.clone(),
             title: spec_info.title.clone(),
@@ -157,8 +166,12 @@ pub fn run(
             },
             structure: StructureOutput {
                 total_lines,
-                sections: sections.iter()
-                    .map(|(t, l)| SectionOutput { title: t.clone(), lines: *l })
+                sections: sections
+                    .iter()
+                    .map(|(t, l)| SectionOutput {
+                        title: t.clone(),
+                        lines: *l,
+                    })
                     .collect(),
                 code_blocks: code_blocks.len(),
                 code_lines: code_blocks.iter().map(|(_, l)| l).sum(),
@@ -166,23 +179,32 @@ pub fn run(
                 checkboxes_total: checkboxes.1,
             },
             dependencies: DependencyOutput {
-                depends_on_count: complete_deps.as_ref().map(|d| d.depends_on.len()).unwrap_or(0),
-                required_by_count: complete_deps.as_ref().map(|d| d.required_by.len()).unwrap_or(0),
+                depends_on_count: complete_deps
+                    .as_ref()
+                    .map(|d| d.depends_on.len())
+                    .unwrap_or(0),
+                required_by_count: complete_deps
+                    .as_ref()
+                    .map(|d| d.required_by.len())
+                    .unwrap_or(0),
                 has_circular: dep_graph.has_circular_dependency(&spec_info.path),
             },
         };
-        
+
         println!("{}", serde_json::to_string_pretty(&output)?);
         return Ok(());
     }
-    
+
     // Pretty print
     println!();
     println!("{}", "═".repeat(60).dimmed());
-    println!("{}", format!("Spec Analysis: {}", spec_info.path).bold().cyan());
+    println!(
+        "{}",
+        format!("Spec Analysis: {}", spec_info.path).bold().cyan()
+    );
     println!("{}", "═".repeat(60).dimmed());
     println!();
-    
+
     // Complexity
     let complexity_color = match complexity_score {
         0..=30 => "green",
@@ -191,12 +213,15 @@ pub fn run(
         _ => "red",
     };
     println!("{}", "Complexity".bold());
-    println!("  Score: {} ({})", 
-        format!("{}/100", complexity_score).color(complexity_color).bold(),
+    println!(
+        "  Score: {} ({})",
+        format!("{}/100", complexity_score)
+            .color(complexity_color)
+            .bold(),
         complexity_label.color(complexity_color)
     );
     println!();
-    
+
     // Tokens
     println!("{}", "Tokens".bold());
     let token_status_color = match token_result.status {
@@ -205,14 +230,19 @@ pub fn run(
         TokenStatus::Warning => "yellow",
         TokenStatus::Excessive => "red",
     };
-    println!("  Total: {} ({:?})", 
-        token_result.total.to_string().color(token_status_color).bold(),
+    println!(
+        "  Total: {} ({:?})",
+        token_result
+            .total
+            .to_string()
+            .color(token_status_color)
+            .bold(),
         token_result.status
     );
     println!("  Frontmatter: {}", token_result.frontmatter);
     println!("  Content: {}", token_result.content);
     println!();
-    
+
     // Structure
     println!("{}", "Structure".bold());
     println!("  Lines: {}", total_lines);
@@ -220,14 +250,20 @@ pub fn run(
     for (title, lines) in &sections {
         println!("    • {} ({} lines)", title.cyan(), lines);
     }
-    println!("  Code blocks: {} ({} lines)", code_blocks.len(), 
-        code_blocks.iter().map(|(_, l)| l).sum::<usize>());
+    println!(
+        "  Code blocks: {} ({} lines)",
+        code_blocks.len(),
+        code_blocks.iter().map(|(_, l)| l).sum::<usize>()
+    );
     if checkboxes.1 > 0 {
         let checkbox_pct = (checkboxes.0 as f64 / checkboxes.1 as f64 * 100.0) as usize;
-        println!("  Checkboxes: {}/{} ({}%)", checkboxes.0, checkboxes.1, checkbox_pct);
+        println!(
+            "  Checkboxes: {}/{} ({}%)",
+            checkboxes.0, checkboxes.1, checkbox_pct
+        );
     }
     println!();
-    
+
     // Dependencies
     println!("{}", "Dependencies".bold());
     if let Some(deps) = complete_deps {
@@ -239,20 +275,20 @@ pub fn run(
         for req in &deps.required_by {
             println!("    ← {}", req.path.dimmed());
         }
-        
+
         if dep_graph.has_circular_dependency(&spec_info.path) {
             println!("  {} Circular dependency detected!", "⚠".yellow());
         }
     } else {
         println!("  No dependencies");
     }
-    
+
     println!();
     println!("{}", "─".repeat(60).dimmed());
-    
+
     // Recommendations
     let mut recommendations: Vec<String> = Vec::new();
-    
+
     if token_result.total > 3500 {
         recommendations.push("Consider splitting spec - token count is high".to_string());
     }
@@ -265,7 +301,7 @@ pub fn run(
     if complexity_score > 70 {
         recommendations.push("High complexity - consider breaking into sub-specs".to_string());
     }
-    
+
     if !recommendations.is_empty() {
         println!("{}", "Recommendations".bold());
         for rec in &recommendations {
@@ -274,9 +310,9 @@ pub fn run(
     } else {
         println!("{} Spec looks well-structured", "✓".green());
     }
-    
+
     println!();
-    
+
     Ok(())
 }
 
@@ -288,7 +324,7 @@ fn calculate_complexity(
     code_blocks: usize,
 ) -> u32 {
     let mut score = 0u32;
-    
+
     // Lines contribution (0-25 points)
     score += match lines {
         0..=100 => 0,
@@ -298,7 +334,7 @@ fn calculate_complexity(
         401..=500 => 20,
         _ => 25,
     };
-    
+
     // Tokens contribution (0-30 points)
     score += match tokens {
         0..=1500 => 0,
@@ -307,7 +343,7 @@ fn calculate_complexity(
         3501..=4500 => 20,
         _ => 30,
     };
-    
+
     // Sections contribution (0-15 points)
     score += match sections {
         0..=3 => 0,
@@ -315,7 +351,7 @@ fn calculate_complexity(
         7..=10 => 10,
         _ => 15,
     };
-    
+
     // Dependencies contribution (0-15 points)
     score += match dependencies {
         0..=2 => 0,
@@ -323,7 +359,7 @@ fn calculate_complexity(
         6..=10 => 10,
         _ => 15,
     };
-    
+
     // Code blocks contribution (0-15 points)
     score += match code_blocks {
         0..=2 => 0,
@@ -331,6 +367,6 @@ fn calculate_complexity(
         6..=10 => 10,
         _ => 15,
     };
-    
+
     score.min(100)
 }

@@ -66,7 +66,10 @@ fn test_create_update_archive_workflow() {
 
     // Should be in archived folder
     let archived_dir = cwd.join("specs").join("archived").join("001-my-feature");
-    assert!(dir_exists(&archived_dir), "spec should be in archived folder");
+    assert!(
+        dir_exists(&archived_dir),
+        "spec should be in archived folder"
+    );
 }
 
 #[test]
@@ -147,7 +150,10 @@ fn test_update_priority() {
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
 
-    assert_eq!(fm.get("priority").and_then(|v| v.as_str()), Some("critical"));
+    assert_eq!(
+        fm.get("priority").and_then(|v| v.as_str()),
+        Some("critical")
+    );
 }
 
 #[test]
@@ -164,7 +170,10 @@ fn test_update_assignee() {
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
 
-    assert_eq!(fm.get("assignee").and_then(|v| v.as_str()), Some("john-doe"));
+    assert_eq!(
+        fm.get("assignee").and_then(|v| v.as_str()),
+        Some("john-doe")
+    );
 }
 
 #[test]
@@ -271,8 +280,14 @@ fn test_archived_specs_not_listed_by_default() {
     archive_spec(cwd, "002-archived-spec");
 
     let result = list_specs(cwd);
-    assert!(result.stdout.contains("active-spec"), "should list active spec");
-    assert!(!result.stdout.contains("002-archived-spec"), "should not list archived spec");
+    assert!(
+        result.stdout.contains("active-spec"),
+        "should list active spec"
+    );
+    assert!(
+        !result.stdout.contains("002-archived-spec"),
+        "should not list archived spec"
+    );
 }
 
 #[test]
@@ -358,7 +373,10 @@ fn test_regression_preserve_created_date_format() {
         // Should match YYYY-MM-DD format
         let re = regex::Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
         assert!(re.is_match(created), "created should be YYYY-MM-DD format");
-        assert!(!created.contains('T'), "created should not contain ISO timestamp");
+        assert!(
+            !created.contains('T'),
+            "created should not contain ISO timestamp"
+        );
     }
 }
 

@@ -1,7 +1,7 @@
 //! List command implementation
 
 use colored::Colorize;
-use leanspec_core::{SpecLoader, SpecInfo, SpecStatus, SpecPriority, SpecFilterOptions};
+use leanspec_core::{SpecFilterOptions, SpecInfo, SpecLoader, SpecPriority, SpecStatus};
 use std::error::Error;
 
 pub fn run(
@@ -15,7 +15,7 @@ pub fn run(
 ) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
-    
+
     // Build filter
     let filter = SpecFilterOptions {
         status: status.map(|s| vec![s.parse().unwrap_or(SpecStatus::Planned)]),
@@ -24,9 +24,9 @@ pub fn run(
         assignee,
         search: None,
     };
-    
+
     let filtered: Vec<_> = specs.iter().filter(|s| filter.matches(s)).collect();
-    
+
     if output_format == "json" {
         print_json(&filtered)?;
     } else if compact {
@@ -34,7 +34,7 @@ pub fn run(
     } else {
         print_detailed(&filtered);
     }
-    
+
     Ok(())
 }
 
@@ -48,16 +48,19 @@ fn print_json(specs: &[&SpecInfo]) -> Result<(), Box<dyn Error>> {
         tags: &'a Vec<String>,
         assignee: &'a Option<String>,
     }
-    
-    let output: Vec<_> = specs.iter().map(|s| SpecOutput {
-        path: &s.path,
-        title: &s.title,
-        status: s.frontmatter.status.to_string(),
-        priority: s.frontmatter.priority.map(|p| p.to_string()),
-        tags: &s.frontmatter.tags,
-        assignee: &s.frontmatter.assignee,
-    }).collect();
-    
+
+    let output: Vec<_> = specs
+        .iter()
+        .map(|s| SpecOutput {
+            path: &s.path,
+            title: &s.title,
+            status: s.frontmatter.status.to_string(),
+            priority: s.frontmatter.priority.map(|p| p.to_string()),
+            tags: &s.frontmatter.tags,
+            assignee: &s.frontmatter.assignee,
+        })
+        .collect();
+
     println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())
 }
@@ -67,7 +70,7 @@ fn print_compact(specs: &[&SpecInfo]) {
         let status_icon = spec.frontmatter.status_emoji();
         println!("{} {} - {}", status_icon, spec.path.cyan(), spec.title);
     }
-    
+
     println!("\n{} specs found", specs.len().to_string().green());
 }
 
@@ -76,7 +79,7 @@ fn print_detailed(specs: &[&SpecInfo]) {
         println!("{}", "No specs found".yellow());
         return;
     }
-    
+
     for spec in specs {
         let status_icon = spec.frontmatter.status_emoji();
         let status_color = match spec.frontmatter.status {
@@ -85,7 +88,7 @@ fn print_detailed(specs: &[&SpecInfo]) {
             SpecStatus::Complete => "green",
             SpecStatus::Archived => "white",
         };
-        
+
         println!();
         println!("{} {}", spec.path.cyan().bold(), spec.title.bold());
         println!(
@@ -93,7 +96,7 @@ fn print_detailed(specs: &[&SpecInfo]) {
             status_icon,
             format!("{:?}", spec.frontmatter.status).color(status_color)
         );
-        
+
         if let Some(priority) = spec.frontmatter.priority {
             let priority_color = match priority {
                 SpecPriority::Low => "white",
@@ -103,20 +106,23 @@ fn print_detailed(specs: &[&SpecInfo]) {
             };
             println!("   📊 {}", format!("{:?}", priority).color(priority_color));
         }
-        
+
         if !spec.frontmatter.tags.is_empty() {
             println!("   🏷️  {}", spec.frontmatter.tags.join(", ").dimmed());
         }
-        
+
         if let Some(assignee) = &spec.frontmatter.assignee {
             println!("   👤 {}", assignee);
         }
-        
+
         if !spec.frontmatter.depends_on.is_empty() {
-            println!("   🔗 depends on: {}", spec.frontmatter.depends_on.join(", ").dimmed());
+            println!(
+                "   🔗 depends on: {}",
+                spec.frontmatter.depends_on.join(", ").dimmed()
+            );
         }
     }
-    
+
     println!();
     println!("{} specs found", specs.len().to_string().green().bold());
 }

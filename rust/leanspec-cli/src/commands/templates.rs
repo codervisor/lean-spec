@@ -15,7 +15,7 @@ pub fn run(
 ) -> Result<(), Box<dyn Error>> {
     let config_dir = Path::new(".lean-spec");
     let templates_dir = config_dir.join("templates");
-    
+
     match action {
         Some("list") | None => list_templates(&templates_dir, output_format),
         Some("show") => {
@@ -30,7 +30,9 @@ pub fn run(
             let name = name.ok_or("Template name required for 'remove' action")?;
             remove_template(&templates_dir, name)
         }
-        Some(action) => Err(format!("Unknown action: {}. Use list, show, add, or remove", action).into()),
+        Some(action) => {
+            Err(format!("Unknown action: {}. Use list, show, add, or remove", action).into())
+        }
     }
 }
 
@@ -40,7 +42,7 @@ fn list_templates(templates_dir: &Path, output_format: &str) -> Result<(), Box<d
         println!("Run: {}", "lean-spec init".cyan());
         return Ok(());
     }
-    
+
     let entries: Vec<_> = fs::read_dir(templates_dir)?
         .filter_map(|e| e.ok())
         .filter(|e| {
@@ -48,7 +50,7 @@ fn list_templates(templates_dir: &Path, output_format: &str) -> Result<(), Box<d
             path.is_file() && path.extension().map(|ext| ext == "md").unwrap_or(false)
         })
         .collect();
-    
+
     if output_format == "json" {
         #[derive(serde::Serialize)]
         struct TemplateInfo {
@@ -56,7 +58,7 @@ fn list_templates(templates_dir: &Path, output_format: &str) -> Result<(), Box<d
             file: String,
             size_kb: f64,
         }
-        
+
         let templates: Vec<_> = entries
             .iter()
             .filter_map(|e| {
@@ -71,20 +73,20 @@ fn list_templates(templates_dir: &Path, output_format: &str) -> Result<(), Box<d
                 })
             })
             .collect();
-        
+
         println!("{}", serde_json::to_string_pretty(&templates)?);
         return Ok(());
     }
-    
+
     if entries.is_empty() {
         println!("{}", "No templates found.".yellow());
         return Ok(());
     }
-    
+
     println!();
     println!("{}", "=== Available Templates ===".green().bold());
     println!();
-    
+
     for entry in &entries {
         let path = entry.path();
         if let (Some(name), Ok(metadata)) = (path.file_stem(), fs::metadata(&path)) {
@@ -92,11 +94,14 @@ fn list_templates(templates_dir: &Path, output_format: &str) -> Result<(), Box<d
             println!("  {} ({:.1} KB)", name.to_string_lossy().cyan(), size_kb);
         }
     }
-    
+
     println!();
-    println!("Use templates with: {}", "lean-spec create <name> --template=<template-name>".dimmed());
+    println!(
+        "Use templates with: {}",
+        "lean-spec create <name> --template=<template-name>".dimmed()
+    );
     println!();
-    
+
     Ok(())
 }
 
@@ -106,19 +111,19 @@ fn show_template(templates_dir: &Path, name: &str) -> Result<(), Box<dyn Error>>
     } else {
         templates_dir.join(format!("{}.md", name))
     };
-    
+
     if !template_file.exists() {
         return Err(format!("Template not found: {}", name).into());
     }
-    
+
     let content = fs::read_to_string(&template_file)?;
-    
+
     println!();
     println!("{}", format!("=== Template: {} ===", name).cyan().bold());
     println!();
     println!("{}", content);
     println!();
-    
+
     Ok(())
 }
 
@@ -127,17 +132,17 @@ fn add_template(templates_dir: &Path, name: &str) -> Result<(), Box<dyn Error>> 
     if !templates_dir.exists() {
         fs::create_dir_all(templates_dir)?;
     }
-    
+
     let template_file = if name.ends_with(".md") {
         templates_dir.join(name)
     } else {
         templates_dir.join(format!("{}.md", name))
     };
-    
+
     if template_file.exists() {
         return Err(format!("Template already exists: {}", name).into());
     }
-    
+
     // Create a default template
     let default_content = r#"---
 status: planned
@@ -171,13 +176,16 @@ _Technical approach and key decisions._
 
 _Additional context, decisions, and learnings._
 "#;
-    
+
     fs::write(&template_file, default_content)?;
-    
+
     println!("{} Added template: {}", "✓".green(), name.cyan());
     println!("  Edit: {}", template_file.display().to_string().dimmed());
-    println!("  Use with: {}", format!("lean-spec create <spec-name> --template={}", name).dimmed());
-    
+    println!(
+        "  Use with: {}",
+        format!("lean-spec create <spec-name> --template={}", name).dimmed()
+    );
+
     Ok(())
 }
 
@@ -187,18 +195,18 @@ fn remove_template(templates_dir: &Path, name: &str) -> Result<(), Box<dyn Error
     } else {
         templates_dir.join(format!("{}.md", name))
     };
-    
+
     if !template_file.exists() {
         return Err(format!("Template not found: {}", name).into());
     }
-    
+
     if name == "default" || name == "minimal" {
         return Err("Cannot remove default templates".into());
     }
-    
+
     fs::remove_file(&template_file)?;
-    
+
     println!("{} Removed template: {}", "✓".green(), name.cyan());
-    
+
     Ok(())
 }

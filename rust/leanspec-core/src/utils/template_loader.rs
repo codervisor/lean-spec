@@ -47,7 +47,9 @@ impl TemplateLoader {
 
     pub fn load(&self, template_name: Option<&str>) -> Result<String, TemplateError> {
         if !self.templates_dir.exists() {
-            return Err(TemplateError::TemplatesDirMissing(self.templates_dir.clone()));
+            return Err(TemplateError::TemplatesDirMissing(
+                self.templates_dir.clone(),
+            ));
         }
 
         let mut tried = Vec::new();

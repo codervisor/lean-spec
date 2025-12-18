@@ -63,10 +63,7 @@ pub fn run(
                     println!("  • {}", suggestion);
                 }
                 println!();
-                println!(
-                    "Use {} to mark complete anyway.",
-                    "--force".yellow()
-                );
+                println!("Use {} to mark complete anyway.", "--force".yellow());
 
                 return Err("Cannot mark spec complete with outstanding checklist items".into());
             }
@@ -86,18 +83,12 @@ pub fn run(
     }
 
     if let Some(p) = priority {
-        updates.insert(
-            "priority".to_string(),
-            serde_yaml::Value::String(p.clone()),
-        );
+        updates.insert("priority".to_string(), serde_yaml::Value::String(p.clone()));
         fields_updated.push(format!("priority → {}", p));
     }
 
     if let Some(a) = assignee {
-        updates.insert(
-            "assignee".to_string(),
-            serde_yaml::Value::String(a.clone()),
-        );
+        updates.insert("assignee".to_string(), serde_yaml::Value::String(a.clone()));
         fields_updated.push(format!("assignee → {}", a));
     }
 
@@ -127,7 +118,10 @@ pub fn run(
             .iter()
             .map(|t| serde_yaml::Value::String(t.clone()))
             .collect();
-        updates.insert("tags".to_string(), serde_yaml::Value::Sequence(tags_sequence));
+        updates.insert(
+            "tags".to_string(),
+            serde_yaml::Value::Sequence(tags_sequence),
+        );
     }
 
     if updates.is_empty() {

@@ -10,7 +10,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_validate_valid_specs() {
     let ctx = TestContext::new();
@@ -35,7 +34,10 @@ fn test_validate_multiple_specs() {
     create_spec(cwd, "spec-three");
 
     let result = validate_specs(cwd);
-    assert!(result.success, "validation should pass for multiple valid specs");
+    assert!(
+        result.success,
+        "validation should pass for multiple valid specs"
+    );
 }
 
 #[test]

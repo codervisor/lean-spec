@@ -67,7 +67,11 @@ async fn test_board_group_by_assignee() {
     let specs_dir = temp.path().join("specs");
 
     // Create specs with assignees
-    for (name, assignee) in [("001-spec-a", "alice"), ("002-spec-b", "bob"), ("003-spec-c", "alice")] {
+    for (name, assignee) in [
+        ("001-spec-a", "alice"),
+        ("002-spec-b", "bob"),
+        ("003-spec-c", "alice"),
+    ] {
         let spec_dir = specs_dir.join(name);
         std::fs::create_dir_all(&spec_dir).unwrap();
         let content = format!(

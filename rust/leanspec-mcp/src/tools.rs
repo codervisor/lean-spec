@@ -2,12 +2,11 @@
 
 use crate::protocol::ToolDefinition;
 use chrono::Utc;
-use leanspec_core::{
-    SpecLoader, SpecStats, DependencyGraph, TokenCounter,
-    FrontmatterParser, SpecFrontmatter, SpecPriority, SpecStatus,
-    TemplateLoader, LeanSpecConfig,
-};
 use leanspec_core::parsers::ParseError;
+use leanspec_core::{
+    DependencyGraph, FrontmatterParser, LeanSpecConfig, SpecFrontmatter, SpecLoader, SpecPriority,
+    SpecStats, SpecStatus, TemplateLoader, TokenCounter,
+};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
@@ -283,7 +282,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
 /// Call a tool with arguments
 pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
     let specs_dir = std::env::var("LEANSPEC_SPECS_DIR").unwrap_or_else(|_| "specs".to_string());
-    
+
     match name {
         "list" => tool_list(&specs_dir, args),
         "view" => tool_view(&specs_dir, args),
@@ -304,55 +303,71 @@ pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
 fn tool_list(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
-    
+
     let status_filter = args.get("status").and_then(|v| v.as_str());
-    let tags_filter: Option<Vec<&str>> = args.get("tags")
+    let tags_filter: Option<Vec<&str>> = args
+        .get("tags")
         .and_then(|v| v.as_array())
         .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect());
     let priority_filter = args.get("priority").and_then(|v| v.as_str());
-    
-    let filtered: Vec<_> = specs.iter().filter(|spec| {
-        if let Some(status) = status_filter {
-            if spec.frontmatter.status.to_string() != status {
-                return false;
+
+    let filtered: Vec<_> = specs
+        .iter()
+        .filter(|spec| {
+            if let Some(status) = status_filter {
+                if spec.frontmatter.status.to_string() != status {
+                    return false;
+                }
             }
-        }
-        if let Some(ref tags) = tags_filter {
-            if !tags.iter().all(|t| spec.frontmatter.tags.contains(&t.to_string())) {
-                return false;
+            if let Some(ref tags) = tags_filter {
+                if !tags
+                    .iter()
+                    .all(|t| spec.frontmatter.tags.contains(&t.to_string()))
+                {
+                    return false;
+                }
             }
-        }
-        if let Some(priority) = priority_filter {
-            if spec.frontmatter.priority.map(|p| p.to_string()) != Some(priority.to_string()) {
-                return false;
+            if let Some(priority) = priority_filter {
+                if spec.frontmatter.priority.map(|p| p.to_string()) != Some(priority.to_string()) {
+                    return false;
+                }
             }
-        }
-        true
-    }).collect();
-    
-    let output: Vec<_> = filtered.iter().map(|s| json!({
-        "path": s.path,
-        "title": s.title,
-        "status": s.frontmatter.status.to_string(),
-        "priority": s.frontmatter.priority.map(|p| p.to_string()),
-        "tags": s.frontmatter.tags,
-    })).collect();
-    
+            true
+        })
+        .collect();
+
+    let output: Vec<_> = filtered
+        .iter()
+        .map(|s| {
+            json!({
+                "path": s.path,
+                "title": s.title,
+                "status": s.frontmatter.status.to_string(),
+                "priority": s.frontmatter.priority.map(|p| p.to_string()),
+                "tags": s.frontmatter.tags,
+            })
+        })
+        .collect();
+
     serde_json::to_string_pretty(&json!({
         "count": filtered.len(),
         "specs": output
-    })).map_err(|e| e.to_string())
+    }))
+    .map_err(|e| e.to_string())
 }
 
 fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("specPath")
+    let spec_path = args
+        .get("specPath")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: specPath")?;
-    
+
     let loader = SpecLoader::new(specs_dir);
-    let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+    let spec = loader
+        .load(spec_path)
+        .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-    
+
     let output = json!({
         "path": spec.path,
         "title": spec.title,
@@ -364,29 +379,40 @@ fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> {
         "assignee": spec.frontmatter.assignee,
         "content": spec.content,
     });
-    
+
     serde_json::to_string_pretty(&output).map_err(|e| e.to_string())
 }
 
 fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
-    let name = args.get("name")
+    let name = args
+        .get("name")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: name")?;
-    
+
     let title_input = args.get("title").and_then(|v| v.as_str());
-    let status = args.get("status").and_then(|v| v.as_str()).unwrap_or("planned");
+    let status = args
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("planned");
     let priority = args.get("priority").and_then(|v| v.as_str());
     let template_name = args.get("template").and_then(|v| v.as_str());
     let content_override = args.get("content").and_then(|v| v.as_str());
-    let tags: Vec<String> = args.get("tags")
+    let tags: Vec<String> = args
+        .get("tags")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
 
     let next_number = get_next_spec_number(specs_dir)?;
     let spec_name = format!("{:03}-{}", next_number, name);
 
-    let title = title_input.map(String::from).unwrap_or_else(|| to_title_case(name));
+    let title = title_input
+        .map(String::from)
+        .unwrap_or_else(|| to_title_case(name));
     let now = Utc::now();
     let created_date = now.format("%Y-%m-%d").to_string();
 
@@ -396,7 +422,8 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
         let project_root = resolve_project_root(specs_dir)?;
         let config = load_config(&project_root);
         let loader = TemplateLoader::with_config(&project_root, config);
-        let template = loader.load(template_name)
+        let template = loader
+            .load(template_name)
             .map_err(|e| format!("Failed to load template: {}", e))?;
         resolve_template_variables(&template, &title, status, priority, &created_date)
     };
@@ -411,14 +438,17 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
 }
 
 fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("specPath")
+    let spec_path = args
+        .get("specPath")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: specPath")?;
-    
+
     let loader = SpecLoader::new(specs_dir);
-    let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+    let spec = loader
+        .load(spec_path)
+        .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-    
+
     // Check for completion verification if changing status to complete
     let force = args.get("force").and_then(|v| v.as_bool()).unwrap_or(false);
     if let Some(new_status) = args.get("status").and_then(|v| v.as_str()) {
@@ -426,19 +456,23 @@ fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
             let spec_dir = std::path::Path::new(&spec.file_path)
                 .parent()
                 .ok_or("Invalid spec path")?;
-            
+
             let verification = leanspec_core::CompletionVerifier::verify_completion(spec_dir)
                 .map_err(|e| e.to_string())?;
-            
+
             if !verification.is_complete {
-                let outstanding: Vec<_> = verification.outstanding.iter().map(|item| {
-                    json!({
-                        "section": item.section,
-                        "line": item.line,
-                        "text": item.text
+                let outstanding: Vec<_> = verification
+                    .outstanding
+                    .iter()
+                    .map(|item| {
+                        json!({
+                            "section": item.section,
+                            "line": item.line,
+                            "text": item.text
+                        })
                     })
-                }).collect();
-                
+                    .collect();
+
                 return Err(serde_json::to_string_pretty(&json!({
                     "error": "INCOMPLETE_CHECKLIST",
                     "message": format!("Cannot mark spec complete: {} outstanding checklist items", verification.outstanding.len()),
@@ -451,99 +485,126 @@ fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
             }
         }
     }
-    
+
     let content = std::fs::read_to_string(&spec.file_path).map_err(|e| e.to_string())?;
-    
-    let mut updates: std::collections::HashMap<String, serde_yaml::Value> = std::collections::HashMap::new();
+
+    let mut updates: std::collections::HashMap<String, serde_yaml::Value> =
+        std::collections::HashMap::new();
     let mut fields_updated = Vec::new();
-    
+
     if let Some(status) = args.get("status").and_then(|v| v.as_str()) {
-        updates.insert("status".to_string(), serde_yaml::Value::String(status.to_string()));
+        updates.insert(
+            "status".to_string(),
+            serde_yaml::Value::String(status.to_string()),
+        );
         fields_updated.push(format!("status → {}", status));
     }
-    
+
     if let Some(priority) = args.get("priority").and_then(|v| v.as_str()) {
-        updates.insert("priority".to_string(), serde_yaml::Value::String(priority.to_string()));
+        updates.insert(
+            "priority".to_string(),
+            serde_yaml::Value::String(priority.to_string()),
+        );
         fields_updated.push(format!("priority → {}", priority));
     }
-    
+
     if let Some(assignee) = args.get("assignee").and_then(|v| v.as_str()) {
-        updates.insert("assignee".to_string(), serde_yaml::Value::String(assignee.to_string()));
+        updates.insert(
+            "assignee".to_string(),
+            serde_yaml::Value::String(assignee.to_string()),
+        );
         fields_updated.push(format!("assignee → {}", assignee));
     }
-    
+
     // Handle tags
-    let add_tags: Vec<String> = args.get("addTags")
+    let add_tags: Vec<String> = args
+        .get("addTags")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
-    
-    let remove_tags: Vec<String> = args.get("removeTags")
+
+    let remove_tags: Vec<String> = args
+        .get("removeTags")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
-    
+
     if !add_tags.is_empty() || !remove_tags.is_empty() {
         let mut current_tags = spec.frontmatter.tags.clone();
-        
+
         for tag in add_tags {
             if !current_tags.contains(&tag) {
                 fields_updated.push(format!("+tag: {}", tag));
                 current_tags.push(tag);
             }
         }
-        
+
         for tag in &remove_tags {
             if let Some(pos) = current_tags.iter().position(|t| t == tag) {
                 fields_updated.push(format!("-tag: {}", tag));
                 current_tags.remove(pos);
             }
         }
-        
+
         let tags_seq: Vec<serde_yaml::Value> = current_tags
             .iter()
             .map(|t| serde_yaml::Value::String(t.clone()))
             .collect();
         updates.insert("tags".to_string(), serde_yaml::Value::Sequence(tags_seq));
     }
-    
+
     if updates.is_empty() {
         return Ok("No updates specified".to_string());
     }
-    
+
     let parser = leanspec_core::FrontmatterParser::new();
-    let new_content = parser.update_frontmatter(&content, &updates)
+    let new_content = parser
+        .update_frontmatter(&content, &updates)
         .map_err(|e| e.to_string())?;
-    
+
     std::fs::write(&spec.file_path, &new_content).map_err(|e| e.to_string())?;
-    
-    Ok(format!("Updated {}: {}", spec.path, fields_updated.join(", ")))
+
+    Ok(format!(
+        "Updated {}: {}",
+        spec.path,
+        fields_updated.join(", ")
+    ))
 }
 
 fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
-    
+
     let fm_validator = leanspec_core::FrontmatterValidator::new();
     let struct_validator = leanspec_core::StructureValidator::new();
     let line_validator = leanspec_core::LineCountValidator::new();
-    
+
     let mut issues = Vec::new();
-    
+
     let specs_to_validate = if let Some(spec_path) = args.get("specPath").and_then(|v| v.as_str()) {
-        let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+        let spec = loader
+            .load(spec_path)
+            .map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
         vec![spec]
     } else {
         specs.clone()
     };
-    
+
     for spec in &specs_to_validate {
         let mut result = leanspec_core::ValidationResult::new(&spec.path);
         result.merge(fm_validator.validate(spec));
         result.merge(struct_validator.validate(spec));
         result.merge(line_validator.validate(spec));
-        
+
         if result.has_errors() || result.has_warnings() {
             issues.push(json!({
                 "spec": spec.path,
@@ -552,34 +613,42 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
             }));
         }
     }
-    
+
     if issues.is_empty() {
-        Ok(format!("All {} specs passed validation", specs_to_validate.len()))
+        Ok(format!(
+            "All {} specs passed validation",
+            specs_to_validate.len()
+        ))
     } else {
         serde_json::to_string_pretty(&json!({
             "total": specs_to_validate.len(),
             "issues": issues
-        })).map_err(|e| e.to_string())
+        }))
+        .map_err(|e| e.to_string())
     }
 }
 
 fn tool_deps(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("specPath")
+    let spec_path = args
+        .get("specPath")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: specPath")?;
-    
+
     let _depth = args.get("depth").and_then(|v| v.as_u64()).unwrap_or(3) as usize;
-    
+
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
-    
-    let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+
+    let spec = loader
+        .load(spec_path)
+        .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-    
+
     let graph = DependencyGraph::new(&specs);
-    let complete = graph.get_complete_graph(&spec.path)
+    let complete = graph
+        .get_complete_graph(&spec.path)
         .ok_or_else(|| "Spec not in graph".to_string())?;
-    
+
     let output = json!({
         "spec": spec.path,
         "title": spec.title,
@@ -595,110 +664,138 @@ fn tool_deps(specs_dir: &str, args: Value) -> Result<String, String> {
         })).collect::<Vec<_>>(),
         "hasCircular": graph.has_circular_dependency(&spec.path),
     });
-    
+
     serde_json::to_string_pretty(&output).map_err(|e| e.to_string())
 }
 
 fn tool_link(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("specPath")
+    let spec_path = args
+        .get("specPath")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: specPath")?;
-    
-    let depends_on = args.get("dependsOn")
+
+    let depends_on = args
+        .get("dependsOn")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: dependsOn")?;
-    
+
     let loader = SpecLoader::new(specs_dir);
-    let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+    let spec = loader
+        .load(spec_path)
+        .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-    
-    let target = loader.load(depends_on).map_err(|e| e.to_string())?
+
+    let target = loader
+        .load(depends_on)
+        .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Target spec not found: {}", depends_on))?;
-    
+
     if spec.frontmatter.depends_on.contains(&target.path) {
         return Ok(format!("{} already depends on {}", spec.path, target.path));
     }
-    
+
     let content = std::fs::read_to_string(&spec.file_path).map_err(|e| e.to_string())?;
-    
+
     let mut depends_on_list = spec.frontmatter.depends_on.clone();
     depends_on_list.push(target.path.clone());
-    
+
     let deps_seq: Vec<serde_yaml::Value> = depends_on_list
         .iter()
         .map(|t| serde_yaml::Value::String(t.clone()))
         .collect();
-    
-    let mut updates: std::collections::HashMap<String, serde_yaml::Value> = std::collections::HashMap::new();
-    updates.insert("depends_on".to_string(), serde_yaml::Value::Sequence(deps_seq));
-    
+
+    let mut updates: std::collections::HashMap<String, serde_yaml::Value> =
+        std::collections::HashMap::new();
+    updates.insert(
+        "depends_on".to_string(),
+        serde_yaml::Value::Sequence(deps_seq),
+    );
+
     let parser = leanspec_core::FrontmatterParser::new();
-    let new_content = parser.update_frontmatter(&content, &updates)
+    let new_content = parser
+        .update_frontmatter(&content, &updates)
         .map_err(|e| e.to_string())?;
-    
+
     std::fs::write(&spec.file_path, &new_content).map_err(|e| e.to_string())?;
-    
+
     Ok(format!("Linked: {} → {}", spec.path, target.path))
 }
 
 fn tool_unlink(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args.get("specPath")
+    let spec_path = args
+        .get("specPath")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: specPath")?;
-    
-    let depends_on = args.get("dependsOn")
+
+    let depends_on = args
+        .get("dependsOn")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: dependsOn")?;
-    
+
     let loader = SpecLoader::new(specs_dir);
-    let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+    let spec = loader
+        .load(spec_path)
+        .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-    
-    let target_path = spec.frontmatter.depends_on.iter()
+
+    let target_path = spec
+        .frontmatter
+        .depends_on
+        .iter()
         .find(|d| d.contains(depends_on) || depends_on.contains(d.as_str()))
         .cloned()
         .ok_or_else(|| format!("{} does not depend on {}", spec.path, depends_on))?;
-    
+
     let content = std::fs::read_to_string(&spec.file_path).map_err(|e| e.to_string())?;
-    
-    let depends_on_list: Vec<_> = spec.frontmatter.depends_on.iter()
+
+    let depends_on_list: Vec<_> = spec
+        .frontmatter
+        .depends_on
+        .iter()
         .filter(|d| *d != &target_path)
         .cloned()
         .collect();
-    
+
     let deps_seq: Vec<serde_yaml::Value> = depends_on_list
         .iter()
         .map(|t| serde_yaml::Value::String(t.clone()))
         .collect();
-    
-    let mut updates: std::collections::HashMap<String, serde_yaml::Value> = std::collections::HashMap::new();
-    updates.insert("depends_on".to_string(), serde_yaml::Value::Sequence(deps_seq));
-    
+
+    let mut updates: std::collections::HashMap<String, serde_yaml::Value> =
+        std::collections::HashMap::new();
+    updates.insert(
+        "depends_on".to_string(),
+        serde_yaml::Value::Sequence(deps_seq),
+    );
+
     let parser = leanspec_core::FrontmatterParser::new();
-    let new_content = parser.update_frontmatter(&content, &updates)
+    let new_content = parser
+        .update_frontmatter(&content, &updates)
         .map_err(|e| e.to_string())?;
-    
+
     std::fs::write(&spec.file_path, &new_content).map_err(|e| e.to_string())?;
-    
+
     Ok(format!("Unlinked: {} ✗ {}", spec.path, target_path))
 }
 
 fn tool_search(specs_dir: &str, args: Value) -> Result<String, String> {
-    let query = args.get("query")
+    let query = args
+        .get("query")
         .and_then(|v| v.as_str())
         .ok_or("Missing required parameter: query")?;
-    
+
     let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(10) as usize;
-    
+
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
-    
+
     let query_lower = query.to_lowercase();
-    
-    let mut results: Vec<_> = specs.iter()
+
+    let mut results: Vec<_> = specs
+        .iter()
         .filter_map(|spec| {
             let mut score = 0.0;
-            
+
             if spec.title.to_lowercase().contains(&query_lower) {
                 score += 10.0;
             }
@@ -714,7 +811,7 @@ fn tool_search(specs_dir: &str, args: Value) -> Result<String, String> {
             if content_matches > 0 {
                 score += (content_matches as f64).min(5.0);
             }
-            
+
             if score > 0.0 {
                 Some((spec, score))
             } else {
@@ -722,38 +819,56 @@ fn tool_search(specs_dir: &str, args: Value) -> Result<String, String> {
             }
         })
         .collect();
-    
+
     results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
     results.truncate(limit);
-    
-    let output: Vec<_> = results.iter().map(|(spec, score)| json!({
-        "path": spec.path,
-        "title": spec.title,
-        "status": spec.frontmatter.status.to_string(),
-        "score": score,
-        "tags": spec.frontmatter.tags,
-    })).collect();
-    
+
+    let output: Vec<_> = results
+        .iter()
+        .map(|(spec, score)| {
+            json!({
+                "path": spec.path,
+                "title": spec.title,
+                "status": spec.frontmatter.status.to_string(),
+                "score": score,
+                "tags": spec.frontmatter.tags,
+            })
+        })
+        .collect();
+
     serde_json::to_string_pretty(&json!({
         "query": query,
         "count": output.len(),
         "results": output
-    })).map_err(|e| e.to_string())
+    }))
+    .map_err(|e| e.to_string())
 }
 
 fn tool_board(specs_dir: &str, args: Value) -> Result<String, String> {
-    let group_by = args.get("groupBy").and_then(|v| v.as_str()).unwrap_or("status");
-    
+    let group_by = args
+        .get("groupBy")
+        .and_then(|v| v.as_str())
+        .unwrap_or("status");
+
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
-    
-    let mut groups: std::collections::HashMap<String, Vec<serde_json::Value>> = std::collections::HashMap::new();
-    
+
+    let mut groups: std::collections::HashMap<String, Vec<serde_json::Value>> =
+        std::collections::HashMap::new();
+
     for spec in &specs {
         let key = match group_by {
             "status" => spec.frontmatter.status.to_string(),
-            "priority" => spec.frontmatter.priority.map(|p| p.to_string()).unwrap_or_else(|| "none".to_string()),
-            "assignee" => spec.frontmatter.assignee.clone().unwrap_or_else(|| "unassigned".to_string()),
+            "priority" => spec
+                .frontmatter
+                .priority
+                .map(|p| p.to_string())
+                .unwrap_or_else(|| "none".to_string()),
+            "assignee" => spec
+                .frontmatter
+                .assignee
+                .clone()
+                .unwrap_or_else(|| "unassigned".to_string()),
             "tag" => {
                 for tag in &spec.frontmatter.tags {
                     groups.entry(tag.clone()).or_default().push(json!({
@@ -766,49 +881,59 @@ fn tool_board(specs_dir: &str, args: Value) -> Result<String, String> {
             }
             _ => "unknown".to_string(),
         };
-        
+
         groups.entry(key).or_default().push(json!({
             "path": spec.path,
             "title": spec.title,
             "status": spec.frontmatter.status.to_string(),
         }));
     }
-    
-    let output: Vec<_> = groups.into_iter().map(|(name, specs)| json!({
-        "name": name,
-        "count": specs.len(),
-        "specs": specs,
-    })).collect();
-    
+
+    let output: Vec<_> = groups
+        .into_iter()
+        .map(|(name, specs)| {
+            json!({
+                "name": name,
+                "count": specs.len(),
+                "specs": specs,
+            })
+        })
+        .collect();
+
     serde_json::to_string_pretty(&json!({
         "groupBy": group_by,
         "total": specs.len(),
         "groups": output
-    })).map_err(|e| e.to_string())
+    }))
+    .map_err(|e| e.to_string())
 }
 
 fn tool_tokens(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let counter = TokenCounter::new();
-    
+
     if let Some(spec_path) = args.get("specPath").and_then(|v| v.as_str()) {
-        let spec = loader.load(spec_path).map_err(|e| e.to_string())?
+        let spec = loader
+            .load(spec_path)
+            .map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-        
+
         let content = std::fs::read_to_string(&spec.file_path).map_err(|e| e.to_string())?;
         let result = counter.count_spec(&content);
-        
+
         Ok(serde_json::to_string_pretty(&json!({
             "spec": spec.path,
             "total": result.total,
             "frontmatter": result.frontmatter,
             "content": result.content,
             "status": format!("{:?}", result.status),
-        })).map_err(|e| e.to_string())?)
+        }))
+        .map_err(|e| e.to_string())?)
     } else {
         let specs = loader.load_all().map_err(|e| e.to_string())?;
-        
-        let results: Vec<_> = specs.iter()
+
+        let results: Vec<_> = specs
+            .iter()
             .filter_map(|spec| {
                 let content = std::fs::read_to_string(&spec.file_path).ok()?;
                 let result = counter.count_spec(&content);
@@ -820,27 +945,29 @@ fn tool_tokens(specs_dir: &str, args: Value) -> Result<String, String> {
                 }))
             })
             .collect();
-        
-        let total_tokens: usize = results.iter()
+
+        let total_tokens: usize = results
+            .iter()
             .filter_map(|r| r.get("total").and_then(|v| v.as_u64()))
             .map(|v| v as usize)
             .sum();
-        
+
         Ok(serde_json::to_string_pretty(&json!({
             "count": results.len(),
             "totalTokens": total_tokens,
             "averageTokens": if results.is_empty() { 0 } else { total_tokens / results.len() },
             "specs": results,
-        })).map_err(|e| e.to_string())?)
+        }))
+        .map_err(|e| e.to_string())?)
     }
 }
 
 fn tool_stats(specs_dir: &str) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
-    
+
     let stats = SpecStats::compute(&specs);
-    
+
     Ok(serde_json::to_string_pretty(&json!({
         "total": stats.total,
         "byStatus": stats.by_status.iter().map(|(k, v)| (k.to_string(), *v)).collect::<std::collections::HashMap<_, _>>(),
@@ -858,19 +985,19 @@ fn tool_stats(specs_dir: &str) -> Result<String, String> {
 
 fn get_next_spec_number(specs_dir: &str) -> Result<u32, String> {
     let specs_path = std::path::Path::new(specs_dir);
-    
+
     if !specs_path.exists() {
         return Ok(1);
     }
-    
+
     let mut max_number = 0u32;
-    
+
     for entry in std::fs::read_dir(specs_path).map_err(|e| e.to_string())? {
         let entry = entry.map_err(|e| e.to_string())?;
         if entry.file_type().map_err(|e| e.to_string())?.is_dir() {
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
-            
+
             if let Some(num_str) = name_str.split('-').next() {
                 if let Ok(num) = num_str.parse::<u32>() {
                     max_number = max_number.max(num);
@@ -878,7 +1005,7 @@ fn get_next_spec_number(specs_dir: &str) -> Result<u32, String> {
             }
         }
     }
-    
+
     Ok(max_number + 1)
 }
 
@@ -1012,8 +1139,7 @@ fn build_frontmatter_from_scratch(
 }
 
 fn to_title_case(name: &str) -> String {
-    name
-        .split('-')
+    name.split('-')
         .map(|w| {
             let mut chars = w.chars();
             match chars.next() {

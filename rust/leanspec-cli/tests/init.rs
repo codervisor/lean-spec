@@ -12,7 +12,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_init_fresh_project_with_yes_flag() {
     let ctx = TestContext::new();
@@ -22,15 +21,18 @@ fn test_init_fresh_project_with_yes_flag() {
 
     assert!(result.success, "init should succeed");
     assert!(
-        result.stdout.to_lowercase().contains("initialized") 
-        || result.stdout.to_lowercase().contains("leanspec")
-        || result.stdout.to_lowercase().contains("success"),
+        result.stdout.to_lowercase().contains("initialized")
+            || result.stdout.to_lowercase().contains("leanspec")
+            || result.stdout.to_lowercase().contains("success"),
         "should mention initialization: {}",
         result.stdout
     );
 
     // Verify directory structure
-    assert!(dir_exists(&cwd.join(".lean-spec")), ".lean-spec should exist");
+    assert!(
+        dir_exists(&cwd.join(".lean-spec")),
+        ".lean-spec should exist"
+    );
     assert!(dir_exists(&cwd.join("specs")), "specs should exist");
     assert!(
         file_exists(&cwd.join(".lean-spec").join("config.json")),
@@ -55,7 +57,8 @@ fn test_init_creates_agents_md_with_substitution() {
     );
     // Should contain LeanSpec instructions
     assert!(
-        agents_content.to_lowercase().contains("leanspec") || agents_content.to_lowercase().contains("lean-spec"),
+        agents_content.to_lowercase().contains("leanspec")
+            || agents_content.to_lowercase().contains("lean-spec"),
         "should contain leanspec instructions"
     );
 }
@@ -86,7 +89,10 @@ fn test_init_creates_templates_directory() {
     init_project(cwd, true);
 
     let templates_dir = cwd.join(".lean-spec").join("templates");
-    assert!(dir_exists(&templates_dir), "templates directory should exist");
+    assert!(
+        dir_exists(&templates_dir),
+        "templates directory should exist"
+    );
 }
 
 #[test]
@@ -117,7 +123,11 @@ fn test_reinit_upgrade_preserves_specs() {
         .into_iter()
         .filter(|s| !s.starts_with('.'))
         .collect();
-    assert_eq!(specs_after.len(), specs_before.len(), "specs should be preserved");
+    assert_eq!(
+        specs_after.len(),
+        specs_before.len(),
+        "specs should be preserved"
+    );
 }
 
 #[test]
@@ -139,7 +149,10 @@ fn test_reinit_preserves_existing_agents_md() {
 
     // AGENTS.md should still have custom content
     let agents_after = read_file(&agents_path);
-    assert_eq!(agents_after, custom_content, "AGENTS.md should be preserved");
+    assert_eq!(
+        agents_after, custom_content,
+        "AGENTS.md should be preserved"
+    );
 }
 
 #[test]
@@ -173,9 +186,9 @@ fn test_init_with_standard_template() {
     let result = exec_cli(&["init", "-y", "--template", "standard"], cwd);
     assert!(result.success);
 
-    let config = serde_json::from_str::<serde_json::Value>(
-        &read_file(&cwd.join(".lean-spec").join("config.json")),
-    )
+    let config = serde_json::from_str::<serde_json::Value>(&read_file(
+        &cwd.join(".lean-spec").join("config.json"),
+    ))
     .expect("valid JSON");
 
     // Should use standard template
@@ -198,9 +211,9 @@ fn test_init_with_detailed_template() {
     let result = exec_cli(&["init", "-y", "--template", "detailed"], cwd);
     assert!(result.success);
 
-    let config = serde_json::from_str::<serde_json::Value>(
-        &read_file(&cwd.join(".lean-spec").join("config.json")),
-    )
+    let config = serde_json::from_str::<serde_json::Value>(&read_file(
+        &cwd.join(".lean-spec").join("config.json"),
+    ))
     .expect("valid JSON");
 
     // Should use detailed template

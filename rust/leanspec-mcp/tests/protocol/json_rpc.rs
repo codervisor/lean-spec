@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 #[test]
 fn test_valid_request_structure() {
     let request = build_request(1, "initialize", json!({}));
-    
+
     assert_eq!(request["jsonrpc"], "2.0");
     assert_eq!(request["id"], 1);
     assert_eq!(request["method"], "initialize");
@@ -27,7 +27,7 @@ fn test_request_with_string_id() {
         "method": "tools/list",
         "params": {}
     });
-    
+
     assert_eq!(request["jsonrpc"], "2.0");
     assert_eq!(request["id"], "request-123");
 }
@@ -41,7 +41,7 @@ fn test_request_null_params() {
         "method": "tools/list",
         "params": null
     });
-    
+
     assert!(request["params"].is_null());
 }
 
@@ -53,7 +53,7 @@ fn test_notification_request() {
         "method": "notifications/initialized",
         "params": {}
     });
-    
+
     assert!(notification.get("id").is_none());
     assert_eq!(notification["method"], "notifications/initialized");
 }
@@ -68,7 +68,7 @@ fn test_success_response_structure() {
             "tools": []
         }
     });
-    
+
     assert_eq!(response["jsonrpc"], "2.0");
     assert_eq!(response["id"], 1);
     assert!(response["result"].is_object());
@@ -86,7 +86,7 @@ fn test_error_response_structure() {
             "message": "Invalid Request"
         }
     });
-    
+
     assert_eq!(response["jsonrpc"], "2.0");
     assert_eq!(response["error"]["code"], -32600);
     assert_eq!(response["error"]["message"], "Invalid Request");
@@ -108,7 +108,7 @@ fn test_error_response_with_data() {
             }
         }
     });
-    
+
     assert_eq!(response["error"]["data"]["field"], "spec");
 }
 
@@ -118,19 +118,19 @@ fn test_standard_error_codes() {
     // Parse error
     let parse_error = json!({ "code": -32700, "message": "Parse error" });
     assert_eq!(parse_error["code"], -32700);
-    
+
     // Invalid Request
     let invalid_request = json!({ "code": -32600, "message": "Invalid Request" });
     assert_eq!(invalid_request["code"], -32600);
-    
+
     // Method not found
     let method_not_found = json!({ "code": -32601, "message": "Method not found" });
     assert_eq!(method_not_found["code"], -32601);
-    
+
     // Invalid params
     let invalid_params = json!({ "code": -32602, "message": "Invalid params" });
     assert_eq!(invalid_params["code"], -32602);
-    
+
     // Internal error
     let internal_error = json!({ "code": -32603, "message": "Internal error" });
     assert_eq!(internal_error["code"], -32603);
@@ -140,7 +140,7 @@ fn test_standard_error_codes() {
 #[test]
 fn test_tool_call_request_structure() {
     let request = build_tool_call_request(1, "list", json!({ "status": "planned" }));
-    
+
     assert_eq!(request["method"], "tools/call");
     assert_eq!(request["params"]["name"], "list");
     assert_eq!(request["params"]["arguments"]["status"], "planned");
@@ -159,7 +159,7 @@ fn test_tool_call_response_content_structure() {
             }]
         }
     });
-    
+
     assert!(response["result"]["content"].is_array());
     assert_eq!(response["result"]["content"][0]["type"], "text");
     assert!(response["result"]["content"][0]["text"].is_string());
@@ -177,7 +177,7 @@ fn test_request_with_complex_params() {
             "priority": "high"
         }),
     );
-    
+
     assert!(request["params"]["arguments"]["tags"].is_array());
     assert_eq!(request["params"]["arguments"]["tags"][0], "feature");
     assert_eq!(request["params"]["arguments"]["tags"][1], "urgent");

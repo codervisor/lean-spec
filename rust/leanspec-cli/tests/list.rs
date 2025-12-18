@@ -10,7 +10,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_list_all_specs() {
     let ctx = TestContext::new();
@@ -36,7 +35,7 @@ fn test_list_filter_by_status() {
     init_project(cwd, true);
     create_spec(cwd, "planned-spec");
     create_spec(cwd, "active-spec");
-    
+
     update_spec(cwd, "002-active-spec", &[("status", "in-progress")]);
 
     // Filter for planned
@@ -95,7 +94,7 @@ fn test_list_filter_by_assignee() {
     init_project(cwd, true);
     create_spec(cwd, "spec-one");
     create_spec(cwd, "spec-two");
-    
+
     update_spec(cwd, "001-spec-one", &[("assignee", "alice")]);
     update_spec(cwd, "002-spec-two", &[("assignee", "bob")]);
 

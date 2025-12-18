@@ -1,20 +1,16 @@
 //! Stats command implementation
 
 use colored::Colorize;
-use leanspec_core::{SpecLoader, SpecStats, Insights, SpecStatus, SpecPriority};
+use leanspec_core::{Insights, SpecLoader, SpecPriority, SpecStats, SpecStatus};
 use std::error::Error;
 
-pub fn run(
-    specs_dir: &str,
-    detailed: bool,
-    output_format: &str,
-) -> Result<(), Box<dyn Error>> {
+pub fn run(specs_dir: &str, detailed: bool, output_format: &str) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
-    
+
     let stats = SpecStats::compute(&specs);
     let insights = Insights::generate(&specs, &stats);
-    
+
     if output_format == "json" {
         #[derive(serde::Serialize)]
         struct StatsOutput {
@@ -27,44 +23,60 @@ pub fn run(
             sub_specs: usize,
             insights: Vec<InsightOutput>,
         }
-        
+
         #[derive(serde::Serialize)]
         struct InsightOutput {
             severity: String,
             message: String,
             related_specs: Vec<String>,
         }
-        
+
         let output = StatsOutput {
             total: stats.total,
-            by_status: stats.by_status.iter().map(|(k, v)| (k.to_string(), *v)).collect(),
-            by_priority: stats.by_priority.iter().map(|(k, v)| (k.to_string(), *v)).collect(),
+            by_status: stats
+                .by_status
+                .iter()
+                .map(|(k, v)| (k.to_string(), *v))
+                .collect(),
+            by_priority: stats
+                .by_priority
+                .iter()
+                .map(|(k, v)| (k.to_string(), *v))
+                .collect(),
             completion_percentage: stats.completion_percentage(),
             active_count: stats.active_count(),
             with_dependencies: stats.with_dependencies,
             sub_specs: stats.sub_specs,
-            insights: insights.messages.iter().map(|i| InsightOutput {
-                severity: format!("{:?}", i.severity),
-                message: i.message.clone(),
-                related_specs: i.related_specs.clone(),
-            }).collect(),
+            insights: insights
+                .messages
+                .iter()
+                .map(|i| InsightOutput {
+                    severity: format!("{:?}", i.severity),
+                    message: i.message.clone(),
+                    related_specs: i.related_specs.clone(),
+                })
+                .collect(),
         };
-        
+
         println!("{}", serde_json::to_string_pretty(&output)?);
         return Ok(());
     }
-    
+
     // Text output
     println!();
     println!("{}", "═".repeat(60).dimmed());
     println!("{}", " SPEC STATISTICS ".bold().cyan());
     println!("{}", "═".repeat(60).dimmed());
     println!();
-    
+
     // Summary
-    println!("{} {} specs", "📊".bold(), stats.total.to_string().green().bold());
+    println!(
+        "{} {} specs",
+        "📊".bold(),
+        stats.total.to_string().green().bold()
+    );
     println!();
-    
+
     // By status
     println!("{}", "By Status".bold());
     println!("{}", "─".repeat(30).dimmed());
@@ -79,11 +91,17 @@ pub fn run(
         if count > 0 || detailed {
             let bar_len = (count as f64 / stats.total as f64 * 30.0) as usize;
             let bar = "█".repeat(bar_len);
-            println!("  {} {:12} {:>4} {}", emoji, format!("{:?}", status), count, bar.cyan());
+            println!(
+                "  {} {:12} {:>4} {}",
+                emoji,
+                format!("{:?}", status),
+                count,
+                bar.cyan()
+            );
         }
     }
     println!();
-    
+
     // Completion
     let completion = stats.completion_percentage();
     let completion_bar_len = (completion / 100.0 * 30.0) as usize;
@@ -97,7 +115,7 @@ pub fn run(
         completion_empty.dimmed()
     );
     println!();
-    
+
     // By priority
     println!("{}", "By Priority".bold());
     println!("{}", "─".repeat(30).dimmed());
@@ -119,7 +137,7 @@ pub fn run(
         println!("  ⚪ {:12} {:>4}", "None", stats.no_priority);
     }
     println!();
-    
+
     // Top tags
     if !stats.by_tag.is_empty() {
         println!("{}", "Top Tags".bold());
@@ -129,7 +147,7 @@ pub fn run(
         }
         println!();
     }
-    
+
     // Dependencies
     if detailed {
         println!("{}", "Dependencies".bold());
@@ -139,17 +157,17 @@ pub fn run(
         println!("  Sub-specs:               {}", stats.sub_specs);
         println!();
     }
-    
+
     // Insights
     if !insights.messages.is_empty() {
         println!("{}", "═".repeat(60).dimmed());
         println!("{}", " INSIGHTS ".bold().yellow());
         println!("{}", "═".repeat(60).dimmed());
         println!();
-        
+
         for insight in &insights.messages {
             println!("  {} {}", insight.severity, insight.message);
-            
+
             if detailed && !insight.related_specs.is_empty() {
                 for spec in insight.related_specs.iter().take(5) {
                     println!("      └─ {}", spec.dimmed());
@@ -161,6 +179,6 @@ pub fn run(
         }
         println!();
     }
-    
+
     Ok(())
 }

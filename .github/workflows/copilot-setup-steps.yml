@@ -31,6 +31,18 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.26.0"
+          run_install: false
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build lean-spec CLI (TypeScript)
+        run: pnpm --filter lean-spec run build
+
       - name: Set up Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 

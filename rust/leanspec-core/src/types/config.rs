@@ -20,19 +20,19 @@ pub struct LeanSpecConfig {
     /// Specs directory (default: "specs")
     #[serde(default = "default_specs_dir")]
     pub specs_dir: PathBuf,
-    
+
     /// Default template name
     #[serde(default)]
     pub default_template: Option<String>,
-    
+
     /// Pattern for spec directories (e.g., "NNN-name")
     #[serde(default)]
     pub pattern: Option<String>,
-    
+
     /// Frontmatter configuration
     #[serde(default)]
     pub frontmatter: FrontmatterConfig,
-    
+
     /// Validation configuration
     #[serde(default)]
     pub validation: ValidationConfig,
@@ -68,23 +68,23 @@ pub struct ValidationConfig {
     /// Maximum number of lines (default: 400)
     #[serde(default = "default_max_lines")]
     pub max_lines: usize,
-    
+
     /// Maximum token count (default: 3500)
     #[serde(default = "default_max_tokens")]
     pub max_tokens: usize,
-    
+
     /// Warning token threshold (default: 2000)
     #[serde(default = "default_warn_tokens")]
     pub warn_tokens: usize,
-    
+
     /// Required sections in spec content
     #[serde(default)]
     pub required_sections: Vec<String>,
-    
+
     /// Whether to enforce checklist verification when marking complete (default: true)
     #[serde(default = "default_enforce_completion_checklist")]
     pub enforce_completion_checklist: bool,
-    
+
     /// Whether to allow completion override with --force (default: true)
     #[serde(default = "default_allow_completion_override")]
     pub allow_completion_override: bool,
@@ -129,7 +129,7 @@ impl LeanSpecConfig {
         let content = std::fs::read_to_string(path).map_err(ConfigError::Io)?;
         serde_yaml::from_str(&content).map_err(ConfigError::Parse)
     }
-    
+
     /// Load configuration from the default location (.lean-spec/config.yaml)
     pub fn load_default() -> Result<Self, ConfigError> {
         let config_path = PathBuf::from(".lean-spec/config.yaml");
@@ -169,7 +169,7 @@ impl std::error::Error for ConfigError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_default_config() {
         let config = LeanSpecConfig::default();
@@ -179,7 +179,7 @@ mod tests {
         assert!(config.validation.enforce_completion_checklist);
         assert!(config.validation.allow_completion_override);
     }
-    
+
     #[test]
     fn test_parse_config() {
         let yaml = r#"
@@ -198,7 +198,7 @@ validation:
         assert_eq!(config.default_template, Some("minimal".to_string()));
         assert_eq!(config.validation.max_lines, 500);
     }
-    
+
     #[test]
     fn test_parse_config_with_completion_settings() {
         let yaml = r#"

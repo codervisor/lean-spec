@@ -101,7 +101,9 @@ async fn test_search_missing_query_param() {
 
     let result = call_tool("search", json!({})).await;
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Missing required parameter: query"));
+    assert!(result
+        .unwrap_err()
+        .contains("Missing required parameter: query"));
 }
 
 #[tokio::test]
@@ -145,9 +147,9 @@ async fn test_search_output_structure() {
 #[tokio::test]
 async fn test_search_results_sorted_by_score() {
     let temp = create_test_project(&[
-        ("001-auth-login", "planned", None),         // Has "auth" in title
-        ("002-user-management", "planned", None),    // No "auth"
-        ("003-authentication", "planned", None),     // Has "auth" in path and title
+        ("001-auth-login", "planned", None),      // Has "auth" in title
+        ("002-user-management", "planned", None), // No "auth"
+        ("003-authentication", "planned", None),  // Has "auth" in path and title
     ]);
     set_specs_dir_env(&temp);
 

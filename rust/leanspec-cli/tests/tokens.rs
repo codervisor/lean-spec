@@ -5,7 +5,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_tokens_single_spec() {
     let ctx = TestContext::new();

@@ -34,8 +34,11 @@ impl CompletionVerifier {
             return Ok(CompletionVerificationResult::success());
         }
 
-        let unchecked: Vec<CheckboxItem> =
-            checkboxes.iter().filter(|cb| !cb.checked).cloned().collect();
+        let unchecked: Vec<CheckboxItem> = checkboxes
+            .iter()
+            .filter(|cb| !cb.checked)
+            .cloned()
+            .collect();
 
         let progress = Progress::calculate(&checkboxes);
 
@@ -102,10 +105,7 @@ impl CompletionVerifier {
 
         if !sections.is_empty() {
             let section_list: Vec<_> = sections.iter().map(|s| s.as_str()).collect();
-            suggestions.push(format!(
-                "Focus on sections: {}",
-                section_list.join(", ")
-            ));
+            suggestions.push(format!("Focus on sections: {}", section_list.join(", ")));
         }
 
         suggestions.push("Or use --force to mark complete anyway".to_string());

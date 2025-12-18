@@ -7,18 +7,15 @@ use leanspec_core::SpecLoader;
 use std::error::Error;
 use std::process::Command;
 
-pub fn run(
-    specs_dir: &str,
-    spec: &str,
-    editor: Option<String>,
-) -> Result<(), Box<dyn Error>> {
+pub fn run(specs_dir: &str, spec: &str, editor: Option<String>) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
-    
-    let spec_info = loader.load(spec)?
+
+    let spec_info = loader
+        .load(spec)?
         .ok_or_else(|| format!("Spec not found: {}", spec))?;
-    
+
     let file_path = spec_info.file_path.to_string_lossy().to_string();
-    
+
     // Determine editor to use
     let editor_cmd = editor
         .or_else(|| std::env::var("EDITOR").ok())
@@ -33,13 +30,15 @@ pub fn run(
                 "xdg-open".to_string()
             }
         });
-    
-    println!("Opening {} in {}...", spec_info.path.cyan(), editor_cmd.cyan());
-    
-    let status = Command::new(&editor_cmd)
-        .arg(&file_path)
-        .status();
-    
+
+    println!(
+        "Opening {} in {}...",
+        spec_info.path.cyan(),
+        editor_cmd.cyan()
+    );
+
+    let status = Command::new(&editor_cmd).arg(&file_path).status();
+
     match status {
         Ok(exit_status) => {
             if exit_status.success() {
@@ -60,7 +59,7 @@ pub fn run(
                     }
                 }
             }
-            
+
             Err(format!("Failed to open editor '{}': {}", editor_cmd, e).into())
         }
     }

@@ -128,7 +128,7 @@ async fn test_link_multiple_dependencies() {
     .await;
     assert!(result1.is_ok());
 
-    // Link to second dependency  
+    // Link to second dependency
     let result2 = call_tool(
         "link",
         json!({
@@ -141,8 +141,7 @@ async fn test_link_multiple_dependencies() {
     assert!(result2.is_ok() || result2.is_err());
 
     // Verify at least first dependency exists
-    let content =
-        std::fs::read_to_string(temp.path().join("specs/003-feature/README.md")).unwrap();
+    let content = std::fs::read_to_string(temp.path().join("specs/003-feature/README.md")).unwrap();
     assert!(content.contains("001-base-a"));
 }
 

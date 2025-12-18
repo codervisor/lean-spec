@@ -5,7 +5,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_stats_basic() {
     let ctx = TestContext::new();
@@ -24,7 +23,9 @@ fn test_stats_basic() {
     // Should show statistics
     let stdout_lower = result.stdout.to_lowercase();
     assert!(
-        stdout_lower.contains("total") || stdout_lower.contains("specs") || stdout_lower.contains("3"),
+        stdout_lower.contains("total")
+            || stdout_lower.contains("specs")
+            || stdout_lower.contains("3"),
         "should show total count"
     );
 }
@@ -73,5 +74,9 @@ fn test_stats_shows_status_breakdown() {
     assert!(result.success);
     // Should show status breakdown
     let stdout_lower = result.stdout.to_lowercase();
-    assert!(stdout_lower.contains("planned") || stdout_lower.contains("complete") || stdout_lower.contains("progress"));
+    assert!(
+        stdout_lower.contains("planned")
+            || stdout_lower.contains("complete")
+            || stdout_lower.contains("progress")
+    );
 }

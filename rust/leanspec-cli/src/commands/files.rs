@@ -15,16 +15,16 @@ pub fn run(
     output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
-    
-    let spec_info = loader.load(spec)?
+
+    let spec_info = loader
+        .load(spec)?
         .ok_or_else(|| format!("Spec not found: {}", spec))?;
-    
+
     // Get the spec directory (parent of README.md)
-    let spec_dir = spec_info.file_path.parent()
-        .ok_or("Invalid spec path")?;
-    
+    let spec_dir = spec_info.file_path.parent().ok_or("Invalid spec path")?;
+
     let mut files: Vec<FileInfo> = Vec::new();
-    
+
     // Collect all files in the spec directory
     for entry in WalkDir::new(spec_dir)
         .min_depth(1)
@@ -34,19 +34,20 @@ pub fn run(
     {
         if entry.file_type().is_file() {
             let path = entry.path();
-            let rel_path = path.strip_prefix(spec_dir)
+            let rel_path = path
+                .strip_prefix(spec_dir)
                 .unwrap_or(path)
                 .to_string_lossy()
                 .to_string();
-            
+
             let size = if show_size {
                 path.metadata().map(|m| m.len()).ok()
             } else {
                 None
             };
-            
+
             let file_type = get_file_type(path);
-            
+
             files.push(FileInfo {
                 path: rel_path,
                 size,
@@ -54,10 +55,10 @@ pub fn run(
             });
         }
     }
-    
+
     // Sort files by path
     files.sort_by(|a, b| a.path.cmp(&b.path));
-    
+
     if output_format == "json" {
         #[derive(serde::Serialize)]
         struct Output {
@@ -65,20 +66,20 @@ pub fn run(
             directory: String,
             files: Vec<FileInfo>,
         }
-        
+
         let output = Output {
             spec: spec_info.path.clone(),
             directory: spec_dir.to_string_lossy().to_string(),
             files,
         };
-        
+
         println!("{}", serde_json::to_string_pretty(&output)?);
     } else {
         println!();
         println!("{}: {}", "Spec".bold(), spec_info.path.cyan());
         println!("{}: {}", "Directory".bold(), spec_dir.display());
         println!();
-        
+
         if files.is_empty() {
             println!("{}", "No files found (except README.md)".yellow());
         } else {
@@ -91,7 +92,7 @@ pub fn run(
                     "config" => "⚙️",
                     _ => "📁",
                 };
-                
+
                 if let Some(size) = file.size {
                     let size_str = format_size(size);
                     println!("  {} {} {}", icon, file.path.cyan(), size_str.dimmed());
@@ -100,11 +101,11 @@ pub fn run(
                 }
             }
         }
-        
+
         println!();
         println!("{} files found", files.len().to_string().green());
     }
-    
+
     Ok(())
 }
 
@@ -117,11 +118,12 @@ struct FileInfo {
 }
 
 fn get_file_type(path: &Path) -> String {
-    let ext = path.extension()
+    let ext = path
+        .extension()
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_lowercase();
-    
+
     match ext.as_str() {
         "md" | "markdown" => "markdown".to_string(),
         "png" | "jpg" | "jpeg" | "gif" | "svg" | "webp" => "image".to_string(),
@@ -135,7 +137,7 @@ fn get_file_type(path: &Path) -> String {
 fn format_size(bytes: u64) -> String {
     const KB: u64 = 1024;
     const MB: u64 = KB * 1024;
-    
+
     if bytes >= MB {
         format!("({:.1} MB)", bytes as f64 / MB as f64)
     } else if bytes >= KB {

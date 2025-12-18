@@ -9,7 +9,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_view_by_full_name() {
     let ctx = TestContext::new();
@@ -68,10 +67,11 @@ fn test_view_shows_frontmatter_fields() {
     let cwd = ctx.path();
 
     init_project(cwd, true);
-    create_spec_with_options(cwd, "detailed-spec", &[
-        ("priority", "high"),
-        ("tags", "api,v2"),
-    ]);
+    create_spec_with_options(
+        cwd,
+        "detailed-spec",
+        &[("priority", "high"), ("tags", "api,v2")],
+    );
 
     let result = view_spec(cwd, "001-detailed-spec");
     assert!(result.success);

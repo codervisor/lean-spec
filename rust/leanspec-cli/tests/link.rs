@@ -9,7 +9,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_link_depends_on() {
     let ctx = TestContext::new();
@@ -30,7 +29,10 @@ fn test_link_depends_on() {
         assert!(dep_strs.contains(&"001-database"));
     } else {
         // Might be stored differently, check content contains the dependency
-        assert!(content.contains("001-database"), "should contain dependency reference");
+        assert!(
+            content.contains("001-database"),
+            "should contain dependency reference"
+        );
     }
 }
 

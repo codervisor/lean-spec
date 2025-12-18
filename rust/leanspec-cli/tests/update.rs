@@ -10,7 +10,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_update_status() {
     let ctx = TestContext::new();
@@ -24,7 +23,10 @@ fn test_update_status() {
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
-    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("in-progress"));
+    assert_eq!(
+        fm.get("status").and_then(|v| v.as_str()),
+        Some("in-progress")
+    );
 }
 
 #[test]
@@ -57,7 +59,10 @@ fn test_update_priority() {
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
-    assert_eq!(fm.get("priority").and_then(|v| v.as_str()), Some("critical"));
+    assert_eq!(
+        fm.get("priority").and_then(|v| v.as_str()),
+        Some("critical")
+    );
 }
 
 #[test]
@@ -73,7 +78,10 @@ fn test_update_assignee() {
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
-    assert_eq!(fm.get("assignee").and_then(|v| v.as_str()), Some("john-doe"));
+    assert_eq!(
+        fm.get("assignee").and_then(|v| v.as_str()),
+        Some("john-doe")
+    );
 }
 
 #[test]
@@ -84,7 +92,10 @@ fn test_update_add_tags() {
     init_project(cwd, true);
     create_spec(cwd, "my-spec");
 
-    let result = exec_cli(&["update", "001-my-spec", "--add-tags", "api,frontend"], cwd);
+    let result = exec_cli(
+        &["update", "001-my-spec", "--add-tags", "api,frontend"],
+        cwd,
+    );
     assert!(result.success);
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
@@ -142,7 +153,10 @@ fn test_update_by_number() {
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
-    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("in-progress"));
+    assert_eq!(
+        fm.get("status").and_then(|v| v.as_str()),
+        Some("in-progress")
+    );
 }
 
 #[test]

@@ -9,7 +9,6 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_board_group_by_status() {
     let ctx = TestContext::new();
@@ -48,7 +47,11 @@ fn test_board_group_by_priority() {
 
     let stdout_lower = result.stdout.to_lowercase();
     // Should show priority groups
-    assert!(stdout_lower.contains("low") || stdout_lower.contains("high") || stdout_lower.contains("critical"));
+    assert!(
+        stdout_lower.contains("low")
+            || stdout_lower.contains("high")
+            || stdout_lower.contains("critical")
+    );
 }
 
 #[test]
@@ -59,7 +62,7 @@ fn test_board_group_by_assignee() {
     init_project(cwd, true);
     create_spec(cwd, "alice-task");
     create_spec(cwd, "bob-task");
-    
+
     update_spec(cwd, "001-alice-task", &[("assignee", "alice")]);
     update_spec(cwd, "002-bob-task", &[("assignee", "bob")]);
 
@@ -68,7 +71,9 @@ fn test_board_group_by_assignee() {
 
     // Should show assignee groups
     assert!(
-        result.stdout.contains("alice") || result.stdout.contains("bob") || result.stdout.contains("Unassigned"),
+        result.stdout.contains("alice")
+            || result.stdout.contains("bob")
+            || result.stdout.contains("Unassigned"),
         "should show assignee groupings"
     );
 }
@@ -114,5 +119,7 @@ fn test_board_single_spec() {
 
     let result = get_board(cwd);
     assert!(result.success);
-    assert!(result.stdout.contains("only-spec") || result.stdout.to_lowercase().contains("planned"));
+    assert!(
+        result.stdout.contains("only-spec") || result.stdout.to_lowercase().contains("planned")
+    );
 }

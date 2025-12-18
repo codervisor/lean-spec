@@ -8,14 +8,17 @@
 mod common;
 use common::*;
 
-
 #[test]
 fn test_search_basic() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
 
     init_project(cwd, true);
-    create_spec_with_options(cwd, "authentication", &[("title", "User Authentication System")]);
+    create_spec_with_options(
+        cwd,
+        "authentication",
+        &[("title", "User Authentication System")],
+    );
     create_spec(cwd, "database");
     create_spec(cwd, "api");
 

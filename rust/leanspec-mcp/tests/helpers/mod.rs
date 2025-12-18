@@ -172,11 +172,11 @@ pub fn set_specs_dir_env(temp_dir: &TempDir) {
     // Use atomic counter to create unique env var name per test
     let test_id = TEST_COUNTER.fetch_add(1, Ordering::SeqCst);
     let specs_path = specs_dir(temp_dir);
-    
+
     // Set the env var - note that parallel tests may still interfere
     // For true isolation, consider using a per-test env var or mutex
     std::env::set_var("LEANSPEC_SPECS_DIR", specs_path);
-    
+
     // Store test_id in temp var (unused but may help with debugging)
     std::env::set_var("LEANSPEC_TEST_ID", test_id.to_string());
 }

@@ -1,22 +1,18 @@
 //! Board command implementation
 
 use colored::Colorize;
-use leanspec_core::{SpecLoader, SpecStatus, SpecPriority};
+use leanspec_core::{SpecLoader, SpecPriority, SpecStatus};
 use std::collections::HashMap;
 use std::error::Error;
 
-pub fn run(
-    specs_dir: &str,
-    group_by: &str,
-    output_format: &str,
-) -> Result<(), Box<dyn Error>> {
+pub fn run(specs_dir: &str, group_by: &str, output_format: &str) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
-    
+
     if output_format == "json" {
         return print_json(&specs, group_by);
     }
-    
+
     match group_by {
         "status" => print_by_status(&specs),
         "priority" => print_by_priority(&specs),
@@ -26,10 +22,11 @@ pub fn run(
             return Err(format!(
                 "Invalid group-by value: {}. Valid: status, priority, assignee, tag",
                 group_by
-            ).into());
+            )
+            .into());
         }
     }
-    
+
     Ok(())
 }
 
@@ -40,28 +37,36 @@ fn print_json(specs: &[leanspec_core::SpecInfo], group_by: &str) -> Result<(), B
         groups: Vec<GroupOutput>,
         total: usize,
     }
-    
+
     #[derive(serde::Serialize)]
     struct GroupOutput {
         name: String,
         count: usize,
         specs: Vec<SpecBrief>,
     }
-    
+
     #[derive(serde::Serialize)]
     struct SpecBrief {
         path: String,
         title: String,
         status: String,
     }
-    
+
     let mut groups: HashMap<String, Vec<&leanspec_core::SpecInfo>> = HashMap::new();
-    
+
     for spec in specs {
         let key = match group_by {
             "status" => spec.frontmatter.status.to_string(),
-            "priority" => spec.frontmatter.priority.map(|p| p.to_string()).unwrap_or_else(|| "none".to_string()),
-            "assignee" => spec.frontmatter.assignee.clone().unwrap_or_else(|| "unassigned".to_string()),
+            "priority" => spec
+                .frontmatter
+                .priority
+                .map(|p| p.to_string())
+                .unwrap_or_else(|| "none".to_string()),
+            "assignee" => spec
+                .frontmatter
+                .assignee
+                .clone()
+                .unwrap_or_else(|| "unassigned".to_string()),
             "tag" => {
                 for tag in &spec.frontmatter.tags {
                     groups.entry(tag.clone()).or_default().push(spec);
@@ -72,21 +77,27 @@ fn print_json(specs: &[leanspec_core::SpecInfo], group_by: &str) -> Result<(), B
         };
         groups.entry(key).or_default().push(spec);
     }
-    
+
     let output = BoardOutput {
         group_by: group_by.to_string(),
         total: specs.len(),
-        groups: groups.into_iter().map(|(name, group_specs)| GroupOutput {
-            name,
-            count: group_specs.len(),
-            specs: group_specs.iter().map(|s| SpecBrief {
-                path: s.path.clone(),
-                title: s.title.clone(),
-                status: s.frontmatter.status.to_string(),
-            }).collect(),
-        }).collect(),
+        groups: groups
+            .into_iter()
+            .map(|(name, group_specs)| GroupOutput {
+                name,
+                count: group_specs.len(),
+                specs: group_specs
+                    .iter()
+                    .map(|s| SpecBrief {
+                        path: s.path.clone(),
+                        title: s.title.clone(),
+                        status: s.frontmatter.status.to_string(),
+                    })
+                    .collect(),
+            })
+            .collect(),
     };
-    
+
     println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())
 }
@@ -98,25 +109,26 @@ fn print_by_status(specs: &[leanspec_core::SpecInfo]) {
         (SpecStatus::Complete, "Complete", "✅"),
         (SpecStatus::Archived, "Archived", "📦"),
     ];
-    
+
     println!();
     println!("{}", "═".repeat(60).dimmed());
     println!("{}", " PROJECT BOARD ".bold().cyan());
     println!("{}", "═".repeat(60).dimmed());
-    
+
     for (status, label, emoji) in statuses {
-        let group: Vec<_> = specs.iter()
+        let group: Vec<_> = specs
+            .iter()
             .filter(|s| s.frontmatter.status == status)
             .collect();
-        
+
         if group.is_empty() {
             continue;
         }
-        
+
         println!();
         println!("{} {} ({})", emoji, label.bold(), group.len());
         println!("{}", "─".repeat(40).dimmed());
-        
+
         for spec in &group {
             let priority_indicator = match spec.frontmatter.priority {
                 Some(SpecPriority::Critical) => "🔴",
@@ -125,15 +137,20 @@ fn print_by_status(specs: &[leanspec_core::SpecInfo]) {
                 Some(SpecPriority::Low) => "🟢",
                 None => "⚪",
             };
-            
-            println!("  {} {} - {}", priority_indicator, spec.path.cyan(), spec.title.dimmed());
-            
+
+            println!(
+                "  {} {} - {}",
+                priority_indicator,
+                spec.path.cyan(),
+                spec.title.dimmed()
+            );
+
             if let Some(assignee) = &spec.frontmatter.assignee {
                 println!("      👤 {}", assignee.dimmed());
             }
         }
     }
-    
+
     println!();
     println!("{}", "═".repeat(60).dimmed());
     println!("Total: {} specs", specs.len().to_string().green());
@@ -147,74 +164,93 @@ fn print_by_priority(specs: &[leanspec_core::SpecInfo]) {
         (Some(SpecPriority::Low), "Low", "🟢"),
         (None, "No Priority", "⚪"),
     ];
-    
+
     println!();
     println!("{}", "═".repeat(60).dimmed());
     println!("{}", " BY PRIORITY ".bold().cyan());
     println!("{}", "═".repeat(60).dimmed());
-    
+
     for (priority, label, emoji) in priorities {
-        let group: Vec<_> = specs.iter()
+        let group: Vec<_> = specs
+            .iter()
             .filter(|s| s.frontmatter.priority == priority)
             .collect();
-        
+
         if group.is_empty() {
             continue;
         }
-        
+
         println!();
         println!("{} {} ({})", emoji, label.bold(), group.len());
         println!("{}", "─".repeat(40).dimmed());
-        
+
         for spec in &group {
             let status_emoji = spec.frontmatter.status_emoji();
-            println!("  {} {} - {}", status_emoji, spec.path.cyan(), spec.title.dimmed());
+            println!(
+                "  {} {} - {}",
+                status_emoji,
+                spec.path.cyan(),
+                spec.title.dimmed()
+            );
         }
     }
-    
+
     println!();
 }
 
 fn print_by_assignee(specs: &[leanspec_core::SpecInfo]) {
     let mut groups: HashMap<String, Vec<&leanspec_core::SpecInfo>> = HashMap::new();
-    
+
     for spec in specs {
-        let key = spec.frontmatter.assignee.clone().unwrap_or_else(|| "Unassigned".to_string());
+        let key = spec
+            .frontmatter
+            .assignee
+            .clone()
+            .unwrap_or_else(|| "Unassigned".to_string());
         groups.entry(key).or_default().push(spec);
     }
-    
+
     println!();
     println!("{}", "═".repeat(60).dimmed());
     println!("{}", " BY ASSIGNEE ".bold().cyan());
     println!("{}", "═".repeat(60).dimmed());
-    
+
     // Sort: Unassigned last
     let mut keys: Vec<_> = groups.keys().cloned().collect();
     keys.sort_by(|a, b| {
-        if a == "Unassigned" { std::cmp::Ordering::Greater }
-        else if b == "Unassigned" { std::cmp::Ordering::Less }
-        else { a.cmp(b) }
+        if a == "Unassigned" {
+            std::cmp::Ordering::Greater
+        } else if b == "Unassigned" {
+            std::cmp::Ordering::Less
+        } else {
+            a.cmp(b)
+        }
     });
-    
+
     for key in keys {
         let group = &groups[&key];
-        
+
         println!();
         println!("👤 {} ({})", key.bold(), group.len());
         println!("{}", "─".repeat(40).dimmed());
-        
+
         for spec in group {
             let status_emoji = spec.frontmatter.status_emoji();
-            println!("  {} {} - {}", status_emoji, spec.path.cyan(), spec.title.dimmed());
+            println!(
+                "  {} {} - {}",
+                status_emoji,
+                spec.path.cyan(),
+                spec.title.dimmed()
+            );
         }
     }
-    
+
     println!();
 }
 
 fn print_by_tag(specs: &[leanspec_core::SpecInfo]) {
     let mut groups: HashMap<String, Vec<&leanspec_core::SpecInfo>> = HashMap::new();
-    
+
     for spec in specs {
         if spec.frontmatter.tags.is_empty() {
             groups.entry("No Tags".to_string()).or_default().push(spec);
@@ -224,30 +260,35 @@ fn print_by_tag(specs: &[leanspec_core::SpecInfo]) {
             }
         }
     }
-    
+
     println!();
     println!("{}", "═".repeat(60).dimmed());
     println!("{}", " BY TAG ".bold().cyan());
     println!("{}", "═".repeat(60).dimmed());
-    
+
     // Sort by count descending
     let mut pairs: Vec<_> = groups.iter().collect();
     pairs.sort_by(|a, b| b.1.len().cmp(&a.1.len()));
-    
+
     for (tag, group) in pairs {
         println!();
         println!("🏷️  {} ({})", tag.bold(), group.len());
         println!("{}", "─".repeat(40).dimmed());
-        
+
         for spec in group.iter().take(10) {
             let status_emoji = spec.frontmatter.status_emoji();
-            println!("  {} {} - {}", status_emoji, spec.path.cyan(), spec.title.dimmed());
+            println!(
+                "  {} {} - {}",
+                status_emoji,
+                spec.path.cyan(),
+                spec.title.dimmed()
+            );
         }
-        
+
         if group.len() > 10 {
             println!("  ... and {} more", group.len() - 10);
         }
     }
-    
+
     println!();
 }

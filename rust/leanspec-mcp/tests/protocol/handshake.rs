@@ -11,7 +11,7 @@ use serde_json::json;
 #[test]
 fn test_initialize_request_structure() {
     let request = build_initialize_request(1);
-    
+
     assert_eq!(request["method"], "initialize");
     assert_eq!(request["params"]["protocolVersion"], "2024-11-05");
     assert!(request["params"]["capabilities"].is_object());
@@ -36,7 +36,7 @@ fn test_initialize_response_structure() {
             }
         }
     });
-    
+
     assert_success_response(&response);
     assert!(response["result"]["protocolVersion"].is_string());
     assert!(response["result"]["capabilities"].is_object());
@@ -61,7 +61,7 @@ fn test_server_capabilities_tools() {
             }
         }
     });
-    
+
     assert!(response["result"]["capabilities"]["tools"].is_object());
 }
 
@@ -69,7 +69,7 @@ fn test_server_capabilities_tools() {
 #[test]
 fn test_protocol_version_format() {
     let version = "2024-11-05";
-    
+
     // Version should be in YYYY-MM-DD format
     assert_eq!(version.len(), 10);
     assert!(version.chars().nth(4) == Some('-'));
@@ -84,7 +84,7 @@ fn test_initialized_notification() {
         "method": "notifications/initialized",
         "params": {}
     });
-    
+
     assert!(notification.get("id").is_none());
     assert_eq!(notification["method"], "notifications/initialized");
 }
@@ -93,7 +93,7 @@ fn test_initialized_notification() {
 #[test]
 fn test_tools_list_request() {
     let request = build_tools_list_request(2);
-    
+
     assert_eq!(request["method"], "tools/list");
     assert_eq!(request["id"], 2);
 }
@@ -117,10 +117,10 @@ fn test_tools_list_response_structure() {
             ]
         }
     });
-    
+
     assert_success_response(&response);
     assert!(response["result"]["tools"].is_array());
-    
+
     let tool = &response["result"]["tools"][0];
     assert!(tool["name"].is_string());
     assert!(tool["description"].is_string());
@@ -145,7 +145,7 @@ fn test_tool_definition_schema() {
             "additionalProperties": false
         }
     });
-    
+
     assert_eq!(tool["name"], "create");
     assert!(tool["inputSchema"]["properties"]["name"].is_object());
     assert!(tool["inputSchema"]["required"].is_array());

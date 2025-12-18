@@ -110,8 +110,7 @@ async fn test_unlink_one_of_multiple() {
     assert!(result.is_ok());
 
     // Verify only one dependency was removed
-    let content =
-        std::fs::read_to_string(temp.path().join("specs/003-feature/README.md")).unwrap();
+    let content = std::fs::read_to_string(temp.path().join("specs/003-feature/README.md")).unwrap();
     assert!(!content.contains("001-base-a"));
     assert!(content.contains("002-base-b"));
 }

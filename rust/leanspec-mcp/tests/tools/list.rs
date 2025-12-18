@@ -100,11 +100,7 @@ async fn test_list_combined_filters() {
     ]);
     set_specs_dir_env(&temp);
 
-    let result = call_tool(
-        "list",
-        json!({ "status": "planned", "priority": "high" }),
-    )
-    .await;
+    let result = call_tool("list", json!({ "status": "planned", "priority": "high" })).await;
     assert!(result.is_ok());
 
     let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();

@@ -3,11 +3,11 @@
 //! Backfill timestamps from git history for specs.
 
 use colored::Colorize;
+use leanspec_core::SpecLoader;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
-use leanspec_core::SpecLoader;
 
 pub fn run(
     specs_dir: &str,
@@ -21,41 +21,47 @@ pub fn run(
 ) -> Result<(), Box<dyn Error>> {
     // Check if we're in a git repository
     if !is_git_repository() {
-        return Err("Not in a git repository. Git history is required for backfilling timestamps.".into());
+        return Err(
+            "Not in a git repository. Git history is required for backfilling timestamps.".into(),
+        );
     }
-    
+
     let loader = SpecLoader::new(specs_dir);
     let all_specs = loader.load_all()?;
-    
+
     // Filter to specific specs if provided
     let specs_to_process: Vec<_> = if let Some(ref target_specs) = specs {
         all_specs
             .iter()
-            .filter(|s| target_specs.iter().any(|t| s.path.contains(t) || s.name().contains(t)))
+            .filter(|s| {
+                target_specs
+                    .iter()
+                    .any(|t| s.path.contains(t) || s.name().contains(t))
+            })
             .collect()
     } else {
         all_specs.iter().collect()
     };
-    
+
     if specs_to_process.is_empty() {
         println!("No specs found to backfill");
         return Ok(());
     }
-    
+
     if dry_run {
         println!("{}", "🔍 Dry run mode - no changes will be made".cyan());
         println!();
     }
-    
+
     println!(
         "Analyzing git history for {} spec{}...\n",
         specs_to_process.len(),
         if specs_to_process.len() == 1 { "" } else { "s" }
     );
-    
+
     let mut updated_count = 0;
     let mut skipped_count = 0;
-    
+
     #[derive(serde::Serialize)]
     struct BackfillResult {
         spec_path: String,
@@ -65,17 +71,17 @@ pub fn run(
         assignee: Option<String>,
         source: String,
     }
-    
+
     let mut results = Vec::new();
-    
+
     for spec in &specs_to_process {
         let spec_readme = spec.file_path.clone();
-        
+
         if !spec_readme.exists() {
             skipped_count += 1;
             continue;
         }
-        
+
         // Check if file is tracked in git
         if !file_exists_in_git(&spec_readme) {
             if output_format != "json" {
@@ -92,14 +98,14 @@ pub fn run(
             skipped_count += 1;
             continue;
         }
-        
+
         // Get git timestamps
         let git_data = extract_git_timestamps(&spec_readme, include_assignee);
-        
+
         // Check if spec already has timestamps (unless force)
         let has_created_at = spec.frontmatter.created_at.is_some();
         let has_updated_at = spec.frontmatter.updated_at.is_some();
-        
+
         if !force && has_created_at && has_updated_at {
             if output_format != "json" {
                 println!("{} {} - Already complete", "✓".dimmed(), spec.name());
@@ -114,7 +120,7 @@ pub fn run(
             });
             continue;
         }
-        
+
         // Prepare updates
         let mut result = BackfillResult {
             spec_path: spec.path.clone(),
@@ -124,25 +130,25 @@ pub fn run(
             assignee: None,
             source: "git".to_string(),
         };
-        
+
         if let Some(created_at) = &git_data.created_at {
             if force || !has_created_at {
                 result.created_at = Some(created_at.clone());
             }
         }
-        
+
         if let Some(updated_at) = &git_data.updated_at {
             if force || !has_updated_at {
                 result.updated_at = Some(updated_at.clone());
             }
         }
-        
+
         if include_assignee {
             if let Some(assignee) = &git_data.assignee {
                 result.assignee = Some(assignee.clone());
             }
         }
-        
+
         if dry_run {
             if output_format != "json" {
                 println!("{} {} - Would update", "→".cyan(), spec.name());
@@ -164,7 +170,9 @@ pub fn run(
                 result.created_at.as_ref(),
                 result.updated_at.as_ref(),
                 result.assignee.as_ref(),
-            ).is_ok() {
+            )
+            .is_ok()
+            {
                 if output_format != "json" {
                     println!("{} {} - Updated", "✓".green(), spec.name());
                 }
@@ -176,15 +184,15 @@ pub fn run(
                 skipped_count += 1;
             }
         }
-        
+
         results.push(result);
     }
-    
+
     if output_format == "json" {
         println!("{}", serde_json::to_string_pretty(&results)?);
         return Ok(());
     }
-    
+
     println!();
     println!("{}", "─".repeat(60));
     println!("{}", "Summary:".bold());
@@ -196,12 +204,12 @@ pub fn run(
         println!("  {} updated", updated_count);
     }
     println!("  {} skipped", skipped_count);
-    
+
     if dry_run {
         println!();
         println!("{}", "ℹ  Run without --dry-run to apply changes".cyan());
     }
-    
+
     Ok(())
 }
 
@@ -234,7 +242,7 @@ fn extract_git_timestamps(path: &Path, include_assignee: bool) -> GitTimestampDa
         updated_at: None,
         assignee: None,
     };
-    
+
     // Get first commit date (created_at)
     if let Ok(output) = Command::new("git")
         .args(["log", "--follow", "--format=%aI", "--diff-filter=A", "--"])
@@ -248,7 +256,7 @@ fn extract_git_timestamps(path: &Path, include_assignee: bool) -> GitTimestampDa
             }
         }
     }
-    
+
     // Fallback: get oldest commit date
     if data.created_at.is_none() {
         if let Ok(output) = Command::new("git")
@@ -264,7 +272,7 @@ fn extract_git_timestamps(path: &Path, include_assignee: bool) -> GitTimestampDa
             }
         }
     }
-    
+
     // Get last commit date (updated_at)
     if let Ok(output) = Command::new("git")
         .args(["log", "-1", "--format=%aI", "--"])
@@ -278,7 +286,7 @@ fn extract_git_timestamps(path: &Path, include_assignee: bool) -> GitTimestampDa
             }
         }
     }
-    
+
     // Get first commit author (assignee)
     if include_assignee {
         if let Ok(output) = Command::new("git")
@@ -294,7 +302,7 @@ fn extract_git_timestamps(path: &Path, include_assignee: bool) -> GitTimestampDa
             }
         }
     }
-    
+
     data
 }
 
@@ -313,48 +321,48 @@ fn update_frontmatter_timestamps(
 ) -> Result<(), Box<dyn Error>> {
     // This is a simplified implementation
     // In production, we would properly parse and update YAML frontmatter
-    
+
     let content = fs::read_to_string(path)?;
-    
+
     // Check if file has frontmatter
     if !content.starts_with("---") {
         return Err("No frontmatter found".into());
     }
-    
+
     // Find the end of frontmatter
     let rest = &content[3..];
     if let Some(end_idx) = rest.find("---") {
         let frontmatter = &rest[..end_idx];
         let body = &rest[end_idx + 3..];
-        
+
         // Parse frontmatter as YAML-like and add/update fields
         // For now, just append timestamps if not present
         let mut new_frontmatter = frontmatter.trim().to_string();
-        
+
         // This is a simplified approach - a real implementation would use serde_yaml
         if !frontmatter.contains("created_at:") {
             if let Some(created_at_val) = created_at {
                 new_frontmatter.push_str(&format!("\ncreated_at: '{}'", created_at_val));
             }
         }
-        
+
         if !frontmatter.contains("updated_at:") {
             if let Some(updated_at_val) = updated_at {
                 new_frontmatter.push_str(&format!("\nupdated_at: '{}'", updated_at_val));
             }
         }
-        
+
         if !frontmatter.contains("assignee:") {
             if let Some(assignee_val) = assignee {
                 new_frontmatter.push_str(&format!("\nassignee: '{}'", assignee_val));
             }
         }
-        
+
         let new_content = format!("---\n{}\n---{}", new_frontmatter, body);
         fs::write(path, new_content)?;
-        
+
         return Ok(());
     }
-    
+
     Err("Invalid frontmatter format".into())
 }

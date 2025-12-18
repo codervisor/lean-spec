@@ -18,7 +18,7 @@ fn test_parse_error_response() {
             "message": "Parse error: invalid JSON"
         }
     });
-    
+
     assert_error_response(&response, -32700);
 }
 
@@ -33,7 +33,7 @@ fn test_invalid_request_error() {
             "message": "Invalid Request"
         }
     });
-    
+
     assert_error_response(&response, -32600);
 }
 
@@ -48,7 +48,7 @@ fn test_method_not_found_error() {
             "message": "Method not found: unknown/method"
         }
     });
-    
+
     assert_error_response(&response, -32601);
 }
 
@@ -63,7 +63,7 @@ fn test_invalid_params_error() {
             "message": "Invalid params: missing required field 'spec'"
         }
     });
-    
+
     assert_error_response(&response, -32602);
 }
 
@@ -78,7 +78,7 @@ fn test_internal_error() {
             "message": "Internal error"
         }
     });
-    
+
     assert_error_response(&response, -32603);
 }
 
@@ -93,7 +93,7 @@ fn test_tool_error() {
             "message": "Spec not found: 999-nonexistent"
         }
     });
-    
+
     assert_error_response(&response, -32000);
 }
 
@@ -113,7 +113,7 @@ fn test_error_with_data() {
             }
         }
     });
-    
+
     assert_error_response(&response, -32602);
     let error = response.get("error").unwrap();
     assert!(error.get("data").is_some());
@@ -132,7 +132,7 @@ fn test_error_preserves_id() {
             "message": "Method not found"
         }
     });
-    
+
     assert_eq!(response["id"], request_id);
 }
 
@@ -147,7 +147,7 @@ fn test_error_with_string_id() {
             "message": "Invalid params"
         }
     });
-    
+
     assert_eq!(response["id"], "request-abc-123");
     assert_error_response(&response, -32602);
 }
@@ -163,7 +163,7 @@ fn test_unknown_tool_error() {
             "message": "Unknown tool: nonexistent_tool"
         }
     });
-    
+
     assert_error_response(&response, -32000);
     assert!(response["error"]["message"]
         .as_str()
@@ -182,7 +182,7 @@ fn test_filesystem_error() {
             "message": "Failed to read spec file: Permission denied"
         }
     });
-    
+
     assert_error_response(&response, -32000);
 }
 
@@ -197,6 +197,6 @@ fn test_validation_error() {
             "message": "Validation failed: invalid frontmatter"
         }
     });
-    
+
     assert_error_response(&response, -32000);
 }

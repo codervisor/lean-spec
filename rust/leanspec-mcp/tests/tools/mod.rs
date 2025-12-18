@@ -1,14 +1,14 @@
 //! Tool tests for MCP server
 
-mod list;
-mod view;
+mod board;
 mod create;
-mod update;
-mod validate;
 mod deps;
 mod link;
-mod unlink;
+mod list;
 mod search;
-mod board;
-mod tokens;
 mod stats;
+mod tokens;
+mod unlink;
+mod update;
+mod validate;
+mod view;

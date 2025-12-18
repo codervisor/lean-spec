@@ -50,7 +50,7 @@ async fn test_create_spec_with_title() {
         .unwrap()
         .filter_map(|e| e.ok())
         .collect();
-    
+
     assert!(!entries.is_empty(), "No specs created");
     let content = std::fs::read_to_string(entries[0].path().join("README.md")).unwrap();
     assert!(content.contains("Authentication System"));
@@ -76,7 +76,7 @@ async fn test_create_spec_with_status() {
         .unwrap()
         .filter_map(|e| e.ok())
         .collect();
-    
+
     assert!(!entries.is_empty(), "No specs created");
     let content = std::fs::read_to_string(entries[0].path().join("README.md")).unwrap();
     assert!(content.contains("status:"));
@@ -102,7 +102,7 @@ async fn test_create_spec_with_priority() {
         .unwrap()
         .filter_map(|e| e.ok())
         .collect();
-    
+
     assert!(!entries.is_empty(), "No specs created");
 }
 
@@ -140,7 +140,9 @@ async fn test_create_spec_missing_name() {
 
     let result = call_tool("create", json!({})).await;
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Missing required parameter: name"));
+    assert!(result
+        .unwrap_err()
+        .contains("Missing required parameter: name"));
 }
 
 #[tokio::test]
@@ -182,10 +184,10 @@ async fn test_create_spec_all_options() {
         .unwrap()
         .filter_map(|e| e.ok())
         .collect();
-    
+
     // Should have created at least one spec
     assert!(!entries.is_empty());
-    
+
     let content = std::fs::read_to_string(entries[0].path().join("README.md")).unwrap();
 
     assert!(content.contains("# Full Feature Implementation"));
@@ -208,8 +210,14 @@ async fn test_create_spec_uses_template_content() {
         .unwrap();
 
     let content = std::fs::read_to_string(entry.path().join("README.md")).unwrap();
-    assert!(content.contains("## Design"), "Template body should be present");
-    assert!(content.contains("priority: medium"), "Template priority should remain when not overridden");
+    assert!(
+        content.contains("## Design"),
+        "Template body should be present"
+    );
+    assert!(
+        content.contains("priority: medium"),
+        "Template priority should remain when not overridden"
+    );
     assert!(content.contains("# Template Check"));
 }
 

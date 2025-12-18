@@ -101,7 +101,11 @@ pub fn update_spec(cwd: &Path, spec: &str, options: &[(&str, &str)]) -> ExecResu
 
 /// Update a spec with --force flag (for completion verification bypass)
 pub fn update_spec_force(cwd: &Path, spec: &str, options: &[(&str, &str)]) -> ExecResult {
-    let mut args = vec!["update".to_string(), spec.to_string(), "--force".to_string()];
+    let mut args = vec![
+        "update".to_string(),
+        spec.to_string(),
+        "--force".to_string(),
+    ];
     for (key, value) in options {
         args.push(format!("--{}", key));
         args.push(value.to_string());
@@ -212,9 +216,7 @@ pub fn parse_frontmatter(content: &str) -> std::collections::HashMap<String, ser
                 if let serde_yaml::Value::Mapping(map) = parsed {
                     return map
                         .into_iter()
-                        .filter_map(|(k, v)| {
-                            k.as_str().map(|s| (s.to_string(), v))
-                        })
+                        .filter_map(|(k, v)| k.as_str().map(|s| (s.to_string(), v)))
                         .collect();
                 }
             }

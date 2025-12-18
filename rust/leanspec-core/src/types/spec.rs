@@ -34,7 +34,10 @@ impl std::str::FromStr for SpecStatus {
             "in-progress" | "in_progress" | "inprogress" => Ok(SpecStatus::InProgress),
             "complete" | "completed" => Ok(SpecStatus::Complete),
             "archived" => Ok(SpecStatus::Archived),
-            _ => Err(format!("Invalid status: {}. Valid values: planned, in-progress, complete, archived", s)),
+            _ => Err(format!(
+                "Invalid status: {}. Valid values: planned, in-progress, complete, archived",
+                s
+            )),
         }
     }
 }
@@ -69,7 +72,10 @@ impl std::str::FromStr for SpecPriority {
             "medium" | "med" => Ok(SpecPriority::Medium),
             "high" => Ok(SpecPriority::High),
             "critical" | "urgent" => Ok(SpecPriority::Critical),
-            _ => Err(format!("Invalid priority: {}. Valid values: low, medium, high, critical", s)),
+            _ => Err(format!(
+                "Invalid priority: {}. Valid values: low, medium, high, critical",
+                s
+            )),
         }
     }
 }
@@ -86,56 +92,56 @@ pub struct StatusTransition {
 pub struct SpecFrontmatter {
     pub status: SpecStatus,
     pub created: String,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub priority: Option<SpecPriority>,
-    
+
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
-    
+
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub depends_on: Vec<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assignee: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub issue: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pr: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub epic: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub breaking: Option<bool>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub due: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub updated: Option<String>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub completed: Option<String>,
-    
+
     // Timestamp fields for velocity tracking
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub created_at: Option<DateTime<Utc>>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<DateTime<Utc>>,
-    
+
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub completed_at: Option<DateTime<Utc>>,
-    
+
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub transitions: Vec<StatusTransition>,
-    
+
     /// Custom fields from config (stored as key-value pairs)
     #[serde(flatten)]
     pub custom: std::collections::HashMap<String, serde_yaml::Value>,
@@ -151,7 +157,7 @@ impl SpecFrontmatter {
             SpecStatus::Archived => "📦",
         }
     }
-    
+
     /// Get the status label for display
     pub fn status_label(&self) -> &'static str {
         match self.status {
@@ -168,22 +174,22 @@ impl SpecFrontmatter {
 pub struct SpecInfo {
     /// Unique identifier (directory name, e.g., "170-cli-mcp-core-rust-migration")
     pub path: String,
-    
+
     /// Title extracted from the markdown H1 heading
     pub title: String,
-    
+
     /// Parsed frontmatter metadata
     pub frontmatter: SpecFrontmatter,
-    
+
     /// Raw markdown content (without frontmatter)
     pub content: String,
-    
+
     /// Full file path
     pub file_path: std::path::PathBuf,
-    
+
     /// Whether this is a sub-spec
     pub is_sub_spec: bool,
-    
+
     /// Parent spec path if this is a sub-spec
     pub parent_spec: Option<String>,
 }
@@ -193,10 +199,13 @@ impl SpecInfo {
     pub fn number(&self) -> Option<u32> {
         self.path.split('-').next()?.parse().ok()
     }
-    
+
     /// Get the spec name without the number prefix
     pub fn name(&self) -> &str {
-        self.path.split_once('-').map(|(_, name)| name).unwrap_or(&self.path)
+        self.path
+            .split_once('-')
+            .map(|(_, name)| name)
+            .unwrap_or(&self.path)
     }
 }
 
@@ -219,14 +228,14 @@ impl SpecFilterOptions {
                 return false;
             }
         }
-        
+
         // Tags filter (spec must have ALL specified tags)
         if let Some(tags) = &self.tags {
             if tags.iter().any(|tag| !spec.frontmatter.tags.contains(tag)) {
                 return false;
             }
         }
-        
+
         // Priority filter
         if let Some(priorities) = &self.priority {
             match &spec.frontmatter.priority {
@@ -234,7 +243,7 @@ impl SpecFilterOptions {
                 _ => return false,
             }
         }
-        
+
         // Assignee filter
         if let Some(assignee) = &self.assignee {
             match &spec.frontmatter.assignee {
@@ -242,7 +251,7 @@ impl SpecFilterOptions {
                 _ => return false,
             }
         }
-        
+
         // Search filter (matches title, path, or content)
         if let Some(search) = &self.search {
             let search_lower = search.to_lowercase();
@@ -253,7 +262,7 @@ impl SpecFilterOptions {
                 return false;
             }
         }
-        
+
         true
     }
 }
@@ -261,25 +270,43 @@ impl SpecFilterOptions {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_spec_status_from_str() {
-        assert_eq!("planned".parse::<SpecStatus>().unwrap(), SpecStatus::Planned);
-        assert_eq!("in-progress".parse::<SpecStatus>().unwrap(), SpecStatus::InProgress);
-        assert_eq!("complete".parse::<SpecStatus>().unwrap(), SpecStatus::Complete);
-        assert_eq!("archived".parse::<SpecStatus>().unwrap(), SpecStatus::Archived);
+        assert_eq!(
+            "planned".parse::<SpecStatus>().unwrap(),
+            SpecStatus::Planned
+        );
+        assert_eq!(
+            "in-progress".parse::<SpecStatus>().unwrap(),
+            SpecStatus::InProgress
+        );
+        assert_eq!(
+            "complete".parse::<SpecStatus>().unwrap(),
+            SpecStatus::Complete
+        );
+        assert_eq!(
+            "archived".parse::<SpecStatus>().unwrap(),
+            SpecStatus::Archived
+        );
         assert!("invalid".parse::<SpecStatus>().is_err());
     }
-    
+
     #[test]
     fn test_spec_priority_from_str() {
         assert_eq!("low".parse::<SpecPriority>().unwrap(), SpecPriority::Low);
-        assert_eq!("medium".parse::<SpecPriority>().unwrap(), SpecPriority::Medium);
+        assert_eq!(
+            "medium".parse::<SpecPriority>().unwrap(),
+            SpecPriority::Medium
+        );
         assert_eq!("high".parse::<SpecPriority>().unwrap(), SpecPriority::High);
-        assert_eq!("critical".parse::<SpecPriority>().unwrap(), SpecPriority::Critical);
+        assert_eq!(
+            "critical".parse::<SpecPriority>().unwrap(),
+            SpecPriority::Critical
+        );
         assert!("invalid".parse::<SpecPriority>().is_err());
     }
-    
+
     #[test]
     fn test_status_display() {
         assert_eq!(SpecStatus::Planned.to_string(), "planned");

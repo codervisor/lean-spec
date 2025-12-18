@@ -1,7 +1,7 @@
 //! Create command implementation
 
-use colored::Colorize;
 use chrono::Utc;
+use colored::Colorize;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
@@ -19,14 +19,14 @@ pub fn run(
     let next_number = get_next_spec_number(specs_dir)?;
     let spec_name = format!("{:03}-{}", next_number, name);
     let spec_dir = Path::new(specs_dir).join(&spec_name);
-    
+
     if spec_dir.exists() {
         return Err(format!("Spec directory already exists: {}", spec_dir.display()).into());
     }
-    
+
     // Create directory
     fs::create_dir_all(&spec_dir)?;
-    
+
     // Generate title
     let title = title.unwrap_or_else(|| {
         name.split('-')
@@ -40,19 +40,19 @@ pub fn run(
             .collect::<Vec<_>>()
             .join(" ")
     });
-    
+
     // Parse tags
     let tags_vec: Vec<String> = tags
         .map(|t| t.split(',').map(|s| s.trim().to_string()).collect())
         .unwrap_or_default();
-    
+
     // Generate content
     let content = generate_spec_content(&title, status, priority.as_deref(), &tags_vec);
-    
+
     // Write file
     let readme_path = spec_dir.join("README.md");
     fs::write(&readme_path, &content)?;
-    
+
     println!("{} {}", "✓".green(), "Created spec:".green());
     println!("  {}: {}", "Path".bold(), spec_name);
     println!("  {}: {}", "Title".bold(), title);
@@ -64,25 +64,25 @@ pub fn run(
         println!("  {}: {}", "Tags".bold(), tags_vec.join(", "));
     }
     println!("  {}: {}", "File".dimmed(), readme_path.display());
-    
+
     Ok(())
 }
 
 fn get_next_spec_number(specs_dir: &str) -> Result<u32, Box<dyn Error>> {
     let specs_path = Path::new(specs_dir);
-    
+
     if !specs_path.exists() {
         return Ok(1);
     }
-    
+
     let mut max_number = 0u32;
-    
+
     for entry in fs::read_dir(specs_path)? {
         let entry = entry?;
         if entry.file_type()?.is_dir() {
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
-            
+
             // Parse number from start of directory name
             if let Some(num_str) = name_str.split('-').next() {
                 if let Ok(num) = num_str.parse::<u32>() {
@@ -91,7 +91,7 @@ fn get_next_spec_number(specs_dir: &str) -> Result<u32, Box<dyn Error>> {
             }
         }
     }
-    
+
     Ok(max_number + 1)
 }
 
@@ -104,7 +104,7 @@ fn generate_spec_content(
     let now = Utc::now();
     let created_date = now.format("%Y-%m-%d").to_string();
     let created_at = now.to_rfc3339();
-    
+
     let mut frontmatter = format!(
         r#"---
 status: {}
@@ -112,21 +112,21 @@ created: '{}'
 "#,
         status, created_date
     );
-    
+
     if !tags.is_empty() {
         frontmatter.push_str("tags:\n");
         for tag in tags {
             frontmatter.push_str(&format!("  - {}\n", tag));
         }
     }
-    
+
     if let Some(p) = priority {
         frontmatter.push_str(&format!("priority: {}\n", p));
     }
-    
+
     frontmatter.push_str(&format!("created_at: '{}'\n", created_at));
     frontmatter.push_str("---\n");
-    
+
     let status_emoji = match status {
         "planned" => "🗓️",
         "in-progress" => "⏳",
@@ -134,14 +134,16 @@ created: '{}'
         "archived" => "📦",
         _ => "📄",
     };
-    
-    let priority_text = priority.map(|p| format!(" · **Priority**: {}", capitalize(p))).unwrap_or_default();
+
+    let priority_text = priority
+        .map(|p| format!(" · **Priority**: {}", capitalize(p)))
+        .unwrap_or_default();
     let tags_text = if tags.is_empty() {
         String::new()
     } else {
         format!(" · **Tags**: {}", tags.join(", "))
     };
-    
+
     format!(
         r#"{}
 # {}

@@ -1,8 +1,8 @@
 //! MCP Protocol implementation
 
+use crate::tools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::tools;
 
 /// JSON-RPC request from MCP client
 #[derive(Debug, Deserialize)]
@@ -45,7 +45,7 @@ impl McpResponse {
             error: None,
         }
     }
-    
+
     pub fn error(code: i32, message: &str) -> Self {
         Self {
             jsonrpc: "2.0".to_string(),
@@ -58,7 +58,7 @@ impl McpResponse {
             }),
         }
     }
-    
+
     pub fn error_with_id(id: Option<Value>, code: i32, message: &str) -> Self {
         Self {
             jsonrpc: "2.0".to_string(),
@@ -87,16 +87,16 @@ pub async fn handle_request(request: McpRequest) -> McpResponse {
     match request.method.as_str() {
         // MCP initialization
         "initialize" => handle_initialize(request.id),
-        
+
         // List available tools
         "tools/list" => handle_tools_list(request.id),
-        
+
         // Call a tool
         "tools/call" => handle_tool_call(request.id, request.params).await,
-        
+
         // Notifications (no response needed for some)
         "notifications/initialized" => McpResponse::success(request.id, Value::Null),
-        
+
         // Unknown method
         _ => McpResponse::error_with_id(
             request.id,
@@ -117,29 +117,28 @@ fn handle_initialize(id: Option<Value>) -> McpResponse {
             "version": env!("CARGO_PKG_VERSION")
         }
     });
-    
+
     McpResponse::success(id, result)
 }
 
 fn handle_tools_list(id: Option<Value>) -> McpResponse {
     let tools = tools::get_tool_definitions();
-    
+
     let result = serde_json::json!({
         "tools": tools
     });
-    
+
     McpResponse::success(id, result)
 }
 
 async fn handle_tool_call(id: Option<Value>, params: Value) -> McpResponse {
-    let name = params.get("name")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
-    
-    let arguments = params.get("arguments")
+    let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
+
+    let arguments = params
+        .get("arguments")
         .cloned()
         .unwrap_or(Value::Object(serde_json::Map::new()));
-    
+
     match tools::call_tool(name, arguments).await {
         Ok(result) => {
             let response = serde_json::json!({
