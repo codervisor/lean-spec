@@ -35,9 +35,9 @@ fn test_update_status_transition() {
     init_project(cwd, true);
     create_spec(cwd, "my-spec");
 
-    // planned → in-progress → complete
+    // planned → in-progress → complete (with force for completion verification)
     update_spec(cwd, "001-my-spec", &[("status", "in-progress")]);
-    update_spec(cwd, "001-my-spec", &[("status", "complete")]);
+    update_spec_force(cwd, "001-my-spec", &[("status", "complete")]);
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
@@ -156,8 +156,8 @@ fn test_update_completed_timestamp() {
     // Update to in-progress first
     update_spec(cwd, "001-my-spec", &[("status", "in-progress")]);
 
-    // Update to complete
-    update_spec(cwd, "001-my-spec", &[("status", "complete")]);
+    // Update to complete (with force for completion verification)
+    update_spec_force(cwd, "001-my-spec", &[("status", "complete")]);
 
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);

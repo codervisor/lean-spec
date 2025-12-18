@@ -399,6 +399,10 @@ enum Commands {
         /// Remove tags
         #[arg(long)]
         remove_tags: Option<String>,
+        
+        /// Skip completion verification when setting status to complete
+        #[arg(short, long)]
+        force: bool,
     },
     
     /// Validate specs for issues
@@ -524,8 +528,8 @@ fn main() -> ExitCode {
         Commands::Unlink { spec, depends_on } => {
             commands::unlink::run(&specs_dir, &spec, &depends_on)
         }
-        Commands::Update { spec, status, priority, assignee, add_tags, remove_tags } => {
-            commands::update::run(&specs_dir, &spec, status, priority, assignee, add_tags, remove_tags)
+        Commands::Update { spec, status, priority, assignee, add_tags, remove_tags, force } => {
+            commands::update::run(&specs_dir, &spec, status, priority, assignee, add_tags, remove_tags, force)
         }
         Commands::Validate { spec, check_deps, strict, warnings_only } => {
             commands::validate::run(&specs_dir, spec, check_deps, strict, warnings_only, &cli.output)

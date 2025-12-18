@@ -49,8 +49,8 @@ fn test_create_update_archive_workflow() {
         Some("in-progress")
     );
 
-    // Step 3: Update to complete
-    let result = update_spec(cwd, "001-my-feature", &[("status", "complete")]);
+    // Step 3: Update to complete (with force since spec has checkboxes)
+    let result = update_spec_force(cwd, "001-my-feature", &[("status", "complete")]);
     assert!(result.success, "update to complete should succeed");
 
     let content = read_file(&readme_path);
@@ -231,7 +231,7 @@ fn test_list_specs_by_status() {
     create_spec(cwd, "done-spec");
 
     update_spec(cwd, "002-active-spec", &[("status", "in-progress")]);
-    update_spec(cwd, "003-done-spec", &[("status", "complete")]);
+    update_spec_force(cwd, "003-done-spec", &[("status", "complete")]);
 
     // Filter by status
     let result = list_specs_with_options(cwd, &[("status", "in-progress")]);
@@ -267,7 +267,7 @@ fn test_archived_specs_not_listed_by_default() {
     create_spec(cwd, "active-spec");
     create_spec(cwd, "archived-spec");
 
-    update_spec(cwd, "002-archived-spec", &[("status", "complete")]);
+    update_spec_force(cwd, "002-archived-spec", &[("status", "complete")]);
     archive_spec(cwd, "002-archived-spec");
 
     let result = list_specs(cwd);
@@ -286,7 +286,7 @@ fn test_board_shows_specs_by_status() {
     create_spec(cwd, "completed-work");
 
     update_spec(cwd, "002-in-progress-work", &[("status", "in-progress")]);
-    update_spec(cwd, "003-completed-work", &[("status", "complete")]);
+    update_spec_force(cwd, "003-completed-work", &[("status", "complete")]);
 
     let result = get_board(cwd);
     assert!(result.success);

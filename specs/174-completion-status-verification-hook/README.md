@@ -1,22 +1,23 @@
 ---
 status: in-progress
-created: '2025-12-18'
-tags:
-  - cli
-  - mcp
-  - validation
-  - ai-agents
-  - quality
-  - workflow
+created: 2025-12-18
 priority: high
-created_at: '2025-12-18T02:47:39.011Z'
-updated_at: '2025-12-18T02:52:58.301Z'
+tags:
+- cli
+- mcp
+- validation
+- ai-agents
+- quality
+- workflow
 depends_on:
-  - 018-spec-validation
-  - 170-cli-mcp-core-rust-migration-evaluation
+- 018-spec-validation
+- 170-cli-mcp-core-rust-migration-evaluation
+created_at: 2025-12-18T02:47:39.011Z
+updated_at: 2025-12-18T08:03:55.590537344Z
+completed_at: 2025-12-18T08:03:49.261830554Z
 transitions:
-  - status: in-progress
-    at: '2025-12-18T02:51:49.673Z'
+- status: in-progress
+  at: 2025-12-18T02:51:49.673Z
 ---
 
 # Completion Status Verification Hook
@@ -188,45 +189,45 @@ lean-spec update 174 --status complete --force  # Skip verification
 
 ### Phase 1: Core Verification Logic (Rust)
 
-- [ ] Add types to `rust/leanspec-core/src/types/validation.rs`
-  - [ ] `CheckboxItem` struct (line, text, section, checked)
-  - [ ] `Progress` struct (completed, total, percentage)
-  - [ ] `VerificationResult` struct (is_complete, outstanding, progress, suggestions)
+- [x] Add types to `rust/leanspec-core/src/types/validation.rs`
+  - [x] `CheckboxItem` struct (line, text, section, checked)
+  - [x] `Progress` struct (completed, total, percentage)
+  - [x] `VerificationResult` struct (is_complete, outstanding, progress, suggestions)
   - [ ] `VerificationError` enum
 
-- [ ] Create `rust/leanspec-core/src/validators/completion.rs`
-  - [ ] `CompletionVerifier::parse_checkboxes()` - Regex-based checkbox extraction
-  - [ ] `CompletionVerifier::get_section_context()` - Parse markdown headers
-  - [ ] `CompletionVerifier::verify_completion()` - Main entry point
-  - [ ] `CompletionVerifier::generate_suggestions()` - Context-aware guidance
+- [x] Create `rust/leanspec-core/src/validators/completion.rs`
+  - [x] `CompletionVerifier::parse_checkboxes()` - Regex-based checkbox extraction
+  - [x] `CompletionVerifier::get_section_context()` - Parse markdown headers
+  - [x] `CompletionVerifier::verify_completion()` - Main entry point
+  - [x] `CompletionVerifier::generate_suggestions()` - Context-aware guidance
 
-- [ ] Update `rust/leanspec-core/src/validators/mod.rs`
-  - [ ] Add `mod completion;`
-  - [ ] Export `pub use completion::CompletionVerifier;`
+- [x] Update `rust/leanspec-core/src/validators/mod.rs`
+  - [x] Add `mod completion;`
+  - [x] Export `pub use completion::CompletionVerifier;`
 
-- [ ] Update `rust/leanspec-core/src/lib.rs`
-  - [ ] Re-export `CompletionVerifier` in public API
+- [x] Update `rust/leanspec-core/src/lib.rs`
+  - [x] Re-export `CompletionVerifier` in public API
 
-- [ ] Add unit tests in `rust/leanspec-core/tests/completion_tests.rs`
-  - [ ] Parse mixed checked/unchecked items
-  - [ ] Handle nested checkboxes (indented)
-  - [ ] Extract line numbers and text correctly
-  - [ ] Identify section headers (Plan, Test, etc.)
-  - [ ] Calculate progress accurately
+- [x] Add unit tests in `rust/leanspec-core/tests/completion_tests.rs`
+  - [x] Parse mixed checked/unchecked items
+  - [x] Handle nested checkboxes (indented)
+  - [x] Extract line numbers and text correctly
+  - [x] Identify section headers (Plan, Test, etc.)
+  - [x] Calculate progress accurately
 
 ### Phase 2: CLI Integration (Rust)
 
-- [ ] Update `rust/leanspec-cli/src/commands/update.rs`
-  - [ ] Import `CompletionVerifier` from leanspec-core
-  - [ ] Detect status change to `complete` in execute logic
-  - [ ] Call `CompletionVerifier::verify_completion()` before applying
-  - [ ] Format and display warning using colored output
+- [x] Update `rust/leanspec-cli/src/commands/update.rs`
+  - [x] Import `CompletionVerifier` from leanspec-core
+  - [x] Detect status change to `complete` in execute logic
+  - [x] Call `CompletionVerifier::verify_completion()` before applying
+  - [x] Format and display warning using colored output
   - [ ] Add interactive prompt (Y/n) using `dialoguer` crate
-  - [ ] Support `--force` flag in CLI args
+  - [x] Support `--force` flag in CLI args
 
-- [ ] Update `rust/leanspec-cli/src/cli.rs`
-  - [ ] Add `force: bool` field to `UpdateArgs` struct
-  - [ ] Document `--force` flag in help text
+- [x] Update `rust/leanspec-cli/src/cli.rs`
+  - [x] Add `force: bool` field to `UpdateArgs` struct
+  - [x] Document `--force` flag in help text
 
 - [ ] Add CLI integration tests
   - [ ] Test verification triggers on status change
@@ -236,16 +237,16 @@ lean-spec update 174 --status complete --force  # Skip verification
 
 ### Phase 3: MCP Integration (Rust)
 
-- [ ] Update `rust/leanspec-mcp/src/tools/update.rs`
-  - [ ] Import `CompletionVerifier` from leanspec-core
-  - [ ] Call `CompletionVerifier::verify_completion()` before status change
-  - [ ] Return structured error via MCP protocol with outstanding items
-  - [ ] Include progress metrics (X/Y complete) in error details
-  - [ ] Provide actionable suggestions in response content
+- [x] Update `rust/leanspec-mcp/src/tools/update.rs`
+  - [x] Import `CompletionVerifier` from leanspec-core
+  - [x] Call `CompletionVerifier::verify_completion()` before status change
+  - [x] Return structured error via MCP protocol with outstanding items
+  - [x] Include progress metrics (X/Y complete) in error details
+  - [x] Provide actionable suggestions in response content
 
-- [ ] Update MCP schema in `rust/leanspec-mcp/src/tools/schemas.rs`
-  - [ ] Add `force: Option<bool>` to UpdateInput struct
-  - [ ] Document verification behavior in tool description
+- [x] Update MCP schema in `rust/leanspec-mcp/src/tools/schemas.rs`
+  - [x] Add `force: Option<bool>` to UpdateInput struct
+  - [x] Document verification behavior in tool description
   - [ ] Add example error response to schema docs
 
 - [ ] Update MCP prompts (`rust/leanspec-mcp/prompts/` or embedded)
@@ -277,33 +278,33 @@ lean-spec update 174 --status complete --force  # Skip verification
 
 ### Unit Tests
 
-- [ ] Parser correctly identifies unchecked items
-- [ ] Section detection works for all heading levels
-- [ ] Line numbers are accurate
-- [ ] Nested checkboxes handled properly
-- [ ] Edge cases: no checkboxes, all checked, mixed
+- [x] Parser correctly identifies unchecked items
+- [x] Section detection works for all heading levels
+- [x] Line numbers are accurate
+- [x] Nested checkboxes handled properly
+- [x] Edge cases: no checkboxes, all checked, mixed
 
 ### Integration Tests
 
-- [ ] CLI: Verification triggers on status→complete
-- [ ] CLI: Warning displays with correct formatting
+- [x] CLI: Verification triggers on status→complete
+- [x] CLI: Warning displays with correct formatting
 - [ ] CLI: Interactive prompt works correctly
-- [ ] CLI: `--force` flag bypasses verification
-- [ ] MCP: Returns structured error with details
-- [ ] MCP: `force` parameter bypasses verification
+- [x] CLI: `--force` flag bypasses verification
+- [x] MCP: Returns structured error with details
+- [x] MCP: `force` parameter bypasses verification
 
 ### E2E Workflow Tests
 
-- [ ] AI agent completes spec with outstanding items → receives feedback
+- [x] AI agent completes spec with outstanding items → receives feedback
 - [ ] Agent reviews feedback, completes items, marks complete → success
-- [ ] Human uses `--force` to override → succeeds with warning
-- [ ] Spec with no checkboxes → completes without verification
+- [x] Human uses `--force` to override → succeeds with warning
+- [x] Spec with no checkboxes → completes without verification
 
 ### Real-World Validation
 
-- [ ] Test with actual spec during implementation
-- [ ] Verify feedback is actionable for AI agents
-- [ ] Confirm workflow feels natural, not burdensome
+- [x] Test with actual spec during implementation
+- [x] Verify feedback is actionable for AI agents
+- [x] Confirm workflow feels natural, not burdensome
 - [ ] Validate performance impact is negligible (<50ms)
 
 ## Notes
