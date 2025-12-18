@@ -99,6 +99,17 @@ pub fn update_spec(cwd: &Path, spec: &str, options: &[(&str, &str)]) -> ExecResu
     exec_cli(&args_refs, cwd)
 }
 
+/// Update a spec with --force flag (for completion verification bypass)
+pub fn update_spec_force(cwd: &Path, spec: &str, options: &[(&str, &str)]) -> ExecResult {
+    let mut args = vec!["update".to_string(), spec.to_string(), "--force".to_string()];
+    for (key, value) in options {
+        args.push(format!("--{}", key));
+        args.push(value.to_string());
+    }
+    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    exec_cli(&args_refs, cwd)
+}
+
 /// Link specs using the CLI
 pub fn link_specs(cwd: &Path, spec: &str, depends_on: &str) -> ExecResult {
     exec_cli(&["link", spec, "--depends-on", depends_on], cwd)

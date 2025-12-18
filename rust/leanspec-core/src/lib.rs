@@ -37,9 +37,10 @@ pub mod utils;
 pub use types::{
     SpecInfo, SpecFrontmatter, SpecStatus, SpecPriority, StatusTransition,
     SpecFilterOptions, LeanSpecConfig, ValidationResult, ValidationIssue, IssueSeverity,
+    CheckboxItem, Progress, CompletionVerificationResult,
 };
 pub use parsers::FrontmatterParser;
-pub use validators::{FrontmatterValidator, StructureValidator, LineCountValidator};
+pub use validators::{FrontmatterValidator, StructureValidator, LineCountValidator, CompletionVerifier};
 pub use utils::{
     DependencyGraph, CompleteDependencyGraph, ImpactRadius,
     TokenCounter, TokenCount, TokenStatus,

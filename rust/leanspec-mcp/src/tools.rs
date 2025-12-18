@@ -84,7 +84,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "update".to_string(),
-            description: "Update a spec's frontmatter (status, priority, tags, assignee)".to_string(),
+            description: "Update a spec's frontmatter (status, priority, tags, assignee). When setting status to 'complete', verifies all checklist items are checked unless force=true.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -115,6 +115,11 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                         "type": "array",
                         "items": { "type": "string" },
                         "description": "Tags to remove"
+                    },
+                    "force": {
+                        "type": "boolean",
+                        "description": "Skip completion verification when setting status to complete",
+                        "default": false
                     }
                 },
                 "required": ["specPath"],
@@ -396,6 +401,39 @@ fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let spec = loader.load(spec_path).map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
+    
+    // Check for completion verification if changing status to complete
+    let force = args.get("force").and_then(|v| v.as_bool()).unwrap_or(false);
+    if let Some(new_status) = args.get("status").and_then(|v| v.as_str()) {
+        if new_status == "complete" && !force {
+            let spec_dir = std::path::Path::new(&spec.file_path)
+                .parent()
+                .ok_or("Invalid spec path")?;
+            
+            let verification = leanspec_core::CompletionVerifier::verify_completion(spec_dir)
+                .map_err(|e| e.to_string())?;
+            
+            if !verification.is_complete {
+                let outstanding: Vec<_> = verification.outstanding.iter().map(|item| {
+                    json!({
+                        "section": item.section,
+                        "line": item.line,
+                        "text": item.text
+                    })
+                }).collect();
+                
+                return Err(serde_json::to_string_pretty(&json!({
+                    "error": "INCOMPLETE_CHECKLIST",
+                    "message": format!("Cannot mark spec complete: {} outstanding checklist items", verification.outstanding.len()),
+                    "details": {
+                        "outstanding": outstanding,
+                        "progress": verification.progress.to_string(),
+                        "suggestions": verification.suggestions
+                    }
+                })).map_err(|e| e.to_string())?);
+            }
+        }
+    }
     
     let content = std::fs::read_to_string(&spec.file_path).map_err(|e| e.to_string())?;
     

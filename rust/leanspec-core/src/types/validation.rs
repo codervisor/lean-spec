@@ -1,6 +1,87 @@
 //! Validation types and results
 
+use serde::{Deserialize, Serialize};
 
+/// A checkbox item extracted from spec content
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckboxItem {
+    /// Line number where the checkbox appears (1-indexed)
+    pub line: usize,
+    /// The text content of the checkbox item
+    pub text: String,
+    /// The section header this checkbox belongs to (e.g., "Plan", "Test")
+    pub section: Option<String>,
+    /// Whether the checkbox is checked
+    pub checked: bool,
+}
+
+/// Progress tracking for checkbox completion
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Progress {
+    /// Number of completed (checked) items
+    pub completed: usize,
+    /// Total number of checkbox items
+    pub total: usize,
+    /// Completion percentage (0-100)
+    pub percentage: f64,
+}
+
+impl Progress {
+    /// Calculate progress from a list of checkboxes
+    pub fn calculate(checkboxes: &[CheckboxItem]) -> Self {
+        let total = checkboxes.len();
+        let completed = checkboxes.iter().filter(|cb| cb.checked).count();
+        let percentage = if total > 0 {
+            (completed as f64 / total as f64) * 100.0
+        } else {
+            100.0
+        };
+        Self {
+            completed,
+            total,
+            percentage,
+        }
+    }
+}
+
+impl std::fmt::Display for Progress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}/{} items complete ({:.0}%)",
+            self.completed, self.total, self.percentage
+        )
+    }
+}
+
+/// Result of completion verification
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompletionVerificationResult {
+    /// Whether the spec can be marked as complete
+    pub is_complete: bool,
+    /// Outstanding (unchecked) checkbox items
+    pub outstanding: Vec<CheckboxItem>,
+    /// Progress metrics
+    pub progress: Progress,
+    /// Actionable suggestions for the agent
+    pub suggestions: Vec<String>,
+}
+
+impl CompletionVerificationResult {
+    /// Create a result indicating successful completion (no outstanding items)
+    pub fn success() -> Self {
+        Self {
+            is_complete: true,
+            outstanding: Vec::new(),
+            progress: Progress {
+                completed: 0,
+                total: 0,
+                percentage: 100.0,
+            },
+            suggestions: Vec::new(),
+        }
+    }
+}
 
 /// Severity of a validation issue
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
