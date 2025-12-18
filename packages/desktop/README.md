@@ -93,9 +93,10 @@ The Tauri v2 permission model is defined in `src-tauri/capabilities/desktop-main
 
 ## Configuration files
 
-- `~/.leanspec/desktop-config.json` — Desktop app configuration and project registry
+- `~/.lean-spec/desktop.json` — Desktop app configuration (window size, shortcuts, theme, etc.)
+- `~/.lean-spec/projects.json` — Project registry
 
-The config file is automatically created on first launch and updated as you add/remove projects.
+These config files are automatically created on first launch and updated as you add/remove projects.
 
 ## Features
 

@@ -520,82 +520,84 @@ Continue to testing? [Y/n]: y
 
 ## Configuration
 
-### Desktop Config (~/.lean-spec/desktop.yaml)
+### Desktop Config (~/.lean-spec/desktop.json)
 
-```yaml
-orchestration:
-  defaultAgent: claude
-  guidedMode: true              # Pause between phases
-  autoValidate: true            # Run validation after implementation
-  autoComplete: false           # Require manual completion
-  
-agents:
-  claude:
-    enabled: true
-    priority: 1
-    models:
-      default: claude-3-5-sonnet-20241022
-      fast: claude-3-5-haiku-20241022
-  copilot:
-    enabled: true
-    priority: 2
-  cursor:
-    enabled: false
-  aider:
-    enabled: true
-    priority: 3
-    
-agentRelay:
-  endpoint: "http://localhost:8080"
-  apiKey: "${AGENT_RELAY_API_KEY}"
-  timeout: 300000               # 5 minutes
-  retryAttempts: 3
-  retryDelay: 5000              # 5 seconds
-  
-devlog:
-  endpoint: "http://localhost:9090"
-  apiKey: "${DEVLOG_API_KEY}"
-  enabled: true
-  batchSize: 10                 # Batch telemetry events
-  flushInterval: 5000           # Flush every 5 seconds
-  
-validation:
-  autoRun: true
-  runTests: true
-  runLinters: true
-  runTypeCheck: true
-  aiReview: true
-  
-  # Test runner
-  testCommand: "npm test"
-  testCoverage: true
-  
-  # Linter
-  linterCommand: "npm run lint"
-  linterIgnore: ["*.test.ts", "*.spec.ts"]
-  
-  # Type checker
-  typeCheckCommand: "tsc --noEmit"
-  
-notifications:
-  phaseComplete: true
-  sessionComplete: true
-  validationFailed: true
-  validationPassed: false       # Only notify on failure
-  
-shortcuts:
-  implement: "CommandOrControl+Shift+I"
-  validate: "CommandOrControl+Shift+V"
-  newSpec: "CommandOrControl+Shift+N"
-  quickSwitcher: "CommandOrControl+Shift+K"
-  
-ui:
-  theme: "system"               # light, dark, or system
-  outputFontSize: 13
-  outputFontFamily: "Menlo, Monaco, 'Courier New', monospace"
-  animatePhaseProgress: true
-  showTokenCount: true
-  showDuration: true
+```json
+{
+  "orchestration": {
+    "defaultAgent": "claude",
+    "guidedMode": true,
+    "autoValidate": true,
+    "autoComplete": false
+  },
+  "agents": {
+    "claude": {
+      "enabled": true,
+      "priority": 1,
+      "models": {
+        "default": "claude-3-5-sonnet-20241022",
+        "fast": "claude-3-5-haiku-20241022"
+      }
+    },
+    "copilot": {
+      "enabled": true,
+      "priority": 2
+    },
+    "cursor": {
+      "enabled": false
+    },
+    "aider": {
+      "enabled": true,
+      "priority": 3
+    }
+  },
+  "agentRelay": {
+    "endpoint": "http://localhost:8080",
+    "apiKey": "${AGENT_RELAY_API_KEY}",
+    "timeout": 300000,
+    "retryAttempts": 3,
+    "retryDelay": 5000
+  },
+  "devlog": {
+    "endpoint": "http://localhost:9090",
+    "apiKey": "${DEVLOG_API_KEY}",
+    "enabled": true,
+    "batchSize": 10,
+    "flushInterval": 5000
+  },
+  "validation": {
+    "autoRun": true,
+    "runTests": true,
+    "runLinters": true,
+    "runTypeCheck": true,
+    "aiReview": true,
+    "testCommand": "npm test",
+    "testCoverage": true,
+    "linterCommand": "npm run lint",
+    "linterIgnore": ["*.test.ts", "*.spec.ts"],
+    "typeCheckCommand": "tsc --noEmit"
+  },
+  "notifications": {
+    "phaseComplete": true,
+    "sessionComplete": true,
+    "validationFailed": true,
+    "validationPassed": false
+  },
+  "shortcuts": {
+    "implement": "CommandOrControl+Shift+I",
+    "validate": "CommandOrControl+Shift+V",
+    "newSpec": "CommandOrControl+Shift+N",
+    "quickSwitcher": "CommandOrControl+Shift+K"
+  },
+  "ui": {
+    "theme": "system",
+    "outputFontSize": 13,
+    "outputFontFamily": "Menlo, Monaco, 'Courier New', monospace",
+    "animatePhaseProgress": true,
+    "showTokenCount": true,
+    "showDuration": true
+  }
+}
 ```
 
 ### Project-Specific Config (.leanspec/config.yaml)

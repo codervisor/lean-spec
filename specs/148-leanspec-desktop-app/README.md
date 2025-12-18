@@ -51,10 +51,10 @@ The current web-based UI (`lean-spec ui`) requires:
 ## Implementation Summary (Dec 10, 2025)
 
 - **New package:** `packages/desktop` ships a Vite-powered chrome plus a Rust/Tauri backend. The shell embeds the existing Next.js UI by launching its standalone server in the background (dev uses `pnpm --filter @leanspec/ui dev`, production bundles `.next/standalone`).
-- **Windowing:** Frameless window with custom title bar + native controls, backed by `tauri-plugin-window-state` for automatic persistence and close-to-tray behavior (configurable via `desktop.yaml`).
+- **Windowing:** Frameless window with custom title bar + native controls, backed by `tauri-plugin-window-state` for automatic persistence and close-to-tray behavior (configurable via `desktop.json`).
 - **Project registry:** Rust port of the project registry keeps `~/.lean-spec/projects.json` in sync, validates folders, and exposes commands for refresh/add/switch. Config-driven active project switches restart the embedded UI with the right `SPECS_DIR`.
 - **Tray + shortcuts:** Dedicated modules (`tray.rs`, `shortcuts.rs`) manage recent-project menus, quick actions (open, add, refresh, check for updates), and global shortcuts (`Cmd/Ctrl+Shift+L/K/N`). Frontend listeners open the project switcher or project picker when shortcuts fire.
-- **Notifications + updater:** Desktop emits OS notifications on project changes and wires a `desktop_check_updates` command to the Tauri updater so tray actions can trigger update checks. Auto-update channels (`stable`/`beta`) live in `desktop.yaml`.
+- **Notifications + updater:** Desktop emits OS notifications on project changes and wires a `desktop_check_updates` command to the Tauri updater so tray actions can trigger update checks. Auto-update channels (`stable`/`beta`) live in `desktop.json`.
 - **Documentation:** Root `README.md` and `packages/desktop/README.md` describe the desktop workflow. A helper script (`pnpm prepare:ui`) copies the Next standalone build so `pnpm build:desktop` produces platform bundles.
 
 ### Developer Workflow
@@ -237,33 +237,35 @@ The desktop app wraps `@leanspec/ui` with minimal changes:
 
 ### Configuration
 
-**Desktop-Specific Config (~/.lean-spec/desktop.yaml):**
-```yaml
-window:
-  width: 1400
-  height: 900
-  x: 100
-  y: 100
-  maximized: false
-
-behavior:
-  startMinimized: false
-  minimizeToTray: true
-  launchAtLogin: false
-  
-shortcuts:
-  global:
-    toggleWindow: "CommandOrControl+Shift+L"
-    quickSwitcher: "CommandOrControl+Shift+K"
-    newSpec: "CommandOrControl+Shift+N"
-  
-updates:
-  autoCheck: true
-  autoInstall: false
-  channel: "stable"  # or "beta"
-
-appearance:
-  theme: "system"  # "light", "dark", or "system"
+**Desktop-Specific Config (~/.lean-spec/desktop.json):**
+```json
+{
+  "window": {
+    "width": 1400,
+    "height": 900,
+    "x": 100,
+    "y": 100,
+    "maximized": false
+  },
+  "behavior": {
+    "startMinimized": false,
+    "minimizeToTray": true,
+    "launchAtLogin": false
+  },
+  "shortcuts": {
+    "toggleWindow": "CommandOrControl+Shift+L",
+    "quickSwitcher": "CommandOrControl+Shift+K",
+    "newSpec": "CommandOrControl+Shift+N"
+  },
+  "updates": {
+    "autoCheck": true,
+    "autoInstall": false,
+    "channel": "stable"
+  },
+  "appearance": {
+    "theme": "system"
+  }
+}
 ```
 
 ### Distribution
@@ -325,7 +327,7 @@ appearance:
 
 **Day 10: Notifications**
 - [x] Implement native OS notifications (project add/switch events)
-- [ ] Add notification preferences _(desktop.yaml toggle TBD)_
+- [ ] Add notification preferences _(desktop.json toggle TBD)_
 - [ ] Test on all platforms
 
 ### Phase 3: Polish & Distribution (Week 3)
@@ -334,7 +336,7 @@ appearance:
 - [x] Configure Tauri updater (endpoints + channel config)
 - [ ] Set up update server (GitHub Releases)
 - [x] Implement update UI hooks (tray action + command)
-- [x] Add update channel selection (stable/beta via `desktop.yaml`)
+- [x] Add update channel selection (stable/beta via `desktop.json`)
 - [ ] Test update flow end-to-end _(requires release infra)_
 
 **Day 13-14: Build & Release**
