@@ -46,6 +46,42 @@ function getCurrentPlatform() {
   return platformKey;
 }
 
+async function killProcessesUsingBinary(binaryPath) {
+  if (process.platform === 'win32') {
+    // Windows: use handle.exe or just try to copy
+    return;
+  }
+  
+  try {
+    // Use lsof to find processes using the binary
+    const { execSync } = await import('node:child_process');
+    const output = execSync(`lsof "${binaryPath}" 2>/dev/null || true`, { encoding: 'utf-8' });
+    
+    if (!output.trim()) {
+      return; // No processes using the file
+    }
+    
+    // Extract PIDs (skip header line)
+    const lines = output.trim().split('\n').slice(1);
+    const pids = [...new Set(lines.map(line => line.split(/\s+/)[1]).filter(Boolean))];
+    
+    if (pids.length > 0) {
+      console.log(`⚠️  Found ${pids.length} process(es) using ${path.basename(binaryPath)}, stopping them...`);
+      for (const pid of pids) {
+        try {
+          execSync(`kill ${pid}`, { stdio: 'ignore' });
+        } catch (e) {
+          // Process might already be dead
+        }
+      }
+      // Give processes time to exit
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  } catch (e) {
+    // lsof not available or other error, continue anyway
+  }
+}
+
 async function copyBinary(binaryName, platformKey) {
   const isWindows = platformKey.startsWith('windows-');
   const sourceExt = isWindows ? '.exe' : '';
@@ -66,6 +102,14 @@ async function copyBinary(binaryName, platformKey) {
   
   // Ensure destination directory exists
   await fs.mkdir(destDir, { recursive: true });
+  
+  // Kill any processes using the destination binary
+  try {
+    await fs.access(destPath);
+    await killProcessesUsingBinary(destPath);
+  } catch (e) {
+    // Destination doesn't exist yet, that's fine
+  }
   
   // Copy binary
   await fs.copyFile(sourcePath, destPath);
