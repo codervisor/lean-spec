@@ -67,10 +67,17 @@ Lightweight spec methodology for AI-powered development.
 ```
 BEFORE: board → search → check existing specs
 DURING: update status to in-progress → code → document decisions → link dependencies
-AFTER:  document completion → update status to complete
+AFTER:  document completion → check off all checklist items → update status to complete
 ```
 
 **Status tracks implementation, NOT spec writing.**
+
+### Completion Verification
+
+When marking a spec complete (`--status complete`), LeanSpec verifies all checklist items are checked:
+- Unchecked items (`- [ ]`) will block completion with actionable feedback
+- Use `--force` to mark complete anyway (e.g., for deferred items)
+- This helps AI agents self-verify before declaring work done
 
 ## Spec Dependencies
 

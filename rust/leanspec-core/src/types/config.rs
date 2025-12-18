@@ -80,6 +80,22 @@ pub struct ValidationConfig {
     /// Required sections in spec content
     #[serde(default)]
     pub required_sections: Vec<String>,
+    
+    /// Whether to enforce checklist verification when marking complete (default: true)
+    #[serde(default = "default_enforce_completion_checklist")]
+    pub enforce_completion_checklist: bool,
+    
+    /// Whether to allow completion override with --force (default: true)
+    #[serde(default = "default_allow_completion_override")]
+    pub allow_completion_override: bool,
+}
+
+fn default_enforce_completion_checklist() -> bool {
+    true
+}
+
+fn default_allow_completion_override() -> bool {
+    true
 }
 
 fn default_max_lines() -> usize {
@@ -101,6 +117,8 @@ impl Default for ValidationConfig {
             max_tokens: default_max_tokens(),
             warn_tokens: default_warn_tokens(),
             required_sections: Vec::new(),
+            enforce_completion_checklist: default_enforce_completion_checklist(),
+            allow_completion_override: default_allow_completion_override(),
         }
     }
 }
@@ -158,6 +176,8 @@ mod tests {
         assert_eq!(config.specs_dir, PathBuf::from("specs"));
         assert_eq!(config.validation.max_lines, 400);
         assert_eq!(config.validation.max_tokens, 3500);
+        assert!(config.validation.enforce_completion_checklist);
+        assert!(config.validation.allow_completion_override);
     }
     
     #[test]
@@ -177,5 +197,17 @@ validation:
         assert_eq!(config.specs_dir, PathBuf::from("my-specs"));
         assert_eq!(config.default_template, Some("minimal".to_string()));
         assert_eq!(config.validation.max_lines, 500);
+    }
+    
+    #[test]
+    fn test_parse_config_with_completion_settings() {
+        let yaml = r#"
+validation:
+  enforce_completion_checklist: false
+  allow_completion_override: false
+"#;
+        let config: LeanSpecConfig = serde_yaml::from_str(yaml).unwrap();
+        assert!(!config.validation.enforce_completion_checklist);
+        assert!(!config.validation.allow_completion_override);
     }
 }

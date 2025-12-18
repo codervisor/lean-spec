@@ -83,6 +83,35 @@ impl CompletionVerificationResult {
     }
 }
 
+/// Errors that can occur during completion verification
+#[derive(Debug, Clone)]
+pub enum VerificationError {
+    /// Failed to read the spec file
+    FileNotFound(String),
+    /// Failed to parse the spec content
+    ParseError(String),
+    /// IO error occurred
+    IoError(String),
+}
+
+impl std::fmt::Display for VerificationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VerificationError::FileNotFound(path) => {
+                write!(f, "Spec file not found: {}", path)
+            }
+            VerificationError::ParseError(msg) => {
+                write!(f, "Failed to parse spec: {}", msg)
+            }
+            VerificationError::IoError(msg) => {
+                write!(f, "IO error: {}", msg)
+            }
+        }
+    }
+}
+
+impl std::error::Error for VerificationError {}
+
 /// Severity of a validation issue
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum IssueSeverity {

@@ -72,6 +72,10 @@ lean-spec update <spec> --status in-progress
 lean-spec update <spec> --status complete
 lean-spec update <spec> --status archived
 
+# Note: When setting status to 'complete', the CLI will verify all checklist
+# items are checked. Use --force to skip this verification.
+lean-spec update <spec> --status complete --force
+
 # Update priority
 lean-spec update <spec> --priority low
 lean-spec update <spec> --priority medium
