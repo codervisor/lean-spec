@@ -47,6 +47,7 @@ Lightweight spec methodology for AI-powered development.
 | **NEVER edit frontmatter manually** | Use `update`, `link`, `unlink` for: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on` |
 | **ALWAYS link spec references** | Content mentions another spec → `lean-spec link <spec> --depends-on <other>` |
 | **Track status transitions** | `planned` → `in-progress` (before coding) → `complete` (after done) |
+| **Keep specs current** | Document progress, decisions, and learnings as work happens. Obsolete specs mislead both humans and AI |
 | **No nested code blocks** | Use indentation instead |
 | **Update all translations** | UI/MCP/CLI changes: Update both `en/common.json` and `zh-CN/common.json` in `packages/ui/src/locales/` and `packages/mcp/src/locales/` |
 
