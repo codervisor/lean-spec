@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createUpdatedFrontmatter, atomicWriteFile } from '@leanspec/core';
+import { createUpdatedFrontmatter, atomicWriteFile } from '@/lib/spec-utils';
 import { projectRegistry } from '@/lib/projects/registry';
 import { isDefaultProject } from '@/lib/projects/constants';
 
@@ -190,7 +190,7 @@ export async function PATCH(
     if (payload.tags !== undefined) updates.tags = payload.tags;
     if (payload.assignee !== undefined) updates.assignee = payload.assignee || undefined;
     
-    // Update frontmatter using @leanspec/core
+    // Update frontmatter using inlined utilities (formerly @leanspec/core)
     const { content: updatedContent, frontmatter } = createUpdatedFrontmatter(currentContent, updates);
     
     // Write back to file atomically

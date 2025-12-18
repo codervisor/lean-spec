@@ -6,67 +6,83 @@ This directory contains the LeanSpec monorepo packages.
 
 ```
 packages/
-├── core/       - @leanspec/core: Platform-agnostic spec parsing & validation
-├── cli/        - lean-spec: CLI tool and MCP server (Node.js)
-├── mcp/        - @leanspec/mcp: MCP server wrapper (spec 102)
-└── ui/         - @leanspec/ui: Standalone UI bundle + launcher (spec 087)
+├── cli/        - lean-spec: CLI wrapper for Rust binary
+├── mcp/        - @leanspec/mcp: MCP server wrapper
+├── desktop/    - @leanspec/desktop: Tauri desktop app
+└── ui/         - @leanspec/ui: Standalone UI bundle + launcher
 ```
 
-## @leanspec/core
+## Architecture (Post Rust Migration)
 
-**Platform-agnostic spec parsing and validation library.**
+**As of spec 181**, the core functionality has migrated to Rust:
 
-The core package provides:
-- Type definitions (`SpecInfo`, `SpecFrontmatter`, etc.)
-- Frontmatter parsing (using gray-matter)
-- Validators (frontmatter, structure, line count)
-- Utilities (stats, insights, filters)
-- Abstract storage interface (`SpecStorage`)
-
-**No file system dependencies** - uses storage adapters for platform-specific I/O.
-
-### Usage
-
-```typescript
-import { 
-  parseFrontmatterFromString,
-  FrontmatterValidator,
-  type SpecStorage 
-} from '@leanspec/core';
-
-// Parse frontmatter from markdown content
-const content = await storage.readFile('spec.md');
-const frontmatter = parseFrontmatterFromString(content);
-
-// Validate spec
-const validator = new FrontmatterValidator();
-const result = await validator.validate(spec);
 ```
+┌─────────────────┐
+│   Desktop App   │
+│ @leanspec/desktop│  ──► Rust backend (leanspec-core)
+└─────────────────┘
+
+┌─────────────────┐
+│   UI App        │
+│  @leanspec/ui   │  ──► Next.js (inlined utilities)
+└─────────────────┘
+
+┌─────────────────┐
+│   CLI           │
+│   lean-spec     │  ──► Rust binary (leanspec-cli)
+└─────────────────┘
+
+┌─────────────────┐
+│   MCP Server    │
+│ @leanspec/mcp   │  ──► Rust binary (leanspec-mcp)
+└─────────────────┘
+```
+
+**Key changes:**
+- `@leanspec/core` TypeScript package has been deprecated and deleted
+- CLI is now a thin wrapper that invokes the Rust binary
+- MCP server runs the Rust MCP binary
+- UI inlines minimal utilities (frontmatter, atomic file ops)
+- Desktop uses Tauri with Rust backend
 
 ## lean-spec (CLI)
 
-**Command-line interface and MCP server.**
+**JavaScript wrapper for Rust CLI binary.**
 
-Implements:
-- All CLI commands (`list`, `create`, `update`, `validate`, etc.)
-- MCP server for AI agent integration
-- FileSystemStorage adapter (Node.js fs operations)
-- Terminal output formatting
+The CLI package provides:
+- Platform detection and binary resolution
+- Fallback to locally built Rust binaries for development
+- Templates for `lean-spec init`
+
+### Usage
+
+```bash
+# Install globally
+npm install -g lean-spec
+
+# Or run via npx
+npx lean-spec list
+npx lean-spec create my-feature
+```
 
 ### Development
 
 ```bash
-cd packages/cli
-pnpm install
-pnpm build
-pnpm test
+# Build Rust binaries first
+cd rust && cargo build --release
+
+# Copy binaries to packages
+node scripts/copy-rust-binaries.mjs
+
+# Test CLI
+node bin/lean-spec.js --version
 ```
 
 ## @leanspec/mcp
 
 **MCP server integration wrapper.**
 
-Simple passthrough wrapper that delegates to `lean-spec mcp`. Makes MCP setup more discoverable with a dedicated package name.
+Simple passthrough wrapper that delegates to the Rust MCP binary. Makes MCP setup more discoverable with a dedicated package name.
 
 ### Usage
 
@@ -75,27 +91,17 @@ Simple passthrough wrapper that delegates to `lean-spec mcp`. Makes MCP setup mo
 npx -y @leanspec/mcp
 ```
 
-The package automatically installs `lean-spec` as a dependency and runs `lean-spec mcp`. See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) for setup instructions.
-
-## Storage Adapters
-
-The core package uses abstract storage interfaces to enable platform independence:
-
-### FileSystemStorage (CLI)
-
-```typescript
-// packages/cli/src/adapters/fs-storage.ts
-import { FileSystemStorage } from './adapters/fs-storage.js';
-
-const storage = new FileSystemStorage();
-const content = await storage.readFile('/path/to/spec/README.md');
-```
+See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) for setup instructions.
 
 ## @leanspec/ui
 
 **Published UI bundle and launcher.**
 
 Contains the Next.js application and exposes a CLI (`npx @leanspec/ui`). Used automatically by `lean-spec ui` outside the monorepo.
+
+The UI package inlines minimal utilities (formerly from `@leanspec/core`):
+- `createUpdatedFrontmatter` - Update spec metadata
+- `atomicWriteFile` - Safe file writing
 
 ### Development
 
@@ -104,7 +110,20 @@ pnpm --filter @leanspec/ui build    # build Next.js app and prepare artifacts
 node packages/ui/bin/ui.js --dry-run
 ```
 
-The build script produces `.next/standalone` and prepares assets for publishing via the GitHub Actions workflow.
+## @leanspec/desktop
+
+**Tauri desktop application.**
+
+Cross-platform desktop app using:
+- Rust backend (Tauri commands for spec operations)
+- React/Vite frontend
+- Shared UI components with web app
+
+### Development
+
+```bash
+pnpm --filter @leanspec/desktop dev:desktop
+```
 
 ## Building
 
@@ -115,8 +134,8 @@ pnpm build
 
 Build specific package:
 ```bash
-pnpm --filter @leanspec/core build
-pnpm --filter lean-spec build
+pnpm --filter @leanspec/ui build
+pnpm --filter @leanspec/desktop build
 ```
 
 ## Testing
@@ -128,49 +147,27 @@ pnpm test
 
 Run tests for specific package:
 ```bash
-pnpm --filter @leanspec/core test
-pnpm --filter lean-spec test
+pnpm --filter @leanspec/ui test
 ```
 
 ## Publishing
 
-The CLI package (`lean-spec`), the MCP wrapper (`@leanspec/mcp`), and the UI bundle (`@leanspec/ui`) are published to npm. The core package (`@leanspec/core`) is currently workspace-only but can be published if needed for external use.
+Published packages:
+- `lean-spec` - CLI (wrapper + Rust binary via optional dependencies)
+- `@leanspec/mcp` - MCP server wrapper
+- `@leanspec/ui` - Web UI bundle
 
-## Architecture
-
-```
-┌─────────────────┐
-│   UI App        │
-│  @leanspec/ui   │
-└────────┬────────┘
-         │
-         │ uses Core
-         │
-         ▼
-┌─────────────────┐
-│  @leanspec/core │  ◄── Platform-agnostic
-│                 │
-│  • Types        │
-│  • Parsers      │
-│  • Validators   │
-│  • Utilities    │
-└────────┬────────┘
-         │
-         │ uses FileSystemStorage
-         │
-         ▼
-┌─────────────────┐
-│   CLI & MCP     │
-│   lean-spec     │
-└─────────────────┘
-```
+Platform-specific binary packages (published separately):
+- `lean-spec-darwin-arm64`
+- `lean-spec-darwin-x64`
+- `lean-spec-linux-arm64`
+- `lean-spec-linux-x64`
+- `lean-spec-windows-x64`
 
 ## Migration Notes
 
-The monorepo was created in spec 067 by:
-1. Creating `packages/core/` with extracted shared logic
-2. Moving existing code to `packages/cli/`
-3. Implementing `FileSystemStorage` adapter in CLI
-4. Core package exports validators, parsers, and utilities
-
-**Zero breaking changes** for end users - the `lean-spec` CLI works identically to before.
+**Spec 181 (TypeScript Deprecation)**:
+- Deleted `@leanspec/core` TypeScript package
+- CLI now invokes Rust binary directly
+- UI inlines 2 utility functions (~50 lines)
+- Single source of truth in Rust

@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import path from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createUpdatedFrontmatter } from '@leanspec/core';
+import { createUpdatedFrontmatter } from '@/lib/spec-utils';
 import { projectRegistry } from '@/lib/projects/registry';
 import { isDefaultProject } from '@/lib/projects/constants';
 
@@ -136,7 +136,7 @@ export async function PATCH(
     // Read current content
     const currentContent = await readFile(readmePath, 'utf-8');
     
-    // Update frontmatter using @leanspec/core
+    // Update frontmatter using inlined utilities (formerly @leanspec/core)
     const { content: updatedContent } = createUpdatedFrontmatter(currentContent, { status });
     
     // Write back to file
