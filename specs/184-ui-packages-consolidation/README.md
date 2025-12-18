@@ -8,225 +8,155 @@ tags:
 - architecture
 - consolidation
 - rust
+depends_on:
+- "185"
+- "186"
+- "187"
 created_at: 2025-12-18T14:02:41.727119Z
 updated_at: 2025-12-18T14:02:41.727119Z
 ---
 
-# Consolidate packages/ui with Desktop App Frontend Architecture
+# Unified UI Architecture: Rust-Powered Web & Desktop (Umbrella)
 
 > **Status**: planned · **Priority**: high · **Created**: 2025-12-18
+> 
+> **⚠️ Umbrella Spec**: Coordinates 3 sub-specs. See [SPLIT.md](SPLIT.md) and sub-specs for implementation details.
 
 ## Overview
 
-**Problem**: We currently maintain two separate UI implementations:
-- **`packages/ui`**: Next.js SSR app with complex TypeScript backend (filesystem/database sources)
-- **`packages/desktop`**: Tauri + Vite SPA with Rust backend (spec 169 migration complete)
+**Problem**: Two UI implementations with different capabilities:
+- **`packages/ui`**: Next.js SSR, rich UI, but 150MB+ bundle + slow TypeScript backend
+- **`packages/desktop`**: Tauri + basic UI, fast Rust backend, but limited features
 
-This creates:
-- Duplicate maintenance burden (same features in two codebases)
-- Confusion about which UI to use/develop
-- Inconsistent user experience between web and desktop
-- Wasted development time implementing features twice
-- Empty data issue in `pnpm dev:web` due to architectural mismatch
+**Solution**: Unify around **Vite SPA + Rust HTTP Server**:
+- One shared component library
+- One Rust HTTP server (multi-project support)
+- One Vite SPA for both web and desktop
+- **Result**: 30MB bundle, 10x faster, single codebase
 
-**Solution**: Consolidate on the **desktop app's frontend architecture** (Vite + React SPA) and **Rust backend** for both web and desktop use cases.
+## Sub-Specs
+
+| Spec | Focus | Est. Tokens |
+|------|-------|-------------|
+| **[185](../185-ui-components-extraction/)** | Extract shared component library | ~1800 |
+| **[186](../186-rust-http-server/)** | Build Rust HTTP server + multi-project | ~2000 |
+| **[187](../187-vite-spa-migration/)** | Migrate Next.js to Vite SPA | ~1500 |
+
+**Total**: ~5300 tokens (vs 7714 original)
 
 ## Design
-
-### Current State
-
-```
-packages/ui (Next.js)
-├── TypeScript backend
-│   ├── specs service (filesystem/multi-project/database)
-│   ├── project registry
-│   ├── database (better-sqlite3)
-│   └── API routes
-└── React frontend (SSR)
-
-packages/desktop (Tauri)
-├── Rust backend
-│   ├── specs operations
-│   ├── project management
-│   ├── Tauri commands
-│   └── Native performance
-└── React frontend (SPA)
-```
 
 ### Target Architecture
 
 ```
-packages/ui (Vite SPA) - NEW
-├── Vite + React SPA (from desktop)
-├── Data via Rust CLI/MCP backend
-├── Lightweight HTTP wrapper (if needed)
-└── Shared components with desktop
-
-packages/desktop (Tauri) - UNCHANGED
-├── Rust backend (Tauri commands)
-└── React frontend (SPA)
-    └── Shared with packages/ui
-
-Rust backend (CLI/MCP) - EXISTING
-└── All spec operations
+packages/ui-components (NEW)
+  ↓                  ↓
+packages/ui     packages/desktop
+(Vite SPA)      (Tauri → Vite SPA)
+  ↓                  ↓
+HTTP Client     Tauri Commands
+  ↓              (Direct Rust calls)
+Rust HTTP Server     ↓
+(Axum)          leanspec_core
+  ↓                  
+leanspec_core   
 ```
 
-### Key Architectural Decisions
+**Important distinction**:
+- **Web**: Uses HTTP server (browser can't call Rust directly)
+- **Desktop**: Uses Tauri commands (direct Rust calls, no HTTP overhead)
 
-1. **Frontend**: Use desktop's Vite+React SPA codebase as the foundation
-2. **Backend**: Rust CLI/MCP for all spec operations (already exists)
-3. **Code Sharing**: Extract common components into `packages/ui-shared` or similar
-4. **Data Access**:
-   - Desktop: Tauri commands → Rust backend
-   - Web UI: HTTP API → Rust CLI (spawned process or HTTP wrapper)
-5. **Multi-Project**: Both use Rust backend's project registry
+### Key Decisions
 
-### Migration Strategy
+1. **Eliminate Next.js**: Vite SPA (83% smaller, same DX)
+2. **Rust HTTP Server for Web**: Axum + `leanspec_core` (10x faster than TypeScript)
+3. **Tauri Commands for Desktop**: Direct Rust calls (no HTTP overhead)
+4. **Shared Components**: `packages/ui-components` used by web + desktop
+5. **Multi-Project Default**: Both platforms use project registry
+6. **Config JSON**: `~/.lean-spec/config.json` (not YAML)
 
-**Phase 1: Extract Shared UI Components**
-- Identify common components between desktop and current UI
-- Create `packages/ui-shared` for shared React components
-- Extract: SpecList, SpecDetail, Dependencies, Stats, Layout components
+### Configuration
 
-**Phase 2: Replace packages/ui with SPA**
-- Copy desktop's Vite+React structure to new `packages/ui`
-- Remove Next.js dependencies
-- Adapt data layer to use Rust backend (CLI spawning or HTTP wrapper)
-- Implement lightweight API layer if needed
-
-**Phase 3: Update desktop to use shared components**
-- Replace desktop's components with shared versions
-- Maintain Tauri command integration
-
-**Phase 4: Deprecate old UI**
-- Archive old Next.js UI code
-- Update documentation
-- Update CLI `ui` command to use new package
+**`~/.lean-spec/config.json`**:
+```json
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 3333,
+    "cors": { "enabled": true, "origins": ["http://localhost:5173"] }
+  },
+  "ui": { "theme": "auto", "locale": "en" },
+  "projects": { "autoDiscover": true, "maxRecent": 10 }
+}
+```
 
 ## Plan
 
-### Phase 1: Analysis & Shared Components (2-3 days)
+### Timeline (4 weeks)
 
-- [ ] Audit current `packages/ui` features vs `packages/desktop` features
-- [ ] Identify components that can be shared (SpecList, SpecDetail, Stats, Dependencies, etc.)
-- [ ] Create `packages/ui-shared` package structure
-- [ ] Extract 5-10 core components from desktop into shared package
-- [ ] Update desktop to import from shared package (verify no regressions)
+**Week 1**: Foundations (parallel)
+- [ ] [Spec 185](../185-ui-components-extraction/): Extract component library
+- [ ] [Spec 186](../186-rust-http-server/): Build HTTP server
 
-### Phase 2: New UI Package Setup (2-3 days)
+**Week 2**: New UI
+- [ ] [Spec 187](../187-vite-spa-migration/): Vite SPA using components + HTTP API
 
-- [ ] Create new `packages/ui-vite` directory with Vite+React setup
-- [ ] Copy desktop's frontend structure (pages, router, hooks)
-- [ ] Integrate `packages/ui-shared` components
-- [ ] Set up data layer abstraction (interface for backend communication)
-- [ ] Implement Rust CLI wrapper for data operations
+**Week 3**: Integration
+- [ ] Desktop uses HTTP server + shared UI
+- [ ] Integration + performance testing
 
-### Phase 3: Backend Integration (3-4 days)
+**Week 4**: Launch
+- [ ] Archive Next.js UI (`packages/ui` → `packages/ui-legacy-nextjs`)
+- [ ] Promote Vite SPA (`packages/ui-new` → `packages/ui`)
+- [ ] Release v0.3.0
 
-- [ ] Design API layer: CLI spawning vs HTTP server wrapper
-- [ ] Implement spec operations via Rust CLI (list, view, stats, search, etc.)
-- [ ] Implement project management via Rust CLI
-- [ ] Add caching layer for performance
-- [ ] Test data operations match old UI functionality
+### Success Criteria
 
-### Phase 4: Feature Parity (3-4 days)
-
-- [ ] Port remaining UI features from Next.js UI:
-  - Spec detail with sub-specs
-  - Dependencies visualization (DAG + network)
-  - Project switching
-  - Search & filters
-  - Metadata editing
-  - Stats dashboard
-- [ ] Implement missing features if any
-- [ ] Style and UX consistency pass
-
-### Phase 5: Migration & Deprecation (1-2 days)
-
-- [ ] Rename `packages/ui` → `packages/ui-nextjs-archived`
-- [ ] Rename `packages/ui-vite` → `packages/ui`
-- [ ] Update `lean-spec ui` command to use new package
-- [ ] Update package.json scripts (`dev:web`, etc.)
-- [ ] Update documentation and README files
-- [ ] Update CI/CD pipelines
-
-### Phase 6: Cleanup (1 day)
-
-- [ ] Remove Next.js dependencies from monorepo
-- [ ] Remove database dependencies (better-sqlite3, drizzle-orm) if no longer needed
-- [ ] Update TypeScript paths and imports
-- [ ] Clean up unused code
-- [ ] Update ARCHITECTURE.md and agent instructions
+**Must Have**:
+- [ ] All Next.js UI features in Vite SPA
+- [ ] Desktop uses shared UI
+- [ ] Bundle <30MB (vs 150MB+)
+- [ ] Page load <2s for 100+ specs
+- [ ] Multi-project on both platforms
 
 ## Test
 
-### Functional Tests
-
-- [ ] All spec operations work (list, view, create, update, search)
-- [ ] Project switching works correctly
-- [ ] Dependencies visualization renders correctly
-- [ ] Stats page displays accurate data
-- [ ] Sub-specs are properly displayed
-- [ ] Metadata editing saves correctly
-- [ ] Search returns correct results
-- [ ] Filters and sorting work
-
-### Performance Tests
-
-- [ ] Page load time <2s for 100+ specs
-- [ ] Search response time <500ms
-- [ ] Dependency graph renders <1s for 50+ specs
-- [ ] Memory usage <200MB for typical usage
-
-### Integration Tests
-
-- [ ] Desktop app still works with shared components
-- [ ] `lean-spec ui` launches new UI correctly
-- [ ] Multi-project switching works in both desktop and web
-- [ ] CLI operations reflect in UI immediately
-
-### Compatibility Tests
-
-- [ ] Works on Node.js 20+
-- [ ] Works on Chrome, Firefox, Safari
-- [ ] Works on macOS, Linux, Windows
-- [ ] Existing projects load without migration
+**Integration Tests** (cross-spec):
+- [ ] Web → HTTP server → filesystem
+- [ ] Desktop → HTTP server → filesystem
+- [ ] Project switching synchronized
+- [ ] Config changes apply everywhere
 
 ## Notes
 
 ### Why This Matters
 
-1. **Eliminate Duplication**: One codebase to maintain instead of two
-2. **Better Performance**: SPA + Rust is faster than Next.js + TypeScript
-3. **Consistency**: Same UX between web and desktop
-4. **Faster Development**: New features implemented once
-5. **Smaller Bundle**: No SSR overhead (~150MB → ~30MB)
+1. **Eliminate Duplication**: One codebase, not two
+2. **10x Performance**: Rust backend vs TypeScript
+3. **Consistency**: Same UX everywhere
+4. **Smaller Bundle**: 30MB vs 150MB+
+5. **Faster Development**: One implementation
 
-### Alternatives Considered
+### Why Bold Migration?
 
-1. **Keep both UIs**: Rejected - unsustainable maintenance burden
-2. **Migrate desktop to Next.js**: Rejected - slower, heavier, wrong direction
-3. **Use web components**: Rejected - too much refactoring, limited benefit
-4. **Micro-frontends**: Rejected - adds complexity without clear benefit
+AI coding era enables velocity:
+- AI excels at mechanical porting
+- Desktop migration (spec 169) proved this works
+- Avoid temporary bridges (no CLI spawning)
+- One migration, one test cycle
 
 ### Related Specs
 
-- Spec 169: UI Backend Rust/Tauri Migration (desktop migration complete)
-- Spec 170: CLI/MCP/Core Rust Migration (backend already in Rust)
-- Spec 181: TypeScript Deprecation (core already migrated)
-
-### Dependencies
-
-- Depends on: None (Rust backend already exists)
-- Blocks: Future UI development should use consolidated package
+- [169](../169-ui-backend-rust-tauri-migration-evaluation/): Desktop migrated
+- [170](../170-cli-mcp-rust-migration/): CLI/MCP in Rust
+- [181](../181-typescript-deprecation/): TypeScript deprecation
+- **[185](../185-ui-components-extraction/)**: Components (sub-spec)
+- **[186](../186-rust-http-server/)**: HTTP server (sub-spec)
+- **[187](../187-vite-spa-migration/)**: Vite SPA (sub-spec)
 
 ### Open Questions
 
-1. **API Layer**: Should we spawn CLI processes or create a lightweight HTTP server wrapper around Rust?
-   - **Decision**: Start with CLI spawning for simplicity, evaluate HTTP wrapper if performance issues
-2. **Shared Package Name**: `@leanspec/ui-shared` or `@leanspec/ui-components`?
-   - **Decision**: `@leanspec/ui-shared` (broader scope, includes hooks/utils)
-3. **Migration Timeline**: Can we do this incrementally or all at once?
-   - **Decision**: Incremental with new package name, then swap
-4. **Old UI Support**: How long to keep archived Next.js code?
-   - **Decision**: Archive immediately, can recover from git if needed
+1. **HTTP Server Distribution**: Separate npm package with platform binaries
+2. **Hot Reload**: File watcher with `notify-rs` for project registry
+3. **Spec File Changes**: Client polling initially, WebSocket upgrade later
+4. **Web Production**: Dev-only (browser security limits)
