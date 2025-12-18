@@ -3,7 +3,6 @@ status: complete
 created: 2025-11-02
 tags: [documentation, website, vitepress]
 priority: high
-superseded-by: specs/20251102/011-docusaurus-vercel-migration
 ---
 
 # Documentation Website

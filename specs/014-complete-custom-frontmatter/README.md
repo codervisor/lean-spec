@@ -6,7 +6,6 @@ tags:
   - frontmatter
   - customization
 priority: high
-milestone: v0.2.0
 completed: '2025-11-04'
 ---
 
