@@ -22,9 +22,9 @@ path = "src/main.rs"
 leanspec-core = { path = "../leanspec-core" }
 
 # Web framework
-axum = "0.8"
-tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace", "fs"] }
+axum = "0.8.7"
+tower = "0.5.2"
+tower-http = { version = "0.6.8", features = ["cors", "trace", "fs"] }
 
 # Async runtime
 tokio.workspace = true

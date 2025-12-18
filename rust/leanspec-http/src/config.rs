@@ -212,17 +212,23 @@ pub fn load_config() -> Result<ServerConfig, ServerError> {
 }
 
 /// Migrate from YAML config to JSON
+/// Note: This performs best-effort migration. Unknown YAML fields are ignored
+/// and defaults are used. The primary goal is to create a valid JSON config file.
 fn migrate_yaml_config(yaml_path: &PathBuf) -> Result<ServerConfig, ServerError> {
     let content = fs::read_to_string(yaml_path)
         .map_err(|e| ServerError::ConfigError(format!("Failed to read YAML config: {}", e)))?;
 
-    // Try to parse as YAML and convert to our structure
-    // For now, just return defaults as migration is best-effort
-    let config = serde_yaml::from_str::<serde_yaml::Value>(&content)
-        .map(|_| ServerConfig::default())
-        .unwrap_or_else(|_| ServerConfig::default());
+    // Try to parse YAML directly into our config struct
+    // This handles fields that match between YAML and JSON formats
+    let config = serde_yaml::from_str::<ServerConfig>(&content).unwrap_or_else(|e| {
+        tracing::warn!(
+            "Could not fully parse YAML config, using defaults: {}",
+            e
+        );
+        ServerConfig::default()
+    });
 
-    // Save as JSON
+    // Save as JSON for future use
     if let Err(e) = save_config(&config) {
         tracing::warn!("Failed to save migrated config: {}", e);
     }

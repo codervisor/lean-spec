@@ -241,7 +241,7 @@ pub struct ValidationIssue {
 impl From<&leanspec_core::ValidationIssue> for ValidationIssue {
     fn from(issue: &leanspec_core::ValidationIssue) -> Self {
         Self {
-            severity: format!("{:?}", issue.severity).to_lowercase(),
+            severity: issue.severity.to_string(),
             message: issue.message.clone(),
             spec: None,
         }

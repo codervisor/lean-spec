@@ -284,7 +284,7 @@ pub async fn validate_all(State(state): State<AppState>) -> ApiResult<Json<Valid
         let result = frontmatter_validator.validate(spec);
         for issue in result.issues {
             issues.push(ValidationIssue {
-                severity: format!("{:?}", issue.severity).to_lowercase(),
+                severity: issue.severity.to_string(),
                 message: issue.message,
                 spec: Some(spec.path.clone()),
             });
@@ -294,7 +294,7 @@ pub async fn validate_all(State(state): State<AppState>) -> ApiResult<Json<Valid
         let result = line_validator.validate(spec);
         for issue in result.issues {
             issues.push(ValidationIssue {
-                severity: format!("{:?}", issue.severity).to_lowercase(),
+                severity: issue.severity.to_string(),
                 message: issue.message,
                 spec: Some(spec.path.clone()),
             });
@@ -304,7 +304,7 @@ pub async fn validate_all(State(state): State<AppState>) -> ApiResult<Json<Valid
         let result = structure_validator.validate(spec);
         for issue in result.issues {
             issues.push(ValidationIssue {
-                severity: format!("{:?}", issue.severity).to_lowercase(),
+                severity: issue.severity.to_string(),
                 message: issue.message,
                 spec: Some(spec.path.clone()),
             });
@@ -318,7 +318,8 @@ pub async fn validate_all(State(state): State<AppState>) -> ApiResult<Json<Valid
         issues.push(ValidationIssue {
             severity: "error".to_string(),
             message: format!("Circular dependency detected: {}", cycle.join(" → ")),
-            spec: Some(cycle.first().cloned().unwrap_or_default()),
+            // Cycles are guaranteed to be non-empty when returned from find_all_cycles
+            spec: cycle.first().cloned(),
         });
     }
 
@@ -389,16 +390,19 @@ pub async fn validate_spec(
 }
 
 /// PATCH /api/specs/:spec/metadata - Update spec metadata
-/// Note: This is a placeholder - actual implementation requires file writing
+/// Note: This endpoint is not yet implemented
 pub async fn update_metadata(
     State(_state): State<AppState>,
     Path(_spec_id): Path<String>,
     Json(_updates): Json<MetadataUpdate>,
-) -> ApiResult<Json<serde_json::Value>> {
+) -> (StatusCode, Json<ApiError>) {
     // TODO: Implement metadata update using leanspec_core
     // This requires adding file writing capabilities
-
-    Ok(Json(serde_json::json!({
-        "message": "Metadata update not yet implemented"
-    })))
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        Json(ApiError::new(
+            "NOT_IMPLEMENTED",
+            "Metadata update is not yet implemented",
+        )),
+    )
 }
