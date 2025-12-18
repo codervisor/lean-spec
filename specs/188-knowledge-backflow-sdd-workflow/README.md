@@ -15,7 +15,9 @@ depends_on:
   - 122-ai-agent-deps-management-fix
   - 174-completion-status-verification-hook
   - 018-spec-validation
-updated_at: '2025-12-18T15:27:17.813Z'
+  - 168-leanspec-orchestration-platform
+  - 171-burst-mode-orchestrator
+updated_at: '2025-12-18T15:53:05.707Z'
 ---
 
 # Knowledge Backflow in SDD Workflow
@@ -26,20 +28,22 @@ Add bidirectional knowledge flow to the SDD workflow, ensuring specs remain accu
 
 **Problem**: Specs often become outdated after implementation. Design decisions made during coding aren't captured, leading to spec-reality drift that misleads future AI agents and human developers.
 
-**Solution**: Three-tier approach:
-1. **Workflow Integration**: Make spec updates part of the completion process
-2. **Automated Detection**: System identifies when specs might be outdated
-3. **AI-Assisted Sync**: Use AI to suggest spec updates based on code changes
+**Solution**: Progressive enhancement approach:
+1. **Workflow Integration** (v0.5.0): Make spec updates part of the completion process
+2. **Orchestrator + Reviewer Validation** (v0.6.0): Use orchestrator agent with reviewer agent to validate completed specs against actual implementation
+3. **Proactive Spec Sync** (Future): Periodic AI-powered spec review and update suggestions (high token cost, requires careful consideration)
 
 See [DESIGN.md](./DESIGN.md) for detailed architecture and [ANALYSIS.md](./ANALYSIS.md) for problem analysis.
 
 ## Design
 
 See [DESIGN.md](./DESIGN.md) for complete technical architecture including:
-- Three-tier implementation approach (Workflow → Detection → AI Sync)
-- Detection heuristics and validation logic
+- Progressive enhancement approach (Workflow → Orchestrator Validation → Proactive Sync)
+- Orchestrator + Reviewer agent integration (leveraging specs 168 and 171)
 - Phased rollout strategy
 - Integration with existing infrastructure
+
+**Key Design Change**: Phase 2 uses **orchestrator + reviewer agents** instead of automated heuristic detection to avoid false positives and leverage clean agent context for validation (see spec 168 and 171).
 
 ## Plan
 
@@ -70,52 +74,65 @@ See [DESIGN.md](./DESIGN.md) for complete technical architecture including:
   - [ ] Explain why backflow matters
   - [ ] Show before/after examples
 
-### Phase 2: Automated Drift Detection (Week 2-3)
+### Phase 2: Orchestrator + Reviewer Agent Validation (Week 2-4)
 
-- [ ] Create RealityAlignmentValidator
-  - [ ] Add to `rust/leanspec-core/src/validators/reality_alignment.rs`
-  - [ ] Implement technology mention detection (grep for tech keywords)
-  - [ ] Implement file staleness detection (compare timestamps)
-  - [ ] Implement broken link detection (validate file paths, spec references)
-  - [ ] Generate actionable warnings with suggestions
+**Rationale**: Instead of heuristic-based drift detection (prone to false positives and context window issues), use orchestrator agent to dispatch reviewer agent with clean context for validation.
+
+- [ ] Extend orchestrator (spec 168) for spec validation workflow
+  - [ ] Add "validate spec against implementation" orchestration mode
+  - [ ] Orchestrator reads spec + implementation code
+  - [ ] Dispatches reviewer agent with focused validation task
   
-- [ ] Integrate with validation system
-  - [ ] Add `--check-reality` flag to CLI validate command
-  - [ ] Add `checkReality` option to MCP validate tool
-  - [ ] Make it part of completion flow (optional warning, not blocker)
+- [ ] Implement reviewer agent capability
+  - [ ] Agent receives: spec requirements + actual codebase
+  - [ ] Agent validates: implementation matches spec claims
+  - [ ] Agent identifies: missing features, architecture drift, outdated design
+  - [ ] Agent generates: actionable spec update suggestions
   
-- [ ] Add freshness metrics
-  - [ ] Calculate "spec staleness score" (days since spec update vs related code changes)
-  - [ ] Show in `lean-spec list --detailed`
-  - [ ] Highlight stale specs in UI
+- [ ] Integrate with completion flow
+  - [ ] Option to trigger reviewer validation before marking complete
+  - [ ] `lean-spec agent review <spec>` command
+  - [ ] Desktop UI: "Validate with AI Reviewer" button
+  - [ ] Reviewer report displayed in UI with suggested updates
+  
+- [ ] Leverage clean context advantage
+  - [ ] Reviewer gets fresh context (no long conversation history)
+  - [ ] Focused task: "Does implementation match this spec?"
+  - [ ] More accurate than heuristics, fewer false positives
   
 - [ ] Testing
-  - [ ] Unit tests for each detection heuristic
-  - [ ] Integration tests with real repos
-  - [ ] Tune thresholds to reduce false positives
+  - [ ] Test reviewer agent on known spec-reality mismatches
+  - [ ] Measure accuracy vs heuristic approaches
+  - [ ] Validate token efficiency (single focused prompt vs multiple checks)
 
-### Phase 3: AI-Assisted Sync (Week 4-5) - Optional/Future
+### Phase 3: Proactive Spec Sync (Future) - High Token Cost
 
-- [ ] Implement git diff analysis
-  - [ ] Find commits between spec creation and now
-  - [ ] Extract meaningful changes (filter noise)
-  - [ ] Categorize by section (architecture, API, etc.)
+**Caution**: This phase requires proactive agents to periodically check specs against codebase, which incurs significant token cost. Requires careful cost/benefit analysis before implementation.
+
+- [ ] Cost/benefit analysis
+  - [ ] Calculate token cost per spec review (estimate: 5k-10k tokens)
+  - [ ] Determine review frequency (daily? weekly? on-demand only?)
+  - [ ] Project monthly token cost at scale
+  - [ ] Validate ROI vs manual spec updates
   
-- [ ] Implement LLM integration
-  - [ ] Create prompt template for change summarization
-  - [ ] Feed: spec content + git diff → LLM → suggested updates
-  - [ ] Parse LLM response into structured diffs
+- [ ] If cost-justified, implement periodic review agent
+  - [ ] Scheduled background task to check specs
+  - [ ] Agent reviews spec + recent code changes
+  - [ ] Agent generates suggestions when drift detected
+  - [ ] Human reviews and approves suggestions
   
-- [ ] Create `lean-spec sync` command
-  - [ ] Analyze changes since spec creation
-  - [ ] Show suggested updates
+- [ ] Alternative: On-demand sync only
+  - [ ] `lean-spec sync <spec>` command (user-triggered)
+  - [ ] Analyzes changes since spec creation
+  - [ ] Shows suggested updates
   - [ ] Interactive review (accept/reject/edit)
   - [ ] Apply updates atomically
   
-- [ ] Add to Desktop UI
-  - [ ] Show "Spec may be outdated" indicator
-  - [ ] "Sync spec" button that runs analysis
-  - [ ] Side-by-side diff view for reviewing changes
+- [ ] Token optimization strategies
+  - [ ] Incremental analysis (only check changed files)
+  - [ ] Smart truncation (summarize old changes)
+  - [ ] Batch processing (review multiple specs in one prompt)
+  - [ ] Caching (avoid re-analyzing unchanged code)
 
 ## Test
 
@@ -131,41 +148,42 @@ See [DESIGN.md](./DESIGN.md) for complete technical architecture including:
   - [ ] Spec updates happen before completion
   - [ ] MCP prompts guide correctly
 
-### Phase 2: Drift Detection Tests
+### Phase 2: Orchestrator + Reviewer Tests
 
-- [ ] Technology mention detection works
-  - [ ] Spec mentions "React" but no React files → warning
-  - [ ] Spec mentions "TypeScript" and TS files exist → no warning
+- [ ] Reviewer agent accuracy
+  - [ ] Correctly identifies missing features in implementation
+  - [ ] Detects architecture changes from original design
+  - [ ] Identifies outdated technology mentions in spec
+  - [ ] Minimal false positives (<5% rate)
   
-- [ ] File staleness detection works
-  - [ ] Spec unchanged for 60 days, code modified last week → warning
-  - [ ] Spec updated recently → no warning
+- [ ] Orchestration workflow
+  - [ ] Orchestrator successfully dispatches reviewer agent
+  - [ ] Reviewer receives clean context (no history pollution)
+  - [ ] Validation report is actionable and accurate
+  - [ ] Results displayed in Desktop UI
   
-- [ ] Broken link detection works
-  - [ ] Spec links to deleted file → warning
-  - [ ] Spec depends on archived spec → warning
-  - [ ] All links valid → no warning
-  
-- [ ] False positive rate is acceptable
-  - [ ] <10% false positives on real repos
-  - [ ] Thresholds are tunable per-project
+- [ ] Integration tests
+  - [ ] Test with known spec-reality mismatches
+  - [ ] Compare accuracy vs heuristic approaches
+  - [ ] Measure token efficiency
+  - [ ] Validate completion flow integration
 
-### Phase 3: AI Sync Tests
+### Phase 3: Proactive Sync Tests (If Implemented)
 
-- [ ] Git diff analysis is accurate
-  - [ ] Identifies major architecture changes
-  - [ ] Filters out trivial changes (formatting, comments)
-  - [ ] Correctly attributes changes to spec sections
+- [ ] Token cost validation
+  - [ ] Measure actual token usage per spec review
+  - [ ] Compare cost vs manual spec maintenance
+  - [ ] Validate ROI calculation
   
-- [ ] LLM suggestions are helpful
+- [ ] Suggestion quality
   - [ ] >80% acceptance rate for suggested updates
   - [ ] Suggestions are specific and actionable
   - [ ] No hallucinations or incorrect suggestions
   
-- [ ] Interactive flow is smooth
-  - [ ] Review/accept/reject workflow is intuitive
-  - [ ] Changes apply correctly
-  - [ ] Atomic updates (all or nothing)
+- [ ] On-demand sync workflow
+  - [ ] `lean-spec sync` command works correctly
+  - [ ] Interactive review flow is intuitive
+  - [ ] Changes apply atomically
 
 ### Real-World Validation
 
@@ -190,10 +208,10 @@ See [DESIGN.md](./DESIGN.md) for complete technical architecture including:
 - **Poor onboarding**: New team members misunderstand system architecture
 - **Lost institutional knowledge**: Design decisions aren't captured
 
-**Design Philosophy**: Progressive enhancement
-1. **Phase 1 (Manual)**: Remind humans to update specs
-2. **Phase 2 (Detection)**: Tell humans when specs are outdated  
-3. **Phase 3 (Automation)**: Help humans update specs with AI
+**Design Philosophy**: Progressive enhancement with agent-based validation
+1. **Phase 1 (Workflow)**: Remind humans to update specs during completion
+2. **Phase 2 (AI Reviewer)**: Use orchestrator + reviewer agent to validate specs against implementation (clean context, higher accuracy)
+3. **Phase 3 (Proactive)**: Periodic AI-powered spec sync (high token cost, requires justification)
 
 Each phase adds value independently. See [ANALYSIS.md](./ANALYSIS.md) for complete problem analysis.
 
@@ -206,5 +224,6 @@ Each phase adds value independently. See [ANALYSIS.md](./ANALYSIS.md) for comple
 - **018-spec-validation**: Validation infrastructure
 
 **Complements**:
-- **168-leanspec-orchestration-platform**: Can trigger spec updates during orchestration
+- **168-leanspec-orchestration-platform**: Orchestrator dispatches reviewer agent for validation
+- **171-burst-mode-orchestrator**: Burst mode pattern adapted for spec validation
 - **123-ai-coding-agent-integration**: Agents can be instructed to update specs
