@@ -1,0 +1,61 @@
+[package]
+name = "leanspec-http"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Rust HTTP server for LeanSpec UI using Axum"
+
+[lib]
+name = "leanspec_http"
+path = "src/lib.rs"
+
+[[bin]]
+name = "leanspec-http"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+leanspec-core = { path = "../leanspec-core" }
+
+# Web framework
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace", "fs"] }
+
+# Async runtime
+tokio.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Date/time
+chrono.workspace = true
+
+# Utilities
+thiserror.workspace = true
+
+# Directories
+dirs = "5.0"
+
+# Unique IDs
+uuid = { version = "1.10", features = ["v4"] }
+
+# Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI
+clap.workspace = true
+
+# YAML parsing for config migration
+serde_yaml.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1.42", features = ["full", "test-util"] }
