@@ -30,28 +30,31 @@ use common::*;
 /// 1. Reproduce the exact conditions that triggered the bug
 /// 2. Verify the bug no longer occurs with the fix
 /// 3. Document the issue number and brief description
-
-#[test]
-#[ignore = "Template test - replace with actual regression test"]
-fn test_regression_template() {
-    // SETUP: Create the conditions that triggered the bug
-    let ctx = TestContext::new();
-    let cwd = ctx.path();
-    init_project(cwd, true);
-
-    // Example setup: Create a spec, modify a file, etc.
-    // create_spec(cwd, "test-spec");
-
-    // ACTION: Perform the action that used to trigger the bug
-    // Example: Run a command, call a function, etc.
-
-    // ASSERT: Verify the bug no longer occurs
-    // Example: Check file contents, verify output, etc.
-
-    // The test should:
-    // - FAIL if the bug is present (before fix)
-    // - PASS if the bug is fixed (after fix)
-}
+///
+/// ## Template for New Regression Tests
+///
+/// ```rust
+/// #[test]
+/// fn test_regression_issue_NUMBER_brief_description() {
+///     // SETUP: Create the conditions that triggered the bug
+///     let ctx = TestContext::new();
+///     let cwd = ctx.path();
+///     init_project(cwd, true);
+///
+///     // Example setup: Create a spec, modify a file, etc.
+///     // create_spec(cwd, "test-spec");
+///
+///     // ACTION: Perform the action that used to trigger the bug
+///     // Example: Run a command, call a function, etc.
+///
+///     // ASSERT: Verify the bug no longer occurs
+///     // Example: Check file contents, verify output, etc.
+///
+///     // The test should:
+///     // - FAIL if the bug is present (before fix)
+///     // - PASS if the bug is fixed (after fix)
+/// }
+/// ```
 
 /// Example: Real regression test for reference
 ///
