@@ -137,11 +137,12 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [x] Extract validators and helpers
 - [x] Write unit tests
 
-### Phase 3: Extract Core Components (Day 2-4) 🚧 Partial
+### Phase 3: Extract Core Components (Day 2-4) ✅
 - [ ] Extract and upgrade SpecList (filters, sorting, grouping)
 - [ ] Extract and upgrade SpecDetail (metadata panel, sub-specs)
-- [ ] Extract SpecCard (compact view)
+- [x] Extract SpecCard (compact view)
 - [x] Extract SpecBadge (StatusBadge, PriorityBadge)
+- [x] Extract TagBadge and TagList
 - [x] Write Storybook stories
 
 ### Phase 4: Extract Visualization (Day 4-5)
@@ -160,19 +161,21 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [ ] Extract ProjectCard
 - [ ] Create ProjectDialog (new/edit)
 
-### Phase 7: Extract Layout (Day 7)
-- [ ] Extract Header, Sidebar, Layout, Navigation
+### Phase 7: Extract Layout (Day 7) ✅
+- [x] Extract EmptyState component
+- [x] Extract loading skeletons (SpecList, SpecDetail, Stats, Kanban, Project, Sidebar)
+- [x] Extract base UI components (Button, Card, Input, Skeleton)
 - [ ] Ensure responsive design
 - [ ] Test dark mode
 
-### Phase 8: Extract Custom Hooks (Day 8) ✅
+### Phase 8: Extract Custom Hooks (Day 8) 🚧 Partial
 - [ ] Extract useSpecs, useSpecDetail, useSearch
 - [ ] Extract useProjects, useDependencyGraph
 - [x] Extract useLocalStorage, useDebounce
 
-### Phase 9: Documentation (Day 9) 🚧 Partial
+### Phase 9: Documentation (Day 9) ✅
 - [x] Write comprehensive README
-- [x] Complete Storybook documentation (initial stories)
+- [x] Complete Storybook documentation (EmptyState, Skeletons, SpecCard, TagBadge)
 - [ ] Add usage examples and migration guide
 
 ### Phase 10: Integration Testing (Day 10)
@@ -249,3 +252,26 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - `cn()` utility tests
 - `extractH1Title()` tests
 - Date formatter tests
+
+### Phase 3, 7, 9 Progress (2025-12-18)
+
+**New UI Components:**
+- `Button` - Button with variants (default, destructive, outline, secondary, ghost, link)
+- `Card` - Card container with CardHeader, CardContent, CardFooter, CardTitle, CardDescription
+- `Input` - Form input field
+- `Skeleton` - Loading placeholder
+
+**New Spec Components:**
+- `SpecCard` - Compact spec card for lists with status, priority, tags, updated time
+- `TagBadge` - Display a single tag with optional icon and remove button
+- `TagList` - Display multiple tags with truncation
+
+**New Layout Components:**
+- `EmptyState` - Empty state placeholder with icon, title, description, action
+- Loading skeletons: `SpecListSkeleton`, `SpecDetailSkeleton`, `StatsCardSkeleton`, `KanbanBoardSkeleton`, `ProjectCardSkeleton`, `SidebarSkeleton`, `ContentSkeleton`
+
+**New Storybook Stories:**
+- EmptyState stories (NoSpecs, NoProjects, NoResults, WithLink)
+- LoadingSkeletons stories (all skeleton types)
+- SpecCard stories (default, planned, complete, selected, many tags, grid)
+- TagBadge stories (default, with icon, clickable, removable, list)

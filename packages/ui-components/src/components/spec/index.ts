@@ -13,3 +13,7 @@ export {
   type PriorityBadgeProps,
   type PriorityConfig,
 } from './priority-badge';
+
+export { SpecCard, type SpecCardProps } from './spec-card';
+
+export { TagBadge, TagList, type TagBadgeProps, type TagListProps } from './tag-badge';
