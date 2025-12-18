@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
       - name: Auto-bump dev version
         run: |
           # Get current version from root package.json (single source of truth)
@@ -57,8 +60,15 @@ jobs:
           
           echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
       
-      - name: Run pre-release checks
-        run: pnpm pre-release
+      - name: Build Rust binaries
+        working-directory: rust
+        run: cargo build --release
+      
+      - name: Copy Rust binaries
+        run: node scripts/copy-rust-binaries.mjs
+      
+      - name: Validate specs
+        run: node bin/lean-spec.js validate --warnings-only
       
       - name: Publish CLI to npm with dev tag
         if: ${{ !inputs.dry_run }}

@@ -36,6 +36,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -43,11 +46,18 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev webkit2gtk-4.1-dev
 
+      - name: Build Rust binaries
+        working-directory: rust
+        run: cargo build --release
+
+      - name: Copy Rust binaries
+        run: node scripts/copy-rust-binaries.mjs
+
       - name: Download Node.js for Desktop
         run: pnpm --filter @leanspec/desktop download:node
 
-      - name: Build packages
-        run: pnpm build
+      - name: Build UI package
+        run: pnpm --filter @leanspec/ui build
 
       - name: Build desktop bundle (macOS)
         if: matrix.os == 'macos-latest'

@@ -21,11 +21,24 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
       
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
-      - name: Run pre-release checks
-        run: pnpm pre-release
+      - name: Sync versions
+        run: pnpm sync-versions
+      
+      - name: Build Rust binaries
+        working-directory: rust
+        run: cargo build --release
+      
+      - name: Copy Rust binaries
+        run: node scripts/copy-rust-binaries.mjs
+      
+      - name: Validate specs
+        run: node bin/lean-spec.js validate --warnings-only
       
       - name: Publish CLI to npm
         working-directory: packages/cli

@@ -26,17 +26,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Set up Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -50,11 +43,15 @@ jobs:
             libjavascriptcoregtk-4.1-dev \
             webkit2gtk-4.1-dev
 
-      - name: Build project
-        run: pnpm run build
+      - name: Build Rust binaries
+        working-directory: rust
+        run: cargo build --release
+
+      - name: Copy binaries to packages
+        run: node scripts/copy-rust-binaries.mjs
 
       - name: Install lean-spec CLI globally
-        run: pnpm link --global
+        run: npm install -g .
         working-directory: packages/cli
 
       - name: Verify lean-spec installation

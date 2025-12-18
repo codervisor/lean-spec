@@ -7,58 +7,63 @@ on:
     branches: [main]
 
 jobs:
-  # Fast checks: type checking, linting, unit tests
-  test:
+  # Rust build and test
+  rust:
     runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v4
       
-      - uses: pnpm/action-setup@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
       
-      - name: Setup Node.js
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: rust/target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+      
+      - name: Check formatting
+        working-directory: rust
+        run: cargo fmt -- --check
+      
+      - name: Run clippy
+        working-directory: rust
+        run: cargo clippy -- -D warnings
+      
+      - name: Build binaries
+        working-directory: rust
+        run: cargo build --release
+      
+      - name: Run tests
+        working-directory: rust
+        run: cargo test
+      
+      - name: Setup Node.js (for spec validation)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
       
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Copy Rust binaries
+        run: node scripts/copy-rust-binaries.mjs
       
-      - name: Run pre-release checks
-        run: pnpm pre-release
-      
-      - name: Generate coverage
-        run: pnpm test:coverage
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/coverage-final.json
-          fail_ci_if_error: false
-
-  # E2E tests: slower, run real CLI commands
-  e2e:
-    runs-on: ubuntu-latest
-    needs: test  # Only run E2E if unit tests pass
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-      
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      
-      - name: Build packages
-        run: pnpm build
-      
-      - name: Run E2E tests
-        run: pnpm test:run -- --testPathPattern="e2e"
-        timeout-minutes: 5
+      - name: Validate specs
+        run: node bin/lean-spec.js validate --warnings-only
