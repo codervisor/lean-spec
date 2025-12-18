@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2025-12-18
 priority: medium
 tags:
@@ -7,7 +7,7 @@ tags:
 - distribution
 - breaking-change
 created_at: 2025-12-18T13:48:54.278021Z
-updated_at: 2025-12-18T13:48:54.278021Z
+updated_at: 2025-12-18T14:06:10.382947Z
 ---
 
 # Rename CLI Platform Packages to @leanspec/cli-* Scope
@@ -95,37 +95,37 @@ packages/cli/binaries/
 
 ### Phase 1: Rename and Publish New Packages
 
-- [ ] Rename platform package directories and package.json
-  - [ ] `darwin-arm64/package.json`: `name` → `@leanspec/cli-darwin-arm64`
-  - [ ] `darwin-x64/package.json`: `name` → `@leanspec/cli-darwin-x64`
-  - [ ] `linux-x64/package.json`: `name` → `@leanspec/cli-linux-x64`
-  - [ ] `linux-arm64/package.json`: `name` → `@leanspec/cli-linux-arm64`
-  - [ ] `windows-x64/package.json`: `name` → `@leanspec/cli-windows-x64`
+- [x] Rename platform package directories and package.json
+  - [x] `darwin-arm64/package.json`: `name` → `@leanspec/cli-darwin-arm64`
+  - [x] `darwin-x64/package.json`: `name` → `@leanspec/cli-darwin-x64`
+  - [x] `linux-x64/package.json`: `name` → `@leanspec/cli-linux-x64`
+  - [x] `linux-arm64/package.json`: `name` → `@leanspec/cli-linux-arm64`
+  - [x] `windows-x64/package.json`: `name` → `@leanspec/cli-windows-x64`
 
-- [ ] Update main CLI wrapper package
-  - [ ] [packages/cli/package.json](../../packages/cli/package.json): Replace `optionalDependencies` with scoped names
-  - [ ] [packages/cli/bin/lean-spec.js](../../packages/cli/bin/lean-spec.js): Update binary resolution logic if needed
+- [x] Update main CLI wrapper package
+  - [x] [packages/cli/package.json](../../packages/cli/package.json): Replace `optionalDependencies` with scoped names
+  - [x] [packages/cli/bin/lean-spec-rust.js](../../packages/cli/bin/lean-spec-rust.js): Update binary resolution logic to use scoped names
 
-- [ ] Update CI/CD workflows
-  - [ ] [.github/workflows/publish-dev.yml](../../.github/workflows/publish-dev.yml): Update package paths and names
-  - [ ] [.github/workflows/publish.yml](../../.github/workflows/publish.yml): Update package paths and names (if exists)
-  - [ ] Update platform package publishing loops
+- [x] Update CI/CD workflows
+  - [x] [.github/workflows/publish-dev.yml](../../.github/workflows/publish-dev.yml): Update package echo statements and dry-run summary
+  - [x] Update platform package publishing loops (already dynamic via package.json)
 
-- [ ] Update build and distribution scripts
-  - [ ] [scripts/copy-rust-binaries.mjs](../../scripts/copy-rust-binaries.mjs): Check if paths need updating
-  - [ ] [scripts/sync-rust-versions.ts](../../scripts/sync-rust-versions.ts): Update package name patterns
-  - [ ] [scripts/publish-platform-packages.ts](../../scripts/publish-platform-packages.ts): Update package names
+- [x] Update build and distribution scripts
+  - [x] [scripts/copy-rust-binaries.mjs](../../scripts/copy-rust-binaries.mjs): No changes needed (uses directories, not package names)
+  - [x] [scripts/sync-rust-versions.ts](../../scripts/sync-rust-versions.ts): Already handles CLI packages correctly
+  - [x] [scripts/publish-platform-packages.ts](../../scripts/publish-platform-packages.ts): Already reads package.json name dynamically
 
-- [ ] Documentation updates
-  - [ ] Update [npm-distribution.md](../../docs/npm-distribution.md)
-  - [ ] Update [AGENTS.md](../../AGENTS.md) if package names mentioned
-  - [ ] Update README if platform packages mentioned
+- [x] Documentation updates
+  - [x] Update [npm-distribution.md](../../docs/npm-distribution.md)
+  - [x] [AGENTS.md](../../AGENTS.md): No package names mentioned
+  - [x] README: No platform packages mentioned
 
 ### Phase 2: Validation and Testing
 
-- [ ] Test local builds
-  - [ ] `pnpm rust:build` successfully copies binaries
-  - [ ] Package versions sync correctly
+- [x] Test local builds
+  - [x] `pnpm rust:build` successfully copies binaries
+  - [x] Package versions sync correctly
+  - [x] Wrapper resolves scoped package names correctly
 
 - [ ] Test dry-run publish
   - [ ] `gh workflow run publish-dev.yml --inputs dry_run=true`
@@ -144,14 +144,29 @@ packages/cli/binaries/
 
 ## Test
 
-- [ ] Local build produces packages with correct scoped names
-- [ ] `lean-spec` wrapper correctly resolves new scoped platform packages
+- [x] Local build produces packages with correct scoped names
+- [x] `lean-spec` wrapper correctly resolves new scoped platform packages
 - [ ] Dev publish workflow publishes all 5 platform packages + main wrapper
 - [ ] Fresh install of `lean-spec@dev` works on macOS ARM64
 - [ ] Package search shows packages under `@leanspec` org
-- [ ] Version sync scripts update all packages correctly
+- [x] Version sync scripts update all packages correctly
 
 ## Notes
+
+### Implementation Completion (2025-12-18)
+
+**Completed:**
+- ✅ All 5 platform packages renamed to `@leanspec/cli-*` in package.json
+- ✅ Main CLI package updated to use scoped names in optionalDependencies
+- ✅ Wrapper script (lean-spec-rust.js) updated to resolve scoped package names
+- ✅ CI/CD workflow (publish-dev.yml) updated with correct echo statements
+- ✅ Documentation (npm-distribution.md) fully updated
+- ✅ Build scripts already handle packages dynamically
+- ✅ Local testing confirms wrapper resolves scoped names correctly
+
+**Ready for:**
+- Dev publish testing (`gh workflow run publish-dev.yml`)
+- Production release in next version
 
 ### Why Keep `lean-spec` Unscoped?
 

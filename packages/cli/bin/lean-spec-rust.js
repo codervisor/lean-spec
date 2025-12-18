@@ -46,7 +46,7 @@ function getBinaryPath() {
 
   const isWindows = platform === 'win32';
   const binaryName = isWindows ? 'lean-spec.exe' : 'lean-spec';
-  const packageName = `lean-spec-${platformKey}`;
+  const packageName = `@leanspec/cli-${platformKey}`;
   
   debug('Binary info:', { platformKey, binaryName, packageName });
 

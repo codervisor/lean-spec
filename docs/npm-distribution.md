@@ -35,11 +35,11 @@ Main Package (lean-spec)
 
 | Package | Platform |
 |---------|----------|
-| `lean-spec-darwin-x64` | macOS Intel |
-| `lean-spec-darwin-arm64` | macOS Apple Silicon |
-| `lean-spec-linux-x64` | Linux x86_64 |
-| `lean-spec-linux-arm64` | Linux ARM64 |
-| `lean-spec-windows-x64` | Windows x64 |
+| `@leanspec/cli-darwin-x64` | macOS Intel |
+| `@leanspec/cli-darwin-arm64` | macOS Apple Silicon |
+| `@leanspec/cli-linux-x64` | Linux x86_64 |
+| `@leanspec/cli-linux-arm64` | Linux ARM64 |
+| `@leanspec/cli-windows-x64` | Windows x64 |
 
 ### Platform Packages (MCP)
 
@@ -118,8 +118,8 @@ All packages use the same version (from root `package.json`):
 ```json
 {
   "lean-spec": "0.3.0",
-  "lean-spec-darwin-x64": "0.3.0",
-  "lean-spec-darwin-arm64": "0.3.0",
+  "@leanspec/cli-darwin-x64": "0.3.0",
+  "@leanspec/cli-darwin-arm64": "0.3.0",
   ...
 }
 ```
@@ -140,7 +140,7 @@ const PLATFORM_MAP = {
 };
 
 // Resolve binary from platform package
-const packageName = `lean-spec-${platformKey}`;
+const packageName = `@leanspec/cli-${platformKey}`;
 const binaryPath = require.resolve(`${packageName}/lean-spec`);
 
 // Spawn binary with all args
@@ -157,7 +157,7 @@ Same pattern as CLI wrapper, but for MCP binary (`leanspec-mcp`).
 
 ```
 Binary not found for darwin-arm64
-Expected package: lean-spec-darwin-arm64
+Expected package: @leanspec/cli-darwin-arm64
 
 To install:
   npm install -g lean-spec
