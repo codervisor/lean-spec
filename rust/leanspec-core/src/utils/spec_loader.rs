@@ -123,8 +123,25 @@ impl SpecLoader {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
         
-        // Skip archived specs directory
+        // Skip archived specs directory and specs inside it
         if spec_path == "archived" {
+            return Ok(None);
+        }
+        
+        // Check if this spec is inside the archived directory
+        if let Some(parent) = spec_dir.parent() {
+            if parent.file_name().map(|n| n == "archived").unwrap_or(false) {
+                return Ok(None);
+            }
+        }
+        
+        // Skip top-level README.md (specs/README.md) - not a spec
+        if spec_dir == self.specs_dir {
+            return Ok(None);
+        }
+        
+        // Skip directories that don't look like specs (should start with numbers)
+        if !spec_path.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
             return Ok(None);
         }
         

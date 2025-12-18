@@ -311,7 +311,7 @@ enum Commands {
     /// Show spec statistics
     Stats {
         /// Show detailed statistics
-        #[arg(short, long)]
+        #[arg(long)]
         detailed: bool,
     },
     
