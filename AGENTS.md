@@ -135,7 +135,12 @@ See [docs/agents/RULES.md](docs/agents/RULES.md) for development rules.
 
 See [docs/agents/PUBLISHING.md](docs/agents/PUBLISHING.md).
 
-**Mandatory steps:**
+**For dev versions (CI only):**
+```bash
+gh workflow run publish-dev.yml  # Publishes all platforms
+```
+
+**Mandatory steps for stable releases:**
 1. Update versions & CHANGELOG
 2. `pnpm pre-release`
 3. Commit, tag, push

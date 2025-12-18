@@ -67,8 +67,57 @@ jobs:
       - name: Copy Rust binaries
         run: node scripts/copy-rust-binaries.mjs
       
+      - name: Sync Rust platform package versions
+        run: pnpm sync-rust-versions
+      
       - name: Validate specs
         run: node bin/lean-spec.js validate --warnings-only
+      
+      - name: Publish CLI platform packages with dev tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          # Platform packages MUST be published before main package
+          for platform in darwin-arm64 darwin-x64 linux-x64 linux-arm64 windows-x64; do
+            echo "Publishing lean-spec-$platform..."
+            cd packages/cli/binaries/$platform
+            OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+              if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+                echo "Version already published, skipping..."
+                cd ../../../..
+                continue
+              else
+                echo "$OUTPUT"
+                exit 1
+              fi
+            }
+            echo "$OUTPUT"
+            cd ../../../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish MCP platform packages with dev tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          # Platform packages MUST be published before main package
+          for platform in darwin-arm64 darwin-x64 linux-x64 linux-arm64 windows-x64; do
+            echo "Publishing @leanspec/mcp-$platform..."
+            cd packages/mcp/binaries/$platform
+            OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+              if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+                echo "Version already published, skipping..."
+                cd ../../../..
+                continue
+              else
+                echo "$OUTPUT"
+                exit 1
+              fi
+            }
+            echo "$OUTPUT"
+            cd ../../../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish CLI to npm with dev tag
         if: ${{ !inputs.dry_run }}
@@ -127,7 +176,11 @@ jobs:
           echo "🧪 DRY RUN - No packages published"
           echo "Would have published version: $DEV_VERSION"
           echo ""
-          echo "Packages that would be published:"
-          echo "  - @codervisor/lean-spec (CLI)"
-          echo "  - @codervisor/lean-spec-mcp (MCP)"
-          echo "  - @codervisor/lean-spec-ui (UI)"
+          echo "Platform packages that would be published:"
+          echo "  CLI: lean-spec-darwin-arm64, lean-spec-darwin-x64, lean-spec-linux-x64, lean-spec-linux-arm64, lean-spec-windows-x64"
+          echo "  MCP: @leanspec/mcp-darwin-arm64, @leanspec/mcp-darwin-x64, @leanspec/mcp-linux-x64, @leanspec/mcp-linux-arm64, @leanspec/mcp-windows-x64"
+          echo ""
+          echo "Main packages that would be published:"
+          echo "  - lean-spec (CLI wrapper)"
+          echo "  - @leanspec/mcp (MCP wrapper)"
+          echo "  - @leanspec/ui (UI)"

@@ -14,45 +14,38 @@ The Rust binaries are distributed via optional dependencies (e.g., `lean-spec-da
 
 ## Publishing Dev Versions
 
-For testing and preview releases, you can publish dev versions that don't affect the stable `latest` tag:
+For testing and preview releases, publish dev versions via CI that don't affect the stable `latest` tag:
 
-### Manual Dev Release
+### Dev Release via CI
 
-1. **Update versions to prerelease format** (e.g., `0.2.5-dev.0`):
-   ```bash
-   # Update version in packages/cli/package.json, packages/ui/package.json, packages/mcp/package.json
-   ```
-
-2. **Build and publish with dev tag**:
-   ```bash
-   pnpm build
-   cd packages/cli && npm publish --tag dev --access public
-   cd ../ui && npm publish --tag dev --access public
-   cd ../mcp && npm publish --tag dev --access public
-   ```
-
-3. **Users install dev versions**:
-   ```bash
-   npm install -g lean-spec@dev
-   npm install @leanspec/ui@dev
-   ```
-
-### Automated Dev Release
-
-Push to `main` or `develop` branch, or trigger the workflow manually to automatically publish dev versions:
+Manually trigger the GitHub Actions workflow to publish dev versions for all platforms:
 
 ```bash
-# Make your changes and commit
-git push origin main  # or develop
+# Option 1: Manual trigger via GitHub UI
+# Go to Actions → Publish Dev Version to npm → Run workflow
+
+# Option 2: Manual trigger via CLI
+gh workflow run publish-dev.yml
 ```
 
 The `.github/workflows/publish-dev.yml` workflow will automatically:
-- **Auto-bump version** to timestamp-based prerelease (e.g., `0.2.4-dev.20251118123045`)
-- Run type checks and build
-- Publish all packages with the `dev` tag
+- **Auto-bump version** to timestamp-based prerelease (e.g., `0.2.4-dev.20251218123045`)
+- Build Rust binaries for current platform
+- Sync all package versions (including Rust platform packages)
+- **Publish platform packages first** (e.g., `lean-spec-darwin-arm64`, `@leanspec/mcp-darwin-arm64`)
+- Publish main packages (CLI, MCP, UI) with the `dev` tag
 - Keep the `latest` tag unchanged for stable users
 
 **Note**: Versions are auto-generated based on the current base version + timestamp, so you don't need to manually update package.json files for dev releases.
+
+### Testing Dev Versions
+
+Users install dev versions with:
+```bash
+npm install -g lean-spec@dev
+npm install @leanspec/mcp@dev
+npm install @leanspec/ui@dev
+```
 
 ## Release Checklist
 
