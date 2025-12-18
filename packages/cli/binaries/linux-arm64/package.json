@@ -1,0 +1,16 @@
+{
+  "name": "lean-spec-linux-arm64",
+  "version": "0.2.10",
+  "description": "LeanSpec CLI binary for Linux ARM64",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "main": "lean-spec",
+  "files": [
+    "lean-spec"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "lean-spec-darwin-x64",
+  "version": "0.2.10",
+  "description": "LeanSpec CLI binary for macOS x64",
+  "os": ["darwin"],
+  "cpu": ["x64"],
+  "main": "lean-spec",
+  "files": [
+    "lean-spec"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "license": "MIT"
+}

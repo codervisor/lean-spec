@@ -8,6 +8,9 @@
   "scripts": {
     "build": "turbo run build",
     "sync-versions": "tsx scripts/sync-versions.ts",
+    "sync-rust-versions": "tsx scripts/sync-rust-versions.ts",
+    "publish:platforms": "tsx scripts/publish-platform-packages.ts",
+    "publish:main": "tsx scripts/publish-main-packages.ts",
     "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/core",
     "dev:web": "turbo run dev --filter=@leanspec/ui",
     "dev:cli": "turbo run dev --filter=lean-spec",

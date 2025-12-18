@@ -1,0 +1,9 @@
+# Binary files - only tracked in CI/CD artifacts
+lean-spec
+lean-spec.exe
+leanspec-mcp
+leanspec-mcp.exe
+
+# Keep the package.json and .gitkeep
+!package.json
+!.gitkeep

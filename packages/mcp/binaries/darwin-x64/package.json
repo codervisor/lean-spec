@@ -1,0 +1,16 @@
+{
+  "name": "@leanspec/mcp-darwin-x64",
+  "version": "0.2.10",
+  "description": "LeanSpec MCP server binary for macOS x64",
+  "os": ["darwin"],
+  "cpu": ["x64"],
+  "main": "leanspec-mcp",
+  "files": [
+    "leanspec-mcp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "license": "MIT"
+}
