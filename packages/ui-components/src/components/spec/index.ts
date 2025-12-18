@@ -17,3 +17,5 @@ export {
 export { SpecCard, type SpecCardProps } from './spec-card';
 
 export { TagBadge, TagList, type TagBadgeProps, type TagListProps } from './tag-badge';
+
+export { SpecMetadata, type SpecMetadataProps, type SpecMetadataData } from './spec-metadata';

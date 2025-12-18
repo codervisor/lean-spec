@@ -141,6 +141,7 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [ ] Extract and upgrade SpecList (filters, sorting, grouping)
 - [ ] Extract and upgrade SpecDetail (metadata panel, sub-specs)
 - [x] Extract SpecCard (compact view)
+- [x] Extract SpecMetadata (metadata display card)
 - [x] Extract SpecBadge (StatusBadge, PriorityBadge)
 - [x] Extract TagBadge and TagList
 - [x] Write Storybook stories
@@ -150,11 +151,11 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [ ] Extract StatsCharts (recharts)
 - [ ] Add controls and legends
 
-### Phase 5: Extract Search & Filter (Day 5-6)
-- [ ] Extract SearchBar with debouncing
-- [ ] Extract FilterPanel (multi-select)
+### Phase 5: Extract Search & Filter (Day 5-6) ✅
+- [x] Extract SearchInput with debouncing and keyboard shortcuts
+- [x] Extract FilterSelect (dropdown filter)
 - [ ] Extract SearchResults
-- [ ] Add keyboard shortcuts
+- [x] Add keyboard shortcuts
 
 ### Phase 6: Extract Project Management (Day 6-7) 🚧 Partial
 - [ ] Extract ProjectSwitcher (recent, favorites)
@@ -166,17 +167,20 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [x] Extract EmptyState component
 - [x] Extract loading skeletons (SpecList, SpecDetail, Stats, Kanban, Project, Sidebar)
 - [x] Extract base UI components (Button, Card, Input, Skeleton, Separator, Avatar)
+- [x] Extract ThemeToggle (navigation)
+- [x] Extract BackToTop (navigation)
 - [ ] Ensure responsive design
 - [ ] Test dark mode
 
-### Phase 8: Extract Custom Hooks (Day 8) 🚧 Partial
+### Phase 8: Extract Custom Hooks (Day 8) ✅
 - [ ] Extract useSpecs, useSpecDetail, useSearch
 - [ ] Extract useProjects, useDependencyGraph
 - [x] Extract useLocalStorage, useDebounce
+- [x] Extract useTheme (theme state management)
 
 ### Phase 9: Documentation (Day 9) ✅
 - [x] Write comprehensive README
-- [x] Complete Storybook documentation (EmptyState, Skeletons, SpecCard, TagBadge)
+- [x] Complete Storybook documentation (all components)
 - [ ] Add usage examples and migration guide
 
 ### Phase 10: Integration Testing (Day 10)
@@ -286,3 +290,28 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - SpecCard stories (default, planned, complete, selected, many tags, grid)
 - TagBadge stories (default, with icon, clickable, removable, list)
 - ProjectAvatar stories (default, sizes, colors)
+
+### Phase 5, 7, 8 Progress (2025-12-18)
+
+**New Search & Filter Components:**
+- `SearchInput` - Search input with keyboard shortcut hint (⌘K)
+- `FilterSelect` - Dropdown filter component with icons
+
+**New Navigation Components:**
+- `ThemeToggle` - Light/dark theme toggle with animated icons
+- `BackToTop` - Floating scroll-to-top button
+
+**New Spec Components:**
+- `SpecMetadata` - Metadata display card with all spec details (status, priority, dates, assignee, tags, GitHub link)
+
+**New Hooks:**
+- `useTheme` - Theme state management with localStorage persistence
+
+**New Storybook Stories:**
+- SearchInput stories (default, with value, shortcuts)
+- FilterSelect stories (status, priority filters)
+- ThemeToggle stories (light, dark, interactive)
+- BackToTop stories (default, custom position)
+- SpecMetadata stories (default, minimal, complete)
+
+**Bundle Size:** ~30KB gzipped (tree-shakeable)

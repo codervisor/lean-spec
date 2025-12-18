@@ -13,12 +13,13 @@ pnpm add @leanspec/ui-components
 ## Usage
 
 ```tsx
-import { StatusBadge, PriorityBadge, SpecCard, EmptyState } from '@leanspec/ui-components';
+import { StatusBadge, PriorityBadge, SpecCard, EmptyState, SearchInput } from '@leanspec/ui-components';
 import '@leanspec/ui-components/styles.css';
 
 function MyComponent() {
   return (
     <div>
+      <SearchInput placeholder="Search specs..." onSearch={(q) => console.log(q)} />
       <StatusBadge status="in-progress" />
       <PriorityBadge priority="high" />
       <SpecCard 
@@ -44,12 +45,23 @@ function MyComponent() {
 - `StatusBadge` - Display spec status with icon
 - `PriorityBadge` - Display spec priority with icon
 - `SpecCard` - Compact spec card for lists
+- `SpecMetadata` - Metadata display card with all spec details
 - `TagBadge` - Display a single tag
 - `TagList` - Display multiple tags with truncation
 
 ### Project Components
 
 - `ProjectAvatar` - Avatar with initials and color from project name
+
+### Search & Filter Components
+
+- `SearchInput` - Search input with keyboard shortcut hint
+- `FilterSelect` - Dropdown filter component
+
+### Navigation Components
+
+- `ThemeToggle` - Light/dark theme toggle button
+- `BackToTop` - Floating scroll-to-top button
 
 ### UI Components
 
@@ -77,6 +89,7 @@ function MyComponent() {
 - `useLocalStorage` - Persist state in localStorage
 - `useDebounce` - Debounce a value
 - `useDebouncedCallback` - Debounce a callback function
+- `useTheme` - Theme state management with localStorage persistence
 
 ## Utilities
 
