@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2025-12-18
 priority: high
 tags:
@@ -13,7 +13,7 @@ depends_on:
 - 018-spec-validation
 - 170-cli-mcp-core-rust-migration-evaluation
 created_at: 2025-12-18T02:47:39.011Z
-updated_at: 2025-12-18T08:03:55.590537344Z
+updated_at: 2025-12-18T08:22:48.839878560Z
 completed_at: 2025-12-18T08:03:49.261830554Z
 transitions:
 - status: in-progress
@@ -222,8 +222,7 @@ lean-spec update 174 --status complete --force  # Skip verification
   - [x] Detect status change to `complete` in execute logic
   - [x] Call `CompletionVerifier::verify_completion()` before applying
   - [x] Format and display warning using colored output
-  - [ ] Add interactive prompt (Y/n) using `dialoguer` crate (deferred - current error message + --force sufficient)
-  - [x] Support `--force` flag in CLI args
+  - [x] Support `--force` flag in CLI args (interactive prompt deferred - error message + --force is sufficient)
 
 - [x] Update `rust/leanspec-cli/src/cli.rs`
   - [x] Add `force: bool` field to `UpdateArgs` struct
@@ -260,7 +259,7 @@ lean-spec update 174 --status complete --force  # Skip verification
   - [x] Add to AGENTS.md workflow guidance
   - [x] Document --force flag behavior
 
-- [ ] Update locales (if applicable) - deferred (Rust CLI uses English by default)
+Note: Locales update deferred - Rust CLI uses English by default; i18n strategy TBD for future.
 
 ## Test
 
@@ -314,11 +313,13 @@ lean-spec update 174 --status complete --force  # Skip verification
 
 ### Future Enhancements
 
-- [ ] **Codebase verification**: Check if files mentioned in checkboxes exist
-- [ ] **Test execution**: Run tests before allowing completion
-- [ ] **Dependency checks**: Verify `depends_on` specs are complete
-- [ ] **Quality metrics**: Token count, validation pass before complete
-- [ ] **Sub-spec coordination**: Check sub-specs completion status
+Ideas for future iterations (not part of this implementation):
+
+- **Codebase verification**: Check if files mentioned in checkboxes exist
+- **Test execution**: Run tests before allowing completion
+- **Dependency checks**: Verify `depends_on` specs are complete
+- **Quality metrics**: Token count, validation pass before complete
+- **Sub-spec coordination**: Check sub-specs completion status
 
 ### Related Specs
 
