@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -35,8 +37,9 @@ export default defineConfig({
         preserveModules: false,
       },
     },
-    sourcemap: true,
-    minify: false,
+    // Disable sourcemaps in production to reduce bundle size
+    sourcemap: !isProduction,
+    minify: isProduction,
     cssCodeSplit: false,
   },
 });

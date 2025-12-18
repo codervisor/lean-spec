@@ -60,7 +60,13 @@ export function StatusBadge({
   label,
   statusConfig = defaultStatusConfig,
 }: StatusBadgeProps) {
-  const config = statusConfig[status as SpecStatus] || defaultStatusConfig.planned;
+  const config = statusConfig[status as SpecStatus] || statusConfig.planned;
+  
+  // Warn in development if an unknown status is provided
+  if (process.env.NODE_ENV === 'development' && !(status in statusConfig)) {
+    console.warn(`StatusBadge: Unknown status "${status}", falling back to "planned"`);
+  }
+  
   const Icon = config.icon;
   const displayLabel = label ?? config.label;
 

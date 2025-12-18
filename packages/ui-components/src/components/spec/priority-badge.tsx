@@ -60,7 +60,13 @@ export function PriorityBadge({
   label,
   priorityConfig = defaultPriorityConfig,
 }: PriorityBadgeProps) {
-  const config = priorityConfig[priority as SpecPriority] || defaultPriorityConfig.medium;
+  const config = priorityConfig[priority as SpecPriority] || priorityConfig.medium;
+  
+  // Warn in development if an unknown priority is provided
+  if (process.env.NODE_ENV === 'development' && !(priority in priorityConfig)) {
+    console.warn(`PriorityBadge: Unknown priority "${priority}", falling back to "medium"`);
+  }
+  
   const Icon = config.icon;
   const displayLabel = label ?? config.label;
 
