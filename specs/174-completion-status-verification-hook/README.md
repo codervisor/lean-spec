@@ -55,11 +55,18 @@ This creates a **feedback loop** where agents learn to verify their work before 
                  │
                  ▼
 ┌─────────────────────────────────────────────────┐
-│  Update Command/Tool                            │
+│  Update Command/Tool (Rust CLI/MCP)            │
 │  1. Detect status change to "complete"          │
-│  2. Read spec README.md                         │
-│  3. Parse checkbox items (- [ ] / - [x])        │
-│  4. Check for unchecked items                   │
+│  2. Call leanspec_core::CompletionVerifier      │
+└────────────────┬────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────┐
+│  leanspec-core::validators::CompletionVerifier  │
+│  1. Read spec README.md                         │
+│  2. Parse checkbox items (- [ ] / - [x])        │
+│  3. Extract section context                     │
+│  4. Return verification result                  │
 └────────────────┬────────────────────────────────┘
                  │
         ┌────────┴────────┐
@@ -71,11 +78,10 @@ This creates a **feedback loop** where agents learn to verify their work before 
 └──────┬───────┘   └─────────┬───────┘
        │                     │
        ▼                     ▼
-  Update status      Return detailed info:
-  to complete        - Outstanding count
-                     - Task locations
-                     - Suggested actions
-                     - Option to proceed anyway
+  Update status      Return VerificationResult:
+  to complete        - outstanding: Vec<CheckboxItem>
+                     - progress: Progress
+                     - suggestions: Vec<String>
 ```
 
 ### Detection Logic
@@ -86,21 +92,28 @@ This creates a **feedback loop** where agents learn to verify their work before 
 - MCP tool: `update` with status field change
 
 **What to check:**
-```typescript
-function verifyCompletion(specPath: string): VerificationResult {
-  const content = readSpecContent(specPath);
-  const unchecked = parseUncheckedCheckboxes(content);
-  
-  return {
-    complete: unchecked.length === 0,
-    outstanding: unchecked.map(item => ({
-      line: item.lineNumber,
-      text: item.text.trim(),
-      section: item.section // Plan, Test, etc.
-    })),
-    totalCheckboxes: countTotalCheckboxes(content),
-    completedCount: countCheckedCheckboxes(content)
-  };
+```rust
+use leanspec_core::validators::CompletionVerifier;
+use leanspec_core::types::{VerificationResult, CheckboxItem};
+
+pub struct CompletionVerifier;
+
+impl CompletionVerifier {
+    pub fn verify_completion(spec_path: &Path) -> Result<VerificationResult> {
+        let content = fs::read_to_string(spec_path.join("README.md"))?;
+        let checkboxes = Self::parse_checkboxes(&content)?;
+        let unchecked: Vec<CheckboxItem> = checkboxes
+            .into_iter()
+            .filter(|cb| !cb.checked)
+            .collect();
+        
+        Ok(VerificationResult {
+            is_complete: unchecked.is_empty(),
+            outstanding: unchecked,
+            progress: Progress::calculate(&checkboxes),
+            suggestions: Self::generate_suggestions(&unchecked),
+        })
+    }
 }
 ```
 
@@ -173,68 +186,92 @@ lean-spec update 174 --status complete --force  # Skip verification
 
 ## Plan
 
-### Phase 1: Core Verification Logic
+### Phase 1: Core Verification Logic (Rust)
 
-- [ ] Create `src/core/completion-verification.ts`
-  - [ ] `parseCheckboxes(content: string)` - Extract all checkbox items
-  - [ ] `getUncheckedItems(content: string)` - Filter unchecked only
-  - [ ] `getSectionContext(content: string, lineNum: number)` - Determine section (Plan/Test/etc)
-  - [ ] `verifyCompletion(specPath: string)` - Main verification function
+- [ ] Add types to `rust/leanspec-core/src/types/validation.rs`
+  - [ ] `CheckboxItem` struct (line, text, section, checked)
+  - [ ] `Progress` struct (completed, total, percentage)
+  - [ ] `VerificationResult` struct (is_complete, outstanding, progress, suggestions)
+  - [ ] `VerificationError` enum
 
-- [ ] Add unit tests for parser
+- [ ] Create `rust/leanspec-core/src/validators/completion.rs`
+  - [ ] `CompletionVerifier::parse_checkboxes()` - Regex-based checkbox extraction
+  - [ ] `CompletionVerifier::get_section_context()` - Parse markdown headers
+  - [ ] `CompletionVerifier::verify_completion()` - Main entry point
+  - [ ] `CompletionVerifier::generate_suggestions()` - Context-aware guidance
+
+- [ ] Update `rust/leanspec-core/src/validators/mod.rs`
+  - [ ] Add `mod completion;`
+  - [ ] Export `pub use completion::CompletionVerifier;`
+
+- [ ] Update `rust/leanspec-core/src/lib.rs`
+  - [ ] Re-export `CompletionVerifier` in public API
+
+- [ ] Add unit tests in `rust/leanspec-core/tests/completion_tests.rs`
   - [ ] Parse mixed checked/unchecked items
   - [ ] Handle nested checkboxes (indented)
   - [ ] Extract line numbers and text correctly
   - [ ] Identify section headers (Plan, Test, etc.)
+  - [ ] Calculate progress accurately
 
-### Phase 2: CLI Integration
+### Phase 2: CLI Integration (Rust)
 
-- [ ] Update `src/commands/update.ts`
-  - [ ] Detect status change to `complete`
-  - [ ] Call `verifyCompletion()` before applying change
-  - [ ] Format and display warning with outstanding items
-  - [ ] Add interactive prompt (Y/n) for override
-  - [ ] Support `--force` flag to bypass
+- [ ] Update `rust/leanspec-cli/src/commands/update.rs`
+  - [ ] Import `CompletionVerifier` from leanspec-core
+  - [ ] Detect status change to `complete` in execute logic
+  - [ ] Call `CompletionVerifier::verify_completion()` before applying
+  - [ ] Format and display warning using colored output
+  - [ ] Add interactive prompt (Y/n) using `dialoguer` crate
+  - [ ] Support `--force` flag in CLI args
 
-- [ ] Add CLI tests
+- [ ] Update `rust/leanspec-cli/src/cli.rs`
+  - [ ] Add `force: bool` field to `UpdateArgs` struct
+  - [ ] Document `--force` flag in help text
+
+- [ ] Add CLI integration tests
   - [ ] Test verification triggers on status change
   - [ ] Test warning display format
   - [ ] Test interactive prompt behavior
   - [ ] Test `--force` flag bypass
 
-### Phase 3: MCP Integration
+### Phase 3: MCP Integration (Rust)
 
-- [ ] Update `packages/mcp/src/tools/update.ts`
-  - [ ] Call `verifyCompletion()` before status change
-  - [ ] Return structured error with outstanding items
-  - [ ] Include progress metrics (X/Y complete)
-  - [ ] Provide actionable suggestions in response
+- [ ] Update `rust/leanspec-mcp/src/tools/update.rs`
+  - [ ] Import `CompletionVerifier` from leanspec-core
+  - [ ] Call `CompletionVerifier::verify_completion()` before status change
+  - [ ] Return structured error via MCP protocol with outstanding items
+  - [ ] Include progress metrics (X/Y complete) in error details
+  - [ ] Provide actionable suggestions in response content
 
-- [ ] Update MCP schema
-  - [ ] Add `force` parameter to update tool
+- [ ] Update MCP schema in `rust/leanspec-mcp/src/tools/schemas.rs`
+  - [ ] Add `force: Option<bool>` to UpdateInput struct
   - [ ] Document verification behavior in tool description
+  - [ ] Add example error response to schema docs
 
-- [ ] Update MCP prompts (`packages/mcp/src/prompts/`)
+- [ ] Update MCP prompts (`rust/leanspec-mcp/prompts/` or embedded)
   - [ ] Add checkpoint guidance before marking complete
   - [ ] Teach pattern: verify → fix outstanding → mark complete
+  - [ ] Include example of handling verification feedback
 
 ### Phase 4: Configuration & Docs
 
-- [ ] Add config options to `ConfigSchema`
-  - [ ] `validation.enforceCompletionChecklist`
-  - [ ] `validation.allowCompletionOverride`
+- [ ] Add config options to `rust/leanspec-core/src/types/config.rs`
+  - [ ] Add `ValidationConfig` struct with fields:
+    - [ ] `enforce_completion_checklist: bool` (default: true)
+    - [ ] `allow_completion_override: bool` (default: false)
+  - [ ] Update `LeanSpecConfig` to include `validation: Option<ValidationConfig>`
+  - [ ] Add serde serialization/deserialization
 
 - [ ] Update documentation
   - [ ] Add to CLI reference (update command)
   - [ ] Add to MCP tools reference
   - [ ] Add to AGENTS.md workflow guidance
   - [ ] Add to best practices
+  - [ ] Document Rust implementation approach
 
-- [ ] Update both locales
-  - [ ] `packages/ui/src/locales/en/common.json`
-  - [ ] `packages/ui/src/locales/zh-CN/common.json`
-  - [ ] `packages/mcp/src/locales/en/common.json` (if needed)
-  - [ ] `packages/mcp/src/locales/zh-CN/common.json` (if needed)
+- [ ] Update locales (if applicable)
+  - [ ] CLI error messages in Rust code (english by default)
+  - [ ] Consider i18n strategy for Rust crates (future)
 
 ## Test
 
