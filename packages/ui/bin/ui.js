@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import open from 'open';
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,9 +32,75 @@ program
 
 program.parseAsync(process.argv);
 
+/**
+ * Check if a port is available for binding
+ * @param {number} port - Port number to check
+ * @returns {Promise<boolean>} - True if port is available
+ */
+async function isPortAvailable(port) {
+  return new Promise((resolve) => {
+    const server = createServer();
+    
+    server.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(false);
+      } else {
+        resolve(false);
+      }
+    });
+    
+    server.once('listening', () => {
+      server.close();
+      resolve(true);
+    });
+    
+    server.listen(port, '0.0.0.0');
+  });
+}
+
+/**
+ * Find an available port starting from the given port
+ * @param {number} startPort - Starting port number
+ * @param {number} maxAttempts - Maximum number of ports to try (default: 10)
+ * @returns {Promise<{port: number, isDefault: boolean}>} - Available port and whether it's the default
+ */
+async function findAvailablePort(startPort, maxAttempts = 10) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const candidatePort = startPort + i;
+    
+    if (candidatePort > 65535) {
+      throw new Error('Port number exceeds valid range (65535)');
+    }
+    
+    const available = await isPortAvailable(candidatePort);
+    
+    if (available) {
+      return {
+        port: candidatePort,
+        isDefault: i === 0
+      };
+    }
+    
+    if (i < maxAttempts - 1) {
+      console.log(chalk.yellow(`⚠ Port ${candidatePort} is in use, trying ${candidatePort + 1}...`));
+    }
+  }
+  
+  throw new Error(`Could not find an available port in range ${startPort}-${startPort + maxAttempts - 1}`);
+}
+
 async function startUi(options) {
   const cwd = process.cwd();
-  const port = validatePort(options.port);
+  const requestedPort = validatePort(options.port);
+  
+  // Resolve actual port to use
+  const { port, isDefault } = await findAvailablePort(Number.parseInt(requestedPort, 10));
+  const actualPort = String(port);
+  
+  // Show message if port was changed
+  if (!isDefault) {
+    console.log(chalk.green(`✓ Using port ${actualPort}\n`));
+  }
   
   let specsDir = '';
   let specsMode = 'filesystem';
@@ -47,11 +114,11 @@ async function startUi(options) {
   const serverPath = getServerPath();
 
   if (options.dryRun) {
-    printDryRun({ port, specsDir, specsMode, serverPath, openBrowser: options.open });
+    printDryRun({ port: actualPort, specsDir, specsMode, serverPath, openBrowser: options.open });
     return;
   }
 
-  await launchServer({ port, specsDir, specsMode, serverPath, openBrowser: options.open });
+  await launchServer({ port: actualPort, specsDir, specsMode, serverPath, openBrowser: options.open });
 }
 
 function validatePort(value) {
