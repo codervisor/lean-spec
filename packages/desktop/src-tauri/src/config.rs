@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 static CONFIG: Lazy<RwLock<DesktopConfig>> = Lazy::new(|| RwLock::new(DesktopConfig::load_or_default()));
 
 const CONFIG_DIR: &str = ".lean-spec";
-const CONFIG_FILE: &str = "desktop.yaml";
+const CONFIG_FILE: &str = "desktop.json";
+const LEGACY_CONFIG_FILE: &str = "desktop.yaml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -98,26 +99,36 @@ impl Default for DesktopConfig {
 impl DesktopConfig {
     fn load_or_default() -> Self {
         let path = config_file_path();
+        
+        // Try JSON first
         match fs::read_to_string(&path) {
-            Ok(raw) => match serde_yaml::from_str::<DesktopConfig>(&raw) {
+            Ok(raw) => match serde_json::from_str::<DesktopConfig>(&raw) {
                 Ok(mut config) => {
                     normalize_config(&mut config);
-                    config
+                    return config;
                 }
                 Err(error) => {
                     eprintln!("Failed to parse desktop config: {error}");
-                    Self::default()
                 }
             },
-            Err(_) => Self::default(),
+            Err(_) => {}
         }
+        
+        // Migration: Try legacy YAML
+        if let Some(legacy_config) = load_legacy_yaml() {
+            legacy_config.persist(); // Save as JSON
+            backup_legacy_yaml();
+            return legacy_config;
+        }
+        
+        Self::default()
     }
 
     fn persist(&self) {
         if let Some(dir) = config_dir() {
             if fs::create_dir_all(&dir).is_ok() {
                 let file = dir.join(CONFIG_FILE);
-                if let Ok(serialized) = serde_yaml::to_string(self) {
+                if let Ok(serialized) = serde_json::to_string_pretty(self) {
                     if let Err(error) = fs::write(file, serialized) {
                         eprintln!("Unable to write desktop config: {error}");
                     }
@@ -134,6 +145,23 @@ fn normalize_config(config: &mut DesktopConfig) {
 
     if !matches!(config.updates.channel.as_str(), "stable" | "beta") {
         config.updates.channel = "stable".into();
+    }
+}
+
+fn load_legacy_yaml() -> Option<DesktopConfig> {
+    let dir = config_dir()?;
+    let path = dir.join(LEGACY_CONFIG_FILE);
+    let raw = fs::read_to_string(path).ok()?;
+    let mut config: DesktopConfig = serde_yaml::from_str(&raw).ok()?;
+    normalize_config(&mut config);
+    Some(config)
+}
+
+fn backup_legacy_yaml() {
+    if let Some(dir) = config_dir() {
+        let legacy = dir.join(LEGACY_CONFIG_FILE);
+        let backup = dir.join("desktop.yaml.bak");
+        let _ = fs::rename(legacy, backup);
     }
 }
 
