@@ -27,3 +27,6 @@ packages/desktop/src-tauri/binaries/ui-server-*
 
 # Rust build artifacts
 rust/target/
+
+# IDE specific files
+.idea/
