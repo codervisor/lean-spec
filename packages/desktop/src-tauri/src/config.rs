@@ -108,7 +108,8 @@ impl DesktopConfig {
                     return config;
                 }
                 Err(error) => {
-                    eprintln!("Failed to parse desktop config: {error}");
+                    eprintln!("Failed to parse desktop config as JSON: {error}");
+                    eprintln!("Will attempt migration from legacy YAML format");
                 }
             },
             Err(_) => {}
@@ -116,8 +117,10 @@ impl DesktopConfig {
         
         // Migration: Try legacy YAML
         if let Some(legacy_config) = load_legacy_yaml() {
+            eprintln!("Migrating desktop config from YAML to JSON format");
             legacy_config.persist(); // Save as JSON
             backup_legacy_yaml();
+            eprintln!("Migration complete: desktop.yaml → desktop.json");
             return legacy_config;
         }
         
@@ -161,7 +164,10 @@ fn backup_legacy_yaml() {
     if let Some(dir) = config_dir() {
         let legacy = dir.join(LEGACY_CONFIG_FILE);
         let backup = dir.join("desktop.yaml.bak");
-        let _ = fs::rename(legacy, backup);
+        match fs::rename(&legacy, &backup) {
+            Ok(_) => eprintln!("Legacy config backed up: desktop.yaml.bak"),
+            Err(error) => eprintln!("Failed to backup legacy config: {error}"),
+        }
     }
 }
 
