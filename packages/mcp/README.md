@@ -69,20 +69,21 @@ The Model Context Protocol (MCP) is an open protocol that standardizes how AI ap
 
 The LeanSpec MCP server provides these tools to AI assistants:
 
+### Core Spec Management (12 tools)
 - **list** - List all specifications with filtering
-- **view** - Read complete specification content
-- **search** - Search across specifications
-- **files** - List files in a specification
-- **deps** - Show dependency graphs
-- **board** - View Kanban-style project board
+- **view** - Read complete specification content (README.md only; sub-spec files not yet included)
 - **create** - Create new specifications
 - **update** - Update specification metadata
-- **archive** - Archive completed specs
-- **tokens** - Count tokens for context management
+- **search** - Search across specifications
+- **deps** - Show dependency graphs
+- **link** - Add dependency relationships
+- **unlink** - Remove dependency relationships
+- **board** - View Kanban-style project board
 - **stats** - Get project statistics
+- **tokens** - Count tokens for context management
 - **validate** - Validate specification quality
-- **check** - Check for sequence conflicts
-- **backfill** - Backfill metadata from git history
+
+Note: Additional utility commands (`files`, `archive`, `backfill`, `check`, `analyze`, `gantt`, `agent`) are available via CLI but not exposed as MCP tools to keep the interface focused on core spec operations. The `files` functionality will be embedded into the `view` tool output in a future update.
 
 ## How It Works
 

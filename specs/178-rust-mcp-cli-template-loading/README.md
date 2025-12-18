@@ -26,7 +26,7 @@ updated_at: 2025-12-18T06:03:00.359725293Z
 - Cannot use `--template` flag with custom templates
 - Template management commands (`lean-spec templates`) are disconnected from spec creation
 
-**Value**: Fixing this will ensure feature parity between Rust and TypeScript implementations, enable template customization, and make the Rust version production-ready.
+**Value**: Fixing template loading ensures feature parity between Rust and TypeScript implementations, enables template customization, and makes the Rust version production-ready.
 
 ## Current Behavior
 
@@ -255,7 +255,6 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
 - [ ] Add tests for variable resolution
 - [ ] Test with custom templates
 - [ ] Test with directory templates (multi-file)
-- [ ] Update documentation
 
 ## Test
 
@@ -288,3 +287,21 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
 **Breaking Change**: None - this is backward compatible. If no `.lean-spec/templates/` exists, return a helpful error message.
 
 **Reference Implementation**: `packages/cli/src/commands/create.ts` lines 160-220
+
+**Related Specs:**
+- See [179-view-command-file-listing](../179-view-command-file-listing) for adding file lists to `view` output
+
+### MCP Tool Parity Status
+
+**Current Rust MCP Tools (12)**: list, view, create, update, validate, deps, link, unlink, search, board, tokens, stats
+
+**Not Yet Ported (intentional - will add when needed)**:
+- `files` - List files in spec directory → **Tracked in spec 179** (will embed in `view` output)
+- `agent` - Dispatch to AI coding agents → **Will add later when agent workflow is mature**
+- `archive` - Archive specs → Lower priority, manual workflow OK for now
+- `backfill` - Backfill git metadata → One-time migration tool, not needed in MCP
+- `check` - Check sequence conflicts → One-time validation, not core workflow
+- `analyze` - Analyze complexity → Covered by `validate` tool
+- `gantt`/`timeline` - Visualization → Better suited for UI, not MCP
+
+**Decision**: Keep MCP focused on core spec management operations that AI agents need frequently. Utility/one-time commands stay CLI-only.
