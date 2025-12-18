@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2025-12-18
 priority: high
 tags:

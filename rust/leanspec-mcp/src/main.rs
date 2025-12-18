@@ -3,10 +3,7 @@
 //! Model Context Protocol server for LeanSpec spec management.
 //! Communicates over stdio using JSON-RPC.
 
-mod protocol;
-mod tools;
-
-use protocol::{McpRequest, McpResponse, handle_request};
+use leanspec_mcp::{McpRequest, McpResponse, handle_request};
 use std::io::{self, BufRead, Write};
 use tokio::runtime::Runtime;
 

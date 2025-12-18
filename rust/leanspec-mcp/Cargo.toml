@@ -9,6 +9,10 @@ repository.workspace = true
 homepage.workspace = true
 description = "MCP (Model Context Protocol) server for LeanSpec"
 
+[lib]
+name = "leanspec_mcp"
+path = "src/lib.rs"
+
 [[bin]]
 name = "leanspec-mcp"
 path = "src/main.rs"
@@ -24,3 +28,6 @@ chrono.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+pretty_assertions.workspace = true
+tokio-test = "0.4"
+assert-json-diff = "2.0"
