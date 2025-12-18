@@ -61,14 +61,18 @@ export function getContrastColor(hexColor?: string): string {
 export function getInitials(name: string): string {
   if (!name) return '??';
 
-  const words = name.trim().split(/[\s_-]+/);
+  const words = name.trim().split(/[\s_-]+/).filter(word => word.length > 0);
 
-  if (words.length >= 2) {
+  if (words.length === 0) return '??';
+
+  if (words.length >= 2 && words[0].length > 0 && words[1].length > 0) {
     // Two or more words: first letter of first two words
     return (words[0][0] + words[1][0]).toUpperCase();
-  } else {
+  } else if (words[0].length > 0) {
     // Single word: first two letters (or one if too short)
     const word = words[0];
     return word.length >= 2 ? (word[0] + word[1]).toUpperCase() : word[0].toUpperCase();
   }
+  
+  return '??';
 }

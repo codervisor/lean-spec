@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * Simple Avatar implementation without @radix-ui/react-avatar dependency.
- * For a fully accessible avatar, consider using @radix-ui/react-avatar.
+ * Provides basic accessibility with role and aria-label attributes.
+ * For full accessibility features, consider using @radix-ui/react-avatar.
  */
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -22,6 +23,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, size = 'md', ...props }, ref) => (
     <div
       ref={ref}
+      role="img"
       className={cn(
         'relative flex shrink-0 overflow-hidden rounded-full',
         sizeClasses[size],
@@ -36,8 +38,8 @@ Avatar.displayName = 'Avatar';
 export interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, ...props }, ref) => (
-    <img ref={ref} className={cn('aspect-square h-full w-full', className)} {...props} />
+  ({ className, alt = '', ...props }, ref) => (
+    <img ref={ref} alt={alt} className={cn('aspect-square h-full w-full', className)} {...props} />
   )
 );
 AvatarImage.displayName = 'AvatarImage';
@@ -48,6 +50,7 @@ const AvatarFallback = React.forwardRef<HTMLDivElement, AvatarFallbackProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
+      aria-hidden="true"
       className={cn(
         'flex h-full w-full items-center justify-center rounded-full bg-muted',
         className

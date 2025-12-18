@@ -85,9 +85,9 @@ export function TagList({ tags, maxVisible = 5, className, onTagClick }: TagList
 
   return (
     <div className={cn('flex flex-wrap gap-1.5', className)}>
-      {visibleTags.map((tag) => (
+      {visibleTags.map((tag, index) => (
         <TagBadge
-          key={tag}
+          key={`${tag}-${index}`}
           tag={tag}
           onClick={onTagClick ? () => onTagClick(tag) : undefined}
         />
