@@ -40,9 +40,6 @@ jobs:
       - name: Install JavaScript dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build lean-spec CLI (TypeScript)
-        run: pnpm --filter lean-spec run build
-
       - name: Set up Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 

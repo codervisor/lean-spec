@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import path from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createUpdatedFrontmatter } from '@leanspec/core';
+import { createUpdatedFrontmatter } from '@/lib/spec-utils';
 import { projectRegistry } from '@/lib/projects/registry';
 import { isDefaultProject } from '@/lib/projects/constants';
 
