@@ -1,0 +1,92 @@
+{
+  "name": "@leanspec/ui-components",
+  "version": "0.2.10",
+  "description": "Framework-agnostic, tree-shakeable UI components for LeanSpec",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./dist/ui-components.css"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build && pnpm build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "keywords": [
+    "leanspec",
+    "ui",
+    "components",
+    "react",
+    "typescript"
+  ],
+  "author": "Marvin Zhang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  },
+  "homepage": "https://lean-spec.dev",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.0.0",
+    "dayjs": "^1.11.19",
+    "lucide-react": "^0.553.0",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-essentials": "^8.6.3",
+    "@storybook/addon-interactions": "^8.6.3",
+    "@storybook/addon-links": "^8.6.3",
+    "@storybook/react": "^8.6.3",
+    "@storybook/react-vite": "^8.6.3",
+    "@storybook/test": "^8.6.3",
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "storybook": "^8.6.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5",
+    "vite": "^6.0.1",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "^4.0.6"
+  }
+}
