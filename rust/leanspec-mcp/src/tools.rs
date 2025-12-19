@@ -61,7 +61,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "Spec name in kebab-case (e.g., 'my-feature')"
+                        "description": "Short spec name in kebab-case (e.g., 'my-feature'). NOTE: DO NOT add spec number (NNN), it will be auto-generated."
                     },
                     "title": {
                         "type": "string",

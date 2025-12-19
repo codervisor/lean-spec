@@ -1,0 +1,309 @@
+---
+status: planned
+created: 2025-12-19
+priority: high
+tags:
+- rust
+- http
+- testing
+- api
+created_at: 2025-12-19T06:33:51.382148Z
+updated_at: 2025-12-19T06:33:51.382148Z
+---
+
+# Rust HTTP API Test Suite
+
+> Comprehensive integration test suite for Rust HTTP server before UI migration
+
+## Overview
+
+**Problem**: Rust HTTP server lacks comprehensive API tests. Before achieving UI parity, we need confidence that all existing endpoints work correctly and match expected behavior.
+
+**Goal**: Create comprehensive integration test suite covering:
+- All implemented endpoints (projects, specs, stats, deps, validation)
+- Error handling and edge cases
+- Multi-project mode scenarios
+- Response format validation
+
+**Why Now**: This is a **prerequisite** for [Spec 190](../190-ui-vite-parity-rust-backend/) - we must validate existing APIs before adding new ones.
+
+## Current State
+
+**Existing Tests**: Minimal
+- Basic router creation test in `routes.rs`
+- Unit tests in `leanspec_core` for spec loading
+- No integration tests for HTTP endpoints
+- No end-to-end API tests
+
+**Coverage Gaps**:
+- ❌ No project management endpoint tests
+- ❌ No spec CRUD operation tests
+- ❌ No search/filter tests
+- ❌ No stats computation tests
+- ❌ No dependency graph tests
+- ❌ No validation endpoint tests
+- ❌ No error response tests
+- ❌ No multi-project switching tests
+
+## Design
+
+### Test Architecture
+
+```
+rust/leanspec-http/tests/
+├── common/
+│   ├── mod.rs              # Test utilities
+│   ├── fixtures.rs         # Test fixtures (sample specs)
+│   └── server.rs           # Test server setup
+├── integration/
+│   ├── projects_test.rs    # Project management APIs
+│   ├── specs_test.rs       # Spec operations
+│   ├── search_test.rs      # Search functionality
+│   ├── stats_test.rs       # Statistics
+│   ├── deps_test.rs        # Dependencies
+│   └── validate_test.rs    # Validation
+└── scenarios/
+    ├── multi_project_test.rs  # Multi-project scenarios
+    └── error_cases_test.rs    # Error handling
+```
+
+### Test Strategy
+
+**Integration Tests** (primary focus):
+- Spin up HTTP server with test project registry
+- Make real HTTP requests via `reqwest`
+- Verify responses match expected format
+- Test error conditions and edge cases
+
+**Test Fixtures**:
+- Reusable test projects with known spec structure
+- Sample specs with various statuses, priorities, tags
+- Projects with dependencies and sub-specs
+
+**Tools**:
+- `axum-test` or raw Axum router testing
+- `reqwest` for HTTP client
+- `serde_json` for response validation
+- `tempfile` for temporary test projects
+- `tokio::test` for async tests
+
+## Plan
+
+### Phase 1: Test Infrastructure (Day 1)
+- [ ] Set up test module structure
+- [ ] Create test fixture generator (sample specs)
+- [ ] Create test server helper (spawn with temp registry)
+- [ ] Add test utilities (assertions, matchers)
+
+### Phase 2: Project Management Tests (Day 2)
+- [ ] Test GET `/api/projects` (list all, empty state, multi-project)
+- [ ] Test POST `/api/projects` (add valid, invalid path, duplicate)
+- [ ] Test GET `/api/projects/{id}` (existing, not found)
+- [ ] Test PATCH `/api/projects/{id}` (update name, favorite, color)
+- [ ] Test DELETE `/api/projects/{id}` (remove, not found, current project)
+- [ ] Test POST `/api/projects/{id}/switch` (switch, not found)
+- [ ] Test POST `/api/projects/{id}/favorite` (toggle)
+- [ ] Test POST `/api/projects/refresh` (cleanup invalid)
+
+### Phase 3: Spec Operations Tests (Day 3)
+- [ ] Test GET `/api/specs` (list all, empty, with filters)
+- [ ] Test GET `/api/specs` with query params (status, priority, tags, assignee)
+- [ ] Test GET `/api/specs/{spec}` (by number, by name, not found)
+- [ ] Test GET `/api/specs/{spec}` (verify required_by computed)
+- [ ] Test POST `/api/search` (query, filters, empty results)
+- [ ] Test POST `/api/search` (ranking by relevance)
+
+### Phase 4: Stats & Dependencies Tests (Day 4)
+- [ ] Test GET `/api/stats` (empty project, various statuses)
+- [ ] Test GET `/api/stats` (verify counts by status, priority, tags)
+- [ ] Test GET `/api/deps/{spec}` (simple dependency)
+- [ ] Test GET `/api/deps/{spec}` (transitive dependencies)
+- [ ] Test GET `/api/deps/{spec}` (circular dependencies)
+- [ ] Test GET `/api/deps/{spec}` (spec not found)
+
+### Phase 5: Validation Tests (Day 4)
+- [ ] Test GET `/api/validate` (all specs valid)
+- [ ] Test GET `/api/validate` (detect missing required fields)
+- [ ] Test GET `/api/validate` (detect excessive line count)
+- [ ] Test GET `/api/validate` (detect circular dependencies)
+- [ ] Test GET `/api/validate/{spec}` (single spec validation)
+
+### Phase 6: Multi-Project Scenarios (Day 5)
+- [ ] Test project switching updates current context
+- [ ] Test spec operations use current project
+- [ ] Test stats reflect current project only
+- [ ] Test dependencies within project scope
+- [ ] Test concurrent project operations
+
+### Phase 7: Error Handling (Day 5)
+- [ ] Test 404 errors (not found resources)
+- [ ] Test 400 errors (invalid input)
+- [ ] Test 500 errors (internal errors)
+- [ ] Test CORS headers
+- [ ] Test malformed JSON requests
+- [ ] Test invalid query parameters
+
+## Success Criteria
+
+**Must Have**:
+- [ ] 80%+ code coverage for handlers
+- [ ] All happy path scenarios tested
+- [ ] All error conditions tested
+- [ ] Multi-project switching tested
+- [ ] Tests run in CI
+- [ ] Tests pass consistently
+
+**Should Have**:
+- [ ] Performance benchmarks (response time < 100ms)
+- [ ] Concurrent request testing
+- [ ] Large dataset testing (100+ specs)
+- [ ] Test documentation/examples
+
+## Test Examples
+
+### Project Management Test
+
+```rust
+#[tokio::test]
+async fn test_list_projects() {
+    let app = test_server().await;
+    
+    // Add test projects
+    let res = app.post("/api/projects")
+        .json(&json!({ "path": "/tmp/test-project" }))
+        .send()
+        .await;
+    assert_eq!(res.status(), 200);
+    
+    // List projects
+    let res = app.get("/api/projects").send().await;
+    assert_eq!(res.status(), 200);
+    
+    let body: ProjectsListResponse = res.json().await;
+    assert_eq!(body.projects.len(), 1);
+    assert!(body.current_project_id.is_some());
+}
+
+#[tokio::test]
+async fn test_switch_project() {
+    let app = test_server().await;
+    let project_id = add_test_project(&app, "/tmp/test1").await;
+    
+    let res = app.post(&format!("/api/projects/{}/switch", project_id))
+        .send()
+        .await;
+    assert_eq!(res.status(), 200);
+    
+    // Verify current project changed
+    let res = app.get("/api/projects").send().await;
+    let body: ProjectsListResponse = res.json().await;
+    assert_eq!(body.current_project_id, Some(project_id));
+}
+```
+
+### Spec Operations Test
+
+```rust
+#[tokio::test]
+async fn test_list_specs_with_filters() {
+    let app = test_server_with_fixtures().await;
+    
+    // Filter by status
+    let res = app.get("/api/specs")
+        .query(&[("status", "in-progress")])
+        .send()
+        .await;
+    assert_eq!(res.status(), 200);
+    
+    let body: ListSpecsResponse = res.json().await;
+    assert!(body.specs.iter().all(|s| s.status == "in-progress"));
+}
+
+#[tokio::test]
+async fn test_get_spec_computes_required_by() {
+    let app = test_server_with_fixtures().await;
+    
+    // Get spec that is depended on by others
+    let res = app.get("/api/specs/001-base-spec").send().await;
+    assert_eq!(res.status(), 200);
+    
+    let spec: SpecDetail = res.json().await.spec;
+    assert!(!spec.required_by.is_empty());
+    assert!(spec.required_by.contains(&"002-dependent-spec".to_string()));
+}
+```
+
+### Search Test
+
+```rust
+#[tokio::test]
+async fn test_search_relevance_ranking() {
+    let app = test_server_with_fixtures().await;
+    
+    let res = app.post("/api/search")
+        .json(&json!({ "query": "rust" }))
+        .send()
+        .await;
+    
+    let body: SearchResponse = res.json().await;
+    
+    // Title matches should come first
+    assert!(body.results[0].title.unwrap().contains("Rust"));
+    
+    // Results should be sorted by spec number descending (newer first) if same relevance
+    for i in 1..body.results.len() {
+        if body.results[i-1].title_match == body.results[i].title_match {
+            assert!(body.results[i-1].spec_number >= body.results[i].spec_number);
+        }
+    }
+}
+```
+
+## Test
+
+**Meta-testing** (tests for the test suite):
+- [ ] All tests pass on clean run
+- [ ] Tests clean up temp files
+- [ ] Tests are deterministic (no flaky tests)
+- [ ] Tests run in parallel safely
+- [ ] Test fixtures are well-documented
+- [ ] CI runs tests automatically
+
+## Notes
+
+### Why Integration Tests First?
+
+1. **Verify current state**: Ensure existing APIs work before adding new ones
+2. **Regression prevention**: Catch breaking changes immediately
+3. **Documentation**: Tests serve as API usage examples
+4. **Confidence**: Safe to refactor with comprehensive tests
+5. **Prerequisites**: Spec 190 backend work needs this foundation
+
+### Testing Philosophy
+
+**Focus on behavior, not implementation**:
+- Test HTTP responses, not internal state
+- Verify response formats match frontend expectations
+- Test edge cases and error conditions
+- Use realistic fixtures that mirror production data
+
+**Keep tests fast**:
+- Use in-memory project registry
+- Generate fixtures dynamically
+- Parallelize where possible
+- Mock slow operations if needed
+
+### Related Specs
+
+- [Spec 190](../190-ui-vite-parity-rust-backend/) - Parent spec (blocks this)
+- [Spec 186](../186-rust-http-server/) - Rust HTTP server implementation
+- [Spec 175](../175-rust-cli-e2e-test-suite/) - CLI test suite (similar pattern)
+- [Spec 176](../176-rust-mcp-server-test-suite/) - MCP test suite (similar pattern)
+
+## Implementation Log
+
+### 2025-12-19: Spec Created
+- Identified need for comprehensive API tests before UI migration
+- Defined test architecture and strategy
+- 5-day implementation plan
+- Priority: HIGH - prerequisite for Spec 190
