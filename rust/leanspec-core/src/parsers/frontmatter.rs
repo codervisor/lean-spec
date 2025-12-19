@@ -272,6 +272,8 @@ impl FrontmatterParser {
         updates: &std::collections::HashMap<String, serde_yaml::Value>,
     ) -> Result<String, ParseError> {
         let (mut frontmatter, body) = self.parse(content)?;
+        let previous_status = frontmatter.status;
+        let now = Utc::now();
 
         // Apply updates
         for (key, value) in updates {
@@ -307,12 +309,25 @@ impl FrontmatterParser {
             }
         }
 
+        // Ensure created_at exists for velocity tracking
+        if frontmatter.created_at.is_none() {
+            frontmatter.created_at = Some(now);
+        }
+
         // Update timestamps
-        frontmatter.updated_at = Some(Utc::now());
+        frontmatter.updated_at = Some(now);
+
+        // Track status transitions
+        if frontmatter.status != previous_status {
+            frontmatter.transitions.push(StatusTransition {
+                status: frontmatter.status,
+                at: now,
+            });
+        }
 
         // Set completed_at if status changed to complete
         if frontmatter.status == SpecStatus::Complete && frontmatter.completed_at.is_none() {
-            frontmatter.completed_at = Some(Utc::now());
+            frontmatter.completed_at = Some(now);
         }
 
         Ok(self.stringify(&frontmatter, &body))

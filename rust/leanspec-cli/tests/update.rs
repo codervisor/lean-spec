@@ -44,6 +44,21 @@ fn test_update_status_transition() {
     let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
     let fm = parse_frontmatter(&content);
     assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("complete"));
+
+    // Should record transitions for status changes
+    let transitions = fm.get("transitions");
+    assert!(transitions.is_some(), "expected transitions in frontmatter");
+    if let Some(serde_yaml::Value::Sequence(seq)) = transitions {
+        // planned -> in-progress -> complete
+        assert!(seq.len() >= 2, "expected at least 2 transitions, got {}", seq.len());
+        let last = seq.last().and_then(|v| v.as_mapping());
+        let last_status = last
+            .and_then(|m| m.get("status"))
+            .and_then(|v| v.as_str());
+        assert_eq!(last_status, Some("complete"));
+    } else {
+        panic!("transitions should be a YAML sequence");
+    }
 }
 
 #[test]
