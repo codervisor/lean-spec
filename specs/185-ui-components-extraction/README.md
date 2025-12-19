@@ -34,8 +34,11 @@ This creates duplication, inconsistency, maintenance burden, and tight coupling 
 
 **Solution**: Extract and consolidate into **`packages/ui-components`** - a framework-agnostic, tree-shakeable component library that serves both web and desktop.
 
+**Goal**: Remove Next.js entirely by making all components framework-agnostic.
+
 **Scope**:
 - Extract React components from both packages/ui and packages/desktop
+- Refactor routing-dependent components to accept navigation props
 - Upgrade to best-in-class implementations
 - Create shared hooks, utilities, and types
 - Set up Storybook for documentation
@@ -64,26 +67,28 @@ packages/ui-components/
 ├── vite.config.ts           # Library build config
 └── package.json
 ```
-
-### Key Components to Extract
-
-**From packages/ui (Next.js)**:
+currently Next.js - will be made framework-agnostic)**:
 - SpecList with advanced filters, sorting, grouping
 - SpecDetail with sub-specs, metadata panel
-- DependencyGraph using reactflow
+- DependencyGraph using reactflow (refactor to accept navigation callbacks)
 - StatsCharts using recharts
 - SearchBar with debouncing
 - FilterPanel with multi-select
 - Layout components
 
 **From packages/desktop (Tauri)**:
-- ProjectSwitcher with quick access
+- ProjectSwitcher with quick access (refactor to accept routing props)
 - Simplified SpecCard
 - File tree navigation
 
 **New/Upgraded**:
 - ProjectDialog (creation/settings)
 - MetadataEditor (standardized form)
+- GraphControls (zoom, pan, layout)
+- ErrorBoundary, LoadingStates
+- Toast notifications
+
+**Routing Strategy**: Components that need navigation will accept callback props instead of using framework-specific routing hooks.ndardized form)
 - GraphControls (zoom, pan, layout)
 - ErrorBoundary, LoadingStates
 - Toast notifications
@@ -341,8 +346,10 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 
 **Bundle Size:** ~32KB gzipped (tree-shakeable)
 
-**Remaining Framework-Specific Components:**
-The following components remain in `packages/ui` as they require framework-specific integrations:
-- `ProjectSwitcher` - Requires Next.js routing (useRouter, usePathname)
-- `SpecDependencyGraph` - Requires Next.js routing for navigation
-- `StatsClient` (full recharts) - Can be used directly with recharts in consumer apps
+**Next Steps - Eliminating Next.js:**
+The following components need routing abstraction to become framework-agnostic:
+- `ProjectSwitcher` - Currently uses Next.js routing → Refactor to accept routing props
+- `SpecDependencyGraph` - Currently uses Next.js routing → Refactor to accept navigation callbacks
+- Once refactored, these will be moved to `ui-components` and Next.js will be fully removed
+
+**Note:** We're extracting FROM Next.js but creating framework-agnostic components. The goal is zero Next.js dependency.

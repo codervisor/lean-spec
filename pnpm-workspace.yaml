@@ -10,3 +10,12 @@ ignoredBuiltDependencies:
 
 onlyBuiltDependencies:
   - better-sqlite3
+
+overrides:
+  esbuild@<=0.24.2: '>=0.25.0'
+  glob@>=10.2.0 <10.5.0: '>=10.5.0'
+  js-yaml@<3.14.2: '>=3.14.2'
+  js-yaml@>=4.0.0 <4.1.1: '>=4.1.1'
+  mdast-util-to-hast@>=13.0.0 <13.2.1: '>=13.2.1'
+  next@>=16.0.0-beta.0 <16.0.9: '>=16.0.9'
+  next@>=16.0.0-canary.0 <16.0.7: '>=16.0.7'
