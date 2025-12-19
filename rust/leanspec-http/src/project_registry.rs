@@ -11,6 +11,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
+fn default_timestamp() -> DateTime<Utc> {
+    Utc::now()
+}
+
 /// A registered LeanSpec project
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,9 +40,11 @@ pub struct Project {
     pub color: Option<String>,
 
     /// Last time this project was accessed
+    #[serde(default = "default_timestamp")]
     pub last_accessed: DateTime<Utc>,
 
     /// When the project was added
+    #[serde(default = "default_timestamp")]
     pub added_at: DateTime<Utc>,
 }
 
@@ -433,5 +439,21 @@ mod tests {
         let project = Project::from_path(temp.path()).unwrap();
         assert!(project.validate().is_ok());
         assert!(project.exists());
+    }
+
+    #[test]
+    fn test_project_deserializes_without_added_at() {
+        let json = r#"{
+            "id": "legacy-id",
+            "name": "Legacy Project",
+            "path": "/tmp/legacy",
+            "specsDir": "/tmp/legacy/specs",
+            "favorite": false,
+            "lastAccessed": "2024-01-01T00:00:00Z"
+        }"#;
+
+        let project: Project = serde_json::from_str(json).unwrap();
+        assert_eq!(project.id, "legacy-id");
+        assert!(project.added_at >= project.last_accessed);
     }
 }

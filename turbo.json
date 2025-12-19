@@ -12,7 +12,23 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR"]
+      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR", "VITE_API_URL"]
+    },
+    "dev:web": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR", "VITE_API_URL"]
+    },
+    "dev:desktop": {
+      "dependsOn": ["@leanspec/ui-components#build"],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR", "TAURI_DEBUG"]
+    },
+    "build:desktop": {
+      "dependsOn": ["@leanspec/ui-components#build"],
+      "outputs": ["src-tauri/target/**"],
+      "cache": false
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -31,6 +47,13 @@
     },
     "format": {
       "outputs": []
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
+    },
+    "build-storybook": {
+      "outputs": ["storybook-static/**"]
     }
   }
 }
