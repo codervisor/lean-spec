@@ -48,6 +48,17 @@ export interface DependencyGraph {
   edges: DependencyEdge[];
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  path: string;
+}
+
+export interface ProjectsResponse {
+  current: Project | null;
+  available: Project[];
+}
+
 class APIError extends Error {
   status: number;
   
@@ -103,6 +114,17 @@ export const api = {
     await fetchAPI(`/api/specs/${encodeURIComponent(name)}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
+    });
+  },
+
+  async getProjects(): Promise<ProjectsResponse> {
+    const data = await fetchAPI<ProjectsResponse>('/api/projects');
+    return data;
+  },
+
+  async switchProject(projectId: string): Promise<void> {
+    await fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/switch`, {
+      method: 'POST',
     });
   },
 };

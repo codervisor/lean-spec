@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { BarChart3, FileText, Network } from 'lucide-react';
+import { BarChart3, FileText, Network, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function Layout() {
@@ -9,6 +9,7 @@ export function Layout() {
     { path: '/specs', label: 'Specs', icon: FileText },
     { path: '/stats', label: 'Stats', icon: BarChart3 },
     { path: '/dependencies', label: 'Dependencies', icon: Network },
+    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   return (

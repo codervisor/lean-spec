@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { api, type SpecDetail } from '../lib/api';
 
 export function SpecDetailPage() {
@@ -115,7 +117,9 @@ export function SpecDetailPage() {
       )}
 
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <pre className="whitespace-pre-wrap">{spec.content}</pre>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {spec.content}
+        </ReactMarkdown>
       </div>
     </div>
   );
