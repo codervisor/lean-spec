@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.11] - 2025-12-19
+
+### Added
+- **Internationalization (i18n) support** - Full localization for UI components and CLI commands
+  - Chinese (zh-CN) translations for all UI pages, components, and status/priority labels
+  - Localized CLI command outputs and error messages
+  - Language switcher in web UI header
+  - System language detection with fallback to English
+- **Token count formatting** - Enhanced display of token counts in UI components
+  - Formatted with thousands separators for readability
+  - Consistent formatting across stats pages and spec metadata
+- **Sidebar enhancements** - Improved navigation and project management
+  - Enhanced MainSidebar layout with better spacing and hover states
+  - Improved ProjectSwitcher item styling with clear selection indicators
+  - Better project avatar display with color coding
+
+### Changed
+- **Multi-project architecture refactoring** ([spec 151](https://web.lean-spec.dev/specs/151)) - Deep architectural improvements
+  - Unified routing: All routes now use `/projects/[id]/*` structure (single-project uses 'default' ID)
+  - Consolidated specs service replacing separate filesystem-source and multi-project-source
+  - Single code path for spec operations (no more mode-specific branching)
+  - Consistent relationship computation across all views
+  - Improved URL handling with automatic redirects for legacy paths
+  - Reduced technical debt from incremental multi-project fixes
+- **Config format migration** - Migrated project registry from YAML to JSON
+  - Better compatibility with web standards
+  - Improved parsing performance
+  - Easier programmatic manipulation
+- **Dependency graph enhancements** ([spec 154](https://web.lean-spec.dev/specs/154)) - Enhanced dependency visualizations
+  - Icon-based status/priority indicators (Clock, PlayCircle, CheckCircle2, Archive)
+  - Color-coded backgrounds for quick status recognition
+  - Level indicators (L1, L2, L3) showing dependency depth
+  - Unified design between dependencies page and spec detail dialog
+  - Focus mode with layered layout options
+  - Better visual hierarchy with tooltips
+
+### Fixed
+- **Sidebar highlighting issues** - Fixed sidebar link highlighting with proper path normalization
+  - Correctly handles root path and nested routes
+  - Active link properly highlighted during navigation
+  - Improved SidebarLink component with better URL matching
+- **Relationship extraction** - Fixed full content retention for relationship parsing
+  - FilesystemSource and MultiProjectFilesystemSource now properly extract relationships
+  - "View Dependencies" button now works correctly in multi-project mode
+  - Relationship computation consistent across all spec sources
+- **Layout responsiveness** - Enhanced responsive design in CreateProjectDialog and DirectoryPicker
+  - Better handling of long paths with proper text truncation
+  - Improved mobile layouts
+  - Fixed path overflow issues
+- **Hydration mismatches** - Added ClientOnly component to prevent SSR/client hydration errors
+  - Fixes React hydration warnings
+  - Improved first paint stability
+  - Better handling of client-side only components
+- **Atomic file operations** - Implemented atomic writes for spec create/update operations
+  - Prevents race conditions during concurrent operations
+  - Prevents partial writes that could corrupt specs
+  - Better error handling during file system operations
+- **Filename formatting** - Enhanced acronym preservation in spec names
+  - API, UI, UX, etc. now properly capitalized in display names
+  - Improved readability of generated filenames
+
+### Technical
+- All 982 tests passing with unified architecture
+- Dependency updates: drizzle-kit and storybook/test versions for improved stability
+- Legacy route removal: Simplified codebase by removing deprecated `/specs/*` routes
+- ProjectContext now always provides `currentProjectId` (derived from mode)
+- Components receive `projectId` prop instead of mode checks
+
+### Notes
+**Version 0.2.11** focuses on stabilizing the Next.js-based `@leanspec/ui` with architectural improvements and bug fixes. This prepares for **version 0.3.0**, which will introduce the major Rust-based CLI/MCP/Web/Desktop migration with:
+- Unified Rust codebase for all platforms (CLI, MCP server, HTTP server, Desktop app)
+- Native performance improvements
+- Cross-platform binaries via GitHub Actions CI/CD  
+- Simplified distribution with scoped npm packages
+- New framework-agnostic UI component library (`@leanspec/ui-components`)
+- Lightweight Vite-based SPA (`@leanspec/ui-vite`) replacing Next.js
+- See [spec 181](https://web.lean-spec.dev/specs/181) for Rust migration details
+
 ## [0.2.10] - 2025-12-05
 
 ### Added
@@ -717,6 +795,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.11]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.11
 [0.2.10]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.10
 [0.2.9]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.9
 [0.2.8]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.8
