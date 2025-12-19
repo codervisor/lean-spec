@@ -112,7 +112,7 @@ export function StatusEditor({
     <div className={cn('relative', className)}>
       <Select
         value={status}
-        onValueChange={(value) => handleChange(value as SpecStatus)}
+        onValueChange={(value: string) => handleChange(value as SpecStatus)}
         disabled={disabled || isUpdating}
       >
         <SelectTrigger 

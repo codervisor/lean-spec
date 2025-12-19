@@ -112,7 +112,7 @@ export function PriorityEditor({
     <div className={cn('relative', className)}>
       <Select
         value={priority}
-        onValueChange={(value) => handleChange(value as SpecPriority)}
+        onValueChange={(value: string) => handleChange(value as SpecPriority)}
         disabled={disabled || isUpdating}
       >
         <SelectTrigger 

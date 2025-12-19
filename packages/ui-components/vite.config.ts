@@ -27,7 +27,21 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        '@radix-ui/react-dialog',
+        '@radix-ui/react-popover',
+        '@radix-ui/react-select',
+        '@radix-ui/react-slot',
+        'class-variance-authority',
+        'clsx',
+        'cmdk',
+        'dayjs',
+        'lucide-react',
+        'tailwind-merge'
+      ],
       output: {
         globals: {
           react: 'React',
