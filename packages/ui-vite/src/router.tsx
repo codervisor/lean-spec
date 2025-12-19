@@ -1,0 +1,21 @@
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { SpecsPage } from './pages/SpecsPage';
+import { SpecDetailPage } from './pages/SpecDetailPage';
+import { StatsPage } from './pages/StatsPage';
+import { DependenciesPage } from './pages/DependenciesPage';
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      { index: true, element: <Navigate to="/specs" replace /> },
+      { path: 'specs', element: <SpecsPage /> },
+      { path: 'specs/:specName', element: <SpecDetailPage /> },
+      { path: 'stats', element: <StatsPage /> },
+      { path: 'dependencies', element: <DependenciesPage /> },
+      { path: 'dependencies/:specName', element: <DependenciesPage /> },
+    ],
+  },
+]);
