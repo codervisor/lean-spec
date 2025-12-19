@@ -53,6 +53,8 @@ function MyComponent() {
 
 - `ProjectAvatar` - Avatar with initials and color from project name
 - `ProjectCard` - Project card with avatar, description, stats, and tags
+- `ProjectSwitcher` - Project switcher dropdown (framework-agnostic with callbacks)
+- `ProjectDialog` - Project creation/edit dialog (framework-agnostic with callbacks)
 
 ### Stats Components
 
@@ -64,6 +66,11 @@ function MyComponent() {
 
 - `SearchInput` - Search input with keyboard shortcut hint
 - `FilterSelect` - Dropdown filter component
+- `SearchResults` - Search results grid display
+
+### Graph Components
+
+- `SpecDependencyGraph` - Interactive dependency graph using ReactFlow (framework-agnostic with callbacks)
 
 ### Navigation Components
 
@@ -117,6 +124,107 @@ All spec-related TypeScript types are exported:
 - `Spec`, `LightweightSpec`, `SidebarSpec`
 - `SpecStatus`, `SpecPriority`
 - `StatsResult`, `DependencyGraph`, etc.
+
+## Advanced Usage Examples
+
+### Using SpecDependencyGraph
+
+```tsx
+import { SpecDependencyGraph } from '@leanspec/ui-components';
+
+function MyDependencyView({ relationships, specNumber, specTitle }) {
+  return (
+    <div style={{ height: '600px' }}>
+      <SpecDependencyGraph
+        relationships={relationships}
+        specNumber={specNumber}
+        specTitle={specTitle}
+        onNodeClick={(specId) => {
+          // Handle navigation to spec
+          router.push(`/specs/${specId}`);
+        }}
+        labels={{
+          title: 'Dependencies',
+          subtitle: 'Click to navigate',
+        }}
+      />
+    </div>
+  );
+}
+```
+
+### Using ProjectSwitcher
+
+```tsx
+import { ProjectSwitcher } from '@leanspec/ui-components';
+
+function MyProjectSwitcher({ currentProject, projects }) {
+  return (
+    <ProjectSwitcher
+      currentProject={currentProject}
+      projects={projects}
+      onProjectSelect={(projectId) => {
+        // Handle project switching
+        router.push(`/projects/${projectId}`);
+      }}
+      onAddProject={() => {
+        // Open project creation dialog
+        setShowDialog(true);
+      }}
+      onManageProjects={() => {
+        // Navigate to project management
+        router.push('/projects');
+      }}
+    />
+  );
+}
+```
+
+### Using ProjectDialog
+
+```tsx
+import { ProjectDialog } from '@leanspec/ui-components';
+
+function MyProjectDialog({ open, onOpenChange }) {
+  return (
+    <ProjectDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={async (path) => {
+        // Handle project creation
+        await createProject(path);
+        onOpenChange(false);
+      }}
+      onBrowseFolder={async () => {
+        // Show native file picker (Tauri/Electron)
+        const result = await window.__TAURI__.dialog.open({
+          directory: true,
+        });
+        return result;
+      }}
+    />
+  );
+}
+```
+
+### Using SearchResults
+
+```tsx
+import { SearchResults } from '@leanspec/ui-components';
+
+function MySearch({ query, results, isSearching }) {
+  return (
+    <SearchResults
+      query={query}
+      results={results}
+      isSearching={isSearching}
+      onSpecClick={(specId) => {
+        router.push(`/specs/${specId}`);
+      }}
+    />
+  );
+}
+```
 
 ## Development
 

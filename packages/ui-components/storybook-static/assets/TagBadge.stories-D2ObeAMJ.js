@@ -1,0 +1,25 @@
+import{j as e}from"./jsx-runtime-D_zvdyIk.js";import{B as V}from"./badge-BcO251Zn.js";import{c as W}from"./utils-CDN07tui.js";import{T as M}from"./tag-BlgyBuDl.js";import"./index-C2vczdB5.js";import"./createLucideIcon-CmAQLPQa.js";import"./index-DhY--VwN.js";function g({tag:a,className:o,showIcon:u=!1,onClick:s,removable:p=!1,onRemove:r}){return e.jsxs(V,{variant:"secondary",className:W("flex items-center gap-1",s&&"cursor-pointer hover:bg-secondary/80",o),onClick:s,children:[u&&e.jsx(M,{className:"h-3 w-3"}),e.jsx("span",{children:a}),p&&e.jsx("button",{type:"button",onClick:t=>{t.stopPropagation(),r==null||r()},className:"ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5","aria-label":`Remove tag ${a}`,children:e.jsx("svg",{className:"h-3 w-3",fill:"none",viewBox:"0 0 24 24",stroke:"currentColor",strokeWidth:2,children:e.jsx("path",{strokeLinecap:"round",strokeLinejoin:"round",d:"M6 18L18 6M6 6l12 12"})})})]})}function f({tags:a,maxVisible:o=5,className:u,onTagClick:s}){if(!a||a.length===0)return null;const p=a.slice(0,o),r=a.length-o;return e.jsxs("div",{className:W("flex flex-wrap gap-1.5",u),children:[p.map((t,A)=>e.jsx(g,{tag:t,onClick:s?()=>s(t):void 0},`${t}-${A}`)),r>0&&e.jsxs(V,{variant:"outline",className:"text-xs",children:["+",r," more"]})]})}g.__docgenInfo={description:"",methods:[],displayName:"TagBadge",props:{tag:{required:!0,tsType:{name:"string"},description:"Tag name to display"},className:{required:!1,tsType:{name:"string"},description:"Additional CSS classes"},showIcon:{required:!1,tsType:{name:"boolean"},description:"Show icon",defaultValue:{value:"false",computed:!1}},onClick:{required:!1,tsType:{name:"signature",type:"function",raw:"() => void",signature:{arguments:[],return:{name:"void"}}},description:"Click handler"},removable:{required:!1,tsType:{name:"boolean"},description:"Whether the tag is removable",defaultValue:{value:"false",computed:!1}},onRemove:{required:!1,tsType:{name:"signature",type:"function",raw:"() => void",signature:{arguments:[],return:{name:"void"}}},description:"Remove handler"}}};f.__docgenInfo={description:"",methods:[],displayName:"TagList",props:{tags:{required:!0,tsType:{name:"Array",elements:[{name:"string"}],raw:"string[]"},description:"Tags to display"},maxVisible:{required:!1,tsType:{name:"number"},description:"Maximum tags to show before truncating",defaultValue:{value:"5",computed:!1}},className:{required:!1,tsType:{name:"string"},description:"Additional CSS classes"},onTagClick:{required:!1,tsType:{name:"signature",type:"function",raw:"(tag: string) => void",signature:{arguments:[{type:{name:"string"},name:"tag"}],return:{name:"void"}}},description:"Click handler for individual tags"}}};const G={title:"Spec/TagBadge",component:g,parameters:{layout:"centered"},tags:["autodocs"]},n={args:{tag:"feature"}},i={args:{tag:"feature",showIcon:!0}},c={args:{tag:"ui",onClick:()=>console.log("Tag clicked")}},l={args:{tag:"removable",removable:!0,onRemove:()=>console.log("Remove clicked")}},d={render:()=>e.jsx(f,{tags:["ui","components","react","typescript","vite"],onTagClick:a=>console.log("Clicked:",a)})},m={render:()=>e.jsx(f,{tags:["ui","components","react","typescript","vite","storybook","testing","more"],maxVisible:3})};var v,T,h;n.parameters={...n.parameters,docs:{...(v=n.parameters)==null?void 0:v.docs,source:{originalSource:`{
+  args: {
+    tag: 'feature'
+  }
+}`,...(h=(T=n.parameters)==null?void 0:T.docs)==null?void 0:h.source}}};var y,b,x;i.parameters={...i.parameters,docs:{...(y=i.parameters)==null?void 0:y.docs,source:{originalSource:`{
+  args: {
+    tag: 'feature',
+    showIcon: true
+  }
+}`,...(x=(b=i.parameters)==null?void 0:b.docs)==null?void 0:x.source}}};var k,C,j;c.parameters={...c.parameters,docs:{...(k=c.parameters)==null?void 0:k.docs,source:{originalSource:`{
+  args: {
+    tag: 'ui',
+    onClick: () => console.log('Tag clicked')
+  }
+}`,...(j=(C=c.parameters)==null?void 0:C.docs)==null?void 0:j.source}}};var w,S,L;l.parameters={...l.parameters,docs:{...(w=l.parameters)==null?void 0:w.docs,source:{originalSource:`{
+  args: {
+    tag: 'removable',
+    removable: true,
+    onRemove: () => console.log('Remove clicked')
+  }
+}`,...(L=(S=l.parameters)==null?void 0:S.docs)==null?void 0:L.source}}};var q,N,I;d.parameters={...d.parameters,docs:{...(q=d.parameters)==null?void 0:q.docs,source:{originalSource:`{
+  render: () => <TagList tags={['ui', 'components', 'react', 'typescript', 'vite']} onTagClick={tag => console.log('Clicked:', tag)} />
+}`,...(I=(N=d.parameters)==null?void 0:N.docs)==null?void 0:I.source}}};var B,R,_;m.parameters={...m.parameters,docs:{...(B=m.parameters)==null?void 0:B.docs,source:{originalSource:`{
+  render: () => <TagList tags={['ui', 'components', 'react', 'typescript', 'vite', 'storybook', 'testing', 'more']} maxVisible={3} />
+}`,...(_=(R=m.parameters)==null?void 0:R.docs)==null?void 0:_.source}}};const H=["Default","WithIcon","Clickable","Removable","TagListComponent","TagListTruncated"];export{c as Clickable,n as Default,l as Removable,d as TagListComponent,m as TagListTruncated,i as WithIcon,H as __namedExportsOrder,G as default};

@@ -60,6 +60,7 @@
     "react-dom": ">=18"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
@@ -69,6 +70,7 @@
     "cmdk": "^1.1.1",
     "dayjs": "^1.11.19",
     "lucide-react": "^0.553.0",
+    "reactflow": "^11.11.4",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
