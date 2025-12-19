@@ -1,7 +1,16 @@
 // Backend adapter pattern for web (HTTP) vs desktop (Tauri IPC)
 // This allows the same UI code to work in both browser and Tauri contexts
 
-import type { Spec, SpecDetail, Stats, DependencyGraph, Project, ProjectsResponse } from './api';
+import type {
+  Spec,
+  SpecDetail,
+  Stats,
+  DependencyGraph,
+  Project,
+  ProjectsResponse,
+  ProjectsListResponse,
+} from './api';
+import { normalizeProjectsResponse } from './api';
 
 export interface ListParams {
   status?: string;
@@ -57,7 +66,8 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async getProjects(): Promise<ProjectsResponse> {
-    return this.fetchAPI<ProjectsResponse>('/api/projects');
+    const data = await this.fetchAPI<ProjectsResponse | ProjectsListResponse>('/api/projects');
+    return normalizeProjectsResponse(data);
   }
 
   async switchProject(projectId: string): Promise<void> {

@@ -59,6 +59,38 @@ export interface ProjectsResponse {
   available: Project[];
 }
 
+// Axum HTTP server returns { projects, current_project_id } instead of { current, available }
+// so we normalize both shapes for the UI layer.
+export interface ProjectsListResponse {
+  projects?: Project[];
+  current_project_id?: string | null;
+  currentProjectId?: string | null;
+  current?: Project | null;
+  available?: Project[];
+}
+
+export function normalizeProjectsResponse(
+  data: ProjectsResponse | ProjectsListResponse
+): ProjectsResponse {
+  if ('projects' in data) {
+    const projects = data.projects || [];
+    const currentId = data.current_project_id || data.currentProjectId || null;
+    const current = currentId
+      ? projects.find((project) => project.id === currentId) || null
+      : null;
+
+    return {
+      current,
+      available: projects,
+    };
+  }
+
+  return {
+    current: data.current || null,
+    available: data.available || [],
+  };
+}
+
 class APIError extends Error {
   status: number;
   
@@ -118,8 +150,8 @@ export const api = {
   },
 
   async getProjects(): Promise<ProjectsResponse> {
-    const data = await fetchAPI<ProjectsResponse>('/api/projects');
-    return data;
+    const data = await fetchAPI<ProjectsResponse | ProjectsListResponse>('/api/projects');
+    return normalizeProjectsResponse(data);
   },
 
   async switchProject(projectId: string): Promise<void> {
