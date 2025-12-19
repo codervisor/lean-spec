@@ -9,6 +9,7 @@ import matter from 'gray-matter';
 import type { SpecSource, CachedSpec } from '../types';
 import type { Spec } from '../../db/schema';
 import { projectRegistry } from '../../projects';
+import { safeMatterOptions } from '../../spec-utils/frontmatter';
 
 // Cache TTL from environment
 const isDev = process.env.NODE_ENV === 'development';
@@ -225,7 +226,7 @@ export class MultiProjectFilesystemSource implements SpecSource {
     projectId: string
   ): Spec | null {
     try {
-      const { data: frontmatter, content: markdown } = matter(content);
+      const { data: frontmatter, content: markdown } = matter(content, safeMatterOptions);
 
       // Validate frontmatter has required status field
       if (!frontmatter || !frontmatter.status) {

@@ -8,6 +8,7 @@ import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
+import { safeMatterOptions } from '../spec-utils/frontmatter';
 
 // Path to specs directory (relative to monorepo root)
 const SPECS_DIR = join(process.cwd(), '../../specs');
@@ -38,7 +39,7 @@ function parseSpecDirectory(dirPath: string): ParsedSpec | null {
   try {
     const readmePath = join(dirPath, 'README.md');
     const content = readFileSync(readmePath, 'utf-8');
-    const { data: frontmatter, content: markdownContent } = matter(content);
+    const { data: frontmatter, content: markdownContent } = matter(content, safeMatterOptions);
     
     // Extract spec number and name from directory name
     const dirName = dirPath.split('/').pop() || '';

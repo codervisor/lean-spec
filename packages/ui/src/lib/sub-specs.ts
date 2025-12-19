@@ -5,6 +5,7 @@
 import { readdirSync, readFileSync, existsSync, statSync } from 'fs';
 import { join } from 'path';
 import matter from 'gray-matter';
+import { safeMatterOptions } from './spec-utils/frontmatter';
 
 export interface SubSpec {
   name: string;
@@ -129,7 +130,7 @@ export function detectSubSpecs(specDirPath: string): SubSpec[] {
       try {
         const content = readFileSync(filePath, 'utf-8');
         // Remove frontmatter if present
-        const { content: markdownContent } = matter(content);
+        const { content: markdownContent } = matter(content, safeMatterOptions);
         const iconConfig = getIconForSubSpec(entry);
         
         subSpecs.push({
@@ -162,7 +163,7 @@ export function getSubSpec(specDirPath: string, fileName: string): SubSpec | nul
 
   try {
     const content = readFileSync(filePath, 'utf-8');
-    const { content: markdownContent } = matter(content);
+    const { content: markdownContent } = matter(content, safeMatterOptions);
     const iconConfig = getIconForSubSpec(fileName);
     
     return {

@@ -9,6 +9,13 @@
 import matter from 'gray-matter';
 import { load, FAILSAFE_SCHEMA } from 'js-yaml';
 
+// Shared YAML engine for gray-matter to avoid js-yaml safeLoad removal
+export const safeMatterOptions = {
+  engines: {
+    yaml: (str: string) => load(str, { schema: FAILSAFE_SCHEMA }) as Record<string, unknown>,
+  },
+};
+
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
 
@@ -168,13 +175,7 @@ export function createUpdatedFrontmatter(
   existingContent: string,
   updates: Partial<SpecFrontmatter>
 ): { content: string; frontmatter: SpecFrontmatter } {
-  const parsed = matter(existingContent, {
-    engines: {
-      // FAILSAFE_SCHEMA is the safest option - only allows strings, arrays, and objects
-      // This prevents any code execution vulnerabilities from YAML parsing
-      yaml: (str) => load(str, { schema: FAILSAFE_SCHEMA }) as Record<string, unknown>
-    }
-  });
+  const parsed = matter(existingContent, safeMatterOptions);
 
   // Store previous data for timestamp enrichment
   const previousData = { ...parsed.data };

@@ -7,9 +7,9 @@
     "leanspec-ui": "./bin/ui.js"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3001",
     "build": "next build && node ./scripts/post-build.mjs",
-    "start": "next start",
+    "start": "next start --port 3001",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

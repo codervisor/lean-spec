@@ -8,6 +8,7 @@
 import matter from 'gray-matter';
 import type { SpecRelationships } from './types';
 import type { Spec } from '../db/schema';
+import { safeMatterOptions } from '../spec-utils/frontmatter';
 
 /**
  * Normalize a depends_on value to a string array
@@ -31,7 +32,7 @@ export function normalizeRelationshipList(value: unknown): string[] {
 export function extractDependsOn(contentOrFrontmatter: string | Record<string, unknown>): string[] {
   if (typeof contentOrFrontmatter === 'string') {
     try {
-      const { data } = matter(contentOrFrontmatter);
+      const { data } = matter(contentOrFrontmatter, safeMatterOptions);
       return normalizeRelationshipList(data?.depends_on ?? data?.dependsOn);
     } catch {
       return [];

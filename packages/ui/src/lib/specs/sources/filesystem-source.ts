@@ -8,6 +8,7 @@ import * as path from 'node:path';
 import matter from 'gray-matter';
 import type { SpecSource, CachedSpec } from '../types';
 import type { Spec } from '../../db/schema';
+import { safeMatterOptions } from '../../spec-utils/frontmatter';
 
 // Cache TTL from environment
 // Default: 0ms in development, 60s in production
@@ -218,7 +219,7 @@ export class FilesystemSource implements SpecSource {
 
     try {
       const rawContent = await fs.readFile(readmePath, 'utf-8');
-      const { data: frontmatter, content: markdownContent } = matter(rawContent);
+      const { data: frontmatter, content: markdownContent } = matter(rawContent, safeMatterOptions);
 
       if (!frontmatter || !frontmatter.status) {
         return null;

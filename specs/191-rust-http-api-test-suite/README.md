@@ -85,6 +85,13 @@ rust/leanspec-http/tests/
 - Verify response structure compatibility
 - Test serialization consistency
 
+**Comparative Testing** (RECOMMENDED):
+- Run both Next.js API (`pnpm -F @leanspec/ui dev`) and Rust HTTP server side-by-side
+- Make identical requests to both servers with same test data
+- Compare JSON responses field-by-field
+- Validate identical behavior and structure
+- Catch subtle differences that static schema checks might miss
+
 **Test Fixtures**:
 - Reusable test projects with known spec structure
 - Sample specs with various statuses, priorities, tags
@@ -93,10 +100,11 @@ rust/leanspec-http/tests/
 **Tools**:
 - `axum-test` or raw Axum router testing
 - `reqwest` for HTTP client
-- `serde_json` for response validation
+- `serde_json` for response validation and comparison
 - `schemars` for JSON Schema generation and validation
 - `tempfile` for temporary test projects
 - `tokio::test` for async tests
+- `assert_json_diff` for comparing JSON responses between servers
 
 ## Plan
 
@@ -107,6 +115,8 @@ rust/leanspec-http/tests/
 - [ ] Add test utilities (assertions, matchers)
 - [ ] Set up schema validation utilities
 - [ ] Document reference Next.js API schemas
+- [ ] Create dual-server test helper (optional: spawn both Next.js + Rust)
+- [ ] Add JSON response comparison utilities
 
 ### Phase 2: Project Management Tests (Day 2)
 - [ ] Test GET `/api/projects` (list all, empty state, multi-project)
@@ -183,8 +193,81 @@ rust/leanspec-http/tests/
 - [ ] Large dataset testing (100+ specs)
 - [ ] Test documentation/examples
 - [ ] JSON Schema exports for documentation
+- [ ] **Comparative tests with live Next.js API** (side-by-side validation)
 
 ## Test Examples
+
+### Comparative Testing (Next.js vs Rust)
+
+```rust
+#[tokio::test]
+#[ignore] // Only run when Next.js server is running
+async fn test_compare_specs_response_with_nextjs() {
+    // Set up test project with known specs
+    let test_project = setup_test_project_with_fixtures().await;
+    
+    // Start Rust HTTP server
+    let rust_client = reqwest::Client::new();
+    let rust_base = "http://localhost:3001"; // Rust server
+    
+    // Assume Next.js is running on default port
+    let nextjs_client = reqwest::Client::new();
+    let nextjs_base = "http://localhost:3000"; // Next.js server
+    
+    // Compare GET /api/specs responses
+    let rust_res = rust_client
+        .get(format!("{}/api/specs", rust_base))
+        .send()
+        .await
+        .unwrap();
+    let rust_json: serde_json::Value = rust_res.json().await.unwrap();
+    
+    let nextjs_res = nextjs_client
+        .get(format!("{}/api/projects/default/specs", nextjs_base))
+        .send()
+        .await
+        .unwrap();
+    let nextjs_json: serde_json::Value = nextjs_res.json().await.unwrap();
+    
+    // Compare response structure
+    assert_json_diff::assert_json_eq!(
+        rust_json["specs"][0]["specNumber"],
+        nextjs_json["specs"][0]["specNumber"]
+    );
+    assert_json_diff::assert_json_eq!(
+        rust_json["specs"][0]["specName"],
+        nextjs_json["specs"][0]["specName"]
+    );
+    
+    // Verify both use camelCase
+    assert!(rust_json["specs"][0].get("specNumber").is_some());
+    assert!(rust_json["specs"][0].get("spec_number").is_none());
+}
+
+#[tokio::test]
+async fn test_compare_stats_response_structure() {
+    let rust_app = test_server_with_fixtures().await;
+    
+    // Get stats from Rust API
+    let rust_res = rust_app.get("/api/stats").send().await;
+    let rust_json: serde_json::Value = rust_res.json().await;
+    
+    // Validate structure matches Next.js format
+    // Next.js returns: { stats: { total, byStatus, byPriority, byTag, ... } }
+    assert!(rust_json.get("total").is_some());
+    assert!(rust_json.get("byStatus").is_some());
+    assert!(rust_json.get("byPriority").is_some());
+    assert!(rust_json.get("byTag").is_some());
+    assert!(rust_json.get("completionPercentage").is_some());
+    
+    // Validate nested structure (camelCase)
+    let by_status = &rust_json["byStatus"];
+    assert!(by_status.get("planned").is_some());
+    assert!(by_status.get("inProgress").is_some()); // camelCase
+    assert!(by_status.get("in_progress").is_none()); // NOT snake_case
+    assert!(by_status.get("complete").is_some());
+}
+```
 
 ### Schema Validation Test
 
@@ -347,6 +430,35 @@ async fn test_search_relevance_ranking() {
 4. Document any intentional differences
 5. Create compatibility tests that would fail on schema drift
 
+**Comparative Testing (Recommended)**:
+1. Run Next.js dev server: `pnpm -F @leanspec/ui dev` (port 3000)
+2. Run Rust HTTP server: `cargo run --bin leanspec-http` (port 3001)
+3. Point both at same test project directory
+4. Make identical requests to both APIs
+5. Compare JSON responses field-by-field using `assert_json_diff`
+6. Validates not just schema but actual behavior
+
+**Benefits of Live Comparison**:
+- Catches subtle differences that static checks miss
+- Validates actual serialization behavior
+- Tests with real Next.js API implementation
+- No need to manually extract/maintain reference schemas
+- Confirms identical responses for same input
+
+**Setup for Comparative Tests**:
+```bash
+# Terminal 1: Start Next.js API
+cd /path/to/lean-spec
+pnpm -F @leanspec/ui dev
+
+# Terminal 2: Start Rust HTTP server
+cd /path/to/lean-spec/rust/leanspec-http
+cargo run
+
+# Terminal 3: Run comparative tests
+cargo test --test comparative -- --ignored
+```
+
 **Key Fields to Validate**:
 - `specNumber` (not `spec_number`)
 - `specName` (not `spec_name`)
@@ -405,3 +517,10 @@ async fn test_search_relevance_ranking() {
 - Defined test architecture and strategy
 - 5-day implementation plan
 - Priority: HIGH - prerequisite for Spec 190
+
+### 2025-12-19: Schema Alignment Added
+- Added explicit schema compatibility testing with Next.js APIs
+- Documented key fields to validate (camelCase serialization)
+- Added comparative testing strategy (run both servers side-by-side)
+- Confirmed Rust types already use camelCase via `#[serde(rename_all = "camelCase")]`
+- Added example tests for live API comparison

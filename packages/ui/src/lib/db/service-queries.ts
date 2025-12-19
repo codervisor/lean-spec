@@ -11,6 +11,7 @@ import { detectSubSpecs } from '../sub-specs';
 import { join, resolve, dirname } from 'path';
 import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import matter from 'gray-matter';
+import { safeMatterOptions } from '../spec-utils/frontmatter';
 
 /**
  * Spec with parsed tags (for client consumption)
@@ -66,7 +67,7 @@ function parseSpecTags(spec: Spec): ParsedSpec {
   let contentMd = spec.contentMd;
   if (contentMd.startsWith('---')) {
     try {
-      const { content } = matter(contentMd);
+      const { content } = matter(contentMd, safeMatterOptions);
       contentMd = content;
     } catch {
       // If parsing fails, use original content
