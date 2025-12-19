@@ -54,7 +54,8 @@ rust/leanspec-http/tests/
 ├── common/
 │   ├── mod.rs              # Test utilities
 │   ├── fixtures.rs         # Test fixtures (sample specs)
-│   └── server.rs           # Test server setup
+│   ├── server.rs           # Test server setup
+│   └── schema_validator.rs # Schema validation utilities
 ├── integration/
 │   ├── projects_test.rs    # Project management APIs
 │   ├── specs_test.rs       # Spec operations
@@ -62,6 +63,9 @@ rust/leanspec-http/tests/
 │   ├── stats_test.rs       # Statistics
 │   ├── deps_test.rs        # Dependencies
 │   └── validate_test.rs    # Validation
+├── schemas/
+│   ├── nextjs_reference.rs # Reference schemas from Next.js API
+│   └── compatibility_test.rs # Schema compatibility tests
 └── scenarios/
     ├── multi_project_test.rs  # Multi-project scenarios
     └── error_cases_test.rs    # Error handling
@@ -75,6 +79,12 @@ rust/leanspec-http/tests/
 - Verify responses match expected format
 - Test error conditions and edge cases
 
+**Schema Compatibility Tests** (NEW):
+- Validate Rust response schemas match Next.js API schemas
+- Ensure field names match (camelCase vs snake_case)
+- Verify response structure compatibility
+- Test serialization consistency
+
 **Test Fixtures**:
 - Reusable test projects with known spec structure
 - Sample specs with various statuses, priorities, tags
@@ -84,6 +94,7 @@ rust/leanspec-http/tests/
 - `axum-test` or raw Axum router testing
 - `reqwest` for HTTP client
 - `serde_json` for response validation
+- `schemars` for JSON Schema generation and validation
 - `tempfile` for temporary test projects
 - `tokio::test` for async tests
 
@@ -94,10 +105,14 @@ rust/leanspec-http/tests/
 - [ ] Create test fixture generator (sample specs)
 - [ ] Create test server helper (spawn with temp registry)
 - [ ] Add test utilities (assertions, matchers)
+- [ ] Set up schema validation utilities
+- [ ] Document reference Next.js API schemas
 
 ### Phase 2: Project Management Tests (Day 2)
 - [ ] Test GET `/api/projects` (list all, empty state, multi-project)
+- [ ] Validate response schema matches Next.js `/api/local-projects`
 - [ ] Test POST `/api/projects` (add valid, invalid path, duplicate)
+- [ ] Validate request/response schema compatibility
 - [ ] Test GET `/api/projects/{id}` (existing, not found)
 - [ ] Test PATCH `/api/projects/{id}` (update name, favorite, color)
 - [ ] Test DELETE `/api/projects/{id}` (remove, not found, current project)
@@ -107,16 +122,23 @@ rust/leanspec-http/tests/
 
 ### Phase 3: Spec Operations Tests (Day 3)
 - [ ] Test GET `/api/specs` (list all, empty, with filters)
+- [ ] Validate response schema matches Next.js `/api/projects/[id]/specs`
+- [ ] Compare field serialization: camelCase vs snake_case
 - [ ] Test GET `/api/specs` with query params (status, priority, tags, assignee)
 - [ ] Test GET `/api/specs/{spec}` (by number, by name, not found)
 - [ ] Test GET `/api/specs/{spec}` (verify required_by computed)
+- [ ] Validate SpecDetail schema matches Next.js spec detail
 - [ ] Test POST `/api/search` (query, filters, empty results)
+- [ ] Validate SearchResponse schema compatibility
 - [ ] Test POST `/api/search` (ranking by relevance)
 
 ### Phase 4: Stats & Dependencies Tests (Day 4)
 - [ ] Test GET `/api/stats` (empty project, various statuses)
+- [ ] Validate StatsResponse schema matches Next.js `/api/projects/[id]/stats`
+- [ ] Compare field names: byStatus, byPriority, byTag
 - [ ] Test GET `/api/stats` (verify counts by status, priority, tags)
 - [ ] Test GET `/api/deps/{spec}` (simple dependency)
+- [ ] Validate DependencyResponse schema
 - [ ] Test GET `/api/deps/{spec}` (transitive dependencies)
 - [ ] Test GET `/api/deps/{spec}` (circular dependencies)
 - [ ] Test GET `/api/deps/{spec}` (spec not found)
@@ -150,6 +172,8 @@ rust/leanspec-http/tests/
 - [ ] All happy path scenarios tested
 - [ ] All error conditions tested
 - [ ] Multi-project switching tested
+- [ ] **Schema compatibility validated with Next.js APIs**
+- [ ] **All response fields use camelCase serialization**
 - [ ] Tests run in CI
 - [ ] Tests pass consistently
 
@@ -158,8 +182,40 @@ rust/leanspec-http/tests/
 - [ ] Concurrent request testing
 - [ ] Large dataset testing (100+ specs)
 - [ ] Test documentation/examples
+- [ ] JSON Schema exports for documentation
 
 ## Test Examples
+
+### Schema Validation Test
+
+```rust
+#[tokio::test]
+async fn test_spec_response_schema_compatibility() {
+    let app = test_server_with_fixtures().await;
+    
+    // Get spec from Rust API
+    let res = app.get("/api/specs/001-test-spec").send().await;
+    assert_eq!(res.status(), 200);
+    
+    let spec: SpecDetail = res.json().await;
+    
+    // Validate required fields exist and use camelCase
+    assert!(spec.spec_number.is_some());
+    assert!(!spec.spec_name.is_empty());
+    assert!(!spec.title.is_none());
+    assert!(!spec.status.is_empty());
+    assert!(!spec.content_md.is_empty());
+    assert!(!spec.file_path.is_empty());
+    
+    // Validate field serialization matches Next.js format
+    let json = serde_json::to_value(&spec).unwrap();
+    assert!(json.get("specNumber").is_some()); // camelCase
+    assert!(json.get("specName").is_some());   // camelCase
+    assert!(json.get("contentMd").is_some());  // camelCase
+    assert!(json.get("filePath").is_some());   // camelCase
+    assert!(json.get("createdAt").is_some()); // camelCase
+}
+```
 
 ### Project Management Test
 
@@ -182,6 +238,11 @@ async fn test_list_projects() {
     let body: ProjectsListResponse = res.json().await;
     assert_eq!(body.projects.len(), 1);
     assert!(body.current_project_id.is_some());
+    
+    // Validate schema matches Next.js /api/local-projects
+    let json = serde_json::to_value(&body).unwrap();
+    assert!(json.get("projects").is_some());
+    assert!(json.get("currentProjectId").is_some()); // camelCase
 }
 
 #[tokio::test]
@@ -271,19 +332,56 @@ async fn test_search_relevance_ranking() {
 
 ## Notes
 
+### Schema Compatibility Strategy
+
+**Reference Implementation**: Next.js API routes in `packages/ui/src/app/api/`
+- `/api/local-projects` → Rust `/api/projects`
+- `/api/projects/[id]/specs` → Rust `/api/specs`
+- `/api/projects/[id]/stats` → Rust `/api/stats`
+- `/api/projects/[id]/dependencies` → Rust `/api/deps/{spec}`
+
+**Validation Approach**:
+1. Extract sample responses from Next.js API routes
+2. Compare field names and structure
+3. Validate camelCase serialization in Rust responses
+4. Document any intentional differences
+5. Create compatibility tests that would fail on schema drift
+
+**Key Fields to Validate**:
+- `specNumber` (not `spec_number`)
+- `specName` (not `spec_name`)
+- `contentMd` (not `content_md`)
+- `filePath` (not `file_path`)
+- `createdAt`, `updatedAt`, `completedAt` (not snake_case)
+- `dependsOn`, `requiredBy` (not snake_case)
+- `byStatus`, `byPriority`, `byTag` in stats (not snake_case)
+
+**Current Status**: ✅ Rust types already use `#[serde(rename_all = "camelCase")]` - tests will validate this continues working.
+
 ### Why Integration Tests First?
 
 1. **Verify current state**: Ensure existing APIs work before adding new ones
 2. **Regression prevention**: Catch breaking changes immediately
-3. **Documentation**: Tests serve as API usage examples
-4. **Confidence**: Safe to refactor with comprehensive tests
-5. **Prerequisites**: Spec 190 backend work needs this foundation
+3. **Schema validation**: Ensure compatibility with Next.js APIs
+4. **Documentation**: Tests serve as API usage examples
+5. **Confidence**: Safe to refactor with comprehensive tests
+6. **Prerequisites**: Spec 190 backend work needs this foundation
+
+### Why Schema Alignment Matters
+
+**API Compatibility** is critical because:
+- **@leanspec/ui-vite** expects exact same response format as Next.js APIs
+- Field names must match (camelCase in JSON, not snake_case)
+- Frontend code should work unchanged when switching backends
+- Type safety: TypeScript types in frontend must match Rust serialization
+- No adapter layer needed if schemas are identical
 
 ### Testing Philosophy
 
 **Focus on behavior, not implementation**:
 - Test HTTP responses, not internal state
 - Verify response formats match frontend expectations
+- **Validate schema compatibility with Next.js APIs**
 - Test edge cases and error conditions
 - Use realistic fixtures that mirror production data
 
