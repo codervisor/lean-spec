@@ -52,6 +52,13 @@ function MyComponent() {
 ### Project Components
 
 - `ProjectAvatar` - Avatar with initials and color from project name
+- `ProjectCard` - Project card with avatar, description, stats, and tags
+
+### Stats Components
+
+- `StatsCard` - Single stat card with icon and trend indicator
+- `StatsOverview` - Grid of stats cards for project overview
+- `ProgressBar` - Horizontal progress bar with variants
 
 ### Search & Filter Components
 

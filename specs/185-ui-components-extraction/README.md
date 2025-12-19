@@ -157,11 +157,18 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - [ ] Extract SearchResults
 - [x] Add keyboard shortcuts
 
-### Phase 6: Extract Project Management (Day 6-7) 🚧 Partial
-- [ ] Extract ProjectSwitcher (recent, favorites)
-- [ ] Extract ProjectCard
+### Phase 6: Extract Project Management (Day 6-7) ✅
+- [ ] Extract ProjectSwitcher (recent, favorites) - requires routing integration
+- [x] Extract ProjectCard
 - [x] Extract ProjectAvatar
-- [ ] Create ProjectDialog (new/edit)
+- [ ] Create ProjectDialog (new/edit) - requires routing integration
+
+### Phase 4: Extract Visualization (Day 4-5) 🚧 Partial
+- [ ] Extract DependencyGraph (reactflow) - complex, requires routing
+- [x] Extract StatsCard (simple stat display)
+- [x] Extract StatsOverview (stats grid)
+- [x] Extract ProgressBar
+- [ ] Extract full StatsCharts (recharts) - requires full chart library
 
 ### Phase 7: Extract Layout (Day 7) ✅
 - [x] Extract EmptyState component
@@ -315,3 +322,27 @@ import { SpecList, useSpecs } from '@leanspec/ui-components'
 - SpecMetadata stories (default, minimal, complete)
 
 **Bundle Size:** ~30KB gzipped (tree-shakeable)
+
+### Phase 4, 6 Progress (2025-12-19)
+
+**New Project Components:**
+- `ProjectCard` - Project card with avatar, description, tags, specs count, favorite toggle
+
+**New Stats Components:**
+- `StatsCard` - Single stat card with icon, value, subtitle, trend indicator
+- `StatsOverview` - Grid of stats cards (total, completed, in-progress, planned)
+- `ProgressBar` - Horizontal progress bar with variants (success, warning, danger, info)
+
+**New Storybook Stories:**
+- ProjectCard stories (default, with toggle, grid view)
+- StatsCard stories (all variants, with trends)
+- StatsOverview stories (default, with archived, custom labels)
+- ProgressBar stories (all sizes, all variants)
+
+**Bundle Size:** ~32KB gzipped (tree-shakeable)
+
+**Remaining Framework-Specific Components:**
+The following components remain in `packages/ui` as they require framework-specific integrations:
+- `ProjectSwitcher` - Requires Next.js routing (useRouter, usePathname)
+- `SpecDependencyGraph` - Requires Next.js routing for navigation
+- `StatsClient` (full recharts) - Can be used directly with recharts in consumer apps

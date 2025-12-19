@@ -4,3 +4,4 @@ export * from './layout';
 export * from './project';
 export * from './navigation';
 export * from './search';
+export * from './stats';
