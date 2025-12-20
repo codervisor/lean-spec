@@ -108,7 +108,7 @@ fn create_invalid_project(dir: &std::path::Path) {
         spec_dir.join("README.md"),
         r#"---
 status: planned
-created: '20250101'
+created: '2025-13-32'
 priority: medium
 tags:
   - invalid
@@ -118,7 +118,7 @@ tags:
 
 ## Overview
 
-Missing proper created format should surface validation issues.
+Invalid created date format should surface validation errors.
 "#,
     )
     .unwrap();
@@ -397,6 +397,7 @@ async fn test_switch_project_and_refresh_cleanup() {
     assert_eq!(switched["id"], first_id);
 
     fs::remove_dir_all(second_project.path()).unwrap();
+    assert!(!second_project.path().exists());
     let (status, body) = make_request(app.clone(), "POST", "/api/projects/refresh").await;
     assert_eq!(status, StatusCode::OK);
     let refresh: Value = serde_json::from_str(&body).unwrap();
