@@ -95,7 +95,10 @@ tags:
 This spec has frontmatter included."#;
 
     let result = create_spec_with_content(cwd, "my-feature", content);
-    assert!(result.success, "create with frontmatter content should succeed");
+    assert!(
+        result.success,
+        "create with frontmatter content should succeed"
+    );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -149,7 +152,10 @@ Content with frontmatter."#;
         ],
         cwd,
     );
-    assert!(result.success, "create with override options should succeed");
+    assert!(
+        result.success,
+        "create with override options should succeed"
+    );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -449,7 +455,10 @@ const x = `template ${string}`;
     write_file(&content_file_path, content);
 
     let result = create_spec_from_file(cwd, "my-feature", "special-content.md");
-    assert!(result.success, "create with special characters should succeed");
+    assert!(
+        result.success,
+        "create with special characters should succeed"
+    );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);
@@ -483,7 +492,10 @@ This is the content body."#;
         ],
         cwd,
     );
-    assert!(result.success, "create with title and content should succeed");
+    assert!(
+        result.success,
+        "create with title and content should succeed"
+    );
 
     let readme_path = cwd.join("specs").join("001-my-feature").join("README.md");
     let file_content = read_file(&readme_path);

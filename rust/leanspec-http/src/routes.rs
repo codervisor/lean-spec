@@ -86,6 +86,7 @@ mod tests {
     fn test_router_creation() {
         let config = ServerConfig::default();
         // This will fail without a valid filesystem, but tests router building
-        let _state = AppState::with_registry(config, crate::project_registry::ProjectRegistry::default());
+        let _state =
+            AppState::with_registry(config, crate::project_registry::ProjectRegistry::default());
     }
 }

@@ -221,10 +221,7 @@ fn migrate_yaml_config(yaml_path: &PathBuf) -> Result<ServerConfig, ServerError>
     // Try to parse YAML directly into our config struct
     // This handles fields that match between YAML and JSON formats
     let config = serde_yaml::from_str::<ServerConfig>(&content).unwrap_or_else(|e| {
-        tracing::warn!(
-            "Could not fully parse YAML config, using defaults: {}",
-            e
-        );
+        tracing::warn!("Could not fully parse YAML config, using defaults: {}", e);
         ServerConfig::default()
     });
 

@@ -115,7 +115,10 @@ fn test_regression_preserve_created_date_format() {
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    assert_eq!(after_created, initial_created, "created date should not change");
+    assert_eq!(
+        after_created, initial_created,
+        "created date should not change"
+    );
     if let Some(created) = after_created.as_ref() {
         // Should match YYYY-MM-DD format
         let re = regex::Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();

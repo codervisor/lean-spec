@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Lightweight spec methodology for AI-powered development (monorepo root)",
-  "packageManager": "pnpm@10.26.0",
+  "packageManager": "pnpm@10.26.1",
   "scripts": {
     "dev": "concurrently \"cargo run --manifest-path rust/Cargo.toml -p leanspec-http\" \"turbo run dev --filter=@leanspec/ui-vite\"",
     "dev:web": "turbo run dev --filter=@leanspec/ui-vite",

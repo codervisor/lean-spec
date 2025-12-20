@@ -3,7 +3,7 @@
 //! These types match the existing Next.js API responses for compatibility.
 
 use chrono::{DateTime, Utc};
-use leanspec_core::{SpecInfo, SpecPriority, SpecStatus, SpecStats};
+use leanspec_core::{SpecInfo, SpecPriority, SpecStats, SpecStatus};
 use serde::{Deserialize, Serialize};
 
 /// Lightweight spec for list views

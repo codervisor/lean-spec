@@ -44,16 +44,12 @@ pub async fn list_specs(
 
     // Apply filters
     let filters = SpecFilterOptions {
-        status: query.status.map(|s| {
-            s.split(',')
-                .filter_map(|s| s.parse().ok())
-                .collect()
-        }),
-        priority: query.priority.map(|s| {
-            s.split(',')
-                .filter_map(|s| s.parse().ok())
-                .collect()
-        }),
+        status: query
+            .status
+            .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect()),
+        priority: query
+            .priority
+            .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect()),
         tags: query
             .tags
             .map(|s| s.split(',').map(|s| s.to_string()).collect()),

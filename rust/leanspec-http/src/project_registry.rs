@@ -91,10 +91,16 @@ impl Project {
     /// Validate the project structure
     pub fn validate(&self) -> Result<(), String> {
         if !self.path.exists() {
-            return Err(format!("Project path does not exist: {}", self.path.display()));
+            return Err(format!(
+                "Project path does not exist: {}",
+                self.path.display()
+            ));
         }
         if !self.specs_dir.exists() {
-            return Err(format!("Specs directory does not exist: {}", self.specs_dir.display()));
+            return Err(format!(
+                "Specs directory does not exist: {}",
+                self.specs_dir.display()
+            ));
         }
         Ok(())
     }
@@ -252,7 +258,10 @@ impl ProjectRegistry {
     /// Set the current project
     pub fn set_current(&mut self, id: &str) -> Result<&Project, ServerError> {
         if !self.projects.contains_key(id) {
-            return Err(ServerError::RegistryError(format!("Project not found: {}", id)));
+            return Err(ServerError::RegistryError(format!(
+                "Project not found: {}",
+                id
+            )));
         }
 
         // Update last_accessed
@@ -344,10 +353,7 @@ impl ProjectRegistry {
 
     /// Get favorite projects
     pub fn favorites(&self) -> Vec<&Project> {
-        self.projects
-            .values()
-            .filter(|p| p.favorite)
-            .collect()
+        self.projects.values().filter(|p| p.favorite).collect()
     }
 
     /// Get recent projects (not favorites, sorted by last_accessed)

@@ -53,7 +53,10 @@ impl ApiError {
     }
 
     pub fn no_project_selected() -> Self {
-        Self::new("NO_PROJECT", "No project selected. Please switch to a project first.")
+        Self::new(
+            "NO_PROJECT",
+            "No project selected. Please switch to a project first.",
+        )
     }
 
     pub fn project_not_found(id: &str) -> Self {

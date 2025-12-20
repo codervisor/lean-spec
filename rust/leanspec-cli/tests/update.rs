@@ -50,11 +50,13 @@ fn test_update_status_transition() {
     assert!(transitions.is_some(), "expected transitions in frontmatter");
     if let Some(serde_yaml::Value::Sequence(seq)) = transitions {
         // planned -> in-progress -> complete
-        assert!(seq.len() >= 2, "expected at least 2 transitions, got {}", seq.len());
+        assert!(
+            seq.len() >= 2,
+            "expected at least 2 transitions, got {}",
+            seq.len()
+        );
         let last = seq.last().and_then(|v| v.as_mapping());
-        let last_status = last
-            .and_then(|m| m.get("status"))
-            .and_then(|v| v.as_str());
+        let last_status = last.and_then(|m| m.get("status")).and_then(|v| v.as_str());
         assert_eq!(last_status, Some("complete"));
     } else {
         panic!("transitions should be a YAML sequence");

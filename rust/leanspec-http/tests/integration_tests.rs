@@ -144,11 +144,7 @@ async fn create_test_state(temp_dir: &TempDir) -> AppState {
 }
 
 /// Helper to make HTTP requests to the test server
-async fn make_request(
-    app: axum::Router,
-    method: &str,
-    uri: &str,
-) -> (StatusCode, String) {
+async fn make_request(app: axum::Router, method: &str, uri: &str) -> (StatusCode, String) {
     use axum::body::Body;
     use axum::http::Request;
     use tower::ServiceExt;
@@ -284,8 +280,12 @@ async fn test_update_project_and_toggle_favorite() {
     assert_eq!(updated["favorite"], true);
     assert_eq!(updated["color"], "#ffcc00");
 
-    let (status, body) =
-        make_request(app.clone(), "POST", &format!("/api/projects/{project_id}/favorite")).await;
+    let (status, body) = make_request(
+        app.clone(),
+        "POST",
+        &format!("/api/projects/{project_id}/favorite"),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     let toggled: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(toggled["favorite"], false);
@@ -390,10 +390,17 @@ async fn test_switch_project_and_refresh_cleanup() {
 
     let (_, body) = make_request(app.clone(), "GET", "/api/projects").await;
     let projects: Value = serde_json::from_str(&body).unwrap();
-    assert_eq!(projects["currentProjectId"].as_str(), Some(second_id.as_str()));
+    assert_eq!(
+        projects["currentProjectId"].as_str(),
+        Some(second_id.as_str())
+    );
 
-    let (status, body) =
-        make_request(app.clone(), "POST", &format!("/api/projects/{first_id}/switch")).await;
+    let (status, body) = make_request(
+        app.clone(),
+        "POST",
+        &format!("/api/projects/{first_id}/switch"),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     let switched: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(switched["id"], first_id);
@@ -409,7 +416,10 @@ async fn test_switch_project_and_refresh_cleanup() {
     let (_, body) = make_request(app.clone(), "GET", "/api/projects").await;
     let projects: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(projects["projects"].as_array().unwrap().len(), 1);
-    assert_eq!(projects["currentProjectId"].as_str(), Some(first_id.as_str()));
+    assert_eq!(
+        projects["currentProjectId"].as_str(),
+        Some(first_id.as_str())
+    );
 }
 
 #[tokio::test]
@@ -418,12 +428,8 @@ async fn test_search_specs() {
     let state = create_test_state(&temp_dir).await;
     let app = create_router(state);
 
-    let (status, body) = make_json_request(
-        app,
-        "POST",
-        "/api/search",
-        r#"{"query": "test"}"#,
-    ).await;
+    let (status, body) =
+        make_json_request(app, "POST", "/api/search", r#"{"query": "test"}"#).await;
 
     assert_eq!(status, StatusCode::OK);
     assert!(body.contains("results"));
@@ -458,7 +464,10 @@ async fn test_stats_camel_case_structure_and_counts() {
 
     let by_status = stats["byStatus"].as_object().unwrap();
     assert_eq!(by_status.get("planned").and_then(|v| v.as_u64()), Some(1));
-    assert_eq!(by_status.get("inProgress").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        by_status.get("inProgress").and_then(|v| v.as_u64()),
+        Some(1)
+    );
     assert_eq!(by_status.get("complete").and_then(|v| v.as_u64()), Some(1));
     assert!(by_status.get("in_progress").is_none());
 
