@@ -1,0 +1,31 @@
+{
+  "name": "@leanspec/api-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API contract validation test suite for LeanSpec",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "leanspec",
+    "api",
+    "contracts",
+    "testing"
+  ],
+  "author": "LeanSpec",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.6",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
