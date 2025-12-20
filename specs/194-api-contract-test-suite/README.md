@@ -1,45 +1,46 @@
 ---
 status: planned
-created: 2025-12-20
+created: '2025-12-20'
 priority: high
 tags:
-- testing
-- api
-- typescript
-- contract
-- integration
+  - testing
+  - api
+  - typescript
+  - contract
+  - integration
 depends_on:
-- 191-rust-http-api-test-suite
-- 186-rust-http-server
-created_at: 2025-12-20T07:13:29.722091Z
-updated_at: 2025-12-20T07:13:38.531807Z
+  - 191-rust-http-api-test-suite
+  - 186-rust-http-server
+created_at: '2025-12-20T07:13:29.722091Z'
+updated_at: '2025-12-20T07:13:38.531807Z'
 ---
 
-# Language-Agnostic API Contract Test Suite
+# API Contract Validation Test Suite
 
-> Comprehensive TypeScript-based API test suite that validates actual HTTP server behavior for both Next.js and Rust backends
+> Language-agnostic TypeScript test suite that defines and validates LeanSpec API contracts against any HTTP server implementation
 
 ## Overview
 
-**Problem**: Current test approaches have serious limitations:
+**Problem**: No single source of truth for API contracts:
 - **Spec 191** (Rust HTTP API tests): Uses Rust unit tests that call router directly with `.oneshot()` - NOT testing actual HTTP server
-- **No contract validation**: No guarantee Next.js and Rust APIs behave identically
-- **Language-coupled**: Tests embedded in implementation language, hard to reuse
+- **No schema definitions**: API contracts exist only in implementation code
+- **No validation**: Can't verify server actually conforms to expected behavior
 - **Mock-based**: Unit tests can fool us - we need real HTTP requests to real servers
 
-**Solution**: Build **language-agnostic** TypeScript test suite that:
-- Tests **actual running HTTP servers** (not mocked routers)
-- Works against **both** Next.js API (`@leanspec/ui`) and Rust HTTP server
-- Makes **real HTTP requests** with `fetch`/`axios`
-- Validates **API contracts** (requests, responses, errors)
-- Can be run independently or in CI
+**Solution**: Build **API contract validation suite** that:
+- **Defines canonical API schemas** (requests, responses, errors) as source of truth
+- Tests **any HTTP server** via configuration (URL-based, implementation-agnostic)
+- Makes **real HTTP requests** to actual running servers
+- Validates responses match defined schemas
+- Tests data correctness with known fixtures
+- Can run against Next.js, Rust, or any future implementation
 
 **Why TypeScript?**
-- Language-neutral (not tied to Rust or Next.js)
-- Excellent HTTP client libraries (`axios`, `node-fetch`)
-- Type-safe with TypeScript
-- Can validate both implementations easily
+- Language-neutral (not tied to any backend implementation)
+- Excellent schema validation (`zod`, `ajv`)
+- Type-safe API schemas serve as documentation
 - Familiar to most developers
+- Easy to integrate with CI
 
 ## Design
 
@@ -50,18 +51,25 @@ tests/api-contracts/          # New standalone test package
 ├── package.json              # Independent npm package
 ├── tsconfig.json
 ├── vitest.config.ts
+├── .env.test                 # API_BASE_URL=http://localhost:3001
 ├── src/
+│   ├── schemas/              # API contract schemas (SOURCE OF TRUTH)
+│   │   ├── projects.ts       # Project API schemas
+│   │   ├── specs.ts          # Spec API schemas
+│   │   ├── search.ts         # Search API schemas
+│   │   ├── stats.ts          # Stats API schemas
+│   │   ├── deps.ts           # Dependencies API schemas
+│   │   ├── validate.ts       # Validation API schemas
+│   │   └── errors.ts         # Error response schemas
 │   ├── fixtures/             # Test data generators
 │   │   ├── projects.ts       # Create test projects
 │   │   └── specs.ts          # Create test specs
-│   ├── clients/              # API client adapters
-│   │   ├── base.ts           # Base client interface
-│   │   ├── nextjs.ts         # Next.js API client
-│   │   └── rust.ts           # Rust HTTP client
+│   ├── client/               # Generic HTTP client
+│   │   ├── index.ts          # Configurable API client
+│   │   └── config.ts         # Read API_BASE_URL from env
 │   ├── utils/
-│   │   ├── server.ts         # Server startup/shutdown
-│   │   ├── assertions.ts     # Custom assertions
-│   │   └── comparisons.ts    # Response comparison helpers
+│   │   ├── validation.ts     # Schema validation helpers
+│   │   └── assertions.ts     # Custom assertions
 │   └── tests/
 │       ├── projects.test.ts  # Project management tests
 │       ├── specs.test.ts     # Spec operations tests
@@ -69,67 +77,76 @@ tests/api-contracts/          # New standalone test package
 │       ├── stats.test.ts     # Stats tests
 │       ├── deps.test.ts      # Dependencies tests
 │       ├── validate.test.ts  # Validation tests
-│       ├── errors.test.ts    # Error handling tests
-│       └── contracts.test.ts # Contract comparison tests
+│       └── errors.test.ts    # Error handling tests
 └── README.md
 ```
 
 ### Test Strategy
 
-**1. Contract Validation** (Primary Goal):
+**1. Schema-First Validation** (Primary Goal):
 ```typescript
-describe('API Contract: GET /api/projects', () => {
-  test('both servers return identical structure', async () => {
-    // Start both servers with same test data
-    const nextjsClient = await startNextJsServer(testProject);
-    const rustClient = await startRustServer(testProject);
+// schemas/projects.ts - Source of truth
+export const ProjectResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  path: z.string(),
+  specsDir: z.string(),
+  favorite: z.boolean(),
+  color: z.string().nullable(),
+  lastAccessed: z.string().datetime()
+});
+
+export const ProjectsListResponseSchema = z.object({
+  projects: z.array(ProjectResponseSchema),
+  currentProjectId: z.string().nullable()
+});
+
+// Test validates server matches schema
+describe('GET /api/projects', () => {
+  test('returns valid projects list matching schema', async () => {
+    const response = await apiClient.get('/api/projects');
     
-    // Make identical requests
-    const nextjsRes = await nextjsClient.get('/api/projects');
-    const rustRes = await rustClient.get('/api/projects');
+    expect(response.status).toBe(200);
     
-    // Validate identical responses
-    expect(nextjsRes.status).toBe(rustRes.status);
-    expect(nextjsRes.data).toMatchObject(rustRes.data);
+    // Validate against canonical schema
+    const result = ProjectsListResponseSchema.safeParse(response.data);
+    expect(result.success).toBe(true);
     
-    // Validate contract
-    expect(nextjsRes.data).toMatchSchema(ProjectsListSchema);
-    expect(rustRes.data).toMatchSchema(ProjectsListSchema);
+    // Validate data correctness
+    expect(response.data.projects).toBeInstanceOf(Array);
   });
 });
 ```
 
-**2. Real HTTP Server Testing**:
+**2. Configuration-Based Testing**:
 ```typescript
-async function startRustServer(projectDir: string) {
-  // Spawn actual Rust HTTP server process
-  const process = spawn('./rust/target/release/leanspec-http', [
-    '--port', '3001',
-    '--project', projectDir
-  ]);
-  
-  // Wait for server to be ready
-  await waitForServer('http://localhost:3001/health');
-  
-  return {
-    url: 'http://localhost:3001',
-    process,
-    cleanup: () => process.kill()
-  };
-}
+// .env.test or environment variable
+// API_BASE_URL=http://localhost:3001  # Test Rust server
+// API_BASE_URL=http://localhost:3000  # Test Next.js server
+
+// client/config.ts
+export const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
+
+// client/index.ts
+export const apiClient = {
+  async get(path: string, params?: Record<string, any>) {
+    const url = new URL(path, API_BASE_URL);
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => 
+        url.searchParams.append(k, String(v))
+      );
+    }
+    const res = await fetch(url.toString());
+    return {
+      status: res.status,
+      headers: Object.fromEntries(res.headers),
+      data: await res.json()
+    };
+  }
+};
 ```
 
-**3. Comprehensive Endpoint Coverage**:
-- ✅ All project management endpoints
-- ✅ All spec CRUD operations
-- ✅ Search functionality
-- ✅ Stats computation
-- ✅ Dependency graphs
-- ✅ Validation
-- ✅ Error conditions (404, 400, 500)
-- ✅ Edge cases (empty projects, large datasets)
-
-**4. Test Data Management**:
+**3. Test Data Management**:
 ```typescript
 // Create isolated test projects for each test
 async function createTestProject(fixtures: SpecFixture[]) {
@@ -151,45 +168,41 @@ async function createTestProject(fixtures: SpecFixture[]) {
 }
 ```
 
-### Server Configuration
+### Test Configuration
 
-**Next.js API** (legacy):
+**Running Against Different Servers**:
+
 ```bash
-PORT=3000 pnpm -F @leanspec/ui dev
-# Expects: http://localhost:3000/api/*
+# Test Rust HTTP server
+API_BASE_URL=http://localhost:3001 npm test
+
+# Test Next.js API (legacy)
+API_BASE_URL=http://localhost:3000 npm test
+
+# Default (Rust)
+npm test  # Uses http://localhost:3001
 ```
 
-**Rust HTTP Server**:
+**Server must be started separately**:
 ```bash
+# Terminal 1: Start server you want to test
 cargo run --bin leanspec-http -- --port 3001
-# Expects: http://localhost:3001/api/*
+# OR
+pnpm -F @leanspec/ui dev  # port 3000
+
+# Terminal 2: Run tests
+cd tests/api-contracts
+npm test
 ```
 
-**Test Runner**:
-```bash
-# Start both servers
-npm run test:start-servers
-
-# Run contract tests
-npm run test:contracts
-
-# Cleanup
-npm run test:stop-servers
-```
-
-### API Client Abstraction
+### Simple HTTP Client
 
 ```typescript
-interface ApiClient {
-  get(path: string, params?: Record<string, any>): Promise<ApiResponse>;
-  post(path: string, body?: any): Promise<ApiResponse>;
-  patch(path: string, body?: any): Promise<ApiResponse>;
-  delete(path: string): Promise<ApiResponse>;
-  baseUrl: string;
-}
+// client/index.ts - Implementation-agnostic
+import { API_BASE_URL } from './config';
 
-class RustHttpClient implements ApiClient {
-  constructor(public baseUrl: string) {}
+export const apiClient = {
+  baseUrl: API_BASE_URL,
   
   async get(path: string, params?: Record<string, any>) {
     const url = new URL(path, this.baseUrl);
@@ -202,46 +215,79 @@ class RustHttpClient implements ApiClient {
     return {
       status: res.status,
       headers: Object.fromEntries(res.headers),
-      data: await res.json()
+      data: res.ok ? await res.json() : null
     };
-  }
-  // ... other methods
-}
-
-class NextJsApiClient implements ApiClient {
-  // Similar implementation but targets Next.js routes
-}
+  },
+  
+  async post(path: string, body?: any) {
+    const res = await fetch(new URL(path, this.baseUrl).toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return {
+      status: res.status,
+      headers: Object.fromEntries(res.headers),
+      data: res.ok ? await res.json() : null
+    };
+  },
+  
+  // ... patch, delete
+};
 ```
 
-### Contract Schemas
+### Contract Schemas (Source of Truth)
 
 ```typescript
-// Define expected API contracts
-const ProjectResponseSchema = z.object({
+// schemas/projects.ts
+import { z } from 'zod';
+
+export const ProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   path: z.string(),
   specsDir: z.string(),
   favorite: z.boolean(),
   color: z.string().nullable(),
-  lastAccessed: z.string().datetime()
+  lastAccessed: z.string().datetime(),
+  addedAt: z.string().datetime().optional()
 });
 
-const SpecListResponseSchema = z.object({
-  specs: z.array(z.object({
-    specNumber: z.number().nullable(),
-    specName: z.string(),
-    title: z.string(),
-    status: z.enum(['planned', 'in-progress', 'complete', 'archived']),
-    priority: z.enum(['low', 'medium', 'high', 'critical']).nullable(),
-    tags: z.array(z.string()),
-    created: z.string().nullable(),
-    filePath: z.string()
-  }))
+export const ProjectsListResponseSchema = z.object({
+  projects: z.array(ProjectSchema),
+  currentProjectId: z.string().nullable()
+});
+
+// schemas/specs.ts
+export const SpecItemSchema = z.object({
+  specNumber: z.number().nullable(),
+  specName: z.string(),
+  title: z.string(),
+  status: z.enum(['planned', 'in-progress', 'complete', 'archived']),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).nullable(),
+  tags: z.array(z.string()),
+  created: z.string().nullable(),
+  updated: z.string().nullable().optional(),
+  filePath: z.string()
+});
+
+export const SpecsListResponseSchema = z.object({
+  specs: z.array(SpecItemSchema)
+});
+
+// schemas/errors.ts
+export const ErrorResponseSchema = z.object({
+  error: z.string(),
+  code: z.string().optional(),
+  details: z.any().optional()
 });
 
 // Use in tests
-expect(response.data).toMatchSchema(ProjectResponseSchema);
+const result = ProjectsListResponseSchema.safeParse(response.data);
+expect(result.success).toBe(true);
+if (!result.success) {
+  console.error('Schema validation failed:', result.error);
+}
 ```
 
 ## Plan
@@ -249,10 +295,10 @@ expect(response.data).toMatchSchema(ProjectResponseSchema);
 ### Phase 1: Test Infrastructure (Days 1-2)
 - [ ] Create `tests/api-contracts` package
 - [ ] Set up TypeScript + Vitest
-- [ ] Implement server startup/shutdown utilities
-- [ ] Create API client abstraction (Rust + Next.js)
+- [ ] Create API client (configuration-based)
+- [ ] Define canonical schemas for all endpoints
 - [ ] Test fixture generators (projects, specs)
-- [ ] Port configuration utilities
+- [ ] Schema validation utilities
 
 ### Phase 2: Core Endpoint Tests (Days 3-5)
 - [ ] Project management tests (8 endpoints)
@@ -264,7 +310,7 @@ expect(response.data).toMatchSchema(ProjectResponseSchema);
   - POST /api/projects/:id/switch
   - POST /api/projects/:id/favorite
   - POST /api/projects/refresh
-- [ ] Validate both servers return same responses
+- [ ] Validate all responses match schemas
 
 ### Phase 3: Spec Operations Tests (Days 6-8)
 - [ ] Spec listing tests (with filters)
@@ -299,17 +345,16 @@ expect(response.data).toMatchSchema(ProjectResponseSchema);
 - [ ] Empty projects
 - [ ] Large datasets (100+ specs)
 
-### Phase 6: Contract Comparison Tests (Days 14-15)
-- [ ] Side-by-side comparison for all endpoints
-- [ ] Response structure validation
-- [ ] Field name consistency (camelCase)
-- [ ] Error format consistency
-- [ ] Status code consistency
-- [ ] Document any intentional differences
+### Phase 6: Data Correctness Tests (Days 14-15)
+- [ ] Verify counts match expected values
+- [ ] Verify dependencies computed correctly
+- [ ] Verify search ranking works
+- [ ] Verify stats calculations accurate
+- [ ] Verify filtered results correct
 
 ### Phase 7: CI Integration (Day 16)
 - [ ] Add to GitHub Actions
-- [ ] Auto-start servers in CI
+- [ ] Parameterize API_BASE_URL for CI
 - [ ] Run tests in parallel
 - [ ] Cleanup after tests
 - [ ] Report coverage
@@ -325,91 +370,103 @@ expect(response.data).toMatchSchema(ProjectResponseSchema);
 
 **Must Have**:
 - [ ] Tests run against **actual HTTP servers** (not mocked)
-- [ ] Tests pass for **both** Next.js and Rust backends
-- [ ] **100% endpoint coverage** from both implementations
+- [ ] **Canonical API schemas** defined in code (source of truth)
+- [ ] Tests pass against **configured server** (via API_BASE_URL)
+- [ ] **100% endpoint coverage** validated against schemas
 - [ ] All tests pass consistently (no flaky tests)
 - [ ] CI integration working
 - [ ] Under 5 minutes total test run time
 
 **Should Have**:
-- [ ] Contract validation catches schema drift
-- [ ] Easy to add new tests
-- [ ] Clear error messages
+- [ ] Schema validation catches API drift
+- [ ] Easy to add new endpoints/schemas
+- [ ] Clear error messages on schema mismatch
 - [ ] Performance benchmarks included
-- [ ] Documentation complete
+- [ ] Documentation for running against different servers
 
 **Nice to Have**:
+- [ ] Export schemas as OpenAPI/Swagger spec
+- [ ] Schema documentation generator
 - [ ] Visual test report
 - [ ] Coverage badges
-- [ ] Automated contract diff reports
 
 ## Test Examples
 
-### Basic Endpoint Test
+### Schema Validation Test
 
 ```typescript
+import { apiClient } from '../client';
+import { ProjectsListResponseSchema } from '../schemas/projects';
+
 describe('GET /api/projects', () => {
-  let rustServer: TestServer;
-  let nextjsServer: TestServer;
-  let testProject: TempDir;
-  
-  beforeAll(async () => {
-    testProject = await createTestProject([
-      { name: '001-test', status: 'planned', title: 'Test Spec' }
-    ]);
+  test('returns valid response matching schema', async () => {
+    const response = await apiClient.get('/api/projects');
     
-    rustServer = await startRustServer(testProject.path);
-    nextjsServer = await startNextJsServer(testProject.path);
+    // Validate status code
+    expect(response.status).toBe(200);
+    
+    // Validate response matches canonical schema
+    const result = ProjectsListResponseSchema.safeParse(response.data);
+    
+    if (!result.success) {
+      console.error('Schema validation errors:');
+      console.error(JSON.stringify(result.error.format(), null, 2));
+    }
+    
+    expect(result.success).toBe(true);
+    
+    // Additional data correctness checks
+    expect(response.data.projects).toBeInstanceOf(Array);
+    expect(response.data.currentProjectId).toBeDefined();
   });
   
-  afterAll(async () => {
-    await rustServer.cleanup();
-    await nextjsServer.cleanup();
-    await testProject.cleanup();
-  });
-  
-  test('Rust server returns valid project list', async () => {
-    const res = await rustServer.client.get('/api/projects');
+  test('projects have required fields', async () => {
+    const response = await apiClient.get('/api/projects');
+    const result = ProjectsListResponseSchema.parse(response.data);
     
-    expect(res.status).toBe(200);
-    expect(res.data).toMatchSchema(ProjectsListSchema);
-    expect(res.data.projects).toBeInstanceOf(Array);
-  });
-  
-  test('Next.js server returns valid project list', async () => {
-    const res = await nextjsServer.client.get('/api/projects');
-    
-    expect(res.status).toBe(200);
-    expect(res.data).toMatchSchema(ProjectsListSchema);
-    expect(res.data.projects).toBeInstanceOf(Array);
+    if (result.projects.length > 0) {
+      const project = result.projects[0];
+      expect(project.id).toBeTruthy();
+      expect(project.name).toBeTruthy();
+      expect(project.path).toBeTruthy();
+      expect(project.specsDir).toBeTruthy();
+      expect(typeof project.favorite).toBe('boolean');
+    }
   });
 });
 ```
 
-### Contract Comparison Test
+### Data Correctness Test
 
 ```typescript
-describe('API Contract Validation', () => {
-  test('GET /api/specs returns identical structure', async () => {
-    const rustRes = await rustServer.client.get('/api/specs');
-    const nextjsRes = await nextjsServer.client.get('/api/specs');
+import { apiClient } from '../client';
+import { SpecsListResponseSchema } from '../schemas/specs';
+
+describe('GET /api/specs', () => {
+  test('filters by status correctly', async () => {
+    const response = await apiClient.get('/api/specs', { 
+      status: 'in-progress' 
+    });
     
-    // Status codes match
-    expect(rustRes.status).toBe(nextjsRes.status);
+    // Validate schema
+    const result = SpecsListResponseSchema.parse(response.data);
     
-    // Response structure matches
-    expect(rustRes.data).toHaveSameStructureAs(nextjsRes.data);
+    // Validate data correctness
+    expect(result.specs.every(s => s.status === 'in-progress')).toBe(true);
+  });
+  
+  test('returns specs with correct structure', async () => {
+    const response = await apiClient.get('/api/specs');
+    const result = SpecsListResponseSchema.parse(response.data);
     
-    // Field names match (camelCase)
-    const rustSpec = rustRes.data.specs[0];
-    const nextjsSpec = nextjsRes.data.specs[0];
-    
-    expect(Object.keys(rustSpec).sort())
-      .toEqual(Object.keys(nextjsSpec).sort());
-    
-    // No snake_case fields
-    expect(JSON.stringify(rustRes.data)).not.toMatch(/_/);
-    expect(JSON.stringify(nextjsRes.data)).not.toMatch(/_/);
+    // Verify each spec has required fields
+    result.specs.forEach(spec => {
+      expect(spec.specName).toBeTruthy();
+      expect(spec.title).toBeTruthy();
+      expect(['planned', 'in-progress', 'complete', 'archived'])
+        .toContain(spec.status);
+      expect(spec.filePath).toBeTruthy();
+    });
   });
 });
 ```
@@ -417,16 +474,30 @@ describe('API Contract Validation', () => {
 ### Error Handling Test
 
 ```typescript
+import { apiClient } from '../client';
+import { ErrorResponseSchema } from '../schemas/errors';
+
 describe('Error Handling', () => {
-  test.each([
-    { server: 'rust', client: () => rustServer.client },
-    { server: 'nextjs', client: () => nextjsServer.client }
-  ])('$server: GET /api/projects/:id returns 404 for nonexistent', async ({ client }) => {
-    const res = await client().get('/api/projects/nonexistent-id');
+  test('GET /api/projects/:id returns 404 for nonexistent project', async () => {
+    const response = await apiClient.get('/api/projects/nonexistent-id');
     
-    expect(res.status).toBe(404);
-    expect(res.data.error).toBeDefined();
-    expect(res.data.code).toBe('PROJECT_NOT_FOUND');
+    expect(response.status).toBe(404);
+    
+    // Validate error response schema
+    const result = ErrorResponseSchema.safeParse(response.data);
+    expect(result.success).toBe(true);
+    
+    expect(response.data.error).toBeTruthy();
+  });
+  
+  test('POST /api/projects with invalid data returns 400', async () => {
+    const response = await apiClient.post('/api/projects', {
+      path: '/nonexistent/path'
+    });
+    
+    expect(response.status).toBe(400);
+    const result = ErrorResponseSchema.parse(response.data);
+    expect(result.error).toBeTruthy();
   });
 });
 ```
@@ -437,7 +508,7 @@ describe('Error Handling', () => {
 describe('Performance', () => {
   test('GET /api/specs completes within 100ms', async () => {
     const start = Date.now();
-    await rustServer.client.get('/api/specs');
+    await apiClient.get('/api/specs');
     const duration = Date.now() - start;
     
     expect(duration).toBeLessThan(100);
@@ -445,7 +516,7 @@ describe('Performance', () => {
   
   test('handles 10 concurrent requests', async () => {
     const requests = Array(10).fill(null).map(() => 
-      rustServer.client.get('/api/specs')
+      apiClient.get('/api/specs')
     );
     
     const results = await Promise.all(requests);
@@ -464,33 +535,39 @@ describe('Performance', () => {
 - ❌ Not testing network layer
 - ❌ Not testing CORS
 - ❌ Not testing real request parsing
-- ❌ Can't compare with Next.js API
-- ❌ Language-coupled (can't reuse for Next.js)
+- ❌ Language-coupled (can't validate other implementations)
 
-**This approach** (TypeScript tests with real HTTP):
-- ✅ Tests actual servers
+**This approach** (TypeScript contract tests):
+- ✅ Tests actual HTTP servers
 - ✅ Tests complete request/response cycle
-- ✅ Tests both implementations
-- ✅ Language-agnostic
+- ✅ Implementation-agnostic (works with any server)
+- ✅ Schemas as source of truth
 - ✅ Can catch integration issues
-- ✅ Validates contracts
+- ✅ Easy to run in CI
 
-### Why TypeScript over Rust Tests?
+### Why Schema-First Approach?
 
-1. **Language-neutral**: Not tied to implementation language
-2. **Both implementations**: Can test Next.js and Rust equally
-3. **Better HTTP tools**: axios, fetch are excellent
-4. **Familiar**: Most developers know TypeScript
-5. **Type-safe**: TypeScript + Zod for validation
-6. **Fast iteration**: TypeScript compiles quickly
+1. **Single source of truth**: Schemas define the contract, not code
+2. **Documentation**: Schemas serve as API documentation
+3. **Validation**: Catch API drift automatically
+4. **Type-safe**: TypeScript + Zod provide compile-time safety
+5. **Portable**: Schemas can be exported as OpenAPI/Swagger
+6. **Clear failures**: Schema validation errors are explicit
+
+### Why Configuration-Based?
+
+1. **Flexible**: Test any server implementation
+2. **Simple**: Just set API_BASE_URL environment variable
+3. **CI-friendly**: Easy to parameterize in CI pipelines
+4. **No coupling**: Tests don't know/care about implementation
+5. **Real testing**: Must start actual server, forces realistic tests
 
 ### Test Data Isolation
 
 **Each test gets fresh data**:
 - Creates temporary directory
 - Generates test specs
-- Starts servers pointing at temp dir
-- Runs test
+- Tests run against configured server with test data
 - Cleans up everything
 
 **No shared state between tests**:
@@ -507,7 +584,7 @@ name: API Contract Tests
 on: [push, pull_request]
 
 jobs:
-  test:
+  test-rust-server:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -517,6 +594,31 @@ jobs:
           cd rust
           cargo build --release --bin leanspec-http
       
+      - name: Start Rust HTTP server
+        run: |
+          ./rust/target/release/leanspec-http --port 3001 &
+          sleep 2  # Wait for server to start
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install test dependencies
+        run: |
+          cd tests/api-contracts
+          npm install
+      
+      - name: Run API contract tests against Rust
+        run: |
+          cd tests/api-contracts
+          API_BASE_URL=http://localhost:3001 npm test
+  
+  test-nextjs-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -525,44 +627,50 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       
-      - name: Run API contract tests
+      - name: Start Next.js server
+        run: |
+          pnpm -F @leanspec/ui dev &
+          sleep 5  # Wait for Next.js to start
+      
+      - name: Run API contract tests against Next.js
         run: |
           cd tests/api-contracts
-          npm test
+          API_BASE_URL=http://localhost:3000 npm test
 ```
+
+### Relationship to Spec 191
+
+**Spec 191** (Rust unit tests):
+- Fast feedback during development
+- Test internal Rust logic
+- Don't require server startup
+- **Keep these** for rapid iteration
+
+**Spec 194** (Contract tests):
+- Validate actual HTTP behavior
+- Define canonical API schemas
+- Implementation-agnostic
+- **Required** for production confidence
+
+**Both are valuable**:
+- **Unit tests** (191): Fast, test implementation details
+- **Contract tests** (194): Slow, test public API contracts
+- **Use together**: Unit tests during development, contract tests before deploy
 
 ### Related Specs
 
-- [Spec 191](../191-rust-http-api-test-suite/) - Rust unit tests (to be replaced/supplemented)
+- [Spec 191](../191-rust-http-api-test-suite/) - Rust unit tests (complementary)
 - [Spec 186](../186-rust-http-server/) - Rust HTTP server implementation
 - [Spec 190](../190-ui-vite-parity-rust-backend/) - UI parity (depends on this)
 - [Spec 192](../192-backend-api-parity/) - Backend API parity (depends on this)
-
-### Migration Path
-
-**Phase 1**: Keep Spec 191 Rust tests
-- They still have value for quick feedback
-- Test internal logic
-
-**Phase 2**: Add this spec (194) tests
-- Comprehensive HTTP-level validation
-- Contract testing
-
-**Phase 3**: Evolve Spec 191 tests
-- Focus on unit-level logic testing
-- Remove redundant HTTP tests
-- Keep fast unit tests for development
-
-**Long-term**:
-- **Unit tests** (Spec 191): Fast feedback, test internal logic
-- **Contract tests** (Spec 194): Validate HTTP APIs, ensure compatibility
-- **E2E tests** (future): Full UI + backend workflows
 
 ## Implementation Log
 
 ### 2025-12-20: Spec Created
 - Identified gap: Spec 191 tests don't actually test HTTP servers
-- Proposed language-agnostic TypeScript test suite
-- Contract validation between Next.js and Rust implementations
-- Real HTTP requests to real servers
+- Proposed schema-first TypeScript test suite
+- Canonical API schemas as source of truth
+- Configuration-based testing (via API_BASE_URL)
+- Real HTTP requests to actual servers
+- Implementation-agnostic (works with any server)
 - Priority: HIGH - prerequisite for API parity confidence
