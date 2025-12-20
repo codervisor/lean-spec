@@ -108,7 +108,7 @@ fn create_invalid_project(dir: &std::path::Path) {
         spec_dir.join("README.md"),
         r#"---
 status: planned
-created: '2025-13-32'
+created: '2025-02-30'
 priority: medium
 tags:
   - invalid
@@ -396,7 +396,8 @@ async fn test_switch_project_and_refresh_cleanup() {
     let switched: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(switched["id"], first_id);
 
-    fs::remove_dir_all(second_project.path()).unwrap();
+    fs::remove_dir_all(second_project.path())
+        .expect("failed to remove second project directory before refresh");
     assert!(!second_project.path().exists());
     let (status, body) = make_request(app.clone(), "POST", "/api/projects/refresh").await;
     assert_eq!(status, StatusCode::OK);
@@ -455,10 +456,7 @@ async fn test_stats_camel_case_structure_and_counts() {
 
     let by_status = stats["byStatus"].as_object().unwrap();
     assert_eq!(by_status.get("planned").and_then(|v| v.as_u64()), Some(1));
-    assert_eq!(
-        by_status.get("inProgress").and_then(|v| v.as_u64()),
-        Some(1)
-    );
+    assert_eq!(by_status.get("inProgress").and_then(|v| v.as_u64()), Some(1));
     assert_eq!(by_status.get("complete").and_then(|v| v.as_u64()), Some(1));
     assert!(by_status.get("in_progress").is_none());
 
