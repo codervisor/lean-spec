@@ -9,8 +9,9 @@ tags:
 - http
 depends_on:
 - 191-rust-http-api-test-suite
+- 194-api-contract-test-suite
 created_at: 2025-12-19T06:36:15.644825Z
-updated_at: 2025-12-19T06:36:24.895108Z
+updated_at: 2025-12-20T07:13:38.535108Z
 ---
 
 # Backend API Parity: Rust HTTP Server Feature Completion
@@ -36,14 +37,14 @@ updated_at: 2025-12-19T06:36:24.895108Z
 
 ### Missing Endpoints (Priority Order)
 
-| Endpoint | Purpose | Impact | Est. Time |
-|----------|---------|--------|-----------|
-| PATCH `/api/specs/{spec}/metadata` | Update spec metadata | **CRITICAL** - Blocks editing | 2 days |
-| POST `/api/local-projects/discover` | Scan for LeanSpec projects | **HIGH** - Blocks onboarding | 1 day |
-| POST `/api/local-projects/list-directory` | Browse directories | **HIGH** - Blocks project creation | 1 day |
-| GET `/api/context` | List context files | **MEDIUM** - Context page | 0.5 days |
-| GET `/api/context/{file}` | Get context file content | **MEDIUM** - Context viewer | 0.5 days |
-| POST `/api/projects/{id}/validate` | Validate project | **LOW** - Nice to have | 0.5 days |
+| Endpoint                                  | Purpose                    | Impact                             | Est. Time |
+| ----------------------------------------- | -------------------------- | ---------------------------------- | --------- |
+| PATCH `/api/specs/{spec}/metadata`        | Update spec metadata       | **CRITICAL** - Blocks editing      | 2 days    |
+| POST `/api/local-projects/discover`       | Scan for LeanSpec projects | **HIGH** - Blocks onboarding       | 1 day     |
+| POST `/api/local-projects/list-directory` | Browse directories         | **HIGH** - Blocks project creation | 1 day     |
+| GET `/api/context`                        | List context files         | **MEDIUM** - Context page          | 0.5 days  |
+| GET `/api/context/{file}`                 | Get context file content   | **MEDIUM** - Context viewer        | 0.5 days  |
+| POST `/api/projects/{id}/validate`        | Validate project           | **LOW** - Nice to have             | 0.5 days  |
 
 **Total Estimate**: ~5.5 days
 

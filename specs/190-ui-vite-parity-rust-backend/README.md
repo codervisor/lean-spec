@@ -14,8 +14,9 @@ depends_on:
 - 191-rust-http-api-test-suite
 - 192-backend-api-parity
 - 193-frontend-ui-parity
+- 194-api-contract-test-suite
 created_at: 2025-12-19T06:25:19.956803Z
-updated_at: 2025-12-19T06:36:24.922053Z
+updated_at: 2025-12-20T07:13:38.536778Z
 ---
 
 # UI-Vite Parity: Feature & Backend Alignment (Umbrella)
@@ -39,11 +40,11 @@ updated_at: 2025-12-19T06:36:24.922053Z
 
 ## Sub-Specs
 
-| Spec | Focus | Est. Time | Status |
-|------|-------|-----------|--------|
-| **[191](../191-rust-http-api-test-suite/)** | API test suite (prerequisite) | 5 days | planned |
-| **[192](../192-backend-api-parity/)** | Backend API endpoints | 5 days | planned |
-| **[193](../193-frontend-ui-parity/)** | Frontend UI components | 15 days | planned |
+| Spec                                        | Focus                         | Est. Time | Status  |
+| ------------------------------------------- | ----------------------------- | --------- | ------- |
+| **[191](../191-rust-http-api-test-suite/)** | API test suite (prerequisite) | 5 days    | planned |
+| **[192](../192-backend-api-parity/)**       | Backend API endpoints         | 5 days    | planned |
+| **[193](../193-frontend-ui-parity/)**       | Frontend UI components        | 15 days   | planned |
 
 **Total**: ~25 days (5 weeks)
 
