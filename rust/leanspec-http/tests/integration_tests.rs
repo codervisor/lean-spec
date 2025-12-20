@@ -113,14 +113,14 @@ priority: medium
 tags:
   - invalid
 depends_on:
-  - 004-invalid-spec
+  - ""
 ---
 
 # Invalid Spec
 
 ## Overview
 
-Self dependency should surface validation errors.
+Empty dependency should surface validation errors.
 "#,
     )
     .unwrap();
