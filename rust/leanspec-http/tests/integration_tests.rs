@@ -4,6 +4,7 @@
 
 use axum::http::StatusCode;
 use leanspec_http::{create_router, AppState, ServerConfig};
+use serde_json::Value;
 use std::fs;
 use tempfile::TempDir;
 
@@ -91,6 +92,33 @@ This spec is complete.
 ## Plan
 
 - [x] Done
+"#,
+    )
+    .unwrap();
+}
+
+/// Create a project with an invalid spec for validation tests
+fn create_invalid_project(dir: &std::path::Path) {
+    let specs_dir = dir.join("specs");
+    fs::create_dir_all(&specs_dir).unwrap();
+
+    let spec_dir = specs_dir.join("004-invalid-spec");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("README.md"),
+        r#"---
+status: planned
+created: '20250101'
+priority: medium
+tags:
+  - invalid
+---
+
+# Invalid Spec
+
+## Overview
+
+Missing proper created format should surface validation issues.
 "#,
     )
     .unwrap();
@@ -193,6 +221,75 @@ async fn test_list_projects() {
 }
 
 #[tokio::test]
+async fn test_add_project_and_get_detail() {
+    let temp_dir = TempDir::new().unwrap();
+    create_test_project(temp_dir.path());
+
+    let config = ServerConfig::default();
+    let registry = leanspec_http::ProjectRegistry::default();
+    let state = AppState::with_registry(config, registry);
+    let app = create_router(state);
+
+    let (status, body) = make_json_request(
+        app.clone(),
+        "POST",
+        "/api/projects",
+        &serde_json::json!({ "path": temp_dir.path() }).to_string(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let project: Value = serde_json::from_str(&body).unwrap();
+    let project_id = project["id"].as_str().unwrap();
+    assert!(project.get("specsDir").is_some());
+    assert!(project.get("lastAccessed").is_some());
+    assert!(project.get("addedAt").is_some());
+
+    let (status, body) = make_request(app.clone(), "GET", "/api/projects").await;
+    assert_eq!(status, StatusCode::OK);
+    let projects: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(projects["projects"].as_array().unwrap().len(), 1);
+    assert_eq!(projects["currentProjectId"].as_str(), Some(project_id));
+}
+
+#[tokio::test]
+async fn test_update_project_and_toggle_favorite() {
+    let temp_dir = TempDir::new().unwrap();
+    let state = create_test_state(&temp_dir).await;
+    let app = create_router(state);
+
+    let (status, body) = make_request(app.clone(), "GET", "/api/projects").await;
+    assert_eq!(status, StatusCode::OK);
+    let projects: Value = serde_json::from_str(&body).unwrap();
+    let project_id = projects["projects"][0]["id"].as_str().unwrap();
+
+    let (status, body) = make_json_request(
+        app.clone(),
+        "PATCH",
+        &format!("/api/projects/{project_id}"),
+        &serde_json::json!({
+            "name": "Updated Project",
+            "favorite": true,
+            "color": "#ffcc00"
+        })
+        .to_string(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    let updated: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(updated["name"], "Updated Project");
+    assert_eq!(updated["favorite"], true);
+    assert_eq!(updated["color"], "#ffcc00");
+
+    let (status, body) =
+        make_request(app.clone(), "POST", &format!("/api/projects/{project_id}/favorite")).await;
+    assert_eq!(status, StatusCode::OK);
+    let toggled: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(toggled["favorite"], false);
+}
+
+#[tokio::test]
 async fn test_specs_without_project_selected() {
     let config = ServerConfig::default();
     let registry = leanspec_http::ProjectRegistry::default();
@@ -221,6 +318,25 @@ async fn test_list_specs_with_project() {
 }
 
 #[tokio::test]
+async fn test_list_specs_filters_and_camelcase() {
+    let temp_dir = TempDir::new().unwrap();
+    let state = create_test_state(&temp_dir).await;
+    let app = create_router(state);
+
+    let (status, body) = make_request(app.clone(), "GET", "/api/specs?status=in-progress").await;
+
+    assert_eq!(status, StatusCode::OK);
+    let specs: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(specs["total"], 1);
+    let spec = &specs["specs"][0];
+    assert_eq!(spec["status"], "in-progress");
+    assert!(spec.get("specNumber").is_some());
+    assert!(spec.get("specName").is_some());
+    assert!(spec.get("filePath").is_some());
+    assert!(spec.get("spec_name").is_none());
+}
+
+#[tokio::test]
 async fn test_get_spec_detail() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
@@ -232,6 +348,64 @@ async fn test_get_spec_detail() {
     assert!(body.contains("First Spec"));
     assert!(body.contains("planned"));
     assert!(body.contains("contentMd"));
+}
+
+#[tokio::test]
+async fn test_switch_project_and_refresh_cleanup() {
+    let first_project = TempDir::new().unwrap();
+    let second_project = TempDir::new().unwrap();
+    create_test_project(first_project.path());
+    create_test_project(second_project.path());
+
+    let config = ServerConfig::default();
+    let registry = leanspec_http::ProjectRegistry::default();
+    let state = AppState::with_registry(config, registry);
+    let app = create_router(state);
+
+    let (_, body) = make_json_request(
+        app.clone(),
+        "POST",
+        "/api/projects",
+        &serde_json::json!({ "path": first_project.path() }).to_string(),
+    )
+    .await;
+    let first_id = serde_json::from_str::<Value>(&body).unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let (_, body) = make_json_request(
+        app.clone(),
+        "POST",
+        "/api/projects",
+        &serde_json::json!({ "path": second_project.path() }).to_string(),
+    )
+    .await;
+    let second_id = serde_json::from_str::<Value>(&body).unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let (_, body) = make_request(app.clone(), "GET", "/api/projects").await;
+    let projects: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(projects["currentProjectId"].as_str(), Some(second_id.as_str()));
+
+    let (status, body) =
+        make_request(app.clone(), "POST", &format!("/api/projects/{first_id}/switch")).await;
+    assert_eq!(status, StatusCode::OK);
+    let switched: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(switched["id"], first_id);
+
+    fs::remove_dir_all(second_project.path()).unwrap();
+    let (status, body) = make_request(app.clone(), "POST", "/api/projects/refresh").await;
+    assert_eq!(status, StatusCode::OK);
+    let refresh: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(refresh["removed"].as_u64(), Some(1));
+
+    let (_, body) = make_request(app.clone(), "GET", "/api/projects").await;
+    let projects: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(projects["projects"].as_array().unwrap().len(), 1);
+    assert_eq!(projects["currentProjectId"].as_str(), Some(first_id.as_str()));
 }
 
 #[tokio::test]
@@ -267,6 +441,33 @@ async fn test_get_stats() {
 }
 
 #[tokio::test]
+async fn test_stats_camel_case_structure_and_counts() {
+    let temp_dir = TempDir::new().unwrap();
+    let state = create_test_state(&temp_dir).await;
+    let app = create_router(state);
+
+    let (status, body) = make_request(app.clone(), "GET", "/api/stats").await;
+
+    assert_eq!(status, StatusCode::OK);
+    let stats: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(stats["total"], 3);
+
+    let by_status = stats["byStatus"].as_object().unwrap();
+    assert_eq!(by_status.get("planned").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        by_status.get("inProgress").and_then(|v| v.as_u64()),
+        Some(1)
+    );
+    assert_eq!(by_status.get("complete").and_then(|v| v.as_u64()), Some(1));
+    assert!(by_status.get("in_progress").is_none());
+
+    let by_priority = stats["byPriority"].as_object().unwrap();
+    assert_eq!(by_priority.get("high").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(by_priority.get("medium").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(by_priority.get("low").and_then(|v| v.as_u64()), Some(1));
+}
+
+#[tokio::test]
 async fn test_get_dependencies() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
@@ -290,6 +491,28 @@ async fn test_validate_all() {
     assert_eq!(status, StatusCode::OK);
     assert!(body.contains("isValid"));
     assert!(body.contains("issues"));
+}
+
+#[tokio::test]
+async fn test_validate_detects_invalid_frontmatter() {
+    let temp_dir = TempDir::new().unwrap();
+    create_invalid_project(temp_dir.path());
+
+    let config = ServerConfig::default();
+    let registry = leanspec_http::ProjectRegistry::default();
+    let state = AppState::with_registry(config, registry);
+    {
+        let mut reg = state.registry.write().await;
+        let _ = reg.add(temp_dir.path());
+    }
+
+    let app = create_router(state);
+    let (status, body) = make_request(app, "GET", "/api/validate").await;
+
+    assert_eq!(status, StatusCode::OK);
+    let validation: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(validation["isValid"], false);
+    assert!(!validation["issues"].as_array().unwrap().is_empty());
 }
 
 #[tokio::test]
