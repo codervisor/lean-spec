@@ -38,11 +38,11 @@ function getCurrentPlatform() {
   const platform = process.platform;
   const arch = process.arch;
   const platformKey = PLATFORM_MAP[platform]?.[arch];
-  
+
   if (!platformKey) {
     throw new Error(`Unsupported platform: ${platform}-${arch}`);
   }
-  
+
   return platformKey;
 }
 
@@ -51,20 +51,20 @@ async function killProcessesUsingBinary(binaryPath) {
     // Windows: use handle.exe or just try to copy
     return;
   }
-  
+
   try {
     // Use lsof to find processes using the binary
     const { execSync } = await import('node:child_process');
     const output = execSync(`lsof "${binaryPath}" 2>/dev/null || true`, { encoding: 'utf-8' });
-    
+
     if (!output.trim()) {
       return; // No processes using the file
     }
-    
+
     // Extract PIDs (skip header line)
     const lines = output.trim().split('\n').slice(1);
     const pids = [...new Set(lines.map(line => line.split(/\s+/)[1]).filter(Boolean))];
-    
+
     if (pids.length > 0) {
       console.log(`⚠️  Found ${pids.length} process(es) using ${path.basename(binaryPath)}, stopping them...`);
       for (const pid of pids) {
@@ -86,12 +86,21 @@ async function copyBinary(binaryName, platformKey) {
   const isWindows = platformKey.startsWith('windows-');
   const sourceExt = isWindows ? '.exe' : '';
   const sourcePath = path.join(ROOT, 'rust', 'target', 'release', `${binaryName}${sourceExt}`);
-  
+
   // Determine destination based on binary name
-  const packagePath = binaryName === 'lean-spec' ? 'cli' : 'mcp';
+  let packagePath;
+  if (binaryName === 'lean-spec') {
+    packagePath = 'cli';
+  } else if (binaryName === 'leanspec-mcp') {
+    packagePath = 'mcp';
+  } else if (binaryName === 'leanspec-http') {
+    packagePath = 'http-server';
+  } else {
+    throw new Error(`Unknown binary: ${binaryName}`);
+  }
   const destDir = path.join(ROOT, 'packages', packagePath, 'binaries', platformKey);
   const destPath = path.join(destDir, binaryName + sourceExt);
-  
+
   // Check if source exists
   try {
     await fs.access(sourcePath);
@@ -99,10 +108,10 @@ async function copyBinary(binaryName, platformKey) {
     console.warn(`⚠️  Source binary not found: ${sourcePath}`);
     return false;
   }
-  
+
   // Ensure destination directory exists
   await fs.mkdir(destDir, { recursive: true });
-  
+
   // Kill any processes using the destination binary
   try {
     await fs.access(destPath);
@@ -110,15 +119,15 @@ async function copyBinary(binaryName, platformKey) {
   } catch (e) {
     // Destination doesn't exist yet, that's fine
   }
-  
+
   // Copy binary
   await fs.copyFile(sourcePath, destPath);
-  
+
   // Make executable on Unix
   if (!isWindows) {
     await fs.chmod(destPath, 0o755);
   }
-  
+
   console.log(`✅ Copied ${binaryName} to ${packagePath}/binaries/${platformKey}/`);
   return true;
 }
@@ -126,14 +135,14 @@ async function copyBinary(binaryName, platformKey) {
 async function main() {
   const args = process.argv.slice(2);
   const copyAll = args.includes('--all');
-  
+
   console.log('🔧 Copying Rust binaries...\n');
-  
-  const binaries = ['lean-spec', 'leanspec-mcp'];
-  
+
+  const binaries = ['lean-spec', 'leanspec-mcp', 'leanspec-http'];
+
   if (copyAll) {
     console.log('📦 Copying all platforms (requires cross-compiled binaries)\n');
-    
+
     for (const platformKey of ALL_PLATFORMS) {
       console.log(`\nPlatform: ${platformKey}`);
       for (const binary of binaries) {
@@ -143,12 +152,12 @@ async function main() {
   } else {
     const currentPlatform = getCurrentPlatform();
     console.log(`📦 Copying for current platform: ${currentPlatform}\n`);
-    
+
     for (const binary of binaries) {
       await copyBinary(binary, currentPlatform);
     }
   }
-  
+
   console.log('\n✨ Done!');
 }
 

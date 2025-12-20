@@ -30,3 +30,6 @@ rust/target/
 
 # IDE specific files
 .idea/
+
+# Binaries
+packages/**/binaries
