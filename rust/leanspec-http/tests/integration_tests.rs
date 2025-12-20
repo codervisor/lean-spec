@@ -108,17 +108,19 @@ fn create_invalid_project(dir: &std::path::Path) {
         spec_dir.join("README.md"),
         r#"---
 status: planned
-created: '2025-02-30'
+created: '2025-02-28'
 priority: medium
 tags:
   - invalid
+depends_on:
+  - 004-invalid-spec
 ---
 
 # Invalid Spec
 
 ## Overview
 
-Invalid created date format should surface validation errors.
+Self dependency should surface validation errors.
 "#,
     )
     .unwrap();
@@ -396,8 +398,7 @@ async fn test_switch_project_and_refresh_cleanup() {
     let switched: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(switched["id"], first_id);
 
-    fs::remove_dir_all(second_project.path())
-        .expect("failed to remove second project directory before refresh");
+    assert!(fs::remove_dir_all(second_project.path()).is_ok());
     assert!(!second_project.path().exists());
     let (status, body) = make_request(app.clone(), "POST", "/api/projects/refresh").await;
     assert_eq!(status, StatusCode::OK);
