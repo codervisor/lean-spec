@@ -11,7 +11,7 @@ Thanks for your interest in contributing! LeanSpec is about keeping things lean,
 5. Commit with clear message: `git commit -m "Add feature X"`
 6. Push and open a PR
 
-> Note: The documentation site lives in the `codervisor/lean-spec-docs` repository and is mounted here as the `docs-site/` submodule. Run `git submodule update --init --recursive` after cloning if you plan to work on docs.
+> Note: The documentation site lives in the `codervisor/lean-spec-docs` repository and is merged here as the `docs-site/` directory using git subtree. It's already included when you clone the repo - no additional steps needed.
 
 ## Development Setup
 
@@ -96,20 +96,32 @@ git push
 - Automated sync in CI/CD
 - Simpler release process
 
-### Docs Site Submodule
+### Docs Site Subtree
 
-The docs are maintained in [codervisor/lean-spec-docs](https://github.com/codervisor/lean-spec-docs) and pulled in via the `docs-site/` git submodule. Typical workflow:
+The docs are maintained in [codervisor/lean-spec-docs](https://github.com/codervisor/lean-spec-docs) and merged into this repo at `docs-site/` using git subtree. The docs are already included when you clone.
 
+**Local development:**
 ```bash
-git submodule update --init --recursive  # first time or when the submodule is missing
 cd docs-site
-pnpm install                            # install docs dependencies once inside the submodule
-pnpm start                              # develop docs locally
-git commit -am "docs: ..." && git push  # push changes from inside the submodule
+pnpm install    # install docs dependencies
+pnpm start      # develop docs locally
+```
 
-cd ..
-git add docs-site                       # stage updated submodule pointer in this repo
-git commit -m "chore: bump docs-site"
+**Pushing docs changes:**
+```bash
+# Make changes in docs-site/, then commit to this repo
+git add docs-site
+git commit -m "docs: your changes"
+git push
+
+# Push to the separate docs repo (maintainers only)
+git subtree push --prefix=docs-site https://github.com/codervisor/lean-spec-docs.git main
+```
+
+**Pulling docs changes from upstream:**
+```bash
+# Pull latest from the separate docs repo
+git subtree pull --prefix=docs-site https://github.com/codervisor/lean-spec-docs.git main --squash
 ```
 
 ### Monorepo with Turborepo
@@ -125,7 +137,7 @@ This project uses [Turborepo](https://turbo.build/) to manage the monorepo with 
 - `packages/mcp` - MCP server wrapper (published as `@leanspec/mcp`)
 - `packages/ui` - Web UI bundle (published as `@leanspec/ui`)
 - `packages/desktop` - Tauri desktop app (not published to npm)
-- `docs-site/` - Git submodule pointing to `codervisor/lean-spec-docs` (Docusaurus)
+- `docs-site/` - Git subtree merged from `codervisor/lean-spec-docs` (Docusaurus)
 
 **Key files:**
 - `turbo.json` - Task pipeline configuration
@@ -168,12 +180,12 @@ All code changes should include tests. We have a comprehensive testing strategy:
 
 ### When to Write Which Test Type
 
-| Test Type | Use When | Location |
-|-----------|----------|----------|
-| **Unit** | Testing pure functions, validators, parsers | `*.test.ts` alongside source |
-| **Integration** | Testing workflows with mocked deps | `integration.test.ts`, `list-integration.test.ts` |
-| **E2E** | Testing user-facing CLI workflows | `__e2e__/*.e2e.test.ts` |
-| **Regression** | Fixing a bug (must fail before, pass after) | Add to relevant `__e2e__` file |
+| Test Type       | Use When                                    | Location                                          |
+| --------------- | ------------------------------------------- | ------------------------------------------------- |
+| **Unit**        | Testing pure functions, validators, parsers | `*.test.ts` alongside source                      |
+| **Integration** | Testing workflows with mocked deps          | `integration.test.ts`, `list-integration.test.ts` |
+| **E2E**         | Testing user-facing CLI workflows           | `__e2e__/*.e2e.test.ts`                           |
+| **Regression**  | Fixing a bug (must fail before, pass after) | Add to relevant `__e2e__` file                    |
 
 ### E2E Tests
 
