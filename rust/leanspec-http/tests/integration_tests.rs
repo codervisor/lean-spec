@@ -113,7 +113,7 @@ priority: medium
 tags:
   - invalid
 depends_on:
-  - ""
+  - "" # intentionally empty to trigger validation error
 ---
 
 # Invalid Spec
@@ -236,7 +236,7 @@ async fn test_add_project_and_get_detail() {
         app.clone(),
         "POST",
         "/api/projects",
-        &serde_json::json!({ "path": temp_dir.path() }).to_string(),
+        &serde_json::json!({ "path": temp_dir.path().to_string_lossy() }).to_string(),
     )
     .await;
 
@@ -368,7 +368,7 @@ async fn test_switch_project_and_refresh_cleanup() {
         app.clone(),
         "POST",
         "/api/projects",
-        &serde_json::json!({ "path": first_project.path() }).to_string(),
+        &serde_json::json!({ "path": first_project.path().to_string_lossy() }).to_string(),
     )
     .await;
     let first_id = serde_json::from_str::<Value>(&body).unwrap()["id"]
@@ -380,7 +380,7 @@ async fn test_switch_project_and_refresh_cleanup() {
         app.clone(),
         "POST",
         "/api/projects",
-        &serde_json::json!({ "path": second_project.path() }).to_string(),
+        &serde_json::json!({ "path": second_project.path().to_string_lossy() }).to_string(),
     )
     .await;
     let second_id = serde_json::from_str::<Value>(&body).unwrap()["id"]
@@ -399,6 +399,7 @@ async fn test_switch_project_and_refresh_cleanup() {
     assert_eq!(switched["id"], first_id);
 
     assert!(fs::remove_dir_all(second_project.path()).is_ok());
+    std::thread::sleep(std::time::Duration::from_millis(10));
     assert!(!second_project.path().exists());
     let (status, body) = make_request(app.clone(), "POST", "/api/projects/refresh").await;
     assert_eq!(status, StatusCode::OK);
