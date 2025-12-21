@@ -67,10 +67,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/dependencies",
             get(handlers::get_project_dependencies),
         )
-        .route(
-            "/api/projects/{id}/stats",
-            get(handlers::get_project_stats),
-        )
+        .route("/api/projects/{id}/stats", get(handlers::get_project_stats))
         .route(
             "/api/projects/{id}/validate",
             post(handlers::validate_project),

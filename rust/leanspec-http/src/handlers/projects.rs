@@ -120,7 +120,9 @@ pub async fn get_project(
         )
     })?;
 
-    Ok(Json(SingleProjectResponse { project: project.into() }))
+    Ok(Json(SingleProjectResponse {
+        project: project.into(),
+    }))
 }
 
 /// PATCH /api/projects/:id - Update a project
