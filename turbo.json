@@ -2,45 +2,88 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "build/**"
+      ]
     },
     "build:templates": {
       "cache": false,
-      "outputs": ["AGENTS.md"]
+      "outputs": [
+        "AGENTS.md"
+      ]
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR", "VITE_API_URL"]
+      "passThroughEnv": [
+        "SPECS_MODE",
+        "SPECS_DIR",
+        "VITE_API_URL"
+      ]
     },
     "dev:web": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR", "VITE_API_URL"]
+      "passThroughEnv": [
+        "SPECS_MODE",
+        "SPECS_DIR",
+        "VITE_API_URL"
+      ]
     },
     "dev:desktop": {
-      "dependsOn": ["@leanspec/ui-components#build"],
+      "dependsOn": [
+        "@leanspec/ui-components#build"
+      ],
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["SPECS_MODE", "SPECS_DIR", "TAURI_DEBUG"]
+      "passThroughEnv": [
+        "SPECS_MODE",
+        "SPECS_DIR",
+        "TAURI_DEBUG"
+      ]
     },
     "build:desktop": {
-      "dependsOn": ["@leanspec/ui-components#build"],
-      "outputs": ["src-tauri/target/**"],
+      "dependsOn": [
+        "@leanspec/ui-components#build"
+      ],
+      "outputs": [
+        "src-tauri/target/**"
+      ],
       "cache": false
     },
     "typecheck": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "coverage/**"
+      ]
     },
     "test:run": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "coverage/**"
+      ]
+    },
+    "test:api": {
+      "cache": false,
+      "outputs": [
+        "coverage/**"
+      ]
     },
     "lint": {
       "outputs": []
@@ -53,7 +96,9 @@
       "persistent": true
     },
     "build-storybook": {
-      "outputs": ["storybook-static/**"]
+      "outputs": [
+        "storybook-static/**"
+      ]
     }
   }
 }

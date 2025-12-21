@@ -1,9 +1,30 @@
 {
 	"name": "lean-spec",
+	"private": true,
+	"packageManager": "pnpm@10.26.1",
 	"devDependencies": {
 		"husky": "^9.1.7"
 	},
 	"scripts": {
-		"prepare": "husky"
+		"prepare": "husky",
+		"dev": "turbo run dev --filter=@leanspec/ui-vite --filter=@leanspec/http-server",
+		"dev:web": "turbo run dev:web --filter=@leanspec/ui-vite",
+		"dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",
+		"build": "turbo run build",
+		"build:rust": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",
+		"test": "turbo run test",
+		"test:api": "turbo run test:api --filter=@leanspec/api-contracts",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui",
+		"test:coverage": "vitest run --coverage",
+		"typecheck": "turbo run typecheck",
+		"lint": "turbo run lint",
+		"format": "turbo run format",
+		"clean": "turbo run clean && cargo clean --manifest-path rust/Cargo.toml",
+		"docs:dev": "pnpm --filter docs-site start",
+		"docs:build": "pnpm --filter docs-site build",
+		"pre-release": "pnpm build && pnpm typecheck && pnpm test",
+		"sync:versions": "tsx scripts/sync-versions.ts && tsx scripts/sync-rust-versions.ts",
+		"cli": "node bin/lean-spec.js"
 	}
 }
