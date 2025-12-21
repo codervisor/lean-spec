@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: '2025-12-10'
 tags:
   - architecture
@@ -12,11 +12,15 @@ created_at: '2025-12-10T06:08:47.689Z'
 depends_on:
   - 123-ai-coding-agent-integration
   - 158-persistent-agent-sessions
+updated_at: '2025-12-21T14:46:00.620Z'
+transitions:
+  - status: archived
+    at: '2025-12-21T14:46:00.620Z'
 ---
 
 # LeanSpec as Memory Layer for AI Agent Orchestration
 
-> **Status**: 📅 Planned · **Priority**: Critical · **Created**: 2025-12-10
+> **Status**: 📦 Archived · **Priority**: Critical · **Created**: 2025-12-10 · **Tags**: architecture, ai-agents, memory, integration, agent-relay
 
 ## Overview
 

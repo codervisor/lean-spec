@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: '2025-12-10'
 tags:
   - ai-agents
@@ -11,12 +11,15 @@ priority: high
 created_at: '2025-12-10T06:00:10.832Z'
 depends_on:
   - 123-ai-coding-agent-integration
-updated_at: '2025-12-10T06:01:54.441Z'
+updated_at: '2025-12-21T14:45:25.413Z'
+transitions:
+  - status: archived
+    at: '2025-12-21T14:45:25.413Z'
 ---
 
 # Persistent AI Agent Sessions for Multi-Phase Spec Implementation
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-10 · **Tags**: ai-agents, workflow, sessions, context-management, dx
+> **Status**: 📦 Archived · **Priority**: High · **Created**: 2025-12-10 · **Tags**: ai-agents, workflow, sessions, context-management, dx
 
 > **⚠️ ARCHITECTURAL NOTE**: This spec describes session persistence patterns that should be implemented in **[agent-relay](https://github.com/codervisor/agent-relay)** (the orchestration engine), not LeanSpec itself. See **spec 159** for architectural separation: LeanSpec provides memory/context, agent-relay handles execution/sessions. The concepts in this spec remain valid but belong in agent-relay's implementation.
 

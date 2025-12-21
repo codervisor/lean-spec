@@ -1,0 +1,304 @@
+---
+status: planned
+created: 2025-12-21
+priority: medium
+tags:
+- mcp
+- dx
+- ai-agents
+- templates
+- documentation
+created_at: 2025-12-21T14:53:17.954876Z
+updated_at: 2025-12-21T14:53:17.954876Z
+---
+
+# Embed Spec Template in MCP Create Tool Content Field Description
+
+> **Status**: planned · **Priority**: medium · **Created**: {date}
+
+## Problem & Motivation
+
+The MCP `create` tool's `content` field has a minimal static description: "Full markdown content to use instead of template". 
+
+**The core issue**: The actual template file (`.lean-spec/templates/spec-template.md`) exists on disk but is NOT exposed to AI agents through the MCP tool schema. AI agents have no way to see what the template looks like, so they don't know:
+
+1. **What structure** the body content should follow
+2. **What sections** are expected (Overview, Design, Plan, Test, Notes)
+3. **What format** these sections use (comments, task lists, etc.)
+4. **What the body looks like** without frontmatter/title (since those are auto-generated)
+
+This leads to:
+- AI agents guessing at spec structure
+- Inconsistent formatting across specs
+- Missing critical sections
+- Specs that don't follow LeanSpec conventions
+- Need for manual corrections and iterations
+
+**Solution**: Make the MCP server **load the template at runtime** and **embed it into the `content` field description** so AI agents can see exactly what a spec body should look like.
+
+## High-Level Approach
+
+**Load template dynamically** and embed it into the MCP tool schema description.
+
+### How It Should Work
+
+1. **At MCP server startup**:
+   - Load `.lean-spec/templates/spec-template.md`
+   - Extract the **body content only** (everything after frontmatter and title)
+   - Format it for inclusion in schema description
+
+2. **In the tool schema**:
+   - Prepend explanatory text about what `content` expects
+   - Include the actual template body (formatted/escaped for JSON)
+   - Make it clear that frontmatter/title are auto-generated
+
+3. **Result**: AI agents see exactly what a spec body should look like
+
+### Implementation Strategy
+
+The MCP server should:
+- Use existing `TemplateLoader` to load the template
+- Strip frontmatter and title (`# {name}`) from template
+- Keep only the body sections (## Overview, ## Design, etc.)
+- Embed the body into the `content` field description
+- Handle template loading errors gracefully (fallback to basic description)
+
+### Example Result
+
+After implementation, the schema would look like:
+```rust
+"content": {
+    "type": "string",
+    "description": "Body content only (markdown sections). DO NOT include frontmatter or title - these are auto-generated from other parameters (name, title, status, priority, tags).
+
+TEMPLATE STRUCTURE (body sections only):
+
+## Overview
+
+<!-- What are we solving? Why now? -->
+
+## Design
+
+<!-- Technical approach, architecture decisions -->
+
+## Plan
+
+<!-- Break down implementation into steps -->
+
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+
+## Test
+
+<!-- How will we verify this works? -->
+
+- [ ] Test criteria 1
+- [ ] Test criteria 2
+
+## Notes
+
+<!-- Optional: Research findings, alternatives considered, open questions -->
+
+Keep specs <2000 tokens optimal, <3500 max. Consider sub-specs (IMPLEMENTATION.md) if >400 lines."
+}
+```
+
+### Design Considerations
+
+**Option 1: Load Full Template, Strip Frontmatter/Title**
+- Load template using `TemplateLoader`
+- Parse and remove YAML frontmatter
+- Remove title line (`# {name}`)
+- Embed remaining body in description
+
+**Pros**: Shows exact template structure, always in sync
+**Cons**: Description can be long (~500 chars + template body)
+
+**Option 2: Load Template, Summarize Structure** 
+- Load template
+- Extract section headings only (## Overview, ## Design, etc.)
+- Provide condensed structure
+
+**Pros**: Shorter description
+**Cons**: Loses valuable details (comments, task list format, tips)
+
+**Option 3: Static Description (Current)**
+- Manually write description
+- No template loading
+
+**Pros**: Short, controlled
+**Cons**: Out of sync with template, lacks real examples
+
+### Recommendation
+
+**Option 1** - Load full template body and embed it. Reasons:
+- AI agents see **exact** template structure
+- **Always synchronized** with actual template file
+- Shows **real examples** of comments, task lists, etc.
+- Template is already concise (~25 lines body), acceptable for schema
+- LLMs handle long descriptions well
+- Worth the length for accuracy
+
+## Recommendation
+
+**Option 1** - Dynamically load and embed the full template body.
+
+**Why**: 
+- Shows **exact** template to AI agents (no guessing)
+- **Always synchronized** (template changes auto-reflect)
+- **Real examples** of formatting (comments, task lists, tips)
+- Template body is ~25 lines (acceptable length)
+- LLMs handle long descriptions well
+- Worth the trade-off for accuracy and zero-maintenance
+
+**Critical**: Strip frontmatter AND title heading before embedding, since those are auto-generated by the tool.
+
+## Key Decisions
+
+1. **Dynamic loading**: Load template at MCP server startup, not hardcoded
+2. **Template processing**: Strip frontmatter (YAML) and title line (`# {name}`), keep body only
+3. **Fallback handling**: If template load fails, use minimal static description
+4. **Cache strategy**: Load once at startup, don't reload on every tool schema request
+5. **Description format**: Prepend explanatory text, then embed processed template body
+
+## Acceptance Criteria
+
+- [ ] MCP server loads `.lean-spec/templates/spec-template.md` at startup
+- [ ] Template loading uses existing `TemplateLoader` infrastructure
+- [ ] Frontmatter (YAML block) is stripped from loaded template
+- [ ] Title line (`# {name}` or similar) is stripped from loaded template
+- [ ] Template body is embedded into `content` field description
+- [ ] Description prepends explanatory text about body-only content
+- [ ] If template load fails, falls back to minimal static description
+- [ ] Tool schema reflects actual template (test by viewing schema)
+- [ ] AI agents can see template structure in MCP tool descriptions
+- [ ] Changes to template file automatically reflect in tool schema after MCP restart
+
+## Out of Scope
+
+- Changing the template structure itself (separate spec)
+- Adding validation for content structure (could be follow-up)
+- Creating additional MCP tools for template queries
+- Modifying other MCP tool descriptions (unless similar issues exist)
+
+## Dependencies
+
+- Built on spec 074-content-at-creation (complete)
+- Relies on current spec template structure (spec-template.md)
+- Related to spec 073-template-engine-agents-md (template system)
+
+## Implementation Notes
+
+**Files to modify**: 
+- `rust/leanspec-mcp/src/tools.rs` - Tool definitions and schema generation
+
+**Approach**:
+
+1. **Add template loading function**:
+   ```rust
+   fn load_template_body_for_description() -> String {
+       // Load template using TemplateLoader
+       // Strip frontmatter (YAML between --- delimiters)
+       // Strip title line (first # heading)
+       // Return body only with explanatory header
+   }
+   ```
+
+2. **Modify tool definition** (lines 85-87):
+   ```rust
+   "content": {
+       "type": "string",
+       "description": load_template_body_for_description()  // Dynamic!
+   },
+   ```
+
+3. **Error handling**:
+   - If template load fails, use fallback static description
+   - Log warning but don't crash MCP server
+
+**Implementation details**:
+- Use existing `TemplateLoader` infrastructure
+- Strip YAML frontmatter (everything between `---` markers)
+- Strip title heading (`# {name}` line and following status line)
+- Keep body sections (## Overview, ## Design, etc.)
+- Prepend: "Body content only (markdown sections). DO NOT include frontmatter or title.\n\nTEMPLATE:"
+- Append: "\n\nKeep <2000 tokens optimal."
+
+**Testing**:
+- Verify template loads at MCP startup
+- Check tool schema includes template body (MCP inspector/logs)
+- Test AI agent can create spec using description alone
+- Verify fallback works if template missing
+- Confirm template changes reflect after restart
+
+## Open Questions
+
+1. Should we cache the loaded template or reload on every schema request?
+   - **Recommendation**: Cache at startup, reload only on server restart
+2. How to handle custom templates (if users override spec-template.md)?
+   - **Recommendation**: Load default template, document that custom templates won't reflect in schema
+3. Should we add line number limits to prevent extremely long descriptions?
+   - **Recommendation**: No artificial limits, templates should be reasonable (~25 lines body)
+4. Should CLI `--content` help text also reference the template?
+   - **Recommendation**: Yes, add similar guidance in CLI help text (separate task)
+
+## Notes
+
+### Why Dynamic Loading
+
+**Benefits**:
+1. **Zero maintenance** - Template changes automatically reflect in tool schema
+2. **Accuracy** - AI agents see EXACTLY what the template looks like
+3. **Consistency** - No risk of manual description drift from actual template
+4. **Examples included** - Comments, task list format, tips all visible to AI
+
+**Trade-offs**:
+- Longer description (but LLMs handle this fine)
+- Requires template load at startup (negligible performance cost)
+- Template errors could affect MCP server (mitigated by fallback)
+
+### Template Processing Logic
+
+The loaded template looks like:
+```markdown
+---
+status: planned
+created: '{date}'
+...
+---
+
+# {name}
+
+> **Status**: {status} · **Priority**: {priority}
+
+## Overview
+
+<!-- What are we solving? Why now? -->
+...
+```
+
+We need to **extract only**:
+```markdown
+## Overview
+
+<!-- What are we solving? Why now? -->
+
+## Design
+...
+```
+
+**Algorithm**:
+1. Skip YAML frontmatter (lines between `---`)
+2. Skip title heading (`# {name}`)
+3. Skip status line (`> **Status**:`)
+4. Keep everything from first `##` onward
+
+### Future Enhancement: Multiple Templates
+
+If LeanSpec adds multiple templates (standard, detailed, minimal), we could:
+- Load all templates at startup
+- Show merged/combined structure in description
+- Or dynamically show template based on `template` parameter
+  
+For now, **YAGNI** - just load the default `spec-template.md`.
