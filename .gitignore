@@ -33,3 +33,6 @@ rust/target/
 
 # Binaries
 packages/**/binaries
+
+# package-lock.json files
+package-lock.json
