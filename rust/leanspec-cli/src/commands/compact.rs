@@ -35,18 +35,12 @@ pub fn run(
     validate_ranges(&parsed_removes, total_lines)?;
 
     if dry_run {
-        display_dry_run(&spec, &content, &parsed_removes)?;
+        display_dry_run(spec, &content, &parsed_removes)?;
         return Ok(());
     }
 
     // Execute the compaction
-    execute_compact(
-        &readme_path,
-        &spec,
-        &content,
-        &parsed_removes,
-        output_format,
-    )?;
+    execute_compact(&readme_path, spec, &content, &parsed_removes, output_format)?;
 
     Ok(())
 }
@@ -270,10 +264,8 @@ fn resolve_spec_path(specs_dir: &str, spec: &str) -> Result<std::path::PathBuf, 
             let name_str = name.to_string_lossy();
 
             // Match by number prefix (e.g., "045" matches "045-feature")
-            if name_str.starts_with(spec) || name_str.contains(spec) {
-                if entry.path().is_dir() {
-                    return Ok(entry.path());
-                }
+            if (name_str.starts_with(spec) || name_str.contains(spec)) && entry.path().is_dir() {
+                return Ok(entry.path());
             }
         }
     }

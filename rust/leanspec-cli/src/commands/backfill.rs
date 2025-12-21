@@ -9,6 +9,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     specs_dir: &str,
     specs: Option<Vec<String>>,

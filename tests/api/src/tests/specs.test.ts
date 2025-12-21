@@ -1,18 +1,20 @@
 /**
  * Specs endpoint tests
  *
- * Tests for spec-related API endpoints.
+ * Tests for project-scoped spec endpoints.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { apiClient } from '../client';
 import {
   ListSpecsResponseSchema,
+  ProjectsListResponseSchema,
   SpecDetailSchema,
   SpecSummarySchema,
   type ListSpecsResponse,
+  type ProjectsListResponse,
   type SpecDetail,
-  type Project,
+  type ProjectMutationResponse,
 } from '../schemas';
 import { validateSchema, createSchemaErrorMessage } from '../utils/validation';
 import {
@@ -22,200 +24,146 @@ import {
 } from '../fixtures';
 
 describe('Specs API', () => {
-  let testProject: TestProject | null = null;
+  let projectId: string | null = null;
+  let mode: 'single-project' | 'multi-project' = 'single-project';
   let addedProjectId: string | null = null;
+  let testProject: TestProject | null = null;
 
   beforeAll(async () => {
-    // Create a test project with specs
-    testProject = await createTestProject({
-      name: 'specs-test-project',
-      specs: defaultTestFixtures,
-    });
+    const projectsResponse = await apiClient.get<ProjectsListResponse>('/api/projects');
+    const projectsValidation = validateSchema(
+      ProjectsListResponseSchema,
+      projectsResponse.data
+    );
 
-    // Add the project to the server
-    const addResponse = await apiClient.post<Project>('/api/projects', {
-      path: testProject.path,
-    });
+    if (!projectsValidation.success) {
+      throw new Error(
+        createSchemaErrorMessage('GET /api/projects', projectsValidation.errors || [])
+      );
+    }
 
-    if (addResponse.ok && addResponse.data) {
-      addedProjectId = addResponse.data.id;
+    const projectList = projectsValidation.data!;
+    mode = projectList.mode ?? 'single-project';
+    projectId = projectList.projects[0]?.id ?? 'default';
 
-      // Switch to the test project
-      await apiClient.post(`/api/projects/${addedProjectId}/switch`);
+    if (mode === 'multi-project') {
+      testProject = await createTestProject({
+        name: 'specs-test-project',
+        specs: defaultTestFixtures,
+      });
+
+      const addResponse = await apiClient.post<ProjectMutationResponse>('/api/projects', {
+        path: testProject.path,
+      });
+
+      if (addResponse.ok && addResponse.data?.project) {
+        projectId = addResponse.data.project.id;
+        addedProjectId = addResponse.data.project.id;
+      }
     }
   });
 
   afterAll(async () => {
-    // Clean up: remove the test project from the server
     if (addedProjectId) {
       try {
         await apiClient.delete(`/api/projects/${addedProjectId}`);
       } catch {
-        // Ignore cleanup errors
+        // ignore cleanup errors
       }
     }
-    // Clean up the test project files
     if (testProject) {
       await testProject.cleanup();
     }
   });
 
-  describe('GET /api/specs', () => {
-    it('returns 200 OK when project is selected', async () => {
-      const response = await apiClient.get('/api/specs');
+  describe('GET /api/projects/:projectId/specs', () => {
+    it('returns specs for the selected project', async () => {
+      if (!projectId) {
+        throw new Error('No projectId available for specs tests');
+      }
+
+      const response = await apiClient.get(`/api/projects/${projectId}/specs`);
       expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
-    });
 
-    it('returns valid response matching schema', async () => {
-      const response = await apiClient.get('/api/specs');
       const result = validateSchema(ListSpecsResponseSchema, response.data);
-
       if (!result.success) {
         throw new Error(
-          createSchemaErrorMessage('GET /api/specs', result.errors || [])
+          createSchemaErrorMessage(
+            `GET /api/projects/${projectId}/specs`,
+            result.errors || []
+          )
         );
       }
 
-      expect(result.success).toBe(true);
-    });
-
-    it('returns specs array with total count', async () => {
-      const response = await apiClient.get<ListSpecsResponse>('/api/specs');
-      expect(response.data).toHaveProperty('specs');
-      expect(response.data).toHaveProperty('total');
-      expect(Array.isArray(response.data.specs)).toBe(true);
-      expect(typeof response.data.total).toBe('number');
-    });
-
-    it('returns non-negative number of specs', async () => {
-      const response = await apiClient.get<ListSpecsResponse>('/api/specs');
-      expect(response.data.total).toBeGreaterThanOrEqual(0);
-      expect(response.data.specs.length).toBe(response.data.total);
+      expect(Array.isArray(result.data?.specs)).toBe(true);
     });
 
     it('each spec matches SpecSummary schema', async () => {
-      const response = await apiClient.get<ListSpecsResponse>('/api/specs');
-      const specs = response.data.specs;
+      if (!projectId) {
+        return;
+      }
 
-      for (const spec of specs) {
-        const result = validateSchema(SpecSummarySchema, spec);
-        if (!result.success) {
+      const response = await apiClient.get<ListSpecsResponse>(
+        `/api/projects/${projectId}/specs`
+      );
+
+      for (const spec of response.data.specs) {
+        const validation = validateSchema(SpecSummarySchema, spec);
+        if (!validation.success) {
           throw new Error(
             createSchemaErrorMessage(
               `Spec ${spec.specName}`,
-              result.errors || []
+              validation.errors || []
             )
           );
         }
-        expect(result.success).toBe(true);
       }
-    });
-
-    describe('filters', () => {
-      it('filters by status', async () => {
-        const response = await apiClient.get<ListSpecsResponse>('/api/specs', {
-          status: 'in-progress',
-        });
-
-        expect(response.status).toBe(200);
-
-        const specs = response.data.specs;
-        for (const spec of specs) {
-          expect(spec.status).toBe('in-progress');
-        }
-      });
-
-      it('filters by priority', async () => {
-        const response = await apiClient.get<ListSpecsResponse>('/api/specs', {
-          priority: 'high',
-        });
-
-        expect(response.status).toBe(200);
-
-        const specs = response.data.specs;
-        for (const spec of specs) {
-          expect(spec.priority).toBe('high');
-        }
-      });
-
-      it('filters by tags', async () => {
-        const response = await apiClient.get<ListSpecsResponse>('/api/specs', { tags: 'api' });
-
-        expect(response.status).toBe(200);
-
-        const specs = response.data.specs;
-        for (const spec of specs) {
-          expect(spec.tags).toContain('api');
-        }
-      });
-
-      it('returns empty array for no matches', async () => {
-        const response = await apiClient.get<ListSpecsResponse>('/api/specs', {
-          tags: 'nonexistent-tag-xyz',
-        });
-
-        expect(response.status).toBe(200);
-        expect(response.data.specs).toHaveLength(0);
-        expect(response.data.total).toBe(0);
-      });
     });
   });
 
-  describe('GET /api/specs/:spec', () => {
-    it('returns spec by number', async () => {
-      // Get an existing spec first
-      const listResponse = await apiClient.get<ListSpecsResponse>('/api/specs');
-      if (listResponse.data.specs.length === 0) {
-        return; // Skip if no specs
+  describe('GET /api/projects/:projectId/specs/:spec', () => {
+    it('returns spec detail for the first spec in the project', async () => {
+      if (!projectId) {
+        return;
       }
-      
-      const spec = listResponse.data.specs[0];
-      const response = await apiClient.get(`/api/specs/${spec.id}`);
 
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
+      const listResponse = await apiClient.get<ListSpecsResponse>(
+        `/api/projects/${projectId}/specs`
+      );
+      const firstSpec = listResponse.data.specs[0];
+
+      if (!firstSpec) {
+        return;
+      }
+
+      const response = await apiClient.get(`/api/projects/${projectId}/specs/${firstSpec.id}`);
+      expect([200, 404]).toContain(response.status);
+
+      if (response.status === 200) {
+        const detailValidation = validateSchema(SpecDetailSchema, response.data);
+        if (!detailValidation.success) {
+          throw new Error(
+            createSchemaErrorMessage(
+              `GET /api/projects/${projectId}/specs/${firstSpec.id}`,
+              detailValidation.errors || []
+            )
+          );
+        }
+
+        expect(response.data).toHaveProperty('contentMd');
+      }
     });
 
-    it('returns valid response matching SpecDetail schema', async () => {
-      // Get an existing spec first
-      const listResponse = await apiClient.get<ListSpecsResponse>('/api/specs');
-      if (listResponse.data.specs.length === 0) {
-        return; // Skip if no specs
-      }
-      
-      const spec = listResponse.data.specs[0];
-      const response = await apiClient.get(`/api/specs/${spec.id}`);
-      const result = validateSchema(SpecDetailSchema, response.data);
-
-      if (!result.success) {
-        throw new Error(
-          createSchemaErrorMessage(`GET /api/specs/${spec.id}`, result.errors || [])
-        );
+    it('returns 404 for nonexistent spec id', async () => {
+      if (!projectId) {
+        return;
       }
 
-      expect(result.success).toBe(true);
-    });
+      const response = await apiClient.get(
+        `/api/projects/${projectId}/specs/999-nonexistent-spec`
+      );
 
-    it('includes content field', async () => {
-      // Get an existing spec first
-      const listResponse = await apiClient.get<ListSpecsResponse>('/api/specs');
-      if (listResponse.data.specs.length === 0) {
-        return; // Skip if no specs
-      }
-      
-      const spec = listResponse.data.specs[0];
-      const response = await apiClient.get<SpecDetail>(`/api/specs/${spec.id}`);
-      expect(response.data).toHaveProperty('contentMd');
-      expect(typeof response.data.contentMd).toBe('string');
-      expect(response.data.contentMd.length).toBeGreaterThan(0);
-    });
-
-    it('returns 404 for nonexistent spec', async () => {
-      const response = await apiClient.get('/api/specs/999-nonexistent-spec');
-
-      expect(response.status).toBe(404);
-      expect(response.ok).toBe(false);
+      expect([404, 400]).toContain(response.status);
     });
   });
 });

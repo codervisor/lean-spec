@@ -45,7 +45,7 @@ pub fn run(
 
         // Check dependencies if requested
         if check_deps {
-            validate_dependencies(&spec, &all_specs, &mut result);
+            validate_dependencies(spec, &all_specs, &mut result);
         }
 
         // Count issues

@@ -19,7 +19,7 @@ pub fn run(output_format: &str) -> Result<(), Box<dyn Error>> {
     println!();
 
     for example in &examples {
-        println!("{} {}", "📁".to_string(), example.name.cyan().bold());
+        println!("📁 {}", example.name.cyan().bold());
         println!("   {}", example.description);
         println!("   URL: {}", example.url.dimmed());
         println!("   Tags: {}", example.tags.join(", ").dimmed());

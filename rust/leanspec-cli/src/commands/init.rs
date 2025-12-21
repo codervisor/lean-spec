@@ -13,18 +13,16 @@ pub fn run(specs_dir: &str, yes: bool, _template: Option<String>) -> Result<(), 
     // Check if already initialized
     if specs_path.exists() && specs_path.is_dir() {
         let readme_exists = specs_path.join("README.md").exists();
-        if !yes {
-            if readme_exists {
-                println!(
-                    "{}",
-                    "LeanSpec already initialized in this directory.".yellow()
-                );
-                println!(
-                    "Specs directory: {}",
-                    specs_path.display().to_string().cyan()
-                );
-                return Ok(());
-            }
+        if !yes && readme_exists {
+            println!(
+                "{}",
+                "LeanSpec already initialized in this directory.".yellow()
+            );
+            println!(
+                "Specs directory: {}",
+                specs_path.display().to_string().cyan()
+            );
+            return Ok(());
         }
     }
 

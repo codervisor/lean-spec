@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::path::Path;
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     specs_dir: &str,
     spec: &str,

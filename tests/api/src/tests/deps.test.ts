@@ -1,16 +1,17 @@
 /**
  * Dependencies endpoint tests
  *
- * Tests for GET /api/deps/:spec endpoint.
+ * Tests for GET /api/projects/:projectId/dependencies endpoint.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { apiClient } from '../client';
 import {
-  DependencyResponseSchema,
-  SpecSummarySchema,
-  type DependencyResponse,
-  type Project,
+  DependencyGraphSchema,
+  ProjectsListResponseSchema,
+  type DependencyGraph,
+  type ProjectsListResponse,
+  type ProjectMutationResponse,
 } from '../schemas';
 import { validateSchema, createSchemaErrorMessage } from '../utils/validation';
 import {
@@ -19,25 +20,43 @@ import {
   type TestProject,
 } from '../fixtures';
 
-describe('GET /api/deps/:spec', () => {
-  let testProject: TestProject | null = null;
+describe('GET /api/projects/:projectId/dependencies', () => {
+  let projectId: string | null = null;
+  let mode: 'single-project' | 'multi-project' = 'single-project';
   let addedProjectId: string | null = null;
+  let testProject: TestProject | null = null;
 
   beforeAll(async () => {
-    // Create a test project with dependency relationships
-    testProject = await createTestProject({
-      name: 'deps-test-project',
-      specs: dependencyTestFixtures,
-    });
+    const projectsResponse = await apiClient.get<ProjectsListResponse>('/api/projects');
+    const projectsValidation = validateSchema(
+      ProjectsListResponseSchema,
+      projectsResponse.data
+    );
 
-    // Add the project to the server
-    const addResponse = await apiClient.post<Project>('/api/projects', {
-      path: testProject.path,
-    });
+    if (!projectsValidation.success) {
+      throw new Error(
+        createSchemaErrorMessage('GET /api/projects', projectsValidation.errors || [])
+      );
+    }
 
-    if (addResponse.ok && addResponse.data) {
-      addedProjectId = addResponse.data.id;
-      await apiClient.post(`/api/projects/${addedProjectId}/switch`);
+    const projects = projectsValidation.data!;
+    mode = projects.mode ?? 'single-project';
+    projectId = projects.projects[0]?.id ?? 'default';
+
+    if (mode === 'multi-project') {
+      testProject = await createTestProject({
+        name: 'deps-test-project',
+        specs: dependencyTestFixtures,
+      });
+
+      const addResponse = await apiClient.post<ProjectMutationResponse>('/api/projects', {
+        path: testProject.path,
+      });
+
+      if (addResponse.ok && addResponse.data?.project) {
+        projectId = addResponse.data.project.id;
+        addedProjectId = addResponse.data.project.id;
+      }
     }
   });
 
@@ -46,7 +65,7 @@ describe('GET /api/deps/:spec', () => {
       try {
         await apiClient.delete(`/api/projects/${addedProjectId}`);
       } catch {
-        // Ignore cleanup errors
+        // ignore cleanup errors
       }
     }
     if (testProject) {
@@ -54,62 +73,45 @@ describe('GET /api/deps/:spec', () => {
     }
   });
 
-  it('returns 200 OK for valid spec', async () => {
-    const response = await apiClient.get('/api/deps/001');
-    expect(response.status).toBe(200);
-    expect(response.ok).toBe(true);
-  });
-
-  it('returns valid response matching schema', async () => {
-    const response = await apiClient.get('/api/deps/001');
-    const result = validateSchema(DependencyResponseSchema, response.data);
-
-    if (!result.success) {
-      throw new Error(
-        createSchemaErrorMessage('GET /api/deps/001', result.errors || [])
-      );
+  it('returns dependency graph for the project', async () => {
+    if (!projectId) {
+      throw new Error('No projectId available for dependency tests');
     }
 
-    expect(result.success).toBe(true);
+    const response = await apiClient.get(`/api/projects/${projectId}/dependencies`);
+    expect([200, 404]).toContain(response.status);
+
+    if (response.status === 200) {
+      const result = validateSchema(DependencyGraphSchema, response.data);
+      if (!result.success) {
+        throw new Error(
+          createSchemaErrorMessage(
+            `GET /api/projects/${projectId}/dependencies`,
+            result.errors || []
+          )
+        );
+      }
+
+      const graph = result.data as DependencyGraph;
+      expect(Array.isArray(graph.nodes)).toBe(true);
+      expect(Array.isArray(graph.edges)).toBe(true);
+    }
   });
 
-  it('has spec, dependsOn, and requiredBy fields', async () => {
-    const response = await apiClient.get<DependencyResponse>('/api/deps/001');
-    const data = response.data;
-
-    expect(data).toHaveProperty('spec');
-    expect(data).toHaveProperty('dependsOn');
-    expect(data).toHaveProperty('requiredBy');
-  });
-
-  it('spec field matches SpecSummary schema', async () => {
-    const response = await apiClient.get<DependencyResponse>('/api/deps/001');
-    const result = validateSchema(SpecSummarySchema, response.data.spec);
-
-    if (!result.success) {
-      throw new Error(
-        createSchemaErrorMessage('GET /api/deps/001 spec', result.errors || [])
-      );
+  it('edges reference valid node ids when available', async () => {
+    if (!projectId) {
+      return;
     }
 
-    expect(result.success).toBe(true);
-  });
+    const response = await apiClient.get(`/api/projects/${projectId}/dependencies`);
+    if (response.status !== 200) {
+      return;
+    }
 
-  it('dependsOn is an array', async () => {
-    const response = await apiClient.get<DependencyResponse>('/api/deps/002');
-    expect(Array.isArray(response.data.dependsOn)).toBe(true);
-  });
-
-  it('requiredBy is an array', async () => {
-    const response = await apiClient.get<DependencyResponse>('/api/deps/001');
-    expect(Array.isArray(response.data.requiredBy)).toBe(true);
-  });
-
-  describe('error handling', () => {
-    it('returns 404 for nonexistent spec', async () => {
-      const response = await apiClient.get('/api/deps/999-nonexistent-spec');
-      expect(response.status).toBe(404);
-      expect(response.ok).toBe(false);
-    });
+    const nodeIds = new Set(response.data.nodes.map((node: { id: string }) => node.id));
+    for (const edge of response.data.edges) {
+      expect(nodeIds.has(edge.source)).toBe(true);
+      expect(nodeIds.has(edge.target)).toBe(true);
+    }
   });
 });

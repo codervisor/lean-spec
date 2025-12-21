@@ -7,6 +7,7 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     specs_dir: &str,
     input_path: &str,
@@ -176,9 +177,7 @@ fn migrate_auto(
             fs::create_dir_all(&target_dir)?;
 
             // Copy the file
-            let target_file = if doc.name == "spec.md" {
-                target_dir.join("README.md")
-            } else if doc.name == "README.md" {
+            let target_file = if doc.name == "spec.md" || doc.name == "README.md" {
                 target_dir.join("README.md")
             } else {
                 target_dir.join(&doc.name)

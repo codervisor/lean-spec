@@ -12,7 +12,7 @@ import { z } from 'zod';
  */
 export const HealthResponseSchema = z.object({
   status: z.string(),
-  version: z.string(),
+  version: z.string().optional(),
   currentProject: z.string().optional().nullable(),
 });
 

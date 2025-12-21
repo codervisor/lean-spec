@@ -242,7 +242,7 @@ pub fn run(
             .count();
 
         println!();
-        println!("  {} {} optimal/good", "✅", optimal);
+        println!("  ✅ {} optimal/good", optimal);
         if warning > 0 {
             println!("  {} {} need attention", "⚠️".yellow(), warning);
         }

@@ -11,6 +11,7 @@ use std::process::{Command, Stdio};
 /// Supported AI agents
 const SUPPORTED_AGENTS: &[&str] = &["claude", "copilot", "aider", "gemini", "cursor", "continue"];
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     specs_dir: &str,
     action: &str,

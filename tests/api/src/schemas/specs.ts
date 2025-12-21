@@ -26,24 +26,40 @@ export const SpecPrioritySchema = z.enum(['low', 'medium', 'high', 'critical']);
 
 export type SpecPriority = z.infer<typeof SpecPrioritySchema>;
 
+const NullableDateTime = z.union([z.string(), z.date()]).nullable().optional();
+
+const RelationshipsSchema = z.object({
+  dependsOn: z.array(z.string()),
+  requiredBy: z.array(z.string()).optional(),
+});
+
+const SubSpecSchema = z.object({
+  slug: z.string(),
+  title: z.string(),
+  path: z.string().optional(),
+});
+
 /**
  * Schema for spec summary (list view)
  */
 export const SpecSummarySchema = z.object({
   id: z.string(),
+  projectId: z.string().optional(),
   specNumber: z.number().nullable(),
   specName: z.string(),
   title: z.string().nullable(),
-  status: z.string(),
-  priority: z.string().nullable(),
-  tags: z.array(z.string()),
+  status: SpecStatusSchema.nullable(),
+  priority: SpecPrioritySchema.nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
   assignee: z.string().nullable().optional(),
-  createdAt: z.string().nullable().optional(),
-  updatedAt: z.string().nullable().optional(),
-  completedAt: z.string().nullable().optional(),
+  createdAt: NullableDateTime,
+  updatedAt: NullableDateTime,
+  completedAt: NullableDateTime,
   filePath: z.string(),
-  dependsOn: z.array(z.string()),
-  requiredBy: z.array(z.string()).optional(),
+  githubUrl: z.string().nullable().optional(),
+  syncedAt: NullableDateTime,
+  relationships: RelationshipsSchema.optional(),
+  subSpecsCount: z.number().optional(),
 });
 
 export type SpecSummary = z.infer<typeof SpecSummarySchema>;
@@ -53,36 +69,41 @@ export type SpecSummary = z.infer<typeof SpecSummarySchema>;
  */
 export const SpecDetailSchema = z.object({
   id: z.string(),
+  projectId: z.string().optional(),
   specNumber: z.number().nullable(),
   specName: z.string(),
   title: z.string().nullable(),
-  status: z.string(),
-  priority: z.string().nullable(),
-  tags: z.array(z.string()),
+  status: SpecStatusSchema.nullable(),
+  priority: SpecPrioritySchema.nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
   assignee: z.string().nullable().optional(),
   contentMd: z.string(),
-  createdAt: z.string().nullable().optional(),
-  updatedAt: z.string().nullable().optional(),
-  completedAt: z.string().nullable().optional(),
+  contentHtml: z.string().nullable().optional(),
+  createdAt: NullableDateTime,
+  updatedAt: NullableDateTime,
+  completedAt: NullableDateTime,
   filePath: z.string(),
-  dependsOn: z.array(z.string()),
-  requiredBy: z.array(z.string()).optional(),
+  githubUrl: z.string().nullable().optional(),
+  syncedAt: NullableDateTime,
+  relationships: RelationshipsSchema.optional(),
+  subSpecs: z.array(SubSpecSchema).optional(),
 });
 
 export type SpecDetail = z.infer<typeof SpecDetailSchema>;
 
 /**
- * Schema for list specs response (GET /api/specs)
+ * Schema for list specs response (GET /api/projects/:projectId/specs)
  */
 export const ListSpecsResponseSchema = z.object({
   specs: z.array(SpecSummarySchema),
-  total: z.number(),
+  projectId: z.string().optional(),
 });
 
 export type ListSpecsResponse = z.infer<typeof ListSpecsResponseSchema>;
 
 /**
  * Schema for metadata update request (PATCH /api/specs/:spec/metadata)
+ * (kept for backward compatibility with Rust HTTP server)
  */
 export const MetadataUpdateRequestSchema = z.object({
   status: z.string().optional(),

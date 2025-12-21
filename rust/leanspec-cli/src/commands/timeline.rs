@@ -23,7 +23,7 @@ pub fn run(specs_dir: &str, months: usize, output_format: &str) -> Result<(), Bo
             .map(|d| d.format("%Y-%m").to_string())
             .unwrap_or_else(|_| "unknown".to_string());
 
-        let entry = by_month.entry(month).or_insert(MonthStats::default());
+        let entry = by_month.entry(month).or_default();
         entry.created += 1;
 
         // Count completed specs
@@ -36,9 +36,7 @@ pub fn run(specs_dir: &str, months: usize, output_format: &str) -> Result<(), Bo
             if transition.status == SpecStatus::Complete {
                 // Use chrono format for year-month extraction
                 let completed_month = transition.at.format("%Y-%m").to_string();
-                let completed_entry = by_month
-                    .entry(completed_month)
-                    .or_insert(MonthStats::default());
+                let completed_entry = by_month.entry(completed_month).or_default();
                 completed_entry.completed_this_month += 1;
             }
         }

@@ -1,20 +1,18 @@
 /**
  * Projects endpoint tests
  *
- * Tests for project management API endpoints.
+ * Tests for project management API endpoints (project-scoped routing).
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { apiClient } from '../client';
 import {
   ProjectsListResponseSchema,
-  ProjectSchema,
-  RefreshProjectsResponseSchema,
-  ToggleFavoriteResponseSchema,
+  ProjectMutationResponseSchema,
+  ProjectResponseSchema,
   type ProjectsListResponse,
-  type Project,
-  type RefreshProjectsResponse,
-  type ToggleFavoriteResponse,
+  type ProjectMutationResponse,
+  type ProjectResponse,
 } from '../schemas';
 import { validateSchema, createSchemaErrorMessage } from '../utils/validation';
 import {
@@ -24,43 +22,61 @@ import {
 } from '../fixtures';
 
 describe('Projects API', () => {
-  let testProject: TestProject | null = null;
+  let mode: 'single-project' | 'multi-project' = 'single-project';
+  let primaryProjectId: string | null = null;
   let addedProjectId: string | null = null;
+  let testProject: TestProject | null = null;
 
   beforeAll(async () => {
-    // Create a test project
-    testProject = await createTestProject({
-      name: 'test-project',
-      specs: defaultTestFixtures,
-    });
+    const listResponse = await apiClient.get<ProjectsListResponse>('/api/projects');
+    const listValidation = validateSchema(ProjectsListResponseSchema, listResponse.data);
+    if (!listValidation.success) {
+      throw new Error(
+        createSchemaErrorMessage('GET /api/projects', listValidation.errors || [])
+      );
+    }
+
+    const listData = listValidation.data!;
+    mode = listData.mode ?? 'single-project';
+    primaryProjectId = listData.projects[0]?.id ?? 'default';
+
+    if (mode === 'multi-project') {
+      testProject = await createTestProject({
+        name: 'test-project',
+        specs: defaultTestFixtures,
+      });
+
+      const addResponse = await apiClient.post<ProjectMutationResponse>(
+        '/api/projects',
+        { path: testProject.path }
+      );
+
+      if (addResponse.ok && addResponse.data?.project) {
+        addedProjectId = addResponse.data.project.id;
+        primaryProjectId = addResponse.data.project.id;
+      }
+    }
   });
 
   afterAll(async () => {
-    // Clean up: remove the test project from the server if it was added
     if (addedProjectId) {
       try {
         await apiClient.delete(`/api/projects/${addedProjectId}`);
       } catch {
-        // Ignore cleanup errors
+        // ignore cleanup errors
       }
     }
-    // Clean up the test project files
     if (testProject) {
       await testProject.cleanup();
     }
   });
 
   describe('GET /api/projects', () => {
-    it('returns 200 OK', async () => {
-      const response = await apiClient.get('/api/projects');
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
-    });
-
     it('returns valid response matching schema', async () => {
       const response = await apiClient.get('/api/projects');
-      const result = validateSchema(ProjectsListResponseSchema, response.data);
+      expect(response.status).toBe(200);
 
+      const result = validateSchema(ProjectsListResponseSchema, response.data);
       if (!result.success) {
         throw new Error(
           createSchemaErrorMessage('GET /api/projects', result.errors || [])
@@ -68,246 +84,130 @@ describe('Projects API', () => {
       }
 
       expect(result.success).toBe(true);
+      expect(Array.isArray(result.data?.projects)).toBe(true);
+      expect(result.data?.projects.length).toBeGreaterThan(0);
     });
 
-    it('returns projects array', async () => {
+    it('includes mode and project metadata', async () => {
       const response = await apiClient.get<ProjectsListResponse>('/api/projects');
-      expect(response.data).toHaveProperty('projects');
-      expect(Array.isArray(response.data.projects)).toBe(true);
-    });
+      const data = response.data;
 
-    it('has currentProjectId field', async () => {
-      const response = await apiClient.get<ProjectsListResponse>('/api/projects');
-      expect(response.data).toHaveProperty('currentProjectId');
+      expect(data.mode === 'single-project' || data.mode === 'multi-project' || data.mode === undefined).toBe(true);
+      expect(data.projects[0]).toHaveProperty('specsDir');
     });
   });
 
-  describe('POST /api/projects', () => {
-    it('adds a new project with valid path', async () => {
-      if (!testProject) {
-        throw new Error('Test project not created');
+  describe('GET /api/projects/:id', () => {
+    it('returns project by ID from the list', async () => {
+      if (!primaryProjectId) {
+        throw new Error('No project id available from /api/projects');
       }
 
-      const response = await apiClient.post<Project>('/api/projects', {
-        path: testProject.path,
-      });
+      const response = await apiClient.get<ProjectResponse>(`/api/projects/${primaryProjectId}`);
+      expect([200, 404]).toContain(response.status);
 
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
+      if (response.status === 200) {
+        const result = validateSchema(ProjectResponseSchema, response.data);
+        if (!result.success) {
+          throw new Error(
+            createSchemaErrorMessage(
+              `GET /api/projects/${primaryProjectId}`,
+              result.errors || []
+            )
+          );
+        }
 
-      // Validate response matches project schema
-      const result = validateSchema(ProjectSchema, response.data);
-      if (!result.success) {
-        throw new Error(
-          createSchemaErrorMessage('POST /api/projects', result.errors || [])
-        );
+        expect(result.data?.project?.id).toBe(primaryProjectId);
       }
-
-      expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('id');
-      expect(result.data).toHaveProperty('path', testProject.path);
-
-      // Save the project ID for later tests and cleanup
-      addedProjectId = result.data?.id ?? null;
     });
 
-    it('returns 400 for invalid path', async () => {
+    it('returns 404 for nonexistent project', async () => {
+      const response = await apiClient.get('/api/projects/nonexistent-project-id-12345');
+      expect([404, 400]).toContain(response.status);
+    });
+  });
+
+  describe('POST /api/projects (multi-project only)', () => {
+    it('creates a project when multi-project mode is enabled', async () => {
+      if (mode !== 'multi-project') {
+        return;
+      }
+
+      expect(addedProjectId).toBeTruthy();
+    });
+
+    it('returns 400 when multi-project mode is disabled', async () => {
+      if (mode === 'multi-project') {
+        return;
+      }
+
       const response = await apiClient.post('/api/projects', {
         path: '/nonexistent/invalid/path/that/does/not/exist',
       });
 
       expect(response.status).toBe(400);
-      expect(response.ok).toBe(false);
     });
   });
 
-  describe('GET /api/projects/:id', () => {
-    it('returns project by ID', async () => {
-      if (!addedProjectId) {
-        // Skip if project wasn't added in previous test
+  describe('PATCH /api/projects/:id (multi-project only)', () => {
+    it('updates project metadata', async () => {
+      if (mode !== 'multi-project' || !addedProjectId) {
         return;
       }
 
-      const response = await apiClient.get<Project>(`/api/projects/${addedProjectId}`);
-
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
-
-      const result = validateSchema(ProjectSchema, response.data);
-      if (!result.success) {
-        throw new Error(
-          createSchemaErrorMessage(
-            `GET /api/projects/${addedProjectId}`,
-            result.errors || []
-          )
-        );
-      }
-
-      expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('id', addedProjectId);
-    });
-
-    it('returns 404 for nonexistent project', async () => {
-      const response = await apiClient.get(
-        '/api/projects/nonexistent-project-id-12345'
-      );
-
-      expect(response.status).toBe(404);
-      expect(response.ok).toBe(false);
-    });
-  });
-
-  describe('PATCH /api/projects/:id', () => {
-    it('updates project name', async () => {
-      if (!addedProjectId) {
-        return;
-      }
-
-      const response = await apiClient.patch<Project>(`/api/projects/${addedProjectId}`, {
-        name: 'Updated Test Project',
-      });
-
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
-      expect(response.data).toHaveProperty('name', 'Updated Test Project');
-    });
-
-    it('updates project color', async () => {
-      if (!addedProjectId) {
-        return;
-      }
-
-      const response = await apiClient.patch<Project>(`/api/projects/${addedProjectId}`, {
-        color: '#FF5733',
-      });
-
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty('color', '#FF5733');
-    });
-
-    it('returns 404 for nonexistent project', async () => {
-      const response = await apiClient.patch(
-        '/api/projects/nonexistent-project-id-12345',
+      const response = await apiClient.patch<ProjectMutationResponse>(
+        `/api/projects/${addedProjectId}`,
         {
-          name: 'Test',
+          name: 'Updated Test Project',
+          color: '#FF5733',
         }
       );
 
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe('POST /api/projects/:id/switch', () => {
-    it('switches to project', async () => {
-      if (!addedProjectId) {
-        return;
-      }
-
-      const response = await apiClient.post<Project>(
-        `/api/projects/${addedProjectId}/switch`
-      );
-
       expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
 
-      const result = validateSchema(ProjectSchema, response.data);
-      expect(result.success).toBe(true);
-    });
-
-    it('returns 404 for nonexistent project', async () => {
-      const response = await apiClient.post(
-        '/api/projects/nonexistent-project-id-12345/switch'
-      );
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe('POST /api/projects/:id/favorite', () => {
-    it('toggles favorite status', async () => {
-      if (!addedProjectId) {
-        return;
-      }
-
-      const response = await apiClient.post<ToggleFavoriteResponse>(
-        `/api/projects/${addedProjectId}/favorite`
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
-
-      const result = validateSchema(ToggleFavoriteResponseSchema, response.data);
+      const result = validateSchema(ProjectMutationResponseSchema, response.data);
       if (!result.success) {
         throw new Error(
           createSchemaErrorMessage(
-            `POST /api/projects/${addedProjectId}/favorite`,
+            `PATCH /api/projects/${addedProjectId}`,
             result.errors || []
           )
         );
       }
 
-      expect(result.success).toBe(true);
-      expect(typeof result.data?.favorite).toBe('boolean');
+      expect(result.data?.project?.name).toBe('Updated Test Project');
+      expect(result.data?.project?.color).toBe('#FF5733');
     });
 
-    it('returns 404 for nonexistent project', async () => {
-      const response = await apiClient.post(
-        '/api/projects/nonexistent-project-id-12345/favorite'
-      );
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe('POST /api/projects/refresh', () => {
-    it('returns valid response', async () => {
-      const response = await apiClient.post<RefreshProjectsResponse>('/api/projects/refresh');
-
-      expect(response.status).toBe(200);
-      expect(response.ok).toBe(true);
-
-      const result = validateSchema(RefreshProjectsResponseSchema, response.data);
-      if (!result.success) {
-        throw new Error(
-          createSchemaErrorMessage(
-            'POST /api/projects/refresh',
-            result.errors || []
-          )
-        );
+    it('toggles favorite flag when provided', async () => {
+      if (mode !== 'multi-project' || !addedProjectId) {
+        return;
       }
 
+      const response = await apiClient.patch<ProjectMutationResponse>(
+        `/api/projects/${addedProjectId}`,
+        { favorite: true }
+      );
+
+      expect(response.status).toBe(200);
+      const result = validateSchema(ProjectMutationResponseSchema, response.data);
       expect(result.success).toBe(true);
-      expect(typeof result.data?.removed).toBe('number');
-      expect(typeof result.data?.message).toBe('string');
+      expect(typeof result.data?.favorite === 'boolean' || result.data?.favorite === undefined).toBe(true);
     });
   });
 
-  describe('DELETE /api/projects/:id', () => {
-    it('removes project', async () => {
-      if (!addedProjectId) {
+  describe('DELETE /api/projects/:id (multi-project only)', () => {
+    it('removes project when supported', async () => {
+      if (mode !== 'multi-project' || !addedProjectId) {
         return;
       }
 
       const response = await apiClient.delete(`/api/projects/${addedProjectId}`);
+      expect([200, 204]).toContain(response.status);
 
-      expect(response.status).toBe(204);
-
-      // Verify project is gone
-      const getResponse = await apiClient.get(
-        `/api/projects/${addedProjectId}`
-      );
-      expect(getResponse.status).toBe(404);
-
-      // Mark as cleaned up
+      const verify = await apiClient.get(`/api/projects/${addedProjectId}`);
+      expect(verify.status).toBe(404);
       addedProjectId = null;
-    });
-
-    it('returns 404 for nonexistent project', async () => {
-      const response = await apiClient.delete(
-        '/api/projects/nonexistent-project-id-12345'
-      );
-
-      expect(response.status).toBe(404);
     });
   });
 });

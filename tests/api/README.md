@@ -11,6 +11,8 @@ This test suite provides:
 3. **Contract Testing**: Tests that make real HTTP requests to actual running servers
 4. **Implementation Agnostic**: Works with any HTTP server (Rust, Node.js, etc.)
 
+The contract is project-scoped: most endpoints are nested under `/api/projects/:projectId/*` with `:projectId` set to `default` for single-project mode.
+
 ## Quick Start
 
 ### Prerequisites
@@ -22,7 +24,7 @@ This test suite provides:
 
 ```bash
 cd tests/api
-npm install
+pnpm install
 ```
 
 ### Running Tests
@@ -36,14 +38,14 @@ cargo run --bin leanspec-http -- --port 3001
 
 # Terminal 2: Run tests
 cd tests/api
-npm test
+pnpm test
 ```
 
 **Against a different server:**
 
 ```bash
 # Set the API_BASE_URL environment variable
-API_BASE_URL=http://localhost:3000 npm test
+API_BASE_URL=http://localhost:3000 pnpm test
 ```
 
 ## Directory Structure
@@ -104,13 +106,14 @@ import { z } from 'zod';
 
 export const ProjectSchema = z.object({
   id: z.string(),
-  name: z.string(),
-  path: z.string(),
+  name: z.string().optional(),
+  displayName: z.string().optional(),
+  path: z.string().optional(),
   specsDir: z.string(),
-  favorite: z.boolean(),
-  color: z.string().nullable(),
-  lastAccessed: z.string(),
-  addedAt: z.string(),
+  favorite: z.boolean().optional(),
+  color: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  lastAccessed: z.union([z.string(), z.date()]).optional().nullable(),
 });
 ```
 
@@ -164,13 +167,13 @@ Fixtures automatically:
 
 ```bash
 # Rust HTTP server
-API_BASE_URL=http://localhost:3001 npm test
+API_BASE_URL=http://localhost:3001 pnpm test
 
 # Next.js server
-API_BASE_URL=http://localhost:3000 npm test
+API_BASE_URL=http://localhost:3000 pnpm test
 
 # Remote server
-API_BASE_URL=https://api.example.com npm test
+API_BASE_URL=https://api.example.com pnpm test
 ```
 
 ## Adding New Tests
@@ -195,7 +198,7 @@ describe('Your Endpoint', () => {
 
   beforeAll(async () => {
     testProject = await createTestProject({ /* options */ });
-    // Add project and switch to it
+    // Add project if multi-project mode is enabled
   });
 
   afterAll(async () => {

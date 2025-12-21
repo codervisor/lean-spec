@@ -968,7 +968,7 @@ fn tool_stats(specs_dir: &str) -> Result<String, String> {
 
     let stats = SpecStats::compute(&specs);
 
-    Ok(serde_json::to_string_pretty(&json!({
+    serde_json::to_string_pretty(&json!({
         "total": stats.total,
         "byStatus": stats.by_status.iter().map(|(k, v)| (k.to_string(), *v)).collect::<std::collections::HashMap<_, _>>(),
         "byPriority": stats.by_priority.iter().map(|(k, v)| (k.to_string(), *v)).collect::<std::collections::HashMap<_, _>>(),
@@ -978,7 +978,8 @@ fn tool_stats(specs_dir: &str) -> Result<String, String> {
         "totalDependencies": stats.total_dependencies,
         "subSpecs": stats.sub_specs,
         "topTags": stats.top_tags(10).iter().map(|(k, v)| json!({ "tag": k, "count": v })).collect::<Vec<_>>(),
-    })).map_err(|e| e.to_string())?)
+    }))
+    .map_err(|e| e.to_string())
 }
 
 // Helper functions

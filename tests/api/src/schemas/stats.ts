@@ -8,50 +8,34 @@
 import { z } from 'zod';
 
 /**
- * Schema for status counts
+ * Schema for status counts (array format from Next.js API)
  */
-export const StatusCountsSchema = z.object({
-  planned: z.number(),
-  inProgress: z.number(),
-  complete: z.number(),
-  archived: z.number(),
-});
-
-export type StatusCounts = z.infer<typeof StatusCountsSchema>;
-
-/**
- * Schema for priority counts
- */
-export const PriorityCountsSchema = z.object({
-  low: z.number(),
-  medium: z.number(),
-  high: z.number(),
-  critical: z.number(),
-});
-
-export type PriorityCounts = z.infer<typeof PriorityCountsSchema>;
-
-/**
- * Schema for tag count
- */
-export const TagCountSchema = z.object({
-  tag: z.string(),
+export const StatusCountSchema = z.object({
+  status: z.string(),
   count: z.number(),
 });
 
-export type TagCount = z.infer<typeof TagCountSchema>;
+export type StatusCount = z.infer<typeof StatusCountSchema>;
 
 /**
- * Schema for stats response (GET /api/stats)
+ * Schema for priority counts (array format from Next.js API)
+ */
+export const PriorityCountSchema = z.object({
+  priority: z.string(),
+  count: z.number(),
+});
+
+export type PriorityCount = z.infer<typeof PriorityCountSchema>;
+
+/**
+ * Schema for stats response (GET /api/projects/:projectId/stats)
  */
 export const StatsResponseSchema = z.object({
-  total: z.number(),
-  byStatus: StatusCountsSchema,
-  byPriority: PriorityCountsSchema,
-  byTag: z.array(TagCountSchema),
-  completionPercentage: z.number(),
-  activeCount: z.number(),
-  unassigned: z.number(),
+  totalProjects: z.number(),
+  totalSpecs: z.number(),
+  specsByStatus: z.array(StatusCountSchema),
+  specsByPriority: z.array(PriorityCountSchema),
+  completionRate: z.number(),
 });
 
 export type StatsResponse = z.infer<typeof StatsResponseSchema>;

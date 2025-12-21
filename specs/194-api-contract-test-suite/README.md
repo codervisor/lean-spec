@@ -635,7 +635,7 @@ jobs:
       - name: Run API contract tests against Next.js
         run: |
           cd tests/api
-          API_BASE_URL=http://localhost:3000 npm test
+          API_BASE_URL=http://localhost:3000 pnpm test
 ```
 
 ### Relationship to Spec 191
@@ -671,6 +671,12 @@ jobs:
 - Rust HTTP server is missing `/health` and `/api/search`; search is not yet implemented feature-wise, so keep schema placeholder but mark the test as pending until spec 192 lands it.
 - Mark deprecated endpoints (project switch, refresh) as out of contract and remove related assertions from the suite once parity decision is made in spec 192.
 - Action: align source-of-truth schemas to the Next.js route structure, and gate tests on feature availability flags so Rust and Next can both pass once parity work completes.
+
+### 2025-12-21: Rebaseline Applied
+- Updated contract schemas to the project-scoped routes (`/api/projects/:projectId/*`), reflecting the Next.js multi-project shape for projects, specs, stats, dependencies, and validation.
+- Refactored tests to use stateless project selection (no `switch`/`refresh`), with conditional flows for single vs multi-project modes and graceful skips when `/health` or `/api/search` are absent.
+- Adjusted stats to array-based counts, dependencies to graph responses, relaxed performance thresholds, and loosened error/health schemas to accommodate both implementations.
+- README and workflow examples now use `pnpm` and document the project-scoped contract.
 
 ### 2025-12-20: Spec Created
 - Identified gap: Spec 191 tests don't actually test HTTP servers

@@ -39,10 +39,7 @@ pub fn run(
     let extractions: Vec<Extraction> = parsed_outputs
         .iter()
         .map(|output| {
-            let extracted_lines: Vec<&str> = lines[(output.start - 1)..output.end]
-                .iter()
-                .copied()
-                .collect();
+            let extracted_lines: Vec<&str> = lines[(output.start - 1)..output.end].to_vec();
 
             Extraction {
                 file: output.file.clone(),
@@ -341,10 +338,8 @@ fn resolve_spec_path(specs_dir: &str, spec: &str) -> Result<std::path::PathBuf, 
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
 
-            if name_str.starts_with(spec) || name_str.contains(spec) {
-                if entry.path().is_dir() {
-                    return Ok(entry.path());
-                }
+            if (name_str.starts_with(spec) || name_str.contains(spec)) && entry.path().is_dir() {
+                return Ok(entry.path());
             }
         }
     }

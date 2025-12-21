@@ -8,7 +8,7 @@ use std::fs;
 use std::path::PathBuf;
 
 /// Server configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerConfig {
     /// Server-specific configuration
@@ -22,16 +22,6 @@ pub struct ServerConfig {
     /// Project management settings
     #[serde(default)]
     pub projects: ProjectSettings,
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            server: ServerSettings::default(),
-            ui: UiSettings::default(),
-            projects: ProjectSettings::default(),
-        }
-    }
 }
 
 /// Server-specific settings
