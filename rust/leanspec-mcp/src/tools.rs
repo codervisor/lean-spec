@@ -1048,7 +1048,15 @@ fn extract_template_body(template: &str) -> String {
         }
     }
 
-    lines.collect::<Vec<_>>().join("\n").trim().to_string()
+    let mut collected = String::new();
+    for (idx, line) in lines.enumerate() {
+        if idx > 0 {
+            collected.push('\n');
+        }
+        collected.push_str(line);
+    }
+
+    collected.trim().to_string()
 }
 
 const CREATE_CONTENT_FALLBACK: &str =
