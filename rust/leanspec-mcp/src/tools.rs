@@ -1025,44 +1025,30 @@ fn extract_template_body(template: &str) -> String {
         Err(_) => template.to_string(),
     };
 
-    let mut skipped_title = false;
-    let mut started_body = false;
-    let mut collected = Vec::new();
+    let mut lines = body.lines().peekable();
 
-    for line in body.lines() {
-        let trimmed = line.trim_start();
-
-        if !skipped_title {
-            if trimmed.is_empty() {
-                continue;
-            }
-            if trimmed.starts_with('#') {
-                skipped_title = true;
-                continue;
-            }
-        }
-
-        if !started_body {
-            if trimmed.is_empty() {
-                continue;
-            }
-            if trimmed.starts_with("> **Status**") {
-                skipped_title = true;
-                continue;
-            }
-            started_body = true;
-        }
-
-        collected.push(line);
+    while matches!(lines.peek(), Some(line) if line.trim().is_empty()) {
+        lines.next();
     }
 
-    collected
-        .into_iter()
-        .skip_while(|line| line.trim().is_empty())
-        .collect::<Vec<_>>()
-        .join("\n")
-        .trim()
-        .to_string()
+    if matches!(lines.peek(), Some(line) if line.trim_start().starts_with('#')) {
+        lines.next();
+        while matches!(lines.peek(), Some(line) if line.trim().is_empty()) {
+            lines.next();
+        }
+    }
+
+    if matches!(
+        lines.peek(),
+        Some(line) if line.trim_start().starts_with("> **Status**")
+    ) {
+        lines.next();
+        while matches!(lines.peek(), Some(line) if line.trim().is_empty()) {
+            lines.next();
+        }
+    }
+
+    lines.collect::<Vec<_>>().join("\n").trim().to_string()
 }
 
 const CREATE_CONTENT_FALLBACK: &str =
