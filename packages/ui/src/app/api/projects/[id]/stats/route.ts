@@ -20,7 +20,7 @@ export async function GET(
     // Use 'default' project as undefined for backward compatibility
     const projectId = isDefaultProject(id) ? undefined : id;
     const stats = await getStats(projectId);
-    return NextResponse.json({ stats });
+    return NextResponse.json(stats);
   } catch (error) {
     console.error('Error fetching stats:', error);
     return NextResponse.json(

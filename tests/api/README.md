@@ -48,6 +48,16 @@ pnpm test
 API_BASE_URL=http://localhost:3000 pnpm test
 ```
 
+### Troubleshooting
+
+- If `/api/projects` returns an empty list or unexpected 404 responses, remove `~/.lean-spec/projects.json` so the backend can re-register the default project rooted at `specs/`.
+- When validating the Next.js API, start it explicitly on port 3000 from `packages/ui`:
+  ```bash
+  cd packages/ui
+  pnpm next dev --port 3000
+  ```
+- Verify `API_BASE_URL` matches the backend under test (Rust: `http://localhost:3001`, Next.js: `http://localhost:3000`).
+
 ## Directory Structure
 
 ```

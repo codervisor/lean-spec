@@ -18,6 +18,14 @@ export async function GET(
     const { id } = await params;
     
     // Use 'default' project as undefined for backward compatibility
+    const specsMode = process.env.SPECS_MODE || 'filesystem';
+    if (!isDefaultProject(id) && specsMode !== 'multi-project') {
+      return NextResponse.json(
+        { error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
+        { status: 404 }
+      );
+    }
+
     const projectId = isDefaultProject(id) ? undefined : id;
     const graph = await getDependencyGraph(projectId);
     return NextResponse.json(graph);
@@ -29,4 +37,3 @@ export async function GET(
     );
   }
 }
-

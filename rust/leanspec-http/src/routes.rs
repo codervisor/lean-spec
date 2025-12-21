@@ -55,6 +55,23 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/favorite",
             post(handlers::toggle_favorite),
         )
+        .route(
+            "/api/projects/{id}/specs",
+            get(handlers::list_project_specs),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}",
+            get(handlers::get_project_spec),
+        )
+        .route(
+            "/api/projects/{id}/dependencies",
+            get(handlers::get_project_dependencies),
+        )
+        .route("/api/projects/{id}/stats", get(handlers::get_project_stats))
+        .route(
+            "/api/projects/{id}/validate",
+            post(handlers::validate_project),
+        )
         // Spec routes
         .route("/api/specs", get(handlers::list_specs))
         .route("/api/specs/{spec}", get(handlers::get_spec))

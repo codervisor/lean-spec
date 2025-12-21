@@ -35,7 +35,7 @@ export async function GET(
       const specsDir = process.env.SPECS_DIR || 'specs';
       return NextResponse.json({ 
         project: {
-          id: 'default',
+          id,
           displayName: 'Local Project',
           specsDir,
           isFeatured: true,
