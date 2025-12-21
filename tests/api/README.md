@@ -21,7 +21,7 @@ This test suite provides:
 ### Installation
 
 ```bash
-cd tests/api-contracts
+cd tests/api
 npm install
 ```
 
@@ -35,7 +35,7 @@ cd rust
 cargo run --bin leanspec-http -- --port 3001
 
 # Terminal 2: Run tests
-cd tests/api-contracts
+cd tests/api
 npm test
 ```
 
@@ -49,7 +49,7 @@ API_BASE_URL=http://localhost:3000 npm test
 ## Directory Structure
 
 ```
-tests/api-contracts/
+tests/api/
 ├── package.json
 ├── tsconfig.json
 ├── vitest.config.ts
@@ -156,8 +156,8 @@ Fixtures automatically:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
+| Variable       | Description                | Default                 |
+| -------------- | -------------------------- | ----------------------- |
 | `API_BASE_URL` | Base URL of the API server | `http://localhost:3001` |
 
 ### Running Against Different Servers
@@ -287,12 +287,12 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          cd tests/api-contracts
+          cd tests/api
           npm install
 
       - name: Run contract tests
         run: |
-          cd tests/api-contracts
+          cd tests/api
           npm test
 ```
 

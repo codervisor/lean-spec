@@ -47,7 +47,7 @@ updated_at: '2025-12-20T07:13:38.531807Z'
 ### Test Architecture
 
 ```
-tests/api-contracts/          # New standalone test package
+tests/api/          # New standalone test package
 ├── package.json              # Independent npm package
 ├── tsconfig.json
 ├── vitest.config.ts
@@ -191,7 +191,7 @@ cargo run --bin leanspec-http -- --port 3001
 pnpm -F @leanspec/ui dev  # port 3000
 
 # Terminal 2: Run tests
-cd tests/api-contracts
+cd tests/api
 npm test
 ```
 
@@ -293,7 +293,7 @@ if (!result.success) {
 ## Plan
 
 ### Phase 1: Test Infrastructure (Days 1-2)
-- [x] Create `tests/api-contracts` package
+- [x] Create `tests/api` package
 - [x] Set up TypeScript + Vitest
 - [x] Create API client (configuration-based)
 - [x] Define canonical schemas for all endpoints
@@ -606,12 +606,12 @@ jobs:
       
       - name: Install test dependencies
         run: |
-          cd tests/api-contracts
+          cd tests/api
           npm install
       
       - name: Run API contract tests against Rust
         run: |
-          cd tests/api-contracts
+          cd tests/api
           API_BASE_URL=http://localhost:3001 npm test
   
   test-nextjs-server:
@@ -634,7 +634,7 @@ jobs:
       
       - name: Run API contract tests against Next.js
         run: |
-          cd tests/api-contracts
+          cd tests/api
           API_BASE_URL=http://localhost:3000 npm test
 ```
 
@@ -676,7 +676,7 @@ jobs:
 - Priority: HIGH - prerequisite for API parity confidence
 
 ### 2025-12-20: Implementation Complete (Phase 1-4, most of Phase 5-8)
-**Created complete test suite in `tests/api-contracts/`:**
+**Created complete test suite in `tests/api/`:**
 - 88 passing tests across 9 test files
 - Test run time: ~1.5 seconds
 

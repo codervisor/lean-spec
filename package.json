@@ -13,7 +13,7 @@
 		"build": "turbo run build",
 		"build:rust": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",
 		"test": "turbo run test",
-		"test:api": "turbo run test:api --filter=@leanspec/api-contracts",
+		"test:api": "turbo run test --filter=@leanspec/api-tests",
 		"test:watch": "vitest",
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest run --coverage",

@@ -1,5 +1,5 @@
 {
-  "name": "@leanspec/api-contracts",
+  "name": "@leanspec/api-tests",
   "version": "0.1.0",
   "private": true,
   "description": "API contract validation test suite for LeanSpec",

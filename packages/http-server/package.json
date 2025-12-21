@@ -7,6 +7,7 @@
     "leanspec-http": "./bin/leanspec-http.js"
   },
   "scripts": {
+    "dev": "nodemon --watch ./binaries --exec 'node ./bin/leanspec-http.js'",
     "typecheck": "echo 'No TypeScript source to check'"
   },
   "keywords": [
@@ -42,5 +43,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }
