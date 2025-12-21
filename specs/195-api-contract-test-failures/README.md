@@ -1,23 +1,29 @@
 ---
-status: planned
-created: 2025-12-21
+status: in-progress
+created: '2025-12-21'
 priority: high
 tags:
-- testing
-- api
-- contract
-- ci
-- parity
+  - testing
+  - api
+  - contract
+  - ci
+  - parity
 depends_on:
-- 194-api-contract-test-suite
-- 191-rust-http-api-test-suite
-- 186-rust-http-server
-- 192-backend-api-parity
-created_at: 2025-12-21T14:11:18.442192Z
-updated_at: 2025-12-21T14:11:27.331265Z
+  - 194-api-contract-test-suite
+  - 191-rust-http-api-test-suite
+  - 186-rust-http-server
+  - 192-backend-api-parity
+created_at: '2025-12-21T14:11:18.442192Z'
+updated_at: '2025-12-21T14:17:05.632Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-21T14:17:05.632Z'
 ---
 
 # API Contract Test Failures (Rust & Next.js)
+
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-21 · **Tags**: testing, api, contract, ci, parity
+
 
 ## Overview
 Investigate and fix API contract suite regressions affecting both Rust HTTP server and Next.js API so the shared contract remains a reliable compatibility gate across backends and CI.
