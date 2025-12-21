@@ -1026,16 +1026,17 @@ fn extract_template_body(template: &str) -> String {
     };
 
     let mut lines = body.lines().peekable();
+    let mut skip_empty = |iter: &mut std::iter::Peekable<std::str::Lines<'_>>| {
+        while matches!(iter.peek(), Some(line) if line.trim().is_empty()) {
+            iter.next();
+        }
+    };
 
-    while matches!(lines.peek(), Some(line) if line.trim().is_empty()) {
-        lines.next();
-    }
+    skip_empty(&mut lines);
 
     if matches!(lines.peek(), Some(line) if line.trim_start().starts_with('#')) {
         lines.next();
-        while matches!(lines.peek(), Some(line) if line.trim().is_empty()) {
-            lines.next();
-        }
+        skip_empty(&mut lines);
     }
 
     if matches!(
@@ -1043,12 +1044,10 @@ fn extract_template_body(template: &str) -> String {
         Some(line) if line.trim_start().starts_with("> **Status**")
     ) {
         lines.next();
-        while matches!(lines.peek(), Some(line) if line.trim().is_empty()) {
-            lines.next();
-        }
+        skip_empty(&mut lines);
     }
 
-    let mut collected = String::new();
+    let mut collected = String::with_capacity(body.len());
     for (idx, line) in lines.enumerate() {
         if idx > 0 {
             collected.push('\n');
