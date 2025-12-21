@@ -30,7 +30,8 @@ async fn test_search_ranking_by_relevance() {
     let app = create_router(state);
 
     // Search for "test" which appears in spec 001
-    let (status, body) = make_json_request(app, "POST", "/api/search", r#"{"query": "test"}"#).await;
+    let (status, body) =
+        make_json_request(app, "POST", "/api/search", r#"{"query": "test"}"#).await;
 
     assert_eq!(status, StatusCode::OK);
     let results: Value = serde_json::from_str(&body).unwrap();

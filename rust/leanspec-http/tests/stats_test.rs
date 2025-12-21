@@ -70,5 +70,12 @@ async fn test_empty_project_stats() {
     assert_eq!(status, StatusCode::OK);
     let stats: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(stats["total"], 0);
-    assert!(stats["byStatus"].as_object().unwrap().is_empty() || stats["byStatus"].as_object().unwrap().values().all(|v| v.as_u64() == Some(0)));
+    assert!(
+        stats["byStatus"].as_object().unwrap().is_empty()
+            || stats["byStatus"]
+                .as_object()
+                .unwrap()
+                .values()
+                .all(|v| v.as_u64() == Some(0))
+    );
 }

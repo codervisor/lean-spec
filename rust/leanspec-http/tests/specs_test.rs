@@ -92,7 +92,10 @@ async fn test_spec_required_by_computation() {
                 .map(|s| s.contains("002-second-spec"))
                 .unwrap_or(false)
         });
-        assert!(has_spec_002, "Expected requiredBy to contain 002-second-spec");
+        assert!(
+            has_spec_002,
+            "Expected requiredBy to contain 002-second-spec"
+        );
     }
 }
 
@@ -115,12 +118,7 @@ async fn test_list_specs_with_multiple_filters() {
     let app = create_router(state);
 
     // Filter by status and priority
-    let (status, body) = make_request(
-        app,
-        "GET",
-        "/api/specs?status=planned&priority=high",
-    )
-    .await;
+    let (status, body) = make_request(app, "GET", "/api/specs?status=planned&priority=high").await;
 
     assert_eq!(status, StatusCode::OK);
     let specs: Value = serde_json::from_str(&body).unwrap();
@@ -178,12 +176,8 @@ async fn test_invalid_query_parameters() {
     let app = create_router(state);
 
     // Invalid status value
-    let (status, _body) = make_request(
-        app.clone(),
-        "GET",
-        "/api/specs?status=invalid-status",
-    )
-    .await;
+    let (status, _body) =
+        make_request(app.clone(), "GET", "/api/specs?status=invalid-status").await;
 
     // Should still succeed but filter nothing (or handle gracefully)
     assert!(status == StatusCode::OK || status == StatusCode::BAD_REQUEST);

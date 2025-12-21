@@ -16,13 +16,7 @@ async fn test_malformed_json_request() {
     let state = create_test_state(&temp_dir).await;
     let app = create_router(state);
 
-    let (status, _body) = make_json_request(
-        app,
-        "POST",
-        "/api/search",
-        "{ invalid json",
-    )
-    .await;
+    let (status, _body) = make_json_request(app, "POST", "/api/search", "{ invalid json").await;
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
 }
@@ -48,7 +42,6 @@ async fn test_cors_headers() {
     // Note: This test will pass if CORS is configured, fail if not
     // Adjust based on actual CORS configuration
     assert!(
-        headers.contains_key("access-control-allow-origin")
-            || response.status() == StatusCode::OK
+        headers.contains_key("access-control-allow-origin") || response.status() == StatusCode::OK
     );
 }

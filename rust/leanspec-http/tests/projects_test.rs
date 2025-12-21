@@ -111,12 +111,7 @@ async fn test_project_not_found() {
     let state = create_test_state(&temp_dir).await;
     let app = create_router(state);
 
-    let (status, body) = make_request(
-        app,
-        "GET",
-        "/api/projects/nonexistent-project-id",
-    )
-    .await;
+    let (status, body) = make_request(app, "GET", "/api/projects/nonexistent-project-id").await;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
     assert!(body.contains("PROJECT_NOT_FOUND") || body.contains("not found"));
@@ -128,12 +123,7 @@ async fn test_delete_nonexistent_project() {
     let state = create_test_state(&temp_dir).await;
     let app = create_router(state);
 
-    let (status, _body) = make_request(
-        app,
-        "DELETE",
-        "/api/projects/nonexistent-project-id",
-    )
-    .await;
+    let (status, _body) = make_request(app, "DELETE", "/api/projects/nonexistent-project-id").await;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
@@ -144,12 +134,8 @@ async fn test_switch_to_nonexistent_project() {
     let state = create_test_state(&temp_dir).await;
     let app = create_router(state);
 
-    let (status, _body) = make_request(
-        app,
-        "POST",
-        "/api/projects/nonexistent-project-id/switch",
-    )
-    .await;
+    let (status, _body) =
+        make_request(app, "POST", "/api/projects/nonexistent-project-id/switch").await;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
