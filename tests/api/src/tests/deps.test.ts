@@ -78,7 +78,7 @@ describe('GET /api/projects/:projectId/dependencies', () => {
       throw new Error('No projectId available for dependency tests');
     }
 
-    const response = await apiClient.get(`/api/projects/${projectId}/dependencies`);
+    const response = await apiClient.get<DependencyGraph>(`/api/projects/${projectId}/dependencies`);
     expect([200, 404]).toContain(response.status);
 
     if (response.status === 200) {
@@ -103,15 +103,69 @@ describe('GET /api/projects/:projectId/dependencies', () => {
       return;
     }
 
-    const response = await apiClient.get(`/api/projects/${projectId}/dependencies`);
+    const response = await apiClient.get<DependencyGraph>(`/api/projects/${projectId}/dependencies`);
     if (response.status !== 200) {
       return;
     }
 
-    const nodeIds = new Set(response.data.nodes.map((node: { id: string }) => node.id));
+    const nodeIds = new Set(response.data.nodes.map((node) => node.id));
     for (const edge of response.data.edges) {
       expect(nodeIds.has(edge.source)).toBe(true);
       expect(nodeIds.has(edge.target)).toBe(true);
     }
+  });
+
+  it('captures declared depends_on relationships from fixtures', async () => {
+    if (mode !== 'multi-project' || !projectId || !addedProjectId) {
+      return;
+    }
+
+    const response = await apiClient.get<DependencyGraph>(`/api/projects/${projectId}/dependencies`);
+    if (response.status !== 200) {
+      return;
+    }
+
+    const validation = validateSchema(DependencyGraphSchema, response.data);
+    if (!validation.success) {
+      throw new Error(
+        createSchemaErrorMessage(
+          `/api/projects/${projectId}/dependencies (relationships)`,
+          validation.errors || []
+        )
+      );
+    }
+
+    const graph = validation.data!;
+    const idFor = (needle: string) =>
+      graph.nodes.find((node) => node.name.toLowerCase().includes(needle))?.id;
+
+    const baseId = idFor('base-feature');
+    const dependentId = idFor('dependent-feature');
+    const anotherId = idFor('another-dependent');
+
+    const hasEdgeBetween = (a?: string, b?: string) =>
+      Boolean(
+        a &&
+        b &&
+        graph.edges.some(
+          (edge) =>
+            (edge.source === a && edge.target === b) ||
+            (edge.source === b && edge.target === a)
+        )
+      );
+
+    if (dependentId && baseId) {
+      expect(hasEdgeBetween(dependentId, baseId)).toBe(true);
+    }
+
+    if (anotherId && baseId) {
+      expect(hasEdgeBetween(anotherId, baseId)).toBe(true);
+    }
+
+    if (anotherId && dependentId) {
+      expect(hasEdgeBetween(anotherId, dependentId)).toBe(true);
+    }
+
+    expect(graph.edges.length).toBeGreaterThanOrEqual(3);
   });
 });

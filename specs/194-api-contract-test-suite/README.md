@@ -65,9 +65,9 @@ Provide enforceable API contracts, fast feedback, and implementation-agnostic va
 - [x] Health and search endpoints are enforced (fail if missing)
 - [x] Default `API_BASE_URL` aligned across config, client, and docs (3001)
 - [x] Suite is type-check clean and free of missing imports
-- [ ] Edge-case coverage: 500 errors, malformed JSON, invalid query params, empty projects, large (>100) specs
-- [ ] CI workflow runs contract suite (matrix for Rust/Next) with `API_BASE_URL` parameterized
-- [ ] Dependency correctness and search ranking assertions
+- [x] Edge-case coverage: 500 errors, malformed JSON, invalid query params, empty projects, large (>100) specs
+- [x] CI workflow runs contract suite (matrix for Rust/Next) with `API_BASE_URL` parameterized
+- [x] Dependency correctness and search ranking assertions
 - [ ] Troubleshooting guide added to README
 
 ## Current Test Coverage
@@ -93,6 +93,8 @@ Provide enforceable API contracts, fast feedback, and implementation-agnostic va
 - Aligned default `API_BASE_URL` to 3001 across Vitest config, client, and docs
 - Removed skip logic for `/health` and `/api/search`; tests now fail if endpoints are absent
 - Fixed missing `validateSchema` import in performance tests to keep type checks green
+- Added edge-case coverage for malformed JSON, invalid params, empty/large projects, and enforced dependency/search correctness
+- Added CI workflow matrix (Rust + Next, parameterized `API_BASE_URL`) at `.github/workflows/api-contract-tests.yml`
 
 ## Plan
 
@@ -103,7 +105,5 @@ Provide enforceable API contracts, fast feedback, and implementation-agnostic va
 
 ## Next Steps
 
-1) Add deterministic 500/malformed/invalid-param and large-dataset fixtures
-2) Add dependency correctness + search ranking assertions
-3) Wire GitHub Actions workflow (Rust + Next) with parameterized `API_BASE_URL`
-4) Add troubleshooting guide to `tests/api/README.md`
+1) Add troubleshooting guide to `tests/api/README.md`
+2) Harden Next.js job once API parity is guaranteed (remove allow-failure)
