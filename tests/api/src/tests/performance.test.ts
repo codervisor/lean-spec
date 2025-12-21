@@ -16,14 +16,13 @@ import {
   defaultTestFixtures,
   type TestProject,
 } from '../fixtures';
+import { validateSchema, createSchemaErrorMessage } from '../utils/validation';
 
 describe('Performance', () => {
   let projectId: string | null = null;
   let mode: 'single-project' | 'multi-project' = 'single-project';
   let addedProjectId: string | null = null;
   let testProject: TestProject | null = null;
-  let healthAvailable = true;
-  let searchAvailable = true;
 
   beforeAll(async () => {
     const projectsResponse = await apiClient.get<ProjectsListResponse>('/api/projects');
@@ -54,13 +53,17 @@ describe('Performance', () => {
     }
 
     const healthProbe = await apiClient.get('/health');
-    if (healthProbe.status === 404) {
-      healthAvailable = false;
+    if (healthProbe.status !== 200) {
+      throw new Error(
+        createSchemaErrorMessage('GET /health', [`Expected 200, got ${healthProbe.status}`])
+      );
     }
 
     const searchProbe = await apiClient.post('/api/search', { query: 'probe', projectId });
-    if ([404, 501].includes(searchProbe.status)) {
-      searchAvailable = false;
+    if (searchProbe.status !== 200) {
+      throw new Error(
+        createSchemaErrorMessage('POST /api/search', [`Expected 200, got ${searchProbe.status}`])
+      );
     }
   });
 
@@ -78,10 +81,7 @@ describe('Performance', () => {
   });
 
   describe('Response times', () => {
-    it('GET /health completes promptly when available', async () => {
-      if (!healthAvailable) {
-        return;
-      }
+    it('GET /health completes promptly', async () => {
       const start = Date.now();
       await apiClient.get('/health');
       const duration = Date.now() - start;
@@ -119,10 +119,7 @@ describe('Performance', () => {
       expect(duration).toBeLessThan(1000);
     });
 
-    it('POST /api/search completes within 1200ms when available', async () => {
-      if (!searchAvailable) {
-        return;
-      }
+    it('POST /api/search completes within 1200ms', async () => {
       const start = Date.now();
       await apiClient.post('/api/search', { query: 'test', projectId });
       const duration = Date.now() - start;
@@ -142,11 +139,7 @@ describe('Performance', () => {
       expect(results.every((r) => r.status === 200)).toBe(true);
     });
 
-    it('handles concurrent GET /health when available', async () => {
-      if (!healthAvailable) {
-        return;
-      }
-
+    it('handles concurrent GET /health', async () => {
       const requests = Array(3)
         .fill(null)
         .map(() => apiClient.get('/health'));

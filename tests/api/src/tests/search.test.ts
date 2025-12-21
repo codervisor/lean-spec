@@ -16,7 +16,6 @@ import {
 import { validateSchema, createSchemaErrorMessage } from '../utils/validation';
 
 describe('POST /api/search', () => {
-  let supportsSearch = true;
   let projectId: string | null = null;
 
   beforeAll(async () => {
@@ -29,31 +28,15 @@ describe('POST /api/search', () => {
     if (projectsValidation.success) {
       projectId = projectsValidation.data?.projects[0]?.id ?? null;
     }
-
-    const probe = await apiClient.post('/api/search', { query: 'probe', projectId });
-    if ([404, 501].includes(probe.status)) {
-      supportsSearch = false;
-    }
   });
 
-  it('returns 404/501 when search is not available', async () => {
-    if (supportsSearch) {
-      return;
-    }
-
-    const response = await apiClient.post('/api/search', { query: 'probe', projectId });
-    expect([404, 501]).toContain(response.status);
-  });
-
-  it('returns valid response matching schema when available', async () => {
-    if (!supportsSearch) {
-      return;
-    }
-
+  it('returns valid response matching schema', async () => {
     const response = await apiClient.post('/api/search', {
       query: 'API',
       projectId,
     });
+
+    expect(response.status).toBe(200);
 
     const result = validateSchema(SearchResponseSchema, response.data);
 
@@ -66,15 +49,13 @@ describe('POST /api/search', () => {
     expect(result.success).toBe(true);
   });
 
-  it('each result matches SpecSummary schema when available', async () => {
-    if (!supportsSearch) {
-      return;
-    }
-
+  it('each result matches SpecSummary schema', async () => {
     const response = await apiClient.post<SearchResponse>('/api/search', {
       query: 'API',
       projectId,
     });
+
+    expect(response.status).toBe(200);
 
     for (const result of response.data.results) {
       const validation = validateSchema(SpecSummarySchema, result);

@@ -15,7 +15,8 @@ export default defineConfig({
     maxWorkers: parseInt(process.env.MAX_WORKERS || '1', 10),
     // Environment variable for API base URL
     env: {
-      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3333',
+      // Keep the default aligned with docs and client config so runs succeed
+      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
     },
   },
 });
