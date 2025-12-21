@@ -36,11 +36,11 @@
     "CHANGELOG.md"
   ],
   "optionalDependencies": {
-    "@leanspec/cli-darwin-arm64": "0.2.10",
-    "@leanspec/cli-darwin-x64": "0.2.10",
-    "@leanspec/cli-linux-arm64": "0.2.10",
-    "@leanspec/cli-linux-x64": "0.2.10",
-    "@leanspec/cli-windows-x64": "0.2.10"
+    "@leanspec/cli-darwin-arm64": "workspace:*",
+    "@leanspec/cli-darwin-x64": "workspace:*",
+    "@leanspec/cli-linux-arm64": "workspace:*",
+    "@leanspec/cli-linux-x64": "workspace:*",
+    "@leanspec/cli-windows-x64": "workspace:*"
   },
   "engines": {
     "node": ">=20"
