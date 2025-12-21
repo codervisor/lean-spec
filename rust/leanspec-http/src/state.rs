@@ -66,8 +66,8 @@ fn default_project_path() -> PathBuf {
         return PathBuf::from(explicit);
     }
 
-    // Fall back to the expected specs root if current_dir is unavailable
-    let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("specs"));
+    // Fall back to the current working directory when resolution fails
+    let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     loop {
         if dir.join("specs").exists() {
             return dir;

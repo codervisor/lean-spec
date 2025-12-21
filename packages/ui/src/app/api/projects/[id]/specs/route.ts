@@ -13,6 +13,13 @@ import { NextResponse } from 'next/server';
 import { getSpecs } from '@/lib/db/service-queries';
 import { isDefaultProject } from '@/lib/projects/constants';
 
+const VALID_STATUSES = ['planned', 'in-progress', 'complete', 'archived'];
+
+function isValidStatusFilter(statusParam: string | null): boolean {
+  if (!statusParam) return true;
+  return statusParam.split(',').every((s) => VALID_STATUSES.includes(s));
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,9 +28,7 @@ export async function GET(
     const { id } = await params;
     const url = new URL(request.url);
     const statusParam = url.searchParams.get('status');
-    const validStatuses = ['planned', 'in-progress', 'complete', 'archived'];
-
-    if (statusParam && !statusParam.split(',').every((s) => validStatuses.includes(s))) {
+    if (!isValidStatusFilter(statusParam)) {
       return NextResponse.json(
         { error: 'Invalid status filter', code: 'INVALID_REQUEST' },
         { status: 400 }

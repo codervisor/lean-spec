@@ -190,14 +190,15 @@ pub async fn get_spec(
 
     // Compute required_by
     if let Some(complete) = dep_graph.get_complete_graph(&spec.path) {
-        detail.required_by = complete
+        let required_by: Vec<String> = complete
             .required_by
             .iter()
             .map(|s| s.path.clone())
             .collect();
+        detail.required_by = required_by.clone();
         detail.relationships = Some(crate::types::SpecRelationships {
             depends_on: detail.depends_on.clone(),
-            required_by: Some(detail.required_by.clone()),
+            required_by: Some(required_by),
         });
     }
 
@@ -233,14 +234,15 @@ pub async fn get_project_spec(
 
     // Compute required_by
     if let Some(complete) = dep_graph.get_complete_graph(&spec.path) {
-        detail.required_by = complete
+        let required_by: Vec<String> = complete
             .required_by
             .iter()
             .map(|s| s.path.clone())
             .collect();
+        detail.required_by = required_by.clone();
         detail.relationships = Some(crate::types::SpecRelationships {
             depends_on: detail.depends_on.clone(),
-            required_by: Some(detail.required_by.clone()),
+            required_by: Some(required_by),
         });
     }
 
