@@ -16,7 +16,7 @@ export default defineConfig({
     // Environment variable for API base URL
     env: {
       // Keep the default aligned with docs and client config so runs succeed
-      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
+      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3333',
     },
   },
 });
