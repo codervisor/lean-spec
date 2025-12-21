@@ -55,9 +55,11 @@ async fn get_spec_loader(
 fn parse_status_filter(
     status: &Option<String>,
 ) -> Result<Option<Vec<SpecStatus>>, (StatusCode, Json<ApiError>)> {
-    let parsed = status
-        .as_ref()
-        .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect::<Vec<_>>());
+    let parsed = status.as_ref().map(|s| {
+        s.split(',')
+            .filter_map(|s| s.parse().ok())
+            .collect::<Vec<_>>()
+    });
 
     if status.is_some() && parsed.as_ref().map_or(true, |v| v.is_empty()) {
         return Err((
