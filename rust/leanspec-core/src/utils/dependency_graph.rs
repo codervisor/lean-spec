@@ -236,7 +236,7 @@ impl DependencyGraph {
         let mut cycles = Vec::new();
         let mut visited = HashSet::new();
 
-        for (_path, &idx) in &self.node_indices {
+        for &idx in self.node_indices.values() {
             if !visited.contains(&idx) {
                 let mut stack = HashSet::new();
                 let mut path_stack = Vec::new();

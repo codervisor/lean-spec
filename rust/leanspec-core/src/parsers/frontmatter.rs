@@ -50,7 +50,7 @@ impl FrontmatterParser {
     }
 
     /// Extract YAML frontmatter from markdown content
-    fn extract_frontmatter<'a>(&self, content: &'a str) -> Result<(String, String), ParseError> {
+    fn extract_frontmatter(&self, content: &str) -> Result<(String, String), ParseError> {
         let content = content.trim_start();
 
         // Check for YAML frontmatter delimiter
