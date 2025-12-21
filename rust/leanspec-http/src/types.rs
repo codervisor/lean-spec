@@ -215,7 +215,7 @@ pub struct PriorityCountItem {
 }
 
 impl StatsResponse {
-    pub fn from_project_stats(stats: SpecStats, project_id: &str, total_specs: usize) -> Self {
+    pub fn from_project_stats(stats: SpecStats, project_id: &str) -> Self {
         let specs_by_status = vec![
             StatusCountItem {
                 status: "planned".to_string(),
@@ -256,7 +256,7 @@ impl StatsResponse {
 
         Self {
             total_projects: 1,
-            total_specs,
+            total_specs: stats.total,
             specs_by_status,
             specs_by_priority,
             completion_rate: stats.completion_percentage(),

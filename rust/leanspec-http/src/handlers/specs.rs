@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use leanspec_core::{
     DependencyGraph, FrontmatterValidator, LineCountValidator, SpecFilterOptions, SpecLoader,
-    SpecStats, StructureValidator,
+    SpecStats, SpecStatus, StructureValidator,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -52,6 +52,23 @@ async fn get_spec_loader(
     Ok((SpecLoader::new(&specs_dir), project))
 }
 
+fn parse_status_filter(
+    status: &Option<String>,
+) -> Result<Option<Vec<SpecStatus>>, (StatusCode, Json<ApiError>)> {
+    let parsed = status
+        .as_ref()
+        .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect::<Vec<_>>());
+
+    if status.is_some() && parsed.as_ref().map_or(true, |v| v.is_empty()) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request("Invalid status filter")),
+        ));
+    }
+
+    Ok(parsed)
+}
+
 /// GET /api/specs - List all specs with optional filters
 pub async fn list_specs(
     State(state): State<AppState>,
@@ -66,20 +83,11 @@ pub async fn list_specs(
         )
     })?;
 
-    let parsed_status: Option<Vec<_>> = query
-        .status
-        .clone()
-        .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect());
-    if query.status.is_some() && parsed_status.as_ref().map_or(true, |v| v.is_empty()) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ApiError::invalid_request("Invalid status filter")),
-        ));
-    }
+    let status_filter = parse_status_filter(&query.status)?;
 
     // Apply filters
     let filters = SpecFilterOptions {
-        status: parsed_status,
+        status: status_filter,
         priority: query
             .priority
             .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect()),
@@ -121,20 +129,11 @@ pub async fn list_project_specs(
         )
     })?;
 
-    let parsed_status: Option<Vec<_>> = query
-        .status
-        .clone()
-        .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect());
-    if query.status.is_some() && parsed_status.as_ref().map_or(true, |v| v.is_empty()) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ApiError::invalid_request("Invalid status filter")),
-        ));
-    }
+    let status_filter = parse_status_filter(&query.status)?;
 
     // Apply filters
     let filters = SpecFilterOptions {
-        status: parsed_status,
+        status: status_filter,
         priority: query
             .priority
             .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect()),
@@ -347,11 +346,7 @@ pub async fn get_stats(State(state): State<AppState>) -> ApiResult<Json<StatsRes
 
     let stats = SpecStats::compute(&all_specs);
 
-    Ok(Json(StatsResponse::from_project_stats(
-        stats,
-        &project.id,
-        all_specs.len(),
-    )))
+    Ok(Json(StatsResponse::from_project_stats(stats, &project.id)))
 }
 
 /// GET /api/projects/:projectId/stats - Project-scoped stats
@@ -370,11 +365,7 @@ pub async fn get_project_stats(
 
     let stats = SpecStats::compute(&all_specs);
 
-    Ok(Json(StatsResponse::from_project_stats(
-        stats,
-        &project.id,
-        all_specs.len(),
-    )))
+    Ok(Json(StatsResponse::from_project_stats(stats, &project.id)))
 }
 
 /// GET /api/deps/:spec - Get dependency graph for a spec

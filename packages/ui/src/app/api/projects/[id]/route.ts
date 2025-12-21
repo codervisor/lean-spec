@@ -33,10 +33,9 @@ export async function GET(
     // 'default' is the canonical ID (spec 151), 'local' kept for backward compatibility
     if (id === 'default' || id === 'local') {
       const specsDir = process.env.SPECS_DIR || 'specs';
-      const projectId = id === 'local' ? 'default' : id;
       return NextResponse.json({ 
         project: {
-          id: projectId,
+          id,
           displayName: 'Local Project',
           specsDir,
           isFeatured: true,
