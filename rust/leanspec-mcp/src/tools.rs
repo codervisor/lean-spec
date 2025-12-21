@@ -9,6 +9,7 @@ use leanspec_core::{
 };
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 /// Get all tool definitions
 pub fn get_tool_definitions() -> Vec<ToolDefinition> {
@@ -84,7 +85,7 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                     },
                     "content": {
                         "type": "string",
-                        "description": "Full markdown content to use instead of template"
+                        "description": create_content_description()
                     },
                     "tags": {
                         "type": "array",
@@ -983,6 +984,72 @@ fn tool_stats(specs_dir: &str) -> Result<String, String> {
 }
 
 // Helper functions
+
+fn create_content_description() -> String {
+    static DESCRIPTION: OnceLock<String> = OnceLock::new();
+
+    DESCRIPTION
+        .get_or_init(|| {
+            build_template_body_description().unwrap_or_else(|e| {
+                eprintln!(
+                    "Warning: failed to load spec template for create tool description: {}",
+                    e
+                );
+                "Body content only (markdown sections). Frontmatter and title are auto-generated."
+                    .to_string()
+            })
+        })
+        .clone()
+}
+
+fn build_template_body_description() -> Result<String, String> {
+    let specs_dir = std::env::var("LEANSPEC_SPECS_DIR").unwrap_or_else(|_| "specs".to_string());
+    let project_root = resolve_project_root(&specs_dir)?;
+    let config = load_config(&project_root);
+    let loader = TemplateLoader::with_config(&project_root, config);
+    let template = loader
+        .load(None)
+        .map_err(|e| format!("Failed to load template: {}", e))?;
+
+    let template_body = extract_template_body(&template);
+
+    Ok(format!(
+        "Body content only (markdown sections). DO NOT include frontmatter or title - these are auto-generated from other parameters (name, title, status, priority, tags).\n\nTEMPLATE STRUCTURE (body sections only):\n\n{}\n\nKeep specs <2000 tokens optimal, <3500 max. Consider sub-specs (IMPLEMENTATION.md) if >400 lines.",
+        template_body
+    ))
+}
+
+fn extract_template_body(template: &str) -> String {
+    let parser = FrontmatterParser::new();
+    let body = match parser.parse(template) {
+        Ok((_, body)) => body,
+        Err(_) => template.to_string(),
+    };
+
+    let mut lines: Vec<&str> = body.lines().collect();
+
+    while matches!(lines.first(), Some(line) if line.trim().is_empty()) {
+        lines.remove(0);
+    }
+
+    if matches!(lines.first(), Some(line) if line.trim_start().starts_with('#')) {
+        lines.remove(0);
+    }
+
+    while matches!(lines.first(), Some(line) if line.trim().is_empty()) {
+        lines.remove(0);
+    }
+
+    if matches!(lines.first(), Some(line) if line.trim_start().starts_with("> **Status**")) {
+        lines.remove(0);
+    }
+
+    while matches!(lines.first(), Some(line) if line.trim().is_empty()) {
+        lines.remove(0);
+    }
+
+    lines.join("\n").trim().to_string()
+}
 
 fn get_next_spec_number(specs_dir: &str) -> Result<u32, String> {
     let specs_path = std::path::Path::new(specs_dir);

@@ -1,20 +1,23 @@
 ---
-status: planned
-created: 2025-12-21
+status: in-progress
+created: '2025-12-21'
 priority: medium
 tags:
-- mcp
-- dx
-- ai-agents
-- templates
-- documentation
-created_at: 2025-12-21T14:53:17.954876Z
-updated_at: 2025-12-21T14:53:17.954876Z
+  - mcp
+  - dx
+  - ai-agents
+  - templates
+  - documentation
+created_at: '2025-12-21T14:53:17.954876Z'
+updated_at: '2025-12-21T15:07:43.301Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-21T15:07:43.301Z'
 ---
 
 # Embed Spec Template in MCP Create Tool Content Field Description
 
-> **Status**: planned · **Priority**: medium · **Created**: {date}
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-12-21 · **Tags**: mcp, dx, ai-agents, templates, documentation
 
 ## Problem & Motivation
 
@@ -164,16 +167,16 @@ Keep specs <2000 tokens optimal, <3500 max. Consider sub-specs (IMPLEMENTATION.m
 
 ## Acceptance Criteria
 
-- [ ] MCP server loads `.lean-spec/templates/spec-template.md` at startup
-- [ ] Template loading uses existing `TemplateLoader` infrastructure
-- [ ] Frontmatter (YAML block) is stripped from loaded template
-- [ ] Title line (`# {name}` or similar) is stripped from loaded template
-- [ ] Template body is embedded into `content` field description
-- [ ] Description prepends explanatory text about body-only content
-- [ ] If template load fails, falls back to minimal static description
-- [ ] Tool schema reflects actual template (test by viewing schema)
-- [ ] AI agents can see template structure in MCP tool descriptions
-- [ ] Changes to template file automatically reflect in tool schema after MCP restart
+- [x] MCP server loads `.lean-spec/templates/spec-template.md` at startup
+- [x] Template loading uses existing `TemplateLoader` infrastructure
+- [x] Frontmatter (YAML block) is stripped from loaded template
+- [x] Title line (`# {name}` or similar) is stripped from loaded template
+- [x] Template body is embedded into `content` field description
+- [x] Description prepends explanatory text about body-only content
+- [x] If template load fails, falls back to minimal static description
+- [x] Tool schema reflects actual template (test by viewing schema)
+- [x] AI agents can see template structure in MCP tool descriptions
+- [x] Changes to template file automatically reflect in tool schema after MCP restart
 
 ## Out of Scope
 
@@ -231,6 +234,14 @@ Keep specs <2000 tokens optimal, <3500 max. Consider sub-specs (IMPLEMENTATION.m
 - Test AI agent can create spec using description alone
 - Verify fallback works if template missing
 - Confirm template changes reflect after restart
+
+### Implementation Notes (2025-12-21)
+- Create tool schema now builds its `content` description by loading the default template via `TemplateLoader`, stripping frontmatter/title/status lines, and caching the processed body with `OnceLock` for reuse.
+- Added a graceful fallback description and warning when template loading fails.
+- Added a regression test asserting the create tool description includes the template body (without frontmatter) so AI agents see the expected structure.
+
+### Testing
+- `RUSTFLAGS="-Awarnings" cargo test -p leanspec-mcp test_create_tool_description_includes_template_body -- --nocapture`
 
 ## Open Questions
 
