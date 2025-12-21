@@ -666,6 +666,12 @@ jobs:
 
 ## Implementation Log
 
+### 2025-12-21: Parity Findings
+- Contract suite currently encodes single-project endpoints (`/api/specs`, `/api/specs/:spec`, `/api/projects/:id/switch`, `/api/projects/refresh`) that do not exist in the Next.js multi-project API. We need to re-baseline schemas and tests to the canonical multi-project shape: `/api/projects/:projectId/specs` and `/api/projects/:projectId/specs/:specId` with stateless project selection.
+- Rust HTTP server is missing `/health` and `/api/search`; search is not yet implemented feature-wise, so keep schema placeholder but mark the test as pending until spec 192 lands it.
+- Mark deprecated endpoints (project switch, refresh) as out of contract and remove related assertions from the suite once parity decision is made in spec 192.
+- Action: align source-of-truth schemas to the Next.js route structure, and gate tests on feature availability flags so Rust and Next can both pass once parity work completes.
+
 ### 2025-12-20: Spec Created
 - Identified gap: Spec 191 tests don't actually test HTTP servers
 - Proposed schema-first TypeScript test suite

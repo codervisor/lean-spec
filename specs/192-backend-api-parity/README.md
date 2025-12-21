@@ -417,6 +417,12 @@ pub async fn list_directory(
 
 ## Implementation Log
 
+### 2025-12-21: Parity Adjustments
+- Contract tests revealed Rust currently exposes `/api/specs` while Next.js uses multi-project routes (`/api/projects/:projectId/specs` and `/api/projects/:projectId/specs/:specId`). Align Rust to the multi-project shape and return structures (`{ specs }`, `{ spec }`) expected by the Next.js API.
+- Add missing endpoints: `/health` and `/api/search` (search can be stubbed or feature-flagged until implemented). Ensure response shapes match the contract suite once updated in spec 194.
+- Remove deprecated flows from Rust (`/api/projects/:id/switch`, `/api/projects/refresh`) in favor of stateless project selection consistent with Next.js.
+- Reconcile project schema differences (Next.js uses `displayName`, `specsDir`, single-project virtual project) so responses match the canonical schema decided with spec 194.
+
 ### 2025-12-19: Sub-Spec Created
 - Split from parent spec 190
 - Focus: Backend API endpoints only
