@@ -995,8 +995,7 @@ fn create_content_description() -> String {
                     "Warning: failed to load spec template for create tool description: {}",
                     e
                 );
-                "Body content only (markdown sections). Frontmatter and title are auto-generated."
-                    .to_string()
+                CREATE_CONTENT_FALLBACK.to_string()
             })
         })
         .clone()
@@ -1014,8 +1013,8 @@ fn build_template_body_description() -> Result<String, String> {
     let template_body = extract_template_body(&template);
 
     Ok(format!(
-        "Body content only (markdown sections). DO NOT include frontmatter or title - these are auto-generated from other parameters (name, title, status, priority, tags).\n\nTEMPLATE STRUCTURE (body sections only):\n\n{}\n\nKeep specs <2000 tokens optimal, <3500 max. Consider sub-specs (IMPLEMENTATION.md) if >400 lines.",
-        template_body
+        "{}{}{}",
+        CONTENT_DESCRIPTION_PREFIX, template_body, CONTENT_DESCRIPTION_SUFFIX
     ))
 }
 
@@ -1026,30 +1025,53 @@ fn extract_template_body(template: &str) -> String {
         Err(_) => template.to_string(),
     };
 
-    let mut lines: Vec<&str> = body.lines().collect();
+    let mut skipped_title = false;
+    let mut started_body = false;
+    let mut collected = Vec::new();
 
-    while matches!(lines.first(), Some(line) if line.trim().is_empty()) {
-        lines.remove(0);
+    for line in body.lines() {
+        let trimmed = line.trim_start();
+
+        if !skipped_title {
+            if trimmed.is_empty() {
+                continue;
+            }
+            if trimmed.starts_with('#') {
+                skipped_title = true;
+                continue;
+            }
+        }
+
+        if !started_body {
+            if trimmed.is_empty() {
+                continue;
+            }
+            if trimmed.starts_with("> **Status**") {
+                skipped_title = true;
+                continue;
+            }
+            started_body = true;
+        }
+
+        collected.push(line);
     }
 
-    if matches!(lines.first(), Some(line) if line.trim_start().starts_with('#')) {
-        lines.remove(0);
-    }
-
-    while matches!(lines.first(), Some(line) if line.trim().is_empty()) {
-        lines.remove(0);
-    }
-
-    if matches!(lines.first(), Some(line) if line.trim_start().starts_with("> **Status**")) {
-        lines.remove(0);
-    }
-
-    while matches!(lines.first(), Some(line) if line.trim().is_empty()) {
-        lines.remove(0);
-    }
-
-    lines.join("\n").trim().to_string()
+    collected
+        .into_iter()
+        .skip_while(|line| line.trim().is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim()
+        .to_string()
 }
+
+const CREATE_CONTENT_FALLBACK: &str =
+    "Body content only (markdown sections). Frontmatter and title are auto-generated.";
+
+const CONTENT_DESCRIPTION_PREFIX: &str = "Body content only (markdown sections). DO NOT include frontmatter or title - these are auto-generated from other parameters (name, title, status, priority, tags).\n\nTEMPLATE STRUCTURE (body sections only):\n\n";
+
+const CONTENT_DESCRIPTION_SUFFIX: &str =
+    "\n\nKeep specs <2000 tokens optimal, <3500 max. Consider sub-specs (IMPLEMENTATION.md) if >400 lines.";
 
 fn get_next_spec_number(specs_dir: &str) -> Result<u32, String> {
     let specs_path = std::path::Path::new(specs_dir);
