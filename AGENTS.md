@@ -4,6 +4,10 @@
 
 Lightweight spec methodology for AI-powered development.
 
+## ⚠ Core Rules
+
+1. Always use `pnpm` instead of `npm` where applicable
+
 ## 🚨 CRITICAL: Before ANY Task
 
 1. **Discover** → `board` or `lean-spec board` to see project state
@@ -12,11 +16,11 @@ Lightweight spec methodology for AI-powered development.
 
 ### 🔍 Search Query Best Practices
 
-| ✅ Good Query | ❌ Poor Query |
-|---------------|---------------|
-| `"search ranking"` | `"AI agent integration coding agent orchestration"` |
-| `"token validation"` | `"how to validate tokens in specs"` |
-| `"api"` + tags filter `["integration"]` | `"api integration feature"` |
+| ✅ Good Query                            | ❌ Poor Query                                        |
+| --------------------------------------- | --------------------------------------------------- |
+| `"search ranking"`                      | `"AI agent integration coding agent orchestration"` |
+| `"token validation"`                    | `"how to validate tokens in specs"`                 |
+| `"api"` + tags filter `["integration"]` | `"api integration feature"`                         |
 
 **Why?** All search terms must appear in the SAME field/line to match. Use 2-4 specific terms + filters instead of long queries.
 
@@ -24,43 +28,43 @@ Lightweight spec methodology for AI-powered development.
 
 ### MCP Tools (Preferred) with CLI Fallback
 
-| Action | MCP Tool | CLI Fallback |
-|--------|----------|--------------|
-| Project status | `board` | `lean-spec board` |
-| List specs | `list` | `lean-spec list` |
-| Search specs | `search` | `lean-spec search "query"` |
-| View spec | `view` | `lean-spec view <spec>` |
-| Create spec | `create` | `lean-spec create <name>` |
-| Update spec | `update` | `lean-spec update <spec> --status <status>` |
-| Link specs | `link` | `lean-spec link <spec> --depends-on <other>` |
-| Unlink specs | `unlink` | `lean-spec unlink <spec> --depends-on <other>` |
-| Dependencies | `deps` | `lean-spec deps <spec>` |
-| Token count | `tokens` | `lean-spec tokens <spec>` |
-| Validate specs | `validate` | `lean-spec validate` |
+| Action         | MCP Tool   | CLI Fallback                                   |
+| -------------- | ---------- | ---------------------------------------------- |
+| Project status | `board`    | `lean-spec board`                              |
+| List specs     | `list`     | `lean-spec list`                               |
+| Search specs   | `search`   | `lean-spec search "query"`                     |
+| View spec      | `view`     | `lean-spec view <spec>`                        |
+| Create spec    | `create`   | `lean-spec create <name>`                      |
+| Update spec    | `update`   | `lean-spec update <spec> --status <status>`    |
+| Link specs     | `link`     | `lean-spec link <spec> --depends-on <other>`   |
+| Unlink specs   | `unlink`   | `lean-spec unlink <spec> --depends-on <other>` |
+| Dependencies   | `deps`     | `lean-spec deps <spec>`                        |
+| Token count    | `tokens`   | `lean-spec tokens <spec>`                      |
+| Validate specs | `validate` | `lean-spec validate`                           |
 
 **Local Development:** Use `node bin/lean-spec.js <command>` instead of `npx lean-spec`. Build first with `pnpm build`.
 
 ## ⚠️ Core Rules
 
-| Rule | Details |
-|------|---------|
-| **NEVER edit frontmatter manually** | Use `update`, `link`, `unlink` for: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on` |
-| **ALWAYS link spec references** | Content mentions another spec → `lean-spec link <spec> --depends-on <other>` |
-| **Track status transitions** | `planned` → `in-progress` (before coding) → `complete` (after done) |
-| **Keep specs current** | Document progress, decisions, and learnings as work happens. Obsolete specs mislead both humans and AI |
-| **No nested code blocks** | Use indentation instead |
-| **Update all translations** | UI/MCP/CLI changes: Update both `en/common.json` and `zh-CN/common.json` in `packages/ui/src/locales/` and `packages/mcp/src/locales/` |
+| Rule                                | Details                                                                                                                                |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **NEVER edit frontmatter manually** | Use `update`, `link`, `unlink` for: `status`, `priority`, `tags`, `assignee`, `transitions`, timestamps, `depends_on`                  |
+| **ALWAYS link spec references**     | Content mentions another spec → `lean-spec link <spec> --depends-on <other>`                                                           |
+| **Track status transitions**        | `planned` → `in-progress` (before coding) → `complete` (after done)                                                                    |
+| **Keep specs current**              | Document progress, decisions, and learnings as work happens. Obsolete specs mislead both humans and AI                                 |
+| **No nested code blocks**           | Use indentation instead                                                                                                                |
+| **Update all translations**         | UI/MCP/CLI changes: Update both `en/common.json` and `zh-CN/common.json` in `packages/ui/src/locales/` and `packages/mcp/src/locales/` |
 
 ### 🚫 Common Mistakes
 
-| ❌ Don't | ✅ Do Instead |
-|----------|---------------|
-| Create spec files manually | Use `create` tool |
-| Skip discovery | Run `board` and `search` first |
-| Leave status as "planned" | Update to `in-progress` before coding |
-| Edit frontmatter manually | Use `update` tool |
+| ❌ Don't                             | ✅ Do Instead                                |
+| ----------------------------------- | ------------------------------------------- |
+| Create spec files manually          | Use `create` tool                           |
+| Skip discovery                      | Run `board` and `search` first              |
+| Leave status as "planned"           | Update to `in-progress` before coding       |
+| Edit frontmatter manually           | Use `update` tool                           |
 | Complete spec without documentation | Document progress, prompts, learnings first |
-| Update only English translations | Update both `en` and `zh-CN` locales |
+| Update only English translations    | Update both `en` and `zh-CN` locales        |
 
 ## 📋 SDD Workflow
 
@@ -91,20 +95,20 @@ lean-spec link <spec> --depends-on <other-spec>
 
 ## When to Use Specs
 
-| ✅ Write spec | ❌ Skip spec |
-|---------------|--------------|
-| Multi-part features | Bug fixes |
-| Breaking changes | Trivial changes |
-| Design decisions | Self-explanatory refactors |
+| ✅ Write spec        | ❌ Skip spec                |
+| ------------------- | -------------------------- |
+| Multi-part features | Bug fixes                  |
+| Breaking changes    | Trivial changes            |
+| Design decisions    | Self-explanatory refactors |
 
 ## Token Thresholds
 
-| Tokens | Status |
-|--------|--------|
-| <2,000 | ✅ Optimal |
-| 2,000-3,500 | ✅ Good |
+| Tokens      | Status               |
+| ----------- | -------------------- |
+| <2,000      | ✅ Optimal            |
+| 2,000-3,500 | ✅ Good               |
 | 3,500-5,000 | ⚠️ Consider splitting |
-| >5,000 | 🔴 Must split |
+| >5,000      | 🔴 Must split         |
 
 ## First Principles (Priority Order)
 
