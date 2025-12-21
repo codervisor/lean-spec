@@ -1,0 +1,2 @@
+# Format Rust code
+cd rust && cargo fmt --all
