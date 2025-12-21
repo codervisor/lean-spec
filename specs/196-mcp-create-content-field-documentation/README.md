@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-21'
 priority: medium
 tags:
@@ -9,15 +9,19 @@ tags:
   - templates
   - documentation
 created_at: '2025-12-21T14:53:17.954876Z'
-updated_at: '2025-12-21T15:07:43.301Z'
+updated_at: '2025-12-21T15:24:08.504Z'
 transitions:
   - status: in-progress
     at: '2025-12-21T15:07:43.301Z'
+  - status: complete
+    at: '2025-12-21T15:24:08.504Z'
+completed_at: '2025-12-21T15:24:08.504Z'
+completed: '2025-12-21'
 ---
 
 # Embed Spec Template in MCP Create Tool Content Field Description
 
-> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-12-21 · **Tags**: mcp, dx, ai-agents, templates, documentation
+> **Status**: ✅ Complete · **Priority**: Medium · **Created**: 2025-12-21 · **Tags**: mcp, dx, ai-agents, templates, documentation
 
 ## Problem & Motivation
 
