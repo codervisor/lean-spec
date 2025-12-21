@@ -5,6 +5,7 @@
 use crate::config::ServerConfig;
 use crate::error::ServerError;
 use crate::project_registry::ProjectRegistry;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -21,7 +22,16 @@ pub struct AppState {
 impl AppState {
     /// Create new application state
     pub fn new(config: ServerConfig) -> Result<Self, ServerError> {
-        let registry = ProjectRegistry::new()?;
+        let mut registry = ProjectRegistry::new()?;
+
+        // Ensure a default project is available for single-project mode
+        if registry.all().is_empty() {
+            let default_path = default_project_path();
+
+            if let Ok(project) = registry.add(&default_path) {
+                let _ = registry.set_current(&project.id);
+            }
+        }
 
         Ok(Self {
             config: Arc::new(config),
@@ -48,4 +58,23 @@ impl AppState {
         let registry = self.registry.read().await;
         registry.current_id().map(|s| s.to_string())
     }
+}
+
+/// Resolve a default project path by walking up to find a `specs` directory.
+fn default_project_path() -> PathBuf {
+    if let Ok(explicit) = std::env::var("LEANSPEC_PROJECT_PATH") {
+        return PathBuf::from(explicit);
+    }
+
+    let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    loop {
+        if dir.join("specs").exists() {
+            return dir;
+        }
+        if !(dir.pop()) {
+            break;
+        }
+    }
+
+    PathBuf::from(".")
 }

@@ -19,6 +19,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const statusParam = url.searchParams.get('status');
+    const validStatuses = ['planned', 'in-progress', 'complete', 'archived'];
+
+    if (statusParam && !statusParam.split(',').every((s) => validStatuses.includes(s))) {
+      return NextResponse.json(
+        { error: 'Invalid status filter', code: 'INVALID_REQUEST' },
+        { status: 400 }
+      );
+    }
     
     // Use 'default' project as undefined for backward compatibility
     // This routes to filesystem source in single-project mode

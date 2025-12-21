@@ -33,7 +33,7 @@ export async function GET() {
     return NextResponse.json({ 
       mode: 'single-project',
       projects: [{
-        id: 'local',
+        id: 'default',
         displayName: 'Local Project',
         specsDir,
         isFeatured: true,

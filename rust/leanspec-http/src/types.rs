@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecSummary {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
     pub id: String,
     pub spec_number: Option<u32>,
     pub spec_name: String,
@@ -25,11 +27,14 @@ pub struct SpecSummary {
     pub depends_on: Vec<String>,
     #[serde(default)]
     pub required_by: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relationships: Option<SpecRelationships>,
 }
 
 impl From<&SpecInfo> for SpecSummary {
     fn from(spec: &SpecInfo) -> Self {
         Self {
+            project_id: None,
             id: spec.path.clone(),
             spec_number: spec.number(),
             spec_name: spec.path.clone(),
@@ -44,7 +49,24 @@ impl From<&SpecInfo> for SpecSummary {
             file_path: spec.file_path.to_string_lossy().to_string(),
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
+            relationships: None,
         }
+    }
+}
+
+impl SpecSummary {
+    pub fn with_project_id(mut self, project_id: &str) -> Self {
+        self.project_id = Some(project_id.to_string());
+        self
+    }
+
+    pub fn with_relationships(mut self, required_by: Vec<String>) -> Self {
+        self.required_by = required_by.clone();
+        self.relationships = Some(SpecRelationships {
+            depends_on: self.depends_on.clone(),
+            required_by: Some(required_by),
+        });
+        self
     }
 }
 
@@ -52,6 +74,8 @@ impl From<&SpecInfo> for SpecSummary {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecDetail {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
     pub id: String,
     pub spec_number: Option<u32>,
     pub spec_name: String,
@@ -68,11 +92,14 @@ pub struct SpecDetail {
     pub depends_on: Vec<String>,
     #[serde(default)]
     pub required_by: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relationships: Option<SpecRelationships>,
 }
 
 impl From<&SpecInfo> for SpecDetail {
     fn from(spec: &SpecInfo) -> Self {
         Self {
+            project_id: None,
             id: spec.path.clone(),
             spec_number: spec.number(),
             spec_name: spec.path.clone(),
@@ -88,8 +115,25 @@ impl From<&SpecInfo> for SpecDetail {
             file_path: spec.file_path.to_string_lossy().to_string(),
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
+            relationships: None,
         }
     }
+}
+
+impl SpecDetail {
+    pub fn with_project_id(mut self, project_id: String) -> Self {
+        self.project_id = Some(project_id);
+        self
+    }
+}
+
+/// Spec relationships container
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecRelationships {
+    pub depends_on: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required_by: Option<Vec<String>>,
 }
 
 /// Response for list specs endpoint
@@ -98,6 +142,8 @@ impl From<&SpecInfo> for SpecDetail {
 pub struct ListSpecsResponse {
     pub specs: Vec<SpecSummary>,
     pub total: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
 }
 
 /// Query parameters for list specs
@@ -117,6 +163,8 @@ pub struct SearchResponse {
     pub results: Vec<SpecSummary>,
     pub total: usize,
     pub query: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
 }
 
 /// Request body for search
@@ -126,6 +174,8 @@ pub struct SearchRequest {
     pub query: String,
     #[serde(default)]
     pub filters: Option<SearchFilters>,
+    #[serde(rename = "projectId", default)]
+    pub project_id: Option<String>,
 }
 
 /// Search filters
@@ -141,73 +191,76 @@ pub struct SearchFilters {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StatsResponse {
-    pub total: usize,
-    pub by_status: StatusCounts,
-    pub by_priority: PriorityCounts,
-    pub by_tag: Vec<TagCount>,
-    pub completion_percentage: f64,
-    pub active_count: usize,
-    pub unassigned: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct StatusCounts {
-    pub planned: usize,
-    pub in_progress: usize,
-    pub complete: usize,
-    pub archived: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct PriorityCounts {
-    pub low: usize,
-    pub medium: usize,
-    pub high: usize,
-    pub critical: usize,
+    pub total_projects: usize,
+    pub total_specs: usize,
+    pub specs_by_status: Vec<StatusCountItem>,
+    pub specs_by_priority: Vec<PriorityCountItem>,
+    pub completion_rate: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TagCount {
-    pub tag: String,
+pub struct StatusCountItem {
+    pub status: String,
     pub count: usize,
 }
 
-impl From<SpecStats> for StatsResponse {
-    fn from(stats: SpecStats) -> Self {
-        let by_status = StatusCounts {
-            planned: *stats.by_status.get(&SpecStatus::Planned).unwrap_or(&0),
-            in_progress: *stats.by_status.get(&SpecStatus::InProgress).unwrap_or(&0),
-            complete: *stats.by_status.get(&SpecStatus::Complete).unwrap_or(&0),
-            archived: *stats.by_status.get(&SpecStatus::Archived).unwrap_or(&0),
-        };
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PriorityCountItem {
+    pub priority: String,
+    pub count: usize,
+}
 
-        let by_priority = PriorityCounts {
-            low: *stats.by_priority.get(&SpecPriority::Low).unwrap_or(&0),
-            medium: *stats.by_priority.get(&SpecPriority::Medium).unwrap_or(&0),
-            high: *stats.by_priority.get(&SpecPriority::High).unwrap_or(&0),
-            critical: *stats.by_priority.get(&SpecPriority::Critical).unwrap_or(&0),
-        };
+impl StatsResponse {
+    pub fn from_project_stats(stats: SpecStats, project_id: &str, total_specs: usize) -> Self {
+        let specs_by_status = vec![
+            StatusCountItem {
+                status: "planned".to_string(),
+                count: *stats.by_status.get(&SpecStatus::Planned).unwrap_or(&0),
+            },
+            StatusCountItem {
+                status: "in-progress".to_string(),
+                count: *stats.by_status.get(&SpecStatus::InProgress).unwrap_or(&0),
+            },
+            StatusCountItem {
+                status: "complete".to_string(),
+                count: *stats.by_status.get(&SpecStatus::Complete).unwrap_or(&0),
+            },
+            StatusCountItem {
+                status: "archived".to_string(),
+                count: *stats.by_status.get(&SpecStatus::Archived).unwrap_or(&0),
+            },
+        ];
 
-        let by_tag: Vec<TagCount> = stats
-            .top_tags(20)
-            .into_iter()
-            .map(|(tag, count)| TagCount {
-                tag: tag.clone(),
-                count: *count,
-            })
-            .collect();
+        let specs_by_priority = vec![
+            PriorityCountItem {
+                priority: "low".to_string(),
+                count: *stats.by_priority.get(&SpecPriority::Low).unwrap_or(&0),
+            },
+            PriorityCountItem {
+                priority: "medium".to_string(),
+                count: *stats.by_priority.get(&SpecPriority::Medium).unwrap_or(&0),
+            },
+            PriorityCountItem {
+                priority: "high".to_string(),
+                count: *stats.by_priority.get(&SpecPriority::High).unwrap_or(&0),
+            },
+            PriorityCountItem {
+                priority: "critical".to_string(),
+                count: *stats.by_priority.get(&SpecPriority::Critical).unwrap_or(&0),
+            },
+        ];
 
         Self {
-            total: stats.total,
-            by_status,
-            by_priority,
-            by_tag,
-            completion_percentage: stats.completion_percentage(),
-            active_count: stats.active_count(),
-            unassigned: stats.unassigned,
+            total_projects: 1,
+            total_specs,
+            specs_by_status,
+            specs_by_priority,
+            completion_rate: stats.completion_percentage(),
+            project_id: Some(project_id.to_string()),
         }
     }
 }
@@ -221,12 +274,61 @@ pub struct DependencyResponse {
     pub required_by: Vec<SpecSummary>,
 }
 
+/// Project-level dependency graph
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DependencyGraphResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
+    pub nodes: Vec<DependencyNode>,
+    pub edges: Vec<DependencyEdge>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DependencyNode {
+    pub id: String,
+    pub name: String,
+    pub number: u32,
+    pub status: String,
+    pub priority: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DependencyEdge {
+    pub source: String,
+    pub target: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+}
+
 /// Validation result
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ValidationResponse {
     pub is_valid: bool,
     pub issues: Vec<ValidationIssue>,
+}
+
+/// Project validation summary
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectValidationResponse {
+    pub project_id: String,
+    pub path: String,
+    pub validation: ProjectValidationSummary,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectValidationSummary {
+    pub is_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub specs_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

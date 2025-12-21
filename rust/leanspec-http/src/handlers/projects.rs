@@ -14,7 +14,13 @@ use crate::state::AppState;
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectsListResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mode: Option<String>,
     pub projects: Vec<ProjectResponse>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recent_projects: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub favorite_projects: Option<Vec<String>>,
     pub current_project_id: Option<String>,
 }
 
@@ -30,6 +36,13 @@ pub struct ProjectResponse {
     pub color: Option<String>,
     pub last_accessed: String,
     pub added_at: String,
+}
+
+/// Project detail wrapper response
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SingleProjectResponse {
+    pub project: ProjectResponse,
 }
 
 impl From<&Project> for ProjectResponse {
@@ -52,9 +65,19 @@ pub async fn list_projects(State(state): State<AppState>) -> Json<ProjectsListRe
     let registry = state.registry.read().await;
     let projects: Vec<ProjectResponse> = registry.all().iter().map(|p| (*p).into()).collect();
     let current_project_id = registry.current_id().map(|s| s.to_string());
+    let mode = if projects.len() > 1 {
+        Some("multi-project".to_string())
+    } else {
+        Some("single-project".to_string())
+    };
+    let recent_projects = Some(registry.recent(5).iter().map(|p| p.id.clone()).collect());
+    let favorite_projects = Some(registry.favorites().iter().map(|p| p.id.clone()).collect());
 
     Json(ProjectsListResponse {
         projects,
+        mode,
+        recent_projects,
+        favorite_projects,
         current_project_id,
     })
 }
@@ -88,7 +111,7 @@ pub async fn add_project(
 pub async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> ApiResult<Json<ProjectResponse>> {
+) -> ApiResult<Json<SingleProjectResponse>> {
     let registry = state.registry.read().await;
     let project = registry.get(&id).ok_or_else(|| {
         (
@@ -97,7 +120,7 @@ pub async fn get_project(
         )
     })?;
 
-    Ok(Json(project.into()))
+    Ok(Json(SingleProjectResponse { project: project.into() }))
 }
 
 /// PATCH /api/projects/:id - Update a project

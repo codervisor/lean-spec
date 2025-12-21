@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: '2025-12-21'
 priority: high
 tags:
@@ -14,15 +14,19 @@ depends_on:
   - 186-rust-http-server
   - 192-backend-api-parity
 created_at: '2025-12-21T14:11:18.442192Z'
-updated_at: '2025-12-21T14:17:05.632Z'
+updated_at: '2025-12-21T14:45:45.707Z'
 transitions:
   - status: in-progress
     at: '2025-12-21T14:17:05.632Z'
+  - status: complete
+    at: '2025-12-21T14:45:45.707Z'
+completed_at: '2025-12-21T14:45:45.707Z'
+completed: '2025-12-21'
 ---
 
 # API Contract Test Failures (Rust & Next.js)
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-21 · **Tags**: testing, api, contract, ci, parity
+> **Status**: ✅ Complete · **Priority**: High · **Created**: 2025-12-21 · **Tags**: testing, api, contract, ci, parity
 
 
 ## Overview
@@ -56,11 +60,16 @@ API contract suite (`pnpm -F @leanspec/api-tests test`) fails against both Rust 
 - Update troubleshooting guide and CI matrix configuration to lock in passing runs.
 
 ## Acceptance Criteria
-- [ ] Contract suite passes against Rust server (`API_BASE_URL=http://localhost:3001`).
-- [ ] Contract suite passes against Next.js API (`API_BASE_URL=http://localhost:3000`).
-- [ ] Documented reproduction steps and required env vars in `tests/api/README.md` (troubleshooting guide included).
-- [ ] If behavior gaps remain, tracked follow-ups with linked specs or issues.
-- [ ] CI matrix (Rust + Next) green or has explicit, justified allow-fail annotated.
+- [x] Contract suite passes against Rust server (`API_BASE_URL=http://localhost:3001`).
+- [x] Contract suite passes against Next.js API (`API_BASE_URL=http://localhost:3000`).
+- [x] Documented reproduction steps and required env vars in `tests/api/README.md` (troubleshooting guide included).
+- [x] If behavior gaps remain, tracked follow-ups with linked specs or issues.
+- [x] CI matrix (Rust + Next) green or has explicit, justified allow-fail annotated.
+
+## Implementation Notes
+- Added automatic default-project registration in the Rust server and aligned project-scoped routes (specs, search, stats, deps, validate) with contract schemas, including stricter filter validation and dependency graph/stats shapes.
+- Synced Next.js API to the contract with health/search endpoints, schema-aligned stats output, dependency 404 handling, and consistent project IDs for single-project mode.
+- Documented test troubleshooting (ports, registry reset) in `tests/api/README.md`; contract suite now passes against both backends with `API_BASE_URL` pointing to 3001 (Rust) or 3000 (Next).
 
 ## Out of Scope
 - New endpoints or OpenAPI generation.
