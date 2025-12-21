@@ -11,9 +11,11 @@ export default defineConfig({
     sequence: {
       shuffle: false,
     },
+    maxConcurrency: parseInt(process.env.MAX_CONCURRENCY || '1', 10),
+    maxWorkers: parseInt(process.env.MAX_WORKERS || '1', 10),
     // Environment variable for API base URL
     env: {
-      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
+      API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3333',
     },
   },
 });
