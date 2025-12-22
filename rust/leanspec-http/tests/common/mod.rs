@@ -1,5 +1,7 @@
 //! Common test utilities and fixtures for integration tests
 
+#![allow(unused_imports)]
+
 pub mod fixtures;
 pub mod helpers;
 
