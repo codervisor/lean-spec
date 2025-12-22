@@ -6,8 +6,9 @@ use axum::Json;
 use std::collections::HashMap;
 
 use leanspec_core::{
-    DependencyGraph, FrontmatterValidator, LineCountValidator, MetadataUpdate as CoreMetadataUpdate,
-    SpecFilterOptions, SpecLoader, SpecStats, SpecStatus, SpecWriter, StructureValidator,
+    DependencyGraph, FrontmatterValidator, LineCountValidator,
+    MetadataUpdate as CoreMetadataUpdate, SpecFilterOptions, SpecLoader, SpecStats, SpecStatus,
+    SpecWriter, StructureValidator,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -671,17 +672,15 @@ pub async fn update_metadata(
     let mut core_updates = CoreMetadataUpdate::new();
 
     if let Some(status_str) = &updates.status {
-        let status = status_str
-            .parse()
-            .map_err(|_| {
-                (
-                    StatusCode::BAD_REQUEST,
-                    Json(ApiError::invalid_request(&format!(
-                        "Invalid status: {}",
-                        status_str
-                    ))),
-                )
-            })?;
+        let status = status_str.parse().map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&format!(
+                    "Invalid status: {}",
+                    status_str
+                ))),
+            )
+        })?;
         core_updates = core_updates.with_status(status);
     }
 
@@ -708,12 +707,14 @@ pub async fn update_metadata(
 
     // Update metadata using spec writer
     let writer = SpecWriter::new(&project.specs_dir);
-    let frontmatter = writer.update_metadata(&spec_id, core_updates).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let frontmatter = writer
+        .update_metadata(&spec_id, core_updates)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
 
     Ok(Json(crate::types::UpdateMetadataResponse {
         success: true,
