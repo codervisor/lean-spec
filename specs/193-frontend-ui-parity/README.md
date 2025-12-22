@@ -1,19 +1,25 @@
 ---
-status: planned
-created: 2025-12-19
+status: in-progress
+created: '2025-12-19'
 priority: high
 tags:
-- ui
-- frontend
-- vite
-- react
+  - ui
+  - frontend
+  - vite
+  - react
 depends_on:
-- 192-backend-api-parity
-created_at: 2025-12-19T06:36:15.645303Z
-updated_at: 2025-12-19T06:36:24.916367Z
+  - 192-backend-api-parity
+created_at: '2025-12-19T06:36:15.645303Z'
+updated_at: '2025-12-22T14:01:35.592Z'
+transitions:
+  - status: in-progress
+    at: '2025-12-22T14:01:35.592Z'
 ---
 
 # Frontend UI Parity: Port @leanspec/ui Components to ui-vite
+
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-19 · **Tags**: ui, frontend, vite, react
+
 
 > Achieve identical UI/UX between @leanspec/ui (Next.js) and @leanspec/ui-vite (Vite SPA)
 
