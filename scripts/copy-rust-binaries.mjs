@@ -10,13 +10,13 @@
  *   node scripts/copy-rust-binaries.mjs --all     # Copy all platforms (requires cross-compilation)
  */
 import { promises as fs } from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
+const REPOSITORY_URL = 'https://github.com/codervisor/lean-spec.git';
 
 // Platform mapping
 const PLATFORM_MAP = {
@@ -25,14 +25,53 @@ const PLATFORM_MAP = {
   win32: { x64: 'windows-x64', arm64: 'windows-arm64' }
 };
 
+const PLATFORM_INFO = {
+  'darwin-x64': { os: 'darwin', cpu: 'x64', label: 'macOS x64' },
+  'darwin-arm64': { os: 'darwin', cpu: 'arm64', label: 'macOS ARM64' },
+  'linux-x64': { os: 'linux', cpu: 'x64', label: 'Linux x64' },
+  'linux-arm64': { os: 'linux', cpu: 'arm64', label: 'Linux ARM64' },
+  'windows-x64': { os: 'win32', cpu: 'x64', label: 'Windows x64' }
+};
+
 // All platforms for --all flag
-const ALL_PLATFORMS = [
-  'darwin-x64',
-  'darwin-arm64',
-  'linux-x64',
-  'linux-arm64',
-  'windows-x64',
-];
+const ALL_PLATFORMS = Object.keys(PLATFORM_INFO);
+
+const BINARY_CONFIG = {
+  'lean-spec': {
+    packagePath: 'cli',
+    packagePrefix: '@leanspec/cli',
+    description: 'LeanSpec CLI binary'
+  },
+  'leanspec-mcp': {
+    packagePath: 'mcp',
+    packagePrefix: '@leanspec/mcp',
+    description: 'LeanSpec MCP server binary'
+  },
+  'leanspec-http': {
+    packagePath: 'http-server',
+    packagePrefix: '@leanspec/http',
+    description: 'LeanSpec HTTP server binary'
+  }
+};
+
+async function resolveTargetVersion() {
+  const rootPackagePath = path.join(ROOT, 'package.json');
+  const rootPackage = JSON.parse(await fs.readFile(rootPackagePath, 'utf-8'));
+
+  if (rootPackage.version) {
+    return rootPackage.version;
+  }
+
+  const cliPackagePath = path.join(ROOT, 'packages', 'cli', 'package.json');
+  const cliPackage = JSON.parse(await fs.readFile(cliPackagePath, 'utf-8'));
+
+  if (!cliPackage.version) {
+    throw new Error('Unable to resolve version from root or packages/cli/package.json');
+  }
+
+  console.warn('⚠️  Root package.json missing version; using packages/cli/package.json version.');
+  return cliPackage.version;
+}
 
 function getCurrentPlatform() {
   const platform = process.platform;
@@ -44,6 +83,60 @@ function getCurrentPlatform() {
   }
 
   return platformKey;
+}
+
+function getPlatformInfo(platformKey) {
+  const info = PLATFORM_INFO[platformKey];
+
+  if (!info) {
+    throw new Error(`Unknown platform key: ${platformKey}`);
+  }
+
+  return info;
+}
+
+function getBinaryFileName(binaryName, platformKey) {
+  return platformKey.startsWith('windows-') ? `${binaryName}.exe` : binaryName;
+}
+
+async function ensurePackageJson({
+  destDir,
+  platformKey,
+  binaryName,
+  packagePrefix,
+  description,
+  version,
+}) {
+  const packageJsonPath = path.join(destDir, 'package.json');
+  const platformInfo = getPlatformInfo(platformKey);
+
+  try {
+    await fs.access(packageJsonPath);
+    return;
+  } catch (e) {
+    // Missing manifest; create below
+  }
+
+  const binaryFileName = getBinaryFileName(binaryName, platformKey);
+  const packageName = `${packagePrefix}-${platformKey}`;
+
+  const packageJson = {
+    name: packageName,
+    version,
+    description: `${description} for ${platformInfo.label}`,
+    os: [platformInfo.os],
+    cpu: [platformInfo.cpu],
+    main: binaryFileName,
+    files: [binaryFileName],
+    repository: {
+      type: 'git',
+      url: REPOSITORY_URL
+    },
+    license: 'MIT'
+  };
+
+  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+  console.log(`🆕 Created ${packageName} package.json`);
 }
 
 async function killProcessesUsingBinary(binaryPath) {
@@ -82,24 +175,18 @@ async function killProcessesUsingBinary(binaryPath) {
   }
 }
 
-async function copyBinary(binaryName, platformKey) {
-  const isWindows = platformKey.startsWith('windows-');
-  const sourceExt = isWindows ? '.exe' : '';
-  const sourcePath = path.join(ROOT, 'rust', 'target', 'release', `${binaryName}${sourceExt}`);
+async function copyBinary(binaryName, platformKey, version) {
+  const config = BINARY_CONFIG[binaryName];
 
-  // Determine destination based on binary name
-  let packagePath;
-  if (binaryName === 'lean-spec') {
-    packagePath = 'cli';
-  } else if (binaryName === 'leanspec-mcp') {
-    packagePath = 'mcp';
-  } else if (binaryName === 'leanspec-http') {
-    packagePath = 'http-server';
-  } else {
+  if (!config) {
     throw new Error(`Unknown binary: ${binaryName}`);
   }
-  const destDir = path.join(ROOT, 'packages', packagePath, 'binaries', platformKey);
-  const destPath = path.join(destDir, binaryName + sourceExt);
+
+  const isWindows = platformKey.startsWith('windows-');
+  const binaryFileName = getBinaryFileName(binaryName, platformKey);
+  const sourcePath = path.join(ROOT, 'rust', 'target', 'release', binaryFileName);
+  const destDir = path.join(ROOT, 'packages', config.packagePath, 'binaries', platformKey);
+  const destPath = path.join(destDir, binaryFileName);
 
   // Check if source exists
   try {
@@ -111,6 +198,16 @@ async function copyBinary(binaryName, platformKey) {
 
   // Ensure destination directory exists
   await fs.mkdir(destDir, { recursive: true });
+
+  // Ensure platform package manifest exists
+  await ensurePackageJson({
+    destDir,
+    platformKey,
+    binaryName,
+    packagePrefix: config.packagePrefix,
+    description: config.description,
+    version,
+  });
 
   // Kill any processes using the destination binary
   try {
@@ -128,13 +225,15 @@ async function copyBinary(binaryName, platformKey) {
     await fs.chmod(destPath, 0o755);
   }
 
-  console.log(`✅ Copied ${binaryName} to ${packagePath}/binaries/${platformKey}/`);
+  console.log(`✅ Copied ${binaryName} to ${config.packagePath}/binaries/${platformKey}/`);
   return true;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const copyAll = args.includes('--all');
+
+  const rootVersion = await resolveTargetVersion();
 
   console.log('🔧 Copying Rust binaries...\n');
 
@@ -146,7 +245,7 @@ async function main() {
     for (const platformKey of ALL_PLATFORMS) {
       console.log(`\nPlatform: ${platformKey}`);
       for (const binary of binaries) {
-        await copyBinary(binary, platformKey);
+        await copyBinary(binary, platformKey, rootVersion);
       }
     }
   } else {
@@ -154,7 +253,7 @@ async function main() {
     console.log(`📦 Copying for current platform: ${currentPlatform}\n`);
 
     for (const binary of binaries) {
-      await copyBinary(binary, currentPlatform);
+      await copyBinary(binary, currentPlatform, rootVersion);
     }
   }
 

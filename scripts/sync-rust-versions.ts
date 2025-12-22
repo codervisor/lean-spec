@@ -6,6 +6,7 @@
  * as the root package.json. It updates:
  * - CLI platform packages (lean-spec-darwin-x64, etc.)
  * - MCP platform packages (@leanspec/mcp-darwin-x64, etc.)
+ * - HTTP server platform packages (@leanspec/http-darwin-x64, etc.)
  * 
  * Usage:
  *   pnpm sync-rust-versions [--dry-run]
@@ -20,14 +21,74 @@ const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
+const REPOSITORY_URL = 'https://github.com/codervisor/lean-spec.git';
 
-const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64'];
+interface PlatformInfo {
+  os: string;
+  cpu: string;
+  label: string;
+}
+
+interface PackageFamily {
+  key: string;
+  label: string;
+  packageDir: string;
+  packagePrefix: string;
+  binaryName: string;
+  description: string;
+}
+
+const PLATFORM_INFO: Record<string, PlatformInfo> = {
+  'darwin-x64': { os: 'darwin', cpu: 'x64', label: 'macOS x64' },
+  'darwin-arm64': { os: 'darwin', cpu: 'arm64', label: 'macOS ARM64' },
+  'linux-x64': { os: 'linux', cpu: 'x64', label: 'Linux x64' },
+  'linux-arm64': { os: 'linux', cpu: 'arm64', label: 'Linux ARM64' },
+  'windows-x64': { os: 'win32', cpu: 'x64', label: 'Windows x64' }
+};
+
+const PLATFORMS = Object.keys(PLATFORM_INFO);
+
+const PACKAGE_FAMILIES: PackageFamily[] = [
+  {
+    key: 'cli',
+    label: 'CLI',
+    packageDir: path.join(PACKAGES_DIR, 'cli', 'binaries'),
+    packagePrefix: '@leanspec/cli',
+    binaryName: 'lean-spec',
+    description: 'LeanSpec CLI binary'
+  },
+  {
+    key: 'mcp',
+    label: 'MCP',
+    packageDir: path.join(PACKAGES_DIR, 'mcp', 'binaries'),
+    packagePrefix: '@leanspec/mcp',
+    binaryName: 'leanspec-mcp',
+    description: 'LeanSpec MCP server binary'
+  },
+  {
+    key: 'http',
+    label: 'HTTP',
+    packageDir: path.join(PACKAGES_DIR, 'http-server', 'binaries'),
+    packagePrefix: '@leanspec/http',
+    binaryName: 'leanspec-http',
+    description: 'LeanSpec HTTP server binary'
+  }
+];
 
 interface PackageJson {
   name: string;
   version: string;
   optionalDependencies?: Record<string, string>;
   [key: string]: unknown;
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function readJsonFile(filePath: string): Promise<PackageJson> {
@@ -40,79 +101,116 @@ async function writeJsonFile(filePath: string, data: PackageJson): Promise<void>
   await fs.writeFile(filePath, content, 'utf-8');
 }
 
+function getPlatformInfo(platformKey: string): PlatformInfo {
+  const info = PLATFORM_INFO[platformKey];
+
+  if (!info) {
+    throw new Error(`Unknown platform key: ${platformKey}`);
+  }
+
+  return info;
+}
+
+function buildPackageJson(
+  family: PackageFamily,
+  platformKey: string,
+  version: string,
+): PackageJson {
+  const platformInfo = getPlatformInfo(platformKey);
+  const binaryFileName = platformKey.startsWith('windows-')
+    ? `${family.binaryName}.exe`
+    : family.binaryName;
+
+  return {
+    name: `${family.packagePrefix}-${platformKey}`,
+    version,
+    description: `${family.description} for ${platformInfo.label}`,
+    os: [platformInfo.os],
+    cpu: [platformInfo.cpu],
+    main: binaryFileName,
+    files: [binaryFileName],
+    repository: {
+      type: 'git',
+      url: REPOSITORY_URL,
+    },
+    license: 'MIT',
+  };
+}
+
+async function resolveTargetVersion(): Promise<string> {
+  const rootPackageJsonPath = path.join(ROOT_DIR, 'package.json');
+  const rootPackage = await readJsonFile(rootPackageJsonPath);
+
+  if (rootPackage.version) {
+    return rootPackage.version;
+  }
+
+  const cliPackageJsonPath = path.join(PACKAGES_DIR, 'cli', 'package.json');
+  const cliPackage = await readJsonFile(cliPackageJsonPath);
+
+  if (cliPackage.version) {
+    console.warn('Root package.json missing version; using packages/cli/package.json version.');
+    return cliPackage.version;
+  }
+
+  throw new Error('Unable to resolve target version from root or CLI package.json');
+}
+
 async function syncRustVersions(dryRun: boolean = false): Promise<void> {
   console.log('🔄 Syncing Rust binary platform package versions...\n');
 
-  // Read root package.json version
-  const rootPackageJsonPath = path.join(ROOT_DIR, 'package.json');
-  const rootPackage = await readJsonFile(rootPackageJsonPath);
-  const targetVersion = rootPackage.version;
+  const targetVersion = await resolveTargetVersion();
 
   console.log(`📦 Target version: ${targetVersion}\n`);
 
   let updated = 0;
   let skipped = 0;
+  let created = 0;
   let errors = 0;
 
-  // Sync CLI platform packages
-  console.log('📁 CLI Platform Packages:');
-  for (const platform of PLATFORMS) {
-    const packageJsonPath = path.join(PACKAGES_DIR, 'cli', 'binaries', platform, 'package.json');
-    
-    try {
-      const pkg = await readJsonFile(packageJsonPath);
-      const packageName = pkg.name;
-      const currentVersion = pkg.version;
+  for (const family of PACKAGE_FAMILIES) {
+    console.log(`${family === PACKAGE_FAMILIES[0] ? '' : '\n'}📁 ${family.label} Platform Packages:`);
 
-      if (currentVersion === targetVersion) {
-        console.log(`  ✓ ${packageName}: ${currentVersion} (synced)`);
-        skipped++;
-      } else {
-        console.log(`  ⚠ ${packageName}: ${currentVersion} → ${targetVersion}`);
-        
-        if (!dryRun) {
-          pkg.version = targetVersion;
-          await writeJsonFile(packageJsonPath, pkg);
+    for (const platform of PLATFORMS) {
+      const packageDir = path.join(family.packageDir, platform);
+      const packageJsonPath = path.join(packageDir, 'package.json');
+      const expectedName = `${family.packagePrefix}-${platform}`;
+
+      try {
+        await fs.mkdir(packageDir, { recursive: true });
+
+        if (!(await fileExists(packageJsonPath))) {
+          if (dryRun) {
+            console.log(`  ℹ ${expectedName}: package.json missing (would create)`);
+            created++;
+            continue;
+          }
+
+          const newPackageJson = buildPackageJson(family, platform, targetVersion);
+          await writeJsonFile(packageJsonPath, newPackageJson);
+          console.log(`  🆕 ${newPackageJson.name}: created at ${targetVersion}`);
+          created++;
+          continue;
         }
-        updated++;
-      }
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        console.log(`  ℹ ${platform}: package.json not found (skipped)`);
-      } else {
-        console.error(`  ✗ ${platform}: ${error}`);
-        errors++;
-      }
-    }
-  }
 
-  // Sync MCP platform packages
-  console.log('\n📁 MCP Platform Packages:');
-  for (const platform of PLATFORMS) {
-    const packageJsonPath = path.join(PACKAGES_DIR, 'mcp', 'binaries', platform, 'package.json');
-    
-    try {
-      const pkg = await readJsonFile(packageJsonPath);
-      const packageName = pkg.name;
-      const currentVersion = pkg.version;
+        const pkg = await readJsonFile(packageJsonPath);
+        const packageName = pkg.name ?? expectedName;
+        const currentVersion = pkg.version;
 
-      if (currentVersion === targetVersion) {
-        console.log(`  ✓ ${packageName}: ${currentVersion} (synced)`);
-        skipped++;
-      } else {
-        console.log(`  ⚠ ${packageName}: ${currentVersion} → ${targetVersion}`);
-        
-        if (!dryRun) {
-          pkg.version = targetVersion;
-          await writeJsonFile(packageJsonPath, pkg);
+        if (currentVersion === targetVersion) {
+          console.log(`  ✓ ${packageName}: ${currentVersion} (synced)`);
+          skipped++;
+        } else {
+          console.log(`  ⚠ ${packageName}: ${currentVersion} → ${targetVersion}`);
+
+          if (!dryRun) {
+            pkg.version = targetVersion;
+            await writeJsonFile(packageJsonPath, pkg);
+          }
+          updated++;
         }
-        updated++;
-      }
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        console.log(`  ℹ ${platform}: package.json not found (skipped)`);
-      } else {
-        console.error(`  ✗ ${platform}: ${error}`);
+      } catch (error) {
+        console.error(`  ✗ ${expectedName}: ${error}`);
         errors++;
       }
     }
@@ -122,8 +220,9 @@ async function syncRustVersions(dryRun: boolean = false): Promise<void> {
   console.log(`Summary:`);
   console.log(`  Updated: ${updated}`);
   console.log(`  Already synced: ${skipped}`);
+  console.log(`  ${dryRun ? 'Would create' : 'Created'}: ${created}`);
   console.log(`  Errors: ${errors}`);
-  
+
   if (dryRun && updated > 0) {
     console.log(`\n💡 Run without --dry-run to apply changes`);
   } else if (!dryRun && updated > 0) {

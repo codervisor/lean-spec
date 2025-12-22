@@ -35,6 +35,34 @@ async function writeJsonFile(filePath: string, data: PackageJson): Promise<void>
   await fs.writeFile(filePath, content, 'utf-8');
 }
 
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveTargetVersion(): Promise<string> {
+  const rootPackageJsonPath = path.join(ROOT_DIR, 'package.json');
+  const rootPackage = await readJsonFile(rootPackageJsonPath);
+
+  if (rootPackage.version) {
+    return rootPackage.version;
+  }
+
+  const cliPackageJsonPath = path.join(PACKAGES_DIR, 'cli', 'package.json');
+  const cliPackage = await readJsonFile(cliPackageJsonPath);
+
+  if (cliPackage.version) {
+    console.warn('Root package.json missing version; using packages/cli/package.json version.');
+    return cliPackage.version;
+  }
+
+  throw new Error('Unable to resolve target version from root or CLI package.json');
+}
+
 async function getPackageDirs(): Promise<string[]> {
   const entries = await fs.readdir(PACKAGES_DIR, { withFileTypes: true });
   return entries
@@ -45,10 +73,7 @@ async function getPackageDirs(): Promise<string[]> {
 async function syncVersions(dryRun: boolean = false): Promise<void> {
   console.log('🔄 Syncing workspace package versions...\n');
 
-  // Read root package.json version
-  const rootPackageJsonPath = path.join(ROOT_DIR, 'package.json');
-  const rootPackage = await readJsonFile(rootPackageJsonPath);
-  const targetVersion = rootPackage.version;
+  const targetVersion = await resolveTargetVersion();
 
   console.log(`📦 Root version: ${targetVersion}\n`);
 
@@ -61,7 +86,14 @@ async function syncVersions(dryRun: boolean = false): Promise<void> {
 
   for (const packageDir of packageDirs) {
     const packageJsonPath = path.join(packageDir, 'package.json');
-    
+    const packageLabel = path.basename(packageDir);
+
+    if (!(await fileExists(packageJsonPath))) {
+      console.log(`ℹ ${packageLabel}: package.json missing (skipped)`);
+      skipped++;
+      continue;
+    }
+
     try {
       const pkg = await readJsonFile(packageJsonPath);
       const packageName = pkg.name;
@@ -72,7 +104,7 @@ async function syncVersions(dryRun: boolean = false): Promise<void> {
         skipped++;
       } else {
         console.log(`⚠ ${packageName}: ${currentVersion} → ${targetVersion}`);
-        
+
         if (!dryRun) {
           pkg.version = targetVersion;
           await writeJsonFile(packageJsonPath, pkg);
@@ -93,7 +125,7 @@ async function syncVersions(dryRun: boolean = false): Promise<void> {
   console.log(`  Updated: ${updated}`);
   console.log(`  Already synced: ${skipped}`);
   console.log(`  Errors: ${errors}`);
-  
+
   if (dryRun && updated > 0) {
     console.log(`\n💡 Run without --dry-run to apply changes`);
   } else if (!dryRun && updated > 0) {
@@ -116,13 +148,14 @@ const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64', 'wi
 async function syncRustPlatformPackages(targetVersion: string, dryRun: boolean): Promise<void> {
   const packageTypes = [
     { name: 'CLI', dir: 'cli' },
-    { name: 'MCP', dir: 'mcp' }
+    { name: 'MCP', dir: 'mcp' },
+    { name: 'HTTP', dir: 'http-server' }
   ];
 
   for (const { name, dir } of packageTypes) {
     for (const platform of PLATFORMS) {
       const packageJsonPath = path.join(PACKAGES_DIR, dir, 'binaries', platform, 'package.json');
-      
+
       try {
         const pkg = await readJsonFile(packageJsonPath);
         const currentVersion = pkg.version;

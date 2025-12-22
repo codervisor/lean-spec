@@ -825,16 +825,16 @@ lean-spec.cmd --version
 
 **Total Estimate**: 2-3 days
 
-| Phase | Effort | Dependencies |
-|-------|--------|--------------|
-| 1. Pre-release script | 1 hour | None |
-| 2. Consolidate paths | 2 hours | Phase 1 |
-| 3. Binary resolution | 4 hours | Phase 2 |
-| 4. Platform packages | 3 hours | Phase 3 |
-| 5. Workflow refactor | 6 hours | Phase 4 |
-| 6. Desktop integration | 4 hours | Phase 5 |
-| Testing | 4 hours | All phases |
-| Documentation | 2 hours | All phases |
+| Phase                  | Effort  | Dependencies |
+| ---------------------- | ------- | ------------ |
+| 1. Pre-release script  | 1 hour  | None         |
+| 2. Consolidate paths   | 2 hours | Phase 1      |
+| 3. Binary resolution   | 4 hours | Phase 2      |
+| 4. Platform packages   | 3 hours | Phase 3      |
+| 5. Workflow refactor   | 6 hours | Phase 4      |
+| 6. Desktop integration | 4 hours | Phase 5      |
+| Testing                | 4 hours | All phases   |
+| Documentation          | 2 hours | All phases   |
 
 **Critical Path**: Phase 1 → 2 → 3 → 4 → 5
 
@@ -886,6 +886,10 @@ lean-spec.cmd --version
 4. **How to handle platforms we don't support yet** (e.g., Windows ARM)?
    - **Recommendation**: Clear error message + fallback to TypeScript
    - **Future**: Add cross-compilation targets as needed
+
+## Implementation Notes (2025-12-22)
+
+- Auto-generate platform package manifests for CLI, MCP, and HTTP binaries when syncing versions or copying artifacts, creating missing package.json files with correct metadata in [scripts/sync-rust-versions.ts](../../scripts/sync-rust-versions.ts) and [scripts/copy-rust-binaries.mjs](../../scripts/copy-rust-binaries.mjs).
 
 ## Documentation Updates
 
