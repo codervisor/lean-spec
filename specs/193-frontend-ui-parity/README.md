@@ -183,20 +183,20 @@ packages/ui-vite/
 
 ### Week 1: Core Components
 **Day 1: Dashboard**
-- [ ] Port `DashboardClient` component
-- [ ] Port `StatCard` component
-- [ ] Port recent specs section
-- [ ] Create `DashboardPage.tsx`
-- [ ] Wire up API calls to `/api/stats` and `/api/specs`
-- [ ] Test dashboard rendering
+- [x] Port `DashboardClient` component
+- [x] Port `StatCard` component
+- [x] Port recent specs section
+- [x] Create `DashboardPage.tsx`
+- [x] Wire up API calls to `/api/stats` and `/api/specs`
+- [x] Test dashboard rendering
 
 **Day 2: Navigation**
 - [ ] Port `SpecsNavSidebar` component
 - [ ] Implement collapsible sidebar logic
 - [ ] Port `QuickSearch` (Cmd+K) component
-- [ ] Add `cmdk` dependency
+- [x] Add `cmdk` dependency
 - [ ] Integrate search with API
-- [ ] Add keyboard shortcuts
+- [x] Add keyboard shortcuts
 
 **Day 3: Spec Detail Enhancements**
 - [ ] Port `SubSpecTabs` component
@@ -204,45 +204,45 @@ packages/ui-vite/
 - [ ] Port `TableOfContentsSidebar`
 - [ ] Implement heading extraction from markdown
 - [ ] Add focus mode toggle
-- [ ] Update `SpecDetailPage.tsx`
+- [x] Update `SpecDetailPage.tsx` (with Mermaid support)
 
 **Day 4: Metadata & Search**
 - [ ] Port inline `EditableSpecMetadata` component
-- [ ] Wire up to metadata update API
+- [x] Wire up to metadata update API (existing)
 - [ ] Enhance `SpecsPage` with grid/list toggle
 - [ ] Add rich spec cards
 - [ ] Integrate `QuickSearch` globally
 
 **Day 5: Visual Parity**
-- [ ] Update `StatusBadge` styling
-- [ ] Update `PriorityBadge` styling
+- [x] Update `StatusBadge` styling (using Badge from ui-components)
+- [x] Update `PriorityBadge` styling (using Badge from ui-components)
 - [ ] Port loading skeletons
 - [ ] Add transitions and animations
 - [ ] Test on different screen sizes
 
 ### Week 2: Advanced Components
 **Day 1-2: Dependency Graph**
-- [ ] Port `SpecDependencyGraph` component
-- [ ] Add `vis-network` or `@visx/network` dependency
-- [ ] Implement graph rendering
-- [ ] Add node interactions (click, hover)
-- [ ] Add DAG layout view
-- [ ] Update `DependenciesPage.tsx`
+- [x] Port `SpecDependencyGraph` component
+- [x] Add `reactflow` and `@dagrejs/dagre` dependency
+- [x] Implement graph rendering
+- [x] Add node interactions (click, hover)
+- [x] Add DAG layout view
+- [x] Update `DependenciesPage.tsx`
 
 **Day 3: Charts & Stats**
-- [ ] Add `recharts` dependency
-- [ ] Port stats chart components
-- [ ] Implement bar charts (by status, priority)
-- [ ] Implement pie chart (distribution)
+- [x] Add `recharts` dependency
+- [x] Port stats chart components
+- [x] Implement bar charts (by status, priority)
+- [x] Implement pie chart (distribution)
 - [ ] Add velocity tracking chart
-- [ ] Update `StatsPage.tsx`
+- [x] Update `StatsPage.tsx`
 
 **Day 4: Mermaid Diagrams**
-- [ ] Add `mermaid` dependency
-- [ ] Port `MermaidDiagram` component
-- [ ] Implement client-side rendering
-- [ ] Add error handling for invalid syntax
-- [ ] Integrate into markdown renderer
+- [x] Add `mermaid` dependency
+- [x] Port `MermaidDiagram` component
+- [x] Implement client-side rendering
+- [x] Add error handling for invalid syntax
+- [x] Integrate into markdown renderer
 
 **Day 5: Project Management**
 - [ ] Port `CreateProjectDialog` component
@@ -273,7 +273,7 @@ packages/ui-vite/
 - [ ] Add empty states
 - [ ] Implement back-to-top button
 - [ ] Add page transitions
-- [ ] Keyboard shortcut help dialog
+- [x] Keyboard shortcut help dialog (exists in Layout)
 - [ ] Mobile responsive testing
 
 ## Test
@@ -392,3 +392,69 @@ packages/ui-vite/
 - Depends on: Spec 192 (Backend APIs)
 - Parallel work with backend implementation
 - Estimated: 3 weeks (15 days)
+
+### 2025-12-22: Phase 1 & 2 Complete - Core Features Implemented
+**Dependencies Added:**
+- ✅ cmdk - Command palette support
+- ✅ recharts - Charts and visualizations
+- ✅ mermaid - Diagram rendering
+- ✅ reactflow - Dependency graph visualization
+- ✅ @dagrejs/dagre - Graph layout algorithm
+- ✅ react-syntax-highlighter - Code highlighting support
+
+**Pages Implemented:**
+1. **DashboardPage** (NEW)
+   - Stats cards with gradient backgrounds (Total, Planned, In Progress, Complete)
+   - Recently added specs section
+   - Planned/In-progress specs sections
+   - Activity timeline with recent updates
+   - Quick actions with navigation buttons
+   - Router updated to use Dashboard as index page
+
+2. **StatsPage** (ENHANCED)
+   - Added Recharts visualizations (Pie chart for status, Bar chart for priority)
+   - Summary cards with key metrics
+   - Enhanced tag display with sorting
+   - Completion rate calculation
+
+3. **DependenciesPage** (ENHANCED)
+   - React Flow interactive graph visualization
+   - Dagre automatic layout algorithm
+   - Graph/List view toggle
+   - Node click navigation to spec details
+   - Color-coded nodes by status
+   - Animated edges for dependency relationships
+   - Pan, zoom, and interaction controls
+
+4. **SpecDetailPage** (ENHANCED)
+   - Mermaid diagram rendering in markdown code blocks
+   - Theme-aware diagram rendering (light/dark mode)
+   - Error handling for invalid diagram syntax
+   - Metadata editing (already existed)
+
+**Navigation & UX:**
+- Added Dashboard to main navigation with LayoutDashboard icon
+- Updated keyboard shortcuts to include 'h' for Dashboard
+- Updated Layout component with Dashboard link
+- Keyboard shortcuts help dialog (already existed)
+
+**Progress Summary:**
+- ✅ 40% of critical components complete
+- ✅ All major visualization features implemented
+- ✅ Dashboard, Stats, Dependencies pages fully functional
+- ✅ Mermaid diagrams working
+- 🔄 Remaining: QuickSearch (Cmd+K), SubSpecTabs, TableOfContents, SpecsNavSidebar
+- 🔄 Remaining: Enhancements to SpecsPage, SettingsPage
+
+**Key Decisions:**
+- Used @leanspec/ui-components for base UI components (Card, Button, Badge)
+- Used React Flow instead of vis-network for better React integration
+- Used Dagre for automatic graph layouting (cleaner than force-directed)
+- Integrated Mermaid directly into ReactMarkdown component pipeline
+- Prioritized visual features (charts, graphs) over navigation features
+
+**Technical Notes:**
+- Build time increased due to Mermaid (many diagram types bundled)
+- Consider code-splitting Mermaid diagrams on demand
+- Type imports fixed for React Flow to use `type` keyword
+- All TypeScript checks passing, build successful
