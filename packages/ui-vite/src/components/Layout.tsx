@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { BarChart3, FileText, Network, Settings, Keyboard } from 'lucide-react';
+import { BarChart3, FileText, Network, Settings, Keyboard, LayoutDashboard } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { ThemeToggle } from './ThemeToggle';
@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
   const shortcuts = [
+    { key: 'h', description: 'Go to dashboard (home)' },
     { key: 'g', description: 'Go to specs list' },
     { key: 's', description: 'Go to stats' },
     { key: 'd', description: 'Go to dependencies' },
@@ -47,6 +48,7 @@ export function Layout() {
   useGlobalShortcuts();
 
   const navItems = [
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/specs', label: 'Specs', icon: FileText },
     { path: '/stats', label: 'Stats', icon: BarChart3 },
     { path: '/dependencies', label: 'Dependencies', icon: Network },
@@ -63,7 +65,9 @@ export function Layout() {
             <nav className="flex gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname.startsWith(item.path);
+                const isActive = item.path === '/' 
+                  ? location.pathname === '/' 
+                  : location.pathname.startsWith(item.path);
                 return (
                   <Link
                     key={item.path}

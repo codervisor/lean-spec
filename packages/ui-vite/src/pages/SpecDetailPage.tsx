@@ -4,6 +4,7 @@ import { ArrowLeft, Edit2, Save, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api, type SpecDetail, type Spec } from '../lib/api';
+import { MermaidDiagram } from '../components/MermaidDiagram';
 
 function MetadataEditor({ 
   spec, 
@@ -256,7 +257,29 @@ export function SpecDetailPage() {
       )}
 
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          components={{
+            code({ className, children, ...props }: any) {
+              const inline = !className?.includes('language-');
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : null;
+              const code = String(children).replace(/\n$/, '');
+              
+              // Render mermaid diagrams
+              if (!inline && language === 'mermaid') {
+                return <MermaidDiagram chart={code} className="my-4" />;
+              }
+              
+              // Regular code blocks
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+          }}
+        >
           {spec.content}
         </ReactMarkdown>
       </div>

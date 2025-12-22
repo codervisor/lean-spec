@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { DashboardPage } from './pages/DashboardPage';
 import { SpecsPage } from './pages/SpecsPage';
 import { SpecDetailPage } from './pages/SpecDetailPage';
 import { StatsPage } from './pages/StatsPage';
@@ -11,7 +12,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Layout />,
     children: [
-      { index: true, element: <Navigate to="/specs" replace /> },
+      { index: true, element: <DashboardPage /> },
       { path: 'specs', element: <SpecsPage /> },
       { path: 'specs/:specName', element: <SpecDetailPage /> },
       { path: 'stats', element: <StatsPage /> },
