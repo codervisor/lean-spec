@@ -33,9 +33,10 @@ rust/target/
 
 # Binaries
 packages/**/binaries
-!packages/**/binaries/
-!packages/**/binaries/**
-!packages/**/binaries/**/package.json
+packages/**/binaries/
+packages/**/binaries/**
+packages/**/binaries/**/package.json
 
 # package-lock.json files
 package-lock.json
+rust/**/leanspec-*
