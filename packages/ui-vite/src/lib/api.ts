@@ -52,6 +52,7 @@ export interface Project {
   id: string;
   name: string;
   path: string;
+  color?: string;
 }
 
 export interface ProjectsResponse {
@@ -93,7 +94,7 @@ export function normalizeProjectsResponse(
 
 class APIError extends Error {
   status: number;
-  
+
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -135,7 +136,7 @@ export const api = {
   },
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
-    const endpoint = specName 
+    const endpoint = specName
       ? `/api/specs/${encodeURIComponent(specName)}/dependencies`
       : '/api/dependencies';
     const data = await fetchAPI<{ graph: DependencyGraph }>(endpoint);

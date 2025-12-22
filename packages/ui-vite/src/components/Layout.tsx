@@ -1,10 +1,8 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { BarChart3, FileText, Network, Settings, Keyboard, LayoutDashboard } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { ProjectSwitcher } from './ProjectSwitcher';
-import { ThemeToggle } from './ThemeToggle';
-import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
+import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
+import { Navigation } from './Navigation';
+import { MainSidebar } from './MainSidebar';
+import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 
 function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
   const shortcuts = [
@@ -14,7 +12,7 @@ function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
     { key: 'd', description: 'Go to dependencies' },
     { key: ',', description: 'Go to settings' },
     { key: '/', description: 'Focus search' },
-    { key: '?', description: 'Show keyboard shortcuts' },
+    { key: '⌘ + K', description: 'Open quick search' },
   ];
 
   return (
@@ -41,66 +39,20 @@ function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
 }
 
 export function Layout() {
-  const location = useLocation();
   const [showShortcuts, setShowShortcuts] = useState(false);
-  
+
   // Register global keyboard shortcuts
   useGlobalShortcuts();
 
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/specs', label: 'Specs', icon: FileText },
-    { path: '/stats', label: 'Stats', icon: BarChart3 },
-    { path: '/dependencies', label: 'Dependencies', icon: Network },
-    { path: '/settings', label: 'Settings', icon: Settings },
-  ];
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <h1 className="text-xl font-bold">LeanSpec</h1>
-            <ProjectSwitcher />
-            <nav className="flex gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.path === '/' 
-                  ? location.pathname === '/' 
-                  : location.pathname.startsWith(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-secondary text-foreground'
-                        : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowShortcuts(true)}
-              title="Keyboard shortcuts (?)"
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
-            >
-              <Keyboard className="w-4 h-4" />
-            </button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-      <main className="flex-1 container mx-auto px-4 py-6">
-        <Outlet />
-      </main>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navigation onShowShortcuts={() => setShowShortcuts(true)} />
+      <div className="flex w-full min-w-0">
+        <MainSidebar />
+        <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] px-4 py-6 lg:px-6">
+          <Outlet />
+        </main>
+      </div>
       {showShortcuts && <KeyboardShortcutsHelp onClose={() => setShowShortcuts(false)} />}
     </div>
   );

@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import { api, type Spec } from '../lib/api';
+import { StatusBadge } from '../components/StatusBadge';
+import { PriorityBadge } from '../components/PriorityBadge';
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
@@ -20,15 +22,15 @@ export function SpecsPage() {
   }, []);
 
   // Get unique values for filters
-  const uniqueStatuses = useMemo(() => 
+  const uniqueStatuses = useMemo(() =>
     Array.from(new Set(specs.map(s => s.status))),
     [specs]
   );
-  const uniquePriorities = useMemo(() => 
+  const uniquePriorities = useMemo(() =>
     Array.from(new Set(specs.map(s => s.priority).filter(Boolean))),
     [specs]
   );
-  const uniqueTags = useMemo(() => 
+  const uniqueTags = useMemo(() =>
     Array.from(new Set(specs.flatMap(s => s.tags || []))),
     [specs]
   );
@@ -39,7 +41,7 @@ export function SpecsPage() {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           spec.name.toLowerCase().includes(query) ||
           spec.title.toLowerCase().includes(query) ||
           (spec.tags?.some(tag => tag.toLowerCase().includes(query)));
@@ -109,7 +111,7 @@ export function SpecsPage() {
           <Filter className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm font-medium">Filters:</span>
         </div>
-        
+
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -165,57 +167,35 @@ export function SpecsPage() {
       ) : (
         <div className="space-y-2">
           {filteredSpecs.map((spec) => (
-          <Link
-            key={spec.name}
-            to={`/specs/${spec.name}`}
-            className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="font-medium">{spec.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{spec.name}</p>
+            <Link
+              key={spec.name}
+              to={`/specs/${spec.name}`}
+              className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="font-medium">{spec.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{spec.name}</p>
+                </div>
+                <div className="flex gap-2 items-center">
+                  {spec.status && <StatusBadge status={spec.status} />}
+                  {spec.priority && <PriorityBadge priority={spec.priority} />}
+                </div>
               </div>
-              <div className="flex gap-2">
-                <span
-                  className={`px-2 py-1 text-xs rounded-full ${
-                    spec.status === 'complete'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                      : spec.status === 'in-progress'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                  }`}
-                >
-                  {spec.status}
-                </span>
-                {spec.priority && (
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${
-                      spec.priority === 'high'
-                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                        : spec.priority === 'medium'
-                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                    }`}
-                  >
-                    {spec.priority}
-                  </span>
-                )}
-              </div>
-            </div>
-            {spec.tags && spec.tags.length > 0 && (
-              <div className="flex gap-2 mt-2">
-                {spec.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs px-2 py-0.5 bg-secondary rounded"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Link>
-        ))}
+              {spec.tags && spec.tags.length > 0 && (
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {spec.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-2 py-0.5 bg-secondary rounded"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </Link>
+          ))}
         </div>
       )}
     </div>

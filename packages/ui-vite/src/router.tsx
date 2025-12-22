@@ -6,6 +6,7 @@ import { SpecDetailPage } from './pages/SpecDetailPage';
 import { StatsPage } from './pages/StatsPage';
 import { DependenciesPage } from './pages/DependenciesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ContextPage } from './pages/ContextPage';
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { path: 'dependencies', element: <DependenciesPage /> },
       { path: 'dependencies/:specName', element: <DependenciesPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'context', element: <ContextPage /> },
     ],
   },
 ]);
