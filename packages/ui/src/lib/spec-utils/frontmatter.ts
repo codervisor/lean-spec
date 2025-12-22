@@ -7,12 +7,15 @@
  * @see spec 181-typescript-deprecation-rust-migration
  */
 import matter from 'gray-matter';
-import { load, FAILSAFE_SCHEMA } from 'js-yaml';
+import { dump, load, FAILSAFE_SCHEMA } from 'js-yaml';
 
-// Shared YAML engine for gray-matter to avoid js-yaml safeLoad removal
+// Shared YAML engine for gray-matter to avoid js-yaml safeLoad/safeDump removal
 export const safeMatterOptions = {
   engines: {
-    yaml: (str: string) => load(str, { schema: FAILSAFE_SCHEMA }) as Record<string, unknown>,
+    yaml: {
+      parse: (str: string) => load(str, { schema: FAILSAFE_SCHEMA }) as Record<string, unknown>,
+      stringify: (data: unknown) => dump(data),
+    },
   },
 };
 
@@ -52,7 +55,7 @@ export interface SpecFrontmatter {
  */
 function normalizeDateFields(data: Record<string, unknown>): void {
   const dateFields = ['created', 'completed', 'updated', 'due'];
-  
+
   for (const field of dateFields) {
     if (data[field] instanceof Date) {
       data[field] = (data[field] as Date).toISOString().split('T')[0];
@@ -124,24 +127,24 @@ function getStatusEmojiPlain(status: string): string {
 function updateVisualMetadata(content: string, frontmatter: SpecFrontmatter): string {
   const statusEmoji = getStatusEmojiPlain(frontmatter.status);
   const statusLabel = frontmatter.status.charAt(0).toUpperCase() + frontmatter.status.slice(1).replace('-', ' ');
-  
+
   // Use the created date as-is (already in YYYY-MM-DD format)
   const created = frontmatter.created;
-  
+
   // Build metadata line
   let metadataLine = `> **Status**: ${statusEmoji} ${statusLabel}`;
-  
+
   if (frontmatter.priority) {
     const priorityLabel = frontmatter.priority.charAt(0).toUpperCase() + frontmatter.priority.slice(1);
     metadataLine += ` · **Priority**: ${priorityLabel}`;
   }
-  
+
   metadataLine += ` · **Created**: ${created}`;
-  
+
   if (frontmatter.tags && frontmatter.tags.length > 0) {
     metadataLine += ` · **Tags**: ${frontmatter.tags.join(', ')}`;
   }
-  
+
   // For enterprise template with assignee/reviewer
   let secondLine = '';
   if (frontmatter.assignee || frontmatter.reviewer) {
@@ -149,10 +152,10 @@ function updateVisualMetadata(content: string, frontmatter: SpecFrontmatter): st
     const reviewer = frontmatter.reviewer || 'TBD';
     secondLine = `\n> **Assignee**: ${assignee} · **Reviewer**: ${reviewer}`;
   }
-  
+
   // Replace existing metadata block or add after title
   const metadataPattern = /^>\s+\*\*Status\*\*:.*(?:\n>\s+\*\*Assignee\*\*:.*)?/m;
-  
+
   if (metadataPattern.test(content)) {
     // Replace existing metadata
     return content.replace(metadataPattern, metadataLine + secondLine);
@@ -164,7 +167,7 @@ function updateVisualMetadata(content: string, frontmatter: SpecFrontmatter): st
       return content.slice(0, insertPos) + '\n\n' + metadataLine + secondLine + '\n' + content.slice(insertPos);
     }
   }
-  
+
   return content;
 }
 
@@ -203,8 +206,8 @@ export function createUpdatedFrontmatter(
   updatedContent = updateVisualMetadata(updatedContent, newData as SpecFrontmatter);
 
   // Stringify back to markdown
-  const newContent = matter.stringify(updatedContent, newData);
-  
+  const newContent = matter.stringify(updatedContent, newData, safeMatterOptions);
+
   return {
     content: newContent,
     frontmatter: newData as SpecFrontmatter
