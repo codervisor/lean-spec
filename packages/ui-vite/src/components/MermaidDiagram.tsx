@@ -14,8 +14,14 @@ mermaid.initialize({
   fontFamily: 'system-ui, -apple-system, sans-serif',
 });
 
-let idCounter = 0;
-const generateId = () => `mermaid-${Date.now()}-${idCounter++}`;
+// Generate unique IDs for Mermaid diagrams using crypto.randomUUID or fallback
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `mermaid-${crypto.randomUUID()}`;
+  }
+  // Fallback for older browsers
+  return `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   const ref = useRef<HTMLDivElement>(null);
