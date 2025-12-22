@@ -38,6 +38,7 @@ chrono.workspace = true
 
 # Utilities
 thiserror.workspace = true
+walkdir.workspace = true
 
 # Directories
 dirs = "5.0"

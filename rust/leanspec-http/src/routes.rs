@@ -72,6 +72,18 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/validate",
             post(handlers::validate_project),
         )
+        // Local project routes
+        .route(
+            "/api/local-projects/discover",
+            post(handlers::discover_projects),
+        )
+        .route(
+            "/api/local-projects/list-directory",
+            post(handlers::list_directory),
+        )
+        // Context routes
+        .route("/api/context", get(handlers::list_context_files))
+        .route("/api/context/{*file}", get(handlers::get_context_file))
         // Spec routes
         .route("/api/specs", get(handlers::list_specs))
         .route("/api/specs/{spec}", get(handlers::get_spec))
