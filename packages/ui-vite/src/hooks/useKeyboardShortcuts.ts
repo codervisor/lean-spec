@@ -45,6 +45,11 @@ export function useGlobalShortcuts() {
 
   const shortcuts: KeyboardShortcut[] = [
     {
+      key: 'h',
+      description: 'Go to dashboard (home)',
+      action: useCallback(() => navigate('/'), [navigate]),
+    },
+    {
       key: 'g',
       description: 'Go to specs list',
       action: useCallback(() => navigate('/specs'), [navigate]),
