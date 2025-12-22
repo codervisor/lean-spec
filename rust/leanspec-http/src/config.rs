@@ -86,15 +86,9 @@ fn default_cors_enabled() -> bool {
 }
 
 fn default_cors_origins() -> Vec<String> {
-    vec![
-        "http://localhost:5173".to_string(), // Vite dev server
-        "http://localhost:3000".to_string(), // Next.js
-        "http://localhost:3333".to_string(), // Self
-        "http://127.0.0.1:5173".to_string(),
-        "http://127.0.0.1:3000".to_string(),
-        "http://127.0.0.1:3333".to_string(),
-        "tauri://localhost".to_string(), // Tauri
-    ]
+    // Allow all origins by default for development convenience
+    // In production, you should specify explicit origins
+    vec![]
 }
 
 /// UI preferences
