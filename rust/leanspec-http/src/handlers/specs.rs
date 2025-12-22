@@ -6,8 +6,9 @@ use axum::Json;
 use std::collections::HashMap;
 
 use leanspec_core::{
-    DependencyGraph, FrontmatterValidator, LineCountValidator, SpecFilterOptions, SpecLoader,
-    SpecStats, SpecStatus, StructureValidator,
+    DependencyGraph, FrontmatterValidator, LineCountValidator,
+    MetadataUpdate as CoreMetadataUpdate, SpecFilterOptions, SpecLoader, SpecStats, SpecStatus,
+    SpecWriter, StructureValidator,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -645,19 +646,79 @@ pub async fn validate_project(
 }
 
 /// PATCH /api/specs/:spec/metadata - Update spec metadata
-/// Note: This endpoint is not yet implemented
 pub async fn update_metadata(
-    State(_state): State<AppState>,
-    Path(_spec_id): Path<String>,
-    Json(_updates): Json<MetadataUpdate>,
-) -> (StatusCode, Json<ApiError>) {
-    // TODO: Implement metadata update using leanspec_core
-    // This requires adding file writing capabilities
-    (
-        StatusCode::NOT_IMPLEMENTED,
-        Json(ApiError::new(
-            "NOT_IMPLEMENTED",
-            "Metadata update is not yet implemented",
-        )),
-    )
+    State(state): State<AppState>,
+    Path(spec_id): Path<String>,
+    Json(updates): Json<MetadataUpdate>,
+) -> ApiResult<Json<crate::types::UpdateMetadataResponse>> {
+    let (loader, project) = get_spec_loader(&state, None).await?;
+
+    // Verify spec exists
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    if spec.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        ));
+    }
+
+    // Convert HTTP metadata update to core metadata update
+    let mut core_updates = CoreMetadataUpdate::new();
+
+    if let Some(status_str) = &updates.status {
+        let status = status_str.parse().map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&format!(
+                    "Invalid status: {}",
+                    status_str
+                ))),
+            )
+        })?;
+        core_updates = core_updates.with_status(status);
+    }
+
+    if let Some(priority_str) = &updates.priority {
+        let priority = priority_str.parse().map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&format!(
+                    "Invalid priority: {}",
+                    priority_str
+                ))),
+            )
+        })?;
+        core_updates = core_updates.with_priority(priority);
+    }
+
+    if let Some(tags) = updates.tags {
+        core_updates = core_updates.with_tags(tags);
+    }
+
+    if let Some(assignee) = updates.assignee {
+        core_updates = core_updates.with_assignee(assignee);
+    }
+
+    // Update metadata using spec writer
+    let writer = SpecWriter::new(&project.specs_dir);
+    let frontmatter = writer
+        .update_metadata(&spec_id, core_updates)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+    Ok(Json(crate::types::UpdateMetadataResponse {
+        success: true,
+        spec_id: spec_id.clone(),
+        frontmatter: crate::types::FrontmatterResponse::from(&frontmatter),
+    }))
 }

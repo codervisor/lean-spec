@@ -360,6 +360,53 @@ pub struct MetadataUpdate {
     pub assignee: Option<String>,
 }
 
+/// Metadata update response
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateMetadataResponse {
+    pub success: bool,
+    pub spec_id: String,
+    pub frontmatter: FrontmatterResponse,
+}
+
+/// Frontmatter response for API
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrontmatterResponse {
+    pub status: String,
+    pub created: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub priority: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub depends_on: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assignee: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub completed_at: Option<DateTime<Utc>>,
+}
+
+impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
+    fn from(fm: &leanspec_core::SpecFrontmatter) -> Self {
+        Self {
+            status: fm.status.to_string(),
+            created: fm.created.clone(),
+            priority: fm.priority.map(|p| p.to_string()),
+            tags: fm.tags.clone(),
+            depends_on: fm.depends_on.clone(),
+            assignee: fm.assignee.clone(),
+            created_at: fm.created_at,
+            updated_at: fm.updated_at,
+            completed_at: fm.completed_at,
+        }
+    }
+}
+
 /// Health check response
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
