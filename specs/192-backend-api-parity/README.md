@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2025-12-19
 priority: high
 tags:
@@ -11,7 +11,10 @@ depends_on:
 - 191-rust-http-api-test-suite
 - 194-api-contract-test-suite
 created_at: 2025-12-19T06:36:15.644825Z
-updated_at: 2025-12-20T07:13:38.535108Z
+updated_at: 2025-12-22T14:03:21.754971146Z
+transitions:
+- status: in-progress
+  at: 2025-12-22T14:03:21.754971146Z
 ---
 
 # Backend API Parity: Rust HTTP Server Feature Completion
