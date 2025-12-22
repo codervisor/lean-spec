@@ -71,15 +71,15 @@ transitions:
 
 ### Page Inventory
 
-| Page | Current State | Target State | Priority |
-|------|---------------|--------------|----------|
-| Dashboard (/) | ❌ Missing | Dashboard with stats, recent specs | **HIGH** |
-| Specs List | ⚠️ Basic list | Grid/list toggle, rich cards, quick search | **HIGH** |
-| Spec Detail | ⚠️ Basic view | ToC sidebar, sub-spec tabs, focus mode | **HIGH** |
-| Stats | ⚠️ Text only | Charts, visualizations, velocity tracking | **MEDIUM** |
-| Dependencies | ⚠️ List only | Interactive graph (DAG + network views) | **HIGH** |
-| Settings/Projects | ⚠️ Basic switcher | Full CRUD, favorites, colors, validation | **MEDIUM** |
-| Context | ❌ Missing | File browser, content viewer | **LOW** |
+| Page              | Current State    | Target State                               | Priority   |
+| ----------------- | ---------------- | ------------------------------------------ | ---------- |
+| Dashboard (/)     | ❌ Missing        | Dashboard with stats, recent specs         | **HIGH**   |
+| Specs List        | ⚠️ Basic list     | Grid/list toggle, rich cards, quick search | **HIGH**   |
+| Spec Detail       | ⚠️ Basic view     | ToC sidebar, sub-spec tabs, focus mode     | **HIGH**   |
+| Stats             | ⚠️ Text only      | Charts, visualizations, velocity tracking  | **MEDIUM** |
+| Dependencies      | ⚠️ List only      | Interactive graph (DAG + network views)    | **HIGH**   |
+| Settings/Projects | ⚠️ Basic switcher | Full CRUD, favorites, colors, validation   | **MEDIUM** |
+| Context           | ❌ Missing        | File browser, content viewer               | **LOW**    |
 
 ## Design
 
@@ -183,19 +183,19 @@ packages/ui-vite/
 
 ### Week 1: Core Components
 **Day 1: Dashboard**
-- [x] Port `DashboardClient` component
-- [x] Port `StatCard` component
-- [x] Port recent specs section
-- [x] Create `DashboardPage.tsx`
+- [x] Create `DashboardPage.tsx` (Implemented inline, components not yet extracted)
+- [ ] Port `DashboardClient` component (Currently inline in DashboardPage)
+- [ ] Port `StatCard` component (Currently inline in DashboardPage)
+- [x] Port recent specs section (Inline)
 - [x] Wire up API calls to `/api/stats` and `/api/specs`
 - [x] Test dashboard rendering
 
 **Day 2: Navigation**
 - [ ] Port `SpecsNavSidebar` component
 - [ ] Implement collapsible sidebar logic
-- [ ] Port `QuickSearch` (Cmd+K) component
-- [x] Add `cmdk` dependency
-- [ ] Integrate search with API
+- [x] Port `QuickSearch` (Cmd+K) component (Implemented as custom modal, not cmdk)
+- [x] Add `cmdk` dependency (Added but unused, custom implementation used)
+- [x] Integrate search with API
 - [x] Add keyboard shortcuts
 
 **Day 3: Spec Detail Enhancements**

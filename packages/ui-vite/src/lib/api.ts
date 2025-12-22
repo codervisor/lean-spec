@@ -131,8 +131,8 @@ export const api = {
   },
 
   async getStats(): Promise<Stats> {
-    const data = await fetchAPI<{ stats: Stats }>('/api/stats');
-    return data.stats;
+    const data = await fetchAPI<Stats>('/api/stats');
+    return data;
   },
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {

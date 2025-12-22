@@ -142,6 +142,9 @@ export function DashboardPage() {
           } as Spec;
         });
 
+        console.debug(transformedSpecs)
+        console.debug(statsData)
+
         setSpecs(transformedSpecs);
         setStats(statsData);
       } catch (err) {
