@@ -4,7 +4,7 @@
 mod helpers;
 
 use helpers::*;
-use leanspec_mcp::tools::call_tool;
+use leanspec_mcp::tools::{call_tool, get_tool_definitions};
 use serde_json::json;
 
 #[tokio::test]
@@ -250,4 +250,37 @@ async fn test_create_spec_with_content_override_includes_frontmatter() {
     assert!(content.contains("priority: high"));
     assert!(content.contains("Custom Title"));
     assert!(content.contains("Body text."));
+}
+
+#[test]
+fn test_create_tool_description_includes_template_body() {
+    let temp = create_empty_project();
+    set_specs_dir_env(&temp);
+
+    let tools = get_tool_definitions();
+    let create_tool = tools
+        .iter()
+        .find(|tool| tool.name == "create")
+        .expect("create tool definition should exist");
+
+    let description = create_tool
+        .input_schema
+        .get("properties")
+        .and_then(|props| props.get("content"))
+        .and_then(|content| content.get("description"))
+        .and_then(|desc| desc.as_str())
+        .expect("content description should be present");
+
+    assert!(
+        description.contains("TEMPLATE STRUCTURE"),
+        "description should include explanatory heading"
+    );
+    assert!(
+        description.contains("## Overview") && description.contains("## Plan"),
+        "template body should be embedded in description"
+    );
+    assert!(
+        !description.contains("status: planned"),
+        "frontmatter should be stripped from template body"
+    );
 }
