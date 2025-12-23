@@ -12,22 +12,22 @@ const priorityConfig: Record<string, { icon: typeof AlertCircle; label: string; 
   'critical': {
     icon: AlertCircle,
     label: 'Critical',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   },
   'high': {
     icon: ArrowUp,
     label: 'High',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   },
   'medium': {
     icon: Minus,
     label: 'Medium',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   },
   'low': {
     icon: ArrowDown,
     label: 'Low',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
   },
 };
 

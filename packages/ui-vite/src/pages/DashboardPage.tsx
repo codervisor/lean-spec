@@ -10,107 +10,16 @@ import {
   PlayCircle,
   TrendingUp,
 } from 'lucide-react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
-import { api, type Spec as APISpec, type Stats } from '../lib/api';
-import { StatusBadge } from '../components/StatusBadge';
-import { PriorityBadge } from '../components/PriorityBadge';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
+import { api, type Stats } from '../lib/api';
 import { useProject } from '../contexts';
-
-// Extend API spec with dates as Date objects
-interface Spec extends Omit<APISpec, 'created' | 'updated'> {
-  created: Date | null;
-  updated: Date | null;
-  specNumber: number | null;
-  id: string;
-}
-
-function formatRelativeTime(date: Date | null): string {
-  if (!date) return 'Unknown';
-
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString();
-}
-
-function SpecListItem({ spec }: { spec: Spec }) {
-  const displayTitle = spec.title || spec.name;
-  const specUrl = `/specs/${spec.name}`;
-
-  return (
-    <Link
-      to={specUrl}
-      className="block p-3 rounded-lg hover:bg-accent transition-colors"
-      title={spec.name}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            {spec.specNumber && (
-              <span className="text-sm font-mono text-muted-foreground shrink-0">
-                #{spec.specNumber.toString().padStart(3, '0')}
-              </span>
-            )}
-            <h4 className="text-sm font-medium truncate">
-              {displayTitle}
-            </h4>
-          </div>
-          {displayTitle !== spec.name && (
-            <div className="text-xs text-muted-foreground mb-1">
-              {spec.name}
-            </div>
-          )}
-          {spec.tags && spec.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {spec.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          {spec.status && <StatusBadge status={spec.status} className="text-[11px]" />}
-          {spec.priority && <PriorityBadge priority={spec.priority} className="text-[11px]" />}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function ActivityItem({ spec, action, time }: { spec: Spec; action: string; time: Date | null }) {
-  const displayTitle = spec.title || spec.name;
-  const specUrl = `/specs/${spec.name}`;
-
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm">
-          <Link to={specUrl} className="font-medium hover:underline" title={spec.name}>
-            {spec.specNumber && `#${spec.specNumber.toString().padStart(3, '0')} `}
-            {displayTitle}
-          </Link>{' '}
-          <span className="text-muted-foreground">{action}</span>
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {formatRelativeTime(time)}
-        </p>
-      </div>
-    </div>
-  );
-}
+import { StatCard } from '../components/dashboard/StatCard';
+import { SpecListItem, type DashboardSpec } from '../components/dashboard/SpecListItem';
+import { ActivityItem } from '../components/dashboard/ActivityItem';
 
 export function DashboardPage() {
   const { currentProject } = useProject();
-  const [specs, setSpecs] = useState<Spec[]>([]);
+  const [specs, setSpecs] = useState<DashboardSpec[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,11 +48,8 @@ export function DashboardPage() {
             specNumber,
             created: spec?.created ? new Date(spec.created) : null,
             updated: spec?.updated ? new Date(spec.updated) : null,
-          } as Spec;
+          } as DashboardSpec;
         });
-
-        console.debug(transformedSpecs)
-        console.debug(statsData)
 
         setSpecs(transformedSpecs);
         setStats(statsData);
@@ -229,61 +135,40 @@ export function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
-            <CardHeader className="relative pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Specs</CardTitle>
-                <FileText className="h-5 w-5 text-blue-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold">{totalSpecs}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent" />
-            <CardHeader className="relative pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Planned</CardTitle>
-                <Clock className="h-5 w-5 text-purple-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold">{stats.by_status?.['planned'] || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
-            <CardHeader className="relative pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
-                <PlayCircle className="h-5 w-5 text-orange-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold">{stats.by_status?.['in-progress'] || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
-            <CardHeader className="relative pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold">{completeCount}</div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+          <StatCard
+            title="Total Specs"
+            value={totalSpecs}
+            icon={FileText}
+            iconColor="text-blue-600"
+            gradientFrom="from-blue-500/10"
+          />
+          <StatCard
+            title="Planned"
+            value={stats.by_status?.['planned'] || 0}
+            icon={Clock}
+            iconColor="text-purple-600"
+            gradientFrom="from-purple-500/10"
+          />
+          <StatCard
+            title="In Progress"
+            value={stats.by_status?.['in-progress'] || 0}
+            icon={PlayCircle}
+            iconColor="text-orange-600"
+            gradientFrom="from-orange-500/10"
+          />
+          <StatCard
+            title="Completed"
+            value={completeCount}
+            icon={CheckCircle2}
+            iconColor="text-green-600"
+            gradientFrom="from-green-500/10"
+            subtext={
+              <span className="flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
                 {completionRate.toFixed(1)}% completion rate
-              </p>
-            </CardContent>
-          </Card>
+              </span>
+            }
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">

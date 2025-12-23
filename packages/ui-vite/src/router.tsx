@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { SpecsLayout } from './components/SpecsLayout';
 import { DashboardPage } from './pages/DashboardPage';
 import { SpecsPage } from './pages/SpecsPage';
 import { SpecDetailPage } from './pages/SpecDetailPage';
@@ -14,8 +15,14 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: 'specs', element: <SpecsPage /> },
-      { path: 'specs/:specName', element: <SpecDetailPage /> },
+      {
+        path: 'specs',
+        element: <SpecsLayout />,
+        children: [
+          { index: true, element: <SpecsPage /> },
+          { path: ':specName', element: <SpecDetailPage /> },
+        ],
+      },
       { path: 'stats', element: <StatsPage /> },
       { path: 'dependencies', element: <DependenciesPage /> },
       { path: 'dependencies/:specName', element: <DependenciesPage /> },

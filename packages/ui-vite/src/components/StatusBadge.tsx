@@ -12,22 +12,22 @@ const statusConfig: Record<string, { icon: typeof Clock; label: string; classNam
   'planned': {
     icon: Clock,
     label: 'Planned',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   },
   'in-progress': {
     icon: PlayCircle,
     label: 'In Progress',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   },
   'complete': {
     icon: CheckCircle2,
     label: 'Complete',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   },
   'archived': {
     icon: Archive,
     label: 'Archived',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
   },
 };
 
