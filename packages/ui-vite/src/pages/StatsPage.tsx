@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend
 } from 'recharts';
@@ -54,21 +54,27 @@ export function StatsPage() {
   }
 
   // Prepare data for charts
-  const statusData = Object.entries(stats.by_status).map(([status, count]) => ({
-    name: status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+  const statusCounts = stats.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
+    acc[entry.status] = entry.count;
+    return acc;
+  }, {});
+
+  const statusData = stats.specsByStatus.map(({ status, count }) => ({
+    name: status
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' '),
     value: count,
     fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#6B7280',
   }));
 
-  const priorityData = Object.entries(stats.by_priority).map(([priority, count]) => ({
+  const priorityData = Object.entries(stats.byPriority || {}).map(([priority, count]) => ({
     name: priority.charAt(0).toUpperCase() + priority.slice(1),
     value: count,
     fill: PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || '#6B7280',
   }));
 
-  const completionRate = stats.total > 0 
-    ? ((stats.by_status.complete || 0) / stats.total * 100).toFixed(1)
-    : '0';
+  const completionRate = stats.completionRate.toFixed(1);
 
   return (
     <div className="space-y-6">
@@ -86,7 +92,7 @@ export function StatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-3xl font-bold">{stats.totalSpecs}</div>
           </CardContent>
         </Card>
 
@@ -97,7 +103,7 @@ export function StatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.by_status.complete || 0}</div>
+            <div className="text-3xl font-bold">{statusCounts.complete || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {completionRate}% completion rate
             </p>
@@ -111,7 +117,7 @@ export function StatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.by_status['in-progress'] || 0}</div>
+            <div className="text-3xl font-bold">{statusCounts['in-progress'] || 0}</div>
           </CardContent>
         </Card>
 
@@ -122,7 +128,7 @@ export function StatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.by_status.planned || 0}</div>
+            <div className="text-3xl font-bold">{statusCounts.planned || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -178,18 +184,18 @@ export function StatsPage() {
       </div>
 
       {/* Tags */}
-      {Object.keys(stats.by_tag).length > 0 && (
+      {Object.keys(stats.byTag || {}).length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Tags</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {Object.entries(stats.by_tag)
+              {Object.entries(stats.byTag || {})
                 .sort(([, a], [, b]) => b - a)
                 .map(([tag, count]) => (
-                  <div 
-                    key={tag} 
+                  <div
+                    key={tag}
                     className="flex justify-between items-center p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
                   >
                     <span className="text-sm font-medium">{tag}</span>

@@ -73,10 +73,10 @@ export function SpecsPage() {
   }, []);
 
   // Get unique values for filters
-  const uniqueStatuses = useMemo(() =>
-    Array.from(new Set(specs.map(s => s.status))),
-    [specs]
-  );
+  const uniqueStatuses = useMemo(() => {
+    const statuses = specs.map((s) => s.status).filter((s): s is SpecStatus => Boolean(s));
+    return Array.from(new Set(statuses));
+  }, [specs]);
   const uniquePriorities = useMemo(() =>
     Array.from(new Set(specs.map(s => s.priority).filter(Boolean) as string[])),
     [specs]
@@ -94,8 +94,8 @@ export function SpecsPage() {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
           spec.name.toLowerCase().includes(query) ||
-          spec.title.toLowerCase().includes(query) ||
-          (spec.tags?.some(tag => tag.toLowerCase().includes(query)));
+          (spec.title ? spec.title.toLowerCase().includes(query) : false) ||
+          spec.tags?.some((tag: string) => tag.toLowerCase().includes(query));
         if (!matchesSearch) return false;
       }
 

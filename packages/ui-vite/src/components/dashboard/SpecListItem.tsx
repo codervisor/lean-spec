@@ -4,13 +4,7 @@ import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
 import type { Spec } from '../../lib/api';
 
-// We need to extend the API Spec type to include the processed fields used in the dashboard
-export interface DashboardSpec extends Omit<Spec, 'created' | 'updated'> {
-  created: Date | null;
-  updated: Date | null;
-  specNumber: number | null;
-  id: string;
-}
+export type DashboardSpec = Spec;
 
 interface SpecListItemProps {
   spec: DashboardSpec;

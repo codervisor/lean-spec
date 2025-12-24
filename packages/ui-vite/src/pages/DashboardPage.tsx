@@ -36,20 +36,10 @@ export function DashboardPage() {
 
         const rawSpecs = Array.isArray(specsData) ? specsData : [];
 
-        const transformedSpecs = rawSpecs.map((spec) => {
-          const name = spec?.name || '';
-          const match = name.match(/^(\d+)-/);
-          const specNumber = match ? parseInt(match[1], 10) : null;
-
-          return {
-            ...spec,
-            name,
-            id: name || spec?.title || crypto.randomUUID(),
-            specNumber,
-            created: spec?.created ? new Date(spec.created) : null,
-            updated: spec?.updated ? new Date(spec.updated) : null,
-          } as DashboardSpec;
-        });
+        const transformedSpecs = rawSpecs.map((spec) => ({
+          ...spec,
+          id: spec.id || spec.specName || spec.name,
+        })) as DashboardSpec[];
 
         setSpecs(transformedSpecs);
         setStats(statsData);
@@ -99,24 +89,29 @@ export function DashboardPage() {
   const recentlyAdded = specs
     .slice()
     .sort((a, b) => {
-      if (!a.created) return 1;
-      if (!b.created) return -1;
-      return b.created.getTime() - a.created.getTime();
+      if (!a.createdAt) return 1;
+      if (!b.createdAt) return -1;
+      return b.createdAt.getTime() - a.createdAt.getTime();
     })
     .slice(0, 5);
 
   const recentActivity = specs
-    .filter((spec) => spec.updated)
+    .filter((spec) => spec.updatedAt)
     .sort((a, b) => {
-      if (!a.updated) return 1;
-      if (!b.updated) return -1;
-      return b.updated.getTime() - a.updated.getTime();
+      if (!a.updatedAt) return 1;
+      if (!b.updatedAt) return -1;
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
     })
     .slice(0, 10);
 
-  const completeCount = stats.by_status?.['complete'] || 0;
-  const totalSpecs = stats.total;
-  const completionRate = totalSpecs > 0 ? (completeCount / totalSpecs) * 100 : 0;
+  const statusCounts = stats.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
+    acc[entry.status] = entry.count;
+    return acc;
+  }, {});
+
+  const completeCount = statusCounts['complete'] || 0;
+  const totalSpecs = stats.totalSpecs;
+  const completionRate = stats.completionRate ?? 0;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -144,14 +139,14 @@ export function DashboardPage() {
           />
           <StatCard
             title="Planned"
-            value={stats.by_status?.['planned'] || 0}
+            value={statusCounts['planned'] || 0}
             icon={Clock}
             iconColor="text-purple-600"
             gradientFrom="from-purple-500/10"
           />
           <StatCard
             title="In Progress"
-            value={stats.by_status?.['in-progress'] || 0}
+            value={statusCounts['in-progress'] || 0}
             icon={PlayCircle}
             iconColor="text-orange-600"
             gradientFrom="from-orange-500/10"
@@ -226,7 +221,7 @@ export function DashboardPage() {
           <CardContent>
             <div className="border-l-2 border-muted pl-4 space-y-1">
               {recentActivity.map((spec) => (
-                <ActivityItem key={spec.id} spec={spec} action="updated" time={spec.updated} />
+                <ActivityItem key={spec.id} spec={spec} action="updated" time={spec.updatedAt} />
               ))}
             </div>
           </CardContent>

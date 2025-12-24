@@ -48,7 +48,15 @@ describe('API Client', () => {
   describe('getSpecs', () => {
     it('should fetch specs successfully', async () => {
       const mockSpecs = [
-        { name: 'spec-001', title: 'Test Spec', status: 'planned' as const },
+        {
+          name: '123-feature',
+          title: 'Test Spec',
+          status: 'planned' as const,
+          priority: 'high' as const,
+          tags: ['ui'],
+          created: '2025-01-01T00:00:00Z',
+          updated: '2025-01-02T00:00:00Z',
+        },
       ];
 
       mockFetch.mockResolvedValueOnce({
@@ -57,18 +65,38 @@ describe('API Client', () => {
       });
 
       const result = await api.getSpecs();
-      expect(result).toEqual(mockSpecs);
+      expect(result).toEqual([
+        {
+          id: '123-feature',
+          name: '123-feature',
+          specNumber: 123,
+          specName: '123-feature',
+          title: 'Test Spec',
+          status: 'planned',
+          priority: 'high',
+          tags: ['ui'],
+          createdAt: new Date('2025-01-01T00:00:00Z'),
+          updatedAt: new Date('2025-01-02T00:00:00Z'),
+        },
+      ]);
     });
   });
 
   describe('getSpec', () => {
     it('should fetch spec details successfully', async () => {
       const mockSpec = {
-        name: 'spec-001',
+        name: '123-feature',
         title: 'Test Spec',
         status: 'planned' as const,
+        priority: 'medium' as const,
+        tags: ['backend'],
+        created: '2025-01-01T00:00:00Z',
+        updated: '2025-01-03T00:00:00Z',
         content: '# Test',
-        metadata: {},
+        metadata: {
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-03T00:00:00Z',
+        },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -76,10 +104,28 @@ describe('API Client', () => {
         json: async () => ({ spec: mockSpec }),
       });
 
-      const result = await api.getSpec('spec-001');
-      expect(result).toEqual(mockSpec);
+      const result = await api.getSpec('123-feature');
+      expect(result).toEqual({
+        id: '123-feature',
+        name: '123-feature',
+        specNumber: 123,
+        specName: '123-feature',
+        title: 'Test Spec',
+        status: 'planned',
+        priority: 'medium',
+        tags: ['backend'],
+        createdAt: new Date('2025-01-01T00:00:00Z'),
+        updatedAt: new Date('2025-01-03T00:00:00Z'),
+        content: '# Test',
+        metadata: {
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-03T00:00:00Z',
+        },
+        dependsOn: [],
+        requiredBy: [],
+      });
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/specs/spec-001'),
+        expect.stringContaining('/api/specs/123-feature'),
         expect.any(Object)
       );
     });
@@ -121,7 +167,17 @@ describe('API Client', () => {
       });
 
       const result = await api.getStats();
-      expect(result).toEqual(mockStats);
+      expect(result).toEqual({
+        totalSpecs: 10,
+        completionRate: (2 / 10) * 100,
+        specsByStatus: [
+          { status: 'planned', count: 5 },
+          { status: 'in-progress', count: 3 },
+          { status: 'complete', count: 2 },
+        ],
+        byPriority: { high: 3, medium: 4, low: 3 },
+        byTag: { frontend: 5, backend: 5 },
+      });
     });
   });
 

@@ -18,6 +18,7 @@
     "@leanspec/ui-components": "workspace:*",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dayjs": "^1.11.19",
     "lucide-react": "^0.553.0",
     "mermaid": "^11.12.2",
     "react": "^19.2.3",

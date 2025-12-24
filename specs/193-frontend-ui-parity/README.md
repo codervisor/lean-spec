@@ -613,28 +613,28 @@ packages/ui-vite/src/
 
 **Goal**: Ensure Rust backend APIs match Next.js shapes via adapters.
 
-- [ ] **Task 0.1**: Create type definitions
-  - [ ] Copy types from `packages/ui/src/types/` to `packages/ui-vite/src/types/`
-  - [ ] Add `NextJsSpec`, `NextJsStats`, `NextJsSpecDetail` interfaces
-  - [ ] Add `RustSpec`, `RustStats`, `RustSpecDetail` interfaces
+- [x] **Task 0.1**: Create type definitions
+  - [x] Copy types from `packages/ui/src/types/` to `packages/ui-vite/src/types/`
+  - [x] Add `NextJsSpec`, `NextJsStats`, `NextJsSpecDetail` interfaces
+  - [x] Add `RustSpec`, `RustStats`, `RustSpecDetail` interfaces
 
-- [ ] **Task 0.2**: Implement adapters in `api.ts`
-  - [ ] Add `adaptSpec()` function
-  - [ ] Add `adaptStats()` function
-  - [ ] Add `extractSpecNumber()` helper
-  - [ ] Add `calculateCompletionRate()` helper
-  - [ ] Update all `api.*` methods to use adapters
+- [x] **Task 0.2**: Implement adapters in `api.ts`
+  - [x] Add `adaptSpec()` function
+  - [x] Add `adaptStats()` function
+  - [x] Add `extractSpecNumber()` helper
+  - [x] Add `calculateCompletionRate()` helper
+  - [x] Update all `api.*` methods to use adapters
 
-- [ ] **Task 0.3**: Port utility functions
-  - [ ] Port `date-utils.ts` (formatDate, formatRelativeTime)
-  - [ ] Port heading extraction logic (from table-of-contents)
-  - [ ] Test utilities work with real data
+- [x] **Task 0.3**: Port utility functions
+  - [x] Port `date-utils.ts` (formatDate, formatRelativeTime)
+  - [x] Port heading extraction logic (from table-of-contents)
+  - [x] Test utilities work with real data
 
-- [ ] **Task 0.4**: Verify API alignment
-  - [ ] Test `/api/specs` returns adapted data
-  - [ ] Test `/api/stats` returns adapted data
-  - [ ] Test spec detail endpoint
-  - [ ] Document any remaining differences
+- [x] **Task 0.4**: Verify API alignment
+  - [x] Test `/api/specs` returns adapted data
+  - [x] Test `/api/stats` returns adapted data
+  - [x] Test spec detail endpoint
+  - [x] Document any remaining differences
 
 ### Phase 1: Core Navigation (3-4 days)
 
@@ -1604,3 +1604,10 @@ From implementation log:
 - Port date-utils and markdown-utils
 - Set up type definitions
 - Start Phase 1: Port SpecsNavSidebar
+
+### 2025-12-24: Phase 0 - API Alignment Complete
+- Added shared Next.js/Rust types in `packages/ui-vite/src/types/api.ts` to mirror Next.js shapes while preserving compatibility fields.
+- Implemented adapter helpers in `lib/api.ts` and `backend-adapter.ts` to normalize specs/stats, extract spec numbers, and compute completion rate.
+- Ported `date-utils.ts` and markdown heading extraction into `ui-vite` utilities for consistent formatting and ToC parsing.
+- Updated dashboard and stats pages to consume normalized stats plus Date objects, keeping spec list rendering on adapted fields.
+- Tests: `pnpm --filter @leanspec/ui-vite test src/lib/api.test.ts` (pass).

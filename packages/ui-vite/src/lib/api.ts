@@ -1,96 +1,23 @@
 // API client for connecting to Rust HTTP server
 
+import type {
+  DependencyGraph,
+  ListParams,
+  NextJsSpec,
+  NextJsSpecDetail,
+  NextJsStats,
+  ProjectsListResponse,
+  ProjectsResponse,
+  RustSpec,
+  RustSpecDetail,
+  RustStats,
+} from '../types/api';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
-export interface Spec {
-  name: string;
-  title: string;
-  status: 'planned' | 'in-progress' | 'complete' | 'archived';
-  priority?: 'low' | 'medium' | 'high';
-  tags?: string[];
-  created?: string;
-  updated?: string;
-  depends_on?: string[];
-  required_by?: string[];
-}
-
-export interface SpecDetail extends Spec {
-  content: string;
-  metadata: {
-    created_at?: string;
-    updated_at?: string;
-    assignee?: string;
-    [key: string]: any;
-  };
-}
-
-export interface Stats {
-  total: number;
-  by_status: Record<string, number>;
-  by_priority: Record<string, number>;
-  by_tag: Record<string, number>;
-}
-
-export interface DependencyNode {
-  id: string;
-  name: string;
-  status: string;
-}
-
-export interface DependencyEdge {
-  source: string;
-  target: string;
-  type: 'depends_on' | 'required_by';
-}
-
-export interface DependencyGraph {
-  nodes: DependencyNode[];
-  edges: DependencyEdge[];
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  path: string;
-  color?: string;
-}
-
-export interface ProjectsResponse {
-  current: Project | null;
-  available: Project[];
-}
-
-// Axum HTTP server returns { projects, current_project_id } instead of { current, available }
-// so we normalize both shapes for the UI layer.
-export interface ProjectsListResponse {
-  projects?: Project[];
-  current_project_id?: string | null;
-  currentProjectId?: string | null;
-  current?: Project | null;
-  available?: Project[];
-}
-
-export function normalizeProjectsResponse(
-  data: ProjectsResponse | ProjectsListResponse
-): ProjectsResponse {
-  if ('projects' in data) {
-    const projects = data.projects || [];
-    const currentId = data.current_project_id || data.currentProjectId || null;
-    const current = currentId
-      ? projects.find((project) => project.id === currentId) || null
-      : null;
-
-    return {
-      current,
-      available: projects,
-    };
-  }
-
-  return {
-    current: data.current || null,
-    available: data.available || [],
-  };
-}
+export type Spec = NextJsSpec;
+export type SpecDetail = NextJsSpecDetail;
+export type Stats = NextJsStats;
 
 class APIError extends Error {
   status: number;
@@ -119,31 +46,120 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return response.json();
 }
 
+function toDateOrNull(value?: string): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function extractSpecNumber(name: string): number | null {
+  const match = name.match(/^(\d+)-/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+export function calculateCompletionRate(byStatus: Record<string, number>): number {
+  const total = Object.values(byStatus || {}).reduce((sum, count) => sum + count, 0);
+  const complete = byStatus?.complete || 0;
+  return total > 0 ? (complete / total) * 100 : 0;
+}
+
+export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
+  return {
+    id: rustSpec.name,
+    name: rustSpec.name,
+    specNumber: extractSpecNumber(rustSpec.name),
+    specName: rustSpec.name,
+    title: rustSpec.title ?? null,
+    status: rustSpec.status ?? null,
+    priority: rustSpec.priority ?? null,
+    tags: rustSpec.tags ?? null,
+    createdAt: toDateOrNull(rustSpec.created),
+    updatedAt: toDateOrNull(rustSpec.updated),
+  };
+}
+
+export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
+  return {
+    ...adaptSpec(rustSpec),
+    content: rustSpec.content ?? '',
+    metadata: rustSpec.metadata ?? {},
+    dependsOn: rustSpec.depends_on ?? [],
+    requiredBy: rustSpec.required_by ?? [],
+  };
+}
+
+export function adaptStats(rustStats: RustStats): NextJsStats {
+  const byStatus = rustStats.by_status || {};
+  return {
+    totalSpecs: rustStats.total,
+    completionRate: calculateCompletionRate(byStatus),
+    specsByStatus: Object.entries(byStatus).map(([status, count]) => ({ status, count })),
+    byPriority: rustStats.by_priority,
+    byTag: rustStats.by_tag,
+  };
+}
+
+export function normalizeProjectsResponse(
+  data: ProjectsResponse | ProjectsListResponse
+): ProjectsResponse {
+  if ('projects' in data) {
+    const projects = data.projects || [];
+    const currentId = data.current_project_id || data.currentProjectId || null;
+    const current = currentId
+      ? projects.find((project: ProjectsResponse['available'][number]) => project.id === currentId) || null
+      : null;
+
+    return {
+      current,
+      available: projects,
+    };
+  }
+
+  return {
+    current: data.current || null,
+    available: data.available || [],
+  };
+}
+
 export const api = {
-  async getSpecs(): Promise<Spec[]> {
-    const data = await fetchAPI<{ specs: Spec[] }>('/api/specs');
-    return data.specs;
+  async getSpecs(params?: ListParams): Promise<Spec[]> {
+    const query = params
+      ? new URLSearchParams(
+        Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
+          if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
+          return acc;
+        }, [])
+      ).toString()
+      : '';
+
+    const endpoint = query ? `/api/specs?${query}` : '/api/specs';
+    const data = await fetchAPI<{ specs: RustSpec[] }>(endpoint);
+    return data.specs.map(adaptSpec);
   },
 
   async getSpec(name: string): Promise<SpecDetail> {
-    const data = await fetchAPI<{ spec: SpecDetail }>(`/api/specs/${encodeURIComponent(name)}`);
-    return data.spec;
+    const data = await fetchAPI<{ spec: RustSpecDetail }>(`/api/specs/${encodeURIComponent(name)}`);
+    return adaptSpecDetail(data.spec);
   },
 
   async getStats(): Promise<Stats> {
-    const data = await fetchAPI<Stats>('/api/stats');
-    return data;
+    const data = await fetchAPI<RustStats | { stats: RustStats }>('/api/stats');
+    const statsPayload = 'stats' in data ? data.stats : data;
+    return adaptStats(statsPayload);
   },
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
     const endpoint = specName
       ? `/api/specs/${encodeURIComponent(specName)}/dependencies`
       : '/api/dependencies';
-    const data = await fetchAPI<{ graph: DependencyGraph }>(endpoint);
-    return data.graph;
+    const data = await fetchAPI<{ graph: DependencyGraph } | DependencyGraph>(endpoint);
+    return 'graph' in data ? data.graph : data;
   },
 
-  async updateSpec(name: string, updates: Partial<Spec>): Promise<void> {
+  async updateSpec(
+    name: string,
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
+  ): Promise<void> {
     await fetchAPI(`/api/specs/${encodeURIComponent(name)}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
