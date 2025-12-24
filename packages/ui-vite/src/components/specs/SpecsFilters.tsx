@@ -1,4 +1,12 @@
 import { Search, Filter, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Input,
+} from '@leanspec/ui-components';
 
 interface SpecsFiltersProps {
   searchQuery: string;
@@ -40,12 +48,12 @@ export function SpecsFilters({
       {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
+        <Input
           type="text"
           placeholder="Search by name, title, or tags..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full pl-10 pr-4 py-2"
         />
       </div>
 
@@ -57,38 +65,41 @@ export function SpecsFilters({
             <span className="text-sm font-medium">Filters:</span>
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="px-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">All Statuses</option>
-            {uniqueStatuses.map(status => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
+          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {uniqueStatuses.map(status => (
+                <SelectItem key={status} value={status}>{status}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
-            value={priorityFilter}
-            onChange={(e) => onPriorityFilterChange(e.target.value)}
-            className="px-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">All Priorities</option>
-            {uniquePriorities.map(priority => (
-              <option key={priority} value={priority}>{priority}</option>
-            ))}
-          </select>
+          <Select value={priorityFilter} onValueChange={onPriorityFilterChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Priorities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priorities</SelectItem>
+              {uniquePriorities.map(priority => (
+                <SelectItem key={priority} value={priority}>{priority}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
-            value={tagFilter}
-            onChange={(e) => onTagFilterChange(e.target.value)}
-            className="px-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">All Tags</option>
-            {uniqueTags.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
-          </select>
+          <Select value={tagFilter} onValueChange={onTagFilterChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Tags" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tags</SelectItem>
+              {uniqueTags.map(tag => (
+                <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {hasActiveFilters && (
             <button

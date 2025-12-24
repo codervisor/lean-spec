@@ -54,12 +54,6 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     );
   }
 
-  // In Vite app, always show project switcher if there are multiple projects
-  const hasMultipleProjects = projects.length > 1;
-  if (!hasMultipleProjects) {
-    return null;
-  }
-
   const handleProjectSelect = (projectId: string) => {
     if (projectId === currentProject?.id) {
       setOpen(false);
