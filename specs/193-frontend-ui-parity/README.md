@@ -1639,3 +1639,9 @@ From implementation log:
 - Implemented SettingsPage parity: searchable project grid with rename, color picker, favorites, validation badges, stats preview, delete confirmation, and create-project entry point.
 - Ported shared UI polish components (ColorPicker, ProjectAvatar) for consistent visuals and spacing.
 - Tests: `pnpm --filter @leanspec/ui-vite typecheck` (pass).
+
+### 2025-12-24: Phase 4-5 - Context View & Polish
+- Delivered Context page parity with list + detail experience: added context APIs to `lib/api.ts`, new `ContextClient`, `ContextFileDetail`, and grouping/search with markdown rendering and mermaid support.
+- Added rehype highlighting/slug deps to ui-vite for consistent markdown rendering and wired BackToTop utility for long documents.
+- Introduced shared skeleton pack (dashboard/spec list/spec detail/stats/context) and replaced spinner text with parity loaders; upgraded error cards with retry actions across dashboard/specs/stats/context pages.
+- Build: `pnpm -F @leanspec/ui-vite build` (pass).

@@ -145,6 +145,26 @@ export interface DirectoryListResponse {
   path: string;
 }
 
+export interface ContextFileListItem {
+  name: string;
+  path: string;
+  size: number;
+  modified?: string | null;
+  modifiedAt?: Date | null;
+}
+
+export interface ContextFileListResponse {
+  files: ContextFileListItem[];
+  total: number;
+}
+
+export interface ContextFileContent extends ContextFileListItem {
+  content: string;
+  fileType?: string | null;
+  tokenCount: number;
+  lineCount: number;
+}
+
 export interface ListParams {
   status?: string;
   priority?: string;

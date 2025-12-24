@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, AlertCircle } from 'lucide-react';
+import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useSearchParams } from 'react-router-dom';
 import { api, type Spec } from '../lib/api';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
 import { cn } from '../lib/utils';
+import { SpecListSkeleton } from '../components/shared/Skeletons';
 
 type ViewMode = 'list' | 'board';
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
@@ -31,9 +33,22 @@ export function SpecsPage() {
   });
   const [showArchivedBoard, setShowArchivedBoard] = useState(false);
 
-  useEffect(() => {
-    loadSpecs();
+  const loadSpecs = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.getSpecs();
+      setSpecs(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to load specs');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadSpecs();
+  }, [loadSpecs]);
 
   useEffect(() => {
     if (initializedFromQuery.current) return;
@@ -54,19 +69,6 @@ export function SpecsPage() {
       setShowArchivedBoard(true);
     }
   }, [statusFilter, viewMode]);
-
-  const loadSpecs = async () => {
-    try {
-      setLoading(true);
-      const data = await api.getSpecs();
-      setSpecs(data);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     // Optimistic update
@@ -132,17 +134,23 @@ export function SpecsPage() {
   }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter]);
 
   if (loading) {
-    return <div className="text-center py-12">Loading specs...</div>;
+    return <SpecListSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-destructive">Error loading specs: {error}</div>
-        <p className="text-sm text-muted-foreground mt-2">
-          Make sure the HTTP server is running on http://localhost:3333
-        </p>
-      </div>
+      <Card>
+        <CardContent className="py-10 text-center space-y-3">
+          <div className="flex justify-center">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <div className="text-lg font-semibold">Unable to load specs</div>
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <Button variant="secondary" size="sm" onClick={loadSpecs} className="mt-2">
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

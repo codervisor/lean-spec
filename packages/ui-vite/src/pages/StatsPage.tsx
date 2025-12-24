@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -12,8 +12,10 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
+import { AlertCircle } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
 import { api, type Stats } from '../lib/api';
+import { StatsSkeleton } from '../components/shared/Skeletons';
 
 const STATUS_COLORS = {
   planned: '#3B82F6',
@@ -34,22 +36,42 @@ export function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.getStats()
-      .then(setStats)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+  const loadStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.getStats();
+      setStats(data);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load statistics';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    void loadStats();
+  }, [loadStats]);
+
   if (loading) {
-    return <div className="text-center py-12">Loading statistics...</div>;
+    return <StatsSkeleton />;
   }
 
   if (error || !stats) {
     return (
-      <div className="text-center py-12">
-        <div className="text-destructive">Error loading stats: {error || 'Unknown error'}</div>
-      </div>
+      <Card>
+        <CardContent className="py-10 text-center space-y-3">
+          <div className="flex justify-center">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <div className="text-lg font-semibold">Unable to load statistics</div>
+          <p className="text-sm text-muted-foreground">{error || 'Unknown error'}</p>
+          <Button variant="secondary" size="sm" onClick={loadStats} className="mt-2">
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

@@ -3,6 +3,9 @@
 import type {
   DependencyGraph,
   DirectoryListResponse,
+  ContextFileContent,
+  ContextFileListItem,
+  ContextFileListResponse,
   ListParams,
   NextJsSpec,
   NextJsSpecDetail,
@@ -71,6 +74,11 @@ function toDateOrNull(value?: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function estimateTokenCount(content: string): number {
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words * 1.15));
+}
+
 export function extractSpecNumber(name: string): number | null {
   const match = name.match(/^(\d+)-/);
   return match ? parseInt(match[1], 10) : null;
@@ -115,6 +123,29 @@ export function adaptStats(rustStats: RustStats): NextJsStats {
     specsByStatus: Object.entries(byStatus).map(([status, count]) => ({ status, count })),
     byPriority: rustStats.by_priority,
     byTag: rustStats.by_tag,
+  };
+}
+
+export function adaptContextFileListItem(item: ContextFileListItem): ContextFileListItem & { modifiedAt: Date | null } {
+  return {
+    ...item,
+    modifiedAt: item.modified ? toDateOrNull(item.modified) : null,
+  };
+}
+
+export function adaptContextFileContent(
+  response: ContextFileListItem & { content: string; fileType?: string | null }
+): ContextFileContent {
+  const modifiedAt = response.modified ? toDateOrNull(response.modified) : null;
+  const content = response.content || '';
+  return {
+    ...response,
+    fileType: response.fileType || null,
+    modified: response.modified ?? null,
+    modifiedAt,
+    content,
+    tokenCount: estimateTokenCount(content),
+    lineCount: content.split('\n').length,
   };
 }
 
@@ -261,6 +292,19 @@ export const api = {
     return adaptStats(statsPayload as RustStats);
   },
 
+  async getContextFiles(): Promise<ContextFileListItem[]> {
+    const data = await fetchAPI<ContextFileListResponse>('/api/context');
+    return (data.files || []).map(adaptContextFileListItem);
+  },
+
+  async getContextFile(path: string): Promise<ContextFileContent> {
+    const safePath = encodeURIComponent(path);
+    const data = await fetchAPI<ContextFileListItem & { content: string; fileType?: string | null }>(
+      `/api/context/${safePath}`
+    );
+    return adaptContextFileContent(data);
+  },
+
   async listDirectory(path = ''): Promise<DirectoryListResponse> {
     return fetchAPI<DirectoryListResponse>('/api/local-projects/list-directory', {
       method: 'POST',
@@ -276,4 +320,7 @@ export type {
   ProjectsListResponse,
   ProjectValidationResponse,
   DirectoryListResponse,
+  ContextFileListItem,
+  ContextFileListResponse,
+  ContextFileContent,
 };

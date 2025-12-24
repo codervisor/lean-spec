@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { Card, CardContent, Skeleton } from '@leanspec/ui-components';
+import { Card, CardContent } from '@leanspec/ui-components';
 import { api, type SpecDetail } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { SubSpecTabs, type SubSpec } from '../components/spec-detail/SubSpecTabs';
 import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/TableOfContents';
 import { EditableMetadata } from '../components/spec-detail/EditableMetadata';
+import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 
 export function SpecDetailPage() {
   const { specName } = useParams<{ specName: string }>();
@@ -59,13 +60,7 @@ export function SpecDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
+    return <SpecDetailSkeleton />;
   }
 
   if (error || !spec) {
