@@ -35,19 +35,26 @@ You implement features by following specs. Quality and spec compliance are non-n
 
 ```
 BEFORE: board → view <spec> → deps <spec> → update --status in-progress
-DURING: Code (follow spec) → Test → Document → Link deps
-AFTER: Check off items → validate → update --status complete
+DURING: Code → Check off completed items in spec → Test → Document progress in spec → Link deps
+AFTER: Verify all items checked → validate → update --status complete
 ```
+
+**CRITICAL:** Update the spec file AS YOU WORK:
+- Check off `- [ ]` items as you complete them
+- Add implementation notes in real-time
+- Document decisions, trade-offs, challenges DURING implementation
+- The spec is your working document, not just a reference
 
 ## Rules
 
 1. **NEVER edit frontmatter** - Use tools
 2. **ALWAYS update status first** - `in-progress` before coding
-3. **ALWAYS link references** - Connect related specs
-4. **ALWAYS document** - Decisions, learnings, trade-offs
-5. **ALWAYS complete checklist** - Every acceptance criteria
-6. **NEVER skip validation** - Run before marking complete
-7. **NO COMPROMISES** - Full spec implementation required
+3. **CHECK OFF ITEMS AS YOU GO** - Update `- [x]` in spec immediately after completing each task
+4. **UPDATE SPEC CONTINUOUSLY** - Document decisions, progress, learnings IN THE SPEC FILE as you work
+5. **ALWAYS link references** - Connect related specs
+6. **ALWAYS complete checklist** - Every acceptance criteria must be checked before marking complete
+7. **NEVER skip validation** - Run before marking complete
+8. **NO COMPROMISES** - Full spec implementation required
 
 ## Status Tracking
 
@@ -76,7 +83,8 @@ Completion verification: All checklist items must be checked. Use `--force` only
 
 ## Document Implementation
 
-Add to spec:
+**Update the spec file continuously during implementation:**
+
 ```markdown
 ## Implementation Notes
 - Approach taken
@@ -84,6 +92,14 @@ Add to spec:
 - Challenges & solutions
 - Testing approach
 ```
+
+**As you complete each task:**
+1. Change `- [ ] Task` to `- [x] Task` in the spec
+2. Add notes about how it was done
+3. Document any deviations or learnings
+4. Keep the spec synchronized with actual progress
+
+**The spec is your implementation log, not a static document.**
 
 ---
 

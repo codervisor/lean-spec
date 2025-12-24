@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LayoutGrid, List, AlertCircle } from 'lucide-react';
+import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useSearchParams } from 'react-router-dom';
 import { api, type Spec } from '../lib/api';
@@ -8,6 +8,7 @@ import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
 import { cn } from '../lib/utils';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
+import { EmptyState } from '../components/shared/EmptyState';
 
 type ViewMode = 'list' | 'board';
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
@@ -100,6 +101,13 @@ export function SpecsPage() {
     Array.from(new Set(specs.flatMap(s => s.tags || []))),
     [specs]
   );
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setTagFilter('all');
+  }, []);
 
   // Filter specs based on search and filters
   const filteredSpecs = useMemo(() => {
@@ -199,18 +207,42 @@ export function SpecsPage() {
         uniqueStatuses={uniqueStatuses}
         uniquePriorities={uniquePriorities}
         uniqueTags={uniqueTags}
-        onClearFilters={() => {
-          setSearchQuery('');
-          setStatusFilter('all');
-          setPriorityFilter('all');
-          setTagFilter('all');
-        }}
+        onClearFilters={handleClearFilters}
         totalSpecs={specs.length}
         filteredCount={filteredSpecs.length}
       />
 
       <div className="flex-1 min-h-0">
-        {viewMode === 'list' ? (
+        {specs.length === 0 ? (
+          <EmptyState
+            icon={FileQuestion}
+            title="No specs yet"
+            description="We could not find any specs for this project. Add a spec in your LeanSpec workspace, then refresh to see it here."
+            actions={(
+              <Button variant="secondary" size="sm" onClick={loadSpecs}>
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Refresh list
+              </Button>
+            )}
+          />
+        ) : filteredSpecs.length === 0 ? (
+          <EmptyState
+            icon={FilterX}
+            title="No specs match your filters"
+            description="Try clearing filters or adjusting your search to see more specs."
+            actions={(
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button variant="outline" size="sm" onClick={handleClearFilters}>
+                  Clear filters
+                </Button>
+                <Button variant="secondary" size="sm" onClick={loadSpecs}>
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Reload data
+                </Button>
+              </div>
+            )}
+          />
+        ) : viewMode === 'list' ? (
           <ListView specs={filteredSpecs} />
         ) : (
           <BoardView

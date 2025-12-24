@@ -524,10 +524,10 @@ export const api = {
 - Dependency: syntax highlighter
 
 **Completion Criteria**:
-- [ ] Context page renders file tree
-- [ ] Clicking file shows content
-- [ ] Syntax highlighting works
-- [ ] Search/filter works
+- [x] Context page renders file tree
+- [x] Clicking file shows content
+- [x] Syntax highlighting works
+- [x] Search/filter works
 
 #### 12-14. Polish Components
 
@@ -536,9 +536,9 @@ export const api = {
 **14. Skeletons** (loading states)
 
 **Completion Criteria**:
-- [ ] Loading skeletons show during data fetch
-- [ ] Back-to-top button appears on scroll
-- [ ] Color picker works (if implementing project colors)
+- [x] Loading skeletons show during data fetch
+- [x] Back-to-top button appears on scroll
+- [x] Color picker works (if implementing project colors)
 
 ### Dependencies to Add
 
@@ -932,46 +932,46 @@ packages/ui-vite/src/
 
 **Goal**: View context files in browser.
 
-- [ ] **Task 1**: Port ContextClient
-  - [ ] Copy `context-client.tsx` (240 lines)
-  - [ ] Update API calls
-  - [ ] Test file tree rendering
+- [x] **Task 1**: Port ContextClient
+  - [x] Copy `context-client.tsx` (240 lines)
+  - [x] Update API calls
+  - [x] Test file tree rendering
 
-- [ ] **Task 2**: Port ContextFileDetail
-  - [ ] Copy `context-file-detail.tsx`
-  - [ ] Add syntax highlighting (react-syntax-highlighter)
-  - [ ] Test file content display
+- [x] **Task 2**: Port ContextFileDetail
+  - [x] Copy `context-file-detail.tsx`
+  - [x] Add syntax highlighting (react-syntax-highlighter)
+  - [x] Test file content display
 
-- [ ] **Task 3**: Create ContextPage
-  - [ ] Integrate ContextClient
-  - [ ] Add to router
-  - [ ] Test navigation
+- [x] **Task 3**: Create ContextPage
+  - [x] Integrate ContextClient
+  - [x] Add to router
+  - [x] Test navigation
 
 **Acceptance**:
-- Context page renders file tree
-- Clicking file shows content
-- Syntax highlighting works
-- Search/filter works
+- [x] Context page renders file tree
+- [x] Clicking file shows content
+- [x] Syntax highlighting works
+- [x] Search/filter works
 
 ### Phase 5: Polish & Final Touches (2-3 days)
 
 #### Day 1: Loading States & Skeletons
 
-- [ ] **Task 1.1**: Port Skeletons component
-  - [ ] Copy `skeletons.tsx` (120 lines)
-  - [ ] Create variants for different pages
-  - [ ] Test rendering
+- [x] **Task 1.1**: Port Skeletons component
+  - [x] Copy `skeletons.tsx` (120 lines)
+  - [x] Create variants for different pages
+  - [x] Test rendering
 
-- [ ] **Task 1.2**: Add to all pages
-  - [ ] DashboardPage: Show skeleton while loading
-  - [ ] SpecsPage: Show skeleton list
-  - [ ] SpecDetailPage: Show skeleton content
-  - [ ] StatsPage: Show skeleton charts
+- [x] **Task 1.2**: Add to all pages
+  - [x] DashboardPage: Show skeleton while loading
+  - [x] SpecsPage: Show skeleton list
+  - [x] SpecDetailPage: Show skeleton content
+  - [x] StatsPage: Show skeleton charts
 
-- [ ] **Task 1.3**: Add loading indicators
-  - [ ] Spinner for inline actions
-  - [ ] Progress bar for navigation
-  - [ ] Skeleton for delayed loads
+- [x] **Task 1.3**: Add loading indicators
+  - [x] Spinner for inline actions
+  - [x] Progress bar for navigation
+  - [x] Skeleton for delayed loads
 
 **Acceptance**:
 - No blank pages during load
@@ -1192,10 +1192,10 @@ For each component and page, verify:
 - [ ] Color picker works (if implementing)
 
 #### Context Page (Optional)
-- [ ] File tree renders context files
-- [ ] Clicking file shows content in viewer
-- [ ] Syntax highlighting works for code files
-- [ ] Search/filter works
+- [x] File tree renders context files
+- [x] Clicking file shows content in viewer
+- [x] Syntax highlighting works for code files
+- [x] Search/filter works
 - [ ] Breadcrumbs show current path
 
 ### Functional Tests
@@ -1253,9 +1253,9 @@ For each component and page, verify:
 - [ ] Shortcuts help dialog accessible (? or Cmd+/)
 
 #### Loading & Error States
-- [ ] Skeleton shows while loading dashboard
-- [ ] Skeleton shows while loading spec list
-- [ ] Skeleton shows while loading spec detail
+- [x] Skeleton shows while loading dashboard
+- [x] Skeleton shows while loading spec list
+- [x] Skeleton shows while loading spec detail
 - [ ] Spinner shows during metadata update
 - [ ] Error boundary catches component errors
 - [ ] Network errors show friendly message
@@ -1323,7 +1323,7 @@ After completing all porting:
 - [x] Dependencies: Interactive graph + focus mode
 - [x] Stats: Charts + visualizations
 - [x] Settings: Full project CRUD
-- [ ] Context: File browser + viewer (optional)
+- [x] Context: File browser + viewer (optional)
 
 **Visual Parity (Pixel-Perfect)**:
 - [ ] Colors match design system exactly

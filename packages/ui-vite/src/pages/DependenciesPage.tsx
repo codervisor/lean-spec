@@ -13,8 +13,9 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import dagre from '@dagrejs/dagre';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@leanspec/ui-components';
-import { Network, List } from 'lucide-react';
+import { Network, List, AlertTriangle, GitBranch, RefreshCcw } from 'lucide-react';
 import { api, type DependencyGraph as APIDependencyGraph } from '../lib/api';
+import { EmptyState } from '../components/shared/EmptyState';
 
 // Node layout using dagre
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
@@ -139,14 +140,42 @@ export function DependenciesPage() {
   }, [navigate]);
 
   if (loading) {
-    return <div className="text-center py-12">Loading dependencies...</div>;
+    return (
+      <Card>
+        <CardContent className="py-10 text-center text-muted-foreground">Loading dependencies...</CardContent>
+      </Card>
+    );
   }
 
   if (error || !graph) {
     return (
-      <div className="text-center py-12">
-        <div className="text-destructive">Error loading dependencies: {error || 'Unknown error'}</div>
-      </div>
+      <EmptyState
+        icon={AlertTriangle}
+        title="Unable to load dependencies"
+        description={error || 'Please check your connection and try again.'}
+        tone="error"
+        actions={(
+          <Button size="sm" variant="secondary" onClick={() => navigate(0)}>
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        )}
+      />
+    );
+  }
+
+  if (graph.nodes.length === 0) {
+    return (
+      <EmptyState
+        icon={GitBranch}
+        title="No dependencies yet"
+        description="Specs are present but no dependency relationships were found. Add depends_on links to see the graph."
+        actions={(
+          <Button size="sm" variant="outline" onClick={() => navigate('/specs')}>
+            Go to specs
+          </Button>
+        )}
+      />
     );
   }
 
@@ -232,17 +261,23 @@ export function DependenciesPage() {
               <CardTitle>Relationships ({graph.edges.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {graph.edges.map((edge: APIDependencyGraph['edges'][number], i: number) => (
-                  <div key={i} className="p-3 bg-secondary rounded-lg text-sm">
-                    <div className="font-medium">{edge.source}</div>
-                    <div className="text-xs text-muted-foreground my-1">
-                      {edge.type === 'depends_on' ? '↓ depends on' : '↑ required by'}
+              {graph.edges.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground bg-secondary/40 rounded-lg border">
+                  No relationships yet. Add depends_on or required_by references in your specs to visualize them here.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {graph.edges.map((edge: APIDependencyGraph['edges'][number], i: number) => (
+                    <div key={i} className="p-3 bg-secondary rounded-lg text-sm">
+                      <div className="font-medium">{edge.source}</div>
+                      <div className="text-xs text-muted-foreground my-1">
+                        {edge.type === 'depends_on' ? '↓ depends on' : '↑ required by'}
+                      </div>
+                      <div className="font-medium">{edge.target}</div>
                     </div>
-                    <div className="font-medium">{edge.target}</div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { Card, CardContent } from '@leanspec/ui-components';
+import { AlertTriangle, ArrowLeft, RefreshCcw } from 'lucide-react';
+import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { api, type SpecDetail } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
@@ -9,6 +9,7 @@ import { SubSpecTabs, type SubSpec } from '../components/spec-detail/SubSpecTabs
 import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/TableOfContents';
 import { EditableMetadata } from '../components/spec-detail/EditableMetadata';
 import { SpecDetailSkeleton } from '../components/shared/Skeletons';
+import { EmptyState } from '../components/shared/EmptyState';
 
 export function SpecDetailPage() {
   const { specName } = useParams<{ specName: string }>();
@@ -16,24 +17,24 @@ export function SpecDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadSpec = async () => {
-      if (!specName) return;
-      setLoading(true);
-      try {
-        const data = await api.getSpec(specName);
-        setSpec(data);
-        setError(null);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load spec';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadSpec();
+  const loadSpec = useCallback(async () => {
+    if (!specName) return;
+    setLoading(true);
+    try {
+      const data = await api.getSpec(specName);
+      setSpec(data);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load spec';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }, [specName]);
+
+  useEffect(() => {
+    void loadSpec();
+  }, [loadSpec]);
 
   const subSpecs: SubSpec[] = useMemo(() => {
     const raw = spec?.metadata?.sub_specs as unknown;
@@ -65,12 +66,25 @@ export function SpecDetailPage() {
 
   if (error || !spec) {
     return (
-      <div className="text-center py-12">
-        <div className="text-destructive">Error loading spec: {error || 'Not found'}</div>
-        <Link to="/specs" className="text-sm text-primary hover:underline mt-4 inline-block">
-          Back to specs
-        </Link>
-      </div>
+      <EmptyState
+        icon={AlertTriangle}
+        title="Spec unavailable"
+        description={error || 'This spec could not be found. It may have been moved or deleted.'}
+        tone="error"
+        actions={(
+          <>
+            <Link to="/specs" className="inline-flex">
+              <Button variant="outline" size="sm" className="gap-2">
+                Back to specs
+              </Button>
+            </Link>
+            <Button variant="secondary" size="sm" className="gap-2" onClick={() => void loadSpec()}>
+              <RefreshCcw className="h-4 w-4" />
+              Retry
+            </Button>
+          </>
+        )}
+      />
     );
   }
 

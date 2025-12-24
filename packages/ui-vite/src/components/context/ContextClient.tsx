@@ -135,8 +135,19 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
         </CardHeader>
         <CardContent>
           {files.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No context files found in .lean-spec/context
+            <div className="text-center py-8 text-muted-foreground text-sm space-y-3">
+              <div>No context files found in .lean-spec/context.</div>
+              <Button size="sm" variant="secondary" onClick={loadList}>
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Rescan project
+              </Button>
+            </div>
+          ) : groupedFiles.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm space-y-3">
+              <div>No files match this search.</div>
+              <Button size="sm" variant="outline" onClick={() => setSearch('')}>
+                Clear search
+              </Button>
             </div>
           ) : (
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">

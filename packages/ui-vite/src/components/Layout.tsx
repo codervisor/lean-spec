@@ -1,8 +1,11 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
+import { ErrorBoundary } from './shared/ErrorBoundary';
+import { PageTransition } from './shared/PageTransition';
+import { BackToTop } from './shared/BackToTop';
 
 function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
   const shortcuts = [
@@ -40,6 +43,7 @@ function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
 
 export function Layout() {
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const location = useLocation();
 
   // Register global keyboard shortcuts
   useGlobalShortcuts();
@@ -50,10 +54,15 @@ export function Layout() {
       <div className="flex w-full min-w-0">
         <MainSidebar />
         <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] px-4 py-6 lg:px-6">
-          <Outlet />
+          <ErrorBoundary key={location.pathname} onReset={() => window.location.reload()}>
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
+          </ErrorBoundary>
         </main>
       </div>
       {showShortcuts && <KeyboardShortcutsHelp onClose={() => setShowShortcuts(false)} />}
+      <BackToTop />
     </div>
   );
 }

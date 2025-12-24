@@ -6,7 +6,6 @@ import rehypeSlug from 'rehype-slug';
 import { ArrowLeft, Clock, Copy, ExternalLink, FileText, Hash, Layers, Type } from 'lucide-react';
 import { Badge, Button, Card, CardContent } from '@leanspec/ui-components';
 import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/TableOfContents';
-import { BackToTop } from '../shared/BackToTop';
 import { MermaidDiagram } from '../MermaidDiagram';
 import type { ContextFileContent } from '../../lib/api';
 
@@ -163,8 +162,6 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
           <TableOfContents content={headingContent} />
         </div>
       )}
-
-      <BackToTop />
     </div>
   );
 }
