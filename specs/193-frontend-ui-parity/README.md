@@ -642,31 +642,31 @@ packages/ui-vite/src/
 
 #### Day 1: Specs Navigation Sidebar
 
-- [ ] **Task 1.1**: Port SpecsNavSidebar component
-  - [ ] Copy `packages/ui/src/components/specs-nav-sidebar.tsx`
-  - [ ] Replace `next/link` → `react-router-dom Link`
-  - [ ] Replace `useRouter` → `useNavigate`
-  - [ ] Replace `useSearchParams` → keep (same in both!)
-  - [ ] Update imports (Tooltip, Select, Input, Button from ui-components)
-  - [ ] Fix `getSpecUrl` helper (remove project prefix)
+- [x] **Task 1.1**: Port SpecsNavSidebar component
+  - [x] Copy `packages/ui/src/components/specs-nav-sidebar.tsx`
+  - [x] Replace `next/link` → `react-router-dom Link`
+  - [x] Replace `useRouter` → `useNavigate`
+  - [x] Replace `useSearchParams` → keep (same in both!)
+  - [x] Update imports (Tooltip, Select, Input, Button from ui-components)
+  - [x] Fix `getSpecUrl` helper (remove project prefix)
 
-- [ ] **Task 1.2**: Integrate sidebar into layout
-  - [ ] Create `SpecsLayout.tsx` wrapper
-  - [ ] Update router to use layout for `/specs` routes
-  - [ ] Test collapse/expand functionality
-  - [ ] Test mobile overlay
+- [x] **Task 1.2**: Integrate sidebar into layout
+  - [x] Create `SpecsLayout.tsx` wrapper
+  - [x] Update router to use layout for `/specs` routes
+  - [x] Test collapse/expand functionality
+  - [x] Test mobile overlay
 
-- [ ] **Task 1.3**: Implement filtering
-  - [ ] Verify status filter works
-  - [ ] Verify priority filter works
-  - [ ] Verify tag filter works
-  - [ ] Test "Clear Filters" button
+- [x] **Task 1.3**: Implement filtering
+  - [x] Verify status filter works
+  - [x] Verify priority filter works
+  - [x] Verify tag filter works
+  - [x] Test "Clear Filters" button
 
-- [ ] **Task 1.4**: Test virtual scrolling
-  - [ ] Verify react-window renders large lists
-  - [ ] Test scroll position persistence
-  - [ ] Test active spec highlighting
-  - [ ] Test search input
+- [x] **Task 1.4**: Test virtual scrolling
+  - [x] Verify react-window renders large lists
+  - [x] Test scroll position persistence
+  - [x] Test active spec highlighting
+  - [x] Test search input
 
 **Acceptance**: 
 - Sidebar matches Next.js version visually
@@ -1611,3 +1611,10 @@ From implementation log:
 - Ported `date-utils.ts` and markdown heading extraction into `ui-vite` utilities for consistent formatting and ToC parsing.
 - Updated dashboard and stats pages to consume normalized stats plus Date objects, keeping spec list rendering on adapted fields.
 - Tests: `pnpm --filter @leanspec/ui-vite test src/lib/api.test.ts` (pass).
+
+### 2025-12-24: Phase 1 - Specs Navigation Sidebar Parity
+- Rebuilt `SpecsNavSidebar` in `ui-vite` with design-system inputs/selects, status/priority/tag filters, clear-all control, and spec number/title badges.
+- Added react-window virtualization with scroll persistence, active spec centering, and relative update timestamps for long lists.
+- Implemented collapse persistence and mobile overlay behavior; `SpecsLayout` now provides a sticky mobile opener and passes visibility state to the sidebar.
+- Dependency added: `react-window` to `@leanspec/ui-vite` for virtualized rendering.
+- Tests: `pnpm --filter @leanspec/ui-vite test -- --runInBand` (pass).
