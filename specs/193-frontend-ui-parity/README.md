@@ -689,17 +689,17 @@ packages/ui-vite/src/
   - [x] Update Command components import
   - [x] Test fuzzy search (fuse.js)
 
-**Option B: Keep custom modal** (simpler)
-- [ ] **Task 2.1**: Enhance existing QuickSearch
-  - [ ] Add fuzzy search (fuse.js)
-  - [ ] Add recent searches
-  - [ ] Add tag filtering
+**Option B: Keep custom modal** (superseded by Option A cmdk port)
+- [x] **Task 2.1**: Enhance existing QuickSearch *(not needed — Option A delivered cmdk/fuse-based search)*
+  - [x] Add fuzzy search (fuse.js)
+  - [x] Add recent searches
+  - [x] Add tag filtering
 
-- [ ] **Task 2.3**: Wire up globally
-  - [ ] Add to Layout component
-  - [ ] Test Cmd+K shortcut
-  - [ ] Test spec selection navigates
-  - [ ] Test recent searches persist
+- [x] **Task 2.3**: Wire up globally *(covered by Option A implementation)*
+  - [x] Add to Layout component
+  - [x] Test Cmd+K shortcut
+  - [x] Test spec selection navigates
+  - [x] Test recent searches persist
 
 **Acceptance**:
 - Cmd+K opens search
