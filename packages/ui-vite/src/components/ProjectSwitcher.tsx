@@ -1,107 +1,205 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Folder, Check } from 'lucide-react';
+/**
+ * Project Switcher Component
+ * Dropdown/expandable project selector for the sidebar
+ */
+
+import { useState } from 'react';
+import { ChevronsUpDown, Plus, Star, Settings, Loader2 } from 'lucide-react';
+import { cn } from '@leanspec/ui-components';
+import { Button } from '@leanspec/ui-components';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@leanspec/ui-components';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@leanspec/ui-components';
+import { Skeleton } from '@leanspec/ui-components';
 import { useProject } from '../contexts';
-import { cn } from '../lib/utils';
+import { CreateProjectDialog } from './projects/CreateProjectDialog';
+import { ProjectAvatar } from './shared/ProjectAvatar';
+import { useTranslation } from 'react-i18next';
 
-export function ProjectSwitcher() {
-  const { currentProject, availableProjects, loading, switchProject } = useProject();
+interface ProjectSwitcherProps {
+  collapsed?: boolean;
+  onAddProject?: () => void; // Kept for compatibility, but we'll use internal dialog
+}
+
+export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
+  const {
+    currentProject,
+    projects,
+    loading: isLoading,
+  } = useProject();
+  const { t } = useTranslation('common');
+
   const [open, setOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSwitch = async (projectId: string) => {
-    if (projectId === currentProject?.id || switching) return;
-    
-    setSwitching(true);
-    try {
-      await switchProject(projectId);
-      setOpen(false);
-      // Refresh the page to reload all data with new project
-      window.location.reload();
-    } catch {
-      // Error is handled by context
-    } finally {
-      setSwitching(false);
-    }
-  };
-
-  if (loading && !currentProject) {
+  // Show skeleton during initial load
+  if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground">
-        <Folder className="w-4 h-4" />
-        <span>Loading...</span>
-      </div>
+      <Skeleton className={cn(
+        "w-full",
+        collapsed ? "h-9 w-9" : "h-10"
+      )} />
     );
   }
 
-  const allProjects = availableProjects;
-  const hasMultipleProjects = allProjects.length > 1;
+  // In Vite app, always show project switcher if there are multiple projects
+  const hasMultipleProjects = projects.length > 1;
+  if (!hasMultipleProjects) {
+    return null;
+  }
+
+  const handleProjectSelect = (projectId: string) => {
+    if (projectId === currentProject?.id) {
+      setOpen(false);
+      return;
+    }
+
+    setIsSwitching(true);
+    setOpen(false);
+
+    // Extract the current path
+    const pathname = window.location.pathname;
+    const projectPathMatch = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
+    let subPath = projectPathMatch?.[1] || ''; // Empty string = project home page
+
+    // If on a spec detail page (/specs/{specId}), redirect to specs list instead
+    // because the same spec ID might not exist in the other project
+    if (subPath.match(/^\/specs\/[^/]+$/)) {
+      subPath = '/specs';
+    }
+
+    // Full page navigation - ensures clean state for new project
+    window.location.assign(`/projects/${projectId}${subPath}`);
+  };
+
+  const sortedProjects = [...(projects || [])].sort((a, b) => {
+    if (a.favorite === b.favorite) return 0;
+    return a.favorite ? -1 : 1;
+  });
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => hasMultipleProjects && setOpen(!open)}
-        disabled={!hasMultipleProjects || switching}
-        className={cn(
-          'flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border transition-colors',
-          hasMultipleProjects
-            ? 'hover:bg-secondary cursor-pointer'
-            : 'cursor-default',
-          switching && 'opacity-50'
-        )}
-      >
-        <Folder className="w-4 h-4 text-primary" />
-        <span className="max-w-[150px] truncate font-medium">
-          {currentProject?.name || 'No project'}
-        </span>
-        {hasMultipleProjects && (
-          <ChevronDown className={cn('w-4 h-4 transition-transform', open && 'rotate-180')} />
-        )}
-      </button>
-
-      {open && hasMultipleProjects && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-background border rounded-md shadow-lg z-50">
-          <div className="p-2 border-b">
-            <span className="text-xs font-medium text-muted-foreground uppercase">
-              Switch Project
-            </span>
-          </div>
-          <div className="max-h-64 overflow-y-auto">
-            {allProjects.map((project) => {
-              const isCurrent = project.id === currentProject?.id;
-              return (
-                <button
-                  key={project.id}
-                  onClick={() => handleSwitch(project.id)}
-                  disabled={isCurrent || switching}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-secondary transition-colors',
-                    isCurrent && 'bg-secondary/50'
+    <>
+      <CreateProjectDialog
+        open={showNewProjectDialog}
+        onOpenChange={setShowNewProjectDialog}
+      />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={isSwitching}
+            className={cn(
+              "w-full justify-between transition-opacity",
+              collapsed ? "h-9 w-9 p-0 justify-center" : "px-3",
+              isSwitching && "opacity-70"
+            )}
+          >
+            {collapsed ? (
+              isSwitching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ProjectAvatar
+                  name={currentProject?.name || ''}
+                  color={currentProject?.color}
+                  size="sm"
+                />
+              )
+            ) : (
+              <>
+                <div className="flex items-center gap-2 truncate">
+                  {isSwitching ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                  ) : (
+                    <ProjectAvatar
+                      name={currentProject?.name || ''}
+                      color={currentProject?.color}
+                      size="sm"
+                      className="shrink-0"
+                    />
                   )}
+                  <span className="truncate">
+                    {isSwitching ? t('projectSwitcher.switching') : (currentProject?.name || t('projectSwitcher.placeholder'))}
+                  </span>
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0" align="start">
+          <Command>
+            <CommandInput placeholder={t('projectSwitcher.searchPlaceholder')} />
+            <CommandList>
+              <CommandEmpty>{t('projectSwitcher.noProject')}</CommandEmpty>
+              <CommandGroup heading={t('projects.projects')}>
+                {sortedProjects.map((project) => {
+                  const isActive = currentProject?.id === project.id;
+                  return (
+                    <CommandItem
+                      key={project.id}
+                      onSelect={() => handleProjectSelect(project.id)}
+                      className={cn(
+                        "text-sm",
+                        isActive && "bg-accent"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ProjectAvatar
+                          name={project.name || ''}
+                          color={project.color}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                        <span className="truncate flex-1">{project.name}</span>
+                        {project.favorite && (
+                          <Star className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+              <CommandSeparator />
+              <CommandGroup>
+                <CommandItem
+                  className="cursor-pointer"
+                  onSelect={() => {
+                    setOpen(false);
+                    setShowNewProjectDialog(true);
+                  }}
                 >
-                  <Folder className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{project.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{project.path}</div>
-                  </div>
-                  {isCurrent && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('projects.createProject')}
+                </CommandItem>
+                <CommandItem
+                  className="cursor-pointer"
+                  onSelect={() => {
+                    setOpen(false);
+                    window.location.assign('/projects');
+                  }}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t('projects.manageProjects')}
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </>
   );
 }

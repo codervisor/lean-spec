@@ -12,6 +12,8 @@
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
     "projectContext": "项目上下文",
+    "settings": "设置",
+    "settingsDescription": "偏好与配置",
     "toggleMenu": "切换菜单",
     "docsTooltip": "查看文档",
     "githubTooltip": "GitHub 仓库"

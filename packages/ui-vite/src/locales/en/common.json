@@ -12,6 +12,8 @@
     "dependencyGraph": "Dependency Graph",
     "analytics": "Analytics",
     "projectContext": "Project Context",
+    "settings": "Settings",
+    "settingsDescription": "Preferences & configuration",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
     "githubTooltip": "GitHub repository"
