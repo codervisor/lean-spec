@@ -84,14 +84,23 @@ export interface DependencyGraph {
 
 export interface Project {
   id: string;
-  name: string;
-  path: string;
-  color?: string;
+  name?: string;
+  displayName?: string;
+  path?: string;
+  specsDir?: string;
+  favorite?: boolean;
+  color?: string | null;
+  description?: string | null;
+  isFeatured?: boolean;
+  lastAccessed?: string | Date | null;
+  githubOwner?: string;
+  githubRepo?: string;
 }
 
 export interface ProjectsResponse {
   current: Project | null;
   available: Project[];
+  projects?: Project[];
 }
 
 // Axum HTTP server returns { projects, current_project_id } instead of { current, available }
@@ -102,6 +111,38 @@ export interface ProjectsListResponse {
   currentProjectId?: string | null;
   current?: Project | null;
   available?: Project[];
+  mode?: 'single-project' | 'multi-project';
+  recentProjects?: string[];
+  favoriteProjects?: string[];
+}
+
+export interface ProjectMutationResponse {
+  project?: Project;
+  favorite?: boolean;
+}
+
+export interface ProjectValidationResult {
+  isValid: boolean;
+  error?: string | null;
+}
+
+export interface ProjectValidationResponse {
+  validation: ProjectValidationResult;
+}
+
+export interface ProjectStatsResponse {
+  stats: RustStats;
+}
+
+export interface DirectoryItem {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+}
+
+export interface DirectoryListResponse {
+  items: DirectoryItem[];
+  path: string;
 }
 
 export interface ListParams {

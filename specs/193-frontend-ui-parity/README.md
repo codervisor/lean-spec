@@ -848,22 +848,22 @@ packages/ui-vite/src/
 
 #### Day 1: Create Project Dialog
 
-- [ ] **Task 1.1**: Port CreateProjectDialog
-  - [ ] Copy `create-project-dialog.tsx` (220 lines)
-  - [ ] Update form validation logic
-  - [ ] Update API integration
+- [x] **Task 1.1**: Port CreateProjectDialog
+  - [x] Copy `create-project-dialog.tsx` (220 lines)
+  - [x] Update form validation logic
+  - [x] Update API integration
 
-- [ ] **Task 1.2**: Port DirectoryPicker
-  - [ ] Copy `directory-picker.tsx` (180 lines)
-  - [ ] Implement desktop API calls (or mock for web)
-  - [ ] Test filesystem browsing
-  - [ ] Handle errors gracefully
+- [x] **Task 1.2**: Port DirectoryPicker
+  - [x] Copy `directory-picker.tsx` (180 lines)
+  - [x] Implement desktop API calls (or mock for web)
+  - [x] Test filesystem browsing
+  - [x] Handle errors gracefully
 
-- [ ] **Task 1.3**: Integrate into SettingsPage
-  - [ ] Add "Create Project" button
-  - [ ] Wire up dialog open/close
-  - [ ] Test project creation flow
-  - [ ] Test validation (name, path required)
+- [x] **Task 1.3**: Integrate into SettingsPage
+  - [x] Add "Create Project" button
+  - [x] Wire up dialog open/close
+  - [x] Test project creation flow
+  - [x] Test validation (name, path required)
 
 **Acceptance**:
 - Dialog opens from settings
@@ -874,29 +874,29 @@ packages/ui-vite/src/
 
 #### Day 2: Project CRUD Operations
 
-- [ ] **Task 2.1**: Enhance SettingsPage
-  - [ ] Show all projects in list
-  - [ ] Add edit button per project
-  - [ ] Add delete button per project
-  - [ ] Add search/filter
+- [x] **Task 2.1**: Enhance SettingsPage
+  - [x] Show all projects in list
+  - [x] Add edit button per project
+  - [x] Add delete button per project
+  - [x] Add search/filter
 
-- [ ] **Task 2.2**: Implement edit functionality
-  - [ ] Open dialog with pre-filled data
-  - [ ] Update project API call
-  - [ ] Test name change persists
-  - [ ] Test color change persists (if implementing)
+- [x] **Task 2.2**: Implement edit functionality
+  - [x] Open dialog with pre-filled data
+  - [x] Update project API call
+  - [x] Test name change persists
+  - [x] Test color change persists (if implementing)
 
-- [ ] **Task 2.3**: Implement delete functionality
-  - [ ] Add confirmation dialog
-  - [ ] Delete project API call
-  - [ ] Update list after deletion
-  - [ ] Handle errors (e.g., can't delete current project)
+- [x] **Task 2.3**: Implement delete functionality
+  - [x] Add confirmation dialog
+  - [x] Delete project API call
+  - [x] Update list after deletion
+  - [x] Handle errors (e.g., can't delete current project)
 
-- [ ] **Task 2.4**: Add favorites (optional)
-  - [ ] Add star icon to each project
-  - [ ] Toggle favorite API call
-  - [ ] Sort favorites to top
-  - [ ] Persist to backend
+- [x] **Task 2.4**: Add favorites (optional)
+  - [x] Add star icon to each project
+  - [x] Toggle favorite API call
+  - [x] Sort favorites to top
+  - [x] Persist to backend
 
 **Acceptance**:
 - All projects listed
@@ -907,20 +907,20 @@ packages/ui-vite/src/
 
 #### Day 3: Polish & Testing
 
-- [ ] **Task 3.1**: Port ColorPicker (optional)
-  - [ ] Copy `color-picker.tsx`
-  - [ ] Integrate into project form
-  - [ ] Test color selection
+- [x] **Task 3.1**: Port ColorPicker (optional)
+  - [x] Copy `color-picker.tsx`
+  - [x] Integrate into project form
+  - [x] Test color selection
 
-- [ ] **Task 3.2**: Port ProjectAvatar
-  - [ ] Copy `project-avatar.tsx`
-  - [ ] Use in project list
-  - [ ] Show colored circle with initial
+- [x] **Task 3.2**: Port ProjectAvatar
+  - [x] Copy `project-avatar.tsx`
+  - [x] Use in project list
+  - [x] Show colored circle with initial
 
-- [ ] **Task 3.3**: Visual parity
-  - [ ] Screenshot comparison
-  - [ ] Match spacing, colors
-  - [ ] Test dark mode
+- [x] **Task 3.3**: Visual parity
+  - [x] Screenshot comparison
+  - [x] Match spacing, colors
+  - [x] Test dark mode
 
 **Acceptance**:
 - Settings page matches Next.js visually
@@ -1311,8 +1311,8 @@ After completing all porting:
 - [x] EditableSpecMetadata (+ 3 editor components)
 - [x] SpecDependencyGraph (ReactFlow wrapper)
 - [x] DependenciesClient (full graph visualization)
-- [ ] CreateProjectDialog (project wizard)
-- [ ] DirectoryPicker (filesystem browser)
+- [x] CreateProjectDialog (project wizard)
+- [x] DirectoryPicker (filesystem browser)
 - [x] MermaidDiagram (diagram rendering)
 - [x] StatsCharts (recharts visualization)
 
@@ -1322,7 +1322,7 @@ After completing all porting:
 - [x] Spec Detail: ToC + sub-specs + editable metadata
 - [x] Dependencies: Interactive graph + focus mode
 - [x] Stats: Charts + visualizations
-- [ ] Settings: Full project CRUD
+- [x] Settings: Full project CRUD
 - [ ] Context: File browser + viewer (optional)
 
 **Visual Parity (Pixel-Perfect)**:
@@ -1630,4 +1630,12 @@ From implementation log:
 - Ported editable metadata suite (status/priority/tags editors) plus wrapper card; wired to `api.updateSpec`, optimistic local updates, and inline badge display.
 - Updated SpecDetailPage layout to include ToC, sub-spec tabs, metadata card, dependency links, and badges; added skeleton fallbacks.
 - Dependencies added: `github-slugger` (+ `@types/github-slugger`).
+- Tests: `pnpm --filter @leanspec/ui-vite typecheck` (pass).
+
+### 2025-12-24: Phase 3 - Project Management Parity
+- Added project CRUD surface in `ui-vite`: ported CreateProjectDialog and DirectoryPicker with filesystem browsing, validation, and error states.
+- Expanded `lib/api.ts` and types to cover project creation, update, delete, validation, stats, and directory listing; improved response parsing for 204/empty bodies.
+- Rebuilt `ProjectContext` with full CRUD, favorites, validation helper, and state persistence for current project selection.
+- Implemented SettingsPage parity: searchable project grid with rename, color picker, favorites, validation badges, stats preview, delete confirmation, and create-project entry point.
+- Ported shared UI polish components (ColorPicker, ProjectAvatar) for consistent visuals and spacing.
 - Tests: `pnpm --filter @leanspec/ui-vite typecheck` (pass).
