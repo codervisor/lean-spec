@@ -8,8 +8,10 @@ import type {
   NextJsSpecDetail as SpecDetail,
   NextJsStats as Stats,
   Project,
+  ProjectStatsResponse,
   ProjectsListResponse,
   ProjectsResponse,
+  ListSpecsResponse,
   RustSpec,
   RustSpecDetail,
   RustStats,
@@ -32,6 +34,7 @@ export interface BackendAdapter {
 
   // Stats and dependencies
   getStats(): Promise<Stats>;
+  getProjectStats?(projectId: string): Promise<Stats>;
   getDependencies(specName?: string): Promise<DependencyGraph>;
 }
 
@@ -83,13 +86,13 @@ export class HttpBackendAdapter implements BackendAdapter {
       ).toString()
       : '';
     const endpoint = query ? `/api/specs?${query}` : '/api/specs';
-    const data = await this.fetchAPI<{ specs: RustSpec[] }>(endpoint);
+    const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
     return data.specs.map(adaptSpec);
   }
 
   async getSpec(name: string): Promise<SpecDetail> {
-    const data = await this.fetchAPI<{ spec: RustSpecDetail }>(`/api/specs/${encodeURIComponent(name)}`);
-    return adaptSpecDetail(data.spec);
+    const data = await this.fetchAPI<RustSpecDetail>(`/api/specs/${encodeURIComponent(name)}`);
+    return adaptSpecDetail(data);
   }
 
   async updateSpec(
@@ -103,15 +106,22 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async getStats(): Promise<Stats> {
-    const data = await this.fetchAPI<RustStats | { stats: RustStats }>('/api/stats');
+    const data = await this.fetchAPI<RustStats>('/api/stats');
+    return adaptStats(data);
+  }
+
+  async getProjectStats(projectId: string): Promise<Stats> {
+    const data = await this.fetchAPI<ProjectStatsResponse | RustStats>(
+      `/api/projects/${encodeURIComponent(projectId)}/stats`
+    );
     const statsPayload = 'stats' in data ? data.stats : data;
-    return adaptStats(statsPayload);
+    return adaptStats(statsPayload as RustStats);
   }
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
     const endpoint = specName
-      ? `/api/specs/${encodeURIComponent(specName)}/dependencies`
-      : '/api/dependencies';
+      ? `/api/deps/${encodeURIComponent(specName)}`
+      : '/api/deps';
     const data = await this.fetchAPI<{ graph: DependencyGraph } | DependencyGraph>(endpoint);
     return 'graph' in data ? data.graph : data;
   }

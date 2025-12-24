@@ -10,53 +10,39 @@ export interface SubSpecItem {
 }
 
 export interface RustSpec {
-  name: string;
-  title: string;
+  id: string;
+  specName: string;
+  specNumber?: number | null;
+  title?: string | null;
   status: SpecStatus;
-  priority?: SpecPriority;
+  priority?: SpecPriority | null;
   tags?: string[];
   assignee?: string | null;
-  created?: string;
-  created_at?: string;
   createdAt?: string;
-  updated?: string;
-  updated_at?: string;
   updatedAt?: string;
-  completed_at?: string;
   completedAt?: string;
-  depends_on?: string[];
   dependsOn?: string[];
-  required_by?: string[];
   requiredBy?: string[];
-  file_path?: string;
   filePath?: string;
   relationships?: {
-    depends_on: string[];
-    required_by?: string[];
+    dependsOn: string[];
+    requiredBy?: string[];
   };
 }
 
 export interface RustSpecDetail extends RustSpec {
-  content?: string;
-  content_md?: string;
   contentMd?: string;
-  metadata?: {
-    created_at?: string;
-    updated_at?: string;
-    assignee?: string;
-    github_url?: string;
-    sub_specs?: SubSpecItem[];
-    [key: string]: unknown;
-  };
-  sub_specs?: SubSpecItem[];
+  content?: string;
   subSpecs?: SubSpecItem[];
 }
 
 export interface RustStats {
-  total: number;
-  by_status: Record<string, number>;
-  by_priority: Record<string, number>;
-  by_tag: Record<string, number>;
+  totalProjects: number;
+  totalSpecs: number;
+  specsByStatus: { status: string; count: number }[];
+  specsByPriority: { priority: string; count: number }[];
+  completionRate: number;
+  projectId?: string;
 }
 
 export interface NextJsSpec {
@@ -81,7 +67,7 @@ export interface NextJsSpec {
 
 export interface NextJsSpecDetail extends NextJsSpec {
   content: string;
-  metadata: {
+  metadata?: {
     created_at?: string;
     updated_at?: string;
     assignee?: string;
@@ -97,8 +83,7 @@ export interface NextJsStats {
   totalSpecs: number;
   completionRate: number;
   specsByStatus: { status: string; count: number }[];
-  byPriority?: Record<string, number>;
-  byTag?: Record<string, number>;
+  specsByPriority?: { priority: string; count: number }[];
 }
 
 export interface DependencyNode {
@@ -110,7 +95,7 @@ export interface DependencyNode {
 export interface DependencyEdge {
   source: string;
   target: string;
-  type: 'depends_on' | 'required_by';
+  type?: 'depends_on' | 'required_by';
 }
 
 export interface DependencyGraph {
@@ -207,3 +192,18 @@ export interface ListParams {
   tag?: string;
   search?: string;
 }
+
+export interface ListSpecsResponse {
+  specs: RustSpec[];
+  total: number;
+  projectId?: string;
+}
+
+export interface SearchResponse {
+  results: RustSpec[];
+  total: number;
+  query: string;
+  projectId?: string;
+}
+
+export type StatsResponse = RustStats;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, BarChart3, Network, Settings, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { Home, FileText, BarChart3, Network, Settings, ChevronLeft, ChevronRight, BookOpen, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ProjectSwitcher } from './ProjectSwitcher';
 
@@ -21,7 +21,12 @@ const navItems: NavItem[] = [
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
-export function MainSidebar() {
+interface MainSidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarProps) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -35,51 +40,87 @@ export function MainSidebar() {
     localStorage.setItem(STORAGE_KEY, String(collapsed));
   }, [collapsed]);
 
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    if (mobileOpen && onMobileClose) {
+      onMobileClose();
+    }
+  }, [location.pathname]);
+
   return (
-    <aside
-      className={cn(
-        'hidden lg:flex flex-col border-r bg-background h-[calc(100vh-3.5rem)] sticky top-14 transition-all duration-300',
-        collapsed ? 'w-16' : 'w-60'
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onMobileClose}
+        />
       )}
-    >
-      <div className="px-3 py-4">
-        <ProjectSwitcher />
-      </div>
 
-      <nav className="flex-1 px-2 space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = item.path === '/'
-            ? location.pathname === '/'
-            : location.pathname.startsWith(item.path);
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'flex flex-col border-r bg-background h-[calc(100vh-3.5rem)] transition-all duration-300',
+          // Desktop styles
+          'hidden lg:flex sticky top-14',
+          collapsed ? 'w-16' : 'w-60',
+          // Mobile styles
+          'lg:hidden fixed left-0 top-14 z-50 w-60',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          // Show on desktop OR when mobile menu is open
+          'lg:translate-x-0 lg:flex'
+        )}
+      >
+        {/* Mobile close button */}
+        <div className="lg:hidden flex justify-end p-2 border-b">
+          <button
+            onClick={onMobileClose}
+            className="p-2 hover:bg-secondary rounded-md transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-                'hover:bg-accent hover:text-accent-foreground',
-                isActive && 'bg-accent text-accent-foreground font-medium',
-                collapsed && 'justify-center px-2'
-              )}
-            >
-              <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary')} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+        <div className="px-3 py-4">
+          <ProjectSwitcher />
+        </div>
 
-      <div className="p-2 border-t">
-        <button
-          onClick={() => setCollapsed((prev) => !prev)}
-          className={cn('w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary transition-colors', collapsed && 'px-2')}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          {!collapsed && <span className="text-xs">Collapse</span>}
-        </button>
-      </div>
-    </aside>
+        <nav className="flex-1 px-2 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.path === '/'
+              ? location.pathname === '/'
+              : location.pathname.startsWith(item.path);
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                  'hover:bg-accent hover:text-accent-foreground',
+                  isActive && 'bg-accent text-accent-foreground font-medium',
+                  collapsed && 'justify-center px-2'
+                )}
+              >
+                <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary')} />
+                {!collapsed && <span className="truncate">{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-2 border-t hidden lg:block">
+          <button
+            onClick={() => setCollapsed((prev) => !prev)}
+            className={cn('w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary transition-colors', collapsed && 'px-2')}
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {!collapsed && <span className="text-xs">Collapse</span>}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

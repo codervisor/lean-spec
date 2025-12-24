@@ -16,6 +16,7 @@ import type {
   ProjectValidationResponse,
   ProjectsListResponse,
   ProjectsResponse,
+  ListSpecsResponse,
   RustSpec,
   RustSpecDetail,
   RustStats,
@@ -108,15 +109,15 @@ export function calculateCompletionRate(byStatus: Record<string, number>): numbe
 }
 
 export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
-  const created = rustSpec.created_at ?? rustSpec.createdAt ?? rustSpec.created;
-  const updated = rustSpec.updated_at ?? rustSpec.updatedAt ?? rustSpec.updated;
-  const completed = rustSpec.completed_at ?? rustSpec.completedAt;
+  const created = rustSpec.createdAt;
+  const updated = rustSpec.updatedAt;
+  const completed = rustSpec.completedAt;
 
   return {
-    id: rustSpec.name,
-    name: rustSpec.name,
-    specNumber: extractSpecNumber(rustSpec.name),
-    specName: rustSpec.name,
+    id: rustSpec.id || rustSpec.specName,
+    name: rustSpec.specName,
+    specNumber: rustSpec.specNumber ?? extractSpecNumber(rustSpec.specName),
+    specName: rustSpec.specName,
     title: rustSpec.title ?? null,
     status: rustSpec.status ?? null,
     priority: rustSpec.priority ?? null,
@@ -125,18 +126,22 @@ export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
     createdAt: toDateOrNull(created),
     updatedAt: toDateOrNull(updated),
     completedAt: toDateOrNull(completed),
-    filePath: rustSpec.file_path ?? rustSpec.filePath,
-    relationships: rustSpec.relationships,
+    filePath: rustSpec.filePath,
+    relationships: rustSpec.relationships
+      ? {
+        depends_on: rustSpec.relationships.dependsOn,
+        required_by: rustSpec.relationships.requiredBy,
+      }
+      : undefined,
   };
 }
 
 export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
-  const content = rustSpec.contentMd ?? rustSpec.content_md ?? rustSpec.content ?? '';
-  const dependsOn = rustSpec.depends_on ?? rustSpec.dependsOn ?? [];
-  const requiredBy = rustSpec.required_by ?? rustSpec.requiredBy ?? [];
-  const metadata = rustSpec.metadata ?? {};
+  const content = rustSpec.contentMd ?? rustSpec.content ?? '';
+  const dependsOn = rustSpec.dependsOn ?? [];
+  const requiredBy = rustSpec.requiredBy ?? [];
 
-  const rawSubSpecs = rustSpec.sub_specs ?? rustSpec.subSpecs ?? (metadata.sub_specs as unknown);
+  const rawSubSpecs = rustSpec.subSpecs as unknown;
   const subSpecs: SubSpecItem[] = Array.isArray(rawSubSpecs)
     ? rawSubSpecs.flatMap((entry) => {
       if (!entry || typeof entry !== 'object') return [];
@@ -160,7 +165,6 @@ export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
   return {
     ...adaptSpec(rustSpec),
     content,
-    metadata,
     dependsOn,
     requiredBy,
     subSpecs: subSpecs.length > 0 ? subSpecs : undefined,
@@ -168,13 +172,11 @@ export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
 }
 
 export function adaptStats(rustStats: RustStats): NextJsStats {
-  const byStatus = rustStats.by_status || {};
   return {
-    totalSpecs: rustStats.total,
-    completionRate: calculateCompletionRate(byStatus),
-    specsByStatus: Object.entries(byStatus).map(([status, count]) => ({ status, count })),
-    byPriority: rustStats.by_priority,
-    byTag: rustStats.by_tag,
+    totalSpecs: rustStats.totalSpecs,
+    completionRate: rustStats.completionRate,
+    specsByStatus: rustStats.specsByStatus,
+    specsByPriority: rustStats.specsByPriority,
   };
 }
 
@@ -255,25 +257,24 @@ export const api = {
       : '';
 
     const endpoint = query ? `/api/specs?${query}` : '/api/specs';
-    const data = await fetchAPI<{ specs: RustSpec[] }>(endpoint);
+    const data = await fetchAPI<ListSpecsResponse>(endpoint);
     return data.specs.map(adaptSpec);
   },
 
   async getSpec(name: string): Promise<SpecDetail> {
-    const data = await fetchAPI<{ spec: RustSpecDetail }>(`/api/specs/${encodeURIComponent(name)}`);
-    return adaptSpecDetail(data.spec);
+    const data = await fetchAPI<RustSpecDetail>(`/api/specs/${encodeURIComponent(name)}`);
+    return adaptSpecDetail(data);
   },
 
   async getStats(): Promise<Stats> {
-    const data = await fetchAPI<RustStats | { stats: RustStats }>('/api/stats');
-    const statsPayload = 'stats' in data ? data.stats : data;
-    return adaptStats(statsPayload);
+    const data = await fetchAPI<RustStats>('/api/stats');
+    return adaptStats(data);
   },
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
     const endpoint = specName
-      ? `/api/specs/${encodeURIComponent(specName)}/dependencies`
-      : '/api/dependencies';
+      ? `/api/deps/${encodeURIComponent(specName)}`
+      : '/api/deps';
     const data = await fetchAPI<{ graph: DependencyGraph } | DependencyGraph>(endpoint);
     return 'graph' in data ? data.graph : data;
   },

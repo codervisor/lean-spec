@@ -90,7 +90,7 @@ export function StatsPage() {
     fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#6B7280',
   }));
 
-  const priorityData = Object.entries(stats.byPriority || {}).map(([priority, count]) => ({
+  const priorityData = (stats.specsByPriority || []).map(({ priority, count }) => ({
     name: priority.charAt(0).toUpperCase() + priority.slice(1),
     value: count,
     fill: PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || '#6B7280',
@@ -205,29 +205,7 @@ export function StatsPage() {
         </Card>
       </div>
 
-      {/* Tags */}
-      {Object.keys(stats.byTag || {}).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tags</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {Object.entries(stats.byTag || {})
-                .sort(([, a], [, b]) => b - a)
-                .map(([tag, count]) => (
-                  <div
-                    key={tag}
-                    className="flex justify-between items-center p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
-                  >
-                    <span className="text-sm font-medium">{tag}</span>
-                    <span className="text-sm font-bold">{count}</span>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tags section removed: Rust stats payload no longer includes tag aggregates */}
     </div>
   );
 }

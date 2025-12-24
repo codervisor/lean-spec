@@ -1,0 +1,485 @@
+{
+  "navigation": {
+    "home": "首页",
+    "specs": "Specs",
+    "dependencies": "依赖关系",
+    "stats": "统计",
+    "context": "上下文",
+    "collapse": "收起",
+    "closeMenu": "关闭菜单",
+    "dashboard": "仪表板",
+    "allSpecifications": "所有 Spec",
+    "dependencyGraph": "依赖图",
+    "analytics": "数据分析",
+    "projectContext": "项目上下文",
+    "toggleMenu": "切换菜单",
+    "docsTooltip": "查看文档",
+    "githubTooltip": "GitHub 仓库"
+  },
+  "search": {
+    "placeholder": "搜索 Spec...",
+    "noResults": "未找到结果",
+    "searchSpecs": "搜索 Spec"
+  },
+  "status": {
+    "planned": "已计划",
+    "inProgress": "进行中",
+    "in-progress": "进行中",
+    "complete": "已完成",
+    "archived": "已归档",
+    "blocked": "阻塞中"
+  },
+  "priority": {
+    "critical": "紧急",
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "unknown": "未知"
+  },
+  "actions": {
+    "create": "创建",
+    "update": "更新",
+    "delete": "删除",
+    "archive": "归档",
+    "view": "查看",
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一步",
+    "loading": "加载中...",
+    "search": "搜索"
+  },
+  "spec": {
+    "spec": "Spec",
+    "specs": "Specs",
+    "specification": "Spec",
+    "specifications": "Specs",
+    "title": "标题",
+    "description": "描述",
+    "tags": "标签",
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间",
+    "completedAt": "完成时间"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "toggleTheme": "切换主题"
+  },
+  "language": {
+    "english": "English",
+    "chinese": "中文",
+    "changeLanguage": "切换语言"
+  },
+  "projects": {
+    "project": "项目",
+    "projects": "项目",
+    "switchProject": "切换项目",
+    "createProject": "创建项目",
+    "manageProjects": "管理项目",
+    "selectProject": "选择项目"
+  },
+  "quickSearch": {
+    "button": "快速搜索...",
+    "placeholder": "按标题、编号或标签搜索 Spec...",
+    "recentSearches": "最近搜索",
+    "filterHeading": "按标签筛选",
+    "filterPrefix": "筛选：",
+    "open": "打开快速搜索"
+  },
+  "projectSwitcher": {
+    "switching": "正在切换...",
+    "placeholder": "选择项目...",
+    "searchPlaceholder": "搜索项目...",
+    "noProject": "未找到项目。"
+  },
+  "createProject": {
+    "title": "添加项目",
+    "descriptionPicker": "浏览并选择项目目录。",
+    "descriptionManual": "请输入本地项目目录的绝对路径。",
+    "enterManually": "手动输入路径",
+    "pathLabel": "项目路径",
+    "pathPlaceholder": "/path/to/your/project",
+    "pathHelp": "选择项目根目录。",
+    "browseFolders": "浏览文件夹",
+    "action": "添加项目",
+    "adding": "正在添加...",
+    "toastSuccess": "项目添加成功",
+    "toastError": "无法添加项目"
+  },
+  "specSidebar": {
+    "title": "全部 Specs",
+    "searchPlaceholder": "搜索 Spec...",
+    "empty": "没有匹配的 Spec",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏"
+  },
+  "specsNavSidebar": {
+    "title": "Spec 列表",
+    "searchPlaceholder": "搜索 Spec...",
+    "noResults": "没有匹配的 Spec",
+    "filtersLabel": "筛选",
+    "toggleFilters": {
+      "show": "展开筛选",
+      "hide": "收起筛选"
+    },
+    "clearFilters": "重置",
+    "select": {
+      "status": {
+        "label": "状态",
+        "all": "全部状态"
+      },
+      "priority": {
+        "label": "优先级",
+        "all": "全部优先级"
+      },
+      "tag": {
+        "label": "标签",
+        "all": "全部标签"
+      }
+    },
+    "badges": {
+      "subSpecs": "+{{count}} 个文件"
+    }
+  },
+  "specsPage": {
+    "title": "Spec 列表",
+    "count": "共 {{count}} 个 Spec",
+    "views": {
+      "list": "列表",
+      "board": "看板",
+      "listTooltip": "列表视图",
+      "boardTooltip": "看板视图"
+    },
+    "wideMode": {
+      "enter": "进入宽屏模式",
+      "exit": "退出宽屏模式"
+    },
+    "searchPlaceholder": "搜索 Spec...",
+    "filters": {
+      "status": "状态",
+      "priority": "优先级",
+      "sort": "排序",
+      "statusAll": "全部状态",
+      "priorityAll": "全部优先级",
+      "sortOptions": {
+        "id-desc": "最新优先",
+        "id-asc": "最旧优先",
+        "updated-desc": "最近更新",
+        "title-asc": "标题 (A-Z)"
+      }
+    },
+    "metadata": {
+      "updated": "更新于 {{time}}",
+      "files": "+{{count}} 个文件",
+      "dependencies": "{{count}} 个依赖",
+      "none": "暂无元信息"
+    },
+    "list": {
+      "empty": "没有匹配的 Spec"
+    },
+    "board": {
+      "dropHere": "拖放到此移动 Spec",
+      "updating": "正在更新...",
+      "archivedCollapsed": "已归档"
+    },
+    "toasts": {
+      "statusUpdated": "已将 {{spec}} 移动到 {{status}}",
+      "statusError": "无法更新状态，请稍后重试。"
+    }
+  },
+  "specDetail": {
+    "toggleSidebar": "展开或收起 Spec 列表",
+    "metadata": {
+      "created": "创建时间",
+      "updated": "更新时间",
+      "name": "名称",
+      "assignee": "责任人",
+      "notAvailable": "暂无数据"
+    },
+    "buttons": {
+      "viewTimeline": "查看时间线",
+      "viewDependencies": "查看依赖",
+      "focus": "专注模式",
+      "exitFocus": "退出专注模式"
+    },
+    "dialogs": {
+      "timelineTitle": "Spec 时间线",
+      "timelineDescription": "查看创建、更新和完成节点。",
+      "dependenciesTitle": "依赖关系图",
+      "dependenciesDescription": "展示前置关系与关联 Spec。",
+      "dependenciesLink": "在依赖页面中查看"
+    },
+    "tabs": {
+      "overview": "概览"
+    },
+    "state": {
+      "loading": "正在加载...",
+      "error": "无法加载 Spec"
+    }
+  },
+  "statsPage": {
+    "title": "项目统计",
+    "description": "查看项目的整体指标与洞察",
+    "cards": {
+      "total": {
+        "title": "Spec 总数",
+        "subtitle": "全部 Spec"
+      },
+      "completed": {
+        "title": "已完成",
+        "subtitle": "完成率"
+      },
+      "inProgress": {
+        "title": "进行中",
+        "subtitle": "活跃中的工作"
+      },
+      "planned": {
+        "title": "已计划",
+        "subtitle": "即将开始的工作"
+      }
+    },
+    "charts": {
+      "status": {
+        "title": "状态分布",
+        "description": "按状态划分的 Spec 数量"
+      },
+      "priority": {
+        "title": "优先级分布",
+        "description": "按优先级划分的 Spec 数量"
+      },
+      "creation": {
+        "title": "创建趋势",
+        "description": "最近新建的 Spec 数量走势"
+      },
+      "topTags": {
+        "title": "热门标签",
+        "description": "使用最频繁的标签"
+      },
+      "label": "{{name}}：{{value}}"
+    }
+  },
+  "contextPage": {
+    "title": "项目上下文",
+    "description": "查看驱动 AI 工具与开发流程的项目级上下文文件",
+    "copyAll": "复制全部",
+    "copyAllSuccess": "已复制！",
+    "searchPlaceholder": "在上下文文件中搜索...",
+    "searchNoMatches": "没有找到包含「{{query}}」的内容",
+    "summary": {
+      "totalTokens": "共 {{formattedCount}} 个 Token",
+      "contextBudget": "用于 AI 工具的上下文预算"
+    },
+    "badges": {
+      "matchesSingular": "{{count}} 个匹配",
+      "matchesPlural": "{{count}} 个匹配",
+      "matchesFoundSingular": "找到 {{count}} 个匹配",
+      "matchesFoundPlural": "找到 {{count}} 个匹配",
+      "filesSingular": "{{count}} 个文件",
+      "filesPlural": "{{count}} 个文件",
+      "filesFiltered": "{{count}}/{{total}} 个文件",
+      "tokens": "{{formattedCount}} 个 Token"
+    },
+    "sections": {
+      "agents": {
+        "title": "Agent 指令",
+        "description": "提供给 AI Agent 的系统提示与使用指南",
+        "empty": "当前没有 Agent 指令",
+        "suggestion": "在项目根目录创建 AGENTS.md"
+      },
+      "config": {
+        "title": "配置",
+        "description": "LeanSpec 项目配置与设置",
+        "empty": "没有找到配置文件",
+        "suggestion": "运行 'lean-spec init' 生成配置文件"
+      },
+      "docs": {
+        "title": "项目文档",
+        "description": "README、贡献指南与变更日志",
+        "empty": "没有找到项目文档",
+        "suggestion": "在项目根目录创建 README.md"
+      }
+    },
+    "emptyState": {
+      "title": "未检测到项目上下文",
+      "description": "该项目暂未配置任何上下文文件，AI Agent 无法了解项目背景。",
+      "suggestion": "先创建 AGENTS.md 或执行 'lean-spec init'"
+    },
+    "search": {
+      "noMatchesTitle": "未找到匹配项",
+      "noMatchesDescription": "试试其他关键词",
+      "noFilesDescription": "该分类下没有文件"
+    },
+    "viewer": {
+      "modified": "更新于 {{date}}",
+      "lines": "{{count}} 行",
+      "viewFull": "查看全页",
+      "openInEditor": "在 VS Code 中打开",
+      "copyContent": "复制内容",
+      "tokenStatus": {
+        "optimal": "最佳",
+        "good": "良好",
+        "large": "偏大",
+        "veryLarge": "非常大"
+      }
+    },
+    "detail": {
+      "back": "返回",
+      "openInEditor": "在编辑器中打开",
+      "copy": "复制",
+      "copySuccess": "已复制！",
+      "lines": "{{count}} 行",
+      "modified": "更新于 {{date}}"
+    }
+  },
+  "specTimeline": {
+    "events": {
+      "created": "创建",
+      "inProgress": "进行中",
+      "complete": "已完成",
+      "archived": "已归档"
+    },
+    "state": {
+      "awaiting": "等待开始",
+      "queued": "排队中",
+      "pending": "等待更新"
+    }
+  },
+  "dependencyGraph": {
+    "header": {
+      "title": "依赖地图",
+      "subtitle": "探索前置工作与关联项",
+      "badge": "React Flow DAG"
+    },
+    "badges": {
+      "current": "当前 Spec",
+      "currentSubtitle": "本 Spec",
+      "dependsOn": "依赖",
+      "dependsOnSubtitle": "必须先完成",
+      "requiredBy": "被依赖",
+      "requiredBySubtitle": "受此 Spec 阻塞"
+    }
+  },
+  "dependenciesPage": {
+    "header": {
+      "title": "依赖关系图",
+      "summary": {
+        "connected": "{{count}} 个 Spec 存在依赖",
+        "standalone": "{{count}} 个独立项",
+        "none": "暂未配置依赖关系"
+      }
+    },
+    "selector": {
+      "placeholder": "选择要高亮的 Spec...",
+      "filterPlaceholder": "输入以筛选...",
+      "clearSelection": "清除选择",
+      "empty": "没有匹配的 Spec"
+    },
+    "filters": {
+      "showStandalone": "显示独立项 ({{count}})",
+      "compact": "紧凑视图",
+      "focusMode": "焦点模式",
+      "clear": "重置",
+      "count": "({{count}})"
+    },
+    "empty": {
+      "title": "暂无依赖可显示",
+      "filters": "没有 Spec 满足当前筛选条件",
+      "standaloneHint": "开启「显示独立项」即可查看未建立依赖的 Spec"
+    },
+    "legend": {
+      "dependsOn": "依赖方向（箭头表示指向）",
+      "instructions": "点击：选中 • 双击：打开 • 拖动：重新布局"
+    },
+    "graph": {
+      "levelTitle": "第 {{depth}} 层",
+      "levelBadge": "L{{depth}}"
+    },
+    "sidebar": {
+      "emptyTitle": "请选择一个 Spec",
+      "emptyDescription": "点击节点即可查看它的依赖关系",
+      "openSpec": "打开 Spec →",
+      "dependsOnHeading": "上游依赖 ({{count}})",
+      "requiredByHeading": "下游被依赖 ({{count}})",
+      "emptyUpstream": "没有上游依赖",
+      "emptyDownstream": "没有下游依赖此 Spec",
+      "depth": {
+        "direct": "直接关系",
+        "level": "第 {{depth}} 层"
+      }
+    }
+  },
+  "editors": {
+    "changeStatus": "修改 Spec 状态",
+    "statusSuccess": "状态已更新",
+    "statusError": "无法更新状态",
+    "changePriority": "修改 Spec 优先级",
+    "prioritySuccess": "优先级已更新",
+    "priorityError": "无法更新优先级",
+    "addTag": "新增标签",
+    "tagExists": "该标签已存在",
+    "tagsSuccess": "标签已更新",
+    "tagsError": "无法更新标签",
+    "searchTag": "搜索或创建标签...",
+    "noTagResults": "没有可用的标签。",
+    "existingTags": "已有标签",
+    "createSection": "创建新标签",
+    "createTag": "创建「{{tag}}」",
+    "removeTag": "移除 {{tag}} 标签"
+  },
+  "desktopMenu": {
+    "close": "关闭",
+    "newSpec": {
+      "title": "创建新 Spec",
+      "description": "通过 LeanSpec CLI 在当前项目中生成新的 Spec。",
+      "slugLabel": "Spec slug",
+      "slugPlaceholder": "例如 desktop-native-menu",
+      "titleLabel": "显示标题（可选）",
+      "titlePlaceholder": "便于识别的标题",
+      "commandLabel": "CLI 命令",
+      "commandPlaceholder": "输入 Spec slug 即可预览命令…",
+      "hint": "在 {{project}}（或项目根目录）执行该命令即可生成 Spec 文件。",
+      "projectFallback": "项目根目录",
+      "copyButton": "复制命令",
+      "copied": "已复制"
+    },
+    "shortcuts": {
+      "title": "键盘快捷键",
+      "description": "原生菜单与这些快捷键保持同步。",
+      "sections": {
+        "global": "桌面外壳",
+        "view": "视图",
+        "help": "帮助"
+      },
+      "items": {
+        "toggleWindow": "显示/隐藏桌面窗口",
+        "quickSwitch": "打开项目切换器",
+        "newSpec": "创建新 Spec",
+        "refreshProjects": "刷新项目",
+        "toggleSidebar": "切换侧边栏",
+        "quickFind": "查找 Spec",
+        "shortcuts": "显示快捷键",
+        "docs": "打开文档"
+      }
+    },
+    "logs": {
+      "title": "桌面日志",
+      "description": "日志仅保存在本机，报告问题时可以分享。",
+      "pathLabel": "日志目录",
+      "pathPlaceholder": "正在等待桌面应用返回日志路径…",
+      "hint": "也可以在原生菜单中选择 Help → View Logs。",
+      "copyPath": "复制路径",
+      "openButton": "打开日志文件夹"
+    },
+    "about": {
+      "title": "关于 LeanSpec Desktop",
+      "description": "LeanSpec UI + 原生集成，专为多项目与自动化场景打造。",
+      "version": "版本",
+      "website": "网站",
+      "support": "支持"
+    }
+  }
+}

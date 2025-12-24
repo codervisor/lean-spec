@@ -155,28 +155,40 @@ describe('API Client', () => {
   describe('getStats', () => {
     it('should fetch stats successfully', async () => {
       const mockStats = {
-        total: 10,
-        by_status: { planned: 5, 'in-progress': 3, complete: 2 },
-        by_priority: { high: 3, medium: 4, low: 3 },
-        by_tag: { frontend: 5, backend: 5 },
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ stats: mockStats }),
-      });
-
-      const result = await api.getStats();
-      expect(result).toEqual({
+        totalProjects: 1,
         totalSpecs: 10,
-        completionRate: (2 / 10) * 100,
         specsByStatus: [
           { status: 'planned', count: 5 },
           { status: 'in-progress', count: 3 },
           { status: 'complete', count: 2 },
         ],
-        byPriority: { high: 3, medium: 4, low: 3 },
-        byTag: { frontend: 5, backend: 5 },
+        specsByPriority: [
+          { priority: 'high', count: 3 },
+          { priority: 'medium', count: 4 },
+          { priority: 'low', count: 3 },
+        ],
+        completionRate: 20,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStats,
+      });
+
+      const result = await api.getStats();
+      expect(result).toEqual({
+        totalSpecs: 10,
+        completionRate: 20,
+        specsByStatus: [
+          { status: 'planned', count: 5 },
+          { status: 'in-progress', count: 3 },
+          { status: 'complete', count: 2 },
+        ],
+        specsByPriority: [
+          { priority: 'high', count: 3 },
+          { priority: 'medium', count: 4 },
+          { priority: 'low', count: 3 },
+        ],
       });
     });
   });
@@ -215,7 +227,7 @@ describe('API Client', () => {
 
       await api.getDependencies('spec-001');
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/specs/spec-001/dependencies'),
+        expect.stringContaining('/api/deps/spec-001'),
         expect.any(Object)
       );
     });

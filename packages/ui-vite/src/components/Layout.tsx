@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -43,16 +43,31 @@ function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
 
 export function Layout() {
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
 
   // Register global keyboard shortcuts
   useGlobalShortcuts();
 
+  // Expose toggle function to window for Navigation component
+  useEffect(() => {
+    (window as any).toggleMainSidebar = () => {
+      setMobileSidebarOpen(prev => !prev);
+    };
+
+    return () => {
+      delete (window as any).toggleMainSidebar;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation onShowShortcuts={() => setShowShortcuts(true)} />
       <div className="flex w-full min-w-0">
-        <MainSidebar />
+        <MainSidebar
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
+        />
         <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] px-4 py-6 lg:px-6">
           <ErrorBoundary key={location.pathname} onReset={() => window.location.reload()}>
             <PageTransition>
