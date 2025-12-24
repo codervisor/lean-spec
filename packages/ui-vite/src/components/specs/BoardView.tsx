@@ -64,17 +64,17 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
   }, [showArchived]);
 
   const specsByStatus = useMemo(() => {
-    const grouped: Record<string, Spec[]> = {
+    const grouped: Record<SpecStatus, Spec[]> = {
       'planned': [],
       'in-progress': [],
       'complete': [],
       'archived': []
     };
 
-    specs.forEach(spec => {
-      if (grouped[spec.status]) {
-        grouped[spec.status].push(spec);
-      }
+    specs.forEach((spec) => {
+      const status = spec.status as SpecStatus | null;
+      if (!status) return;
+      grouped[status].push(spec);
     });
 
     return grouped;
@@ -92,12 +92,6 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
     if (activeDropZone !== status) {
       setActiveDropZone(status);
     }
-  };
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    // Only clear if we're leaving the drop zone container, not entering a child
-    // This is tricky with native DnD, simplified for now
   };
 
   const handleDrop = (status: SpecStatus, e: DragEvent<HTMLDivElement>) => {

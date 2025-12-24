@@ -16,12 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@leanspec/ui-components';
-import {
-  FixedSizeList,
-  type FixedSizeList as FixedSizeListType,
-  type ListChildComponentProps,
-  type ListOnScrollProps,
-} from 'react-window';
+import * as ReactWindow from 'react-window';
 import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
 import { api, type Spec } from '../lib/api';
@@ -58,7 +53,13 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return stored ? parseFloat(stored) : 0;
   });
 
-  const listRef = useRef<FixedSizeListType<Spec[]> | null>(null);
+  type ListRef = ReactWindow.FixedSizeList<Spec[]>;
+  type ListChildComponentProps = ReactWindow.ListChildComponentProps<Spec[]>;
+  type ListOnScrollProps = ReactWindow.ListOnScrollProps;
+
+  const { FixedSizeList } = ReactWindow;
+
+  const listRef = useRef<ListRef | null>(null);
   const mobileOpenRef = useRef(mobileOpen);
 
   const activeSpecId = useMemo(() => {
@@ -156,7 +157,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     setTagFilter('all');
   };
 
-  const Row = ({ index, style, data }: ListChildComponentProps<Spec[]>) => {
+  const Row = ({ index, style, data }: ListChildComponentProps) => {
     const spec = data[index];
     const isActive = spec.name === activeSpecId;
     const displayTitle = spec.title || spec.specName;

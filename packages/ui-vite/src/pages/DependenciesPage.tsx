@@ -72,7 +72,7 @@ export function DependenciesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
-  
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -80,11 +80,11 @@ export function DependenciesPage() {
     api.getDependencies(specName)
       .then((data) => {
         setGraph(data);
-        
+
         // Convert API graph to React Flow format
         const flowNodes: Node[] = data.nodes.map((node) => ({
           id: node.id,
-          data: { 
+          data: {
             label: (
               <div className="text-center p-2">
                 <div className="font-medium text-sm">{node.name}</div>
@@ -126,7 +126,7 @@ export function DependenciesPage() {
           flowNodes,
           flowEdges
         );
-        
+
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       })
@@ -211,7 +211,7 @@ export function DependenciesPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {graph.nodes.map((node) => (
+                {graph.nodes.map((node: APIDependencyGraph['nodes'][number]) => (
                   <button
                     key={node.id}
                     onClick={() => navigate(`/specs/${node.id}`)}
@@ -226,14 +226,14 @@ export function DependenciesPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Relationships ({graph.edges.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {graph.edges.map((edge, i) => (
+                {graph.edges.map((edge: APIDependencyGraph['edges'][number], i: number) => (
                   <div key={i} className="p-3 bg-secondary rounded-lg text-sm">
                     <div className="font-medium">{edge.source}</div>
                     <div className="text-xs text-muted-foreground my-1">

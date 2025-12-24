@@ -270,4 +270,10 @@ export const api = {
 };
 
 // Re-export types for convenience
-export type { ProjectsResponse, ProjectsListResponse, ProjectValidationResponse, DirectoryListResponse };
+export type {
+  DependencyGraph,
+  ProjectsResponse,
+  ProjectsListResponse,
+  ProjectValidationResponse,
+  DirectoryListResponse,
+};
