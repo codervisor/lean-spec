@@ -4,6 +4,8 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path as FsPath;
 
 use leanspec_core::{
     DependencyGraph, FrontmatterValidator, LineCountValidator,
@@ -16,7 +18,8 @@ use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::types::{
     DependencyResponse, ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest,
-    SearchResponse, SpecDetail, SpecSummary, StatsResponse, ValidationIssue, ValidationResponse,
+    SearchResponse, SpecDetail, SpecSummary, StatsResponse, SubSpec, ValidationIssue,
+    ValidationResponse,
 };
 
 /// Resolve a project by ID or fall back to the current/first project
@@ -70,6 +73,148 @@ fn parse_status_filter(
     }
 
     Ok(parsed)
+}
+
+fn strip_frontmatter(content: &str) -> String {
+    let trimmed = content.trim_start();
+    if !trimmed.starts_with("---") {
+        return content.to_string();
+    }
+
+    let mut lines = trimmed.lines();
+    // Skip opening ---
+    lines.next();
+
+    let mut in_frontmatter = true;
+    let mut body = String::new();
+
+    for line in lines {
+        if in_frontmatter && line.trim() == "---" {
+            in_frontmatter = false;
+            continue;
+        }
+
+        if !in_frontmatter {
+            body.push_str(line);
+            body.push('\n');
+        }
+    }
+
+    if in_frontmatter {
+        return content.to_string();
+    }
+
+    body
+}
+
+fn format_sub_spec_name(file_name: &str) -> String {
+    let base = file_name.trim_end_matches(".md");
+    base.split(['-', '_'])
+        .filter(|part| !part.is_empty())
+        .map(|part| {
+            if part.len() <= 4 && part.chars().all(|c| c.is_ascii_uppercase()) {
+                part.to_string()
+            } else {
+                let mut chars = part.chars();
+                if let Some(first) = chars.next() {
+                    format!("{}{}", first.to_uppercase(), chars.as_str().to_lowercase())
+                } else {
+                    String::new()
+                }
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn icon_for_sub_spec(file_name: &str) -> (Option<String>, Option<String>) {
+    let lower = file_name.to_ascii_lowercase();
+
+    let patterns: &[(&[&str], &str, &str)] = &[
+        // Design & UI
+        (&["design", "ui", "ux", "mockup", "wireframe", "prototype"], "Palette", "text-purple-600"),
+        // Architecture & Structure
+        (&["architecture", "structure", "system", "diagram"], "Map", "text-indigo-600"),
+        // Implementation & Code
+        (&["implementation", "code", "develop", "build"], "Code", "text-green-600"),
+        // API & Integration
+        (&["api", "endpoint", "integration", "interface"], "Code", "text-blue-600"),
+        // Testing & QA
+        (&["test", "qa", "quality", "validation"], "TestTube", "text-orange-600"),
+        // Tasks & PM
+        (&["task", "todo", "checklist", "milestone"], "CheckSquare", "text-gray-600"),
+        // Configuration & Setup
+        (&["config", "setup", "settings", "environment"], "Wrench", "text-yellow-600"),
+        // Deployment & DevOps
+        (&["deploy", "devops", "ci", "cd", "pipeline", "release"], "Wrench", "text-orange-600"),
+        // Migration & Updates
+        (&["migration", "upgrade", "refactor", "transition"], "GitBranch", "text-cyan-600"),
+        // Security
+        (&["security", "auth", "permission", "access", "encryption"], "CheckSquare", "text-red-600"),
+        // Performance
+        (&["performance", "optimization", "speed", "cache", "benchmark"], "TrendingUp", "text-green-600"),
+        // Data
+        (&["database", "data", "schema", "model", "query"], "FileText", "text-blue-600"),
+        // Docs
+        (&["doc", "guide", "manual", "reference"], "FileText", "text-gray-500"),
+        // Git
+        (&["github", "git", "vcs", "version"], "GitBranch", "text-pink-600"),
+    ];
+
+    for (keywords, icon, color) in patterns {
+        if keywords.iter().any(|keyword| lower.contains(keyword)) {
+            return (Some(icon.to_string()), Some(color.to_string()));
+        }
+    }
+
+    (Some("FileText".to_string()), Some("text-gray-600".to_string()))
+}
+
+fn detect_sub_specs(readme_path: &str) -> Vec<SubSpec> {
+    let Some(parent_dir) = FsPath::new(readme_path).parent() else {
+        return Vec::new();
+    };
+
+    let mut sub_specs = Vec::new();
+
+    let entries = match fs::read_dir(parent_dir) {
+        Ok(entries) => entries,
+        Err(_) => return sub_specs,
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            continue;
+        }
+
+        let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+
+        let lower_name = file_name.to_ascii_lowercase();
+        if file_name == "README.md" || !lower_name.ends_with(".md") {
+            continue;
+        }
+
+        let Ok(raw) = fs::read_to_string(&path) else {
+            continue;
+        };
+
+        let content = strip_frontmatter(&raw);
+        let (icon_name, color) = icon_for_sub_spec(file_name);
+
+        sub_specs.push(SubSpec {
+            name: format_sub_spec_name(file_name),
+            file: file_name.to_string(),
+            icon_name,
+            color,
+            content,
+        });
+    }
+
+    sub_specs.sort_by(|a, b| a.file.to_lowercase().cmp(&b.file.to_lowercase()));
+    sub_specs
 }
 
 /// GET /api/specs - List all specs with optional filters
@@ -203,6 +348,11 @@ pub async fn get_spec(
         });
     }
 
+    let sub_specs = detect_sub_specs(&detail.file_path);
+    if !sub_specs.is_empty() {
+        detail.sub_specs = Some(sub_specs);
+    }
+
     Ok(Json(detail.with_project_id(project.id)))
 }
 
@@ -245,6 +395,11 @@ pub async fn get_project_spec(
             depends_on: detail.depends_on.clone(),
             required_by: Some(required_by),
         });
+    }
+
+    let sub_specs = detect_sub_specs(&detail.file_path);
+    if !sub_specs.is_empty() {
+        detail.sub_specs = Some(sub_specs);
     }
 
     Ok(Json(detail))

@@ -780,10 +780,10 @@ packages/ui-vite/src/
   - [x] Verify Tabs component integration
   - [x] Test ReactMarkdown rendering
 
-- [ ] **Task 2.2**: Detect sub-specs
-  - [ ] Implement sub-spec detection logic (look for `DESIGN.md`, etc.)
-  - [ ] Load sub-spec content from API
-  - [ ] Map icon names to lucide icons
+- [x] **Task 2.2**: Detect sub-specs
+  - [x] Implement sub-spec detection logic (look for `DESIGN.md`, etc.)
+  - [x] Load sub-spec content from API
+  - [x] Map icon names to lucide icons
 
 - [x] **Task 2.3**: Integrate into SpecDetailPage
   - [x] Replace plain markdown with SubSpecTabs
@@ -992,10 +992,10 @@ packages/ui-vite/src/
   - [x] No dependencies: Show explanation
   - [x] No context files: Show message
 
-- [ ] **Task 2.3**: Improve error messages
-  - [ ] Show specific error (network, 404, 500)
-  - [ ] Add troubleshooting hints
-  - [ ] Add contact/report link
+- [x] **Task 2.3**: Improve error messages
+  - [x] Show specific error (network, 404, 500)
+  - [x] Add troubleshooting hints
+  - [x] Add contact/report link
 
 **Acceptance**:
 - All error cases handled gracefully
@@ -1650,4 +1650,10 @@ From implementation log:
 - Implemented global error boundary, retry affordances, and shared EmptyState component; wrapped Layout outlet and added graceful fallbacks across specs, dependencies, and context pages.
 - Added global BackToTop control and page fade-in transitions; moved per-page BackToTop usage to centralized control.
 - Introduced actionable empty states for specs (no data vs filtered), dependencies (no relationships), and context (no files or search misses).
+- Typecheck: `pnpm -F @leanspec/ui-vite typecheck` (pass).
+
+### 2025-12-24: Sub-spec API + Spec Detail Error Handling
+- Added Rust HTTP sub-spec detection (scan spec directories, strip frontmatter, icon/color heuristics) and surfaced `sub_specs` on spec detail responses.
+- Normalized API adapters and types to consume new sub-spec payloads, fix date field alignment, and map additional relationships/paths.
+- Spec detail page now prefers server-provided sub-specs, upgrades error messaging (status-aware, network hints), and adds report link + focus-visible styling on tabs.
 - Typecheck: `pnpm -F @leanspec/ui-vite typecheck` (pass).

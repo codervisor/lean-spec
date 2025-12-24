@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
-import { api, type SpecDetail } from '../lib/api';
+import { APIError, api, type SpecDetail } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { SubSpecTabs, type SubSpec } from '../components/spec-detail/SubSpecTabs';
@@ -17,6 +17,27 @@ export function SpecDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const describeError = useCallback((err: unknown) => {
+    if (err instanceof APIError) {
+      switch (err.status) {
+        case 404:
+          return 'Spec not found (404). Check the spec ID or sync the project.';
+        case 400:
+          return 'Bad request when loading spec. Verify the spec path and try again.';
+        case 500:
+          return 'Server error while loading spec. Restart the Rust server or check logs.';
+        default:
+          return `Failed to load spec (${err.status}). ${err.message || 'Please retry.'}`;
+      }
+    }
+
+    if (err instanceof Error && err.message.includes('Failed to fetch')) {
+      return 'Network error: unable to reach the backend. Ensure VITE_API_URL is reachable and the server is running.';
+    }
+
+    return err instanceof Error ? err.message : 'Unexpected error while loading spec.';
+  }, []);
+
   const loadSpec = useCallback(async () => {
     if (!specName) return;
     setLoading(true);
@@ -25,19 +46,18 @@ export function SpecDetailPage() {
       setSpec(data);
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load spec';
-      setError(message);
+      setError(describeError(err));
     } finally {
       setLoading(false);
     }
-  }, [specName]);
+  }, [describeError, specName]);
 
   useEffect(() => {
     void loadSpec();
   }, [loadSpec]);
 
   const subSpecs: SubSpec[] = useMemo(() => {
-    const raw = spec?.metadata?.sub_specs as unknown;
+    const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);
     if (!Array.isArray(raw)) return [];
     return raw
       .map((entry) => {
@@ -49,7 +69,11 @@ export function SpecDetailPage() {
           name,
           content,
           file: typeof (entry as Record<string, unknown>).file === 'string' ? (entry as Record<string, unknown>).file as string : name,
-          iconName: typeof (entry as Record<string, unknown>).iconName === 'string' ? (entry as Record<string, unknown>).iconName as string : undefined,
+          iconName: typeof (entry as Record<string, unknown>).iconName === 'string'
+            ? (entry as Record<string, unknown>).iconName as string
+            : typeof (entry as Record<string, unknown>).icon_name === 'string'
+              ? (entry as Record<string, unknown>).icon_name as string
+              : undefined,
           color: typeof (entry as Record<string, unknown>).color === 'string' ? (entry as Record<string, unknown>).color as string : undefined,
         } satisfies SubSpec;
       })
@@ -82,6 +106,16 @@ export function SpecDetailPage() {
               <RefreshCcw className="h-4 w-4" />
               Retry
             </Button>
+            <a
+              href="https://github.com/codervisor/lean-spec/issues"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex"
+            >
+              <Button variant="ghost" size="sm" className="gap-2">
+                Report issue
+              </Button>
+            </a>
           </>
         )}
       />

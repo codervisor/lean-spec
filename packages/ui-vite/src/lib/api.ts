@@ -19,6 +19,7 @@ import type {
   RustSpec,
   RustSpecDetail,
   RustStats,
+  SubSpecItem,
 } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
@@ -28,7 +29,7 @@ export type SpecDetail = NextJsSpecDetail;
 export type Stats = NextJsStats;
 export type Project = ProjectType;
 
-class APIError extends Error {
+export class APIError extends Error {
   status: number;
 
   constructor(status: number, message: string) {
@@ -48,8 +49,23 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new APIError(response.status, error || response.statusText);
+    const raw = await response.text();
+    let message = raw || response.statusText;
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.message === 'string') {
+        message = parsed.message;
+      } else if (typeof parsed.error === 'string') {
+        message = parsed.error;
+      } else if (typeof parsed.detail === 'string') {
+        message = parsed.detail;
+      }
+    } catch {
+      // Fall back to raw message
+    }
+
+    throw new APIError(response.status, message || response.statusText);
   }
 
   if (response.status === 204) {
@@ -68,8 +84,9 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   }
 }
 
-function toDateOrNull(value?: string): Date | null {
+function toDateOrNull(value?: string | Date | null): Date | null {
   if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -91,6 +108,10 @@ export function calculateCompletionRate(byStatus: Record<string, number>): numbe
 }
 
 export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
+  const created = rustSpec.created_at ?? rustSpec.createdAt ?? rustSpec.created;
+  const updated = rustSpec.updated_at ?? rustSpec.updatedAt ?? rustSpec.updated;
+  const completed = rustSpec.completed_at ?? rustSpec.completedAt;
+
   return {
     id: rustSpec.name,
     name: rustSpec.name,
@@ -100,18 +121,49 @@ export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
     status: rustSpec.status ?? null,
     priority: rustSpec.priority ?? null,
     tags: rustSpec.tags ?? null,
-    createdAt: toDateOrNull(rustSpec.created),
-    updatedAt: toDateOrNull(rustSpec.updated),
+    assignee: rustSpec.assignee ?? null,
+    createdAt: toDateOrNull(created),
+    updatedAt: toDateOrNull(updated),
+    completedAt: toDateOrNull(completed),
+    filePath: rustSpec.file_path ?? rustSpec.filePath,
+    relationships: rustSpec.relationships,
   };
 }
 
 export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
+  const content = rustSpec.contentMd ?? rustSpec.content_md ?? rustSpec.content ?? '';
+  const dependsOn = rustSpec.depends_on ?? rustSpec.dependsOn ?? [];
+  const requiredBy = rustSpec.required_by ?? rustSpec.requiredBy ?? [];
+  const metadata = rustSpec.metadata ?? {};
+
+  const rawSubSpecs = rustSpec.sub_specs ?? rustSpec.subSpecs ?? (metadata.sub_specs as unknown);
+  const subSpecs: SubSpecItem[] = Array.isArray(rawSubSpecs)
+    ? rawSubSpecs.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object') return [];
+      const candidate = entry as Partial<SubSpecItem> & Record<string, unknown>;
+      const name = typeof candidate.name === 'string' ? candidate.name : undefined;
+      const subContent = typeof candidate.content === 'string' ? candidate.content : undefined;
+      if (!name || !subContent) return [];
+
+      const file = typeof candidate.file === 'string' ? candidate.file : name;
+      const iconName = typeof candidate.iconName === 'string'
+        ? candidate.iconName
+        : typeof candidate.icon_name === 'string'
+          ? (candidate.icon_name as string)
+          : undefined;
+      const color = typeof candidate.color === 'string' ? candidate.color : undefined;
+
+      return [{ name, file, iconName, color, content: subContent } satisfies SubSpecItem];
+    })
+    : [];
+
   return {
     ...adaptSpec(rustSpec),
-    content: rustSpec.content ?? '',
-    metadata: rustSpec.metadata ?? {},
-    dependsOn: rustSpec.depends_on ?? [],
-    requiredBy: rustSpec.required_by ?? [],
+    content,
+    metadata,
+    dependsOn,
+    requiredBy,
+    subSpecs: subSpecs.length > 0 ? subSpecs : undefined,
   };
 }
 

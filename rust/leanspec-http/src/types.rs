@@ -94,6 +94,8 @@ pub struct SpecDetail {
     pub required_by: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub relationships: Option<SpecRelationships>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sub_specs: Option<Vec<SubSpec>>,
 }
 
 impl From<&SpecInfo> for SpecDetail {
@@ -116,6 +118,7 @@ impl From<&SpecInfo> for SpecDetail {
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
             relationships: None,
+            sub_specs: None,
         }
     }
 }
@@ -134,6 +137,19 @@ pub struct SpecRelationships {
     pub depends_on: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required_by: Option<Vec<String>>,
+}
+
+/// Sub-spec metadata for spec detail payloads
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubSpec {
+    pub name: String,
+    pub file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
+    pub content: String,
 }
 
 /// Response for list specs endpoint

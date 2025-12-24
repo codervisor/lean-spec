@@ -98,7 +98,7 @@ export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
       key={value}
       onClick={() => setActiveTab(value)}
       className={cn(
-        'flex items-center gap-2 px-4 py-2 text-sm border-b-2 -mb-px transition-colors',
+        'flex items-center gap-2 px-4 py-2 text-sm border-b-2 -mb-px transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         activeTab === value
           ? 'border-primary text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -128,7 +128,7 @@ export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
                       key={subSpec.file}
                       variant="ghost"
                       onClick={() => setActiveTab(subSpec.name.toLowerCase())}
-                      className="justify-start gap-2 h-auto px-2 py-2"
+                      className="justify-start gap-2 h-auto px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       {Icon && <Icon className={cn('h-4 w-4', subSpec.color)} />}
                       <span className="text-sm font-medium">{subSpec.name}</span>

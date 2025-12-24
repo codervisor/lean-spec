@@ -1,27 +1,55 @@
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
 
+export interface SubSpecItem {
+  name: string;
+  file: string;
+  iconName?: string;
+  color?: string;
+  content: string;
+}
+
 export interface RustSpec {
   name: string;
   title: string;
   status: SpecStatus;
   priority?: SpecPriority;
   tags?: string[];
+  assignee?: string | null;
   created?: string;
+  created_at?: string;
+  createdAt?: string;
   updated?: string;
+  updated_at?: string;
+  updatedAt?: string;
+  completed_at?: string;
+  completedAt?: string;
   depends_on?: string[];
+  dependsOn?: string[];
   required_by?: string[];
+  requiredBy?: string[];
+  file_path?: string;
+  filePath?: string;
+  relationships?: {
+    depends_on: string[];
+    required_by?: string[];
+  };
 }
 
 export interface RustSpecDetail extends RustSpec {
-  content: string;
+  content?: string;
+  content_md?: string;
+  contentMd?: string;
   metadata?: {
     created_at?: string;
     updated_at?: string;
     assignee?: string;
     github_url?: string;
+    sub_specs?: SubSpecItem[];
     [key: string]: unknown;
   };
+  sub_specs?: SubSpecItem[];
+  subSpecs?: SubSpecItem[];
 }
 
 export interface RustStats {
@@ -40,8 +68,15 @@ export interface NextJsSpec {
   status: SpecStatus | null;
   priority: SpecPriority | null;
   tags: string[] | null;
+  assignee?: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+  completedAt?: Date | null;
+  filePath?: string;
+  relationships?: {
+    depends_on: string[];
+    required_by?: string[];
+  };
 }
 
 export interface NextJsSpecDetail extends NextJsSpec {
@@ -55,6 +90,7 @@ export interface NextJsSpecDetail extends NextJsSpec {
   };
   dependsOn?: string[];
   requiredBy?: string[];
+  subSpecs?: SubSpecItem[];
 }
 
 export interface NextJsStats {
