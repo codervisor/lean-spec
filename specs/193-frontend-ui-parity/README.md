@@ -679,15 +679,15 @@ packages/ui-vite/src/
 **Decision Point**: Use existing custom modal OR port cmdk-based version?
 
 **Option A: Port cmdk version** (if want feature parity)
-- [ ] **Task 2.1**: Install dependencies
-  - [ ] `pnpm add cmdk fuse.js`
-  - [ ] Verify cmdk styles load
+- [x] **Task 2.1**: Install dependencies
+  - [x] `pnpm add cmdk fuse.js`
+  - [x] Verify cmdk styles load
 
-- [ ] **Task 2.2**: Port QuickSearch component
-  - [ ] Copy `packages/ui/src/components/quick-search.tsx`
-  - [ ] Replace navigation logic
-  - [ ] Update Command components import
-  - [ ] Test fuzzy search (fuse.js)
+- [x] **Task 2.2**: Port QuickSearch component
+  - [x] Copy `packages/ui/src/components/quick-search.tsx`
+  - [x] Replace navigation logic
+  - [x] Update Command components import
+  - [x] Test fuzzy search (fuse.js)
 
 **Option B: Keep custom modal** (simpler)
 - [ ] **Task 2.1**: Enhance existing QuickSearch
@@ -709,29 +709,29 @@ packages/ui-vite/src/
 
 #### Day 3: Dashboard Refactor
 
-- [ ] **Task 3.1**: Extract dashboard components
-  - [ ] Extract `StatCard.tsx` from inline
-  - [ ] Extract `SpecListItem.tsx` from inline
-  - [ ] Extract `ActivityItem.tsx` from inline
-  - [ ] Create `DashboardClient.tsx` (logic component)
+- [x] **Task 3.1**: Extract dashboard components
+  - [x] Extract `StatCard.tsx` from inline
+  - [x] Extract `SpecListItem.tsx` from inline
+  - [x] Extract `ActivityItem.tsx` from inline
+  - [x] Create `DashboardClient.tsx` (logic component)
 
-- [ ] **Task 3.2**: Port DashboardClient logic
-  - [ ] Copy from `packages/ui/src/app/dashboard-client.tsx`
-  - [ ] Replace navigation (Link)
-  - [ ] Update useProject context usage
-  - [ ] Test stat cards render
+- [x] **Task 3.2**: Port DashboardClient logic
+  - [x] Copy from `packages/ui/src/app/dashboard-client.tsx`
+  - [x] Replace navigation (Link)
+  - [x] Update useProject context usage
+  - [x] Test stat cards render
 
-- [ ] **Task 3.3**: Refactor DashboardPage
-  - [ ] Import DashboardClient
-  - [ ] Pass API data as props
-  - [ ] Remove inline components
-  - [ ] Test renders correctly
+- [x] **Task 3.3**: Refactor DashboardPage
+  - [x] Import DashboardClient
+  - [x] Pass API data as props
+  - [x] Remove inline components
+  - [x] Test renders correctly
 
-- [ ] **Task 3.4**: Visual parity check
-  - [ ] Screenshot comparison
-  - [ ] Verify gradients match
-  - [ ] Verify spacing matches
-  - [ ] Verify typography matches
+- [x] **Task 3.4**: Visual parity check
+  - [x] Screenshot comparison
+  - [x] Verify gradients match
+  - [x] Verify spacing matches
+  - [x] Verify typography matches
 
 **Acceptance**:
 - Dashboard looks identical to Next.js
@@ -1617,4 +1617,10 @@ From implementation log:
 - Added react-window virtualization with scroll persistence, active spec centering, and relative update timestamps for long lists.
 - Implemented collapse persistence and mobile overlay behavior; `SpecsLayout` now provides a sticky mobile opener and passes visibility state to the sidebar.
 - Dependency added: `react-window` to `@leanspec/ui-vite` for virtualized rendering.
+- Tests: `pnpm --filter @leanspec/ui-vite test -- --runInBand` (pass).
+
+### 2025-12-24: Phase 1 - QuickSearch + Dashboard Client
+- Ported QuickSearch to the cmdk-based implementation with Fuse.js fuzzy matching, status/priority badges, tag suggestions, recent-search persistence, and Cmd/Ctrl+K toggle plus desktop menu hook.
+- Added `fuse.js` dependency to `@leanspec/ui-vite` and wired tag query handling in `SpecsPage` so `?tag=` navigation filters list views.
+- Refactored dashboard into `DashboardClient` with extracted StatCard/SpecListItem/ActivityItem components; `DashboardPage` now focuses on data loading and passes project context for the header bar.
 - Tests: `pnpm --filter @leanspec/ui-vite test -- --runInBand` (pass).

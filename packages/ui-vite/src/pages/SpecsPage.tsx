@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { api, type Spec } from '../lib/api';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
@@ -20,6 +21,9 @@ export function SpecsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
 
+  const [searchParams] = useSearchParams();
+  const initializedFromQuery = useRef(false);
+
   // View State
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem('specs-view-mode');
@@ -30,6 +34,15 @@ export function SpecsPage() {
   useEffect(() => {
     loadSpecs();
   }, []);
+
+  useEffect(() => {
+    if (initializedFromQuery.current) return;
+    const initialTag = searchParams.get('tag');
+    const initialQuery = searchParams.get('q');
+    if (initialTag) setTagFilter(initialTag);
+    if (initialQuery) setSearchQuery(initialQuery);
+    initializedFromQuery.current = true;
+  }, [searchParams]);
 
   useEffect(() => {
     localStorage.setItem('specs-view-mode', viewMode);
