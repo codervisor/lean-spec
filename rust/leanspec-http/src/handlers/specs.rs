@@ -132,33 +132,89 @@ fn icon_for_sub_spec(file_name: &str) -> (Option<String>, Option<String>) {
 
     let patterns: &[(&[&str], &str, &str)] = &[
         // Design & UI
-        (&["design", "ui", "ux", "mockup", "wireframe", "prototype"], "Palette", "text-purple-600"),
+        (
+            &["design", "ui", "ux", "mockup", "wireframe", "prototype"],
+            "Palette",
+            "text-purple-600",
+        ),
         // Architecture & Structure
-        (&["architecture", "structure", "system", "diagram"], "Map", "text-indigo-600"),
+        (
+            &["architecture", "structure", "system", "diagram"],
+            "Map",
+            "text-indigo-600",
+        ),
         // Implementation & Code
-        (&["implementation", "code", "develop", "build"], "Code", "text-green-600"),
+        (
+            &["implementation", "code", "develop", "build"],
+            "Code",
+            "text-green-600",
+        ),
         // API & Integration
-        (&["api", "endpoint", "integration", "interface"], "Code", "text-blue-600"),
+        (
+            &["api", "endpoint", "integration", "interface"],
+            "Code",
+            "text-blue-600",
+        ),
         // Testing & QA
-        (&["test", "qa", "quality", "validation"], "TestTube", "text-orange-600"),
+        (
+            &["test", "qa", "quality", "validation"],
+            "TestTube",
+            "text-orange-600",
+        ),
         // Tasks & PM
-        (&["task", "todo", "checklist", "milestone"], "CheckSquare", "text-gray-600"),
+        (
+            &["task", "todo", "checklist", "milestone"],
+            "CheckSquare",
+            "text-gray-600",
+        ),
         // Configuration & Setup
-        (&["config", "setup", "settings", "environment"], "Wrench", "text-yellow-600"),
+        (
+            &["config", "setup", "settings", "environment"],
+            "Wrench",
+            "text-yellow-600",
+        ),
         // Deployment & DevOps
-        (&["deploy", "devops", "ci", "cd", "pipeline", "release"], "Wrench", "text-orange-600"),
+        (
+            &["deploy", "devops", "ci", "cd", "pipeline", "release"],
+            "Wrench",
+            "text-orange-600",
+        ),
         // Migration & Updates
-        (&["migration", "upgrade", "refactor", "transition"], "GitBranch", "text-cyan-600"),
+        (
+            &["migration", "upgrade", "refactor", "transition"],
+            "GitBranch",
+            "text-cyan-600",
+        ),
         // Security
-        (&["security", "auth", "permission", "access", "encryption"], "CheckSquare", "text-red-600"),
+        (
+            &["security", "auth", "permission", "access", "encryption"],
+            "CheckSquare",
+            "text-red-600",
+        ),
         // Performance
-        (&["performance", "optimization", "speed", "cache", "benchmark"], "TrendingUp", "text-green-600"),
+        (
+            &["performance", "optimization", "speed", "cache", "benchmark"],
+            "TrendingUp",
+            "text-green-600",
+        ),
         // Data
-        (&["database", "data", "schema", "model", "query"], "FileText", "text-blue-600"),
+        (
+            &["database", "data", "schema", "model", "query"],
+            "FileText",
+            "text-blue-600",
+        ),
         // Docs
-        (&["doc", "guide", "manual", "reference"], "FileText", "text-gray-500"),
+        (
+            &["doc", "guide", "manual", "reference"],
+            "FileText",
+            "text-gray-500",
+        ),
         // Git
-        (&["github", "git", "vcs", "version"], "GitBranch", "text-pink-600"),
+        (
+            &["github", "git", "vcs", "version"],
+            "GitBranch",
+            "text-pink-600",
+        ),
     ];
 
     for (keywords, icon, color) in patterns {
@@ -167,7 +223,10 @@ fn icon_for_sub_spec(file_name: &str) -> (Option<String>, Option<String>) {
         }
     }
 
-    (Some("FileText".to_string()), Some("text-gray-600".to_string()))
+    (
+        Some("FileText".to_string()),
+        Some("text-gray-600".to_string()),
+    )
 }
 
 fn detect_sub_specs(readme_path: &str) -> Vec<SubSpec> {
