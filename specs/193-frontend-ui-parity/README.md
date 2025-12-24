@@ -47,50 +47,50 @@ transitions:
 **From**: `packages/ui/src/components/`
 **To**: `packages/ui-vite/src/components/`
 
-| #   | Component                    | Status    | Lines | Complexity | Dependencies                       |
-| --- | ---------------------------- | --------- | ----- | ---------- | ---------------------------------- |
-| 1   | `dashboard-client.tsx`       | ✅ Done    | 285   | Medium     | Next Link, useProject, Card        |
-| 2   | `specs-nav-sidebar.tsx`      | ✅ Done    | 520   | High       | react-window, Next Link, useRouter |
-| 3   | `quick-search.tsx`           | ✅ Done    | 150   | Medium     | cmdk, fuse.js, useRouter           |
-| 4   | `sub-spec-tabs.tsx`          | ✅ Done    | 120   | Low        | Tabs, ReactMarkdown                |
-| 5   | `table-of-contents.tsx`      | ✅ Done    | 180   | Medium     | Dialog, github-slugger             |
-| 6   | `editable-spec-metadata.tsx` | ✅ Done    | 140   | Medium     | Status/Priority/TagsEditor         |
-| 7   | `spec-dependency-graph.tsx`  | ✅ Done    | 85    | Low        | ReactFlow wrapper                  |
-| 8   | `dependencies-client.tsx`    | ✅ Done    | 650   | High       | ReactFlow, dagre                   |
-| 9   | `create-project-dialog.tsx`  | ❌ Missing | 220   | High       | Dialog, DirectoryPicker            |
-| 10  | `directory-picker.tsx`       | ❌ Missing | 180   | High       | Desktop API integration            |
-| 11  | `specs-client.tsx`           | ⚠️ Basic   | 280   | Medium     | Grid/List toggle                   |
-| 12  | `stats-client.tsx`           | ✅ Done    | 320   | Medium     | recharts                           |
-| 13  | `status-editor.tsx`          | ✅ Done    | 95    | Low        | Select, API call                   |
-| 14  | `priority-editor.tsx`        | ✅ Done    | 95    | Low        | Select, API call                   |
-| 15  | `tags-editor.tsx`            | ✅ Done    | 130   | Medium     | Input, Badge                       |
-| 16  | `mermaid-diagram.tsx`        | ✅ Done    | 110   | Medium     | mermaid                            |
-| 17  | `context-client.tsx`         | ❌ Missing | 240   | High       | File tree, viewer                  |
-| 18  | `color-picker.tsx`           | ❌ Missing | 85    | Low        | Popover, color input               |
-| 19  | `project-avatar.tsx`         | ❌ Missing | 45    | Low        | Avatar with color                  |
-| 20  | `back-to-top.tsx`            | ❌ Missing | 60    | Low        | Button, scroll listener            |
-| 21  | `skeletons.tsx`              | ❌ Missing | 120   | Low        | Skeleton components                |
+| #   | Component                    | Status | Lines | Complexity | Dependencies                       |
+| --- | ---------------------------- | ------ | ----- | ---------- | ---------------------------------- |
+| 1   | `dashboard-client.tsx`       | ✅ Done | 285   | Medium     | Next Link, useProject, Card        |
+| 2   | `specs-nav-sidebar.tsx`      | ✅ Done | 520   | High       | react-window, Next Link, useRouter |
+| 3   | `quick-search.tsx`           | ✅ Done | 150   | Medium     | cmdk, fuse.js, useRouter           |
+| 4   | `sub-spec-tabs.tsx`          | ✅ Done | 120   | Low        | Tabs, ReactMarkdown                |
+| 5   | `table-of-contents.tsx`      | ✅ Done | 180   | Medium     | Dialog, github-slugger             |
+| 6   | `editable-spec-metadata.tsx` | ✅ Done | 140   | Medium     | Status/Priority/TagsEditor         |
+| 7   | `spec-dependency-graph.tsx`  | ✅ Done | 85    | Low        | ReactFlow wrapper                  |
+| 8   | `dependencies-client.tsx`    | ✅ Done | 650   | High       | ReactFlow, dagre                   |
+| 9   | `create-project-dialog.tsx`  | ✅ Done | 220   | High       | Dialog, DirectoryPicker            |
+| 10  | `directory-picker.tsx`       | ✅ Done | 180   | High       | Desktop API integration            |
+| 11  | `specs-client.tsx`           | ✅ Done | 280   | Medium     | Grid/List toggle                   |
+| 12  | `stats-client.tsx`           | ✅ Done | 320   | Medium     | recharts                           |
+| 13  | `status-editor.tsx`          | ✅ Done | 95    | Low        | Select, API call                   |
+| 14  | `priority-editor.tsx`        | ✅ Done | 95    | Low        | Select, API call                   |
+| 15  | `tags-editor.tsx`            | ✅ Done | 130   | Medium     | Input, Badge                       |
+| 16  | `mermaid-diagram.tsx`        | ✅ Done | 110   | Medium     | mermaid                            |
+| 17  | `context-client.tsx`         | ✅ Done | 240   | High       | File tree, viewer                  |
+| 18  | `color-picker.tsx`           | ✅ Done | 85    | Low        | Popover, color input               |
+| 19  | `project-avatar.tsx`         | ✅ Done | 45    | Low        | Avatar with color                  |
+| 20  | `back-to-top.tsx`            | ✅ Done | 60    | Low        | Button, scroll listener            |
+| 21  | `skeletons.tsx`              | ✅ Done | 120   | Low        | Skeleton components                |
 
 **Summary**:
 - **Total**: 21 components
-- **Complete** (✅): 13 (62%)
-- **Partial** (⚠️): 1 (5%)
-- **Missing** (❌): 7 (33%)
+- **Complete** (✅): 21 (100%)
+- **Partial** (⚠️): 0 (0%)
+- **Missing** (❌): 0 (0%)
 
 ### Page/Route Mapping
 
 **From**: `packages/ui/src/app/projects/[projectId]/**/page.tsx`
 **To**: `packages/ui-vite/src/pages/*Page.tsx`
 
-| Page         | Next.js Route                 | Vite Route      | Status    | Priority |
-| ------------ | ----------------------------- | --------------- | --------- | -------- |
-| Dashboard    | `/projects/[id]`              | `/`             | ✅ Done    | HIGH     |
-| Specs List   | `/projects/[id]/specs`        | `/specs`        | ⚠️ Basic   | HIGH     |
-| Spec Detail  | `/projects/[id]/specs/[spec]` | `/specs/:id`    | ✅ Done    | HIGH     |
-| Dependencies | `/projects/[id]/dependencies` | `/dependencies` | ✅ Done    | HIGH     |
-| Stats        | `/projects/[id]/stats`        | `/stats`        | ✅ Done    | HIGH     |
-| Context      | `/projects/[id]/context`      | `/context`      | ❌ Missing | MEDIUM   |
-| Settings     | `/projects`                   | `/settings`     | ⚠️ Basic   | MEDIUM   |
+| Page         | Next.js Route                 | Vite Route      | Status | Priority |
+| ------------ | ----------------------------- | --------------- | ------ | -------- |
+| Dashboard    | `/projects/[id]`              | `/`             | ✅ Done | HIGH     |
+| Specs List   | `/projects/[id]/specs`        | `/specs`        | ✅ Done | HIGH     |
+| Spec Detail  | `/projects/[id]/specs/[spec]` | `/specs/:id`    | ✅ Done | HIGH     |
+| Dependencies | `/projects/[id]/dependencies` | `/dependencies` | ✅ Done | HIGH     |
+| Stats        | `/projects/[id]/stats`        | `/stats`        | ✅ Done | HIGH     |
+| Context      | `/projects/[id]/context`      | `/context`      | ✅ Done | MEDIUM   |
+| Settings     | `/projects`                   | `/settings`     | ✅ Done | MEDIUM   |
 
 ### API Contract Alignment
 
@@ -980,17 +980,17 @@ packages/ui-vite/src/
 
 #### Day 2: Error States & Empty States
 
-- [ ] **Task 2.1**: Add error boundaries
-  - [ ] Create ErrorBoundary component
-  - [ ] Wrap all pages
-  - [ ] Show friendly error message
-  - [ ] Add retry button
+- [x] **Task 2.1**: Add error boundaries
+  - [x] Create ErrorBoundary component
+  - [x] Wrap all pages
+  - [x] Show friendly error message
+  - [x] Add retry button
 
-- [ ] **Task 2.2**: Add empty states
-  - [ ] No specs: Show onboarding message
-  - [ ] No search results: Show helpful text
-  - [ ] No dependencies: Show explanation
-  - [ ] No context files: Show message
+- [x] **Task 2.2**: Add empty states
+  - [x] No specs: Show onboarding message
+  - [x] No search results: Show helpful text
+  - [x] No dependencies: Show explanation
+  - [x] No context files: Show message
 
 - [ ] **Task 2.3**: Improve error messages
   - [ ] Show specific error (network, 404, 500)
@@ -1004,15 +1004,15 @@ packages/ui-vite/src/
 
 #### Day 3: Animations & Interactions
 
-- [ ] **Task 3.1**: Port BackToTop button
-  - [ ] Copy `back-to-top.tsx` (60 lines)
-  - [ ] Show when scrolled down
-  - [ ] Smooth scroll to top
+- [x] **Task 3.1**: Port BackToTop button
+  - [x] Copy `back-to-top.tsx` (60 lines)
+  - [x] Show when scrolled down
+  - [x] Smooth scroll to top
 
-- [ ] **Task 3.2**: Add page transitions
-  - [ ] Fade in/out between pages
+- [x] **Task 3.2**: Add page transitions
+  - [x] Fade in/out between pages
   - [ ] Slide animations for modals
-  - [ ] Test performance
+  - [x] Test performance
 
 - [ ] **Task 3.3**: Polish interactions
   - [ ] Hover states on all buttons
@@ -1645,3 +1645,9 @@ From implementation log:
 - Added rehype highlighting/slug deps to ui-vite for consistent markdown rendering and wired BackToTop utility for long documents.
 - Introduced shared skeleton pack (dashboard/spec list/spec detail/stats/context) and replaced spinner text with parity loaders; upgraded error cards with retry actions across dashboard/specs/stats/context pages.
 - Build: `pnpm -F @leanspec/ui-vite build` (pass).
+
+### 2025-12-24: Phase 5 Polish (Error/Empty States, Transitions)
+- Implemented global error boundary, retry affordances, and shared EmptyState component; wrapped Layout outlet and added graceful fallbacks across specs, dependencies, and context pages.
+- Added global BackToTop control and page fade-in transitions; moved per-page BackToTop usage to centralized control.
+- Introduced actionable empty states for specs (no data vs filtered), dependencies (no relationships), and context (no files or search misses).
+- Typecheck: `pnpm -F @leanspec/ui-vite typecheck` (pass).
