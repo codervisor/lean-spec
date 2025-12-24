@@ -1,24 +1,75 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Filter } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { LayoutGrid, List } from 'lucide-react';
 import { api, type Spec } from '../lib/api';
-import { StatusBadge } from '../components/StatusBadge';
-import { PriorityBadge } from '../components/PriorityBadge';
+import { BoardView } from '../components/specs/BoardView';
+import { ListView } from '../components/specs/ListView';
+import { SpecsFilters } from '../components/specs/SpecsFilters';
+import { cn } from '../lib/utils';
+
+type ViewMode = 'list' | 'board';
+type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
 
+  // View State
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('specs-view-mode');
+    return (saved === 'board' || saved === 'list') ? saved : 'list';
+  });
+  const [showArchivedBoard, setShowArchivedBoard] = useState(false);
+
   useEffect(() => {
-    api.getSpecs()
-      .then(setSpecs)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    loadSpecs();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('specs-view-mode', viewMode);
+  }, [viewMode]);
+
+  // Auto-show archived column when filtering by archived status in board view
+  useEffect(() => {
+    if (statusFilter === 'archived' && viewMode === 'board') {
+      setShowArchivedBoard(true);
+    }
+  }, [statusFilter, viewMode]);
+
+  const loadSpecs = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getSpecs();
+      setSpecs(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
+    // Optimistic update
+    setSpecs(prev => prev.map(s =>
+      s.name === spec.name ? { ...s, status: newStatus } : s
+    ));
+
+    try {
+      await api.updateSpec(spec.name, { status: newStatus });
+    } catch (err) {
+      // Revert on error
+      setSpecs(prev => prev.map(s =>
+        s.name === spec.name ? { ...s, status: spec.status } : s
+      ));
+      console.error('Failed to update status:', err);
+    }
   }, []);
 
   // Get unique values for filters
@@ -27,7 +78,7 @@ export function SpecsPage() {
     [specs]
   );
   const uniquePriorities = useMemo(() =>
-    Array.from(new Set(specs.map(s => s.priority).filter(Boolean))),
+    Array.from(new Set(specs.map(s => s.priority).filter(Boolean) as string[])),
     [specs]
   );
   const uniqueTags = useMemo(() =>
@@ -83,121 +134,72 @@ export function SpecsPage() {
   }
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Specs</h2>
-        <div className="text-sm text-muted-foreground">
-          {filteredSpecs.length} of {specs.length} {specs.length === 1 ? 'spec' : 'specs'}
-        </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search by name, title, or tags..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Filters:</span>
-        </div>
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="all">All Statuses</option>
-          {uniqueStatuses.map(status => (
-            <option key={status} value={status}>{status}</option>
-          ))}
-        </select>
-
-        <select
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="all">All Priorities</option>
-          {uniquePriorities.map(priority => (
-            <option key={priority} value={priority}>{priority}</option>
-          ))}
-        </select>
-
-        <select
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="all">All Tags</option>
-          {uniqueTags.map(tag => (
-            <option key={tag} value={tag}>{tag}</option>
-          ))}
-        </select>
-
-        {(searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all') && (
+        <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-lg border">
           <button
-            onClick={() => {
-              setSearchQuery('');
-              setStatusFilter('all');
-              setPriorityFilter('all');
-              setTagFilter('all');
-            }}
-            className="text-sm text-primary hover:underline"
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              viewMode === 'list'
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="List View"
           >
-            Clear all
+            <List className="w-4 h-4" />
           </button>
+          <button
+            onClick={() => setViewMode('board')}
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              viewMode === 'board'
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            title="Board View"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <SpecsFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={setPriorityFilter}
+        tagFilter={tagFilter}
+        onTagFilterChange={setTagFilter}
+        uniqueStatuses={uniqueStatuses}
+        uniquePriorities={uniquePriorities}
+        uniqueTags={uniqueTags}
+        onClearFilters={() => {
+          setSearchQuery('');
+          setStatusFilter('all');
+          setPriorityFilter('all');
+          setTagFilter('all');
+        }}
+        totalSpecs={specs.length}
+        filteredCount={filteredSpecs.length}
+      />
+
+      <div className="flex-1 min-h-0">
+        {viewMode === 'list' ? (
+          <ListView specs={filteredSpecs} />
+        ) : (
+          <BoardView
+            specs={filteredSpecs}
+            onStatusChange={handleStatusChange}
+            showArchived={showArchivedBoard}
+            onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
+          />
         )}
       </div>
-
-      {filteredSpecs.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          No specs match your filters
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filteredSpecs.map((spec) => (
-            <Link
-              key={spec.name}
-              to={`/specs/${spec.name}`}
-              className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-medium">{spec.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{spec.name}</p>
-                </div>
-                <div className="flex gap-2 items-center">
-                  {spec.status && <StatusBadge status={spec.status} />}
-                  {spec.priority && <PriorityBadge priority={spec.priority} />}
-                </div>
-              </div>
-              {spec.tags && spec.tags.length > 0 && (
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  {spec.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs px-2 py-0.5 bg-secondary rounded"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

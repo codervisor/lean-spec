@@ -17,10 +17,15 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       {
         path: 'specs',
-        element: <SpecsLayout />,
         children: [
           { index: true, element: <SpecsPage /> },
-          { path: ':specName', element: <SpecDetailPage /> },
+          {
+            path: ':specName',
+            element: <SpecsLayout />,
+            children: [
+              { index: true, element: <SpecDetailPage /> },
+            ],
+          },
         ],
       },
       { path: 'stats', element: <StatsPage /> },
