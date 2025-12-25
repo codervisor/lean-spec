@@ -58,18 +58,20 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
           <Badge
             key={tag}
             variant="outline"
-            className="text-xs pr-1 gap-1"
+            className="text-xs pr-0.5 gap-1 h-6"
           >
             {tag}
             {!disabled && (
-              <button
+              <Button
                 onClick={() => handleRemove(tag)}
                 disabled={updating}
-                className="ml-1 rounded-full hover:bg-muted p-0.5 transition-colors"
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 rounded-full hover:bg-muted ml-0.5"
                 aria-label={`Remove ${tag}`}
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
             )}
           </Badge>
         ))}

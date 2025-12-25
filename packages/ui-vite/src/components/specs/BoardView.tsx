@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Clock, PlayCircle, CheckCircle2, Archive, MoreHorizontal } from 'lucide-react';
 import type { Spec } from '../../lib/api';
 import { PriorityBadge } from '../PriorityBadge';
-import { cn } from '../../lib/utils';
+import { cn, Button } from '@leanspec/ui-components';
 
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 
@@ -142,12 +142,14 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
                 </span>
               </div>
               {status === 'archived' && (
-                <button
+                <Button
                   onClick={onToggleArchived}
-                  className="text-muted-foreground hover:text-foreground"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
                 >
                   <MoreHorizontal className="w-4 h-4" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -202,16 +204,17 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
       })}
 
       {!showArchived && (
-        <button
+        <Button
           onClick={onToggleArchived}
-          className="flex-shrink-0 w-10 flex flex-col items-center py-4 gap-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors border border-transparent"
+          variant="ghost"
+          className="flex-shrink-0 w-10 flex-col items-center py-4 gap-2 rounded-lg h-auto"
           title="Show Archived"
         >
           <Archive className="w-4 h-4 text-muted-foreground" />
           <div className="writing-vertical-rl text-xs font-medium text-muted-foreground tracking-wider uppercase">
             Archived
           </div>
-        </button>
+        </Button>
       )}
     </div>
   );

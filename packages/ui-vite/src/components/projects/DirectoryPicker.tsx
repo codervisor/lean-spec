@@ -98,26 +98,30 @@ export function DirectoryPicker({
           className="flex-1 overflow-x-auto whitespace-nowrap flex items-center scrollbar-hide px-1 min-w-0"
           title={currentPath}
         >
-          <button
+          <Button
             onClick={() => handleNavigate('/')}
-            className="hover:bg-accent p-1 rounded-sm transition-colors shrink-0"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
             title="Go to root"
           >
             <Home className="h-4 w-4 text-muted-foreground" />
-          </button>
+          </Button>
 
           {segments.map((segment, index) => (
             <div key={segment.path} className="flex items-center shrink-0">
               <ChevronRight className="h-3 w-3 text-muted-foreground mx-0.5 shrink-0" />
-              <button
+              <Button
                 onClick={() => handleNavigate(segment.path)}
+                variant="ghost"
+                size="sm"
                 className={cn(
-                  'px-1.5 py-0.5 rounded-sm transition-colors text-sm hover:bg-accent hover:text-accent-foreground',
+                  'h-7 text-sm',
                   index === segments.length - 1 ? 'font-medium text-foreground' : 'text-muted-foreground'
                 )}
               >
                 {segment.name}
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -144,14 +148,16 @@ export function DirectoryPicker({
                 <div className="p-4 text-center text-sm text-muted-foreground">Empty directory</div>
               ) : (
                 displayItems.map((item: DirectoryListResponse['items'][number]) => (
-                  <button
+                  <Button
                     key={item.path}
                     onClick={() => handleNavigate(item.path)}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground text-left group transition-colors"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start gap-3 h-9 group"
                   >
                     <Folder className="h-4 w-4 text-blue-500 fill-blue-500/20 group-hover:fill-blue-500/30 transition-colors shrink-0" />
                     <span className="truncate">{item.name}</span>
-                  </button>
+                  </Button>
                 ))
               )}
             </div>

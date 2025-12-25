@@ -6,9 +6,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  cn,
 } from '@leanspec/ui-components';
 import { extractHeadings, type HeadingItem } from '../../lib/markdown-utils';
-import { cn } from '../../lib/utils';
 
 function scrollToHeading(id: string) {
   const element = document.getElementById(id);
@@ -30,20 +30,23 @@ function TOCList({ headings, onHeadingClick }: TOCListProps) {
   return (
     <nav className="space-y-1">
       {headings.map((heading) => (
-        <button
+        <Button
           key={`${heading.id}-${heading.level}`}
           onClick={() => onHeadingClick(heading.id)}
+          variant="ghost"
+          size="sm"
           className={cn(
-            'w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors flex items-start gap-2 text-muted-foreground hover:text-foreground',
+            'w-full justify-start h-auto py-1.5',
             heading.level === 2 && 'font-medium text-foreground',
             heading.level === 3 && 'pl-6',
             heading.level === 4 && 'pl-10',
             heading.level === 5 && 'pl-14',
-            heading.level >= 6 && 'pl-16'
+            heading.level >= 6 && 'pl-16',
+            'text-muted-foreground hover:text-foreground'
           )}
         >
-          <span className="flex-1 truncate">{heading.text}</span>
-        </button>
+          <span className="flex-1 truncate text-left">{heading.text}</span>
+        </Button>
       ))}
     </nav>
   );

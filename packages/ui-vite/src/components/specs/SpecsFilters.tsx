@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
   Input,
+  Button,
 } from '@leanspec/ui-components';
 
 interface SpecsFiltersProps {
@@ -102,13 +103,15 @@ export function SpecsFilters({
           </Select>
 
           {hasActiveFilters && (
-            <button
+            <Button
               onClick={onClearFilters}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-secondary"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1"
             >
               <X className="w-3 h-3" />
               Clear
-            </button>
+            </Button>
           )}
         </div>
 

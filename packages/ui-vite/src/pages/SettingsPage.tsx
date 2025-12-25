@@ -395,8 +395,10 @@ export function SettingsPage() {
                           className="w-56"
                           onClick={(event: MouseEvent) => event.stopPropagation()}
                         >
-                          <button
-                            className="flex w-full items-center gap-2 px-2 py-2 text-sm hover:bg-accent rounded-md"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2 h-9"
                             onClick={(event: MouseEvent) => {
                               event.stopPropagation();
                               startEditing(project.id, project.name || project.id);
@@ -404,7 +406,7 @@ export function SettingsPage() {
                           >
                             <Pencil className="h-4 w-4" />
                             Rename
-                          </button>
+                          </Button>
                           <div className="p-2" onClick={(event: MouseEvent) => event.stopPropagation()}>
                             <p className="text-xs text-muted-foreground mb-2 px-2">Project Color</p>
                             <div className="flex flex-wrap gap-1 px-2">
@@ -416,8 +418,10 @@ export function SettingsPage() {
                             </div>
                           </div>
                           <div className="h-px bg-border my-2" />
-                          <button
-                            className="flex w-full items-center gap-2 px-2 py-2 text-sm hover:bg-accent rounded-md"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2 h-9"
                             onClick={(event: MouseEvent) => {
                               event.stopPropagation();
                               void handleFavoriteToggle(project.id);
@@ -425,9 +429,11 @@ export function SettingsPage() {
                           >
                             <Star className="h-4 w-4" />
                             {project.favorite ? 'Unfavorite' : 'Favorite'}
-                          </button>
-                          <button
-                            className="flex w-full items-center gap-2 px-2 py-2 text-sm hover:bg-accent rounded-md"
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2 h-9"
                             onClick={(event: MouseEvent) => {
                               event.stopPropagation();
                               void handleValidate(project.id);
@@ -435,10 +441,12 @@ export function SettingsPage() {
                           >
                             <RefreshCw className="h-4 w-4" />
                             Validate Path
-                          </button>
+                          </Button>
                           <div className="h-px bg-border my-2" />
-                          <button
-                            className="flex w-full items-center gap-2 px-2 py-2 text-sm hover:bg-accent rounded-md text-destructive"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2 h-9 text-destructive hover:text-destructive"
                             onClick={(event: MouseEvent) => {
                               event.stopPropagation();
                               setDeleteTarget(project);
@@ -446,7 +454,7 @@ export function SettingsPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                             Remove
-                          </button>
+                          </Button>
                         </PopoverContent>
                       </Popover>
                     </div>

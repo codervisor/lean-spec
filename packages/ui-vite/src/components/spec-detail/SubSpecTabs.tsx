@@ -5,8 +5,7 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import GithubSlugger from 'github-slugger';
 import { BookOpen, CheckSquare, Code, FileText, GitBranch, Map, Palette, TestTube, Wrench } from 'lucide-react';
-import { Card, Button, Separator } from '@leanspec/ui-components';
-import { cn } from '../../lib/utils';
+import { Card, Button, Separator, cn } from '@leanspec/ui-components';
 import { MermaidDiagram } from '../MermaidDiagram';
 
 export interface SubSpec {
@@ -94,11 +93,12 @@ export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
   const overviewCardVisible = hasSubSpecs && subSpecs.length > 2 && activeTab === 'readme';
 
   const renderTabButton = (value: string, label: string, Icon?: React.ComponentType<{ className?: string }>, color?: string) => (
-    <button
+    <Button
       key={value}
       onClick={() => setActiveTab(value)}
+      variant="ghost"
       className={cn(
-        'flex items-center gap-2 px-4 py-2 text-sm border-b-2 -mb-px transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        'border-b-2 -mb-px rounded-none gap-2',
         activeTab === value
           ? 'border-primary text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -106,7 +106,7 @@ export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
     >
       {Icon && <Icon className={cn('h-4 w-4', color)} />}
       <span className="truncate">{label}</span>
-    </button>
+    </Button>
   );
 
   return (

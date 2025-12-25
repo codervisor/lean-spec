@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
-import { Button } from '@leanspec/ui-components';
-import { cn } from '../lib/utils';
+import { Button, cn } from '@leanspec/ui-components';
 
 const languages = [
   { code: 'en', labelKey: 'language.english', shortLabel: 'EN' },
@@ -47,16 +46,18 @@ export function LanguageSwitcher() {
           <div className="fixed inset-0 z-50" onClick={() => setOpen(false)} />
           <div className="absolute right-0 mt-2 w-32 z-50 rounded-md border bg-popover p-1 shadow-md">
             {languages.map((language) => (
-              <button
+              <Button
                 key={language.code}
                 onClick={() => changeLanguage(language.code)}
+                variant="ghost"
+                size="sm"
                 className={cn(
-                  'w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent transition-colors',
+                  'w-full justify-start h-8',
                   i18n.language === language.code && 'bg-accent'
                 )}
               >
                 {t(language.labelKey)}
-              </button>
+              </Button>
             ))}
           </div>
         </>

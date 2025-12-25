@@ -6,6 +6,7 @@ import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { PageTransition } from './shared/PageTransition';
 import { BackToTop } from './shared/BackToTop';
+import { Button } from '@leanspec/ui-components';
 
 function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
   const shortcuts = [
@@ -30,12 +31,14 @@ function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-        <button
+        <Button
           onClick={onClose}
-          className="mt-4 w-full px-4 py-2 text-sm bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
+          variant="secondary"
+          size="sm"
+          className="mt-4 w-full"
         >
           Close
-        </button>
+        </Button>
       </div>
     </div>
   );

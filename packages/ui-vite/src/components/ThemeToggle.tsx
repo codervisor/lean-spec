@@ -1,6 +1,6 @@
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../contexts';
-import { cn } from '../lib/utils';
+import { cn, Button } from '@leanspec/ui-components';
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -17,19 +17,21 @@ export function ThemeToggle() {
         const Icon = option.icon;
         const isActive = theme === option.value;
         return (
-          <button
+          <Button
             key={option.value}
             onClick={() => setTheme(option.value)}
             title={option.label}
+            variant="ghost"
+            size="icon"
             className={cn(
-              'p-1.5 rounded-md transition-colors',
+              'h-7 w-7',
               isActive
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Icon className="w-4 h-4" />
-          </button>
+          </Button>
         );
       })}
     </div>
