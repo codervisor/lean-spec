@@ -19,6 +19,7 @@ import type { Stats } from '../../lib/api';
 import { StatCard } from './StatCard';
 import { SpecListItem, type DashboardSpec } from './SpecListItem';
 import { ActivityItem } from './ActivityItem';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardClientProps {
   specs: DashboardSpec[];
@@ -29,6 +30,7 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ specs, stats, projectColor, projectName, basePath = '/projects/default' }: DashboardClientProps) {
+  const { t } = useTranslation('common');
   const inProgressSpecs = specs
     .filter((spec) => spec.status === 'in-progress')
     .sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0))
@@ -77,11 +79,11 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
               />
             )}
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Dashboard</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('dashboard.title')}</h1>
               <p className="text-muted-foreground mt-2">
                 {projectName
-                  ? `${projectName} — overview and recent activity`
-                  : 'Project overview and recent activity'}
+                  ? t('dashboard.subtitleWithProject', { projectName })
+                  : t('dashboard.subtitle')}
               </p>
             </div>
           </div>
@@ -89,28 +91,28 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
-            title="Total Specs"
+            title={t('dashboard.cards.total')}
             value={stats.totalSpecs}
             icon={FileText}
             iconColor="text-blue-600"
             gradientFrom="from-blue-500/10"
           />
           <StatCard
-            title="Planned"
+            title={t('dashboard.cards.planned')}
             value={statusCounts['planned'] || 0}
             icon={Clock}
             iconColor="text-purple-600"
             gradientFrom="from-purple-500/10"
           />
           <StatCard
-            title="In Progress"
+            title={t('dashboard.cards.inProgress')}
             value={statusCounts['in-progress'] || 0}
             icon={PlayCircle}
             iconColor="text-orange-600"
             gradientFrom="from-orange-500/10"
           />
           <StatCard
-            title="Completed"
+            title={t('dashboard.cards.completed')}
             value={completeCount}
             icon={CheckCircle2}
             iconColor="text-green-600"
@@ -118,7 +120,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
             subtext={
               <span className="flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
-                {completionRate.toFixed(1)}% completion rate
+                {t('dashboard.cards.completionRate', { rate: completionRate.toFixed(1) })}
               </span>
             }
           />
@@ -129,7 +131,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-blue-600" />
-                Recently Added
+                {t('dashboard.recentlyAdded')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
@@ -143,14 +145,14 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Clock className="h-5 w-5 text-purple-600" />
-                Planned ({plannedSpecs.length})
+                {t('dashboard.plannedSection', { count: plannedSpecs.length })}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
               {plannedSpecs.length > 0 ? (
                 plannedSpecs.map((spec) => <SpecListItem key={spec.id} spec={spec} basePath={basePath} />)
               ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">No planned specs</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">{t('dashboard.noPlanned')}</p>
               )}
             </CardContent>
           </Card>
@@ -159,14 +161,14 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <PlayCircle className="h-5 w-5 text-orange-600" />
-                In Progress ({inProgressSpecs.length})
+                {t('dashboard.inProgressSection', { count: inProgressSpecs.length })}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
               {inProgressSpecs.length > 0 ? (
                 inProgressSpecs.map((spec) => <SpecListItem key={spec.id} spec={spec} basePath={basePath} />)
               ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">No specs in progress</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">{t('dashboard.noInProgress')}</p>
               )}
             </CardContent>
           </Card>
@@ -174,12 +176,12 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
+            <CardTitle className="text-lg">{t('dashboard.recentActivity')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="border-l-2 border-muted pl-4 space-y-1">
               {recentActivity.map((spec) => (
-                <ActivityItem key={spec.id} spec={spec} action="updated" time={spec.updatedAt} basePath={basePath} />
+                <ActivityItem key={spec.id} spec={spec} action={t('dashboard.actionUpdated')} time={spec.updatedAt} basePath={basePath} />
               ))}
             </div>
           </CardContent>
@@ -187,20 +189,20 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
+            <CardTitle className="text-lg">{t('dashboard.quickActions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
                 <Link to={`${basePath}/specs`}>
                   <ListIcon className="h-4 w-4 mr-2" />
-                  View All Specs
+                  {t('dashboard.viewAllSpecs')}
                 </Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link to={`${basePath}/stats`}>
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  View Stats
+                  {t('dashboard.viewStats')}
                 </Link>
               </Button>
             </div>

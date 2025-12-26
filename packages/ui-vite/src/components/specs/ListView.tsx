@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { Spec } from '../../lib/api';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
+import { useTranslation } from 'react-i18next';
 
 interface ListViewProps {
   specs: Spec[];
@@ -9,10 +10,12 @@ interface ListViewProps {
 }
 
 export function ListView({ specs, basePath = '/projects/default' }: ListViewProps) {
+  const { t } = useTranslation('common');
+
   if (specs.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground border rounded-lg bg-secondary/10">
-        No specs match your filters
+        {t('specsPage.list.empty')}
       </div>
     );
   }

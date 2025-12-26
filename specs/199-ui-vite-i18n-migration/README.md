@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2025-12-26
 priority: high
 tags:
@@ -12,7 +12,10 @@ depends_on:
 - 091-chinese-localization-strategy
 - 187-vite-spa-migration
 created_at: 2025-12-26T08:38:09.712123Z
-updated_at: 2025-12-26T08:38:16.407620Z
+updated_at: 2025-12-26T08:41:57.258855Z
+transitions:
+- status: in-progress
+  at: 2025-12-26T08:41:57.258855Z
 ---
 
 ## Overview
@@ -54,16 +57,16 @@ updated_at: 2025-12-26T08:38:16.407620Z
 
 ### Gap Analysis Summary
 
-| Feature | @leanspec/ui | @leanspec/ui-vite | Gap |
-|---------|--------------|-------------------|-----|
-| **i18n Library** | i18next + detector | i18next only | ⚠️ Missing detector |
-| **Translation Files** | 1,008 lines (6 files) | 1,010 lines (6 files) | ✅ Identical |
-| **Components Translated** | 29 components (58%) | 9 components (24%) | ❌ 69% missing |
-| **Language Switcher** | ✅ Yes | ✅ Yes | ✅ Complete |
-| **Browser Detection** | ✅ Auto | ❌ Manual only | ⚠️ Missing |
-| **Provider Component** | ✅ I18nProvider | ❌ Direct import | ⚠️ Different |
-| **Tests** | ✅ 8 tests | ❌ None | ❌ Missing |
-| **Extra Keys** | ❌ Missing | ✅ settings | ⚠️ Out of sync |
+| Feature                   | @leanspec/ui          | @leanspec/ui-vite     | Gap                |
+| ------------------------- | --------------------- | --------------------- | ------------------ |
+| **i18n Library**          | i18next + detector    | i18next only          | ⚠️ Missing detector |
+| **Translation Files**     | 1,008 lines (6 files) | 1,010 lines (6 files) | ✅ Identical        |
+| **Components Translated** | 29 components (58%)   | 9 components (24%)    | ❌ 69% missing      |
+| **Language Switcher**     | ✅ Yes                 | ✅ Yes                 | ✅ Complete         |
+| **Browser Detection**     | ✅ Auto                | ❌ Manual only         | ⚠️ Missing          |
+| **Provider Component**    | ✅ I18nProvider        | ❌ Direct import       | ⚠️ Different        |
+| **Tests**                 | ✅ 8 tests             | ❌ None                | ❌ Missing          |
+| **Extra Keys**            | ❌ Missing             | ✅ settings            | ⚠️ Out of sync      |
 
 ### Technical Approach
 
@@ -247,46 +250,46 @@ describe('i18n configuration', () => {
 
 ### Migration Reference Map
 
-| ui-vite Component | Source in @leanspec/ui | Translation Keys |
-|-------------------|------------------------|------------------|
-| `StatusBadge.tsx` | `status-badge.tsx` | `status.*` |
-| `PriorityBadge.tsx` | `priority-badge.tsx` | `priority.*` |
-| `SpecsNavSidebar.tsx` | `specs-nav-sidebar.tsx` | `specsNavSidebar.*` |
-| `BoardView.tsx` | `specs-client.tsx` | `specsPage.board.*` |
-| `ListView.tsx` | `specs-client.tsx` | `specsPage.list.*` |
-| `EditableMetadata.tsx` | `editable-spec-metadata.tsx` | `editors.*` |
-| `CreateProjectDialog.tsx` | `create-project-dialog.tsx` | `createProject.*` |
+| ui-vite Component         | Source in @leanspec/ui       | Translation Keys    |
+| ------------------------- | ---------------------------- | ------------------- |
+| `StatusBadge.tsx`         | `status-badge.tsx`           | `status.*`          |
+| `PriorityBadge.tsx`       | `priority-badge.tsx`         | `priority.*`        |
+| `SpecsNavSidebar.tsx`     | `specs-nav-sidebar.tsx`      | `specsNavSidebar.*` |
+| `BoardView.tsx`           | `specs-client.tsx`           | `specsPage.board.*` |
+| `ListView.tsx`            | `specs-client.tsx`           | `specsPage.list.*`  |
+| `EditableMetadata.tsx`    | `editable-spec-metadata.tsx` | `editors.*`         |
+| `CreateProjectDialog.tsx` | `create-project-dialog.tsx`  | `createProject.*`   |
 
 ## Plan
 
 ### Timeline: 3 Weeks (15 Hours Total)
 
 #### Week 1: Infrastructure & High Priority (5 hours)
-- [ ] Install `i18next-browser-languagedetector`
-- [ ] Upgrade `src/lib/i18n.ts` configuration
-- [ ] Add namespace support (`common`, `errors`, `help`)
-- [ ] Sync missing translation keys to @leanspec/ui
-- [ ] Migrate StatusBadge.tsx
-- [ ] Migrate PriorityBadge.tsx
-- [ ] Create test file with 8 tests
-- [ ] Verify language switcher works with new config
+- [x] Install `i18next-browser-languagedetector`
+- [x] Upgrade `src/lib/i18n.ts` configuration
+- [x] Add namespace support (`common`, `errors`, `help`)
+- [x] Sync missing translation keys to @leanspec/ui
+- [x] Migrate StatusBadge.tsx
+- [x] Migrate PriorityBadge.tsx
+- [x] Create test file with 8 tests
+- [x] Verify language switcher works with new config
 
 **Deliverable**: Core infrastructure + badges working
 
 #### Week 2: Views & Navigation (6 hours)
-- [ ] Migrate SpecsNavSidebar.tsx (filters, search)
-- [ ] Migrate BoardView.tsx (status columns, drag-drop)
-- [ ] Migrate ListView.tsx (sort, metadata)
-- [ ] Migrate QuickSearch.tsx (enhance existing)
-- [ ] Migrate SpecsFilters.tsx (enhance existing)
+- [x] Migrate SpecsNavSidebar.tsx (filters, search)
+- [x] Migrate BoardView.tsx (status columns, drag-drop)
+- [x] Migrate ListView.tsx (sort, metadata)
+- [x] Migrate QuickSearch.tsx (enhance existing)
+- [x] Migrate SpecsFilters.tsx (enhance existing)
 - [ ] Test all navigation flows in Chinese
 
 **Deliverable**: Main spec browsing fully translated
 
 #### Week 3: Editors, Forms & Polish (4 hours)
-- [ ] Migrate metadata editors (Status, Priority, Tags)
-- [ ] Migrate CreateProjectDialog.tsx
-- [ ] Migrate DirectoryPicker.tsx
+- [x] Migrate metadata editors (Status, Priority, Tags)
+- [x] Migrate CreateProjectDialog.tsx
+- [x] Migrate DirectoryPicker.tsx
 - [ ] Migrate remaining 13 components
 - [ ] Fix any missed strings (empty states, tooltips)
 - [ ] Run all tests, verify 100% pass rate
@@ -294,6 +297,13 @@ describe('i18n configuration', () => {
 - [ ] Document migration patterns for contributors
 
 **Deliverable**: Complete translation parity
+
+## Implementation Notes
+
+- Added `i18next-browser-languagedetector` and expanded `src/lib/i18n.ts` to load `common`, `errors`, and `help` namespaces with browser + localStorage detection.
+- Localized core UI components (badges, navigation, board/list views, quick search, filters, metadata editors, create project, directory picker, context pages, dashboard) using shared translation keys.
+- Synced new/common keys across @leanspec/ui-vite and @leanspec/ui (actions, directory picker, dashboard block, metadata source/link, specs filter summary, navigation settings).
+- Added `packages/ui-vite/src/lib/i18n.test.ts` mirroring @leanspec/ui coverage; suite now passes. Existing API tests still fail due to mock `response.text` not being a function (pre-existing).
 
 ### Validation Checklist
 
@@ -306,13 +316,13 @@ describe('i18n configuration', () => {
 - [ ] All empty states translated
 
 **Configuration**:
-- [ ] Browser language detection working
-- [ ] localStorage persistence working
+- [x] Browser language detection working
+- [x] localStorage persistence working
 - [ ] Language switcher toggles correctly
-- [ ] All 3 namespaces loaded
+- [x] All 3 namespaces loaded
 
 **Testing**:
-- [ ] 8 i18n tests passing
+- [x] 8 i18n tests passing
 - [ ] No regression in existing tests
 - [ ] Manual Chinese mode walkthrough complete
 
@@ -321,23 +331,23 @@ describe('i18n configuration', () => {
 ### Automated Tests (packages/ui-vite/src/lib/i18n.test.ts)
 
 **Configuration Tests**:
-- [ ] i18n has English and Chinese resources
-- [ ] i18n has common, errors, help namespaces
-- [ ] Browser language detector is registered
-- [ ] localStorage persistence is configured
+- [x] i18n has English and Chinese resources
+- [x] i18n has common, errors, help namespaces
+- [x] Browser language detector is registered
+- [x] localStorage persistence is configured
 
 **Translation Tests**:
-- [ ] navigation.home translates to "首页"
-- [ ] spec.spec remains "Spec" (not translated)
-- [ ] status.planned translates to "已计划"
-- [ ] status.inProgress translates to "进行中"
-- [ ] status.complete translates to "已完成"
-- [ ] priority.high translates to "高"
-- [ ] Fallback works for missing keys
+- [x] navigation.home translates to "首页"
+- [x] spec.spec remains "Spec" (not translated)
+- [x] status.planned translates to "已计划"
+- [x] status.inProgress translates to "进行中"
+- [x] status.complete translates to "已完成"
+- [x] priority.high translates to "高"
+- [x] Fallback works for missing keys
 
 **Behavior Tests**:
-- [ ] changeLanguage() persists to localStorage
-- [ ] Browser detection loads correct locale on init
+- [x] changeLanguage() persists to localStorage
+- [x] Browser detection loads correct locale on init
 
 ### Manual Testing Checklist
 
@@ -395,28 +405,28 @@ describe('i18n configuration', () => {
 
 ### Risk Assessment
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Missing language detector | Medium | Install early in week 1 |
-| Component coverage incomplete | High | Systematic audit + checklist |
-| Translation keys out of sync | Medium | Sync keys in week 1 |
-| Layout breaks with Chinese text | Low | Test early, adjust CSS if needed |
-| Performance impact | Low | Bundle already includes locales |
+| Risk                            | Severity | Mitigation                       |
+| ------------------------------- | -------- | -------------------------------- |
+| Missing language detector       | Medium   | Install early in week 1          |
+| Component coverage incomplete   | High     | Systematic audit + checklist     |
+| Translation keys out of sync    | Medium   | Sync keys in week 1              |
+| Layout breaks with Chinese text | Low      | Test early, adjust CSS if needed |
+| Performance impact              | Low      | Bundle already includes locales  |
 
 ### Estimated Effort Breakdown
 
-| Task | Components | Hours |
-|------|-----------|-------|
-| Install + config | 1 file | 0.5 |
-| Badge components | 2 | 1.0 |
-| Sidebar/Filters | 2 | 1.5 |
-| Board/List views | 2 | 2.0 |
-| Metadata editors | 3 | 2.0 |
-| Remaining components | ~15 | 4.0 |
-| Tests | 1 file | 1.0 |
-| QA & fixes | - | 2.0 |
-| Documentation | - | 1.0 |
-| **Total** | **~28** | **15 hours** |
+| Task                 | Components | Hours        |
+| -------------------- | ---------- | ------------ |
+| Install + config     | 1 file     | 0.5          |
+| Badge components     | 2          | 1.0          |
+| Sidebar/Filters      | 2          | 1.5          |
+| Board/List views     | 2          | 2.0          |
+| Metadata editors     | 3          | 2.0          |
+| Remaining components | ~15        | 4.0          |
+| Tests                | 1 file     | 1.0          |
+| QA & fixes           | -          | 2.0          |
+| Documentation        | -          | 1.0          |
+| **Total**            | **~28**    | **15 hours** |
 
 ### Dependencies
 

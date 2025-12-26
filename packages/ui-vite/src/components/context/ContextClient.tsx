@@ -7,6 +7,8 @@ import { cn } from '../../lib/utils';
 import { ContextFileDetail } from './ContextFileDetail';
 import { ContextPageSkeleton } from '../shared/Skeletons';
 import { useProject } from '../../contexts';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../lib/date-utils';
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -16,7 +18,7 @@ function formatSize(bytes: number): string {
 
 function formatModified(modified?: string | null, modifiedAt?: Date | null): string {
   const date = modifiedAt ?? (modified ? new Date(modified) : null);
-  if (!date || Number.isNaN(date.getTime())) return 'Unknown';
+  if (!date || Number.isNaN(date.getTime())) return '';
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
@@ -34,6 +36,7 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const { t, i18n } = useTranslation('common');
 
   const loadList = async () => {
     setLoadingList(true);
@@ -103,10 +106,10 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
           <div className="flex justify-center">
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
-          <div className="text-lg font-semibold">Unable to load context</div>
+          <div className="text-lg font-semibold">{t('errors.loadingError')}</div>
           <p className="text-sm text-muted-foreground">{error}</p>
           <Button onClick={loadList} variant="secondary" size="sm" className="mt-2">
-            Retry
+            {t('actions.retry')}
           </Button>
         </CardContent>
       </Card>
@@ -118,8 +121,8 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
       <Card className="h-full">
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Project Context</CardTitle>
-            <Button variant="ghost" size="icon" onClick={loadList} aria-label="Refresh context files">
+            <CardTitle className="text-lg">{t('contextPage.title')}</CardTitle>
+            <Button variant="ghost" size="icon" onClick={loadList} aria-label={t('actions.refresh')}>
               <RefreshCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -128,7 +131,7 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or path"
+              placeholder={t('contextPage.searchPlaceholder')}
               className="pl-10"
             />
           </div>
@@ -136,17 +139,19 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
         <CardContent>
           {files.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm space-y-3">
-              <div>No context files found in .lean-spec/context.</div>
+              <div className="font-medium text-foreground">{t('contextPage.emptyState.title')}</div>
+              <div>{t('contextPage.emptyState.description')}</div>
               <Button size="sm" variant="secondary" onClick={loadList}>
                 <RefreshCcw className="h-4 w-4 mr-2" />
-                Rescan project
+                {t('actions.refresh')}
               </Button>
             </div>
           ) : groupedFiles.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm space-y-3">
-              <div>No files match this search.</div>
+              <div className="font-medium text-foreground">{t('contextPage.search.noMatchesTitle')}</div>
+              <div>{t('contextPage.search.noMatchesDescription')}</div>
               <Button size="sm" variant="outline" onClick={() => setSearch('')}>
-                Clear search
+                {t('actions.clear')}
               </Button>
             </div>
           ) : (
@@ -155,7 +160,7 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
                 <div key={folder} className="space-y-2">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                     <Folder className="h-3.5 w-3.5" />
-                    {folder === 'root' ? 'Root' : folder}
+                    {folder === 'root' ? t('directoryPicker.root') : folder}
                     <Badge variant="secondary" className="text-[11px]">{entries.length}</Badge>
                   </div>
                   <div className="space-y-1">
@@ -182,7 +187,13 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
                           </div>
                           <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
                             <span>{formatSize(file.size)}</span>
-                            <span>{formatModified(file.modified, file.modifiedAt)}</span>
+                            <span>
+                              {t('contextPage.detail.modified', {
+                                date:
+                                  formatModified(file.modified, file.modifiedAt) ||
+                                  formatDate(file.modified ?? file.modifiedAt ?? undefined, i18n.language),
+                              })}
+                            </span>
                           </div>
                         </div>
                       </button>
@@ -212,10 +223,10 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
               <div className="flex justify-center">
                 <AlertCircle className="h-6 w-6 text-destructive" />
               </div>
-              <div className="text-lg font-semibold">Failed to open file</div>
+              <div className="text-lg font-semibold">{t('errors.operationFailed')}</div>
               <p className="text-sm text-muted-foreground">{fileError}</p>
               <Button variant="secondary" size="sm" onClick={() => selectedPath && loadFile(selectedPath)}>
-                Retry
+                {t('actions.retry')}
               </Button>
             </CardContent>
           </Card>
@@ -228,7 +239,7 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
         {!activeFile && !loadingFile && !fileError && (
           <Card>
             <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              Select a file to view its content
+              {t('contextPage.detail.selectFile')}
             </CardContent>
           </Card>
         )}

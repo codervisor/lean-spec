@@ -48,6 +48,21 @@ export function SpecsFilters({
   filteredCount,
 }: SpecsFiltersProps) {
   const { t } = useTranslation('common');
+  const statusKeyMap: Record<string, `status.${string}`> = {
+    planned: 'status.planned',
+    'in-progress': 'status.inProgress',
+    complete: 'status.complete',
+    archived: 'status.archived',
+  };
+  const priorityKeyMap: Record<string, `priority.${string}`> = {
+    critical: 'priority.critical',
+    high: 'priority.high',
+    medium: 'priority.medium',
+    low: 'priority.low',
+  };
+
+  const formatStatus = (status: string) => statusKeyMap[status] ? t(statusKeyMap[status]) : status;
+  const formatPriority = (priority: string) => priorityKeyMap[priority] ? t(priorityKeyMap[priority]) : priority;
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
 
   return (
@@ -79,7 +94,7 @@ export function SpecsFilters({
             <SelectContent>
               <SelectItem value="all">{t('specsPage.filters.statusAll')}</SelectItem>
               {uniqueStatuses.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
+                <SelectItem key={status} value={status}>{formatStatus(status)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -91,7 +106,7 @@ export function SpecsFilters({
             <SelectContent>
               <SelectItem value="all">{t('specsPage.filters.priorityAll')}</SelectItem>
               {uniquePriorities.map(priority => (
-                <SelectItem key={priority} value={priority}>{priority}</SelectItem>
+                <SelectItem key={priority} value={priority}>{formatPriority(priority)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -128,13 +143,13 @@ export function SpecsFilters({
               className="h-8 gap-1"
             >
               <X className="w-3 h-3" />
-              Clear
+              {t('specsNavSidebar.clearFilters')}
             </Button>
           )}
         </div>
 
         <div className="text-sm text-muted-foreground">
-          {filteredCount} of {totalSpecs} specs
+          {t('specsPage.filters.filteredCount', { filtered: filteredCount, total: totalSpecs })}
         </div>
       </div>
     </div>

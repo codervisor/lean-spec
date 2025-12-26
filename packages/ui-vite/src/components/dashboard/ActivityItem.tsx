@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { DashboardSpec } from './SpecListItem';
+import { formatRelativeTime } from '../../lib/date-utils';
+import { useTranslation } from 'react-i18next';
 
 interface ActivityItemProps {
   spec: DashboardSpec;
@@ -8,24 +10,11 @@ interface ActivityItemProps {
   basePath?: string;
 }
 
-function formatRelativeTime(date: Date | null): string {
-  if (!date) return 'Unknown';
-
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString();
-}
-
 export function ActivityItem({ spec, action, time, basePath = '/projects/default' }: ActivityItemProps) {
   const displayTitle = spec.title || spec.name;
   const specUrl = `${basePath}/specs/${spec.name}`;
+  const { i18n } = useTranslation('common');
+  const relativeTime = formatRelativeTime(time, i18n.language);
 
   return (
     <div className="flex items-start gap-3 py-2">
@@ -39,7 +28,7 @@ export function ActivityItem({ spec, action, time, basePath = '/projects/default
           <span className="text-muted-foreground">{action}</span>
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {formatRelativeTime(time)}
+          {relativeTime}
         </p>
       </div>
     </div>

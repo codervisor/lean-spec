@@ -15,6 +15,7 @@ import {
 import { api, type Spec } from '../lib/api';
 import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
+import { useTranslation } from 'react-i18next';
 
 const RECENT_STORAGE_KEY = 'leanspec-recent-searches';
 
@@ -33,6 +34,7 @@ export function QuickSearch() {
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [specs, setSpecs] = useState<QuickSearchSpec[]>([]);
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     api
@@ -137,10 +139,10 @@ export function QuickSearch() {
         variant="outline"
         size="sm"
         className="gap-2 text-muted-foreground hover:text-foreground"
-        aria-label="Open quick search"
+        aria-label={t('quickSearch.open')}
       >
         <Search className="h-4 w-4" />
-        <span className="hidden sm:inline">Quick search...</span>
+        <span className="hidden sm:inline">{t('quickSearch.button')}</span>
         <kbd className="hidden md:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
           <span className="text-xs">⌘</span>K
         </kbd>
@@ -154,15 +156,15 @@ export function QuickSearch() {
         }}
       >
         <CommandInput
-          placeholder="Search specs by title, number, or tags"
+          placeholder={t('quickSearch.placeholder')}
           value={search}
           onValueChange={setSearch}
         />
         <CommandList>
-          <CommandEmpty>No results found</CommandEmpty>
+          <CommandEmpty>{t('search.noResults')}</CommandEmpty>
 
           {!search && recentSearches.length > 0 && (
-            <CommandGroup heading="Recent searches">
+            <CommandGroup heading={t('quickSearch.recentSearches')}>
               {recentSearches.map((recent) => (
                 <CommandItem
                   key={recent}
@@ -176,7 +178,7 @@ export function QuickSearch() {
             </CommandGroup>
           )}
 
-          <CommandGroup heading="Specs">
+          <CommandGroup heading={t('spec.specs')}>
             {results.map((spec) => {
               const specNumber = formatSpecNumber(spec.specNumber ?? null);
               const label = spec.title || spec.name;
@@ -210,7 +212,7 @@ export function QuickSearch() {
           {tagSuggestions.length > 0 && (
             <>
               <CommandSeparator />
-              <CommandGroup heading="Filter by tag">
+              <CommandGroup heading={t('quickSearch.filterHeading')}>
                 {tagSuggestions.map((tag) => (
                   <CommandItem key={tag} value={tag} onSelect={() => handleTagSelect(tag)}>
                     <Tag className="mr-2 h-4 w-4" />

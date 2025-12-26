@@ -8,18 +8,13 @@ import { Badge, Button, Card, CardContent } from '@leanspec/ui-components';
 import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/TableOfContents';
 import { MermaidDiagram } from '../MermaidDiagram';
 import type { ContextFileContent } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../lib/date-utils';
 
 interface ContextFileDetailProps {
   file: ContextFileContent;
   projectRoot?: string;
   onBack?: () => void;
-}
-
-function formatDate(value?: string | Date | null) {
-  if (!value) return 'Unknown date';
-  const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return 'Unknown date';
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function toVSCodeUri(projectRoot: string, filePath: string) {
@@ -31,6 +26,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
   const [copied, setCopied] = useState(false);
   const isMarkdown = file.name.toLowerCase().endsWith('.md');
   const isJson = file.name.toLowerCase().endsWith('.json');
+  const { t, i18n } = useTranslation('common');
 
   const headingContent = useMemo(() => file.content, [file.content]);
 
@@ -57,7 +53,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
             {onBack && (
               <Button variant="ghost" size="sm" onClick={onBack} className="h-8 px-2">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {t('contextPage.detail.back')}
               </Button>
             )}
             <FileText className="h-5 w-5 text-primary" />
@@ -70,12 +66,12 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
             {projectRoot && (
               <Button variant="ghost" size="sm" onClick={handleOpenInEditor} className="h-8 px-3 text-xs">
                 <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                Open in editor
+                {t('contextPage.detail.openInEditor')}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-3 text-xs">
               {copied ? <Hash className="h-3.5 w-3.5 mr-1 text-green-600" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('contextPage.detail.copySuccess') : t('contextPage.detail.copy')}
             </Button>
           </div>
         </div>
@@ -86,18 +82,20 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
           </Badge>
           <Badge variant="outline" className="text-xs flex items-center gap-1">
             <Layers className="h-3 w-3" />
-            {file.tokenCount.toLocaleString()} tokens
+            {t('contextPage.badges.tokens', { formattedCount: file.tokenCount.toLocaleString() })}
           </Badge>
           <Badge variant="outline" className="text-xs flex items-center gap-1">
             <FileText className="h-3 w-3" />
-            {file.lineCount} lines
+            {t('contextPage.detail.lines', { count: file.lineCount })}
           </Badge>
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            {formatDate(file.modified ?? file.modifiedAt)}
+            {t('contextPage.detail.modified', {
+              date: formatDate(file.modified ?? file.modifiedAt, i18n.language),
+            })}
           </span>
           <span className="text-muted-foreground">•</span>
-          <span>{(file.size / 1024).toFixed(1)} KB</span>
+          <span>{t('contextPage.detail.size', { size: (file.size / 1024).toFixed(1) })}</span>
         </div>
       </header>
 

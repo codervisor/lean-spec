@@ -12,6 +12,8 @@
     "dependencyGraph": "Dependency Graph",
     "analytics": "Analytics",
     "projectContext": "Project Context",
+    "settings": "Settings",
+    "settingsDescription": "Preferences & configuration",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
     "githubTooltip": "GitHub repository"
@@ -40,6 +42,7 @@
     "create": "Create",
     "update": "Update",
     "delete": "Delete",
+    "add": "Add",
     "archive": "Archive",
     "view": "View",
     "edit": "Edit",
@@ -47,6 +50,9 @@
     "cancel": "Cancel",
     "close": "Close",
     "back": "Back",
+    "clear": "Clear",
+    "refresh": "Refresh",
+    "retry": "Retry",
     "next": "Next",
     "loading": "Loading...",
     "search": "Search"
@@ -104,11 +110,20 @@
     "pathLabel": "Project Path",
     "pathPlaceholder": "/path/to/your/project",
     "pathHelp": "Select the root directory of your project.",
+    "pathRequired": "Project path is required",
     "browseFolders": "Browse folders",
     "action": "Add Project",
     "adding": "Adding...",
     "toastSuccess": "Project added successfully",
     "toastError": "Failed to add project"
+  },
+  "directoryPicker": {
+    "action": "Select This Folder",
+    "parent": "Go to parent directory",
+    "rootAction": "Go to root",
+    "root": "Root",
+    "empty": "Empty directory",
+    "error": "Failed to list directory"
   },
   "specSidebar": {
     "title": "All Specs",
@@ -165,6 +180,7 @@
       "sort": "Sort by",
       "statusAll": "All Status",
       "priorityAll": "All Priority",
+      "filteredCount": "{{filtered}} of {{total}} specs",
       "sortOptions": {
         "id-desc": "Newest First",
         "id-asc": "Oldest First",
@@ -198,7 +214,9 @@
       "updated": "Updated",
       "name": "Name",
       "assignee": "Assignee",
-      "notAvailable": "Not available"
+      "notAvailable": "Not available",
+      "source": "Source",
+      "viewOnGitHub": "View on GitHub"
     },
     "buttons": {
       "viewTimeline": "View Timeline",
@@ -261,6 +279,28 @@
       },
       "label": "{{name}}: {{value}}"
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Project overview and recent activity",
+    "subtitleWithProject": "{{projectName}} — overview and recent activity",
+    "cards": {
+      "total": "Total Specs",
+      "planned": "Planned",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "completionRate": "{{rate}}% completion rate"
+    },
+    "recentlyAdded": "Recently Added",
+    "plannedSection": "Planned ({{count}})",
+    "inProgressSection": "In Progress ({{count}})",
+    "noPlanned": "No planned specs",
+    "noInProgress": "No specs in progress",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions",
+    "viewAllSpecs": "View All Specs",
+    "viewStats": "View Stats",
+    "actionUpdated": "updated"
   },
   "contextPage": {
     "title": "Project Context",
@@ -332,7 +372,9 @@
       "copy": "Copy",
       "copySuccess": "Copied!",
       "lines": "{{count}} lines",
-      "modified": "Modified {{date}}"
+      "modified": "Modified {{date}}",
+      "size": "{{size}} KB",
+      "selectFile": "Select a file to view its content"
     }
   },
   "specTimeline": {

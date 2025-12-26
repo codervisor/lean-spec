@@ -4,6 +4,7 @@ import { Clock, PlayCircle, CheckCircle2, Archive, MoreHorizontal } from 'lucide
 import type { Spec } from '../../lib/api';
 import { PriorityBadge } from '../PriorityBadge';
 import { cn, Button } from '@leanspec/ui-components';
+import { useTranslation } from 'react-i18next';
 
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 
@@ -17,35 +18,35 @@ interface BoardViewProps {
 
 const STATUS_CONFIG: Record<SpecStatus, {
   icon: typeof Clock;
-  title: string;
+  titleKey: `status.${string}`;
   colorClass: string;
   bgClass: string;
   borderClass: string;
 }> = {
   'planned': {
     icon: Clock,
-    title: 'Planned',
+    titleKey: 'status.planned',
     colorClass: 'text-blue-600 dark:text-blue-400',
     bgClass: 'bg-blue-50 dark:bg-blue-900/20',
     borderClass: 'border-blue-200 dark:border-blue-800'
   },
   'in-progress': {
     icon: PlayCircle,
-    title: 'In Progress',
+    titleKey: 'status.inProgress',
     colorClass: 'text-orange-600 dark:text-orange-400',
     bgClass: 'bg-orange-50 dark:bg-orange-900/20',
     borderClass: 'border-orange-200 dark:border-orange-800'
   },
   'complete': {
     icon: CheckCircle2,
-    title: 'Complete',
+    titleKey: 'status.complete',
     colorClass: 'text-green-600 dark:text-green-400',
     bgClass: 'bg-green-50 dark:bg-green-900/20',
     borderClass: 'border-green-200 dark:border-green-800'
   },
   'archived': {
     icon: Archive,
-    title: 'Archived',
+    titleKey: 'status.archived',
     colorClass: 'text-gray-600 dark:text-gray-400',
     bgClass: 'bg-gray-50 dark:bg-gray-900/20',
     borderClass: 'border-gray-200 dark:border-gray-800'
@@ -55,6 +56,7 @@ const STATUS_CONFIG: Record<SpecStatus, {
 export function BoardView({ specs, onStatusChange, showArchived, onToggleArchived, basePath = '/projects/default' }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
+  const { t } = useTranslation('common');
 
   const columns = useMemo(() => {
     const cols: SpecStatus[] = ['planned', 'in-progress', 'complete'];
@@ -136,7 +138,7 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
               <div className="flex items-center gap-2">
                 <Icon className={cn("w-4 h-4", config.colorClass)} />
                 <span className={cn("font-medium text-sm", config.colorClass)}>
-                  {config.title}
+                  {t(config.titleKey)}
                 </span>
                 <span className="text-xs px-2 py-0.5 bg-background/50 rounded-full text-muted-foreground">
                   {statusSpecs.length}
@@ -209,11 +211,11 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
           onClick={onToggleArchived}
           variant="ghost"
           className="flex-shrink-0 w-10 flex-col items-center py-4 gap-2 rounded-lg h-auto"
-          title="Show Archived"
+          title={t('specsPage.board.archivedCollapsed')}
         >
           <Archive className="w-4 h-4 text-muted-foreground" />
           <div className="writing-vertical-rl text-xs font-medium text-muted-foreground tracking-wider uppercase">
-            Archived
+            {t('status.archived')}
           </div>
         </Button>
       )}

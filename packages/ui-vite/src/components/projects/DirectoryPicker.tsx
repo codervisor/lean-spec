@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight, Folder, Home, Loader2 } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
 import { cn } from '../../lib/utils';
 import { api, type DirectoryListResponse } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface DirectoryPickerProps {
   onSelect: (path: string) => void;
@@ -16,7 +17,7 @@ export function DirectoryPicker({
   onSelect,
   onCancel,
   initialPath,
-  actionLabel = 'Select This Folder',
+  actionLabel,
   isLoading: externalLoading,
 }: DirectoryPickerProps) {
   const [currentPath, setCurrentPath] = useState(initialPath || '');
@@ -24,6 +25,7 @@ export function DirectoryPicker({
   const [internalLoading, setInternalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation('common');
 
   const isLoading = externalLoading || internalLoading;
 
@@ -48,7 +50,7 @@ export function DirectoryPicker({
         setCurrentPath(data.path);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to list directory';
+      const message = err instanceof Error ? err.message : t('directoryPicker.error');
       setError(message);
     } finally {
       setInternalLoading(false);
@@ -76,6 +78,7 @@ export function DirectoryPicker({
   };
 
   const segments = getPathSegments(currentPath);
+  const resolvedActionLabel = actionLabel ?? t('directoryPicker.action');
 
   return (
     <div className="flex flex-col h-[400px] gap-4 min-w-0 overflow-hidden">
@@ -86,7 +89,7 @@ export function DirectoryPicker({
           className="h-8 w-8 shrink-0"
           disabled={!parentItem || isLoading}
           onClick={() => parentItem && handleNavigate(parentItem.path)}
-          title="Go to parent directory"
+          title={t('directoryPicker.parent')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -103,7 +106,7 @@ export function DirectoryPicker({
             variant="ghost"
             size="icon"
             className="h-7 w-7 shrink-0"
-            title="Go to root"
+            title={t('directoryPicker.rootAction')}
           >
             <Home className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -138,14 +141,14 @@ export function DirectoryPicker({
           <div className="p-4 text-destructive text-sm text-center">
             {error}
             <Button variant="link" onClick={() => fetchDirectory(currentPath)} className="block mx-auto mt-2">
-              Retry
+              {t('actions.retry')}
             </Button>
           </div>
         ) : (
           <div className="h-full overflow-auto">
             <div className="p-1">
               {displayItems.length === 0 && !isLoading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">Empty directory</div>
+                <div className="p-4 text-center text-sm text-muted-foreground">{t('directoryPicker.empty')}</div>
               ) : (
                 displayItems.map((item: DirectoryListResponse['items'][number]) => (
                   <Button
@@ -167,10 +170,10 @@ export function DirectoryPicker({
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancel
+          {t('actions.cancel')}
         </Button>
         <Button onClick={() => onSelect(currentPath)} disabled={isLoading || !currentPath}>
-          {actionLabel}
+          {resolvedActionLabel}
         </Button>
       </div>
     </div>

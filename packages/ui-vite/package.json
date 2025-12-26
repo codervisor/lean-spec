@@ -23,6 +23,7 @@
     "fuse.js": "^7.1.0",
     "github-slugger": "^2.0.0",
     "i18next": "^25.7.3",
+    "i18next-browser-languagedetector": "^8.2.0",
     "lucide-react": "^0.553.0",
     "mermaid": "^11.12.2",
     "react": "^19.2.3",

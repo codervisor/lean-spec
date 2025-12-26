@@ -3,6 +3,7 @@ import { Loader2, Plus, X } from 'lucide-react';
 import { Badge, Button, Input } from '@leanspec/ui-components';
 import { cn } from '../../lib/utils';
 import { api, type Spec } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface TagsEditorProps {
   specName: string;
@@ -17,6 +18,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
   const [input, setInput] = useState('');
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation('common');
 
   const persist = async (next: string[]) => {
     const previous = tags;
@@ -29,7 +31,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
       onChange?.(next);
     } catch (err) {
       setTags(previous);
-      const message = err instanceof Error ? err.message : 'Failed to update tags';
+      const message = err instanceof Error ? err.message : t('editors.tagsError');
       setError(message);
     } finally {
       setUpdating(false);
@@ -40,7 +42,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
     const trimmed = input.trim();
     if (!trimmed) return;
     if (tags.includes(trimmed)) {
-      setError('Tag already added');
+      setError(t('editors.tagExists'));
       return;
     }
     void persist([...tags, trimmed]);
@@ -68,14 +70,14 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
                 variant="ghost"
                 size="icon"
                 className="h-4 w-4 p-0 rounded-full hover:bg-muted ml-0.5"
-                aria-label={`Remove ${tag}`}
+                aria-label={t('editors.removeTag', { tag })}
               >
                 <X className="h-3 w-3" />
               </Button>
             )}
           </Badge>
         ))}
-        {tags.length === 0 && <span className="text-xs text-muted-foreground">No tags yet</span>}
+        {tags.length === 0 && <span className="text-xs text-muted-foreground">{t('editors.noTags')}</span>}
       </div>
 
       {!disabled && (
@@ -89,9 +91,9 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
                 handleAdd();
               }
             }}
-            placeholder="Add tag"
+            placeholder={t('editors.addTag')}
             className="h-9"
-            aria-label="Add tag"
+            aria-label={t('editors.addTag')}
           />
           <Button
             type="button"
@@ -102,7 +104,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
             className="gap-1"
           >
             {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Add
+            {t('actions.add')}
           </Button>
         </div>
       )}

@@ -42,6 +42,7 @@
     "create": "创建",
     "update": "更新",
     "delete": "删除",
+    "add": "添加",
     "archive": "归档",
     "view": "查看",
     "edit": "编辑",
@@ -49,6 +50,9 @@
     "cancel": "取消",
     "close": "关闭",
     "back": "返回",
+    "clear": "清除",
+    "refresh": "刷新",
+    "retry": "重试",
     "next": "下一步",
     "loading": "加载中...",
     "search": "搜索"
@@ -106,11 +110,20 @@
     "pathLabel": "项目路径",
     "pathPlaceholder": "/path/to/your/project",
     "pathHelp": "选择项目根目录。",
+    "pathRequired": "项目路径为必填项",
     "browseFolders": "浏览文件夹",
     "action": "添加项目",
     "adding": "正在添加...",
     "toastSuccess": "项目添加成功",
     "toastError": "无法添加项目"
+  },
+  "directoryPicker": {
+    "action": "选择此文件夹",
+    "parent": "返回上级目录",
+    "rootAction": "返回根目录",
+    "root": "根目录",
+    "empty": "空目录",
+    "error": "无法列出目录"
   },
   "specSidebar": {
     "title": "全部 Specs",
@@ -167,6 +180,7 @@
       "sort": "排序",
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
+      "filteredCount": "{{filtered}} / {{total}} 个 Spec",
       "sortOptions": {
         "id-desc": "最新优先",
         "id-asc": "最旧优先",
@@ -200,7 +214,9 @@
       "updated": "更新时间",
       "name": "名称",
       "assignee": "责任人",
-      "notAvailable": "暂无数据"
+      "notAvailable": "暂无",
+      "source": "来源",
+      "viewOnGitHub": "在 GitHub 查看"
     },
     "buttons": {
       "viewTimeline": "查看时间线",
@@ -233,7 +249,9 @@
       },
       "completed": {
         "title": "已完成",
-        "subtitle": "完成率"
+        "modified": "修改于 {{date}}",
+        "size": "{{size}} KB",
+        "selectFile": "选择文件以查看内容"
       },
       "inProgress": {
         "title": "进行中",
@@ -263,6 +281,28 @@
       },
       "label": "{{name}}：{{value}}"
     }
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "subtitle": "项目概览与近期活动",
+    "subtitleWithProject": "{{projectName}} — 概览与近期活动",
+    "cards": {
+      "total": "Spec 总数",
+      "planned": "已计划",
+      "inProgress": "进行中",
+      "completed": "已完成",
+      "completionRate": "{{rate}}% 完成率"
+    },
+    "recentlyAdded": "最近添加",
+    "plannedSection": "已计划 ({{count}})",
+    "inProgressSection": "进行中 ({{count}})",
+    "noPlanned": "暂无已计划的 Spec",
+    "noInProgress": "暂无进行中的 Spec",
+    "recentActivity": "最近活动",
+    "quickActions": "快捷操作",
+    "viewAllSpecs": "查看所有 Spec",
+    "viewStats": "查看统计",
+    "actionUpdated": "已更新"
   },
   "contextPage": {
     "title": "项目上下文",

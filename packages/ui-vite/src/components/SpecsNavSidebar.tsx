@@ -22,6 +22,7 @@ import { PriorityBadge } from './PriorityBadge';
 import { api, type Spec } from '../lib/api';
 import { cn } from '../lib/utils';
 import { formatRelativeTime } from '../lib/date-utils';
+import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEYS = {
   collapsed: 'specs-nav-sidebar-collapsed',
@@ -54,6 +55,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     const stored = localStorage.getItem(STORAGE_KEYS.scroll);
     return stored ? parseFloat(stored) : 0;
   });
+  const { t, i18n } = useTranslation('common');
 
   type ListRef = ReactWindow.FixedSizeList<Spec[]>;
   type ListChildComponentProps = ReactWindow.ListChildComponentProps<Spec[]>;
@@ -193,7 +195,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             )}
             {spec.updatedAt && (
               <span className="text-[10px] text-muted-foreground">
-                {formatRelativeTime(spec.updatedAt)}
+                {formatRelativeTime(spec.updatedAt, i18n.language)}
               </span>
             )}
           </div>
@@ -224,14 +226,14 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       >
         <div className="p-3 border-b space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-sm">Specifications</h2>
+            <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
             <div className="flex items-center gap-1">
               <Button
                 variant={showFilters || hasActiveFilters ? 'secondary' : 'ghost'}
                 size="sm"
                 className="h-7 w-7 p-0"
                 onClick={() => setShowFilters((prev) => !prev)}
-                title="Toggle filters"
+                title={showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
               >
                 <Filter className="h-4 w-4" />
               </Button>
@@ -241,7 +243,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   size="sm"
                   className="h-7 w-7 p-0 lg:hidden"
                   onClick={() => onMobileOpenChange(false)}
-                  title="Close"
+                  title={t('actions.close')}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -251,7 +253,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 size="sm"
                 className="h-7 w-7 p-0 hidden lg:flex"
                 onClick={() => setCollapsed(true)}
-                title="Collapse sidebar"
+                title={t('specSidebar.collapse')}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -262,7 +264,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search specs..."
+              placeholder={t('specsNavSidebar.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 h-9"
@@ -272,7 +274,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           {showFilters && (
             <div className="space-y-2 pt-2 border-t">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Filters</span>
+                <span className="text-xs font-medium text-muted-foreground">{t('specsNavSidebar.filtersLabel')}</span>
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
@@ -280,44 +282,44 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                     className="h-6 px-2 text-xs"
                     onClick={resetFilters}
                   >
-                    Clear
+                    {t('specsNavSidebar.clearFilters')}
                   </Button>
                 )}
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All statuses" />
+                  <SelectValue placeholder={t('specsNavSidebar.select.status.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="planned">Planned</SelectItem>
-                  <SelectItem value="in-progress">In progress</SelectItem>
-                  <SelectItem value="complete">Complete</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
+                  <SelectItem value="all">{t('specsNavSidebar.select.status.all')}</SelectItem>
+                  <SelectItem value="planned">{t('status.planned')}</SelectItem>
+                  <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
+                  <SelectItem value="complete">{t('status.complete')}</SelectItem>
+                  <SelectItem value="archived">{t('status.archived')}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All priorities" />
+                  <SelectValue placeholder={t('specsNavSidebar.select.priority.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All priorities</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="all">{t('specsNavSidebar.select.priority.all')}</SelectItem>
+                  <SelectItem value="low">{t('priority.low')}</SelectItem>
+                  <SelectItem value="medium">{t('priority.medium')}</SelectItem>
+                  <SelectItem value="high">{t('priority.high')}</SelectItem>
+                  <SelectItem value="critical">{t('priority.critical')}</SelectItem>
                 </SelectContent>
               </Select>
 
               {allTags.length > 0 && (
                 <Select value={tagFilter} onValueChange={setTagFilter}>
                   <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="All tags" />
+                    <SelectValue placeholder={t('specsNavSidebar.select.tag.all')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All tags</SelectItem>
+                    <SelectItem value="all">{t('specsNavSidebar.select.tag.all')}</SelectItem>
                     {allTags.map((tag) => (
                       <SelectItem key={tag} value={tag}>
                         {tag}
@@ -333,11 +335,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
         <div className="flex-1 overflow-hidden">
           {loading ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              Loading...
+              {t('actions.loading')}
             </div>
           ) : filteredSpecs.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              No specs found
+              {t('specsNavSidebar.noResults')}
             </div>
           ) : (
             <FixedSizeList
@@ -366,6 +368,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           className="hidden lg:flex h-6 w-6 p-0 fixed z-20 top-20 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
           onClick={() => setCollapsed(false)}
           title="Expand sidebar"
+          title={t('specSidebar.expand')}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

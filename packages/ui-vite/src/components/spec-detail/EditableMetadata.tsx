@@ -7,6 +7,7 @@ import { PriorityEditor } from '../metadata-editors/PriorityEditor';
 import { TagsEditor } from '../metadata-editors/TagsEditor';
 import { formatDate, formatRelativeTime } from '../../lib/date-utils';
 import type { SpecDetail } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface EditableMetadataProps {
   spec: SpecDetail;
@@ -18,13 +19,14 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
   const updated = spec.metadata?.updated_at || spec.updatedAt;
   const githubUrl = spec.metadata?.github_url;
   const assignee = spec.metadata?.assignee;
+  const { t, i18n } = useTranslation('common');
 
   return (
     <Card>
       <CardContent className="pt-6 space-y-4">
         <dl className="grid grid-cols-2 gap-4">
           <div>
-            <dt className="text-sm font-medium text-muted-foreground mb-1">Status</dt>
+            <dt className="text-sm font-medium text-muted-foreground mb-1">{t('specsPage.filters.status')}</dt>
             <dd className="flex items-center gap-2">
               {spec.status && <StatusBadge status={spec.status} />}
               <StatusEditor
@@ -36,7 +38,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
           </div>
 
           <div>
-            <dt className="text-sm font-medium text-muted-foreground mb-1">Priority</dt>
+            <dt className="text-sm font-medium text-muted-foreground mb-1">{t('specsPage.filters.priority')}</dt>
             <dd className="flex items-center gap-2">
               {spec.priority && <PriorityBadge priority={spec.priority} />}
               <PriorityEditor
@@ -50,13 +52,13 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
           <div>
             <dt className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
               <Calendar className="h-4 w-4" />
-              Created
+              {t('specDetail.metadata.created')}
             </dt>
             <dd className="text-sm">
-              {formatDate(created)}
+              {formatDate(created, i18n.language)}
               {created && (
                 <span className="text-muted-foreground ml-1">
-                  ({formatRelativeTime(created)})
+                  ({formatRelativeTime(created, i18n.language)})
                 </span>
               )}
             </dd>
@@ -65,13 +67,13 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
           <div>
             <dt className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
               <Calendar className="h-4 w-4" />
-              Updated
+              {t('specDetail.metadata.updated')}
             </dt>
             <dd className="text-sm">
-              {formatDate(updated)}
+              {formatDate(updated, i18n.language)}
               {updated && (
                 <span className="text-muted-foreground ml-1">
-                  ({formatRelativeTime(updated)})
+                  ({formatRelativeTime(updated, i18n.language)})
                 </span>
               )}
             </dd>
@@ -81,7 +83,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
             <div>
               <dt className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
                 <User className="h-4 w-4" />
-                Assignee
+                {t('specDetail.metadata.assignee')}
               </dt>
               <dd className="text-sm">{assignee}</dd>
             </div>
@@ -90,7 +92,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
           <div className={assignee ? '' : 'col-span-2'}>
             <dt className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
               <Tag className="h-4 w-4" />
-              Tags
+              {t('spec.tags')}
             </dt>
             <dd>
               <TagsEditor
@@ -105,7 +107,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
             <div className="col-span-2">
               <dt className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
                 <GitBranch className="h-4 w-4" />
-                Source
+                {t('specDetail.metadata.source')}
               </dt>
               <dd>
                 <a
@@ -114,7 +116,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
                   rel="noreferrer"
                   className="text-sm text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  View on GitHub
+                  {t('specDetail.metadata.viewOnGitHub')}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </dd>
