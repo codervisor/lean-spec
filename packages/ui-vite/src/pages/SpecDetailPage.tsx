@@ -10,10 +10,13 @@ import { TableOfContents, TableOfContentsSidebar } from '../components/spec-deta
 import { EditableMetadata } from '../components/spec-detail/EditableMetadata';
 import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
+import { useProject } from '../contexts';
 
 export function SpecDetailPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const { currentProject, loading: projectLoading } = useProject();
+  const projectReady = !projectId || currentProject?.id === projectId;
   const [spec, setSpec] = useState<SpecDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export function SpecDetailPage() {
   }, []);
 
   const loadSpec = useCallback(async () => {
-    if (!specName) return;
+    if (!specName || !projectReady || projectLoading) return;
     setLoading(true);
     try {
       const data = await api.getSpec(specName);
@@ -51,11 +54,11 @@ export function SpecDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [describeError, specName]);
+  }, [describeError, projectLoading, projectReady, specName]);
 
   useEffect(() => {
     void loadSpec();
-  }, [loadSpec]);
+  }, [loadSpec, projectReady]);
 
   const subSpecs: SubSpec[] = useMemo(() => {
     const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);

@@ -20,8 +20,20 @@ function SidebarLink({ to, icon: Icon, label, description, currentPath, isCollap
   const normalize = (value: string) => value.replace(/\/$/, '') || '/';
   const normalizedTo = normalize(to);
   const normalizedPath = normalize(currentPath);
-  const isHome = normalizedTo === '/';
-  const isActive = isHome ? normalizedPath === '/' : normalizedPath.startsWith(normalizedTo);
+
+  // Strip /projects/:id prefix so highlighting works for project-scoped routes
+  const stripProjectPrefix = (value: string) => {
+    const match = value.match(/^\/projects\/[^/]+(\/.*)?$/);
+    return match ? (match[1] || '/') : value;
+  };
+
+  const toWithoutProject = stripProjectPrefix(normalizedTo);
+  const pathWithoutProject = stripProjectPrefix(normalizedPath);
+
+  const isHome = toWithoutProject === '/' || toWithoutProject === '';
+  const isActive = isHome
+    ? pathWithoutProject === '/' || pathWithoutProject === ''
+    : pathWithoutProject === toWithoutProject || pathWithoutProject.startsWith(`${toWithoutProject}/`);
 
   return (
     <Link

@@ -9,14 +9,20 @@ import { SpecsFilters } from '../components/specs/SpecsFilters';
 import { cn } from '../lib/utils';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
+import { useProject } from '../contexts';
+import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
+type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const { currentProject, loading: projectLoading } = useProject();
+  const projectReady = !projectId || currentProject?.id === projectId;
+  const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +31,7 @@ export function SpecsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('id-desc');
 
   const [searchParams] = useSearchParams();
   const initializedFromQuery = useRef(false);
@@ -37,6 +44,7 @@ export function SpecsPage() {
   const [showArchivedBoard, setShowArchivedBoard] = useState(false);
 
   const loadSpecs = useCallback(async () => {
+    if (!projectReady || projectLoading) return;
     try {
       setLoading(true);
       const data = await api.getSpecs();
@@ -47,7 +55,7 @@ export function SpecsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectLoading, projectReady]);
 
   useEffect(() => {
     void loadSpecs();
@@ -113,8 +121,7 @@ export function SpecsPage() {
 
   // Filter specs based on search and filters
   const filteredSpecs = useMemo(() => {
-    return specs.filter(spec => {
-      // Search filter
+    const filtered = specs.filter(spec => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
@@ -124,50 +131,83 @@ export function SpecsPage() {
         if (!matchesSearch) return false;
       }
 
-      // Status filter
       if (statusFilter !== 'all' && spec.status !== statusFilter) {
         return false;
       }
 
-      // Priority filter
       if (priorityFilter !== 'all' && spec.priority !== priorityFilter) {
         return false;
       }
 
-      // Tag filter
       if (tagFilter !== 'all' && !spec.tags?.includes(tagFilter)) {
         return false;
       }
 
       return true;
     });
-  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter]);
+
+    const sorted = [...filtered];
+    switch (sortBy) {
+      case 'id-asc':
+        sorted.sort((a, b) => (a.specNumber || 0) - (b.specNumber || 0));
+        break;
+      case 'updated-desc':
+        sorted.sort((a, b) => {
+          if (!a.updatedAt) return 1;
+          if (!b.updatedAt) return -1;
+          return b.updatedAt.getTime() - a.updatedAt.getTime();
+        });
+        break;
+      case 'title-asc':
+        sorted.sort((a, b) => {
+          const titleA = (a.title || a.name).toLowerCase();
+          const titleB = (b.title || b.name).toLowerCase();
+          return titleA.localeCompare(titleB);
+        });
+        break;
+      case 'id-desc':
+      default:
+        sorted.sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
+        break;
+    }
+
+    return sorted;
+  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter]);
 
   if (loading) {
-    return <SpecListSkeleton />;
+    return (
+      <div className="p-4 sm:p-6">
+        <SpecListSkeleton />
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-destructive" />
-          </div>
-          <div className="text-lg font-semibold">Unable to load specs</div>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button variant="secondary" size="sm" onClick={loadSpecs} className="mt-2">
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="p-4 sm:p-6">
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="flex justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <div className="text-lg font-semibold">Unable to load specs</div>
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <Button variant="secondary" size="sm" onClick={loadSpecs} className="mt-2">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Specs</h2>
+    <div className="h-full flex flex-col gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold">{t('specsPage.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
+        </div>
 
         <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-lg border">
           <button
@@ -206,6 +246,8 @@ export function SpecsPage() {
         onPriorityFilterChange={setPriorityFilter}
         tagFilter={tagFilter}
         onTagFilterChange={setTagFilter}
+        sortBy={sortBy}
+        onSortByChange={(value) => setSortBy(value as SortOption)}
         uniqueStatuses={uniqueStatuses}
         uniquePriorities={uniquePriorities}
         uniqueTags={uniqueTags}

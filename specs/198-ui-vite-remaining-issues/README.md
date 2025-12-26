@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2025-12-26
 priority: high
 tags:
@@ -10,7 +10,10 @@ tags:
 depends_on:
 - 193-frontend-ui-parity
 created_at: 2025-12-26T06:32:10.135558Z
-updated_at: 2025-12-26T06:32:19.430988Z
+updated_at: 2025-12-26T06:33:23.302928Z
+transitions:
+- status: in-progress
+  at: 2025-12-26T06:33:23.302928Z
 ---
 
 ## Overview

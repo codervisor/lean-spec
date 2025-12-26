@@ -8,11 +8,16 @@ import { StatsPage } from './pages/StatsPage';
 import { DependenciesPage } from './pages/DependenciesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ContextPage } from './pages/ContextPage';
+import { ProjectsPage } from './pages/ProjectsPage';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <Navigate to="/projects/default" replace />,
+  },
+  {
+    path: '/projects',
+    element: <ProjectsPage />,
   },
   {
     path: '/projects/:projectId',

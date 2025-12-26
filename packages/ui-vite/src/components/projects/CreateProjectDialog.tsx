@@ -40,7 +40,11 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       const project = await addProject(projectPath);
       onOpenChange(false);
       // Full reload to ensure new project context propagates everywhere
-      window.location.assign('/');
+      if (project?.id) {
+        window.location.assign(`/projects/${project.id}/specs`);
+      } else {
+        window.location.assign('/');
+      }
       return project;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create project';
@@ -144,7 +148,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
           </form>
         )}
 
-        {mode === 'picker' && error && (
+        {error && (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
             {error}
           </div>

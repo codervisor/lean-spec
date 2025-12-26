@@ -37,6 +37,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     currentProject,
     projects,
     loading: isLoading,
+    switchProject,
   } = useProject();
   const { t } = useTranslation('common');
 
@@ -54,7 +55,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     );
   }
 
-  const handleProjectSelect = (projectId: string) => {
+  const handleProjectSelect = async (projectId: string) => {
     if (projectId === currentProject?.id) {
       setOpen(false);
       return;
@@ -63,19 +64,21 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     setIsSwitching(true);
     setOpen(false);
 
-    // Extract the current path
     const pathname = window.location.pathname;
     const projectPathMatch = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
-    let subPath = projectPathMatch?.[1] || ''; // Empty string = project home page
+    let subPath = projectPathMatch?.[1] || '';
 
-    // If on a spec detail page (/specs/{specId}), redirect to specs list instead
-    // because the same spec ID might not exist in the other project
     if (subPath.match(/^\/specs\/[^/]+$/)) {
       subPath = '/specs';
     }
 
-    // Full page navigation - ensures clean state for new project
-    window.location.assign(`/projects/${projectId}${subPath}`);
+    try {
+      await switchProject(projectId);
+      window.location.assign(`/projects/${projectId}${subPath}`);
+    } catch (err) {
+      console.error('Failed to switch project', err);
+      setIsSwitching(false);
+    }
   };
 
   const sortedProjects = [...(projects || [])].sort((a, b) => {

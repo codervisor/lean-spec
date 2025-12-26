@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@leanspec/ui-c
 import { Network, List, AlertTriangle, GitBranch, RefreshCcw } from 'lucide-react';
 import { api, type DependencyGraph as APIDependencyGraph } from '../lib/api';
 import { EmptyState } from '../components/shared/EmptyState';
+import { useProject } from '../contexts';
 
 // Node layout using dagre
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
@@ -70,6 +71,8 @@ export function DependenciesPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const navigate = useNavigate();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const { currentProject, loading: projectLoading } = useProject();
+  const projectReady = !projectId || currentProject?.id === projectId;
   const [graph, setGraph] = useState<APIDependencyGraph | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +82,9 @@ export function DependenciesPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   useEffect(() => {
+    if (!projectReady || projectLoading) return;
+
+    setLoading(true);
     api.getDependencies(specName)
       .then((data) => {
         setGraph(data);
@@ -134,7 +140,7 @@ export function DependenciesPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [specName, setNodes, setEdges]);
+  }, [projectLoading, projectReady, setEdges, setNodes, specName]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     navigate(`${basePath}/specs/${node.id}`);
