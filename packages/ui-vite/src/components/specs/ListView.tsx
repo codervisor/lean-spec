@@ -5,9 +5,10 @@ import { PriorityBadge } from '../PriorityBadge';
 
 interface ListViewProps {
   specs: Spec[];
+  basePath?: string;
 }
 
-export function ListView({ specs }: ListViewProps) {
+export function ListView({ specs, basePath = '/projects/default' }: ListViewProps) {
   if (specs.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground border rounded-lg bg-secondary/10">
@@ -21,7 +22,7 @@ export function ListView({ specs }: ListViewProps) {
       {specs.map((spec) => (
         <Link
           key={spec.name}
-          to={`/specs/${spec.name}`}
+          to={`${basePath}/specs/${spec.name}`}
           className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors bg-background"
         >
           <div className="flex items-start justify-between gap-4">

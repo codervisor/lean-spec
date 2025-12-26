@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, FileText, BarChart3, Network, Settings, ChevronLeft, ChevronRight, BookOpen, X } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -51,6 +51,8 @@ interface MainSidebarProps {
 
 export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarProps) {
   const location = useLocation();
+  const { projectId } = useParams<{ projectId: string }>();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { t } = useTranslation('common');
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -73,12 +75,12 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
   }, [location.pathname, mobileOpen, onMobileClose]);
 
   const navItems = [
-    { path: '/', label: t('navigation.home'), description: t('navigation.dashboard'), icon: Home },
-    { path: '/specs', label: t('navigation.specs'), description: t('navigation.allSpecifications'), icon: FileText },
-    { path: '/dependencies', label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
-    { path: '/stats', label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
-    { path: '/context', label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },
-    { path: '/settings', label: t('navigation.settings'), description: t('navigation.settingsDescription'), icon: Settings },
+    { path: basePath, label: t('navigation.home'), description: t('navigation.dashboard'), icon: Home },
+    { path: `${basePath}/specs`, label: t('navigation.specs'), description: t('navigation.allSpecifications'), icon: FileText },
+    { path: `${basePath}/dependencies`, label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
+    { path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
+    { path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },
+    { path: `${basePath}/settings`, label: t('navigation.settings'), description: t('navigation.settingsDescription'), icon: Settings },
   ];
 
   return (

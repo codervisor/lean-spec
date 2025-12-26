@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { AlertCircle } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
-import { api, type Stats } from '../lib/api';
+import { api, type Stats, type Spec } from '../lib/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 
 const STATUS_COLORS = {
@@ -33,14 +33,16 @@ const PRIORITY_COLORS = {
 
 export function StatsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadStats = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.getStats();
-      setStats(data);
+      const [statsData, specsData] = await Promise.all([api.getStats(), api.getSpecs()]);
+      setStats(statsData);
+      setSpecs(Array.isArray(specsData) ? specsData : []);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load statistics';
@@ -76,25 +78,54 @@ export function StatsPage() {
   }
 
   // Prepare data for charts
-  const statusCounts = stats.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
+  const statusCounts = useMemo(() => stats.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
     acc[entry.status] = entry.count;
     return acc;
-  }, {});
+  }, {}), [stats.specsByStatus]);
 
-  const statusData = stats.specsByStatus.map(({ status, count }) => ({
+  const statusData = useMemo(() => stats.specsByStatus.map(({ status, count }) => ({
     name: status
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' '),
     value: count,
     fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#6B7280',
-  }));
+  })), [stats.specsByStatus]);
 
-  const priorityData = (stats.specsByPriority || []).map(({ priority, count }) => ({
+  const priorityData = useMemo(() => (stats.specsByPriority || []).map(({ priority, count }) => ({
     name: priority.charAt(0).toUpperCase() + priority.slice(1),
     value: count,
     fill: PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || '#6B7280',
-  }));
+  })), [stats.specsByPriority]);
+
+  const topTags = useMemo(() => {
+    const tagFrequency = specs.reduce<Record<string, number>>((acc, spec) => {
+      (spec.tags || []).forEach((tag) => {
+        acc[tag] = (acc[tag] || 0) + 1;
+      });
+      return acc;
+    }, {});
+
+    return Object.entries(tagFrequency)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([tag, count]) => ({ tag, count }));
+  }, [specs]);
+
+  const trendData = useMemo(() => {
+    const monthFormatter = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short' });
+    const monthly = specs
+      .filter((spec) => spec.createdAt)
+      .reduce<Record<string, number>>((acc, spec) => {
+        const month = monthFormatter.format(spec.createdAt as Date);
+        acc[month] = (acc[month] || 0) + 1;
+        return acc;
+      }, {});
+
+    return Object.entries(monthly)
+      .slice(-6)
+      .map(([month, count]) => ({ month, count }));
+  }, [specs]);
 
   const completionRate = stats.completionRate.toFixed(1);
 
@@ -107,24 +138,26 @@ export function StatsPage() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+          <CardHeader className="relative pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Specs
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="text-3xl font-bold">{stats.totalSpecs}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
+          <CardHeader className="relative pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Completed
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="text-3xl font-bold">{statusCounts.complete || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {completionRate}% completion rate
@@ -132,24 +165,26 @@ export function StatsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
+          <CardHeader className="relative pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               In Progress
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="text-3xl font-bold">{statusCounts['in-progress'] || 0}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
+          <CardHeader className="relative pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Planned
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             <div className="text-3xl font-bold">{statusCounts.planned || 0}</div>
           </CardContent>
         </Card>
@@ -205,7 +240,52 @@ export function StatsPage() {
         </Card>
       </div>
 
-      {/* Tags section removed: Rust stats payload no longer includes tag aggregates */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {trendData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Created per Month</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {topTags.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Tags</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {topTags.map(({ tag, count }) => (
+                  <div key={tag} className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium truncate">{tag}</span>
+                    <div className="flex items-center gap-2 w-40">
+                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary"
+                          style={{ width: `${(count / topTags[0].count) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-6 text-right">{count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

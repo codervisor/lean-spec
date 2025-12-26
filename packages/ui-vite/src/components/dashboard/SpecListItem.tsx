@@ -8,11 +8,12 @@ export type DashboardSpec = Spec;
 
 interface SpecListItemProps {
   spec: DashboardSpec;
+  basePath?: string;
 }
 
-export function SpecListItem({ spec }: SpecListItemProps) {
+export function SpecListItem({ spec, basePath = '/projects/default' }: SpecListItemProps) {
   const displayTitle = spec.title || spec.name;
-  const specUrl = `/specs/${spec.name}`;
+  const specUrl = `${basePath}/specs/${spec.name}`;
 
   return (
     <Link

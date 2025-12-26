@@ -9,25 +9,25 @@ interface PriorityBadgeProps {
 }
 
 const priorityConfig: Record<string, { icon: typeof AlertCircle; label: string; className: string }> = {
-  'critical': {
+  critical: {
     icon: AlertCircle,
     label: 'Critical',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    className: 'bg-red-500/20 text-red-700 dark:text-red-300 border border-red-200/60 dark:border-red-400/40',
   },
-  'high': {
+  high: {
     icon: ArrowUp,
     label: 'High',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    className: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-200/60 dark:border-orange-400/40',
   },
-  'medium': {
+  medium: {
     icon: Minus,
     label: 'Medium',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    className: 'bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-200/60 dark:border-blue-400/40',
   },
-  'low': {
+  low: {
     icon: ArrowDown,
     label: 'Low',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+    className: 'bg-gray-500/20 text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-gray-500/40',
   },
 };
 
@@ -36,7 +36,14 @@ export function PriorityBadge({ priority, className, iconOnly = false }: Priorit
   const Icon = config.icon;
 
   return (
-    <Badge className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', config.className, className)}>
+    <Badge
+      className={cn(
+        'flex items-center w-fit h-5 px-2 py-0.5 text-xs font-medium',
+        !iconOnly && 'gap-1.5',
+        config.className,
+        className,
+      )}
+    >
       <Icon className="h-3.5 w-3.5" />
       {!iconOnly && config.label}
     </Badge>

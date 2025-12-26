@@ -9,25 +9,25 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<string, { icon: typeof Clock; label: string; className: string }> = {
-  'planned': {
+  planned: {
     icon: Clock,
     label: 'Planned',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    className: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-400/40',
   },
   'in-progress': {
     icon: PlayCircle,
     label: 'In Progress',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    className: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-200/60 dark:border-orange-400/40',
   },
-  'complete': {
+  complete: {
     icon: CheckCircle2,
     label: 'Complete',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    className: 'bg-green-500/20 text-green-700 dark:text-green-300 border border-green-200/60 dark:border-green-400/40',
   },
-  'archived': {
+  archived: {
     icon: Archive,
     label: 'Archived',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+    className: 'bg-gray-500/20 text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-gray-500/40',
   },
 };
 
@@ -36,7 +36,14 @@ export function StatusBadge({ status, className, iconOnly = false }: StatusBadge
   const Icon = config.icon;
 
   return (
-    <Badge className={cn('flex items-center w-fit', !iconOnly && 'gap-1.5', config.className, className)}>
+    <Badge
+      className={cn(
+        'flex items-center w-fit h-5 px-2 py-0.5 text-xs font-medium',
+        !iconOnly && 'gap-1.5',
+        config.className,
+        className,
+      )}
+    >
       <Icon className="h-3.5 w-3.5" />
       {!iconOnly && config.label}
     </Badge>

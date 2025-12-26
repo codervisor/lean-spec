@@ -14,6 +14,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const projectColor = currentProject && 'color' in currentProject ? (currentProject as { color?: string }).color : undefined;
+  const basePath = currentProject?.id ? `/projects/${currentProject.id}` : '/projects/default';
 
   const loadData = useCallback(async () => {
     try {
@@ -68,6 +69,7 @@ export function DashboardPage() {
       stats={stats}
       projectColor={projectColor}
       projectName={currentProject?.name}
+      basePath={basePath}
     />
   );
 }

@@ -12,6 +12,7 @@ interface BoardViewProps {
   onStatusChange: (spec: Spec, status: SpecStatus) => void;
   showArchived: boolean;
   onToggleArchived: () => void;
+  basePath?: string;
 }
 
 const STATUS_CONFIG: Record<SpecStatus, {
@@ -51,7 +52,7 @@ const STATUS_CONFIG: Record<SpecStatus, {
   }
 };
 
-export function BoardView({ specs, onStatusChange, showArchived, onToggleArchived }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, showArchived, onToggleArchived, basePath = '/projects/default' }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
 
@@ -108,7 +109,7 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
   };
 
   return (
-    <div className="flex h-full gap-4 overflow-x-auto pb-4">
+    <div className="flex flex-col md:flex-row gap-3 sm:gap-4 md:gap-6 h-full pb-2 md:snap-x md:snap-mandatory overflow-y-auto md:overflow-y-hidden md:overflow-x-auto">
       {columns.map(status => {
         const config = STATUS_CONFIG[status];
         const statusSpecs = specsByStatus[status] || [];
@@ -166,7 +167,7 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
                       draggingId === spec.name && "opacity-50"
                     )}
                   >
-                    <Link to={`/specs/${spec.name}`} className="block group">
+                    <Link to={`${basePath}/specs/${spec.name}`} className="block group">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <h4 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2">
                           {spec.title}

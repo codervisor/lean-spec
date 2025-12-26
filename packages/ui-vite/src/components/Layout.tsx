@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
@@ -7,6 +7,7 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { PageTransition } from './shared/PageTransition';
 import { BackToTop } from './shared/BackToTop';
 import { Button } from '@leanspec/ui-components';
+import { useProject } from '../contexts';
 
 function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
   const shortcuts = [
@@ -48,6 +49,8 @@ export function Layout() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
+  const { projectId } = useParams<{ projectId: string }>();
+  const { currentProject, switchProject } = useProject();
 
   // Register global keyboard shortcuts
   useGlobalShortcuts();
@@ -63,6 +66,11 @@ export function Layout() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!projectId || currentProject?.id === projectId) return;
+    void switchProject(projectId).catch((err) => console.error('Failed to sync project from route', err));
+  }, [currentProject?.id, projectId, switchProject]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation onShowShortcuts={() => setShowShortcuts(true)} />
@@ -71,7 +79,7 @@ export function Layout() {
           mobileOpen={mobileSidebarOpen}
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
-        <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] px-4 py-6 lg:px-6">
+        <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)]">
           <ErrorBoundary key={location.pathname} onReset={() => window.location.reload()}>
             <PageTransition>
               <Outlet />

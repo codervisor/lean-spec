@@ -25,9 +25,10 @@ interface DashboardClientProps {
   stats: Stats;
   projectColor?: string;
   projectName?: string;
+  basePath?: string;
 }
 
-export function DashboardClient({ specs, stats, projectColor, projectName }: DashboardClientProps) {
+export function DashboardClient({ specs, stats, projectColor, projectName, basePath = '/projects/default' }: DashboardClientProps) {
   const inProgressSpecs = specs
     .filter((spec) => spec.status === 'in-progress')
     .sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0))
@@ -133,7 +134,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName }: Das
             </CardHeader>
             <CardContent className="space-y-1">
               {recentlyAdded.slice(0, 5).map((spec) => (
-                <SpecListItem key={spec.id} spec={spec} />
+                <SpecListItem key={spec.id} spec={spec} basePath={basePath} />
               ))}
             </CardContent>
           </Card>
@@ -147,7 +148,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName }: Das
             </CardHeader>
             <CardContent className="space-y-1">
               {plannedSpecs.length > 0 ? (
-                plannedSpecs.map((spec) => <SpecListItem key={spec.id} spec={spec} />)
+                plannedSpecs.map((spec) => <SpecListItem key={spec.id} spec={spec} basePath={basePath} />)
               ) : (
                 <p className="text-sm text-muted-foreground py-4 text-center">No planned specs</p>
               )}
@@ -163,7 +164,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName }: Das
             </CardHeader>
             <CardContent className="space-y-1">
               {inProgressSpecs.length > 0 ? (
-                inProgressSpecs.map((spec) => <SpecListItem key={spec.id} spec={spec} />)
+                inProgressSpecs.map((spec) => <SpecListItem key={spec.id} spec={spec} basePath={basePath} />)
               ) : (
                 <p className="text-sm text-muted-foreground py-4 text-center">No specs in progress</p>
               )}
@@ -178,7 +179,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName }: Das
           <CardContent>
             <div className="border-l-2 border-muted pl-4 space-y-1">
               {recentActivity.map((spec) => (
-                <ActivityItem key={spec.id} spec={spec} action="updated" time={spec.updatedAt} />
+                <ActivityItem key={spec.id} spec={spec} action="updated" time={spec.updatedAt} basePath={basePath} />
               ))}
             </div>
           </CardContent>
@@ -191,13 +192,13 @@ export function DashboardClient({ specs, stats, projectColor, projectName }: Das
           <CardContent>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
-                <Link to="/specs">
+                <Link to={`${basePath}/specs`}>
                   <ListIcon className="h-4 w-4 mr-2" />
                   View All Specs
                 </Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link to="/stats">
+                <Link to={`${basePath}/stats`}>
                   <TrendingUp className="h-4 w-4 mr-2" />
                   View Stats
                 </Link>

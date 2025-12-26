@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { BookOpen, ChevronRight, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@leanspec/ui-components';
@@ -16,26 +16,30 @@ interface NavigationProps {
   onShowShortcuts?: () => void;
 }
 
-/**
- * Parse pathname to extract page info for breadcrumbs
- */
+function stripProjectPrefix(pathname: string): string {
+  const match = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
+  return match ? match[1] || '/' : pathname;
+}
+
 function parsePathname(pathname: string): { page: string; specId?: string; query?: string } {
-  if (pathname === '/') return { page: 'home' };
-  if (pathname === '/stats') return { page: 'stats' };
-  if (pathname === '/dependencies') return { page: 'dependencies' };
-  if (pathname === '/context') return { page: 'context' };
-  if (pathname === '/settings') return { page: 'settings' };
-  if (pathname === '/specs' || pathname.startsWith('/specs?')) {
-    return { page: 'specs', query: pathname.split('?')[1] };
+  const path = stripProjectPrefix(pathname);
+
+  if (path === '/') return { page: 'home' };
+  if (path === '/stats') return { page: 'stats' };
+  if (path === '/dependencies') return { page: 'dependencies' };
+  if (path === '/context') return { page: 'context' };
+  if (path === '/settings') return { page: 'settings' };
+  if (path === '/specs' || path.startsWith('/specs?')) {
+    return { page: 'specs', query: path.split('?')[1] };
   }
-  if (pathname.startsWith('/specs/')) {
-    return { page: 'spec-detail', specId: pathname.split('/')[2] };
+  if (path.startsWith('/specs/')) {
+    return { page: 'spec-detail', specId: path.split('/')[2] };
   }
 
   return { page: 'unknown' };
 }
 
-function Breadcrumb() {
+function Breadcrumb({ basePath }: { basePath: string }) {
   const location = useLocation();
   const { t } = useTranslation('common');
 
@@ -56,39 +60,39 @@ function Breadcrumb() {
       break;
 
     case 'stats':
-      items = [{ label: homeLabel, to: '/' }, { label: statsLabel }];
+      items = [{ label: homeLabel, to: basePath }, { label: statsLabel }];
       break;
 
     case 'dependencies':
-      items = [{ label: homeLabel, to: '/' }, { label: depsLabel }];
+      items = [{ label: homeLabel, to: basePath }, { label: depsLabel }];
       break;
 
     case 'context':
-      items = [{ label: homeLabel, to: '/' }, { label: contextLabel }];
+      items = [{ label: homeLabel, to: basePath }, { label: contextLabel }];
       break;
 
     case 'settings':
-      items = [{ label: homeLabel, to: '/' }, { label: settingsLabel }];
+      items = [{ label: homeLabel, to: basePath }, { label: settingsLabel }];
       break;
 
     case 'specs': {
       const searchParams = new URLSearchParams(parsed.query || '');
       const view = searchParams.get('view');
       const viewLabel = view === 'board' ? 'Board' : 'List';
-      items = [{ label: homeLabel, to: '/' }, { label: `${specsLabel} (${viewLabel})` }];
+      items = [{ label: homeLabel, to: basePath }, { label: `${specsLabel} (${viewLabel})` }];
       break;
     }
 
     case 'spec-detail':
       items = [
-        { label: homeLabel, to: '/' },
-        { label: specsLabel, to: '/specs' },
+        { label: homeLabel, to: basePath },
+        { label: specsLabel, to: `${basePath}/specs` },
         { label: parsed.specId || '' },
       ];
       break;
 
     default:
-      items = [{ label: homeLabel, to: '/' }];
+      items = [{ label: homeLabel, to: basePath }];
   }
 
   return (
@@ -111,6 +115,8 @@ function Breadcrumb() {
 
 export function Navigation({ onShowShortcuts: _onShowShortcuts }: NavigationProps) {
   const { t } = useTranslation('common');
+  const { projectId } = useParams<{ projectId: string }>();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
 
   const toggleSidebar = () => {
     if (typeof window !== 'undefined' && (window as any).toggleMainSidebar) {
@@ -134,7 +140,7 @@ export function Navigation({ onShowShortcuts: _onShowShortcuts }: NavigationProp
             <span className="sr-only">{t('navigation.toggleMenu')}</span>
           </Button>
 
-          <Link to="/" className="flex items-center space-x-2 shrink-0">
+          <Link to={basePath} className="flex items-center space-x-2 shrink-0">
             <img
               src="/logo-with-bg.svg"
               alt="LeanSpec"
@@ -148,7 +154,7 @@ export function Navigation({ onShowShortcuts: _onShowShortcuts }: NavigationProp
             <span className="font-bold text-lg sm:text-xl hidden sm:inline">LeanSpec</span>
           </Link>
           <div className="hidden md:block min-w-0">
-            <Breadcrumb />
+            <Breadcrumb basePath={basePath} />
           </div>
         </div>
 

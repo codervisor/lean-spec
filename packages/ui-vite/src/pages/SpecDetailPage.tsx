@@ -12,7 +12,8 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 
 export function SpecDetailPage() {
-  const { specName } = useParams<{ specName: string }>();
+  const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [spec, setSpec] = useState<SpecDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +98,7 @@ export function SpecDetailPage() {
         tone="error"
         actions={(
           <>
-            <Link to="/specs" className="inline-flex">
+            <Link to={`${basePath}/specs`} className="inline-flex">
               <Button variant="outline" size="sm" className="gap-2">
                 Back to specs
               </Button>
@@ -130,7 +131,7 @@ export function SpecDetailPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <Link
-            to="/specs"
+            to={`${basePath}/specs`}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -167,7 +168,7 @@ export function SpecDetailPage() {
                   <p className="text-sm font-medium">Depends on</p>
                   <div className="flex flex-wrap gap-2">
                     {dependsOn.map((dep) => (
-                      <Link key={dep} to={`/specs/${dep}`} className="text-sm text-primary hover:underline">
+                      <Link key={dep} to={`${basePath}/specs/${dep}`} className="text-sm text-primary hover:underline">
                         {dep}
                       </Link>
                     ))}
@@ -179,7 +180,7 @@ export function SpecDetailPage() {
                   <p className="text-sm font-medium">Required by</p>
                   <div className="flex flex-wrap gap-2">
                     {requiredBy.map((dep) => (
-                      <Link key={dep} to={`/specs/${dep}`} className="text-sm text-primary hover:underline">
+                      <Link key={dep} to={`${basePath}/specs/${dep}`} className="text-sm text-primary hover:underline">
                         {dep}
                       </Link>
                     ))}

@@ -5,6 +5,7 @@ interface ActivityItemProps {
   spec: DashboardSpec;
   action: string;
   time: Date | null;
+  basePath?: string;
 }
 
 function formatRelativeTime(date: Date | null): string {
@@ -22,9 +23,9 @@ function formatRelativeTime(date: Date | null): string {
   return date.toLocaleDateString();
 }
 
-export function ActivityItem({ spec, action, time }: ActivityItemProps) {
+export function ActivityItem({ spec, action, time, basePath = '/projects/default' }: ActivityItemProps) {
   const displayTitle = spec.title || spec.name;
-  const specUrl = `/specs/${spec.name}`;
+  const specUrl = `${basePath}/specs/${spec.name}`;
 
   return (
     <div className="flex items-start gap-3 py-2">

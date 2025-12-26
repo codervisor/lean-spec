@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { SpecsLayout } from './components/SpecsLayout';
 import { DashboardPage } from './pages/DashboardPage';
@@ -12,6 +12,10 @@ import { ContextPage } from './pages/ContextPage';
 export const router = createBrowserRouter([
   {
     path: '/',
+    element: <Navigate to="/projects/default" replace />,
+  },
+  {
+    path: '/projects/:projectId',
     element: <Layout />,
     children: [
       { index: true, element: <DashboardPage /> },

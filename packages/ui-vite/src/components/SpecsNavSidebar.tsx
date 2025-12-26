@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -35,6 +35,8 @@ interface SpecsNavSidebarProps {
 
 export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: SpecsNavSidebarProps) {
   const location = useLocation();
+  const { projectId } = useParams<{ projectId: string }>();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -165,7 +167,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return (
       <div style={style} className="px-1">
         <Link
-          to={`/specs/${spec.name}`}
+          to={`${basePath}/specs/${spec.name}`}
           onClick={() => onMobileOpenChange?.(false)}
           className={cn(
             'flex flex-col gap-1 p-2 rounded-md text-sm transition-colors',

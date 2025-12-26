@@ -67,8 +67,9 @@ const getStatusColor = (status: string) => {
 };
 
 export function DependenciesPage() {
-  const { specName } = useParams<{ specName: string }>();
+  const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const navigate = useNavigate();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [graph, setGraph] = useState<APIDependencyGraph | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,8 +137,8 @@ export function DependenciesPage() {
   }, [specName, setNodes, setEdges]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    navigate(`/specs/${node.id}`);
-  }, [navigate]);
+    navigate(`${basePath}/specs/${node.id}`);
+  }, [basePath, navigate]);
 
   if (loading) {
     return (
@@ -171,7 +172,7 @@ export function DependenciesPage() {
         title="No dependencies yet"
         description="Specs are present but no dependency relationships were found. Add depends_on links to see the graph."
         actions={(
-          <Button size="sm" variant="outline" onClick={() => navigate('/specs')}>
+          <Button size="sm" variant="outline" onClick={() => navigate(`${basePath}/specs`)}>
             Go to specs
           </Button>
         )}
@@ -243,7 +244,7 @@ export function DependenciesPage() {
                 {graph.nodes.map((node: APIDependencyGraph['nodes'][number]) => (
                   <button
                     key={node.id}
-                    onClick={() => navigate(`/specs/${node.id}`)}
+                    onClick={() => navigate(`${basePath}/specs/${node.id}`)}
                     className="w-full p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors text-left"
                   >
                     <div className="font-medium">{node.name}</div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Fuse from 'fuse.js';
 import { Clock, FileText, Search, Tag } from 'lucide-react';
 import {
@@ -27,6 +27,8 @@ const formatSpecNumber = (specNumber: number | null) =>
 
 export function QuickSearch() {
   const navigate = useNavigate();
+  const { projectId } = useParams<{ projectId: string }>();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -119,11 +121,11 @@ export function QuickSearch() {
     persistRecentSearches(next);
     setOpen(false);
     setSearch('');
-    navigate(`/specs/${spec.name}`);
+    navigate(`${basePath}/specs/${spec.name}`);
   };
 
   const handleTagSelect = (tag: string) => {
-    navigate(`/specs?tag=${encodeURIComponent(tag)}`);
+    navigate(`${basePath}/specs?tag=${encodeURIComponent(tag)}`);
     setOpen(false);
     setSearch('');
   };

@@ -1,39 +1,23 @@
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../contexts';
-import { cn, Button } from '@leanspec/ui-components';
+import { Button } from '@leanspec/ui-components';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
-  const options = [
-    { value: 'light' as const, icon: Sun, label: 'Light' },
-    { value: 'dark' as const, icon: Moon, label: 'Dark' },
-    { value: 'system' as const, icon: Monitor, label: 'System' },
-  ];
+  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg">
-      {options.map((option) => {
-        const Icon = option.icon;
-        const isActive = theme === option.value;
-        return (
-          <Button
-            key={option.value}
-            onClick={() => setTheme(option.value)}
-            title={option.label}
-            variant="ghost"
-            size="icon"
-            className={cn(
-              'h-7 w-7',
-              isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Icon className="w-4 h-4" />
-          </Button>
-        );
-      })}
-    </div>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      aria-label="Toggle theme"
+      className="relative h-9 w-9"
+    >
+      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    </Button>
   );
 }

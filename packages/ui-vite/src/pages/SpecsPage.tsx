@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { api, type Spec } from '../lib/api';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
@@ -15,6 +15,8 @@ type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
+  const { projectId } = useParams<{ projectId: string }>();
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -243,13 +245,14 @@ export function SpecsPage() {
             )}
           />
         ) : viewMode === 'list' ? (
-          <ListView specs={filteredSpecs} />
+          <ListView specs={filteredSpecs} basePath={basePath} />
         ) : (
           <BoardView
             specs={filteredSpecs}
             onStatusChange={handleStatusChange}
             showArchived={showArchivedBoard}
             onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
+            basePath={basePath}
           />
         )}
       </div>
