@@ -15,8 +15,9 @@ depends_on:
 - 192-backend-api-parity
 - 193-frontend-ui-parity
 - 194-api-contract-test-suite
+- 199-ui-vite-i18n-migration
 created_at: 2025-12-19T06:25:19.956803Z
-updated_at: 2025-12-20T07:13:38.536778Z
+updated_at: 2025-12-26T08:38:16.451943Z
 ---
 
 # UI-Vite Parity: Feature & Backend Alignment (Umbrella)

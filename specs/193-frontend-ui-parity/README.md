@@ -1,20 +1,21 @@
 ---
 status: in-progress
-created: '2025-12-19'
+created: 2025-12-19
 priority: critical
 tags:
-  - ui
-  - frontend
-  - vite
-  - react
-  - ui-parity
+- ui
+- frontend
+- vite
+- react
+- ui-parity
 depends_on:
-  - 192-backend-api-parity
-created_at: '2025-12-19T06:36:15.645303Z'
-updated_at: '2025-12-24T00:00:00.000Z'
+- 192-backend-api-parity
+- 199-ui-vite-i18n-migration
+created_at: 2025-12-19T06:36:15.645303Z
+updated_at: 2025-12-26T08:38:16.523764Z
 transitions:
-  - status: in-progress
-    at: '2025-12-22T14:01:35.592Z'
+- status: in-progress
+  at: 2025-12-22T14:01:35.592Z
 ---
 
 # Frontend UI Parity: Achieve 100% UI/UX Match Between Next.js and Vite

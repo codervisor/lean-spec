@@ -1,0 +1,460 @@
+---
+status: planned
+created: 2025-12-26
+priority: high
+tags:
+- i18n
+- ui-vite
+- chinese-market
+- ux
+- parity
+depends_on:
+- 091-chinese-localization-strategy
+- 187-vite-spa-migration
+created_at: 2025-12-26T08:38:09.712123Z
+updated_at: 2025-12-26T08:38:16.407620Z
+---
+
+## Overview
+
+**Problem**: @leanspec/ui-vite has only **30% i18n implementation** despite having complete translation files. While @leanspec/ui (Next.js) has 29 components using i18n (58% coverage), ui-vite has only 9 components (24% coverage). This creates a poor user experience for Chinese users and blocks feature parity.
+
+**Current State**:
+- ✅ Translation files synced (1,010 lines, 6 files total)
+- ✅ Language switcher working
+- ✅ Core navigation translated
+- ⚠️ Missing `i18next-browser-languagedetector` (manual localStorage only)
+- ❌ 69% of components still have hardcoded English strings
+- ❌ No test coverage for i18n
+- ❌ Status/priority badges not translated
+- ❌ Form labels, errors, toasts all hardcoded in English
+
+**Impact**:
+- Chinese users see mostly English UI despite choosing Chinese
+- Feature parity gap with @leanspec/ui blocks migration
+- Poor impression for primary target market
+- Inconsistent multilingual experience
+
+**Scope**:
+1. Install missing i18n dependencies
+2. Migrate translation logic from @leanspec/ui to ui-vite components
+3. Achieve 100% component translation coverage
+4. Add comprehensive test suite
+5. Sync missing translation keys between packages
+
+**Out of Scope**:
+- Creating new translations (reuse existing)
+- Translating user-generated content
+- Adding languages beyond en/zh-CN
+- Backend/API translations (CLI/MCP handled separately in spec 157)
+
+**Success Criteria**: @leanspec/ui-vite achieves translation parity with @leanspec/ui
+
+## Design
+
+### Gap Analysis Summary
+
+| Feature | @leanspec/ui | @leanspec/ui-vite | Gap |
+|---------|--------------|-------------------|-----|
+| **i18n Library** | i18next + detector | i18next only | ⚠️ Missing detector |
+| **Translation Files** | 1,008 lines (6 files) | 1,010 lines (6 files) | ✅ Identical |
+| **Components Translated** | 29 components (58%) | 9 components (24%) | ❌ 69% missing |
+| **Language Switcher** | ✅ Yes | ✅ Yes | ✅ Complete |
+| **Browser Detection** | ✅ Auto | ❌ Manual only | ⚠️ Missing |
+| **Provider Component** | ✅ I18nProvider | ❌ Direct import | ⚠️ Different |
+| **Tests** | ✅ 8 tests | ❌ None | ❌ Missing |
+| **Extra Keys** | ❌ Missing | ✅ settings | ⚠️ Out of sync |
+
+### Technical Approach
+
+#### Phase 1: Dependencies & Configuration
+
+**Install Missing Packages**:
+```bash
+cd packages/ui-vite
+pnpm add i18next-browser-languagedetector
+```
+
+**Upgrade i18n Configuration** (`src/lib/i18n.ts`):
+```typescript
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+i18n
+  .use(LanguageDetector)  // Add browser detection
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    defaultNS: 'common',
+    ns: ['common', 'errors', 'help'],  // Add namespaces
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'leanspec-language',
+    },
+    interpolation: {
+      escapeValue: false,
+    },
+  });
+```
+
+#### Phase 2: Component Migration Strategy
+
+**Pattern**: Copy translation hooks from @leanspec/ui components
+
+**Priority 1: Badges & Status Indicators** (High Visibility)
+- `StatusBadge.tsx` ← from `status-badge.tsx`
+- `PriorityBadge.tsx` ← from `priority-badge.tsx`
+
+**Before**:
+```tsx
+<Badge>{priority}</Badge>
+```
+
+**After**:
+```tsx
+const { t } = useTranslation('common');
+<Badge>{t(`priority.${priority}`)}</Badge>
+```
+
+**Priority 2: Navigation & Filters** (High Usage)
+- `SpecsNavSidebar.tsx` ← from `specs-nav-sidebar.tsx`
+- `SpecsFilters.tsx` (enhance existing)
+- `QuickSearch.tsx` (enhance existing)
+
+**Priority 3: Views & Pages** (Core Functionality)
+- `BoardView.tsx` ← from `specs-client.tsx` (board logic)
+- `ListView.tsx` ← from `specs-client.tsx` (list logic)
+- Dashboard components (if implemented)
+
+**Priority 4: Editors & Forms** (User Input)
+- `EditableMetadata.tsx` ← from `editable-spec-metadata.tsx`
+- `metadata-editors/PriorityEditor.tsx` ← from `priority-editor.tsx`
+- `metadata-editors/TagsEditor.tsx` ← from `tags-editor.tsx`
+- `projects/CreateProjectDialog.tsx` ← from `create-project-dialog.tsx`
+
+**Priority 5: Context & Analytics** (Advanced Features)
+- `context/ContextClient.tsx` ← from `context-client.tsx`
+- `context/ContextFileDetail.tsx` ← from `context-file-detail.tsx`
+- `dashboard/StatCard.tsx` (if exists)
+
+#### Phase 3: Missing Components
+
+**Components in ui-vite WITHOUT translation** (28 total):
+```
+1. StatusBadge.tsx
+2. PriorityBadge.tsx
+3. SpecsNavSidebar.tsx
+4. BoardView.tsx
+5. ListView.tsx
+6. EditableMetadata.tsx
+7. PriorityEditor.tsx
+8. TagsEditor.tsx
+9. CreateProjectDialog.tsx
+10. StatCard.tsx
+11. ActivityItem.tsx
+12. SpecListItem.tsx
+13. ContextClient.tsx
+14. ContextFileDetail.tsx
+15. DirectoryPicker.tsx
+... and 13 more
+```
+
+**All need**: `import { useTranslation } from 'react-i18next'`
+
+#### Phase 4: Testing Strategy
+
+Create `packages/ui-vite/src/lib/i18n.test.ts` based on @leanspec/ui:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import i18n from './i18n';
+
+describe('i18n configuration', () => {
+  it('should have English and Chinese languages available', () => {
+    const languages = Object.keys(i18n.options.resources || {});
+    expect(languages).toContain('en');
+    expect(languages).toContain('zh-CN');
+  });
+
+  it('should have namespaces: common, errors, help', () => {
+    expect(i18n.options.ns).toContain('common');
+    expect(i18n.options.ns).toContain('errors');
+    expect(i18n.options.ns).toContain('help');
+  });
+
+  it('should translate navigation.home to Chinese', () => {
+    i18n.changeLanguage('zh-CN');
+    expect(i18n.t('navigation.home', { ns: 'common' })).toBe('首页');
+  });
+
+  it('should keep "Spec" in English for Chinese locale', () => {
+    i18n.changeLanguage('zh-CN');
+    expect(i18n.t('spec.spec', { ns: 'common' })).toBe('Spec');
+  });
+
+  it('should translate status terms', () => {
+    i18n.changeLanguage('zh-CN');
+    expect(i18n.t('status.planned', { ns: 'common' })).toBe('已计划');
+    expect(i18n.t('status.inProgress', { ns: 'common' })).toBe('进行中');
+    expect(i18n.t('status.complete', { ns: 'common' })).toBe('已完成');
+  });
+
+  it('should fallback to English for missing keys', () => {
+    i18n.changeLanguage('zh-CN');
+    const result = i18n.t('nonexistent.key', { 
+      ns: 'common', 
+      defaultValue: 'fallback' 
+    });
+    expect(result).toBe('fallback');
+  });
+
+  it('should detect browser language on init', () => {
+    // Test language detector integration
+    expect(i18n.options.detection).toBeDefined();
+  });
+
+  it('should persist language choice to localStorage', () => {
+    i18n.changeLanguage('zh-CN');
+    const stored = localStorage.getItem('leanspec-language');
+    expect(stored).toBe('zh-CN');
+  });
+});
+```
+
+#### Phase 5: Translation Key Sync
+
+**Add missing keys to @leanspec/ui**:
+```json
+// packages/ui/src/locales/en/common.json
+{
+  "navigation": {
+    "settings": "Settings",
+    "settingsDescription": "Preferences & configuration"
+  }
+}
+```
+
+```json
+// packages/ui/src/locales/zh-CN/common.json
+{
+  "navigation": {
+    "settings": "设置",
+    "settingsDescription": "偏好与配置"
+  }
+}
+```
+
+### Migration Reference Map
+
+| ui-vite Component | Source in @leanspec/ui | Translation Keys |
+|-------------------|------------------------|------------------|
+| `StatusBadge.tsx` | `status-badge.tsx` | `status.*` |
+| `PriorityBadge.tsx` | `priority-badge.tsx` | `priority.*` |
+| `SpecsNavSidebar.tsx` | `specs-nav-sidebar.tsx` | `specsNavSidebar.*` |
+| `BoardView.tsx` | `specs-client.tsx` | `specsPage.board.*` |
+| `ListView.tsx` | `specs-client.tsx` | `specsPage.list.*` |
+| `EditableMetadata.tsx` | `editable-spec-metadata.tsx` | `editors.*` |
+| `CreateProjectDialog.tsx` | `create-project-dialog.tsx` | `createProject.*` |
+
+## Plan
+
+### Timeline: 3 Weeks (15 Hours Total)
+
+#### Week 1: Infrastructure & High Priority (5 hours)
+- [ ] Install `i18next-browser-languagedetector`
+- [ ] Upgrade `src/lib/i18n.ts` configuration
+- [ ] Add namespace support (`common`, `errors`, `help`)
+- [ ] Sync missing translation keys to @leanspec/ui
+- [ ] Migrate StatusBadge.tsx
+- [ ] Migrate PriorityBadge.tsx
+- [ ] Create test file with 8 tests
+- [ ] Verify language switcher works with new config
+
+**Deliverable**: Core infrastructure + badges working
+
+#### Week 2: Views & Navigation (6 hours)
+- [ ] Migrate SpecsNavSidebar.tsx (filters, search)
+- [ ] Migrate BoardView.tsx (status columns, drag-drop)
+- [ ] Migrate ListView.tsx (sort, metadata)
+- [ ] Migrate QuickSearch.tsx (enhance existing)
+- [ ] Migrate SpecsFilters.tsx (enhance existing)
+- [ ] Test all navigation flows in Chinese
+
+**Deliverable**: Main spec browsing fully translated
+
+#### Week 3: Editors, Forms & Polish (4 hours)
+- [ ] Migrate metadata editors (Status, Priority, Tags)
+- [ ] Migrate CreateProjectDialog.tsx
+- [ ] Migrate DirectoryPicker.tsx
+- [ ] Migrate remaining 13 components
+- [ ] Fix any missed strings (empty states, tooltips)
+- [ ] Run all tests, verify 100% pass rate
+- [ ] Manual QA: Full app walkthrough in Chinese
+- [ ] Document migration patterns for contributors
+
+**Deliverable**: Complete translation parity
+
+### Validation Checklist
+
+**Component Coverage** (100% required):
+- [ ] All 37 components using `useTranslation()`
+- [ ] No hardcoded English strings in JSX
+- [ ] All buttons, labels, placeholders translated
+- [ ] All error messages translated
+- [ ] All toast notifications translated
+- [ ] All empty states translated
+
+**Configuration**:
+- [ ] Browser language detection working
+- [ ] localStorage persistence working
+- [ ] Language switcher toggles correctly
+- [ ] All 3 namespaces loaded
+
+**Testing**:
+- [ ] 8 i18n tests passing
+- [ ] No regression in existing tests
+- [ ] Manual Chinese mode walkthrough complete
+
+## Test
+
+### Automated Tests (packages/ui-vite/src/lib/i18n.test.ts)
+
+**Configuration Tests**:
+- [ ] i18n has English and Chinese resources
+- [ ] i18n has common, errors, help namespaces
+- [ ] Browser language detector is registered
+- [ ] localStorage persistence is configured
+
+**Translation Tests**:
+- [ ] navigation.home translates to "首页"
+- [ ] spec.spec remains "Spec" (not translated)
+- [ ] status.planned translates to "已计划"
+- [ ] status.inProgress translates to "进行中"
+- [ ] status.complete translates to "已完成"
+- [ ] priority.high translates to "高"
+- [ ] Fallback works for missing keys
+
+**Behavior Tests**:
+- [ ] changeLanguage() persists to localStorage
+- [ ] Browser detection loads correct locale on init
+
+### Manual Testing Checklist
+
+**Language Switcher**:
+- [ ] Click globe icon → shows EN/中文 options
+- [ ] Select "中文" → UI switches to Chinese
+- [ ] Refresh page → Chinese persists
+- [ ] Select "EN" → UI switches back to English
+
+**Navigation**:
+- [ ] Sidebar menu items all in Chinese
+- [ ] Page titles all in Chinese
+- [ ] Breadcrumbs all in Chinese
+
+**Spec Browsing**:
+- [ ] Status badges: 已计划, 进行中, 已完成, 已归档
+- [ ] Priority badges: 紧急, 高, 中, 低
+- [ ] Search placeholder in Chinese
+- [ ] Filter labels in Chinese
+- [ ] Sort options in Chinese
+- [ ] Empty state message in Chinese
+
+**Forms & Dialogs**:
+- [ ] "Add Project" dialog all in Chinese
+- [ ] Form labels in Chinese
+- [ ] Validation errors in Chinese
+- [ ] Success toasts in Chinese
+- [ ] Cancel/Save buttons in Chinese
+
+**Metadata Editing**:
+- [ ] Status dropdown options in Chinese
+- [ ] Priority dropdown options in Chinese
+- [ ] Tag creation UI in Chinese
+- [ ] Confirmation messages in Chinese
+
+**Visual Inspection**:
+- [ ] No English text visible in Chinese mode
+- [ ] No layout breaks from longer Chinese text
+- [ ] All tooltips in Chinese
+- [ ] All aria-labels in Chinese (if visible)
+
+### Regression Tests
+
+**English Mode**:
+- [ ] All features work identically
+- [ ] No performance degradation
+- [ ] All existing tests pass
+
+**Build & Bundle**:
+- [ ] `pnpm build` succeeds
+- [ ] Bundle size not significantly increased
+- [ ] All locales included in build
+
+## Notes
+
+### Risk Assessment
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Missing language detector | Medium | Install early in week 1 |
+| Component coverage incomplete | High | Systematic audit + checklist |
+| Translation keys out of sync | Medium | Sync keys in week 1 |
+| Layout breaks with Chinese text | Low | Test early, adjust CSS if needed |
+| Performance impact | Low | Bundle already includes locales |
+
+### Estimated Effort Breakdown
+
+| Task | Components | Hours |
+|------|-----------|-------|
+| Install + config | 1 file | 0.5 |
+| Badge components | 2 | 1.0 |
+| Sidebar/Filters | 2 | 1.5 |
+| Board/List views | 2 | 2.0 |
+| Metadata editors | 3 | 2.0 |
+| Remaining components | ~15 | 4.0 |
+| Tests | 1 file | 1.0 |
+| QA & fixes | - | 2.0 |
+| Documentation | - | 1.0 |
+| **Total** | **~28** | **15 hours** |
+
+### Dependencies
+
+- **Depends on**: 
+  - [Spec 091](../091-chinese-localization-strategy/) - i18n infrastructure (complete)
+  - [Spec 187](../187-vite-spa-migration/) - ui-vite exists (complete)
+- **Blocks**: 
+  - [Spec 190](../190-ui-vite-parity-rust-backend/) - Full feature parity
+  - [Spec 193](../193-frontend-ui-parity/) - UI component parity
+- **Related**:
+  - [Spec 157](../157-complete-ui-cli-translation/) - @leanspec/ui translation (in-progress)
+
+### Success Metrics
+
+**Before**:
+- 9 components with i18n (24% coverage)
+- Manual localStorage only
+- 0 tests
+
+**After**:
+- 37 components with i18n (100% coverage)
+- Auto browser detection + localStorage
+- 8 comprehensive tests passing
+- Feature parity with @leanspec/ui
+
+### Resources
+
+**Reference Implementations**:
+- `packages/ui/src/lib/i18n/config.ts` - Full i18n setup
+- `packages/ui/src/lib/i18n/config.test.ts` - Test examples
+- `packages/ui/src/components/*-badge.tsx` - Badge translation patterns
+- `packages/ui/src/components/specs-client.tsx` - Complex component example
+
+**Translation Files** (already complete):
+- `packages/ui-vite/src/locales/en/*.json` (486 + 11 + 8 lines)
+- `packages/ui-vite/src/locales/zh-CN/*.json` (486 + 11 + 8 lines)
+
+**Documentation**:
+- `docs/i18n/README.md` - i18n guidelines
+- [Spec 115](../115-chinese-translation-quality/) - Translation quality standards
+- `AGENTS.md` - Always update both en + zh-CN locales
