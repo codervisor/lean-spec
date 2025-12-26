@@ -30,8 +30,8 @@ function getInitials(name: string): string {
   return word.length >= 2 ? (word[0] + word[1]).toUpperCase() : word[0].toUpperCase();
 }
 
-function getContrastColor(hexColor?: string): string {
-  if (!hexColor) return '#ffffff';
+function getContrastColor(hexColor?: string): string | undefined {
+  if (!hexColor) return undefined;
 
   const hex = hexColor.replace('#', '');
   const r = parseInt(hex.substring(0, 2), 16);
@@ -59,7 +59,7 @@ export function ProjectAvatar({
         className="font-semibold border"
         style={{
           backgroundColor: color || undefined,
-          color: textColor,
+          ...(textColor && { color: textColor }),
         }}
       >
         {initials}

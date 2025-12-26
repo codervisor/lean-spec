@@ -209,31 +209,33 @@ export function SpecsPage() {
           <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-lg border">
-          <button
+        <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
+          <Button
+            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+            size="sm"
             onClick={() => setViewMode('list')}
             className={cn(
-              "p-1.5 rounded-md transition-colors",
-              viewMode === 'list'
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              "h-8",
+              viewMode === 'list' && "bg-background shadow-sm"
             )}
             title="List View"
           >
-            <List className="w-4 h-4" />
-          </button>
-          <button
+            <List className="w-4 h-4 mr-1.5" />
+            List
+          </Button>
+          <Button
+            variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+            size="sm"
             onClick={() => setViewMode('board')}
             className={cn(
-              "p-1.5 rounded-md transition-colors",
-              viewMode === 'board'
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              "h-8",
+              viewMode === 'board' && "bg-background shadow-sm"
             )}
             title="Board View"
           >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
+            <LayoutGrid className="w-4 h-4 mr-1.5" />
+            Board
+          </Button>
         </div>
       </div>
 

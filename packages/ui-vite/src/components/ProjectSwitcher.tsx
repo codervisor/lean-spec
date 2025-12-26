@@ -163,7 +163,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                         />
                         <span className="truncate flex-1">{project.name}</span>
                         {project.favorite && (
-                          <Star className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500" />
+                          <Star className="h-3 w-3 shrink-0 fill-yellow-600 text-yellow-600 dark:fill-yellow-500 dark:text-yellow-500" />
                         )}
                       </div>
                     </CommandItem>

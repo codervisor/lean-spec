@@ -104,14 +104,24 @@ After implementing initial UI parity between Next.js and Vite apps in spec 193, 
 
 ## Plan
 
-- [ ] Fix sidebar active state detection for project-prefixed routes
-- [ ] Debug and fix spec detail page routing/API errors
-- [ ] Debug and fix dependencies page routing/API errors  
-- [ ] Add `/projects` route and implement project management page
-- [ ] Add proper padding to specs list and board views
-- [ ] Fix project switcher navigation and context sync
-- [ ] Debug and fix "Path does not exist" error in create project
-- [ ] Implement full sorting options matching Next.js UI
+- [x] Fix sidebar active state detection for project-prefixed routes (MainSidebar strips project prefixes so active highlighting follows nested routes)
+- [x] Debug and fix spec detail page routing/API errors (SpecDetailPage waits for project context and uses project-aware base paths)
+- [x] Debug and fix dependencies page routing/API errors (DependenciesPage uses project params, basePath navigation, and guards on project readiness)
+- [x] Add `/projects` route and implement project management page (router now exposes `/projects` with ProjectsPage for management)
+- [x] Add proper padding to specs list and board views (SpecsPage uses padded container with max width)
+- [x] Fix project switcher navigation and context sync (ProjectSwitcher calls switchProject then redirects to preserved subpath; ProjectContext refreshes projects and persists selection)
+- [x] Debug and fix "Path does not exist" error in create project (CreateProjectDialog supports picker/manual modes with DirectoryPicker and clearer errors)
+- [x] Implement full sorting options matching Next.js UI (SpecsPage + SpecsFilters expose id asc/desc, updated desc, title asc)
+
+## Implementation Notes
+
+- Sidebar links normalize paths and remove `/projects/:id` prefixes before comparing, preventing the home item from staying highlighted on nested routes.
+- Spec detail and dependencies pages gate data loading on project context readiness and use project-aware base paths for navigation.
+- Router now includes `/projects` mapped to ProjectsPage, providing management UI consistent with the project switcher entry.
+- SpecsPage container adds `p-4 sm:p-6` spacing with a centered max width for both list and board layouts.
+- Project switcher preserves the current subpath when changing projects and falls back to `/specs` for detail routes to avoid broken paths.
+- Create project flow accepts picker or manual input; DirectoryPicker queries the filesystem and the dialog surfaces validation errors without blocking.
+- Specs sorting options now mirror the Next.js UI and propagate through SpecsFilters.
 
 ## Test
 
@@ -123,6 +133,8 @@ After implementing initial UI parity between Next.js and Vite apps in spec 193, 
 - [ ] Can switch between projects via project switcher
 - [ ] Can create new project without path validation errors
 - [ ] All sorting options work and match Next.js behavior
+
+Test run: `pnpm -C packages/ui-vite test` (fails in `src/lib/api.test.ts` because the mocked fetch response lacks `.text()`).
 
 ## Notes
 
