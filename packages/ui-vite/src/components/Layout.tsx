@@ -8,22 +8,24 @@ import { PageTransition } from './shared/PageTransition';
 import { BackToTop } from './shared/BackToTop';
 import { Button } from '@leanspec/ui-components';
 import { useProject } from '../contexts';
+import { useTranslation } from 'react-i18next';
 
 function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('common');
   const shortcuts = [
-    { key: 'h', description: 'Go to dashboard (home)' },
-    { key: 'g', description: 'Go to specs list' },
-    { key: 's', description: 'Go to stats' },
-    { key: 'd', description: 'Go to dependencies' },
-    { key: ',', description: 'Go to settings' },
-    { key: '/', description: 'Focus search' },
-    { key: '⌘ + K', description: 'Open quick search' },
+    { key: 'h', description: t('keyboardShortcuts.items.dashboard') },
+    { key: 'g', description: t('keyboardShortcuts.items.specs') },
+    { key: 's', description: t('keyboardShortcuts.items.stats') },
+    { key: 'd', description: t('keyboardShortcuts.items.dependencies') },
+    { key: ',', description: t('keyboardShortcuts.items.settings') },
+    { key: '/', description: t('keyboardShortcuts.items.search') },
+    { key: '⌘ + K', description: t('keyboardShortcuts.items.quickSearch') },
   ];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-background border rounded-lg shadow-lg p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg font-medium mb-4">Keyboard Shortcuts</h3>
+        <h3 className="text-lg font-medium mb-4">{t('keyboardShortcuts.title')}</h3>
         <div className="space-y-2">
           {shortcuts.map((s) => (
             <div key={s.key} className="flex items-center justify-between">
@@ -38,7 +40,7 @@ function KeyboardShortcutsHelp({ onClose }: { onClose: () => void }) {
           size="sm"
           className="mt-4 w-full"
         >
-          Close
+          {t('actions.close')}
         </Button>
       </div>
     </div>

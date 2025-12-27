@@ -7,5 +7,9 @@
   "networkError": "网络错误",
   "unknownError": "发生未知错误",
   "permissionDenied": "权限被拒绝",
-  "operationFailed": "操作失败"
+  "operationFailed": "操作失败",
+  "pageError": {
+    "title": "页面出现错误",
+    "description": "页面渲染失败。"
+  }
 }

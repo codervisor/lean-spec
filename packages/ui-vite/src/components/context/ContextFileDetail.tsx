@@ -78,7 +78,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge variant="outline" className="text-xs flex items-center gap-1">
             <Type className="h-3 w-3" />
-            {file.fileType || 'text'}
+            {file.fileType || t('contextPage.detail.defaultFileType')}
           </Badge>
           <Badge variant="outline" className="text-xs flex items-center gap-1">
             <Layers className="h-3 w-3" />

@@ -55,7 +55,8 @@
     "retry": "Retry",
     "next": "Next",
     "loading": "Loading...",
-    "search": "Search"
+    "search": "Search",
+    "backToTop": "Back to top"
   },
   "spec": {
     "spec": "Spec",
@@ -101,6 +102,31 @@
     "placeholder": "Select project...",
     "searchPlaceholder": "Search projects...",
     "noProject": "No project found."
+  },
+  "keyboardShortcuts": {
+    "title": "Keyboard Shortcuts",
+    "items": {
+      "dashboard": "Go to dashboard (home)",
+      "specs": "Go to specs list",
+      "stats": "Go to stats",
+      "dependencies": "Go to dependencies",
+      "settings": "Go to settings",
+      "search": "Focus search",
+      "quickSearch": "Open quick search"
+    }
+  },
+  "tableOfContents": {
+    "title": "Table of Contents",
+    "open": "Open table of contents",
+    "onThisPage": "On this page"
+  },
+  "subSpecTabs": {
+    "multiSectionTitle": "This spec has multiple sections",
+    "multiSectionDescription": "Use the tabs below to navigate between the main overview and detailed sections."
+  },
+  "colorPicker": {
+    "pickColor": "Pick color",
+    "selectColor": "Select color {{color}}"
   },
   "createProject": {
     "title": "Add Project",
@@ -371,10 +397,15 @@
       "openInEditor": "Open in Editor",
       "copy": "Copy",
       "copySuccess": "Copied!",
+      "defaultFileType": "text",
       "lines": "{{count}} lines",
       "modified": "Modified {{date}}",
       "size": "{{size}} KB",
       "selectFile": "Select a file to view its content"
+    },
+    "errors": {
+      "list": "Failed to load context files",
+      "file": "Failed to load file"
     }
   },
   "specTimeline": {

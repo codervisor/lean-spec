@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@leanspec/ui-components';
 import { cn } from '../../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const PROJECT_COLORS = [
   '#ef4444',
@@ -25,6 +26,7 @@ interface ColorPickerProps {
 
 export function ColorPicker({ value, onChange, disabled }: ColorPickerProps) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation('common');
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -34,7 +36,7 @@ export function ColorPicker({ value, onChange, disabled }: ColorPickerProps) {
           size="sm"
           className="h-8 w-8 p-0"
           disabled={disabled}
-          aria-label="Pick color"
+          aria-label={t('colorPicker.pickColor')}
         >
           <div
             className="h-4 w-4 rounded-full border"
@@ -56,7 +58,7 @@ export function ColorPicker({ value, onChange, disabled }: ColorPickerProps) {
                 onChange(color);
                 setOpen(false);
               }}
-              aria-label={`Select color ${color}`}
+              aria-label={t('colorPicker.selectColor', { color })}
             />
           ))}
         </div>

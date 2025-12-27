@@ -7,5 +7,9 @@
   "networkError": "Network error",
   "unknownError": "An unknown error occurred",
   "permissionDenied": "Permission denied",
-  "operationFailed": "Operation failed"
+  "operationFailed": "Operation failed",
+  "pageError": {
+    "title": "Something went wrong",
+    "description": "The page failed to render."
+  }
 }

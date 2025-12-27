@@ -8,6 +8,7 @@
     "collapse": "收起",
     "closeMenu": "关闭菜单",
     "dashboard": "仪表板",
+    "filteredCount": "{{filtered}} / {{total}} 个 Spec",
     "allSpecifications": "所有 Spec",
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
@@ -55,7 +56,8 @@
     "retry": "重试",
     "next": "下一步",
     "loading": "加载中...",
-    "search": "搜索"
+    "search": "搜索",
+    "backToTop": "返回顶部"
   },
   "spec": {
     "spec": "Spec",
@@ -101,6 +103,31 @@
     "placeholder": "选择项目...",
     "searchPlaceholder": "搜索项目...",
     "noProject": "未找到项目。"
+  },
+  "keyboardShortcuts": {
+    "title": "键盘快捷键",
+    "items": {
+      "dashboard": "跳转到仪表板（首页）",
+      "specs": "跳转到 Spec 列表",
+      "stats": "跳转到统计",
+      "dependencies": "跳转到依赖",
+      "settings": "跳转到设置",
+      "search": "聚焦搜索框",
+      "quickSearch": "打开快速搜索"
+    }
+  },
+  "tableOfContents": {
+    "title": "目录",
+    "open": "打开目录",
+    "onThisPage": "页面导航"
+  },
+  "subSpecTabs": {
+    "multiSectionTitle": "此 Spec 包含多个章节",
+    "multiSectionDescription": "使用下方标签切换概览和详细章节。"
+  },
+  "colorPicker": {
+    "pickColor": "选择颜色",
+    "selectColor": "选择颜色 {{color}}"
   },
   "createProject": {
     "title": "添加项目",
@@ -180,7 +207,6 @@
       "sort": "排序",
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
-      "filteredCount": "{{filtered}} / {{total}} 个 Spec",
       "sortOptions": {
         "id-desc": "最新优先",
         "id-asc": "最旧优先",
@@ -373,8 +399,15 @@
       "openInEditor": "在编辑器中打开",
       "copy": "复制",
       "copySuccess": "已复制！",
+      "defaultFileType": "文本",
       "lines": "{{count}} 行",
-      "modified": "更新于 {{date}}"
+      "modified": "更新于 {{date}}",
+      "size": "大小 {{size}} KB",
+      "selectFile": "选择文件以查看内容"
+    },
+    "errors": {
+      "list": "无法加载上下文文件",
+      "file": "无法加载文件"
     }
   },
   "specTimeline": {

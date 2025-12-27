@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
 import { EmptyState } from './EmptyState';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   children: ReactNode;
@@ -15,7 +16,14 @@ interface State {
   error?: Error;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+interface TranslatedProps extends Props {
+  fallbackTitle: string;
+  fallbackMessage: string;
+  retryLabel: string;
+  reloadLabel: string;
+}
+
+class ErrorBoundaryInner extends Component<TranslatedProps, State> {
   state: State = { hasError: false };
 
   static getDerivedStateFromError(error: Error): State {
@@ -36,16 +44,18 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <EmptyState
           icon={AlertTriangle}
-          title={this.props.title || 'Something went wrong'}
-          description={this.props.message || this.state.error?.message || 'The page failed to render.'}
+          title={this.props.title || this.props.fallbackTitle}
+          description={
+            this.props.message || this.state.error?.message || this.props.fallbackMessage
+          }
           tone="error"
           actions={(
             <>
               <Button size="sm" onClick={this.resetBoundary}>
-                Retry
+                {this.props.retryLabel}
               </Button>
               <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
-                Reload page
+                {this.props.reloadLabel}
               </Button>
             </>
           )}
@@ -55,4 +65,18 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
+}
+
+export function ErrorBoundary(props: Props) {
+  const { t } = useTranslation(['common', 'errors']);
+
+  return (
+    <ErrorBoundaryInner
+      fallbackTitle={t('pageError.title', { ns: 'errors' })}
+      fallbackMessage={t('pageError.description', { ns: 'errors' })}
+      retryLabel={t('actions.retry', { ns: 'common' })}
+      reloadLabel={t('actions.refresh', { ns: 'common' })}
+      {...props}
+    />
+  );
 }

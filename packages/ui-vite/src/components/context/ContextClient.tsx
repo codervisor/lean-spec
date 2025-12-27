@@ -49,7 +49,7 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
         void loadFile(list[0].path, true);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load context files';
+      const message = err instanceof Error ? err.message : t('contextPage.errors.list');
       setError(message);
     } finally {
       setLoadingList(false);
@@ -68,7 +68,7 @@ export function ContextClient({ projectRoot }: ContextClientProps) {
       const detail = await api.getContextFile(path);
       setFileCache((prev) => ({ ...prev, [path]: detail }));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load file';
+      const message = err instanceof Error ? err.message : t('contextPage.errors.file');
       setFileError(message);
     } finally {
       setLoadingFile(false);

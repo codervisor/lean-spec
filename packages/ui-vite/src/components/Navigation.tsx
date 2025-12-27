@@ -78,7 +78,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
     case 'specs': {
       const searchParams = new URLSearchParams(parsed.query || '');
       const view = searchParams.get('view');
-      const viewLabel = view === 'board' ? 'Board' : 'List';
+      const viewLabel = view === 'board' ? t('specsPage.views.board') : t('specsPage.views.list');
       items = [{ label: homeLabel, to: basePath }, { label: `${specsLabel} (${viewLabel})` }];
       break;
     }

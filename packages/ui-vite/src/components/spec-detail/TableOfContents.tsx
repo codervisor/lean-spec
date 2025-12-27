@@ -9,6 +9,7 @@ import {
   cn,
 } from '@leanspec/ui-components';
 import { extractHeadings, type HeadingItem } from '../../lib/markdown-utils';
+import { useTranslation } from 'react-i18next';
 
 function scrollToHeading(id: string) {
   const element = document.getElementById(id);
@@ -57,18 +58,22 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContentsSidebar({ content }: TableOfContentsProps) {
+  const { t } = useTranslation('common');
   const headings = useMemo(() => extractHeadings(content), [content]);
   if (headings.length === 0) return null;
 
   return (
     <div className="py-2">
-      <h4 className="mb-4 text-sm font-semibold leading-none tracking-tight px-2">On this page</h4>
+      <h4 className="mb-4 text-sm font-semibold leading-none tracking-tight px-2">
+        {t('tableOfContents.onThisPage')}
+      </h4>
       <TOCList headings={headings} onHeadingClick={scrollToHeading} />
     </div>
   );
 }
 
 export function TableOfContents({ content }: TableOfContentsProps) {
+  const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const headings = useMemo(() => extractHeadings(content), [content]);
 
@@ -87,13 +92,13 @@ export function TableOfContents({ content }: TableOfContentsProps) {
         aria-expanded={open}
         onClick={() => setOpen(true)}
         className="fixed bottom-24 right-6 h-12 w-12 rounded-full shadow-lg z-40 hover:scale-110 transition-transform"
-        aria-label="Table of contents"
+        aria-label={t('tableOfContents.open')}
       >
         <List className="h-5 w-5" />
       </Button>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Table of Contents</DialogTitle>
+          <DialogTitle>{t('tableOfContents.title')}</DialogTitle>
         </DialogHeader>
         <TOCList headings={headings} onHeadingClick={handleHeadingClick} />
       </DialogContent>

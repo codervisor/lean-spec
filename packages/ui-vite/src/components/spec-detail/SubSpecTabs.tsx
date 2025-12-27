@@ -7,6 +7,7 @@ import GithubSlugger from 'github-slugger';
 import { BookOpen, CheckSquare, Code, FileText, GitBranch, Map, Palette, TestTube, Wrench } from 'lucide-react';
 import { Card, Button, Separator, cn } from '@leanspec/ui-components';
 import { MermaidDiagram } from '../MermaidDiagram';
+import { useTranslation } from 'react-i18next';
 
 export interface SubSpec {
   name: string;
@@ -88,6 +89,7 @@ interface SubSpecTabsProps {
 export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
   const [activeTab, setActiveTab] = useState('readme');
   const markdownComponents = useMarkdownComponents();
+  const { t } = useTranslation('common');
 
   const hasSubSpecs = subSpecs.length > 0;
   const overviewCardVisible = hasSubSpecs && subSpecs.length > 2 && activeTab === 'readme';
@@ -116,9 +118,9 @@ export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
           <div className="flex items-start gap-3">
             <BookOpen className="h-5 w-5 text-primary mt-0.5" />
             <div className="space-y-2">
-              <h4 className="font-semibold text-sm">This spec has multiple sections</h4>
+              <h4 className="font-semibold text-sm">{t('subSpecTabs.multiSectionTitle')}</h4>
               <p className="text-sm text-muted-foreground">
-                Use the tabs below to navigate between the main overview and detailed sections.
+                {t('subSpecTabs.multiSectionDescription')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {subSpecs.map((subSpec) => {
@@ -142,7 +144,7 @@ export function SubSpecTabs({ mainContent, subSpecs = [] }: SubSpecTabsProps) {
       )}
 
       <div className="border-b flex flex-wrap gap-2">
-        {renderTabButton('readme', 'Overview', FileText)}
+        {renderTabButton('readme', t('specDetail.tabs.overview'), FileText)}
         {subSpecs.map((subSpec) => {
           const value = subSpec.name.toLowerCase();
           const Icon = subSpec.iconName ? ICON_MAP[subSpec.iconName] : undefined;
