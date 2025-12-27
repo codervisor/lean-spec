@@ -6,6 +6,7 @@ import { useProject } from '../contexts';
 import { DashboardClient } from '../components/dashboard/DashboardClient';
 import type { DashboardSpec } from '../components/dashboard/SpecListItem';
 import { DashboardSkeleton } from '../components/shared/Skeletons';
+import { useTranslation } from 'react-i18next';
 
 export function DashboardPage() {
   const { currentProject } = useProject();
@@ -13,6 +14,7 @@ export function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation('common');
   const projectColor = currentProject && 'color' in currentProject ? (currentProject as { color?: string }).color : undefined;
   const basePath = currentProject?.id ? `/projects/${currentProject.id}` : '/projects/default';
 
@@ -49,10 +51,10 @@ export function DashboardPage() {
           <div className="flex justify-center">
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
-          <div className="text-lg font-semibold">Unable to load dashboard</div>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <div className="text-lg font-semibold">{t('dashboard.state.errorTitle')}</div>
+          <p className="text-sm text-muted-foreground">{error || t('dashboard.state.errorDescription')}</p>
           <Button variant="secondary" size="sm" onClick={loadData} className="mt-2">
-            Retry
+            {t('actions.retry')}
           </Button>
         </CardContent>
       </Card>

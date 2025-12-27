@@ -11,11 +11,13 @@ import { EditableMetadata } from '../components/spec-detail/EditableMetadata';
 import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { useProject } from '../contexts';
+import { useTranslation } from 'react-i18next';
 
 export function SpecDetailPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { currentProject, loading: projectLoading } = useProject();
+  const { t } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
   const [spec, setSpec] = useState<SpecDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,22 +27,22 @@ export function SpecDetailPage() {
     if (err instanceof APIError) {
       switch (err.status) {
         case 404:
-          return 'Spec not found (404). Check the spec ID or sync the project.';
+          return t('specNotFound', { ns: 'errors' });
         case 400:
-          return 'Bad request when loading spec. Verify the spec path and try again.';
+          return t('invalidInput', { ns: 'errors' });
         case 500:
-          return 'Server error while loading spec. Restart the Rust server or check logs.';
+          return t('unknownError', { ns: 'errors' });
         default:
-          return `Failed to load spec (${err.status}). ${err.message || 'Please retry.'}`;
+          return t('loadingError', { ns: 'errors' });
       }
     }
 
     if (err instanceof Error && err.message.includes('Failed to fetch')) {
-      return 'Network error: unable to reach the backend. Ensure VITE_API_URL is reachable and the server is running.';
+      return t('networkError', { ns: 'errors' });
     }
 
-    return err instanceof Error ? err.message : 'Unexpected error while loading spec.';
-  }, []);
+    return err instanceof Error ? err.message : t('unknownError', { ns: 'errors' });
+  }, [t]);
 
   const loadSpec = useCallback(async () => {
     if (!specName || !projectReady || projectLoading) return;
@@ -96,19 +98,19 @@ export function SpecDetailPage() {
     return (
       <EmptyState
         icon={AlertTriangle}
-        title="Spec unavailable"
-        description={error || 'This spec could not be found. It may have been moved or deleted.'}
+        title={t('specDetail.state.unavailableTitle')}
+        description={error || t('specDetail.state.unavailableDescription')}
         tone="error"
         actions={(
           <>
             <Link to={`${basePath}/specs`} className="inline-flex">
               <Button variant="outline" size="sm" className="gap-2">
-                Back to specs
+                {t('specDetail.links.backToSpecs')}
               </Button>
             </Link>
             <Button variant="secondary" size="sm" className="gap-2" onClick={() => void loadSpec()}>
               <RefreshCcw className="h-4 w-4" />
-              Retry
+              {t('actions.retry')}
             </Button>
             <a
               href="https://github.com/codervisor/lean-spec/issues"
@@ -117,7 +119,7 @@ export function SpecDetailPage() {
               className="inline-flex"
             >
               <Button variant="ghost" size="sm" className="gap-2">
-                Report issue
+                {t('specDetail.links.reportIssue')}
               </Button>
             </a>
           </>
@@ -138,7 +140,7 @@ export function SpecDetailPage() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to specs
+            {t('specDetail.links.backToSpecs')}
           </Link>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {spec.specNumber && (
@@ -168,7 +170,7 @@ export function SpecDetailPage() {
             <CardContent className="pt-6 space-y-3">
               {dependsOn.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Depends on</p>
+                  <p className="text-sm font-medium">{t('specDetail.dependencies.dependsOn')}</p>
                   <div className="flex flex-wrap gap-2">
                     {dependsOn.map((dep) => (
                       <Link key={dep} to={`${basePath}/specs/${dep}`} className="text-sm text-primary hover:underline">
@@ -180,7 +182,7 @@ export function SpecDetailPage() {
               )}
               {requiredBy.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Required by</p>
+                  <p className="text-sm font-medium">{t('specDetail.dependencies.requiredBy')}</p>
                   <div className="flex flex-wrap gap-2">
                     {requiredBy.map((dep) => (
                       <Link key={dep} to={`${basePath}/specs/${dep}`} className="text-sm text-primary hover:underline">

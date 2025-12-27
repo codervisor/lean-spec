@@ -17,6 +17,7 @@ import { Network, List, AlertTriangle, GitBranch, RefreshCcw } from 'lucide-reac
 import { api, type DependencyGraph as APIDependencyGraph } from '../lib/api';
 import { EmptyState } from '../components/shared/EmptyState';
 import { useProject } from '../contexts';
+import { useTranslation } from 'react-i18next';
 
 // Node layout using dagre
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
@@ -72,6 +73,7 @@ export function DependenciesPage() {
   const navigate = useNavigate();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { currentProject, loading: projectLoading } = useProject();
+  const { t } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
   const [graph, setGraph] = useState<APIDependencyGraph | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,7 +99,7 @@ export function DependenciesPage() {
               <div className="text-center p-2">
                 <div className="font-medium text-sm">{node.name}</div>
                 <div className={`text-xs px-2 py-0.5 rounded mt-1 ${getStatusColor(node.status)}`}>
-                  {node.status}
+                  {t(`status.${node.status}`, { defaultValue: node.status })}
                 </div>
               </div>
             ),
@@ -126,7 +128,9 @@ export function DependenciesPage() {
           markerEnd: {
             type: MarkerType.ArrowClosed,
           },
-          label: edge.type === 'depends_on' ? 'depends on' : 'required by',
+          label: edge.type === 'depends_on'
+            ? t('dependenciesPage.list.dependsOn')
+            : t('dependenciesPage.list.requiredBy'),
           style: { stroke: edge.type === 'depends_on' ? '#3B82F6' : '#6B7280' },
         }));
 
@@ -138,9 +142,9 @@ export function DependenciesPage() {
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err instanceof Error ? err.message : t('loadingError', { ns: 'errors' })))
       .finally(() => setLoading(false));
-  }, [projectLoading, projectReady, setEdges, setNodes, specName]);
+  }, [projectLoading, projectReady, setEdges, setNodes, specName, t]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     navigate(`${basePath}/specs/${node.id}`);
@@ -149,7 +153,7 @@ export function DependenciesPage() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">Loading dependencies...</CardContent>
+        <CardContent className="py-10 text-center text-muted-foreground">{t('dependenciesPage.state.loading')}</CardContent>
       </Card>
     );
   }
@@ -158,13 +162,13 @@ export function DependenciesPage() {
     return (
       <EmptyState
         icon={AlertTriangle}
-        title="Unable to load dependencies"
-        description={error || 'Please check your connection and try again.'}
+        title={t('dependenciesPage.state.errorTitle')}
+        description={error || t('dependenciesPage.state.errorDescription')}
         tone="error"
         actions={(
           <Button size="sm" variant="secondary" onClick={() => navigate(0)}>
             <RefreshCcw className="h-4 w-4 mr-2" />
-            Retry
+            {t('actions.retry')}
           </Button>
         )}
       />
@@ -175,11 +179,11 @@ export function DependenciesPage() {
     return (
       <EmptyState
         icon={GitBranch}
-        title="No dependencies yet"
-        description="Specs are present but no dependency relationships were found. Add depends_on links to see the graph."
+        title={t('dependenciesPage.empty.noDependencies')}
+        description={t('dependenciesPage.empty.noDependenciesDescription')}
         actions={(
           <Button size="sm" variant="outline" onClick={() => navigate(`${basePath}/specs`)}>
-            Go to specs
+            {t('dependenciesPage.actions.goToSpecs')}
           </Button>
         )}
       />
@@ -191,10 +195,15 @@ export function DependenciesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">
-            {specName ? `Dependencies for ${specName}` : 'All Dependencies'}
+            {specName
+              ? t('dependenciesPage.header.specTitle', { specName })
+              : t('dependenciesPage.header.allTitle')}
           </h2>
           <p className="text-muted-foreground mt-1">
-            {graph.nodes.length} specs, {graph.edges.length} relationships
+            {t('dependenciesPage.header.countSummary', {
+              specs: graph.nodes.length,
+              relationships: graph.edges.length,
+            })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -204,7 +213,7 @@ export function DependenciesPage() {
             onClick={() => setViewMode('graph')}
           >
             <Network className="w-4 h-4 mr-2" />
-            Graph
+            {t('dependenciesPage.view.graph')}
           </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -212,7 +221,7 @@ export function DependenciesPage() {
             onClick={() => setViewMode('list')}
           >
             <List className="w-4 h-4 mr-2" />
-            List
+            {t('dependenciesPage.view.list')}
           </Button>
         </div>
       </div>
@@ -235,7 +244,7 @@ export function DependenciesPage() {
               </ReactFlow>
             </div>
             <div className="p-4 text-sm text-muted-foreground">
-              Click on a node to view spec details. Use mouse wheel to zoom, drag to pan.
+              {t('dependenciesPage.graph.instructions')}
             </div>
           </CardContent>
         </Card>
@@ -243,7 +252,7 @@ export function DependenciesPage() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Specs ({graph.nodes.length})</CardTitle>
+              <CardTitle>{t('dependenciesPage.list.specsTitle', { count: graph.nodes.length })}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -255,7 +264,7 @@ export function DependenciesPage() {
                   >
                     <div className="font-medium">{node.name}</div>
                     <div className={`text-xs px-2 py-0.5 rounded mt-1 inline-block ${getStatusColor(node.status)}`}>
-                      {node.status}
+                      {t(`status.${node.status}`, { defaultValue: node.status })}
                     </div>
                   </button>
                 ))}
@@ -265,12 +274,12 @@ export function DependenciesPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Relationships ({graph.edges.length})</CardTitle>
+              <CardTitle>{t('dependenciesPage.list.relationshipsTitle', { count: graph.edges.length })}</CardTitle>
             </CardHeader>
             <CardContent>
               {graph.edges.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground bg-secondary/40 rounded-lg border">
-                  No relationships yet. Add depends_on or required_by references in your specs to visualize them here.
+                  {t('dependenciesPage.list.noRelationships')}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -278,7 +287,9 @@ export function DependenciesPage() {
                     <div key={i} className="p-3 bg-secondary rounded-lg text-sm">
                       <div className="font-medium">{edge.source}</div>
                       <div className="text-xs text-muted-foreground my-1">
-                        {edge.type === 'depends_on' ? '↓ depends on' : '↑ required by'}
+                        {edge.type === 'depends_on'
+                          ? t('dependenciesPage.list.dependsOn')
+                          : t('dependenciesPage.list.requiredBy')}
                       </div>
                       <div className="font-medium">{edge.target}</div>
                     </div>

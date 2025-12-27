@@ -3,9 +3,11 @@ import { Card, CardContent } from '@leanspec/ui-components';
 import { ContextClient } from '../components/context/ContextClient';
 import { ContextPageSkeleton } from '../components/shared/Skeletons';
 import { useProject } from '../contexts';
+import { useTranslation } from 'react-i18next';
 
 export function ContextPage() {
   const { currentProject, loading, error } = useProject();
+  const { t } = useTranslation(['common', 'errors']);
 
   if (loading) {
     return <ContextPageSkeleton />;
@@ -18,8 +20,8 @@ export function ContextPage() {
           <div className="flex justify-center">
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
-          <div className="text-lg font-semibold">Project unavailable</div>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <div className="text-lg font-semibold">{t('projectNotFound', { ns: 'errors' })}</div>
+          <p className="text-sm text-muted-foreground">{error || t('errors.loadingError', { ns: 'errors' })}</p>
         </CardContent>
       </Card>
     );
@@ -28,9 +30,9 @@ export function ContextPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Project Context</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('contextPage.title')}</h1>
         <p className="text-muted-foreground text-sm">
-          Browse contextual files from .lean-spec/context with search, preview, and markdown rendering.
+          {t('contextPage.description')}
         </p>
       </div>
 

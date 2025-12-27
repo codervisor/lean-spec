@@ -12,7 +12,7 @@ depends_on:
 - 091-chinese-localization-strategy
 - 187-vite-spa-migration
 created_at: 2025-12-26T08:38:09.712123Z
-updated_at: 2025-12-26T08:41:57.258855Z
+updated_at: 2025-12-27T14:05:00.000000Z
 transitions:
 - status: in-progress
   at: 2025-12-26T08:41:57.258855Z
@@ -56,6 +56,8 @@ transitions:
 **Success Criteria**: @leanspec/ui-vite achieves translation parity with @leanspec/ui
 
 ## Design
+
+Design captures the gap analysis and phased migration approach to reach i18n parity.
 
 ### Gap Analysis Summary
 
@@ -264,6 +266,8 @@ describe('i18n configuration', () => {
 
 ## Plan
 
+Plan tracks weekly execution and remaining gaps for localization completion.
+
 ### Timeline: 3 Weeks (15 Hours Total)
 
 #### Week 1: Infrastructure & High Priority (5 hours)
@@ -309,6 +313,8 @@ describe('i18n configuration', () => {
 - Added `packages/ui-vite/src/lib/i18n.test.ts` mirroring @leanspec/ui coverage; suite now passes. Existing API tests still fail due to mock `response.text` not being a function (pre-existing).
 - Localized remaining surface strings in ui-vite (keyboard shortcuts overlay, table of contents, sub-spec tabs, back-to-top control, color picker, error boundary) and aligned context viewer fallbacks (errors + default file type) with translated keys.
 - Added shared translation keys (keyboard shortcuts, table of contents, color picker, context errors/default file type, back-to-top action) to both @leanspec/ui-vite and @leanspec/ui for parity.
+- Localized dashboard, specs, dependencies, stats, context, and projects pages plus their empty/error states; added matching translation keys to both @leanspec/ui-vite and @leanspec/ui for parity.
+- Outstanding localization gaps: toast notifications still need localization; API tests remain red due to mock `response.text` shape; manual QA outstanding.
 
 ### Validation Checklist
 
@@ -318,7 +324,7 @@ describe('i18n configuration', () => {
 - [x] All buttons, labels, placeholders translated
 - [x] All error messages translated
 - [ ] All toast notifications translated
-- [ ] All empty states translated
+- [x] All empty states translated
 
 **Configuration**:
 - [x] Browser language detection working
@@ -332,6 +338,8 @@ describe('i18n configuration', () => {
 - [ ] Manual Chinese mode walkthrough complete
 
 ## Test
+
+Test section summarizes automated i18n coverage and pending manual/QA items.
 
 ### Automated Tests (packages/ui-vite/src/lib/i18n.test.ts)
 
@@ -375,6 +383,8 @@ describe('i18n configuration', () => {
 **Build & Bundle**: [ ] `pnpm build` succeeds; [ ] bundle size stable; [ ] locales bundled.
 
 ## Notes
+
+Notes capture risks, dependencies, and related specs affecting this migration.
 
 ### Risk Assessment
 

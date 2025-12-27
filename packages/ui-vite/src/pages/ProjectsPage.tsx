@@ -88,7 +88,7 @@ export function ProjectsPage() {
         },
       }));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Validation failed';
+      const message = err instanceof Error ? err.message : t('projects.validationFailed');
       setValidation((prev) => ({ ...prev, [projectId]: { status: 'invalid', message } }));
     }
   };
@@ -116,7 +116,7 @@ export function ProjectsPage() {
               {currentProject ? `${t('navigation.home')} · ${currentProject.name}` : t('projects.projects')}
             </p>
             <h1 className="text-3xl font-bold tracking-tight">{t('projects.projects')}</h1>
-            <p className="text-muted-foreground">Manage your LeanSpec workspaces.</p>
+            <p className="text-muted-foreground">{t('projects.description')}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => void refreshProjects()} disabled={loading}>
@@ -179,7 +179,7 @@ export function ProjectsPage() {
 
                 <CardContent className="space-y-3 flex-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="text-xs uppercase tracking-wide">Color</span>
+                    <span className="text-xs uppercase tracking-wide">{t('projects.colorLabel')}</span>
                     <ColorPicker value={project.color} onChange={(color) => void updateProject(project.id, { color })} />
                   </div>
 
@@ -196,7 +196,7 @@ export function ProjectsPage() {
                     </Button>
                     <Button size="sm" variant="outline" className="gap-2" onClick={() => void handleValidate(project.id)}>
                       <CheckCircle2 className="h-4 w-4" />
-                      {t('actions.validate', { defaultValue: 'Validate' })}
+                      {t('actions.validate')}
                     </Button>
                     <Button
                       size="sm"
@@ -205,7 +205,7 @@ export function ProjectsPage() {
                       onClick={() => void removeProject(project.id)}
                     >
                       <Trash2 className="h-4 w-4" />
-                      {t('actions.remove', { defaultValue: 'Remove' })}
+                      {t('actions.remove')}
                     </Button>
                   </div>
                 </CardContent>
@@ -216,7 +216,7 @@ export function ProjectsPage() {
 
         {filteredProjects.length === 0 && (
           <div className="border rounded-lg p-6 text-center text-muted-foreground">
-            {t('quickSearch.noResults', { defaultValue: 'No projects found.' })}
+            {t('quickSearch.noResults')}
           </div>
         )}
       </div>

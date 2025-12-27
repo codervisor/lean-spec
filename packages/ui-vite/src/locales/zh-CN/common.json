@@ -8,7 +8,6 @@
     "collapse": "收起",
     "closeMenu": "关闭菜单",
     "dashboard": "仪表板",
-    "filteredCount": "{{filtered}} / {{total}} 个 Spec",
     "allSpecifications": "所有 Spec",
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
@@ -58,7 +57,11 @@
     "loading": "加载中...",
     "search": "搜索",
     "backToTop": "返回顶部",
-    "openSidebar": "打开侧边栏"
+    "openSidebar": "打开侧边栏",
+    "validate": "校验",
+    "remove": "移除",
+    "report": "报告",
+    "open": "打开"
   },
   "spec": {
     "spec": "Spec",
@@ -89,7 +92,10 @@
     "switchProject": "切换项目",
     "createProject": "创建项目",
     "manageProjects": "管理项目",
-    "selectProject": "选择项目"
+    "selectProject": "选择项目",
+    "description": "管理你的 LeanSpec 工作区。",
+    "colorLabel": "颜色",
+    "validationFailed": "校验失败"
   },
   "quickSearch": {
     "button": "快速搜索...",
@@ -97,7 +103,8 @@
     "recentSearches": "最近搜索",
     "filterHeading": "按标签筛选",
     "filterPrefix": "筛选：",
-    "open": "打开快速搜索"
+    "open": "打开快速搜索",
+    "noResults": "未找到结果"
   },
   "projectSwitcher": {
     "switching": "正在切换...",
@@ -208,6 +215,7 @@
       "sort": "排序",
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
+      "filteredCount": "{{filtered}} / {{total}} 个 Spec",
       "sortOptions": {
         "id-desc": "最新优先",
         "id-asc": "最旧优先",
@@ -232,6 +240,18 @@
     "toasts": {
       "statusUpdated": "已将 {{spec}} 移动到 {{status}}",
       "statusError": "无法更新状态，请稍后重试。"
+    },
+    "state": {
+      "errorTitle": "无法加载 Spec",
+      "errorDescription": "请重试或刷新项目。",
+      "noSpecsTitle": "暂无 Spec",
+      "noSpecsDescription": "未找到任何 Spec。请在 LeanSpec 工作区添加后刷新。",
+      "noFiltersTitle": "没有匹配当前筛选条件的 Spec",
+      "noFiltersDescription": "尝试清除筛选条件或调整搜索。"
+    },
+    "buttons": {
+      "refreshList": "刷新列表",
+      "reloadData": "重新加载"
     }
   },
   "specDetail": {
@@ -263,7 +283,17 @@
     },
     "state": {
       "loading": "正在加载...",
-      "error": "无法加载 Spec"
+      "error": "无法加载 Spec",
+      "unavailableTitle": "Spec 无法访问",
+      "unavailableDescription": "无法找到该 Spec，可能已被移动或删除。"
+    },
+    "dependencies": {
+      "dependsOn": "依赖",
+      "requiredBy": "被依赖"
+    },
+    "links": {
+      "backToSpecs": "返回 Spec 列表",
+      "reportIssue": "报告问题"
     }
   },
   "statsPage": {
@@ -276,9 +306,7 @@
       },
       "completed": {
         "title": "已完成",
-        "modified": "修改于 {{date}}",
-        "size": "{{size}} KB",
-        "selectFile": "选择文件以查看内容"
+        "subtitle": "完成率"
       },
       "inProgress": {
         "title": "进行中",
@@ -307,6 +335,11 @@
         "description": "使用最频繁的标签"
       },
       "label": "{{name}}：{{value}}"
+    },
+    "state": {
+      "errorTitle": "无法加载统计数据",
+      "errorDescription": "请重试或刷新项目。",
+      "unknownError": "未知错误"
     }
   },
   "dashboard": {
@@ -329,7 +362,11 @@
     "quickActions": "快捷操作",
     "viewAllSpecs": "查看所有 Spec",
     "viewStats": "查看统计",
-    "actionUpdated": "已更新"
+    "actionUpdated": "已更新",
+    "state": {
+      "errorTitle": "无法加载仪表板",
+      "errorDescription": "请刷新页面或稍后再试。"
+    }
   },
   "contextPage": {
     "title": "项目上下文",
@@ -442,6 +479,9 @@
   "dependenciesPage": {
     "header": {
       "title": "依赖关系图",
+      "specTitle": "{{specName}} 的依赖",
+      "allTitle": "所有依赖",
+      "countSummary": "{{specs}} 个 Spec，{{relationships}} 条关系",
       "summary": {
         "connected": "{{count}} 个 Spec 存在依赖",
         "standalone": "{{count}} 个独立项",
@@ -461,10 +501,21 @@
       "clear": "重置",
       "count": "({{count}})"
     },
+    "view": {
+      "graph": "图",
+      "list": "列表"
+    },
+    "state": {
+      "loading": "正在加载依赖...",
+      "errorTitle": "无法加载依赖",
+      "errorDescription": "请检查网络后重试。"
+    },
     "empty": {
       "title": "暂无依赖可显示",
       "filters": "没有 Spec 满足当前筛选条件",
-      "standaloneHint": "开启「显示独立项」即可查看未建立依赖的 Spec"
+      "standaloneHint": "开启「显示独立项」即可查看未建立依赖的 Spec",
+      "noDependencies": "暂无依赖",
+      "noDependenciesDescription": "找到了 Spec，但尚未设置依赖关系。添加 depends_on 以查看依赖图。"
     },
     "legend": {
       "dependsOn": "依赖方向（箭头表示指向）",
@@ -472,7 +523,18 @@
     },
     "graph": {
       "levelTitle": "第 {{depth}} 层",
-      "levelBadge": "L{{depth}}"
+      "levelBadge": "L{{depth}}",
+      "instructions": "单击节点查看详情；滚轮缩放，拖拽平移。"
+    },
+    "list": {
+      "specsTitle": "Spec 列表 ({{count}})",
+      "relationshipsTitle": "关系 ({{count}})",
+      "noRelationships": "尚无依赖或被依赖关系。添加 depends_on 或 required_by 来可视化。",
+      "dependsOn": "↓ 依赖",
+      "requiredBy": "↑ 被依赖"
+    },
+    "actions": {
+      "goToSpecs": "前往 Spec 列表"
     },
     "sidebar": {
       "emptyTitle": "请选择一个 Spec",

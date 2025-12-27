@@ -57,7 +57,12 @@
     "loading": "Loading...",
     "search": "Search",
     "backToTop": "Back to top",
-    "openSidebar": "Open sidebar"
+    "openSidebar": "Open sidebar",
+    "validate": "Validate",
+    "remove": "Remove",
+    "report": "Report",
+    "view": "View",
+    "open": "Open"
   },
   "spec": {
     "spec": "Spec",
@@ -88,7 +93,10 @@
     "switchProject": "Switch Project",
     "createProject": "Create Project",
     "manageProjects": "Manage Projects",
-    "selectProject": "Select Project"
+    "selectProject": "Select Project",
+    "description": "Manage your LeanSpec workspaces.",
+    "colorLabel": "Color",
+    "validationFailed": "Validation failed"
   },
   "quickSearch": {
     "button": "Quick search...",
@@ -96,7 +104,8 @@
     "recentSearches": "Recent Searches",
     "filterHeading": "Filter by Tag",
     "filterPrefix": "Filter by:",
-    "open": "Open quick search"
+    "open": "Open quick search",
+    "noResults": "No results found"
   },
   "projectSwitcher": {
     "switching": "Switching...",
@@ -232,6 +241,18 @@
     "toasts": {
       "statusUpdated": "Moved {{spec}} to {{status}}",
       "statusError": "Unable to update status. Please try again."
+    },
+    "state": {
+      "errorTitle": "Unable to load specs",
+      "errorDescription": "Please try again or refresh your project.",
+      "noSpecsTitle": "No specs yet",
+      "noSpecsDescription": "We could not find any specs for this project. Add a spec in your LeanSpec workspace, then refresh to see it here.",
+      "noFiltersTitle": "No specs match your filters",
+      "noFiltersDescription": "Try clearing filters or adjusting your search to see more specs."
+    },
+    "buttons": {
+      "refreshList": "Refresh list",
+      "reloadData": "Reload data"
     }
   },
   "specDetail": {
@@ -263,7 +284,17 @@
     },
     "state": {
       "loading": "Loading...",
-      "error": "Error loading spec"
+      "error": "Error loading spec",
+      "unavailableTitle": "Spec unavailable",
+      "unavailableDescription": "This spec could not be found. It may have been moved or deleted."
+    },
+    "dependencies": {
+      "dependsOn": "Depends on",
+      "requiredBy": "Required by"
+    },
+    "links": {
+      "backToSpecs": "Back to specs",
+      "reportIssue": "Report issue"
     }
   },
   "statsPage": {
@@ -305,6 +336,11 @@
         "description": "Most frequently used tags"
       },
       "label": "{{name}}: {{value}}"
+    },
+    "state": {
+      "errorTitle": "Unable to load statistics",
+      "errorDescription": "Please try again or refresh your project.",
+      "unknownError": "Unknown error"
     }
   },
   "dashboard": {
@@ -327,7 +363,11 @@
     "quickActions": "Quick Actions",
     "viewAllSpecs": "View All Specs",
     "viewStats": "View Stats",
-    "actionUpdated": "updated"
+    "actionUpdated": "updated",
+    "state": {
+      "errorTitle": "Unable to load dashboard",
+      "errorDescription": "Please refresh or try again."
+    }
   },
   "contextPage": {
     "title": "Project Context",
@@ -440,6 +480,9 @@
   "dependenciesPage": {
     "header": {
       "title": "Dependency Graph",
+      "specTitle": "Dependencies for {{specName}}",
+      "allTitle": "All Dependencies",
+      "countSummary": "{{specs}} specs, {{relationships}} relationships",
       "summary": {
         "connected": "{{count}} specs with dependencies",
         "standalone": "{{count}} standalone",
@@ -459,10 +502,21 @@
       "clear": "Clear",
       "count": "({{count}})"
     },
+    "view": {
+      "graph": "Graph",
+      "list": "List"
+    },
+    "state": {
+      "loading": "Loading dependencies...",
+      "errorTitle": "Unable to load dependencies",
+      "errorDescription": "Please check your connection and try again."
+    },
     "empty": {
       "title": "No dependencies to display",
       "filters": "No specs match the current filters",
-      "standaloneHint": "Enable \"Show Standalone\" to see specs without dependencies"
+      "standaloneHint": "Enable \"Show Standalone\" to see specs without dependencies",
+      "noDependencies": "No dependencies yet",
+      "noDependenciesDescription": "Specs are present but no dependency relationships were found. Add depends_on links to see the graph."
     },
     "legend": {
       "dependsOn": "Depends On (arrow shows direction)",
@@ -470,7 +524,18 @@
     },
     "graph": {
       "levelTitle": "Level {{depth}}",
-      "levelBadge": "L{{depth}}"
+      "levelBadge": "L{{depth}}",
+      "instructions": "Click on a node to view spec details. Use mouse wheel to zoom, drag to pan."
+    },
+    "list": {
+      "specsTitle": "Specs ({{count}})",
+      "relationshipsTitle": "Relationships ({{count}})",
+      "noRelationships": "No relationships yet. Add depends_on or required_by references in your specs to visualize them here.",
+      "dependsOn": "↓ depends on",
+      "requiredBy": "↑ required by"
+    },
+    "actions": {
+      "goToSpecs": "Go to specs"
     },
     "sidebar": {
       "emptyTitle": "Select a spec",

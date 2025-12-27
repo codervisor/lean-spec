@@ -190,10 +190,10 @@ export function SpecsPage() {
             <div className="flex justify-center">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>
-            <div className="text-lg font-semibold">Unable to load specs</div>
-            <p className="text-sm text-muted-foreground">{error}</p>
+            <div className="text-lg font-semibold">{t('specsPage.state.errorTitle')}</div>
+            <p className="text-sm text-muted-foreground">{error || t('specsPage.state.errorDescription')}</p>
             <Button variant="secondary" size="sm" onClick={loadSpecs} className="mt-2">
-              Retry
+              {t('actions.retry')}
             </Button>
           </CardContent>
         </Card>
@@ -218,10 +218,10 @@ export function SpecsPage() {
               "h-8",
               viewMode === 'list' && "bg-background shadow-sm"
             )}
-            title="List View"
+            title={t('specsPage.views.listTooltip')}
           >
             <List className="w-4 h-4 mr-1.5" />
-            List
+            {t('specsPage.views.list')}
           </Button>
           <Button
             variant={viewMode === 'board' ? 'secondary' : 'ghost'}
@@ -231,10 +231,10 @@ export function SpecsPage() {
               "h-8",
               viewMode === 'board' && "bg-background shadow-sm"
             )}
-            title="Board View"
+            title={t('specsPage.views.boardTooltip')}
           >
             <LayoutGrid className="w-4 h-4 mr-1.5" />
-            Board
+            {t('specsPage.views.board')}
           </Button>
         </div>
       </div>
@@ -262,28 +262,28 @@ export function SpecsPage() {
         {specs.length === 0 ? (
           <EmptyState
             icon={FileQuestion}
-            title="No specs yet"
-            description="We could not find any specs for this project. Add a spec in your LeanSpec workspace, then refresh to see it here."
+            title={t('specsPage.state.noSpecsTitle')}
+            description={t('specsPage.state.noSpecsDescription')}
             actions={(
               <Button variant="secondary" size="sm" onClick={loadSpecs}>
                 <RefreshCcw className="h-4 w-4 mr-2" />
-                Refresh list
+                {t('specsPage.buttons.refreshList')}
               </Button>
             )}
           />
         ) : filteredSpecs.length === 0 ? (
           <EmptyState
             icon={FilterX}
-            title="No specs match your filters"
-            description="Try clearing filters or adjusting your search to see more specs."
+            title={t('specsPage.state.noFiltersTitle')}
+            description={t('specsPage.state.noFiltersDescription')}
             actions={(
               <div className="flex gap-2 flex-wrap justify-center">
                 <Button variant="outline" size="sm" onClick={handleClearFilters}>
-                  Clear filters
+                  {t('specsNavSidebar.clearFilters')}
                 </Button>
                 <Button variant="secondary" size="sm" onClick={loadSpecs}>
                   <RefreshCcw className="h-4 w-4 mr-2" />
-                  Reload data
+                  {t('specsPage.buttons.reloadData')}
                 </Button>
               </div>
             )}
