@@ -18,6 +18,8 @@ transitions:
   at: 2025-12-26T08:41:57.258855Z
 ---
 
+# UI Vite i18n Migration
+
 ## Overview
 
 **Problem**: @leanspec/ui-vite has only **30% i18n implementation** despite having complete translation files. While @leanspec/ui (Next.js) has 29 components using i18n (58% coverage), ui-vite has only 9 components (24% coverage). This creates a poor user experience for Chinese users and blocks feature parity.
@@ -303,6 +305,7 @@ describe('i18n configuration', () => {
 - Added `i18next-browser-languagedetector` and expanded `src/lib/i18n.ts` to load `common`, `errors`, and `help` namespaces with browser + localStorage detection.
 - Localized core UI components (badges, navigation, board/list views, quick search, filters, metadata editors, create project, directory picker, context pages, dashboard) using shared translation keys.
 - Synced new/common keys across @leanspec/ui-vite and @leanspec/ui (actions, directory picker, dashboard block, metadata source/link, specs filter summary, navigation settings).
+- Localized SpecsLayout mobile header/button, ThemeToggle aria label, and MermaidDiagram loading/error states with new mermaid error keys synced to @leanspec/ui and @leanspec/ui-vite.
 - Added `packages/ui-vite/src/lib/i18n.test.ts` mirroring @leanspec/ui coverage; suite now passes. Existing API tests still fail due to mock `response.text` not being a function (pre-existing).
 - Localized remaining surface strings in ui-vite (keyboard shortcuts overlay, table of contents, sub-spec tabs, back-to-top control, color picker, error boundary) and aligned context viewer fallbacks (errors + default file type) with translated keys.
 - Added shared translation keys (keyboard shortcuts, table of contents, color picker, context errors/default file type, back-to-top action) to both @leanspec/ui-vite and @leanspec/ui for parity.
@@ -353,55 +356,23 @@ describe('i18n configuration', () => {
 
 ### Manual Testing Checklist
 
-**Language Switcher**:
-- [ ] Click globe icon → shows EN/中文 options
-- [ ] Select "中文" → UI switches to Chinese
-- [ ] Refresh page → Chinese persists
-- [ ] Select "EN" → UI switches back to English
+**Language Switcher**: [ ] Options show EN/中文; [ ] selecting 中文 switches UI and persists on refresh; [ ] selecting EN switches back.
 
-**Navigation**:
-- [ ] Sidebar menu items all in Chinese
-- [ ] Page titles all in Chinese
-- [ ] Breadcrumbs all in Chinese
+**Navigation**: [ ] Sidebar labels, page titles, breadcrumbs localize in Chinese.
 
-**Spec Browsing**:
-- [ ] Status badges: 已计划, 进行中, 已完成, 已归档
-- [ ] Priority badges: 紧急, 高, 中, 低
-- [ ] Search placeholder in Chinese
-- [ ] Filter labels in Chinese
-- [ ] Sort options in Chinese
-- [ ] Empty state message in Chinese
+**Spec Browsing**: [ ] Status/priorities show Chinese labels; [ ] search/filter/sort copy localized; [ ] empty states localized.
 
-**Forms & Dialogs**:
-- [ ] "Add Project" dialog all in Chinese
-- [ ] Form labels in Chinese
-- [ ] Validation errors in Chinese
-- [ ] Success toasts in Chinese
-- [ ] Cancel/Save buttons in Chinese
+**Forms & Dialogs**: [ ] Add Project dialog labels/errors/toasts/buttons localized.
 
-**Metadata Editing**:
-- [ ] Status dropdown options in Chinese
-- [ ] Priority dropdown options in Chinese
-- [ ] Tag creation UI in Chinese
-- [ ] Confirmation messages in Chinese
+**Metadata Editing**: [ ] Status/Priority/Tags dropdowns + confirmations localized.
 
-**Visual Inspection**:
-- [ ] No English text visible in Chinese mode
-- [ ] No layout breaks from longer Chinese text
-- [ ] All tooltips in Chinese
-- [ ] All aria-labels in Chinese (if visible)
+**Visual Inspection**: [ ] No stray English in Chinese mode; [ ] layout holds with longer strings; [ ] tooltips/aria-labels localized.
 
 ### Regression Tests
 
-**English Mode**:
-- [ ] All features work identically
-- [ ] No performance degradation
-- [ ] All existing tests pass
+**English Mode**: [ ] Feature parity maintained; [ ] no perf regressions; [ ] existing tests pass.
 
-**Build & Bundle**:
-- [ ] `pnpm build` succeeds
-- [ ] Bundle size not significantly increased
-- [ ] All locales included in build
+**Build & Bundle**: [ ] `pnpm build` succeeds; [ ] bundle size stable; [ ] locales bundled.
 
 ## Notes
 
@@ -415,21 +386,6 @@ describe('i18n configuration', () => {
 | Layout breaks with Chinese text | Low      | Test early, adjust CSS if needed |
 | Performance impact              | Low      | Bundle already includes locales  |
 
-### Estimated Effort Breakdown
-
-| Task                 | Components | Hours        |
-| -------------------- | ---------- | ------------ |
-| Install + config     | 1 file     | 0.5          |
-| Badge components     | 2          | 1.0          |
-| Sidebar/Filters      | 2          | 1.5          |
-| Board/List views     | 2          | 2.0          |
-| Metadata editors     | 3          | 2.0          |
-| Remaining components | ~15        | 4.0          |
-| Tests                | 1 file     | 1.0          |
-| QA & fixes           | -          | 2.0          |
-| Documentation        | -          | 1.0          |
-| **Total**            | **~28**    | **15 hours** |
-
 ### Dependencies
 
 - **Depends on**: 
@@ -440,33 +396,3 @@ describe('i18n configuration', () => {
   - [Spec 193](../193-frontend-ui-parity/) - UI component parity
 - **Related**:
   - [Spec 157](../157-complete-ui-cli-translation/) - @leanspec/ui translation (in-progress)
-
-### Success Metrics
-
-**Before**:
-- 9 components with i18n (24% coverage)
-- Manual localStorage only
-- 0 tests
-
-**After**:
-- 37 components with i18n (100% coverage)
-- Auto browser detection + localStorage
-- 8 comprehensive tests passing
-- Feature parity with @leanspec/ui
-
-### Resources
-
-**Reference Implementations**:
-- `packages/ui/src/lib/i18n/config.ts` - Full i18n setup
-- `packages/ui/src/lib/i18n/config.test.ts` - Test examples
-- `packages/ui/src/components/*-badge.tsx` - Badge translation patterns
-- `packages/ui/src/components/specs-client.tsx` - Complex component example
-
-**Translation Files** (already complete):
-- `packages/ui-vite/src/locales/en/*.json` (486 + 11 + 8 lines)
-- `packages/ui-vite/src/locales/zh-CN/*.json` (486 + 11 + 8 lines)
-
-**Documentation**:
-- `docs/i18n/README.md` - i18n guidelines
-- [Spec 115](../115-chinese-translation-quality/) - Translation quality standards
-- `AGENTS.md` - Always update both en + zh-CN locales

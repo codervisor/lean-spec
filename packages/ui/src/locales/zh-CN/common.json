@@ -57,7 +57,8 @@
     "next": "下一步",
     "loading": "加载中...",
     "search": "搜索",
-    "backToTop": "返回顶部"
+    "backToTop": "返回顶部",
+    "openSidebar": "打开侧边栏"
   },
   "spec": {
     "spec": "Spec",

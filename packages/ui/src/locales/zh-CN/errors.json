@@ -11,5 +11,10 @@
   "pageError": {
     "title": "页面出现错误",
     "description": "页面渲染失败。"
+  },
+  "mermaid": {
+    "title": "Mermaid 图表错误",
+    "renderError": "渲染图表失败",
+    "loading": "正在加载图表..."
   }
 }

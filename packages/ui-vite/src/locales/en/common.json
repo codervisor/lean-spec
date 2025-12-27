@@ -56,7 +56,8 @@
     "next": "Next",
     "loading": "Loading...",
     "search": "Search",
-    "backToTop": "Back to top"
+    "backToTop": "Back to top",
+    "openSidebar": "Open sidebar"
   },
   "spec": {
     "spec": "Spec",

@@ -11,5 +11,10 @@
   "pageError": {
     "title": "Something went wrong",
     "description": "The page failed to render."
+  },
+  "mermaid": {
+    "title": "Mermaid diagram error",
+    "renderError": "Failed to render diagram",
+    "loading": "Loading diagram..."
   }
 }

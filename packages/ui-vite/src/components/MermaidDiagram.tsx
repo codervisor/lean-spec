@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
+import { useTranslation } from 'react-i18next';
 
 interface MermaidDiagramProps {
   chart: string;
@@ -28,6 +29,7 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [id] = useState(generateId);
+  const { t } = useTranslation(['common', 'errors']);
 
   useEffect(() => {
     if (!chart || !ref.current) return;
@@ -46,7 +48,8 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
         setSvg(svg);
       } catch (err) {
         console.error('Mermaid rendering error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to render diagram');
+        const fallback = t('mermaid.renderError', { ns: 'errors' });
+        setError(err instanceof Error ? err.message : fallback);
       }
     };
 
@@ -57,7 +60,7 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
     return (
       <div className={`border border-destructive rounded-lg p-4 ${className}`}>
         <div className="text-sm text-destructive">
-          <strong>Mermaid Diagram Error:</strong>
+          <strong>{t('mermaid.title', { ns: 'errors' })}</strong>
           <pre className="mt-2 text-xs overflow-auto">{error}</pre>
         </div>
       </div>
@@ -67,13 +70,13 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   if (!svg) {
     return (
       <div className={`border rounded-lg p-4 ${className}`}>
-        <div className="text-sm text-muted-foreground">Loading diagram...</div>
+        <div className="text-sm text-muted-foreground">{t('mermaid.loading', { ns: 'errors' })}</div>
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       ref={ref}
       className={`mermaid-diagram border rounded-lg p-4 overflow-auto ${className}`}
       dangerouslySetInnerHTML={{ __html: svg }}
