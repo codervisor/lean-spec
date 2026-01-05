@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   Search,
@@ -16,7 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@leanspec/ui-components';
-import * as ReactWindow from 'react-window';
+import {
+  List,
+  type ListImperativeAPI,
+} from 'react-window';
 import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
 import { api, type Spec } from '../lib/api';
@@ -57,13 +60,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   });
   const { t, i18n } = useTranslation('common');
 
-  type ListRef = ReactWindow.FixedSizeList<Spec[]>;
-  type ListChildComponentProps = ReactWindow.ListChildComponentProps<Spec[]>;
-  type ListOnScrollProps = ReactWindow.ListOnScrollProps;
-
-  const { FixedSizeList } = ReactWindow;
-
-  const listRef = useRef<ListRef | null>(null);
+  const listRef = useRef<ListImperativeAPI>(null);
   const mobileOpenRef = useRef(mobileOpen);
 
   const activeSpecId = useMemo(() => {
@@ -138,6 +135,57 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return [...result].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
   }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter]);
 
+  const RowComponent = useCallback(
+    (rowProps: { index: number; style: CSSProperties }) => {
+      const { index, style } = rowProps;
+      const spec = filteredSpecs[index];
+      const isActive = spec?.name === activeSpecId;
+      const displayTitle = spec?.title || spec?.specName;
+
+      if (!spec) {
+        return <div style={style} />;
+      }
+
+      return (
+        <div style={style} className="px-1">
+          <Link
+            to={`${basePath}/specs/${spec.name}`}
+            onClick={() => onMobileOpenChange?.(false)}
+            className={cn(
+              'flex flex-col gap-1 p-2 rounded-md text-sm transition-colors',
+              isActive
+                ? 'bg-accent text-accent-foreground font-medium'
+                : 'hover:bg-accent/50'
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {spec.specNumber && (
+                <span className="text-xs font-mono text-muted-foreground shrink-0">
+                  #{spec.specNumber.toString().padStart(3, '0')}
+                </span>
+              )}
+              <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {spec.status && (
+                <StatusBadge status={spec.status} className="text-[10px] px-1.5 py-0 h-4" />
+              )}
+              {spec.priority && (
+                <PriorityBadge priority={spec.priority} className="text-[10px] px-1.5 py-0 h-4" />
+              )}
+              {spec.updatedAt && (
+                <span className="text-[10px] text-muted-foreground">
+                  {formatRelativeTime(spec.updatedAt, i18n.language)}
+                </span>
+              )}
+            </div>
+          </Link>
+        </div>
+      );
+    },
+    [activeSpecId, basePath, filteredSpecs, i18n.language, onMobileOpenChange]
+  );
+
   const allTags = useMemo(() => {
     const set = new Set<string>();
     specs.forEach((spec) => spec.tags?.forEach((tag) => set.add(tag)));
@@ -148,60 +196,38 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
 
   useEffect(() => {
-    if (!listRef.current || initialScrollOffset > 0) return;
+    if (initialScrollOffset > 0) return;
     const targetIndex = filteredSpecs.findIndex((spec) => spec.name === activeSpecId);
     if (targetIndex >= 0) {
-      listRef.current.scrollToItem(targetIndex, 'center');
+      listRef.current?.scrollToRow({ index: targetIndex, align: 'center', behavior: 'instant' });
     }
   }, [filteredSpecs, activeSpecId, initialScrollOffset]);
+
+  useEffect(() => {
+    const el = listRef.current?.element;
+    if (!el) return;
+
+    if (initialScrollOffset > 0) {
+      el.scrollTop = initialScrollOffset;
+    }
+  }, [initialScrollOffset, listHeight, showFilters, filteredSpecs.length]);
+
+  useEffect(() => {
+    const el = listRef.current?.element;
+    if (!el) return;
+
+    const onScroll = () => {
+      localStorage.setItem(STORAGE_KEYS.scroll, String(el.scrollTop));
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   const resetFilters = () => {
     setStatusFilter('all');
     setPriorityFilter('all');
     setTagFilter('all');
-  };
-
-  const Row = ({ index, style, data }: ListChildComponentProps) => {
-    const spec = data[index];
-    const isActive = spec.name === activeSpecId;
-    const displayTitle = spec.title || spec.specName;
-
-    return (
-      <div style={style} className="px-1">
-        <Link
-          to={`${basePath}/specs/${spec.name}`}
-          onClick={() => onMobileOpenChange?.(false)}
-          className={cn(
-            'flex flex-col gap-1 p-2 rounded-md text-sm transition-colors',
-            isActive
-              ? 'bg-accent text-accent-foreground font-medium'
-              : 'hover:bg-accent/50'
-          )}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            {spec.specNumber && (
-              <span className="text-xs font-mono text-muted-foreground shrink-0">
-                #{spec.specNumber.toString().padStart(3, '0')}
-              </span>
-            )}
-            <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {spec.status && (
-              <StatusBadge status={spec.status} className="text-[10px] px-1.5 py-0 h-4" />
-            )}
-            {spec.priority && (
-              <PriorityBadge priority={spec.priority} className="text-[10px] px-1.5 py-0 h-4" />
-            )}
-            {spec.updatedAt && (
-              <span className="text-[10px] text-muted-foreground">
-                {formatRelativeTime(spec.updatedAt, i18n.language)}
-              </span>
-            )}
-          </div>
-        </Link>
-      </div>
-    );
   };
 
   const sidebarVisible = mobileOpen || !collapsed;
@@ -342,21 +368,16 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               {t('specsNavSidebar.noResults')}
             </div>
           ) : (
-            <FixedSizeList
-              ref={listRef}
-              height={listHeight}
-              width="100%"
-              itemSize={76}
-              itemCount={filteredSpecs.length}
-              itemData={filteredSpecs}
+            <List<Record<string, never>>
+              listRef={listRef}
+              defaultHeight={listHeight}
+              rowCount={filteredSpecs.length}
+              rowHeight={76}
               overscanCount={6}
-              initialScrollOffset={initialScrollOffset}
-              onScroll={({ scrollOffset }: ListOnScrollProps) =>
-                localStorage.setItem(STORAGE_KEYS.scroll, String(scrollOffset))
-              }
-            >
-              {Row}
-            </FixedSizeList>
+              rowComponent={RowComponent}
+              rowProps={{}}
+              style={{ height: listHeight, width: '100%' }}
+            />
           )}
         </div>
       </aside>
