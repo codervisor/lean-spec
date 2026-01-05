@@ -52,9 +52,6 @@ dev-web:
 dev-desktop:
 	pnpm dev:desktop
 
-dev-storybook:
-	turbo run storybook --filter=@leanspec/ui-components
-
 # Build & Test
 build:
 	pnpm build

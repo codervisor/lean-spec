@@ -1026,7 +1026,7 @@ fn extract_template_body(template: &str) -> String {
     };
 
     let mut lines = body.lines().peekable();
-    let mut skip_empty = |iter: &mut std::iter::Peekable<std::str::Lines<'_>>| {
+    let skip_empty = |iter: &mut std::iter::Peekable<std::str::Lines<'_>>| {
         while matches!(iter.peek(), Some(line) if line.trim().is_empty()) {
             iter.next();
         }

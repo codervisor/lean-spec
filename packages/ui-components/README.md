@@ -235,9 +235,6 @@ pnpm install
 # Build the library
 pnpm build
 
-# Run Storybook
-pnpm storybook
-
 # Run tests
 pnpm test
 ```

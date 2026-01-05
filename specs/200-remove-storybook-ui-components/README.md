@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-05
 priority: medium
 tags:
@@ -10,12 +10,15 @@ tags:
 depends_on:
 - 185-ui-components-extraction
 created_at: 2026-01-05T07:35:59.442762720Z
-updated_at: 2026-01-05T07:36:39.871103173Z
+updated_at: 2026-01-05T07:38:58.003950897Z
+transitions:
+- status: in-progress
+  at: 2026-01-05T07:38:58.003950897Z
 ---
 
 # Remove Storybook from UI Components Package
 
-> **Status**: 🗓️ Planned · **Created**: 2026-01-05
+> **Status**: 🚧 In Progress · **Created**: 2026-01-05
 
 ## Overview
 
@@ -77,24 +80,24 @@ With the Rust migration and unified architecture (spec 184), LeanSpec is moving 
 ## Plan
 
 ### Phase 1: Remove Code
-- [ ] Remove Storybook devDependencies from package.json
-- [ ] Remove npm scripts (storybook, build-storybook)
-- [ ] Delete .storybook/ directory
-- [ ] Delete stories/ directory
-- [ ] Delete storybook-static/ directory (if exists)
+- [x] Remove Storybook devDependencies from package.json
+- [x] Remove npm scripts (storybook, build-storybook)
+- [x] Delete .storybook/ directory
+- [x] Delete stories/ directory
+- [x] Delete storybook-static/ directory (if exists)
 
 ### Phase 2: Update Documentation
-- [ ] Remove Storybook references from README.md
-- [ ] Update Makefile (remove storybook target)
-- [ ] Update scripts.md (remove Storybook commands)
-- [ ] Verify README has sufficient component documentation
+- [x] Remove Storybook references from README.md
+- [x] Update Makefile (remove storybook target)
+- [x] Update scripts.md (remove Storybook commands)
+- [x] Verify README has sufficient component documentation
 
 ### Phase 3: Cleanup
-- [ ] Run `pnpm install` to update lockfile
-- [ ] Verify builds still work: `pnpm build`
-- [ ] Verify typecheck passes: `pnpm typecheck`
+- [x] Run `pnpm install` to update lockfile
+- [ ] Verify builds still work: `pnpm build` *(fails in @leanspec/ui-vite tailwind.config.js:52 - requires CJS require in ESM)*
+- [ ] Verify typecheck passes: `pnpm typecheck` *(fails in tests/api headers typing and response.data unknown)*
 - [ ] Verify tests pass: `pnpm test`
-- [ ] Update turbo.json if needed
+- [x] Update turbo.json if needed
 
 ## Component Documentation Strategy
 
@@ -114,11 +117,11 @@ The README.md includes:
 
 ## Success Criteria
 
-- [ ] All Storybook code/config removed
-- [ ] package.json has no Storybook dependencies
+- [x] All Storybook code/config removed
+- [x] package.json has no Storybook dependencies
 - [ ] Build, typecheck, and tests pass
-- [ ] README.md remains comprehensive
-- [ ] No broken references in docs/scripts
+- [x] README.md remains comprehensive
+- [x] No broken references in docs/scripts
 - [ ] Reduced package install time (verify with `time pnpm install`)
 
 ## Notes
@@ -131,6 +134,10 @@ The README.md includes:
 
 **Alternative Considered**: Keep Storybook for visual regression testing
 **Decision**: Not needed - UI components are simple, well-typed, and tested in ui-vite's E2E tests
+
+**Current Risks/Follow-ups**:
+- `pnpm build` fails in `packages/ui-vite/tailwind.config.js` because `require` is used under ESM (Node 22)
+- `pnpm typecheck` fails in `tests/api` due to `Headers` being non-iterable for `Object.fromEntries` and `response.data` typed as `unknown`
 
 **Related Specs**:
 - Spec 184: UI Packages Consolidation (consolidation strategy)

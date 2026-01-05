@@ -106,21 +106,6 @@ pnpm bundle:macos   # DMG
 pnpm bundle:windows # NSIS installer
 ```
 
-## UI Components
-
-```bash
-# Run Storybook
-turbo run storybook --filter=@leanspec/ui-components
-
-# Or directly
-cd packages/ui-components
-pnpm storybook
-
-# Build Storybook
-cd packages/ui-components
-pnpm build-storybook
-```
-
 ## Quick Reference
 
 Most common daily commands (available in `package.json`):
