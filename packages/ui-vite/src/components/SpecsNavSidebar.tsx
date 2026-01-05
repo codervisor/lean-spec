@@ -367,7 +367,6 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           size="sm"
           className="hidden lg:flex h-6 w-6 p-0 fixed z-20 top-20 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
           onClick={() => setCollapsed(false)}
-          title="Expand sidebar"
           title={t('specSidebar.expand')}
         >
           <ChevronRight className="h-4 w-4" />

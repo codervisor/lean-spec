@@ -1,7 +1,7 @@
 {
 	"name": "lean-spec",
 	"private": true,
-	"packageManager": "pnpm@10.26.1",
+	"packageManager": "pnpm@10.27.0",
 	"devDependencies": {
 		"husky": "^9.1.7",
 		"turbo": "^2.7.2"
