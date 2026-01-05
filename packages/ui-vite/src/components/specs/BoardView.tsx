@@ -1,9 +1,9 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, PlayCircle, CheckCircle2, Archive, MoreHorizontal } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive } from 'lucide-react';
 import type { Spec } from '../../lib/api';
 import { PriorityBadge } from '../PriorityBadge';
-import { cn, Button } from '@leanspec/ui-components';
+import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
 type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
@@ -11,8 +11,6 @@ type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 interface BoardViewProps {
   specs: Spec[];
   onStatusChange: (spec: Spec, status: SpecStatus) => void;
-  showArchived: boolean;
-  onToggleArchived: () => void;
   basePath?: string;
 }
 
@@ -53,18 +51,15 @@ const STATUS_CONFIG: Record<SpecStatus, {
   }
 };
 
-export function BoardView({ specs, onStatusChange, showArchived, onToggleArchived, basePath = '/projects/default' }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, basePath = '/projects/default' }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
 
   const columns = useMemo(() => {
     const cols: SpecStatus[] = ['planned', 'in-progress', 'complete'];
-    if (showArchived) {
-      cols.push('archived');
-    }
     return cols;
-  }, [showArchived]);
+  }, []);
 
   const specsByStatus = useMemo(() => {
     const grouped: Record<SpecStatus, Spec[]> = {
@@ -130,7 +125,7 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
           >
             {/* Column Header */}
             <div className={cn(
-              "p-3 flex items-center justify-between border-b",
+              "p-3 flex items-center justify-between border-b sticky top-0 z-5",
               config.borderClass,
               config.bgClass,
               "rounded-t-lg"
@@ -144,20 +139,10 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
                   {statusSpecs.length}
                 </span>
               </div>
-              {status === 'archived' && (
-                <Button
-                  onClick={onToggleArchived}
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              )}
             </div>
 
             {/* Column Content */}
-            <div className="flex-1 p-2 overflow-y-auto min-h-[150px]">
+            <div className="flex-1 p-2 overflow-y-auto">
               <div className="space-y-2">
                 {statusSpecs.map(spec => (
                   <div
@@ -205,20 +190,6 @@ export function BoardView({ specs, onStatusChange, showArchived, onToggleArchive
           </div>
         );
       })}
-
-      {!showArchived && (
-        <Button
-          onClick={onToggleArchived}
-          variant="ghost"
-          className="flex-shrink-0 w-10 flex-col items-center py-4 gap-2 rounded-lg h-auto"
-          title={t('specsPage.board.archivedCollapsed')}
-        >
-          <Archive className="w-4 h-4 text-muted-foreground" />
-          <div className="writing-vertical-rl text-xs font-medium text-muted-foreground tracking-wider uppercase">
-            {t('status.archived')}
-          </div>
-        </Button>
-      )}
     </div>
   );
 }

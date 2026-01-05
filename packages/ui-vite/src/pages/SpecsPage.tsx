@@ -41,7 +41,6 @@ export function SpecsPage() {
     const saved = localStorage.getItem('specs-view-mode');
     return (saved === 'board' || saved === 'list') ? saved : 'list';
   });
-  const [showArchivedBoard, setShowArchivedBoard] = useState(false);
 
   const loadSpecs = useCallback(async () => {
     if (!projectReady || projectLoading) return;
@@ -73,13 +72,6 @@ export function SpecsPage() {
   useEffect(() => {
     localStorage.setItem('specs-view-mode', viewMode);
   }, [viewMode]);
-
-  // Auto-show archived column when filtering by archived status in board view
-  useEffect(() => {
-    if (statusFilter === 'archived' && viewMode === 'board') {
-      setShowArchivedBoard(true);
-    }
-  }, [statusFilter, viewMode]);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     // Optimistic update
@@ -202,61 +194,63 @@ export function SpecsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold">{t('specsPage.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 pt-4 pb-2 z-10">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold">{t('specsPage.title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
+          </div>
+
+          <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className={cn(
+                "h-8",
+                viewMode === 'list' && "bg-background shadow-sm"
+              )}
+              title={t('specsPage.views.listTooltip')}
+            >
+              <List className="w-4 h-4 mr-1.5" />
+              {t('specsPage.views.list')}
+            </Button>
+            <Button
+              variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('board')}
+              className={cn(
+                "h-8",
+                viewMode === 'board' && "bg-background shadow-sm"
+              )}
+              title={t('specsPage.views.boardTooltip')}
+            >
+              <LayoutGrid className="w-4 h-4 mr-1.5" />
+              {t('specsPage.views.board')}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
-          <Button
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('list')}
-            className={cn(
-              "h-8",
-              viewMode === 'list' && "bg-background shadow-sm"
-            )}
-            title={t('specsPage.views.listTooltip')}
-          >
-            <List className="w-4 h-4 mr-1.5" />
-            {t('specsPage.views.list')}
-          </Button>
-          <Button
-            variant={viewMode === 'board' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('board')}
-            className={cn(
-              "h-8",
-              viewMode === 'board' && "bg-background shadow-sm"
-            )}
-            title={t('specsPage.views.boardTooltip')}
-          >
-            <LayoutGrid className="w-4 h-4 mr-1.5" />
-            {t('specsPage.views.board')}
-          </Button>
-        </div>
+        <SpecsFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          tagFilter={tagFilter}
+          onTagFilterChange={setTagFilter}
+          sortBy={sortBy}
+          onSortByChange={(value) => setSortBy(value as SortOption)}
+          uniqueStatuses={uniqueStatuses}
+          uniquePriorities={uniquePriorities}
+          uniqueTags={uniqueTags}
+          onClearFilters={handleClearFilters}
+          totalSpecs={specs.length}
+          filteredCount={filteredSpecs.length}
+        />
       </div>
-
-      <SpecsFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        priorityFilter={priorityFilter}
-        onPriorityFilterChange={setPriorityFilter}
-        tagFilter={tagFilter}
-        onTagFilterChange={setTagFilter}
-        sortBy={sortBy}
-        onSortByChange={(value) => setSortBy(value as SortOption)}
-        uniqueStatuses={uniqueStatuses}
-        uniquePriorities={uniquePriorities}
-        uniqueTags={uniqueTags}
-        onClearFilters={handleClearFilters}
-        totalSpecs={specs.length}
-        filteredCount={filteredSpecs.length}
-      />
 
       <div className="flex-1 min-h-0">
         {specs.length === 0 ? (
@@ -294,8 +288,6 @@ export function SpecsPage() {
           <BoardView
             specs={filteredSpecs}
             onStatusChange={handleStatusChange}
-            showArchived={showArchivedBoard}
-            onToggleArchived={() => setShowArchivedBoard(!showArchivedBoard)}
             basePath={basePath}
           />
         )}

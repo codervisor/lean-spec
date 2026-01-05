@@ -21,7 +21,7 @@ export function ListView({ specs, basePath = '/projects/default' }: ListViewProp
   }
 
   return (
-    <div className="space-y-2">
+    <div className="h-full overflow-y-auto space-y-2">
       {specs.map((spec) => (
         <Link
           key={spec.name}
