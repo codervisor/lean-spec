@@ -19,6 +19,9 @@
       ]
     },
     "dev": {
+      "dependsOn": [
+        "@leanspec/ui-components#build"
+      ],
       "cache": false,
       "persistent": true,
       "passThroughEnv": [
