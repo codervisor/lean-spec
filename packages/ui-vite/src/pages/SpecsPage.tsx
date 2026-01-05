@@ -195,7 +195,7 @@ export function SpecsPage() {
 
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 pt-4 pb-2 z-10">
+      <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-2xl font-bold">{t('specsPage.title')}</h2>
