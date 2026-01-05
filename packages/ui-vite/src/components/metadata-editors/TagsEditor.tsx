@@ -1,6 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Loader2, Plus, X } from 'lucide-react';
-import { Badge, Button, Input } from '@leanspec/ui-components';
+import {
+  Badge,
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@leanspec/ui-components';
 import { cn } from '../../lib/utils';
 import { api, type Spec } from '../../lib/api';
 import { useTranslation } from 'react-i18next';
@@ -15,101 +27,180 @@ interface TagsEditorProps {
 
 export function TagsEditor({ specName, value, onChange, disabled = false, className }: TagsEditorProps) {
   const [tags, setTags] = useState<string[]>(value || []);
-  const [input, setInput] = useState('');
-  const [updating, setUpdating] = useState(false);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
   const { t } = useTranslation('common');
 
-  const persist = async (next: string[]) => {
-    const previous = tags;
-    setTags(next);
-    setUpdating(true);
+  // Fetch all available tags for autocomplete when popover opens
+  useEffect(() => {
+    if (isOpen && allTags.length === 0) {
+      const fetchTags = async () => {
+        try {
+          const specs = await api.getSpecs();
+          const uniqueTags = new Set<string>();
+          specs.forEach(s => s.tags?.forEach(t => uniqueTags.add(t)));
+          setAllTags(Array.from(uniqueTags).sort());
+        } catch (err) {
+          console.error('Failed to fetch tags:', err);
+        }
+      };
+      void fetchTags();
+    }
+  }, [isOpen, allTags.length]);
+
+  const updateTags = async (newTags: string[]) => {
+    const previousTags = tags;
+    setTags(newTags); // Optimistic update
+    setIsUpdating(true);
     setError(null);
 
     try {
-      await api.updateSpec(specName, { tags: next });
-      onChange?.(next);
+      await api.updateSpec(specName, { tags: newTags });
+      onChange?.(newTags);
     } catch (err) {
-      setTags(previous);
-      const message = err instanceof Error ? err.message : t('editors.tagsError');
-      setError(message);
+      setTags(previousTags); // Rollback
+      const errorMessage = err instanceof Error ? err.message : t('editors.tagsError');
+      setError(errorMessage);
     } finally {
-      setUpdating(false);
+      setIsUpdating(false);
     }
   };
 
-  const handleAdd = () => {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    if (tags.includes(trimmed)) {
+  const handleAddTag = (tag: string) => {
+    const trimmedTag = tag.trim(); // Don't lowercase automatically to preserve user intent, or follow project convention
+    if (!trimmedTag) return;
+    if (tags.includes(trimmedTag)) {
       setError(t('editors.tagExists'));
       return;
     }
-    void persist([...tags, trimmed]);
-    setInput('');
+
+    const newTags = [...tags, trimmedTag];
+    void updateTags(newTags);
+    setSearchValue('');
+    setIsOpen(false);
   };
 
-  const handleRemove = (tag: string) => {
-    void persist(tags.filter((t) => t !== tag));
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = tags.filter(t => t !== tagToRemove);
+    void updateTags(newTags);
   };
+
+  // Filter available tags: show tags that aren't already added and match search
+  const availableTags = useMemo(() => {
+    const lowercaseSearch = searchValue.toLowerCase();
+    return allTags
+      .filter(tag => !tags.includes(tag))
+      .filter(tag => !lowercaseSearch || tag.toLowerCase().includes(lowercaseSearch));
+  }, [allTags, tags, searchValue]);
+
+  // Check if search value could be a new tag (not in available tags)
+  const canCreateNewTag = searchValue.trim() &&
+    !tags.includes(searchValue.trim()) &&
+    !allTags.includes(searchValue.trim());
 
   return (
-    <div className={cn('space-y-2', className)}>
-      <div className="flex flex-wrap gap-2">
+    <div className={cn("relative", className)}>
+      <div className="flex gap-1 flex-wrap items-center">
         {tags.map((tag) => (
           <Badge
             key={tag}
             variant="outline"
-            className="text-xs pr-0.5 gap-1 h-6"
+            className={cn(
+              "text-xs pr-1 gap-1",
+              disabled && "opacity-50"
+            )}
           >
             {tag}
             {!disabled && (
-              <Button
-                onClick={() => handleRemove(tag)}
-                disabled={updating}
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 p-0 rounded-full hover:bg-muted ml-0.5"
+              <button
+                onClick={() => handleRemoveTag(tag)}
+                disabled={isUpdating}
+                className="ml-1 rounded-full hover:bg-muted p-0.5 transition-colors"
                 aria-label={t('editors.removeTag', { tag })}
               >
                 <X className="h-3 w-3" />
-              </Button>
+              </button>
             )}
           </Badge>
         ))}
-        {tags.length === 0 && <span className="text-xs text-muted-foreground">{t('editors.noTags')}</span>}
+
+        {!disabled && (
+          <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                disabled={isUpdating}
+                aria-label={t('editors.addTag')}
+              >
+                {isUpdating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Plus className="h-3 w-3" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-0" align="start">
+              <Command>
+                <CommandInput
+                  placeholder={t('editors.searchTag')}
+                  value={searchValue}
+                  onValueChange={setSearchValue}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {canCreateNewTag ? (
+                      <CommandItem
+                        onSelect={() => handleAddTag(searchValue)}
+                        className="cursor-pointer"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('editors.createTag', { tag: searchValue.trim() })}
+                      </CommandItem>
+                    ) : (
+                      <span className="text-muted-foreground px-2 py-1.5 text-sm">
+                        {t('editors.noTagResults')}
+                      </span>
+                    )}
+                  </CommandEmpty>
+                  {availableTags.length > 0 && (
+                    <CommandGroup heading={t('editors.existingTags')}>
+                      {availableTags.slice(0, 10).map((tag) => (
+                        <CommandItem
+                          key={tag}
+                          value={tag}
+                          onSelect={() => handleAddTag(tag)}
+                          className="cursor-pointer"
+                        >
+                          {tag}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  {canCreateNewTag && availableTags.length > 0 && (
+                    <CommandGroup heading={t('editors.createSection')}>
+                      <CommandItem
+                        onSelect={() => handleAddTag(searchValue)}
+                        className="cursor-pointer"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('editors.createTag', { tag: searchValue.trim() })}
+                      </CommandItem>
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+              {error && (
+                <p className="text-xs text-destructive px-2 pb-2">{error}</p>
+              )}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
-
-      {!disabled && (
-        <div className="flex items-center gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAdd();
-              }
-            }}
-            placeholder={t('editors.addTag')}
-            className="h-9"
-            aria-label={t('editors.addTag')}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-            disabled={updating}
-            className="gap-1"
-          >
-            {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {t('actions.add')}
-          </Button>
-        </div>
-      )}
-
-      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
