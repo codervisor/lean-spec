@@ -32,6 +32,11 @@ const priorityConfig: Record<string, { icon: typeof AlertCircle; labelKey: `prio
   },
 };
 
+export function getPriorityLabel(priority: string, t: (key: string) => string) {
+  const config = priorityConfig[priority] || priorityConfig['medium'];
+  return t(config.labelKey);
+}
+
 export function PriorityBadge({ priority, className, iconOnly = false }: PriorityBadgeProps) {
   const config = priorityConfig[priority] || priorityConfig['medium'];
   const Icon = config.icon;

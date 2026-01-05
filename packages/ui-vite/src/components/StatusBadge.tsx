@@ -32,6 +32,11 @@ const statusConfig: Record<string, { icon: typeof Clock; labelKey: `status.${str
   },
 };
 
+export function getStatusLabel(status: string, t: (key: string) => string) {
+  const config = statusConfig[status] || statusConfig['planned'];
+  return t(config.labelKey);
+}
+
 export function StatusBadge({ status, className, iconOnly = false }: StatusBadgeProps) {
   const config = statusConfig[status] || statusConfig['planned'];
   const Icon = config.icon;

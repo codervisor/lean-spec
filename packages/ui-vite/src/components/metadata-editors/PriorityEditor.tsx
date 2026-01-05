@@ -6,10 +6,10 @@ import { api, type Spec } from '../../lib/api';
 import { useTranslation } from 'react-i18next';
 
 const PRIORITY_OPTIONS: Array<{ value: NonNullable<Spec['priority']>; labelKey: `priority.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [
-  { value: 'critical', labelKey: 'priority.critical', className: 'bg-red-500/20 text-red-600 dark:text-red-400', Icon: AlertCircle },
-  { value: 'high', labelKey: 'priority.high', className: 'bg-orange-500/20 text-orange-600 dark:text-orange-300', Icon: ArrowUp },
-  { value: 'medium', labelKey: 'priority.medium', className: 'bg-blue-500/20 text-blue-600 dark:text-blue-300', Icon: Minus },
-  { value: 'low', labelKey: 'priority.low', className: 'bg-gray-500/20 text-gray-600 dark:text-gray-300', Icon: ArrowDown },
+  { value: 'critical', labelKey: 'priority.critical', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', Icon: AlertCircle },
+  { value: 'high', labelKey: 'priority.high', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', Icon: ArrowUp },
+  { value: 'medium', labelKey: 'priority.medium', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', Icon: Minus },
+  { value: 'low', labelKey: 'priority.low', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400', Icon: ArrowDown },
 ];
 
 interface PriorityEditorProps {
@@ -57,16 +57,18 @@ export function PriorityEditor({ specName, value, onChange, disabled = false, cl
       >
         <SelectTrigger
           className={cn(
-            'h-8 w-fit min-w-[120px] border px-2 text-xs font-medium justify-start',
+            'h-7 w-fit min-w-[100px] border-0 px-2 text-xs font-medium justify-start',
             option.className,
             className,
-            updating && 'opacity-80'
+            updating && 'opacity-70'
           )}
           aria-label={t('editors.changePriority')}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {updating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <option.Icon className="h-3.5 w-3.5" />}
-            <SelectValue placeholder={t('specsPage.filters.priority')} />
+            <SelectValue placeholder={t('specsPage.filters.priority')}>
+              {t(option.labelKey)}
+            </SelectValue>
           </div>
         </SelectTrigger>
         <SelectContent>

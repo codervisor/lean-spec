@@ -20,8 +20,9 @@ import {
   List,
   type ListImperativeAPI,
 } from 'react-window';
-import { StatusBadge } from './StatusBadge';
-import { PriorityBadge } from './PriorityBadge';
+import { StatusBadge, getStatusLabel } from './StatusBadge';
+import { PriorityBadge, getPriorityLabel } from './PriorityBadge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 import { api, type Spec } from '../lib/api';
 import { cn } from '../lib/utils';
 import { formatRelativeTime } from '../lib/date-utils';
@@ -148,42 +149,72 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
       return (
         <div style={style} className="px-1">
-          <Link
-            to={`${basePath}/specs/${spec.name}`}
-            onClick={() => onMobileOpenChange?.(false)}
-            className={cn(
-              'flex flex-col gap-1 p-2 rounded-md text-sm transition-colors',
-              isActive
-                ? 'bg-accent text-accent-foreground font-medium'
-                : 'hover:bg-accent/50'
-            )}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              {spec.specNumber && (
-                <span className="text-xs font-mono text-muted-foreground shrink-0">
-                  #{spec.specNumber.toString().padStart(3, '0')}
-                </span>
-              )}
-              <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {spec.status && (
-                <StatusBadge status={spec.status} className="text-[10px] px-1.5 py-0 h-4" />
-              )}
-              {spec.priority && (
-                <PriorityBadge priority={spec.priority} className="text-[10px] px-1.5 py-0 h-4" />
-              )}
-              {spec.updatedAt && (
-                <span className="text-[10px] text-muted-foreground">
-                  {formatRelativeTime(spec.updatedAt, i18n.language)}
-                </span>
-              )}
-            </div>
-          </Link>
+          <div className="mb-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to={`${basePath}/specs/${spec.name}`}
+                  onClick={() => onMobileOpenChange?.(false)}
+                  className={cn(
+                    'flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
+                    isActive
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'hover:bg-accent/50'
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {spec.specNumber && (
+                      <span className="text-xs font-mono text-muted-foreground shrink-0">
+                        #{spec.specNumber.toString().padStart(3, '0')}
+                      </span>
+                    )}
+                    <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {spec.status && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {getStatusLabel(spec.status, t)}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {spec.priority && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {getPriorityLabel(spec.priority, t)}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {spec.updatedAt && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatRelativeTime(spec.updatedAt, i18n.language)}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[300px]">
+                <div className="space-y-1">
+                  <div className="font-semibold">{displayTitle}</div>
+                  <div className="text-xs text-muted-foreground">{spec.specName}</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       );
     },
-    [activeSpecId, basePath, filteredSpecs, i18n.language, onMobileOpenChange]
+    [activeSpecId, basePath, filteredSpecs, i18n.language, onMobileOpenChange, t]
   );
 
   const allTags = useMemo(() => {
@@ -233,167 +264,169 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const sidebarVisible = mobileOpen || !collapsed;
 
   return (
-    <div className="relative">
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => onMobileOpenChange?.(false)}
-        />
-      )}
-
-      <aside
-        className={cn(
-          'border-r bg-background flex flex-col overflow-hidden transition-all duration-300',
-          mobileOpen
-            ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl'
-            : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',
-          collapsed && !mobileOpen ? 'lg:w-0 lg:border-r-0' : 'lg:w-[280px]'
+    <TooltipProvider delayDuration={700}>
+      <div className="relative">
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            onClick={() => onMobileOpenChange?.(false)}
+          />
         )}
-      >
-        <div className="p-3 border-b space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
-            <div className="flex items-center gap-1">
-              <Button
-                variant={showFilters || hasActiveFilters ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 w-7 p-0"
-                onClick={() => setShowFilters((prev) => !prev)}
-                title={showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-              {onMobileOpenChange && (
+
+        <aside
+          className={cn(
+            'border-r bg-background flex flex-col overflow-hidden transition-all duration-300',
+            mobileOpen
+              ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl'
+              : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',
+            collapsed && !mobileOpen ? 'lg:w-0 lg:border-r-0' : 'lg:w-[280px]'
+          )}
+        >
+          <div className="p-3 border-b space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
+              <div className="flex items-center gap-1">
                 <Button
-                  variant="ghost"
+                  variant={showFilters || hasActiveFilters ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="h-7 w-7 p-0 lg:hidden"
-                  onClick={() => onMobileOpenChange(false)}
-                  title={t('actions.close')}
+                  className="h-7 w-7 p-0"
+                  onClick={() => setShowFilters((prev) => !prev)}
+                  title={showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
                 >
-                  <X className="h-4 w-4" />
+                  <Filter className="h-4 w-4" />
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 hidden lg:flex"
-                onClick={() => setCollapsed(true)}
-                title={t('specSidebar.collapse')}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={t('specsNavSidebar.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-9"
-            />
-          </div>
-
-          {showFilters && (
-            <div className="space-y-2 pt-2 border-t">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">{t('specsNavSidebar.filtersLabel')}</span>
-                {hasActiveFilters && (
+                {onMobileOpenChange && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={resetFilters}
+                    className="h-7 w-7 p-0 lg:hidden"
+                    onClick={() => onMobileOpenChange(false)}
+                    title={t('actions.close')}
                   >
-                    {t('specsNavSidebar.clearFilters')}
+                    <X className="h-4 w-4" />
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 hidden lg:flex"
+                  onClick={() => setCollapsed(true)}
+                  title={t('specSidebar.collapse')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
               </div>
+            </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder={t('specsNavSidebar.select.status.all')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('specsNavSidebar.select.status.all')}</SelectItem>
-                  <SelectItem value="planned">{t('status.planned')}</SelectItem>
-                  <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
-                  <SelectItem value="complete">{t('status.complete')}</SelectItem>
-                  <SelectItem value="archived">{t('status.archived')}</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t('specsNavSidebar.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9"
+              />
+            </div>
 
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder={t('specsNavSidebar.select.priority.all')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('specsNavSidebar.select.priority.all')}</SelectItem>
-                  <SelectItem value="low">{t('priority.low')}</SelectItem>
-                  <SelectItem value="medium">{t('priority.medium')}</SelectItem>
-                  <SelectItem value="high">{t('priority.high')}</SelectItem>
-                  <SelectItem value="critical">{t('priority.critical')}</SelectItem>
-                </SelectContent>
-              </Select>
+            {showFilters && (
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">{t('specsNavSidebar.filtersLabel')}</span>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={resetFilters}
+                    >
+                      {t('specsNavSidebar.clearFilters')}
+                    </Button>
+                  )}
+                </div>
 
-              {allTags.length > 0 && (
-                <Select value={tagFilter} onValueChange={setTagFilter}>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder={t('specsNavSidebar.select.tag.all')} />
+                    <SelectValue placeholder={t('specsNavSidebar.select.status.all')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('specsNavSidebar.select.tag.all')}</SelectItem>
-                    {allTags.map((tag) => (
-                      <SelectItem key={tag} value={tag}>
-                        {tag}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">{t('specsNavSidebar.select.status.all')}</SelectItem>
+                    <SelectItem value="planned">{t('status.planned')}</SelectItem>
+                    <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
+                    <SelectItem value="complete">{t('status.complete')}</SelectItem>
+                    <SelectItem value="archived">{t('status.archived')}</SelectItem>
                   </SelectContent>
                 </Select>
-              )}
-            </div>
-          )}
-        </div>
 
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              {t('actions.loading')}
-            </div>
-          ) : filteredSpecs.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              {t('specsNavSidebar.noResults')}
-            </div>
-          ) : (
-            <List<Record<string, never>>
-              listRef={listRef}
-              defaultHeight={listHeight}
-              rowCount={filteredSpecs.length}
-              rowHeight={76}
-              overscanCount={6}
-              rowComponent={RowComponent}
-              rowProps={{}}
-              style={{ height: listHeight, width: '100%' }}
-            />
-          )}
-        </div>
-      </aside>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder={t('specsNavSidebar.select.priority.all')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('specsNavSidebar.select.priority.all')}</SelectItem>
+                    <SelectItem value="low">{t('priority.low')}</SelectItem>
+                    <SelectItem value="medium">{t('priority.medium')}</SelectItem>
+                    <SelectItem value="high">{t('priority.high')}</SelectItem>
+                    <SelectItem value="critical">{t('priority.critical')}</SelectItem>
+                  </SelectContent>
+                </Select>
 
-      {!sidebarVisible && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hidden lg:flex h-6 w-6 p-0 fixed z-20 top-20 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
-          onClick={() => setCollapsed(false)}
-          title={t('specSidebar.expand')}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
+                {allTags.length > 0 && (
+                  <Select value={tagFilter} onValueChange={setTagFilter}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={t('specsNavSidebar.select.tag.all')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('specsNavSidebar.select.tag.all')}</SelectItem>
+                      {allTags.map((tag) => (
+                        <SelectItem key={tag} value={tag}>
+                          {tag}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-hidden">
+            {loading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                {t('actions.loading')}
+              </div>
+            ) : filteredSpecs.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                {t('specsNavSidebar.noResults')}
+              </div>
+            ) : (
+              <List<Record<string, never>>
+                listRef={listRef}
+                defaultHeight={listHeight}
+                rowCount={filteredSpecs.length}
+                rowHeight={76}
+                overscanCount={6}
+                rowComponent={RowComponent}
+                rowProps={{}}
+                style={{ height: listHeight, width: '100%' }}
+              />
+            )}
+          </div>
+        </aside>
+
+        {!sidebarVisible && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden lg:flex h-6 w-6 p-0 fixed z-20 top-20 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
+            onClick={() => setCollapsed(false)}
+            title={t('specSidebar.expand')}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 

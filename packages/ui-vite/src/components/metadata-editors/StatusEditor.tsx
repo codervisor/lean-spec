@@ -6,10 +6,10 @@ import { api, type Spec } from '../../lib/api';
 import { useTranslation } from 'react-i18next';
 
 const STATUS_OPTIONS: Array<{ value: NonNullable<Spec['status']>; labelKey: `status.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [
-  { value: 'planned', labelKey: 'status.planned', className: 'bg-blue-500/20 text-blue-700 dark:text-blue-300', Icon: Clock },
-  { value: 'in-progress', labelKey: 'status.inProgress', className: 'bg-orange-500/20 text-orange-700 dark:text-orange-300', Icon: PlayCircle },
-  { value: 'complete', labelKey: 'status.complete', className: 'bg-green-500/20 text-green-700 dark:text-green-300', Icon: CheckCircle2 },
-  { value: 'archived', labelKey: 'status.archived', className: 'bg-gray-500/20 text-gray-600 dark:text-gray-300', Icon: Archive },
+  { value: 'planned', labelKey: 'status.planned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', Icon: Clock },
+  { value: 'in-progress', labelKey: 'status.inProgress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', Icon: PlayCircle },
+  { value: 'complete', labelKey: 'status.complete', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', Icon: CheckCircle2 },
+  { value: 'archived', labelKey: 'status.archived', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400', Icon: Archive },
 ];
 
 interface StatusEditorProps {
@@ -53,16 +53,18 @@ export function StatusEditor({ specName, value, onChange, disabled = false, clas
       <Select value={status} onValueChange={(value) => handleChange(value as NonNullable<Spec['status']>)} disabled={disabled || updating}>
         <SelectTrigger
           className={cn(
-            'h-8 w-fit min-w-[140px] border px-2 text-xs font-medium justify-start',
+            'h-7 w-fit min-w-[120px] border-0 px-2 text-xs font-medium justify-start',
             option.className,
             className,
-            updating && 'opacity-80'
+            updating && 'opacity-70'
           )}
           aria-label={t('editors.changeStatus')}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {updating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <option.Icon className="h-3.5 w-3.5" />}
-            <SelectValue placeholder={t('specsPage.filters.status')} />
+            <SelectValue placeholder={t('specsPage.filters.status')}>
+              {t(option.labelKey)}
+            </SelectValue>
           </div>
         </SelectTrigger>
         <SelectContent>
