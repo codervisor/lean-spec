@@ -1,7 +1,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AlertTriangle, RefreshCcw, GitBranch, FileText, Home } from 'lucide-react';
-import { Button, cn } from '@leanspec/ui-components';
+import {
+  AlertTriangle,
+  RefreshCcw,
+  GitBranch,
+  FileText,
+  Home,
+  Clock,
+  Maximize2,
+  Minimize2,
+  List as ListIcon,
+  ExternalLink
+} from 'lucide-react';
+import {
+  Button,
+  cn,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  SpecTimeline,
+  SpecDependencyGraph,
+  StatusBadge,
+  PriorityBadge,
+  type CompleteSpecRelationships
+} from '@leanspec/ui-components';
 import { APIError, api, type SpecDetail } from '../lib/api';
 import { StatusEditor } from '../components/metadata-editors/StatusEditor';
 import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
@@ -35,6 +59,10 @@ export function SpecDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const currentSubSpec = searchParams.get('subspec');
   const headerRef = useRef<HTMLElement>(null);
+  const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
+  const [dependenciesDialogOpen, setDependenciesDialogOpen] = useState(false);
+  const [dependencyGraphData, setDependencyGraphData] = useState<CompleteSpecRelationships | null>(null);
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   const describeError = useCallback((err: unknown) => {
     if (err instanceof APIError) {
@@ -74,6 +102,55 @@ export function SpecDetailPage() {
   useEffect(() => {
     void loadSpec();
   }, [loadSpec, projectReady]);
+
+  useEffect(() => {
+    if (dependenciesDialogOpen && !dependencyGraphData && spec) {
+      const loadGraph = async () => {
+        try {
+          // Fetch all specs to get details for dependencies
+          // In a real app, we should have a dedicated endpoint for this
+          const allSpecs = await api.getSpecs();
+
+          const findSpec = (idOrName: string) =>
+            allSpecs.find(s => s.id === idOrName || s.specName === idOrName);
+
+          const current = {
+            specName: spec.name,
+            specNumber: spec.specNumber || undefined,
+            status: spec.status || undefined,
+            priority: spec.priority || undefined
+          };
+
+          const dependsOn = (spec.dependsOn || []).map(id => {
+            const s = findSpec(id);
+            return {
+              specName: s?.specName || id,
+              specNumber: s?.specNumber || undefined,
+              title: s?.title || undefined,
+              status: s?.status || undefined,
+              priority: s?.priority || undefined
+            };
+          });
+
+          const requiredBy = (spec.requiredBy || []).map(id => {
+            const s = findSpec(id);
+            return {
+              specName: s?.specName || id,
+              specNumber: s?.specNumber || undefined,
+              title: s?.title || undefined,
+              status: s?.status || undefined,
+              priority: s?.priority || undefined
+            };
+          });
+
+          setDependencyGraphData({ current, dependsOn, requiredBy });
+        } catch (err) {
+          console.error('Failed to load dependency graph data', err);
+        }
+      };
+      void loadGraph();
+    }
+  }, [dependenciesDialogOpen, dependencyGraphData, spec]);
 
   const subSpecs: SubSpec[] = useMemo(() => {
     const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);
@@ -199,77 +276,203 @@ export function SpecDetailPage() {
   return (
     <>
       {/* Compact Header - sticky on desktop */}
-      <header ref={headerRef} className="lg:sticky lg:top-14 lg:z-20 border-b bg-card">
-        <div className="px-3 sm:px-6 py-2 sm:py-3">
-          {/* Line 1: Spec number + H1 Title */}
-          <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight">
-              {spec.specNumber && (
-                <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
-              )}
-              {displayTitle}
-            </h1>
-          </div>
+      <header ref={headerRef} className="lg:sticky lg:top-0 lg:z-20 border-b bg-card">
+        <div className={cn("px-3 sm:px-6", isFocusMode ? "py-1.5" : "py-2 sm:py-3")}>
+          {/* Focus mode: Single compact row */}
+          {isFocusMode ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <h1 className="text-base font-semibold tracking-tight truncate">
+                  {spec.specNumber && (
+                    <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+                  )}
+                  {displayTitle}
+                </h1>
+                <StatusBadge status={spec.status || 'planned'} />
+                <PriorityBadge priority={spec.priority || 'medium'} />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFocusMode(false)}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                title={t('specDetail.buttons.exitFocus')}
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            /* Normal mode: Full multi-line header */
+            <>
+              {/* Line 1: Spec number + H1 Title */}
+              <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+                  {spec.specNumber && (
+                    <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+                  )}
+                  {displayTitle}
+                </h1>
 
-          {/* Line 2: Status, Priority, Tags */}
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusEditor
-              specName={spec.name}
-              value={spec.status}
-              onChange={(status) => applySpecPatch({ status })}
-            />
-            <PriorityEditor
-              specName={spec.name}
-              value={spec.priority}
-              onChange={(priority) => applySpecPatch({ priority })}
-            />
+                {/* Mobile Specs List Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden h-8 w-8 -mr-2 shrink-0 text-muted-foreground"
+                  onClick={() => {
+                    // Placeholder for sidebar toggle
+                  }}
+                >
+                  <ListIcon className="h-5 w-5" />
+                  <span className="sr-only">{t('specDetail.toggleSidebar')}</span>
+                </Button>
+              </div>
 
-            <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
-            <TagsEditor
-              specName={spec.name}
-              value={tags}
-              onChange={(tags) => applySpecPatch({ tags })}
-            />
-          </div>
+              {/* Line 2: Status, Priority, Tags */}
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusEditor
+                  specName={spec.name}
+                  value={spec.status}
+                  onChange={(status) => applySpecPatch({ status })}
+                />
+                <PriorityEditor
+                  specName={spec.name}
+                  value={spec.priority}
+                  onChange={(priority) => applySpecPatch({ priority })}
+                />
 
-          {/* Line 3: Small metadata row */}
-          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-1.5 sm:mt-2">
-            <span className="hidden sm:inline">
-              {t('specDetail.metadata.created')}: {formatDate(spec.createdAt, i18n.language)}
-            </span>
-            <span className="hidden sm:inline">•</span>
-            <span>
-              {t('specDetail.metadata.updated')}: {formatDate(spec.updatedAt, i18n.language)}
-              {updatedRelative && (
-                <span className="ml-1 text-[11px] text-muted-foreground/80">({updatedRelative})</span>
-              )}
-            </span>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden md:inline">{t('specDetail.metadata.name')}: {spec.name}</span>
-            {spec.metadata?.assignee && (
-              <>
+                <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+                <TagsEditor
+                  specName={spec.name}
+                  value={tags}
+                  onChange={(tags) => applySpecPatch({ tags })}
+                />
+              </div>
+
+              {/* Line 3: Small metadata row */}
+              <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-1.5 sm:mt-2">
+                <span className="hidden sm:inline">
+                  {t('specDetail.metadata.created')}: {formatDate(spec.createdAt, i18n.language)}
+                </span>
                 <span className="hidden sm:inline">•</span>
-                <span className="hidden sm:inline">{t('specDetail.metadata.assignee')}: {spec.metadata.assignee}</span>
-              </>
-            )}
-          </div>
+                <span>
+                  {t('specDetail.metadata.updated')}: {formatDate(spec.updatedAt, i18n.language)}
+                  {updatedRelative && (
+                    <span className="ml-1 text-[11px] text-muted-foreground/80">({updatedRelative})</span>
+                  )}
+                </span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden md:inline">{t('specDetail.metadata.name')}: {spec.name}</span>
+                {spec.metadata?.assignee && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline">{t('specDetail.metadata.assignee')}: {spec.metadata.assignee}</span>
+                  </>
+                )}
+              </div>
 
-          {/* Action buttons row */}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasRelationships}
-              className={cn(
-                'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
-                !hasRelationships && 'cursor-not-allowed opacity-50'
-              )}
-            >
-              <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-              {t('specDetail.buttons.viewDependencies')}
-            </Button>
-          </div>
+              {/* Action buttons row */}
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-haspopup="dialog"
+                    aria-expanded={timelineDialogOpen}
+                    onClick={() => setTimelineDialogOpen(true)}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Clock className="mr-1.5 h-3.5 w-3.5" />
+                    {t('specDetail.buttons.viewTimeline')}
+                    <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                  <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{t('specDetail.dialogs.timelineTitle')}</DialogTitle>
+                      <DialogDescription>{t('specDetail.dialogs.timelineDescription')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4">
+                      <SpecTimeline
+                        createdAt={spec.createdAt}
+                        updatedAt={spec.updatedAt}
+                        completedAt={spec.completedAt}
+                        status={spec.status || 'planned'}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={dependenciesDialogOpen} onOpenChange={setDependenciesDialogOpen}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-haspopup="dialog"
+                    aria-expanded={dependenciesDialogOpen}
+                    onClick={() => setDependenciesDialogOpen(true)}
+                    disabled={!hasRelationships}
+                    className={cn(
+                      'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
+                      !hasRelationships && 'cursor-not-allowed opacity-50'
+                    )}
+                  >
+                    <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+                    {t('specDetail.buttons.viewDependencies')}
+                    <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                  <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
+                    <DialogHeader>
+                      <DialogTitle>{t('specDetail.dialogs.dependenciesTitle')}</DialogTitle>
+                      <DialogDescription className="flex flex-col gap-2">
+                        <span>{t('specDetail.dialogs.dependenciesDescription')}</span>
+                        <Link
+                          to={projectId
+                            ? `/projects/${projectId}/dependencies?spec=${spec.specNumber || spec.id}`
+                            : `/dependencies?spec=${spec.specNumber || spec.id}`
+                          }
+                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline w-fit"
+                          onClick={() => setDependenciesDialogOpen(false)}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {t('specDetail.dialogs.dependenciesLink')}
+                        </Link>
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="min-h-0 flex-1">
+                      {dependencyGraphData && (
+                        <SpecDependencyGraph
+                          relationships={dependencyGraphData}
+                          specNumber={spec.specNumber}
+                          specTitle={displayTitle}
+                          onNodeClick={(specId) => {
+                            const url = projectId
+                              ? `/projects/${projectId}/specs/${specId}`
+                              : `/projects/default/specs/${specId}`;
+                            navigate(url);
+                            setDependenciesDialogOpen(false);
+                          }}
+                        />
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Focus Mode Toggle */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFocusMode(true)}
+                  className="hidden lg:inline-flex h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  title={t('specDetail.buttons.focus')}
+                >
+                  <Maximize2 className="mr-1.5 h-3.5 w-3.5" />
+                  {t('specDetail.buttons.focus')}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Horizontal Tabs for Sub-specs */}
@@ -281,8 +484,8 @@ export function SpecDetailPage() {
                 <button
                   onClick={() => handleSubSpecSwitch(null)}
                   className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors ${!currentSubSpec
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }`}
                 >
                   <Home className="h-4 w-4" />
@@ -297,8 +500,8 @@ export function SpecDetailPage() {
                       key={subSpec.file}
                       onClick={() => handleSubSpecSwitch(subSpec.file)}
                       className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors ${currentSubSpec === subSpec.file
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         }`}
                     >
                       <Icon className={`h-4 w-4 ${subSpec.color || ''}`} />
