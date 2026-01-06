@@ -283,7 +283,7 @@ export const api = {
     name: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
-    await fetchAPI(`/api/specs/${encodeURIComponent(name)}`, {
+    await fetchAPI(`/api/specs/${encodeURIComponent(name)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });

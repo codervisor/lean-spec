@@ -10,7 +10,7 @@ tags:
 depends_on:
 - 193-frontend-ui-parity
 created_at: 2025-12-26T06:32:10.135558Z
-updated_at: 2026-01-06T14:59:35.350392Z
+updated_at: 2026-01-06T15:06:55.941151Z
 transitions:
 - status: in-progress
   at: 2025-12-26T06:33:23.302928Z
