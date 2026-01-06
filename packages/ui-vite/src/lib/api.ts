@@ -1,29 +1,25 @@
 // API client for connecting to Rust HTTP server
 
+import { getBackend } from './backend-adapter';
 import type {
-  DependencyGraph,
-  DirectoryListResponse,
   ContextFileContent,
   ContextFileListItem,
   ContextFileListResponse,
-  ListParams,
+  DependencyGraph,
+  DirectoryListResponse,
   NextJsSpec,
   NextJsSpecDetail,
   NextJsStats,
   Project as ProjectType,
-  ProjectMutationResponse,
-  ProjectStatsResponse,
   ProjectValidationResponse,
   ProjectsListResponse,
   ProjectsResponse,
-  ListSpecsResponse,
   RustSpec,
   RustSpecDetail,
   RustStats,
+  SearchResponse,
   SubSpecItem,
 } from '../types/api';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
 export type Spec = NextJsSpec;
 export type SpecDetail = NextJsSpecDetail;
@@ -40,51 +36,6 @@ export class APIError extends Error {
   }
 }
 
-async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const raw = await response.text();
-    let message = raw || response.statusText;
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (typeof parsed.message === 'string') {
-        message = parsed.message;
-      } else if (typeof parsed.error === 'string') {
-        message = parsed.error;
-      } else if (typeof parsed.detail === 'string') {
-        message = parsed.detail;
-      }
-    } catch {
-      // Fall back to raw message
-    }
-
-    throw new APIError(response.status, message || response.statusText);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  const text = await response.text();
-  if (!text) {
-    return undefined as T;
-  }
-
-  try {
-    return JSON.parse(text) as T;
-  } catch (err) {
-    throw new APIError(response.status, err instanceof Error ? err.message : 'Failed to parse response');
-  }
-}
-
 function toDateOrNull(value?: string | Date | null): Date | null {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
@@ -92,7 +43,7 @@ function toDateOrNull(value?: string | Date | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function estimateTokenCount(content: string): number {
+export function estimateTokenCount(content: string): number {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words * 1.15));
 }
@@ -245,126 +196,10 @@ export function normalizeProjectsResponse(
   };
 }
 
-export const api = {
-  async getSpecs(params?: ListParams): Promise<Spec[]> {
-    const query = params
-      ? new URLSearchParams(
-        Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
-          if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
-          return acc;
-        }, [])
-      ).toString()
-      : '';
+export type SearchResult = Omit<SearchResponse, 'results'> & { results: Spec[] };
 
-    const endpoint = query ? `/api/specs?${query}` : '/api/specs';
-    const data = await fetchAPI<ListSpecsResponse>(endpoint);
-    return data.specs.map(adaptSpec);
-  },
-
-  async getSpec(name: string): Promise<SpecDetail> {
-    const data = await fetchAPI<RustSpecDetail>(`/api/specs/${encodeURIComponent(name)}`);
-    return adaptSpecDetail(data);
-  },
-
-  async getStats(): Promise<Stats> {
-    const data = await fetchAPI<RustStats>('/api/stats');
-    return adaptStats(data);
-  },
-
-  async getDependencies(specName?: string): Promise<DependencyGraph> {
-    const endpoint = specName
-      ? `/api/deps/${encodeURIComponent(specName)}`
-      : '/api/deps';
-    const data = await fetchAPI<{ graph: DependencyGraph } | DependencyGraph>(endpoint);
-    return 'graph' in data ? data.graph : data;
-  },
-
-  async updateSpec(
-    name: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
-  ): Promise<void> {
-    await fetchAPI(`/api/specs/${encodeURIComponent(name)}/metadata`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates),
-    });
-  },
-
-  async getProjects(): Promise<ProjectsResponse> {
-    const data = await fetchAPI<ProjectsResponse | ProjectsListResponse>('/api/projects');
-    return normalizeProjectsResponse(data);
-  },
-
-  async switchProject(projectId: string): Promise<void> {
-    await fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/switch`, {
-      method: 'POST',
-    });
-  },
-
-  async createProject(
-    path: string,
-    options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
-  ): Promise<Project> {
-    const data = await fetchAPI<ProjectMutationResponse>('/api/projects', {
-      method: 'POST',
-      body: JSON.stringify({ path, ...options }),
-    });
-    if (!data.project) {
-      throw new Error('Project creation failed: missing project payload');
-    }
-    return adaptProject(data.project);
-  },
-
-  async updateProject(
-    projectId: string,
-    updates: Partial<Pick<Project, 'name' | 'color' | 'favorite' | 'description'>>
-  ): Promise<Project | undefined> {
-    const data = await fetchAPI<ProjectMutationResponse>(`/api/projects/${encodeURIComponent(projectId)}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates),
-    });
-    return data.project ? adaptProject(data.project) : undefined;
-  },
-
-  async deleteProject(projectId: string): Promise<void> {
-    await fetchAPI(`/api/projects/${encodeURIComponent(projectId)}`, {
-      method: 'DELETE',
-    });
-  },
-
-  async validateProject(projectId: string): Promise<ProjectValidationResponse> {
-    return fetchAPI<ProjectValidationResponse>(`/api/projects/${encodeURIComponent(projectId)}/validate`, {
-      method: 'POST',
-    });
-  },
-
-  async getProjectStats(projectId: string): Promise<Stats> {
-    const data = await fetchAPI<ProjectStatsResponse | RustStats>(
-      `/api/projects/${encodeURIComponent(projectId)}/stats`
-    );
-    const statsPayload = 'stats' in data ? data.stats : data;
-    return adaptStats(statsPayload as RustStats);
-  },
-
-  async getContextFiles(): Promise<ContextFileListItem[]> {
-    const data = await fetchAPI<ContextFileListResponse>('/api/context');
-    return (data.files || []).map(adaptContextFileListItem);
-  },
-
-  async getContextFile(path: string): Promise<ContextFileContent> {
-    const safePath = encodeURIComponent(path);
-    const data = await fetchAPI<ContextFileListItem & { content: string; fileType?: string | null }>(
-      `/api/context/${safePath}`
-    );
-    return adaptContextFileContent(data);
-  },
-
-  async listDirectory(path = ''): Promise<DirectoryListResponse> {
-    return fetchAPI<DirectoryListResponse>('/api/local-projects/list-directory', {
-      method: 'POST',
-      body: JSON.stringify({ path }),
-    });
-  },
-};
+export const api = getBackend();
+export { getBackend } from './backend-adapter';
 
 // Re-export types for convenience
 export type {

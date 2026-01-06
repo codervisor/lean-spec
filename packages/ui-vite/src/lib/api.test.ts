@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { api } from './api';
+import { APIError, api } from './api';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -13,20 +13,61 @@ describe('API Client', () => {
   describe('getProjects', () => {
     it('should fetch projects successfully', async () => {
       const mockResponse = {
-        current: { id: 'proj1', name: 'Project 1', path: '/path/1' },
+        current: { id: 'proj1', name: 'Project 1', displayName: 'Project 1', path: '/path/1', specsDir: '/path/1' },
         available: [
-          { id: 'proj1', name: 'Project 1', path: '/path/1' },
-          { id: 'proj2', name: 'Project 2', path: '/path/2' },
+          { id: 'proj1', name: 'Project 1', displayName: 'Project 1', path: '/path/1', specsDir: '/path/1' },
+          { id: 'proj2', name: 'Project 2', displayName: 'Project 2', path: '/path/2', specsDir: '/path/2' },
         ],
       };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        status: 200,
+        text: async () => JSON.stringify(mockResponse),
       });
 
       const result = await api.getProjects();
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({
+        current: expect.objectContaining({
+          id: 'proj1',
+          name: 'Project 1',
+          displayName: 'Project 1',
+          path: '/path/1',
+          specsDir: '/path/1',
+        }),
+        available: [
+          expect.objectContaining({
+            id: 'proj1',
+            name: 'Project 1',
+            displayName: 'Project 1',
+            path: '/path/1',
+            specsDir: '/path/1',
+          }),
+          expect.objectContaining({
+            id: 'proj2',
+            name: 'Project 2',
+            displayName: 'Project 2',
+            path: '/path/2',
+            specsDir: '/path/2',
+          }),
+        ],
+        projects: [
+          expect.objectContaining({
+            id: 'proj1',
+            name: 'Project 1',
+            displayName: 'Project 1',
+            path: '/path/1',
+            specsDir: '/path/1',
+          }),
+          expect.objectContaining({
+            id: 'proj2',
+            name: 'Project 2',
+            displayName: 'Project 2',
+            path: '/path/2',
+            specsDir: '/path/2',
+          }),
+        ],
+      });
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/projects'),
         expect.any(Object)
@@ -41,7 +82,7 @@ describe('API Client', () => {
         text: async () => 'Server error',
       });
 
-      await expect(api.getProjects()).rejects.toThrow();
+      await expect(api.getProjects()).rejects.toBeInstanceOf(APIError);
     });
   });
 
@@ -49,24 +90,25 @@ describe('API Client', () => {
     it('should fetch specs successfully', async () => {
       const mockSpecs = [
         {
-          name: '123-feature',
+          specName: '123-feature',
           title: 'Test Spec',
           status: 'planned' as const,
           priority: 'high' as const,
           tags: ['ui'],
-          created: '2025-01-01T00:00:00Z',
-          updated: '2025-01-02T00:00:00Z',
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: '2025-01-02T00:00:00Z',
         },
       ];
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ specs: mockSpecs }),
+        status: 200,
+        text: async () => JSON.stringify({ specs: mockSpecs }),
       });
 
       const result = await api.getSpecs();
       expect(result).toEqual([
-        {
+        expect.objectContaining({
           id: '123-feature',
           name: '123-feature',
           specNumber: 123,
@@ -77,7 +119,7 @@ describe('API Client', () => {
           tags: ['ui'],
           createdAt: new Date('2025-01-01T00:00:00Z'),
           updatedAt: new Date('2025-01-02T00:00:00Z'),
-        },
+        }),
       ]);
     });
   });
@@ -85,45 +127,40 @@ describe('API Client', () => {
   describe('getSpec', () => {
     it('should fetch spec details successfully', async () => {
       const mockSpec = {
-        name: '123-feature',
+        specName: '123-feature',
         title: 'Test Spec',
         status: 'planned' as const,
         priority: 'medium' as const,
         tags: ['backend'],
-        created: '2025-01-01T00:00:00Z',
-        updated: '2025-01-03T00:00:00Z',
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-03T00:00:00Z',
         content: '# Test',
-        metadata: {
-          created_at: '2025-01-01T00:00:00Z',
-          updated_at: '2025-01-03T00:00:00Z',
-        },
       };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ spec: mockSpec }),
+        status: 200,
+        text: async () => JSON.stringify(mockSpec),
       });
 
       const result = await api.getSpec('123-feature');
-      expect(result).toEqual({
-        id: '123-feature',
-        name: '123-feature',
-        specNumber: 123,
-        specName: '123-feature',
-        title: 'Test Spec',
-        status: 'planned',
-        priority: 'medium',
-        tags: ['backend'],
-        createdAt: new Date('2025-01-01T00:00:00Z'),
-        updatedAt: new Date('2025-01-03T00:00:00Z'),
-        content: '# Test',
-        metadata: {
-          created_at: '2025-01-01T00:00:00Z',
-          updated_at: '2025-01-03T00:00:00Z',
-        },
-        dependsOn: [],
-        requiredBy: [],
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: '123-feature',
+          name: '123-feature',
+          specNumber: 123,
+          specName: '123-feature',
+          title: 'Test Spec',
+          status: 'planned',
+          priority: 'medium',
+          tags: ['backend'],
+          createdAt: new Date('2025-01-01T00:00:00Z'),
+          updatedAt: new Date('2025-01-03T00:00:00Z'),
+          content: '# Test',
+          dependsOn: [],
+          requiredBy: [],
+        })
+      );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/specs/123-feature'),
         expect.any(Object)
@@ -137,7 +174,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({}),
+        status: 204,
+        text: async () => '',
       });
 
       await api.updateSpec('spec-001', updates);
@@ -172,7 +210,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockStats,
+        status: 200,
+        text: async () => JSON.stringify(mockStats),
       });
 
       const result = await api.getStats();
@@ -207,7 +246,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ graph: mockGraph }),
+        status: 200,
+        text: async () => JSON.stringify({ graph: mockGraph }),
       });
 
       const result = await api.getDependencies();
@@ -222,7 +262,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ graph: mockGraph }),
+        status: 200,
+        text: async () => JSON.stringify({ graph: mockGraph }),
       });
 
       await api.getDependencies('spec-001');

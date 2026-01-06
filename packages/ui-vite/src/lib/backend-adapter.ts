@@ -2,21 +2,37 @@
 // This allows the same UI code to work in both browser and Tauri contexts
 
 import type {
+  ContextFileContent,
+  ContextFileListItem,
   DependencyGraph,
+  DirectoryListResponse,
   ListParams,
+  ListSpecsResponse,
   NextJsSpec as Spec,
   NextJsSpecDetail as SpecDetail,
   NextJsStats as Stats,
   Project,
+  ProjectMutationResponse,
   ProjectStatsResponse,
+  ProjectValidationResponse,
   ProjectsListResponse,
   ProjectsResponse,
-  ListSpecsResponse,
   RustSpec,
   RustSpecDetail,
   RustStats,
+  SearchResponse,
 } from '../types/api';
-import { adaptSpec, adaptSpecDetail, adaptStats, normalizeProjectsResponse } from './api';
+import {
+  APIError,
+  adaptContextFileContent,
+  adaptContextFileListItem,
+  adaptProject,
+  adaptSpec,
+  adaptSpecDetail,
+  adaptStats,
+  normalizeProjectsResponse,
+  type SearchResult,
+} from './api';
 
 /**
  * Backend adapter interface - abstracts the communication layer
@@ -26,16 +42,32 @@ export interface BackendAdapter {
   // Project operations
   getProjects(): Promise<ProjectsResponse>;
   switchProject(projectId: string): Promise<void>;
+  createProject(
+    path: string,
+    options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
+  ): Promise<Project>;
+  updateProject(
+    projectId: string,
+    updates: Partial<Pick<Project, 'name' | 'color' | 'favorite' | 'description'>>
+  ): Promise<Project | undefined>;
+  deleteProject(projectId: string): Promise<void>;
+  validateProject(projectId: string): Promise<ProjectValidationResponse>;
 
   // Spec operations
   getSpecs(params?: ListParams): Promise<Spec[]>;
   getSpec(name: string): Promise<SpecDetail>;
   updateSpec(name: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
+  searchSpecs(query: string, filters?: Record<string, unknown>): Promise<SearchResult>;
 
   // Stats and dependencies
   getStats(): Promise<Stats>;
   getProjectStats?(projectId: string): Promise<Stats>;
   getDependencies(specName?: string): Promise<DependencyGraph>;
+
+  // Context files & local filesystem
+  getContextFiles(): Promise<ContextFileListItem[]>;
+  getContextFile(path: string): Promise<ContextFileContent>;
+  listDirectory(path?: string): Promise<DirectoryListResponse>;
 }
 
 /**
@@ -58,11 +90,39 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || response.statusText);
+      const raw = await response.text();
+      let message = raw || response.statusText;
+
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.message === 'string') {
+          message = parsed.message;
+        } else if (typeof parsed.error === 'string') {
+          message = parsed.error;
+        } else if (typeof parsed.detail === 'string') {
+          message = parsed.detail;
+        }
+      } catch {
+        // Fall back to raw message
+      }
+
+      throw new APIError(response.status, message || response.statusText);
     }
 
-    return response.json();
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (err) {
+      throw new APIError(response.status, err instanceof Error ? err.message : 'Failed to parse response');
+    }
   }
 
   async getProjects(): Promise<ProjectsResponse> {
@@ -76,14 +136,51 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
+  async createProject(
+    path: string,
+    options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
+  ): Promise<Project> {
+    const data = await this.fetchAPI<ProjectMutationResponse>('/api/projects', {
+      method: 'POST',
+      body: JSON.stringify({ path, ...options }),
+    });
+    if (!data.project) {
+      throw new Error('Project creation failed: missing project payload');
+    }
+    return adaptProject(data.project);
+  }
+
+  async updateProject(
+    projectId: string,
+    updates: Partial<Pick<Project, 'name' | 'color' | 'favorite' | 'description'>>
+  ): Promise<Project | undefined> {
+    const data = await this.fetchAPI<ProjectMutationResponse>(`/api/projects/${encodeURIComponent(projectId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    return data.project ? adaptProject(data.project) : undefined;
+  }
+
+  async deleteProject(projectId: string): Promise<void> {
+    await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async validateProject(projectId: string): Promise<ProjectValidationResponse> {
+    return this.fetchAPI<ProjectValidationResponse>(`/api/projects/${encodeURIComponent(projectId)}/validate`, {
+      method: 'POST',
+    });
+  }
+
   async getSpecs(params?: ListParams): Promise<Spec[]> {
     const query = params
       ? new URLSearchParams(
-        Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
-          if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
-          return acc;
-        }, [])
-      ).toString()
+          Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
+            if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
+            return acc;
+          }, [])
+        ).toString()
       : '';
     const endpoint = query ? `/api/specs?${query}` : '/api/specs';
     const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
@@ -110,6 +207,17 @@ export class HttpBackendAdapter implements BackendAdapter {
     return adaptStats(data);
   }
 
+  async searchSpecs(query: string, filters?: Record<string, unknown>): Promise<SearchResult> {
+    const data = await this.fetchAPI<SearchResponse>('/api/search', {
+      method: 'POST',
+      body: JSON.stringify({ query, filters }),
+    });
+    return {
+      ...data,
+      results: data.results.map(adaptSpec),
+    };
+  }
+
   async getProjectStats(projectId: string): Promise<Stats> {
     const data = await this.fetchAPI<ProjectStatsResponse | RustStats>(
       `/api/projects/${encodeURIComponent(projectId)}/stats`
@@ -124,6 +232,26 @@ export class HttpBackendAdapter implements BackendAdapter {
       : '/api/deps';
     const data = await this.fetchAPI<{ graph: DependencyGraph } | DependencyGraph>(endpoint);
     return 'graph' in data ? data.graph : data;
+  }
+
+  async getContextFiles(): Promise<ContextFileListItem[]> {
+    const data = await this.fetchAPI<{ files?: ContextFileListItem[] }>('/api/context');
+    return (data.files || []).map(adaptContextFileListItem);
+  }
+
+  async getContextFile(path: string): Promise<ContextFileContent> {
+    const safePath = encodeURIComponent(path);
+    const data = await this.fetchAPI<ContextFileListItem & { content: string; fileType?: string | null }>(
+      `/api/context/${safePath}`
+    );
+    return adaptContextFileContent(data);
+  }
+
+  async listDirectory(path = ''): Promise<DirectoryListResponse> {
+    return this.fetchAPI<DirectoryListResponse>('/api/local-projects/list-directory', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    });
   }
 }
 
@@ -156,6 +284,28 @@ export class TauriBackendAdapter implements BackendAdapter {
   async switchProject(projectId: string): Promise<void> {
     await this.invoke('desktop_switch_project', { projectId });
     this.currentProjectId = projectId;
+  }
+
+  async createProject(
+    _path: string,
+    _options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
+  ): Promise<Project> {
+    throw new Error('createProject is not implemented for the Tauri backend yet');
+  }
+
+  async updateProject(
+    _projectId: string,
+    _updates: Partial<Pick<Project, 'name' | 'color' | 'favorite' | 'description'>>
+  ): Promise<Project | undefined> {
+    throw new Error('updateProject is not implemented for the Tauri backend yet');
+  }
+
+  async deleteProject(_projectId: string): Promise<void> {
+    throw new Error('deleteProject is not implemented for the Tauri backend yet');
+  }
+
+  async validateProject(_projectId: string): Promise<ProjectValidationResponse> {
+    throw new Error('validateProject is not implemented for the Tauri backend yet');
   }
 
   async getSpecs(_params?: ListParams): Promise<Spec[]> {
@@ -197,6 +347,10 @@ export class TauriBackendAdapter implements BackendAdapter {
     }
   }
 
+  async searchSpecs(_query: string, _filters?: Record<string, unknown>): Promise<SearchResult> {
+    throw new Error('searchSpecs is not implemented for the Tauri backend yet');
+  }
+
   async getStats(): Promise<Stats> {
     if (!this.currentProjectId) {
       throw new Error('No project selected');
@@ -214,6 +368,24 @@ export class TauriBackendAdapter implements BackendAdapter {
     return this.invoke<DependencyGraph>('get_dependency_graph', {
       projectId: this.currentProjectId,
     });
+  }
+
+  async getContextFiles(): Promise<ContextFileListItem[]> {
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
+    throw new Error('getContextFiles is not implemented for the Tauri backend yet');
+  }
+
+  async getContextFile(_path: string): Promise<ContextFileContent> {
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
+    throw new Error('getContextFile is not implemented for the Tauri backend yet');
+  }
+
+  async listDirectory(_path = ''): Promise<DirectoryListResponse> {
+    throw new Error('listDirectory is not implemented for the Tauri backend yet');
   }
 }
 
