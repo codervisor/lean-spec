@@ -140,7 +140,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     (rowProps: { index: number; style: CSSProperties }) => {
       const { index, style } = rowProps;
       const spec = filteredSpecs[index];
-      const isActive = spec?.name === activeSpecId;
+      const isActive = spec?.specName === activeSpecId;
       const displayTitle = spec?.title || spec?.specName;
 
       if (!spec) {
@@ -153,7 +153,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  to={`${basePath}/specs/${spec.name}`}
+                   to={`${basePath}/specs/${spec.specName}`}
                   onClick={() => onMobileOpenChange?.(false)}
                   className={cn(
                     'flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
@@ -206,7 +206,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               <TooltipContent side="right" className="max-w-[300px]">
                 <div className="space-y-1">
                   <div className="font-semibold">{displayTitle}</div>
-                  <div className="text-xs text-muted-foreground">{spec.specName}</div>
+                   <div className="text-xs text-muted-foreground">{spec.specName}</div>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -228,7 +228,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
   useEffect(() => {
     if (initialScrollOffset > 0) return;
-    const targetIndex = filteredSpecs.findIndex((spec) => spec.name === activeSpecId);
+    const targetIndex = filteredSpecs.findIndex((spec) => spec.specName === activeSpecId);
     if (targetIndex >= 0) {
       listRef.current?.scrollToRow({ index: targetIndex, align: 'center', behavior: 'instant' });
     }

@@ -79,7 +79,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
   }, [specs]);
 
   const handleDragStart = (spec: Spec, e: DragEvent<HTMLDivElement>) => {
-    setDraggingId(spec.name);
+    setDraggingId(spec.specName);
     e.dataTransfer.effectAllowed = 'move';
     // Set drag image or data if needed
   };
@@ -97,7 +97,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
     setActiveDropZone(null);
 
     if (draggingId) {
-      const spec = specs.find(s => s.name === draggingId);
+      const spec = specs.find(s => s.specName === draggingId);
       if (spec && spec.status !== status) {
         onStatusChange(spec, status);
       }
@@ -146,24 +146,24 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
               <div className="space-y-2">
                 {statusSpecs.map(spec => (
                   <div
-                    key={spec.name}
-                    draggable
-                    onDragStart={(e) => handleDragStart(spec, e)}
+                     key={spec.specName}
+                     draggable
+                     onDragStart={(e) => handleDragStart(spec, e)}
                     className={cn(
                       "bg-background p-3 rounded border shadow-sm cursor-move hover:border-primary/50 transition-all",
-                      draggingId === spec.name && "opacity-50"
-                    )}
-                  >
-                    <Link to={`${basePath}/specs/${spec.name}`} className="block group">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2">
-                          {spec.title}
+                       draggingId === spec.specName && "opacity-50"
+                     )}
+                   >
+                     <Link to={`${basePath}/specs/${spec.specName}`} className="block group">
+                       <div className="flex items-start justify-between gap-2 mb-2">
+                         <h4 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2">
+                           {spec.title}
                         </h4>
                       </div>
 
                       <div className="flex items-center justify-between mt-2">
                         <div className="text-xs text-muted-foreground font-mono">
-                          {spec.name.split('-')[0]}
+                           {spec.specName.split('-')[0]}
                         </div>
                         {spec.priority && (
                           <PriorityBadge priority={spec.priority} className="text-[10px] px-1.5 py-0" />

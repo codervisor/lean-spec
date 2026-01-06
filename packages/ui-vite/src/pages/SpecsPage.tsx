@@ -76,15 +76,15 @@ export function SpecsPage() {
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     // Optimistic update
     setSpecs(prev => prev.map(s =>
-      s.name === spec.name ? { ...s, status: newStatus } : s
+      s.specName === spec.specName ? { ...s, status: newStatus } : s
     ));
 
     try {
-      await api.updateSpec(spec.name, { status: newStatus });
+      await api.updateSpec(spec.specName, { status: newStatus });
     } catch (err) {
       // Revert on error
       setSpecs(prev => prev.map(s =>
-        s.name === spec.name ? { ...s, status: spec.status } : s
+        s.specName === spec.specName ? { ...s, status: spec.status } : s
       ));
       console.error('Failed to update status:', err);
     }
@@ -117,7 +117,7 @@ export function SpecsPage() {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
-          spec.name.toLowerCase().includes(query) ||
+          spec.specName.toLowerCase().includes(query) ||
           (spec.title ? spec.title.toLowerCase().includes(query) : false) ||
           spec.tags?.some((tag: string) => tag.toLowerCase().includes(query));
         if (!matchesSearch) return false;
@@ -145,17 +145,19 @@ export function SpecsPage() {
         break;
       case 'updated-desc':
         sorted.sort((a, b) => {
-          if (!a.updatedAt) return 1;
-          if (!b.updatedAt) return -1;
-          return b.updatedAt.getTime() - a.updatedAt.getTime();
-        });
-        break;
-      case 'title-asc':
-        sorted.sort((a, b) => {
-          const titleA = (a.title || a.name).toLowerCase();
-          const titleB = (b.title || b.name).toLowerCase();
-          return titleA.localeCompare(titleB);
-        });
+           if (!a.updatedAt) return 1;
+           if (!b.updatedAt) return -1;
+           const aTime = new Date(a.updatedAt).getTime();
+           const bTime = new Date(b.updatedAt).getTime();
+           return bTime - aTime;
+         });
+         break;
+       case 'title-asc':
+       sorted.sort((a, b) => {
+          const titleA = (a.title || a.specName).toLowerCase();
+          const titleB = (b.title || b.specName).toLowerCase();
+         return titleA.localeCompare(titleB);
+       });
         break;
       case 'id-desc':
       default:

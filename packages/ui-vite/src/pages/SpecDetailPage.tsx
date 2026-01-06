@@ -115,7 +115,7 @@ export function SpecDetailPage() {
             allSpecs.find(s => s.id === idOrName || s.specName === idOrName);
 
           const current = {
-            specName: spec.name,
+            specName: spec.specName,
             specNumber: spec.specNumber || undefined,
             status: spec.status || undefined,
             priority: spec.priority || undefined
@@ -335,19 +335,19 @@ export function SpecDetailPage() {
               {/* Line 2: Status, Priority, Tags */}
               <div className="flex flex-wrap items-center gap-2">
                 <StatusEditor
-                  specName={spec.name}
-                  value={spec.status}
-                  onChange={(status) => applySpecPatch({ status })}
-                />
+                 specName={spec.specName}
+                 value={spec.status}
+                 onChange={(status) => applySpecPatch({ status })}
+               />
                 <PriorityEditor
-                  specName={spec.name}
+                  specName={spec.specName}
                   value={spec.priority}
                   onChange={(priority) => applySpecPatch({ priority })}
                 />
 
                 <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
                 <TagsEditor
-                  specName={spec.name}
+                  specName={spec.specName}
                   value={tags}
                   onChange={(tags) => applySpecPatch({ tags })}
                 />
@@ -366,7 +366,7 @@ export function SpecDetailPage() {
                   )}
                 </span>
                 <span className="hidden sm:inline">•</span>
-                <span className="hidden md:inline">{t('specDetail.metadata.name')}: {spec.name}</span>
+                <span className="hidden md:inline">{t('specDetail.metadata.name')}: {spec.specName}</span>
                 {spec.metadata?.assignee && (
                   <>
                     <span className="hidden sm:inline">•</span>

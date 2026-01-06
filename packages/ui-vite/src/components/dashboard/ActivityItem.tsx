@@ -6,13 +6,13 @@ import { useTranslation } from 'react-i18next';
 interface ActivityItemProps {
   spec: DashboardSpec;
   action: string;
-  time: Date | null;
+  time: Date | string | null;
   basePath?: string;
 }
 
 export function ActivityItem({ spec, action, time, basePath = '/projects/default' }: ActivityItemProps) {
-  const displayTitle = spec.title || spec.name;
-  const specUrl = `${basePath}/specs/${spec.name}`;
+  const displayTitle = spec.title || spec.specName;
+  const specUrl = `${basePath}/specs/${spec.specName}`;
   const { i18n } = useTranslation('common');
   const relativeTime = formatRelativeTime(time, i18n.language);
 
@@ -21,7 +21,7 @@ export function ActivityItem({ spec, action, time, basePath = '/projects/default
       <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm">
-          <Link to={specUrl} className="font-medium hover:underline" title={spec.name}>
+          <Link to={specUrl} className="font-medium hover:underline" title={spec.specName}>
             {spec.specNumber && `#${spec.specNumber.toString().padStart(3, '0')} `}
             {displayTitle}
           </Link>{' '}

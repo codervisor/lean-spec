@@ -9,7 +9,7 @@ export interface SubSpecItem {
   content: string;
 }
 
-export interface RustSpec {
+export interface Spec {
   id: string;
   specName: string;
   specNumber?: number | null;
@@ -30,60 +30,20 @@ export interface RustSpec {
   };
 }
 
-export interface RustSpecDetail extends RustSpec {
+export interface SpecDetail extends Spec {
   contentMd?: string;
   content?: string;
   subSpecs?: SubSpecItem[];
+  metadata?: Record<string, unknown>;
 }
 
-export interface RustStats {
+export interface Stats {
   totalProjects: number;
   totalSpecs: number;
   specsByStatus: { status: string; count: number }[];
   specsByPriority: { priority: string; count: number }[];
   completionRate: number;
   projectId?: string;
-}
-
-export interface NextJsSpec {
-  id: string;
-  name: string;
-  specNumber: number | null;
-  specName: string;
-  title: string | null;
-  status: SpecStatus | null;
-  priority: SpecPriority | null;
-  tags: string[] | null;
-  assignee?: string | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  completedAt?: Date | null;
-  filePath?: string;
-  relationships?: {
-    depends_on: string[];
-    required_by?: string[];
-  };
-}
-
-export interface NextJsSpecDetail extends NextJsSpec {
-  content: string;
-  metadata?: {
-    created_at?: string;
-    updated_at?: string;
-    assignee?: string;
-    github_url?: string;
-    [key: string]: unknown;
-  };
-  dependsOn?: string[];
-  requiredBy?: string[];
-  subSpecs?: SubSpecItem[];
-}
-
-export interface NextJsStats {
-  totalSpecs: number;
-  completionRate: number;
-  specsByStatus: { status: string; count: number }[];
-  specsByPriority?: { priority: string; count: number }[];
 }
 
 export interface DependencyNode {
@@ -152,7 +112,7 @@ export interface ProjectValidationResponse {
 }
 
 export interface ProjectStatsResponse {
-  stats: RustStats;
+  stats: Stats;
 }
 
 export interface DirectoryItem {
@@ -194,16 +154,16 @@ export interface ListParams {
 }
 
 export interface ListSpecsResponse {
-  specs: RustSpec[];
+  specs: Spec[];
   total: number;
   projectId?: string;
 }
 
 export interface SearchResponse {
-  results: RustSpec[];
+  results: Spec[];
   total: number;
   query: string;
   projectId?: string;
 }
 
-export type StatsResponse = RustStats;
+export type StatsResponse = Stats;
