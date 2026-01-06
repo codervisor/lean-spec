@@ -53,7 +53,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(STORAGE_KEYS.collapsed) === 'true';
   });
-  const [listHeight, setListHeight] = useState<number>(() => calculateListHeight(false));
+  const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
   const [initialScrollOffset] = useState<number>(() => {
     if (typeof window === 'undefined') return 0;
     const stored = localStorage.getItem(STORAGE_KEYS.scroll);
@@ -85,11 +85,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, []);
 
   useEffect(() => {
-    const handler = () => setListHeight(calculateListHeight(showFilters));
+    const handler = () => setListHeight(calculateListHeight());
     handler();
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
-  }, [showFilters]);
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -430,9 +430,9 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   );
 }
 
-function calculateListHeight(filtersOpen: boolean) {
+function calculateListHeight() {
   if (typeof window === 'undefined') return 600;
   const headerHeight = 56; // top navigation bar
-  const controlsHeight = filtersOpen ? 250 : 170; // search + filters container
+  const controlsHeight = 180;
   return Math.max(window.innerHeight - headerHeight - controlsHeight, 320);
 }

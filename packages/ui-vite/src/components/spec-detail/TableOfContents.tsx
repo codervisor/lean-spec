@@ -8,46 +8,86 @@ import {
   DialogTitle,
   cn,
 } from '@leanspec/ui-components';
-import { extractHeadings, type HeadingItem } from '../../lib/markdown-utils';
 import { useTranslation } from 'react-i18next';
+import GithubSlugger from 'github-slugger';
+
+interface TOCItem {
+  id: string;
+  text: string;
+  level: number;
+}
+
+/**
+ * Extract headings from markdown content
+ */
+function extractHeadings(markdown: string): TOCItem[] {
+  if (!markdown) return [];
+
+  const headings: TOCItem[] = [];
+  const lines = markdown.split('\n');
+  let inCodeBlock = false;
+  const slugger = new GithubSlugger();
+
+  for (const line of lines) {
+    // Track code blocks
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+
+    // Skip lines inside code blocks
+    if (inCodeBlock) continue;
+
+    // Match headings (## Heading or ### Heading, skip # H1)
+    const match = line.match(/^(#{2,6})\s+(.+)$/);
+    if (match) {
+      const level = match[1].length;
+      const text = match[2].trim();
+      const id = slugger.slug(text);
+
+      headings.push({ id, text, level });
+    }
+  }
+
+  return headings;
+}
 
 function scrollToHeading(id: string) {
   const element = document.getElementById(id);
-  if (!element) return;
-  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  if (window.history.replaceState) {
-    window.history.replaceState(null, '', `#${id}`);
-  } else {
-    window.location.hash = id;
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (window.history.replaceState) {
+      window.history.replaceState(null, '', `#${id}`);
+    } else {
+      window.location.hash = id;
+    }
   }
 }
 
 interface TOCListProps {
-  headings: HeadingItem[];
+  headings: TOCItem[];
   onHeadingClick: (id: string) => void;
 }
 
 function TOCList({ headings, onHeadingClick }: TOCListProps) {
   return (
     <nav className="space-y-1">
-      {headings.map((heading) => (
-        <Button
-          key={`${heading.id}-${heading.level}`}
+      {headings.map((heading, index) => (
+        <button
+          key={`${heading.id}-${index}`}
           onClick={() => onHeadingClick(heading.id)}
-          variant="ghost"
-          size="sm"
           className={cn(
-            'w-full justify-start h-auto py-1.5',
+            'w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors flex items-start gap-2 group text-muted-foreground hover:text-foreground',
             heading.level === 2 && 'font-medium text-foreground',
             heading.level === 3 && 'pl-6',
             heading.level === 4 && 'pl-10',
             heading.level === 5 && 'pl-14',
-            heading.level >= 6 && 'pl-16',
-            'text-muted-foreground hover:text-foreground'
+            heading.level === 6 && 'pl-18'
           )}
         >
-          <span className="flex-1 truncate text-left">{heading.text}</span>
-        </Button>
+          <span className="flex-1 truncate">{heading.text}</span>
+        </button>
       ))}
     </nav>
   );
@@ -81,7 +121,10 @@ export function TableOfContents({ content }: TableOfContentsProps) {
 
   const handleHeadingClick = (id: string) => {
     setOpen(false);
-    setTimeout(() => scrollToHeading(id), 100);
+    // Small delay to allow dialog to close before scrolling
+    setTimeout(() => {
+      scrollToHeading(id);
+    }, 100);
   };
 
   return (

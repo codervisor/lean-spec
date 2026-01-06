@@ -205,14 +205,18 @@ export function SpecDetailPage() {
   // Handle scroll padding for sticky header
   useEffect(() => {
     const updateScrollPadding = () => {
-      const navbarHeight = 64; // Approximate navbar height
-      let offset = navbarHeight;
+      const navbarHeight = 56; // 3.5rem / top-14
+      let offset = 0;
 
+      // On large screens, the spec header is also sticky
       if (window.innerWidth >= 1024 && headerRef.current) {
         offset += headerRef.current.offsetHeight - navbarHeight;
       }
 
-      document.documentElement.style.scrollPaddingTop = `${offset}px`;
+      const specDetailMain = document.querySelector<HTMLDivElement>('#spec-detail-main');
+      if (specDetailMain) {
+        specDetailMain.style.scrollPaddingTop = `${offset}px`;
+      }
     };
 
     updateScrollPadding();
@@ -526,8 +530,8 @@ export function SpecDetailPage() {
           className={cn(
             "hidden xl:block w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide",
             subSpecs.length > 0
-              ? "top-[16.375rem] h-[calc(100vh-16.375rem)]"
-              : "top-[13.125rem] h-[calc(100vh-13.125rem)]"
+              ? "top-[calc(16.375rem-3.5rem)] h-[calc(100vh-16.375rem)]"
+              : "top-[calc(13.125rem-3.5rem)] h-[calc(100vh-13.125rem)]"
           )}
         >
           <TableOfContentsSidebar content={displayContent} />
