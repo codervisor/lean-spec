@@ -262,6 +262,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   };
 
   const sidebarVisible = mobileOpen || !collapsed;
+  console.debug('sidebarVisible', sidebarVisible);
 
   return (
     <TooltipProvider delayDuration={700}>
@@ -418,7 +419,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           <Button
             variant="ghost"
             size="sm"
-            className="hidden lg:flex h-6 w-6 p-0 fixed z-20 top-20 -translate-x-1/2 left-[calc(var(--main-sidebar-width,240px))] bg-background border"
+            className="hidden lg:flex h-10 w-5 p-0 absolute z-50 top-2 left-0 bg-background border border-l-0 rounded-r-md rounded-l-none shadow-md hover:w-6 hover:bg-accent transition-all items-center justify-center"
             onClick={() => setCollapsed(false)}
             title={t('specSidebar.expand')}
           >
@@ -433,6 +434,6 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 function calculateListHeight() {
   if (typeof window === 'undefined') return 600;
   const headerHeight = 56; // top navigation bar
-  const controlsHeight = 180;
-  return Math.max(window.innerHeight - headerHeight - controlsHeight, 320);
+  const controlsHeight = 100;
+  return window.innerHeight - headerHeight - controlsHeight;
 }
