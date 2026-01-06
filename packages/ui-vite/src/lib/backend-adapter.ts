@@ -99,7 +99,7 @@ export class HttpBackendAdapter implements BackendAdapter {
     name: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
-    await this.fetchAPI(`/api/specs/${encodeURIComponent(name)}`, {
+    await this.fetchAPI(`/api/specs/${encodeURIComponent(name)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });

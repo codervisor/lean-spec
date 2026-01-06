@@ -10,12 +10,11 @@ tags:
 depends_on:
 - 193-frontend-ui-parity
 created_at: 2025-12-26T06:32:10.135558Z
-updated_at: 2025-12-26T06:33:23.302928Z
+updated_at: 2026-01-06T14:59:35.350392Z
 transitions:
 - status: in-progress
   at: 2025-12-26T06:33:23.302928Z
 ---
-
 ## Overview
 
 After implementing initial UI parity between Next.js and Vite apps in spec 193, several critical issues remain that prevent full feature parity and usability. These issues affect navigation, routing, project management, and layout consistency.

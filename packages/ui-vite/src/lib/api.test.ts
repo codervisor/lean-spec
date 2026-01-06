@@ -143,7 +143,7 @@ describe('API Client', () => {
       await api.updateSpec('spec-001', updates);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/specs/spec-001'),
+        expect.stringContaining('/api/specs/spec-001/metadata'),
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify(updates),

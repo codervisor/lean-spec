@@ -70,6 +70,7 @@ The server reads configuration from `~/.lean-spec/config.json`:
 ### Specs
 - `GET /api/specs` - List specs (with filters)
 - `GET /api/specs/:spec` - Get spec detail
+- `PATCH /api/specs/:spec/metadata` - Update spec metadata
 - `POST /api/search` - Search specs
 - `GET /api/stats` - Project statistics
 - `GET /api/deps/:spec` - Dependency graph
