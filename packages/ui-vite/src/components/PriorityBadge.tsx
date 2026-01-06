@@ -46,7 +46,7 @@ export function PriorityBadge({ priority, className, iconOnly = false }: Priorit
     <Badge
       variant="outline"
       className={cn(
-        'flex items-center w-fit h-5 px-2 py-0.5 text-xs font-medium',
+        'flex items-center w-fit h-5 px-2 py-0.5 text-xs font-medium border-transparent',
         !iconOnly && 'gap-1.5',
         config.className,
         className,
