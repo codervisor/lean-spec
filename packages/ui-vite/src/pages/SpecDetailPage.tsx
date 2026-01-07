@@ -368,12 +368,12 @@ export function SpecDetailPage() {
                 </span>
                 <span className="hidden sm:inline">•</span>
                 <span className="hidden md:inline">{t('specDetail.metadata.name')}: {spec.specName}</span>
-                {spec.metadata?.assignee && (
+                {spec.metadata?.assignee ? (
                   <>
                     <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline">{t('specDetail.metadata.assignee')}: {spec.metadata.assignee}</span>
+                    <span className="hidden sm:inline">{t('specDetail.metadata.assignee')}: {String(spec.metadata.assignee)}</span>
                   </>
-                )}
+                ) : null}
               </div>
 
               {/* Action buttons row */}

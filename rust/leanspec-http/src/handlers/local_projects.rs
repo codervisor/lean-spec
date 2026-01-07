@@ -68,7 +68,7 @@ pub struct ListDirectoryRequest {
 #[serde(rename_all = "camelCase")]
 pub struct ListDirectoryResponse {
     pub path: String,
-    pub entries: Vec<DirectoryEntry>,
+    pub items: Vec<DirectoryEntry>,
 }
 
 /// Directory entry information
@@ -76,6 +76,8 @@ pub struct ListDirectoryResponse {
 #[serde(rename_all = "camelCase")]
 pub struct DirectoryEntry {
     pub name: String,
+    pub path: String,
+    #[serde(rename = "isDirectory")]
     pub is_dir: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size: Option<u64>,
@@ -126,7 +128,20 @@ pub async fn list_directory(
     State(_state): State<AppState>,
     Json(req): Json<ListDirectoryRequest>,
 ) -> ApiResult<Json<ListDirectoryResponse>> {
-    let path = PathBuf::from(&req.path);
+    let mut req_path = req.path;
+    if req_path.is_empty() {
+        req_path = std::env::current_dir()
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError::internal_error(&e.to_string())),
+                )
+            })?
+            .to_string_lossy()
+            .to_string();
+    }
+
+    let path = PathBuf::from(req_path);
 
     if !path.exists() {
         return Err((
@@ -165,6 +180,7 @@ pub async fn list_directory(
             continue;
         }
 
+        let entry_path = entry.path();
         let metadata = entry.metadata().ok();
         let is_dir = metadata.as_ref().map(|m| m.is_dir()).unwrap_or(false);
         let size = metadata
@@ -174,6 +190,7 @@ pub async fn list_directory(
 
         entries.push(DirectoryEntry {
             name,
+            path: entry_path.to_string_lossy().to_string(),
             is_dir,
             size,
             modified,
@@ -189,6 +206,6 @@ pub async fn list_directory(
 
     Ok(Json(ListDirectoryResponse {
         path: path.to_string_lossy().to_string(),
-        entries,
+        items: entries,
     }))
 }

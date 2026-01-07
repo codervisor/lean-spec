@@ -7,7 +7,7 @@ import { CreateProjectDialog } from '../components/projects/CreateProjectDialog'
 import { ProjectAvatar } from '../components/shared/ProjectAvatar';
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { useProject } from '../contexts';
-import type { Project } from '../lib/api';
+import type { Project } from '../types/api';
 
 interface ValidationState {
   status: 'idle' | 'checking' | 'valid' | 'invalid';

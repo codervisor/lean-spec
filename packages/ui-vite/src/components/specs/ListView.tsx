@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import type { Spec } from '../../lib/api';
+import type { Spec } from '../../types/api';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +45,7 @@ export function ListView({ specs, basePath = '/projects/default' }: ListViewProp
           </div>
           {spec.tags && spec.tags.length > 0 && (
             <div className="flex gap-2 mt-3 flex-wrap">
-              {spec.tags.map((tag) => (
+              {spec.tags.map((tag: string) => (
                 <span
                   key={tag}
                   className="text-xs px-2 py-0.5 bg-secondary rounded text-secondary-foreground"

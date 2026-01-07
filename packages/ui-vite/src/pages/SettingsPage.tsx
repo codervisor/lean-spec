@@ -36,7 +36,8 @@ import { useProject } from '../contexts';
 import { CreateProjectDialog } from '../components/projects/CreateProjectDialog';
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { ProjectAvatar } from '../components/shared/ProjectAvatar';
-import { api, type Project, type Stats } from '../lib/api';
+import { api } from '../lib/api';
+import type { Project, Stats } from '../types/api';
 
 dayjs.extend(relativeTime);
 
@@ -116,8 +117,10 @@ export function SettingsPage() {
       for (const project of projects) {
         if (statsCache[project.id]) continue;
         try {
-          const stats = await api.getProjectStats(project.id);
-          setStatsCache((prev) => ({ ...prev, [project.id]: stats }));
+          if (api.getProjectStats) {
+            const stats = await api.getProjectStats(project.id);
+            setStatsCache((prev) => ({ ...prev, [project.id]: stats }));
+          }
         } catch {
           // Stats are best-effort; ignore errors
         }

@@ -6,7 +6,7 @@ import { StatusEditor } from '../metadata-editors/StatusEditor';
 import { PriorityEditor } from '../metadata-editors/PriorityEditor';
 import { TagsEditor } from '../metadata-editors/TagsEditor';
 import { formatDate, formatRelativeTime } from '../../lib/date-utils';
-import type { SpecDetail } from '../../lib/api';
+import type { SpecDetail } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 
 interface EditableMetadataProps {
@@ -15,10 +15,10 @@ interface EditableMetadataProps {
 }
 
 export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) {
-  const created = spec.metadata?.created_at || spec.createdAt;
-  const updated = spec.metadata?.updated_at || spec.updatedAt;
-  const githubUrl = spec.metadata?.github_url;
-  const assignee = spec.metadata?.assignee;
+  const created = (spec.metadata?.created_at as string | undefined) || spec.createdAt;
+  const updated = (spec.metadata?.updated_at as string | undefined) || spec.updatedAt;
+  const githubUrl = spec.metadata?.github_url as string | undefined;
+  const assignee = spec.metadata?.assignee as string | undefined;
   const { t, i18n } = useTranslation('common');
 
   return (

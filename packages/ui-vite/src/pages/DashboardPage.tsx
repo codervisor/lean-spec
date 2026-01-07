@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
-import { api, type Stats } from '../lib/api';
+import { api } from '../lib/api';
+import type { Stats } from '../types/api';
 import { useProject } from '../contexts';
 import { DashboardClient } from '../components/dashboard/DashboardClient';
 import type { DashboardSpec } from '../components/dashboard/SpecListItem';

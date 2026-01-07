@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { api, type Spec } from '../lib/api';
+import { api } from '../lib/api';
+import type { Spec } from '../types/api';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
@@ -145,19 +146,19 @@ export function SpecsPage() {
         break;
       case 'updated-desc':
         sorted.sort((a, b) => {
-           if (!a.updatedAt) return 1;
-           if (!b.updatedAt) return -1;
-           const aTime = new Date(a.updatedAt).getTime();
-           const bTime = new Date(b.updatedAt).getTime();
-           return bTime - aTime;
-         });
-         break;
-       case 'title-asc':
-       sorted.sort((a, b) => {
+          if (!a.updatedAt) return 1;
+          if (!b.updatedAt) return -1;
+          const aTime = new Date(a.updatedAt).getTime();
+          const bTime = new Date(b.updatedAt).getTime();
+          return bTime - aTime;
+        });
+        break;
+      case 'title-asc':
+        sorted.sort((a, b) => {
           const titleA = (a.title || a.specName).toLowerCase();
           const titleB = (b.title || b.specName).toLowerCase();
-         return titleA.localeCompare(titleB);
-       });
+          return titleA.localeCompare(titleB);
+        });
         break;
       case 'id-desc':
       default:

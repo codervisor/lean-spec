@@ -7,7 +7,7 @@ import { ArrowLeft, Clock, Copy, ExternalLink, FileText, Hash, Layers, Type } fr
 import { Badge, Button, Card, CardContent } from '@leanspec/ui-components';
 import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/TableOfContents';
 import { MermaidDiagram } from '../MermaidDiagram';
-import type { ContextFileContent } from '../../lib/api';
+import type { ContextFileContent } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../lib/date-utils';
 

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@leanspec/ui-components';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
-import type { Spec } from '../../lib/api';
+import type { Spec } from '../../types/api';
 
 export type DashboardSpec = Spec;
 
@@ -40,7 +40,7 @@ export function SpecListItem({ spec, basePath = '/projects/default' }: SpecListI
           )}
           {spec.tags && spec.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {spec.tags.slice(0, 3).map((tag) => (
+              {spec.tags.slice(0, 3).map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>

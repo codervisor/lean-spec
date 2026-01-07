@@ -15,7 +15,7 @@ import {
   PlayCircle,
   TrendingUp,
 } from 'lucide-react';
-import type { Stats } from '../../lib/api';
+import type { Stats } from '../../types/api';
 import { StatCard } from './StatCard';
 import { SpecListItem, type DashboardSpec } from './SpecListItem';
 import { ActivityItem } from './ActivityItem';
@@ -63,7 +63,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
     })
     .slice(0, 10);
 
-  const statusCounts = stats.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
+  const statusCounts = stats.specsByStatus.reduce<Record<string, number>>((acc: Record<string, number>, entry: { status: string; count: number }) => {
     acc[entry.status] = entry.count;
     return acc;
   }, {});
@@ -185,7 +185,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
           <CardContent>
             <div className="border-l-2 border-muted pl-4 space-y-1">
               {recentActivity.map((spec) => (
-                <ActivityItem key={spec.id} spec={spec} action={t('dashboard.actionUpdated')} time={spec.updatedAt} basePath={basePath} />
+                <ActivityItem key={spec.id} spec={spec} action={t('dashboard.actionUpdated')} time={spec.updatedAt ?? null} basePath={basePath} />
               ))}
             </div>
           </CardContent>

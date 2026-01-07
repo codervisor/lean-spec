@@ -23,7 +23,8 @@ import {
 import { StatusBadge, getStatusLabel } from './StatusBadge';
 import { PriorityBadge, getPriorityLabel } from './PriorityBadge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-import { api, type Spec } from '../lib/api';
+import { api } from '../lib/api';
+import type { Spec } from '../types/api';
 import { cn } from '../lib/utils';
 import { formatRelativeTime } from '../lib/date-utils';
 import { useTranslation } from 'react-i18next';
@@ -153,7 +154,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                   to={`${basePath}/specs/${spec.specName}`}
+                  to={`${basePath}/specs/${spec.specName}`}
                   onClick={() => onMobileOpenChange?.(false)}
                   className={cn(
                     'flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
@@ -206,7 +207,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               <TooltipContent side="right" className="max-w-[300px]">
                 <div className="space-y-1">
                   <div className="font-semibold">{displayTitle}</div>
-                   <div className="text-xs text-muted-foreground">{spec.specName}</div>
+                  <div className="text-xs text-muted-foreground">{spec.specName}</div>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -219,7 +220,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
-    specs.forEach((spec) => spec.tags?.forEach((tag) => set.add(tag)));
+    specs.forEach((spec) => spec.tags?.forEach((tag: string) => set.add(tag)));
     return Array.from(set).sort();
   }, [specs]);
 

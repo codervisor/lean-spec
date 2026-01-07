@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { AlertCircle, ArrowDown, ArrowUp, Loader2, Minus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { cn } from '../../lib/utils';
-import { api, type Spec } from '../../lib/api';
+import { api } from '../../lib/api';
+import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 
 const PRIORITY_OPTIONS: Array<{ value: NonNullable<Spec['priority']>; labelKey: `priority.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [

@@ -14,7 +14,8 @@ import {
 } from 'recharts';
 import { AlertCircle } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
-import { api, type Stats, type Spec } from '../lib/api';
+import { api } from '../lib/api';
+import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 import { useTranslation } from 'react-i18next';
 
@@ -59,18 +60,18 @@ export function StatsPage() {
   }, [loadStats]);
 
   // Prepare data for charts - must be before any conditional returns
-  const statusCounts = useMemo(() => stats?.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
+  const statusCounts = useMemo(() => stats?.specsByStatus.reduce<Record<string, number>>((acc: Record<string, number>, entry: { status: string; count: number }) => {
     acc[entry.status] = entry.count;
     return acc;
   }, {}) || {}, [stats?.specsByStatus]);
 
-  const statusData = useMemo(() => stats?.specsByStatus.map(({ status, count }) => ({
+  const statusData = useMemo(() => stats?.specsByStatus.map(({ status, count }: { status: string; count: number }) => ({
     name: t(`status.${status}`, { defaultValue: status }),
     value: count,
     fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#6B7280',
   })) || [], [stats?.specsByStatus, t]);
 
-  const priorityData = useMemo(() => (stats?.specsByPriority || []).map(({ priority, count }) => ({
+  const priorityData = useMemo(() => (stats?.specsByPriority || []).map(({ priority, count }: { priority: string; count: number }) => ({
     name: t(`priority.${priority}`, { defaultValue: priority }),
     value: count,
     fill: PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || '#6B7280',
@@ -78,7 +79,7 @@ export function StatsPage() {
 
   const topTags = useMemo(() => {
     const tagFrequency = specs.reduce<Record<string, number>>((acc, spec) => {
-      (spec.tags || []).forEach((tag) => {
+      (spec.tags || []).forEach((tag: string) => {
         acc[tag] = (acc[tag] || 0) + 1;
       });
       return acc;
@@ -218,7 +219,7 @@ export function StatsPage() {
                   outerRadius={80}
                   dataKey="value"
                 >
-                  {statusData.map((entry, index) => (
+                  {statusData.map((entry: { name: string; value: number; fill: string }, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>

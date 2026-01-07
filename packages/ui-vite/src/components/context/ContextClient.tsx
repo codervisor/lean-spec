@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, FileText, Folder, RefreshCcw, Search } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Skeleton } from '@leanspec/ui-components';
-import type { ContextFileContent, ContextFileListItem } from '../../lib/api';
+import type { ContextFileContent, ContextFileListItem } from '../../types/api';
 import { api } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { ContextFileDetail } from './ContextFileDetail';

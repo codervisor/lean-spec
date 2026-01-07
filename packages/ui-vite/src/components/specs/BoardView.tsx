@@ -1,7 +1,7 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, PlayCircle, CheckCircle2, Archive } from 'lucide-react';
-import type { Spec } from '../../lib/api';
+import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../PriorityBadge';
 import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
@@ -146,24 +146,24 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
               <div className="space-y-2">
                 {statusSpecs.map(spec => (
                   <div
-                     key={spec.specName}
-                     draggable
-                     onDragStart={(e) => handleDragStart(spec, e)}
+                    key={spec.specName}
+                    draggable
+                    onDragStart={(e) => handleDragStart(spec, e)}
                     className={cn(
                       "bg-background p-3 rounded border shadow-sm cursor-move hover:border-primary/50 transition-all",
-                       draggingId === spec.specName && "opacity-50"
-                     )}
-                   >
-                     <Link to={`${basePath}/specs/${spec.specName}`} className="block group">
-                       <div className="flex items-start justify-between gap-2 mb-2">
-                         <h4 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2">
-                           {spec.title}
+                      draggingId === spec.specName && "opacity-50"
+                    )}
+                  >
+                    <Link to={`${basePath}/specs/${spec.specName}`} className="block group">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-2">
+                          {spec.title}
                         </h4>
                       </div>
 
                       <div className="flex items-center justify-between mt-2">
                         <div className="text-xs text-muted-foreground font-mono">
-                           {spec.specName.split('-')[0]}
+                          {spec.specName.split('-')[0]}
                         </div>
                         {spec.priority && (
                           <PriorityBadge priority={spec.priority} className="text-[10px] px-1.5 py-0" />
@@ -172,7 +172,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
 
                       {spec.tags && spec.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {spec.tags.slice(0, 3).map(tag => (
+                          {spec.tags.slice(0, 3).map((tag: string) => (
                             <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-secondary rounded text-muted-foreground">
                               {tag}
                             </span>
