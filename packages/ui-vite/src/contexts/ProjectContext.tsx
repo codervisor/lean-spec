@@ -36,13 +36,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const applyProjects = useCallback((data: ProjectsResponse) => {
-    const normalized = data.available || [];
+    const normalized = data.projects || [];
     setProjects(normalized);
     setFavoriteProjects(normalized.filter((project: Project) => project.favorite));
 
     const storedId = localStorage.getItem(STORAGE_KEY);
-    const nextCurrent = data.current
-      || (storedId ? normalized.find((p: Project) => p.id === storedId) || null : null)
+    const nextCurrent = (storedId ? normalized.find((p: Project) => p.id === storedId) || null : null)
       || normalized[0]
       || null;
 

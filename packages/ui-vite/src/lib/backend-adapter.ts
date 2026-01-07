@@ -271,15 +271,15 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async getProjects(): Promise<ProjectsResponse> {
     const data = await this.invoke<{
-      current_project: Project | null;
       projects: Project[];
+      recentProjects?: string[];
+      favoriteProjects?: string[];
     }>('desktop_bootstrap');
 
-    this.currentProjectId = data.current_project?.id || null;
-
     return {
-      current: data.current_project,
-      available: data.projects,
+      projects: data.projects,
+      recentProjects: data.recentProjects,
+      favoriteProjects: data.favoriteProjects,
     };
   }
 

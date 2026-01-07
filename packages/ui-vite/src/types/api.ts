@@ -80,9 +80,9 @@ export interface Project {
 }
 
 export interface ProjectsResponse {
-  current: Project | null;
-  available: Project[];
   projects?: Project[];
+  recentProjects?: string[];
+  favoriteProjects?: string[];
 }
 
 // Axum HTTP server returns { projects, current_project_id } instead of { current, available }

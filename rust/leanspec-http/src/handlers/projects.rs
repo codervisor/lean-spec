@@ -14,8 +14,6 @@ use crate::state::AppState;
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectsListResponse {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mode: Option<String>,
     pub projects: Vec<ProjectResponse>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recent_projects: Option<Vec<String>>,
@@ -63,17 +61,11 @@ impl From<&Project> for ProjectResponse {
 pub async fn list_projects(State(state): State<AppState>) -> Json<ProjectsListResponse> {
     let registry = state.registry.read().await;
     let projects: Vec<ProjectResponse> = registry.all().iter().map(|p| (*p).into()).collect();
-    let mode = if projects.len() > 1 {
-        Some("multi-project".to_string())
-    } else {
-        Some("single-project".to_string())
-    };
     let recent_projects = Some(registry.recent(5).iter().map(|p| p.id.clone()).collect());
     let favorite_projects = Some(registry.favorites().iter().map(|p| p.id.clone()).collect());
 
     Json(ProjectsListResponse {
         projects,
-        mode,
         recent_projects,
         favorite_projects,
     })
