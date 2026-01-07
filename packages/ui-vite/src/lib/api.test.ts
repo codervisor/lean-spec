@@ -27,11 +27,66 @@ describe('API Client', () => {
       });
 
       const result = await api.getProjects();
-      const expectedAvailable = mockResponse.available.map(adaptProject);
       expect(result).toEqual({
-        current: adaptProject(mockResponse.current),
-        available: expectedAvailable,
-        projects: expectedAvailable,
+        current: {
+          id: 'proj1',
+          name: 'Project 1',
+          displayName: 'Project 1',
+          path: '/path/1',
+          specsDir: '/path/1',
+          favorite: false,
+          color: null,
+          description: null,
+          lastAccessed: null,
+        },
+        available: [
+          {
+            id: 'proj1',
+            name: 'Project 1',
+            displayName: 'Project 1',
+            path: '/path/1',
+            specsDir: '/path/1',
+            favorite: false,
+            color: null,
+            description: null,
+            lastAccessed: null,
+          },
+          {
+            id: 'proj2',
+            name: 'Project 2',
+            displayName: 'Project 2',
+            path: '/path/2',
+            specsDir: '/path/2',
+            favorite: false,
+            color: null,
+            description: null,
+            lastAccessed: null,
+          },
+        ],
+        projects: [
+          {
+            id: 'proj1',
+            name: 'Project 1',
+            displayName: 'Project 1',
+            path: '/path/1',
+            specsDir: '/path/1',
+            favorite: false,
+            color: null,
+            description: null,
+            lastAccessed: null,
+          },
+          {
+            id: 'proj2',
+            name: 'Project 2',
+            displayName: 'Project 2',
+            path: '/path/2',
+            specsDir: '/path/2',
+            favorite: false,
+            color: null,
+            description: null,
+            lastAccessed: null,
+          },
+        ],
       });
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/projects'),
@@ -55,13 +110,16 @@ describe('API Client', () => {
     it('should fetch specs successfully', async () => {
       const mockSpecs = [
         {
+          id: '123-feature',
+          specName: '123-feature',
+          specNumber: 123,
           specName: '123-feature',
           title: 'Test Spec',
           status: 'planned' as const,
           priority: 'high' as const,
           tags: ['ui'],
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-02T00:00:00Z',
+          createdAtAt: '2025-01-01T00:00:00Z',
+          updatedAtAt: '2025-01-02T00:00:00Z',
         },
       ];
 
@@ -72,13 +130,14 @@ describe('API Client', () => {
       });
 
       const result = await api.getSpecs();
-      expect(result).toEqual(mockSpecs.map(adaptSpec));
+      expect(result).toEqual(mockSpecs);
     });
   });
 
   describe('getSpec', () => {
     it('should fetch spec details successfully', async () => {
       const mockSpec = {
+        id: '123-feature',
         specName: '123-feature',
         specNumber: 123,
         title: 'Test Spec',
@@ -98,12 +157,11 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 200,
-        text: async () => JSON.stringify(mockSpec),
+        json: async () => ({ spec: mockSpec }),
       });
 
       const result = await api.getSpec('123-feature');
-      expect(result).toEqual(adaptSpecDetail(mockSpec));
+      expect(result).toEqual(mockSpec);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/specs/123-feature'),
         expect.any(Object)

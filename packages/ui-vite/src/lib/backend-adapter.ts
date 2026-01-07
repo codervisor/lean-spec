@@ -7,29 +7,27 @@ import type {
   DependencyGraph,
   DirectoryListResponse,
   ListParams,
-  ListSpecsResponse,
+  Spec,
+  SpecDetail,
+  Stats,
   Project,
   ProjectMutationResponse,
   ProjectStatsResponse,
   ProjectValidationResponse,
-  ProjectsListResponse,
   ProjectsResponse,
-  SearchResponse,
-  Spec,
-  SpecDetail,
-  Stats,
+  ListSpecsResponse,
+  SearchResponse as SearchResult,
 } from '../types/api';
-import {
-  APIError,
-  adaptContextFileContent,
-  adaptContextFileListItem,
-  adaptProject,
-  adaptSpec,
-  adaptSpecDetail,
-  adaptStats,
-  normalizeProjectsResponse,
-  type SearchResult,
-} from './api';
+
+export class APIError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = 'APIError';
+  }
+}
 
 /**
  * Backend adapter interface - abstracts the communication layer
@@ -54,7 +52,6 @@ export interface BackendAdapter {
   getSpecs(params?: ListParams): Promise<Spec[]>;
   getSpec(specName: string): Promise<SpecDetail>;
   updateSpec(specName: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
-  searchSpecs(query: string, filters?: Record<string, unknown>): Promise<SearchResult>;
 
   // Stats and dependencies
   getStats(): Promise<Stats>;
@@ -123,8 +120,8 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async getProjects(): Promise<ProjectsResponse> {
-    const data = await this.fetchAPI<ProjectsResponse | ProjectsListResponse>('/api/projects');
-    return normalizeProjectsResponse(data);
+    const data = await this.fetchAPI<ProjectsResponse>('/api/projects');
+    return data;
   }
 
   async switchProject(projectId: string): Promise<void> {
@@ -144,7 +141,7 @@ export class HttpBackendAdapter implements BackendAdapter {
     if (!data.project) {
       throw new Error('Project creation failed: missing project payload');
     }
-    return adaptProject(data.project);
+    return data.project;
   }
 
   async updateProject(
@@ -155,7 +152,7 @@ export class HttpBackendAdapter implements BackendAdapter {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
-    return data.project ? adaptProject(data.project) : undefined;
+    return data.project;
   }
 
   async deleteProject(projectId: string): Promise<void> {
@@ -173,21 +170,20 @@ export class HttpBackendAdapter implements BackendAdapter {
   async getSpecs(params?: ListParams): Promise<Spec[]> {
     const query = params
       ? new URLSearchParams(
-          Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
-            if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
-            return acc;
-          }, [])
-        ).toString()
+        Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
+          if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
+          return acc;
+        }, [])
+      ).toString()
       : '';
     const endpoint = query ? `/api/specs?${query}` : '/api/specs';
     const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
-    return (data.specs || []).map(adaptSpec);
+    return data.specs || [];
   }
 
   async getSpec(specName: string): Promise<SpecDetail> {
     const data = await this.fetchAPI<SpecDetail | { spec: SpecDetail }>(`/api/specs/${encodeURIComponent(specName)}`);
-    const spec = 'spec' in data ? data.spec : data;
-    return adaptSpecDetail(spec);
+    return 'spec' in data ? data.spec : data;
   }
 
   async updateSpec(
@@ -202,19 +198,7 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async getStats(): Promise<Stats> {
     const data = await this.fetchAPI<Stats | { stats: Stats }>('/api/stats');
-    const stats = 'stats' in data ? data.stats : data;
-    return adaptStats(stats);
-  }
-
-  async searchSpecs(query: string, filters?: Record<string, unknown>): Promise<SearchResult> {
-    const data = await this.fetchAPI<SearchResponse>('/api/search', {
-      method: 'POST',
-      body: JSON.stringify({ query, filters }),
-    });
-    return {
-      ...data,
-      results: data.results.map(adaptSpec),
-    };
+    return 'stats' in data ? data.stats : data;
   }
 
   async getProjectStats(projectId: string): Promise<Stats> {
@@ -222,7 +206,7 @@ export class HttpBackendAdapter implements BackendAdapter {
       `/api/projects/${encodeURIComponent(projectId)}/stats`
     );
     const statsPayload = 'stats' in data ? data.stats : data;
-    return adaptStats(statsPayload);
+    return statsPayload;
   }
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
@@ -235,15 +219,15 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async getContextFiles(): Promise<ContextFileListItem[]> {
     const data = await this.fetchAPI<{ files?: ContextFileListItem[] }>('/api/context');
-    return (data.files || []).map(adaptContextFileListItem);
+    return data.files || [];
   }
 
   async getContextFile(path: string): Promise<ContextFileContent> {
     const safePath = encodeURIComponent(path);
-    const data = await this.fetchAPI<ContextFileListItem & { content: string; fileType?: string | null }>(
+    const data = await this.fetchAPI<ContextFileContent>(
       `/api/context/${safePath}`
     );
-    return adaptContextFileContent(data);
+    return data;
   }
 
   async listDirectory(path = ''): Promise<DirectoryListResponse> {
@@ -313,9 +297,9 @@ export class TauriBackendAdapter implements BackendAdapter {
     }
     // Tauri commands return LightweightSpec[], need to map to Spec[]
     const specs = await this.invoke<Spec[]>('get_specs', {
-      projectId: this.currentProjectId,
+      projectId: this.currentProjectId
     });
-    return specs.map(adaptSpec);
+    return specs;
   }
 
   async getSpec(specName: string): Promise<SpecDetail> {
@@ -326,7 +310,7 @@ export class TauriBackendAdapter implements BackendAdapter {
       projectId: this.currentProjectId,
       specId: specName,
     });
-    return adaptSpecDetail(spec);
+    return spec;
   }
 
   async updateSpec(
@@ -357,7 +341,7 @@ export class TauriBackendAdapter implements BackendAdapter {
     const stats = await this.invoke<Stats>('get_project_stats', {
       projectId: this.currentProjectId,
     });
-    return adaptStats(stats);
+    return stats;
   }
 
   async getDependencies(_specName?: string): Promise<DependencyGraph> {
