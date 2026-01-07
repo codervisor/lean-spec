@@ -17,38 +17,15 @@ use crate::error::{ApiError, ApiResult};
 use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::types::{
-    DependencyResponse, ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest,
-    SearchResponse, SpecDetail, SpecSummary, StatsResponse, SubSpec, ValidationIssue,
-    ValidationResponse,
+    ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse, SpecDetail,
+    SpecSummary, StatsResponse, SubSpec,
 };
+use crate::utils::resolve_project;
 
-/// Resolve a project by ID or fall back to the current/first project
-async fn resolve_project(
-    state: &AppState,
-    project_id: Option<&str>,
-) -> Result<Project, (StatusCode, Json<ApiError>)> {
-    let registry = state.registry.read().await;
-    let project = if let Some(id) = project_id {
-        registry.get(id).cloned()
-    } else {
-        registry
-            .current()
-            .cloned()
-            .or_else(|| registry.all().first().map(|p| (*p).clone()))
-    };
-
-    project.ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ApiError::no_project_selected()),
-        )
-    })
-}
-
-/// Helper to get the spec loader for a project
+/// Helper to get the spec loader for a project (required project_id)
 async fn get_spec_loader(
     state: &AppState,
-    project_id: Option<&str>,
+    project_id: &str,
 ) -> Result<(SpecLoader, Project), (StatusCode, Json<ApiError>)> {
     let project = resolve_project(state, project_id).await?;
     let specs_dir = project.specs_dir.clone();
@@ -276,58 +253,13 @@ fn detect_sub_specs(readme_path: &str) -> Vec<SubSpec> {
     sub_specs
 }
 
-/// GET /api/specs - List all specs with optional filters
-pub async fn list_specs(
-    State(state): State<AppState>,
-    Query(query): Query<ListSpecsQuery>,
-) -> ApiResult<Json<ListSpecsResponse>> {
-    let (loader, project) = get_spec_loader(&state, None).await?;
-
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    let status_filter = parse_status_filter(&query.status)?;
-
-    // Apply filters
-    let filters = SpecFilterOptions {
-        status: status_filter,
-        priority: query
-            .priority
-            .map(|s| s.split(',').filter_map(|s| s.parse().ok()).collect()),
-        tags: query
-            .tags
-            .map(|s| s.split(',').map(|s| s.to_string()).collect()),
-        assignee: query.assignee,
-        search: None,
-    };
-
-    let project_id = project.id.clone();
-    let filtered_specs: Vec<SpecSummary> = all_specs
-        .iter()
-        .filter(|s| filters.matches(s))
-        .map(|s| SpecSummary::from(s).with_project_id(&project_id))
-        .collect();
-
-    let total = filtered_specs.len();
-
-    Ok(Json(ListSpecsResponse {
-        specs: filtered_specs,
-        total,
-        project_id: Some(project_id),
-    }))
-}
-
-/// GET /api/projects/:projectId/specs - List specs for a specific project
+/// GET /api/projects/:projectId/specs - List specs for a project
 pub async fn list_project_specs(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
     Query(query): Query<ListSpecsQuery>,
 ) -> ApiResult<Json<ListSpecsResponse>> {
-    let (loader, project) = get_spec_loader(&state, Some(&project_id)).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
         (
@@ -366,61 +298,12 @@ pub async fn list_project_specs(
     }))
 }
 
-/// GET /api/specs/:spec - Get a spec by ID or number
-pub async fn get_spec(
-    State(state): State<AppState>,
-    Path(spec_id): Path<String>,
-) -> ApiResult<Json<SpecDetail>> {
-    let (loader, project) = get_spec_loader(&state, None).await?;
-
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
-
-    // Get dependency graph to compute required_by
-    let all_specs = loader.load_all().unwrap_or_default();
-    let dep_graph = DependencyGraph::new(&all_specs);
-
-    let mut detail = SpecDetail::from(&spec);
-
-    // Compute required_by
-    if let Some(complete) = dep_graph.get_complete_graph(&spec.path) {
-        let required_by: Vec<String> = complete
-            .required_by
-            .iter()
-            .map(|s| s.path.clone())
-            .collect();
-        detail.required_by = required_by.clone();
-        detail.relationships = Some(crate::types::SpecRelationships {
-            depends_on: detail.depends_on.clone(),
-            required_by: Some(required_by),
-        });
-    }
-
-    let sub_specs = detect_sub_specs(&detail.file_path);
-    if !sub_specs.is_empty() {
-        detail.sub_specs = Some(sub_specs);
-    }
-
-    Ok(Json(detail.with_project_id(project.id)))
-}
-
 /// GET /api/projects/:projectId/specs/:spec - Get a spec within a project
 pub async fn get_project_spec(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
 ) -> ApiResult<Json<SpecDetail>> {
-    let (loader, project) = get_spec_loader(&state, Some(&project_id)).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let spec = loader.load(&spec_id).map_err(|e| {
         (
@@ -464,12 +347,13 @@ pub async fn get_project_spec(
     Ok(Json(detail))
 }
 
-/// POST /api/search - Search specs
-pub async fn search_specs(
+/// POST /api/projects/:projectId/search - Search specs in a project
+pub async fn search_project_specs(
     State(state): State<AppState>,
+    Path(project_id): Path<String>,
     Json(req): Json<SearchRequest>,
 ) -> ApiResult<Json<SearchResponse>> {
-    let (loader, project) = get_spec_loader(&state, req.project_id.as_deref()).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
         (
@@ -552,28 +436,12 @@ pub async fn search_specs(
     }))
 }
 
-/// GET /api/stats - Get project statistics
-pub async fn get_stats(State(state): State<AppState>) -> ApiResult<Json<StatsResponse>> {
-    let (loader, project) = get_spec_loader(&state, None).await?;
-
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    let stats = SpecStats::compute(&all_specs);
-
-    Ok(Json(StatsResponse::from_project_stats(stats, &project.id)))
-}
-
-/// GET /api/projects/:projectId/stats - Project-scoped stats
+/// GET /api/projects/:projectId/stats - Project statistics
 pub async fn get_project_stats(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
 ) -> ApiResult<Json<StatsResponse>> {
-    let (loader, project) = get_spec_loader(&state, Some(&project_id)).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
         (
@@ -585,51 +453,6 @@ pub async fn get_project_stats(
     let stats = SpecStats::compute(&all_specs);
 
     Ok(Json(StatsResponse::from_project_stats(stats, &project.id)))
-}
-
-/// GET /api/deps/:spec - Get dependency graph for a spec
-pub async fn get_dependencies(
-    State(state): State<AppState>,
-    Path(spec_id): Path<String>,
-) -> ApiResult<Json<DependencyResponse>> {
-    let (loader, _project) = get_spec_loader(&state, None).await?;
-
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    // Find the spec
-    let spec = all_specs.iter().find(|s| {
-        s.path == spec_id
-            || s.path.starts_with(&format!("{}-", spec_id))
-            || s.number().map(|n| n.to_string()) == Some(spec_id.clone())
-    });
-
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
-
-    // Build dependency graph
-    let dep_graph = DependencyGraph::new(&all_specs);
-
-    let complete = dep_graph.get_complete_graph(&spec.path).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
-
-    Ok(Json(DependencyResponse {
-        spec: SpecSummary::from(spec),
-        depends_on: complete.depends_on.iter().map(SpecSummary::from).collect(),
-        required_by: complete.required_by.iter().map(SpecSummary::from).collect(),
-    }))
 }
 
 /// GET /api/projects/:projectId/dependencies - Dependency graph for a project
@@ -637,7 +460,7 @@ pub async fn get_project_dependencies(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
 ) -> ApiResult<Json<crate::types::DependencyGraphResponse>> {
-    let (loader, project) = get_spec_loader(&state, Some(&project_id)).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
         (
@@ -682,151 +505,12 @@ pub async fn get_project_dependencies(
     }))
 }
 
-/// GET /api/validate - Validate all specs
-pub async fn validate_all(State(state): State<AppState>) -> ApiResult<Json<ValidationResponse>> {
-    let (loader, _project) = get_spec_loader(&state, None).await?;
-
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    let mut issues = Vec::new();
-
-    let frontmatter_validator = FrontmatterValidator::new();
-    let line_validator = LineCountValidator::new();
-    let structure_validator = StructureValidator::new();
-
-    for spec in &all_specs {
-        // Frontmatter validation
-        let result = frontmatter_validator.validate(spec);
-        for issue in result.issues {
-            issues.push(ValidationIssue {
-                severity: issue.severity.to_string(),
-                message: issue.message,
-                spec: Some(spec.path.clone()),
-            });
-        }
-
-        // Line count validation
-        let result = line_validator.validate(spec);
-        for issue in result.issues {
-            issues.push(ValidationIssue {
-                severity: issue.severity.to_string(),
-                message: issue.message,
-                spec: Some(spec.path.clone()),
-            });
-        }
-
-        // Structure validation
-        let result = structure_validator.validate(spec);
-        for issue in result.issues {
-            issues.push(ValidationIssue {
-                severity: issue.severity.to_string(),
-                message: issue.message,
-                spec: Some(spec.path.clone()),
-            });
-        }
-    }
-
-    // Check for circular dependencies
-    let dep_graph = DependencyGraph::new(&all_specs);
-    let cycles = dep_graph.find_all_cycles();
-    for cycle in cycles {
-        issues.push(ValidationIssue {
-            severity: "error".to_string(),
-            message: format!("Circular dependency detected: {}", cycle.join(" → ")),
-            // Cycles are guaranteed to be non-empty when returned from find_all_cycles
-            spec: cycle.first().cloned(),
-        });
-    }
-
-    let is_valid = issues.iter().all(|i| i.severity != "error");
-
-    Ok(Json(ValidationResponse { is_valid, issues }))
-}
-
-/// GET /api/validate/:spec - Validate a single spec
-pub async fn validate_spec(
-    State(state): State<AppState>,
-    Path(spec_id): Path<String>,
-) -> ApiResult<Json<ValidationResponse>> {
-    let (loader, _project) = get_spec_loader(&state, None).await?;
-
-    let spec = loader.load(&spec_id).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    let spec = spec.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::spec_not_found(&spec_id)),
-        )
-    })?;
-
-    let mut issues = Vec::new();
-
-    let frontmatter_validator = FrontmatterValidator::new();
-    let line_validator = LineCountValidator::new();
-    let structure_validator = StructureValidator::new();
-
-    // Frontmatter validation
-    let result = frontmatter_validator.validate(&spec);
-    for issue in result.issues {
-        issues.push(ValidationIssue::from(&issue));
-    }
-
-    // Line count validation
-    let result = line_validator.validate(&spec);
-    for issue in result.issues {
-        issues.push(ValidationIssue::from(&issue));
-    }
-
-    // Structure validation
-    let result = structure_validator.validate(&spec);
-    for issue in result.issues {
-        issues.push(ValidationIssue::from(&issue));
-    }
-
-    // Check for circular dependencies involving this spec
-    let all_specs = loader.load_all().unwrap_or_default();
-    let dep_graph = DependencyGraph::new(&all_specs);
-    if dep_graph.has_circular_dependency(&spec.path) {
-        issues.push(ValidationIssue {
-            severity: "error".to_string(),
-            message: "Spec is part of a circular dependency".to_string(),
-            spec: None,
-        });
-    }
-
-    let is_valid = issues.iter().all(|i| i.severity != "error");
-
-    Ok(Json(ValidationResponse { is_valid, issues }))
-}
-
-/// POST /api/projects/:projectId/validate - Project validation summary
+/// POST /api/projects/:projectId/validate - Validate all specs in a project
 pub async fn validate_project(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
 ) -> ApiResult<Json<crate::types::ProjectValidationResponse>> {
-    {
-        let registry = state.registry.read().await;
-        if registry.all().len() <= 1 {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Json(ApiError::invalid_request(
-                    "Project validation requires multi-project mode",
-                )),
-            ));
-        }
-    }
-
-    let (loader, project) = get_spec_loader(&state, Some(&project_id)).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
         (
@@ -859,13 +543,13 @@ pub async fn validate_project(
     }))
 }
 
-/// PATCH /api/specs/:spec/metadata - Update spec metadata
-pub async fn update_metadata(
+/// PATCH /api/projects/:projectId/specs/:spec/metadata - Update spec metadata
+pub async fn update_project_metadata(
     State(state): State<AppState>,
-    Path(spec_id): Path<String>,
+    Path((project_id, spec_id)): Path<(String, String)>,
     Json(updates): Json<MetadataUpdate>,
 ) -> ApiResult<Json<crate::types::UpdateMetadataResponse>> {
-    let (loader, project) = get_spec_loader(&state, None).await?;
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     // Verify spec exists
     let spec = loader.load(&spec_id).map_err(|e| {

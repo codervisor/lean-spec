@@ -37,11 +37,6 @@ packages/**/binaries/
 packages/**/binaries/**
 packages/**/binaries/**/package.json
 
-# LeanSpec generated files
-rust/**/leanspec-http
-rust/**/leanspec-mcp
-rust/**/leanspec-cli
-
 # package-lock.json files
 package-lock.json
 

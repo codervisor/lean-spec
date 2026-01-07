@@ -50,7 +50,6 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/projects/{id}", get(handlers::get_project))
         .route("/api/projects/{id}", patch(handlers::update_project))
         .route("/api/projects/{id}", delete(handlers::remove_project))
-        .route("/api/projects/{id}/switch", post(handlers::switch_project))
         .route(
             "/api/projects/{id}/favorite",
             post(handlers::toggle_favorite),
@@ -72,6 +71,14 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/validate",
             post(handlers::validate_project),
         )
+        .route(
+            "/api/projects/{id}/search",
+            post(handlers::search_project_specs),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}/metadata",
+            patch(handlers::update_project_metadata),
+        )
         // Local project routes
         .route(
             "/api/local-projects/discover",
@@ -81,25 +88,6 @@ pub fn create_router(state: AppState) -> Router {
             "/api/local-projects/list-directory",
             post(handlers::list_directory),
         )
-        // Context routes
-        .route("/api/context", get(handlers::list_context_files))
-        .route("/api/context/{*file}", get(handlers::get_context_file))
-        // Spec routes
-        .route("/api/specs", get(handlers::list_specs))
-        .route("/api/specs/{spec}", get(handlers::get_spec))
-        .route(
-            "/api/specs/{spec}/metadata",
-            patch(handlers::update_metadata),
-        )
-        // Search route
-        .route("/api/search", post(handlers::search_specs))
-        // Stats route
-        .route("/api/stats", get(handlers::get_stats))
-        // Dependency routes
-        .route("/api/deps/{spec}", get(handlers::get_dependencies))
-        // Validation routes
-        .route("/api/validate", get(handlers::validate_all))
-        .route("/api/validate/{spec}", get(handlers::validate_spec))
         // Add middleware
         .layer(cors)
         .layer(TraceLayer::new_for_http())

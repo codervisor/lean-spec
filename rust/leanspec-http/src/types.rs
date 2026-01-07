@@ -429,6 +429,4 @@ impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
 pub struct HealthResponse {
     pub status: String,
     pub version: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub current_project: Option<String>,
 }

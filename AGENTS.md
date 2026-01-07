@@ -7,6 +7,7 @@ Lightweight spec methodology for AI-powered development.
 ## ⚠ Core Rules
 
 1. Always use `pnpm` instead of `npm` where applicable
+2. **DRY Principle** - Don't Repeat Yourself: Extract common logic to shared utilities/modules rather than duplicating code
 
 ## 🚨 CRITICAL: Before ANY Task
 

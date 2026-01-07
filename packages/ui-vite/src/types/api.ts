@@ -14,6 +14,7 @@ export interface Spec {
   specName: string;
   specNumber?: number | null;
   title?: string | null;
+  content?: string;
   status: SpecStatus;
   priority?: SpecPriority | null;
   tags?: string[];

@@ -61,7 +61,10 @@ async fn test_add_project_and_get_detail() {
     assert_eq!(status, StatusCode::OK);
     let projects: Value = serde_json::from_str(&body).unwrap();
     assert_eq!(projects["projects"].as_array().unwrap().len(), 1);
-    assert_eq!(projects["currentProjectId"].as_str(), Some(project_id));
+
+    // Verify the project is in the list
+    let project_in_list = &projects["projects"][0];
+    assert_eq!(project_in_list["id"].as_str().unwrap(), project_id);
 }
 
 #[tokio::test]
@@ -124,18 +127,6 @@ async fn test_delete_nonexistent_project() {
     let app = create_router(state);
 
     let (status, _body) = make_request(app, "DELETE", "/api/projects/nonexistent-project-id").await;
-
-    assert_eq!(status, StatusCode::NOT_FOUND);
-}
-
-#[tokio::test]
-async fn test_switch_to_nonexistent_project() {
-    let temp_dir = TempDir::new().unwrap();
-    let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
-
-    let (status, _body) =
-        make_request(app, "POST", "/api/projects/nonexistent-project-id/switch").await;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
 }

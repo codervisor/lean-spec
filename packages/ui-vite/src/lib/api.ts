@@ -1,3 +1,5 @@
+import { getBackend, APIError } from "./backend-adapter";
+
 // API client utilities and adapter exports
 export function parseDate(value?: string | Date | null): Date | null {
   if (!value) return null;
@@ -21,3 +23,7 @@ export function calculateCompletionRate(byStatus: Record<string, number>): numbe
   const complete = byStatus?.complete || 0;
   return total > 0 ? (complete / total) * 100 : 0;
 }
+
+export const api = getBackend();
+
+export { APIError };

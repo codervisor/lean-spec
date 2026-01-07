@@ -27,10 +27,7 @@ impl AppState {
         // Ensure a default project is available for single-project mode
         if registry.all().is_empty() {
             let default_path = default_project_path();
-
-            if let Ok(project) = registry.add(&default_path) {
-                let _ = registry.set_current(&project.id);
-            }
+            let _ = registry.add(&default_path);
         }
 
         Ok(Self {
@@ -45,18 +42,6 @@ impl AppState {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
         }
-    }
-
-    /// Get the current project's specs directory
-    pub async fn current_specs_dir(&self) -> Option<std::path::PathBuf> {
-        let registry = self.registry.read().await;
-        registry.current().map(|p| p.specs_dir.clone())
-    }
-
-    /// Get the current project ID
-    pub async fn current_project_id(&self) -> Option<String> {
-        let registry = self.registry.read().await;
-        registry.current_id().map(|s| s.to_string())
     }
 }
 

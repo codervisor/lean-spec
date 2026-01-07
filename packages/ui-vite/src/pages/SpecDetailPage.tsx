@@ -26,7 +26,7 @@ import {
   PriorityBadge,
   type CompleteSpecRelationships
 } from '@leanspec/ui-components';
-import { APIError, api, type SpecDetail } from '../lib/api';
+import { APIError, api } from '../lib/api';
 import { StatusEditor } from '../components/metadata-editors/StatusEditor';
 import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
 import { TagsEditor } from '../components/metadata-editors/TagsEditor';
@@ -39,6 +39,7 @@ import { BackToTop } from '../components/shared/BackToTop';
 import { useProject } from '../contexts';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatRelativeTime } from '../lib/date-utils';
+import type { SpecDetail } from '../types/api';
 
 // Icon mapping for sub-specs (matching ui package)
 const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -198,7 +199,7 @@ export function SpecDetailPage() {
   }
 
   // Extract title
-  const displayTitle = spec?.title || spec?.name || '';
+  const displayTitle = spec?.title || spec?.specName || '';
   const tags = spec?.tags || [];
   const updatedRelative = spec?.updatedAt ? formatRelativeTime(spec.updatedAt, i18n.language) : null;
 
@@ -335,10 +336,10 @@ export function SpecDetailPage() {
               {/* Line 2: Status, Priority, Tags */}
               <div className="flex flex-wrap items-center gap-2">
                 <StatusEditor
-                 specName={spec.specName}
-                 value={spec.status}
-                 onChange={(status) => applySpecPatch({ status })}
-               />
+                  specName={spec.specName}
+                  value={spec.status}
+                  onChange={(status) => applySpecPatch({ status })}
+                />
                 <PriorityEditor
                   specName={spec.specName}
                   value={spec.priority}

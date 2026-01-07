@@ -158,17 +158,12 @@ fn find_specs_dir(project_path: &Path) -> Result<PathBuf, ServerError> {
 pub struct ProjectsFile {
     /// List of registered projects
     pub projects: Vec<Project>,
-
-    /// Currently active project ID
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub current_project_id: Option<String>,
 }
 
 /// Project registry - manages the collection of projects
 #[derive(Debug)]
 pub struct ProjectRegistry {
     projects: HashMap<String, Project>,
-    current_project_id: Option<String>,
     file_path: PathBuf,
 }
 
@@ -178,7 +173,6 @@ impl ProjectRegistry {
         let file_path = projects_path();
         let mut registry = Self {
             projects: HashMap::new(),
-            current_project_id: None,
             file_path,
         };
 
@@ -204,8 +198,6 @@ impl ProjectRegistry {
             .map(|p| (p.id.clone(), p))
             .collect();
 
-        self.current_project_id = file.current_project_id;
-
         Ok(())
     }
 
@@ -219,7 +211,6 @@ impl ProjectRegistry {
 
         let file = ProjectsFile {
             projects: self.projects.values().cloned().collect(),
-            current_project_id: self.current_project_id.clone(),
         };
 
         let content = serde_json::to_string_pretty(&file)
@@ -243,40 +234,6 @@ impl ProjectRegistry {
         self.projects.get(id)
     }
 
-    /// Get the current project
-    pub fn current(&self) -> Option<&Project> {
-        self.current_project_id
-            .as_ref()
-            .and_then(|id| self.projects.get(id))
-    }
-
-    /// Get the current project ID
-    pub fn current_id(&self) -> Option<&str> {
-        self.current_project_id.as_deref()
-    }
-
-    /// Set the current project
-    pub fn set_current(&mut self, id: &str) -> Result<&Project, ServerError> {
-        if !self.projects.contains_key(id) {
-            return Err(ServerError::RegistryError(format!(
-                "Project not found: {}",
-                id
-            )));
-        }
-
-        // Update last_accessed
-        if let Some(project) = self.projects.get_mut(id) {
-            project.last_accessed = Utc::now();
-        }
-
-        self.current_project_id = Some(id.to_string());
-        self.save()?;
-
-        self.projects
-            .get(id)
-            .ok_or_else(|| ServerError::RegistryError("Project not found".to_string()))
-    }
-
     /// Add a new project
     pub fn add(&mut self, path: &Path) -> Result<Project, ServerError> {
         // Check if project already exists
@@ -292,7 +249,6 @@ impl ProjectRegistry {
         let id = project.id.clone();
 
         self.projects.insert(id.clone(), project.clone());
-        self.current_project_id = Some(id);
         self.save()?;
 
         Ok(project)
@@ -302,11 +258,6 @@ impl ProjectRegistry {
     pub fn remove(&mut self, id: &str) -> Result<(), ServerError> {
         if self.projects.remove(id).is_none() {
             return Err(ServerError::RegistryError("Project not found".to_string()));
-        }
-
-        // Clear current if it was the removed project
-        if self.current_project_id.as_deref() == Some(id) {
-            self.current_project_id = None;
         }
 
         self.save()
@@ -376,9 +327,6 @@ impl ProjectRegistry {
 
         for id in invalid_ids {
             self.projects.remove(&id);
-            if self.current_project_id.as_deref() == Some(&id) {
-                self.current_project_id = None;
-            }
         }
 
         if removed > 0 {
@@ -393,7 +341,6 @@ impl Default for ProjectRegistry {
     fn default() -> Self {
         Self {
             projects: HashMap::new(),
-            current_project_id: None,
             file_path: projects_path(),
         }
     }

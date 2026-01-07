@@ -21,7 +21,6 @@ pub struct ProjectsListResponse {
     pub recent_projects: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub favorite_projects: Option<Vec<String>>,
-    pub current_project_id: Option<String>,
 }
 
 /// Project response type (camelCase for frontend compatibility)
@@ -64,7 +63,6 @@ impl From<&Project> for ProjectResponse {
 pub async fn list_projects(State(state): State<AppState>) -> Json<ProjectsListResponse> {
     let registry = state.registry.read().await;
     let projects: Vec<ProjectResponse> = registry.all().iter().map(|p| (*p).into()).collect();
-    let current_project_id = registry.current_id().map(|s| s.to_string());
     let mode = if projects.len() > 1 {
         Some("multi-project".to_string())
     } else {
@@ -78,7 +76,6 @@ pub async fn list_projects(State(state): State<AppState>) -> Json<ProjectsListRe
         mode,
         recent_projects,
         favorite_projects,
-        current_project_id,
     })
 }
 
@@ -156,22 +153,6 @@ pub async fn remove_project(
     })?;
 
     Ok(StatusCode::NO_CONTENT)
-}
-
-/// POST /api/projects/:id/switch - Switch to a project
-pub async fn switch_project(
-    State(state): State<AppState>,
-    Path(id): Path<String>,
-) -> ApiResult<Json<ProjectResponse>> {
-    let mut registry = state.registry.write().await;
-    let project = registry.set_current(&id).map_err(|e| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::project_not_found(&e.to_string())),
-        )
-    })?;
-
-    Ok(Json(project.into()))
 }
 
 /// POST /api/projects/:id/favorite - Toggle favorite status

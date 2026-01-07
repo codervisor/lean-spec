@@ -32,7 +32,6 @@ transitions:
 - Metadata update (file writing)
 - Project discovery (filesystem scanning)
 - Directory listing (file browser)
-- Context file management
 - Project validation
 
 **Goal**: Implement all missing endpoints so Rust HTTP server has **identical functionality** to Next.js API routes.
@@ -48,11 +47,9 @@ transitions:
 | PATCH `/api/specs/{spec}/metadata`        | Update spec metadata       | **CRITICAL** - Blocks editing      | 2 days    |
 | POST `/api/local-projects/discover`       | Scan for LeanSpec projects | **HIGH** - Blocks onboarding       | 1 day     |
 | POST `/api/local-projects/list-directory` | Browse directories         | **HIGH** - Blocks project creation | 1 day     |
-| GET `/api/context`                        | List context files         | **MEDIUM** - Context page          | 0.5 days  |
-| GET `/api/context/{file}`                 | Get context file content   | **MEDIUM** - Context viewer        | 0.5 days  |
 | POST `/api/projects/{id}/validate`        | Validate project           | **LOW** - Nice to have             | 0.5 days  |
 
-**Total Estimate**: ~5.5 days
+**Total Estimate**: ~4.5 days
 
 ### Implementation Requirements
 
@@ -77,19 +74,7 @@ transitions:
 - Filter hidden files by default (optional param to show)
 - Handle permission errors gracefully
 
-**4. Context API** (GET `/api/context`)
-- List files in `.lean-spec/context/` of current project
-- Return file metadata: name, size, modified time
-- Support recursive subdirectories
-- Handle missing context directory
-
-**5. Context File Detail** (GET `/api/context/{file}`)
-- Read file content from `.lean-spec/context/`
-- Detect file type/language for syntax highlighting hint
-- Return content as string with metadata
-- Handle binary files (return base64 or error)
-
-**6. Project Validation** (POST `/api/projects/{id}/validate`)
+**4. Project Validation** (POST `/api/projects/{id}/validate`)
 - Check if project path exists on filesystem
 - Verify `.lean-spec/` directory exists
 - Check for specs directory
@@ -336,11 +321,10 @@ pub async fn list_directory(
 - [x] Add HTTP handler
 - [x] Write integration tests
 
-### Day 3: Directory Listing & Context
+### Day 3: Directory Listing & Project Validation
 - [x] Implement directory listing handler
 - [x] Add sorting and filtering logic
-- [x] Implement context file listing
-- [x] Implement context file reading
+- [x] Implement project validation endpoint (already existed)
 - [x] Add HTTP handlers
 - [x] Write integration tests
 
@@ -370,8 +354,6 @@ pub async fn list_directory(
 - [x] PATCH `/api/specs/{spec}/metadata` updates and persists
 - [x] POST `/api/local-projects/discover` finds projects
 - [x] POST `/api/local-projects/list-directory` returns entries
-- [x] GET `/api/context` lists context files
-- [x] GET `/api/context/{file}` returns content
 - [x] POST `/api/projects/{id}/validate` validates correctly (pre-existing)
 
 **Error Handling**:
@@ -383,7 +365,7 @@ pub async fn list_directory(
 ## Success Criteria
 
 **Must Have**:
-- [x] All 6 endpoints implemented and functional
+- [x] All 4 endpoints implemented and functional
 - [x] Metadata editing works end-to-end
 - [x] Project discovery finds valid projects
 - [x] Directory listing works for project creation
@@ -403,7 +385,7 @@ pub async fn list_directory(
 1. **Metadata update first**: Most critical, blocks editing
 2. **Discovery next**: Required for onboarding flow
 3. **Directory listing**: Completes project creation flow
-4. **Context API**: Lower priority, enables context features
+4. **Validation**: Polish, improves UX
 5. **Validation**: Polish, improves UX
 
 ### File Writing Safety
@@ -440,15 +422,17 @@ pub async fn list_directory(
   - Lists directory contents with metadata (name, type, size, modified)
   - Hidden file filtering support
   - Sorted output (directories first, then alphabetical)
-- **Context API (MEDIUM)**: Implemented GET `/api/context` and GET `/api/context/{file}`
-  - Lists all files in `.lean-spec/context/` directory
-  - Reads context file content with security checks
-  - Path traversal protection
-  - File type detection from extensions
 - **Test Results**: All 57 leanspec-core tests passing (including 10 new tests)
 - **Build**: Clean release build with no errors
 
-**Status**: All 5 priority endpoints implemented and tested. Project validation endpoint was already implemented.
+**Status**: All 3 priority endpoints implemented and tested. Project validation endpoint was already implemented.
+
+### 2026-01-07: Context API Removal
+- **Removed `.lean-spec/context` API**: The context file API endpoints were added without a real use case
+  - Deleted `rust/leanspec-http/src/handlers/context.rs`
+  - Removed GET `/api/projects/{id}/context` and GET `/api/projects/{id}/context/{file}` routes
+  - The actual "project context" feature (spec 131) reads from root files, not `.lean-spec/context/`
+  - No evidence this directory or API was ever used or needed
 
 ### 2025-12-21: Parity Adjustments
 - Contract tests revealed Rust currently exposes `/api/specs` while Next.js uses multi-project routes (`/api/projects/:projectId/specs` and `/api/projects/:projectId/specs/:specId`). Align Rust to the multi-project shape and return structures (`{ specs }`, `{ spec }`) expected by the Next.js API.

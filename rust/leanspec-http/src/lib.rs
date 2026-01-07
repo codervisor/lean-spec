@@ -29,6 +29,7 @@ pub mod project_registry;
 pub mod routes;
 pub mod state;
 pub mod types;
+pub mod utils;
 
 pub use config::{load_config, ServerConfig};
 pub use error::ServerError;

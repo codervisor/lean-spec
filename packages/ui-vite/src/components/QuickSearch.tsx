@@ -12,16 +12,13 @@ import {
   CommandSeparator,
   Button,
 } from '@leanspec/ui-components';
-import { api, type Spec } from '../lib/api';
 import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
 import { useTranslation } from 'react-i18next';
+import type { Spec } from '../types/api';
+import { api } from '../lib/api';
 
 const RECENT_STORAGE_KEY = 'leanspec-recent-searches';
-
-interface QuickSearchSpec extends Spec {
-  specNumber: number | null;
-}
 
 const formatSpecNumber = (specNumber: number | null) =>
   specNumber != null ? specNumber.toString().padStart(3, '0') : null;
@@ -33,12 +30,11 @@ export function QuickSearch() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [specs, setSpecs] = useState<QuickSearchSpec[]>([]);
+  const [specs, setSpecs] = useState<Spec[]>([]);
   const { t } = useTranslation('common');
 
   useEffect(() => {
-    api
-      .getSpecs()
+    api.getSpecs()
       .then((data) => setSpecs(data))
       .catch(() => {
         // Quick search is best-effort; ignore failures
@@ -117,7 +113,7 @@ export function QuickSearch() {
     localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(entries));
   };
 
-  const handleSelect = (spec: QuickSearchSpec) => {
+  const handleSelect = (spec: Spec) => {
     const label = spec.title || spec.specName;
     const next = [label, ...recentSearches.filter((item) => item !== label)].slice(0, 5);
     persistRecentSearches(next);
