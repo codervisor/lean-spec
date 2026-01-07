@@ -234,12 +234,6 @@ export const api = {
     return normalizeProjectsResponse(data);
   },
 
-  async switchProject(projectId: string): Promise<void> {
-    await fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/switch`, {
-      method: 'POST',
-    });
-  },
-
   async createProject(
     path: string,
     options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
@@ -319,5 +313,4 @@ export type {
   Spec,
   SpecDetail,
   Stats,
-  Project,
 };

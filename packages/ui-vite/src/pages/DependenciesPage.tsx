@@ -14,7 +14,8 @@ import 'reactflow/dist/style.css';
 import dagre from '@dagrejs/dagre';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@leanspec/ui-components';
 import { Network, List, AlertTriangle, GitBranch, RefreshCcw } from 'lucide-react';
-import { api, type DependencyGraph as APIDependencyGraph } from '../lib/api';
+import { getBackend } from '../lib/backend-adapter';
+import type { DependencyGraph as APIDependencyGraph } from '../types/api';
 import { EmptyState } from '../components/shared/EmptyState';
 import { useProject } from '../contexts';
 import { useTranslation } from 'react-i18next';
@@ -87,7 +88,7 @@ export function DependenciesPage() {
     if (!projectReady || projectLoading) return;
 
     setLoading(true);
-    api.getDependencies(specName)
+    getBackend().getDependencies(specName)
       .then((data) => {
         setGraph(data);
 
