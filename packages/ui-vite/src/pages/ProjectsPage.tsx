@@ -385,11 +385,10 @@ export function ProjectsPage() {
                         </PopoverContent>
                       </Popover>
                     </div>
-
                   </div>
                 </CardHeader>
 
-                <CardContent className="px-4 pb-4 flex-1">
+                <CardContent className="p-2 px-4 pb-4 flex-1">
                   <div className="flex items-center gap-4 py-1">
                     <div className="flex flex-col">
                       <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Specs</span>
@@ -398,7 +397,7 @@ export function ProjectsPage() {
                     <div className="w-px h-8 bg-border" />
                     <div className="flex flex-col">
                       <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Completion</span>
-                      <span className="text-lg font-bold tracking-tight">{stats?.completionRate || 0}%</span>
+                      <span className="text-lg font-bold tracking-tight">{(stats?.completionRate || 0).toFixed(1)}%</span>
                     </div>
                   </div>
                 </CardContent>
