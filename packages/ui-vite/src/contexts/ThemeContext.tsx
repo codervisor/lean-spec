@@ -28,8 +28,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Apply theme to document
   useEffect(() => {
     const root = document.documentElement;
+
+    // Add changing-theme class to disable transitions
+    root.classList.add('changing-theme');
+
+    // Update theme classes
     root.classList.remove('light', 'dark');
     root.classList.add(resolvedTheme);
+
+    // Remove changing-theme class after a brief delay to allow DOM to update
+    const timeoutId = setTimeout(() => {
+      root.classList.remove('changing-theme');
+    }, 50);
+
+    return () => clearTimeout(timeoutId);
   }, [resolvedTheme]);
 
   // Listen for system theme changes
@@ -39,8 +51,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       const root = document.documentElement;
+
+      // Add changing-theme class to disable transitions
+      root.classList.add('changing-theme');
+
+      // Update theme classes
       root.classList.remove('light', 'dark');
       root.classList.add(getSystemTheme());
+
+      // Remove changing-theme class after a brief delay
+      setTimeout(() => {
+        root.classList.remove('changing-theme');
+      }, 50);
     };
 
     mediaQuery.addEventListener('change', handleChange);
