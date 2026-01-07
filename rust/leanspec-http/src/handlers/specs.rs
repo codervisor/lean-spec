@@ -8,9 +8,8 @@ use std::fs;
 use std::path::Path as FsPath;
 
 use leanspec_core::{
-    DependencyGraph, FrontmatterValidator, LineCountValidator,
-    MetadataUpdate as CoreMetadataUpdate, SpecFilterOptions, SpecLoader, SpecStats, SpecStatus,
-    SpecWriter, StructureValidator,
+    DependencyGraph, MetadataUpdate as CoreMetadataUpdate, SpecFilterOptions, SpecLoader,
+    SpecStats, SpecStatus, SpecWriter,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -502,44 +501,6 @@ pub async fn get_project_dependencies(
         project_id: Some(project.id),
         nodes,
         edges,
-    }))
-}
-
-/// POST /api/projects/:projectId/validate - Validate all specs in a project
-pub async fn validate_project(
-    State(state): State<AppState>,
-    Path(project_id): Path<String>,
-) -> ApiResult<Json<crate::types::ProjectValidationResponse>> {
-    let (loader, project) = get_spec_loader(&state, &project_id).await?;
-
-    let all_specs = loader.load_all().map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
-
-    let frontmatter_validator = FrontmatterValidator::new();
-    let line_validator = LineCountValidator::new();
-    let structure_validator = StructureValidator::new();
-
-    let mut issues = Vec::new();
-    for spec in &all_specs {
-        issues.extend(frontmatter_validator.validate(spec).issues);
-        issues.extend(line_validator.validate(spec).issues);
-        issues.extend(structure_validator.validate(spec).issues);
-    }
-
-    let validation = crate::types::ProjectValidationSummary {
-        is_valid: issues.is_empty(),
-        error: None,
-        specs_dir: Some(project.specs_dir.to_string_lossy().to_string()),
-    };
-
-    Ok(Json(crate::types::ProjectValidationResponse {
-        project_id: project.id,
-        path: project.path.to_string_lossy().to_string(),
-        validation,
     }))
 }
 

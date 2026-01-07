@@ -173,3 +173,36 @@ pub async fn refresh_projects(State(state): State<AppState>) -> Json<serde_json:
         "message": format!("Removed {} invalid projects", removed)
     }))
 }
+
+/// POST /api/projects/:projectId/validate - Validate a project
+pub async fn validate_project(
+    State(state): State<AppState>,
+    Path(project_id): Path<String>,
+) -> ApiResult<Json<crate::types::ProjectValidationResponse>> {
+    let registry = state.registry.read().await;
+    let project = registry.get(&project_id).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::project_not_found(&project_id)),
+        )
+    })?;
+
+    let validation = match project.validate() {
+        Ok(_) => crate::types::ProjectValidationSummary {
+            is_valid: true,
+            error: None,
+            specs_dir: Some(project.specs_dir.to_string_lossy().to_string()),
+        },
+        Err(error) => crate::types::ProjectValidationSummary {
+            is_valid: false,
+            error: Some(error),
+            specs_dir: None,
+        },
+    };
+
+    Ok(Json(crate::types::ProjectValidationResponse {
+        project_id: project.id.clone(),
+        path: project.path.to_string_lossy().to_string(),
+        validation,
+    }))
+}
