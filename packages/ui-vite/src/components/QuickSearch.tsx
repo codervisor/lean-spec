@@ -88,7 +88,7 @@ export function QuickSearch() {
         keys: [
           { name: 'title', weight: 2 },
           { name: 'specNumber', weight: 1.5 },
-          { name: 'name', weight: 1 },
+          { name: 'specName', weight: 1 },
           { name: 'tags', weight: 0.5 },
         ],
         threshold: 0.4,
@@ -118,12 +118,12 @@ export function QuickSearch() {
   };
 
   const handleSelect = (spec: QuickSearchSpec) => {
-    const label = spec.title || spec.name;
+    const label = spec.title || spec.specName;
     const next = [label, ...recentSearches.filter((item) => item !== label)].slice(0, 5);
     persistRecentSearches(next);
     setOpen(false);
     setSearch('');
-    navigate(`${basePath}/specs/${spec.name}`);
+    navigate(`${basePath}/specs/${spec.specName}`);
   };
 
   const handleTagSelect = (tag: string) => {
@@ -181,10 +181,10 @@ export function QuickSearch() {
           <CommandGroup heading={t('spec.specs')}>
             {results.map((spec) => {
               const specNumber = formatSpecNumber(spec.specNumber ?? null);
-              const label = spec.title || spec.name;
+              const label = spec.title || spec.specName;
               return (
                 <CommandItem
-                  key={spec.name}
+                  key={spec.specName}
                   value={`${specNumber ? `#${specNumber}` : ''} ${label}`.trim()}
                   onSelect={() => handleSelect(spec)}
                 >
@@ -197,7 +197,7 @@ export function QuickSearch() {
                         )}
                         <span className="truncate font-medium">{label}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{spec.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{spec.specName}</div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       {spec.status && <StatusBadge status={spec.status} />}

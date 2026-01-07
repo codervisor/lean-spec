@@ -24,19 +24,19 @@ export function ListView({ specs, basePath = '/projects/default' }: ListViewProp
     <div className="h-full overflow-y-auto space-y-2">
       {specs.map((spec) => (
         <Link
-          key={spec.name}
-          to={`${basePath}/specs/${spec.name}`}
+          key={spec.specName}
+          to={`${basePath}/specs/${spec.specName}`}
           className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors bg-background"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                  {spec.name.split('-')[0]}
+                  {spec.specName.split('-')[0]}
                 </span>
                 <h3 className="font-medium truncate">{spec.title}</h3>
               </div>
-              <p className="text-sm text-muted-foreground truncate">{spec.name}</p>
+              <p className="text-sm text-muted-foreground truncate">{spec.specName}</p>
             </div>
             <div className="flex gap-2 items-center flex-shrink-0">
               {spec.status && <StatusBadge status={spec.status} />}

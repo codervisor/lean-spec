@@ -12,14 +12,14 @@ interface SpecListItemProps {
 }
 
 export function SpecListItem({ spec, basePath = '/projects/default' }: SpecListItemProps) {
-  const displayTitle = spec.title || spec.name;
-  const specUrl = `${basePath}/specs/${spec.name}`;
+  const displayTitle = spec.title || spec.specName;
+  const specUrl = `${basePath}/specs/${spec.specName}`;
 
   return (
     <Link
       to={specUrl}
       className="block p-3 rounded-lg hover:bg-accent transition-colors"
-      title={spec.name}
+      title={spec.specName}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -33,9 +33,9 @@ export function SpecListItem({ spec, basePath = '/projects/default' }: SpecListI
               {displayTitle}
             </h4>
           </div>
-          {displayTitle !== spec.name && (
+          {displayTitle !== spec.specName && (
             <div className="text-xs text-muted-foreground mb-1">
-              {spec.name}
+              {spec.specName}
             </div>
           )}
           {spec.tags && spec.tags.length > 0 && (

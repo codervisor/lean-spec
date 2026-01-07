@@ -7,9 +7,6 @@ import type {
   ContextFileListItem,
   ContextFileListResponse,
   ListParams,
-  NextJsSpec,
-  NextJsSpecDetail,
-  NextJsStats,
   Project as ProjectType,
   ProjectMutationResponse,
   ProjectStatsResponse,
@@ -17,17 +14,13 @@ import type {
   ProjectsListResponse,
   ProjectsResponse,
   ListSpecsResponse,
-  RustSpec,
-  RustSpecDetail,
-  RustStats,
-  SubSpecItem,
+  Spec,
+  SpecDetail,
+  Stats,
 } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
-export type Spec = NextJsSpec;
-export type SpecDetail = NextJsSpecDetail;
-export type Stats = NextJsStats;
 export type Project = ProjectType;
 
 export class APIError extends Error {
@@ -50,11 +43,18 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   });
 
   if (!response.ok) {
-    const raw = await response.text();
+    let raw: string | undefined;
+    if (typeof response.text === 'function') {
+      try {
+        raw = await response.text();
+      } catch {
+        raw = undefined;
+      }
+    }
     let message = raw || response.statusText;
 
     try {
-      const parsed = JSON.parse(raw);
+      const parsed = raw ? JSON.parse(raw) : null;
       if (typeof parsed.message === 'string') {
         message = parsed.message;
       } else if (typeof parsed.error === 'string') {
@@ -73,19 +73,31 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     return undefined as T;
   }
 
-  const text = await response.text();
-  if (!text) {
-    return undefined as T;
+  if (typeof response.json === 'function') {
+    try {
+      return await response.json() as T;
+    } catch {
+      // Fall through to text parsing below
+    }
   }
 
-  try {
-    return JSON.parse(text) as T;
-  } catch (err) {
-    throw new APIError(response.status, err instanceof Error ? err.message : 'Failed to parse response');
+  if (typeof response.text === 'function') {
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (err) {
+      throw new APIError(response.status, err instanceof Error ? err.message : 'Failed to parse response');
+    }
   }
+
+  return undefined as T;
 }
 
-function toDateOrNull(value?: string | Date | null): Date | null {
+export function parseDate(value?: string | Date | null): Date | null {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
   const date = new Date(value);
@@ -108,89 +120,17 @@ export function calculateCompletionRate(byStatus: Record<string, number>): numbe
   return total > 0 ? (complete / total) * 100 : 0;
 }
 
-export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
-  const created = rustSpec.createdAt;
-  const updated = rustSpec.updatedAt;
-  const completed = rustSpec.completedAt;
-
-  return {
-    id: rustSpec.id || rustSpec.specName,
-    name: rustSpec.specName,
-    specNumber: rustSpec.specNumber ?? extractSpecNumber(rustSpec.specName),
-    specName: rustSpec.specName,
-    title: rustSpec.title ?? null,
-    status: rustSpec.status ?? null,
-    priority: rustSpec.priority ?? null,
-    tags: rustSpec.tags ?? null,
-    assignee: rustSpec.assignee ?? null,
-    createdAt: toDateOrNull(created),
-    updatedAt: toDateOrNull(updated),
-    completedAt: toDateOrNull(completed),
-    filePath: rustSpec.filePath,
-    relationships: rustSpec.relationships
-      ? {
-        depends_on: rustSpec.relationships.dependsOn,
-        required_by: rustSpec.relationships.requiredBy,
-      }
-      : undefined,
-  };
-}
-
-export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
-  const content = rustSpec.contentMd ?? rustSpec.content ?? '';
-  const dependsOn = rustSpec.dependsOn ?? [];
-  const requiredBy = rustSpec.requiredBy ?? [];
-
-  const rawSubSpecs = rustSpec.subSpecs as unknown;
-  const subSpecs: SubSpecItem[] = Array.isArray(rawSubSpecs)
-    ? rawSubSpecs.flatMap((entry) => {
-      if (!entry || typeof entry !== 'object') return [];
-      const candidate = entry as Partial<SubSpecItem> & Record<string, unknown>;
-      const name = typeof candidate.name === 'string' ? candidate.name : undefined;
-      const subContent = typeof candidate.content === 'string' ? candidate.content : undefined;
-      if (!name || !subContent) return [];
-
-      const file = typeof candidate.file === 'string' ? candidate.file : name;
-      const iconName = typeof candidate.iconName === 'string'
-        ? candidate.iconName
-        : typeof candidate.icon_name === 'string'
-          ? (candidate.icon_name as string)
-          : undefined;
-      const color = typeof candidate.color === 'string' ? candidate.color : undefined;
-
-      return [{ name, file, iconName, color, content: subContent } satisfies SubSpecItem];
-    })
-    : [];
-
-  return {
-    ...adaptSpec(rustSpec),
-    content,
-    dependsOn,
-    requiredBy,
-    subSpecs: subSpecs.length > 0 ? subSpecs : undefined,
-  };
-}
-
-export function adaptStats(rustStats: RustStats): NextJsStats {
-  return {
-    totalSpecs: rustStats.totalSpecs,
-    completionRate: rustStats.completionRate,
-    specsByStatus: rustStats.specsByStatus,
-    specsByPriority: rustStats.specsByPriority,
-  };
-}
-
 export function adaptContextFileListItem(item: ContextFileListItem): ContextFileListItem & { modifiedAt: Date | null } {
   return {
     ...item,
-    modifiedAt: item.modified ? toDateOrNull(item.modified) : null,
+    modifiedAt: item.modified ? parseDate(item.modified) : null,
   };
 }
 
 export function adaptContextFileContent(
   response: ContextFileListItem & { content: string; fileType?: string | null }
 ): ContextFileContent {
-  const modifiedAt = response.modified ? toDateOrNull(response.modified) : null;
+  const modifiedAt = response.modified ? parseDate(response.modified) : null;
   const content = response.content || '';
   return {
     ...response,
@@ -258,17 +198,17 @@ export const api = {
 
     const endpoint = query ? `/api/specs?${query}` : '/api/specs';
     const data = await fetchAPI<ListSpecsResponse>(endpoint);
-    return data.specs.map(adaptSpec);
+    return data.specs || [];
   },
 
   async getSpec(name: string): Promise<SpecDetail> {
-    const data = await fetchAPI<RustSpecDetail>(`/api/specs/${encodeURIComponent(name)}`);
-    return adaptSpecDetail(data);
+    const data = await fetchAPI<SpecDetail | { spec: SpecDetail }>(`/api/specs/${encodeURIComponent(name)}`);
+    return 'spec' in data ? data.spec : data;
   },
 
   async getStats(): Promise<Stats> {
-    const data = await fetchAPI<RustStats>('/api/stats');
-    return adaptStats(data);
+    const data = await fetchAPI<Stats | { stats: Stats }>('/api/stats');
+    return 'stats' in data ? data.stats : data;
   },
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
@@ -338,11 +278,11 @@ export const api = {
   },
 
   async getProjectStats(projectId: string): Promise<Stats> {
-    const data = await fetchAPI<ProjectStatsResponse | RustStats>(
+    const data = await fetchAPI<ProjectStatsResponse | Stats>(
       `/api/projects/${encodeURIComponent(projectId)}/stats`
     );
     const statsPayload = 'stats' in data ? data.stats : data;
-    return adaptStats(statsPayload as RustStats);
+    return statsPayload;
   },
 
   async getContextFiles(): Promise<ContextFileListItem[]> {
@@ -376,4 +316,8 @@ export type {
   ContextFileListItem,
   ContextFileListResponse,
   ContextFileContent,
+  Spec,
+  SpecDetail,
+  Stats,
+  Project,
 };
