@@ -12,7 +12,7 @@ depends_on:
   - 193-frontend-ui-parity
   - 198-ui-vite-remaining-issues
 created_at: '2026-01-06T15:10:01.548099Z'
-updated_at: '2026-01-06T15:25:16.946Z'
+updated_at: '2026-01-07T08:12:23.262Z'
 transitions:
   - status: in-progress
     at: '2026-01-06T15:25:16.946Z'
@@ -139,6 +139,8 @@ Test all 18 importing files still work with **zero breaking changes**.
 - Tauri adapter provides explicit “not implemented” stubs for newly added methods to make gaps visible without breaking type contracts.
 - `api.ts` now delegates to `getBackend()` and only exports utilities/types; `api` remains the default singleton for existing imports.
 - Updated `api.test.ts` expectations to align with Rust payload shapes and the adapter-driven API layer.
+- Resolved merge conflicts with `origin/main` while keeping the adapter delegation pattern and normalizing types/fixtures.
+- Tests not re-run locally in this merge (pnpm/vitest install required); rely on CI for verification.
 
 ## Test
 

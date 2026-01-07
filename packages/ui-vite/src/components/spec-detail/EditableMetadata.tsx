@@ -30,7 +30,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
             <dd className="flex items-center gap-2">
               {spec.status && <StatusBadge status={spec.status} />}
               <StatusEditor
-                specName={spec.name}
+                specName={spec.specName}
                 value={spec.status}
                 onChange={(status) => onSpecChange?.({ status })}
               />
@@ -42,7 +42,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
             <dd className="flex items-center gap-2">
               {spec.priority && <PriorityBadge priority={spec.priority} />}
               <PriorityEditor
-                specName={spec.name}
+                specName={spec.specName}
                 value={spec.priority}
                 onChange={(priority) => onSpecChange?.({ priority })}
               />
@@ -96,7 +96,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
             </dt>
             <dd>
               <TagsEditor
-                specName={spec.name}
+                specName={spec.specName}
                 value={spec.tags}
                 onChange={(tags) => onSpecChange?.({ tags })}
               />

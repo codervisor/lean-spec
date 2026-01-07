@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { APIError, api } from './api';
+import { APIError, adaptProject, adaptSpec, adaptSpecDetail, api } from './api';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -27,46 +27,11 @@ describe('API Client', () => {
       });
 
       const result = await api.getProjects();
+      const expectedAvailable = mockResponse.available.map(adaptProject);
       expect(result).toEqual({
-        current: expect.objectContaining({
-          id: 'proj1',
-          name: 'Project 1',
-          displayName: 'Project 1',
-          path: '/path/1',
-          specsDir: '/path/1',
-        }),
-        available: [
-          expect.objectContaining({
-            id: 'proj1',
-            name: 'Project 1',
-            displayName: 'Project 1',
-            path: '/path/1',
-            specsDir: '/path/1',
-          }),
-          expect.objectContaining({
-            id: 'proj2',
-            name: 'Project 2',
-            displayName: 'Project 2',
-            path: '/path/2',
-            specsDir: '/path/2',
-          }),
-        ],
-        projects: [
-          expect.objectContaining({
-            id: 'proj1',
-            name: 'Project 1',
-            displayName: 'Project 1',
-            path: '/path/1',
-            specsDir: '/path/1',
-          }),
-          expect.objectContaining({
-            id: 'proj2',
-            name: 'Project 2',
-            displayName: 'Project 2',
-            path: '/path/2',
-            specsDir: '/path/2',
-          }),
-        ],
+        current: adaptProject(mockResponse.current),
+        available: expectedAvailable,
+        projects: expectedAvailable,
       });
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/projects'),
@@ -107,20 +72,7 @@ describe('API Client', () => {
       });
 
       const result = await api.getSpecs();
-      expect(result).toEqual([
-        expect.objectContaining({
-          id: '123-feature',
-          name: '123-feature',
-          specNumber: 123,
-          specName: '123-feature',
-          title: 'Test Spec',
-          status: 'planned',
-          priority: 'high',
-          tags: ['ui'],
-          createdAt: new Date('2025-01-01T00:00:00Z'),
-          updatedAt: new Date('2025-01-02T00:00:00Z'),
-        }),
-      ]);
+      expect(result).toEqual(mockSpecs.map(adaptSpec));
     });
   });
 
@@ -128,6 +80,7 @@ describe('API Client', () => {
     it('should fetch spec details successfully', async () => {
       const mockSpec = {
         specName: '123-feature',
+        specNumber: 123,
         title: 'Test Spec',
         status: 'planned' as const,
         priority: 'medium' as const,
@@ -135,6 +88,12 @@ describe('API Client', () => {
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-03T00:00:00Z',
         content: '# Test',
+        metadata: {
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-03T00:00:00Z',
+        },
+        dependsOn: [],
+        requiredBy: [],
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -144,23 +103,7 @@ describe('API Client', () => {
       });
 
       const result = await api.getSpec('123-feature');
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: '123-feature',
-          name: '123-feature',
-          specNumber: 123,
-          specName: '123-feature',
-          title: 'Test Spec',
-          status: 'planned',
-          priority: 'medium',
-          tags: ['backend'],
-          createdAt: new Date('2025-01-01T00:00:00Z'),
-          updatedAt: new Date('2025-01-03T00:00:00Z'),
-          content: '# Test',
-          dependsOn: [],
-          requiredBy: [],
-        })
-      );
+      expect(result).toEqual(adaptSpecDetail(mockSpec));
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/specs/123-feature'),
         expect.any(Object)
@@ -215,20 +158,7 @@ describe('API Client', () => {
       });
 
       const result = await api.getStats();
-      expect(result).toEqual({
-        totalSpecs: 10,
-        completionRate: 20,
-        specsByStatus: [
-          { status: 'planned', count: 5 },
-          { status: 'in-progress', count: 3 },
-          { status: 'complete', count: 2 },
-        ],
-        specsByPriority: [
-          { priority: 'high', count: 3 },
-          { priority: 'medium', count: 4 },
-          { priority: 'low', count: 3 },
-        ],
-      });
+      expect(result).toEqual(mockStats);
     });
   });
 

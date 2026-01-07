@@ -1,4 +1,4 @@
-// API client for connecting to Rust HTTP server
+// API client utilities and adapter exports
 
 import { getBackend } from './backend-adapter';
 import type {
@@ -7,23 +7,17 @@ import type {
   ContextFileListResponse,
   DependencyGraph,
   DirectoryListResponse,
-  NextJsSpec,
-  NextJsSpecDetail,
-  NextJsStats,
   Project as ProjectType,
   ProjectValidationResponse,
   ProjectsListResponse,
   ProjectsResponse,
-  RustSpec,
-  RustSpecDetail,
-  RustStats,
   SearchResponse,
+  Spec,
+  SpecDetail,
+  Stats,
   SubSpecItem,
 } from '../types/api';
 
-export type Spec = NextJsSpec;
-export type SpecDetail = NextJsSpecDetail;
-export type Stats = NextJsStats;
 export type Project = ProjectType;
 
 export class APIError extends Error {
@@ -36,7 +30,7 @@ export class APIError extends Error {
   }
 }
 
-function toDateOrNull(value?: string | Date | null): Date | null {
+export function parseDate(value?: string | Date | null): Date | null {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
   const date = new Date(value);
@@ -59,89 +53,82 @@ export function calculateCompletionRate(byStatus: Record<string, number>): numbe
   return total > 0 ? (complete / total) * 100 : 0;
 }
 
-export function adaptSpec(rustSpec: RustSpec): NextJsSpec {
-  const created = rustSpec.createdAt;
-  const updated = rustSpec.updatedAt;
-  const completed = rustSpec.completedAt;
+export function adaptSpec(rustSpec: Spec): Spec {
+  const specNumber = rustSpec.specNumber ?? extractSpecNumber(rustSpec.specName);
 
   return {
+    ...rustSpec,
     id: rustSpec.id || rustSpec.specName,
-    name: rustSpec.specName,
-    specNumber: rustSpec.specNumber ?? extractSpecNumber(rustSpec.specName),
-    specName: rustSpec.specName,
-    title: rustSpec.title ?? null,
-    status: rustSpec.status ?? null,
+    specNumber: specNumber ?? null,
+    title: rustSpec.title ?? rustSpec.specName ?? null,
     priority: rustSpec.priority ?? null,
-    tags: rustSpec.tags ?? null,
-    assignee: rustSpec.assignee ?? null,
-    createdAt: toDateOrNull(created),
-    updatedAt: toDateOrNull(updated),
-    completedAt: toDateOrNull(completed),
-    filePath: rustSpec.filePath,
-    relationships: rustSpec.relationships
-      ? {
-        depends_on: rustSpec.relationships.dependsOn,
-        required_by: rustSpec.relationships.requiredBy,
-      }
-      : undefined,
+    tags: rustSpec.tags ?? [],
+    createdAt: rustSpec.createdAt ?? undefined,
+    updatedAt: rustSpec.updatedAt ?? undefined,
+    completedAt: rustSpec.completedAt ?? undefined,
+    dependsOn: rustSpec.dependsOn ?? rustSpec.relationships?.dependsOn,
+    requiredBy: rustSpec.requiredBy ?? rustSpec.relationships?.requiredBy,
   };
 }
 
-export function adaptSpecDetail(rustSpec: RustSpecDetail): NextJsSpecDetail {
+export function adaptSpecDetail(rustSpec: SpecDetail): SpecDetail {
   const content = rustSpec.contentMd ?? rustSpec.content ?? '';
-  const dependsOn = rustSpec.dependsOn ?? [];
-  const requiredBy = rustSpec.requiredBy ?? [];
-
-  const rawSubSpecs = rustSpec.subSpecs as unknown;
-  const subSpecs: SubSpecItem[] = Array.isArray(rawSubSpecs)
-    ? rawSubSpecs.flatMap((entry) => {
-      if (!entry || typeof entry !== 'object') return [];
-      const candidate = entry as Partial<SubSpecItem> & Record<string, unknown>;
-      const name = typeof candidate.name === 'string' ? candidate.name : undefined;
-      const subContent = typeof candidate.content === 'string' ? candidate.content : undefined;
-      if (!name || !subContent) return [];
-
-      const file = typeof candidate.file === 'string' ? candidate.file : name;
-      const iconName = typeof candidate.iconName === 'string'
-        ? candidate.iconName
-        : typeof candidate.icon_name === 'string'
-          ? (candidate.icon_name as string)
-          : undefined;
-      const color = typeof candidate.color === 'string' ? candidate.color : undefined;
-
-      return [{ name, file, iconName, color, content: subContent } satisfies SubSpecItem];
-    })
-    : [];
 
   return {
     ...adaptSpec(rustSpec),
     content,
-    dependsOn,
-    requiredBy,
-    subSpecs: subSpecs.length > 0 ? subSpecs : undefined,
+    contentMd: rustSpec.contentMd ?? rustSpec.content,
+    metadata: rustSpec.metadata,
+    dependsOn: rustSpec.dependsOn ?? rustSpec.relationships?.dependsOn ?? [],
+    requiredBy: rustSpec.requiredBy ?? rustSpec.relationships?.requiredBy ?? [],
+    subSpecs: normalizeSubSpecs(rustSpec.subSpecs),
   };
 }
 
-export function adaptStats(rustStats: RustStats): NextJsStats {
+function normalizeSubSpecs(subSpecs?: SubSpecItem[] | unknown): SubSpecItem[] | undefined {
+  if (!Array.isArray(subSpecs)) return undefined;
+
+  const normalized = subSpecs.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const candidate = entry as Partial<SubSpecItem> & Record<string, unknown>;
+    const name = typeof candidate.name === 'string' ? candidate.name : undefined;
+    const content = typeof candidate.content === 'string' ? candidate.content : undefined;
+    if (!name || !content) return [];
+
+    const file = typeof candidate.file === 'string' ? candidate.file : name;
+    const iconName =
+      typeof candidate.iconName === 'string'
+        ? candidate.iconName
+        : typeof candidate.icon_name === 'string'
+          ? (candidate.icon_name as string)
+          : undefined;
+    const color = typeof candidate.color === 'string' ? candidate.color : undefined;
+
+    return [{ name, file, iconName, color, content } satisfies SubSpecItem];
+  });
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+export function adaptStats(rustStats: Stats): Stats {
   return {
-    totalSpecs: rustStats.totalSpecs,
-    completionRate: rustStats.completionRate,
-    specsByStatus: rustStats.specsByStatus,
-    specsByPriority: rustStats.specsByPriority,
+    ...rustStats,
+    specsByPriority: rustStats.specsByPriority ?? [],
+    specsByStatus: rustStats.specsByStatus ?? [],
   };
 }
 
 export function adaptContextFileListItem(item: ContextFileListItem): ContextFileListItem & { modifiedAt: Date | null } {
   return {
     ...item,
-    modifiedAt: item.modified ? toDateOrNull(item.modified) : null,
+    modifiedAt: item.modified ? parseDate(item.modified) : null,
   };
 }
 
 export function adaptContextFileContent(
   response: ContextFileListItem & { content: string; fileType?: string | null }
 ): ContextFileContent {
-  const modifiedAt = response.modified ? toDateOrNull(response.modified) : null;
+  const modifiedAt = response.modified ? parseDate(response.modified) : null;
   const content = response.content || '';
   return {
     ...response,
@@ -211,4 +198,8 @@ export type {
   ContextFileListItem,
   ContextFileListResponse,
   ContextFileContent,
+  Spec,
+  SpecDetail,
+  Stats,
+  Project,
 };
