@@ -14,10 +14,12 @@ import {
 } from 'recharts';
 import { AlertCircle } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 import { useTranslation } from 'react-i18next';
+import { useProject } from '../contexts';
 
 const STATUS_COLORS = {
   planned: '#3B82F6',
@@ -39,8 +41,10 @@ export function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { t, i18n } = useTranslation('common');
+  const { currentProject, loading: projectLoading } = useProject();
 
   const loadStats = useCallback(async () => {
+    if (projectLoading || !currentProject) return;
     try {
       setLoading(true);
       const [statsData, specsData] = await Promise.all([api.getStats(), api.getSpecs()]);
@@ -53,7 +57,7 @@ export function StatsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentProject, projectLoading]);
 
   useEffect(() => {
     void loadStats();
@@ -118,8 +122,24 @@ export function StatsPage() {
 
   const completionRate = stats?.completionRate.toFixed(1) || '0.0';
 
-  if (loading) {
+  if (projectLoading || loading) {
     return <StatsSkeleton />;
+  }
+
+  if (!currentProject) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center space-y-3">
+          <div className="text-lg font-semibold">{t('statsPage.state.noProjectTitle', { defaultValue: 'No project selected' })}</div>
+          <p className="text-sm text-muted-foreground">
+            {t('statsPage.state.noProjectDescription', { defaultValue: 'Select or create a project to view statistics.' })}
+          </p>
+          <Link to="/projects" className="inline-flex">
+            <Button variant="secondary" size="sm">{t('projectsPage.title', { defaultValue: 'Projects' })}</Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (error || !stats) {

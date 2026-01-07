@@ -16,7 +16,6 @@ import type {
   ProjectValidationResponse,
   ProjectsResponse,
   ListSpecsResponse,
-  SearchResponse as SearchResult,
 } from '../types/api';
 
 export class APIError extends Error {
@@ -54,7 +53,7 @@ export interface BackendAdapter {
 
   // Stats and dependencies
   getStats(): Promise<Stats>;
-  getProjectStats?(projectId: string): Promise<Stats>;
+  getProjectStats(projectId: string): Promise<Stats>;
   getDependencies(specName?: string): Promise<DependencyGraph>;
 
   // Context files & local filesystem
@@ -344,16 +343,19 @@ export class TauriBackendAdapter implements BackendAdapter {
     }
   }
 
-  async searchSpecs(_query: string, _filters?: Record<string, unknown>): Promise<SearchResult> {
-    throw new Error('searchSpecs is not implemented for the Tauri backend yet');
-  }
-
   async getStats(): Promise<Stats> {
     if (!this.currentProjectId) {
       throw new Error('No project selected');
     }
     const stats = await this.invoke<Stats>('get_project_stats', {
       projectId: this.currentProjectId,
+    });
+    return stats;
+  }
+
+  async getProjectStats(projectId: string): Promise<Stats> {
+    const stats = await this.invoke<Stats>('get_project_stats', {
+      projectId,
     });
     return stats;
   }
