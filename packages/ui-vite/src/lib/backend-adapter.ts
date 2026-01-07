@@ -4,19 +4,16 @@
 import type {
   DependencyGraph,
   ListParams,
-  NextJsSpec as Spec,
-  NextJsSpecDetail as SpecDetail,
-  NextJsStats as Stats,
+  Spec,
+  SpecDetail,
+  Stats,
   Project,
   ProjectStatsResponse,
   ProjectsListResponse,
   ProjectsResponse,
   ListSpecsResponse,
-  RustSpec,
-  RustSpecDetail,
-  RustStats,
 } from '../types/api';
-import { adaptSpec, adaptSpecDetail, adaptStats, normalizeProjectsResponse } from './api';
+import { normalizeProjectsResponse } from './api';
 
 /**
  * Backend adapter interface - abstracts the communication layer
@@ -29,8 +26,8 @@ export interface BackendAdapter {
 
   // Spec operations
   getSpecs(params?: ListParams): Promise<Spec[]>;
-  getSpec(name: string): Promise<SpecDetail>;
-  updateSpec(name: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
+  getSpec(specName: string): Promise<SpecDetail>;
+  updateSpec(specName: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
 
   // Stats and dependencies
   getStats(): Promise<Stats>;
@@ -87,35 +84,35 @@ export class HttpBackendAdapter implements BackendAdapter {
       : '';
     const endpoint = query ? `/api/specs?${query}` : '/api/specs';
     const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
-    return data.specs.map(adaptSpec);
+    return data.specs || [];
   }
 
-  async getSpec(name: string): Promise<SpecDetail> {
-    const data = await this.fetchAPI<RustSpecDetail>(`/api/specs/${encodeURIComponent(name)}`);
-    return adaptSpecDetail(data);
+  async getSpec(specName: string): Promise<SpecDetail> {
+    const data = await this.fetchAPI<SpecDetail | { spec: SpecDetail }>(`/api/specs/${encodeURIComponent(specName)}`);
+    return 'spec' in data ? data.spec : data;
   }
 
   async updateSpec(
-    name: string,
+    specName: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
-    await this.fetchAPI(`/api/specs/${encodeURIComponent(name)}/metadata`, {
+    await this.fetchAPI(`/api/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
   }
 
   async getStats(): Promise<Stats> {
-    const data = await this.fetchAPI<RustStats>('/api/stats');
-    return adaptStats(data);
+    const data = await this.fetchAPI<Stats | { stats: Stats }>('/api/stats');
+    return 'stats' in data ? data.stats : data;
   }
 
   async getProjectStats(projectId: string): Promise<Stats> {
-    const data = await this.fetchAPI<ProjectStatsResponse | RustStats>(
+    const data = await this.fetchAPI<ProjectStatsResponse | Stats>(
       `/api/projects/${encodeURIComponent(projectId)}/stats`
     );
     const statsPayload = 'stats' in data ? data.stats : data;
-    return adaptStats(statsPayload as RustStats);
+    return statsPayload;
   }
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
@@ -163,25 +160,25 @@ export class TauriBackendAdapter implements BackendAdapter {
       throw new Error('No project selected');
     }
     // Tauri commands return LightweightSpec[], need to map to Spec[]
-    const specs = await this.invoke<RustSpec[]>('get_specs', {
+    const specs = await this.invoke<Spec[]>('get_specs', {
       projectId: this.currentProjectId
     });
-    return specs.map(adaptSpec);
+    return specs;
   }
 
-  async getSpec(name: string): Promise<SpecDetail> {
+  async getSpec(specName: string): Promise<SpecDetail> {
     if (!this.currentProjectId) {
       throw new Error('No project selected');
     }
-    const spec = await this.invoke<RustSpecDetail>('get_spec_detail', {
+    const spec = await this.invoke<SpecDetail>('get_spec_detail', {
       projectId: this.currentProjectId,
-      specId: name,
+      specId: specName,
     });
-    return adaptSpecDetail(spec);
+    return spec;
   }
 
   async updateSpec(
-    name: string,
+    specName: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
     if (!this.currentProjectId) {
@@ -191,7 +188,7 @@ export class TauriBackendAdapter implements BackendAdapter {
     if (updates.status) {
       await this.invoke('update_spec_status', {
         projectId: this.currentProjectId,
-        specId: name,
+        specId: specName,
         newStatus: updates.status,
       });
     }
@@ -201,10 +198,10 @@ export class TauriBackendAdapter implements BackendAdapter {
     if (!this.currentProjectId) {
       throw new Error('No project selected');
     }
-    const stats = await this.invoke<RustStats>('get_project_stats', {
+    const stats = await this.invoke<Stats>('get_project_stats', {
       projectId: this.currentProjectId,
     });
-    return adaptStats(stats);
+    return stats;
   }
 
   async getDependencies(_specName?: string): Promise<DependencyGraph> {

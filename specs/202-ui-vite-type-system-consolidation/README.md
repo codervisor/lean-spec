@@ -1,22 +1,25 @@
 ---
-status: planned
-created: 2026-01-06
+status: in-progress
+created: '2026-01-06'
 priority: high
 tags:
-- ui-vite
-- typescript
-- refactoring
-- tech-debt
-- types
+  - ui-vite
+  - typescript
+  - refactoring
+  - tech-debt
+  - types
 depends_on:
-- 201-ui-vite-backend-adapter-migration
-created_at: 2026-01-06T15:16:21.998231Z
-updated_at: 2026-01-06T15:17:21.793402Z
+  - 201-ui-vite-backend-adapter-migration
+created_at: '2026-01-06T15:16:21.998231Z'
+updated_at: '2026-01-06T15:27:13.315Z'
+transitions:
+  - status: in-progress
+    at: '2026-01-06T15:25:18.208Z'
 ---
 
 # UI-Vite Type System Consolidation
 
-> **Status**: 🗓️ Planned · **Created**: 2026-01-06 · **Priority**: High · **Tags**: ui-vite, typescript, refactoring, tech-debt, types
+> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2026-01-06 · **Tags**: ui-vite, typescript, refactoring, tech-debt, types
 
 ## Overview
 
@@ -176,28 +179,37 @@ const createdDate = spec.createdAt ? parseDate(spec.createdAt) : null;
 
 ## Plan
 
-- [ ] **Audit all type usage** - Find everywhere NextJsSpec/RustSpec are used
-- [ ] **Create type aliases** - Add deprecation warnings to old types
-- [ ] **Rename canonical types** - RustSpec → Spec, RustSpecDetail → SpecDetail, RustStats → Stats
-- [ ] **Remove backend-adapter adapters** - Delete adaptSpec/adaptSpecDetail/adaptStats calls
-- [ ] **Remove api.ts adapters** - Delete adapter function calls
-- [ ] **Create date-utils.ts** - Extract minimal parseDate() helper
-- [ ] **Update all components** (18 files) - Change imports and field access
-- [ ] **Update backend-adapter interface** - Use canonical types in BackendAdapter interface
+- [x] **Audit all type usage** - Find everywhere NextJsSpec/RustSpec are used
+- [x] **Create type aliases** - Add deprecation warnings to old types (removed redundant legacy types instead)
+- [x] **Rename canonical types** - RustSpec → Spec, RustSpecDetail → SpecDetail, RustStats → Stats
+- [x] **Remove backend-adapter adapters** - Delete adaptSpec/adaptSpecDetail/adaptStats calls
+- [x] **Remove api.ts adapters** - Delete adapter function calls
+- [x] **Create date-utils.ts** - Extract minimal parseDate() helper
+- [x] **Update all components** (18 files) - Change imports and field access
+- [x] **Update backend-adapter interface** - Use canonical types in BackendAdapter interface
 - [ ] **Run type checks** - `pnpm -C packages/ui-vite typecheck`
 - [ ] **Test all pages** - Manual verification
-- [ ] **Update tests** - Fix broken test mocks
-- [ ] **Delete deprecated types** - Remove NextJsSpec, NextJsSpecDetail, NextJsStats
-- [ ] **Delete adapter functions** - Remove adaptSpec(), adaptSpecDetail(), adaptStats()
+- [x] **Update tests** - Fix broken test mocks
+- [x] **Delete deprecated types** - Remove NextJsSpec, NextJsSpecDetail, NextJsStats
+- [x] **Delete adapter functions** - Remove adaptSpec(), adaptSpecDetail(), adaptStats()
 - [ ] **Measure bundle size** - Verify reduction
 - [ ] **Update documentation** - Document canonical type system
+
+## Implementation Notes
+
+- Canonicalized @leanspec/ui-vite types by renaming RustSpec/RustSpecDetail/RustStats to Spec/SpecDetail/Stats and removing the legacy Next.js variants and their adapters.
+- API and backend adapters now return backend shapes directly (with a minimal `parseDate` helper retained for optional date parsing) and no longer perform redundant spec/stat transformations.
+- UI components and dashboards now consume `specName` consistently (no `name` alias), and list/board/search interactions rely on canonical fields.
+- Updated vitest mocks to the canonical shapes and adjusted project normalization expectations to reflect the defaulted project fields.
+- SpecDetail keeps an optional `metadata` bag to align with existing UI consumption while remaining backward compatible.
+- Verified with `pnpm -C packages/ui-vite test` and `pnpm -C packages/ui-vite typecheck`.
 
 ## Test
 
 **Type Safety**:
-- [ ] `pnpm -C packages/ui-vite typecheck` passes with no errors
-- [ ] No references to deprecated types remain
-- [ ] All components import from canonical types
+- [x] `pnpm -C packages/ui-vite typecheck` passes with no errors
+- [x] No references to deprecated types remain
+- [x] All components import from canonical types
 
 **Runtime Verification**:
 - [ ] Dashboard displays specs correctly (check `specName` field access)
@@ -210,8 +222,8 @@ const createdDate = spec.createdAt ? parseDate(spec.createdAt) : null;
 - [ ] Stats page calculations correct
 
 **Unit Tests**:
-- [ ] `pnpm -C packages/ui-vite test` passes
-- [ ] Test mocks use canonical types
+- [x] `pnpm -C packages/ui-vite test` passes
+- [x] Test mocks use canonical types
 - [ ] Date parsing utility has tests
 
 **Performance**:

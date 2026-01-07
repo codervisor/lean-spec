@@ -46,7 +46,9 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
     .sort((a, b) => {
       if (!a.createdAt) return 1;
       if (!b.createdAt) return -1;
-      return b.createdAt.getTime() - a.createdAt.getTime();
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return bTime - aTime;
     })
     .slice(0, 5);
 
@@ -55,7 +57,9 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
     .sort((a, b) => {
       if (!a.updatedAt) return 1;
       if (!b.updatedAt) return -1;
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
+      const aTime = new Date(a.updatedAt).getTime();
+      const bTime = new Date(b.updatedAt).getTime();
+      return bTime - aTime;
     })
     .slice(0, 10);
 
