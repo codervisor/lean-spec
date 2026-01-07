@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { api } from './api';
+import { APIError, adaptProject, adaptSpec, adaptSpecDetail, api } from './api';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -13,16 +13,17 @@ describe('API Client', () => {
   describe('getProjects', () => {
     it('should fetch projects successfully', async () => {
       const mockResponse = {
-        current: { id: 'proj1', name: 'Project 1', path: '/path/1' },
+        current: { id: 'proj1', name: 'Project 1', displayName: 'Project 1', path: '/path/1', specsDir: '/path/1' },
         available: [
-          { id: 'proj1', name: 'Project 1', path: '/path/1' },
-          { id: 'proj2', name: 'Project 2', path: '/path/2' },
+          { id: 'proj1', name: 'Project 1', displayName: 'Project 1', path: '/path/1', specsDir: '/path/1' },
+          { id: 'proj2', name: 'Project 2', displayName: 'Project 2', path: '/path/2', specsDir: '/path/2' },
         ],
       };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        status: 200,
+        text: async () => JSON.stringify(mockResponse),
       });
 
       const result = await api.getProjects();
@@ -101,7 +102,7 @@ describe('API Client', () => {
         text: async () => 'Server error',
       });
 
-      await expect(api.getProjects()).rejects.toThrow();
+      await expect(api.getProjects()).rejects.toBeInstanceOf(APIError);
     });
   });
 
@@ -112,18 +113,20 @@ describe('API Client', () => {
           id: '123-feature',
           specName: '123-feature',
           specNumber: 123,
+          specName: '123-feature',
           title: 'Test Spec',
           status: 'planned' as const,
           priority: 'high' as const,
           tags: ['ui'],
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-02T00:00:00Z',
+          createdAtAt: '2025-01-01T00:00:00Z',
+          updatedAtAt: '2025-01-02T00:00:00Z',
         },
       ];
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ specs: mockSpecs }),
+        status: 200,
+        text: async () => JSON.stringify({ specs: mockSpecs }),
       });
 
       const result = await api.getSpecs();
@@ -172,7 +175,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({}),
+        status: 204,
+        text: async () => '',
       });
 
       await api.updateSpec('spec-001', updates);
@@ -207,7 +211,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockStats,
+        status: 200,
+        text: async () => JSON.stringify(mockStats),
       });
 
       const result = await api.getStats();
@@ -229,7 +234,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ graph: mockGraph }),
+        status: 200,
+        text: async () => JSON.stringify({ graph: mockGraph }),
       });
 
       const result = await api.getDependencies();
@@ -244,7 +250,8 @@ describe('API Client', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ graph: mockGraph }),
+        status: 200,
+        text: async () => JSON.stringify({ graph: mockGraph }),
       });
 
       await api.getDependencies('spec-001');

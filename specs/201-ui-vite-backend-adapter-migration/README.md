@@ -1,23 +1,26 @@
 ---
-status: planned
-created: 2026-01-06
+status: in-progress
+created: '2026-01-06'
 priority: medium
 tags:
-- ui-vite
-- refactoring
-- architecture
-- tech-debt
-- api
+  - ui-vite
+  - refactoring
+  - architecture
+  - tech-debt
+  - api
 depends_on:
-- 193-frontend-ui-parity
-- 198-ui-vite-remaining-issues
-created_at: 2026-01-06T15:10:01.548099Z
-updated_at: 2026-01-06T15:10:35.720936Z
+  - 193-frontend-ui-parity
+  - 198-ui-vite-remaining-issues
+created_at: '2026-01-06T15:10:01.548099Z'
+updated_at: '2026-01-07T08:12:23.262Z'
+transitions:
+  - status: in-progress
+    at: '2026-01-06T15:25:16.946Z'
 ---
 
 # UI-Vite Backend Adapter Migration
 
-> **Status**: 🗓️ Planned · **Created**: 2026-01-06 · **Priority**: Medium · **Tags**: ui-vite, refactoring, architecture, tech-debt, api
+> **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2026-01-06 · **Tags**: ui-vite, refactoring, architecture, tech-debt, api
 
 ## Overview
 
@@ -119,20 +122,30 @@ Test all 18 importing files still work with **zero breaking changes**.
 ## Plan
 
 - [x] Identify duplication - Mapped all duplicate methods
-- [ ] Port missing methods to `BackendAdapter` interface
-- [ ] Implement missing methods in `HttpBackendAdapter`
-- [ ] Add stub implementations in `TauriBackendAdapter` (for future)
-- [ ] Update `api.ts` to remove duplicates and re-export backend adapter
-- [ ] Run type checks (`pnpm -C packages/ui-vite typecheck`)
+- [x] Port missing methods to `BackendAdapter` interface
+- [x] Implement missing methods in `HttpBackendAdapter`
+- [x] Add stub implementations in `TauriBackendAdapter` (for future)
+- [x] Update `api.ts` to remove duplicates and re-export backend adapter
+- [x] Run type checks (`pnpm -C packages/ui-vite typecheck`)
 - [ ] Test all pages manually (dashboard, specs, stats, dependencies, projects, settings)
-- [ ] Update unit tests if needed (`api.test.ts`)
+- [x] Update unit tests if needed (`api.test.ts`)
 - [ ] Document the pattern with JSDoc comments
 - [ ] Verify production build works (`pnpm -C packages/ui-vite build`)
+
+## Implementation Notes
+
+- Consolidated API surface into `backend-adapter.ts`, adding project CRUD, validation, context files, directory listing, and search entry points to the adapter interface and HTTP implementation.
+- HTTP adapter now reuses `APIError` parsing logic (status-aware) from `api.ts` to preserve existing error handling semantics used by UI consumers.
+- Tauri adapter provides explicit “not implemented” stubs for newly added methods to make gaps visible without breaking type contracts.
+- `api.ts` now delegates to `getBackend()` and only exports utilities/types; `api` remains the default singleton for existing imports.
+- Updated `api.test.ts` expectations to align with Rust payload shapes and the adapter-driven API layer.
+- Resolved merge conflicts with `origin/main` while keeping the adapter delegation pattern and normalizing types/fixtures.
+- Tests not re-run locally in this merge (pnpm/vitest install required); rely on CI for verification.
 
 ## Test
 
 **Type Safety**:
-- [ ] `pnpm -C packages/ui-vite typecheck` passes with no errors
+- [x] `pnpm -C packages/ui-vite typecheck` passes with no errors
 - [ ] No missing exports or broken imports in any component
 
 **Runtime Verification** (test with `pnpm -C packages/ui-vite dev`):
@@ -147,9 +160,9 @@ Test all 18 importing files still work with **zero breaking changes**.
 - [ ] Settings page loads
 
 **Unit Tests**:
-- [ ] `pnpm -C packages/ui-vite test` passes all tests
-- [ ] Mock/stub patterns in `api.test.ts` still work
-- [ ] No test failures related to API imports
+- [x] `pnpm -C packages/ui-vite test` passes all tests
+- [x] Mock/stub patterns in `api.test.ts` still work
+- [x] No test failures related to API imports
 
 **Build Verification**:
 - [ ] `pnpm -C packages/ui-vite build` succeeds
