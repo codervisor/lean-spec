@@ -10,6 +10,16 @@ import { SettingsPage } from './pages/SettingsPage';
 import { ContextPage } from './pages/ContextPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 
+/**
+ * Router configuration for ui-vite.
+ *
+ * Layout composition:
+ * - Layout: Navigation + MainSidebar (applies to all /projects/:projectId/* routes)
+ * - SpecsLayout: SpecsNavSidebar (applies to all /projects/:projectId/specs/* routes)
+ *
+ * This nested layout approach ensures consistent UI structure while allowing
+ * specs-specific navigation to be scoped to specs routes only.
+ */
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -25,16 +35,12 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       {
+        // Specs routes now all use SpecsLayout (both list and detail)
         path: 'specs',
+        element: <SpecsLayout />,
         children: [
           { index: true, element: <SpecsPage /> },
-          {
-            path: ':specName',
-            element: <SpecsLayout />,
-            children: [
-              { index: true, element: <SpecDetailPage /> },
-            ],
-          },
+          { path: ':specName', element: <SpecDetailPage /> },
         ],
       },
       { path: 'stats', element: <StatsPage /> },

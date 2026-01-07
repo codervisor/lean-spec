@@ -1,12 +1,14 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import { ProjectProvider, ThemeProvider } from './contexts';
+import { ProjectProvider, ThemeProvider, KeyboardShortcutsProvider } from './contexts';
 
 function App() {
   return (
     <ThemeProvider>
       <ProjectProvider>
-        <RouterProvider router={router} />
+        <KeyboardShortcutsProvider>
+          <RouterProvider router={router} />
+        </KeyboardShortcutsProvider>
       </ProjectProvider>
     </ThemeProvider>
   );

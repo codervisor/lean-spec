@@ -13,6 +13,7 @@ interface BreadcrumbItem {
 }
 
 interface NavigationProps {
+  onToggleSidebar?: () => void;
   onShowShortcuts?: () => void;
 }
 
@@ -113,15 +114,13 @@ function Breadcrumb({ basePath }: { basePath: string }) {
   );
 }
 
-export function Navigation({ onShowShortcuts: _onShowShortcuts }: NavigationProps) {
+export function Navigation({ onToggleSidebar, onShowShortcuts: _onShowShortcuts }: NavigationProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
 
   const toggleSidebar = () => {
-    if (typeof window !== 'undefined' && (window as any).toggleMainSidebar) {
-      (window as any).toggleMainSidebar();
-    }
+    onToggleSidebar?.();
   };
 
   return (
