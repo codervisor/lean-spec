@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { SpecsLayout } from './components/SpecsLayout';
+import { MinimalLayout } from './components/MinimalLayout';
 import { DashboardPage } from './pages/DashboardPage';
 import { SpecsPage } from './pages/SpecsPage';
 import { SpecDetailPage } from './pages/SpecDetailPage';
@@ -13,12 +13,14 @@ import { ProjectsPage } from './pages/ProjectsPage';
 /**
  * Router configuration for ui-vite.
  *
- * Layout composition:
- * - Layout: Navigation + MainSidebar (applies to all /projects/:projectId/* routes)
- * - SpecsLayout: SpecsNavSidebar (applies to all /projects/:projectId/specs/* routes)
+ * Layout hierarchy:
+ * - MinimalLayout: Navigation only (for ProjectsPage)
+ * - Layout: Navigation + MainSidebar (for project-scoped routes)
  *
- * This nested layout approach ensures consistent UI structure while allowing
- * specs-specific navigation to be scoped to specs routes only.
+ * This nested layout approach ensures:
+ * 1. Navigation bar is always present across all pages
+ * 2. MainSidebar only shows when viewing a specific project
+ * 3. SpecDetailPage handles its own SpecsNavSidebar internally
  */
 export const router = createBrowserRouter([
   {
@@ -27,7 +29,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/projects',
-    element: <ProjectsPage />,
+    element: <MinimalLayout />,
+    children: [{ index: true, element: <ProjectsPage /> }],
   },
   {
     path: '/projects/:projectId',
@@ -35,9 +38,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       {
-        // Specs routes now all use SpecsLayout (both list and detail)
         path: 'specs',
-        element: <SpecsLayout />,
         children: [
           { index: true, element: <SpecsPage /> },
           { path: ':specName', element: <SpecDetailPage /> },

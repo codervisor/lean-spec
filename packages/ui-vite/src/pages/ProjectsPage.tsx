@@ -228,7 +228,7 @@ export function ProjectsPage() {
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-7xl mx-auto py-6 space-y-6 px-4">
-          {/* Back navigation */}
+          {/* Back navigation - only show if coming from a specific project */}
           {currentProject && (
             <Link
               to={`/projects/${currentProject.id}/specs`}

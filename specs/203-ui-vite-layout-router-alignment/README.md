@@ -94,81 +94,124 @@ transitions:
 ### Proposed Architecture
 
 **Goals**:
-1. **Single Layout Component**: One primary layout that handles Navigation + MainSidebar for all project-scoped pages
-2. **Conditional Sub-Layouts**: Nested layouts (like SpecsLayout) only when needed, following a clear pattern
+1. **Consistent Navigation**: Navigation bar present on ALL pages (app shell)
+2. **Conditional MainSidebar**: Only shown for project-scoped pages
 3. **Route Organization**: Group related routes logically, make layout composition explicit
-4. **State Management**: Move global shortcut handling out of Layout (could be a hook in App.tsx)
+4. **State Management**: Move global shortcut handling to proper context
+
+**Layout Hierarchy**:
+
+| Layout        | Components                                 | Usage                                   |
+| ------------- | ------------------------------------------ | --------------------------------------- |
+| MinimalLayout | Navigation                                 | ProjectsPage (project selection list)   |
+| Layout        | Navigation + MainSidebar                   | All /projects/:projectId/* routes       |
+| SpecsLayout   | Navigation + MainSidebar + SpecsNavSidebar | All /projects/:projectId/specs/* routes |
+
+**Key Insight**: The only difference between ProjectsPage and project-scoped pages is whether MainSidebar is included. Both need Navigation for consistent app shell (theme toggle, settings, etc.).
 
 **Pattern Comparison**:
 
-| Concern                  | Next.js UI                     | Current ui-vite                         | Proposed ui-vite                    |
-| ------------------------ | ------------------------------ | --------------------------------------- | ----------------------------------- |
-| **Providers**            | RootLayout (layout.tsx)        | App.tsx                                 | App.tsx ✅ (keep)                    |
-| **Navigation**           | RootLayout (layout.tsx)        | Layout component                        | Layout component ✅ (keep)           |
-| **MainSidebar**          | RootLayout (layout.tsx)        | Layout component                        | Layout component ✅ (keep)           |
-| **Project-level pages**  | Direct children in file system | Children of /projects/:projectId layout | Children of /projects/:projectId ✅  |
-| **Specs navigation**     | N/A (not in Next.js yet)       | SpecsLayout for detail page only        | SpecsLayout for all /specs/* routes |
-| **Global shortcuts**     | N/A                            | Layout component useState               | Dedicated hook in App.tsx or Layout |
-| **Mobile sidebar state** | N/A                            | Layout component useState + window hack | Context or better state management  |
-| **Error boundary**       | Per-page or app level          | Layout component (wraps Outlet)         | Layout component ✅ (keep)           |
-| **Page transitions**     | N/A (Next.js handles)          | Layout component (wraps Outlet)         | Layout component ✅ (keep)           |
+| Concern                  | Next.js UI                     | Current ui-vite                         | Implemented ui-vite                   |
+| ------------------------ | ------------------------------ | --------------------------------------- | ------------------------------------- |
+| **Providers**            | RootLayout (layout.tsx)        | App.tsx                                 | App.tsx ✅ (keep)                      |
+| **Navigation**           | RootLayout (layout.tsx)        | Layout component                        | MinimalLayout + Layout ✅              |
+| **MainSidebar**          | RootLayout (layout.tsx)        | Layout component                        | Layout component only ✅               |
+| **ProjectsPage**         | N/A                            | Standalone page, no layout              | MinimalLayout (Navigation only) ✅     |
+| **Project-level pages**  | Direct children in file system | Children of /projects/:projectId layout | Children of /projects/:projectId ✅    |
+| **Specs navigation**     | N/A (not in Next.js yet)       | SpecsLayout for detail page only        | SpecsLayout for all /specs/* routes ✅ |
+| **Global shortcuts**     | N/A                            | Layout component useState               | Dedicated hook in App.tsx or Layout   |
+| **Mobile sidebar state** | N/A                            | Layout component useState + window hack | Context or better state management    |
+| **Error boundary**       | Per-page or app level          | Layout component (wraps Outlet)         | Layout component ✅ (keep)             |
+| **Page transitions**     | N/A (Next.js handles)          | Layout component (wraps Outlet)         | Layout component ✅ (keep)             |
 
 **Key Insight**: The main difference is that Next.js has a single root layout that applies to all pages by design (file-system routing), while react-router requires explicit nesting. The proposed change is to make the layout nesting **more consistent** rather than trying to perfectly match Next.js (which is architecturally different).
 
-### Refactoring Proposal
+### Refactoring Implementation
 
-#### Option A: Keep Current Structure, Clean Up (RECOMMENDED)
+#### Layout Hierarchy (IMPLEMENTED)
 
-**Changes**:
-1. ✅ Keep Layout as main wrapper (Navigation + MainSidebar + Outlet)
-2. ✅ Keep SpecsLayout as sub-layout (SpecsNavSidebar + Outlet)
-3. 🔧 Make SpecsLayout apply to ALL `/specs/*` routes, not just detail
-4. 🔧 Extract keyboard shortcut state management to a dedicated context or hook
-5. 🔧 Remove `window.toggleMainSidebar` hack, use proper state lifting or context
-6. 🔧 Document layout composition clearly in router.tsx
+**Three-tier layout system**:
 
-**Why**: Minimal changes, aligns with react-router best practices, clear separation of concerns.
+1. **MinimalLayout**: Navigation only
+   - Used for ProjectsPage (project selection)
+   - Provides consistent app shell without project-specific sidebar
+   
+2. **Layout**: Navigation + MainSidebar
+   - Used for all project-scoped routes (`/projects/:projectId/*`)
+   - MainSidebar provides dashboard, specs, stats, settings navigation
+   
+3. **SpecsLayout**: Extends Layout with SpecsNavSidebar
+   - Used for all specs routes (`/projects/:projectId/specs/*`)
+   - SpecsNavSidebar provides spec list/search navigation
 
 **Router Structure**:
 ```tsx
 /                              -> Navigate to /projects/default
-/projects                      -> ProjectsPage (standalone, no Layout)
+/projects                      -> MinimalLayout (Navigation only)
+  /                            -> ProjectsPage
 /projects/:projectId           -> Layout (Navigation + MainSidebar)
   /                            -> DashboardPage
   /specs                       -> SpecsLayout (+ SpecsNavSidebar)
     /                          -> SpecsPage
     /:specName                 -> SpecDetailPage
-  /stats                       -> StatsPage (no sub-layout)
-  /dependencies                -> DependenciesPage (no sub-layout)
-  /dependencies/:specName      -> DependenciesPage (no sub-layout)
-  /settings                    -> SettingsPage (no sub-layout)
-  /context                     -> ContextPage (no sub-layout)
+  /stats                       -> StatsPage
+  /dependencies                -> DependenciesPage
+  /dependencies/:specName      -> DependenciesPage
+  /settings                    -> SettingsPage
+  /context                     -> ContextPage
 ```
 
 **Benefits**:
+- Navigation bar consistent across ALL pages
+- MainSidebar only appears when viewing a specific project
 - SpecsNavSidebar visible on both list and detail pages (better UX)
-- Clear layout nesting: Layout (global) → SpecsLayout (specs-specific)
-- Less code churn, less risk
-
-#### Option B: Flatten to Single Layout (NOT RECOMMENDED)
-
-**Changes**:
-1. Merge SpecsLayout into Layout component
-2. Conditionally render SpecsNavSidebar based on route
-3. Single layout for all routes
-
-**Why NOT**:
-- Less modular
-- Makes Layout component more complex
-- Harder to maintain
-- Goes against react-router patterns
+- Clear layout nesting: MinimalLayout → Layout → SpecsLayout
+- No "weird" sidebar on project selection page
 
 ### Implementation Details
 
-#### 1. Router Structure Change
+#### 1. MinimalLayout Component (IMPLEMENTED)
 
-**Before** (`router.tsx`):
+**Created** `components/MinimalLayout.tsx`:
 ```tsx
+// Provides Navigation only, without MainSidebar
+// Used for ProjectsPage where sidebar navigation doesn't make sense
+export function MinimalLayout() {
+  return (
+    <LayoutProvider>
+      <Navigation />
+      <main><Outlet /></main>
+    </LayoutProvider>
+  );
+}
+```
+
+**Key points**:
+- Shares LayoutProvider with Layout for API consistency
+- Includes global keyboard shortcuts and error boundaries
+- No MainSidebar, but keeps Navigation for app shell consistency
+
+#### 2. Router Structure Change (IMPLEMENTED)
+
+**ProjectsPage now uses MinimalLayout**:
+```tsx
+// Before: Standalone, no layout
+{
+  path: '/projects',
+  element: <ProjectsPage />,
+}
+
+// After: Wrapped with MinimalLayout
+{
+  path: '/projects',
+  element: <MinimalLayout />,
+  children: [{ index: true, element: <ProjectsPage /> }],
+}
+```
+
+**SpecsPage now uses SpecsLayout**:
+```tsx
+// Before: No SpecsLayout for list view
 {
   path: '/projects/:projectId',
   element: <Layout />,
@@ -185,13 +228,10 @@ transitions:
         },
       ],
     },
-    // ...
   ],
 }
-```
 
-**After** (`router.tsx`):
-```tsx
+// After: SpecsLayout wraps both list and detail
 {
   path: '/projects/:projectId',
   element: <Layout />,
@@ -199,10 +239,14 @@ transitions:
     { index: true, element: <DashboardPage /> },
     {
       path: 'specs',
-      element: <SpecsLayout />,                       // Wrap all specs routes
+      element: <SpecsLayout />,                       // Wraps all specs routes
       children: [
-        { index: true, element: <SpecsPage /> },      // Now has sidebar
-        { path: ':specName', element: <SpecDetailPage /> },  // Still has sidebar
+        { index: true, element: <SpecsPage /> },      // Now has SpecsNavSidebar
+        { path: ':specName', element: <SpecDetailPage /> },
+      ],
+    },
+        { index: true, element: <SpecsPage /> },      // Now has SpecsNavSidebar
+        { path: ':specName', element: <SpecDetailPage /> },
       ],
     },
     { path: 'stats', element: <StatsPage /> },
@@ -215,11 +259,20 @@ transitions:
 ```
 
 **Impact**:
-- SpecsPage will now render inside SpecsLayout (gains SpecsNavSidebar)
-- SpecDetailPage rendering unchanged (already inside SpecsLayout)
-- SpecsNavSidebar becomes persistent across specs list ↔ detail navigation
+- ProjectsPage gains Navigation bar for app shell consistency
+- SpecsPage gains SpecsNavSidebar (persistent across list ↔ detail navigation)
+- All pages now have Navigation (theme toggle, settings, etc.)
 
-#### 2. Mobile Sidebar State Management
+#### 3. ProjectsPage Simplification (IMPLEMENTED)
+
+ProjectsPage no longer needs standalone styling since MinimalLayout provides the app shell. The page now focuses on its content (project cards, search) rather than layout concerns.
+
+**Changes**:
+- Removed redundant `min-h-screen` wrapper (provided by MinimalLayout)
+- Kept page-specific header with search and "New Project" button
+- Added clarifying comment for back navigation (only shows when coming from a project)
+
+#### 4. Mobile Sidebar State Management (ALREADY IMPLEMENTED)
 
 **Problem**: Current implementation uses `window.toggleMainSidebar` to communicate between Navigation and Layout:
 
