@@ -36,7 +36,6 @@ export class APIError extends Error {
 export interface BackendAdapter {
   // Project operations
   getProjects(): Promise<ProjectsResponse>;
-  switchProject(projectId: string): Promise<void>;
   createProject(
     path: string,
     options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
@@ -69,6 +68,7 @@ export interface BackendAdapter {
  */
 export class HttpBackendAdapter implements BackendAdapter {
   private baseUrl: string;
+  private currentProjectId: string | null = null;
 
   constructor(baseUrl?: string) {
     this.baseUrl = baseUrl || import.meta.env.VITE_API_URL || 'http://localhost:3333';
@@ -124,12 +124,6 @@ export class HttpBackendAdapter implements BackendAdapter {
     return data;
   }
 
-  async switchProject(projectId: string): Promise<void> {
-    await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/switch`, {
-      method: 'POST',
-    });
-  }
-
   async createProject(
     path: string,
     options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
@@ -168,6 +162,9 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async getSpecs(params?: ListParams): Promise<Spec[]> {
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
     const query = params
       ? new URLSearchParams(
         Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
@@ -176,13 +173,20 @@ export class HttpBackendAdapter implements BackendAdapter {
         }, [])
       ).toString()
       : '';
-    const endpoint = query ? `/api/specs?${query}` : '/api/specs';
+    const endpoint = query
+      ? `/api/projects/${encodeURIComponent(this.currentProjectId)}/specs?${query}`
+      : `/api/projects/${encodeURIComponent(this.currentProjectId)}/specs`;
     const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
     return data.specs || [];
   }
 
   async getSpec(specName: string): Promise<SpecDetail> {
-    const data = await this.fetchAPI<SpecDetail | { spec: SpecDetail }>(`/api/specs/${encodeURIComponent(specName)}`);
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
+    const data = await this.fetchAPI<SpecDetail | { spec: SpecDetail }>(
+      `/api/projects/${encodeURIComponent(this.currentProjectId)}/specs/${encodeURIComponent(specName)}`
+    );
     return 'spec' in data ? data.spec : data;
   }
 
@@ -190,6 +194,12 @@ export class HttpBackendAdapter implements BackendAdapter {
     specName: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
+    // Note: Currently using legacy /api/specs/{spec}/metadata endpoint
+    // which implicitly uses the current project from server state.
+    // TODO: Consider migrating to /api/projects/{id}/specs/{spec}/metadata for consistency
     await this.fetchAPI(`/api/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
@@ -197,7 +207,12 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async getStats(): Promise<Stats> {
-    const data = await this.fetchAPI<Stats | { stats: Stats }>('/api/stats');
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
+    const data = await this.fetchAPI<Stats | { stats: Stats }>(
+      `/api/projects/${encodeURIComponent(this.currentProjectId)}/stats`
+    );
     return 'stats' in data ? data.stats : data;
   }
 
@@ -209,12 +224,16 @@ export class HttpBackendAdapter implements BackendAdapter {
     return statsPayload;
   }
 
-  async getDependencies(specName?: string): Promise<DependencyGraph> {
-    const endpoint = specName
-      ? `/api/deps/${encodeURIComponent(specName)}`
-      : '/api/deps';
-    const data = await this.fetchAPI<{ graph: DependencyGraph } | DependencyGraph>(endpoint);
-    return 'graph' in data ? data.graph : data;
+  async getDependencies(_specName?: string): Promise<DependencyGraph> {
+    if (!this.currentProjectId) {
+      throw new Error('No project selected');
+    }
+    // Note: specName parameter is ignored for HTTP adapter as the project endpoint
+    // returns the full dependency graph. Individual spec dependencies can be computed client-side.
+    const data = await this.fetchAPI<DependencyGraph>(
+      `/api/projects/${encodeURIComponent(this.currentProjectId)}/dependencies`
+    );
+    return data;
   }
 
   async getContextFiles(): Promise<ContextFileListItem[]> {
@@ -262,11 +281,6 @@ export class TauriBackendAdapter implements BackendAdapter {
       current: data.current_project,
       available: data.projects,
     };
-  }
-
-  async switchProject(projectId: string): Promise<void> {
-    await this.invoke('desktop_switch_project', { projectId });
-    this.currentProjectId = projectId;
   }
 
   async createProject(

@@ -58,44 +58,23 @@ export function StatsPage() {
     void loadStats();
   }, [loadStats]);
 
-  if (loading) {
-    return <StatsSkeleton />;
-  }
-
-  if (error || !stats) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-destructive" />
-          </div>
-          <div className="text-lg font-semibold">{t('statsPage.state.errorTitle')}</div>
-          <p className="text-sm text-muted-foreground">{error || t('statsPage.state.unknownError')}</p>
-          <Button variant="secondary" size="sm" onClick={loadStats} className="mt-2">
-            {t('actions.retry')}
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Prepare data for charts
-  const statusCounts = useMemo(() => stats.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
+  // Prepare data for charts - must be before any conditional returns
+  const statusCounts = useMemo(() => stats?.specsByStatus.reduce<Record<string, number>>((acc, entry) => {
     acc[entry.status] = entry.count;
     return acc;
-  }, {}), [stats.specsByStatus]);
+  }, {}) || {}, [stats?.specsByStatus]);
 
-  const statusData = useMemo(() => stats.specsByStatus.map(({ status, count }) => ({
+  const statusData = useMemo(() => stats?.specsByStatus.map(({ status, count }) => ({
     name: t(`status.${status}`, { defaultValue: status }),
     value: count,
     fill: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#6B7280',
-  })), [stats.specsByStatus, t]);
+  })) || [], [stats?.specsByStatus, t]);
 
-  const priorityData = useMemo(() => (stats.specsByPriority || []).map(({ priority, count }) => ({
+  const priorityData = useMemo(() => (stats?.specsByPriority || []).map(({ priority, count }) => ({
     name: t(`priority.${priority}`, { defaultValue: priority }),
     value: count,
     fill: PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || '#6B7280',
-  })), [stats.specsByPriority, t]);
+  })), [stats?.specsByPriority, t]);
 
   const topTags = useMemo(() => {
     const tagFrequency = specs.reduce<Record<string, number>>((acc, spec) => {
@@ -116,8 +95,18 @@ export function StatsPage() {
     const monthly = specs
       .filter((spec) => spec.createdAt)
       .reduce<Record<string, number>>((acc, spec) => {
-        const month = monthFormatter.format(spec.createdAt as Date);
-        acc[month] = (acc[month] || 0) + 1;
+        try {
+          const date = typeof spec.createdAt === 'string'
+            ? new Date(spec.createdAt)
+            : spec.createdAt;
+
+          if (date instanceof Date && !isNaN(date.getTime())) {
+            const month = monthFormatter.format(date);
+            acc[month] = (acc[month] || 0) + 1;
+          }
+        } catch {
+          // Skip invalid dates
+        }
         return acc;
       }, {});
 
@@ -126,7 +115,28 @@ export function StatsPage() {
       .map(([month, count]) => ({ month, count }));
   }, [i18n.language, specs]);
 
-  const completionRate = stats.completionRate.toFixed(1);
+  const completionRate = stats?.completionRate.toFixed(1) || '0.0';
+
+  if (loading) {
+    return <StatsSkeleton />;
+  }
+
+  if (error || !stats) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center space-y-3">
+          <div className="flex justify-center">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <div className="text-lg font-semibold">{t('statsPage.state.errorTitle')}</div>
+          <p className="text-sm text-muted-foreground">{error || t('statsPage.state.unknownError')}</p>
+          <Button variant="secondary" size="sm" onClick={loadStats} className="mt-2">
+            {t('actions.retry')}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

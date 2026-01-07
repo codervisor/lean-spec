@@ -72,9 +72,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      await api.switchProject(projectId);
       localStorage.setItem(STORAGE_KEY, projectId);
-      await refreshProjects();
+      const data: ProjectsResponse = await api.getProjects();
+      applyProjects(data);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to switch project';
       setError(message);
@@ -82,7 +82,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [currentProject?.id, refreshProjects]);
+  }, [applyProjects, currentProject?.id]);
 
   const addProject = useCallback(async (
     path: string,
