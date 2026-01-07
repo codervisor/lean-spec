@@ -48,6 +48,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setCurrentProject(nextCurrent);
     if (nextCurrent) {
       localStorage.setItem(STORAGE_KEY, nextCurrent.id);
+      api.setCurrentProjectId(nextCurrent.id);
+    } else {
+      api.setCurrentProjectId(null);
     }
   }, []);
 

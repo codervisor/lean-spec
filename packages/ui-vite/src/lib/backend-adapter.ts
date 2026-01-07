@@ -47,14 +47,14 @@ export interface BackendAdapter {
   validateProject(projectId: string): Promise<ProjectValidationResponse>;
 
   // Spec operations
-  getSpecs(params?: ListParams): Promise<Spec[]>;
-  getSpec(specName: string): Promise<SpecDetail>;
-  updateSpec(specName: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
+  getSpecs(projectId: string, params?: ListParams): Promise<Spec[]>;
+  getSpec(projectId: string, specName: string): Promise<SpecDetail>;
+  updateSpec(projectId: string, specName: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
 
   // Stats and dependencies
-  getStats(): Promise<Stats>;
+  getStats(projectId: string): Promise<Stats>;
   getProjectStats(projectId: string): Promise<Stats>;
-  getDependencies(specName?: string): Promise<DependencyGraph>;
+  getDependencies(projectId: string, specName?: string): Promise<DependencyGraph>;
 
   // Context files & local filesystem
   getContextFiles(): Promise<ContextFileListItem[]>;
@@ -67,7 +67,6 @@ export interface BackendAdapter {
  */
 export class HttpBackendAdapter implements BackendAdapter {
   private baseUrl: string;
-  private currentProjectId: string | null = null;
 
   constructor(baseUrl?: string) {
     this.baseUrl = baseUrl || import.meta.env.VITE_API_URL || 'http://localhost:3333';
@@ -160,10 +159,7 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
-  async getSpecs(params?: ListParams): Promise<Spec[]> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getSpecs(projectId: string, params?: ListParams): Promise<Spec[]> {
     const query = params
       ? new URLSearchParams(
         Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
@@ -173,29 +169,24 @@ export class HttpBackendAdapter implements BackendAdapter {
       ).toString()
       : '';
     const endpoint = query
-      ? `/api/projects/${encodeURIComponent(this.currentProjectId)}/specs?${query}`
-      : `/api/projects/${encodeURIComponent(this.currentProjectId)}/specs`;
+      ? `/api/projects/${encodeURIComponent(projectId)}/specs?${query}`
+      : `/api/projects/${encodeURIComponent(projectId)}/specs`;
     const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
     return data.specs || [];
   }
 
-  async getSpec(specName: string): Promise<SpecDetail> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getSpec(projectId: string, specName: string): Promise<SpecDetail> {
     const data = await this.fetchAPI<SpecDetail | { spec: SpecDetail }>(
-      `/api/projects/${encodeURIComponent(this.currentProjectId)}/specs/${encodeURIComponent(specName)}`
+      `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}`
     );
     return 'spec' in data ? data.spec : data;
   }
 
   async updateSpec(
+    _projectId: string,
     specName: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
     // Note: Currently using legacy /api/specs/{spec}/metadata endpoint
     // which implicitly uses the current project from server state.
     // TODO: Consider migrating to /api/projects/{id}/specs/{spec}/metadata for consistency
@@ -205,12 +196,9 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
-  async getStats(): Promise<Stats> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getStats(projectId: string): Promise<Stats> {
     const data = await this.fetchAPI<Stats | { stats: Stats }>(
-      `/api/projects/${encodeURIComponent(this.currentProjectId)}/stats`
+      `/api/projects/${encodeURIComponent(projectId)}/stats`
     );
     return 'stats' in data ? data.stats : data;
   }
@@ -223,14 +211,11 @@ export class HttpBackendAdapter implements BackendAdapter {
     return statsPayload;
   }
 
-  async getDependencies(_specName?: string): Promise<DependencyGraph> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getDependencies(projectId: string, _specName?: string): Promise<DependencyGraph> {
     // Note: specName parameter is ignored for HTTP adapter as the project endpoint
     // returns the full dependency graph. Individual spec dependencies can be computed client-side.
     const data = await this.fetchAPI<DependencyGraph>(
-      `/api/projects/${encodeURIComponent(this.currentProjectId)}/dependencies`
+      `/api/projects/${encodeURIComponent(projectId)}/dependencies`
     );
     return data;
   }
@@ -260,8 +245,6 @@ export class HttpBackendAdapter implements BackendAdapter {
  * Tauri adapter for desktop app - uses IPC commands
  */
 export class TauriBackendAdapter implements BackendAdapter {
-  private currentProjectId: string | null = null;
-
   private async invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
     // Dynamic import to avoid bundling Tauri in web builds
     const { invoke } = await import('@tauri-apps/api/core');
@@ -304,51 +287,40 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('validateProject is not implemented for the Tauri backend yet');
   }
 
-  async getSpecs(_params?: ListParams): Promise<Spec[]> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getSpecs(projectId: string, _params?: ListParams): Promise<Spec[]> {
     // Tauri commands return LightweightSpec[], need to map to Spec[]
     const specs = await this.invoke<Spec[]>('get_specs', {
-      projectId: this.currentProjectId
+      projectId
     });
     return specs;
   }
 
-  async getSpec(specName: string): Promise<SpecDetail> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getSpec(projectId: string, specName: string): Promise<SpecDetail> {
     const spec = await this.invoke<SpecDetail>('get_spec_detail', {
-      projectId: this.currentProjectId,
+      projectId,
       specId: specName,
     });
     return spec;
   }
 
   async updateSpec(
+    projectId: string,
     specName: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
     // For now, only status update is supported
     if (updates.status) {
       await this.invoke('update_spec_status', {
-        projectId: this.currentProjectId,
+        projectId,
         specId: specName,
         newStatus: updates.status,
       });
     }
   }
 
-  async getStats(): Promise<Stats> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getStats(projectId: string): Promise<Stats> {
     const stats = await this.invoke<Stats>('get_project_stats', {
-      projectId: this.currentProjectId,
+      projectId,
     });
     return stats;
   }
@@ -360,26 +332,17 @@ export class TauriBackendAdapter implements BackendAdapter {
     return stats;
   }
 
-  async getDependencies(_specName?: string): Promise<DependencyGraph> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
+  async getDependencies(projectId: string, _specName?: string): Promise<DependencyGraph> {
     return this.invoke<DependencyGraph>('get_dependency_graph', {
-      projectId: this.currentProjectId,
+      projectId,
     });
   }
 
   async getContextFiles(): Promise<ContextFileListItem[]> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
     throw new Error('getContextFiles is not implemented for the Tauri backend yet');
   }
 
   async getContextFile(_path: string): Promise<ContextFileContent> {
-    if (!this.currentProjectId) {
-      throw new Error('No project selected');
-    }
     throw new Error('getContextFile is not implemented for the Tauri backend yet');
   }
 
