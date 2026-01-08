@@ -57,18 +57,21 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
   const [initialScrollOffset] = useState<number>(() => {
     if (typeof window === 'undefined') return 0;
-    const stored = localStorage.getItem(STORAGE_KEYS.scroll);
+    const stored = sessionStorage.getItem(STORAGE_KEYS.scroll);
     return stored ? parseFloat(stored) : 0;
   });
   const { t, i18n } = useTranslation('common');
 
   const listRef = useRef<ListImperativeAPI>(null);
   const mobileOpenRef = useRef(mobileOpen);
+  const hasRestoredInitialScroll = useRef(false);
 
   const activeSpecId = useMemo(() => {
     const match = location.pathname.match(/\/specs\/(.+)$/);
     return match ? decodeURIComponent(match[1]) : '';
   }, [location.pathname]);
+
+  const prevActiveSpecId = useRef(activeSpecId);
 
   useEffect(() => {
     async function loadSpecs() {
@@ -227,29 +230,46 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const hasActiveFilters =
     statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
 
+  // Restore initial scroll position only once on mount
   useEffect(() => {
-    if (initialScrollOffset > 0) return;
+    const el = listRef.current?.element;
+    if (!el || hasRestoredInitialScroll.current) return;
+
+    if (initialScrollOffset > 0) {
+      el.scrollTop = initialScrollOffset;
+      hasRestoredInitialScroll.current = true;
+    }
+  }, [initialScrollOffset, listHeight, showFilters, filteredSpecs.length]);
+
+  // Scroll to active spec when it changes or on initial load (if no stored scroll offset)
+  useEffect(() => {
+    if (!activeSpecId || filteredSpecs.length === 0) return;
+
+    // Skip if we haven't restored initial scroll yet and there is one to restore
+    if (!hasRestoredInitialScroll.current && initialScrollOffset > 0) {
+      hasRestoredInitialScroll.current = true;
+      return;
+    }
+
+    // Skip if active spec hasn't changed
+    if (prevActiveSpecId.current === activeSpecId && hasRestoredInitialScroll.current) {
+      return;
+    }
+
     const targetIndex = filteredSpecs.findIndex((spec) => spec.specName === activeSpecId);
     if (targetIndex >= 0) {
-      listRef.current?.scrollToRow({ index: targetIndex, align: 'center', behavior: 'instant' });
+      listRef.current?.scrollToRow({ index: targetIndex, align: 'center', behavior: 'smooth' });
     }
+
+    prevActiveSpecId.current = activeSpecId;
   }, [filteredSpecs, activeSpecId, initialScrollOffset]);
 
   useEffect(() => {
     const el = listRef.current?.element;
     if (!el) return;
 
-    if (initialScrollOffset > 0) {
-      el.scrollTop = initialScrollOffset;
-    }
-  }, [initialScrollOffset, listHeight, showFilters, filteredSpecs.length]);
-
-  useEffect(() => {
-    const el = listRef.current?.element;
-    if (!el) return;
-
     const onScroll = () => {
-      localStorage.setItem(STORAGE_KEYS.scroll, String(el.scrollTop));
+      sessionStorage.setItem(STORAGE_KEYS.scroll, String(el.scrollTop));
     };
 
     el.addEventListener('scroll', onScroll, { passive: true });

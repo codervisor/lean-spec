@@ -1,306 +1,884 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as React from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
-  type Node,
-  type Edge,
-  Controls,
   Background,
-  useNodesState,
-  useEdgesState,
+  Controls,
+  type Edge,
+  MiniMap,
   MarkerType,
+  type Node,
   Position,
+  type ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import dagre from '@dagrejs/dagre';
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@leanspec/ui-components';
-import { Network, List, AlertTriangle, GitBranch, RefreshCcw } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { api } from '../lib/api';
-import type { DependencyGraph as APIDependencyGraph } from '../types/api';
-import { EmptyState } from '../components/shared/EmptyState';
+import type { DependencyGraph } from '../types/api';
 import { useProject } from '../contexts';
-import { useTranslation } from 'react-i18next';
 
-// Node layout using dagre
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-  const nodeWidth = 200;
-  const nodeHeight = 80;
-
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 50 });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-  });
-
-  return { nodes: layoutedNodes, edges };
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'complete':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-500';
-    case 'in-progress':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 border-blue-500';
-    case 'planned':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 border-purple-500';
-    case 'archived':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300 border-gray-500';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300 border-gray-500';
-  }
-};
+import { nodeTypes } from '../components/dependencies/SpecNode';
+import { SpecSidebar } from '../components/dependencies/SpecSidebar';
+import { getConnectionDepths, layoutGraph } from '../components/dependencies/utils';
+import { DEPENDS_ON_COLOR, toneBgColors } from '../components/dependencies/constants';
+import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from '../components/dependencies/types';
 
 export function DependenciesPage() {
-  const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
+  const { specName, projectId } = useParams<{ specName?: string; projectId?: string }>();
   const navigate = useNavigate();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { currentProject, loading: projectLoading } = useProject();
-  const { t } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
-  const [graph, setGraph] = useState<APIDependencyGraph | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const specParam = searchParams.get('spec');
+  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
 
-  useEffect(() => {
+  // Helper to generate project-scoped URLs
+  const getSpecUrl = React.useCallback((specNumber: number | string) => {
+    return `${basePath}/specs/${specNumber}`;
+  }, [basePath]);
+
+  const [data, setData] = React.useState<DependencyGraph | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [instance, setInstance] = React.useState<ReactFlowInstance | null>(null);
+  const [showStandalone, setShowStandalone] = React.useState(false);
+  const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
+  const [focusedNodeId, setFocusedNodeId] = React.useState<string | null>(null);
+  const [viewMode, setViewMode] = React.useState<'graph' | 'focus'>('graph');
+  const [isCompact, setIsCompact] = React.useState(false);
+  const [selectorOpen, setSelectorOpen] = React.useState(false);
+  const [selectorQuery, setSelectorQuery] = React.useState('');
+  const selectorRef = React.useRef<HTMLDivElement>(null);
+
+  // Track if we've completed initial URL-to-state sync
+  const initialSyncComplete = React.useRef(false);
+  // Track the expected focusedNodeId after URL initialization (to avoid URL update race)
+  const initialFocusedNodeId = React.useRef<string | null>(null);
+
+  // Load data
+  React.useEffect(() => {
     if (!projectReady || projectLoading) return;
 
     setLoading(true);
     api.getDependencies(specName)
-      .then((data) => {
-        setGraph(data);
+      .then((responseData) => {
+        setData(responseData);
+        setIsCompact(responseData.nodes.length > 30);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : t('errors:loadingError')))
+      .finally(() => setLoading(false));
+  }, [projectLoading, projectReady, specName, t]);
 
-        // Convert API graph to React Flow format
-        const flowNodes: Node[] = data.nodes.map((node) => ({
+  // Initialize focused node from URL param on mount
+  React.useEffect(() => {
+    if (data && !initialSyncComplete.current) {
+      if (specParam) {
+        const node = data.nodes.find((n) => n.number.toString() === specParam);
+        if (node) {
+          initialFocusedNodeId.current = node.id;
+          setFocusedNodeId(node.id);
+        }
+      }
+      initialSyncComplete.current = true;
+    }
+  }, [specParam, data]);
+
+  // Sync URL with focused node state
+  React.useEffect(() => {
+    if (!data) return;
+    // Skip if initial sync hasn't completed
+    if (!initialSyncComplete.current) return;
+
+    // Skip if this is the initial focusedNodeId set from URL
+    if (initialFocusedNodeId.current !== null) {
+      if (focusedNodeId === initialFocusedNodeId.current) {
+        // This is the initial sync, clear the ref but don't update URL
+        initialFocusedNodeId.current = null;
+        return;
+      }
+      // focusedNodeId changed to something else, clear the ref
+      initialFocusedNodeId.current = null;
+    }
+
+    const focusedNode = focusedNodeId ? data.nodes.find((n) => n.id === focusedNodeId) : null;
+    const newSpecParam = focusedNode ? focusedNode.number.toString() : null;
+
+    // Only update if different from current URL
+    if (newSpecParam !== specParam) {
+      const params = new URLSearchParams(searchParams);
+      if (newSpecParam) {
+        params.set('spec', newSpecParam);
+      } else {
+        params.delete('spec');
+      }
+      setSearchParams(params, { replace: true });
+    }
+  }, [focusedNodeId, data, specParam, searchParams, setSearchParams]);
+
+  // Only use dependsOn edges (DAG only)
+  const dependsOnEdges = React.useMemo(
+    () => (data?.edges || []).filter((e) => e.type === 'dependsOn'),
+    [data?.edges]
+  );
+
+  const adjacencyMaps = React.useMemo(() => {
+    const upstream = new Map<string, Set<string>>();
+    const downstream = new Map<string, Set<string>>();
+
+    dependsOnEdges.forEach((e) => {
+      if (!upstream.has(e.source)) upstream.set(e.source, new Set());
+      upstream.get(e.source)!.add(e.target);
+
+      if (!downstream.has(e.target)) downstream.set(e.target, new Set());
+      downstream.get(e.target)!.add(e.source);
+    });
+
+    return { upstream, downstream };
+  }, [dependsOnEdges]);
+
+  // Get connection depths for focused node (all transitive deps)
+  const connectionDepths = React.useMemo(() => {
+    if (!focusedNodeId) return null;
+    return getConnectionDepths(focusedNodeId, dependsOnEdges, Infinity);
+  }, [focusedNodeId, dependsOnEdges]);
+
+  React.useEffect(() => {
+    if (!focusedNodeId && viewMode === 'focus') {
+      setViewMode('graph');
+    }
+  }, [focusedNodeId, viewMode]);
+
+  // Helper to get all transitive IDs
+  const getAllTransitiveIds = React.useCallback((startId: string, adjacencyMap: Map<string, Set<string>>) => {
+    const visited = new Set<string>();
+    const queue = [startId];
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      const neighbors = adjacencyMap.get(id);
+      if (neighbors) {
+        neighbors.forEach(n => {
+          if (!visited.has(n)) {
+            visited.add(n);
+            queue.push(n);
+          }
+        });
+      }
+    }
+    return visited;
+  }, []);
+
+  // Get detailed info for focused node (for sidebar)
+  const focusedNodeDetails = React.useMemo((): FocusedNodeDetails | null => {
+    if (!focusedNodeId || !data) return null;
+    const node = data.nodes.find((n) => n.id === focusedNodeId);
+    if (!node) return null;
+
+    const nodeMap = new Map(data.nodes.map((n) => [n.id, n]));
+
+    // BFS to get all upstream specs grouped by depth
+    const getTransitiveDeps = (
+      startId: string,
+      adjacencyMap: Map<string, Set<string>>
+    ): { depth: number; specs: typeof data.nodes }[] => {
+      const visited = new Set<string>([startId]);
+      const result: { depth: number; specs: typeof data.nodes }[] = [];
+      let currentLevel = new Set([startId]);
+      let depth = 1;
+
+      while (currentLevel.size > 0) {
+        const nextLevel = new Set<string>();
+        const specsAtDepth: typeof data.nodes = [];
+
+        currentLevel.forEach((nodeId) => {
+          const neighbors = adjacencyMap.get(nodeId);
+          if (neighbors) {
+            neighbors.forEach((neighborId) => {
+              if (!visited.has(neighborId)) {
+                visited.add(neighborId);
+                nextLevel.add(neighborId);
+                const spec = nodeMap.get(neighborId);
+                if (spec) specsAtDepth.push(spec);
+              }
+            });
+          }
+        });
+
+        if (specsAtDepth.length > 0) {
+          result.push({ depth, specs: specsAtDepth });
+        }
+        currentLevel = nextLevel;
+        depth++;
+      }
+
+      return result;
+    };
+
+    const upstream = getTransitiveDeps(focusedNodeId, adjacencyMaps.upstream);
+    const downstream = getTransitiveDeps(focusedNodeId, adjacencyMaps.downstream);
+
+    return { node, upstream, downstream };
+  }, [focusedNodeId, data, adjacencyMaps]);
+
+  // Build the graph
+  const graph = React.useMemo(() => {
+    if (!data) return { nodes: [], edges: [] };
+
+    const isFocusMode = viewMode === 'focus' && !!focusedNodeId;
+
+    if (isFocusMode && focusedNodeId) {
+      const upstreamIds = getAllTransitiveIds(focusedNodeId, adjacencyMaps.upstream);
+      const downstreamIds = getAllTransitiveIds(focusedNodeId, adjacencyMaps.downstream);
+      const visibleNodeIds = new Set<string>([focusedNodeId, ...upstreamIds, ...downstreamIds]);
+
+      const visibleNodes = data.nodes.filter((n) => visibleNodeIds.has(n.id));
+
+      const nodes: Node<SpecNodeData>[] = visibleNodes.map((node) => {
+        const isFocused = focusedNodeId === node.id;
+        const connectionDepth = isFocused ? 0 : connectionDepths?.get(node.id);
+
+        return {
           id: node.id,
+          type: 'specNode',
           data: {
-            label: (
-              <div className="text-center p-2">
-                <div className="font-medium text-sm">{node.name}</div>
-                <div className={`text-xs px-2 py-0.5 rounded mt-1 ${getStatusColor(node.status)}`}>
-                  {t(`status.${node.status}`, { defaultValue: node.status })}
-                </div>
-              </div>
-            ),
-            name: node.name,
-            status: node.status,
+            label: node.name,
+            shortLabel: node.name.length > 14 ? node.name.slice(0, 12) + '…' : node.name,
+            badge: node.status === 'in-progress' ? 'WIP' : node.status.slice(0, 3).toUpperCase(),
+            number: node.number,
+            tone: node.status as GraphTone,
+            priority: node.priority,
+            href: getSpecUrl(node.number),
+            interactive: true,
+            isFocused,
+            connectionDepth,
+            isDimmed: false,
+            isCompact,
+            isSecondary: false,
           },
           position: { x: 0, y: 0 },
-          type: 'default',
-          sourcePosition: Position.Bottom,
-          targetPosition: Position.Top,
-          style: {
-            border: '2px solid',
-            borderRadius: '8px',
-            padding: '10px',
-            width: 200,
-          },
-          className: getStatusColor(node.status),
-        }));
+          draggable: true,
+          selectable: true,
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+        };
+      });
 
-        const flowEdges: Edge[] = data.edges.map((edge, index) => ({
-          id: `${edge.source}-${edge.target}-${index}`,
+      const edges: Edge[] = dependsOnEdges
+        .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+        .map((edge) => {
+          const isHighlighted = edge.source === focusedNodeId || edge.target === focusedNodeId;
+
+          return {
+            id: `${edge.source}-${edge.target}-dependsOn`,
+            source: edge.source,
+            target: edge.target,
+            type: 'smoothstep',
+            animated: isHighlighted,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: DEPENDS_ON_COLOR,
+              width: 18,
+              height: 18,
+            },
+            style: {
+              stroke: DEPENDS_ON_COLOR,
+              strokeWidth: isHighlighted ? 2.75 : 2,
+              opacity: 1,
+            },
+          };
+        });
+
+      return layoutGraph(nodes, edges, isCompact, false, {
+        mode: 'focus',
+        focusedNodeId,
+        upstreamIds,
+        downstreamIds,
+      });
+    }
+
+    // Primary nodes: those matching the status filter
+    const primaryNodes = data.nodes.filter(
+      (node) => statusFilter.length === 0 || statusFilter.includes(node.status)
+    );
+    const primaryNodeIds = new Set(primaryNodes.map((n) => n.id));
+
+    // Find all nodes in the critical path (connected to primary nodes via dependencies)
+    const criticalPathIds = new Set<string>(primaryNodeIds);
+
+    // BFS to find all connected nodes through dependencies
+    const queue = [...primaryNodeIds];
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      dependsOnEdges.forEach((e) => {
+        // Check both directions - upstream and downstream dependencies
+        if (e.source === nodeId && !criticalPathIds.has(e.target)) {
+          criticalPathIds.add(e.target);
+          queue.push(e.target);
+        }
+        if (e.target === nodeId && !criticalPathIds.has(e.source)) {
+          criticalPathIds.add(e.source);
+          queue.push(e.source);
+        }
+      });
+    }
+
+    // Get all nodes in critical path
+    const criticalPathNodes = data.nodes.filter((n) => criticalPathIds.has(n.id));
+
+    // Filter edges to only those between critical path nodes
+    const filteredEdges = dependsOnEdges.filter(
+      (e) => criticalPathIds.has(e.source) && criticalPathIds.has(e.target)
+    );
+
+    // Filter to nodes with dependencies unless showStandalone
+    let visibleNodes = criticalPathNodes;
+    if (!showStandalone) {
+      const nodesWithDeps = new Set<string>();
+      filteredEdges.forEach((e) => {
+        nodesWithDeps.add(e.source);
+        nodesWithDeps.add(e.target);
+      });
+      visibleNodes = criticalPathNodes.filter((n) => nodesWithDeps.has(n.id));
+    }
+
+    const visibleNodeIds = new Set(visibleNodes.map((n) => n.id));
+
+    // Track which nodes are "secondary" (shown due to critical path, not primary filter)
+    const secondaryNodeIds = new Set(
+      [...visibleNodeIds].filter((id) => !primaryNodeIds.has(id))
+    );
+
+    const nodes: Node<SpecNodeData>[] = visibleNodes.map((node) => {
+      const isFocused = focusedNodeId === node.id;
+      const isSecondary = secondaryNodeIds.has(node.id);
+
+      let connectionDepth: number | undefined;
+      let isDimmed = false;
+
+      if (focusedNodeId) {
+        connectionDepth = connectionDepths?.get(node.id);
+        isDimmed = connectionDepth === undefined;
+      }
+
+      return {
+        id: node.id,
+        type: 'specNode',
+        data: {
+          label: node.name,
+          shortLabel: node.name.length > 14 ? node.name.slice(0, 12) + '…' : node.name,
+          badge: node.status === 'in-progress' ? 'WIP' : node.status.slice(0, 3).toUpperCase(),
+          number: node.number,
+          tone: node.status as GraphTone,
+          priority: node.priority,
+          href: getSpecUrl(node.number),
+          interactive: true,
+          isFocused,
+          connectionDepth,
+          isDimmed,
+          isCompact,
+          isSecondary,
+        },
+        position: { x: 0, y: 0 },
+        draggable: true,
+        selectable: true,
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
+      };
+    });
+
+    const edges: Edge[] = filteredEdges
+      .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+      .map((edge) => {
+        let isHighlighted = true;
+        let opacity = 0.7;
+
+        if (focusedNodeId) {
+          const sourceDepth = connectionDepths?.get(edge.source);
+          const targetDepth = connectionDepths?.get(edge.target);
+          isHighlighted =
+            sourceDepth !== undefined &&
+            targetDepth !== undefined &&
+            (sourceDepth === 0 || targetDepth === 0);
+          opacity = isHighlighted
+            ? 1
+            : sourceDepth !== undefined && targetDepth !== undefined
+              ? 0.4
+              : 0.1;
+        }
+
+        return {
+          id: `${edge.source}-${edge.target}-dependsOn`,
           source: edge.source,
           target: edge.target,
           type: 'smoothstep',
-          animated: edge.type === 'depends_on',
+          animated: isHighlighted && focusedNodeId !== null,
           markerEnd: {
             type: MarkerType.ArrowClosed,
+            color: DEPENDS_ON_COLOR,
+            width: 18,
+            height: 18,
           },
-          label: edge.type === 'depends_on'
-            ? t('dependenciesPage.list.dependsOn')
-            : t('dependenciesPage.list.requiredBy'),
-          style: { stroke: edge.type === 'depends_on' ? '#3B82F6' : '#6B7280' },
-        }));
+          style: {
+            stroke: DEPENDS_ON_COLOR,
+            strokeWidth: isHighlighted ? 2.5 : 1.5,
+            opacity,
+          },
+        };
+      });
 
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          flowNodes,
-          flowEdges
-        );
+    return layoutGraph(nodes, edges, isCompact, showStandalone, { mode: 'graph' });
+  }, [
+    data,
+    dependsOnEdges,
+    statusFilter,
+    focusedNodeId,
+    connectionDepths,
+    isCompact,
+    showStandalone,
+    adjacencyMaps,
+    viewMode,
+    getSpecUrl,
+    getAllTransitiveIds,
+  ]);
 
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : t('loadingError', { ns: 'errors' })))
-      .finally(() => setLoading(false));
-  }, [projectLoading, projectReady, setEdges, setNodes, specName, t]);
+  // Connection stats
+  const connectionStats = React.useMemo((): ConnectionStats => {
+    if (!data) return { connected: 0, standalone: 0 };
 
-  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    navigate(`${basePath}/specs/${node.id}`);
-  }, [basePath, navigate]);
+    const nodesWithDeps = new Set<string>();
+    dependsOnEdges.forEach((e) => {
+      nodesWithDeps.add(e.source);
+      nodesWithDeps.add(e.target);
+    });
+
+    return {
+      connected: nodesWithDeps.size,
+      standalone: data.nodes.length - nodesWithDeps.size,
+    };
+  }, [dependsOnEdges, data]);
+
+  const statusCounts = React.useMemo(() => {
+    if (!data) return {};
+    const counts: Record<string, number> = {};
+    data.nodes.forEach((node) => {
+      counts[node.status] = (counts[node.status] || 0) + 1;
+    });
+    return counts;
+  }, [data]);
+
+  const handleInit = React.useCallback((flowInstance: ReactFlowInstance) => {
+    setInstance(flowInstance);
+    requestAnimationFrame(() => {
+      flowInstance.fitView({ padding: 0.15, duration: 300 });
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (!instance) return;
+    const timer = setTimeout(() => {
+      instance.fitView({ padding: 0.15, duration: 300 });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [instance, graph, statusFilter, showStandalone]);
+
+  // Center on focused node when set from URL param
+  React.useEffect(() => {
+    if (!instance || !focusedNodeId || !specParam) return;
+    const node = graph.nodes.find((n) => n.id === focusedNodeId);
+    if (node) {
+      const timer = setTimeout(() => {
+        instance.setCenter(node.position.x + 80, node.position.y + 30, {
+          duration: 400,
+          zoom: 1,
+        });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [instance, focusedNodeId, specParam, graph.nodes]);
+
+  // Close selector dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (selectorRef.current && !selectorRef.current.contains(e.target as globalThis.Node)) {
+        setSelectorOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter specs for selector dropdown
+  const filteredSpecs = React.useMemo(() => {
+    if (!data) return [];
+    if (!selectorQuery.trim()) return data.nodes.slice(0, 15);
+    const q = selectorQuery.toLowerCase();
+    return data.nodes
+      .filter(
+        (n) =>
+          n.name.toLowerCase().includes(q) ||
+          n.number.toString().includes(q) ||
+          n.tags.some((t) => t.toLowerCase().includes(q))
+      )
+      .slice(0, 15);
+  }, [data, selectorQuery]);
+
+  // Get focused spec name for display
+  const focusedSpec = React.useMemo(
+    () => (focusedNodeId && data ? data.nodes.find((n) => n.id === focusedNodeId) : null),
+    [focusedNodeId, data]
+  );
+
+  const handleNodeClick = React.useCallback(
+    (event: React.MouseEvent, node: Node<SpecNodeData>) => {
+      if (!node?.data) return;
+      if (event.detail === 2 && node.data.href) {
+        navigate(node.data.href);
+        return;
+      }
+      setFocusedNodeId((prev) => (prev === node.id ? null : node.id));
+    },
+    [navigate]
+  );
+
+  const handlePaneClick = React.useCallback(() => {
+    setFocusedNodeId(null);
+  }, []);
+
+  const toggleStatus = (status: string) => {
+    setStatusFilter((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+    setFocusedNodeId(null);
+  };
+
+  const clearFilters = () => {
+    setStatusFilter([]);
+    setFocusedNodeId(null);
+    setSelectorQuery('');
+  };
+
+  const handleSelectSpec = (specId: string) => {
+    setFocusedNodeId(specId);
+    setSelectorOpen(false);
+    setSelectorQuery('');
+    // Center on the selected node
+    if (instance) {
+      const node = graph.nodes.find((n) => n.id === specId);
+      if (node) {
+        instance.setCenter(node.position.x + 80, node.position.y + 30, {
+          duration: 400,
+          zoom: 1,
+        });
+      }
+    }
+  };
+
+  const hasFilters = statusFilter.length > 0 || focusedNodeId;
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-muted-foreground">{t('dependenciesPage.state.loading')}</CardContent>
-      </Card>
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+          <p className="text-muted-foreground">{t('dependenciesPage.state.loading')}</p>
+        </div>
+      </div>
     );
   }
 
-  if (error || !graph) {
+  if (error || !data) {
     return (
-      <EmptyState
-        icon={AlertTriangle}
-        title={t('dependenciesPage.state.errorTitle')}
-        description={error || t('dependenciesPage.state.errorDescription')}
-        tone="error"
-        actions={(
-          <Button size="sm" variant="secondary" onClick={() => navigate(0)}>
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            {t('actions.retry')}
-          </Button>
-        )}
-      />
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-destructive mb-2">{t('dependenciesPage.state.errorTitle')}</p>
+            <p className="text-sm text-muted-foreground">{error || t('dependenciesPage.state.errorDescription')}</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
-  if (graph.nodes.length === 0) {
+  if (data.nodes.length === 0) {
     return (
-      <EmptyState
-        icon={GitBranch}
-        title={t('dependenciesPage.empty.noDependencies')}
-        description={t('dependenciesPage.empty.noDependenciesDescription')}
-        actions={(
-          <Button size="sm" variant="outline" onClick={() => navigate(`${basePath}/specs`)}>
-            {t('dependenciesPage.actions.goToSpecs')}
-          </Button>
-        )}
-      />
+      <div className="container mx-auto p-6">
+        <div className="rounded-lg border border-border bg-muted/30 p-8 text-center">
+          <h2 className="text-xl font-semibold mb-2">{t('dependenciesPage.empty.noDependencies')}</h2>
+          <p className="text-muted-foreground">{t('dependenciesPage.empty.noDependenciesDescription')}</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {specName
-              ? t('dependenciesPage.header.specTitle', { specName })
-              : t('dependenciesPage.header.allTitle')}
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            {t('dependenciesPage.header.countSummary', {
-              specs: graph.nodes.length,
-              relationships: graph.edges.length,
-            })}
-          </p>
+    <div className="container mx-auto p-6 h-[calc(100vh-7rem)]">
+      <div className="flex h-full flex-col gap-2">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('dependenciesPage.header.title')}
+              </p>
+              <p className="text-sm text-foreground">
+                {connectionStats.connected > 0 ? (
+                  <>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      {t('dependenciesPage.header.summary.connected', { count: connectionStats.connected })}
+                    </span>
+                    {connectionStats.standalone > 0 && (
+                      <>
+                        {' • '}
+                        <span className="text-muted-foreground">
+                          {t('dependenciesPage.header.summary.standalone', { count: connectionStats.standalone })}
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">{t('dependenciesPage.header.summary.none')}</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Spec Selector */}
+          <div className="relative" ref={selectorRef}>
+            <button
+              onClick={() => setSelectorOpen(!selectorOpen)}
+              className={cn(
+                'h-7 w-52 rounded-md border bg-background px-2.5 text-xs text-left flex items-center gap-2 transition-colors',
+                focusedNodeId
+                  ? 'border-primary/60 bg-primary/10'
+                  : 'border-border hover:border-primary/40'
+              )}
+            >
+              {focusedSpec ? (
+                <>
+                  <span className="text-muted-foreground">#{focusedSpec.number.toString().padStart(3, '0')}</span>
+                  <span className="truncate flex-1 text-foreground">{focusedSpec.name}</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">{t('dependenciesPage.selector.placeholder')}</span>
+              )}
+              <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {selectorOpen && (
+              <div className="absolute right-0 top-8 z-50 w-64 rounded-md border border-border bg-background shadow-lg overflow-hidden">
+                <div className="p-2 border-b border-border">
+                  <input
+                    type="text"
+                    placeholder={t('dependenciesPage.selector.filterPlaceholder')}
+                    value={selectorQuery}
+                    onChange={(e) => setSelectorQuery(e.target.value)}
+                    className="w-full h-7 rounded border border-border bg-muted/30 px-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    autoFocus
+                  />
+                </div>
+                <div className="max-h-64 overflow-auto">
+                  {focusedNodeId && (
+                    <button
+                      onClick={() => {
+                        setFocusedNodeId(null);
+                        setSelectorOpen(false);
+                        setSelectorQuery('');
+                      }}
+                      className="w-full px-3 py-2 text-xs text-left hover:bg-muted/50 border-b border-border text-muted-foreground flex items-center gap-2"
+                    >
+                      <span className="text-red-400">×</span> {t('dependenciesPage.selector.clearSelection')}
+                    </button>
+                  )}
+                  {filteredSpecs.length > 0 ? (
+                    filteredSpecs.map((spec) => (
+                      <button
+                        key={spec.id}
+                        onClick={() => handleSelectSpec(spec.id)}
+                        className={cn(
+                          'w-full px-3 py-2 text-xs text-left hover:bg-muted/50 flex items-center gap-2',
+                          focusedNodeId === spec.id && 'bg-primary/20'
+                        )}
+                      >
+                        <span className="text-muted-foreground font-mono">#{spec.number.toString().padStart(3, '0')}</span>
+                        <span className="truncate flex-1">{spec.name}</span>
+                        <span
+                          className={cn(
+                            'text-[9px] px-1 py-0.5 rounded uppercase font-medium',
+                            spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+                            spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+                            spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
+                            spec.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
+                          )}
+                        >
+                          {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-xs text-muted-foreground text-center">
+                      {t('dependenciesPage.selector.empty')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'graph' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('graph')}
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => {
+            const isActive = statusFilter.length === 0 || statusFilter.includes(status);
+            const label = t(`status.${status}`);
+            const count = statusCounts[status] || 0;
+            return (
+              <button
+                key={status}
+                onClick={() => toggleStatus(status)}
+                className={cn(
+                  'rounded border px-2 py-1 font-medium transition-colors',
+                  isActive && status === 'planned' && 'border-blue-500/60 bg-blue-500/20 text-blue-700 dark:text-blue-300',
+                  isActive && status === 'in-progress' && 'border-orange-500/60 bg-orange-500/20 text-orange-700 dark:text-orange-300',
+                  isActive && status === 'complete' && 'border-green-500/60 bg-green-500/20 text-green-700 dark:text-green-300',
+                  isActive && status === 'archived' && 'border-gray-500/60 bg-gray-500/20 text-gray-600 dark:text-gray-300',
+                  !isActive && 'border-border bg-background text-muted-foreground/40'
+                )}
+              >
+                {label}
+                <span className="ml-1 opacity-60">{t('dependenciesPage.filters.count', { count })}</span>
+              </button>
+            );
+          })}
+
+          <span className="h-3 w-px bg-border" />
+
+          <button
+            onClick={() => setShowStandalone(!showStandalone)}
+            className={cn(
+              'rounded border px-2 py-1 font-medium transition-colors',
+              showStandalone
+                ? 'border-violet-500/60 bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                : 'border-border bg-background hover:bg-accent text-muted-foreground'
+            )}
           >
-            <Network className="w-4 h-4 mr-2" />
-            {t('dependenciesPage.view.graph')}
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('list')}
+            {t('dependenciesPage.filters.showStandalone', { count: connectionStats.standalone })}
+          </button>
+
+          <span className="h-3 w-px bg-border" />
+
+          <button
+            onClick={() => setIsCompact(!isCompact)}
+            className={cn(
+              'rounded border px-2 py-1 font-medium transition-colors',
+              isCompact
+                ? 'border-primary/60 bg-primary/20 text-primary'
+                : 'border-border bg-background hover:bg-accent text-muted-foreground'
+            )}
           >
-            <List className="w-4 h-4 mr-2" />
-            {t('dependenciesPage.view.list')}
-          </Button>
+            {t('dependenciesPage.filters.compact')}
+          </button>
+
+          {focusedNodeId && (
+            <button
+              onClick={() => setViewMode((prev) => (prev === 'graph' ? 'focus' : 'graph'))}
+              className={cn(
+                'rounded border px-2 py-1 font-medium transition-colors',
+                viewMode === 'focus'
+                  ? 'border-primary/60 bg-primary/20 text-primary'
+                  : 'border-border bg-background hover:bg-accent text-muted-foreground'
+              )}
+            >
+              {t('dependenciesPage.filters.focusMode')}
+            </button>
+          )}
+
+          {hasFilters && (
+            <>
+              <span className="h-3 w-px bg-border" />
+              <button
+                onClick={clearFilters}
+                className="rounded border border-red-500/40 bg-red-500/10 px-2 py-1 font-medium text-red-400 hover:bg-red-500/20"
+              >
+                {t('dependenciesPage.filters.clear')}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Main content */}
+        <div className="flex flex-1 gap-3 min-h-0">
+          {/* Graph */}
+          <div className="flex-1 overflow-hidden rounded-lg border border-border bg-gray-50 dark:bg-[#080c14]">
+            {graph.nodes.length > 0 ? (
+              <ReactFlow
+                nodes={graph.nodes}
+                edges={graph.edges}
+                nodeTypes={nodeTypes}
+                onInit={handleInit}
+                className="h-full w-full"
+                fitView
+                proOptions={{ hideAttribution: true }}
+                nodesDraggable
+                nodesConnectable={false}
+                elementsSelectable
+                panOnScroll
+                panOnDrag
+                zoomOnScroll
+                zoomOnPinch
+                minZoom={0.05}
+                maxZoom={2}
+                onNodeClick={handleNodeClick}
+                onPaneClick={handlePaneClick}
+              >
+                <Background gap={20} size={1} color="rgba(100, 116, 139, 0.06)" />
+                <Controls showInteractive={false} className="!bg-background/90 !border-border !rounded-md" />
+                <MiniMap
+                  nodeColor={(node) => {
+                    const d = node.data as SpecNodeData;
+                    return toneBgColors[d.tone] || '#6b7280';
+                  }}
+                  maskColor="rgba(128, 128, 128, 0.6)"
+                  className="!bg-white/95 dark:!bg-background/95 !border-border !rounded-md"
+                  style={{ width: 120, height: 80 }}
+                  pannable
+                  zoomable
+                />
+              </ReactFlow>
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <p className="text-sm font-medium">{t('dependenciesPage.empty.title')}</p>
+                  <p className="text-xs mt-1">
+                    {showStandalone
+                      ? t('dependenciesPage.empty.filters')
+                      : t('dependenciesPage.empty.standaloneHint')}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <SpecSidebar
+            focusedDetails={focusedNodeDetails}
+            onSelectSpec={setFocusedNodeId}
+            onOpenSpec={(num) => navigate(getSpecUrl(num))}
+          />
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-6 bg-amber-400 rounded" />
+            {t('dependenciesPage.legend.dependsOn')}
+          </span>
+          <span className="text-muted-foreground/50 ml-auto">
+            {t('dependenciesPage.legend.instructions')}
+          </span>
         </div>
       </div>
-
-      {viewMode === 'graph' ? (
-        <Card>
-          <CardContent className="p-0">
-            <div style={{ height: '600px' }} className="border rounded-lg">
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onNodeClick={onNodeClick}
-                fitView
-                attributionPosition="bottom-left"
-              >
-                <Controls />
-                <Background />
-              </ReactFlow>
-            </div>
-            <div className="p-4 text-sm text-muted-foreground">
-              {t('dependenciesPage.graph.instructions')}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dependenciesPage.list.specsTitle', { count: graph.nodes.length })}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {graph.nodes.map((node: APIDependencyGraph['nodes'][number]) => (
-                  <button
-                    key={node.id}
-                    onClick={() => navigate(`${basePath}/specs/${node.id}`)}
-                    className="w-full p-3 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors text-left"
-                  >
-                    <div className="font-medium">{node.name}</div>
-                    <div className={`text-xs px-2 py-0.5 rounded mt-1 inline-block ${getStatusColor(node.status)}`}>
-                      {t(`status.${node.status}`, { defaultValue: node.status })}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dependenciesPage.list.relationshipsTitle', { count: graph.edges.length })}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {graph.edges.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground bg-secondary/40 rounded-lg border">
-                  {t('dependenciesPage.list.noRelationships')}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {graph.edges.map((edge: APIDependencyGraph['edges'][number], i: number) => (
-                    <div key={i} className="p-3 bg-secondary rounded-lg text-sm">
-                      <div className="font-medium">{edge.source}</div>
-                      <div className="text-xs text-muted-foreground my-1">
-                        {edge.type === 'depends_on'
-                          ? t('dependenciesPage.list.dependsOn')
-                          : t('dependenciesPage.list.requiredBy')}
-                      </div>
-                      <div className="font-medium">{edge.target}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

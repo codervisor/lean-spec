@@ -50,13 +50,16 @@ export interface Stats {
 export interface DependencyNode {
   id: string;
   name: string;
+  number: number;
   status: string;
+  priority: string;
+  tags: string[];
 }
 
 export interface DependencyEdge {
   source: string;
   target: string;
-  type?: 'depends_on' | 'required_by';
+  type?: 'depends_on' | 'required_by' | 'dependsOn';
 }
 
 export interface DependencyGraph {

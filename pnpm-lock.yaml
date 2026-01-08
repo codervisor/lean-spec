@@ -171,7 +171,15 @@ importers:
         specifier: workspace:*
         version: link:binaries/windows-x64
 
+  packages/http-server/binaries/darwin-arm64: {}
+
+  packages/http-server/binaries/darwin-x64: {}
+
+  packages/http-server/binaries/linux-arm64: {}
+
   packages/http-server/binaries/linux-x64: {}
+
+  packages/http-server/binaries/windows-x64: {}
 
   packages/mcp:
     dependencies:
