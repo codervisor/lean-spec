@@ -12,9 +12,10 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, FileText, Clock, PlayCircle, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
 import { Link } from 'react-router-dom';
+import { StatCard } from '../components/dashboard/StatCard';
 import { api } from '../lib/api';
 import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
@@ -169,57 +170,41 @@ export function StatsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('statsPage.cards.total.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold">{stats.totalSpecs}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('statsPage.cards.completed.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold">{statusCounts.complete || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard
+          title={t('statsPage.cards.total.title')}
+          value={stats.totalSpecs}
+          icon={FileText}
+          iconColor="text-blue-600"
+          gradientFrom="from-blue-500/10"
+        />
+        <StatCard
+          title={t('statsPage.cards.planned.title')}
+          value={statusCounts.planned || 0}
+          icon={Clock}
+          iconColor="text-purple-600"
+          gradientFrom="from-purple-500/10"
+        />
+        <StatCard
+          title={t('statsPage.cards.inProgress.title')}
+          value={statusCounts['in-progress'] || 0}
+          icon={PlayCircle}
+          iconColor="text-orange-600"
+          gradientFrom="from-orange-500/10"
+        />
+        <StatCard
+          title={t('statsPage.cards.completed.title')}
+          value={statusCounts.complete || 0}
+          icon={CheckCircle2}
+          iconColor="text-green-600"
+          gradientFrom="from-green-500/10"
+          subtext={
+            <span className="flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
               {completionRate}% {t('statsPage.cards.completed.subtitle')}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent" />
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('statsPage.cards.inProgress.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold">{statusCounts['in-progress'] || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
-          <CardHeader className="relative pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('statsPage.cards.planned.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="text-3xl font-bold">{statusCounts.planned || 0}</div>
-          </CardContent>
-        </Card>
+            </span>
+          }
+        />
       </div>
 
       {/* Charts */}
