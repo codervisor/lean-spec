@@ -35,7 +35,7 @@ import {
 import { useProject } from '../contexts';
 import { CreateProjectDialog } from '../components/projects/CreateProjectDialog';
 import { ColorPicker } from '../components/shared/ColorPicker';
-import { ProjectAvatar } from '../components/shared/ProjectAvatar';
+import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
 import { api } from '../lib/api';
 import type { Project, Stats } from '../types/api';
 
@@ -252,7 +252,7 @@ export function SettingsPage() {
     return (
       <div className="px-4 py-2 bg-muted/20 border-t flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
         <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || '#666' }} />
+          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || getColorForName(project.name || project.id) }} />
           <span>Local</span>
         </div>
         {lastAccessed && <span>{lastAccessed}</span>}

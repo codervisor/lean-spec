@@ -42,15 +42,53 @@ function getContrastColor(hexColor?: string): string | undefined {
   return luminance > 0.5 ? '#000000' : '#ffffff';
 }
 
+const AVATAR_COLORS = [
+  '#ef4444', // red-500
+  '#f97316', // orange-500
+  '#f59e0b', // amber-500
+  '#84cc16', // lime-500
+  '#22c55e', // green-500
+  '#10b981', // emerald-500
+  '#06b6d4', // cyan-500
+  '#0ea5e9', // sky-500
+  '#3b82f6', // blue-500
+  '#6366f1', // indigo-500
+  '#8b5cf6', // violet-500
+  '#d946ef', // fuchsia-500
+  '#ec4899', // pink-500
+  '#f43f5e', // rose-500
+  '#78716c', // stone-500
+];
+
+export function getColorForName(name: string): string {
+  if (!name) return 'hsl(var(--primary))';
+
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const index = Math.abs(hash % AVATAR_COLORS.length);
+  return AVATAR_COLORS[index];
+}
+
 export function ProjectAvatar({
   name,
-  color = 'hsl(var(--primary))',
+  color,
   icon,
   size = 'md',
   className,
 }: ProjectAvatarProps) {
   const initials = React.useMemo(() => getInitials(name), [name]);
-  const textColor = React.useMemo(() => getContrastColor(color?.startsWith('#') ? color : undefined), [color]);
+
+  const displayColor = React.useMemo(() => {
+    if (color) return color;
+    return getColorForName(name);
+  }, [color, name]);
+
+  const textColor = React.useMemo(() =>
+    getContrastColor(displayColor?.startsWith('#') ? displayColor : undefined),
+    [displayColor]);
 
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
@@ -58,7 +96,7 @@ export function ProjectAvatar({
       <AvatarFallback
         className="font-semibold border"
         style={{
-          backgroundColor: color || undefined,
+          backgroundColor: displayColor,
           ...(textColor && { color: textColor }),
         }}
       >
