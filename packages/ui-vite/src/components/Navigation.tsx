@@ -77,10 +77,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
       break;
 
     case 'specs': {
-      const searchParams = new URLSearchParams(parsed.query || '');
-      const view = searchParams.get('view');
-      const viewLabel = view === 'board' ? t('specsPage.views.board') : t('specsPage.views.list');
-      items = [{ label: homeLabel, to: basePath }, { label: `${specsLabel} (${viewLabel})` }];
+      items = [{ label: homeLabel, to: basePath }, { label: specsLabel }];
       break;
     }
 
@@ -125,7 +122,7 @@ export function Navigation({ onToggleSidebar, onShowShortcuts: _onShowShortcuts 
 
   return (
     <header className="sticky top-0 z-50 w-full h-14 border-b border-border bg-background">
-      <div className="flex items-center justify-between h-full px-2 sm:px-4">
+      <div className="flex items-center justify-between h-full lg:px-1 px-4">
         {/* Left: Mobile Menu + Logo + Breadcrumb */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           {/* Mobile hamburger menu */}

@@ -1,4 +1,4 @@
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -48,6 +48,23 @@ export function SpecsFilters({
   filteredCount,
 }: SpecsFiltersProps) {
   const { t } = useTranslation('common');
+
+  // Status icons mapping
+  const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+    planned: Clock,
+    'in-progress': PlayCircle,
+    complete: CheckCircle2,
+    archived: Archive,
+  };
+
+  // Priority icons mapping
+  const priorityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+    critical: AlertCircle,
+    high: ArrowUp,
+    medium: Minus,
+    low: ArrowDown,
+  };
+
   const statusKeyMap: Record<string, `status.${string}`> = {
     planned: 'status.planned',
     'in-progress': 'status.inProgress',
@@ -93,9 +110,17 @@ export function SpecsFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('specsPage.filters.statusAll')}</SelectItem>
-              {uniqueStatuses.map(status => (
-                <SelectItem key={status} value={status}>{formatStatus(status)}</SelectItem>
-              ))}
+              {uniqueStatuses.map(status => {
+                const StatusIcon = statusIcons[status];
+                return (
+                  <SelectItem key={status} value={status}>
+                    <div className="flex items-center gap-2">
+                      {StatusIcon && <StatusIcon className="h-4 w-4" />}
+                      <span>{formatStatus(status)}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 
@@ -105,9 +130,17 @@ export function SpecsFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('specsPage.filters.priorityAll')}</SelectItem>
-              {uniquePriorities.map(priority => (
-                <SelectItem key={priority} value={priority}>{formatPriority(priority)}</SelectItem>
-              ))}
+              {uniquePriorities.map(priority => {
+                const PriorityIcon = priorityIcons[priority];
+                return (
+                  <SelectItem key={priority} value={priority}>
+                    <div className="flex items-center gap-2">
+                      {PriorityIcon && <PriorityIcon className="h-4 w-4" />}
+                      <span>{formatPriority(priority)}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 

@@ -94,16 +94,32 @@ export function SpecsPage() {
   // Get unique values for filters
   const uniqueStatuses = useMemo(() => {
     const statuses = specs.map((s) => s.status).filter((s): s is SpecStatus => Boolean(s));
-    return Array.from(new Set(statuses));
+    const uniqueSet = Array.from(new Set(statuses));
+    // Sort by defined order: planned -> in-progress -> complete -> archived
+    const statusOrder: Record<SpecStatus, number> = {
+      'planned': 1,
+      'in-progress': 2,
+      'complete': 3,
+      'archived': 4,
+    };
+    return uniqueSet.sort((a, b) => statusOrder[a] - statusOrder[b]);
   }, [specs]);
-  const uniquePriorities = useMemo(() =>
-    Array.from(new Set(specs.map(s => s.priority).filter(Boolean) as string[])),
-    [specs]
-  );
-  const uniqueTags = useMemo(() =>
-    Array.from(new Set(specs.flatMap(s => s.tags || []))),
-    [specs]
-  );
+  const uniquePriorities = useMemo(() => {
+    const uniqueSet = Array.from(new Set(specs.map(s => s.priority).filter(Boolean) as string[]));
+    // Sort by defined order: critical -> high -> medium -> low
+    const priorityOrder: Record<string, number> = {
+      'critical': 1,
+      'high': 2,
+      'medium': 3,
+      'low': 4,
+    };
+    return uniqueSet.sort((a, b) => (priorityOrder[a] || 999) - (priorityOrder[b] || 999));
+  }, [specs]);
+  const uniqueTags = useMemo(() => {
+    const uniqueSet = Array.from(new Set(specs.flatMap(s => s.tags || [])));
+    // Sort alphabetically ascending
+    return uniqueSet.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  }, [specs]);
 
   const handleClearFilters = useCallback(() => {
     setSearchQuery('');

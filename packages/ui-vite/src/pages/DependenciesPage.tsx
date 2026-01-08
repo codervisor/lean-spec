@@ -1,6 +1,19 @@
 import * as React from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+import {
+  Button,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@leanspec/ui-components';
 import ReactFlow, {
   Background,
   Controls,
@@ -50,7 +63,6 @@ export function DependenciesPage() {
   const [isCompact, setIsCompact] = React.useState(false);
   const [selectorOpen, setSelectorOpen] = React.useState(false);
   const [selectorQuery, setSelectorQuery] = React.useState('');
-  const selectorRef = React.useRef<HTMLDivElement>(null);
 
   // Track if we've completed initial URL-to-state sync
   const initialSyncComplete = React.useRef(false);
@@ -497,17 +509,6 @@ export function DependenciesPage() {
     }
   }, [instance, focusedNodeId, specParam, graph.nodes]);
 
-  // Close selector dropdown when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (selectorRef.current && !selectorRef.current.contains(e.target as globalThis.Node)) {
-        setSelectorOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Filter specs for selector dropdown
   const filteredSpecs = React.useMemo(() => {
     if (!data) return [];
@@ -643,69 +644,65 @@ export function DependenciesPage() {
           </div>
 
           {/* Spec Selector */}
-          <div className="relative" ref={selectorRef}>
-            <button
-              onClick={() => setSelectorOpen(!selectorOpen)}
-              className={cn(
-                'h-7 w-52 rounded-md border bg-background px-2.5 text-xs text-left flex items-center gap-2 transition-colors',
-                focusedNodeId
-                  ? 'border-primary/60 bg-primary/10'
-                  : 'border-border hover:border-primary/40'
-              )}
-            >
-              {focusedSpec ? (
-                <>
-                  <span className="text-muted-foreground">#{focusedSpec.number.toString().padStart(3, '0')}</span>
-                  <span className="truncate flex-1 text-foreground">{focusedSpec.name}</span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">{t('dependenciesPage.selector.placeholder')}</span>
-              )}
-              <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {selectorOpen && (
-              <div className="absolute right-0 top-8 z-50 w-64 rounded-md border border-border bg-background shadow-lg overflow-hidden">
-                <div className="p-2 border-b border-border">
-                  <input
-                    type="text"
-                    placeholder={t('dependenciesPage.selector.filterPlaceholder')}
-                    value={selectorQuery}
-                    onChange={(e) => setSelectorQuery(e.target.value)}
-                    className="w-full h-7 rounded border border-border bg-muted/30 px-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    autoFocus
-                  />
-                </div>
-                <div className="max-h-64 overflow-auto">
-                  {focusedNodeId && (
-                    <button
-                      onClick={() => {
-                        setFocusedNodeId(null);
-                        setSelectorOpen(false);
-                        setSelectorQuery('');
-                      }}
-                      className="w-full px-3 py-2 text-xs text-left hover:bg-muted/50 border-b border-border text-muted-foreground flex items-center gap-2"
-                    >
-                      <span className="text-red-400">×</span> {t('dependenciesPage.selector.clearSelection')}
-                    </button>
-                  )}
-                  {filteredSpecs.length > 0 ? (
-                    filteredSpecs.map((spec) => (
-                      <button
-                        key={spec.id}
-                        onClick={() => handleSelectSpec(spec.id)}
-                        className={cn(
-                          'w-full px-3 py-2 text-xs text-left hover:bg-muted/50 flex items-center gap-2',
-                          focusedNodeId === spec.id && 'bg-primary/20'
-                        )}
+          <Popover open={selectorOpen} onOpenChange={setSelectorOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={selectorOpen}
+                className={cn(
+                  'w-[240px] h-9 justify-between px-3 text-xs',
+                  focusedNodeId && 'border-primary/60 bg-primary/10 text-foreground'
+                )}
+              >
+                {focusedSpec ? (
+                  <span className="truncate flex items-center">
+                    <span className="text-muted-foreground mr-2 font-mono">#{focusedSpec.number.toString().padStart(3, '0')}</span>
+                    <span className="truncate">{focusedSpec.name}</span>
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground font-normal">{t('dependenciesPage.selector.placeholder')}</span>
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0" align="end">
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder={t('dependenciesPage.selector.filterPlaceholder')}
+                  value={selectorQuery}
+                  onValueChange={setSelectorQuery}
+                  className="text-xs"
+                />
+                <CommandList>
+                  <CommandEmpty className="py-2 text-center text-xs text-muted-foreground">
+                    {t('dependenciesPage.selector.empty')}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {focusedNodeId && (
+                      <CommandItem
+                        onSelect={() => {
+                          setFocusedNodeId(null);
+                          setSelectorOpen(false);
+                          setSelectorQuery('');
+                        }}
+                        className="text-muted-foreground"
                       >
-                        <span className="text-muted-foreground font-mono">#{spec.number.toString().padStart(3, '0')}</span>
+                        <X className="mr-2 h-3.5 w-3.5" />
+                        {t('dependenciesPage.selector.clearSelection')}
+                      </CommandItem>
+                    )}
+                    {filteredSpecs.map((spec) => (
+                      <CommandItem
+                        key={spec.id}
+                        value={spec.id}
+                        onSelect={() => handleSelectSpec(spec.id)}
+                      >
+                        <span className="text-muted-foreground font-mono mr-2">#{spec.number.toString().padStart(3, '0')}</span>
                         <span className="truncate flex-1">{spec.name}</span>
                         <span
                           className={cn(
-                            'text-[9px] px-1 py-0.5 rounded uppercase font-medium',
+                            'text-[9px] px-1 py-0.5 rounded uppercase font-medium ml-2 shrink-0',
                             spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
                             spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
                             spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
@@ -714,17 +711,21 @@ export function DependenciesPage() {
                         >
                           {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
                         </span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-                      {t('dependenciesPage.selector.empty')}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+                        <div
+                          className={cn(
+                            'mr-2 flex h-4 w-4 items-center justify-center',
+                            focusedNodeId === spec.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        >
+                          <Check className="h-4 w-4" />
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Filters */}

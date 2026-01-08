@@ -38,7 +38,7 @@ function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
         <div key={index} className="flex items-center gap-1">
           {index > 0 && <ChevronRight className="h-4 w-4" />}
           {item.href ? (
-            <Link 
+            <Link
               href={item.href}
               className="hover:text-foreground transition-colors"
             >
@@ -63,7 +63,7 @@ function parsePathname(pathname: string): { projectId?: string; page: string; sp
   if (projectMatch) {
     const projectId = projectMatch[1];
     const rest = projectMatch[2] || '';
-    
+
     // Parse the page within the project
     if (!rest) {
       return { projectId, page: 'home' };
@@ -85,7 +85,7 @@ function parsePathname(pathname: string): { projectId?: string; page: string; sp
     }
     return { projectId, page: 'unknown' };
   }
-  
+
   // Legacy URLs (single-project mode)
   if (pathname === '/') return { page: 'home' };
   if (pathname === '/stats') return { page: 'stats' };
@@ -97,7 +97,7 @@ function parsePathname(pathname: string): { projectId?: string; page: string; sp
   if (pathname.startsWith('/specs/')) {
     return { page: 'spec-detail', specId: pathname.split('/')[2] };
   }
-  
+
   return { page: 'unknown' };
 }
 
@@ -113,52 +113,47 @@ function useBreadcrumbs(): BreadcrumbItem[] {
   const statsLabel = t('navigation.stats');
   const depsLabel = t('navigation.dependencies');
   const contextLabel = t('navigation.context');
-  
+
   const parsed = parsePathname(pathname);
   const homeUrl = getUrl('/');
   const specsUrl = getUrl('/specs');
-  
+
   switch (parsed.page) {
     case 'home':
       return [{ label: homeLabel }];
-    
+
     case 'stats':
       return [
         { label: homeLabel, href: homeUrl },
         { label: statsLabel }
       ];
-    
+
     case 'dependencies':
       return [
         { label: homeLabel, href: homeUrl },
         { label: depsLabel }
       ];
-    
+
     case 'context':
       return [
         { label: homeLabel, href: homeUrl },
         { label: contextLabel }
       ];
-    
+
     case 'specs': {
-      const searchParams = new URLSearchParams(parsed.query || '');
-      const view = searchParams.get('view');
-      const viewLabel = view === 'board' 
-        ? t('specsPage.views.boardTooltip')
-        : t('specsPage.views.listTooltip');
       return [
         { label: homeLabel, href: homeUrl },
-        { label: `${specsLabel} (${viewLabel})` }
+        { label: specsLabel }
       ];
     }
-    
+
     case 'spec-detail':
       return [
         { label: homeLabel, href: homeUrl },
         { label: specsLabel, href: specsUrl },
         { label: parsed.specId || '' }
       ];
-    
+
     default:
       return [{ label: homeLabel, href: homeUrl }];
   }
@@ -192,18 +187,18 @@ export function Navigation({ specs }: NavigationProps) {
 
           <Link href="/" className="flex items-center space-x-2 shrink-0">
             <Image
-              src="/logo-with-bg.svg" 
-              alt="LeanSpec" 
+              src="/logo-with-bg.svg"
+              alt="LeanSpec"
               width={32}
               height={32}
-              className="h-7 w-7 sm:h-8 sm:w-8 dark:hidden" 
+              className="h-7 w-7 sm:h-8 sm:w-8 dark:hidden"
             />
             <Image
-              src="/logo-dark-bg.svg" 
-              alt="LeanSpec" 
+              src="/logo-dark-bg.svg"
+              alt="LeanSpec"
               width={32}
               height={32}
-              className="h-7 w-7 sm:h-8 sm:w-8 hidden dark:block" 
+              className="h-7 w-7 sm:h-8 sm:w-8 hidden dark:block"
             />
             <span className="font-bold text-lg sm:text-xl hidden sm:inline">LeanSpec</span>
           </Link>
@@ -211,7 +206,7 @@ export function Navigation({ specs }: NavigationProps) {
             <Breadcrumb items={breadcrumbs} />
           </div>
         </div>
-        
+
         {/* Right: Search + Language + Theme + Docs + GitHub */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <QuickSearch specs={specs} />
@@ -227,12 +222,12 @@ export function Navigation({ specs }: NavigationProps) {
                 <p>{t('theme.toggleTheme')}</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
-                  <a 
-                    href="https://www.lean-spec.dev" 
+                  <a
+                    href="https://www.lean-spec.dev"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={t('navigation.docsTooltip')}
@@ -249,8 +244,8 @@ export function Navigation({ specs }: NavigationProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
-                  <a 
-                    href="https://github.com/codervisor/lean-spec" 
+                  <a
+                    href="https://github.com/codervisor/lean-spec"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={t('navigation.githubTooltip')}

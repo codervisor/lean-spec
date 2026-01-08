@@ -6,6 +6,14 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  PlayCircle,
+  CheckCircle2,
+  Archive,
+  AlertCircle,
+  ArrowUp,
+  Minus,
+  ArrowDown,
 } from 'lucide-react';
 import {
   Button,
@@ -373,10 +381,30 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('specsNavSidebar.select.status.all')}</SelectItem>
-                    <SelectItem value="planned">{t('status.planned')}</SelectItem>
-                    <SelectItem value="in-progress">{t('status.inProgress')}</SelectItem>
-                    <SelectItem value="complete">{t('status.complete')}</SelectItem>
-                    <SelectItem value="archived">{t('status.archived')}</SelectItem>
+                    <SelectItem value="planned">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{t('status.planned')}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="in-progress">
+                      <div className="flex items-center gap-2">
+                        <PlayCircle className="h-4 w-4" />
+                        <span>{t('status.inProgress')}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="complete">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>{t('status.complete')}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="archived">
+                      <div className="flex items-center gap-2">
+                        <Archive className="h-4 w-4" />
+                        <span>{t('status.archived')}</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -386,10 +414,30 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('specsNavSidebar.select.priority.all')}</SelectItem>
-                    <SelectItem value="low">{t('priority.low')}</SelectItem>
-                    <SelectItem value="medium">{t('priority.medium')}</SelectItem>
-                    <SelectItem value="high">{t('priority.high')}</SelectItem>
-                    <SelectItem value="critical">{t('priority.critical')}</SelectItem>
+                    <SelectItem value="low">
+                      <div className="flex items-center gap-2">
+                        <ArrowDown className="h-4 w-4" />
+                        <span>{t('priority.low')}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="medium">
+                      <div className="flex items-center gap-2">
+                        <Minus className="h-4 w-4" />
+                        <span>{t('priority.medium')}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="high">
+                      <div className="flex items-center gap-2">
+                        <ArrowUp className="h-4 w-4" />
+                        <span>{t('priority.high')}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="critical">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{t('priority.critical')}</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
 

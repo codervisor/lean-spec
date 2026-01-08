@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { ChevronsUpDown, Plus, Star, Settings, Loader2 } from 'lucide-react';
+import { ChevronsUpDown, Plus, Star, Settings, Loader2, Check } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 import { Button } from '@leanspec/ui-components';
 import {
@@ -137,7 +137,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0" align="start">
+        <PopoverContent className="w-[240px] p-0" align="start">
           <Command>
             <CommandInput placeholder={t('projectSwitcher.searchPlaceholder')} />
             <CommandList>
@@ -165,6 +165,14 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                         {project.favorite && (
                           <Star className="h-3 w-3 shrink-0 fill-yellow-600 text-yellow-600 dark:fill-yellow-500 dark:text-yellow-500" />
                         )}
+                        <div
+                          className={cn(
+                            'mr-2 flex h-4 w-4 items-center justify-center',
+                            currentProject?.id === project.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        >
+                          <Check className="h-4 w-4" />
+                        </div>
                       </div>
                     </CommandItem>
                   );
@@ -179,8 +187,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                     setShowNewProjectDialog(true);
                   }}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('projects.createProject')}
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span>{t('projects.createProject')}</span>
+                  </div>
                 </CommandItem>
                 <CommandItem
                   className="cursor-pointer"
@@ -189,8 +199,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                     window.location.assign('/projects');
                   }}
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  {t('projects.manageProjects')}
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span>{t('projects.manageProjects')}</span>
+                  </div>
                 </CommandItem>
               </CommandGroup>
             </CommandList>
