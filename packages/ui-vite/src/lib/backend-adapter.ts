@@ -16,6 +16,7 @@ import type {
   ProjectValidationResponse,
   ProjectsResponse,
   ListSpecsResponse,
+  ProjectContext,
 } from '../types/api';
 
 export class APIError extends Error {
@@ -59,6 +60,7 @@ export interface BackendAdapter {
   // Context files & local filesystem
   getContextFiles(): Promise<ContextFileListItem[]>;
   getContextFile(path: string): Promise<ContextFileContent>;
+  getProjectContext(projectId: string): Promise<ProjectContext>;
   listDirectory(path?: string): Promise<DirectoryListResponse>;
 }
 
@@ -233,6 +235,13 @@ export class HttpBackendAdapter implements BackendAdapter {
     return data;
   }
 
+  async getProjectContext(projectId: string): Promise<ProjectContext> {
+    const data = await this.fetchAPI<ProjectContext>(
+      `/api/projects/${projectId}/context`
+    );
+    return data;
+  }
+
   async listDirectory(path = ''): Promise<DirectoryListResponse> {
     return this.fetchAPI<DirectoryListResponse>('/api/local-projects/list-directory', {
       method: 'POST',
@@ -344,6 +353,10 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async getContextFile(_path: string): Promise<ContextFileContent> {
     throw new Error('getContextFile is not implemented for the Tauri backend yet');
+  }
+
+  async getProjectContext(_projectId: string): Promise<ProjectContext> {
+    throw new Error('getProjectContext is not implemented for the Tauri backend yet');
   }
 
   async listDirectory(_path = ''): Promise<DirectoryListResponse> {

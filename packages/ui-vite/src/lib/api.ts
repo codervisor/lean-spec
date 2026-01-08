@@ -37,6 +37,10 @@ class ProjectAPI {
   getContextFile = (path: string) => this.backend.getContextFile(path);
 
   // Project-scoped methods that automatically inject currentProjectId
+  async getProjectContext(): Promise<import('../types/api').ProjectContext> {
+    return this.backend.getProjectContext(this.getCurrentProjectId());
+  }
+
   async getSpecs(params?: ListParams): Promise<Spec[]> {
     return this.backend.getSpecs(this.getCurrentProjectId(), params);
   }

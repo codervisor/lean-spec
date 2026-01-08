@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, FileText, BarChart3, Network, Settings, ChevronLeft, ChevronRight, BookOpen, X } from 'lucide-react';
+import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ProjectSwitcher } from './ProjectSwitcher';
 
@@ -92,7 +92,6 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
     { path: `${basePath}/dependencies`, label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
     { path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
     { path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },
-    { path: `${basePath}/settings`, label: t('navigation.settings'), description: t('navigation.settingsDescription'), icon: Settings },
   ];
 
   return (
