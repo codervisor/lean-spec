@@ -95,7 +95,20 @@
     "selectProject": "选择项目",
     "description": "管理你的 LeanSpec 工作区。",
     "colorLabel": "颜色",
-    "validationFailed": "校验失败"
+    "validationFailed": "校验失败",
+    "newProject": "新建项目",
+    "backTo": "返回 {{projectName}}",
+    "rename": "重命名",
+    "projectColor": "项目颜色",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "validatePath": "校验路径",
+    "specs": "Spec 数",
+    "completion": "完成度",
+    "local": "本地",
+    "noProjectsFound": "未找到项目",
+    "getStarted": "开始创建您的第一个 LeanSpec 项目。",
+    "searchPlaceholder": "搜索项目..."
   },
   "quickSearch": {
     "button": "快速搜索...",

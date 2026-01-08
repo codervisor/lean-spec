@@ -235,7 +235,7 @@ export function ProjectsPage() {
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to {currentProject.name}
+              {t('projects.backTo', { projectName: currentProject.name })}
             </Link>
           )}
 
@@ -248,7 +248,7 @@ export function ProjectsPage() {
             </div>
             <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
               <Plus className="mr-2 h-4 w-4" />
-              New Project
+              {t('projects.newProject')}
             </Button>
           </div>
 
@@ -256,7 +256,7 @@ export function ProjectsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={t('quickSearch.searchPlaceholder', { defaultValue: 'Search projects...' })}
+                placeholder={t('projects.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-background/50"
@@ -345,10 +345,10 @@ export function ProjectsPage() {
                             onClick={() => startEditing(project.id, project.name || project.id)}
                           >
                             <Pencil className="mr-2 h-4 w-4" />
-                            Rename
+                            {t('projects.rename')}
                           </Button>
                           <div className="p-2">
-                            <p className="text-xs text-muted-foreground mb-2 px-1">Project Color</p>
+                            <p className="text-xs text-muted-foreground mb-2 px-1">{t('projects.projectColor')}</p>
                             <div className="flex flex-wrap gap-1">
                               <ColorPicker
                                 value={project.color}
@@ -363,7 +363,7 @@ export function ProjectsPage() {
                             onClick={() => toggleFavorite(project.id)}
                           >
                             <Star className="mr-2 h-4 w-4" />
-                            {project.favorite ? 'Unfavorite' : 'Favorite'}
+                            {project.favorite ? t('projects.unfavorite') : t('projects.favorite')}
                           </Button>
                           <Button
                             variant="ghost"
@@ -371,7 +371,7 @@ export function ProjectsPage() {
                             onClick={() => handleValidate(project.id)}
                           >
                             <RefreshCw className="mr-2 h-4 w-4" />
-                            Validate Path
+                            {t('projects.validatePath')}
                           </Button>
                           <div className="h-px bg-border my-1" />
                           <Button
@@ -391,12 +391,12 @@ export function ProjectsPage() {
                 <CardContent className="p-2 px-4 pb-4 flex-1">
                   <div className="flex items-center gap-4 py-1">
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Specs</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t('projects.specs')}</span>
                       <span className="text-lg font-bold tracking-tight">{stats?.totalSpecs || 0}</span>
                     </div>
                     <div className="w-px h-8 bg-border" />
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Completion</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t('projects.completion')}</span>
                       <span className="text-lg font-bold tracking-tight">{(stats?.completionRate || 0).toFixed(1)}%</span>
                     </div>
                   </div>
@@ -405,7 +405,7 @@ export function ProjectsPage() {
                 <div className="px-4 py-2 bg-muted/20 border-t flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color || getColorForName(project.name || project.id) }} />
-                    <span>Local</span>
+                    <span>{t('projects.local')}</span>
                   </div>
                   {project.lastAccessed && (
                     <span>{dayjs(project.lastAccessed).fromNow()}</span>
@@ -428,9 +428,9 @@ export function ProjectsPage() {
               <div className="bg-muted/30 p-4 rounded-full mb-4">
                 <FolderOpen className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold">No projects found</h3>
+              <h3 className="text-xl font-semibold">{t('projects.noProjectsFound')}</h3>
               <p className="text-muted-foreground mt-2 mb-6 max-w-sm">
-                {searchQuery ? t('quickSearch.noResults') : "Get started by creating your first LeanSpec project."}
+                {searchQuery ? t('quickSearch.noResults') : t('projects.getStarted')}
               </p>
               <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
                 <Plus className="mr-2 h-4 w-4" />

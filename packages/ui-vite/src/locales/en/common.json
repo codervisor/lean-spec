@@ -95,7 +95,20 @@
     "selectProject": "Select Project",
     "description": "Manage your LeanSpec workspaces.",
     "colorLabel": "Color",
-    "validationFailed": "Validation failed"
+    "validationFailed": "Validation failed",
+    "newProject": "New Project",
+    "backTo": "Back to {{projectName}}",
+    "rename": "Rename",
+    "projectColor": "Project Color",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "validatePath": "Validate Path",
+    "specs": "Specs",
+    "completion": "Completion",
+    "local": "Local",
+    "noProjectsFound": "No projects found",
+    "getStarted": "Get started by creating your first LeanSpec project.",
+    "searchPlaceholder": "Search projects..."
   },
   "quickSearch": {
     "button": "Quick search...",
