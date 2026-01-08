@@ -162,7 +162,9 @@ export function StatsPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h2 className="text-2xl font-bold">{t('statsPage.title')}</h2>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
+          {t('statsPage.title')}
+        </h1>
         <p className="text-muted-foreground mt-1">{t('statsPage.description')}</p>
       </div>
 

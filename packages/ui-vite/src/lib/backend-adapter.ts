@@ -11,7 +11,6 @@ import type {
   SpecDetail,
   Stats,
   Project,
-  ProjectMutationResponse,
   ProjectStatsResponse,
   ProjectValidationResponse,
   ProjectsResponse,
@@ -128,25 +127,24 @@ export class HttpBackendAdapter implements BackendAdapter {
     path: string,
     options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }
   ): Promise<Project> {
-    const data = await this.fetchAPI<ProjectMutationResponse>('/api/projects', {
+    // Rust backend returns Project directly (not wrapped in { project: ... })
+    const project = await this.fetchAPI<Project>('/api/projects', {
       method: 'POST',
       body: JSON.stringify({ path, ...options }),
     });
-    if (!data.project) {
-      throw new Error('Project creation failed: missing project payload');
-    }
-    return data.project;
+    return project;
   }
 
   async updateProject(
     projectId: string,
     updates: Partial<Pick<Project, 'name' | 'color' | 'favorite' | 'description'>>
   ): Promise<Project | undefined> {
-    const data = await this.fetchAPI<ProjectMutationResponse>(`/api/projects/${encodeURIComponent(projectId)}`, {
+    // Rust backend returns Project directly (not wrapped in { project: ... })
+    const project = await this.fetchAPI<Project>(`/api/projects/${encodeURIComponent(projectId)}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
-    return data.project;
+    return project;
   }
 
   async deleteProject(projectId: string): Promise<void> {

@@ -88,24 +88,6 @@ export interface ProjectsResponse {
   favoriteProjects?: string[];
 }
 
-// Axum HTTP server returns { projects, current_project_id } instead of { current, available }
-// so we normalize both shapes for the UI layer.
-export interface ProjectsListResponse {
-  projects?: Project[];
-  current_project_id?: string | null;
-  currentProjectId?: string | null;
-  current?: Project | null;
-  available?: Project[];
-  mode?: 'single-project' | 'multi-project';
-  recentProjects?: string[];
-  favoriteProjects?: string[];
-}
-
-export interface ProjectMutationResponse {
-  project?: Project;
-  favorite?: boolean;
-}
-
 export interface ProjectValidationResult {
   isValid: boolean;
   error?: string | null;
@@ -136,11 +118,6 @@ export interface ContextFileListItem {
   size: number;
   modified?: string | null;
   modifiedAt?: Date | null;
-}
-
-export interface ContextFileListResponse {
-  files: ContextFileListItem[];
-  total: number;
 }
 
 export interface ContextFileContent extends ContextFileListItem {
@@ -206,12 +183,3 @@ export interface ListSpecsResponse {
   total: number;
   projectId?: string;
 }
-
-export interface SearchResponse {
-  results: Spec[];
-  total: number;
-  query: string;
-  projectId?: string;
-}
-
-export type StatsResponse = Stats;

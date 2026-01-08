@@ -72,6 +72,10 @@ pub fn create_router(state: AppState) -> Router {
             post(handlers::validate_project),
         )
         .route(
+            "/api/projects/{id}/context",
+            get(handlers::get_project_context),
+        )
+        .route(
             "/api/projects/{id}/search",
             post(handlers::search_project_specs),
         )

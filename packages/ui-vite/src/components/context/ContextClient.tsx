@@ -289,12 +289,11 @@ export function ContextClient({ context }: ContextClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-primary" />
             {t('contextPage.title')}
           </h1>
           <p className="text-muted-foreground mt-2">

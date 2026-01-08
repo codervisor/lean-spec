@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import { ArrowLeft, Clock, Copy, ExternalLink, FileText, Hash, Layers, Type } from 'lucide-react';
-import { Badge, Button, Card, CardContent } from '@leanspec/ui-components';
+import { Badge, Button } from '@leanspec/ui-components';
 import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/TableOfContents';
 import { MermaidDiagram } from '../MermaidDiagram';
 import type { ContextFileContent } from '../../types/api';
@@ -46,8 +46,8 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
   };
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-3">
+    <div className="space-y-6 px-6 py-3">
+      <header className="flex flex-col gap-3 sticky top-14 bg-background py-2 z-10">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {onBack && (
@@ -100,53 +100,51 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="overflow-hidden">
-          <CardContent className="p-4 sm:p-6">
-            {isJson ? (
-              <pre className="p-3 text-sm overflow-x-auto bg-muted/40 rounded-md border whitespace-pre-wrap">
-                {(() => {
-                  try {
-                    return JSON.stringify(JSON.parse(file.content), null, 2);
-                  } catch (err) {
-                    console.error('Failed to parse JSON context file', err);
-                    return file.content;
-                  }
-                })()}
-              </pre>
-            ) : isMarkdown ? (
-              <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight, rehypeSlug]}
-                  components={{
-                    pre: ({ children, ...props }) => {
-                      const childArray = Array.isArray(children) ? children : [children];
-                      const firstChild = childArray[0];
-                      if (
-                        firstChild &&
-                        typeof firstChild === 'object' &&
-                        'props' in firstChild &&
-                        typeof (firstChild as { props?: { className?: string; children?: string } }).props?.className === 'string' &&
-                        (firstChild as { props?: { className?: string } }).props?.className?.includes('language-mermaid')
-                      ) {
-                        const code = (firstChild as { props?: { children?: string } }).props?.children;
-                        const content = typeof code === 'string' ? code : '';
-                        return <MermaidDiagram chart={content} />;
-                      }
-                      return <pre {...props}>{children}</pre>;
-                    },
-                  }}
-                >
-                  {file.content}
-                </ReactMarkdown>
-              </article>
-            ) : (
-              <pre className="p-3 text-sm overflow-x-auto bg-muted/40 rounded-md border whitespace-pre-wrap">
+        <div className="overflow-hidden p-4 sm:p-6">
+          {isJson ? (
+            <pre className="p-3 text-sm overflow-x-auto bg-muted/40 rounded-md border whitespace-pre-wrap">
+              {(() => {
+                try {
+                  return JSON.stringify(JSON.parse(file.content), null, 2);
+                } catch (err) {
+                  console.error('Failed to parse JSON context file', err);
+                  return file.content;
+                }
+              })()}
+            </pre>
+          ) : isMarkdown ? (
+            <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight, rehypeSlug]}
+                components={{
+                  pre: ({ children, ...props }) => {
+                    const childArray = Array.isArray(children) ? children : [children];
+                    const firstChild = childArray[0];
+                    if (
+                      firstChild &&
+                      typeof firstChild === 'object' &&
+                      'props' in firstChild &&
+                      typeof (firstChild as { props?: { className?: string; children?: string } }).props?.className === 'string' &&
+                      (firstChild as { props?: { className?: string } }).props?.className?.includes('language-mermaid')
+                    ) {
+                      const code = (firstChild as { props?: { children?: string } }).props?.children;
+                      const content = typeof code === 'string' ? code : '';
+                      return <MermaidDiagram chart={content} />;
+                    }
+                    return <pre {...props}>{children}</pre>;
+                  },
+                }}
+              >
                 {file.content}
-              </pre>
-            )}
-          </CardContent>
-        </Card>
+              </ReactMarkdown>
+            </article>
+          ) : (
+            <pre className="p-3 text-sm overflow-x-auto bg-muted/40 rounded-md border whitespace-pre-wrap">
+              {file.content}
+            </pre>
+          )}
+        </div>
 
         {isMarkdown && (
           <aside className="hidden xl:block sticky top-28 h-[calc(100vh-8rem)] overflow-y-auto">

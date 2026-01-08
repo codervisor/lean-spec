@@ -206,3 +206,177 @@ pub async fn validate_project(
         validation,
     }))
 }
+
+/// GET /api/projects/:projectId/context - Get project context (agent instructions, config, docs)
+pub async fn get_project_context(
+    State(state): State<AppState>,
+    Path(project_id): Path<String>,
+) -> ApiResult<Json<crate::types::ProjectContextResponse>> {
+    let registry = state.registry.read().await;
+    let project = registry.get(&project_id).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::project_not_found(&project_id)),
+        )
+    })?;
+
+    let project_root = &project.path;
+
+    // Collect agent instruction files
+    let agent_instructions = collect_agent_instructions(project_root)?;
+
+    // Collect project config
+    let config = collect_project_config(project_root)?;
+
+    // Collect project docs
+    let project_docs = collect_project_docs(project_root)?;
+
+    // Calculate total tokens
+    let mut total_tokens = 0;
+    for file in &agent_instructions {
+        total_tokens += file.token_count;
+    }
+    if let Some(ref config_file) = config.file {
+        total_tokens += config_file.token_count;
+    }
+    for file in &project_docs {
+        total_tokens += file.token_count;
+    }
+
+    Ok(Json(crate::types::ProjectContextResponse {
+        agent_instructions,
+        config,
+        project_docs,
+        total_tokens,
+        project_root: project_root.to_string_lossy().to_string(),
+    }))
+}
+
+/// Helper: Read a context file and return its metadata
+fn read_context_file(
+    file_path: &PathBuf,
+    project_root: &PathBuf,
+) -> Result<crate::types::ContextFile, std::io::Error> {
+    let content = std::fs::read_to_string(file_path)?;
+    let metadata = std::fs::metadata(file_path)?;
+    let modified = metadata
+        .modified()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let last_modified =
+        chrono::DateTime::from_timestamp(modified as i64, 0).unwrap_or_else(|| chrono::Utc::now());
+
+    let relative_path = file_path
+        .strip_prefix(project_root)
+        .unwrap_or(file_path)
+        .to_string_lossy()
+        .to_string();
+
+    let name = file_path
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| relative_path.clone());
+
+    let token_count = estimate_tokens(&content);
+
+    Ok(crate::types::ContextFile {
+        name,
+        path: relative_path,
+        content,
+        token_count,
+        last_modified,
+    })
+}
+
+/// Helper: Estimate token count (approximation)
+fn estimate_tokens(text: &str) -> usize {
+    let words = text.split_whitespace().count();
+    let special_chars = text
+        .chars()
+        .filter(|c| !c.is_alphanumeric() && !c.is_whitespace())
+        .count();
+    ((words as f64 * 1.3) + (special_chars as f64 * 0.5)).ceil() as usize
+}
+
+/// Helper: Collect agent instruction files
+fn collect_agent_instructions(
+    project_root: &PathBuf,
+) -> Result<Vec<crate::types::ContextFile>, (StatusCode, Json<ApiError>)> {
+    let mut files = Vec::new();
+
+    // Root agent files
+    let root_agent_files = ["AGENTS.md", "GEMINI.md", "CLAUDE.md", "COPILOT.md"];
+    for file_name in &root_agent_files {
+        let file_path = project_root.join(file_name);
+        if let Ok(file) = read_context_file(&file_path, project_root) {
+            files.push(file);
+        }
+    }
+
+    // .github/copilot-instructions.md
+    let copilot_path = project_root.join(".github").join("copilot-instructions.md");
+    if let Ok(file) = read_context_file(&copilot_path, project_root) {
+        files.push(file);
+    }
+
+    // docs/agents/*.md
+    let agents_docs_dir = project_root.join("docs").join("agents");
+    if let Ok(entries) = std::fs::read_dir(&agents_docs_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("md") {
+                if let Ok(file) = read_context_file(&path, project_root) {
+                    files.push(file);
+                }
+            }
+        }
+    }
+
+    Ok(files)
+}
+
+/// Helper: Collect project config
+fn collect_project_config(
+    project_root: &PathBuf,
+) -> Result<crate::types::ProjectConfigResponse, (StatusCode, Json<ApiError>)> {
+    let config_path = project_root.join(".lean-spec").join("config.json");
+
+    if !config_path.exists() {
+        return Ok(crate::types::ProjectConfigResponse {
+            file: None,
+            parsed: None,
+        });
+    }
+
+    match read_context_file(&config_path, project_root) {
+        Ok(file) => {
+            let parsed = serde_json::from_str::<crate::types::LeanSpecConfig>(&file.content).ok();
+            Ok(crate::types::ProjectConfigResponse {
+                file: Some(file),
+                parsed,
+            })
+        }
+        Err(_) => Ok(crate::types::ProjectConfigResponse {
+            file: None,
+            parsed: None,
+        }),
+    }
+}
+
+/// Helper: Collect project documentation files
+fn collect_project_docs(
+    project_root: &PathBuf,
+) -> Result<Vec<crate::types::ContextFile>, (StatusCode, Json<ApiError>)> {
+    let mut files = Vec::new();
+
+    let doc_files = ["README.md", "CONTRIBUTING.md", "CHANGELOG.md"];
+    for file_name in &doc_files {
+        let file_path = project_root.join(file_name);
+        if let Ok(file) = read_context_file(&file_path, project_root) {
+            files.push(file);
+        }
+    }
+
+    Ok(files)
+}

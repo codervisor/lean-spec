@@ -201,7 +201,9 @@ export function SpecsPage() {
       <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold">{t('specsPage.title')}</h2>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
+              {t('specsPage.title')}
+            </h1>
             <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
           </div>
 
