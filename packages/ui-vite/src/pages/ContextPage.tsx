@@ -24,6 +24,11 @@ export function ContextPage() {
 
   useEffect(() => {
     async function loadContext() {
+      // Wait for project loading to complete before attempting to load context
+      if (projectLoading) {
+        return;
+      }
+
       if (!currentProject?.id) {
         setContext(null);
         setLoading(false);
@@ -45,20 +50,21 @@ export function ContextPage() {
     }
 
     void loadContext();
-  }, [currentProject?.id, t]);
+  }, [currentProject?.id, projectLoading, t]);
 
   if (projectLoading || loading) {
     return <ContextPageSkeleton />;
   }
 
-  if (projectError || error) {
+  // Handle actual API/project errors (only show project errors if they're real errors, not "no projects" state)
+  if (error && currentProject) {
     return (
       <Card>
         <CardContent className="py-10 text-center space-y-3">
           <div className="flex justify-center">
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
-          <div className="text-lg font-semibold">{t('projectNotFound', { ns: 'errors' })}</div>
+          <div className="text-lg font-semibold">{t('contextPage.errors.loadFailed', { ns: 'common' })}</div>
           <p className="text-sm text-muted-foreground">
             {projectError || error || t('errors.loadingError', { ns: 'errors' })}
           </p>
@@ -67,16 +73,17 @@ export function ContextPage() {
     );
   }
 
+  // No project selected - guide user to create/select one
   if (!currentProject) {
     return (
       <Card>
         <CardContent className="py-10 text-center space-y-3">
           <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-destructive" />
+            <AlertCircle className="h-6 w-6 text-muted-foreground" />
           </div>
-          <div className="text-lg font-semibold">{t('projectNotFound', { ns: 'errors' })}</div>
+          <div className="text-lg font-semibold">{t('contextPage.errors.noProject', { ns: 'common' })}</div>
           <p className="text-sm text-muted-foreground">
-            {t('contextPage.errors.noProject', { ns: 'common' })}
+            {t('contextPage.errors.noProjectDescription', { ns: 'common' })}
           </p>
         </CardContent>
       </Card>

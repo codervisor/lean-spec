@@ -237,7 +237,7 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async getProjectContext(projectId: string): Promise<ProjectContext> {
     const data = await this.fetchAPI<ProjectContext>(
-      `/api/projects/${projectId}/context`
+      `/api/projects/${encodeURIComponent(projectId)}/context`
     );
     return data;
   }

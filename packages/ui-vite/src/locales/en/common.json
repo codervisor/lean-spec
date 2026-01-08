@@ -445,7 +445,10 @@
     },
     "errors": {
       "list": "Failed to load context files",
-      "file": "Failed to load file"
+      "file": "Failed to load file",
+      "loadFailed": "Unable to load project context",
+      "noProject": "No project selected",
+      "noProjectDescription": "Please select or create a project to view its context files."
     }
   },
   "specTimeline": {

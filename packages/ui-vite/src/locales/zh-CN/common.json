@@ -445,7 +445,10 @@
     },
     "errors": {
       "list": "无法加载上下文文件",
-      "file": "无法加载文件"
+      "file": "无法加载文件",
+      "loadFailed": "无法加载项目上下文",
+      "noProject": "未选择项目",
+      "noProjectDescription": "请选择或创建一个项目以查看其上下文文件。"
     }
   },
   "specTimeline": {
