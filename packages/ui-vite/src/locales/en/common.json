@@ -490,6 +490,13 @@
       "dependsOnSubtitle": "Must complete first",
       "requiredBy": "Required By",
       "requiredBySubtitle": "Blocked by this spec"
+    },
+    "statusSubtitles": {
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "plannedBlocking": "Must complete first",
+      "plannedCanProceed": "Can proceed",
+      "archived": "Archived"
     }
   },
   "dependenciesPage": {

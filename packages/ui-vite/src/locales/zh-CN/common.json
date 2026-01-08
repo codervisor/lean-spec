@@ -1,14 +1,14 @@
 {
   "navigation": {
     "home": "首页",
-    "specs": "Specs",
+    "specs": "规范",
     "dependencies": "依赖关系",
     "stats": "统计",
     "context": "上下文",
     "collapse": "收起",
     "closeMenu": "关闭菜单",
     "dashboard": "仪表板",
-    "allSpecifications": "所有 Spec",
+    "allSpecifications": "所有规范",
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
     "projectContext": "项目上下文",
@@ -19,9 +19,9 @@
     "githubTooltip": "GitHub 仓库"
   },
   "search": {
-    "placeholder": "搜索 Spec...",
+    "placeholder": "搜索规范...",
     "noResults": "未找到结果",
-    "searchSpecs": "搜索 Spec"
+    "searchSpecs": "搜索规范"
   },
   "status": {
     "planned": "已计划",
@@ -64,10 +64,10 @@
     "open": "打开"
   },
   "spec": {
-    "spec": "Spec",
-    "specs": "Specs",
-    "specification": "Spec",
-    "specifications": "Specs",
+    "spec": "规范",
+    "specs": "规范",
+    "specification": "规范",
+    "specifications": "规范",
     "title": "标题",
     "description": "描述",
     "tags": "标签",
@@ -103,7 +103,7 @@
     "favorite": "收藏",
     "unfavorite": "取消收藏",
     "validatePath": "校验路径",
-    "specs": "Spec 数",
+    "specs": "规范数",
     "completion": "完成度",
     "local": "本地",
     "noProjectsFound": "未找到项目",
@@ -112,7 +112,7 @@
   },
   "quickSearch": {
     "button": "快速搜索...",
-    "placeholder": "按标题、编号或标签搜索 Spec...",
+    "placeholder": "按标题、编号或标签搜索规范...",
     "recentSearches": "最近搜索",
     "filterHeading": "按标签筛选",
     "filterPrefix": "筛选：",
@@ -129,7 +129,7 @@
     "title": "键盘快捷键",
     "items": {
       "dashboard": "跳转到仪表板（首页）",
-      "specs": "跳转到 Spec 列表",
+      "specs": "跳转到规范列表",
       "stats": "跳转到统计",
       "dependencies": "跳转到依赖",
       "settings": "跳转到设置",
@@ -143,7 +143,7 @@
     "onThisPage": "页面导航"
   },
   "subSpecTabs": {
-    "multiSectionTitle": "此 Spec 包含多个章节",
+    "multiSectionTitle": "此规范包含多个章节",
     "multiSectionDescription": "使用下方标签切换概览和详细章节。"
   },
   "colorPicker": {
@@ -174,16 +174,16 @@
     "error": "无法列出目录"
   },
   "specSidebar": {
-    "title": "全部 Specs",
-    "searchPlaceholder": "搜索 Spec...",
-    "empty": "没有匹配的 Spec",
+    "title": "全部规范",
+    "searchPlaceholder": "搜索规范...",
+    "empty": "没有匹配的规范",
     "collapse": "收起侧边栏",
     "expand": "展开侧边栏"
   },
   "specsNavSidebar": {
-    "title": "Spec 列表",
-    "searchPlaceholder": "搜索 Spec...",
-    "noResults": "没有匹配的 Spec",
+    "title": "规范列表",
+    "searchPlaceholder": "搜索规范...",
+    "noResults": "没有匹配的规范",
     "filtersLabel": "筛选",
     "toggleFilters": {
       "show": "展开筛选",
@@ -209,8 +209,8 @@
     }
   },
   "specsPage": {
-    "title": "Spec 列表",
-    "count": "共 {{count}} 个 Spec",
+    "title": "规范列表",
+    "count": "共 {{count}} 个规范",
     "views": {
       "list": "列表",
       "board": "看板",
@@ -221,14 +221,14 @@
       "enter": "进入宽屏模式",
       "exit": "退出宽屏模式"
     },
-    "searchPlaceholder": "搜索 Spec...",
+    "searchPlaceholder": "搜索规范...",
     "filters": {
       "status": "状态",
       "priority": "优先级",
       "sort": "排序",
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
-      "filteredCount": "{{filtered}} / {{total}} 个 Spec",
+      "filteredCount": "{{filtered}} / {{total}} 个规范",
       "sortOptions": {
         "id-desc": "最新优先",
         "id-asc": "最旧优先",
@@ -243,10 +243,10 @@
       "none": "暂无元信息"
     },
     "list": {
-      "empty": "没有匹配的 Spec"
+      "empty": "没有匹配的规范"
     },
     "board": {
-      "dropHere": "拖放到此移动 Spec",
+      "dropHere": "拖放到此移动规范",
       "updating": "正在更新...",
       "archivedCollapsed": "已归档"
     },
@@ -255,11 +255,11 @@
       "statusError": "无法更新状态，请稍后重试。"
     },
     "state": {
-      "errorTitle": "无法加载 Spec",
+      "errorTitle": "无法加载规范",
       "errorDescription": "请重试或刷新项目。",
-      "noSpecsTitle": "暂无 Spec",
-      "noSpecsDescription": "未找到任何 Spec。请在 LeanSpec 工作区添加后刷新。",
-      "noFiltersTitle": "没有匹配当前筛选条件的 Spec",
+      "noSpecsTitle": "暂无规范",
+      "noSpecsDescription": "未找到任何规范。请在 LeanSpec 工作区添加后刷新。",
+      "noFiltersTitle": "没有匹配当前筛选条件的规范",
       "noFiltersDescription": "尝试清除筛选条件或调整搜索。"
     },
     "buttons": {
@@ -268,7 +268,7 @@
     }
   },
   "specDetail": {
-    "toggleSidebar": "展开或收起 Spec 列表",
+    "toggleSidebar": "展开或收起规范列表",
     "metadata": {
       "created": "创建时间",
       "updated": "更新时间",
@@ -285,10 +285,10 @@
       "exitFocus": "退出专注模式"
     },
     "dialogs": {
-      "timelineTitle": "Spec 时间线",
+      "timelineTitle": "规范时间线",
       "timelineDescription": "查看创建、更新和完成节点。",
       "dependenciesTitle": "依赖关系图",
-      "dependenciesDescription": "展示前置关系与关联 Spec。",
+      "dependenciesDescription": "展示前置关系与关联规范。",
       "dependenciesLink": "在依赖页面中查看"
     },
     "tabs": {
@@ -296,16 +296,16 @@
     },
     "state": {
       "loading": "正在加载...",
-      "error": "无法加载 Spec",
-      "unavailableTitle": "Spec 无法访问",
-      "unavailableDescription": "无法找到该 Spec，可能已被移动或删除。"
+      "error": "无法加载规范",
+      "unavailableTitle": "规范无法访问",
+      "unavailableDescription": "无法找到该规范，可能已被移动或删除。"
     },
     "dependencies": {
       "dependsOn": "依赖",
       "requiredBy": "被依赖"
     },
     "links": {
-      "backToSpecs": "返回 Spec 列表",
+      "backToSpecs": "返回规范列表",
       "reportIssue": "报告问题"
     }
   },
@@ -314,8 +314,8 @@
     "description": "查看项目的整体指标与洞察",
     "cards": {
       "total": {
-        "title": "Spec 总数",
-        "subtitle": "全部 Spec"
+        "title": "规范总数",
+        "subtitle": "全部规范"
       },
       "completed": {
         "title": "已完成",
@@ -333,15 +333,15 @@
     "charts": {
       "status": {
         "title": "状态分布",
-        "description": "按状态划分的 Spec 数量"
+        "description": "按状态划分的规范数量"
       },
       "priority": {
         "title": "优先级分布",
-        "description": "按优先级划分的 Spec 数量"
+        "description": "按优先级划分的规范数量"
       },
       "creation": {
         "title": "创建趋势",
-        "description": "最近新建的 Spec 数量走势"
+        "description": "最近新建的规范数量走势"
       },
       "topTags": {
         "title": "热门标签",
@@ -360,7 +360,7 @@
     "subtitle": "项目概览与近期活动",
     "subtitleWithProject": "{{projectName}} — 概览与近期活动",
     "cards": {
-      "total": "Spec 总数",
+      "total": "规范总数",
       "planned": "已计划",
       "inProgress": "进行中",
       "completed": "已完成",
@@ -369,11 +369,11 @@
     "recentlyAdded": "最近添加",
     "plannedSection": "已计划 ({{count}})",
     "inProgressSection": "进行中 ({{count}})",
-    "noPlanned": "暂无已计划的 Spec",
-    "noInProgress": "暂无进行中的 Spec",
+    "noPlanned": "暂无已计划的规范",
+    "noInProgress": "暂无进行中的规范",
     "recentActivity": "最近活动",
     "quickActions": "快捷操作",
-    "viewAllSpecs": "查看所有 Spec",
+    "viewAllSpecs": "查看所有规范",
     "viewStats": "查看统计",
     "actionUpdated": "已更新",
     "state": {
@@ -484,12 +484,19 @@
       "badge": "React Flow DAG"
     },
     "badges": {
-      "current": "当前 Spec",
-      "currentSubtitle": "本 Spec",
+      "current": "当前规范",
+      "currentSubtitle": "本规范",
       "dependsOn": "依赖",
       "dependsOnSubtitle": "必须先完成",
       "requiredBy": "被依赖",
-      "requiredBySubtitle": "受此 Spec 阻塞"
+      "requiredBySubtitle": "受此规范阻塞"
+    },
+    "statusSubtitles": {
+      "completed": "已完成",
+      "inProgress": "进行中",
+      "plannedBlocking": "必须先完成",
+      "plannedCanProceed": "可以继续",
+      "archived": "已归档"
     }
   },
   "dependenciesPage": {
@@ -497,18 +504,18 @@
       "title": "依赖关系图",
       "specTitle": "{{specName}} 的依赖",
       "allTitle": "所有依赖",
-      "countSummary": "{{specs}} 个 Spec，{{relationships}} 条关系",
+      "countSummary": "{{specs}} 个规范，{{relationships}} 条关系",
       "summary": {
-        "connected": "{{count}} 个 Spec 存在依赖",
+        "connected": "{{count}} 个规范存在依赖",
         "standalone": "{{count}} 个独立项",
         "none": "暂未配置依赖关系"
       }
     },
     "selector": {
-      "placeholder": "选择要高亮的 Spec...",
+      "placeholder": "选择要高亮的规范...",
       "filterPlaceholder": "输入以筛选...",
       "clearSelection": "清除选择",
-      "empty": "没有匹配的 Spec"
+      "empty": "没有匹配的规范"
     },
     "filters": {
       "showStandalone": "显示独立项 ({{count}})",
@@ -528,10 +535,10 @@
     },
     "empty": {
       "title": "暂无依赖可显示",
-      "filters": "没有 Spec 满足当前筛选条件",
-      "standaloneHint": "开启「显示独立项」即可查看未建立依赖的 Spec",
+      "filters": "没有规范满足当前筛选条件",
+      "standaloneHint": "开启「显示独立项」即可查看未建立依赖的规范",
       "noDependencies": "暂无依赖",
-      "noDependenciesDescription": "找到了 Spec，但尚未设置依赖关系。添加 depends_on 以查看依赖图。"
+      "noDependenciesDescription": "找到了规范，但尚未设置依赖关系。添加 depends_on 以查看依赖图。"
     },
     "legend": {
       "dependsOn": "依赖方向（箭头表示指向）",
@@ -543,23 +550,23 @@
       "instructions": "单击节点查看详情；滚轮缩放，拖拽平移。"
     },
     "list": {
-      "specsTitle": "Spec 列表 ({{count}})",
+      "specsTitle": "规范列表 ({{count}})",
       "relationshipsTitle": "关系 ({{count}})",
       "noRelationships": "尚无依赖或被依赖关系。添加 depends_on 或 required_by 来可视化。",
       "dependsOn": "↓ 依赖",
       "requiredBy": "↑ 被依赖"
     },
     "actions": {
-      "goToSpecs": "前往 Spec 列表"
+      "goToSpecs": "前往规范列表"
     },
     "sidebar": {
-      "emptyTitle": "请选择一个 Spec",
+      "emptyTitle": "请选择一个规范",
       "emptyDescription": "点击节点即可查看它的依赖关系",
-      "openSpec": "打开 Spec →",
+      "openSpec": "打开规范 →",
       "dependsOnHeading": "上游依赖 ({{count}})",
       "requiredByHeading": "下游被依赖 ({{count}})",
       "emptyUpstream": "没有上游依赖",
-      "emptyDownstream": "没有下游依赖此 Spec",
+      "emptyDownstream": "没有下游依赖此规范",
       "depth": {
         "direct": "直接关系",
         "level": "第 {{depth}} 层"
@@ -567,10 +574,10 @@
     }
   },
   "editors": {
-    "changeStatus": "修改 Spec 状态",
+    "changeStatus": "修改规范状态",
     "statusSuccess": "状态已更新",
     "statusError": "无法更新状态",
-    "changePriority": "修改 Spec 优先级",
+    "changePriority": "修改规范优先级",
     "prioritySuccess": "优先级已更新",
     "priorityError": "无法更新优先级",
     "addTag": "新增标签",
@@ -587,15 +594,15 @@
   "desktopMenu": {
     "close": "关闭",
     "newSpec": {
-      "title": "创建新 Spec",
-      "description": "通过 LeanSpec CLI 在当前项目中生成新的 Spec。",
+      "title": "创建新规范",
+      "description": "通过 LeanSpec CLI 在当前项目中生成新的规范。",
       "slugLabel": "Spec slug",
       "slugPlaceholder": "例如 desktop-native-menu",
       "titleLabel": "显示标题（可选）",
       "titlePlaceholder": "便于识别的标题",
       "commandLabel": "CLI 命令",
       "commandPlaceholder": "输入 Spec slug 即可预览命令…",
-      "hint": "在 {{project}}（或项目根目录）执行该命令即可生成 Spec 文件。",
+      "hint": "在 {{project}}（或项目根目录）执行该命令即可生成规范文件。",
       "projectFallback": "项目根目录",
       "copyButton": "复制命令",
       "copied": "已复制"
@@ -611,10 +618,10 @@
       "items": {
         "toggleWindow": "显示/隐藏桌面窗口",
         "quickSwitch": "打开项目切换器",
-        "newSpec": "创建新 Spec",
+        "newSpec": "创建新规范",
         "refreshProjects": "刷新项目",
         "toggleSidebar": "切换侧边栏",
-        "quickFind": "查找 Spec",
+        "quickFind": "查找规范",
         "shortcuts": "显示快捷键",
         "docs": "打开文档"
       }

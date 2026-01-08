@@ -52,7 +52,7 @@ export function SpecDetailPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const basePath = `/projects/${projectId}`;
   const { currentProject, loading: projectLoading } = useProject();
   const { t, i18n } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
@@ -413,6 +413,16 @@ export function SpecDetailPage() {
                           updatedAt={spec.updatedAt}
                           completedAt={spec.completedAt}
                           status={spec.status || 'planned'}
+                          labels={{
+                            created: t('specTimeline.events.created'),
+                            inProgress: t('specTimeline.events.inProgress'),
+                            complete: t('specTimeline.events.complete'),
+                            archived: t('specTimeline.events.archived'),
+                            awaiting: t('specTimeline.state.awaiting'),
+                            queued: t('specTimeline.state.queued'),
+                            pending: t('specTimeline.state.pending'),
+                          }}
+                          language={i18n.language}
                         />
                       </div>
                     </DialogContent>
@@ -460,6 +470,22 @@ export function SpecDetailPage() {
                             relationships={dependencyGraphData}
                             specNumber={spec.specNumber}
                             specTitle={displayTitle}
+                            labels={{
+                              title: t('dependencyGraph.header.title'),
+                              subtitle: t('dependencyGraph.header.subtitle'),
+                              badge: t('dependencyGraph.header.badge'),
+                              currentBadge: t('dependencyGraph.badges.current'),
+                              currentSubtitle: t('dependencyGraph.badges.currentSubtitle'),
+                              dependsOnBadge: t('dependencyGraph.badges.dependsOn'),
+                              dependsOnSubtitle: t('dependencyGraph.badges.dependsOnSubtitle'),
+                              requiredByBadge: t('dependencyGraph.badges.requiredBy'),
+                              requiredBySubtitle: t('dependencyGraph.badges.requiredBySubtitle'),
+                              completedSubtitle: t('dependencyGraph.statusSubtitles.completed'),
+                              inProgressSubtitle: t('dependencyGraph.statusSubtitles.inProgress'),
+                              plannedBlockingSubtitle: t('dependencyGraph.statusSubtitles.plannedBlocking'),
+                              plannedCanProceedSubtitle: t('dependencyGraph.statusSubtitles.plannedCanProceed'),
+                              archivedSubtitle: t('dependencyGraph.statusSubtitles.archived'),
+                            }}
                             onNodeClick={(specId) => {
                               const url = projectId
                                 ? `/projects/${projectId}/specs/${specId}`

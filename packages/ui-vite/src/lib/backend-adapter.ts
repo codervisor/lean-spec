@@ -183,14 +183,11 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async updateSpec(
-    _projectId: string,
+    projectId: string,
     specName: string,
     updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
   ): Promise<void> {
-    // Note: Currently using legacy /api/specs/{spec}/metadata endpoint
-    // which implicitly uses the current project from server state.
-    // TODO: Consider migrating to /api/projects/{id}/specs/{spec}/metadata for consistency
-    await this.fetchAPI(`/api/specs/${encodeURIComponent(specName)}/metadata`, {
+    await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
