@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-09
 priority: medium
 tags:
@@ -13,10 +13,13 @@ depends_on:
 - 199-ui-vite-i18n-migration
 - 198-ui-vite-remaining-issues
 created_at: 2026-01-09T08:00:49.769451481Z
-updated_at: 2026-01-09T08:05:07.738937436Z
+updated_at: 2026-01-09T08:16:29.406480607Z
+completed_at: 2026-01-09T08:16:29.406480607Z
 transitions:
 - status: in-progress
   at: 2026-01-09T08:03:33.565783121Z
+- status: complete
+  at: 2026-01-09T08:16:29.406480607Z
 ---
 
 ## Overview
