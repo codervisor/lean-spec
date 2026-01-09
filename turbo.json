@@ -41,7 +41,8 @@
     },
     "dev:desktop": {
       "dependsOn": [
-        "@leanspec/ui-components#build"
+        "@leanspec/ui-components#build",
+        "@leanspec/ui-vite#build"
       ],
       "cache": false,
       "persistent": true,
@@ -53,7 +54,8 @@
     },
     "build:desktop": {
       "dependsOn": [
-        "@leanspec/ui-components#build"
+        "@leanspec/ui-components#build",
+        "@leanspec/ui-vite#build"
       ],
       "outputs": [
         "src-tauri/target/**"

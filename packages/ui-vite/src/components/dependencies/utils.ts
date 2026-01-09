@@ -98,15 +98,9 @@ export function layoutGraph(
   if (nodes.length === 0) return { nodes: [], edges: [] };
 
   const mode = options.mode ?? 'graph';
-  const upstreamIds = options.upstreamIds ?? new Set<string>();
-  const downstreamIds = options.downstreamIds ?? new Set<string>();
 
   if (mode === 'focus' && options.focusedNodeId) {
-    return layeredLayout(nodes, edges, isCompact, {
-      focusedNodeId: options.focusedNodeId,
-      upstreamIds,
-      downstreamIds,
-    });
+    return layeredLayout(nodes, edges, isCompact);
   }
 
   const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
@@ -215,11 +209,6 @@ function layeredLayout(
   nodes: Node<SpecNodeData>[],
   edges: Edge[],
   isCompact: boolean,
-  params: {
-    focusedNodeId: string;
-    upstreamIds: Set<string>;
-    downstreamIds: Set<string>;
-  }
 ): { nodes: Node<SpecNodeData>[]; edges: Edge[] } {
   // Use dagre for consistent hierarchical layout
   // This preserves the structure of complex dependency chains (A->B->C)
