@@ -94,7 +94,7 @@ export function ProjectsTable({
       case 'valid':
         return <CheckCircle2 size={14} style={{ color: '#22c55e' }} />;
       case 'invalid':
-        return <AlertTriangle size={14} style={{ color: '#ef4444' }} title={state.error} />;
+        return <AlertTriangle size={14} style={{ color: '#ef4444' }} />;
       case 'validating':
         return <RefreshCw size={14} className={styles.spin} style={{ color: 'rgba(255, 255, 255, 0.5)' }} />;
       default:

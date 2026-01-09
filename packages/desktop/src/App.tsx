@@ -1,19 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+/**
+ * Desktop App Entry Point - Wraps @leanspec/ui-vite with desktop-specific shell
+ * 
+ * This component provides:
+ * - Desktop-specific title bar with project switcher
+ * - Window controls (minimize, maximize, close)
+ * - Projects management modal
+ * - Desktop state management (projects, active project)
+ * 
+ * The actual UI pages come from @leanspec/ui-vite
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { ThemeProvider, KeyboardShortcutsProvider } from '@leanspec/ui-vite/src/contexts';
+import { SpecsPage } from '@leanspec/ui-vite/src/pages/SpecsPage';
+import { SpecDetailPage } from '@leanspec/ui-vite/src/pages/SpecDetailPage';
+import { StatsPage } from '@leanspec/ui-vite/src/pages/StatsPage';
+import { DependenciesPage } from '@leanspec/ui-vite/src/pages/DependenciesPage';
+import { useProjects } from './hooks/useProjects';
+import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';
 import TitleBar from './components/TitleBar';
 import { ProjectsManager } from './components/ProjectsManager';
-import { useProjects } from './hooks/useProjects';
 import styles from './app.module.css';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { appLogDir } from '@tauri-apps/api/path';
-import { revealItemInDir } from '@tauri-apps/plugin-opener';
-import { checkForUpdates, getDesktopVersion } from './lib/ipc';
 
-const App = () => {
+function DesktopRootLayout() {
   const {
     projects,
     activeProjectId,
-    uiUrl,
     loading,
     error,
     switchProject,
@@ -23,88 +37,10 @@ const App = () => {
     removeProject,
     renameProject,
   } = useProjects();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const pendingMenuEvents = useRef<string[]>([]);
-  const versionCache = useRef<string>('');
-  const logDirCache = useRef<string>('');
+  
   const [projectsManagerOpen, setProjectsManagerOpen] = useState(false);
 
-  const postToIframe = useCallback((payload: Record<string, unknown>) => {
-    const target = iframeRef.current?.contentWindow;
-    if (!target) {
-      return false;
-    }
-    target.postMessage({ source: 'leanspec-desktop', ...payload }, '*');
-    return true;
-  }, []);
-
-  const flushPendingMenuEvents = useCallback(() => {
-    if (!iframeRef.current?.contentWindow) {
-      return;
-    }
-
-    while (pendingMenuEvents.current.length > 0) {
-      const action = pendingMenuEvents.current.shift();
-      if (action) {
-        postToIframe({ type: 'menu', action });
-      }
-    }
-  }, [postToIframe]);
-
-  const forwardMenuAction = useCallback(
-    (action: string) => {
-      const delivered = postToIframe({ type: 'menu', action });
-      if (!delivered) {
-        pendingMenuEvents.current.push(action);
-      }
-    },
-    [postToIframe],
-  );
-
-  const ensureDesktopVersion = useCallback(async () => {
-    if (versionCache.current) {
-      return versionCache.current;
-    }
-    const resolved = await getDesktopVersion();
-    versionCache.current = resolved;
-    return resolved;
-  }, []);
-
-  const ensureLogDirectory = useCallback(async () => {
-    if (logDirCache.current) {
-      return logDirCache.current;
-    }
-    const resolved = await appLogDir();
-    logDirCache.current = resolved;
-    return resolved;
-  }, []);
-
-  useEffect(() => {
-    const menuHandlers: Record<string, () => void> = {
-      'desktop://menu-new-spec': () => forwardMenuAction('desktop://menu-new-spec'),
-      'desktop://menu-open-project': () => addProject(),
-      'desktop://menu-switch-project': () => forwardMenuAction('desktop://menu-switch-project'),
-      'desktop://menu-find': () => forwardMenuAction('desktop://menu-find'),
-      'desktop://menu-refresh': () => refreshProjects(),
-      'desktop://menu-toggle-sidebar': () => forwardMenuAction('desktop://menu-toggle-sidebar'),
-      'desktop://menu-manage-projects': () => setProjectsManagerOpen(true),
-      'desktop://menu-shortcuts': () => forwardMenuAction('desktop://menu-shortcuts'),
-      'desktop://menu-logs': () => forwardMenuAction('desktop://menu-logs'),
-      'desktop://menu-about': () => forwardMenuAction('desktop://menu-about'),
-      'desktop://menu-updates': () => {
-        checkForUpdates().catch((error) => console.error(error));
-      },
-    };
-
-    const subscription = Promise.all(
-      Object.entries(menuHandlers).map(([name, handler]) => listen(name, handler)),
-    );
-
-    return () => {
-      subscription.then((handlers: UnlistenFn[]) => handlers.forEach((dispose) => dispose()));
-    };
-  }, [addProject, forwardMenuAction, refreshProjects]);
-
+  // Handle keyboard shortcuts for projects manager
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'm') {
@@ -117,133 +53,152 @@ const App = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      const data = event.data;
-      if (!data || typeof data !== 'object' || data.source !== 'leanspec-ui') {
-        return;
-      }
+  if (loading) {
+    return (
+      <DesktopLayout header={
+        <TitleBar 
+          projects={[]} 
+          activeProjectId={undefined} 
+          onProjectSelect={() => {}} 
+          onAddProject={() => {}} 
+          onRefresh={() => {}} 
+          onManageProjects={() => {}} 
+          isLoading={true} 
+        />
+      }>
+        <div className={styles.centerState}>Loading desktop environment…</div>
+      </DesktopLayout>
+    );
+  }
 
-      if (data.type !== 'desktop-action') {
-        return;
-      }
+  if (error) {
+    return (
+      <DesktopLayout header={
+        <TitleBar 
+          projects={[]} 
+          activeProjectId={undefined} 
+          onProjectSelect={() => {}} 
+          onAddProject={() => {}} 
+          onRefresh={() => {}} 
+          onManageProjects={() => {}} 
+          isLoading={false} 
+        />
+      }>
+        <div className={styles.errorState}>
+          <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to load projects</div>
+          <div>{error}</div>
+        </div>
+      </DesktopLayout>
+    );
+  }
 
-      switch (data.action) {
-        case 'open-logs': {
-          ensureLogDirectory()
-            .then((dir) => {
-              if (dir) {
-                revealItemInDir(dir).catch((error) => console.error(error));
-              }
-            })
-            .catch((error) => console.error(error));
-          break;
+  if (!activeProjectId) {
+    return (
+      <DesktopLayout 
+        header={
+          <TitleBar 
+            projects={projects} 
+            activeProjectId={undefined} 
+            onProjectSelect={switchProject} 
+            onAddProject={addProject} 
+            onRefresh={refreshProjects} 
+            onManageProjects={() => setProjectsManagerOpen(true)}
+            isLoading={false}
+          />
         }
-        case 'request-logs-path': {
-          ensureLogDirectory()
-            .then((dir) => {
-              if (dir) {
-                postToIframe({ type: 'desktop-response', action: 'logs-path', payload: { path: dir } });
-              }
-            })
-            .catch((error) => console.error(error));
-          break;
-        }
-        case 'get-version': {
-          ensureDesktopVersion()
-            .then((version) => {
-              postToIframe({ type: 'desktop-response', action: 'desktop-version', payload: { version } });
-            })
-            .catch((error) => console.error(error));
-          break;
-        }
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, [ensureDesktopVersion, ensureLogDirectory, postToIframe]);
-
-  const iframeSrc = useMemo(() => {
-    if (!uiUrl) {
-      return undefined;
-    }
-
-    const url = new URL(uiUrl);
-    url.searchParams.set('desktop', '1');
-    if (activeProjectId) {
-      url.searchParams.set('project', activeProjectId);
-    }
-    return url.toString();
-  }, [uiUrl, activeProjectId]);
-
-  const handleIframeLoad = useCallback(() => {
-    flushPendingMenuEvents();
-  }, [flushPendingMenuEvents]);
+      >
+        <div className={styles.centerState}>
+          <p>No project selected.</p>
+          <button onClick={addProject} style={{ marginTop: '1rem', padding: '0.5rem 1rem', cursor: 'pointer' }}>
+            Open a project
+          </button>
+        </div>
+      </DesktopLayout>
+    );
+  }
 
   return (
-    <DesktopLayout
-      header={
-        <TitleBar
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onProjectSelect={switchProject}
-          onAddProject={addProject}
-          onRefresh={refreshProjects}
-          onManageProjects={() => setProjectsManagerOpen(true)}
-          isLoading={loading}
-        />
-      }
+    <DesktopProjectProvider 
+      projectId={activeProjectId}
+      projects={projects}
+      onSwitchProject={switchProject}
     >
-      {loading && <div className={styles.centerState}>Loading desktop environment…</div>}
-      {error && (
-        <div className={styles.errorState}>
-          <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to start UI server</div>
-          <div>{error}</div>
-          {error.includes('Node.js') && (
-            <div style={{ marginTop: '1rem', fontSize: '0.9em', color: 'rgba(255, 255, 255, 0.7)' }}>
-              <p>
-                <strong>Ubuntu/Debian:</strong> <code>sudo apt install nodejs</code>
-              </p>
-              <p>
-                <strong>Fedora/RHEL:</strong> <code>sudo dnf install nodejs</code>
-              </p>
-              <p>
-                <strong>Arch:</strong> <code>sudo pacman -S nodejs</code>
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-      {projectsManagerOpen && !loading && (
-        <ProjectsManager
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onClose={() => setProjectsManagerOpen(false)}
-          onOpenProject={(projectId) => {
-            switchProject(projectId);
-            setProjectsManagerOpen(false);
-          }}
-          onAddProject={addProject}
-          onRefresh={refreshProjects}
-          onToggleFavorite={toggleFavorite}
-          onRemoveProject={removeProject}
-          onRenameProject={renameProject}
-        />
-      )}
-      {iframeSrc && !error && !projectsManagerOpen && (
-        <iframe
-          key={iframeSrc}
-          ref={iframeRef}
-          className={styles.desktopFrame}
-          src={iframeSrc}
-          title="LeanSpec UI"
-          onLoad={handleIframeLoad}
-        />
-      )}
-    </DesktopLayout>
+      <DesktopLayout 
+        header={
+          <TitleBar 
+            projects={projects} 
+            activeProjectId={activeProjectId} 
+            onProjectSelect={switchProject} 
+            onAddProject={addProject} 
+            onRefresh={refreshProjects} 
+            onManageProjects={() => setProjectsManagerOpen(true)}
+            isLoading={false}
+          />
+        }
+      >
+        {projectsManagerOpen && (
+          <ProjectsManager
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onClose={() => setProjectsManagerOpen(false)}
+            onOpenProject={(projectId) => {
+              switchProject(projectId);
+              setProjectsManagerOpen(false);
+            }}
+            onAddProject={addProject}
+            onRefresh={refreshProjects}
+            onToggleFavorite={toggleFavorite}
+            onRemoveProject={removeProject}
+            onRenameProject={renameProject}
+          />
+        )}
+        <Outlet />
+      </DesktopLayout>
+    </DesktopProjectProvider>
+  );
+}
+
+// Create router with ui-vite pages but desktop layout
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <DesktopRootLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/specs" replace />,
+      },
+      {
+        path: 'specs',
+        element: <SpecsPage />,
+      },
+      {
+        path: 'specs/:specName',
+        element: <SpecDetailPage />,
+      },
+      {
+        path: 'stats',
+        element: <StatsPage />,
+      },
+      {
+        path: 'dependencies',
+        element: <DependenciesPage />,
+      },
+      {
+        path: 'dependencies/:specName',
+        element: <DependenciesPage />,
+      },
+    ],
+  },
+]);
+
+const App = () => {
+  return (
+    <ThemeProvider>
+      <KeyboardShortcutsProvider>
+        <RouterProvider router={router} />
+      </KeyboardShortcutsProvider>
+    </ThemeProvider>
   );
 };
 

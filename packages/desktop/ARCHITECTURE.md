@@ -1,10 +1,10 @@
 # LeanSpec Desktop Architecture
 
-> **Status**: Native SPA Mode (Spec 169 Phase 5 Complete)
+> **Status**: Native SPA Mode with UI-Vite Integration (Spec 204 Complete)
 
 ## Overview
 
-The LeanSpec Desktop app is built with Tauri v2, providing a native application experience with Rust backend and React frontend.
+The LeanSpec Desktop app is built with Tauri v2 and **@leanspec/ui-vite**, providing a native application experience with Rust backend and shared React UI components.
 
 ### Migration from Node.js (December 2025)
 
@@ -18,16 +18,31 @@ Desktop App
     └── @leanspec/core (TypeScript) - Spec operations
 ```
 
-**After (Pure Native)**:
+**After (Pure Native with UI-Vite, January 2026)**:
 ```
 Desktop App
 ├── Tauri Backend (Rust) - Everything backend
 │   ├── Window management, tray, shortcuts
 │   ├── Spec operations (migrated from @leanspec/core)
-│   └── Tauri commands (replace Next.js API routes)
-└── Static SPA (React) - Pure frontend, no SSR
-    └── Vite build with React Router
+│   └── Tauri commands (replace HTTP API)
+└── UI Layer (React)
+    ├── Desktop Shell (desktop-specific)
+    │   ├── TitleBar with project switcher
+    │   ├── WindowControls
+    │   ├── ProjectsManager modal
+    │   └── DesktopProjectContext
+    └── @leanspec/ui-vite (shared with web)
+        ├── Backend adapter (Tauri IPC mode)
+        ├── Pages (Specs, Stats, Dependencies, etc.)
+        ├── Components (from @leanspec/ui-components)
+        └── Contexts (Theme, KeyboardShortcuts)
 ```
+
+**Key Benefits**:
+- **Code Reuse**: Shares 90%+ of UI code with web version
+- **Consistency**: Identical UI/UX across desktop and web
+- **Maintainability**: Single codebase for UI features
+- **Performance**: No extra overhead compared to previous implementation
 
 ## Architecture Components
 
@@ -75,30 +90,32 @@ Desktop App
 
 ### 2. React Frontend (`src/`)
 
-**Routing (`Router.tsx`)**:
-- React Router for client-side navigation
-- Routes:
-  - `/specs` - Spec list page
-  - `/specs/:specId` - Spec detail page
-  - `/stats` - Project statistics
-  - `/dependencies` - Dependency graph
+**Architecture**:
+- Uses **@leanspec/ui-vite** for all page rendering
+- Desktop-specific shell wraps ui-vite components
+- Tauri backend adapter enables ui-vite to use IPC instead of HTTP
 
-**Pages (`pages/`)**:
-- `SpecsPage.tsx` - Specs list with search, filter, sort, list/board views
-- `SpecDetailPage.tsx` - Individual spec with content, metadata, dependencies
-- `StatsPage.tsx` - Project statistics and metrics overview
-- `DependenciesPage.tsx` - Dependency graph visualization
+**Routing (`App.tsx`)**:
+- React Router with routes defined in desktop App
+- Routes use **ui-vite pages**:
+  - `/specs` - SpecsPage from ui-vite
+  - `/specs/:specName` - SpecDetailPage from ui-vite
+  - `/stats` - StatsPage from ui-vite
+  - `/dependencies` - DependenciesPage from ui-vite
 
-**Components (`components/`)**:
-- `DesktopLayout.tsx` - Main application layout
+**Desktop-Specific Components (`components/`)**:
+- `DesktopLayout.tsx` - Main application layout with title bar
 - `TitleBar.tsx` - Custom title bar with project selector
 - `ProjectsManager.tsx` - Project management modal
 - `WindowControls.tsx` - Window control buttons (minimize, maximize, close)
+- `DesktopMenu.tsx` - Desktop menu bar
 
-**Hooks (`hooks/`)**:
-- `useProjects.ts` - Project management state
-- `useSpecs.ts` - Spec operations via Tauri commands
+**Desktop-Specific Hooks (`hooks/`)**:
+- `useProjects.ts` - Desktop project management state
 - `useProjectsManager.ts` - Projects manager modal state
+
+**Desktop-Specific Contexts (`contexts/`)**:
+- `DesktopProjectContext.tsx` - Bridges desktop project state with ui-vite
 
 **IPC Layer (`lib/ipc.ts`)**:
 - Wrapper functions for all Tauri commands
@@ -177,10 +194,34 @@ import { myCommand } from '@/lib/ipc';
 const result = await myCommand('value');
 ```
 
-### Adding New Pages
+### Adding UI Features
 
-1. **Create page component** in `src/pages/MyPage.tsx`
-2. **Add route** in `src/Router.tsx`
+For most UI features, work should be done in **@leanspec/ui-vite**:
+
+1. **Add to ui-vite** (`packages/ui-vite/src/...`)
+   - Benefits both desktop and web versions
+   - Use backend adapter for API calls (works in both Tauri and HTTP modes)
+
+2. **Desktop-only features** (rare cases):
+   - Add to desktop `src/components/`
+   - Example: TitleBar, WindowControls, ProjectsManager
+
+### Backend Adapter Pattern
+
+UI-vite uses a backend adapter that automatically detects the environment:
+
+```typescript
+// In ui-vite/src/lib/backend-adapter.ts
+export function createBackendAdapter(): BackendAdapter {
+  // @ts-expect-error __TAURI__ is injected by Tauri at runtime
+  if (typeof window !== 'undefined' && window.__TAURI__) {
+    return new TauriBackendAdapter();  // Uses Tauri IPC
+  }
+  return new HttpBackendAdapter();      // Uses HTTP fetch
+}
+```
+
+This allows ui-vite components to work seamlessly in both desktop and web contexts.
 3. **Add navigation** in relevant components
 
 ### Building and Testing
