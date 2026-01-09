@@ -14,15 +14,14 @@ import {
   ArrowUp,
   Minus,
   ArrowDown,
+  Check,
 } from 'lucide-react';
 import {
   Button,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@leanspec/ui-components';
 import {
   List,
@@ -40,6 +39,9 @@ import { useTranslation } from 'react-i18next';
 const STORAGE_KEYS = {
   collapsed: 'specs-nav-sidebar-collapsed',
   scroll: 'specs-nav-sidebar-scroll-offset',
+  statusFilter: 'specs-nav-sidebar-status-filter',
+  priorityFilter: 'specs-nav-sidebar-priority-filter',
+  tagFilter: 'specs-nav-sidebar-tag-filter',
 };
 
 interface SpecsNavSidebarProps {
@@ -54,9 +56,21 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [tagFilter, setTagFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const stored = sessionStorage.getItem(STORAGE_KEYS.statusFilter);
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [priorityFilter, setPriorityFilter] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const stored = sessionStorage.getItem(STORAGE_KEYS.priorityFilter);
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [tagFilter, setTagFilter] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const stored = sessionStorage.getItem(STORAGE_KEYS.tagFilter);
+    return stored ? JSON.parse(stored) : [];
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -133,16 +147,18 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       );
     }
 
-    if (statusFilter !== 'all') {
-      result = result.filter((spec) => spec.status === statusFilter);
+    if (statusFilter.length > 0) {
+      result = result.filter((spec) => spec.status && statusFilter.includes(spec.status));
     }
 
-    if (priorityFilter !== 'all') {
-      result = result.filter((spec) => spec.priority === priorityFilter);
+    if (priorityFilter.length > 0) {
+      result = result.filter((spec) => spec.priority && priorityFilter.includes(spec.priority));
     }
 
-    if (tagFilter !== 'all') {
-      result = result.filter((spec) => spec.tags?.includes(tagFilter));
+    if (tagFilter.length > 0) {
+      result = result.filter((spec) =>
+        spec.tags?.some((tag: string) => tagFilter.includes(tag))
+      );
     }
 
     return [...result].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
@@ -236,7 +252,20 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, [specs]);
 
   const hasActiveFilters =
-    statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
+    statusFilter.length > 0 || priorityFilter.length > 0 || tagFilter.length > 0;
+
+  // Persist filters to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.statusFilter, JSON.stringify(statusFilter));
+  }, [statusFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.priorityFilter, JSON.stringify(priorityFilter));
+  }, [priorityFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.tagFilter, JSON.stringify(tagFilter));
+  }, [tagFilter]);
 
   // Restore initial scroll position only once on mount
   useEffect(() => {
@@ -285,9 +314,27 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, []);
 
   const resetFilters = () => {
-    setStatusFilter('all');
-    setPriorityFilter('all');
-    setTagFilter('all');
+    setStatusFilter([]);
+    setPriorityFilter([]);
+    setTagFilter([]);
+  };
+
+  const toggleStatus = (status: string) => {
+    setStatusFilter((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+  };
+
+  const togglePriority = (priority: string) => {
+    setPriorityFilter((prev) =>
+      prev.includes(priority) ? prev.filter((p) => p !== priority) : [...prev, priority]
+    );
+  };
+
+  const toggleTag = (tag: string) => {
+    setTagFilter((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
   const sidebarVisible = mobileOpen || !collapsed;
@@ -375,86 +422,136 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   )}
                 </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder={t('specsNavSidebar.select.status.all')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('specsNavSidebar.select.status.all')}</SelectItem>
-                    <SelectItem value="planned">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{t('status.planned')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="in-progress">
-                      <div className="flex items-center gap-2">
-                        <PlayCircle className="h-4 w-4" />
-                        <span>{t('status.inProgress')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="complete">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>{t('status.complete')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="archived">
-                      <div className="flex items-center gap-2">
-                        <Archive className="h-4 w-4" />
-                        <span>{t('status.archived')}</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder={t('specsNavSidebar.select.priority.all')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('specsNavSidebar.select.priority.all')}</SelectItem>
-                    <SelectItem value="low">
-                      <div className="flex items-center gap-2">
-                        <ArrowDown className="h-4 w-4" />
-                        <span>{t('priority.low')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="medium">
-                      <div className="flex items-center gap-2">
-                        <Minus className="h-4 w-4" />
-                        <span>{t('priority.medium')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="high">
-                      <div className="flex items-center gap-2">
-                        <ArrowUp className="h-4 w-4" />
-                        <span>{t('priority.high')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="critical">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>{t('priority.critical')}</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {allTags.length > 0 && (
-                  <Select value={tagFilter} onValueChange={setTagFilter}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder={t('specsNavSidebar.select.tag.all')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('specsNavSidebar.select.tag.all')}</SelectItem>
-                      {allTags.map((tag) => (
-                        <SelectItem key={tag} value={tag}>
-                          {tag}
-                        </SelectItem>
+                {/* Status Filter */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-full justify-between text-xs font-normal"
+                    >
+                      <span className="truncate">
+                        {statusFilter.length === 0
+                          ? t('specsNavSidebar.select.status.all')
+                          : `${t('specsNavSidebar.status')}: ${statusFilter.length} ${t('specsNavSidebar.selected')}`}
+                      </span>
+                      <ChevronRight className="h-3 w-3 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start">
+                    <div className="space-y-1">
+                      {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => (
+                        <div
+                          key={status}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                          onClick={() => toggleStatus(status)}
+                        >
+                          <div className="flex items-center justify-center w-4 h-4 border rounded">
+                            {statusFilter.includes(status) && (
+                              <Check className="h-3 w-3" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-1">
+                            {status === 'planned' && <Clock className="h-4 w-4" />}
+                            {status === 'in-progress' && <PlayCircle className="h-4 w-4" />}
+                            {status === 'complete' && <CheckCircle2 className="h-4 w-4" />}
+                            {status === 'archived' && <Archive className="h-4 w-4" />}
+                            <span className="text-sm">
+                              {status === 'planned' && t('status.planned')}
+                              {status === 'in-progress' && t('status.inProgress')}
+                              {status === 'complete' && t('status.complete')}
+                              {status === 'archived' && t('status.archived')}
+                            </span>
+                          </div>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Priority Filter */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-full justify-between text-xs font-normal"
+                    >
+                      <span className="truncate">
+                        {priorityFilter.length === 0
+                          ? t('specsNavSidebar.select.priority.all')
+                          : `${t('specsNavSidebar.priority')}: ${priorityFilter.length} ${t('specsNavSidebar.selected')}`}
+                      </span>
+                      <ChevronRight className="h-3 w-3 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start">
+                    <div className="space-y-1">
+                      {(['low', 'medium', 'high', 'critical'] as const).map((priority) => (
+                        <div
+                          key={priority}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                          onClick={() => togglePriority(priority)}
+                        >
+                          <div className="flex items-center justify-center w-4 h-4 border rounded">
+                            {priorityFilter.includes(priority) && (
+                              <Check className="h-3 w-3" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-1">
+                            {priority === 'low' && <ArrowDown className="h-4 w-4" />}
+                            {priority === 'medium' && <Minus className="h-4 w-4" />}
+                            {priority === 'high' && <ArrowUp className="h-4 w-4" />}
+                            {priority === 'critical' && <AlertCircle className="h-4 w-4" />}
+                            <span className="text-sm">
+                              {priority === 'low' && t('priority.low')}
+                              {priority === 'medium' && t('priority.medium')}
+                              {priority === 'high' && t('priority.high')}
+                              {priority === 'critical' && t('priority.critical')}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Tag Filter */}
+                {allTags.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-full justify-between text-xs font-normal"
+                      >
+                        <span className="truncate">
+                          {tagFilter.length === 0
+                            ? t('specsNavSidebar.select.tag.all')
+                            : `${t('specsNavSidebar.tags')}: ${tagFilter.length} ${t('specsNavSidebar.selected')}`}
+                        </span>
+                        <ChevronRight className="h-3 w-3 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2 max-h-64 overflow-y-auto" align="start">
+                      <div className="space-y-1">
+                        {allTags.map((tag) => (
+                          <div
+                            key={tag}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                            onClick={() => toggleTag(tag)}
+                          >
+                            <div className="flex items-center justify-center w-4 h-4 border rounded">
+                              {tagFilter.includes(tag) && (
+                                <Check className="h-3 w-3" />
+                              )}
+                            </div>
+                            <span className="text-sm flex-1">{tag}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
               </div>
             )}

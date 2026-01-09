@@ -209,6 +209,10 @@
       "hide": "收起筛选"
     },
     "clearFilters": "重置",
+    "status": "状态",
+    "priority": "优先级",
+    "tags": "标签",
+    "selected": "已选",
     "select": {
       "status": {
         "label": "状态",

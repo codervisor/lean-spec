@@ -209,6 +209,10 @@
       "hide": "Hide filters"
     },
     "clearFilters": "Clear",
+    "status": "Status",
+    "priority": "Priority",
+    "tags": "Tags",
+    "selected": "selected",
     "select": {
       "status": {
         "label": "Status",
