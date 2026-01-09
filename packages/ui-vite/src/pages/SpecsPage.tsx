@@ -9,6 +9,7 @@ import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
 import { cn } from '../lib/utils';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
+import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
 import { useProject } from '../contexts';
 import { useTranslation } from 'react-i18next';
@@ -215,43 +216,42 @@ export function SpecsPage() {
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 max-w-7xl mx-auto w-full">
       <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
-              {t('specsPage.title')}
-            </h1>
-            <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
-          </div>
+        <PageHeader
+          title={t('specsPage.title')}
+          description={t('specsPage.description')}
+          actions={(
+            <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  "h-8",
+                  viewMode === 'list' && "bg-background shadow-sm"
+                )}
+                title={t('specsPage.views.listTooltip')}
+              >
+                <List className="w-4 h-4 mr-1.5" />
+                {t('specsPage.views.list')}
+              </Button>
+              <Button
+                variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('board')}
+                className={cn(
+                  "h-8",
+                  viewMode === 'board' && "bg-background shadow-sm"
+                )}
+                title={t('specsPage.views.boardTooltip')}
+              >
+                <LayoutGrid className="w-4 h-4 mr-1.5" />
+                {t('specsPage.views.board')}
+              </Button>
+            </div>
+          )}
+        />
 
-          <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
-            <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className={cn(
-                "h-8",
-                viewMode === 'list' && "bg-background shadow-sm"
-              )}
-              title={t('specsPage.views.listTooltip')}
-            >
-              <List className="w-4 h-4 mr-1.5" />
-              {t('specsPage.views.list')}
-            </Button>
-            <Button
-              variant={viewMode === 'board' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('board')}
-              className={cn(
-                "h-8",
-                viewMode === 'board' && "bg-background shadow-sm"
-              )}
-              title={t('specsPage.views.boardTooltip')}
-            >
-              <LayoutGrid className="w-4 h-4 mr-1.5" />
-              {t('specsPage.views.board')}
-            </Button>
-          </div>
-        </div>
+        <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
 
         <SpecsFilters
           searchQuery={searchQuery}

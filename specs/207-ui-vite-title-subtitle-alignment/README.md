@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-09
 priority: medium
 tags:
@@ -8,8 +8,15 @@ tags:
 - ui-vite
 - consistency
 - typography
+depends_on:
+- 193-frontend-ui-parity
+- 199-ui-vite-i18n-migration
+- 198-ui-vite-remaining-issues
 created_at: 2026-01-09T08:00:49.769451481Z
-updated_at: 2026-01-09T08:00:49.769451481Z
+updated_at: 2026-01-09T08:05:07.738937436Z
+transitions:
+- status: in-progress
+  at: 2026-01-09T08:03:33.565783121Z
 ---
 
 ## Overview

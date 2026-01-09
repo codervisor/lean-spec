@@ -111,6 +111,10 @@
     "noProjectsFound": "未找到项目",
     "getStarted": "开始创建您的第一个 LeanSpec 项目。"
   },
+  "projectsPage": {
+    "title": "项目",
+    "description": "管理你的 LeanSpec 工作区。"
+  },
   "settingsPage": {
     "title": "项目",
     "description": "管理您的 LeanSpec 项目和工作区。",
@@ -235,6 +239,7 @@
   },
   "specsPage": {
     "title": "规范列表",
+    "description": "浏览并管理项目中的所有规范。",
     "count": "共 {{count}} 个规范",
     "views": {
       "list": "列表",
@@ -515,6 +520,8 @@
     }
   },
   "dependenciesPage": {
+    "title": "依赖关系",
+    "description": "可视化项目内规范的关联关系。",
     "header": {
       "title": "依赖关系图",
       "specTitle": "{{specName}} 的依赖",

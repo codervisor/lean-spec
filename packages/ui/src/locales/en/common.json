@@ -111,6 +111,10 @@
     "noProjectsFound": "No projects found",
     "getStarted": "Get started by creating your first LeanSpec project."
   },
+  "projectsPage": {
+    "title": "Projects",
+    "description": "Manage your LeanSpec projects and workspaces."
+  },
   "settingsPage": {
     "title": "Projects",
     "description": "Manage your LeanSpec projects and workspaces.",
@@ -235,6 +239,7 @@
   },
   "specsPage": {
     "title": "Specifications",
+    "description": "Browse and organize all specifications in your project.",
     "count": "{{count}} specs",
     "views": {
       "list": "List",
@@ -515,6 +520,8 @@
     }
   },
   "dependenciesPage": {
+    "title": "Dependencies",
+    "description": "Visualize how specs connect across your project.",
     "header": {
       "title": "Dependency Graph",
       "specTitle": "Dependencies for {{specName}}",

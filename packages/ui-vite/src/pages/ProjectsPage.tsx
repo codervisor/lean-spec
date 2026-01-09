@@ -22,6 +22,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { CreateProjectDialog } from '../components/projects/CreateProjectDialog';
 import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
 import { ColorPicker } from '../components/shared/ColorPicker';
+import { PageHeader } from '../components/shared/PageHeader';
 import { useProject } from '../contexts';
 import { api } from '../lib/api';
 
@@ -225,18 +226,16 @@ export function ProjectsPage() {
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-7xl mx-auto py-6 space-y-6 px-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('projects.projects')}</h1>
-              <p className="text-muted-foreground mt-1 text-lg">
-                {t('projects.description') || 'Manage your LeanSpec projects and workspaces.'}
-              </p>
-            </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              {t('projects.newProject')}
-            </Button>
-          </div>
+          <PageHeader
+            title={t('projectsPage.title')}
+            description={t('projectsPage.description') || t('projects.description')}
+            actions={(
+              <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
+                <Plus className="mr-2 h-4 w-4" />
+                {t('projects.newProject')}
+              </Button>
+            )}
+          />
 
           <div className="flex items-center space-x-2 max-w-md">
             <div className="relative flex-1">

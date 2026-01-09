@@ -19,6 +19,7 @@ import { StatCard } from '../components/dashboard/StatCard';
 import { api } from '../lib/api';
 import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
+import { PageHeader } from '../components/shared/PageHeader';
 import { useTranslation } from 'react-i18next';
 import { useProject } from '../contexts';
 
@@ -162,12 +163,10 @@ export function StatsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
-          {t('statsPage.title')}
-        </h1>
-        <p className="text-muted-foreground mt-1">{t('statsPage.description')}</p>
-      </div>
+      <PageHeader
+        title={t('statsPage.title')}
+        description={t('statsPage.description')}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

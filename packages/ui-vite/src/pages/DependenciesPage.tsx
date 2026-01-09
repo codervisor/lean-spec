@@ -35,6 +35,7 @@ import { SpecSidebar } from '../components/dependencies/SpecSidebar';
 import { getConnectionDepths, layoutGraph } from '../components/dependencies/utils';
 import { DEPENDS_ON_COLOR, toneBgColors } from '../components/dependencies/constants';
 import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from '../components/dependencies/types';
+import { PageHeader } from '../components/shared/PageHeader';
 
 export function DependenciesPage() {
   const { specName, projectId } = useParams<{ specName?: string; projectId?: string }>();
@@ -613,119 +614,114 @@ export function DependenciesPage() {
 
   return (
     <div className="container mx-auto p-6 h-[calc(100vh-7rem)]">
-      <div className="flex h-full flex-col gap-2">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('dependenciesPage.header.title')}
-              </p>
-              <p className="text-sm text-foreground">
-                {connectionStats.connected > 0 ? (
-                  <>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      {t('dependenciesPage.header.summary.connected', { count: connectionStats.connected })}
+      <div className="flex h-full flex-col gap-4">
+        <PageHeader
+          title={t('dependenciesPage.title')}
+          description={t('dependenciesPage.description')}
+          actions={(
+            <Popover open={selectorOpen} onOpenChange={setSelectorOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={selectorOpen}
+                  className={cn(
+                    'w-[240px] h-9 justify-between px-3 text-xs',
+                    focusedNodeId && 'border-primary/60 bg-primary/10 text-foreground'
+                  )}
+                >
+                  {focusedSpec ? (
+                    <span className="truncate flex items-center">
+                      <span className="text-muted-foreground mr-2 font-mono">#{focusedSpec.number.toString().padStart(3, '0')}</span>
+                      <span className="truncate">{focusedSpec.name}</span>
                     </span>
-                    {connectionStats.standalone > 0 && (
-                      <>
-                        {' • '}
-                        <span className="text-muted-foreground">
-                          {t('dependenciesPage.header.summary.standalone', { count: connectionStats.standalone })}
-                        </span>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">{t('dependenciesPage.header.summary.none')}</span>
-                )}
-              </p>
-            </div>
-          </div>
+                  ) : (
+                    <span className="text-muted-foreground font-normal">{t('dependenciesPage.selector.placeholder')}</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0" align="end">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder={t('dependenciesPage.selector.filterPlaceholder')}
+                    value={selectorQuery}
+                    onValueChange={setSelectorQuery}
+                    className="text-xs"
+                  />
+                  <CommandList>
+                    <CommandEmpty className="py-2 text-center text-xs text-muted-foreground">
+                      {t('dependenciesPage.selector.empty')}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {focusedNodeId && (
+                        <CommandItem
+                          onSelect={() => {
+                            setFocusedNodeId(null);
+                            setSelectorOpen(false);
+                            setSelectorQuery('');
+                          }}
+                          className="text-muted-foreground"
+                        >
+                          <X className="mr-2 h-3.5 w-3.5" />
+                          {t('dependenciesPage.selector.clearSelection')}
+                        </CommandItem>
+                      )}
+                      {filteredSpecs.map((spec) => (
+                        <CommandItem
+                          key={spec.id}
+                          value={spec.id}
+                          onSelect={() => handleSelectSpec(spec.id)}
+                        >
+                          <span className="text-muted-foreground font-mono mr-2">#{spec.number.toString().padStart(3, '0')}</span>
+                          <span className="truncate flex-1">{spec.name}</span>
+                          <span
+                            className={cn(
+                              'text-[9px] px-1 py-0.5 rounded uppercase font-medium ml-2 shrink-0',
+                              spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+                              spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+                              spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
+                              spec.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
+                            )}
+                          >
+                            {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
+                          </span>
+                          <div
+                            className={cn(
+                              'mr-2 flex h-4 w-4 items-center justify-center',
+                              focusedNodeId === spec.id ? 'opacity-100' : 'opacity-0'
+                            )}
+                          >
+                            <Check className="h-4 w-4" />
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          )}
+        />
 
-          {/* Spec Selector */}
-          <Popover open={selectorOpen} onOpenChange={setSelectorOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={selectorOpen}
-                className={cn(
-                  'w-[240px] h-9 justify-between px-3 text-xs',
-                  focusedNodeId && 'border-primary/60 bg-primary/10 text-foreground'
-                )}
-              >
-                {focusedSpec ? (
-                  <span className="truncate flex items-center">
-                    <span className="text-muted-foreground mr-2 font-mono">#{focusedSpec.number.toString().padStart(3, '0')}</span>
-                    <span className="truncate">{focusedSpec.name}</span>
+        <div className="text-sm text-muted-foreground">
+          {connectionStats.connected > 0 ? (
+            <>
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {t('dependenciesPage.header.summary.connected', { count: connectionStats.connected })}
+              </span>
+              {connectionStats.standalone > 0 && (
+                <>
+                  {' • '}
+                  <span className="text-muted-foreground">
+                    {t('dependenciesPage.header.summary.standalone', { count: connectionStats.standalone })}
                   </span>
-                ) : (
-                  <span className="text-muted-foreground font-normal">{t('dependenciesPage.selector.placeholder')}</span>
-                )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0" align="end">
-              <Command shouldFilter={false}>
-                <CommandInput
-                  placeholder={t('dependenciesPage.selector.filterPlaceholder')}
-                  value={selectorQuery}
-                  onValueChange={setSelectorQuery}
-                  className="text-xs"
-                />
-                <CommandList>
-                  <CommandEmpty className="py-2 text-center text-xs text-muted-foreground">
-                    {t('dependenciesPage.selector.empty')}
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {focusedNodeId && (
-                      <CommandItem
-                        onSelect={() => {
-                          setFocusedNodeId(null);
-                          setSelectorOpen(false);
-                          setSelectorQuery('');
-                        }}
-                        className="text-muted-foreground"
-                      >
-                        <X className="mr-2 h-3.5 w-3.5" />
-                        {t('dependenciesPage.selector.clearSelection')}
-                      </CommandItem>
-                    )}
-                    {filteredSpecs.map((spec) => (
-                      <CommandItem
-                        key={spec.id}
-                        value={spec.id}
-                        onSelect={() => handleSelectSpec(spec.id)}
-                      >
-                        <span className="text-muted-foreground font-mono mr-2">#{spec.number.toString().padStart(3, '0')}</span>
-                        <span className="truncate flex-1">{spec.name}</span>
-                        <span
-                          className={cn(
-                            'text-[9px] px-1 py-0.5 rounded uppercase font-medium ml-2 shrink-0',
-                            spec.status === 'planned' && 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-                            spec.status === 'in-progress' && 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
-                            spec.status === 'complete' && 'bg-green-500/20 text-green-600 dark:text-green-400',
-                            spec.status === 'archived' && 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
-                          )}
-                        >
-                          {spec.status === 'in-progress' ? 'WIP' : spec.status.slice(0, 3)}
-                        </span>
-                        <div
-                          className={cn(
-                            'mr-2 flex h-4 w-4 items-center justify-center',
-                            focusedNodeId === spec.id ? 'opacity-100' : 'opacity-0'
-                          )}
-                        >
-                          <Check className="h-4 w-4" />
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                </>
+              )}
+            </>
+          ) : (
+            <span>{t('dependenciesPage.header.summary.none')}</span>
+          )}
         </div>
 
         {/* Filters */}

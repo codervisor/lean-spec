@@ -12,6 +12,7 @@ import type { ProjectContext, ContextFile } from '../../types/api';
 import { cn } from '../../lib/utils';
 import { useTranslation } from 'react-i18next';
 import { ContextFileDetail } from './ContextFileDetail';
+import { PageHeader } from '../shared/PageHeader';
 
 interface ContextClientProps {
   context: ProjectContext;
@@ -290,17 +291,10 @@ export function ContextClient({ context }: ContextClientProps) {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3">
-            {t('contextPage.title')}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {t('contextPage.description')}
-          </p>
-        </div>
-        {hasAnyContent && (
+      <PageHeader
+        title={t('contextPage.title')}
+        description={t('contextPage.description')}
+        actions={hasAnyContent ? (
           <Button
             variant="outline"
             size="sm"
@@ -319,8 +313,8 @@ export function ContextClient({ context }: ContextClientProps) {
               </>
             )}
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Search and Summary */}
       {hasAnyContent && (
