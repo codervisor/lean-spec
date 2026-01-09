@@ -29,10 +29,10 @@ import { SpecDetailPage } from '@leanspec/ui-vite/src/pages/SpecDetailPage';
 import { StatsPage } from '@leanspec/ui-vite/src/pages/StatsPage';
 import { DependenciesPage } from '@leanspec/ui-vite/src/pages/DependenciesPage';
 import { ContextPage } from '@leanspec/ui-vite/src/pages/ContextPage';
+import { ProjectsPage } from '@leanspec/ui-vite/src/pages/ProjectsPage';
 import { useProjects } from './hooks/useProjects';
 import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';
-import { ProjectsManager } from './components/ProjectsManager';
 import WindowControls from './components/WindowControls';
 import styles from './app.module.css';
 
@@ -65,7 +65,6 @@ function DesktopRootLayout() {
 
   const { switchProject: switchUiProject } = useProject();
   
-  const [projectsManagerOpen, setProjectsManagerOpen] = useState(false);
   const pendingNavigateToActiveProject = useRef(false);
   const navigationRightSlot = <WindowControls />;
 
@@ -126,19 +125,6 @@ function DesktopRootLayout() {
     navigate(replaceProjectInPath(activeProjectId), { replace: false });
   }, [activeProjectId, loading, navigate]);
 
-  // Handle keyboard shortcuts for projects manager
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'm') {
-        event.preventDefault();
-        setProjectsManagerOpen(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   if (loading) {
     return (
       <DesktopNavigationFrame>
@@ -184,25 +170,6 @@ function DesktopRootLayout() {
       onSwitchProject={switchDesktopProject}
     >
       <DesktopLayout>
-        {projectsManagerOpen && (
-          <ProjectsManager
-            projects={projects}
-            activeProjectId={effectiveProjectId}
-            onClose={() => setProjectsManagerOpen(false)}
-            onOpenProject={(nextId) => {
-              navigate(replaceProjectInPath(nextId));
-              setProjectsManagerOpen(false);
-            }}
-            onAddProject={async () => {
-              pendingNavigateToActiveProject.current = true;
-              await addProject();
-            }}
-            onRefresh={refreshProjects}
-            onToggleFavorite={toggleFavorite}
-            onRemoveProject={removeProject}
-            onRenameProject={renameProject}
-          />
-        )}
         <Layout className="min-h-0 min-w-0" navigationRightSlot={navigationRightSlot} />
       </DesktopLayout>
     </DesktopProjectProvider>
@@ -210,26 +177,13 @@ function DesktopRootLayout() {
 }
 
 function DesktopProjectsLayout() {
-  const location = useLocation();
-  const navigate = useNavigate();
   const {
     projects,
     activeProjectId,
     loading,
     error,
     switchProject: switchDesktopProject,
-    addProject,
-    refreshProjects,
-    toggleFavorite,
-    removeProject,
-    renameProject,
   } = useProjects();
-
-  const pendingNavigateToActiveProject = useRef(false);
-
-  const goToProject = (projectId: string) => {
-    navigate(`/projects/${projectId}/specs${location.search}`);
-  };
 
   if (loading) {
     return (
@@ -257,26 +211,7 @@ function DesktopProjectsLayout() {
       onSwitchProject={switchDesktopProject}
     >
       <DesktopNavigationFrame>
-        <ProjectsManager
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onClose={() => {
-            if (activeProjectId) {
-              goToProject(activeProjectId);
-            } else {
-              navigate('/projects/default');
-            }
-          }}
-          onOpenProject={(id) => goToProject(id)}
-          onAddProject={async () => {
-            pendingNavigateToActiveProject.current = true;
-            await addProject();
-          }}
-          onRefresh={refreshProjects}
-          onToggleFavorite={toggleFavorite}
-          onRemoveProject={removeProject}
-          onRenameProject={renameProject}
-        />
+        <ProjectsPage />
       </DesktopNavigationFrame>
     </DesktopProjectProvider>
   );
