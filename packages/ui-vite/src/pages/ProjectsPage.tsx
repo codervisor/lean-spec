@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
-  ArrowLeft,
   Check,
   CheckCircle2,
   FolderOpen,
@@ -16,8 +15,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, Input, Popover, PopoverContent, PopoverTrigger } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
-// Using react-router-dom Link/useNavigate instead of Next.js
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -46,7 +44,6 @@ export function ProjectsPage() {
   const navigate = useNavigate();
   const {
     projects,
-    currentProject,
     switchProject,
     toggleFavorite,
     removeProject,
@@ -228,17 +225,6 @@ export function ProjectsPage() {
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-7xl mx-auto py-6 space-y-6 px-4">
-          {/* Back navigation - only show if coming from a specific project */}
-          {currentProject && (
-            <Link
-              to={`/projects/${currentProject.id}/specs`}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t('projects.backTo', { projectName: currentProject.name })}
-            </Link>
-          )}
-
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('projects.projects')}</h1>
