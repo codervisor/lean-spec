@@ -19,10 +19,12 @@ function LayoutContent({
   className,
   style,
   navigationRightSlot,
+  onNavigationDoubleClick,
 }: {
   className?: string;
   style?: React.CSSProperties;
   navigationRightSlot?: ReactNode;
+  onNavigationDoubleClick?: () => void;
 }) {
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
@@ -47,6 +49,7 @@ function LayoutContent({
         onToggleSidebar={toggleMobileSidebar}
         onShowShortcuts={toggleHelp}
         rightSlot={navigationRightSlot}
+        onHeaderDoubleClick={onNavigationDoubleClick}
       />
       <div className="flex w-full min-w-0">
         <MainSidebar mobileOpen={mobileSidebarOpen} onMobileClose={toggleMobileSidebar} />
@@ -71,15 +74,17 @@ interface LayoutProps {
   className?: string;
   style?: React.CSSProperties;
   navigationRightSlot?: ReactNode;
+  onNavigationDoubleClick?: () => void;
 }
 
-export function Layout({ className, style, navigationRightSlot }: LayoutProps) {
+export function Layout({ className, style, navigationRightSlot, onNavigationDoubleClick }: LayoutProps) {
   return (
     <LayoutProvider>
       <LayoutContent
         className={className}
         style={style}
         navigationRightSlot={navigationRightSlot}
+        onNavigationDoubleClick={onNavigationDoubleClick}
       />
     </LayoutProvider>
   );

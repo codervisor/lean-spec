@@ -39,7 +39,14 @@ import styles from './app.module.css';
 const DesktopNavigationFrame = ({ children }: { children: ReactNode }) => (
   <DesktopLayout>
     <div className="flex min-h-screen flex-col bg-background">
-      <Navigation rightSlot={<WindowControls />} />
+      <Navigation
+        rightSlot={<WindowControls />}
+        onHeaderDoubleClick={async () => {
+          const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+          const desktopWindow = WebviewWindow.getCurrent();
+          await desktopWindow.toggleMaximize();
+        }}
+      />
       <main className="flex-1 w-full min-h-[calc(100vh-3.5rem)]">{children}</main>
     </div>
   </DesktopLayout>
@@ -57,10 +64,6 @@ function DesktopRootLayout() {
     error,
     switchProject: switchDesktopProject,
     addProject,
-    refreshProjects,
-    toggleFavorite,
-    removeProject,
-    renameProject,
   } = useProjects();
 
   const { switchProject: switchUiProject } = useProject();
@@ -170,7 +173,15 @@ function DesktopRootLayout() {
       onSwitchProject={switchDesktopProject}
     >
       <DesktopLayout>
-        <Layout className="min-h-0 min-w-0" navigationRightSlot={navigationRightSlot} />
+        <Layout
+          className="min-h-0 min-w-0"
+          navigationRightSlot={navigationRightSlot}
+          onNavigationDoubleClick={async () => {
+            const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+            const desktopWindow = WebviewWindow.getCurrent();
+            await desktopWindow.toggleMaximize();
+          }}
+        />
       </DesktopLayout>
     </DesktopProjectProvider>
   );

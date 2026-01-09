@@ -17,6 +17,7 @@ interface NavigationProps {
   onToggleSidebar?: () => void;
   onShowShortcuts?: () => void;
   rightSlot?: ReactNode;
+  onHeaderDoubleClick?: () => void;
 }
 
 function stripProjectPrefix(pathname: string): string {
@@ -113,7 +114,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
   );
 }
 
-export function Navigation({ onToggleSidebar, rightSlot }: NavigationProps) {
+export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: NavigationProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
@@ -126,6 +127,7 @@ export function Navigation({ onToggleSidebar, rightSlot }: NavigationProps) {
     <header
       className="sticky top-0 z-50 w-full h-14 border-b border-border bg-background"
       data-tauri-drag-region="true"
+      onDoubleClick={onHeaderDoubleClick}
     >
       <div className="flex items-center justify-between h-full lg:px-1 px-4">
         {/* Left: Mobile Menu + Logo + Breadcrumb */}
