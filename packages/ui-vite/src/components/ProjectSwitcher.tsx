@@ -26,6 +26,7 @@ import { useProject } from '../contexts';
 import { CreateProjectDialog } from './projects/CreateProjectDialog';
 import { ProjectAvatar } from './shared/ProjectAvatar';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface ProjectSwitcherProps {
   collapsed?: boolean;
@@ -40,6 +41,8 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     switchProject,
   } = useProject();
   const { t } = useTranslation('common');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
@@ -64,9 +67,13 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     setIsSwitching(true);
     setOpen(false);
 
-    const pathname = window.location.pathname;
+    const pathname = location.pathname;
     const projectPathMatch = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
     let subPath = projectPathMatch?.[1] || '';
+
+    if (!subPath || subPath === '/') {
+      subPath = '/specs';
+    }
 
     if (subPath.match(/^\/specs\/[^/]+$/)) {
       subPath = '/specs';
@@ -74,9 +81,10 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
 
     try {
       await switchProject(projectId);
-      window.location.assign(`/projects/${projectId}${subPath}`);
+      navigate(`/projects/${projectId}${subPath}${location.search}`);
     } catch (err) {
       console.error('Failed to switch project', err);
+    } finally {
       setIsSwitching(false);
     }
   };
@@ -196,7 +204,7 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
                   className="cursor-pointer"
                   onSelect={() => {
                     setOpen(false);
-                    window.location.assign('/projects');
+                    navigate('/projects');
                   }}
                 >
                   <div className="flex items-center gap-2">

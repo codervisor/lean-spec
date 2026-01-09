@@ -13,6 +13,7 @@ import {
 import { useProject } from '../../contexts';
 import { DirectoryPicker } from './DirectoryPicker.tsx';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface CreateProjectDialogProps {
 
 export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
   const { addProject } = useProject();
+  const navigate = useNavigate();
   const [path, setPath] = useState('');
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,11 +43,10 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       setError(null);
       const project = await addProject(projectPath);
       onOpenChange(false);
-      // Full reload to ensure new project context propagates everywhere
       if (project?.id) {
-        window.location.assign(`/projects/${project.id}/specs`);
+        navigate(`/projects/${project.id}/specs`);
       } else {
-        window.location.assign('/');
+        navigate('/');
       }
       return project;
     } catch (err) {
