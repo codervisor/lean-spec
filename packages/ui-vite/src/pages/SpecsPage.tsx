@@ -50,8 +50,8 @@ export function SpecsPage() {
       const data = await api.getSpecs();
       setSpecs(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to load specs');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load specs');
     } finally {
       setLoading(false);
     }
