@@ -10,7 +10,7 @@
  * The actual UI pages come from @leanspec/ui-vite
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   createHashRouter,
   RouterProvider,
@@ -22,6 +22,7 @@ import {
 } from 'react-router-dom';
 import { ThemeProvider, KeyboardShortcutsProvider, ProjectProvider, useProject } from '@leanspec/ui-vite/src/contexts';
 import { Layout } from '@leanspec/ui-vite/src/components/Layout';
+import { Navigation } from '@leanspec/ui-vite/src/components/Navigation';
 import { DashboardPage } from '@leanspec/ui-vite/src/pages/DashboardPage';
 import { SpecsPage } from '@leanspec/ui-vite/src/pages/SpecsPage';
 import { SpecDetailPage } from '@leanspec/ui-vite/src/pages/SpecDetailPage';
@@ -31,9 +32,18 @@ import { ContextPage } from '@leanspec/ui-vite/src/pages/ContextPage';
 import { useProjects } from './hooks/useProjects';
 import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';
-import TitleBar from './components/TitleBar';
 import { ProjectsManager } from './components/ProjectsManager';
+import WindowControls from './components/WindowControls';
 import styles from './app.module.css';
+
+const DesktopNavigationFrame = ({ children }: { children: ReactNode }) => (
+  <DesktopLayout>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Navigation rightSlot={<WindowControls />} />
+      <main className="flex-1 w-full min-h-[calc(100vh-3.5rem)]">{children}</main>
+    </div>
+  </DesktopLayout>
+);
 
 function DesktopRootLayout() {
   const location = useLocation();
@@ -57,6 +67,7 @@ function DesktopRootLayout() {
   
   const [projectsManagerOpen, setProjectsManagerOpen] = useState(false);
   const pendingNavigateToActiveProject = useRef(false);
+  const navigationRightSlot = <WindowControls />;
 
   const effectiveProjectId = useMemo(() => {
     if (projectId && projectId !== 'default') return projectId;
@@ -130,26 +141,26 @@ function DesktopRootLayout() {
 
   if (loading) {
     return (
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopNavigationFrame>
         <div className={styles.centerState}>Loading desktop environment…</div>
-      </DesktopLayout>
+      </DesktopNavigationFrame>
     );
   }
 
   if (error) {
     return (
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopNavigationFrame>
         <div className={styles.errorState}>
           <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to load projects</div>
           <div>{error}</div>
         </div>
-      </DesktopLayout>
+      </DesktopNavigationFrame>
     );
   }
 
   if (!effectiveProjectId) {
     return (
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopNavigationFrame>
         <div className={styles.centerState}>
           <p>No project selected.</p>
           <button
@@ -162,7 +173,7 @@ function DesktopRootLayout() {
             Open a project
           </button>
         </div>
-      </DesktopLayout>
+      </DesktopNavigationFrame>
     );
   }
 
@@ -172,7 +183,7 @@ function DesktopRootLayout() {
       projects={projects}
       onSwitchProject={switchDesktopProject}
     >
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopLayout>
         {projectsManagerOpen && (
           <ProjectsManager
             projects={projects}
@@ -192,7 +203,7 @@ function DesktopRootLayout() {
             onRenameProject={renameProject}
           />
         )}
-        <Layout className="min-h-0 min-w-0" />
+        <Layout className="min-h-0 min-w-0" navigationRightSlot={navigationRightSlot} />
       </DesktopLayout>
     </DesktopProjectProvider>
   );
@@ -222,20 +233,20 @@ function DesktopProjectsLayout() {
 
   if (loading) {
     return (
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopNavigationFrame>
         <div className={styles.centerState}>Loading desktop environment…</div>
-      </DesktopLayout>
+      </DesktopNavigationFrame>
     );
   }
 
   if (error) {
     return (
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopNavigationFrame>
         <div className={styles.errorState}>
           <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to load projects</div>
           <div>{error}</div>
         </div>
-      </DesktopLayout>
+      </DesktopNavigationFrame>
     );
   }
 
@@ -245,7 +256,7 @@ function DesktopProjectsLayout() {
       projects={projects}
       onSwitchProject={switchDesktopProject}
     >
-      <DesktopLayout header={<TitleBar />}>
+      <DesktopNavigationFrame>
         <ProjectsManager
           projects={projects}
           activeProjectId={activeProjectId}
@@ -266,7 +277,7 @@ function DesktopProjectsLayout() {
           onRemoveProject={removeProject}
           onRenameProject={renameProject}
         />
-      </DesktopLayout>
+      </DesktopNavigationFrame>
     </DesktopProjectProvider>
   );
 }

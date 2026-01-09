@@ -5,6 +5,8 @@
     "dependencies": "依赖关系",
     "stats": "统计",
     "context": "上下文",
+    "projects": "项目",
+    "manageProjects": "管理项目",
     "collapse": "收起",
     "closeMenu": "关闭菜单",
     "dashboard": "仪表板",

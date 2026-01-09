@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { BookOpen, ChevronRight, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,7 @@ interface BreadcrumbItem {
 interface NavigationProps {
   onToggleSidebar?: () => void;
   onShowShortcuts?: () => void;
+  rightSlot?: ReactNode;
 }
 
 function stripProjectPrefix(pathname: string): string {
@@ -111,7 +113,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
   );
 }
 
-export function Navigation({ onToggleSidebar }: NavigationProps) {
+export function Navigation({ onToggleSidebar, rightSlot }: NavigationProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
@@ -121,7 +123,10 @@ export function Navigation({ onToggleSidebar }: NavigationProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full h-14 border-b border-border bg-background">
+    <header
+      className="sticky top-0 z-50 w-full h-14 border-b border-border bg-background"
+      data-tauri-drag-region="true"
+    >
       <div className="flex items-center justify-between h-full lg:px-1 px-4">
         {/* Left: Mobile Menu + Logo + Breadcrumb */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
@@ -131,12 +136,17 @@ export function Navigation({ onToggleSidebar }: NavigationProps) {
             size="icon"
             onClick={toggleSidebar}
             className="lg:hidden h-9 w-9 shrink-0"
+            data-tauri-drag-region="false"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">{t('navigation.toggleMenu')}</span>
           </Button>
 
-          <Link to={basePath} className="flex items-center space-x-2 shrink-0">
+          <Link
+            to={basePath}
+            className="flex items-center space-x-2 shrink-0"
+            data-tauri-drag-region="false"
+          >
             <img
               src="/logo-with-bg.svg"
               alt="LeanSpec"
@@ -149,14 +159,16 @@ export function Navigation({ onToggleSidebar }: NavigationProps) {
             />
             <span className="font-bold text-lg sm:text-xl hidden sm:inline">LeanSpec</span>
           </Link>
-          <div className="hidden md:block min-w-0">
+          <div className="hidden md:block min-w-0" data-tauri-drag-region="false">
             <Breadcrumb basePath={basePath} />
           </div>
         </div>
 
         {/* Right: Search + Language + Theme + Docs + GitHub */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <QuickSearch />
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0" data-tauri-drag-region="false">
+          <div data-tauri-drag-region="false">
+            <QuickSearch />
+          </div>
           <TooltipProvider>
             <LanguageSwitcher />
             <Tooltip>
@@ -172,7 +184,13 @@ export function Navigation({ onToggleSidebar }: NavigationProps) {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  data-tauri-drag-region="false"
+                >
                   <a
                     href="https://www.lean-spec.dev"
                     target="_blank"
@@ -190,7 +208,13 @@ export function Navigation({ onToggleSidebar }: NavigationProps) {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" asChild className="h-9 w-9 sm:h-10 sm:w-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  data-tauri-drag-region="false"
+                >
                   <a
                     href="https://github.com/codervisor/lean-spec"
                     target="_blank"
@@ -214,6 +238,12 @@ export function Navigation({ onToggleSidebar }: NavigationProps) {
                 <p>{t('navigation.githubTooltip')}</p>
               </TooltipContent>
             </Tooltip>
+
+            {rightSlot && (
+              <div className="ml-2 flex items-center" data-tauri-drag-region="false">
+                {rightSlot}
+              </div>
+            )}
           </TooltipProvider>
         </div>
       </div>

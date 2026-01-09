@@ -5,6 +5,8 @@
     "dependencies": "Dependencies",
     "stats": "Stats",
     "context": "Context",
+    "projects": "Projects",
+    "manageProjects": "Manage projects",
     "collapse": "Collapse",
     "closeMenu": "Close menu",
     "dashboard": "Dashboard",
