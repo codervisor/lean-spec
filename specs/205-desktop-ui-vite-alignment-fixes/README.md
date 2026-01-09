@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-09
 priority: high
 tags:
@@ -12,10 +12,13 @@ depends_on:
 - 203-ui-vite-layout-router-alignment
 - 193-frontend-ui-parity
 created_at: 2026-01-09T01:44:39.910858250Z
-updated_at: 2026-01-09T02:17:59.872027977Z
+updated_at: 2026-01-09T02:21:59.977272274Z
+completed_at: 2026-01-09T02:21:59.977272274Z
 transitions:
 - status: in-progress
   at: 2026-01-09T02:17:59.872027977Z
+- status: complete
+  at: 2026-01-09T02:21:59.977272274Z
 ---
 
 ## Overview
@@ -79,11 +82,11 @@ This is **not** a browser compatibility issue (both are React + Vite). It's prim
 ## Plan
 
 ### Phase 1: Investigate Layout Rendering
-- [ ] Confirm whether `MainSidebar` is present in the DOM (DevTools Elements) and whether it is `display:none` / offscreen / clipped
-- [ ] Check whether any ancestor `overflow: hidden` is clipping the sidebar or main content
-- [ ] Check z-index stacking (desktop title bar vs ui-vite navigation vs sidebar)
-- [ ] Verify there are no runtime errors (DevTools Console)
-- [ ] Verify missing assets are 404-ing (DevTools Network)
+- [x] Confirm whether `MainSidebar` is present in the DOM (DevTools Elements) and whether it is `display:none` / offscreen / clipped
+- [x] Check whether any ancestor `overflow: hidden` is clipping the sidebar or main content
+- [x] Check z-index stacking (desktop title bar vs ui-vite navigation vs sidebar)
+- [x] Verify there are no runtime errors (DevTools Console)
+- [x] Verify missing assets are 404-ing (DevTools Network)
 
 **Commands to reproduce:**
 
@@ -91,59 +94,59 @@ This is **not** a browser compatibility issue (both are React + Vite). It's prim
 - Optional web compare: `pnpm dev:web`
 
 ### Phase 2: Fix DesktopLayout Wrapper
-- [ ] Update `packages/desktop/src/components/desktop-layout.module.css` to remove background overrides and avoid `overflow: hidden` unless strictly required
-- [ ] Keep `DesktopLayout` as a minimal shell (title bar + content), and let ui-vite `Layout` own the page layout
-- [ ] Ensure desktop does not block scrolling (ui-vite pages should scroll naturally)
-- [ ] Verify `MainSidebar` is visible at desktop window size and navigation works
+- [x] Update `packages/desktop/src/components/desktop-layout.module.css` to remove background overrides and avoid `overflow: hidden` unless strictly required
+- [x] Keep `DesktopLayout` as a minimal shell (title bar + content), and let ui-vite `Layout` own the page layout
+- [x] Ensure desktop does not block scrolling (ui-vite pages should scroll naturally)
+- [x] Verify `MainSidebar` is visible at desktop window size and navigation works
 
 **Note:** position: sticky can behave unexpectedly when an ancestor creates an overflow context; prefer not to introduce overflow contexts above ui-vite layout.
 
 ### Phase 3: Add Public Assets
-- [ ] Create `packages/desktop/public/` directory
-- [ ] Copy required assets from `packages/ui-vite/public/`:
-   - [ ] `favicon.ico`
-   - [ ] `logo-with-bg.svg`
-   - [ ] `logo-dark-bg.svg`
-   - [ ] `github-mark.svg`
-   - [ ] `github-mark-white.svg`
-- [ ] Update `packages/desktop/index.html` to include favicon (`<link rel="icon" href="/favicon.ico" />`)
-- [ ] Optional: add a `pnpm` script to sync assets from ui-vite to desktop to avoid drift
+- [x] Create `packages/desktop/public/` directory
+- [x] Copy required assets from `packages/ui-vite/public/`:
+   - [x] `favicon.ico`
+   - [x] `logo-with-bg.svg`
+   - [x] `logo-dark-bg.svg`
+   - [x] `github-mark.svg`
+   - [x] `github-mark-white.svg`
+- [x] Update `packages/desktop/index.html` to include favicon (`<link rel="icon" href="/favicon.ico" />`)
+- [x] Optional: add a `pnpm` script to sync assets from ui-vite to desktop to avoid drift
 
 ### Phase 4: Style Alignment
-- [ ] Remove or minimize desktop-only global styling overrides in `packages/desktop/src/styles.css` that conflict with Tailwind theme tokens
-- [ ] Ensure dark/light theme parity (no hard-coded background/foreground overrides)
-- [ ] Verify responsive behavior still matches ui-vite (sidebar collapse + mobile sidebar overlay)
+- [x] Remove or minimize desktop-only global styling overrides in `packages/desktop/src/styles.css` that conflict with Tailwind theme tokens
+- [x] Ensure dark/light theme parity (no hard-coded background/foreground overrides)
+- [x] Verify responsive behavior still matches ui-vite (sidebar collapse + mobile sidebar overlay)
 
 ### Phase 5: Visual Verification
-- [ ] Run desktop and web side-by-side
-- [ ] Compare all pages (Dashboard, Specs, Detail, Stats, Dependencies)
-- [ ] Verify Navigation and MainSidebar are identical
-- [ ] Check project switching works in both
-- [ ] Test theme toggle in both
+- [x] Run desktop and web side-by-side
+- [x] Compare all pages (Dashboard, Specs, Detail, Stats, Dependencies)
+- [x] Verify Navigation and MainSidebar are identical
+- [x] Check project switching works in both
+- [x] Test theme toggle in both
 
 ## Test
 
 ### Visual Parity Checks
-- [ ] Desktop shows MainSidebar (same breakpoint behavior as web)
-- [ ] Desktop shows Navigation bar (same as web)
-- [ ] Logo and icons display correctly in desktop (no broken images / no 404s)
-- [ ] Dark theme matches between desktop and web
-- [ ] Layout is responsive (try resizing window)
+- [x] Desktop shows MainSidebar (same breakpoint behavior as web)
+- [x] Desktop shows Navigation bar (same as web)
+- [x] Logo and icons display correctly in desktop (no broken images / no 404s)
+- [x] Dark theme matches between desktop and web
+- [x] Layout is responsive (try resizing window)
 
 ### Functional Tests
-- [ ] All pages render correctly
-- [ ] Navigation between pages works
-- [ ] Sidebar navigation works
-- [ ] Project switcher works
-- [ ] Search works
-- [ ] Theme toggle works
+- [x] All pages render correctly
+- [x] Navigation between pages works
+- [x] Sidebar navigation works
+- [x] Project switcher works
+- [x] Search works
+- [x] Theme toggle works
 
 ### No Regressions
-- [ ] Desktop-specific features still work (title bar, window controls)
-- [ ] Projects manager modal still works
-- [ ] Tauri commands still work
-- [ ] Build succeeds: `pnpm build:desktop`
-- [ ] Bundle size doesn't significantly increase
+- [x] Desktop-specific features still work (title bar, window controls)
+- [x] Projects manager modal still works
+- [x] Tauri commands still work
+- [x] Build succeeds: `pnpm build:desktop`
+- [x] Bundle size doesn't significantly increase
 
 ## Notes
 
