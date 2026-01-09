@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
@@ -15,7 +15,6 @@ import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts } from '../
  */
 function LayoutContent() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, switchProject } = useProject();
   const { mobileSidebarOpen, toggleMobileSidebar } = useLayout();
@@ -25,18 +24,12 @@ function LayoutContent() {
   useGlobalShortcuts();
 
   useEffect(() => {
-    // `/projects/default` is a route alias for the most recently used project.
-    // Once we know the current project, normalize the URL to the real id.
-    if (projectId === 'default' && currentProject?.id) {
-      navigate(`/projects/${currentProject.id}`, { replace: true });
-      return;
-    }
-
-    if (!projectId || projectId === 'default' || currentProject?.id === projectId) return;
+    // Sync project context with the URL parameter
+    if (!projectId || currentProject?.id === projectId) return;
     void switchProject(projectId).catch((err) =>
       console.error('Failed to sync project from route', err)
     );
-  }, [currentProject?.id, navigate, projectId, switchProject]);
+  }, [currentProject?.id, projectId, switchProject]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

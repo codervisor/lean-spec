@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { MinimalLayout } from './components/MinimalLayout';
 import { DashboardPage } from './pages/DashboardPage';
@@ -8,6 +8,7 @@ import { StatsPage } from './pages/StatsPage';
 import { DependenciesPage } from './pages/DependenciesPage';
 import { ContextPage } from './pages/ContextPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { RootRedirect } from './components/RootRedirect';
 
 /**
  * Router configuration for ui-vite.
@@ -24,7 +25,7 @@ import { ProjectsPage } from './pages/ProjectsPage';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/projects/default" replace />,
+    element: <RootRedirect />,
   },
   {
     path: '/projects',
