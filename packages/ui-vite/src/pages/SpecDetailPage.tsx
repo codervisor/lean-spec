@@ -202,7 +202,7 @@ export function SpecDetailPage() {
 
   // Extract title
   const displayTitle = spec?.title || spec?.specName || '';
-  const tags = spec?.tags || [];
+  const tags = useMemo(() => spec?.tags || [], [spec?.tags]);
   const updatedRelative = spec?.updatedAt ? formatRelativeTime(spec.updatedAt, i18n.language) : null;
 
   // Handle scroll padding for sticky header
@@ -282,7 +282,7 @@ export function SpecDetailPage() {
 
   return (
     <div className="flex h-full relative">
-      <SpecsNavSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
+      <SpecsNavSidebar key="specs-nav-sidebar" mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
       <div className="flex-1 min-w-0 overflow-y-auto h-[calc(100vh-3.5rem)]">
         {/* Mobile Sidebar Toggle Button */}
         <div className="lg:hidden sticky top-0 z-20 flex items-center justify-between bg-background/95 backdrop-blur border-b px-3 py-2">

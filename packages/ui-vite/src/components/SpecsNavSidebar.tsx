@@ -94,13 +94,18 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, [location.pathname]);
 
   const prevActiveSpecId = useRef(activeSpecId);
+  const loadedRef = useRef(false);
 
   useEffect(() => {
+    // Only load specs once, don't reload on every render
+    if (loadedRef.current) return;
+    
     async function loadSpecs() {
       try {
         setLoading(true);
         const data = await api.getSpecs();
         setSpecs(data);
+        loadedRef.current = true;
       } catch (err) {
         console.error('Failed to load specs for sidebar', err);
       } finally {
@@ -338,7 +343,6 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   };
 
   const sidebarVisible = mobileOpen || !collapsed;
-  console.debug('sidebarVisible', sidebarVisible);
 
   return (
     <TooltipProvider delayDuration={700}>
