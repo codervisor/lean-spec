@@ -111,7 +111,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
   );
 }
 
-export function Navigation({ onToggleSidebar, onShowShortcuts: _onShowShortcuts }: NavigationProps) {
+export function Navigation({ onToggleSidebar }: NavigationProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
