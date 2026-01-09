@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-09
 priority: high
 tags:
@@ -12,7 +12,10 @@ depends_on:
 - 203-ui-vite-layout-router-alignment
 - 193-frontend-ui-parity
 created_at: 2026-01-09T01:44:39.910858250Z
-updated_at: 2026-01-09T01:50:43.417099964Z
+updated_at: 2026-01-09T02:17:59.872027977Z
+transitions:
+- status: in-progress
+  at: 2026-01-09T02:17:59.872027977Z
 ---
 
 ## Overview

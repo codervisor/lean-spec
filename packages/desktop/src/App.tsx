@@ -27,6 +27,7 @@ import { SpecsPage } from '@leanspec/ui-vite/src/pages/SpecsPage';
 import { SpecDetailPage } from '@leanspec/ui-vite/src/pages/SpecDetailPage';
 import { StatsPage } from '@leanspec/ui-vite/src/pages/StatsPage';
 import { DependenciesPage } from '@leanspec/ui-vite/src/pages/DependenciesPage';
+import { ContextPage } from '@leanspec/ui-vite/src/pages/ContextPage';
 import { useProjects } from './hooks/useProjects';
 import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';
@@ -296,6 +297,7 @@ const router = createHashRouter([
       { path: 'stats', element: <StatsPage /> },
       { path: 'dependencies', element: <DependenciesPage /> },
       { path: 'dependencies/:specName', element: <DependenciesPage /> },
+      { path: 'context', element: <ContextPage /> },
     ],
   },
 ]);
