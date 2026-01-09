@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  createBrowserRouter,
+  createHashRouter,
   RouterProvider,
   Navigate,
   Outlet,
@@ -21,6 +21,7 @@ import {
   useParams,
 } from 'react-router-dom';
 import { ThemeProvider, KeyboardShortcutsProvider, ProjectProvider, useProject } from '@leanspec/ui-vite/src/contexts';
+import { Layout } from '@leanspec/ui-vite/src/components/Layout';
 import { DashboardPage } from '@leanspec/ui-vite/src/pages/DashboardPage';
 import { SpecsPage } from '@leanspec/ui-vite/src/pages/SpecsPage';
 import { SpecDetailPage } from '@leanspec/ui-vite/src/pages/SpecDetailPage';
@@ -128,17 +129,7 @@ function DesktopRootLayout() {
 
   if (loading) {
     return (
-      <DesktopLayout header={
-        <TitleBar 
-          projects={[]} 
-          activeProjectId={undefined} 
-          onProjectSelect={() => {}} 
-          onAddProject={() => {}} 
-          onRefresh={() => {}} 
-          onManageProjects={() => {}} 
-          isLoading={true} 
-        />
-      }>
+      <DesktopLayout header={<TitleBar />}>
         <div className={styles.centerState}>Loading desktop environment…</div>
       </DesktopLayout>
     );
@@ -146,17 +137,7 @@ function DesktopRootLayout() {
 
   if (error) {
     return (
-      <DesktopLayout header={
-        <TitleBar 
-          projects={[]} 
-          activeProjectId={undefined} 
-          onProjectSelect={() => {}} 
-          onAddProject={() => {}} 
-          onRefresh={() => {}} 
-          onManageProjects={() => {}} 
-          isLoading={false} 
-        />
-      }>
+      <DesktopLayout header={<TitleBar />}>
         <div className={styles.errorState}>
           <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to load projects</div>
           <div>{error}</div>
@@ -167,24 +148,7 @@ function DesktopRootLayout() {
 
   if (!effectiveProjectId) {
     return (
-      <DesktopLayout 
-        header={
-          <TitleBar 
-            projects={projects} 
-            activeProjectId={undefined} 
-            onProjectSelect={(nextId) => {
-              navigate(replaceProjectInPath(nextId));
-            }} 
-            onAddProject={async () => {
-              pendingNavigateToActiveProject.current = true;
-              await addProject();
-            }} 
-            onRefresh={refreshProjects} 
-            onManageProjects={() => setProjectsManagerOpen(true)}
-            isLoading={false}
-          />
-        }
-      >
+      <DesktopLayout header={<TitleBar />}>
         <div className={styles.centerState}>
           <p>No project selected.</p>
           <button
@@ -207,24 +171,7 @@ function DesktopRootLayout() {
       projects={projects}
       onSwitchProject={switchDesktopProject}
     >
-      <DesktopLayout 
-        header={
-          <TitleBar 
-            projects={projects} 
-            activeProjectId={effectiveProjectId} 
-            onProjectSelect={(nextId) => {
-              navigate(replaceProjectInPath(nextId));
-            }} 
-            onAddProject={async () => {
-              pendingNavigateToActiveProject.current = true;
-              await addProject();
-            }} 
-            onRefresh={refreshProjects} 
-            onManageProjects={() => setProjectsManagerOpen(true)}
-            isLoading={false}
-          />
-        }
-      >
+      <DesktopLayout header={<TitleBar />}>
         {projectsManagerOpen && (
           <ProjectsManager
             projects={projects}
@@ -244,7 +191,7 @@ function DesktopRootLayout() {
             onRenameProject={renameProject}
           />
         )}
-        <Outlet />
+        <Layout className="min-h-0 min-w-0" />
       </DesktopLayout>
     </DesktopProjectProvider>
   );
@@ -274,17 +221,7 @@ function DesktopProjectsLayout() {
 
   if (loading) {
     return (
-      <DesktopLayout header={
-        <TitleBar
-          projects={[]}
-          activeProjectId={undefined}
-          onProjectSelect={() => {}}
-          onAddProject={() => {}}
-          onRefresh={() => {}}
-          onManageProjects={() => {}}
-          isLoading={true}
-        />
-      }>
+      <DesktopLayout header={<TitleBar />}>
         <div className={styles.centerState}>Loading desktop environment…</div>
       </DesktopLayout>
     );
@@ -292,17 +229,7 @@ function DesktopProjectsLayout() {
 
   if (error) {
     return (
-      <DesktopLayout header={
-        <TitleBar
-          projects={[]}
-          activeProjectId={undefined}
-          onProjectSelect={() => {}}
-          onAddProject={() => {}}
-          onRefresh={() => {}}
-          onManageProjects={() => {}}
-          isLoading={false}
-        />
-      }>
+      <DesktopLayout header={<TitleBar />}>
         <div className={styles.errorState}>
           <div style={{ fontSize: '1.2em', fontWeight: 600 }}>Unable to load projects</div>
           <div>{error}</div>
@@ -317,22 +244,7 @@ function DesktopProjectsLayout() {
       projects={projects}
       onSwitchProject={switchDesktopProject}
     >
-      <DesktopLayout
-        header={
-          <TitleBar
-            projects={projects}
-            activeProjectId={activeProjectId}
-            onProjectSelect={(id) => goToProject(id)}
-            onAddProject={async () => {
-              pendingNavigateToActiveProject.current = true;
-              await addProject();
-            }}
-            onRefresh={refreshProjects}
-            onManageProjects={() => {}}
-            isLoading={false}
-          />
-        }
-      >
+      <DesktopLayout header={<TitleBar />}>
         <ProjectsManager
           projects={projects}
           activeProjectId={activeProjectId}
@@ -359,7 +271,8 @@ function DesktopProjectsLayout() {
 }
 
 // Create router with ui-vite pages but desktop layout
-const router = createBrowserRouter([
+// Use hash router for Tauri to avoid issues with file:// protocol
+const router = createHashRouter([
   {
     path: '/',
     element: <Navigate to="/projects/default" replace />,

@@ -1,167 +1,23 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: transparent;
-}
-
 .titleBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  height: 48px;
-  background: rgba(8, 11, 18, 0.98);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(16px);
+  height: 32px;
+  background: var(--background, #09090b);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
   z-index: 1000;
   flex-shrink: 0;
+  user-select: none;
 }
 
-.leftSection {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logoButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.logoGlyph {
-  font-size: 20px;
-}
-
-.projectSwitcher {
-  position: relative;
-}
-
-.projectButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: inherit;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-.projectMenu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  min-width: 280px;
-  border-radius: 16px;
-  padding: 12px;
-  background: rgba(8, 11, 18, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
-  z-index: 10;
-}
-
-.projectMenuHeader {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 8px;
-}
-
-.projectMenuItem {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  border: none;
-  background: transparent;
-  color: inherit;
-  padding: 10px;
-  border-radius: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.projectMenuItem:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.projectMeta {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.projectMenuFooter {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.dragRegion {
+  flex: 1;
+  height: 100%;
 }
 
 .rightSection {
   display: flex;
   align-items: center;
-  gap: 8px;
+  height: 100%;
 }
 
-.secondaryAction,
-.primaryAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 10px;
-  padding: 6px 12px;
-  font-size: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
-  color: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.primaryAction {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.primaryAction:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.secondaryAction:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-.emptyState {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  padding: 12px 0;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}

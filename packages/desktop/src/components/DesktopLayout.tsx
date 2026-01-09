@@ -9,7 +9,7 @@ interface DesktopLayoutProps {
 const DesktopLayout = ({ header, children }: DesktopLayoutProps) => (
   <div className={styles.desktop}>
     {header}
-    <main className={styles.content}>{children}</main>
+    <div className={styles.content}>{children}</div>
   </div>
 );
 

@@ -7,13 +7,14 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { PageTransition } from './shared/PageTransition';
 import { BackToTop } from './shared/BackToTop';
 import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts } from '../contexts';
+import { cn } from '../lib/utils';
 
 /**
  * Layout component that wraps all project-scoped pages.
  * Provides Navigation, MainSidebar, and page transition logic.
  * Uses LayoutProvider to manage mobile sidebar state without window hacks.
  */
-function LayoutContent() {
+function LayoutContent({ className, style }: { className?: string; style?: React.CSSProperties }) {
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, switchProject } = useProject();
@@ -32,7 +33,7 @@ function LayoutContent() {
   }, [currentProject?.id, projectId, switchProject]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className={cn("min-h-screen flex flex-col bg-background", className)} style={style}>
       <Navigation onToggleSidebar={toggleMobileSidebar} onShowShortcuts={toggleHelp} />
       <div className="flex w-full min-w-0">
         <MainSidebar mobileOpen={mobileSidebarOpen} onMobileClose={toggleMobileSidebar} />
@@ -53,10 +54,15 @@ function LayoutContent() {
  * Layout wrapper that provides LayoutProvider.
  * Wraps LayoutContent to provide layout-specific state management.
  */
-export function Layout() {
+interface LayoutProps {
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function Layout({ className, style }: LayoutProps) {
   return (
     <LayoutProvider>
-      <LayoutContent />
+      <LayoutContent className={className} style={style} />
     </LayoutProvider>
   );
 }
