@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-09
 priority: high
 tags:
@@ -12,12 +12,11 @@ depends_on:
 - 205-desktop-ui-vite-alignment-fixes
 - 203-ui-vite-layout-router-alignment
 created_at: 2026-01-09T02:30:05.005888347Z
-updated_at: 2026-01-09T02:38:05.567910168Z
+updated_at: 2026-01-09T02:54:44.723050717Z
 transitions:
 - status: in-progress
   at: 2026-01-09T02:38:05.567910168Z
 ---
-
 ## Overview
 
 The desktop app currently has two critical UX issues:
