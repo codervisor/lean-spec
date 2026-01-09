@@ -11,7 +11,7 @@ import {
   Input,
 } from '@leanspec/ui-components';
 import { useProject } from '../../contexts';
-import { DirectoryPicker } from './DirectoryPicker.tsx';
+import { DirectoryPicker } from './DirectoryPicker';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 

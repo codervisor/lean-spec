@@ -1,8 +1,9 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
 import { EmptyState } from './EmptyState';
-import { useTranslation } from 'react-i18next';
+import i18n from '../../lib/i18n';
 
 interface Props {
   children: ReactNode;
@@ -16,79 +17,63 @@ interface Props {
   resetKey?: unknown;
 }
 
-interface State {
-  hasError: boolean;
-  error?: Error;
+interface FallbackProps {
+  error: Error;
+  resetErrorBoundary: () => void;
+  title?: string;
+  message?: string;
 }
 
-interface TranslatedProps extends Props {
-  fallbackTitle: string;
-  fallbackMessage: string;
-  retryLabel: string;
-  reloadLabel: string;
-}
-
-class ErrorBoundaryInner extends Component<TranslatedProps, State> {
-  state: State = { hasError: false };
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('UI error captured', error, errorInfo);
-  }
-
-  componentDidUpdate(prevProps: TranslatedProps) {
-    // Reset boundary state when navigating (or other resetKey changes)
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      this.setState({ hasError: false, error: undefined });
-    }
-  }
-
-  resetBoundary = () => {
-    this.setState({ hasError: false, error: undefined });
-    this.props.onReset?.();
-  };
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <EmptyState
-          icon={AlertTriangle}
-          title={this.props.title || this.props.fallbackTitle}
-          description={
-            this.props.message || this.state.error?.message || this.props.fallbackMessage
-          }
-          tone="error"
-          actions={(
-            <>
-              <Button size="sm" onClick={this.resetBoundary}>
-                {this.props.retryLabel}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
-                {this.props.reloadLabel}
-              </Button>
-            </>
-          )}
-        />
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-export function ErrorBoundary(props: Props) {
-  const { t } = useTranslation(['common', 'errors']);
+/**
+ * ErrorBoundary wrapper using react-error-boundary library.
+ * Provides a hook-friendly API while using a class component internally.
+ */
+function ErrorFallback({ error, resetErrorBoundary, title, message }: FallbackProps) {
+  // Use i18n.t directly with fallbacks to avoid hook issues
+  const fallbackTitle = i18n.t?.('pageError.title', { ns: 'errors', defaultValue: 'Something went wrong' }) || 'Something went wrong';
+  const fallbackMessage = i18n.t?.('pageError.description', { ns: 'errors', defaultValue: 'An unexpected error occurred. Please try again.' }) || 'An unexpected error occurred. Please try again.';
+  const retryLabel = i18n.t?.('actions.retry', { ns: 'common', defaultValue: 'Try again' }) || 'Try again';
+  const reloadLabel = i18n.t?.('actions.refresh', { ns: 'common', defaultValue: 'Reload' }) || 'Reload';
 
   return (
-    <ErrorBoundaryInner
-      fallbackTitle={t('pageError.title', { ns: 'errors' })}
-      fallbackMessage={t('pageError.description', { ns: 'errors' })}
-      retryLabel={t('actions.retry', { ns: 'common' })}
-      reloadLabel={t('actions.refresh', { ns: 'common' })}
-      {...props}
+    <EmptyState
+      icon={AlertTriangle}
+      title={title || fallbackTitle}
+      description={message || error?.message || fallbackMessage}
+      tone="error"
+      actions={(
+        <>
+          <Button size="sm" onClick={resetErrorBoundary}>
+            {retryLabel}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+            {reloadLabel}
+          </Button>
+        </>
+      )}
     />
+  );
+}
+
+export function ErrorBoundary({ children, title, message, onReset, resetKey }: Props) {
+  const handleReset = () => {
+    onReset?.();
+  };
+
+  const handleError = (error: Error, errorInfo: { componentStack?: string | null }) => {
+    console.error('UI error captured', error, errorInfo);
+  };
+
+  return (
+    <ReactErrorBoundary
+      FallbackComponent={(props) => (
+        <ErrorFallback {...props} title={title} message={message} />
+      )}
+      onReset={handleReset}
+      onError={handleError}
+      resetKeys={[resetKey]}
+    >
+      {children}
+    </ReactErrorBoundary>
   );
 }

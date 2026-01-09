@@ -35,6 +35,7 @@ import type { Spec } from '../types/api';
 import { cn } from '../lib/utils';
 import { formatRelativeTime } from '../lib/date-utils';
 import { useTranslation } from 'react-i18next';
+import { useProject } from '../contexts';
 
 const STORAGE_KEYS = {
   collapsed: 'specs-nav-sidebar-collapsed',
@@ -52,6 +53,7 @@ interface SpecsNavSidebarProps {
 export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: SpecsNavSidebarProps) {
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
+  const { currentProject } = useProject();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,18 +96,19 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, [location.pathname]);
 
   const prevActiveSpecId = useRef(activeSpecId);
-  const loadedRef = useRef(false);
 
   useEffect(() => {
-    // Only load specs once, don't reload on every render
-    if (loadedRef.current) return;
-    
+    // Wait for project to be available before loading specs
+    if (!currentProject) {
+      setLoading(true);
+      return;
+    }
+
     async function loadSpecs() {
       try {
         setLoading(true);
         const data = await api.getSpecs();
         setSpecs(data);
-        loadedRef.current = true;
       } catch (err) {
         console.error('Failed to load specs for sidebar', err);
       } finally {
@@ -113,7 +116,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       }
     }
     loadSpecs();
-  }, []);
+  }, [currentProject]);
 
   useEffect(() => {
     const handler = () => setListHeight(calculateListHeight());
@@ -300,6 +303,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
     const targetIndex = filteredSpecs.findIndex((spec) => spec.specName === activeSpecId);
     if (targetIndex >= 0) {
+      console.debug('scroll')
       listRef.current?.scrollToRow({ index: targetIndex, align: 'center', behavior: 'smooth' });
     }
 
@@ -356,7 +360,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
         <aside
           className={cn(
-            'border-r bg-background flex flex-col overflow-hidden transition-all duration-300',
+            'border-r bg-background flex flex-col overflow-hidden',
             mobileOpen
               ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl'
               : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',

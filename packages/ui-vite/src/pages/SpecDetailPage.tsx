@@ -12,7 +12,7 @@ import {
   List as ListIcon,
   ExternalLink
 } from 'lucide-react';
-import { SpecsNavSidebar } from '../components/SpecsNavSidebar';
+import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
   Button,
   cn,
@@ -41,6 +41,7 @@ import { useProject } from '../contexts';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatRelativeTime } from '../lib/date-utils';
 import type { SpecDetail } from '../types/api';
+import { PageTransition } from '../components/shared/PageTransition';
 
 // Icon mapping for sub-specs (matching ui package)
 const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -65,7 +66,7 @@ export function SpecDetailPage() {
   const [dependenciesDialogOpen, setDependenciesDialogOpen] = useState(false);
   const [dependencyGraphData, setDependencyGraphData] = useState<CompleteSpecRelationships | null>(null);
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { setMobileOpen } = useSpecDetailLayoutContext();
 
   const describeError = useCallback((err: unknown) => {
     if (err instanceof APIError) {
@@ -281,8 +282,7 @@ export function SpecDetailPage() {
   const hasRelationships = dependsOn.length > 0 || requiredBy.length > 0;
 
   return (
-    <div className="flex h-full relative">
-      <SpecsNavSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
+    <PageTransition>
       <div className="flex-1 min-w-0 overflow-y-auto h-[calc(100vh-3.5rem)]">
         {/* Mobile Sidebar Toggle Button */}
         <div className="lg:hidden sticky top-0 z-20 flex items-center justify-between bg-background/95 backdrop-blur border-b px-3 py-2">
@@ -581,6 +581,6 @@ export function SpecDetailPage() {
         </div>
         <BackToTop />
       </div>
-    </div>
+    </PageTransition>
   );
 }

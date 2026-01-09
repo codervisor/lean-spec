@@ -5,7 +5,6 @@ import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { ErrorBoundary } from './shared/ErrorBoundary';
-import { PageTransition } from './shared/PageTransition';
 import { BackToTop } from './shared/BackToTop';
 import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts } from '../contexts';
 import { cn } from '../lib/utils';
@@ -55,9 +54,7 @@ function LayoutContent({
         <MainSidebar mobileOpen={mobileSidebarOpen} onMobileClose={toggleMobileSidebar} />
         <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)]">
           <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
+            <Outlet />
           </ErrorBoundary>
         </main>
       </div>

@@ -1,14 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { MinimalLayout } from './components/MinimalLayout';
-import { DashboardPage } from './pages/DashboardPage';
-import { SpecsPage } from './pages/SpecsPage';
-import { SpecDetailPage } from './pages/SpecDetailPage';
-import { StatsPage } from './pages/StatsPage';
-import { DependenciesPage } from './pages/DependenciesPage';
-import { ContextPage } from './pages/ContextPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RootRedirect } from './components/RootRedirect';
+import { createProjectRoutes } from './router/projectRoutes';
 
 /**
  * Router configuration for ui-vite.
@@ -20,7 +15,7 @@ import { RootRedirect } from './components/RootRedirect';
  * This nested layout approach ensures:
  * 1. Navigation bar is always present across all pages
  * 2. MainSidebar only shows when viewing a specific project
- * 3. SpecDetailPage handles its own SpecsNavSidebar internally
+ * 3. SpecDetailLayout provides SpecsNavSidebar + outlet context
  */
 export const router = createBrowserRouter([
   {
@@ -35,19 +30,6 @@ export const router = createBrowserRouter([
   {
     path: '/projects/:projectId',
     element: <Layout />,
-    children: [
-      { index: true, element: <DashboardPage /> },
-      {
-        path: 'specs',
-        children: [
-          { index: true, element: <SpecsPage /> },
-          { path: ':specName', element: <SpecDetailPage /> },
-        ],
-      },
-      { path: 'stats', element: <StatsPage /> },
-      { path: 'dependencies', element: <DependenciesPage /> },
-      { path: 'dependencies/:specName', element: <DependenciesPage /> },
-      { path: 'context', element: <ContextPage /> },
-    ],
+    children: createProjectRoutes(),
   },
 ]);

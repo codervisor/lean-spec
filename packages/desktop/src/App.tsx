@@ -10,12 +10,11 @@
  * The actual UI pages come from @leanspec/ui-vite
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
   createHashRouter,
   RouterProvider,
   Navigate,
-  Outlet,
   useLocation,
   useNavigate,
   useParams,
@@ -23,13 +22,8 @@ import {
 import { ThemeProvider, KeyboardShortcutsProvider, ProjectProvider, useProject } from '@leanspec/ui-vite/src/contexts';
 import { Layout } from '@leanspec/ui-vite/src/components/Layout';
 import { Navigation } from '@leanspec/ui-vite/src/components/Navigation';
-import { DashboardPage } from '@leanspec/ui-vite/src/pages/DashboardPage';
-import { SpecsPage } from '@leanspec/ui-vite/src/pages/SpecsPage';
-import { SpecDetailPage } from '@leanspec/ui-vite/src/pages/SpecDetailPage';
-import { StatsPage } from '@leanspec/ui-vite/src/pages/StatsPage';
-import { DependenciesPage } from '@leanspec/ui-vite/src/pages/DependenciesPage';
-import { ContextPage } from '@leanspec/ui-vite/src/pages/ContextPage';
 import { ProjectsPage } from '@leanspec/ui-vite/src/pages/ProjectsPage';
+import { createProjectRoutes } from '@leanspec/ui-vite/src/router/projectRoutes';
 import { useProjects } from './hooks/useProjects';
 import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';
@@ -57,6 +51,8 @@ function DesktopRootLayout() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
 
+  const { switchProject: switchUiProject } = useProject();
+
   const {
     projects,
     activeProjectId,
@@ -66,8 +62,6 @@ function DesktopRootLayout() {
     addProject,
   } = useProjects();
 
-  const { switchProject: switchUiProject } = useProject();
-  
   const pendingNavigateToActiveProject = useRef(false);
   const navigationRightSlot = <WindowControls />;
 
@@ -242,20 +236,7 @@ const router = createHashRouter([
   {
     path: '/projects/:projectId',
     element: <DesktopRootLayout />,
-    children: [
-      { index: true, element: <DashboardPage /> },
-      {
-        path: 'specs',
-        children: [
-          { index: true, element: <SpecsPage /> },
-          { path: ':specName', element: <SpecDetailPage /> },
-        ],
-      },
-      { path: 'stats', element: <StatsPage /> },
-      { path: 'dependencies', element: <DependenciesPage /> },
-      { path: 'dependencies/:specName', element: <DependenciesPage /> },
-      { path: 'context', element: <ContextPage /> },
-    ],
+    children: createProjectRoutes(),
   },
 ]);
 
