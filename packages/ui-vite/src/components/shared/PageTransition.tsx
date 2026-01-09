@@ -11,14 +11,22 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setVisible(false);
-    const id = window.requestAnimationFrame(() => setVisible(true));
-    return () => window.cancelAnimationFrame(id);
+    let raf1 = 0;
+    let raf2 = 0;
+
+    raf1 = window.requestAnimationFrame(() => {
+      setVisible(false);
+      raf2 = window.requestAnimationFrame(() => setVisible(true));
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
   }, [location.pathname]);
 
   return (
     <div
-      key={location.pathname}
       className={cn(
         'transition-all duration-200 ease-out',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'

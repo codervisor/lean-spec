@@ -54,7 +54,7 @@ function LayoutContent({
       <div className="flex w-full min-w-0">
         <MainSidebar mobileOpen={mobileSidebarOpen} onMobileClose={toggleMobileSidebar} />
         <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)]">
-          <ErrorBoundary key={location.pathname} onReset={() => window.location.reload()}>
+          <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>
             <PageTransition>
               <Outlet />
             </PageTransition>

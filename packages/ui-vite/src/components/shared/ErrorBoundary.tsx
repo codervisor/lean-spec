@@ -9,6 +9,11 @@ interface Props {
   title?: string;
   message?: string;
   onReset?: () => void;
+  /**
+   * When this value changes, the boundary resets its error state.
+   * This lets us recover on navigation without remounting the whole subtree.
+   */
+  resetKey?: unknown;
 }
 
 interface State {
@@ -32,6 +37,13 @@ class ErrorBoundaryInner extends Component<TranslatedProps, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('UI error captured', error, errorInfo);
+  }
+
+  componentDidUpdate(prevProps: TranslatedProps) {
+    // Reset boundary state when navigating (or other resetKey changes)
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, error: undefined });
+    }
   }
 
   resetBoundary = () => {
