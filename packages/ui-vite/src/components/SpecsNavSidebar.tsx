@@ -288,27 +288,29 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
   // Scroll to active spec when it changes or on initial load (if no stored scroll offset)
   useEffect(() => {
+    // Wait until the specs are loaded AND the list is actually rendered.
+    if (loading) return;
     if (!activeSpecId || filteredSpecs.length === 0) return;
+    if (!listRef.current) return;
 
-    // Skip if we haven't restored initial scroll yet and there is one to restore
-    if (!hasRestoredInitialScroll.current && initialScrollOffset > 0) {
-      hasRestoredInitialScroll.current = true;
-      return;
-    }
-
-    // Skip if active spec hasn't changed
-    if (prevActiveSpecId.current === activeSpecId && hasRestoredInitialScroll.current) {
-      return;
-    }
+    // Skip if active spec hasn't changed and we've already handled the initial scroll behavior.
+    if (prevActiveSpecId.current === activeSpecId && hasRestoredInitialScroll.current) return;
 
     const targetIndex = filteredSpecs.findIndex((spec) => spec.specName === activeSpecId);
     if (targetIndex >= 0) {
-      console.debug('scroll')
-      listRef.current?.scrollToRow({ index: targetIndex, align: 'center', behavior: 'smooth' });
+      // Defer to the next frame so the list has committed layout.
+      const raf = requestAnimationFrame(() => {
+        listRef.current?.scrollToRow({ index: targetIndex, align: 'smart', behavior: 'smooth' });
+      });
+      hasRestoredInitialScroll.current = true;
+      prevActiveSpecId.current = activeSpecId;
+      return () => cancelAnimationFrame(raf);
     }
 
+    // Active spec isn't currently visible (e.g., filtered out). Don't mark initial scroll
+    // as handled so we can scroll once it becomes visible again.
     prevActiveSpecId.current = activeSpecId;
-  }, [filteredSpecs, activeSpecId, initialScrollOffset]);
+  }, [filteredSpecs, activeSpecId, initialScrollOffset, loading]);
 
   useEffect(() => {
     const el = listRef.current?.element;
