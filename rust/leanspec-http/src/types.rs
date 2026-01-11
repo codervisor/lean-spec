@@ -145,10 +145,6 @@ pub struct SpecRelationships {
 pub struct SubSpec {
     pub name: String,
     pub file: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub icon_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub color: Option<String>,
     pub content: String,
 }
 

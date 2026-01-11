@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   RefreshCcw,
   GitBranch,
-  FileText,
   Home,
   Clock,
   Maximize2,
@@ -31,7 +30,7 @@ import { APIError, api } from '../lib/api';
 import { StatusEditor } from '../components/metadata-editors/StatusEditor';
 import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
 import { TagsEditor } from '../components/metadata-editors/TagsEditor';
-import type { SubSpec } from '../components/spec-detail/SubSpecTabs';
+import type { SubSpec } from '../types/api';
 import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/TableOfContents';
 import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
@@ -42,12 +41,14 @@ import { useTranslation } from 'react-i18next';
 import { formatDate, formatRelativeTime } from '../lib/date-utils';
 import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
+import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
+import type { LucideIcon } from 'lucide-react';
 
-// Icon mapping for sub-specs (matching ui package)
-const SUB_SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  FileText,
-  Home,
-};
+// Sub-spec with frontend-assigned styling
+interface EnrichedSubSpec extends SubSpec {
+  icon: LucideIcon;
+  color: string;
+}
 
 export function SpecDetailPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
@@ -156,28 +157,33 @@ export function SpecDetailPage() {
     }
   }, [dependenciesDialogOpen, dependencyGraphData, spec]);
 
-  const subSpecs: SubSpec[] = useMemo(() => {
+  const subSpecs: EnrichedSubSpec[] = useMemo(() => {
     const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);
     if (!Array.isArray(raw)) return [];
     return raw
       .map((entry) => {
         if (!entry || typeof entry !== 'object') return null;
-        const name = (entry as Record<string, unknown>).name;
         const content = (entry as Record<string, unknown>).content;
-        if (typeof name !== 'string' || typeof content !== 'string') return null;
+        if (typeof content !== 'string') return null;
+
+        const file = typeof (entry as Record<string, unknown>).file === 'string'
+          ? (entry as Record<string, unknown>).file as string
+          : typeof (entry as Record<string, unknown>).name === 'string'
+            ? (entry as Record<string, unknown>).name as string
+            : '';
+
+        // Use frontend styling logic based on filename
+        const style = getSubSpecStyle(file);
+
         return {
-          name,
+          name: formatSubSpecName(file),
           content,
-          file: typeof (entry as Record<string, unknown>).file === 'string' ? (entry as Record<string, unknown>).file as string : name,
-          iconName: typeof (entry as Record<string, unknown>).iconName === 'string'
-            ? (entry as Record<string, unknown>).iconName as string
-            : typeof (entry as Record<string, unknown>).icon_name === 'string'
-              ? (entry as Record<string, unknown>).icon_name as string
-              : undefined,
-          color: typeof (entry as Record<string, unknown>).color === 'string' ? (entry as Record<string, unknown>).color as string : undefined,
-        } satisfies SubSpec;
+          file,
+          icon: style.icon,
+          color: style.color,
+        };
       })
-      .filter(Boolean) as SubSpec[];
+      .filter(Boolean) as EnrichedSubSpec[];
   }, [spec]);
 
   const applySpecPatch = (updates: Partial<SpecDetail>) => {
@@ -535,7 +541,7 @@ export function SpecDetailPage() {
 
                   {/* Sub-spec tabs */}
                   {subSpecs.map((subSpec) => {
-                    const Icon = SUB_SPEC_ICONS[subSpec.iconName || ''] || FileText;
+                    const Icon = subSpec.icon;
                     return (
                       <button
                         key={subSpec.file}
@@ -545,7 +551,7 @@ export function SpecDetailPage() {
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                           }`}
                       >
-                        <Icon className={`h-4 w-4 ${subSpec.color || ''}`} />
+                        <Icon className={`h-4 w-4 ${subSpec.color}`} />
                         <span className="hidden sm:inline">{subSpec.name}</span>
                       </button>
                     );

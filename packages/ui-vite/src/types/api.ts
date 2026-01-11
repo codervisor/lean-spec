@@ -1,12 +1,12 @@
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
 
-export interface SubSpecItem {
+export interface SubSpec {
   name: string;
   file: string;
-  iconName?: string;
-  color?: string;
   content: string;
+  // Note: icon and color are assigned in frontend via getSubSpecStyle()
+  // Backend no longer provides these fields
 }
 
 export interface Spec {
@@ -34,7 +34,7 @@ export interface Spec {
 export interface SpecDetail extends Spec {
   contentMd?: string;
   content?: string;
-  subSpecs?: SubSpecItem[];
+  subSpecs?: SubSpec[];
   metadata?: Record<string, unknown>;
 }
 
