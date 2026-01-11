@@ -16,6 +16,12 @@ import {
   GitBranch,
   TrendingUp,
   FileText,
+  Network,
+  Rocket,
+  Shield,
+  Database,
+  Lightbulb,
+  BookOpen,
 } from 'lucide-react';
 
 interface SubSpecStyle {
@@ -51,7 +57,7 @@ const PATTERNS: PatternConfig[] = [
   // API & Integration
   {
     keywords: ['api', 'endpoint', 'integration', 'interface'],
-    icon: Code,
+    icon: Network,
     color: 'text-blue-600',
   },
   // Testing & QA
@@ -64,19 +70,19 @@ const PATTERNS: PatternConfig[] = [
   {
     keywords: ['task', 'todo', 'checklist', 'milestone'],
     icon: CheckSquare,
-    color: 'text-gray-600',
+    color: 'text-slate-600',
   },
   // Configuration & Setup
   {
     keywords: ['config', 'setup', 'settings', 'environment'],
     icon: Wrench,
-    color: 'text-yellow-600',
+    color: 'text-amber-600',
   },
   // Deployment & DevOps
   {
     keywords: ['deploy', 'devops', 'ci', 'cd', 'pipeline', 'release'],
-    icon: Wrench,
-    color: 'text-orange-600',
+    icon: Rocket,
+    color: 'text-rose-600',
   },
   // Migration & Updates
   {
@@ -87,25 +93,31 @@ const PATTERNS: PatternConfig[] = [
   // Security
   {
     keywords: ['security', 'auth', 'permission', 'access', 'encryption'],
-    icon: CheckSquare,
+    icon: Shield,
     color: 'text-red-600',
   },
   // Performance
   {
     keywords: ['performance', 'optimization', 'speed', 'cache', 'benchmark'],
     icon: TrendingUp,
-    color: 'text-green-600',
+    color: 'text-emerald-600',
   },
   // Data
   {
     keywords: ['database', 'data', 'schema', 'model', 'query'],
-    icon: FileText,
-    color: 'text-blue-600',
+    icon: Database,
+    color: 'text-sky-600',
+  },
+  // Notes & Research
+  {
+    keywords: ['notes', 'research', 'findings', 'considerations', 'exploration'],
+    icon: Lightbulb,
+    color: 'text-yellow-600',
   },
   // Docs
   {
-    keywords: ['doc', 'guide', 'manual', 'reference'],
-    icon: FileText,
+    keywords: ['doc', 'guide', 'manual', 'reference', 'readme'],
+    icon: BookOpen,
     color: 'text-gray-500',
   },
   // Git
