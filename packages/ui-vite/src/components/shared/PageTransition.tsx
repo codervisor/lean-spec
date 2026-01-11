@@ -3,10 +3,11 @@ import { useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
 interface PageTransitionProps {
+  className?: string;
   children: ReactNode;
 }
 
-export function PageTransition({ children }: PageTransitionProps) {
+export function PageTransition({ className, children }: PageTransitionProps) {
   const location = useLocation();
   const [visible, setVisible] = useState(false);
 
@@ -28,6 +29,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   return (
     <div
       className={cn(
+        className,
         'transition-all duration-200 ease-out',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       )}

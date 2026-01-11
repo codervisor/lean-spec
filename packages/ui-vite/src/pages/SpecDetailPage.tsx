@@ -282,7 +282,7 @@ export function SpecDetailPage() {
   const hasRelationships = dependsOn.length > 0 || requiredBy.length > 0;
 
   return (
-    <PageTransition>
+    <PageTransition className="w-full">
       <div className="flex-1 min-w-0 overflow-y-auto h-[calc(100vh-3.5rem)]">
         {/* Mobile Sidebar Toggle Button */}
         <div className="lg:hidden sticky top-0 z-20 flex items-center justify-between bg-background/95 backdrop-blur border-b px-3 py-2">
