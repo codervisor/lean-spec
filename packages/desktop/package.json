@@ -6,7 +6,7 @@
   "description": "LeanSpec Desktop app powered by Tauri",
   "scripts": {
     "dev": "vite dev --port 1420",
-    "build": "vite build",
+    "build": "pnpm --filter @leanspec/ui-components build && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
