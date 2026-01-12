@@ -5,7 +5,8 @@
   "description": "API contract validation test suite for LeanSpec",
   "type": "module",
   "scripts": {
-    "test": "vitest run",
+    "test": "echo 'Skipping API integration tests (require running server). Use pnpm test:api to run with server.'",
+    "test:api": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
