@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2025-12-18
 priority: high
 tags:
@@ -9,9 +9,8 @@ tags:
 - distribution
 - infrastructure
 created_at: 2025-12-18T08:56:50.646815749Z
-updated_at: 2025-12-18T09:00:38.059658518Z
+updated_at: 2026-01-12T08:27:52.916620313Z
 ---
-
 # Align Pre-Release and Publish Workflows with Rust Distribution Model
 
 > **Status**: 🗓️ Planned · **Created**: 2025-12-18
