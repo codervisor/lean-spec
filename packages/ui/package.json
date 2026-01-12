@@ -1,8 +1,7 @@
 {
-  "name": "@leanspec/ui-vite",
+  "name": "@leanspec/ui",
   "version": "0.3.0",
-  "description": "LeanSpec Vite SPA - Lightweight UI for spec management",
-  "private": true,
+  "description": "LeanSpec web UI launcher for visual spec management (Vite SPA)",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",

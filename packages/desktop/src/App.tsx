@@ -1,5 +1,5 @@
 /**
- * Desktop App Entry Point - Wraps @leanspec/ui-vite with desktop-specific shell
+ * Desktop App Entry Point - Wraps @leanspec/ui with desktop-specific shell
  * 
  * This component provides:
  * - Desktop-specific title bar with project switcher
@@ -7,7 +7,7 @@
  * - Projects management modal
  * - Desktop state management (projects, active project)
  * 
- * The actual UI pages come from @leanspec/ui-vite
+ * The actual UI pages come from @leanspec/ui
  */
 
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
@@ -19,11 +19,11 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom';
-import { ThemeProvider, KeyboardShortcutsProvider, ProjectProvider, useProject } from '@leanspec/ui-vite/src/contexts';
-import { Layout } from '@leanspec/ui-vite/src/components/Layout';
-import { Navigation } from '@leanspec/ui-vite/src/components/Navigation';
-import { ProjectsPage } from '@leanspec/ui-vite/src/pages/ProjectsPage';
-import { createProjectRoutes } from '@leanspec/ui-vite/src/router/projectRoutes';
+import { ThemeProvider, KeyboardShortcutsProvider, ProjectProvider, useProject } from '@leanspec/ui/src/contexts';
+import { Layout } from '@leanspec/ui/src/components/Layout';
+import { Navigation } from '@leanspec/ui/src/components/Navigation';
+import { ProjectsPage } from '@leanspec/ui/src/pages/ProjectsPage';
+import { createProjectRoutes } from '@leanspec/ui/src/router/projectRoutes';
 import { useProjects } from './hooks/useProjects';
 import { DesktopProjectProvider } from './contexts/DesktopProjectContext';
 import DesktopLayout from './components/DesktopLayout';
@@ -83,7 +83,7 @@ function DesktopRootLayout() {
     return `/projects/${nextProjectId}${nextRest}${location.search}`;
   };
 
-  // Desktop uses a route alias like ui-vite: `/projects/default`.
+  // Desktop uses a route alias like ui: `/projects/default`.
   // Once desktop state is loaded, normalize it to the real active project id.
   useEffect(() => {
     if (loading) return;
@@ -98,7 +98,7 @@ function DesktopRootLayout() {
     }
   }, [effectiveProjectId, loading, navigate, projectId]);
 
-  // Keep desktop backend active project and ui-vite ProjectContext in sync with the route.
+  // Keep desktop backend active project and ui ProjectContext in sync with the route.
   useEffect(() => {
     if (loading) return;
     if (!effectiveProjectId) return;
@@ -108,7 +108,7 @@ function DesktopRootLayout() {
       void switchDesktopProject(effectiveProjectId);
     }
 
-    // Sync ui-vite data fetching (api.setCurrentProjectId).
+    // Sync ui data fetching (api.setCurrentProjectId).
     void switchUiProject(effectiveProjectId);
   }, [activeProjectId, effectiveProjectId, loading, switchDesktopProject, switchUiProject]);
 
@@ -161,7 +161,7 @@ function DesktopRootLayout() {
   }
 
   return (
-    <DesktopProjectProvider 
+    <DesktopProjectProvider
       projectId={effectiveProjectId}
       projects={projects}
       onSwitchProject={switchDesktopProject}
@@ -222,7 +222,7 @@ function DesktopProjectsLayout() {
   );
 }
 
-// Create router with ui-vite pages but desktop layout
+// Create router with ui pages but desktop layout
 // Use hash router for Tauri to avoid issues with file:// protocol
 const router = createHashRouter([
   {

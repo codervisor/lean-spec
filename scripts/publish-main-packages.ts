@@ -31,19 +31,19 @@ interface PublishResult {
 
 async function publishPackage(packageDir: string, dryRun: boolean): Promise<PublishResult> {
   const packageJsonPath = path.join(packageDir, 'package.json');
-  
+
   try {
     const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
     const packageName = packageJson.name;
 
     // Publish
-    const command = dryRun 
+    const command = dryRun
       ? 'npm publish --dry-run --access public'
       : 'npm publish --access public';
-    
+
     console.log(`  📦 Publishing ${packageName}...`);
     execSync(command, { cwd: packageDir, stdio: 'pipe' });
-    
+
     return { package: packageName, success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -57,7 +57,7 @@ async function publishPackage(packageDir: string, dryRun: boolean): Promise<Publ
 
 async function verifyPlatformPackages(): Promise<boolean> {
   console.log('🔍 Verifying platform packages are published...\n');
-  
+
   // Check a subset of platform packages to verify they're available
   const packagesToCheck = [
     'lean-spec-darwin-arm64',
@@ -75,14 +75,14 @@ async function verifyPlatformPackages(): Promise<boolean> {
       return false;
     }
   }
-  
+
   console.log('');
   return true;
 }
 
 async function publishMainPackages(dryRun: boolean): Promise<void> {
   console.log('📤 Publishing main packages...\n');
-  
+
   if (dryRun) {
     console.log('🔍 DRY RUN - No packages will be published\n');
   } else {
@@ -97,7 +97,7 @@ async function publishMainPackages(dryRun: boolean): Promise<void> {
 
   // Publish main CLI package
   console.log('📁 Main Packages:');
-  
+
   const cliResult = await publishPackage(path.join(PACKAGES_DIR, 'cli'), dryRun);
   results.push(cliResult);
   if (cliResult.success) {
@@ -112,6 +112,14 @@ async function publishMainPackages(dryRun: boolean): Promise<void> {
     console.log(`  ✓ ${mcpResult.package}`);
   } else {
     console.log(`  ✗ ${mcpResult.package}: ${mcpResult.error}`);
+  }
+
+  const uiResult = await publishPackage(path.join(PACKAGES_DIR, 'ui'), dryRun);
+  results.push(uiResult);
+  if (uiResult.success) {
+    console.log(`  ✓ ${uiResult.package}`);
+  } else {
+    console.log(`  ✗ ${uiResult.package}: ${uiResult.error}`);
   }
 
   // Summary

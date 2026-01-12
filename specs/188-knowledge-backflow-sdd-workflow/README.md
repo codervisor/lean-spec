@@ -225,5 +225,5 @@ Each phase adds value independently. See [ANALYSIS.md](./ANALYSIS.md) for comple
 
 **Complements**:
 - **168-leanspec-orchestration-platform**: Orchestrator dispatches reviewer agent for validation
-- **171-burst-mode-orchestrator**: Burst mode pattern adapted for spec validation
+- **171-burst-mode-orchestrator**: Ralph mode pattern (autonomous loop) adapted for spec validation
 - **123-ai-coding-agent-integration**: Agents can be instructed to update specs

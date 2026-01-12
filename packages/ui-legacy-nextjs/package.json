@@ -1,8 +1,9 @@
 {
-  "name": "@leanspec/ui",
+  "name": "@leanspec/ui-legacy-nextjs",
   "version": "0.2.12",
-  "description": "LeanSpec web UI launcher for visual spec management",
+  "description": "ARCHIVED: Legacy Next.js implementation of LeanSpec UI",
   "type": "module",
+  "private": true,
   "bin": {
     "leanspec-ui": "./bin/ui.js"
   },

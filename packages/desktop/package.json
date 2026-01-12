@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@leanspec/ui-components": "workspace:*",
-    "@leanspec/ui-vite": "workspace:*",
+    "@leanspec/ui": "workspace:*",
     "@tauri-apps/api": "^2.9.1",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-notification": "^2.3.3",

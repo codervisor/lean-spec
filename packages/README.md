@@ -6,61 +6,48 @@ This directory contains the LeanSpec monorepo packages.
 
 ```
 packages/
-├── cli/        - lean-spec: CLI wrapper for Rust binary
-├── mcp/        - @leanspec/mcp: MCP server wrapper
-├── desktop/    - @leanspec/desktop: Tauri desktop app
-└── ui/         - @leanspec/ui: Standalone UI bundle + launcher
+├── cli/               - lean-spec: CLI wrapper for Rust binary
+├── mcp/               - @leanspec/mcp: MCP server wrapper
+├── desktop/           - @leanspec/desktop: Tauri desktop app
+├── ui/                - @leanspec/ui: Primary Vite SPA (web + desktop)
+├── ui-legacy-nextjs/  - Archived Next.js UI (not built/published)
+└── ui-components/     - Shared component library
 ```
 
-## Architecture (Post Rust Migration)
-
-**As of spec 181**, the core functionality has migrated to Rust:
+## Architecture (Vite + Rust)
 
 ```
-┌─────────────────┐
-│   Desktop App   │
-│ @leanspec/desktop│  ──► Rust backend (leanspec-core)
-└─────────────────┘
+┌─────────────────┐              ┌────────────────────────┐
+│   Desktop App   │──────► IPC ─►│ Rust backend (Tauri)   │
+│ @leanspec/desktop│             └────────────────────────┘
+│                 │
+│   UI Shell      │──────► SPA ─►│ @leanspec/ui (Vite)    │
+└─────────────────┘              └────────────────────────┘
+
+┌─────────────────┐              ┌────────────────────────┐
+│   Web App       │──────► HTTP ►│ Rust HTTP server       │
+│  @leanspec/ui   │              │ @leanspec/http-server  │
+└─────────────────┘              └────────────────────────┘
 
 ┌─────────────────┐
-│   UI App        │
-│  @leanspec/ui   │  ──► Next.js (inlined utilities)
-└─────────────────┘
-
-┌─────────────────┐
-│   CLI           │
-│   lean-spec     │  ──► Rust binary (leanspec-cli)
-└─────────────────┘
-
-┌─────────────────┐
-│   MCP Server    │
-│ @leanspec/mcp   │  ──► Rust binary (leanspec-mcp)
+│   CLI / MCP     │──────► Rust binaries (leanspec-cli/mcp)
 └─────────────────┘
 ```
 
-**Key changes:**
-- `@leanspec/core` TypeScript package has been deprecated and deleted
-- CLI is now a thin wrapper that invokes the Rust binary
-- MCP server runs the Rust MCP binary
-- UI inlines minimal utilities (frontmatter, atomic file ops)
-- Desktop uses Tauri with Rust backend
+- Single UI codebase (@leanspec/ui) for web and desktop
+- Rust provides backend for both HTTP server and Tauri commands
+- Archived Next.js implementation remains in `ui-legacy-nextjs` for reference only
 
 ## lean-spec (CLI)
 
 **JavaScript wrapper for Rust CLI binary.**
 
-The CLI package provides:
-- Platform detection and binary resolution
-- Fallback to locally built Rust binaries for development
-- Templates for `lean-spec init`
+Provides platform detection, binary resolution, and templates for `lean-spec init`.
 
 ### Usage
 
 ```bash
-# Install globally
 npm install -g lean-spec
-
-# Or run via npx
 npx lean-spec list
 npx lean-spec create my-feature
 ```
@@ -68,13 +55,8 @@ npx lean-spec create my-feature
 ### Development
 
 ```bash
-# Build Rust binaries first
 cd rust && cargo build --release
-
-# Copy binaries to packages
 node scripts/copy-rust-binaries.mjs
-
-# Test CLI
 node bin/lean-spec.js --version
 ```
 
@@ -82,57 +64,56 @@ node bin/lean-spec.js --version
 
 **MCP server integration wrapper.**
 
-Simple passthrough wrapper that delegates to the Rust MCP binary. Makes MCP setup more discoverable with a dedicated package name.
-
-### Usage
+Delegates to the Rust MCP binary and makes MCP setup discoverable.
 
 ```bash
-# Use with Claude Desktop, Cline, Zed, etc.
 npx -y @leanspec/mcp
 ```
 
-See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration) for setup instructions.
+See [MCP Integration docs](https://lean-spec.dev/docs/guide/usage/ai-assisted/mcp-integration).
 
-## @leanspec/ui
+## @leanspec/ui (Vite SPA)
 
-**Published UI bundle and launcher.**
-
-Contains the Next.js application and exposes a CLI (`npx @leanspec/ui`). Used automatically by `lean-spec ui` outside the monorepo.
-
-The UI package inlines minimal utilities (formerly from `@leanspec/core`):
-- `createUpdatedFrontmatter` - Update spec metadata
-- `atomicWriteFile` - Safe file writing
+Primary UI used by both web and desktop:
+- Vite 7 + React 19 + TypeScript 5
+- Shared components from `@leanspec/ui-components`
+- Served by Rust HTTP server or bundled in Tauri
 
 ### Development
 
 ```bash
-pnpm --filter @leanspec/ui build    # build Next.js app and prepare artifacts
-node packages/ui/bin/ui.js --dry-run
+pnpm --filter @leanspec/ui dev       # Vite dev server
+pnpm --filter @leanspec/ui build     # build SPA assets
+pnpm --filter @leanspec/ui preview   # preview production build
 ```
+
+## @leanspec/ui-legacy-nextjs (Archived)
+
+Legacy Next.js implementation kept for rollback/reference:
+- Marked `private` and excluded from workspace builds
+- Not published to npm
+- See `packages/ui-legacy-nextjs/ARCHIVED.md` for details
 
 ## @leanspec/desktop
 
-**Tauri desktop application.**
-
-Cross-platform desktop app using:
-- Rust backend (Tauri commands for spec operations)
-- React/Vite frontend
-- Shared UI components with web app
-
-### Development
+Tauri desktop application using the Vite SPA:
+- Rust backend commands for spec operations
+- React/Vite frontend reusing `@leanspec/ui`
+- Shared components via `@leanspec/ui-components`
 
 ```bash
 pnpm --filter @leanspec/desktop dev:desktop
+pnpm --filter @leanspec/desktop build:desktop
 ```
 
 ## Building
 
-Build all packages:
 ```bash
 pnpm build
 ```
 
 Build specific package:
+
 ```bash
 pnpm --filter @leanspec/ui build
 pnpm --filter @leanspec/desktop build
@@ -140,12 +121,12 @@ pnpm --filter @leanspec/desktop build
 
 ## Testing
 
-Run all tests:
 ```bash
 pnpm test
 ```
 
-Run tests for specific package:
+Run tests for a package:
+
 ```bash
 pnpm --filter @leanspec/ui test
 ```
@@ -155,7 +136,7 @@ pnpm --filter @leanspec/ui test
 Published packages:
 - `lean-spec` - CLI (wrapper + Rust binary via optional dependencies)
 - `@leanspec/mcp` - MCP server wrapper
-- `@leanspec/ui` - Web UI bundle
+- `@leanspec/ui` - Vite SPA bundle
 
 Platform-specific binary packages (published separately):
 - `lean-spec-darwin-arm64`
@@ -166,8 +147,6 @@ Platform-specific binary packages (published separately):
 
 ## Migration Notes
 
-**Spec 181 (TypeScript Deprecation)**:
-- Deleted `@leanspec/core` TypeScript package
-- CLI now invokes Rust binary directly
-- UI inlines 2 utility functions (~50 lines)
-- Single source of truth in Rust
+- Vite SPA replaces the former Next.js UI
+- Archived Next.js code lives in `packages/ui-legacy-nextjs`
+- Rust remains the single source of truth for backend logic

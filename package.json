@@ -8,8 +8,8 @@
 	},
 	"scripts": {
 		"prepare": "husky",
-		"dev": "turbo run dev --filter=@leanspec/ui-vite --filter=@leanspec/http-server",
-		"dev:web": "turbo run dev:web --filter=@leanspec/ui-vite",
+		"dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
+		"dev:web": "turbo run dev:web --filter=@leanspec/ui",
 		"dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",
 		"build": "turbo run build",
 		"build:rust": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",

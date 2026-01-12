@@ -1,10 +1,10 @@
 # LeanSpec Desktop Architecture
 
-> **Status**: Native SPA Mode with UI-Vite Integration (Spec 204 Complete)
+> **Status**: Native SPA Mode with Vite UI Integration (Spec 204 Complete)
 
 ## Overview
 
-The LeanSpec Desktop app is built with Tauri v2 and **@leanspec/ui-vite**, providing a native application experience with Rust backend and shared React UI components.
+The LeanSpec Desktop app is built with Tauri v2 and **@leanspec/ui**, providing a native application experience with Rust backend and shared React UI components.
 
 ### Migration from Node.js (December 2025)
 
@@ -18,7 +18,7 @@ Desktop App
     └── @leanspec/core (TypeScript) - Spec operations
 ```
 
-**After (Pure Native with UI-Vite, January 2026)**:
+**After (Pure Native with Vite UI, January 2026)**:
 ```
 Desktop App
 ├── Tauri Backend (Rust) - Everything backend
@@ -31,7 +31,7 @@ Desktop App
     │   ├── WindowControls
     │   ├── ProjectsManager modal
     │   └── DesktopProjectContext
-    └── @leanspec/ui-vite (shared with web)
+    └── @leanspec/ui (shared with web)
         ├── Backend adapter (Tauri IPC mode)
         ├── Pages (Specs, Stats, Dependencies, etc.)
         ├── Components (from @leanspec/ui-components)
@@ -91,17 +91,17 @@ Desktop App
 ### 2. React Frontend (`src/`)
 
 **Architecture**:
-- Uses **@leanspec/ui-vite** for all page rendering
-- Desktop-specific shell wraps ui-vite components
-- Tauri backend adapter enables ui-vite to use IPC instead of HTTP
+- Uses **@leanspec/ui** for all page rendering
+- Desktop-specific shell wraps the Vite UI components
+- Tauri backend adapter enables the Vite UI to use IPC instead of HTTP
 
 **Routing (`App.tsx`)**:
 - React Router with routes defined in desktop App
-- Routes use **ui-vite pages**:
-  - `/specs` - SpecsPage from ui-vite
-  - `/specs/:specName` - SpecDetailPage from ui-vite
-  - `/stats` - StatsPage from ui-vite
-  - `/dependencies` - DependenciesPage from ui-vite
+- Routes use **Vite UI pages**:
+  - `/specs` - SpecsPage from ui
+  - `/specs/:specName` - SpecDetailPage from ui
+  - `/stats` - StatsPage from ui
+  - `/dependencies` - DependenciesPage from ui
 
 **Desktop-Specific Components (`components/`)**:
 - `DesktopLayout.tsx` - Main application layout with title bar
@@ -115,7 +115,7 @@ Desktop App
 - `useProjectsManager.ts` - Projects manager modal state
 
 **Desktop-Specific Contexts (`contexts/`)**:
-- `DesktopProjectContext.tsx` - Bridges desktop project state with ui-vite
+- `DesktopProjectContext.tsx` - Bridges desktop project state with the Vite UI
 
 **IPC Layer (`lib/ipc.ts`)**:
 - Wrapper functions for all Tauri commands
@@ -144,20 +144,20 @@ pnpm bundle:windows  # .nsis installer
 
 ### Bundle Size (After Migration)
 
-| Component | Size | Notes |
-|-----------|------|-------|
-| Rust binary | ~24 MB | Optimized release build |
-| Frontend assets | ~2 MB | Vite production build |
-| **Total** | **~26 MB** | **83% smaller than before (150MB+)** |
+| Component       | Size       | Notes                                |
+| --------------- | ---------- | ------------------------------------ |
+| Rust binary     | ~24 MB     | Optimized release build              |
+| Frontend assets | ~2 MB      | Vite production build                |
+| **Total**       | **~26 MB** | **83% smaller than before (150MB+)** |
 
 ### Runtime Performance
 
-| Metric | Before (Node.js) | After (Rust) | Improvement |
-|--------|------------------|--------------|-------------|
-| Startup time | 2-3 seconds | <1 second | 66% faster |
-| Memory usage | 400-600 MB | 50-100 MB | 83% less |
-| Spec list (1000 specs) | ~500ms | ~50ms | 90% faster |
-| Dependency graph | ~1000ms | ~100ms | 90% faster |
+| Metric                 | Before (Node.js) | After (Rust) | Improvement |
+| ---------------------- | ---------------- | ------------ | ----------- |
+| Startup time           | 2-3 seconds      | <1 second    | 66% faster  |
+| Memory usage           | 400-600 MB       | 50-100 MB    | 83% less    |
+| Spec list (1000 specs) | ~500ms           | ~50ms        | 90% faster  |
+| Dependency graph       | ~1000ms          | ~100ms       | 90% faster  |
 
 ## Development Workflow
 
@@ -196,9 +196,9 @@ const result = await myCommand('value');
 
 ### Adding UI Features
 
-For most UI features, work should be done in **@leanspec/ui-vite**:
+For most UI features, work should be done in **@leanspec/ui**:
 
-1. **Add to ui-vite** (`packages/ui-vite/src/...`)
+1. **Add to ui** (`packages/ui/src/...`)
    - Benefits both desktop and web versions
    - Use backend adapter for API calls (works in both Tauri and HTTP modes)
 
@@ -208,10 +208,10 @@ For most UI features, work should be done in **@leanspec/ui-vite**:
 
 ### Backend Adapter Pattern
 
-UI-vite uses a backend adapter that automatically detects the environment:
+The Vite UI uses a backend adapter that automatically detects the environment:
 
 ```typescript
-// In ui-vite/src/lib/backend-adapter.ts
+// In ui/src/lib/backend-adapter.ts
 export function createBackendAdapter(): BackendAdapter {
   // @ts-expect-error __TAURI__ is injected by Tauri at runtime
   if (typeof window !== 'undefined' && window.__TAURI__) {
@@ -221,7 +221,7 @@ export function createBackendAdapter(): BackendAdapter {
 }
 ```
 
-This allows ui-vite components to work seamlessly in both desktop and web contexts.
+This allows the Vite UI components to work seamlessly in both desktop and web contexts.
 3. **Add navigation** in relevant components
 
 ### Building and Testing

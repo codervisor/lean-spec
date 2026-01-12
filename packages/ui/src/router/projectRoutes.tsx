@@ -11,7 +11,7 @@ import { StatsPage } from '../pages/StatsPage';
 /**
  * Shared project-scoped route definitions.
  *
- * Both the web app (@leanspec/ui-vite) and desktop app (@leanspec/desktop)
+ * Both the web app (@leanspec/ui) and desktop app (@leanspec/desktop)
  * compose these under their own top-level layouts and router types
  * (browser vs hash).
  */

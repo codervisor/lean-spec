@@ -66,7 +66,7 @@ Focus testing on **business logic and data integrity**, not presentation details
 **Why Keep**: Validates query contracts and data shapes.
 
 #### 7. I18n Configuration Tests
-**Location**: `packages/ui-vite/src/lib/i18n.test.ts`  
+**Location**: `packages/ui/src/lib/i18n.test.ts`  
 **Tests**: Translation loading, locale detection  
 **Value**: ⭐⭐⭐⭐  
 **Why Keep**: Ensures i18n plumbing works. Easy to break subtly.

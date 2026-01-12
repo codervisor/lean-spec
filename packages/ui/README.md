@@ -1,6 +1,6 @@
-# @leanspec/ui-vite
+# @leanspec/ui
 
-Vite-based Single Page Application for LeanSpec spec management.
+Primary Vite-based Single Page Application for LeanSpec spec management (web + desktop). The legacy Next.js implementation is archived in `packages/ui-legacy-nextjs/`.
 
 ## Overview
 
@@ -74,8 +74,8 @@ The built static files can be:
 ## Migration from Next.js
 
 This SPA replaces the previous Next.js implementation with:
-- ✅ 83% smaller bundle (30MB vs 150MB+)
-- ✅ 10x faster dev HMR
+- ✅ ~99% smaller bundle (sub-MB Vite assets vs 129MB+ Next.js)
+- ✅ Faster dev HMR and builds
 - ✅ Simpler architecture (no SSR overhead)
 - ✅ Same features and functionality
 - ✅ Better performance

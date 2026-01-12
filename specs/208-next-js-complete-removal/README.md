@@ -50,17 +50,17 @@ transitions:
 
 The groundwork is done across these completed specs:
 
-| Spec | Component | Status |
-|------|-----------|--------|
-| **184** | Unified UI Architecture (Umbrella) | ✅ Complete |
-| **185** | UI Components Extraction | ✅ Complete |
-| **186** | Rust HTTP Server | ✅ Complete |
-| **187** | Vite SPA Migration | ✅ Complete |
-| **190** | UI-Vite Parity (Umbrella) | ✅ Complete |
-| **191** | Rust HTTP API Tests | ✅ Complete |
-| **192** | Backend API Parity | ✅ Complete |
-| **193** | Frontend UI Parity | ✅ Complete |
-| **194** | API Contract Tests | ✅ Complete |
+| Spec        | Component                            | Status     |
+| ----------- | ------------------------------------ | ---------- |
+| **184**     | Unified UI Architecture (Umbrella)   | ✅ Complete |
+| **185**     | UI Components Extraction             | ✅ Complete |
+| **186**     | Rust HTTP Server                     | ✅ Complete |
+| **187**     | Vite SPA Migration                   | ✅ Complete |
+| **190**     | UI-Vite Parity (Umbrella)            | ✅ Complete |
+| **191**     | Rust HTTP API Tests                  | ✅ Complete |
+| **192**     | Backend API Parity                   | ✅ Complete |
+| **193**     | Frontend UI Parity                   | ✅ Complete |
+| **194**     | API Contract Tests                   | ✅ Complete |
 | **197-207** | UI-Vite Polish & Desktop Integration | ✅ Complete |
 
 **Result**: Both architectures coexist, but only Vite+Rust is actively used.
@@ -307,18 +307,18 @@ Option 2: **Fresh start**
 
 ### Phase 2: Archive Next.js Package (1 hour)
 
-- [ ] **Create git tag for rollback**
+- [x] **Create git tag for rollback**
   ```bash
   git tag -a pre-nextjs-removal -m "State before removing Next.js UI"
   git push origin pre-nextjs-removal
   ```
 
-- [ ] **Move Next.js to archive**
+- [x] **Move Next.js to archive**
   ```bash
   git mv packages/ui packages/ui-legacy-nextjs
   ```
 
-- [ ] **Create ARCHIVED.md in legacy package**
+- [x] **Create ARCHIVED.md in legacy package**
   ```markdown
   # ARCHIVED: Next.js UI Implementation
   
@@ -344,7 +344,7 @@ Option 2: **Fresh start**
   - Spec 208: Next.js Complete Removal
   ```
 
-- [ ] **Mark as private in package.json**
+- [x] **Mark as private in package.json**
   ```json
   {
     "name": "@leanspec/ui-legacy-nextjs",
@@ -354,14 +354,14 @@ Option 2: **Fresh start**
   }
   ```
 
-- [ ] **Remove from pnpm-workspace.yaml**
+- [x] **Remove from pnpm-workspace.yaml**
   ```diff
   packages:
     - 'packages/*'
   + - '!packages/ui-legacy-nextjs'
   ```
 
-- [ ] **Remove from turbo.json**
+- [x] **Remove from turbo.json**
   ```diff
   {
     "pipeline": {
@@ -373,12 +373,12 @@ Option 2: **Fresh start**
 
 ### Phase 3: Promote Vite to Primary UI (1 hour)
 
-- [ ] **Rename ui-vite to ui**
+- [x] **Rename ui-vite to ui**
   ```bash
   git mv packages/ui-vite packages/ui
   ```
 
-- [ ] **Update package.json**
+- [x] **Update package.json**
   ```diff
   {
   - "name": "@leanspec/ui-vite",
@@ -400,7 +400,7 @@ Option 2: **Fresh start**
   // (May already exist in ui-vite, verify)
   ```
 
-- [ ] **Update imports in desktop package**
+- [x] **Update imports in desktop package**
   ```diff
   // packages/desktop/package.json
   {
@@ -417,7 +417,7 @@ Option 2: **Fresh start**
   + import { ... } from '@leanspec/ui';
   ```
 
-- [ ] **Update turbo.json**
+- [x] **Update turbo.json**
   ```diff
   {
     "pipeline": {
@@ -435,7 +435,7 @@ Option 2: **Fresh start**
 
 ### Phase 4: Update Root Configuration (1 hour)
 
-- [ ] **Update root package.json scripts**
+- [x] **Update root package.json scripts**
   ```diff
   {
     "scripts": {
@@ -447,14 +447,14 @@ Option 2: **Fresh start**
   }
   ```
 
-- [ ] **Update pnpm-workspace.yaml overrides**
+- [x] **Update pnpm-workspace.yaml overrides**
   ```diff
   packageExtensions:
     # Keep Next.js overrides for legacy package (archived)
     # But remove from active workspace
   ```
 
-- [ ] **Verify workspace integrity**
+- [x] **Verify workspace integrity**
   ```bash
   pnpm install
   pnpm -r list --depth=0  # Should show @leanspec/ui, not ui-vite
@@ -462,29 +462,29 @@ Option 2: **Fresh start**
 
 ### Phase 5: Update Documentation (2 hours)
 
-- [ ] **Update root README.md**
-  - [ ] Architecture diagram: Remove Next.js, show Vite+Rust
+- [x] **Update root README.md**
+  - [x] Architecture diagram: Remove Next.js, show Vite+Rust
   - [ ] Technology stack: Replace "Next.js" with "Vite"
   - [ ] Bundle size stats: Update with new numbers
-  - [ ] Development setup: Remove Next.js instructions
+  - [x] Development setup: Remove Next.js instructions
 
-- [ ] **Update CONTRIBUTING.md**
-  - [ ] Package listing: Remove Next.js, update ui-vite → ui
-  - [ ] Build commands: Update filter names
-  - [ ] Dev workflow: Update package paths
+- [x] **Update CONTRIBUTING.md**
+  - [x] Package listing: Remove Next.js, update ui-vite → ui
+  - [x] Build commands: Update filter names
+  - [x] Dev workflow: Update package paths
 
-- [ ] **Update packages/README.md**
-  - [ ] Architecture diagram: Update package names
-  - [ ] Package descriptions: Update @leanspec/ui description
-  - [ ] Remove Next.js references
+- [x] **Update packages/README.md**
+  - [x] Architecture diagram: Update package names
+  - [x] Package descriptions: Update @leanspec/ui description
+  - [x] Remove Next.js references
 
-- [ ] **Update AGENTS.md**
-  - [ ] Translation paths: Remove packages/ui/src/locales reference (was Next.js)
-  - [ ] Update to `packages/ui/src/locales/` (now Vite)
+- [x] **Update AGENTS.md**
+  - [x] Translation paths: Remove packages/ui/src/locales reference (was Next.js)
+  - [x] Update to `packages/ui/src/locales/` (now Vite)
   - [ ] Development commands: Update package names
   - [ ] Remove any Next.js-specific instructions
 
-- [ ] **Update CLAUDE.md** (copy from AGENTS.md changes)
+- [x] **Update CLAUDE.md** (copy from AGENTS.md changes)
 
 - [ ] **Update docs-site/ (if exists in monorepo)**
   - [ ] Architecture overview page
@@ -508,7 +508,7 @@ Option 2: **Fresh start**
   - [ ] Verify @leanspec/ui gets published
   - [ ] Ensure ui-legacy-nextjs does NOT get published
 
-- [ ] **Update version sync scripts**
+- [x] **Update version sync scripts**
   ```diff
   // scripts/sync-versions.ts
   const packages = [
@@ -521,7 +521,7 @@ Option 2: **Fresh start**
   ];
   ```
 
-- [ ] **Update publish scripts**
+- [x] **Update publish scripts**
   ```diff
   // scripts/publish-main-packages.ts
   const packages = [
@@ -653,6 +653,16 @@ Option 2: **Fresh start**
   
   See Spec 208 for full details.
   ```
+
+## Implementation Notes
+
+- Archived Next.js UI to `packages/ui-legacy-nextjs` with private package.json and ARCHIVED.md, and excluded it from the workspace.
+- Promoted the Vite SPA to `@leanspec/ui` (v0.3.0) and updated desktop imports, turbo config, root scripts, and workspace references.
+- Documentation refreshed: root README, CONTRIBUTING, packages/README, AGENTS/CLAUDE translation guidance, and docs/test-strategy path.
+- Release tooling updated: version sync skips the legacy package; publish-main-packages now publishes `@leanspec/ui`.
+- Ran `pnpm install --frozen-lockfile=false` to refresh the lockfile after renames (only platform binary warnings observed).
+- Bin launcher for the Vite UI and docs-site updates remain pending.
+- Tests not run (not requested yet).
 
 ## Test
 

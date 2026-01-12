@@ -1,31 +1,35 @@
 ---
 status: planned
-created: '2025-12-17'
-tags:
-  - ai-agents
-  - orchestration
-  - testing
-  - automation
-  - coding-pattern
-  - quality-over-speed
+created: 2025-12-17
 priority: high
-created_at: '2025-12-17T09:01:14.343Z'
+tags:
+- ai-agents
+- orchestration
+- testing
+- automation
+- coding-pattern
+- quality-over-speed
+- ralph
 depends_on:
-  - 123-ai-coding-agent-integration
-  - 158-persistent-agent-sessions
-  - 168-leanspec-orchestration-platform
-updated_at: '2025-12-17T09:01:14.390Z'
+- 123-ai-coding-agent-integration
+- 158-persistent-agent-sessions
+- 168-leanspec-orchestration-platform
+created_at: 2025-12-17T09:01:14.343Z
+updated_at: 2026-01-12T14:04:21.296425Z
 ---
-# Burst Mode Orchestrator (BMO) - Iterative Test-Driven AI Coding Pattern
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-17 · **Tags**: ai-agents, orchestration, testing, automation, coding-pattern, quality-over-speed
+# Ralph Mode (Autonomous AI Development Loop) - Iterative Test-Driven AI Coding Pattern
+
+> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-17 · **Tags**: ai-agents, orchestration, testing, automation, coding-pattern, quality-over-speed, ralph
 
 
 ## Vision & Objectives
 
 Build an intelligent code orchestrator based on **LeanSpec** to achieve an automated closed-loop "Spec-Driven Development" workflow.
 
-The core concept is **"Burst Mode"**: trading computational resources (tokens) and time for exceptionally high code quality. The system takes over the "code-test-fix" PDCA cycle until the code passes all defined specifications or reaches maximum iterations, significantly reducing human intervention in code review and minor fixes.
+The core concept is **"Ralph Mode"** (also called "Ralph technique" or "burst mode"): an autonomous AI development loop pattern originally created by [Geoffrey Huntley](https://ghuntley.com/ralph/). In its purest form, Ralph is a simple bash loop: `while :; do cat PROMPT.md | claude-code ; done`
+
+This spec adapts the Ralph pattern to LeanSpec's ecosystem, trading computational resources (tokens) and time for exceptionally high code quality. The system takes over the "code-test-fix" PDCA cycle until the code passes all defined specifications or reaches maximum iterations, significantly reducing human intervention in code review and minor fixes.
 
 **Core Values:**
 
@@ -37,16 +41,16 @@ The core concept is **"Burst Mode"**: trading computational resources (tokens) a
 
 This spec defines a **coding pattern** that can be implemented within the orchestration infrastructure defined in:
 
-* **123-ai-coding-agent-integration**: Provides the dispatch interface for triggering AI agents. Burst mode integrates via `--burst` flag on `agent run` command.
-* **158-persistent-agent-sessions**: Enables multi-phase workflows (each burst iteration = one phase)
-* **168-leanspec-orchestration-platform**: Desktop app UI for controlling burst sessions
+* **123-ai-coding-agent-integration**: Provides the dispatch interface for triggering AI agents. Ralph mode integrates via `--ralph` or `--burst` flag on `agent run` command.
+* **158-persistent-agent-sessions**: Enables multi-phase workflows (each Ralph iteration = one phase)
+* **168-leanspec-orchestration-platform**: Desktop app UI for controlling Ralph sessions
 
-BMO is **not** a standalone tool but a **pattern** for orchestrating agents:
+Ralph Mode is **not** a standalone tool but a **pattern** for orchestrating agents, inspired by the [ralph-claude-code](https://github.com/frankbria/ralph-claude-code) project:
 
 ```mermaid
 graph TB
     User[User] -->|"Define Spec + Tests"| Spec[LeanSpec Document]
-    Spec -->|"Dispatch with max_iterations"| BMO[Burst Mode Pattern]
+    Spec -->|"Dispatch with max_iterations"| BMO[Ralph Mode Pattern]
     BMO -->|"Phase 1: Implement"| Agent[AI Coding Agent]
     Agent -->|"Generate Code"| Executor[Test Executor]
     Executor -->|"Tests Pass"| Critic[Spec Verification]
@@ -110,9 +114,9 @@ The system uses an **Agentic Loop** architecture. It's not just code generation,
        └─> Complete & Verified → ✅ Done
 ```
 
-## Workflow Logic (The Burst Loop)
+## Workflow Logic (The Ralph Loop)
 
-The orchestrator's core is a `while` loop with the following logic:
+The orchestrator's core is a `while` loop with the following logic, adapted from the Ralph technique:
 
 ### Initialization Phase
 
@@ -121,10 +125,10 @@ The orchestrator's core is a `while` loop with the following logic:
 3. **Define Acceptance Criteria** → Explicit, verifiable conditions for completion
 4. **Human Approval** → User reviews and approves Spec + Tests + ACs
 
-### Burst Loop
+### Ralph Loop
 
 ```javascript
-const maxIterations = 10; // Configurable burst limit
+const maxIterations = 10; // Configurable Ralph/burst limit
 let iteration = 0;
 
 while (iteration < maxIterations) {
@@ -169,7 +173,7 @@ while (iteration < maxIterations) {
 }
 
 // Max iterations reached without passing
-throw new Error(`Burst failed after ${maxIterations} iterations. Manual intervention required.`);
+throw new Error(`Ralph loop failed after ${maxIterations} iterations. Manual intervention required.`);
 ```
 
 ### Loop Cases
@@ -183,7 +187,9 @@ throw new Error(`Burst failed after ${maxIterations} iterations. Manual interven
 
 ## Key Design Decisions
 
-### 1. Why "Burst Mode"?
+### 1. Why "Ralph Mode" (Burst Mode)?
+
+**Origin**: The Ralph technique was created by Geoffrey Huntley as an autonomous AI development pattern. The name "Ralph" refers to Ralph Wiggum from The Simpsons, representing deterministic behavior in an undeterministic world. See [ghuntley.com/ralph](https://ghuntley.com/ralph/) and [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-code).
 
 **Traditional Workflow Problems:**
 - After AI generates code, humans manually run tests
@@ -191,11 +197,12 @@ throw new Error(`Burst failed after ${maxIterations} iterations. Manual interven
 - Multiple round-trips, low efficiency, unstable quality
 - False positives: "tests pass" doesn't guarantee spec completion
 
-**Burst Mode Advantages:**
-- Automated PDCA cycle with no human intervention
+**Ralph Mode Advantages:**
+- Automated PDCA cycle with no human intervention (like Ralph's `while` loop)
 - System automatically captures and analyzes errors
 - Continuous iteration until verified complete or max iterations reached
 - Critic prevents false positives by verifying spec compliance
+- Inspired by battle-tested ralph-claude-code implementation (v0.9.8, 276 passing tests)
 
 ### 2. Sandbox Execution Environment
 
@@ -229,24 +236,24 @@ The Critic is a **two-phase verification engine**: Test Analysis + Spec Verifica
 
 #### Phase 1: Test Analysis (when tests fail)
 
-| Error Type | Analysis Strategy | Example |
-|-----------|------------------|------|
-| **Syntax Error** | Extract line number and error message | `SyntaxError: Unexpected token '}' at line 42` |
-| **Type Error** | Analyze type mismatch, suggest type correction | `TypeError: Cannot read property 'x' of undefined` |
-| **Logic Error** | Compare expected vs actual values, infer logic issues | `Expected: [1,2,3], Received: [1,2,2]` |
-| **Timeout** | Identify potential infinite loops, suggest exit conditions | `Test exceeded 5000ms timeout` |
+| Error Type       | Analysis Strategy                                          | Example                                            |
+| ---------------- | ---------------------------------------------------------- | -------------------------------------------------- |
+| **Syntax Error** | Extract line number and error message                      | `SyntaxError: Unexpected token '}' at line 42`     |
+| **Type Error**   | Analyze type mismatch, suggest type correction             | `TypeError: Cannot read property 'x' of undefined` |
+| **Logic Error**  | Compare expected vs actual values, infer logic issues      | `Expected: [1,2,3], Received: [1,2,2]`             |
+| **Timeout**      | Identify potential infinite loops, suggest exit conditions | `Test exceeded 5000ms timeout`                     |
 
 #### Phase 2: Spec Verification (always runs)
 
 Even when tests pass, verify:
 
-| Check Type | Verification Method | Prevents |
-|-----------|-------------------|----------|
-| **Requirement Coverage** | Map spec requirements to code implementation | Incomplete features |
-| **AC Compliance** | Validate each acceptance criterion is met | Partial implementations |
-| **Functionality Gaps** | Compare spec intent vs actual behavior | Tests that don't cover all scenarios |
-| **False Positives** | Cross-reference test assertions with spec requirements | Passing tests that miss key requirements |
-| **Edge Cases** | Verify boundary conditions mentioned in spec | Brittle implementations |
+| Check Type               | Verification Method                                    | Prevents                                 |
+| ------------------------ | ------------------------------------------------------ | ---------------------------------------- |
+| **Requirement Coverage** | Map spec requirements to code implementation           | Incomplete features                      |
+| **AC Compliance**        | Validate each acceptance criterion is met              | Partial implementations                  |
+| **Functionality Gaps**   | Compare spec intent vs actual behavior                 | Tests that don't cover all scenarios     |
+| **False Positives**      | Cross-reference test assertions with spec requirements | Passing tests that miss key requirements |
+| **Edge Cases**           | Verify boundary conditions mentioned in spec           | Brittle implementations                  |
 
 **Enhanced Techniques:**
 - **Semantic Diff:** Compare code changes to judge fix effectiveness
@@ -277,7 +284,7 @@ Iteration N: Spec (2k) + Test Suite (1k) + ACs (0.5k) + Verification Report (1k)
 
 ### Phase 1: Proof of Concept (1-2 weeks)
 
-**Goal:** Validate Burst Loop feasibility
+**Goal:** Validate Ralph Loop feasibility
 
 **Scope:**
 - [ ] Simple Coder (Claude/GPT API calls)
@@ -318,62 +325,66 @@ Iteration N: Spec (2k) + Test Suite (1k) + ACs (0.5k) + Verification Report (1k)
 
 **Scope:**
 - [ ] Desktop App UI (Tauri)
-- [ ] CLI integration via `lean-spec agent run <spec> --burst` flag
+- [ ] CLI integration via `lean-spec agent run <spec> --ralph` or `--burst` flag
 - [ ] `--max-iterations <n>` option (default: 10)
-- [ ] Burst mode context injection in agent prompts
+- [ ] Ralph mode context injection in agent prompts
 - [ ] Sandbox environment (Docker)
 - [ ] Monitoring and logging
 
 **CLI Usage:**
 ```bash
-# Enable burst mode for single spec
+# Enable Ralph mode for single spec
+lean-spec agent run 045 --ralph
+
+# Alternative: Use --burst alias
 lean-spec agent run 045 --burst
 
-# Burst mode with custom iterations
-lean-spec agent run 045 --burst --max-iterations 15
+# Ralph mode with custom iterations
+lean-spec agent run 045 --ralph --max-iterations 15
 
-# Burst mode with specific agent
-lean-spec agent run 045 --agent claude --burst
+# Ralph mode with specific agent
+lean-spec agent run 045 --agent claude --ralph
 
-# Dry run to preview burst workflow
-lean-spec agent run 045 --burst --dry-run
+# Dry run to preview Ralph workflow
+lean-spec agent run 045 --ralph --dry-run
 ```
 
-**Success Criteria:** One-click Burst Mode trigger from Desktop App and CLI flag support
+**Success Criteria:** One-click Ralph Mode trigger from Desktop App and CLI flag support
 
 ### Phase 5: Advanced Features (Future)
 
 **Possible Directions:**
-- [ ] Multi-language support (Python, Go, Rust)
-- [ ] Parallel Burst (run multiple test suites simultaneously)
+- [ ] Multi-language support (Python, Go, Rust) - following ralph-claude-code patterns
+- [ ] Parallel Ralph (run multiple test suites simultaneously)
 - [ ] AI-to-AI Communication (multi-agent collaboration)
 - [ ] Adaptive maxIterations (dynamically adjust based on complexity)
 - [ ] Human-in-the-loop for ambiguous ACs
+- [ ] Integration with ralph-claude-code's circuit breaker and rate limiting patterns
 
 ## Success Metrics
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Completion Rate** | >90% | Simple scenarios (single file, <200 LOC) |
-| **False Positive Rate** | <5% | Tests pass but spec incomplete |
-| **Average Iterations** | <5 | Including initial generation |
-| **Time per Iteration** | <30s | Including API calls + test execution |
-| **Token Consumption** | <50k per burst | Based on Claude Sonnet 3.5 |
-| **Verification Accuracy** | >95% | Critic correctly identifies incomplete specs |
-| **User Satisfaction** | >4.5/5 | Via NPS survey |
+| Metric                    | Target                 | Notes                                        |
+| ------------------------- | ---------------------- | -------------------------------------------- |
+| **Completion Rate**       | >90%                   | Simple scenarios (single file, <200 LOC)     |
+| **False Positive Rate**   | <5%                    | Tests pass but spec incomplete               |
+| **Average Iterations**    | <5                     | Including initial generation                 |
+| **Time per Iteration**    | <30s                   | Including API calls + test execution         |
+| **Token Consumption**     | <50k per Ralph session | Based on Claude Sonnet 3.5                   |
+| **Verification Accuracy** | >95%                   | Critic correctly identifies incomplete specs |
+| **User Satisfaction**     | >4.5/5                 | Via NPS survey                               |
 
 ## Risks & Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **Infinite Loop (Code)** | System hang | Executor 5-minute timeout |
-| **Infinite Loop (Logic)** | Token waste | Detect repeated errors, early termination |
-| **High Token Cost** | Financial loss | Daily limits, cost estimation |
-| **Sandbox Escape** | Security risk | Use Docker/gVisor, block network access |
-| **AI Hallucination** | Invalid code | Critic validates syntax, rejects obvious errors |
-| **False Positives** | Incomplete deliverables | Two-phase verification (tests + spec) |
-| **Ambiguous Specs** | Wrong implementation | Require explicit ACs, human review |
-| **Over-verification** | Slow convergence | Balance strictness vs pragmatism |
+| Risk                      | Impact                  | Mitigation                                      |
+| ------------------------- | ----------------------- | ----------------------------------------------- |
+| **Infinite Loop (Code)**  | System hang             | Executor 5-minute timeout                       |
+| **Infinite Loop (Logic)** | Token waste             | Detect repeated errors, early termination       |
+| **High Token Cost**       | Financial loss          | Daily limits, cost estimation                   |
+| **Sandbox Escape**        | Security risk           | Use Docker/gVisor, block network access         |
+| **AI Hallucination**      | Invalid code            | Critic validates syntax, rejects obvious errors |
+| **False Positives**       | Incomplete deliverables | Two-phase verification (tests + spec)           |
+| **Ambiguous Specs**       | Wrong implementation    | Require explicit ACs, human review              |
+| **Over-verification**     | Slow convergence        | Balance strictness vs pragmatism                |
 
 ## Technology Stack
 
@@ -422,13 +433,20 @@ Database (Session Storage):
    - Balance between completeness and pragmatism
    - Different modes for different project types?
 
-6. **How does `--burst` flag interact with other agent options?**
-   - Can burst mode work with `--parallel` (worktrees)?
-   - Should burst mode auto-enable certain agents (e.g., Claude for best reasoning)?
-   - How to handle burst mode in cloud agents (gh-coding)?
+6. **How does `--ralph`/`--burst` flag interact with other agent options?**
+   - Can Ralph mode work with `--parallel` (worktrees)?
+   - Should Ralph mode auto-enable certain agents (e.g., Claude for best reasoning)?
+   - How to handle Ralph mode in cloud agents (gh-coding)?
+   - Can we learn from ralph-claude-code's session management and circuit breaker patterns?
 
 ## References
 
+**Ralph Technique**:
+- [Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/) - Geoffrey Huntley's original article
+- [ralph-claude-code](https://github.com/frankbria/ralph-claude-code) - Production implementation by Frank Bria
+- [How Ralph Wiggum went from 'The Simpsons' to the biggest name in AI](https://venturebeat.com/technology/how-ralph-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now) - VentureBeat coverage
+
+**Development Practices**:
 - [Test-Driven Development (TDD)](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
 - [PDCA Cycle](https://en.wikipedia.org/wiki/PDCA)
 - [Docker Security Best Practices](https://docs.docker.com/engine/security/)

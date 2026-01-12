@@ -1,7 +1,7 @@
 /**
- * Desktop Project Context - Bridges desktop project state with ui-vite's ProjectContext
+ * Desktop Project Context - Bridges desktop project state with ui's ProjectContext
  * 
- * This context wraps ui-vite's ProjectProvider and provides desktop-specific
+ * This context wraps the UI ProjectProvider and provides desktop-specific
  * project management that's compatible with Tauri IPC.
  */
 
@@ -29,12 +29,12 @@ export function DesktopProjectProvider({
   onSwitchProject,
   children,
 }: DesktopProjectProviderProps) {
-  // Inject project ID into the window object for ui-vite to detect
+  // Inject project ID into the window object for the UI bundle to detect
   useEffect(() => {
-    // Set a global flag that ui-vite can check
+    // Set a global flag that the UI bundle can check
     (window as any).__DESKTOP_PROJECT_ID__ = projectId;
     (window as any).__DESKTOP_PROJECTS__ = projects;
-    
+
     return () => {
       delete (window as any).__DESKTOP_PROJECT_ID__;
       delete (window as any).__DESKTOP_PROJECTS__;

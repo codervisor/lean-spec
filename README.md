@@ -84,15 +84,15 @@ Works with any AI coding assistant via MCP or CLI:
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **📊 Kanban Board** | `lean-spec board` - visual project tracking |
-| **🔍 Smart Search** | `lean-spec search` - find specs by content or metadata |
-| **🔗 Dependencies** | Track spec relationships with `depends_on` and `related` |
-| **🎨 Web UI** | `lean-spec ui` - browser-based dashboard |
-| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection |
-| **🤖 AI-Native** | MCP server + CLI for AI assistants |
-| **🖥️ Desktop App** | Native Tauri shell with tray + shortcuts (`pnpm dev:desktop`) |
+| Feature             | Description                                                   |
+| ------------------- | ------------------------------------------------------------- |
+| **📊 Kanban Board**  | `lean-spec board` - visual project tracking                   |
+| **🔍 Smart Search**  | `lean-spec search` - find specs by content or metadata        |
+| **🔗 Dependencies**  | Track spec relationships with `depends_on` and `related`      |
+| **🎨 Web UI**        | `lean-spec ui` - browser-based dashboard                      |
+| **📈 Project Stats** | `lean-spec stats` - health metrics and bottleneck detection   |
+| **🤖 AI-Native**     | MCP server + CLI for AI assistants                            |
+| **🖥️ Desktop App**   | Native Tauri shell with tray + shortcuts (`pnpm dev:desktop`) |
 
 <p align="center">
   <img src="https://github.com/codervisor/lean-spec-docs/blob/main/static/img/ui/ui-board-view.png" alt="Kanban Board View" width="800">
@@ -102,7 +102,7 @@ Works with any AI coding assistant via MCP or CLI:
 
 ## Desktop App
 
-The new `@leanspec/desktop` package wraps the Next.js UI in a lightweight Tauri shell for local, multi-project workflows:
+The `@leanspec/desktop` package wraps the Vite UI (`@leanspec/ui`) in a lightweight Tauri shell for local, multi-project workflows backed by Rust commands:
 
 ```bash
 # Launch the desktop shell with hot reload
@@ -118,7 +118,7 @@ Key capabilities:
 - Global shortcuts (`Cmd/Ctrl+Shift+L` to toggle, `Cmd/Ctrl+Shift+K` to open the project switcher, `Cmd/Ctrl+Shift+N` to add a spec)
 - Shared project registry + native folder picker backed by `~/.lean-spec/projects.json`
 - System tray with recent projects, background notifications, and update checks
-- Embedded Next.js standalone build for offline packaging (macOS `.dmg`, Windows `.msi/.exe`, Linux `.AppImage/.deb/.rpm`)
+- Embedded Vite static build + Rust HTTP server for offline packaging (macOS `.dmg`, Windows `.msi/.exe`, Linux `.AppImage/.deb/.rpm`)
 
 See [packages/desktop/README.md](packages/desktop/README.md) for configuration details.
 

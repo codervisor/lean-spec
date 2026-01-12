@@ -40,6 +40,7 @@ All packages in the monorepo maintain synchronized versions automatically. The r
 - `@leanspec/ui` (web UI package)
 - `@leanspec/mcp` (MCP server wrapper)
 - `@leanspec/desktop` (Tauri desktop app)
+- `@leanspec/ui-legacy-nextjs` (archived, not published)
 
 ### Automated Version Sync
 
@@ -137,6 +138,7 @@ This project uses [Turborepo](https://turbo.build/) to manage the monorepo with 
 - `packages/mcp` - MCP server wrapper (published as `@leanspec/mcp`)
 - `packages/ui` - Web UI bundle (published as `@leanspec/ui`)
 - `packages/desktop` - Tauri desktop app (not published to npm)
+- `packages/ui-legacy-nextjs` - Archived Next.js UI (excluded from workspace builds)
 - `docs-site/` - Git subtree merged from `codervisor/lean-spec-docs` (Docusaurus)
 
 **Key files:**
