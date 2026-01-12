@@ -19,6 +19,7 @@ help:
 	@echo "Code Quality:"
 	@echo "  make format       - Format all code"
 	@echo "  make lint         - Lint all packages"
+	@echo "  make pre-push     - Run pre-push validation (typecheck + clippy)"
 	@echo "  make pre-release  - Full pre-release validation"
 	@echo ""
 	@echo "Rust Development:"
@@ -26,6 +27,7 @@ help:
 	@echo "  make rust-dev     - Build Rust binaries (dev)"
 	@echo "  make rust-test    - Run Rust tests"
 	@echo "  make rust-check   - Check Rust code"
+	@echo "  make rust-clippy  - Run clippy with warnings as errors"
 	@echo "  make rust-fmt     - Format Rust code"
 	@echo "  make rust-clean   - Clean Rust build artifacts"
 	@echo ""
@@ -81,8 +83,17 @@ format:
 lint:
 	turbo run lint
 
+pre-push:
+	@echo "🔍 Running TypeScript typecheck..."
+	@pnpm typecheck
+	@echo "🦀 Running Rust clippy checks..."
+	@cargo clippy --manifest-path rust/Cargo.toml -- -D warnings
+	@echo "✅ All pre-push checks passed!"
+
 pre-release:
 	pnpm pre-release
+	@echo "Running Rust clippy checks..."
+	$(MAKE) rust-clippy
 
 # Rust Development
 rust-build:

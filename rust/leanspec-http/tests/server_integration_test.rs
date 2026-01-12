@@ -80,7 +80,9 @@ async fn test_server_add_and_remove_project() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(temp_dir.path());
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let (addr, handle) = start_test_server(state).await;
 
     let client = Client::new();
@@ -95,7 +97,7 @@ async fn test_server_add_and_remove_project() {
 
     assert_eq!(add_response.status(), StatusCode::OK);
     let add_body: serde_json::Value = add_response.json().await.unwrap();
-    let project_id = add_body["project"]["id"].as_str().unwrap();
+    let project_id = add_body["id"].as_str().unwrap();
 
     // Verify project exists
     let list_response = client
@@ -115,7 +117,7 @@ async fn test_server_add_and_remove_project() {
         .await
         .unwrap();
 
-    assert_eq!(remove_response.status(), StatusCode::OK);
+    assert_eq!(remove_response.status(), StatusCode::NO_CONTENT);
 
     // Verify project was removed
     let final_list = client
@@ -137,7 +139,9 @@ async fn test_server_get_specs() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(temp_dir.path());
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let (addr, handle) = start_test_server(state).await;
 
     let client = Client::new();
@@ -151,7 +155,7 @@ async fn test_server_get_specs() {
         .unwrap();
 
     let add_body: serde_json::Value = add_response.json().await.unwrap();
-    let project_id = add_body["project"]["id"].as_str().unwrap();
+    let project_id = add_body["id"].as_str().unwrap();
 
     // Get specs
     let specs_response = client

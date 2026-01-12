@@ -110,7 +110,12 @@
     "local": "Local",
     "noProjectsFound": "No projects found",
     "getStarted": "Get started by creating your first LeanSpec project.",
-    "searchPlaceholder": "Search projects..."
+    "searchPlaceholder": "Search projects...",
+    "errors": {
+      "load": "Failed to load projects",
+      "switch": "Failed to switch project",
+      "noProjectSelected": "No project selected. Please select a project first."
+    }
   },
   "projectsPage": {
     "title": "Projects",

@@ -1,2 +1,11 @@
-# Format Rust code
+#!/bin/sh
+# Format Rust code before commit (fast operation)
+echo "🎨 Formatting Rust code..."
 cd rust && cargo fmt --all
+
+if [ $? -ne 0 ]; then
+  echo "❌ Rust formatting failed!"
+  exit 1
+fi
+
+echo "✅ Rust code formatted!"

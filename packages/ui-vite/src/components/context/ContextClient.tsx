@@ -76,10 +76,17 @@ function FileCard({
   searchQuery?: string;
   onClick: () => void;
 }) {
+  const { t } = useTranslation('common');
   const matches = searchQuery ? countMatches(file.content, searchQuery) : 0;
   const hasMatch = !searchQuery || matches > 0 || file.name.toLowerCase().includes(searchQuery.toLowerCase());
 
   if (!hasMatch) return null;
+
+  const matchesLabel = matches === 1
+    ? t('contextPage.badges.matchesSingular', { count: matches })
+    : t('contextPage.badges.matchesPlural', { count: matches });
+
+  const tokensLabel = t('contextPage.badges.tokens', { formattedCount: file.tokenCount.toLocaleString() });
 
   return (
     <button
@@ -97,12 +104,12 @@ function FileCard({
         <div className="flex items-center gap-2 shrink-0">
           {searchQuery && matches > 0 && (
             <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900">
-              {matches} {matches === 1 ? 'match' : 'matches'}
+              {matchesLabel}
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
             <Coins className="h-3 w-3 mr-1" />
-            {file.tokenCount.toLocaleString()}
+            {tokensLabel}
           </Badge>
         </div>
       </div>
@@ -132,6 +139,7 @@ function ContextSection({
   searchQuery?: string;
   onFileSelect?: (file: ContextFile) => void;
 }) {
+  const { t } = useTranslation('common');
   const totalTokens = files.reduce((sum, f) => sum + f.tokenCount, 0);
 
   // Filter files by search if query exists
@@ -152,6 +160,34 @@ function ContextSection({
 
   const filteredCount = filteredFiles.length;
 
+  const totalMatchesLabel = React.useMemo(() => (
+    totalMatches === 1
+      ? t('contextPage.badges.matchesSingular', { count: totalMatches })
+      : t('contextPage.badges.matchesPlural', { count: totalMatches })
+  ), [t, totalMatches]);
+
+  const filesLabel = React.useMemo(() => {
+    if (filteredCount === files.length) {
+      return filteredCount === 1
+        ? t('contextPage.badges.filesSingular', { count: filteredCount })
+        : t('contextPage.badges.filesPlural', { count: filteredCount });
+    }
+    return t('contextPage.badges.filesFiltered', { count: filteredCount, total: files.length });
+  }, [files.length, filteredCount, t]);
+
+  const tokensLabel = React.useMemo(
+    () => t('contextPage.badges.tokens', { formattedCount: totalTokens.toLocaleString() }),
+    [t, totalTokens]
+  );
+
+  const emptyTitle = searchQuery
+    ? t('contextPage.search.noMatchesTitle')
+    : emptyMessage;
+
+  const emptyDescription = searchQuery
+    ? t('contextPage.search.noMatchesDescription')
+    : t('contextPage.search.noFilesDescription');
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -169,17 +205,15 @@ function ContextSection({
             <div className="flex items-center gap-2">
               {searchQuery && totalMatches > 0 && (
                 <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                  {totalMatches} {totalMatches === 1 ? 'match' : 'matches'}
+                  {totalMatchesLabel}
                 </Badge>
               )}
               <Badge variant="secondary" className="text-xs">
-                {filteredCount === files.length
-                  ? `${filteredCount} ${filteredCount === 1 ? 'file' : 'files'}`
-                  : `${filteredCount} of ${files.length} files`}
+                {filesLabel}
               </Badge>
               <Badge variant="outline" className={cn('text-xs', getTotalTokenColor(totalTokens))}>
                 <Coins className="h-3 w-3 mr-1" />
-                {totalTokens.toLocaleString()} tokens
+                {tokensLabel}
               </Badge>
             </div>
           )}
@@ -189,8 +223,8 @@ function ContextSection({
         {filteredFiles.length === 0 ? (
           <EmptyState
             icon={AlertCircle}
-            title={searchQuery ? 'No matches found' : emptyMessage}
-            description={searchQuery ? 'Try adjusting your search query' : 'No files in this category'}
+            title={emptyTitle}
+            description={emptyDescription}
             suggestion={searchQuery ? undefined : emptySuggestion}
           />
         ) : (
@@ -214,7 +248,7 @@ export function ContextClient({ context }: ContextClientProps) {
   const [copiedAll, setCopiedAll] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedFile, setSelectedFile] = React.useState<ContextFile | null>(null);
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
 
   // Collect all content for "Copy All" feature
   const handleCopyAll = async () => {
@@ -346,11 +380,13 @@ export function ContextClient({ context }: ContextClientProps) {
             <div className="flex items-center gap-2 text-sm">
               {totalMatches > 0 ? (
                 <Badge variant="secondary" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                  {totalMatches} {totalMatches === 1 ? 'match' : 'matches'} found
+                  {totalMatches === 1
+                    ? t('contextPage.badges.matchesFoundSingular', { count: totalMatches })
+                    : t('contextPage.badges.matchesFoundPlural', { count: totalMatches })}
                 </Badge>
               ) : (
                 <span className="text-muted-foreground">
-                  No matches for "{searchQuery}"
+                  {t('contextPage.searchNoMatches', { query: searchQuery })}
                 </span>
               )}
             </div>
@@ -364,13 +400,13 @@ export function ContextClient({ context }: ContextClientProps) {
                   <Coins className={cn('h-5 w-5', getTotalTokenColor(context.totalTokens))} />
                   <span className="text-sm">
                     <strong className={getTotalTokenColor(context.totalTokens)}>
-                      {context.totalTokens.toLocaleString()} total tokens
+                      {t('contextPage.summary.totalTokens', { formattedCount: context.totalTokens.toLocaleString() })}
                     </strong>
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Info className="h-4 w-4" />
-                  Context budget for AI agents
+                  {t('contextPage.summary.contextBudget')}
                 </div>
               </div>
             </CardContent>
@@ -382,36 +418,36 @@ export function ContextClient({ context }: ContextClientProps) {
       <div className="space-y-6">
         {/* Agent Instructions */}
         <ContextSection
-          title="Agent Instructions"
-          description="AI agent configuration and workflow guidelines"
+          title={t('contextPage.sections.agents.title')}
+          description={t('contextPage.sections.agents.description')}
           icon={BookOpen}
           files={context.agentInstructions}
-          emptyMessage="No agent instructions found"
-          emptySuggestion="Create AGENTS.md or other agent files"
+          emptyMessage={t('contextPage.sections.agents.empty')}
+          emptySuggestion={t('contextPage.sections.agents.suggestion')}
           searchQuery={searchQuery}
           onFileSelect={setSelectedFile}
         />
 
         {/* Configuration */}
         <ContextSection
-          title="Configuration"
-          description="LeanSpec project configuration"
+          title={t('contextPage.sections.config.title')}
+          description={t('contextPage.sections.config.description')}
           icon={Settings}
           files={context.config.file ? [context.config.file] : []}
-          emptyMessage="No configuration file found"
-          emptySuggestion="Initialize with 'lean-spec init'"
+          emptyMessage={t('contextPage.sections.config.empty')}
+          emptySuggestion={t('contextPage.sections.config.suggestion')}
           searchQuery={searchQuery}
           onFileSelect={setSelectedFile}
         />
 
         {/* Project Documentation */}
         <ContextSection
-          title="Project Documentation"
-          description="README, contributing guidelines, and other docs"
+          title={t('contextPage.sections.docs.title')}
+          description={t('contextPage.sections.docs.description')}
           icon={FileText}
           files={context.projectDocs}
-          emptyMessage="No project documentation found"
-          emptySuggestion="Add README.md or CONTRIBUTING.md"
+          emptyMessage={t('contextPage.sections.docs.empty')}
+          emptySuggestion={t('contextPage.sections.docs.suggestion')}
           searchQuery={searchQuery}
           onFileSelect={setSelectedFile}
         />
@@ -423,9 +459,9 @@ export function ContextClient({ context }: ContextClientProps) {
           <CardContent className="py-12">
             <EmptyState
               icon={BookOpen}
-              title="No context files found"
-              description="This project doesn't have any context files yet"
-              suggestion="Add AGENTS.md, README.md, or other documentation files"
+              title={t('contextPage.emptyState.title')}
+              description={t('contextPage.emptyState.description')}
+              suggestion={t('contextPage.emptyState.suggestion')}
             />
           </CardContent>
         </Card>

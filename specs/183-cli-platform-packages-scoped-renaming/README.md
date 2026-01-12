@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2025-12-18
 priority: medium
 tags:
@@ -7,9 +7,8 @@ tags:
 - distribution
 - breaking-change
 created_at: 2025-12-18T13:48:54.278021Z
-updated_at: 2025-12-18T14:06:10.382947Z
+updated_at: 2026-01-12T08:27:41.583704878Z
 ---
-
 # Rename CLI Platform Packages to @leanspec/cli-* Scope
 
 > **Status**: planned · **Priority**: medium · **Created**: 2025-12-18

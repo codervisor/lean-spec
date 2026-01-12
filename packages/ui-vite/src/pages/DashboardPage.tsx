@@ -33,11 +33,12 @@ export function DashboardPage() {
       setStats(statsData);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      console.error('Failed to load dashboard data', err);
+      setError(t('dashboard.state.errorDescription'));
     } finally {
       setLoading(false);
     }
-  }, [currentProject, projectLoading]);
+  }, [currentProject, projectLoading, t]);
 
   useEffect(() => {
     void loadData();

@@ -195,11 +195,11 @@ export function ProjectsPage() {
     } catch {
       setValidationStates(prev => ({
         ...prev,
-        [projectId]: { status: 'invalid', error: 'Failed to validate' }
+        [projectId]: { status: 'invalid', error: t('projects.validationFailed') }
       }));
       // toast.error('Failed to validate project');
     }
-  }, []);
+  }, [t]);
 
   const getValidationIcon = (projectId: string) => {
     const state = validationStates[projectId];
@@ -213,7 +213,7 @@ export function ProjectsPage() {
     }
     if (state.status === 'invalid') {
       return (
-        <span title={state.error || 'Invalid project'}>
+        <span title={state.error || t('projects.validationFailed')}>
           <AlertTriangle className="h-4 w-4 text-destructive" />
         </span>
       );

@@ -39,7 +39,9 @@ async fn test_add_project_and_get_detail() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(temp_dir.path());
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let app = create_router(state);
 
     let (status, body) = make_json_request(
@@ -133,7 +135,8 @@ async fn test_delete_nonexistent_project() {
 
 #[tokio::test]
 async fn test_add_invalid_project_path() {
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+    let state = create_empty_state(&registry_dir).await;
     let app = create_router(state);
 
     let (status, _body) = make_json_request(
@@ -193,7 +196,9 @@ async fn test_get_project_context() {
     )
     .unwrap();
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let app = create_router(state);
 
     // Add project

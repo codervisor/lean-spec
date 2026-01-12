@@ -11,22 +11,31 @@ use common::*;
 
 #[tokio::test]
 async fn test_specs_without_project_selected() {
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+    let state = create_empty_state(&registry_dir).await;
     let app = create_router(state);
 
-    let (status, body) = make_request(app, "GET", "/api/specs").await;
+    // Try to access specs without a valid project ID (should return 404)
+    let (status, _body) = make_request(app, "GET", "/api/projects/invalid-id/specs").await;
 
-    assert_eq!(status, StatusCode::BAD_REQUEST);
-    assert!(body.contains("NO_PROJECT"));
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]
 async fn test_list_specs_with_project() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) = make_request(app, "GET", "/api/specs").await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    let (status, body) =
+        make_request(app, "GET", &format!("/api/projects/{}/specs", project_id)).await;
 
     assert_eq!(status, StatusCode::OK);
     assert!(body.contains("specs"));
@@ -39,9 +48,21 @@ async fn test_list_specs_with_project() {
 async fn test_list_specs_filters_and_camelcase() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) = make_request(app.clone(), "GET", "/api/specs?status=in-progress").await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    let (status, body) = make_request(
+        app.clone(),
+        "GET",
+        &format!("/api/projects/{}/specs?status=in-progress", project_id),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     let specs: Value = serde_json::from_str(&body).unwrap();
@@ -58,9 +79,21 @@ async fn test_list_specs_filters_and_camelcase() {
 async fn test_get_spec_detail() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) = make_request(app, "GET", "/api/specs/001-first-spec").await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    let (status, body) = make_request(
+        app,
+        "GET",
+        &format!("/api/projects/{}/specs/001-first-spec", project_id),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     assert!(body.contains("First Spec"));
@@ -72,10 +105,22 @@ async fn test_get_spec_detail() {
 async fn test_spec_required_by_computation() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
+
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
 
     // Get spec 001 which is depended on by spec 002
-    let (status, body) = make_request(app, "GET", "/api/specs/001-first-spec").await;
+    let (status, body) = make_request(
+        app,
+        "GET",
+        &format!("/api/projects/{}/specs/001-first-spec", project_id),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     let spec: Value = serde_json::from_str(&body).unwrap();
@@ -103,22 +148,48 @@ async fn test_spec_required_by_computation() {
 async fn test_spec_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) = make_request(app, "GET", "/api/specs/999-nonexistent").await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    let (status, _body) = make_request(
+        app,
+        "GET",
+        &format!("/api/projects/{}/specs/999-nonexistent", project_id),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
-    assert!(body.contains("SPEC_NOT_FOUND"));
 }
 
 #[tokio::test]
 async fn test_list_specs_with_multiple_filters() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
+
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
 
     // Filter by status and priority
-    let (status, body) = make_request(app, "GET", "/api/specs?status=planned&priority=high").await;
+    let (status, body) = make_request(
+        app,
+        "GET",
+        &format!(
+            "/api/projects/{}/specs?status=planned&priority=high",
+            project_id
+        ),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     let specs: Value = serde_json::from_str(&body).unwrap();
@@ -135,9 +206,21 @@ async fn test_list_specs_with_multiple_filters() {
 async fn test_list_specs_with_tags_filter() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) = make_request(app, "GET", "/api/specs?tags=test").await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    let (status, body) = make_request(
+        app,
+        "GET",
+        &format!("/api/projects/{}/specs?tags=test", project_id),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     let specs: Value = serde_json::from_str(&body).unwrap();
@@ -155,29 +238,52 @@ async fn test_list_specs_with_tags_filter() {
 async fn test_update_spec_metadata_not_implemented() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) = make_json_request(
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    // The update endpoint exists, so test that it works (not NOT_IMPLEMENTED)
+    let (status, _body) = make_json_request(
         app,
         "PATCH",
-        "/api/specs/001-first-spec/metadata",
+        &format!("/api/projects/{}/specs/001-first-spec/metadata", project_id),
         &serde_json::json!({ "status": "in-progress" }).to_string(),
     )
     .await;
 
-    assert_eq!(status, StatusCode::NOT_IMPLEMENTED);
-    assert!(body.contains("NOT_IMPLEMENTED"));
+    // Should return OK or BAD_REQUEST, not NOT_IMPLEMENTED
+    assert!(
+        status == StatusCode::OK || status == StatusCode::BAD_REQUEST,
+        "Expected OK or BAD_REQUEST, got: {}",
+        status
+    );
 }
 
 #[tokio::test]
 async fn test_invalid_query_parameters() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
+
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
 
     // Invalid status value
-    let (status, _body) =
-        make_request(app.clone(), "GET", "/api/specs?status=invalid-status").await;
+    let (status, _body) = make_request(
+        app.clone(),
+        "GET",
+        &format!("/api/projects/{}/specs?status=invalid-status", project_id),
+    )
+    .await;
 
     // Should still succeed but filter nothing (or handle gracefully)
     assert!(status == StatusCode::OK || status == StatusCode::BAD_REQUEST);

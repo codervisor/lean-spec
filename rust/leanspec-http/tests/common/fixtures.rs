@@ -8,6 +8,13 @@ use tempfile::TempDir;
 
 use leanspec_http::{AppState, ProjectRegistry, ServerConfig};
 
+fn test_registry_file(temp_dir: &TempDir) -> std::path::PathBuf {
+    temp_dir
+        .path()
+        .join(".lean-spec-test")
+        .join("projects.json")
+}
+
 /// Create a test project with some specs
 pub fn create_test_project(dir: &Path) {
     let specs_dir = dir.join("specs");
@@ -177,7 +184,7 @@ pub async fn create_test_state(temp_dir: &TempDir) -> AppState {
     create_test_project(temp_dir.path());
 
     let config = ServerConfig::default();
-    let registry = ProjectRegistry::default();
+    let registry = ProjectRegistry::new_with_file_path(test_registry_file(temp_dir)).unwrap();
     let state = AppState::with_registry(config, registry);
 
     // Add project via the registry
@@ -190,8 +197,8 @@ pub async fn create_test_state(temp_dir: &TempDir) -> AppState {
 }
 
 /// Create a test state without any project
-pub async fn create_empty_state() -> AppState {
+pub async fn create_empty_state(temp_dir: &TempDir) -> AppState {
     let config = ServerConfig::default();
-    let registry = ProjectRegistry::default();
+    let registry = ProjectRegistry::new_with_file_path(test_registry_file(temp_dir)).unwrap();
     AppState::with_registry(config, registry)
 }

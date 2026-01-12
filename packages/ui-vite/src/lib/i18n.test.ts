@@ -24,9 +24,9 @@ describe('i18n configuration', () => {
     expect(i18n.t('navigation.home', { ns: 'common' })).toBe('首页');
   });
 
-  it('should keep "Spec" in English for Chinese locale', async () => {
+  it('should translate Spec label to Chinese', async () => {
     await i18n.changeLanguage('zh-CN');
-    expect(i18n.t('spec.spec', { ns: 'common' })).toBe('Spec');
+    expect(i18n.t('spec.spec', { ns: 'common' })).toBe('规范');
   });
 
   it('should translate status terms', async () => {

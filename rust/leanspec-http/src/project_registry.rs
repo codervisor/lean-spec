@@ -180,6 +180,20 @@ impl ProjectRegistry {
         Ok(registry)
     }
 
+    /// Create a new registry using a specific registry file path.
+    ///
+    /// This is primarily useful for tests to avoid touching the user's real
+    /// `~/.lean-spec/projects.json`.
+    pub fn new_with_file_path(file_path: PathBuf) -> Result<Self, ServerError> {
+        let mut registry = Self {
+            projects: HashMap::new(),
+            file_path,
+        };
+
+        registry.load()?;
+        Ok(registry)
+    }
+
     /// Load projects from disk
     pub fn load(&mut self) -> Result<(), ServerError> {
         if !self.file_path.exists() {

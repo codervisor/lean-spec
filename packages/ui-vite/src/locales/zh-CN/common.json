@@ -110,7 +110,12 @@
     "local": "本地",
     "noProjectsFound": "未找到项目",
     "getStarted": "开始创建您的第一个 LeanSpec 项目。",
-    "searchPlaceholder": "搜索项目..."
+    "searchPlaceholder": "搜索项目...",
+    "errors": {
+      "load": "无法加载项目",
+      "switch": "无法切换项目",
+      "noProjectSelected": "未选择项目，请先选择或创建一个项目。"
+    }
   },
   "projectsPage": {
     "title": "项目",

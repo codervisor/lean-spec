@@ -1,23 +1,22 @@
 ---
-status: in-progress
-created: '2026-01-06'
+status: complete
+created: 2026-01-06
 priority: medium
 tags:
-  - ui-vite
-  - refactoring
-  - architecture
-  - tech-debt
-  - api
+- ui-vite
+- refactoring
+- architecture
+- tech-debt
+- api
 depends_on:
-  - 193-frontend-ui-parity
-  - 198-ui-vite-remaining-issues
-created_at: '2026-01-06T15:10:01.548099Z'
-updated_at: '2026-01-07T08:12:23.262Z'
+- 193-frontend-ui-parity
+- 198-ui-vite-remaining-issues
+created_at: 2026-01-06T15:10:01.548099Z
+updated_at: 2026-01-12T08:26:39.209525424Z
 transitions:
-  - status: in-progress
-    at: '2026-01-06T15:25:16.946Z'
+- status: in-progress
+  at: 2026-01-06T15:25:16.946Z
 ---
-
 # UI-Vite Backend Adapter Migration
 
 > **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2026-01-06 · **Tags**: ui-vite, refactoring, architecture, tech-debt, api

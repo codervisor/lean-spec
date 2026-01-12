@@ -84,12 +84,6 @@
         "coverage/**"
       ]
     },
-    "test:api": {
-      "cache": false,
-      "outputs": [
-        "coverage/**"
-      ]
-    },
     "lint": {
       "outputs": []
     },

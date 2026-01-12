@@ -34,10 +34,10 @@ describe('i18n configuration', () => {
     expect(translated).toBe('Home');
   });
 
-  it('should keep "Spec" term in English for Chinese locale', () => {
+  it('should translate "Spec" term to Chinese', () => {
     i18n.changeLanguage('zh-CN');
     const translated = i18n.t('spec.spec', { ns: 'common' });
-    expect(translated).toBe('Spec');
+    expect(translated).toBe('规范');
   });
 
   it('should translate status terms correctly in Chinese', () => {

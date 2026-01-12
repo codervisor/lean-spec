@@ -54,12 +54,12 @@ export function StatsPage() {
       setSpecs(Array.isArray(specsData) ? specsData : []);
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load statistics';
-      setError(message);
+      console.error('Failed to load statistics', err);
+      setError(t('statsPage.state.errorDescription'));
     } finally {
       setLoading(false);
     }
-  }, [currentProject, projectLoading]);
+  }, [currentProject, projectLoading, t]);
 
   useEffect(() => {
     void loadStats();

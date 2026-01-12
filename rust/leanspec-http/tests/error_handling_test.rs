@@ -14,9 +14,23 @@ use common::*;
 async fn test_malformed_json_request() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, _body) = make_json_request(app, "POST", "/api/search", "{ invalid json").await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    // Test malformed JSON on a POST endpoint
+    let (status, _body) = make_json_request(
+        app,
+        "POST",
+        &format!("/api/projects/{}/search", project_id),
+        "{ invalid json",
+    )
+    .await;
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
 }
