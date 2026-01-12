@@ -109,31 +109,17 @@
     "completion": "完成度",
     "local": "本地",
     "noProjectsFound": "未找到项目",
-    "getStarted": "开始创建您的第一个 LeanSpec 项目。"
+    "getStarted": "开始创建您的第一个 LeanSpec 项目。",
+    "searchPlaceholder": "搜索项目...",
+    "errors": {
+      "load": "无法加载项目",
+      "switch": "无法切换项目",
+      "noProjectSelected": "未选择项目，请先选择或创建一个项目。"
+    }
   },
   "projectsPage": {
     "title": "项目",
     "description": "管理你的 LeanSpec 工作区。"
-  },
-  "settingsPage": {
-    "title": "项目",
-    "description": "管理您的 LeanSpec 项目和工作区。",
-    "refresh": "刷新",
-    "loading": "正在加载设置...",
-    "searchPlaceholder": "搜索项目...",
-    "projectNameEmpty": "项目名称不能为空",
-    "failedUpdateName": "无法更新项目名称",
-    "failedUpdateColor": "无法更新项目颜色",
-    "failedValidate": "无法校验项目",
-    "failedFavorite": "无法更新收藏状态",
-    "failedDelete": "无法删除项目",
-    "failedSwitch": "无法切换项目",
-    "validationFailed": "校验失败",
-    "invalidProject": "无效的项目",
-    "noProjectsMatchSearch": "没有找到匹配的项目。",
-    "deleteProject": "删除项目",
-    "deleteDescription": "这将从 LeanSpec 中移除项目，但不会删除磁盘上的文件。",
-    "delete": "删除"
   },
   "quickSearch": {
     "button": "快速搜索...",
@@ -215,10 +201,6 @@
       "hide": "收起筛选"
     },
     "clearFilters": "重置",
-    "status": "状态",
-    "priority": "优先级",
-    "tags": "标签",
-    "selected": "已选",
     "select": {
       "status": {
         "label": "状态",
@@ -251,7 +233,7 @@
       "enter": "进入宽屏模式",
       "exit": "退出宽屏模式"
     },
-    "searchPlaceholder": "搜索 Spec...",
+    "searchPlaceholder": "搜索规范...",
     "filters": {
       "status": "状态",
       "priority": "优先级",
@@ -488,7 +470,10 @@
     },
     "errors": {
       "list": "无法加载上下文文件",
-      "file": "无法加载文件"
+      "file": "无法加载文件",
+      "loadFailed": "无法加载项目上下文",
+      "noProject": "未选择项目",
+      "noProjectDescription": "请选择或创建一个项目以查看其上下文文件。"
     }
   },
   "specTimeline": {
@@ -517,6 +502,13 @@
       "dependsOnSubtitle": "必须先完成",
       "requiredBy": "被依赖",
       "requiredBySubtitle": "受此规范阻塞"
+    },
+    "statusSubtitles": {
+      "completed": "已完成",
+      "inProgress": "进行中",
+      "plannedBlocking": "必须先完成",
+      "plannedCanProceed": "可以继续",
+      "archived": "已归档"
     }
   },
   "dependenciesPage": {

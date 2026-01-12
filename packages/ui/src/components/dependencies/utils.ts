@@ -26,12 +26,12 @@ export function getConnectionDepths(
   // downstreamMap: target → sources (specs that depend on target)
   const upstreamMap = new Map<string, Set<string>>();
   const downstreamMap = new Map<string, Set<string>>();
-  
+
   edges.forEach((e) => {
     // source depends on target, so target is upstream of source
     if (!upstreamMap.has(e.source)) upstreamMap.set(e.source, new Set());
     upstreamMap.get(e.source)!.add(e.target);
-    
+
     // source depends on target, so source is downstream of target
     if (!downstreamMap.has(e.target)) downstreamMap.set(e.target, new Set());
     downstreamMap.get(e.target)!.add(e.source);
@@ -98,15 +98,9 @@ export function layoutGraph(
   if (nodes.length === 0) return { nodes: [], edges: [] };
 
   const mode = options.mode ?? 'graph';
-  const upstreamIds = options.upstreamIds ?? new Set<string>();
-  const downstreamIds = options.downstreamIds ?? new Set<string>();
 
   if (mode === 'focus' && options.focusedNodeId) {
-    return layeredLayout(nodes, edges, isCompact, {
-      focusedNodeId: options.focusedNodeId,
-      upstreamIds,
-      downstreamIds,
-    });
+    return layeredLayout(nodes, edges, isCompact);
   }
 
   const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
@@ -215,19 +209,14 @@ function layeredLayout(
   nodes: Node<SpecNodeData>[],
   edges: Edge[],
   isCompact: boolean,
-  params: {
-    focusedNodeId: string;
-    upstreamIds: Set<string>;
-    downstreamIds: Set<string>;
-  }
 ): { nodes: Node<SpecNodeData>[]; edges: Edge[] } {
   // Use dagre for consistent hierarchical layout
   // This preserves the structure of complex dependency chains (A->B->C)
   // instead of flattening them into just "upstream" and "downstream" buckets
-  
+
   const width = isCompact ? COMPACT_NODE_WIDTH : NODE_WIDTH;
   const height = isCompact ? COMPACT_NODE_HEIGHT : NODE_HEIGHT;
-  
+
   const graph = new dagre.graphlib.Graph();
   graph.setGraph({
     rankdir: 'LR', // Consistent with main graph

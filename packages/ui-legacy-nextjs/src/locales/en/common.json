@@ -46,7 +46,6 @@
     "delete": "Delete",
     "add": "Add",
     "archive": "Archive",
-    "view": "View",
     "edit": "Edit",
     "save": "Save",
     "cancel": "Cancel",
@@ -63,6 +62,7 @@
     "validate": "Validate",
     "remove": "Remove",
     "report": "Report",
+    "view": "View",
     "open": "Open"
   },
   "spec": {
@@ -109,17 +109,31 @@
     "completion": "Completion",
     "local": "Local",
     "noProjectsFound": "No projects found",
-    "getStarted": "Get started by creating your first LeanSpec project.",
-    "searchPlaceholder": "Search projects...",
-    "errors": {
-      "load": "Failed to load projects",
-      "switch": "Failed to switch project",
-      "noProjectSelected": "No project selected. Please select a project first."
-    }
+    "getStarted": "Get started by creating your first LeanSpec project."
   },
   "projectsPage": {
     "title": "Projects",
     "description": "Manage your LeanSpec projects and workspaces."
+  },
+  "settingsPage": {
+    "title": "Projects",
+    "description": "Manage your LeanSpec projects and workspaces.",
+    "refresh": "Refresh",
+    "loading": "Loading settings...",
+    "searchPlaceholder": "Search projects...",
+    "projectNameEmpty": "Project name cannot be empty",
+    "failedUpdateName": "Failed to update project name",
+    "failedUpdateColor": "Failed to update project color",
+    "failedValidate": "Failed to validate project",
+    "failedFavorite": "Failed to update favorite state",
+    "failedDelete": "Failed to delete project",
+    "failedSwitch": "Failed to switch project",
+    "validationFailed": "Validation failed",
+    "invalidProject": "Invalid project",
+    "noProjectsMatchSearch": "We couldn't find any projects matching your search.",
+    "deleteProject": "Delete project",
+    "deleteDescription": "This will remove the project from LeanSpec. It will not delete files on disk.",
+    "delete": "Delete"
   },
   "quickSearch": {
     "button": "Quick search...",
@@ -201,6 +215,10 @@
       "hide": "Hide filters"
     },
     "clearFilters": "Clear",
+    "status": "Status",
+    "priority": "Priority",
+    "tags": "Tags",
+    "selected": "selected",
     "select": {
       "status": {
         "label": "Status",
@@ -470,10 +488,7 @@
     },
     "errors": {
       "list": "Failed to load context files",
-      "file": "Failed to load file",
-      "loadFailed": "Unable to load project context",
-      "noProject": "No project selected",
-      "noProjectDescription": "Please select or create a project to view its context files."
+      "file": "Failed to load file"
     }
   },
   "specTimeline": {
@@ -502,13 +517,6 @@
       "dependsOnSubtitle": "Must complete first",
       "requiredBy": "Required By",
       "requiredBySubtitle": "Blocked by this spec"
-    },
-    "statusSubtitles": {
-      "completed": "Completed",
-      "inProgress": "In progress",
-      "plannedBlocking": "Must complete first",
-      "plannedCanProceed": "Can proceed",
-      "archived": "Archived"
     }
   },
   "dependenciesPage": {

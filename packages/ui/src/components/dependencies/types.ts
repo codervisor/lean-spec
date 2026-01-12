@@ -1,4 +1,4 @@
-import type { ProjectDependencyGraph } from '@/app/api/dependencies/route';
+import type { DependencyGraph } from '../../types/api';
 
 export type GraphTone = 'planned' | 'in-progress' | 'complete' | 'archived';
 
@@ -18,7 +18,7 @@ export interface SpecNodeData {
   isSecondary?: boolean; // Shown due to critical path, not primary filter
 }
 
-export type SpecNode = ProjectDependencyGraph['nodes'][0];
+export type SpecNode = DependencyGraph['nodes'][0];
 
 // Specs grouped by their depth level from the focused node
 export interface SpecsByDepth {

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-12
 priority: high
 tags:
@@ -10,7 +10,10 @@ tags:
 - rust
 - cleanup
 created_at: 2026-01-12T13:27:28.890238Z
-updated_at: 2026-01-12T13:27:28.890238Z
+updated_at: 2026-01-12T13:34:02.981347Z
+transitions:
+- status: in-progress
+  at: 2026-01-12T13:34:02.981347Z
 ---
 
 ## Overview

@@ -59,13 +59,13 @@ export function formatDuration(
   locale?: string
 ): string {
   if (!start || !end) return '';
-
+  
   const startDate = dayjs(start);
   const endDate = dayjs(end);
   const diffMs = endDate.diff(startDate);
-
+  
   if (diffMs < 0) return '';
-
+  
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -73,47 +73,47 @@ export function formatDuration(
 
   const unitFormatters = chinese
     ? {
-      minute: (value: number) => `${value} 分钟`,
-      hour: (value: number) => `${value} 小时`,
-      day: (value: number) => `${value} 天`,
-      month: (value: number) => `${value} 个月`,
-      year: (value: number) => `${value} 年`,
-    }
+        minute: (value: number) => `${value} 分钟`,
+        hour: (value: number) => `${value} 小时`,
+        day: (value: number) => `${value} 天`,
+        month: (value: number) => `${value} 个月`,
+        year: (value: number) => `${value} 年`,
+      }
     : {
-      minute: (value: number) => `${value}m`,
-      hour: (value: number) => `${value}h`,
-      day: (value: number) => `${value}d`,
-      month: (value: number) => `${value}mo`,
-      year: (value: number) => `${value}y`,
-    };
+        minute: (value: number) => `${value}m`,
+        hour: (value: number) => `${value}h`,
+        day: (value: number) => `${value}d`,
+        month: (value: number) => `${value}mo`,
+        year: (value: number) => `${value}y`,
+      };
 
   const joinValues = (...parts: string[]) => parts.filter(Boolean).join(chinese ? ' ' : ' ');
   const lessThanMinute = chinese ? '小于 1 分钟' : '< 1m';
-
+  
   if (days === 0 && hours === 0) {
     if (minutes === 0) return lessThanMinute;
     return unitFormatters.minute(minutes);
   }
-
+  
   if (days === 0) {
     return unitFormatters.hour(hours);
   }
-
+  
   if (days < 30) {
     return hours > 0
       ? joinValues(unitFormatters.day(days), unitFormatters.hour(hours))
       : unitFormatters.day(days);
   }
-
+  
   const months = Math.floor(days / 30);
   const remainingDays = days % 30;
-
+  
   if (months < 12) {
     return remainingDays > 0
       ? joinValues(unitFormatters.month(months), unitFormatters.day(remainingDays))
       : unitFormatters.month(months);
   }
-
+  
   const years = Math.floor(months / 12);
   const remainingMonths = months % 12;
   return remainingMonths > 0
