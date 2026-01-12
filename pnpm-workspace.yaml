@@ -2,7 +2,6 @@ packages:
   - packages/*
   - packages/cli/binaries/*
   - packages/http-server/binaries/*
-  - tests/*
 
 ignoredBuiltDependencies:
   - core-js
