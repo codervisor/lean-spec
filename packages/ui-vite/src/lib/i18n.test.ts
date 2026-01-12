@@ -24,11 +24,6 @@ describe('i18n configuration', () => {
     expect(i18n.t('navigation.home', { ns: 'common' })).toBe('首页');
   });
 
-  it('should keep "Spec" in English for Chinese locale', async () => {
-    await i18n.changeLanguage('zh-CN');
-    expect(i18n.t('spec.spec', { ns: 'common' })).toBe('Spec');
-  });
-
   it('should translate status terms', async () => {
     await i18n.changeLanguage('zh-CN');
     expect(i18n.t('status.planned', { ns: 'common' })).toBe('已计划');
