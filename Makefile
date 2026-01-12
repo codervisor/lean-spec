@@ -26,6 +26,7 @@ help:
 	@echo "  make rust-dev     - Build Rust binaries (dev)"
 	@echo "  make rust-test    - Run Rust tests"
 	@echo "  make rust-check   - Check Rust code"
+	@echo "  make rust-clippy  - Run clippy with warnings as errors"
 	@echo "  make rust-fmt     - Format Rust code"
 	@echo "  make rust-clean   - Clean Rust build artifacts"
 	@echo ""
@@ -83,6 +84,8 @@ lint:
 
 pre-release:
 	pnpm pre-release
+	@echo "Running Rust clippy checks..."
+	$(MAKE) rust-clippy
 
 # Rust Development
 rust-build:

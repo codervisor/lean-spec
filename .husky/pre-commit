@@ -1,2 +1,6 @@
-# Format Rust code
+# Format Rust code and run clippy
+echo "Formatting Rust code..."
 cd rust && cargo fmt --all
+
+echo "Running clippy checks..."
+cargo clippy --all -- -D warnings

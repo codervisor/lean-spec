@@ -265,7 +265,7 @@ fn read_context_file(
         .unwrap()
         .as_secs();
     let last_modified =
-        chrono::DateTime::from_timestamp(modified as i64, 0).unwrap_or_else(|| chrono::Utc::now());
+        chrono::DateTime::from_timestamp(modified as i64, 0).unwrap_or_else(chrono::Utc::now);
 
     let relative_path = file_path
         .strip_prefix(project_root)

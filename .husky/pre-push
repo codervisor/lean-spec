@@ -1,0 +1,11 @@
+#!/bin/sh
+# Run full validation before pushing
+echo "🦀 Running Rust clippy checks before push..."
+cargo clippy --manifest-path rust/Cargo.toml -- -D warnings
+
+if [ $? -ne 0 ]; then
+  echo "❌ Clippy checks failed! Fix the warnings before pushing."
+  exit 1
+fi
+
+echo "✅ All Rust checks passed!"

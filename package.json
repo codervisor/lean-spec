@@ -20,11 +20,12 @@
 		"test:coverage": "vitest run --coverage",
 		"typecheck": "turbo run typecheck",
 		"lint": "turbo run lint",
+		"lint:rust": "cargo clippy --manifest-path rust/Cargo.toml -- -D warnings",
 		"format": "turbo run format",
 		"clean": "turbo run clean && cargo clean --manifest-path rust/Cargo.toml",
 		"docs:dev": "pnpm --filter docs-site start",
 		"docs:build": "pnpm --filter docs-site build",
-		"pre-release": "pnpm build && pnpm typecheck && pnpm test",
+		"pre-release": "pnpm build && pnpm typecheck && pnpm test && pnpm lint:rust",
 		"sync:versions": "tsx scripts/sync-versions.ts && tsx scripts/sync-rust-versions.ts",
 		"cli": "node bin/lean-spec.js"
 	}
