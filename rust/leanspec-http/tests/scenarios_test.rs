@@ -17,7 +17,9 @@ async fn test_switch_project_and_refresh_cleanup() {
     create_test_project(first_project.path());
     create_test_project(second_project.path());
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let app = create_router(state);
 
     // Add first project

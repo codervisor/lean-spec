@@ -11,7 +11,8 @@ use common::*;
 
 #[tokio::test]
 async fn test_specs_without_project_selected() {
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+    let state = create_empty_state(&registry_dir).await;
     let app = create_router(state);
 
     // Try to access specs without a valid project ID (should return 404)

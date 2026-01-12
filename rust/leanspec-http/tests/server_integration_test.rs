@@ -80,7 +80,9 @@ async fn test_server_add_and_remove_project() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(temp_dir.path());
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let (addr, handle) = start_test_server(state).await;
 
     let client = Client::new();
@@ -137,7 +139,9 @@ async fn test_server_get_specs() {
     let temp_dir = TempDir::new().unwrap();
     create_test_project(temp_dir.path());
 
-    let state = create_empty_state().await;
+    let registry_dir = TempDir::new().unwrap();
+
+    let state = create_empty_state(&registry_dir).await;
     let (addr, handle) = start_test_server(state).await;
 
     let client = Client::new();

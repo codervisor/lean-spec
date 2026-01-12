@@ -81,8 +81,14 @@ async fn test_empty_project_stats() {
     let temp_dir = TempDir::new().unwrap();
     create_empty_project(temp_dir.path());
 
+    let registry_dir = TempDir::new().unwrap();
+    let registry_file = registry_dir
+        .path()
+        .join(".lean-spec-test")
+        .join("projects.json");
+
     let config = leanspec_http::ServerConfig::default();
-    let registry = leanspec_http::ProjectRegistry::default();
+    let registry = leanspec_http::ProjectRegistry::new_with_file_path(registry_file).unwrap();
     let state = leanspec_http::AppState::with_registry(config, registry);
     {
         let mut reg = state.registry.write().await;
