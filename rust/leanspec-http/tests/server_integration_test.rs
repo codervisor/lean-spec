@@ -95,7 +95,7 @@ async fn test_server_add_and_remove_project() {
 
     assert_eq!(add_response.status(), StatusCode::OK);
     let add_body: serde_json::Value = add_response.json().await.unwrap();
-    let project_id = add_body["project"]["id"].as_str().unwrap();
+    let project_id = add_body["id"].as_str().unwrap();
 
     // Verify project exists
     let list_response = client
@@ -115,7 +115,7 @@ async fn test_server_add_and_remove_project() {
         .await
         .unwrap();
 
-    assert_eq!(remove_response.status(), StatusCode::OK);
+    assert_eq!(remove_response.status(), StatusCode::NO_CONTENT);
 
     // Verify project was removed
     let final_list = client
@@ -151,7 +151,7 @@ async fn test_server_get_specs() {
         .unwrap();
 
     let add_body: serde_json::Value = add_response.json().await.unwrap();
-    let project_id = add_body["project"]["id"].as_str().unwrap();
+    let project_id = add_body["id"].as_str().unwrap();
 
     // Get specs
     let specs_response = client

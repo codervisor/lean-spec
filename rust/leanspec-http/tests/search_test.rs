@@ -13,10 +13,22 @@ use common::*;
 async fn test_search_specs() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
 
-    let (status, body) =
-        make_json_request(app, "POST", "/api/search", r#"{"query": "test"}"#).await;
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
+
+    let (status, body) = make_json_request(
+        app,
+        "POST",
+        &format!("/api/projects/{}/search", project_id),
+        r#"{"query": "test"}"#,
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     assert!(body.contains("results"));
@@ -27,11 +39,23 @@ async fn test_search_specs() {
 async fn test_search_ranking_by_relevance() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
+
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
 
     // Search for "test" which appears in spec 001
-    let (status, body) =
-        make_json_request(app, "POST", "/api/search", r#"{"query": "test"}"#).await;
+    let (status, body) = make_json_request(
+        app,
+        "POST",
+        &format!("/api/projects/{}/search", project_id),
+        r#"{"query": "test"}"#,
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     let results: Value = serde_json::from_str(&body).unwrap();
@@ -51,14 +75,21 @@ async fn test_search_ranking_by_relevance() {
 async fn test_search_with_filters() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
+
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
 
     // Search with status filter
     let (status, body) = make_json_request(
         app,
         "POST",
-        "/api/search",
-        r#"{"query": "spec", "status": "planned"}"#,
+        &format!("/api/projects/{}/search", project_id),
+        r#"{"query": "spec", "filters": {"status": "planned"}}"#,
     )
     .await;
 
@@ -71,12 +102,19 @@ async fn test_search_with_filters() {
 async fn test_search_empty_results() {
     let temp_dir = TempDir::new().unwrap();
     let state = create_test_state(&temp_dir).await;
-    let app = create_router(state);
+    let app = create_router(state.clone());
+
+    // Get project ID
+    let project_id = {
+        let reg = state.registry.read().await;
+        let projects = reg.all();
+        projects.first().unwrap().id.clone()
+    };
 
     let (status, body) = make_json_request(
         app,
         "POST",
-        "/api/search",
+        &format!("/api/projects/{}/search", project_id),
         r#"{"query": "nonexistentquerystring123456"}"#,
     )
     .await;
