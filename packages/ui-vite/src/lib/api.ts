@@ -1,4 +1,5 @@
 import { getBackend, APIError, type BackendAdapter } from "./backend-adapter";
+import i18n from "./i18n";
 import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph } from "../types/api";
 
 /**
@@ -19,7 +20,7 @@ class ProjectAPI {
 
   getCurrentProjectId(): string {
     if (!this._currentProjectId) {
-      throw new Error('No project selected. Please select a project first.');
+      throw new Error(i18n.t('projects.errors.noProjectSelected', { ns: 'common' }));
     }
     return this._currentProjectId;
   }

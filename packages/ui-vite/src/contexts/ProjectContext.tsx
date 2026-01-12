@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { api } from '../lib/api';
+import i18n from '../lib/i18n';
 import type { Project, ProjectValidationResponse, ProjectsResponse } from '../types/api';
 
 interface ProjectContextValue {
@@ -61,8 +62,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const data: ProjectsResponse = await api.getProjects();
       applyProjects(data);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load projects';
-      setError(message);
+      console.error('Failed to load projects', err);
+      setError(i18n.t('projects.errors.load', { ns: 'common' }));
     } finally {
       setLoading(false);
     }
@@ -78,8 +79,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const data: ProjectsResponse = await api.getProjects();
       applyProjects(data);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to switch project';
-      setError(message);
+      console.error('Failed to switch project', err);
+      setError(i18n.t('projects.errors.switch', { ns: 'common' }));
       throw err;
     } finally {
       setLoading(false);

@@ -351,16 +351,16 @@ Test section summarizes automated i18n coverage and pending manual/QA items.
 
 **Translation Tests**:
 - [x] navigation.home translates to "首页"
-- [x] spec.spec remains "Spec" (not translated)
+- [ ] spec.spec translates to "规范"
+- [x] status.planned translates to "已计划"
+- [x] status.inProgress translates to "进行中"
+- [x] navigation.home translates to "首页"
+- [x] spec.spec translates to "规范"
 - [x] status.planned translates to "已计划"
 - [x] status.inProgress translates to "进行中"
 - [x] status.complete translates to "已完成"
 - [x] priority.high translates to "高"
 - [x] Fallback works for missing keys
-
-**Behavior Tests**:
-- [x] changeLanguage() persists to localStorage
-- [x] Browser detection loads correct locale on init
 
 ### Manual Testing Checklist
 

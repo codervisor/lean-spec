@@ -52,11 +52,12 @@ export function SpecsPage() {
       setSpecs(data);
       setError(null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load specs');
+      console.error('Failed to load specs', err);
+      setError(t('specsPage.state.errorDescription'));
     } finally {
       setLoading(false);
     }
-  }, [projectLoading, projectReady]);
+  }, [projectLoading, projectReady, t]);
 
   useEffect(() => {
     void loadSpecs();
