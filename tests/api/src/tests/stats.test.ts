@@ -102,7 +102,7 @@ describe('GET /api/projects/:projectId/stats', () => {
       return;
     }
 
-    const response = await apiClient.get(`/api/projects/${projectId}/stats`);
+    const response = await apiClient.get<StatsResponse>(`/api/projects/${projectId}/stats`);
     if (response.status !== 200) {
       return;
     }

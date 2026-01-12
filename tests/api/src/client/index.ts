@@ -15,6 +15,17 @@ export interface ApiResponse<T = unknown> {
 }
 
 /**
+ * Convert fetch Headers to plain object
+ */
+function headersToObject(headers: Headers): Record<string, string> {
+  const result: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    result[key] = value;
+  });
+  return result;
+}
+
+/**
  * API client for making HTTP requests to the LeanSpec server
  */
 export const apiClient = {
@@ -41,7 +52,7 @@ export const apiClient = {
 
     return {
       status: res.status,
-      headers: Object.fromEntries(res.headers),
+      headers: headersToObject(res.headers),
       data: data as T,
       ok: res.ok,
     };
@@ -65,7 +76,7 @@ export const apiClient = {
 
     return {
       status: res.status,
-      headers: Object.fromEntries(res.headers),
+      headers: headersToObject(res.headers),
       data: data as T,
       ok: res.ok,
     };
@@ -89,7 +100,7 @@ export const apiClient = {
 
     return {
       status: res.status,
-      headers: Object.fromEntries(res.headers),
+      headers: headersToObject(res.headers),
       data: data as T,
       ok: res.ok,
     };
@@ -109,7 +120,7 @@ export const apiClient = {
 
     return {
       status: res.status,
-      headers: Object.fromEntries(res.headers),
+      headers: headersToObject(res.headers),
       data: data as T,
       ok: res.ok,
     };

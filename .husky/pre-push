@@ -1,5 +1,16 @@
 #!/bin/sh
 # Run full validation before pushing
+
+echo "🔍 Running TypeScript typecheck before push..."
+pnpm typecheck
+
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript typecheck failed! Fix the errors before pushing."
+  exit 1
+fi
+
+echo "✅ TypeScript checks passed!"
+
 echo "🦀 Running Rust clippy checks before push..."
 cargo clippy --manifest-path rust/Cargo.toml -- -D warnings
 
@@ -9,3 +20,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✅ All Rust checks passed!"
+echo "🎉 All pre-push checks passed!"
