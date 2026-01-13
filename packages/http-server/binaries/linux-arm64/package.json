@@ -1,0 +1,20 @@
+{
+  "name": "@leanspec/http-linux-arm64",
+  "version": "0.2.15",
+  "description": "LeanSpec HTTP server binary for Linux ARM64",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "leanspec-http",
+  "files": [
+    "leanspec-http"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git"
+  },
+  "license": "MIT"
+}

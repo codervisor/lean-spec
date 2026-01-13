@@ -31,11 +31,13 @@ rust/target/
 # IDE specific files
 .idea/
 
-# Binaries
-packages/**/binaries
-packages/**/binaries/
-packages/**/binaries/**
-packages/**/binaries/**/package.json
+# Binaries (but keep package.json files)
+packages/cli/binaries/*/lean-spec
+packages/cli/binaries/*/lean-spec.exe
+packages/mcp/binaries/*/leanspec-mcp
+packages/mcp/binaries/*/leanspec-mcp.exe
+packages/http-server/binaries/*/leanspec-http
+packages/http-server/binaries/*/leanspec-http.exe
 
 # package-lock.json files
 package-lock.json

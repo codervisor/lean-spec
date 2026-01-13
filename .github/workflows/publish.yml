@@ -154,23 +154,23 @@ jobs:
             
             # CLI binaries
             if [ -d "artifacts/binaries-$platform" ]; then
-              mkdir -p rust/npm-dist/leanspec-cli-$platform/bin
-              cp artifacts/binaries-$platform/lean-spec* rust/npm-dist/leanspec-cli-$platform/bin/ || true
+              mkdir -p packages/cli/binaries/$platform
+              cp artifacts/binaries-$platform/lean-spec* packages/cli/binaries/$platform/ || true
             else
               echo "WARNING: Missing artifacts/binaries-$platform"
             fi
             
             # MCP binaries
             if [ -d "artifacts/binaries-$platform" ]; then
-              mkdir -p rust/npm-dist/leanspec-mcp-$platform/bin
-              cp artifacts/binaries-$platform/leanspec-mcp* rust/npm-dist/leanspec-mcp-$platform/bin/ || true
+              mkdir -p packages/mcp/binaries/$platform
+              cp artifacts/binaries-$platform/leanspec-mcp* packages/mcp/binaries/$platform/ || true
             else
               echo "WARNING: Missing MCP binaries for $platform"
             fi
           done
           
           echo "Copied binaries:"
-          find rust/npm-dist -name "bin" -type d -exec ls -la {} \;
+          find packages/cli/binaries packages/mcp/binaries -type f \( -name "lean-spec*" -o -name "leanspec-mcp*" \) | sort
       
       - name: Validate all platform binaries exist
         run: |
@@ -180,11 +180,11 @@ jobs:
           for platform in $PLATFORMS; do
             # Check CLI binary
             if [[ "$platform" == windows-* ]]; then
-              CLI_BIN="rust/npm-dist/leanspec-cli-$platform/bin/lean-spec.exe"
-              MCP_BIN="rust/npm-dist/leanspec-mcp-$platform/bin/leanspec-mcp.exe"
+              CLI_BIN="packages/cli/binaries/$platform/lean-spec.exe"
+              MCP_BIN="packages/mcp/binaries/$platform/leanspec-mcp.exe"
             else
-              CLI_BIN="rust/npm-dist/leanspec-cli-$platform/bin/lean-spec"
-              MCP_BIN="rust/npm-dist/leanspec-mcp-$platform/bin/leanspec-mcp"
+              CLI_BIN="packages/cli/binaries/$platform/lean-spec"
+              MCP_BIN="packages/mcp/binaries/$platform/leanspec-mcp"
             fi
             
             if [ ! -f "$CLI_BIN" ]; then
@@ -244,7 +244,6 @@ jobs:
       
       - name: Publish CLI platform packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: rust/npm-dist
         run: |
           TAG=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
@@ -253,24 +252,26 @@ jobs:
 
           for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
             echo "Publishing @leanspec/cli-$platform..."
-            cd leanspec-cli-$platform
+            cd packages/cli/binaries/$platform
             OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
               if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
                 echo "Version already published, skipping..."
+                cd -
+                continue
               else
                 echo "$OUTPUT"
+                cd -
                 exit 1
               fi
             }
             echo "$OUTPUT"
-            cd ..
+            cd -
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish MCP platform packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: rust/npm-dist
         run: |
           TAG=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
@@ -279,17 +280,20 @@ jobs:
 
           for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
             echo "Publishing @leanspec/mcp-$platform..."
-            cd leanspec-mcp-$platform
+            cd packages/mcp/binaries/$platform
             OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
               if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
                 echo "Version already published, skipping..."
+                cd -
+                continue
               else
                 echo "$OUTPUT"
+                cd -
                 exit 1
               fi
             }
             echo "$OUTPUT"
-            cd ..
+            cd -
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
