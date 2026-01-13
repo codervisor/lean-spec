@@ -153,6 +153,40 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
+      - name: Publish UI Components to npm with dev tag
+        if: ${{ !inputs.dry_run }}
+        working-directory: packages/ui-components
+        run: |
+          OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish HTTP Server to npm with dev tag
+        if: ${{ !inputs.dry_run }}
+        working-directory: packages/http-server
+        run: |
+          OUTPUT=$(npm publish --tag dev --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
       - name: Publish UI to npm with dev tag
         if: ${{ !inputs.dry_run }}
         working-directory: packages/ui
@@ -183,4 +217,6 @@ jobs:
           echo "Main packages that would be published:"
           echo "  - lean-spec (CLI wrapper)"
           echo "  - @leanspec/mcp (MCP wrapper)"
+          echo "  - @leanspec/ui-components (UI Components)"
+          echo "  - @leanspec/http-server (HTTP Server)"
           echo "  - @leanspec/ui (UI)"

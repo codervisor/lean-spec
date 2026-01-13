@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/ui-components",
-  "version": "0.2.10",
+  "version": "0.2.15",
   "description": "Framework-agnostic, tree-shakeable UI components for LeanSpec",
   "type": "module",
   "main": "./dist/index.cjs",

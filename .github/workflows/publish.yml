@@ -72,6 +72,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
+      - name: Publish UI Components to npm
+        working-directory: packages/ui-components
+        run: |
+          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish HTTP Server to npm
+        working-directory: packages/http-server
+        run: |
+          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+              echo "Version already published, skipping..."
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+          echo "$OUTPUT"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
       - name: Publish UI to npm
         working-directory: packages/ui
         run: |

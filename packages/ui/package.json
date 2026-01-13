@@ -1,8 +1,17 @@
 {
   "name": "@leanspec/ui",
-  "version": "0.2.13",
+  "version": "0.2.15",
   "description": "LeanSpec web UI launcher for visual spec management (Vite SPA)",
   "type": "module",
+  "bin": {
+    "leanspec-ui": "./bin/leanspec-ui.js"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "vite --port 3000",
     "build": "tsc -b && vite build",
@@ -14,6 +23,7 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.8",
+    "@leanspec/http-server": "workspace:*",
     "@leanspec/ui-components": "workspace:*",
     "@radix-ui/react-tooltip": "^1.2.8",
     "clsx": "^2.1.1",

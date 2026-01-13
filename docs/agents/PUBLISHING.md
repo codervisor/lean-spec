@@ -67,14 +67,20 @@ npm install @leanspec/ui@dev
    - ⚠️ **CRITICAL**: This step prevents `workspace:*` from leaking into npm packages
    - Creates backups of original package.json files
    - Replaces all `workspace:*` dependencies with actual versions
-9. **Publish to npm**: For each package (cli, mcp, ui):
+9. **Publish to npm**: For each package (cli, mcp, ui-components, http-server, ui) **in order**:
    ```bash
    cd packages/cli && npm publish --access public
    cd ../mcp && npm publish --access public
+   cd ../ui-components && npm publish --access public
+   cd ../http-server && npm publish --access public
    cd ../ui && npm publish --access public
    ```
+   - ⚠️ **IMPORTANT**: Publish in dependency order:
+     - `ui-components` has no workspace dependencies
+     - `http-server` has no workspace dependencies  
+     - `ui` depends on both `ui-components` and `http-server`
    - If a package version already exists (403 error), that's OK - skip it
-   - Tag UI as latest if needed: `npm dist-tag add @leanspec/ui@X.Y.Z latest`
+   - Tag packages as latest if needed: `npm dist-tag add @leanspec/ui@X.Y.Z latest`
 10. **Restore packages**: Run `pnpm restore-packages` to restore original package.json files with `workspace:*`
 11. **Create GitHub Release** (REQUIRED - DO NOT SKIP):
    ```bash
@@ -94,6 +100,8 @@ npm install @leanspec/ui@dev
    ### 📦 Published Packages
    - `lean-spec@X.Y.Z`
    - `@leanspec/mcp@X.Y.Z`
+   - `@leanspec/ui-components@X.Y.Z`
+   - `@leanspec/http-server@X.Y.Z`
    - `@leanspec/ui@X.Y.Z`
    
    ### 🔗 Links
@@ -110,11 +118,16 @@ npm install @leanspec/ui@dev
    - Release notes provide context that CHANGELOG.md alone doesn't
 12. **Verify**: 
    - `npm view lean-spec version` to confirm CLI publication
-   - `npm view @leanspec/ui version` to confirm UI publication
    - `npm view @leanspec/mcp version` to confirm MCP publication
+   - `npm view @leanspec/ui-components version` to confirm UI Components publication
+   - `npm view @leanspec/http-server version` to confirm HTTP Server publication
+   - `npm view @leanspec/ui version` to confirm UI publication
    - `npm view lean-spec dependencies` to ensure no `workspace:*` dependencies leaked
+   - `npm view @leanspec/ui-components dependencies` to ensure no `workspace:*` dependencies leaked
+   - `npm view @leanspec/http-server dependencies` to ensure no `workspace:*` dependencies leaked
    - `npm view @leanspec/ui dependencies` to ensure no `workspace:*` dependencies leaked
    - Test installation: `npm install -g lean-spec@latest` in a clean environment
+   - Test UI installation: `npm install -g @leanspec/ui@latest` in a clean environment
    - **Check GitHub release page**: https://github.com/codervisor/lean-spec/releases
    - Verify release appears with correct title and notes
 
@@ -125,7 +138,9 @@ npm install @leanspec/ui@dev
 
 ## Package Publication Notes
 
-**Important**: 
+**Important**: http-server` package IS published to npm as a public scoped package (required dependency for `@leanspec/ui`, provides the API backend)
 - The `@leanspec/ui` package IS published to npm as a public scoped package
-- Both `lean-spec` (CLI) and `@leanspec/ui` are published automatically via GitHub Actions when a release is created
+- Packages `lean-spec` (CLI), `@leanspec/mcp` (MCP), `@leanspec/ui-components`, `@leanspec/http-serverd package (required dependency for `@leanspec/ui`)
+- The `@leanspec/ui` package IS published to npm as a public scoped package
+- Packages `lean-spec` (CLI), `@leanspec/mcp` (MCP), `@leanspec/ui-components`, and `@leanspec/ui` are published automatically via GitHub Actions when a release is created
 - Platform-specific binary packages (e.g., `lean-spec-darwin-arm64`) are published separately via the rust-binaries workflow

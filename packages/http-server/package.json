@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/http-server",
-  "version": "0.2.10",
+  "version": "0.2.15",
   "description": "Rust HTTP server for LeanSpec UI",
   "type": "module",
   "bin": {

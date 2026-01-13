@@ -42,6 +42,8 @@ function writePackageJson(pkgPath: string, pkg: PackageJson): void {
 function resolveWorkspaceVersion(depName: string): string | null {
   // Map package names to their paths in the monorepo
   const pkgMap: Record<string, string> = {
+    '@leanspec/http-server': 'packages/http-server/package.json',
+    '@leanspec/ui-components': 'packages/ui-components/package.json',
     '@leanspec/ui': 'packages/ui/package.json',
     '@leanspec/mcp': 'packages/mcp/package.json',
     'lean-spec': 'packages/cli/package.json',
@@ -118,6 +120,7 @@ function main() {
   const packages = [
     'packages/cli/package.json',
     'packages/mcp/package.json',
+    'packages/ui-components/package.json',
     'packages/ui/package.json',
   ];
 
