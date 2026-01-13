@@ -143,41 +143,6 @@ async function syncVersions(dryRun: boolean = false): Promise<void> {
   if (errors > 0) {
     process.exit(1);
   }
-
-  // Also sync Rust platform packages
-  console.log('\n📦 Syncing Rust platform packages...');
-  await syncRustPlatformPackages(targetVersion, dryRun);
-}
-
-const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64'];
-
-async function syncRustPlatformPackages(targetVersion: string, dryRun: boolean): Promise<void> {
-  const packageTypes = [
-    { name: 'CLI', dir: 'cli' },
-    { name: 'MCP', dir: 'mcp' },
-    { name: 'HTTP', dir: 'http-server' }
-  ];
-
-  for (const { name, dir } of packageTypes) {
-    for (const platform of PLATFORMS) {
-      const packageJsonPath = path.join(PACKAGES_DIR, dir, 'binaries', platform, 'package.json');
-
-      try {
-        const pkg = await readJsonFile(packageJsonPath);
-        const currentVersion = pkg.version;
-
-        if (currentVersion !== targetVersion) {
-          if (!dryRun) {
-            pkg.version = targetVersion;
-            await writeJsonFile(packageJsonPath, pkg);
-          }
-          console.log(`  ⚠ ${pkg.name}: ${currentVersion} → ${targetVersion}`);
-        }
-      } catch {
-        // Package doesn't exist yet, skip
-      }
-    }
-  }
 }
 
 // Parse CLI args

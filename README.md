@@ -100,6 +100,26 @@ Works with any AI coding assistant via MCP or CLI:
 
 ---
 
+## Requirements
+
+### Runtime
+- **Node.js**: `>= 20.0.0`
+- **pnpm**: `>= 10.0.0` (preferred package manager)
+
+### Development
+- **Node.js**: `>= 20.0.0`
+- **Rust**: `>= 1.70` (for building CLI/MCP/HTTP binaries)
+- **pnpm**: `>= 10.0.0`
+
+**Quick Check:**
+```bash
+node --version   # Should be v20.0.0 or higher
+pnpm --version   # Should be 10.0.0 or higher
+rustc --version  # Should be 1.70 or higher (dev only)
+```
+
+---
+
 ## Desktop App
 
 The `@leanspec/desktop` package wraps the Vite UI (`@leanspec/ui`) in a lightweight Tauri shell for local, multi-project workflows backed by Rust commands:

@@ -3,13 +3,19 @@
 	"version": "0.2.15",
 	"private": true,
 	"packageManager": "pnpm@10.28.0",
+	"engines": {
+		"node": ">=20.0.0",
+		"pnpm": ">=10.0.0"
+	},
 	"devDependencies": {
 		"husky": "^9.1.7",
+		"tsx": "^4.19.2",
 		"turbo": "^2.7.2"
 	},
 	"scripts": {
 		"prepare": "husky",
 		"dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
+		"build:node": "turbo run build",
 		"dev:web": "turbo run dev:web --filter=@leanspec/ui",
 		"dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",
 		"build": "turbo run build",
@@ -28,9 +34,9 @@
 		"pre-release": "pnpm build && pnpm typecheck && pnpm test && pnpm lint:rust",
 		"prepare-publish": "tsx scripts/prepare-publish.ts",
 		"restore-packages": "tsx scripts/restore-packages.ts",
-		"sync:versions": "tsx scripts/sync-versions.ts && tsx scripts/sync-rust-versions.ts",
-		"sync-versions": "pnpm sync:versions",
-		"sync-rust-versions": "tsx scripts/sync-rust-versions.ts",
+		"sync-versions:node": "tsx scripts/sync-versions.ts",
+		"sync-versions:rust": "tsx scripts/sync-rust-versions.ts",
+		"sync-versions": "tsx scripts/sync-versions.ts && tsx scripts/sync-rust-versions.ts",
 		"cli": "node bin/lean-spec.js"
 	}
 }
