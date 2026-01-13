@@ -106,7 +106,7 @@ packages/cli/binaries/
   - [x] [packages/cli/bin/lean-spec-rust.js](../../packages/cli/bin/lean-spec-rust.js): Update binary resolution logic to use scoped names
 
 - [x] Update CI/CD workflows
-  - [x] [.github/workflows/publish-dev.yml](../../.github/workflows/publish-dev.yml): Update package echo statements and dry-run summary
+  - [x] Unified dev publishing via [.github/workflows/publish.yml](../../.github/workflows/publish.yml) (use `dev=true`)
   - [x] Update platform package publishing loops (already dynamic via package.json)
 
 - [x] Update build and distribution scripts
@@ -127,7 +127,7 @@ packages/cli/binaries/
   - [x] Wrapper resolves scoped package names correctly
 
 - [ ] Test dry-run publish
-  - [ ] `gh workflow run publish-dev.yml --inputs dry_run=true`
+  - [ ] `gh workflow run publish.yml --field dev=true --field dry_run=true`
   - [ ] Verify all package names are scoped correctly
 
 - [ ] Test actual dev publish
@@ -158,13 +158,13 @@ packages/cli/binaries/
 - ✅ All 5 platform packages renamed to `@leanspec/cli-*` in package.json
 - ✅ Main CLI package updated to use scoped names in optionalDependencies
 - ✅ Wrapper script (lean-spec-rust.js) updated to resolve scoped package names
-- ✅ CI/CD workflow (publish-dev.yml) updated with correct echo statements
+- ✅ CI/CD workflow (publish.yml with `dev=true`) publishes dev builds
 - ✅ Documentation (npm-distribution.md) fully updated
 - ✅ Build scripts already handle packages dynamically
 - ✅ Local testing confirms wrapper resolves scoped names correctly
 
 **Ready for:**
-- Dev publish testing (`gh workflow run publish-dev.yml`)
+- Dev publish testing (`gh workflow run publish.yml --field dev=true`)
 - Production release in next version
 
 ### Why Keep `lean-spec` Unscoped?
@@ -180,7 +180,7 @@ This is a **non-breaking change** for end users:
 
 ### Publishing Order
 
-**Critical**: Platform packages MUST be published before main wrapper, as seen in [publish-dev.yml](../../.github/workflows/publish-dev.yml):
+**Critical**: Platform packages MUST be published before main wrapper, as implemented in [.github/workflows/publish.yml](../../.github/workflows/publish.yml):
 1. Publish all 5 `@leanspec/cli-*` platform packages
 2. Then publish `lean-spec` main wrapper
 

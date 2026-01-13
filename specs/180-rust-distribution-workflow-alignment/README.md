@@ -385,12 +385,12 @@ Each `packages/{cli,mcp}/binaries/{platform}/package.json`:
 
 ### Phase 5: Refactor Publish Workflows
 
-- [ ] Update `publish-dev.yml` to use platform packages
+- [x] Support dev publishing via `publish.yml` with `dev=true`
 - [x] `publish.yml` builds Rust binaries inline
 - [ ] Add desktop build integration
 - [ ] Test in CI
 
-**`publish-dev.yml`** (simplified for speed):
+**`publish.yml` (workflow_dispatch with `dev=true`)** (simplified for speed):
 
 ```yaml
 name: Publish Dev Version
@@ -711,10 +711,10 @@ npx lean-spec list
 **Dev workflow test**:
 ```bash
 # Trigger manually
-gh workflow run publish-dev.yml --field dry_run=true
+gh workflow run publish.yml --field dev=true --field dry_run=true
 
 # Check logs
-gh run list --workflow=publish-dev.yml
+gh run list --workflow=publish.yml
 gh run view <run-id> --log
 ```
 
@@ -903,7 +903,6 @@ lean-spec.cmd --version
 
 - Current workflow files:
   - [.github/workflows/publish.yml](../../.github/workflows/publish.yml)
-  - [.github/workflows/publish-dev.yml](../../.github/workflows/publish-dev.yml)
   - [.github/workflows/publish.yml](../../.github/workflows/publish.yml)
   - [.github/workflows/desktop-build.yml](../../.github/workflows/desktop-build.yml)
 - Scripts:

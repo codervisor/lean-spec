@@ -6,7 +6,13 @@ on:
       dry_run:
         description: 'Skip npm publish steps (build/validate only)'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
+      dev:
+        description: 'Publish a dev prerelease version (auto-bumps to -dev.<run_id> and publishes with the dev dist-tag)'
+        required: false
+        default: false
+        type: boolean
   release:
     types: [published]
 
@@ -208,18 +214,47 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Auto-bump dev version
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
+        run: |
+          # Get current version from root package.json (single source of truth)
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          # Extract base version (remove any prerelease suffix)
+          BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-dev\..*//')
+
+          # Deterministic dev version shared across jobs in this workflow run
+          DEV_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}"
+
+          echo "Bumping version to: $DEV_VERSION"
+
+          node -e "
+            const fs = require('fs');
+            const path = 'package.json';
+            const json = JSON.parse(fs.readFileSync(path, 'utf8'));
+            json.version = '$DEV_VERSION';
+            fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
+          "
+
+          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
       
       - name: Sync versions
         run: pnpm sync-versions
       
       - name: Publish CLI platform packages
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: rust/npm-dist
         run: |
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
           for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
             echo "Publishing @leanspec/cli-$platform..."
             cd leanspec-cli-$platform
-            OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+            OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
               if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
                 echo "Version already published, skipping..."
               else
@@ -234,13 +269,18 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish MCP platform packages
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: rust/npm-dist
         run: |
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
           for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
             echo "Publishing @leanspec/mcp-$platform..."
             cd leanspec-mcp-$platform
-            OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+            OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
               if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
                 echo "Version already published, skipping..."
               else
@@ -274,6 +314,30 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Auto-bump dev version
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
+        run: |
+          # Get current version from root package.json (single source of truth)
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          # Extract base version (remove any prerelease suffix)
+          BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-dev\..*//')
+
+          # Deterministic dev version shared across jobs in this workflow run
+          DEV_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}"
+
+          echo "Bumping version to: $DEV_VERSION"
+
+          node -e "
+            const fs = require('fs');
+            const path = 'package.json';
+            const json = JSON.parse(fs.readFileSync(path, 'utf8'));
+            json.version = '$DEV_VERSION';
+            fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
+          "
+
+          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
       
       - name: Sync versions
         run: pnpm sync-versions
@@ -285,10 +349,15 @@ jobs:
         run: node bin/lean-spec.js validate --warnings-only
       
       - name: Publish CLI to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: packages/cli
         run: |
-          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
+          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
             if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
               echo "Version already published, skipping..."
               exit 0
@@ -302,10 +371,15 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish MCP wrapper to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: packages/mcp
         run: |
-          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
+          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
             if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
               echo "Version already published, skipping..."
               exit 0
@@ -319,10 +393,15 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish UI Components to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: packages/ui-components
         run: |
-          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
+          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
             if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
               echo "Version already published, skipping..."
               exit 0
@@ -336,10 +415,15 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish HTTP Server to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: packages/http-server
         run: |
-          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
+          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
             if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
               echo "Version already published, skipping..."
               exit 0
@@ -353,10 +437,15 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish UI to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         working-directory: packages/ui
         run: |
-          OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+          TAG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG="--tag dev"
+          fi
+
+          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
             if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
               echo "Version already published, skipping..."
               exit 0
@@ -371,6 +460,28 @@ jobs:
       
       - name: Summary
         run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "🧪 DRY RUN - No packages published"
+            if [ "${{ inputs.dev }}" = "true" ]; then
+              echo "Would have published dev version: ${DEV_VERSION:-<computed in job>}"
+              echo ""
+              echo "Would have published with dist-tag: dev"
+            else
+              echo "Would have published stable release (latest dist-tag)"
+            fi
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            echo "✅ Published dev packages successfully"
+            echo "Dev version: ${DEV_VERSION:-<computed in job>}"
+            echo ""
+            echo "Verify installation:"
+            echo "  npm install -g lean-spec@dev"
+            echo "  lean-spec --version"
+            exit 0
+          fi
+
           echo "✅ Published main packages successfully"
           echo ""
           echo "Verify installation:"

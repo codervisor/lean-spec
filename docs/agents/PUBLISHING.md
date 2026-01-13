@@ -22,21 +22,24 @@ Manually trigger the GitHub Actions workflow to publish dev versions for all pla
 
 ```bash
 # Option 1: Manual trigger via GitHub UI
-# Go to Actions → Publish Dev Version to npm → Run workflow
+# Go to Actions → Publish to npm → Run workflow (set dev=true)
 
 # Option 2: Manual trigger via CLI
-gh workflow run publish-dev.yml
+gh workflow run publish.yml --field dev=true
+
+# Dry run (build/validate only)
+gh workflow run publish.yml --field dev=true --field dry_run=true
 ```
 
-The `.github/workflows/publish-dev.yml` workflow will automatically:
-- **Auto-bump version** to timestamp-based prerelease (e.g., `0.2.4-dev.20251218123045`)
+The `.github/workflows/publish.yml` workflow (with `dev=true`) will automatically:
+- **Auto-bump version** to a prerelease (e.g., `0.2.4-dev.123456789`)
 - Build Rust binaries for current platform
 - Sync all package versions (including Rust platform packages)
 - **Publish platform packages first** (e.g., `lean-spec-darwin-arm64`, `@leanspec/mcp-darwin-arm64`)
 - Publish main packages (CLI, MCP, UI) with the `dev` tag
 - Keep the `latest` tag unchanged for stable users
 
-**Note**: Versions are auto-generated based on the current base version + timestamp, so you don't need to manually update package.json files for dev releases.
+**Note**: Versions are auto-generated from the current base version + the workflow run id, so you don't need to manually update package.json files for dev releases.
 
 ### Testing Dev Versions
 

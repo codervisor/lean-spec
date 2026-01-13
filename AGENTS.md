@@ -142,7 +142,7 @@ See [docs/agents/PUBLISHING.md](docs/agents/PUBLISHING.md).
 
 **For dev versions (CI only):**
 ```bash
-gh workflow run publish-dev.yml  # Publishes all platforms
+gh workflow run publish.yml --field dev=true  # Publishes all platforms with the dev dist-tag
 ```
 
 **Mandatory steps for stable releases:**

@@ -29,6 +29,8 @@
 		"prepare-publish": "tsx scripts/prepare-publish.ts",
 		"restore-packages": "tsx scripts/restore-packages.ts",
 		"sync:versions": "tsx scripts/sync-versions.ts && tsx scripts/sync-rust-versions.ts",
+		"sync-versions": "pnpm sync:versions",
+		"sync-rust-versions": "tsx scripts/sync-rust-versions.ts",
 		"cli": "node bin/lean-spec.js"
 	}
 }

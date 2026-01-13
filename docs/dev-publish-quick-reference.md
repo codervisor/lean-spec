@@ -5,7 +5,10 @@ Quick commands for publishing development versions of lean-spec with Rust implem
 ## TL;DR
 
 ```bash
-gh workflow run publish-dev.yml    # Publish dev version (all platforms)
+gh workflow run publish.yml --field dev=true    # Publish dev version (all platforms)
+
+# Dry run (build/validate only)
+gh workflow run publish.yml --field dev=true --field dry_run=true
 ```
 
 ## What Gets Published
@@ -29,10 +32,10 @@ gh workflow run publish-dev.yml    # Publish dev version (all platforms)
 
 ## Version Format
 
-Dev versions use timestamp format:
+Dev versions use a workflow-run-id prerelease format:
 ```
-0.2.10-dev.20251218140530
-│      │   └─ Timestamp (YYYYMMDDHHMMSS)
+0.2.10-dev.123456789
+│      │   └─ GitHub Actions run id
 │      └─ dev tag
 └─ Base version
 ```
