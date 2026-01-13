@@ -346,6 +346,7 @@ jobs:
         run: pnpm build
       
       - name: Validate specs
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: node bin/lean-spec.js validate --warnings-only
       
       - name: Publish CLI to npm
