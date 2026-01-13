@@ -94,7 +94,9 @@ Rust binaries must be built for multiple platforms to support cross-platform dis
 
 ### GitHub Actions Workflow
 
-**File:** `.github/workflows/rust-binaries.yml`
+**Historical file (removed):** `.github/workflows/rust-binaries.yml`
+
+**Note (current repo state):** The release pipeline now builds Rust binaries inline in `.github/workflows/publish.yml`, so this standalone workflow may be removed or treated as historical documentation.
 
 ```yaml
 name: Build Rust Binaries
@@ -394,7 +396,7 @@ artifacts/
 ## Plan
 
 ### Phase 1: Workflow Setup
-- [x] Create `.github/workflows/rust-binaries.yml`
+- [x] Create `.github/workflows/rust-binaries.yml` (historical)
 - [x] Define build matrix for 6 platforms
 - [x] Set up Rust toolchain installation
 - [x] Configure workflow triggers (tags, manual dispatch)

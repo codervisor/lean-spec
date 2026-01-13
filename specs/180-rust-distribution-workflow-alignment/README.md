@@ -111,11 +111,11 @@ spawn('lean-spec', ['mcp'], { stdio: 'inherit' });  // Delegates to CLI
 ```
 
 **Issues**:
-- Builds Rust inline (should use `rust-binaries.yml` artifacts)
+- Builds Rust binaries inline (matrix) and uses the produced artifacts
 - Publishes main package immediately (should publish platform packages first)
 - No desktop app builds
 
-**`rust-binaries.yml`** (exists but not used):
+**`rust-binaries.yml`** (removed; superseded by inline Rust builds in `publish.yml`):
 - Builds all platforms via matrix
 - Uploads artifacts
 - Has conditional publish step
@@ -386,7 +386,7 @@ Each `packages/{cli,mcp}/binaries/{platform}/package.json`:
 ### Phase 5: Refactor Publish Workflows
 
 - [ ] Update `publish-dev.yml` to use platform packages
-- [ ] Update `publish.yml` to orchestrate with `rust-binaries.yml`
+- [x] `publish.yml` builds Rust binaries inline
 - [ ] Add desktop build integration
 - [ ] Test in CI
 
@@ -477,6 +477,8 @@ jobs:
 
 **`publish.yml`** (production - full cross-platform):
 
+**Note (current repo state):** `publish.yml` builds Rust binaries inline; it does not call a separate `rust-binaries.yml` reusable workflow.
+
 ```yaml
 name: Publish to npm
 
@@ -487,9 +489,7 @@ on:
 jobs:
   # Step 1: Build Rust binaries for all platforms
   rust-binaries:
-    uses: ./.github/workflows/rust-binaries.yml
-    with:
-      publish: false  # Don't publish, just build
+    # (inline Rust build matrix)
   
   # Step 2: Publish platform packages
   publish-platform:
@@ -725,7 +725,7 @@ git tag v0.2.11-test
 git push origin v0.2.11-test
 
 # Check rust-binaries workflow
-gh run list --workflow=rust-binaries.yml
+gh run list --workflow=publish.yml
 
 # Check publish workflow (should wait for binaries)
 gh run list --workflow=publish.yml
@@ -904,7 +904,7 @@ lean-spec.cmd --version
 - Current workflow files:
   - [.github/workflows/publish.yml](../../.github/workflows/publish.yml)
   - [.github/workflows/publish-dev.yml](../../.github/workflows/publish-dev.yml)
-  - [.github/workflows/rust-binaries.yml](../../.github/workflows/rust-binaries.yml)
+  - [.github/workflows/publish.yml](../../.github/workflows/publish.yml)
   - [.github/workflows/desktop-build.yml](../../.github/workflows/desktop-build.yml)
 - Scripts:
   - [scripts/copy-rust-binaries.mjs](../../scripts/copy-rust-binaries.mjs)

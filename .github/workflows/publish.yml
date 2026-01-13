@@ -1,11 +1,118 @@
 name: Publish to npm
 
 on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Skip npm publish steps (build/validate only)'
+        required: false
+        default: 'false'
   release:
     types: [published]
 
 jobs:
-  publish:
+  # Step 1: Build Rust binaries for ALL platforms
+  rust-binaries:
+    name: Build Rust binaries (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: darwin-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: darwin-arm64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            platform: linux-x64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            platform: linux-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows-x64
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: rust/target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-build-
+
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+          mkdir -p ~/.cargo
+          echo "[target.aarch64-unknown-linux-gnu]" >> ~/.cargo/config.toml
+          echo 'linker = "aarch64-linux-gnu-gcc"' >> ~/.cargo/config.toml
+
+      - name: Build CLI binary
+        working-directory: rust
+        run: cargo build --release --target ${{ matrix.target }} --package leanspec-cli
+
+      - name: Build MCP binary
+        working-directory: rust
+        run: cargo build --release --target ${{ matrix.target }} --package leanspec-mcp
+
+      - name: Prepare artifacts
+        shell: bash
+        run: |
+          mkdir -p dist/${{ matrix.platform }}
+
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp rust/target/${{ matrix.target }}/release/lean-spec.exe dist/${{ matrix.platform }}/
+            cp rust/target/${{ matrix.target }}/release/leanspec-mcp.exe dist/${{ matrix.platform }}/
+          else
+            cp rust/target/${{ matrix.target }}/release/lean-spec dist/${{ matrix.platform }}/
+            cp rust/target/${{ matrix.target }}/release/leanspec-mcp dist/${{ matrix.platform }}/
+          fi
+
+          echo "=== Prepared artifacts ==="
+          ls -la dist/${{ matrix.platform }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.platform }}
+          path: dist/${{ matrix.platform }}
+          retention-days: 30
+  
+  # Step 2: Publish platform-specific packages (MUST happen before main packages)
+  publish-platform:
+    needs: rust-binaries
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,8 +128,83 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
       
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Download all platform binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find artifacts -type f -ls
+      
+      - name: Copy binaries to platform packages
+        run: |
+          # Expected platforms
+          PLATFORMS="darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64"
+          
+          for platform in $PLATFORMS; do
+            echo "Processing platform: $platform"
+            
+            # CLI binaries
+            if [ -d "artifacts/binaries-$platform" ]; then
+              mkdir -p rust/npm-dist/leanspec-cli-$platform/bin
+              cp artifacts/binaries-$platform/lean-spec* rust/npm-dist/leanspec-cli-$platform/bin/ || true
+            else
+              echo "WARNING: Missing artifacts/binaries-$platform"
+            fi
+            
+            # MCP binaries
+            if [ -d "artifacts/binaries-$platform" ]; then
+              mkdir -p rust/npm-dist/leanspec-mcp-$platform/bin
+              cp artifacts/binaries-$platform/leanspec-mcp* rust/npm-dist/leanspec-mcp-$platform/bin/ || true
+            else
+              echo "WARNING: Missing MCP binaries for $platform"
+            fi
+          done
+          
+          echo "Copied binaries:"
+          find rust/npm-dist -name "bin" -type d -exec ls -la {} \;
+      
+      - name: Validate all platform binaries exist
+        run: |
+          PLATFORMS="darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64"
+          MISSING=""
+          
+          for platform in $PLATFORMS; do
+            # Check CLI binary
+            if [[ "$platform" == windows-* ]]; then
+              CLI_BIN="rust/npm-dist/leanspec-cli-$platform/bin/lean-spec.exe"
+              MCP_BIN="rust/npm-dist/leanspec-mcp-$platform/bin/leanspec-mcp.exe"
+            else
+              CLI_BIN="rust/npm-dist/leanspec-cli-$platform/bin/lean-spec"
+              MCP_BIN="rust/npm-dist/leanspec-mcp-$platform/bin/leanspec-mcp"
+            fi
+            
+            if [ ! -f "$CLI_BIN" ]; then
+              echo "❌ MISSING: $CLI_BIN"
+              MISSING="$MISSING $CLI_BIN"
+            else
+              echo "✅ Found: $CLI_BIN ($(ls -lh $CLI_BIN | awk '{print $5}'))"
+            fi
+            
+            if [ ! -f "$MCP_BIN" ]; then
+              echo "❌ MISSING: $MCP_BIN"
+              MISSING="$MISSING $MCP_BIN"
+            else
+              echo "✅ Found: $MCP_BIN ($(ls -lh $MCP_BIN | awk '{print $5}'))"
+            fi
+          done
+          
+          if [ -n "$MISSING" ]; then
+            echo ""
+            echo "❌ ERROR: Missing platform binaries. Cannot publish."
+            echo "Missing files:$MISSING"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All platform binaries validated successfully!"
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -30,17 +212,80 @@ jobs:
       - name: Sync versions
         run: pnpm sync-versions
       
-      - name: Build Rust binaries
-        working-directory: rust
-        run: cargo build --release
+      - name: Publish CLI platform packages
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        working-directory: rust/npm-dist
+        run: |
+          for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
+            echo "Publishing @leanspec/cli-$platform..."
+            cd leanspec-cli-$platform
+            OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+              if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+                echo "Version already published, skipping..."
+              else
+                echo "$OUTPUT"
+                exit 1
+              fi
+            }
+            echo "$OUTPUT"
+            cd ..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
-      - name: Copy Rust binaries
-        run: node scripts/copy-rust-binaries.mjs
+      - name: Publish MCP platform packages
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
+        working-directory: rust/npm-dist
+        run: |
+          for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
+            echo "Publishing @leanspec/mcp-$platform..."
+            cd leanspec-mcp-$platform
+            OUTPUT=$(npm publish --provenance --access public 2>&1) || {
+              if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
+                echo "Version already published, skipping..."
+              else
+                echo "$OUTPUT"
+                exit 1
+              fi
+            }
+            echo "$OUTPUT"
+            cd ..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  
+  # Step 3: Publish main packages (AFTER platform packages are available)
+  publish-main:
+    needs: publish-platform
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Sync versions
+        run: pnpm sync-versions
+      
+      - name: Build TypeScript packages
+        run: pnpm build
       
       - name: Validate specs
         run: node bin/lean-spec.js validate --warnings-only
       
       - name: Publish CLI to npm
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
         working-directory: packages/cli
         run: |
           OUTPUT=$(npm publish --provenance --access public 2>&1) || {
@@ -57,6 +302,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish MCP wrapper to npm
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
         working-directory: packages/mcp
         run: |
           OUTPUT=$(npm publish --provenance --access public 2>&1) || {
@@ -73,6 +319,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish UI Components to npm
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
         working-directory: packages/ui-components
         run: |
           OUTPUT=$(npm publish --provenance --access public 2>&1) || {
@@ -89,6 +336,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish HTTP Server to npm
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
         working-directory: packages/http-server
         run: |
           OUTPUT=$(npm publish --provenance --access public 2>&1) || {
@@ -105,6 +353,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish UI to npm
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['dry_run'] != 'true' }}
         working-directory: packages/ui
         run: |
           OUTPUT=$(npm publish --provenance --access public 2>&1) || {
@@ -119,3 +368,26 @@ jobs:
           echo "$OUTPUT"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Summary
+        run: |
+          echo "✅ Published main packages successfully"
+          echo ""
+          echo "Verify installation:"
+          echo "  npm install -g lean-spec@latest"
+          echo "  lean-spec --version"
+      
+      - name: Verify publish success
+        run: |
+          echo ""
+          echo "✅ All packages published successfully!"
+          echo ""
+          echo "Published:"
+          echo "  - CLI with platform binaries (darwin-x64, darwin-arm64, linux-x64, linux-arm64, windows-x64)"
+          echo "  - MCP with platform binaries"
+          echo "  - UI Components"
+          echo "  - HTTP Server"
+          echo "  - UI"
+          echo ""
+          echo "Users can now install with:"
+          echo "  npm install -g lean-spec"
