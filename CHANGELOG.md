@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.13] - 2026-01-13
+
+### Added
+- **Enhanced i18n support** - Comprehensive internationalization improvements
+  - Localized MermaidDiagram, SpecsLayout, and ThemeToggle components
+  - Shared translation keys for common UI elements
+  - Enhanced error message localization
+  - Status and priority filters with session storage persistence
+- **Statistics Dashboard** - New StatsPage with charts and statistics overview
+  - Visual analytics with recharts integration
+  - Project health metrics display
+  - Progress tracking visualization
+- **Embeddings-based Search** - PgVector storage integration for semantic search
+  - Improved search relevance
+  - Preparation for AI-powered spec discovery
+
+### Changed
+- **Navigation Enhancements** - Refined navigation and project switcher
+  - Improved UI consistency across components
+  - Better status icon indicators
+  - Enhanced DesktopNavigationFrame integration
+- **Layout Refactoring** - Consolidated header components
+  - PageHeader component for consistent layout
+  - Improved page structure across all views
+- **Backend Adapter** - Project-specific API endpoint usage
+  - Better multi-project support
+  - Enhanced localization for spec statuses
+
+### Fixed
+- **YAML Frontmatter** - Enhanced YAML handling with safeDump support
+- **Testing Setup** - localStorage mock and improved API test scripts
+- **Status Handling** - Refined status fallbacks and validation
+
+## [0.2.12] - 2025-12-22
+
+### Added
+- Initial 0.2.x release with Vite SPA migration
+
 ## [0.2.11] - 2025-12-19
 
 ### Added
