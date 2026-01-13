@@ -11,7 +11,11 @@
  * - Must be logged in to npm (npm login)
  * 
  * Usage:
- *   pnpm publish:platforms [--dry-run]
+ *   tsx scripts/publish-platform-packages.ts [--dry-run] [--tag <tag>]
+ *   
+ * Options:
+ *   --dry-run    Run without actually publishing
+ *   --tag <tag>  Publish with a dist-tag (e.g., dev, beta, next)
  */
 
 import { execSync } from 'node:child_process';
@@ -42,9 +46,9 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-async function publishPackage(packageDir: string, dryRun: boolean): Promise<PublishResult> {
+async function publishPackage(packageDir: string, dryRun: boolean, tag?: string): Promise<PublishResult> {
   const packageJsonPath = path.join(packageDir, 'package.json');
-  
+
   try {
     const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
     const packageName = packageJson.name;
@@ -52,7 +56,7 @@ async function publishPackage(packageDir: string, dryRun: boolean): Promise<Publ
     // Check if binary exists
     const binaryName = packageJson.main;
     const binaryPath = path.join(packageDir, binaryName);
-    
+
     if (!(await fileExists(binaryPath))) {
       return {
         package: packageName,
@@ -61,14 +65,29 @@ async function publishPackage(packageDir: string, dryRun: boolean): Promise<Publ
       };
     }
 
-    // Publish
-    const command = dryRun 
-      ? 'npm publish --dry-run --access public'
-      : 'npm publish --access public';
-    
-    console.log(`  📦 Publishing ${packageName}...`);
-    execSync(command, { cwd: packageDir, stdio: 'pipe' });
-    
+    // Build publish command
+    let command = 'npm publish --access public';
+    if (tag) {
+      command += ` --tag ${tag}`;
+    }
+    if (dryRun) {
+      command += ' --dry-run';
+    }
+
+    console.log(`  📦 Publishing ${packageName}${tag ? ` (tag: ${tag})` : ''}...`);
+
+    try {
+      execSync(command, { cwd: packageDir, stdio: 'pipe' });
+    } catch (error) {
+      // Check if it's a "cannot publish over existing version" error
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('You cannot publish over the previously published versions')) {
+        console.log(`  ⚠️  ${packageName} already published (skipped)`);
+        return { package: packageName, success: true };
+      }
+      throw error;
+    }
+
     return { package: packageName, success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -80,9 +99,9 @@ async function publishPackage(packageDir: string, dryRun: boolean): Promise<Publ
   }
 }
 
-async function publishPlatformPackages(dryRun: boolean): Promise<void> {
+async function publishPlatformPackages(dryRun: boolean, tag?: string): Promise<void> {
   console.log('📤 Publishing platform packages...\n');
-  
+
   if (dryRun) {
     console.log('🔍 DRY RUN - No packages will be published\n');
   }
@@ -93,9 +112,9 @@ async function publishPlatformPackages(dryRun: boolean): Promise<void> {
   console.log('📁 CLI Platform Packages:');
   for (const platform of PLATFORMS) {
     const packageDir = path.join(PACKAGES_DIR, 'cli', 'binaries', platform);
-    const result = await publishPackage(packageDir, dryRun);
+    const result = await publishPackage(packageDir, dryRun, tag);
     results.push(result);
-    
+
     if (result.success) {
       console.log(`  ✓ ${result.package}`);
     } else {
@@ -107,9 +126,9 @@ async function publishPlatformPackages(dryRun: boolean): Promise<void> {
   console.log('\n📁 MCP Platform Packages:');
   for (const platform of PLATFORMS) {
     const packageDir = path.join(PACKAGES_DIR, 'mcp', 'binaries', platform);
-    const result = await publishPackage(packageDir, dryRun);
+    const result = await publishPackage(packageDir, dryRun, tag);
     results.push(result);
-    
+
     if (result.success) {
       console.log(`  ✓ ${result.package}`);
     } else {
@@ -145,7 +164,13 @@ async function publishPlatformPackages(dryRun: boolean): Promise<void> {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 
-publishPlatformPackages(dryRun).catch(error => {
+let tag: string | undefined;
+const tagIndex = args.indexOf('--tag');
+if (tagIndex !== -1 && args[tagIndex + 1]) {
+  tag = args[tagIndex + 1];
+}
+
+publishPlatformPackages(dryRun, tag).catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });

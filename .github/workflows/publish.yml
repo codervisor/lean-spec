@@ -134,167 +134,38 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
       
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
       - name: Download all platform binaries
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
       
-      - name: List downloaded artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          find artifacts -type f -ls
-      
       - name: Copy binaries to platform packages
-        run: |
-          # Expected platforms
-          PLATFORMS="darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64"
-          
-          for platform in $PLATFORMS; do
-            echo "Processing platform: $platform"
-            
-            # CLI binaries
-            if [ -d "artifacts/binaries-$platform" ]; then
-              mkdir -p packages/cli/binaries/$platform
-              cp artifacts/binaries-$platform/lean-spec* packages/cli/binaries/$platform/ || true
-            else
-              echo "WARNING: Missing artifacts/binaries-$platform"
-            fi
-            
-            # MCP binaries
-            if [ -d "artifacts/binaries-$platform" ]; then
-              mkdir -p packages/mcp/binaries/$platform
-              cp artifacts/binaries-$platform/leanspec-mcp* packages/mcp/binaries/$platform/ || true
-            else
-              echo "WARNING: Missing MCP binaries for $platform"
-            fi
-          done
-          
-          echo "Copied binaries:"
-          find packages/cli/binaries packages/mcp/binaries -type f \( -name "lean-spec*" -o -name "leanspec-mcp*" \) | sort
+        run: ./scripts/copy-platform-binaries.sh artifacts/
       
-      - name: Validate all platform binaries exist
-        run: |
-          PLATFORMS="darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64"
-          MISSING=""
-          
-          for platform in $PLATFORMS; do
-            # Check CLI binary
-            if [[ "$platform" == windows-* ]]; then
-              CLI_BIN="packages/cli/binaries/$platform/lean-spec.exe"
-              MCP_BIN="packages/mcp/binaries/$platform/leanspec-mcp.exe"
-            else
-              CLI_BIN="packages/cli/binaries/$platform/lean-spec"
-              MCP_BIN="packages/mcp/binaries/$platform/leanspec-mcp"
-            fi
-            
-            if [ ! -f "$CLI_BIN" ]; then
-              echo "❌ MISSING: $CLI_BIN"
-              MISSING="$MISSING $CLI_BIN"
-            else
-              echo "✅ Found: $CLI_BIN ($(ls -lh $CLI_BIN | awk '{print $5}'))"
-            fi
-            
-            if [ ! -f "$MCP_BIN" ]; then
-              echo "❌ MISSING: $MCP_BIN"
-              MISSING="$MISSING $MCP_BIN"
-            else
-              echo "✅ Found: $MCP_BIN ($(ls -lh $MCP_BIN | awk '{print $5}'))"
-            fi
-          done
-          
-          if [ -n "$MISSING" ]; then
-            echo ""
-            echo "❌ ERROR: Missing platform binaries. Cannot publish."
-            echo "Missing files:$MISSING"
-            exit 1
-          fi
-          
-          echo ""
-          echo "✅ All platform binaries validated successfully!"
+      - name: Validate platform binaries
+        run: tsx scripts/validate-platform-binaries.ts
       
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Auto-bump dev version
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
         run: |
-          # Get current version from root package.json (single source of truth)
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-
-          # Extract base version (remove any prerelease suffix)
-          BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-dev\..*//')
-
-          # Deterministic dev version shared across jobs in this workflow run
-          DEV_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}"
-
-          echo "Bumping version to: $DEV_VERSION"
-
-          node -e "
-            const fs = require('fs');
-            const path = 'package.json';
-            const json = JSON.parse(fs.readFileSync(path, 'utf8'));
-            json.version = '$DEV_VERSION';
-            fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
-          "
-
-          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
+          tsx scripts/bump-dev-version.ts ${{ github.run_id }}
+          pnpm sync-versions
       
-      - name: Sync versions
+      - name: Sync versions (stable release)
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dev }}
         run: pnpm sync-versions
       
-      - name: Publish CLI platform packages
+      - name: Publish platform packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: |
-          TAG=""
+          TAG_ARG=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
+            TAG_ARG="--tag dev"
           fi
-
-          for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
-            echo "Publishing @leanspec/cli-$platform..."
-            cd packages/cli/binaries/$platform
-            OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-              if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-                echo "Version already published, skipping..."
-                cd -
-                continue
-              else
-                echo "$OUTPUT"
-                cd -
-                exit 1
-              fi
-            }
-            echo "$OUTPUT"
-            cd -
-          done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
-      - name: Publish MCP platform packages
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        run: |
-          TAG=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
-          fi
-
-          for platform in darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64; do
-            echo "Publishing @leanspec/mcp-$platform..."
-            cd packages/mcp/binaries/$platform
-            OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-              if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-                echo "Version already published, skipping..."
-                cd -
-                continue
-              else
-                echo "$OUTPUT"
-                cd -
-                exit 1
-              fi
-            }
-            echo "$OUTPUT"
-            cd -
-          done
+          tsx scripts/publish-platform-packages.ts $TAG_ARG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   
@@ -322,28 +193,11 @@ jobs:
       - name: Auto-bump dev version
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
         run: |
-          # Get current version from root package.json (single source of truth)
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-
-          # Extract base version (remove any prerelease suffix)
-          BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-dev\..*//')
-
-          # Deterministic dev version shared across jobs in this workflow run
-          DEV_VERSION="${BASE_VERSION}-dev.${GITHUB_RUN_ID}"
-
-          echo "Bumping version to: $DEV_VERSION"
-
-          node -e "
-            const fs = require('fs');
-            const path = 'package.json';
-            const json = JSON.parse(fs.readFileSync(path, 'utf8'));
-            json.version = '$DEV_VERSION';
-            fs.writeFileSync(path, JSON.stringify(json, null, 2) + '\n');
-          "
-
-          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_ENV
+          tsx scripts/bump-dev-version.ts ${{ github.run_id }}
+          pnpm sync-versions
       
-      - name: Sync versions
+      - name: Sync versions (stable release)
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dev }}
         run: pnpm sync-versions
       
       - name: Build TypeScript packages
@@ -353,137 +207,31 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: node bin/lean-spec.js validate --warnings-only
       
-      - name: Publish CLI to npm
+      - name: Publish main packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: packages/cli
         run: |
-          TAG=""
+          TAG_ARG=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
+            TAG_ARG="--tag dev"
           fi
-
-          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-              echo "Version already published, skipping..."
-              exit 0
-            else
-              echo "$OUTPUT"
-              exit 1
-            fi
-          }
-          echo "$OUTPUT"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
-      - name: Publish MCP wrapper to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: packages/mcp
-        run: |
-          TAG=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
-          fi
-
-          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-              echo "Version already published, skipping..."
-              exit 0
-            else
-              echo "$OUTPUT"
-              exit 1
-            fi
-          }
-          echo "$OUTPUT"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
-      - name: Publish UI Components to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: packages/ui-components
-        run: |
-          TAG=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
-          fi
-
-          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-              echo "Version already published, skipping..."
-              exit 0
-            else
-              echo "$OUTPUT"
-              exit 1
-            fi
-          }
-          echo "$OUTPUT"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
-      - name: Publish HTTP Server to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: packages/http-server
-        run: |
-          TAG=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
-          fi
-
-          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-              echo "Version already published, skipping..."
-              exit 0
-            else
-              echo "$OUTPUT"
-              exit 1
-            fi
-          }
-          echo "$OUTPUT"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
-      - name: Publish UI to npm
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        working-directory: packages/ui
-        run: |
-          TAG=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            TAG="--tag dev"
-          fi
-
-          OUTPUT=$(npm publish $TAG --provenance --access public 2>&1) || {
-            if echo "$OUTPUT" | grep -q "You cannot publish over the previously published versions"; then
-              echo "Version already published, skipping..."
-              exit 0
-            else
-              echo "$OUTPUT"
-              exit 1
-            fi
-          }
-          echo "$OUTPUT"
+          tsx scripts/publish-main-packages.ts $TAG_ARG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Summary
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            echo "🧪 DRY RUN - No packages published"
-            if [ "${{ inputs.dev }}" = "true" ]; then
-              echo "Would have published dev version: ${DEV_VERSION:-<computed in job>}"
-              echo ""
-              echo "Would have published with dist-tag: dev"
-            else
-              echo "Would have published stable release (latest dist-tag)"
-            fi
+            echo "✅ Dry run completed successfully"
+            echo ""
+            echo "All checks passed. Ready to publish for real."
             exit 0
           fi
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
-            echo "✅ Published dev packages successfully"
-            echo "Dev version: ${DEV_VERSION:-<computed in job>}"
+            echo "✅ Dev version published successfully"
             echo ""
-            echo "Verify installation:"
+            echo "Test installation:"
             echo "  npm install -g lean-spec@dev"
-            echo "  lean-spec --version"
             exit 0
           fi
 

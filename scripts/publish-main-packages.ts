@@ -9,7 +9,11 @@
  * Platform packages must be available on npm before publishing main packages.
  * 
  * Usage:
- *   pnpm publish:main [--dry-run]
+ *   tsx scripts/publish-main-packages.ts [--dry-run] [--tag <tag>]
+ *   
+ * Options:
+ *   --dry-run    Run without actually publishing
+ *   --tag <tag>  Publish with a dist-tag (e.g., dev, beta, next)
  */
 
 import { execSync } from 'node:child_process';
@@ -29,20 +33,35 @@ interface PublishResult {
   error?: string;
 }
 
-async function publishPackage(packageDir: string, dryRun: boolean): Promise<PublishResult> {
+async function publishPackage(packageDir: string, dryRun: boolean, tag?: string): Promise<PublishResult> {
   const packageJsonPath = path.join(packageDir, 'package.json');
 
   try {
     const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
     const packageName = packageJson.name;
 
-    // Publish
-    const command = dryRun
-      ? 'npm publish --dry-run --access public'
-      : 'npm publish --access public';
+    // Build publish command
+    let command = 'npm publish --access public';
+    if (tag) {
+      command += ` --tag ${tag}`;
+    }
+    if (dryRun) {
+      command += ' --dry-run';
+    }
 
-    console.log(`  📦 Publishing ${packageName}...`);
-    execSync(command, { cwd: packageDir, stdio: 'pipe' });
+    console.log(`  📦 Publishing ${packageName}${tag ? ` (tag: ${tag})` : ''}...`);
+
+    try {
+      execSync(command, { cwd: packageDir, stdio: 'pipe' });
+    } catch (error) {
+      // Check if it's a "cannot publish over existing version" error
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('You cannot publish over the previously published versions')) {
+        console.log(`  ⚠️  ${packageName} already published (skipped)`);
+        return { package: packageName, success: true };
+      }
+      throw error;
+    }
 
     return { package: packageName, success: true };
   } catch (error) {
@@ -80,7 +99,7 @@ async function verifyPlatformPackages(): Promise<boolean> {
   return true;
 }
 
-async function publishMainPackages(dryRun: boolean): Promise<void> {
+async function publishMainPackages(dryRun: boolean, tag?: string): Promise<void> {
   console.log('📤 Publishing main packages...\n');
 
   if (dryRun) {
@@ -98,7 +117,7 @@ async function publishMainPackages(dryRun: boolean): Promise<void> {
   // Publish main CLI package
   console.log('📁 Main Packages:');
 
-  const cliResult = await publishPackage(path.join(PACKAGES_DIR, 'cli'), dryRun);
+  const cliResult = await publishPackage(path.join(PACKAGES_DIR, 'cli'), dryRun, tag);
   results.push(cliResult);
   if (cliResult.success) {
     console.log(`  ✓ ${cliResult.package}`);
@@ -106,7 +125,7 @@ async function publishMainPackages(dryRun: boolean): Promise<void> {
     console.log(`  ✗ ${cliResult.package}: ${cliResult.error}`);
   }
 
-  const mcpResult = await publishPackage(path.join(PACKAGES_DIR, 'mcp'), dryRun);
+  const mcpResult = await publishPackage(path.join(PACKAGES_DIR, 'mcp'), dryRun, tag);
   results.push(mcpResult);
   if (mcpResult.success) {
     console.log(`  ✓ ${mcpResult.package}`);
@@ -114,7 +133,23 @@ async function publishMainPackages(dryRun: boolean): Promise<void> {
     console.log(`  ✗ ${mcpResult.package}: ${mcpResult.error}`);
   }
 
-  const uiResult = await publishPackage(path.join(PACKAGES_DIR, 'ui'), dryRun);
+  const uiComponentsResult = await publishPackage(path.join(PACKAGES_DIR, 'ui-components'), dryRun, tag);
+  results.push(uiComponentsResult);
+  if (uiComponentsResult.success) {
+    console.log(`  ✓ ${uiComponentsResult.package}`);
+  } else {
+    console.log(`  ✗ ${uiComponentsResult.package}: ${uiComponentsResult.error}`);
+  }
+
+  const httpServerResult = await publishPackage(path.join(PACKAGES_DIR, 'http-server'), dryRun, tag);
+  results.push(httpServerResult);
+  if (httpServerResult.success) {
+    console.log(`  ✓ ${httpServerResult.package}`);
+  } else {
+    console.log(`  ✗ ${httpServerResult.package}: ${httpServerResult.error}`);
+  }
+
+  const uiResult = await publishPackage(path.join(PACKAGES_DIR, 'ui'), dryRun, tag);
   results.push(uiResult);
   if (uiResult.success) {
     console.log(`  ✓ ${uiResult.package}`);
@@ -151,7 +186,13 @@ async function publishMainPackages(dryRun: boolean): Promise<void> {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 
-publishMainPackages(dryRun).catch(error => {
+let tag: string | undefined;
+const tagIndex = args.indexOf('--tag');
+if (tagIndex !== -1 && args[tagIndex + 1]) {
+  tag = args[tagIndex + 1];
+}
+
+publishMainPackages(dryRun, tag).catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
