@@ -25,6 +25,8 @@
 		"docs:dev": "pnpm --filter docs-site start",
 		"docs:build": "pnpm --filter docs-site build",
 		"pre-release": "pnpm build && pnpm typecheck && pnpm test && pnpm lint:rust",
+		"prepare-publish": "tsx scripts/prepare-publish.ts",
+		"restore-packages": "tsx scripts/restore-packages.ts",
 		"sync:versions": "tsx scripts/sync-versions.ts && tsx scripts/sync-rust-versions.ts",
 		"cli": "node bin/lean-spec.js"
 	}
