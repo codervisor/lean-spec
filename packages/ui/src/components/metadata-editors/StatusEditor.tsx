@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Archive, CheckCircle2, Clock, Loader2, PlayCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, PlayCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
@@ -11,7 +11,6 @@ const STATUS_OPTIONS: Array<{ value: NonNullable<Spec['status']>; labelKey: `sta
   { value: 'planned', labelKey: 'status.planned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', Icon: Clock },
   { value: 'in-progress', labelKey: 'status.inProgress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', Icon: PlayCircle },
   { value: 'complete', labelKey: 'status.complete', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', Icon: CheckCircle2 },
-  { value: 'archived', labelKey: 'status.archived', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400', Icon: Archive },
 ];
 
 interface StatusEditorProps {
