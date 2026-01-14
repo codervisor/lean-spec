@@ -308,7 +308,7 @@ export function SpecDetailPage() {
                 <div className="flex items-center gap-3 min-w-0">
                   <h1 className="text-base font-semibold tracking-tight truncate">
                     {spec.specNumber && (
-                      <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+                      <span className="text-muted-foreground">#{spec.specNumber} </span>
                     )}
                     {displayTitle}
                   </h1>
@@ -333,7 +333,7 @@ export function SpecDetailPage() {
                 <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
                   <h1 className="text-lg sm:text-xl font-bold tracking-tight">
                     {spec.specNumber && (
-                      <span className="text-muted-foreground">#{spec.specNumber.toString().padStart(3, '0')} </span>
+                      <span className="text-muted-foreground">#{spec.specNumber} </span>
                     )}
                     {displayTitle}
                   </h1>

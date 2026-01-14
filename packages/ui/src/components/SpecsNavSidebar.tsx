@@ -201,7 +201,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   <div className="flex items-center gap-1.5">
                     {spec.specNumber && (
                       <span className="text-xs font-mono text-muted-foreground shrink-0">
-                        #{spec.specNumber.toString().padStart(3, '0')}
+                        #{spec.specNumber}
                       </span>
                     )}
                     <span className="truncate text-xs leading-relaxed">{displayTitle}</span>

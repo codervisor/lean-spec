@@ -26,7 +26,7 @@ export function SpecListItem({ spec, basePath = '/projects/default' }: SpecListI
           <div className="flex items-center gap-2 mb-1">
             {spec.specNumber && (
               <span className="text-sm font-mono text-muted-foreground shrink-0">
-                #{spec.specNumber.toString().padStart(3, '0')}
+                #{spec.specNumber}
               </span>
             )}
             <h4 className="text-sm font-medium truncate">

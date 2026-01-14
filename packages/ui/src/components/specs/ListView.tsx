@@ -32,7 +32,7 @@ export function ListView({ specs, basePath = '/projects/default' }: ListViewProp
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                  {spec.specName.split('-')[0]}
+                  #{spec.specNumber}
                 </span>
                 <h3 className="font-medium truncate">{spec.title}</h3>
               </div>

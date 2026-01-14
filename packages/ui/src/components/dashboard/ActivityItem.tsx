@@ -22,7 +22,7 @@ export function ActivityItem({ spec, action, time, basePath = '/projects/default
       <div className="flex-1 min-w-0">
         <p className="text-sm">
           <Link to={specUrl} className="font-medium hover:underline" title={spec.specName}>
-            {spec.specNumber && `#${spec.specNumber.toString().padStart(3, '0')} `}
+            {spec.specNumber && `#${spec.specNumber} `}
             {displayTitle}
           </Link>{' '}
           <span className="text-muted-foreground">{action}</span>
