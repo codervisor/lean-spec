@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
+import { useSpecs } from '../../contexts';
 
 const STATUS_OPTIONS: Array<{ value: NonNullable<Spec['status']>; labelKey: `status.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [
   { value: 'planned', labelKey: 'status.planned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', Icon: Clock },
@@ -27,6 +28,7 @@ export function StatusEditor({ specName, value, onChange, disabled = false, clas
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
+  const { triggerRefresh } = useSpecs();
 
   const option = STATUS_OPTIONS.find((opt) => opt.value === status) || STATUS_OPTIONS[0];
 
@@ -40,6 +42,7 @@ export function StatusEditor({ specName, value, onChange, disabled = false, clas
     try {
       await api.updateSpec(specName, { status: next });
       onChange?.(next);
+      triggerRefresh(); // Notify other components to refresh
     } catch (err) {
       setStatus(previous);
       const message = err instanceof Error ? err.message : t('editors.statusError');

@@ -24,10 +24,15 @@ impl AppState {
     pub fn new(config: ServerConfig) -> Result<Self, ServerError> {
         let mut registry = ProjectRegistry::new()?;
 
-        // Ensure a default project is available for single-project mode
+        // Auto-register a project when none are configured
         if registry.all().is_empty() {
-            let default_path = default_project_path();
-            let _ = registry.add(&default_path);
+            if let Some((project_path, specs_dir)) = default_project_path() {
+                let _ = registry.auto_register_if_empty(
+                    &project_path,
+                    &specs_dir,
+                    project_path.file_name().and_then(|n| n.to_str()),
+                );
+            }
         }
 
         Ok(Self {
@@ -46,21 +51,26 @@ impl AppState {
 }
 
 /// Resolve a default project path by walking up to find a `specs` directory.
-fn default_project_path() -> PathBuf {
+fn default_project_path() -> Option<(PathBuf, PathBuf)> {
     if let Ok(explicit) = std::env::var("LEANSPEC_PROJECT_PATH") {
-        return PathBuf::from(explicit);
+        let root = PathBuf::from(explicit);
+        let specs = root.join("specs");
+        if specs.exists() {
+            return Some((root, specs));
+        }
     }
 
     // Fall back to the current working directory when resolution fails
-    let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let mut dir = std::env::current_dir().ok()?;
     loop {
-        if dir.join("specs").exists() {
-            return dir;
+        let specs_dir = dir.join("specs");
+        if specs_dir.exists() {
+            return Some((dir.clone(), specs_dir));
         }
         if !(dir.pop()) {
             break;
         }
     }
 
-    PathBuf::from(".")
+    None
 }

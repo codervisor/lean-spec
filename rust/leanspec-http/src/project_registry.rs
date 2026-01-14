@@ -9,10 +9,43 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use uuid::Uuid;
 
 fn default_timestamp() -> DateTime<Utc> {
     Utc::now()
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ProjectOptions<'a> {
+    pub specs_dir: Option<&'a Path>,
+    pub name: Option<&'a str>,
+}
+
+fn slugify(name: &str) -> String {
+    // Simple ASCII-first slug generator to avoid extra dependencies
+    let mut slug = String::new();
+    let mut pending_dash = false;
+
+    for ch in name.chars() {
+        if ch.is_ascii_alphanumeric() {
+            slug.push(ch.to_ascii_lowercase());
+            pending_dash = false;
+        } else if ch.is_ascii_whitespace() || matches!(ch, '-' | '_' | '/' | '\\') {
+            if !slug.is_empty() && !pending_dash {
+                slug.push('-');
+                pending_dash = true;
+            }
+        }
+    }
+
+    while slug.ends_with('-') {
+        slug.pop();
+    }
+
+    if slug.is_empty() {
+        "project".to_string()
+    } else {
+        slug
+    }
 }
 
 /// A registered LeanSpec project
@@ -51,6 +84,14 @@ pub struct Project {
 impl Project {
     /// Create a new project from a path
     pub fn from_path(path: &Path) -> Result<Self, ServerError> {
+        Self::from_path_with_options(path, ProjectOptions::default())
+    }
+
+    /// Create a new project from a path with explicit options
+    pub fn from_path_with_options(
+        path: &Path,
+        options: ProjectOptions,
+    ) -> Result<Self, ServerError> {
         // Validate the path exists
         if !path.exists() {
             return Err(ServerError::RegistryError(format!(
@@ -59,20 +100,32 @@ impl Project {
             )));
         }
 
-        // Determine project name from path
-        let name = path
-            .file_name()
-            .and_then(|n| n.to_str())
+        // Determine project name from path or override
+        let name = options
+            .name
             .map(|s| s.to_string())
-            .unwrap_or_else(|| "Unnamed Project".to_string());
+            .or_else(|| {
+                path.file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_else(|| "LeanSpec Project".to_string());
 
         // Find specs directory
-        let specs_dir = find_specs_dir(path)?;
+        let specs_dir = if let Some(specs_dir) = options.specs_dir {
+            if specs_dir.is_absolute() {
+                specs_dir.to_path_buf()
+            } else {
+                path.join(specs_dir)
+            }
+        } else {
+            find_specs_dir(path)?
+        };
 
         let now = Utc::now();
 
         Ok(Self {
-            id: Uuid::new_v4().to_string(),
+            id: slugify(&name),
             name,
             path: path.to_path_buf(),
             specs_dir,
@@ -125,7 +178,11 @@ fn find_specs_dir(project_path: &Path) -> Result<PathBuf, ServerError> {
     if config_json.exists() {
         if let Ok(content) = fs::read_to_string(&config_json) {
             if let Ok(config) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(specs_dir) = config.get("specs_dir").and_then(|v| v.as_str()) {
+                if let Some(specs_dir) = config
+                    .get("specs_dir")
+                    .or_else(|| config.get("specsDir"))
+                    .and_then(|v| v.as_str())
+                {
                     let path = project_path.join(specs_dir);
                     if path.exists() {
                         return Ok(path);
@@ -138,7 +195,11 @@ fn find_specs_dir(project_path: &Path) -> Result<PathBuf, ServerError> {
     if config_yaml.exists() {
         if let Ok(content) = fs::read_to_string(&config_yaml) {
             if let Ok(config) = serde_yaml::from_str::<serde_yaml::Value>(&content) {
-                if let Some(specs_dir) = config.get("specs_dir").and_then(|v| v.as_str()) {
+                if let Some(specs_dir) = config
+                    .get("specs_dir")
+                    .or_else(|| config.get("specsDir"))
+                    .and_then(|v| v.as_str())
+                {
                     let path = project_path.join(specs_dir);
                     if path.exists() {
                         return Ok(path);
@@ -250,6 +311,15 @@ impl ProjectRegistry {
 
     /// Add a new project
     pub fn add(&mut self, path: &Path) -> Result<Project, ServerError> {
+        self.add_with_options(path, ProjectOptions::default())
+    }
+
+    /// Add a new project with explicit options (custom specs_dir/name)
+    pub fn add_with_options(
+        &mut self,
+        path: &Path,
+        options: ProjectOptions,
+    ) -> Result<Project, ServerError> {
         // Check if project already exists
         for project in self.projects.values() {
             if project.path == path {
@@ -259,13 +329,55 @@ impl ProjectRegistry {
             }
         }
 
-        let project = Project::from_path(path)?;
-        let id = project.id.clone();
+        let mut project = Project::from_path_with_options(path, options)?;
+        let preferred_id = project.id.clone();
+        project.id = self.ensure_unique_id(&preferred_id);
 
-        self.projects.insert(id.clone(), project.clone());
+        self.projects.insert(project.id.clone(), project.clone());
         self.save()?;
 
         Ok(project)
+    }
+
+    /// Automatically create a project when registry is empty
+    pub fn auto_register_if_empty(
+        &mut self,
+        path: &Path,
+        specs_dir: &Path,
+        name: Option<&str>,
+    ) -> Result<Option<Project>, ServerError> {
+        if !self.projects.is_empty() {
+            return Ok(None);
+        }
+
+        if !specs_dir.exists() {
+            return Ok(None);
+        }
+
+        let project = self.add_with_options(
+            path,
+            ProjectOptions {
+                specs_dir: Some(specs_dir),
+                name,
+            },
+        )?;
+
+        Ok(Some(project))
+    }
+
+    fn ensure_unique_id(&self, preferred: &str) -> String {
+        if !self.projects.contains_key(preferred) {
+            return preferred.to_string();
+        }
+
+        let mut counter = 2;
+        loop {
+            let candidate = format!("{}-{}", preferred, counter);
+            if !self.projects.contains_key(&candidate) {
+                return candidate;
+            }
+            counter += 1;
+        }
     }
 
     /// Remove a project

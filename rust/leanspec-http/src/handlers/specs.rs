@@ -8,8 +8,8 @@ use std::fs;
 use std::path::Path as FsPath;
 
 use leanspec_core::{
-    DependencyGraph, MetadataUpdate as CoreMetadataUpdate, SpecFilterOptions, SpecLoader,
-    SpecStats, SpecStatus, SpecWriter,
+    DependencyGraph, MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions,
+    SpecLoader, SpecStats, SpecStatus, SpecWriter,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -370,7 +370,11 @@ pub async fn get_project_dependencies(
     for spec in &all_specs {
         nodes.push(crate::types::DependencyNode {
             id: spec.path.clone(),
-            name: spec.path.clone(),
+            name: if !spec.title.is_empty() && spec.title != spec.path {
+                spec.title.clone()
+            } else {
+                spec.path.clone()
+            },
             number: spec.number().unwrap_or(0),
             status: spec.frontmatter.status.to_string(),
             priority: spec
@@ -420,6 +424,48 @@ pub async fn update_project_metadata(
             StatusCode::NOT_FOUND,
             Json(ApiError::spec_not_found(&spec_id)),
         ));
+    }
+
+    // Check if status is being updated to "archived"
+    let is_archiving = updates
+        .status
+        .as_ref()
+        .map(|s| s == "archived")
+        .unwrap_or(false);
+
+    // If archiving, use the archiver to move the spec to archived/ folder
+    if is_archiving {
+        let archiver = SpecArchiver::new(&project.specs_dir);
+        archiver.archive(&spec_id).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+        // Reload the spec from its new location
+        let archived_path = format!("archived/{}", spec_id);
+        let updated_spec = loader.load(&archived_path).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+        let frontmatter = updated_spec
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::spec_not_found(&archived_path)),
+                )
+            })?
+            .frontmatter;
+
+        return Ok(Json(crate::types::UpdateMetadataResponse {
+            success: true,
+            spec_id: spec_id.clone(),
+            frontmatter: crate::types::FrontmatterResponse::from(&frontmatter),
+        }));
     }
 
     // Convert HTTP metadata update to core metadata update

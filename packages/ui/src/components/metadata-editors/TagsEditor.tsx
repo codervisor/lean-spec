@@ -17,6 +17,7 @@ import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
+import { useSpecs } from '../../contexts';
 
 interface TagsEditorProps {
   specName: string;
@@ -34,6 +35,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const { t } = useTranslation('common');
+  const { triggerRefresh } = useSpecs();
 
   // Fetch all available tags for autocomplete when popover opens
   useEffect(() => {
@@ -61,6 +63,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
     try {
       await api.updateSpec(specName, { tags: newTags });
       onChange?.(newTags);
+      triggerRefresh(); // Notify other components to refresh
     } catch (err) {
       setTags(previousTags); // Rollback
       const errorMessage = err instanceof Error ? err.message : t('editors.tagsError');

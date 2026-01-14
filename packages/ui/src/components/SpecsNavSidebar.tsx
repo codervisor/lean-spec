@@ -35,7 +35,7 @@ import type { Spec } from '../types/api';
 import { cn } from '../lib/utils';
 import { formatRelativeTime } from '../lib/date-utils';
 import { useTranslation } from 'react-i18next';
-import { useProject } from '../contexts';
+import { useProject, useSpecs } from '../contexts';
 
 const STORAGE_KEYS = {
   collapsed: 'specs-nav-sidebar-collapsed',
@@ -54,6 +54,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
+  const { refreshTrigger } = useSpecs();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +117,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       }
     }
     loadSpecs();
-  }, [currentProject]);
+  }, [currentProject, refreshTrigger]);
 
   useEffect(() => {
     const handler = () => setListHeight(calculateListHeight());

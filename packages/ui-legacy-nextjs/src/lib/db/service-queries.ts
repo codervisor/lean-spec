@@ -73,7 +73,7 @@ function parseSpecTags(spec: Spec): ParsedSpec {
       // If parsing fails, use original content
     }
   }
-  
+
   return {
     ...spec,
     contentMd,
@@ -87,16 +87,16 @@ function parseSpecTags(spec: Spec): ParsedSpec {
 function countSubSpecs(specDirPath: string): number {
   try {
     if (!existsSync(specDirPath)) return 0;
-    
+
     const entries = readdirSync(specDirPath);
     let count = 0;
-    
+
     for (const entry of entries) {
       // Skip README.md (main spec file) and non-.md files
       if (entry === 'README.md' || !entry.endsWith('.md')) {
         continue;
       }
-      
+
       const filePath = join(specDirPath, entry);
       try {
         const stat = statSync(filePath);
@@ -107,7 +107,7 @@ function countSubSpecs(specDirPath: string): number {
         // Skip files that can't be accessed
       }
     }
-    
+
     return count;
   } catch {
     return 0;
@@ -129,12 +129,12 @@ export async function getSpecs(projectId?: string): Promise<LightweightSpec[]> {
  */
 export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(LightweightSpec & { subSpecsCount: number })[]> {
   const specs = await specsService.getAllSpecs(projectId);
-  
+
   // Only count sub-specs for filesystem mode
   if (projectId) {
     return specs.map(spec => ({ ...toLightweightSpec(parseSpecTags(spec)), subSpecsCount: 0 }));
   }
-  
+
   return specs.map(spec => {
     const specDirPath = buildSpecDirPath(spec.filePath);
     const subSpecsCount = countSubSpecs(specDirPath);
@@ -149,10 +149,10 @@ export async function getSpecsWithSubSpecCount(projectId?: string): Promise<(Lig
  */
 export async function getSpecsWithMetadata(projectId?: string): Promise<(LightweightSpec & { subSpecsCount: number; relationships: SpecRelationships })[]> {
   const specs = await specsService.getAllSpecs(projectId);
-  
+
   // Use the unified relationship map builder
   const relationshipMap = buildRelationshipMap(specs);
-  
+
   return specs.map(spec => {
     // Sub-specs count only available in filesystem mode
     const subSpecsCount = projectId ? 0 : countSubSpecs(buildSpecDirPath(spec.filePath));
@@ -178,7 +178,7 @@ export async function getSpecById(id: string, projectId?: string): Promise<(Pars
   if (!spec) return null;
 
   const parsedSpec = parseSpecTags(spec);
-  
+
   // Get all specs and build relationship map (unified approach for both modes)
   const allSpecs = await specsService.getAllSpecs(effectiveProjectId);
   const relationshipMap = buildRelationshipMap(allSpecs);
@@ -260,7 +260,7 @@ export async function getStats(projectId?: string): Promise<StatsResult> {
 export async function getAllTags(projectId?: string): Promise<string[]> {
   const specs = await specsService.getAllSpecs(projectId);
   const tagSet = new Set<string>();
-  
+
   for (const spec of specs) {
     const parsedSpec = parseSpecTags(spec);
     if (parsedSpec.tags && Array.isArray(parsedSpec.tags)) {
@@ -269,7 +269,7 @@ export async function getAllTags(projectId?: string): Promise<string[]> {
       }
     }
   }
-  
+
   return Array.from(tagSet).sort();
 }
 
@@ -304,11 +304,11 @@ function estimateTokens(text: string): number {
 function readContextFile(filePath: string, projectRoot: string): ContextFile | null {
   try {
     if (!existsSync(filePath)) return null;
-    
+
     const stats = statSync(filePath);
     const content = readFileSync(filePath, 'utf-8');
     const relativePath = filePath.replace(projectRoot + '/', '');
-    
+
     return {
       name: relativePath.split('/').pop() || relativePath,
       path: relativePath,
@@ -328,7 +328,7 @@ function readContextFile(filePath: string, projectRoot: string): ContextFile | n
 export async function getAgentInstructions(projectRootOverride?: string): Promise<ContextFile[]> {
   const projectRoot = projectRootOverride || getProjectRootDir();
   const files: ContextFile[] = [];
-  
+
   // Primary agent instruction files in root
   const rootAgentFiles = [
     'AGENTS.md',
@@ -336,19 +336,19 @@ export async function getAgentInstructions(projectRootOverride?: string): Promis
     'CLAUDE.md',
     'COPILOT.md',
   ];
-  
+
   for (const fileName of rootAgentFiles) {
     const file = readContextFile(join(projectRoot, fileName), projectRoot);
     if (file) files.push(file);
   }
-  
+
   // Check .github/copilot-instructions.md
   const copilotInstructions = readContextFile(
     join(projectRoot, '.github', 'copilot-instructions.md'),
     projectRoot
   );
   if (copilotInstructions) files.push(copilotInstructions);
-  
+
   // Check docs/agents/*.md
   const agentsDocsDir = join(projectRoot, 'docs', 'agents');
   if (existsSync(agentsDocsDir)) {
@@ -364,7 +364,7 @@ export async function getAgentInstructions(projectRootOverride?: string): Promis
       // Directory might not be accessible
     }
   }
-  
+
   return files;
 }
 
@@ -374,13 +374,13 @@ export async function getAgentInstructions(projectRootOverride?: string): Promis
 export async function getProjectConfig(projectRootOverride?: string): Promise<{ file: ContextFile | null; parsed: LeanSpecConfig | null }> {
   const projectRoot = projectRootOverride || getProjectRootDir();
   const configPath = join(projectRoot, '.lean-spec', 'config.json');
-  
+
   const file = readContextFile(configPath, projectRoot);
-  
+
   if (!file) {
     return { file: null, parsed: null };
   }
-  
+
   try {
     const parsed = JSON.parse(file.content) as LeanSpecConfig;
     return { file, parsed };
@@ -395,18 +395,18 @@ export async function getProjectConfig(projectRootOverride?: string): Promise<{ 
 export async function getProjectDocs(projectRootOverride?: string): Promise<ContextFile[]> {
   const projectRoot = projectRootOverride || getProjectRootDir();
   const files: ContextFile[] = [];
-  
+
   const docFiles = [
     'README.md',
     'CONTRIBUTING.md',
     'CHANGELOG.md',
   ];
-  
+
   for (const fileName of docFiles) {
     const file = readContextFile(join(projectRoot, fileName), projectRoot);
     if (file) files.push(file);
   }
-  
+
   return files;
 }
 
@@ -420,7 +420,7 @@ export async function getProjectContext(projectRootOverride?: string): Promise<P
     getProjectConfig(projectRoot),
     getProjectDocs(projectRoot),
   ]);
-  
+
   // Calculate total tokens
   let totalTokens = 0;
   for (const file of agentInstructions) {
@@ -432,7 +432,7 @@ export async function getProjectContext(projectRootOverride?: string): Promise<P
   for (const file of projectDocs) {
     totalTokens += file.tokenCount;
   }
-  
+
   return {
     agentInstructions,
     config,
@@ -467,7 +467,7 @@ export interface DependencyGraph {
  */
 export async function getDependencyGraph(projectId?: string): Promise<DependencyGraph> {
   const specs = await getSpecsWithMetadata(projectId);
-  
+
   const nodes = specs
     .filter(spec => spec.specNumber !== null)
     .map(spec => ({
@@ -481,14 +481,14 @@ export async function getDependencyGraph(projectId?: string): Promise<Dependency
 
   const edges: DependencyGraph['edges'] = [];
   const specIdByFolder = new Map<string, string>();
-  
+
   specs.forEach(spec => {
     if (spec.specNumber !== null) {
       const folderName = spec.filePath
         .replace(/^specs\//, '')
         .replace(/\/README\.md$/, '');
       specIdByFolder.set(folderName, spec.id);
-      
+
       const paddedNumber = spec.specNumber.toString().padStart(3, '0');
       specIdByFolder.set(paddedNumber, spec.id);
       specIdByFolder.set(spec.specNumber.toString(), spec.id);
@@ -497,19 +497,20 @@ export async function getDependencyGraph(projectId?: string): Promise<Dependency
 
   specs.forEach(spec => {
     if (!spec.specNumber) return;
-    
+
     // Only process dependsOn relationships (no related)
+    // When spec A depends_on B, the edge should go from A (spec) to B (dependency)
     spec.relationships.dependsOn.forEach(dep => {
       const depTrimmed = dep.trim();
       const match = depTrimmed.match(/^(\d+)/);
-      const targetId = match 
+      const targetId = match
         ? specIdByFolder.get(match[1]) || specIdByFolder.get(match[1].padStart(3, '0'))
         : specIdByFolder.get(depTrimmed);
-      
+
       if (targetId && targetId !== spec.id) {
         edges.push({
-          source: targetId,
-          target: spec.id,
+          source: spec.id,
+          target: targetId,
           type: 'dependsOn',
         });
       }

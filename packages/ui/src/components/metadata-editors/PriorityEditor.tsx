@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
+import { useSpecs } from '../../contexts';
 
 const PRIORITY_OPTIONS: Array<{ value: NonNullable<Spec['priority']>; labelKey: `priority.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [
   { value: 'critical', labelKey: 'priority.critical', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', Icon: AlertCircle },
@@ -27,6 +28,7 @@ export function PriorityEditor({ specName, value, onChange, disabled = false, cl
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
+  const { triggerRefresh } = useSpecs();
 
   const option = PRIORITY_OPTIONS.find((opt) => opt.value === priority) || PRIORITY_OPTIONS[1];
 
@@ -40,6 +42,7 @@ export function PriorityEditor({ specName, value, onChange, disabled = false, cl
     try {
       await api.updateSpec(specName, { priority: next });
       onChange?.(next);
+      triggerRefresh(); // Notify other components to refresh
     } catch (err) {
       setPriority(previous);
       const message = err instanceof Error ? err.message : t('editors.priorityError');

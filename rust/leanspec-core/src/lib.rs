@@ -41,9 +41,10 @@ pub use types::{
     ValidationIssue, ValidationResult,
 };
 pub use utils::{
-    CompleteDependencyGraph, DependencyGraph, DiscoveredProject, DiscoveryError, ImpactRadius,
-    Insights, LoadError, MetadataUpdate, ProjectDiscovery, SpecLoader, SpecStats, SpecWriter,
-    TemplateError, TemplateLoader, TokenCount, TokenCounter, TokenStatus, WriteError,
+    ArchiveError, CompleteDependencyGraph, DependencyGraph, DiscoveredProject, DiscoveryError,
+    ImpactRadius, Insights, LoadError, MetadataUpdate, ProjectDiscovery, SpecArchiver, SpecLoader,
+    SpecStats, SpecWriter, TemplateError, TemplateLoader, TokenCount, TokenCounter, TokenStatus,
+    WriteError,
 };
 pub use validators::{
     CompletionVerifier, FrontmatterValidator, LineCountValidator, StructureValidator,
