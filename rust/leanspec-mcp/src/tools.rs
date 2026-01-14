@@ -429,7 +429,15 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
         resolve_template_variables(&template, &title, status, priority, &created_date)
     };
 
-    let content = merge_frontmatter(&base_content, status, priority, &tags, &created_date, now)?;
+    let content = merge_frontmatter(
+        &base_content,
+        status,
+        priority,
+        &tags,
+        &created_date,
+        now,
+        &title,
+    )?;
 
     let spec_dir = std::path::Path::new(specs_dir).join(&spec_name);
     std::fs::create_dir_all(&spec_dir).map_err(|e| e.to_string())?;
@@ -1146,6 +1154,7 @@ fn merge_frontmatter(
     tags: &[String],
     created_date: &str,
     now: chrono::DateTime<Utc>,
+    title: &str,
 ) -> Result<String, String> {
     let parser = FrontmatterParser::new();
     let status_parsed: SpecStatus = status
@@ -1173,7 +1182,15 @@ fn merge_frontmatter(
             }
             fm.updated_at = Some(now);
 
-            Ok(parser.stringify(&fm, &body))
+            // Ensure H1 title is present in the body
+            let trimmed_body = body.trim_start();
+            let final_body = if trimmed_body.starts_with("# ") || trimmed_body.starts_with("#\n") {
+                body
+            } else {
+                format!("# {}\n\n{}", title, trimmed_body)
+            };
+
+            Ok(parser.stringify(&fm, &final_body))
         }
         Err(ParseError::NoFrontmatter) => build_frontmatter_from_scratch(
             content,
@@ -1181,6 +1198,7 @@ fn merge_frontmatter(
             priority_parsed,
             tags,
             created_date,
+            title,
             now,
         ),
         Err(e) => Err(e.to_string()),
@@ -1193,6 +1211,7 @@ fn build_frontmatter_from_scratch(
     priority: Option<SpecPriority>,
     tags: &[String],
     created_date: &str,
+    title: &str,
     now: chrono::DateTime<Utc>,
 ) -> Result<String, String> {
     let frontmatter = SpecFrontmatter {
@@ -1218,7 +1237,16 @@ fn build_frontmatter_from_scratch(
     };
 
     let parser = FrontmatterParser::new();
-    Ok(parser.stringify(&frontmatter, content.trim_start()))
+
+    // Ensure H1 title is present in the body
+    let body = content.trim_start();
+    let final_body = if body.starts_with("# ") || body.starts_with("#\n") {
+        body.to_string()
+    } else {
+        format!("# {}\n\n{}", title, body)
+    };
+
+    Ok(parser.stringify(&frontmatter, &final_body))
 }
 
 fn to_title_case(name: &str) -> String {
