@@ -21,7 +21,8 @@ import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { useTranslation } from 'react-i18next';
-import { useProject } from '../contexts';
+import { useProject, useLayout } from '../contexts';
+import { cn } from '../lib/utils';
 
 const STATUS_COLORS = {
   planned: '#3B82F6',
@@ -44,6 +45,7 @@ export function StatsPage() {
   const [error, setError] = useState<string | null>(null);
   const { t, i18n } = useTranslation('common');
   const { currentProject, loading: projectLoading } = useProject();
+  const { isWideMode } = useLayout();
 
   const loadStats = useCallback(async () => {
     if (projectLoading || !currentProject) return;
@@ -162,7 +164,7 @@ export function StatsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className={cn("space-y-6 p-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
       <PageHeader
         title={t('statsPage.title')}
         description={t('statsPage.description')}

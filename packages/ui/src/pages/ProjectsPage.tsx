@@ -23,8 +23,9 @@ import { CreateProjectDialog } from '../components/projects/CreateProjectDialog'
 import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { PageHeader } from '../components/shared/PageHeader';
-import { useProject } from '../contexts';
+import { useProject, useLayout } from '../contexts';
 import { api } from '../lib/api';
+import { cn } from '../lib/utils';
 
 dayjs.extend(relativeTime);
 
@@ -51,6 +52,7 @@ export function ProjectsPage() {
     updateProject,
     loading,
   } = useProject();
+  const { isWideMode } = useLayout();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -225,7 +227,7 @@ export function ProjectsPage() {
     <div className="min-h-screen bg-background">
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-7xl mx-auto py-6 space-y-6 px-4">
+        <div className={cn("container mx-auto py-6 space-y-6 px-4", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <PageHeader
             title={t('projectsPage.title')}
             description={t('projectsPage.description') || t('projects.description')}
@@ -251,7 +253,7 @@ export function ProjectsPage() {
         </div>
       </div>
 
-      <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className={cn("container mx-auto py-8 px-4", isWideMode ? "max-w-full" : "max-w-7xl")}>
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProjects.map((project) => {
             const stats = statsCache[project.id];

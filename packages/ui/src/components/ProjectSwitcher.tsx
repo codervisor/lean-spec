@@ -71,10 +71,12 @@ export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
     const projectPathMatch = pathname.match(/^\/projects\/[^/]+(\/.*)?$/);
     let subPath = projectPathMatch?.[1] || '';
 
+    // Default to home if no subpath
     if (!subPath || subPath === '/') {
-      subPath = '/specs';
+      subPath = '';
     }
 
+    // If on a spec detail page, fallback to specs list
     if (subPath.match(/^\/specs\/[^/]+$/)) {
       subPath = '/specs';
     }

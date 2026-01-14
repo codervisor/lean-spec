@@ -28,7 +28,7 @@ import 'reactflow/dist/style.css';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
-import { useProject } from '../contexts';
+import { useProject, useLayout } from '../contexts';
 
 import { nodeTypes } from '../components/dependencies/SpecNode';
 import { SpecSidebar } from '../components/dependencies/SpecSidebar';
@@ -43,6 +43,7 @@ export function DependenciesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { currentProject, loading: projectLoading } = useProject();
+  const { isWideMode } = useLayout();
   const projectReady = !projectId || currentProject?.id === projectId;
 
   const specParam = searchParams.get('spec');
@@ -603,7 +604,7 @@ export function DependenciesPage() {
 
   if (data.nodes.length === 0) {
     return (
-      <div className="container mx-auto p-6">
+      <div className={cn("container mx-auto p-6", isWideMode ? "max-w-full" : "max-w-7xl")}>
         <div className="rounded-lg border border-border bg-muted/30 p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">{t('dependenciesPage.empty.noDependencies')}</h2>
           <p className="text-muted-foreground">{t('dependenciesPage.empty.noDependenciesDescription')}</p>
@@ -613,7 +614,7 @@ export function DependenciesPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 h-[calc(100vh-7rem)]">
+    <div className={cn("mx-auto w-full p-6 h-[calc(100vh-7rem)]", isWideMode ? "max-w-full" : "max-w-7xl")}>
       <div className="flex h-full flex-col gap-4">
         <PageHeader
           title={t('dependenciesPage.title')}

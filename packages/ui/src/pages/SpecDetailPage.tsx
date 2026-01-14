@@ -36,7 +36,7 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
-import { useProject } from '../contexts';
+import { useProject, useLayout } from '../contexts';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatRelativeTime } from '../lib/date-utils';
 import type { SpecDetail } from '../types/api';
@@ -56,6 +56,7 @@ export function SpecDetailPage() {
   const navigate = useNavigate();
   const basePath = `/projects/${projectId}`;
   const { currentProject, loading: projectLoading } = useProject();
+  const { isWideMode } = useLayout();
   const { t, i18n } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
   const [spec, setSpec] = useState<SpecDetail | null>(null);
@@ -300,7 +301,7 @@ export function SpecDetailPage() {
 
         {/* Compact Header - sticky on desktop */}
         <header ref={headerRef} className="lg:sticky lg:top-0 lg:z-20 border-b bg-card">
-          <div className={cn("px-3 sm:px-6", isFocusMode ? "py-1.5" : "py-2 sm:py-3")}>
+          <div className={cn("px-3 sm:px-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl", isFocusMode ? "py-1.5" : "py-2 sm:py-3")}>
             {/* Focus mode: Single compact row */}
             {isFocusMode ? (
               <div className="flex items-center justify-between gap-3">
@@ -525,7 +526,7 @@ export function SpecDetailPage() {
           {/* Horizontal Tabs for Sub-specs */}
           {subSpecs.length > 0 && (
             <div className="border-t bg-muted/30">
-              <div className="px-3 sm:px-6 overflow-x-auto">
+              <div className={cn("px-3 sm:px-6 overflow-x-auto mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
                 <div className="flex gap-1 py-2 min-w-max">
                   {/* Overview tab (README.md) */}
                   <button
@@ -563,7 +564,7 @@ export function SpecDetailPage() {
         </header>
 
         {/* Main content with Sidebar */}
-        <div className="flex flex-col xl:flex-row xl:items-start">
+        <div className={cn("flex flex-col xl:flex-row xl:items-start mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
             <MarkdownRenderer content={displayContent} />
           </main>

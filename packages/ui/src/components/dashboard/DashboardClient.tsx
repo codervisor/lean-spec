@@ -20,6 +20,8 @@ import { StatCard } from './StatCard';
 import { SpecListItem, type DashboardSpec } from './SpecListItem';
 import { ActivityItem } from './ActivityItem';
 import { useTranslation } from 'react-i18next';
+import { useLayout } from '../../contexts';
+import { cn } from '../../lib/utils';
 
 interface DashboardClientProps {
   specs: DashboardSpec[];
@@ -31,6 +33,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({ specs, stats, projectColor, projectName, basePath = '/projects/default' }: DashboardClientProps) {
   const { t } = useTranslation('common');
+  const { isWideMode } = useLayout();
   const inProgressSpecs = specs
     .filter((spec) => spec.status === 'in-progress')
     .sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0))
@@ -73,7 +76,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      <div className={cn("mx-auto space-y-6 sm:space-y-8", isWideMode ? "max-w-full" : "max-w-7xl")}>
         <div>
           <div className="flex items-center gap-3">
             {projectColor && (

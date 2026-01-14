@@ -11,7 +11,7 @@ import { cn } from '../lib/utils';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
-import { useProject } from '../contexts';
+import { useProject, useLayout } from '../contexts';
 import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
@@ -23,6 +23,7 @@ export function SpecsPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { currentProject, loading: projectLoading } = useProject();
+  const { isWideMode } = useLayout();
   const projectReady = !projectId || currentProject?.id === projectId;
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
@@ -215,7 +216,7 @@ export function SpecsPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 max-w-7xl mx-auto w-full">
+    <div className={cn("h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
       <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
         <PageHeader
           title={t('specsPage.title')}
