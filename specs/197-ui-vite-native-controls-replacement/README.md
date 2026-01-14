@@ -5,6 +5,9 @@ priority: medium
 created_at: 2025-12-24T15:18:14.119002Z
 updated_at: 2026-01-12T08:21:19.326720992Z
 ---
+
+# UI Vite Native Controls Replacement
+
 ## Overview
 
 Native form controls remain in UI-Vite (buttons, toggle options) while the Next.js UI uses shadcn/ui primitives via @leanspec/ui-components. This creates styling inconsistencies and duplicated interaction logic. Known native usages:

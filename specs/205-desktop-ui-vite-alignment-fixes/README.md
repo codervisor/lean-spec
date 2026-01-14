@@ -21,6 +21,8 @@ transitions:
   at: 2026-01-09T02:21:59.977272274Z
 ---
 
+# Desktop UI Vite Alignment Fixes
+
 ## Overview
 
 Following spec 204's integration of @leanspec/ui-vite into @leanspec/desktop, there are critical rendering issues where desktop looks significantly different from the web version:

@@ -12,6 +12,8 @@ created_at: 2026-01-13T04:23:23.407095620Z
 updated_at: 2026-01-13T04:23:23.407095620Z
 ---
 
+# Cross-Platform Binary Distribution
+
 ## Overview
 
 ### Problem Statement
@@ -52,11 +54,11 @@ LeanSpec currently distributes Rust binaries via npm (specs 172, 173), which wor
 
 ### Distribution Matrix
 
-| Platform | Primary | Secondary | Future |
-|----------|---------|-----------|--------|
-| **macOS** | Homebrew | npm, Direct Download | MacPorts, Nix |
-| **Linux** | Direct Download + Install Script | apt (PPA), snap, npm | Flatpak, AppImage, AUR |
-| **Windows** | winget | npm, Scoop, Direct Download | Chocolatey |
+| Platform    | Primary                          | Secondary                   | Future                 |
+| ----------- | -------------------------------- | --------------------------- | ---------------------- |
+| **macOS**   | Homebrew                         | npm, Direct Download        | MacPorts, Nix          |
+| **Linux**   | Direct Download + Install Script | apt (PPA), snap, npm        | Flatpak, AppImage, AUR |
+| **Windows** | winget                           | npm, Scoop, Direct Download | Chocolatey             |
 
 ### Priority Ranking
 
@@ -495,13 +497,13 @@ npm install -g lean-spec
 
 ### Direct Downloads
 
-| Platform | Binary | Checksum |
-|----------|--------|----------|
-| macOS (Intel) | [lean-spec-darwin-x64.tar.gz](url) | [sha256](url) |
+| Platform              | Binary                               | Checksum      |
+| --------------------- | ------------------------------------ | ------------- |
+| macOS (Intel)         | [lean-spec-darwin-x64.tar.gz](url)   | [sha256](url) |
 | macOS (Apple Silicon) | [lean-spec-darwin-arm64.tar.gz](url) | [sha256](url) |
-| Linux (x64) | [lean-spec-linux-x64.tar.gz](url) | [sha256](url) |
-| Linux (ARM64) | [lean-spec-linux-arm64.tar.gz](url) | [sha256](url) |
-| Windows (x64) | [lean-spec-windows-x64.zip](url) | [sha256](url) |
+| Linux (x64)           | [lean-spec-linux-x64.tar.gz](url)    | [sha256](url) |
+| Linux (ARM64)         | [lean-spec-linux-arm64.tar.gz](url)  | [sha256](url) |
+| Windows (x64)         | [lean-spec-windows-x64.zip](url)     | [sha256](url) |
 ```
 
 ### 6. apt/PPA (Ubuntu/Debian)
@@ -561,18 +563,18 @@ sudo apt-get install leanspec
 
 ### Distribution Comparison
 
-| Method | Audience | Maintenance | Auto-Update | Priority |
-|--------|----------|-------------|-------------|----------|
-| **npm** | JS/TS devs | Low (automated) | ✅ | ✅ Done |
-| **Homebrew** | macOS/Linux devs | Low (automated) | ✅ | 🔥 Tier 1 |
-| **Install Script** | Everyone | Very Low | ❌ | 🔥 Tier 1 |
-| **winget** | Windows users | Medium | ✅ | 🔥 Tier 1 |
-| **Scoop** | Windows devs | Low (automated) | ✅ | ⭐ Tier 2 |
-| **GitHub Releases** | Manual downloads | Very Low | ❌ | ⭐ Tier 2 |
-| **apt/PPA** | Ubuntu/Debian | High (signing) | ✅ | 💤 Tier 3 |
-| **AUR** | Arch users | None (community) | ✅ | 💤 Tier 3 |
-| **nixpkgs** | Nix users | None (community) | ✅ | 💤 Tier 3 |
-| **Chocolatey** | Windows users | High | ✅ | 💤 Tier 3 |
+| Method              | Audience         | Maintenance      | Auto-Update | Priority |
+| ------------------- | ---------------- | ---------------- | ----------- | -------- |
+| **npm**             | JS/TS devs       | Low (automated)  | ✅           | ✅ Done   |
+| **Homebrew**        | macOS/Linux devs | Low (automated)  | ✅           | 🔥 Tier 1 |
+| **Install Script**  | Everyone         | Very Low         | ❌           | 🔥 Tier 1 |
+| **winget**          | Windows users    | Medium           | ✅           | 🔥 Tier 1 |
+| **Scoop**           | Windows devs     | Low (automated)  | ✅           | ⭐ Tier 2 |
+| **GitHub Releases** | Manual downloads | Very Low         | ❌           | ⭐ Tier 2 |
+| **apt/PPA**         | Ubuntu/Debian    | High (signing)   | ✅           | 💤 Tier 3 |
+| **AUR**             | Arch users       | None (community) | ✅           | 💤 Tier 3 |
+| **nixpkgs**         | Nix users        | None (community) | ✅           | 💤 Tier 3 |
+| **Chocolatey**      | Windows users    | High             | ✅           | 💤 Tier 3 |
 
 ### Automated Publishing Workflow
 

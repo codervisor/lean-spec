@@ -17,6 +17,9 @@ transitions:
 - status: in-progress
   at: 2026-01-09T02:38:05.567910168Z
 ---
+
+# Desktop Navigation Seamless Integration
+
 ## Overview
 
 The desktop app currently has two critical UX issues:

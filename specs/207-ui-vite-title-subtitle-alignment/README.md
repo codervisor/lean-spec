@@ -22,21 +22,23 @@ transitions:
   at: 2026-01-09T08:16:29.406480607Z
 ---
 
+# UI Vite Title Subtitle Alignment
+
 ## Overview
 
 **Problem**: Page titles (h1/h2) and subtitles across ui-vite pages are inconsistent in structure, typography, spacing, and semantic markup. Some pages use `<h1>`, others don't; subtitle positioning and styling varies; and there's no clear pattern for when to include descriptive text.
 
 **Current State Audit** (7 pages total):
 
-| Page | Title Element | Title Classes | Subtitle | Issues |
-|------|--------------|---------------|----------|---------|
-| DashboardPage | None (delegated to DashboardClient) | N/A | N/A | No page-level header, relies on component |
-| ProjectsPage | `<h1>` | `text-3xl font-bold tracking-tight text-foreground` | `<p>` below with `text-muted-foreground mt-1 text-lg` | ✅ Good structure, could align classes |
-| StatsPage | `<h1>` | `text-3xl sm:text-4xl font-bold tracking-tight` | `<p>` with `text-muted-foreground mt-1` | ✅ Good, but inconsistent with ProjectsPage |
-| SpecsPage | None | N/A | None | ❌ No page title at all |
-| SpecDetailPage | Dynamic (spec title) | Variable | Metadata cards | ⚠️ Special case, needs review |
-| DependenciesPage | None | N/A | None | ❌ No page title |
-| ContextPage | None | N/A | None | ❌ No page title |
+| Page             | Title Element                       | Title Classes                                       | Subtitle                                              | Issues                                     |
+| ---------------- | ----------------------------------- | --------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------ |
+| DashboardPage    | None (delegated to DashboardClient) | N/A                                                 | N/A                                                   | No page-level header, relies on component  |
+| ProjectsPage     | `<h1>`                              | `text-3xl font-bold tracking-tight text-foreground` | `<p>` below with `text-muted-foreground mt-1 text-lg` | ✅ Good structure, could align classes      |
+| StatsPage        | `<h1>`                              | `text-3xl sm:text-4xl font-bold tracking-tight`     | `<p>` with `text-muted-foreground mt-1`               | ✅ Good, but inconsistent with ProjectsPage |
+| SpecsPage        | None                                | N/A                                                 | None                                                  | ❌ No page title at all                     |
+| SpecDetailPage   | Dynamic (spec title)                | Variable                                            | Metadata cards                                        | ⚠️ Special case, needs review               |
+| DependenciesPage | None                                | N/A                                                 | None                                                  | ❌ No page title                            |
+| ContextPage      | None                                | N/A                                                 | None                                                  | ❌ No page title                            |
 
 **Impact**: 
 - Poor user orientation (what page am I on?)

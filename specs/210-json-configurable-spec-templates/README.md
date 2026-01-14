@@ -15,6 +15,8 @@ created_at: 2026-01-12T13:42:18.642426Z
 updated_at: 2026-01-12T13:42:30.773693Z
 ---
 
+# JSON Configurable Spec Templates
+
 ## Overview
 
 **Problem**: Spec templates are currently plain markdown files with hardcoded structure. This limits flexibility and makes it difficult to:

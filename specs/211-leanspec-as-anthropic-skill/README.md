@@ -1,182 +1,178 @@
 ---
 status: planned
 created: 2026-01-12
-priority: high
+priority: medium
 tags:
-- skills
-- anthropic
+- agent-skills
 - integration
 - sdd
-- methodology
-- orchestration
+- cross-platform
+- addon
 created_at: 2026-01-12T13:55:05.053133Z
 updated_at: 2026-01-12T13:55:05.053133Z
 ---
+
+# LeanSpec Agent Skill Support
 
 ## Overview
 
 ### Problem & Motivation
 
-**Anthropic Skills** is a new concept that allows Claude to learn reusable capabilities - expertise, procedures, and best practices that can be applied automatically. Currently, users must configure LeanSpec via MCP, set up AGENTS.md, and manually teach AI agents about SDD methodology in every conversation.
+**Agent Skills** is an open standard format (https://agentskills.io) originally developed by Anthropic and now adopted across the AI coding ecosystem by Claude, Cursor, OpenAI Codex, Letta, Factory, and others. Skills are SKILL.md files that package instructions, scripts, and resources that agents can discover and use.
 
-**The Opportunity**: Package LeanSpec's SDD methodology as an **Anthropic Skill** that:
-- Teaches Claude the complete SDD workflow automatically
-- Enables spec-driven development without manual configuration
-- Makes LeanSpec's orchestration capabilities discoverable
-- Positions LeanSpec as a **systematic methodology**, not just tooling
+Currently, users must:
+- Configure LeanSpec via MCP server
+- Set up AGENTS.md in their project
+- Manually teach AI agents about SDD methodology in every conversation
 
-### What Are Anthropic Skills?
+**The Opportunity**: Create a **LeanSpec Agent Skill** (SKILL.md) that:
+- Teaches agents the complete SDD workflow automatically
+- Works across multiple AI tools (Claude, Cursor, Codex, etc.)
+- Makes SDD methodology discoverable and portable
+- Serves as an **addon feature**, complementing existing MCP/CLI tools
 
-Based on research:
-- **Skills** teach Claude how to work with specific tools, procedures, and organizational standards
-- They're **reusable capabilities** that persist across conversations
-- Examples: Box (file transformation), Notion (workflow integration), Rakuten (spreadsheet processing)
-- Skills appear in Claude's capabilities settings and can be enabled/shared
-- They use **MCP under the hood** but provide higher-level methodology abstraction
+### What Are Agent Skills?
+
+**Agent Skills** are a lightweight, open format:
+- **SKILL.md file** with frontmatter (name, description) + markdown instructions
+- Optional `scripts/`, `references/`, `assets/` directories
+- **Progressive disclosure**: Agents load name/description first, full content on activation
+- **Cross-platform**: Works with Claude, Cursor, Codex, Letta, Factory, and growing list
+- **Version controlled**: Skills are just folders you can check into git
+
+**Key principle**: Skills are **addon capabilities**, not a replacement for core tooling.
 
 ### Strategic Vision
 
-**Current**: LeanSpec as MCP tools (list, view, create, update, etc.)  
-**Future**: LeanSpec as **SDD Skill** - a complete methodology for AI-assisted development
+**Current**: LeanSpec via MCP + CLI + AGENTS.md  
+**Addition**: LeanSpec Agent Skill for cross-platform SDD methodology
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                  LeanSpec as Skill                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  "Enable spec-driven development (SDD) methodology"         │
-│                                                             │
-│  When activated, Claude automatically:                      │
-│  • Discovers existing specs via MCP                         │
-│  • Follows SDD lifecycle (create → implement → validate)    │
-│  • Enforces context economy (<2000 tokens per spec)         │
-│  • Uses burst mode for iterative development               │
-│  • Tracks dependencies and relationships                    │
-│  • Maintains spec-code alignment                            │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│              LeanSpec Agent Skill                      │
+│           (SKILL.md in .lean-spec/skills/)             │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│  When activated by compatible agents:                  │
+│  • Teaches SDD workflow (discover → design → code)     │
+│  • Enforces context economy (<2000 tokens per spec)    │
+│  • References MCP tools (list, view, create, etc.)     │
+│  • Provides best practices and common patterns         │
+│  • Works across Claude, Cursor, Codex, etc.            │
+│                                                        │
+│  Does NOT replace: MCP server, CLI, or core tools      │
+│                                                        │
+└────────────────────────────────────────────────────────┘
 ```
 
 ## High-Level Approach
 
 ### 1. Skill Definition Structure
 
-**Skill Manifest** (conceptual):
-```json
-{
-  "name": "leanspec-sdd",
-  "version": "1.0.0",
-  "displayName": "LeanSpec Spec-Driven Development",
-  "description": "Systematic AI-assisted development using lightweight specifications",
-  "capabilities": [
-    "spec-management",
-    "context-economy",
-    "sdd-workflow",
-    "burst-mode-orchestration",
-    "dependency-tracking"
-  ],
-  "mcp": {
-    "server": "@leanspec/mcp",
-    "required": true
-  },
-  "methodology": {
-    "framework": "Spec-Driven Development (SDD)",
-    "principles": [
-      "Context Economy: Keep specs <2000 tokens",
-      "Signal-to-Noise: Every word informs decisions",
-      "Intent Over Implementation: Capture WHY",
-      "Progressive Disclosure: Add complexity only when needed"
-    ],
-    "workflow": ["discover", "design", "implement", "validate", "complete"]
-  },
-  "prompts": {
-    "systemPrompt": "You are an expert in Spec-Driven Development...",
-    "workflowPrompts": { ... }
-  }
-}
-```
+**Agent Skill Format** (SKILL.md):
+
+The skill will have YAML frontmatter followed by markdown instructions:
+
+**Frontmatter fields**:
+- `name: leanspec-sdd`
+- `description`: Spec-Driven Development methodology for AI-assisted development. Use when working in a LeanSpec project.
+- `compatibility`: Requires lean-spec CLI or @leanspec/mcp server
+- `metadata`: author, version, homepage
+
+**Body sections**:
+1. When to Use This Skill - Triggers for activation (LeanSpec project detected, user mentions specs, planning features)
+2. Core SDD Workflow - Discovery (board, search) → Design (create, validate tokens) → Implement (update status) → Validate (check completion)
+3. Context Economy Principles - Keep specs under 2000 tokens, validate before creating
+4. Tool Reference - Document both MCP tool names and CLI commands
+5. Best Practices - Common patterns, anti-patterns, examples
+
+See references/ for detailed workflow steps, examples, and patterns.
 
 ### 2. Integration Points
 
-**MCP Foundation** (already exists):
-- All spec operations (list, view, create, update, link, etc.)
-- Board, stats, search, validation
-- Token counting and context management
+**Foundation (exists)**:
+- MCP server: `@leanspec/mcp` with all tools (list, view, create, etc.)
+- CLI: `lean-spec` commands
+- AGENTS.md: Project-specific instructions
 
-**Skill Layer** (new):
-- **Methodology teaching**: Automatic SDD workflow guidance
-- **Workflow orchestration**: Multi-phase development patterns
-- **Quality gates**: Enforces context economy, validation
-- **Burst mode integration**: Connects to spec 171 patterns
+**Agent Skill (new, addon)**:
+- SKILL.md file teaching SDD methodology
+- References MCP tools and CLI commands
+- Portable across Claude, Cursor, Codex, etc.
+- Does NOT replace existing tools
 
 ### 3. User Experience
 
-**Before (MCP only)**:
+**Before (without Agent Skill)**:
 ```
 User: "Let's implement feature X"
-Claude: "Should I create a spec first?"
-User: "Yes, follow SDD methodology..."
-Claude: [needs to be told what SDD is]
+Agent: "Should I create a spec first?"
+User: "Yes, follow SDD methodology in AGENTS.md..."
+Agent: [needs to read and parse AGENTS.md]
 ```
 
-**After (Skill enabled)**:
+**After (with Agent Skill)**:
 ```
 User: "Let's implement feature X"
-Claude: [Automatically discovers specs via MCP]
-Claude: "I see this is a LeanSpec project. Let me check existing specs..."
-Claude: [Runs board, search]
-Claude: "No existing spec found. I'll create spec 211-feature-x following SDD principles..."
-Claude: [Creates spec, validates token count, links dependencies]
-Claude: "Spec created. Ready to implement via burst mode?"
+Agent: [Detects LeanSpec project, activates leanspec-sdd skill]
+Agent: "Checking existing specs..."
+Agent: [Runs lean-spec board and search]
+Agent: "No existing spec found. Creating spec 211-feature-x following SDD..."
+Agent: [Creates spec, validates <2000 tokens, links dependencies]
+Agent: "Spec created. Ready to implement?"
 ```
 
-### 4. Skill Capabilities
+**Cross-platform**: Works with Claude, Cursor, Codex, and any skill-compatible agent.
 
-| Capability                | What It Teaches Claude                                       | Enabled By                  |
-| ------------------------- | ------------------------------------------------------------ | --------------------------- |
-| **Discovery**             | Always check specs first via `board` and `search`            | MCP tools                   |
-| **Context Economy**       | Keep specs <2000 tokens, validate before creating            | `tokens` tool + methodology |
-| **SDD Workflow**          | Follow: Discover → Design → Implement → Validate             | Skill prompts               |
-| **Dependency Management** | Use `link`/`unlink` to track relationships                   | MCP tools                   |
-| **Ralph Mode**            | Autonomous iterative AI development loop (also "burst mode") | Spec 171 integration        |
-| **Quality Gates**         | Validate before marking complete                             | `validate` tool             |
+### 4. What The Skill Teaches
+
+| Capability                | What Agents Learn                                 | Tools Used             |
+| ------------------------- | ------------------------------------------------- | ---------------------- |
+| **Discovery**             | Always check specs first via board and search     | MCP or CLI             |
+| **Context Economy**       | Keep specs <2000 tokens, validate before creating | tokens tool/command    |
+| **SDD Workflow**          | Follow: Discover → Design → Implement → Validate  | Documented in SKILL.md |
+| **Dependency Management** | Use link/unlink to track relationships            | MCP or CLI             |
+| **Quality Gates**         | Validate before marking complete                  | validate tool/command  |
+| **Best Practices**        | Common patterns, anti-patterns, spec structure    | Examples in SKILL.md   |
+
+**Note**: Skill is **methodology teaching**, not tool replacement.
 
 ## Acceptance Criteria
 
 ### Core Requirements
 
-- [ ] **Skill manifest defined** - Clear structure for LeanSpec Skill
-- [ ] **Methodology documented** - SDD principles encoded for Claude
-- [ ] **MCP integration** - Skill automatically connects to @leanspec/mcp
-- [ ] **Workflow prompts** - System prompts for each SDD phase
-- [ ] **Discovery behavior** - Claude automatically runs board/search before creating specs
-- [ ] **Context economy enforcement** - Warns when specs exceed 2000 tokens
-- [ ] **Ralph mode awareness** - Claude knows about autonomous iterative development pattern (also called "burst mode")
+- [ ] **SKILL.md created** - Valid Agent Skills format with frontmatter + instructions
+- [ ] **Methodology documented** - SDD workflow encoded in markdown
+- [ ] **Tool references** - Clear instructions for using MCP tools or CLI commands
+- [ ] **Workflow guidance** - Step-by-step instructions for each SDD phase
+- [ ] **Discovery behavior** - Agents learn to run board/search before creating specs
+- [ ] **Context economy** - Instructions explain <2000 token principle and validation
+- [ ] **Cross-platform compatible** - Works with Claude, Cursor, Codex, etc.
 
 ### Integration Requirements
 
-- [ ] **Compatible with existing MCP** - Works with current @leanspec/mcp package
-- [ ] **No breaking changes** - Skill is additive, doesn't replace MCP tools
-- [ ] **Orchestration ready** - Connects to spec 168 desktop app vision
-- [ ] **Ralph mode ready** - Supports spec 171 autonomous iterative pattern (Ralph/burst mode)
+- [ ] **Compatible with existing tools** - Works with current @leanspec/mcp and CLI
+- [ ] **No breaking changes** - Skill is additive, doesn't replace existing tools
+- [ ] **Validation** - Skill passes `skills-ref validate` check
+- [ ] **Progressive disclosure** - SKILL.md under 500 lines, detailed content in references/
 
 ### User Experience Requirements
 
-- [ ] **Zero configuration** - Enabling skill auto-configures SDD methodology
-- [ ] **Discoverable** - Appears in Claude's Skills settings
-- [ ] **Shareable** - Can be shared within organizations
-- [ ] **Intuitive** - Claude naturally follows SDD without being told
+- [ ] **Easy setup** - Users add skill to their project or global skills directory
+- [ ] **Auto-activation** - Agents detect LeanSpec projects and activate skill
+- [ ] **Shareable** - Can be version-controlled and shared via git
+- [ ] **Intuitive** - Agents naturally follow SDD after reading skill
 
 ## Out of Scope
 
 **NOT included in initial Skill**:
-- ❌ Desktop app integration (handled by spec 168)
-- ❌ Ralph mode implementation (handled by spec 171 - autonomous loop pattern)
 - ❌ New MCP tools (use existing ones)
-- ❌ VS Code extension (separate integration)
-- ❌ Alternative AI tools (Cursor, etc.) - Claude only
+- ❌ CLI modifications (skill references existing commands)
+- ❌ Desktop app integration (handled by spec 168)
+- ❌ Complex workflow orchestration (handled by spec 171)
+- ❌ Tool-specific implementations (skill is cross-platform)
 
-**Why**: The Skill teaches methodology, infrastructure already exists.
+**Why**: The Skill teaches methodology. Infrastructure already exists.
 
 ## Dependencies
 
@@ -193,299 +189,231 @@ Claude: "Spec created. Ready to implement via burst mode?"
 
 ## Design Considerations
 
-### 1. How Are Skills Defined?
+### 1. Agent Skills Format
 
-**Research findings**: Skills appear to use MCP as infrastructure but provide higher-level abstractions:
-- MCP = Low-level tools (list, view, create)
-- Skill = High-level methodology (when to use tools, in what order, following what principles)
+**Agent Skills specification** (https://agentskills.io/specification):
+- **SKILL.md** with YAML frontmatter + Markdown body
+- **Progressive disclosure**: name/description loaded first, full content on activation
+- **Optional directories**: scripts/, references/, assets/
+- **Cross-platform**: Works with any skills-compatible agent
 
 **LeanSpec Skill structure**:
 ```
-Skill Definition
-├── Metadata (name, version, description)
-├── MCP Connection (points to @leanspec/mcp)
-├── Methodology (SDD principles and workflow)
-├── System Prompts (teach Claude SDD patterns)
-└── Quality Gates (context economy, validation rules)
+.lean-spec/skills/leanspec-sdd/
+├── SKILL.md                # Main skill file
+├── references/
+│   ├── WORKFLOW.md         # Detailed SDD workflow
+│   ├── BEST-PRACTICES.md   # Common patterns
+│   └── EXAMPLES.md         # Example specs
+└── scripts/
+    └── validate-spec.sh    # Optional validation script
 ```
 
-### 2. Skill vs MCP Server
+### 2. Agent Skill vs MCP Server
 
-| Aspect            | MCP Server                     | LeanSpec Skill                             |
-| ----------------- | ------------------------------ | ------------------------------------------ |
-| **Level**         | Low-level tool access          | High-level methodology                     |
-| **What**          | Execute commands               | Follow workflow                            |
-| **Examples**      | `list`, `create`, `update`     | "Always search first", "Keep <2000 tokens" |
-| **Configuration** | Requires manual setup          | Auto-configures on enable                  |
-| **Audience**      | All AI tools (Claude, Copilot) | Claude only (Skills are Claude-specific)   |
+| Aspect            | MCP Server                    | Agent Skill                                 |
+| ----------------- | ----------------------------- | ------------------------------------------- |
+| **Level**         | Low-level tool access         | High-level methodology                      |
+| **What**          | Execute commands              | Follow workflow                             |
+| **Examples**      | `list`, `create`, `update`    | "Always search first", "Keep <2000 tokens"  |
+| **Configuration** | Requires manual setup         | Drop SKILL.md in project or user directory  |
+| **Audience**      | Tools with MCP support        | Any Agent Skills-compatible tool            |
+| **Adoption**      | Claude, Cursor, Copilot, etc. | Claude, Cursor, Codex, Letta, Factory, etc. |
 
-**Strategy**: Skill wraps MCP, doesn't replace it. Other tools still use MCP directly.
+**Strategy**: Skill references MCP/CLI, doesn't replace them. Provides methodology layer.
 
 ### 3. Methodology Encoding
 
-**SDD Workflow Prompts**:
+**SKILL.md structure** (main sections):
 
-**Phase 1: Discovery**
-```
-Before creating any spec, ALWAYS:
-1. Run `board` to see project state
-2. Run `search` with relevant keywords
-3. Check for related/duplicate specs
-4. Review dependencies of related specs
+1. **When to Use**: Triggers for activating the skill
+2. **Core Principles**: Context economy, signal-to-noise, etc.
+3. **Discovery Phase**: Always check specs first (board, search)
+4. **Design Phase**: Create specs following template, validate tokens
+5. **Implementation Phase**: Update status, track progress, document
+6. **Validation Phase**: Run validate, check completion criteria
+7. **Common Patterns**: Examples of good/bad practices
+8. **Tool Reference**: MCP tools and CLI commands available
 
-Only create new spec if truly needed.
-```
+**Progressive disclosure**:
+- SKILL.md: ~300-400 lines (core workflow)
+- references/WORKFLOW.md: Detailed step-by-step guide
+- references/BEST-PRACTICES.md: Patterns and anti-patterns
+- references/EXAMPLES.md: Sample specs
 
-**Phase 2: Design**
-```
-When creating a spec:
-1. Use standard template (from spec 117)
-2. Keep total <2000 tokens (run `tokens` to verify)
-3. Focus on WHY over HOW
-4. Define clear acceptance criteria
-5. Link dependencies with `link` tool
+### 4. Skill Location
 
-Validate before creating: `validate --check-deps`
-```
+**Where to place the skill**:
 
-**Phase 3: Implementation**
-```
-When implementing:
-1. Mark spec as in-progress: `update <spec> --status in-progress`
-2. For complex specs, suggest burst mode (spec 171)
-3. Track progress via checklist items
-4. Document decisions in spec as you go
+| Scope       | Location                                        | Use Case                            |
+| ----------- | ----------------------------------------------- | ----------------------------------- |
+| **Project** | `$PROJECT_ROOT/.lean-spec/skills/leanspec-sdd/` | Team-specific SDD variations        |
+| **User**    | `~/.codex/skills/leanspec-sdd/` (Codex)         | Personal preference across projects |
+| **User**    | `~/.cursor/skills/leanspec-sdd/` (Cursor)       | Personal preference across projects |
+| **Global**  | Bundled with lean-spec installation             | Default for all users (future)      |
 
-Don't leave specs in limbo.
-```
-
-**Phase 4: Validation**
-```
-Before marking complete:
-1. Run `validate <spec>` to check quality
-2. Verify all checklist items checked
-3. Check token count still <2000
-4. Ensure all acceptance criteria met
-
-Use `update <spec> --status complete` only when verified.
-```
-
-### 4. Context Economy Enforcement
-
-**Built-in checks**:
-```javascript
-// Skill behavior: Automatic token checking
-if (action === 'create' && content.length > estimatedTokens(2000)) {
-  warn("This spec may exceed 2000 tokens. Consider splitting.");
-  suggest("Run `tokens` to verify exact count.");
-}
-
-// Before marking complete
-if (action === 'update' && status === 'complete') {
-  const tokenCount = await runTool('tokens', { spec });
-  if (tokenCount > 2000) {
-    warn("Spec exceeds optimal token count (2000).");
-    suggest("Consider refactoring before completing.");
-  }
-}
-```
-
-### 5. Burst Mode Integration
-
-**Skill awareness**:
-```
-When user says "implement spec X":
-- Suggest Ralph mode (autonomous loop) for iterative development
-- Explain: "I can implement this using Ralph mode - autonomous iterative test-driven development"
-- Offer: "This will automatically iterate until tests pass and spec is verified"
-- Reference: Based on Geoffrey Huntley's Ralph technique (ghuntley.com/ralph)
-
-Connect to spec 171 workflow without reimplementing it.
-```
+**Note**: Exact paths depend on the agent tool being used. See https://agentskills.io for details.
 
 ## Implementation Strategy
 
-### Phase 1: Skill Definition Research (1-2 weeks)
+### Phase 1: SKILL.md Creation (1 week)
 
 **Goals**:
-- [ ] Understand exact Skill definition format (contact Anthropic if needed)
-- [ ] Research similar Skills (Box, Notion, Rakuten patterns)
-- [ ] Define LeanSpec Skill manifest structure
-- [ ] Document methodology encoding approach
+- [ ] Create SKILL.md following Agent Skills specification
+- [ ] Write frontmatter (name, description, compatibility)
+- [ ] Document core SDD workflow in markdown
+- [ ] Create references/ directory with detailed docs
 
 **Deliverables**:
-- Skill specification document
-- Example Skill JSON/YAML manifest
-- System prompt templates
+- `.lean-spec/skills/leanspec-sdd/SKILL.md`
+- `references/WORKFLOW.md`, `BEST-PRACTICES.md`, `EXAMPLES.md`
+- Validate with `skills-ref validate`
 
-### Phase 2: Methodology Encoding (1-2 weeks)
+### Phase 2: Tool Integration (3-5 days)
 
 **Goals**:
-- [ ] Encode SDD principles in Skill format
-- [ ] Create workflow prompts for each phase
-- [ ] Define quality gates and validation rules
-- [ ] Write context economy enforcement logic
+- [ ] Document MCP tool usage in skill
+- [ ] Provide CLI command alternatives
+- [ ] Add examples of both approaches
+- [ ] Test with different agent tools
 
 **Deliverables**:
-- Complete methodology document
-- Workflow prompt library
-- Quality gate definitions
+- Clear tool reference section
+- Working examples with Claude, Cursor, Codex
+- Compatibility notes
 
-### Phase 3: MCP Integration (1 week)
+### Phase 3: Testing & Refinement (1 week)
 
 **Goals**:
-- [ ] Connect Skill to @leanspec/mcp
-- [ ] Test tool invocation from Skill prompts
-- [ ] Verify automatic discovery behavior
-- [ ] Ensure no MCP breaking changes
+- [ ] Test skill with real LeanSpec projects
+- [ ] Verify agents follow SDD workflow
+- [ ] Measure token count of SKILL.md (<500 lines)
+- [ ] Gather feedback from different agent tools
 
 **Deliverables**:
-- Integration layer
-- Compatibility tests
-- Documentation
+- Test reports per agent (Claude, Cursor, Codex, etc.)
+- Refinement list
+- Performance metrics
 
-### Phase 4: Testing & Refinement (2 weeks)
+### Phase 4: Distribution (3-5 days)
 
 **Goals**:
-- [ ] Test Skill with real projects
-- [ ] Verify Claude follows SDD workflow naturally
-- [ ] Measure context economy compliance
-- [ ] Gather user feedback
+- [ ] Bundle skill with lean-spec installation
+- [ ] Create setup documentation
+- [ ] Submit to community skill repositories
+- [ ] Announce availability
 
 **Deliverables**:
-- Test reports
-- Refinement backlog
-- User feedback summary
-
-### Phase 5: Launch (1 week)
-
-**Goals**:
-- [ ] Publish Skill to Anthropic Skills marketplace
-- [ ] Create documentation and tutorials
-- [ ] Marketing: Position LeanSpec as methodology, not just tools
-- [ ] Monitor adoption and usage
-
-**Deliverables**:
-- Published Skill
-- Launch blog post
-- Tutorial videos
-- Analytics dashboard
+- Installation guide
+- Blog post
+- PR to agentskills/community-skills repo
 
 ## Success Metrics
 
-| Metric              | Target                                    | Measurement          |
-| ------------------- | ----------------------------------------- | -------------------- |
-| **Skill adoption**  | 500+ enables in 3 months                  | Claude analytics     |
-| **SDD compliance**  | >80% of conversations follow workflow     | Session analysis     |
-| **Context economy** | >75% of specs <2000 tokens                | `tokens` tool data   |
-| **Discovery rate**  | >90% run `board`/`search` before creating | MCP logs             |
-| **Completion rate** | >60% of in-progress specs completed       | Spec status tracking |
+| Metric               | Target                                  | Measurement                        |
+| -------------------- | --------------------------------------- | ---------------------------------- |
+| **Skill adoption**   | 100+ projects using skill in 3 months   | Git analytics                      |
+| **Agent compliance** | >70% of sessions follow SDD workflow    | Session analysis (where available) |
+| **Context economy**  | >75% of specs <2000 tokens              | `tokens` tool data                 |
+| **Discovery rate**   | >80% check board/search before creating | Tool usage logs                    |
+| **Cross-platform**   | Works with 3+ agent tools               | Testing verification               |
 
 ## Technical Challenges
 
-### Challenge 1: Skill Format Unknown
+### Challenge 1: Agent Behavior Variance
 
-**Issue**: Anthropic hasn't published official Skill definition format yet.
-
-**Mitigation**:
-1. Research existing Skills (Box, Notion) via Claude
-2. Contact Anthropic for early access / documentation
-3. Start with conceptual design, adapt format when available
-
-### Challenge 2: Claude-Only
-
-**Issue**: Skills only work with Claude, not other AI tools.
+**Issue**: Different agents may interpret skills differently.
 
 **Mitigation**:
-- Keep MCP server as universal interface
-- Skills are additive layer for Claude users
-- Other tools continue using MCP directly
+1. Follow Agent Skills specification strictly
+2. Test with multiple agents (Claude, Cursor, Codex)
+3. Use clear, explicit instructions in SKILL.md
+4. Provide examples in references/
+
+### Challenge 2: Tool Detection
+
+**Issue**: Skill needs to detect if MCP or CLI is available.
+
+**Mitigation**:
+- Document both MCP and CLI approaches in skill
+- Include compatibility field in frontmatter
+- Provide graceful degradation instructions
 
 ### Challenge 3: Methodology Drift
 
-**Issue**: Claude might not follow Skill prompts consistently.
+**Issue**: Agents might not consistently follow skill instructions.
 
 **Mitigation**:
-- Strong system prompts with explicit rules
-- Quality gates that block non-compliant actions
-- Continuous refinement based on usage data
+- Strong, explicit workflow instructions
+- Include "When to Use" section
+- Provide positive/negative examples
+- Continuous refinement based on usage
 
 ## Open Questions
 
-1. **What is the exact Skill definition format?**
-   - Need official documentation from Anthropic
-   - May need early access program
+1. **Should we bundle the skill with lean-spec installation?**
+   - Or distribute separately via GitHub?
+   - Pros/cons of each approach
 
-2. **How are Skills distributed?**
-   - Skills marketplace?
-   - Private sharing?
-   - Public registry?
+2. **How do we handle skill updates?**
+   - Version in metadata field
+   - Migration path for existing users
 
-3. **Can Skills be versioned?**
-   - Important for methodology evolution
-   - Backward compatibility concerns
+3. **What's the best skill location?**
+   - Project-level (.lean-spec/skills/)?
+   - User-level (~/.codex/skills/)?
+   - Both with override behavior?
 
-4. **How do Skills interact with custom instructions?**
-   - Do they override?
-   - Do they merge?
-   - Priority handling?
+4. **How detailed should references/ be?**
+   - Balance between completeness and token usage
+   - Progressive disclosure strategy
 
-5. **Can Skills trigger desktop apps?**
-   - Integration with spec 168 orchestration?
-   - Deep linking from Skill to desktop?
-
-6. **Are Skills mandatory or optional?**
-   - Should MCP still work without Skill?
-   - How to encourage Skill adoption?
+5. **Should we create tool-specific variants?**
+   - One skill for all agents?
+   - Or optimize for each (Claude, Cursor, Codex)?
 
 ## Marketing & Positioning
 
-### New Messaging
+### Key Messages
 
-**Current**: "LeanSpec - Lightweight spec management for AI-powered development"
+**For Agent Skills Directory/Community**:
+- "Teach agents systematic spec-driven development"
+- "Works with Claude, Cursor, Codex, and more"
+- "Drop-in methodology for AI-powered teams"
 
-**New**: "LeanSpec - The SDD Methodology Skill for Claude"
-
-**Tagline**: "Teach Claude systematic development, not just tools"
+**For LeanSpec Users**:
+- "Share SDD workflow across your team via Agent Skills"
+- "Works with any Agent Skills-compatible tool"
+- "Addon feature - complements existing MCP and CLI"
 
 ### Value Proposition
 
 **For Individual Developers**:
-- Zero configuration - enable Skill, start coding
-- Claude automatically follows SDD best practices
-- No need to explain methodology every conversation
+- Quick setup: drop SKILL.md in project or user directory
+- Agents automatically learn SDD workflow
+- Works across multiple AI coding tools
 
 **For Teams**:
-- Consistent development methodology across team
-- Shareable Skill = shared practices
-- Quality gates built-in
+- Version-controlled methodology
+- Consistent development practices
+- Easy onboarding for new team members
 
 **For Organizations**:
-- Standardized AI-assisted development
-- Measurable code quality improvements
-- Reduced onboarding time for AI tools
-
-### Competitive Advantage
-
-**vs Manual Prompting**: Automatic, consistent, no memory
-**vs Custom Instructions**: Structured workflow, not just personality
-**vs Pure MCP**: Methodology, not just tools
-**vs Other SDD Tools**: Native Claude integration, AI-first
+- Portable skill definition
+- Works with multiple agent platforms
+- Measurable quality improvements via spec validation
 
 ## Related Specs
 
 **Foundation**:
-- **123-ai-coding-agent-integration**: Agent dispatch (exists)
+- **102-mcp-wrapper-package**: @leanspec/mcp distribution (complete)
 - **069-token-counting-utils**: Context economy measurement (complete)
 - **018-spec-validation**: Quality gates (complete)
-
-**Orchestration Vision**:
-- **168-leanspec-orchestration-platform**: Desktop app (parallel)
-- **171-burst-mode-orchestrator**: Iterative pattern (parallel)
-
-**Supporting**:
-- **102-mcp-wrapper-package**: @leanspec/mcp distribution (complete)
 - **117-simplify-template-system**: Template structure (complete)
+
+**Parallel Work**:
+- **168-leanspec-orchestration-platform**: Desktop app (separate concern)
+- **171-burst-mode-orchestrator**: Iterative pattern (separate concern)
 
 ## Next Steps
 
@@ -497,42 +425,49 @@ Connect to spec 171 workflow without reimplementing it.
 
 ## Notes
 
-### Why This Matters Strategically
+### Why Agent Skills Matter
 
-LeanSpec has excellent infrastructure (MCP, CLI, desktop app) but **discoverability is low**. Skills solve this:
+Agent Skills solve a **discoverability and portability problem**:
 
-**Current problem**:
-- Users must manually configure MCP
-- Must learn SDD methodology separately
-- Must remember to follow workflow
-- Each conversation starts from scratch
+**Current state**:
+- Users must manually configure tools (MCP server)
+- Must learn methodology separately (AGENTS.md)
+- Agent-specific setup (Claude vs Cursor vs Codex)
+- Methodology locked in project docs
 
-**Skills solution**:
-- One-click enable in Claude settings
-- Methodology automatically applied
-- Consistent behavior across conversations
-- Shareable within organizations
+**With Agent Skills**:
+- Drop SKILL.md in project → all compatible agents understand SDD
+- Portable across tools (Claude, Cursor, Codex, Letta, Factory, etc.)
+- Version-controlled methodology that travels with code
+- Easy to share: just commit the skill folder
+
+### Positioning
+
+Agent Skills are an **addon feature**, not core infrastructure:
+- **Core**: MCP server + CLI for spec operations
+- **Addon**: Agent Skill teaches methodology to compatible agents
+- **Benefit**: Users without skills can still use MCP/CLI directly
 
 ### Relationship to Spec 168
 
 **Spec 168**: Desktop app as orchestration frontend  
-**This spec**: Methodology as Claude Skill
+**This spec**: Agent Skill teaching SDD methodology
 
 **Synergy**:
-- Skill teaches Claude the methodology
-- Desktop app provides GUI for execution
+- Skill teaches agents the methodology
+- Desktop app provides GUI for visualization/management
 - MCP connects them
 - User gets complete solution
 
 ### Philosophical Alignment
 
 This spec aligns with **LeanSpec First Principles** (spec 049):
-1. **Context Economy**: Built into Skill validation
-2. **Signal-to-Noise**: Enforced via prompts
-3. **Intent Over Implementation**: Core of SDD teaching
+1. **Context Economy**: Built into skill instructions (<2000 tokens)
+2. **Signal-to-Noise**: Clear workflow guidance, no fluff
+3. **Intent Over Implementation**: Skill teaches WHY, not just HOW
 4. **Bridge the Gap**: Skills = human+AI shared understanding
-5. **Progressive Disclosure**: Workflow guides complexity
+5. **Progressive Disclosure**: SKILL.md + references/ structure
 
 ---
 
-**Key Insight**: Skills transform LeanSpec from "a tool Claude can use" to "a methodology Claude knows". This is the difference between giving Claude a hammer vs teaching it carpentry.
+**Key Insight**: Agent Skills provide a **standard way** to share methodology across the AI coding ecosystem. This increases LeanSpec's reach beyond tools with MCP support.
