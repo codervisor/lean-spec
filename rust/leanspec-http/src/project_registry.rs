@@ -29,11 +29,12 @@ fn slugify(name: &str) -> String {
         if ch.is_ascii_alphanumeric() {
             slug.push(ch.to_ascii_lowercase());
             pending_dash = false;
-        } else if ch.is_ascii_whitespace() || matches!(ch, '-' | '_' | '/' | '\\') {
-            if !slug.is_empty() && !pending_dash {
-                slug.push('-');
-                pending_dash = true;
-            }
+        } else if (ch.is_ascii_whitespace() || matches!(ch, '-' | '_' | '/' | '\\'))
+            && !slug.is_empty()
+            && !pending_dash
+        {
+            slug.push('-');
+            pending_dash = true;
         }
     }
 
