@@ -573,10 +573,10 @@ fn main() -> ExitCode {
         Commands::Ui {
             port,
             no_open,
-            multi_project,
+            multi_project: _,
             dev,
             dry_run,
-        } => commands::ui::run(&specs_dir, &port, no_open, multi_project, dev, dry_run),
+        } => commands::ui::run(&specs_dir, &port, no_open, true, dev, dry_run),
         Commands::Unlink { spec, depends_on } => {
             commands::unlink::run(&specs_dir, &spec, &depends_on)
         }

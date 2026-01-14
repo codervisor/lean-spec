@@ -12,7 +12,7 @@ pub fn run(
     specs_dir: &str,
     port: &str,
     no_open: bool,
-    multi_project: bool,
+    _multi_project: bool,
     dev: bool,
     dry_run: bool,
 ) -> Result<(), Box<dyn Error>> {
@@ -24,19 +24,6 @@ pub fn run(
     // Port validation happens during parse - u16 range is 0-65535
 
     let cwd = std::env::current_dir()?;
-    let specs_path = cwd.join(specs_dir);
-
-    // Verify specs directory exists (for single-project mode)
-    if !multi_project && !specs_path.exists() {
-        return Err(format!(
-            "Specs directory not found: {}\n\nRun `lean-spec init` to initialize LeanSpec in this directory.",
-            specs_path.display()
-        ).into());
-    }
-
-    if multi_project {
-        println!("{}", "→ Multi-project mode enabled".cyan());
-    }
 
     // Check if we're in the LeanSpec monorepo for dev mode
     if dev {
@@ -53,11 +40,11 @@ pub fn run(
             return Err("Development mode only works in the LeanSpec monorepo.\nRemove --dev flag to use production mode.".into());
         }
 
-        return run_dev_mode(&ui_dir, specs_dir, port, !no_open, multi_project, dry_run);
+        return run_dev_mode(&ui_dir, specs_dir, port, !no_open, dry_run);
     }
 
     // Production mode: use published @leanspec/ui
-    run_published_ui(&cwd, specs_dir, port, !no_open, multi_project, dry_run)
+    run_published_ui(&cwd, specs_dir, port, !no_open, dry_run)
 }
 
 fn run_dev_mode(
@@ -65,7 +52,6 @@ fn run_dev_mode(
     specs_dir: &str,
     port: &str,
     open_browser: bool,
-    multi_project: bool,
     dry_run: bool,
 ) -> Result<(), Box<dyn Error>> {
     println!(
@@ -76,18 +62,12 @@ fn run_dev_mode(
     // Detect package manager
     let package_manager = detect_package_manager(ui_dir)?;
 
-    let specs_mode = if multi_project {
-        "multi-project"
-    } else {
-        "filesystem"
-    };
-
     if dry_run {
         println!("{}", "Would run:".cyan());
         println!("  cd {}", ui_dir.display().to_string().dimmed());
         println!(
-            "  SPECS_MODE={} SPECS_DIR={} PORT={} {} run dev",
-            specs_mode, specs_dir, port, package_manager
+            "  SPECS_DIR={} PORT={} {} run dev",
+            specs_dir, port, package_manager
         );
         if open_browser {
             println!("  open http://localhost:{}", port);
@@ -101,7 +81,6 @@ fn run_dev_mode(
     let child = Command::new(&package_manager)
         .args(["run", "dev"])
         .current_dir(ui_dir)
-        .env("SPECS_MODE", specs_mode)
         .env("SPECS_DIR", specs_dir)
         .env("PORT", port)
         .stdin(Stdio::inherit())
@@ -136,7 +115,6 @@ fn run_published_ui(
     specs_dir: &str,
     port: &str,
     open_browser: bool,
-    multi_project: bool,
     dry_run: bool,
 ) -> Result<(), Box<dyn Error>> {
     println!("{}\n", "→ Using published @leanspec/ui package".dimmed());
@@ -145,13 +123,7 @@ fn run_published_ui(
     let package_manager = detect_package_manager(cwd)?;
 
     // Build command
-    let (cmd, args) = build_ui_command(
-        &package_manager,
-        specs_dir,
-        port,
-        open_browser,
-        multi_project,
-    );
+    let (cmd, args) = build_ui_command(&package_manager, specs_dir, port, open_browser);
 
     if dry_run {
         println!("{}", "Would run:".cyan());
@@ -186,19 +158,13 @@ fn run_published_ui(
 
 fn build_ui_command(
     package_manager: &str,
-    specs_dir: &str,
+    _specs_dir: &str,
     port: &str,
     open_browser: bool,
-    multi_project: bool,
 ) -> (String, Vec<String>) {
     let mut ui_args = vec!["@leanspec/ui".to_string()];
 
-    if multi_project {
-        ui_args.push("--multi-project".to_string());
-    } else {
-        ui_args.push("--specs".to_string());
-        ui_args.push(specs_dir.to_string());
-    }
+    ui_args.push("--multi-project".to_string());
 
     ui_args.push("--port".to_string());
     ui_args.push(port.to_string());

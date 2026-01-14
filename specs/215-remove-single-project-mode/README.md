@@ -164,19 +164,20 @@ specsDir: ./specs
 ## Plan
 
 ### Phase 1: Auto-Migration Logic
-- [ ] Add migration detection logic to CLI
-- [ ] Create project from SPECS_DIR on first run
-- [ ] Generate meaningful project ID (slug of directory name)
-- [ ] Write migration to `.leanspec/projects.json`
+- [x] Add migration detection logic to CLI (auto-registers projects when specs exist and registry is empty)
+- [x] Create project from SPECS_DIR on first run (CLI bootstrap writes registry entry)
+- [x] Generate meaningful project ID (slug of directory name)
+- [x] Write migration to `.leanspec/projects.json`
 - [ ] Add migration test cases
 
 ### Phase 2: Update Init Command
-- [ ] Prompt for project name during init
-- [ ] Register project in `.leanspec/projects.json`
+- [x] Prompt for project name during init
+- [x] Register project in `.leanspec/projects.json`
 - [ ] Update init tests
 - [ ] Update documentation
 
 ### Phase 3: Remove Legacy Mode Code
+- [x] Remove `SPECS_MODE` checks from CLI UI launcher; always run multi-project
 - [ ] Remove `SPECS_MODE` checks from UI server
 - [ ] Remove `isDefaultProject()` utility
 - [ ] Remove `DEFAULT_PROJECT_ID` constant
@@ -206,16 +207,22 @@ specsDir: ./specs
 - [ ] Remove environment variable support
 - [ ] Final cleanup and simplification
 
-## Test
+### Test
 
 - [ ] Fresh init creates project automatically
 - [ ] Existing single-project users auto-migrate seamlessly
 - [ ] Multi-project users unaffected by changes
 - [ ] Desktop app works with new structure
 - [ ] Web UI works with new structure
-- [ ] CLI commands work without SPECS_MODE
+- [x] CLI commands work without SPECS_MODE (CLI no longer sets/reads SPECS_MODE)
 - [ ] URLs are intuitive (no /projects/default)
 - [ ] Migration guide is clear and tested
+
+## Implementation Notes
+
+- CLI now resolves project context and auto-registers a slugged project in the registry when specs exist but the registry is empty (covers single-project migration path).
+- `lean-spec init` prompts for a project name (defaults to detected folder), writes config under project root, and registers the project.
+- CLI UI command always runs in multi-project mode and drops `SPECS_MODE` usage; deprecated `SPECS_MODE`/`SPECS_DIR` envs emit warnings only.
 
 ## Notes
 

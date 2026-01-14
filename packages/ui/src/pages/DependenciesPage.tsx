@@ -633,7 +633,7 @@ export function DependenciesPage() {
                 >
                   {focusedSpec ? (
                     <span className="truncate flex items-center">
-                      <span className="text-muted-foreground mr-2 font-mono">#{focusedSpec.number.toString().padStart(3, '0')}</span>
+                      <span className="text-muted-foreground mr-2 font-mono">#{focusedSpec.number}</span>
                       <span className="truncate">{focusedSpec.name}</span>
                     </span>
                   ) : (
@@ -674,7 +674,7 @@ export function DependenciesPage() {
                           value={spec.id}
                           onSelect={() => handleSelectSpec(spec.id)}
                         >
-                          <span className="text-muted-foreground font-mono mr-2">#{spec.number.toString().padStart(3, '0')}</span>
+                          <span className="text-muted-foreground font-mono mr-2">#{spec.number}</span>
                           <span className="truncate flex-1">{spec.name}</span>
                           <span
                             className={cn(

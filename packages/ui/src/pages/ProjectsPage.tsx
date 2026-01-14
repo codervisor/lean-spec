@@ -132,7 +132,7 @@ export function ProjectsPage() {
   const handleProjectClick = async (projectId: string) => {
     try {
       await switchProject(projectId);
-      navigate(`/projects/${projectId}/specs`);
+      navigate(`/projects/${projectId}`);
     } catch (e) {
       console.error('Failed to switch project', e);
     }

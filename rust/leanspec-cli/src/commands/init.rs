@@ -1,14 +1,43 @@
-//! Init command implementation
-//!
-//! Initializes LeanSpec in a project directory.
-
 use colored::Colorize;
+use dialoguer::Input;
 use std::error::Error;
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 pub fn run(specs_dir: &str, yes: bool, _template: Option<String>) -> Result<(), Box<dyn Error>> {
-    let specs_path = Path::new(specs_dir);
+    let root = std::env::current_dir()?;
+    let specs_path = {
+        let candidate = PathBuf::from(specs_dir);
+        if candidate.is_absolute() {
+            candidate
+        } else {
+            root.join(candidate)
+        }
+    };
+
+    let detected_name = root
+        .file_name()
+        .and_then(|s| s.to_str())
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or("project")
+        .to_string();
+
+    let default_name = detected_name.clone();
+    let _project_name = if yes {
+        default_name
+    } else {
+        let input = Input::new()
+            .with_prompt(format!("Project name (detected: {})", detected_name))
+            .default(detected_name.clone())
+            .interact_text()?;
+
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            detected_name.clone()
+        } else {
+            trimmed.to_string()
+        }
+    };
 
     // Check if already initialized
     if specs_path.exists() && specs_path.is_dir() {
@@ -28,7 +57,7 @@ pub fn run(specs_dir: &str, yes: bool, _template: Option<String>) -> Result<(), 
 
     // Create specs directory
     if !specs_path.exists() {
-        fs::create_dir_all(specs_path)?;
+        fs::create_dir_all(&specs_path)?;
         println!(
             "{} Created specs directory: {}",
             "✓".green(),
@@ -37,9 +66,9 @@ pub fn run(specs_dir: &str, yes: bool, _template: Option<String>) -> Result<(), 
     }
 
     // Create .lean-spec directory for configuration
-    let config_dir = Path::new(".lean-spec");
+    let config_dir = root.join(".lean-spec");
     if !config_dir.exists() {
-        fs::create_dir_all(config_dir)?;
+        fs::create_dir_all(&config_dir)?;
         println!(
             "{} Created configuration directory: {}",
             "✓".green(),

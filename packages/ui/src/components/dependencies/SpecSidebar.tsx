@@ -34,7 +34,7 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
   const depthLabel = depth === 1
     ? t('dependenciesPage.sidebar.depth.direct')
     : t('dependenciesPage.sidebar.depth.level', { depth });
-  
+
   const StatusIcon = statusIcons[spec.status as keyof typeof statusIcons] || Clock;
   const PriorityIcon = priorityIcons[spec.priority as keyof typeof priorityIcons] || Minus;
 
@@ -48,7 +48,7 @@ function SpecListItem({ spec, type, depth, onClick }: SpecListItemProps) {
     >
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] font-bold text-muted-foreground">
-          #{spec.number.toString().padStart(3, '0')}
+          #{spec.number}
         </span>
         {/* Status icon */}
         <div
@@ -133,7 +133,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
   }
 
   const { node, upstream, downstream } = focusedDetails;
-  
+
   const StatusIcon = statusIcons[node.status as keyof typeof statusIcons] || Clock;
   const PriorityIcon = priorityIcons[node.priority as keyof typeof priorityIcons] || Minus;
 
@@ -142,7 +142,7 @@ export function SpecSidebar({ focusedDetails, onSelectSpec, onOpenSpec }: SpecSi
       {/* Selected spec header */}
       <div className="p-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">#{node.number.toString().padStart(3, '0')}</span>
+          <span className="font-bold text-sm">#{node.number}</span>
           {/* Status icon */}
           <div
             className={cn(

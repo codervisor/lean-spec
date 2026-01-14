@@ -388,8 +388,10 @@ pub async fn get_project_dependencies(
         for dep in &spec.frontmatter.depends_on {
             if spec_map.contains_key(dep) {
                 edges.push(crate::types::DependencyEdge {
-                    source: spec.path.clone(),
-                    target: dep.clone(),
+                    // Edge direction: dependency -> dependent
+                    // If spec A depends_on B, draw B -> A
+                    source: dep.clone(),
+                    target: spec.path.clone(),
                     r#type: Some("dependsOn".to_string()),
                 });
             }
