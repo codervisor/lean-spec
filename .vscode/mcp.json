@@ -19,12 +19,5 @@
 			"envFile": "",
 			"dev": {}
 		},
-	},
-	"inputs": [
-		{
-			"id": "context7_api_key",
-			"type": "promptString",
-			"description": "Context7 API Key"
-		}
-	]
+	}
 }
