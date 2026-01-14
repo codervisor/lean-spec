@@ -207,6 +207,10 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: node bin/lean-spec.js validate --warnings-only
       
+      - name: Prepare packages for npm publish
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        run: pnpm prepare-publish
+      
       - name: Publish main packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: |
@@ -217,6 +221,10 @@ jobs:
           pnpm tsx scripts/publish-main-packages.ts $TAG_ARG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Restore packages after publish
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        run: pnpm restore-packages
       
       - name: Summary
         run: |
