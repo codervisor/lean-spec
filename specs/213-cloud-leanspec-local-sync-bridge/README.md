@@ -27,15 +27,16 @@ updated_at: 2026-01-14T07:59:38.874533Z
 - **CLI/MCP**: Direct filesystem access only
 
 **Pain Points**:
-1. **No persistent access**: Can't check specs from mobile/tablet/different machine without starting local server
+1. **No remote access**: Can't check specs from mobile/tablet/different machine without starting local server
 2. **Context switching cost**: Must start web server or desktop app every time
-3. **Collaboration friction**: Can't share live spec view without deployment
+3. **No remote editing**: Can't update spec status while away from dev machine
 4. **Future AI agent orchestration**: No always-on service for remote agent control (spec 168 vision)
 
 **The Opportunity**: 
-Deploy LeanSpec UI to cloud (similar to current demo at leanspec.vercel.app) but connect it to local projects via lightweight **sync bridges** (better name TBD) that:
+Deploy LeanSpec UI to cloud as a **remote editor** for local machines via lightweight **sync bridges** that:
 - Run as background services on development machines
-- Push spec changes to cloud in real-time
+- Push local filesystem state to cloud for viewing
+- Receive edit commands from cloud and apply to local filesystem
 - Enable remote agent orchestration in the future
 - Provide always-on access without local UI servers
 
@@ -46,6 +47,8 @@ Deploy LeanSpec UI to cloud (similar to current demo at leanspec.vercel.app) but
 - Foundation for AI agent remote control (spec 168)
 
 ## High-Level Approach
+
+**Core Principle**: Local filesystem is source of truth, cloud is remote viewer/editor
 
 ### Architecture Overview
 
@@ -110,8 +113,8 @@ Deploy LeanSpec UI to cloud (similar to current demo at leanspec.vercel.app) but
 
 A lightweight background service that:
 1. **Watches** local `specs/` directory for changes
-2. **Syncs** changes to cloud LeanSpec in real-time
-3. **Receives** commands from cloud (future: AI agent orchestration)
+2. **Pushes** changes to cloud LeanSpec in real-time
+3. **Receives** edit commands from cloud and applies to local filesystem
 4. **Authenticates** with cloud via API key/OAuth
 5. **Runs** as system service (menu bar on Mac, tray on Windows/Linux)
 
@@ -129,19 +132,22 @@ Since "agent" conflicts with AI agents, consider:
 
 ### Cloud LeanSpec Features
 
-**Phase 1: Read-Only Cloud Access**
+**Phase 1: Remote Viewing**
 - Deploy UI to cloud with multi-project support
+- Per-machine views ("MacBook", "Desktop", "CI Server")
 - Sync bridges push spec changes to cloud
 - View specs from anywhere (mobile, tablet, web browser)
 - No local server required for viewing
 
-**Phase 2: Metadata Editing**
+**Phase 2: Remote Editing**
+- Select specific machine to edit
 - Update spec status, priority, tags via cloud UI
-- Changes sync back to local filesystem via bridge
-- Conflict resolution (last-write-wins initially)
+- Edit commands sent to bridge, applied to local filesystem
+- Simple conflict detection (reject if file changed locally)
+- Machine offline → Queue edit or show "unavailable"
 
 **Phase 3: AI Agent Orchestration** (spec 168 integration)
-- Cloud triggers AI coding sessions via sync bridges
+- Cloud triggers AI coding sessions on specific machines
 - Bridges execute commands on local machines
 - Real-time session monitoring in cloud UI
 - Remote SDD workflow management
@@ -155,19 +161,26 @@ Sync Bridge (Rust binary ~5MB)
 ├── WebSocket Client (tungstenite)
 ├── Authentication (JWT/OAuth)
 ├── Compression (zstd)
-├── Versioning (vector clocks / version counters)
-├── Conflict Detection (checksum + base version)
+├── Command Handler (receive edits from cloud)
 └── System Integration (menu bar, tray)
 ```
 
 **Capabilities**:
-- **Unidirectional** (Phase 1): Push changes to cloud
-- **Bidirectional** (Phase 2): Receive metadata updates, future commands
-- **Multi-machine aware**: Track version vectors, detect conflicts
+- **Push**: Watch local filesystem, push changes to cloud
+- **Receive**: Handle edit commands from cloud, apply to local files
+- **Conflict detection**: Simple timestamp check, reject if file changed
 - **Efficient**: Only sync changed files, debounce rapid changes
 - **Secure**: TLS, authentication, encrypted payloads
 - **Resilient**: Offline queue, automatic reconnection
-- **Broadcast receiver**: Apply changes from other machines
+
+**Edit Command Types**:
+```rust
+enum EditCommand {
+    UpdateFrontmatter { spec: String, fields: HashMap<String, String> },
+    UpdateContent { spec: String, content: String },
+    CreateSpec { name: String, template: Option<String> },
+}
+```
 
 **Distribution**:
 - Bundled with Desktop app (Tauri)
@@ -176,164 +189,72 @@ Sync Bridge (Rust binary ~5MB)
 
 ### Multi-Machine Synchronization
 
-**Challenge**: Multiple developers/machines editing same project concurrently.
+**Solution**: Use Git for multi-machine sync (what it's designed for)
 
-**Solution**: Hub-and-spoke model with cloud as authoritative state.
+```bash
+# Machine A
+vim specs/123-my-feature/README.md  # Edit locally
+git add specs/123-my-feature/
+git commit -m "Update spec 123"
+git push
 
-#### Version Tracking
-
-Each spec maintains:
-- **Version counter** (incremented on each change)
-- **Last modified timestamp** (for ordering)
-- **Machine ID** (which bridge made the change)
-- **Checksum** (SHA-256 of content)
-
-```rust
-struct SpecVersion {
-    version: u64,
-    timestamp: DateTime<Utc>,
-    machine_id: String,
-    checksum: String,
-}
+# Machine B
+git pull  # Get changes from Machine A
+# Bridge B detects changes, pushes to cloud
 ```
 
-#### Conflict Resolution Strategy
+**Cloud's Role**:
+- Shows **each machine's current filesystem state**
+- NOT a distributed sync system
+- NOT resolving conflicts (git does that)
+- User sees: "MacBook (5 min ago)", "Desktop (2 hours ago)"
 
-**1. No Conflict (Sequential Edits)**
-```
-Machine A: V1 → V2 (edits, uploads)
-Machine B: Receives V2 notification, applies
-→ All machines at V2, no conflict
-```
-
-**2. Concurrent Edits - Different Files**
-```
-Machine A: V1 → V2a (edits spec 123)
-Machine B: V1 → V2b (edits spec 456)
-→ No conflict, independent changes
-```
-
-**3. Concurrent Edits - Same File, Different Fields**
-```
-Machine A: Changes frontmatter (status)
-Machine B: Changes content (adds section)
-→ Merge both changes (frontmatter + content)
-```
-
-**4. Concurrent Edits - Same File, Same Field**
-```
-Machine A: Changes status to "in-progress"
-Machine B: Changes status to "complete"
-→ Conflict! Resolution:
-  a) Last-write-wins (timestamp)
-  b) Machine priority (primary dev wins)
-  c) Manual resolution UI
-```
-
-**Resolution Algorithm**:
-
-```
-ON CLOUD RECEIVES CHANGE:
-  1. Check base version matches current version
-     - Match: Accept change, increment version
-     - Mismatch: Conflict detected
-  
-  2. IF CONFLICT:
-     a) Frontmatter: Last-write-wins by timestamp
-     b) Content: Three-way merge
-        - Base: V_base
-        - Machine A: V_a
-        - Machine B: V_b
-        - Result: V_merged
-     c) Store conflict metadata for audit
-  
-  3. Broadcast merged version to ALL bridges
-  
-  4. Bridges apply change:
-     - If no local edits: Direct apply
-     - If local edits: Conflict warning
-```
-
-#### Broadcast Mechanism
-
-**Cloud maintains per-project connection registry**:
-```rust
-struct ProjectConnections {
-    project_id: String,
-    bridges: HashMap<MachineId, WebSocketConnection>,
-}
-```
-
-**On change**:
-1. Identify all bridges watching the project
-2. Send change notification to all (except originator)
-3. Retry failed deliveries with exponential backoff
-4. Queue for offline bridges
-
-**Bridge receives broadcast**:
-1. Check if local file changed since last sync
-2. If unchanged: Apply directly
-3. If changed: Conflict resolution (merge or warn)
-4. Update local filesystem
-5. Skip triggering file watcher (avoid loop)
+**If machines diverge**:
+- User sees different states per machine in cloud UI
+- To sync: Use git pull/push/merge (standard workflow)
+- No automatic sync between machines via cloud
 
 ### Data Flow Examples
 
-**Example 1: Single machine edit → cloud**
+**Example 1: Local edit → Cloud viewing**
 ```
-1. Edit specs/123-my-feature/123-my-feature.md on Machine A
-2. Bridge A detects change via file watcher
-3. Bridge A sends diff + vector clock to cloud
-4. Cloud updates database with new version
-5. Cloud UI updates in real-time for all viewers
-```
-
-**Example 2: Single machine edit → other machines (multi-machine sync)**
-```
-1. Edit spec on Machine A (MacBook)
-2. Bridge A sends change to cloud
-3. Cloud stores change + increments version counter
-4. Cloud broadcasts to all bridges watching same project:
-   - Bridge B (Desktop) receives notification
-   - Bridge C (Laptop) receives notification
-5. Bridge B and C fetch change and apply to local filesystem
-6. All machines now have consistent state
+1. Edit specs/123-my-feature/README.md on MacBook
+2. Bridge detects change via file watcher
+3. Bridge pushes change to cloud
+4. Cloud updates "MacBook" view in database
+5. Anyone viewing "MacBook" in cloud UI sees update
 ```
 
-**Example 3: Concurrent edits on different machines (conflict)**
+**Example 2: Cloud edit → Local filesystem**
 ```
-Time T0: All machines have spec at version V1
-
-Time T1:
-- Machine A edits frontmatter (status: in-progress)
-- Machine B edits same spec content (adds section)
-- Both offline/disconnected
-
-Time T2:
-- Bridge A reconnects, sends change (V1 → V2a)
-- Cloud accepts, now at version V2a
-
-Time T3:
-- Bridge B reconnects, sends change (V1 → V2b)
-- Cloud detects conflict (base version V1 != current V2a)
-- Cloud applies resolution strategy:
-  a) Frontmatter: Last-write-wins with timestamp
-  b) Content: Three-way merge or manual resolution
-- Cloud broadcasts conflict resolution to all bridges
-- Machine A receives merged version, applies locally
+1. Open cloud UI on phone
+2. Select "MacBook" machine
+3. Click "Mark In Progress" on spec 123
+4. Cloud sends EditCommand to MacBook's bridge
+5. Bridge updates local frontmatter
+6. Bridge detects change, pushes back to cloud (confirmation)
+7. Cloud UI shows updated status
 ```
 
-**Example 4: Cloud UI edit → multiple machines**
+**Example 3: Multi-machine workflow with Git**
 ```
-1. User clicks "Mark In Progress" in cloud UI
-2. Cloud updates database with new version
-3. Cloud broadcasts metadata change to all connected bridges:
-   - Bridge A (MacBook): Receives update
-   - Bridge B (Desktop): Receives update
-   - Bridge C (Laptop): Offline, queued for replay
-4. Online bridges update local frontmatter
-5. Bridge C reconnects, receives queued update, applies change
-6. All machines converge to same state
+1. Edit spec on MacBook → Bridge pushes to cloud
+2. Cloud shows: "MacBook (just now)", "Desktop (5 hours ago)"
+3. On MacBook: git commit && git push
+4. On Desktop: git pull → Bridge detects changes → Pushes to cloud
+5. Cloud shows: "MacBook (2 min ago)", "Desktop (just now)"
+6. Both machines now in sync (via git)
+```
+
+**Example 4: Conflict detection**
+```
+1. Cloud UI loads spec from MacBook (timestamp: T1)
+2. User edits in cloud UI
+3. Meanwhile, local edit on MacBook (timestamp: T2)
+4. Cloud sends edit command to bridge
+5. Bridge checks: file timestamp > T1 → Reject edit
+6. Bridge responds: "Conflict: file changed locally"
+7. Cloud UI shows error, user refreshes and retries
 ```
 
 **Example 5: Future AI agent orchestration**
@@ -347,26 +268,27 @@ Time T3:
 
 ## Acceptance Criteria
 
-### Phase 1: Cloud Deployment + Read-Only Bridges
+### Phase 1: Remote Viewing
 - [ ] Cloud LeanSpec deployed (Vercel/similar)
 - [ ] Sync bridge runs as background service
 - [ ] File watcher detects changes <1s
 - [ ] Changes appear in cloud UI <3s
 - [ ] Works on Mac/Windows/Linux
 - [ ] Authentication with API keys
-- [ ] Multi-project support (one bridge per project)
+- [ ] Per-machine views in cloud UI
+- [ ] Multiple machines can connect to same project
+- [ ] Each machine's state shown separately
 
-### Phase 2: Bidirectional Sync + Multi-Machine
-- [ ] Edit metadata in cloud UI
-- [ ] Changes sync to local filesystem
-- [ ] Multiple bridges can connect to same project
-- [ ] Edit on Machine A → syncs to Machine B/C via cloud
-- [ ] Cloud edit broadcasts to all connected machines
-- [ ] Conflict detection for concurrent edits
-- [ ] Conflict resolution (last-write-wins for frontmatter)
-- [ ] Three-way merge for content conflicts
-- [ ] Offline queue works correctly
-- [ ] Bridge avoids sync loops (ignore own broadcasts)
+### Phase 2: Remote Editing
+- [ ] Select specific machine to edit in cloud UI
+- [ ] Edit metadata (status, priority, tags) via cloud
+- [ ] Edit commands sent to bridge via WebSocket
+- [ ] Bridge applies edits to local filesystem
+- [ ] Bridge confirms edit success/failure to cloud
+- [ ] Simple conflict detection (timestamp check)
+- [ ] Reject edit if file changed locally since load
+- [ ] Offline machine shows "unavailable" status
+- [ ] Queue edits for offline machines (optional)
 
 ### Phase 3: AI Agent Integration
 - [ ] Cloud can trigger local commands
@@ -383,11 +305,12 @@ Time T3:
 
 ## Out of Scope
 
-**Phase 1**:
-- Full content editing in cloud UI (use local editor + sync)
-- Collaborative real-time editing (future consideration)
-- Spec creation via cloud UI (use CLI/desktop app)
-- Built-in AI agents (use agent-relay via bridges)
+**Phase 1 & 2**:
+- Automatic multi-machine sync (use git for that)
+- Real-time collaborative editing (multiple users same file)
+- Complex conflict resolution (git handles merges)
+- Full spec content editing in cloud (metadata only for now)
+- Unified view across machines (per-machine views are simpler)
 
 **Not This Spec**:
 - AI agent orchestration details (see spec 168)
@@ -414,27 +337,26 @@ Time T3:
 2. **Protocol**: WebSocket vs HTTP/2 Server-Sent Events?
 3. **Authentication**: API keys vs OAuth vs device flow?
 4. **Pricing model**: Free tier vs paid for cloud hosting?
-5. **Conflict resolution**: 
-   - Frontmatter: Last-write-wins sufficient?
-   - Content: Three-way merge vs operational transforms (OT) vs CRDTs?
-   - Should we support manual conflict resolution UI?
-6. **Security**: How to safely execute remote commands (Phase 3)?
-7. **Distribution**: Bundle with desktop app vs separate CLI tool?
-8. **Multi-machine identity**:
-   - How to identify machines? (MAC address, hostname, UUID?)
-   - Should user name machines ("Work MacBook", "Home PC")?
-9. **Primary machine concept**:
-   - Should one machine be "primary" with higher priority in conflicts?
-   - Or fully distributed with timestamp-only resolution?
-10. **Concurrent edit warnings**:
-    - Notify user when another machine is editing same spec?
-    - Lock specs during editing (Google Docs style)?
+5. **Machine naming**:
+   - Auto-detect (hostname)?
+   - User customizable ("Work MacBook", "Home PC")?
+6. **Edit scope**:
+   - Phase 2: Only frontmatter editing?
+   - Or allow full content editing with limitations?
+7. **Conflict handling**:
+   - Reject edit if file changed (simple)?
+   - Or show diff and let user decide?
+8. **Offline edits**:
+   - Queue for offline machines?
+   - Or just show "unavailable" error?
+9. **Security**: How to safely execute remote commands (Phase 3)?
+10. **Distribution**: Bundle with desktop app vs separate CLI tool?
 11. **Git integration**:
-    - Should bridge auto-commit synced changes?
+    - Should bridge auto-commit cloud edits?
     - Or leave git operations to user?
-12. **Broadcast optimization**:
-    - Send full file or diffs for broadcasts?
-    - How to handle large spec files efficiently?
+12. **View selection**:
+    - Default to "most recently updated" machine?
+    - Or require explicit machine selection?
 
 ## Notes
 
@@ -446,25 +368,26 @@ Time T3:
 - Didn't address remote access need
 
 **This spec**:
-- Focuses on always-on cloud access
-- Adds local-to-cloud sync layer
-- Enables remote collaboration and AI orchestration
+- Focuses on remote viewing/editing
+- Local filesystem remains source of truth
+- Cloud is remote editor for specific machines
+- Git handles multi-machine sync
 
-**No conflict**: Spec 082 handles data layer, this spec handles sync layer.
+**No conflict**: Spec 082 handles data layer, this spec handles remote access layer.
 
 ### Why Not Just Use GitHub as Sync?
 
-GitHub provides version control but not real-time sync:
+GitHub provides version control but not real-time remote access:
+- **No viewing without clone**: Can't check specs from phone without git clone
+- **No remote editing**: Can't update spec status from tablet
 - **Latency**: Push/pull adds 10-30s delay
-- **Friction**: Requires commit discipline
-- **No metadata**: Can't update status without file edit
 - **No commands**: Can't trigger AI agents remotely
 
 Sync bridges provide:
-- **Real-time**: <3s latency for spec updates
-- **Transparent**: No git ceremony required
-- **Bidirectional**: Cloud can send commands back
-- **Flexible**: Works with any VCS (git, hg, none)
+- **Instant viewing**: Check specs from anywhere, <3s latency
+- **Remote editing**: Update metadata from any device
+- **Machine control**: Send commands to specific dev machines
+- **Complements git**: Git still used for version control and multi-machine sync
 
 ### Security Considerations
 
@@ -491,67 +414,23 @@ Sync bridges provide:
 | Reconnection     | <5s    | After network outage          |
 | Change detection | <1s    | File watcher latency          |
 
-### Multi-Machine Sync Tradeoffs
+### Implementation Estimates
 
-| Approach                   | Pros                   | Cons                                  |
-| -------------------------- | ---------------------- | ------------------------------------- |
-| **Last-write-wins**        | Simple, low latency    | Data loss on conflicts                |
-| **Three-way merge**        | Preserves both changes | Complex, can't auto-resolve all       |
-| **Operational Transforms** | Real-time collab       | Very complex, overkill                |
-| **CRDTs**                  | Automatic convergence  | Large overhead, complex               |
-| **Locking**                | Prevents conflicts     | Poor UX, requires constant connection |
+**Phase 1** (Remote Viewing): 2-3 weeks
+- Cloud deployment (spec 082 foundation)
+- Bridge implementation (Rust)
+- Per-machine state management
+- Authentication
 
-**Recommendation**: 
-- **Phase 2**: Last-write-wins + three-way merge
-- **Future**: Consider OT/CRDTs only if real-time collab becomes priority
+**Phase 2** (Remote Editing): 1-2 weeks
+- Edit command handling in bridge
+- Cloud UI edit interface
+- Simple conflict detection
 
-### Why Git Doesn't Solve This
-
-Git provides distributed version control but:
-- **Manual sync**: Requires explicit push/pull
-- **Latency**: 10-30s for remote sync
-- **Ceremony**: Commit messages, branches
-- **No real-time**: Can't see other machines' changes instantly
-
-Sync bridges provide:
-- **Transparent sync**: Automatic, no user action
-- **Low latency**: <3s machine-to-machine
-- **No ceremony**: Works alongside git
-- **Real-time awareness**: See changes as they happen
-
-**Git remains primary version control**; bridges are real-time sync layer.
-
-### Edge Cases
-
-**1. Bridge restart during sync**
-- Solution: Track last synced version, resume from checkpoint
-
-**2. Network partition (split brain)**
-- Solution: Cloud is source of truth, partitioned bridges queue changes
-
-**3. Rapid successive edits (save spam)**
-- Solution: Debounce file watcher (500ms), batch changes
-
-**4. Large file changes (>1MB)**
-- Solution: Incremental sync with binary diffs (bsdiff)
-
-**5. Bridge crashes mid-apply**
-- Solution: Atomic file writes, rollback on failure
-
-**6. Clock skew between machines**
-- Solution: Use server timestamps, not client timestamps
-
-### Implementation Complexity
-
-**Sync Bridge (Rust)**:
-- File watcher: ~500 LOC (notify-rs)
-- WebSocket client: ~300 LOC (tungstenite)
-- Authentication: ~200 LOC
-- System tray: ~400 LOC (tray-icon)
-- Version tracking: ~300 LOC
-- Conflict detection: ~400 LOC
-- Three-way merge: ~500 LOC
-- **Total**: ~2,600 LOC Rust (+73% for multi-machine)
+**Phase 3** (AI orchestration): 2-3 weeks
+- Integration with agent-relay (spec 168)
+- Command execution security
+- Session monitoring
 
 **Cloud Backend**:
 - WebSocket server: ~600 LOC (Node.js/Rust)
