@@ -97,7 +97,7 @@ pub enum SyncEvent {
         specs: Vec<SpecRecord>,
     },
     SpecChanged {
-        spec: SpecRecord,
+        spec: Box<SpecRecord>,
     },
     SpecDeleted {
         spec_name: String,
@@ -548,7 +548,7 @@ pub async fn ingest_sync_events(
                 project.last_updated = Some(Utc::now());
             }
             SyncEvent::SpecChanged { spec } => {
-                project.specs.insert(spec.spec_name.clone(), spec);
+                project.specs.insert(spec.spec_name.clone(), *spec);
                 project.last_updated = Some(Utc::now());
             }
             SyncEvent::SpecDeleted { spec_name } => {
