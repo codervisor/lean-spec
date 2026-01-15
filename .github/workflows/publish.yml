@@ -151,6 +151,9 @@ jobs:
       - name: Copy binaries to platform packages
         run: ./scripts/copy-platform-binaries.sh artifacts/
       
+      - name: Generate platform package manifests
+        run: pnpm tsx scripts/generate-platform-manifests.ts
+      
       - name: Validate platform binaries
         run: pnpm tsx scripts/validate-platform-binaries.ts
       
