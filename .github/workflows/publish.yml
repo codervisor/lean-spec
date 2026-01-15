@@ -190,6 +190,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Download linux-x64 CLI binary
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries-linux-x64
+          path: artifacts/
+
+      - name: Copy binaries for validation
+        run: ./scripts/copy-platform-binaries.sh artifacts/
+
       - name: Auto-bump dev version
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
         run: |
