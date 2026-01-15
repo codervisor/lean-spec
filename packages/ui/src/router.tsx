@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { MachinesPage } from './pages/MachinesPage';
 import { RootRedirect } from './components/RootRedirect';
 import { createProjectRoutes } from './router/projectRoutes';
 
@@ -24,6 +25,11 @@ export const router = createBrowserRouter([
     path: '/projects',
     element: <Layout />,
     children: [{ index: true, element: <ProjectsPage /> }],
+  },
+  {
+    path: '/machines',
+    element: <Layout />,
+    children: [{ index: true, element: <MachinesPage /> }],
   },
   {
     path: '/projects/:projectId',

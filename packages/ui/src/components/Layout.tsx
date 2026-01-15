@@ -3,10 +3,11 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
+import { MachineSwitcher } from './MachineSwitcher';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { BackToTop } from './shared/BackToTop';
-import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts } from '../contexts';
+import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts, useMachine } from '../contexts';
 import { cn } from '../lib/utils';
 
 /**
@@ -30,6 +31,9 @@ function LayoutContent({
   const { currentProject, switchProject } = useProject();
   const { mobileSidebarOpen, toggleMobileSidebar } = useLayout();
   const { toggleHelp } = useKeyboardShortcuts();
+  const { machineModeEnabled } = useMachine();
+
+  const resolvedRightSlot = navigationRightSlot ?? (machineModeEnabled ? <MachineSwitcher /> : undefined);
 
   // Register global keyboard shortcuts
   useGlobalShortcuts();
@@ -47,7 +51,7 @@ function LayoutContent({
       <Navigation
         onToggleSidebar={toggleMobileSidebar}
         onShowShortcuts={toggleHelp}
-        rightSlot={navigationRightSlot}
+        rightSlot={resolvedRightSlot}
         onHeaderDoubleClick={onNavigationDoubleClick}
       />
       <div className="flex w-full min-w-0">

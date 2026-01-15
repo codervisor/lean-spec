@@ -23,11 +23,19 @@ interface TagsEditorProps {
   specName: string;
   value: Spec['tags'];
   onChange?: (tags: string[]) => void;
+  expectedContentHash?: string;
   disabled?: boolean;
   className?: string;
 }
 
-export function TagsEditor({ specName, value, onChange, disabled = false, className }: TagsEditorProps) {
+export function TagsEditor({
+  specName,
+  value,
+  onChange,
+  expectedContentHash,
+  disabled = false,
+  className,
+}: TagsEditorProps) {
   const [tags, setTags] = useState<string[]>(value || []);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -61,7 +69,7 @@ export function TagsEditor({ specName, value, onChange, disabled = false, classN
     setError(null);
 
     try {
-      await api.updateSpec(specName, { tags: newTags });
+      await api.updateSpec(specName, { tags: newTags, expectedContentHash });
       onChange?.(newTags);
       triggerRefresh(); // Notify other components to refresh
     } catch (err) {

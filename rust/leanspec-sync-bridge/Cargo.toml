@@ -1,0 +1,34 @@
+[package]
+name = "leanspec-sync-bridge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "LeanSpec Sync Bridge for cloud/local sync"
+
+[[bin]]
+name = "leanspec-sync-bridge"
+path = "src/main.rs"
+
+[dependencies]
+leanspec-core = { path = "../leanspec-core" }
+
+clap.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid = { version = "1.10", features = ["v4", "v5"] }
+sha2 = "0.10"
+notify = "6.1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+tokio.workspace = true
+futures-util = "0.3"
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
+url = "2.5"
+dirs = "5.0"
+hostname = "0.4"
+anyhow = "1.0"

@@ -7,6 +7,8 @@
     "context": "Context",
     "projects": "Projects",
     "manageProjects": "Manage projects",
+    "machines": "Machines",
+    "manageMachines": "Manage machines",
     "collapse": "Collapse",
     "closeMenu": "Close menu",
     "dashboard": "Dashboard",
@@ -119,7 +121,24 @@
   },
   "projectsPage": {
     "title": "Projects",
+    "machineDescription": "Projects synced from {{machine}}.",
     "description": "Manage your LeanSpec projects and workspaces."
+  },
+  "machines": {
+    "title": "Machines",
+    "description": "Manage connected Sync Bridge devices.",
+    "available": "Available Machines",
+    "empty": "No machines connected yet.",
+    "switcherLabel": "Select machine",
+    "noSelection": "Select a machine",
+    "projectsCount": "{{count}} projects",
+    "requestExecution": "Request execution",
+    "revoke": "Revoke",
+    "unavailable": "Machine unavailable. Connect the bridge to edit metadata.",
+    "status": {
+      "online": "Online",
+      "offline": "Offline"
+    }
   },
   "quickSearch": {
     "button": "Quick search...",

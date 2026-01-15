@@ -5,6 +5,7 @@
 use chrono::{DateTime, Utc};
 use leanspec_core::{SpecInfo, SpecPriority, SpecStats, SpecStatus};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 /// Lightweight spec for list views
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +29,8 @@ pub struct SpecSummary {
     #[serde(default)]
     pub required_by: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub content_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub relationships: Option<SpecRelationships>,
 }
 
@@ -49,6 +52,7 @@ impl From<&SpecInfo> for SpecSummary {
             file_path: spec.file_path.to_string_lossy().to_string(),
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
+            content_hash: Some(hash_content(&spec.content)),
             relationships: None,
         }
     }
@@ -93,6 +97,8 @@ pub struct SpecDetail {
     #[serde(default)]
     pub required_by: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub content_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub relationships: Option<SpecRelationships>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sub_specs: Option<Vec<SubSpec>>,
@@ -117,6 +123,7 @@ impl From<&SpecInfo> for SpecDetail {
             file_path: spec.file_path.to_string_lossy().to_string(),
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
+            content_hash: Some(hash_content(&spec.content)),
             relationships: None,
             sub_specs: None,
         }
@@ -370,6 +377,7 @@ pub struct MetadataUpdate {
     pub priority: Option<String>,
     pub tags: Option<Vec<String>>,
     pub assignee: Option<String>,
+    pub expected_content_hash: Option<String>,
 }
 
 /// Metadata update response
@@ -425,6 +433,12 @@ impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
 pub struct HealthResponse {
     pub status: String,
     pub version: String,
+}
+
+fn hash_content(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    format!("{:x}", hasher.finalize())
 }
 
 /// Context file representation

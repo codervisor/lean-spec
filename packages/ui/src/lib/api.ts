@@ -1,6 +1,6 @@
 import { getBackend, APIError, type BackendAdapter } from "./backend-adapter";
 import i18n from "./i18n";
-import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph } from "../types/api";
+import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph, MachinesResponse } from "../types/api";
 
 /**
  * Project-aware API wrapper
@@ -9,6 +9,7 @@ import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph } from "../ty
 class ProjectAPI {
   private backend: BackendAdapter;
   private _currentProjectId: string | null = null;
+  private _currentMachineId: string | null = null;
 
   constructor() {
     this.backend = getBackend();
@@ -16,6 +17,11 @@ class ProjectAPI {
 
   setCurrentProjectId(projectId: string | null) {
     this._currentProjectId = projectId;
+  }
+
+  setCurrentMachineId(machineId: string | null) {
+    this._currentMachineId = machineId;
+    this.backend.setMachineId(machineId);
   }
 
   getCurrentProjectId(): string {
@@ -26,6 +32,12 @@ class ProjectAPI {
   }
 
   // Pass-through methods that don't need projectId
+  getMachines = (): Promise<MachinesResponse> => this.backend.getMachines();
+  renameMachine = (machineId: string, label: string) => this.backend.renameMachine(machineId, label);
+  revokeMachine = (machineId: string) => this.backend.revokeMachine(machineId);
+  requestExecution = (machineId: string, payload: Record<string, unknown>) =>
+    this.backend.requestExecution(machineId, payload);
+
   getProjects = () => this.backend.getProjects();
   createProject = (path: string, options?: { favorite?: boolean; color?: string; name?: string; description?: string | null }) =>
     this.backend.createProject(path, options);
@@ -50,7 +62,10 @@ class ProjectAPI {
     return this.backend.getSpec(this.getCurrentProjectId(), specName);
   }
 
-  async updateSpec(specName: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void> {
+  async updateSpec(
+    specName: string,
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
+  ): Promise<void> {
     return this.backend.updateSpec(this.getCurrentProjectId(), specName, updates);
   }
 

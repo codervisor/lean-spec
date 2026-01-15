@@ -22,6 +22,10 @@ pub struct ServerConfig {
     /// Project management settings
     #[serde(default)]
     pub projects: ProjectSettings,
+
+    /// Cloud sync settings
+    #[serde(default)]
+    pub sync: SyncSettings,
 }
 
 /// Server-specific settings
@@ -137,6 +141,50 @@ pub struct ProjectSettings {
     /// Maximum number of recent projects to track
     #[serde(default = "default_max_recent")]
     pub max_recent: usize,
+}
+
+/// Cloud sync settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncSettings {
+    /// Optional API key for headless/CI authentication
+    #[serde(default)]
+    pub api_key: Option<String>,
+
+    /// Device flow verification URL override
+    #[serde(default = "default_verification_url")]
+    pub verification_url: String,
+
+    /// Device code expiry in seconds
+    #[serde(default = "default_device_code_ttl")]
+    pub device_code_ttl_seconds: u64,
+
+    /// Access token expiry in seconds (0 = never)
+    #[serde(default = "default_token_ttl")]
+    pub token_ttl_seconds: u64,
+}
+
+impl Default for SyncSettings {
+    fn default() -> Self {
+        Self {
+            api_key: None,
+            verification_url: default_verification_url(),
+            device_code_ttl_seconds: default_device_code_ttl(),
+            token_ttl_seconds: default_token_ttl(),
+        }
+    }
+}
+
+fn default_verification_url() -> String {
+    "https://app.lean-spec.dev/device".to_string()
+}
+
+fn default_device_code_ttl() -> u64 {
+    900
+}
+
+fn default_token_ttl() -> u64 {
+    86400
 }
 
 impl Default for ProjectSettings {

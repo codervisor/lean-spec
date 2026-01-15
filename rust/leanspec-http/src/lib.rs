@@ -28,6 +28,7 @@ pub mod handlers;
 pub mod project_registry;
 pub mod routes;
 pub mod state;
+pub mod sync_state;
 pub mod types;
 pub mod utils;
 

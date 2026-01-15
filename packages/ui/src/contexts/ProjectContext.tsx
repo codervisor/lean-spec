@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { api } from '../lib/api';
 import i18n from '../lib/i18n';
 import type { Project, ProjectValidationResponse, ProjectsResponse } from '../types/api';
+import { useMachine } from './MachineContext';
 
 interface ProjectContextValue {
   currentProject: Project | null;
@@ -30,30 +31,35 @@ const ProjectContext = createContext<ProjectContextValue | null>(null);
 const STORAGE_KEY = 'leanspec-current-project';
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
+  const { currentMachine, machineModeEnabled } = useMachine();
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [favoriteProjects, setFavoriteProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const storageKey = machineModeEnabled && currentMachine
+    ? `${STORAGE_KEY}:${currentMachine.id}`
+    : STORAGE_KEY;
+
   const applyProjects = useCallback((data: ProjectsResponse) => {
     const normalized = data.projects || [];
     setProjects(normalized);
     setFavoriteProjects(normalized.filter((project: Project) => project.favorite));
 
-    const storedId = localStorage.getItem(STORAGE_KEY);
+    const storedId = localStorage.getItem(storageKey);
     const nextCurrent = (storedId ? normalized.find((p: Project) => p.id === storedId) || null : null)
       || normalized[0]
       || null;
 
     setCurrentProject(nextCurrent);
     if (nextCurrent) {
-      localStorage.setItem(STORAGE_KEY, nextCurrent.id);
+      localStorage.setItem(storageKey, nextCurrent.id);
       api.setCurrentProjectId(nextCurrent.id);
     } else {
       api.setCurrentProjectId(null);
     }
-  }, []);
+  }, [storageKey]);
 
   const refreshProjects = useCallback(async () => {
     setLoading(true);
@@ -75,7 +81,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      localStorage.setItem(STORAGE_KEY, projectId);
+      localStorage.setItem(storageKey, projectId);
       const data: ProjectsResponse = await api.getProjects();
       applyProjects(data);
     } catch (err: unknown) {
@@ -112,10 +118,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setError(null);
     await api.deleteProject(projectId);
     if (currentProject?.id === projectId) {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     }
     await refreshProjects();
-  }, [currentProject?.id, refreshProjects]);
+  }, [currentProject?.id, refreshProjects, storageKey]);
 
   const toggleFavorite = useCallback(async (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
@@ -129,7 +135,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshProjects();
-  }, [refreshProjects]);
+  }, [refreshProjects, currentMachine?.id, machineModeEnabled]);
 
   return (
     <ProjectContext.Provider

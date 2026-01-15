@@ -15,6 +15,7 @@ export interface Spec {
   specNumber?: number | null;
   title?: string | null;
   content?: string;
+  contentHash?: string;
   status: SpecStatus;
   priority?: SpecPriority | null;
   tags?: string[];
@@ -36,6 +37,20 @@ export interface SpecDetail extends Spec {
   content?: string;
   subSpecs?: SubSpec[];
   metadata?: Record<string, unknown>;
+}
+
+export type MachineStatus = 'online' | 'offline';
+
+export interface Machine {
+  id: string;
+  label: string;
+  status: MachineStatus;
+  lastSeen?: string;
+  projectCount?: number;
+}
+
+export interface MachinesResponse {
+  machines: Machine[];
 }
 
 export interface Stats {

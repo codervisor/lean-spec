@@ -8,6 +8,7 @@ import { TagsEditor } from '../metadata-editors/TagsEditor';
 import { formatDate, formatRelativeTime } from '../../lib/date-utils';
 import type { SpecDetail } from '../../types/api';
 import { useTranslation } from 'react-i18next';
+import { useMachine } from '../../contexts';
 
 interface EditableMetadataProps {
   spec: SpecDetail;
@@ -20,6 +21,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
   const githubUrl = spec.metadata?.github_url as string | undefined;
   const assignee = spec.metadata?.assignee as string | undefined;
   const { t, i18n } = useTranslation('common');
+  const { machineModeEnabled, isMachineAvailable } = useMachine();
 
   return (
     <Card>
@@ -32,6 +34,8 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
               <StatusEditor
                 specName={spec.specName}
                 value={spec.status}
+                expectedContentHash={spec.contentHash}
+                disabled={machineModeEnabled && !isMachineAvailable}
                 onChange={(status) => onSpecChange?.({ status })}
               />
             </dd>
@@ -44,6 +48,8 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
               <PriorityEditor
                 specName={spec.specName}
                 value={spec.priority}
+                expectedContentHash={spec.contentHash}
+                disabled={machineModeEnabled && !isMachineAvailable}
                 onChange={(priority) => onSpecChange?.({ priority })}
               />
             </dd>
@@ -98,6 +104,8 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
               <TagsEditor
                 specName={spec.specName}
                 value={spec.tags}
+                expectedContentHash={spec.contentHash}
+                disabled={machineModeEnabled && !isMachineAvailable}
                 onChange={(tags) => onSpecChange?.({ tags })}
               />
             </dd>

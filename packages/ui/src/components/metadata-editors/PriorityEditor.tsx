@@ -18,11 +18,19 @@ interface PriorityEditorProps {
   specName: string;
   value: Spec['priority'];
   onChange?: (priority: NonNullable<Spec['priority']>) => void;
+  expectedContentHash?: string;
   disabled?: boolean;
   className?: string;
 }
 
-export function PriorityEditor({ specName, value, onChange, disabled = false, className }: PriorityEditorProps) {
+export function PriorityEditor({
+  specName,
+  value,
+  onChange,
+  expectedContentHash,
+  disabled = false,
+  className,
+}: PriorityEditorProps) {
   const initial = value || 'medium';
   const [priority, setPriority] = useState<NonNullable<Spec['priority']>>(initial as NonNullable<Spec['priority']>);
   const [updating, setUpdating] = useState(false);
@@ -40,7 +48,7 @@ export function PriorityEditor({ specName, value, onChange, disabled = false, cl
     setError(null);
 
     try {
-      await api.updateSpec(specName, { priority: next });
+      await api.updateSpec(specName, { priority: next, expectedContentHash });
       onChange?.(next);
       triggerRefresh(); // Notify other components to refresh
     } catch (err) {

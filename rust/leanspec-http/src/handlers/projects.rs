@@ -1,6 +1,7 @@
 //! Project management handlers
 
 use axum::extract::{Path, State};
+use axum::http::HeaderMap;
 use axum::http::StatusCode;
 use axum::Json;
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,7 @@ use std::path::PathBuf;
 use crate::error::{ApiError, ApiResult};
 use crate::project_registry::{Project, ProjectUpdate};
 use crate::state::AppState;
+use crate::sync_state::machine_id_from_headers;
 
 /// Response for project list
 #[derive(Debug, Serialize)]
@@ -57,8 +59,52 @@ impl From<&Project> for ProjectResponse {
     }
 }
 
+fn project_response_from_record(record: &crate::sync_state::ProjectRecord) -> ProjectResponse {
+    ProjectResponse {
+        id: record.id.clone(),
+        name: record.name.clone(),
+        path: record.path.clone().unwrap_or_else(|| record.id.clone()),
+        specs_dir: record.path.clone().unwrap_or_else(|| record.id.clone()),
+        favorite: record.favorite,
+        color: record.color.clone(),
+        last_accessed: chrono::Utc::now().to_rfc3339(),
+        added_at: chrono::Utc::now().to_rfc3339(),
+    }
+}
+
 /// GET /api/projects - List all projects
-pub async fn list_projects(State(state): State<AppState>) -> Json<ProjectsListResponse> {
+pub async fn list_projects(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Json<ProjectsListResponse> {
+    list_projects_with_headers(state, headers).await
+}
+
+async fn list_projects_with_headers(
+    state: AppState,
+    headers: HeaderMap,
+) -> Json<ProjectsListResponse> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state.persistent.machines.get(&machine_id).cloned();
+
+        let projects: Vec<ProjectResponse> = machine
+            .map(|machine| {
+                machine
+                    .projects
+                    .values()
+                    .map(project_response_from_record)
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        return Json(ProjectsListResponse {
+            projects,
+            recent_projects: None,
+            favorite_projects: None,
+        });
+    }
+
     let registry = state.registry.read().await;
     let projects: Vec<ProjectResponse> = registry.all().iter().map(|p| (*p).into()).collect();
     let recent_projects = Some(registry.recent(5).iter().map(|p| p.id.clone()).collect());
@@ -100,7 +146,33 @@ pub async fn add_project(
 pub async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<SingleProjectResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        let project = machine.projects.get(&id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&id)),
+            )
+        })?;
+
+        return Ok(Json(SingleProjectResponse {
+            project: project_response_from_record(project),
+        }));
+    }
+
     let registry = state.registry.read().await;
     let project = registry.get(&id).ok_or_else(|| {
         (
@@ -118,8 +190,48 @@ pub async fn get_project(
 pub async fn update_project(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Json(updates): Json<ProjectUpdate>,
 ) -> ApiResult<Json<ProjectResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let mut sync_state = state.sync_state.write().await;
+        let response = {
+            let machine = sync_state
+                .persistent
+                .machines
+                .get_mut(&machine_id)
+                .ok_or_else(|| {
+                    (
+                        StatusCode::NOT_FOUND,
+                        Json(ApiError::invalid_request("Machine not found")),
+                    )
+                })?;
+
+            let project = machine.projects.get_mut(&id).ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::project_not_found(&id)),
+                )
+            })?;
+
+            if let Some(name) = updates.name {
+                project.name = name;
+            }
+            if let Some(favorite) = updates.favorite {
+                project.favorite = favorite;
+            }
+            if let Some(color) = updates.color {
+                project.color = Some(color);
+            }
+
+            project_response_from_record(project)
+        };
+
+        sync_state.save();
+
+        return Ok(Json(response));
+    }
+
     let mut registry = state.registry.write().await;
     let project = registry.update(&id, updates).map_err(|e| {
         (
@@ -135,7 +247,32 @@ pub async fn update_project(
 pub async fn remove_project(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<StatusCode> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let mut sync_state = state.sync_state.write().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get_mut(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        if machine.projects.remove(&id).is_none() {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&id)),
+            ));
+        }
+
+        sync_state.save();
+        return Ok(StatusCode::NO_CONTENT);
+    }
+
     let mut registry = state.registry.write().await;
     registry.remove(&id).map_err(|e| {
         (
@@ -151,7 +288,35 @@ pub async fn remove_project(
 pub async fn toggle_favorite(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<serde_json::Value>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let mut sync_state = state.sync_state.write().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get_mut(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        let project = machine.projects.get_mut(&id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&id)),
+            )
+        })?;
+
+        project.favorite = !project.favorite;
+        let is_favorite = project.favorite;
+        sync_state.save();
+
+        return Ok(Json(serde_json::json!({ "favorite": is_favorite })));
+    }
+
     let mut registry = state.registry.write().await;
     let is_favorite = registry.toggle_favorite(&id).map_err(|e| {
         (
@@ -178,7 +343,39 @@ pub async fn refresh_projects(State(state): State<AppState>) -> Json<serde_json:
 pub async fn validate_project(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<crate::types::ProjectValidationResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        if !machine.projects.contains_key(&project_id) {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            ));
+        }
+
+        return Ok(Json(crate::types::ProjectValidationResponse {
+            project_id: project_id.clone(),
+            path: project_id.clone(),
+            validation: crate::types::ProjectValidationSummary {
+                is_valid: true,
+                error: None,
+                specs_dir: None,
+            },
+        }));
+    }
+
     let registry = state.registry.read().await;
     let project = registry.get(&project_id).ok_or_else(|| {
         (
@@ -211,7 +408,40 @@ pub async fn validate_project(
 pub async fn get_project_context(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<crate::types::ProjectContextResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        if !machine.projects.contains_key(&project_id) {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            ));
+        }
+
+        return Ok(Json(crate::types::ProjectContextResponse {
+            agent_instructions: Vec::new(),
+            config: crate::types::ProjectConfigResponse {
+                file: None,
+                parsed: None,
+            },
+            project_docs: Vec::new(),
+            total_tokens: 0,
+            project_root: project_id.clone(),
+        }));
+    }
+
     let registry = state.registry.read().await;
     let project = registry.get(&project_id).ok_or_else(|| {
         (

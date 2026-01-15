@@ -17,11 +17,19 @@ interface StatusEditorProps {
   specName: string;
   value: Spec['status'];
   onChange?: (status: NonNullable<Spec['status']>) => void;
+  expectedContentHash?: string;
   disabled?: boolean;
   className?: string;
 }
 
-export function StatusEditor({ specName, value, onChange, disabled = false, className }: StatusEditorProps) {
+export function StatusEditor({
+  specName,
+  value,
+  onChange,
+  expectedContentHash,
+  disabled = false,
+  className,
+}: StatusEditorProps) {
   const initial = value || 'planned';
   const [status, setStatus] = useState<NonNullable<Spec['status']>>(initial as NonNullable<Spec['status']>);
   const [updating, setUpdating] = useState(false);
@@ -39,7 +47,7 @@ export function StatusEditor({ specName, value, onChange, disabled = false, clas
     setError(null);
 
     try {
-      await api.updateSpec(specName, { status: next });
+      await api.updateSpec(specName, { status: next, expectedContentHash });
       onChange?.(next);
       triggerRefresh(); // Notify other components to refresh
     } catch (err) {

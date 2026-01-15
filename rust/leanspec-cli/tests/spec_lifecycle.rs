@@ -9,8 +9,6 @@
 mod common;
 use common::*;
 
-use std::path::Path;
-
 #[test]
 fn test_create_update_archive_workflow() {
     let ctx = TestContext::new();

@@ -11,7 +11,7 @@ import { cn } from '../lib/utils';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
-import { useProject, useLayout } from '../contexts';
+import { useProject, useLayout, useMachine } from '../contexts';
 import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
@@ -24,6 +24,7 @@ export function SpecsPage() {
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { currentProject, loading: projectLoading } = useProject();
   const { isWideMode } = useLayout();
+  const { machineModeEnabled, isMachineAvailable } = useMachine();
   const projectReady = !projectId || currentProject?.id === projectId;
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
@@ -78,13 +79,16 @@ export function SpecsPage() {
   }, [viewMode]);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
+    if (machineModeEnabled && !isMachineAvailable) {
+      return;
+    }
     // Optimistic update
     setSpecs(prev => prev.map(s =>
       s.specName === spec.specName ? { ...s, status: newStatus } : s
     ));
 
     try {
-      await api.updateSpec(spec.specName, { status: newStatus });
+      await api.updateSpec(spec.specName, { status: newStatus, expectedContentHash: spec.contentHash });
     } catch (err) {
       // Revert on error
       setSpecs(prev => prev.map(s =>
@@ -92,7 +96,7 @@ export function SpecsPage() {
       ));
       console.error('Failed to update status:', err);
     }
-  }, []);
+  }, [isMachineAvailable, machineModeEnabled]);
 
   // Get unique values for filters
   const uniqueStatuses = useMemo(() => {
@@ -253,6 +257,12 @@ export function SpecsPage() {
           )}
         />
 
+        {machineModeEnabled && !isMachineAvailable && (
+          <div className="text-xs text-destructive">
+            {t('machines.unavailable')}
+          </div>
+        )}
+
         <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
 
         <SpecsFilters
@@ -311,6 +321,7 @@ export function SpecsPage() {
           <BoardView
             specs={filteredSpecs}
             onStatusChange={handleStatusChange}
+            canEdit={!machineModeEnabled || isMachineAvailable}
             basePath={basePath}
           />
         )}

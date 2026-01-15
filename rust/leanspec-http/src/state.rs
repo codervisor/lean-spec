@@ -5,6 +5,7 @@
 use crate::config::ServerConfig;
 use crate::error::ServerError;
 use crate::project_registry::ProjectRegistry;
+use crate::sync_state::SyncState;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -17,6 +18,9 @@ pub struct AppState {
 
     /// Project registry
     pub registry: Arc<RwLock<ProjectRegistry>>,
+
+    /// Cloud sync state
+    pub sync_state: Arc<RwLock<SyncState>>,
 }
 
 impl AppState {
@@ -38,6 +42,7 @@ impl AppState {
         Ok(Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
+            sync_state: Arc::new(RwLock::new(SyncState::load())),
         })
     }
 
@@ -46,6 +51,7 @@ impl AppState {
         Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
+            sync_state: Arc::new(RwLock::new(SyncState::load())),
         }
     }
 }

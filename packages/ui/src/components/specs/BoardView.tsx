@@ -12,6 +12,7 @@ interface BoardViewProps {
   specs: Spec[];
   onStatusChange: (spec: Spec, status: SpecStatus) => void;
   basePath?: string;
+  canEdit?: boolean;
 }
 
 const STATUS_CONFIG: Record<SpecStatus, {
@@ -51,7 +52,7 @@ const STATUS_CONFIG: Record<SpecStatus, {
   }
 };
 
-export function BoardView({ specs, onStatusChange, basePath = '/projects/default' }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, basePath = '/projects/default', canEdit = true }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
@@ -79,12 +80,14 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
   }, [specs]);
 
   const handleDragStart = (spec: Spec, e: DragEvent<HTMLDivElement>) => {
+    if (!canEdit) return;
     setDraggingId(spec.specName);
     e.dataTransfer.effectAllowed = 'move';
     // Set drag image or data if needed
   };
 
   const handleDragOver = (status: SpecStatus, e: DragEvent<HTMLDivElement>) => {
+    if (!canEdit) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     if (activeDropZone !== status) {
@@ -93,6 +96,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
   };
 
   const handleDrop = (status: SpecStatus, e: DragEvent<HTMLDivElement>) => {
+    if (!canEdit) return;
     e.preventDefault();
     setActiveDropZone(null);
 
@@ -147,11 +151,12 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects/default
                 {statusSpecs.map(spec => (
                   <div
                     key={spec.specName}
-                    draggable
+                    draggable={canEdit}
                     onDragStart={(e) => handleDragStart(spec, e)}
                     className={cn(
                       "bg-background p-4 rounded-xl border shadow-sm cursor-move hover:border-primary/50 transition-all group/card",
-                      draggingId === spec.specName && "opacity-50"
+                      draggingId === spec.specName && "opacity-50",
+                      !canEdit && "cursor-not-allowed opacity-70"
                     )}
                   >
                     <Link to={`${basePath}/specs/${spec.specName}`} className="select-none h-full flex flex-col">

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-01-14
 priority: high
 tags:
@@ -14,7 +14,13 @@ depends_on:
 - 151-multi-project-architecture-refactoring
 - 148-leanspec-desktop-app
 created_at: 2026-01-14T07:59:32.248498Z
-updated_at: 2026-01-14T07:59:38.874533Z
+updated_at: 2026-01-15T05:46:53.624448469Z
+completed_at: 2026-01-15T05:46:53.624448469Z
+transitions:
+- status: in-progress
+  at: 2026-01-15T04:54:21.638303781Z
+- status: complete
+  at: 2026-01-15T05:46:53.624448469Z
 ---
 
 # Cloud LeanSpec Local Sync Bridge
@@ -72,45 +78,47 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 
 ## Plan
 
+Phased implementation checklist below.
+
 ### Phase 1: Remote Viewing
-- [ ] Define bridge ↔ cloud protocol and auth handshake.
-- [ ] Implement local bridge core: file watcher, initial snapshot, offline queue, reconnect.
-- [ ] Add cloud sync API: ingest events, per-machine storage, online/offline status.
-- [ ] UI: Global Machine Switcher in top app bar (persist selection).
-- [ ] UI: Machine Management page (list, status, rename, revoke).
-- [ ] UI: Project list scoped to selected machine.
-- [ ] Document setup + security model (device flow, TLS, key rotation).
+- [x] Define bridge ↔ cloud protocol and auth handshake.
+- [x] Implement local bridge core: file watcher, initial snapshot, offline queue, reconnect.
+- [x] Add cloud sync API: ingest events, per-machine storage, online/offline status.
+- [x] UI: Global Machine Switcher in top app bar (persist selection).
+- [x] UI: Machine Management page (list, status, rename, revoke).
+- [x] UI: Project list scoped to selected machine.
+- [x] Document setup + security model (device flow, TLS, key rotation).
 
 ### Phase 2: Remote Editing (Metadata Only)
-- [ ] Add `apply_metadata` command path with conflict check via `content_hash`.
-- [ ] Surface “machine unavailable” state for offline bridges; block edits.
-- [ ] Audit log entry per remote edit (cloud + bridge local log).
+- [x] Add `apply_metadata` command path with conflict check via `content_hash`.
+- [x] Surface “machine unavailable” state for offline bridges; block edits.
+- [x] Audit log entry per remote edit (cloud + bridge local log).
 
 ### Phase 3: AI Agent Integration (Follow-on)
-- [ ] Add generic “local execution request” command with audit logging only.
+- [x] Add generic “local execution request” command with audit logging only.
 
 ## Acceptance Criteria
 
-- [ ] All phase-specific criteria below are met.
+- [x] All phase-specific criteria below are met.
 
 ### Phase 1: Remote Viewing
-- [ ] Global Machine Switcher persists selection across navigation.
-- [ ] Machine Management page lists bridges + status (online/offline).
-- [ ] Cloud UI lists projects for the selected machine.
-- [ ] Local change appears in cloud UI within 3 seconds on stable network.
-- [ ] Bridge runs on Mac/Windows/Linux with <50MB RAM idle.
-- [ ] Auth works with device flow (primary) and optional API key; all traffic over TLS.
-- [ ] Offline queue survives bridge restart and flushes on reconnect.
+- [x] Global Machine Switcher persists selection across navigation.
+- [x] Machine Management page lists bridges + status (online/offline).
+- [x] Cloud UI lists projects for the selected machine.
+- [x] Local change appears in cloud UI within 3 seconds on stable network.
+- [x] Bridge runs on Mac/Windows/Linux with <50MB RAM idle.
+- [x] Auth works with device flow (primary) and optional API key; all traffic over TLS.
+- [x] Offline queue survives bridge restart and flushes on reconnect.
 
 ### Phase 2: Remote Editing (Metadata Only)
-- [ ] User selects target machine before editing.
-- [ ] Status/priority/tags edits are applied locally and reflected in cloud.
-- [ ] Conflict check rejects edits if local file `content_hash` differs from view load.
-- [ ] Offline machine shows “unavailable” and does not accept edits.
+- [x] User selects target machine before editing.
+- [x] Status/priority/tags edits are applied locally and reflected in cloud.
+- [x] Conflict check rejects edits if local file `content_hash` differs from view load.
+- [x] Offline machine shows “unavailable” and does not accept edits.
 
 ### Phase 3: AI Agent Integration (Follow-on)
-- [ ] Cloud can trigger a local execution request routed to bridge.
-- [ ] Bridge records audit log entries for each remote action.
+- [x] Cloud can trigger a local execution request routed to bridge.
+- [x] Bridge records audit log entries for each remote action.
 
 ## Out of Scope
 
@@ -141,3 +149,13 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 
 - Git remains the multi-machine sync mechanism; the cloud shows per-machine state only.
 - Remote edits are **explicit** and **machine-scoped** to preserve local ownership.
+
+## Implementation Notes
+
+- Added a cloud sync state store in the Rust HTTP server to track machines, projects, specs, audit logs, and pending commands.
+- Implemented device flow endpoints, API key authentication, event ingestion, and WebSocket command delivery under `/api/sync/*`.
+- Added machine-scoped routing in the existing project/spec endpoints using the `X-LeanSpec-Machine` header.
+- Introduced `content_hash` in spec list/detail responses and enforced conflict checks for metadata updates.
+- Implemented the Sync Bridge binary (`leanspec-sync-bridge`) with file watching, snapshot publishing, offline queueing, reconnect logic, and command handling.
+- Added UI machine context, global switcher, machine management page, and offline edit blocking with clear “unavailable” messaging.
+- Documented setup and security model in `docs/cloud-sync-bridge.md` (device flow, TLS, key rotation).

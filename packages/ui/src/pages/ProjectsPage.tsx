@@ -23,7 +23,7 @@ import { CreateProjectDialog } from '../components/projects/CreateProjectDialog'
 import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { PageHeader } from '../components/shared/PageHeader';
-import { useProject, useLayout } from '../contexts';
+import { useProject, useLayout, useMachine } from '../contexts';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 
@@ -52,6 +52,7 @@ export function ProjectsPage() {
     updateProject,
     loading,
   } = useProject();
+  const { machineModeEnabled, currentMachine } = useMachine();
   const { isWideMode } = useLayout();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -230,13 +231,15 @@ export function ProjectsPage() {
         <div className={cn("container mx-auto py-6 space-y-6 px-4", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <PageHeader
             title={t('projectsPage.title')}
-            description={t('projectsPage.description') || t('projects.description')}
-            actions={(
+            description={machineModeEnabled
+              ? t('projectsPage.machineDescription', { machine: currentMachine?.label || '' })
+              : (t('projectsPage.description') || t('projects.description'))}
+            actions={!machineModeEnabled ? (
               <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="shadow-sm">
                 <Plus className="mr-2 h-4 w-4" />
                 {t('projects.newProject')}
               </Button>
-            )}
+            ) : undefined}
           />
 
           <div className="flex items-center space-x-2 max-w-md">
@@ -330,6 +333,7 @@ export function ProjectsPage() {
                             variant="ghost"
                             className="w-full justify-start h-8 px-2 text-sm"
                             onClick={() => startEditing(project.id, project.name || project.id)}
+                            disabled={machineModeEnabled}
                           >
                             <Pencil className="mr-2 h-4 w-4" />
                             {t('projects.rename')}
@@ -340,6 +344,7 @@ export function ProjectsPage() {
                               <ColorPicker
                                 value={project.color}
                                 onChange={(color) => handleColorChange(project.id, color)}
+                                disabled={machineModeEnabled}
                               />
                             </div>
                           </div>
@@ -348,6 +353,7 @@ export function ProjectsPage() {
                             variant="ghost"
                             className="w-full justify-start h-8 px-2 text-sm"
                             onClick={() => toggleFavorite(project.id)}
+                            disabled={machineModeEnabled}
                           >
                             <Star className="mr-2 h-4 w-4" />
                             {project.favorite ? t('projects.unfavorite') : t('projects.favorite')}
@@ -356,6 +362,7 @@ export function ProjectsPage() {
                             variant="ghost"
                             className="w-full justify-start h-8 px-2 text-sm"
                             onClick={() => handleValidate(project.id)}
+                            disabled={machineModeEnabled}
                           >
                             <RefreshCw className="mr-2 h-4 w-4" />
                             {t('projects.validatePath')}
@@ -365,6 +372,7 @@ export function ProjectsPage() {
                             variant="ghost"
                             className="w-full justify-start h-8 px-2 text-sm text-destructive hover:text-destructive"
                             onClick={() => removeProject(project.id)}
+                            disabled={machineModeEnabled}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             {t('actions.remove')}
@@ -419,10 +427,12 @@ export function ProjectsPage() {
               <p className="text-muted-foreground mt-2 mb-6 max-w-sm">
                 {searchQuery ? t('quickSearch.noResults') : t('projects.getStarted')}
               </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
-                <Plus className="mr-2 h-4 w-4" />
-                {t('projects.createProject')}
-              </Button>
+              {!machineModeEnabled && (
+                <Button onClick={() => setIsCreateDialogOpen(true)} size="lg">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('projects.createProject')}
+                </Button>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useMachine } from './MachineContext';
 
 interface SpecsContextValue {
   /** Increment this to trigger a refetch of specs in any listening component */
@@ -15,10 +16,20 @@ interface SpecsProviderProps {
 
 export function SpecsProvider({ children }: SpecsProviderProps) {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { machineModeEnabled } = useMachine();
 
   const triggerRefresh = useCallback(() => {
     setRefreshTrigger((prev) => prev + 1);
   }, []);
+
+  useEffect(() => {
+    if (!machineModeEnabled) return;
+    const interval = window.setInterval(() => {
+      triggerRefresh();
+    }, 2000);
+
+    return () => window.clearInterval(interval);
+  }, [machineModeEnabled, triggerRefresh]);
 
   return (
     <SpecsContext.Provider value={{ refreshTrigger, triggerRefresh }}>

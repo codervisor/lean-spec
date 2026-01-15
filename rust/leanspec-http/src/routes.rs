@@ -83,6 +83,25 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/specs/{spec}/metadata",
             patch(handlers::update_project_metadata),
         )
+        // Cloud sync routes
+        .route("/api/sync/machines", get(handlers::list_machines))
+        .route("/api/sync/machines/{id}", patch(handlers::rename_machine))
+        .route("/api/sync/machines/{id}", delete(handlers::revoke_machine))
+        .route(
+            "/api/sync/machines/{id}/execution",
+            post(handlers::trigger_execution_request),
+        )
+        .route("/api/sync/device/code", post(handlers::create_device_code))
+        .route(
+            "/api/sync/device/activate",
+            post(handlers::activate_device_code),
+        )
+        .route(
+            "/api/sync/oauth/token",
+            post(handlers::exchange_device_code),
+        )
+        .route("/api/sync/events", post(handlers::ingest_sync_events))
+        .route("/api/sync/bridge/ws", get(handlers::bridge_ws))
         // Local project routes
         .route(
             "/api/local-projects/discover",

@@ -4,6 +4,7 @@ members = [
     "leanspec-cli",
     "leanspec-mcp",
     "leanspec-http",
+    "leanspec-sync-bridge",
 ]
 resolver = "2"
 

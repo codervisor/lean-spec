@@ -6,8 +6,10 @@ mod health;
 mod local_projects;
 mod projects;
 mod specs;
+mod sync;
 
 pub use health::*;
 pub use local_projects::*;
 pub use projects::*;
 pub use specs::*;
+pub use sync::*;

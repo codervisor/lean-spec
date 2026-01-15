@@ -36,7 +36,7 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
-import { useProject, useLayout } from '../contexts';
+import { useProject, useLayout, useMachine } from '../contexts';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatRelativeTime } from '../lib/date-utils';
 import type { SpecDetail } from '../types/api';
@@ -57,6 +57,7 @@ export function SpecDetailPage() {
   const basePath = `/projects/${projectId}`;
   const { currentProject, loading: projectLoading } = useProject();
   const { isWideMode } = useLayout();
+  const { machineModeEnabled, isMachineAvailable } = useMachine();
   const { t, i18n } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
   const [spec, setSpec] = useState<SpecDetail | null>(null);
@@ -355,11 +356,15 @@ export function SpecDetailPage() {
                   <StatusEditor
                     specName={spec.specName}
                     value={spec.status}
+                    expectedContentHash={spec.contentHash}
+                    disabled={machineModeEnabled && !isMachineAvailable}
                     onChange={(status) => applySpecPatch({ status })}
                   />
                   <PriorityEditor
                     specName={spec.specName}
                     value={spec.priority}
+                    expectedContentHash={spec.contentHash}
+                    disabled={machineModeEnabled && !isMachineAvailable}
                     onChange={(priority) => applySpecPatch({ priority })}
                   />
 
@@ -367,9 +372,17 @@ export function SpecDetailPage() {
                   <TagsEditor
                     specName={spec.specName}
                     value={tags}
+                    expectedContentHash={spec.contentHash}
+                    disabled={machineModeEnabled && !isMachineAvailable}
                     onChange={(tags) => applySpecPatch({ tags })}
                   />
                 </div>
+
+                {machineModeEnabled && !isMachineAvailable && (
+                  <div className="text-xs text-destructive mt-2">
+                    {t('machines.unavailable')}
+                  </div>
+                )}
 
                 {/* Line 3: Small metadata row */}
                 <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground mt-1.5 sm:mt-2">

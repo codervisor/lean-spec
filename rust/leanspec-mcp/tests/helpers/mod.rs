@@ -1,5 +1,7 @@
 //! Test helpers for MCP server tests
 
+#![allow(dead_code)]
+
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};

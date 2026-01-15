@@ -1,8 +1,9 @@
 //! Spec operation handlers
 
 use axum::extract::{Path, Query, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path as FsPath;
@@ -15,6 +16,7 @@ use leanspec_core::{
 use crate::error::{ApiError, ApiResult};
 use crate::project_registry::Project;
 use crate::state::AppState;
+use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 use crate::types::{
     ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse, SpecDetail,
     SpecSummary, StatsResponse, SubSpec,
@@ -81,6 +83,68 @@ fn strip_frontmatter(content: &str) -> String {
     }
 
     body
+}
+
+fn hash_content(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+fn spec_number_from_name(name: &str) -> Option<u32> {
+    name.split('-').next()?.parse().ok()
+}
+
+fn summary_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) -> SpecSummary {
+    SpecSummary {
+        project_id: Some(project_id.to_string()),
+        id: record.spec_name.clone(),
+        spec_number: spec_number_from_name(&record.spec_name),
+        spec_name: record.spec_name.clone(),
+        title: record.title.clone(),
+        status: record.status.clone(),
+        priority: record.priority.clone(),
+        tags: record.tags.clone(),
+        assignee: record.assignee.clone(),
+        created_at: record.created_at,
+        updated_at: record.updated_at,
+        completed_at: record.completed_at,
+        file_path: record
+            .file_path
+            .clone()
+            .unwrap_or_else(|| record.spec_name.clone()),
+        depends_on: record.depends_on.clone(),
+        required_by: Vec::new(),
+        content_hash: Some(record.content_hash.clone()),
+        relationships: None,
+    }
+}
+
+fn detail_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) -> SpecDetail {
+    SpecDetail {
+        project_id: Some(project_id.to_string()),
+        id: record.spec_name.clone(),
+        spec_number: spec_number_from_name(&record.spec_name),
+        spec_name: record.spec_name.clone(),
+        title: record.title.clone(),
+        status: record.status.clone(),
+        priority: record.priority.clone(),
+        tags: record.tags.clone(),
+        assignee: record.assignee.clone(),
+        content_md: record.content_md.clone(),
+        created_at: record.created_at,
+        updated_at: record.updated_at,
+        completed_at: record.completed_at,
+        file_path: record
+            .file_path
+            .clone()
+            .unwrap_or_else(|| record.spec_name.clone()),
+        depends_on: record.depends_on.clone(),
+        required_by: Vec::new(),
+        content_hash: Some(record.content_hash.clone()),
+        relationships: None,
+        sub_specs: None,
+    }
 }
 
 fn format_sub_spec_name(file_name: &str) -> String {
@@ -152,7 +216,110 @@ pub async fn list_project_specs(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
     Query(query): Query<ListSpecsQuery>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<ListSpecsResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        if machine.revoked {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ApiError::unauthorized("Machine revoked")),
+            ));
+        }
+
+        let project = machine.projects.get(&project_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            )
+        })?;
+
+        let status_filter = parse_status_filter(&query.status)?.map(|values| {
+            values
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+        });
+
+        let priority_filter = query
+            .priority
+            .map(|s| s.split(',').map(|v| v.to_string()).collect::<Vec<_>>());
+
+        let tags_filter = query
+            .tags
+            .map(|s| s.split(',').map(|v| v.to_string()).collect::<Vec<_>>());
+
+        let mut required_by_map: HashMap<String, Vec<String>> = HashMap::new();
+        for spec in project.specs.values() {
+            for dep in &spec.depends_on {
+                required_by_map
+                    .entry(dep.clone())
+                    .or_default()
+                    .push(spec.spec_name.clone());
+            }
+        }
+
+        let filtered_specs: Vec<SpecSummary> = project
+            .specs
+            .values()
+            .filter(|spec| {
+                if let Some(statuses) = &status_filter {
+                    if !statuses.contains(&spec.status) {
+                        return false;
+                    }
+                }
+
+                if let Some(priorities) = &priority_filter {
+                    match &spec.priority {
+                        Some(priority) if priorities.contains(priority) => {}
+                        None if priorities.is_empty() => {}
+                        _ => return false,
+                    }
+                }
+
+                if let Some(tags) = &tags_filter {
+                    if !tags.iter().all(|tag| spec.tags.contains(tag)) {
+                        return false;
+                    }
+                }
+
+                true
+            })
+            .map(|spec| {
+                let mut summary = summary_from_record(&project.id, spec);
+                let required_by = required_by_map
+                    .get(&spec.spec_name)
+                    .cloned()
+                    .unwrap_or_default();
+                summary.required_by = required_by.clone();
+                summary.relationships = Some(crate::types::SpecRelationships {
+                    depends_on: summary.depends_on.clone(),
+                    required_by: Some(required_by),
+                });
+                summary
+            })
+            .collect();
+
+        let total = filtered_specs.len();
+
+        return Ok(Json(ListSpecsResponse {
+            specs: filtered_specs,
+            total,
+            project_id: Some(project.id.clone()),
+        }));
+    }
+
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
@@ -196,7 +363,53 @@ pub async fn list_project_specs(
 pub async fn get_project_spec(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<SpecDetail>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        let project = machine.projects.get(&project_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            )
+        })?;
+
+        let record = project.specs.get(&spec_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::spec_not_found(&spec_id)),
+            )
+        })?;
+
+        let mut detail = detail_from_record(&project.id, record);
+
+        let required_by = project
+            .specs
+            .values()
+            .filter(|spec| spec.depends_on.contains(&record.spec_name))
+            .map(|spec| spec.spec_name.clone())
+            .collect::<Vec<_>>();
+
+        detail.required_by = required_by.clone();
+        detail.relationships = Some(crate::types::SpecRelationships {
+            depends_on: detail.depends_on.clone(),
+            required_by: Some(required_by),
+        });
+
+        return Ok(Json(detail));
+    }
+
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let spec = loader.load(&spec_id).map_err(|e| {
@@ -245,8 +458,98 @@ pub async fn get_project_spec(
 pub async fn search_project_specs(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
+    headers: HeaderMap,
     Json(req): Json<SearchRequest>,
 ) -> ApiResult<Json<SearchResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        let project = machine.projects.get(&project_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            )
+        })?;
+
+        let query_lower = req.query.to_lowercase();
+        let mut results: Vec<SpecSummary> = project
+            .specs
+            .values()
+            .filter(|spec| {
+                spec.spec_name.to_lowercase().contains(&query_lower)
+                    || spec
+                        .title
+                        .as_ref()
+                        .map(|title| title.to_lowercase().contains(&query_lower))
+                        .unwrap_or(false)
+                    || spec.content_md.to_lowercase().contains(&query_lower)
+                    || spec
+                        .tags
+                        .iter()
+                        .any(|tag| tag.to_lowercase().contains(&query_lower))
+            })
+            .filter(|spec| {
+                if let Some(ref filters) = req.filters {
+                    if let Some(ref status) = filters.status {
+                        if &spec.status != status {
+                            return false;
+                        }
+                    }
+                    if let Some(ref priority) = filters.priority {
+                        match &spec.priority {
+                            Some(p) if p == priority => {}
+                            _ => return false,
+                        }
+                    }
+                    if let Some(ref tags) = filters.tags {
+                        if !tags.iter().all(|t| spec.tags.contains(t)) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            })
+            .map(|spec| summary_from_record(&project.id, spec))
+            .collect();
+
+        results.sort_by(|a, b| {
+            let a_title_match = a
+                .title
+                .as_ref()
+                .map(|t| t.to_lowercase().contains(&query_lower))
+                .unwrap_or(false);
+            let b_title_match = b
+                .title
+                .as_ref()
+                .map(|t| t.to_lowercase().contains(&query_lower))
+                .unwrap_or(false);
+
+            match (a_title_match, b_title_match) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => b.spec_number.cmp(&a.spec_number),
+            }
+        });
+
+        let total = results.len();
+        return Ok(Json(SearchResponse {
+            results,
+            total,
+            query: req.query,
+            project_id: Some(project.id.clone()),
+        }));
+    }
+
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
@@ -334,7 +637,65 @@ pub async fn search_project_specs(
 pub async fn get_project_stats(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<StatsResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        let project = machine.projects.get(&project_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            )
+        })?;
+
+        let mut by_status: HashMap<String, usize> = HashMap::new();
+        let mut by_priority: HashMap<String, usize> = HashMap::new();
+        let mut completed = 0usize;
+
+        for spec in project.specs.values() {
+            *by_status.entry(spec.status.clone()).or_insert(0) += 1;
+            if let Some(priority) = &spec.priority {
+                *by_priority.entry(priority.clone()).or_insert(0) += 1;
+            }
+            if spec.status == "complete" {
+                completed += 1;
+            }
+        }
+
+        let total_specs = project.specs.len();
+        let completion_rate = if total_specs == 0 {
+            0.0
+        } else {
+            (completed as f64 / total_specs as f64) * 100.0
+        };
+
+        return Ok(Json(StatsResponse {
+            total_projects: 1,
+            total_specs,
+            specs_by_status: by_status
+                .into_iter()
+                .map(|(status, count)| crate::types::StatusCountItem { status, count })
+                .collect(),
+            specs_by_priority: by_priority
+                .into_iter()
+                .map(|(priority, count)| crate::types::PriorityCountItem { priority, count })
+                .collect(),
+            completion_rate,
+            project_id: Some(project.id.clone()),
+        }));
+    }
+
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
@@ -353,7 +714,71 @@ pub async fn get_project_stats(
 pub async fn get_project_dependencies(
     State(state): State<AppState>,
     Path(project_id): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Json<crate::types::DependencyGraphResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let sync_state = state.sync_state.read().await;
+        let machine = sync_state
+            .persistent
+            .machines
+            .get(&machine_id)
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::invalid_request("Machine not found")),
+                )
+            })?;
+
+        let project = machine.projects.get(&project_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError::project_not_found(&project_id)),
+            )
+        })?;
+
+        let mut nodes = Vec::new();
+        let mut edges = Vec::new();
+        let spec_map: HashMap<String, _> = project
+            .specs
+            .values()
+            .map(|spec| (spec.spec_name.clone(), spec))
+            .collect();
+
+        for spec in project.specs.values() {
+            nodes.push(crate::types::DependencyNode {
+                id: spec.spec_name.clone(),
+                name: spec
+                    .title
+                    .clone()
+                    .filter(|t| !t.is_empty())
+                    .unwrap_or_else(|| spec.spec_name.clone()),
+                number: spec_number_from_name(&spec.spec_name).unwrap_or(0),
+                status: spec.status.clone(),
+                priority: spec
+                    .priority
+                    .clone()
+                    .unwrap_or_else(|| "medium".to_string()),
+                tags: spec.tags.clone(),
+            });
+
+            for dep in &spec.depends_on {
+                if spec_map.contains_key(dep) {
+                    edges.push(crate::types::DependencyEdge {
+                        source: dep.clone(),
+                        target: spec.spec_name.clone(),
+                        r#type: Some("dependsOn".to_string()),
+                    });
+                }
+            }
+        }
+
+        return Ok(Json(crate::types::DependencyGraphResponse {
+            project_id: Some(project.id.clone()),
+            nodes,
+            edges,
+        }));
+    }
+
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     let all_specs = loader.load_all().map_err(|e| {
@@ -409,8 +834,120 @@ pub async fn get_project_dependencies(
 pub async fn update_project_metadata(
     State(state): State<AppState>,
     Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
     Json(updates): Json<MetadataUpdate>,
 ) -> ApiResult<Json<crate::types::UpdateMetadataResponse>> {
+    if let Some(machine_id) = machine_id_from_headers(&headers) {
+        let mut sync_state = state.sync_state.write().await;
+        let is_online = sync_state.is_machine_online(&machine_id);
+        let sender = sync_state.connections.get(&machine_id).cloned();
+
+        let (command, frontmatter) = {
+            let machine = sync_state
+                .persistent
+                .machines
+                .get_mut(&machine_id)
+                .ok_or_else(|| {
+                    (
+                        StatusCode::NOT_FOUND,
+                        Json(ApiError::invalid_request("Machine not found")),
+                    )
+                })?;
+
+            let project = machine.projects.get_mut(&project_id).ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::project_not_found(&project_id)),
+                )
+            })?;
+
+            let spec = project.specs.get(&spec_id).ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::spec_not_found(&spec_id)),
+                )
+            })?;
+
+            if !is_online {
+                return Err((
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ApiError::invalid_request("Machine unavailable")),
+                ));
+            }
+
+            if let Some(expected_hash) = &updates.expected_content_hash {
+                if expected_hash != &spec.content_hash {
+                    return Err((
+                        StatusCode::CONFLICT,
+                        Json(
+                            ApiError::invalid_request("Content hash mismatch")
+                                .with_details(spec.content_hash.clone()),
+                        ),
+                    ));
+                }
+            }
+
+            let command = PendingCommand {
+                id: uuid::Uuid::new_v4().to_string(),
+                command: SyncCommand::ApplyMetadata {
+                    project_id: project_id.clone(),
+                    spec_name: spec_id.clone(),
+                    status: updates.status.clone(),
+                    priority: updates.priority.clone(),
+                    tags: updates.tags.clone(),
+                    expected_content_hash: updates.expected_content_hash.clone(),
+                },
+                created_at: chrono::Utc::now(),
+            };
+
+            machine.pending_commands.push(command.clone());
+
+            let frontmatter = crate::types::FrontmatterResponse {
+                status: spec.status.clone(),
+                created: spec
+                    .created_at
+                    .map(|ts| ts.date_naive().to_string())
+                    .unwrap_or_default(),
+                priority: spec.priority.clone(),
+                tags: spec.tags.clone(),
+                depends_on: spec.depends_on.clone(),
+                assignee: spec.assignee.clone(),
+                created_at: spec.created_at,
+                updated_at: spec.updated_at,
+                completed_at: spec.completed_at,
+            };
+
+            (command, frontmatter)
+        };
+
+        if let Some(sender) = sender {
+            let _ = sender.send(axum::extract::ws::Message::Text(
+                serde_json::to_string(&command).unwrap_or_default().into(),
+            ));
+        }
+
+        sync_state
+            .persistent
+            .audit_log
+            .push(crate::sync_state::AuditLogEntry {
+                id: uuid::Uuid::new_v4().to_string(),
+                machine_id: machine_id.clone(),
+                project_id: Some(project_id.clone()),
+                spec_name: Some(spec_id.clone()),
+                action: "apply_metadata".to_string(),
+                status: "queued".to_string(),
+                message: None,
+                created_at: chrono::Utc::now(),
+            });
+        sync_state.save();
+
+        return Ok(Json(crate::types::UpdateMetadataResponse {
+            success: true,
+            spec_id: spec_id.clone(),
+            frontmatter,
+        }));
+    }
+
     let (loader, project) = get_spec_loader(&state, &project_id).await?;
 
     // Verify spec exists
@@ -426,6 +963,16 @@ pub async fn update_project_metadata(
             StatusCode::NOT_FOUND,
             Json(ApiError::spec_not_found(&spec_id)),
         ));
+    }
+
+    if let Some(expected_hash) = &updates.expected_content_hash {
+        let current_hash = hash_content(&spec.as_ref().unwrap().content);
+        if expected_hash != &current_hash {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
+            ));
+        }
     }
 
     // Check if status is being updated to "archived"

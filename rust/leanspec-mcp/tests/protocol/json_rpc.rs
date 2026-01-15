@@ -5,7 +5,7 @@ mod helpers;
 
 use helpers::*;
 use pretty_assertions::assert_eq;
-use serde_json::{json, Value};
+use serde_json::json;
 
 /// Test: Valid JSON-RPC request structure
 #[test]

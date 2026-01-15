@@ -22,7 +22,7 @@ path = "src/main.rs"
 leanspec-core = { path = "../leanspec-core" }
 
 # Web framework
-axum = "0.8.7"
+axum = { version = "0.8.7", features = ["ws"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.8", features = ["cors", "trace", "fs"] }
 
@@ -32,6 +32,8 @@ tokio.workspace = true
 # Serialization
 serde.workspace = true
 serde_json.workspace = true
+sha2 = "0.10"
+futures-util = "0.3"
 
 # Date/time
 chrono.workspace = true

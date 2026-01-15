@@ -16,6 +16,7 @@ import type {
   ProjectsResponse,
   ListSpecsResponse,
   ProjectContext,
+  MachinesResponse,
 } from '../types/api';
 
 export class APIError extends Error {
@@ -33,6 +34,14 @@ export class APIError extends Error {
  * Web uses HTTP fetch, Desktop uses Tauri invoke
  */
 export interface BackendAdapter {
+  setMachineId(machineId: string | null): void;
+
+  // Machine operations
+  getMachines(): Promise<MachinesResponse>;
+  renameMachine(machineId: string, label: string): Promise<void>;
+  revokeMachine(machineId: string): Promise<void>;
+  requestExecution(machineId: string, payload: Record<string, unknown>): Promise<void>;
+
   // Project operations
   getProjects(): Promise<ProjectsResponse>;
   createProject(
@@ -49,7 +58,11 @@ export interface BackendAdapter {
   // Spec operations
   getSpecs(projectId: string, params?: ListParams): Promise<Spec[]>;
   getSpec(projectId: string, specName: string): Promise<SpecDetail>;
-  updateSpec(projectId: string, specName: string, updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>): Promise<void>;
+  updateSpec(
+    projectId: string,
+    specName: string,
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
+  ): Promise<void>;
 
   // Stats and dependencies
   getStats(projectId: string): Promise<Stats>;
@@ -68,16 +81,24 @@ export interface BackendAdapter {
  */
 export class HttpBackendAdapter implements BackendAdapter {
   private baseUrl: string;
+  private machineId: string | null = null;
 
   constructor(baseUrl?: string) {
     this.baseUrl = baseUrl || import.meta.env.VITE_API_URL || 'http://localhost:3333';
   }
 
+  setMachineId(machineId: string | null) {
+    this.machineId = machineId;
+  }
+
   private async fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const syncApiKey = import.meta.env.VITE_SYNC_API_KEY as string | undefined;
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...(this.machineId ? { 'X-LeanSpec-Machine': this.machineId } : {}),
+        ...(syncApiKey ? { 'X-API-Key': syncApiKey } : {}),
         ...options?.headers,
       },
     });
@@ -121,6 +142,30 @@ export class HttpBackendAdapter implements BackendAdapter {
   async getProjects(): Promise<ProjectsResponse> {
     const data = await this.fetchAPI<ProjectsResponse>('/api/projects');
     return data;
+  }
+
+  async getMachines(): Promise<MachinesResponse> {
+    return this.fetchAPI<MachinesResponse>('/api/sync/machines');
+  }
+
+  async renameMachine(machineId: string, label: string): Promise<void> {
+    await this.fetchAPI(`/api/sync/machines/${encodeURIComponent(machineId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ label }),
+    });
+  }
+
+  async revokeMachine(machineId: string): Promise<void> {
+    await this.fetchAPI(`/api/sync/machines/${encodeURIComponent(machineId)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async requestExecution(machineId: string, payload: Record<string, unknown>): Promise<void> {
+    await this.fetchAPI(`/api/sync/machines/${encodeURIComponent(machineId)}/execution`, {
+      method: 'POST',
+      body: JSON.stringify({ payload }),
+    });
   }
 
   async createProject(
@@ -185,7 +230,7 @@ export class HttpBackendAdapter implements BackendAdapter {
   async updateSpec(
     projectId: string,
     specName: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
   ): Promise<void> {
     await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
@@ -249,6 +294,25 @@ export class HttpBackendAdapter implements BackendAdapter {
  * Tauri adapter for desktop app - uses IPC commands
  */
 export class TauriBackendAdapter implements BackendAdapter {
+  setMachineId(_machineId: string | null) {
+    // No-op for desktop
+  }
+
+  async getMachines(): Promise<MachinesResponse> {
+    throw new Error('getMachines is not implemented for the Tauri backend yet');
+  }
+
+  async renameMachine(_machineId: string, _label: string): Promise<void> {
+    throw new Error('renameMachine is not implemented for the Tauri backend yet');
+  }
+
+  async revokeMachine(_machineId: string): Promise<void> {
+    throw new Error('revokeMachine is not implemented for the Tauri backend yet');
+  }
+
+  async requestExecution(_machineId: string, _payload: Record<string, unknown>): Promise<void> {
+    throw new Error('requestExecution is not implemented for the Tauri backend yet');
+  }
   private async invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
     // Dynamic import to avoid bundling Tauri in web builds
     const { invoke } = await import('@tauri-apps/api/core');
@@ -310,7 +374,7 @@ export class TauriBackendAdapter implements BackendAdapter {
   async updateSpec(
     projectId: string,
     specName: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>>
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
   ): Promise<void> {
     // For now, only status update is supported
     if (updates.status) {

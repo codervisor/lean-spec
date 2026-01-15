@@ -71,6 +71,10 @@ impl ApiError {
         Self::new("INVALID_REQUEST", reason)
     }
 
+    pub fn unauthorized(reason: &str) -> Self {
+        Self::new("UNAUTHORIZED", reason)
+    }
+
     pub fn internal_error(reason: &str) -> Self {
         Self::new("INTERNAL_ERROR", reason)
     }
@@ -84,6 +88,7 @@ impl IntoResponse for ApiError {
         let status = match self.code.as_str() {
             "NOT_FOUND" | "PROJECT_NOT_FOUND" | "SPEC_NOT_FOUND" => StatusCode::NOT_FOUND,
             "NO_PROJECT" | "INVALID_REQUEST" => StatusCode::BAD_REQUEST,
+            "UNAUTHORIZED" => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
 

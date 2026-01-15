@@ -7,6 +7,8 @@
     "context": "上下文",
     "projects": "项目",
     "manageProjects": "管理项目",
+    "machines": "设备",
+    "manageMachines": "管理设备",
     "collapse": "收起",
     "closeMenu": "关闭菜单",
     "dashboard": "仪表板",
@@ -119,7 +121,24 @@
   },
   "projectsPage": {
     "title": "项目",
+    "machineDescription": "来自 {{machine}} 的同步项目。",
     "description": "管理你的 LeanSpec 工作区。"
+  },
+  "machines": {
+    "title": "设备",
+    "description": "管理已连接的 Sync Bridge 设备。",
+    "available": "可用设备",
+    "empty": "暂时没有已连接的设备。",
+    "switcherLabel": "选择设备",
+    "noSelection": "请选择设备",
+    "projectsCount": "{{count}} 个项目",
+    "requestExecution": "请求执行",
+    "revoke": "撤销",
+    "unavailable": "设备不可用。请连接 Sync Bridge 后再编辑元数据。",
+    "status": {
+      "online": "在线",
+      "offline": "离线"
+    }
   },
   "quickSearch": {
     "button": "快速搜索...",

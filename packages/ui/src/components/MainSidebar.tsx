@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder } from 'lucide-react';
+import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ProjectSwitcher } from './ProjectSwitcher';
+import { useMachine } from '../contexts';
 
 const STORAGE_KEY = 'main-sidebar-collapsed';
 
@@ -66,6 +67,7 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
   const { projectId } = useParams<{ projectId: string }>();
   const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { t } = useTranslation('common');
+  const { machineModeEnabled } = useMachine();
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -93,6 +95,9 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
     { path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
     { path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },
     { path: '/projects', label: t('navigation.projects'), description: t('navigation.manageProjects'), icon: Folder },
+    ...(machineModeEnabled
+      ? [{ path: '/machines', label: t('navigation.machines'), description: t('navigation.manageMachines'), icon: Cpu }]
+      : []),
   ];
 
   return (

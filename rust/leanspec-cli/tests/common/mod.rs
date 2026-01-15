@@ -6,9 +6,11 @@
 //! - File and directory assertions
 //! - Frontmatter parsing
 
-use assert_cmd::Command;
+#![allow(dead_code)]
+
+use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tempfile::TempDir;
 
 /// Test context with temporary directory management
@@ -47,8 +49,7 @@ pub struct ExecResult {
 
 /// Execute a CLI command and capture output
 pub fn exec_cli(args: &[&str], cwd: &Path) -> ExecResult {
-    let output = Command::cargo_bin("lean-spec")
-        .expect("Failed to find lean-spec binary")
+    let output = cargo_bin_cmd!("lean-spec")
         .args(args)
         .current_dir(cwd)
         .env("NO_COLOR", "1")
