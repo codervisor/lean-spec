@@ -1,11 +1,19 @@
 #!/usr/bin/env node
 /**
  * Restore original package.json files after publishing.
- * This reverts the changes made by prepare-publish.ts
+ * This reverts the workspace:* replacements made by prepare-publish.ts
+ * 
+ * NOTE: This only restores dependency changes, NOT version changes.
+ * - For stable releases: Versions should remain at the new release version
+ * - For dev testing: Use `git restore` to discard version bumps too
  * 
  * Usage:
  *   npm run restore-packages
  *   pnpm restore-packages
+ *   
+ * To restore everything including versions (dev testing):
+ *   git restore package.json packages/star/package.json packages/star/star/package.json
+ *   (replace 'star' with asterisk glob pattern)
  */
 
 import { existsSync, renameSync, unlinkSync } from 'fs';
