@@ -81,7 +81,7 @@ enum SyncEvent {
         specs: Vec<SpecRecord>,
     },
     SpecChanged {
-        spec: SpecRecord,
+        spec: Box<SpecRecord>,
     },
     SpecDeleted {
         spec_name: String,
@@ -532,7 +532,9 @@ async fn apply_metadata(
     let event = QueuedEvent {
         project_id: project_id.to_string(),
         project_name: project.name,
-        event: SyncEvent::SpecChanged { spec: record },
+        event: SyncEvent::SpecChanged {
+            spec: Box::new(record),
+        },
     };
 
     let locked = state.lock().await;
@@ -573,7 +575,9 @@ async fn watch_project(
                             let _ = event_tx.send(QueuedEvent {
                                 project_id: project_id.clone(),
                                 project_name: project_name.clone(),
-                                event: SyncEvent::SpecChanged { spec: record },
+                                event: SyncEvent::SpecChanged {
+                                    spec: Box::new(record),
+                                },
                             });
                         }
                     }
