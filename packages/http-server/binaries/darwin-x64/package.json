@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/http-darwin-x64",
-  "version": "0.2.15",
+  "version": "0.2.17",
   "description": "LeanSpec HTTP server binary for macOS x64",
   "os": [
     "darwin"

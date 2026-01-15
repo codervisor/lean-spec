@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.17] - 2026-01-15
+
+### Fixed
+- **Critical**: Fixed `workspace:*` dependencies in published packages
+  - Version 0.2.15 of `@leanspec/http-server` was published with unresolved workspace protocol references
+  - This caused installation failures: `npm error Unsupported URL Type "workspace:": workspace:*`
+  - All packages now properly resolve workspace dependencies before publishing
+  - Platform packages (CLI, MCP, HTTP) optionalDependencies now correctly reference versioned packages
+
 ## [0.2.13] - 2026-01-13
 
 ### Added
