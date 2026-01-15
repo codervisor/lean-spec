@@ -290,6 +290,10 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: pnpm prepare-publish
       
+      - name: Verify no workspace:* protocol after preparation
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        run: pnpm tsx scripts/validate-no-workspace-protocol.ts
+      
       - name: Publish main packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: |
