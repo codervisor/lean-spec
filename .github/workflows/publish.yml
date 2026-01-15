@@ -190,10 +190,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Download linux-x64 CLI binary
+      - name: Download all platform binaries
         uses: actions/download-artifact@v4
         with:
-          name: binaries-linux-x64
           path: artifacts/
 
       - name: Copy binaries for validation
