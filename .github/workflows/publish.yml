@@ -279,16 +279,16 @@ jobs:
           echo "Missing packages: ${missing_packages[*]}"
           exit 1
       
+      - name: Prepare packages for npm publish
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        run: pnpm prepare-publish
+      
       - name: Build TypeScript packages
         run: pnpm build
       
       - name: Validate specs
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         run: node bin/lean-spec.js validate --warnings-only
-      
-      - name: Prepare packages for npm publish
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
-        run: pnpm prepare-publish
       
       - name: Publish main packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
