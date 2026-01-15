@@ -109,16 +109,65 @@ async function ensurePackageJson({
 }) {
   const packageJsonPath = path.join(destDir, 'package.json');
   const platformInfo = getPlatformInfo(platformKey);
+  const binaryFileName = getBinaryFileName(binaryName, platformKey);
+  const packageName = `${packagePrefix}-${platformKey}`;
+  const isWindows = platformKey.startsWith('windows-');
 
+  // Always create/update postinstall script
+  const postinstallPath = path.join(destDir, 'postinstall.js');
+  const postinstallContent = isWindows
+    ? `#!/usr/bin/env node
+/**
+ * Postinstall script - no-op on Windows (permissions not needed).
+ * This file exists for consistency across all platform packages.
+ */
+console.log('✓ ${binaryFileName} ready');
+`
+    : `#!/usr/bin/env node
+/**
+ * Postinstall script to set execute permissions on the binary.
+ * npm doesn't preserve file permissions, so we need to set them after install.
+ */
+const { chmodSync } = require('fs');
+const { join } = require('path');
+
+const binaryPath = join(__dirname, '${binaryFileName}');
+
+try {
+  chmodSync(binaryPath, 0o755);
+  console.log('✓ Set execute permissions on ${binaryFileName} binary');
+} catch (err) {
+  console.error('Warning: Could not set execute permissions:', err.message);
+  // Don't fail the install
+}
+`;
+  await fs.writeFile(postinstallPath, postinstallContent);
+
+  // Check if package.json already exists
   try {
     await fs.access(packageJsonPath);
+    // Update existing package.json to include postinstall if missing
+    const existingPkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
+    let updated = false;
+
+    if (!existingPkg.files?.includes('postinstall.js')) {
+      existingPkg.files = [...(existingPkg.files || []), 'postinstall.js'];
+      updated = true;
+    }
+
+    if (!existingPkg.scripts?.postinstall) {
+      existingPkg.scripts = { ...(existingPkg.scripts || {}), postinstall: 'node postinstall.js' };
+      updated = true;
+    }
+
+    if (updated) {
+      await fs.writeFile(packageJsonPath, JSON.stringify(existingPkg, null, 2) + '\n');
+      console.log(`🔄 Updated ${packageName} package.json`);
+    }
     return;
   } catch (e) {
     // Missing manifest; create below
   }
-
-  const binaryFileName = getBinaryFileName(binaryName, platformKey);
-  const packageName = `${packagePrefix}-${platformKey}`;
 
   const packageJson = {
     name: packageName,
@@ -127,7 +176,10 @@ async function ensurePackageJson({
     os: [platformInfo.os],
     cpu: [platformInfo.cpu],
     main: binaryFileName,
-    files: [binaryFileName],
+    files: [binaryFileName, 'postinstall.js'],
+    scripts: {
+      postinstall: 'node postinstall.js'
+    },
     repository: {
       type: 'git',
       url: REPOSITORY_URL

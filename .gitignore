@@ -31,13 +31,19 @@ rust/target/
 # IDE specific files
 .idea/
 
-# Binaries (but keep package.json files)
+# Binaries and auto-generated platform package files
 packages/cli/binaries/*/lean-spec
 packages/cli/binaries/*/lean-spec.exe
+packages/cli/binaries/*/package.json
+packages/cli/binaries/*/postinstall.js
 packages/mcp/binaries/*/leanspec-mcp
 packages/mcp/binaries/*/leanspec-mcp.exe
+packages/mcp/binaries/*/package.json
+packages/mcp/binaries/*/postinstall.js
 packages/http-server/binaries/*/leanspec-http
 packages/http-server/binaries/*/leanspec-http.exe
+packages/http-server/binaries/*/package.json
+packages/http-server/binaries/*/postinstall.js
 
 # package-lock.json files
 package-lock.json
