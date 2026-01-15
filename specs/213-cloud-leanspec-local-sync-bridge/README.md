@@ -21,7 +21,7 @@ updated_at: 2026-01-14T07:59:38.874533Z
 
 ## Overview
 
-Provide always-on, remote access to local LeanSpec projects by deploying the UI to the cloud and connecting each developer machine via a lightweight **Sync Bridge**. The local filesystem remains the source of truth; the cloud shows per-machine state and sends explicit edit commands back to the selected machine.
+Provide always-on, remote access to local LeanSpec projects by deploying the UI to the cloud and connecting each developer machine via a lightweight **Sync Bridge**. The local filesystem remains the source of truth; the cloud shows per-machine state and sends explicit, machine-scoped metadata edit commands back to the selected machine.
 
 ## Problem & Motivation
 
@@ -44,23 +44,50 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 - Rust binary running in the background on each machine.
 - Watches `specs/` for changes and pushes deltas to the cloud.
 - Applies **explicit** edit commands from cloud to local files.
-- Auth via API key or device flow; TLS required.
-- Reconnects automatically and queues events when offline.
+- Auth via device flow (primary) with optional API key for CI/headless; TLS required.
+- Reconnects automatically and queues events locally when offline.
 
 **Multi-machine model**
 - Each machine is a distinct view in the cloud (e.g., “Work MacBook”).
 - Git remains the mechanism for syncing between machines.
 - Cloud does **not** resolve merge conflicts between machines.
 
+## Protocol & Data Model (Bridge ↔ Cloud)
+
+**Identity**
+- `machine_id` (stable UUID) + user-defined `machine_label` (default hostname).
+- `project_id` per LeanSpec workspace (multi-project support).
+
+**Event types (bridge → cloud)**
+- `snapshot` (initial full state summary per project).
+- `spec_changed` / `spec_deleted` (path, metadata, content hash).
+- `heartbeat` (online status, version, queue depth).
+
+**Command types (cloud → bridge)**
+- `apply_metadata` (status/priority/tags + expected `content_hash`).
+- `rename_machine` / `revoke_machine`.
+
+**Conflict check**
+- Cloud sends expected `content_hash`; bridge rejects if mismatch and returns current hash.
+
 ## Plan
 
-- [ ] Define bridge ↔ cloud protocol (event types, payload limits, auth handshake).
-- [ ] Implement local bridge (file watcher, event queue, WebSocket client, edit executor).
-- [ ] Add cloud sync API (ingest events, per-machine storage, publish updates).
-- [ ] UI: Implement Global Machine Switcher in top app bar.
-- [ ] UI: Create Machine Management page (list, status, rename, revoke).
-- [ ] Add remote metadata edit flow with conflict check (timestamp/version).
-- [ ] Document setup and security model (API key/device flow, audit log).
+### Phase 1: Remote Viewing
+- [ ] Define bridge ↔ cloud protocol and auth handshake.
+- [ ] Implement local bridge core: file watcher, initial snapshot, offline queue, reconnect.
+- [ ] Add cloud sync API: ingest events, per-machine storage, online/offline status.
+- [ ] UI: Global Machine Switcher in top app bar (persist selection).
+- [ ] UI: Machine Management page (list, status, rename, revoke).
+- [ ] UI: Project list scoped to selected machine.
+- [ ] Document setup + security model (device flow, TLS, key rotation).
+
+### Phase 2: Remote Editing (Metadata Only)
+- [ ] Add `apply_metadata` command path with conflict check via `content_hash`.
+- [ ] Surface “machine unavailable” state for offline bridges; block edits.
+- [ ] Audit log entry per remote edit (cloud + bridge local log).
+
+### Phase 3: AI Agent Integration (Follow-on)
+- [ ] Add generic “local execution request” command with audit logging only.
 
 ## Acceptance Criteria
 
@@ -72,12 +99,13 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 - [ ] Cloud UI lists projects for the selected machine.
 - [ ] Local change appears in cloud UI within 3 seconds on stable network.
 - [ ] Bridge runs on Mac/Windows/Linux with <50MB RAM idle.
-- [ ] Auth works with API key or device flow; all traffic over TLS.
+- [ ] Auth works with device flow (primary) and optional API key; all traffic over TLS.
+- [ ] Offline queue survives bridge restart and flushes on reconnect.
 
 ### Phase 2: Remote Editing (Metadata Only)
 - [ ] User selects target machine before editing.
 - [ ] Status/priority/tags edits are applied locally and reflected in cloud.
-- [ ] Conflict check rejects edits if local file changed since view load.
+- [ ] Conflict check rejects edits if local file `content_hash` differs from view load.
 - [ ] Offline machine shows “unavailable” and does not accept edits.
 
 ### Phase 3: AI Agent Integration (Follow-on)
@@ -101,13 +129,13 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 **This spec enables**:
 - [168-leanspec-orchestration-platform](specs/168-leanspec-orchestration-platform/168-leanspec-orchestration-platform.md) - Remote AI agent orchestration
 
-## Open Questions
+## Decisions
 
-1. Preferred naming: Sync Bridge vs Local Relay?
-2. Auth choice: API keys vs device flow (or both)?
-3. Conflict check: file timestamp vs content hash?
-4. Offline edits: queue or reject with user prompt?
-5. Machine naming: auto hostname vs user-defined label?
+- Naming: **Sync Bridge**.
+- Auth: Device flow primary; API key optional for CI/headless.
+- Conflict check: `content_hash` match required.
+- Offline edits: rejected with “unavailable” state (no cloud-side queue).
+- Machine naming: default hostname, user-editable label.
 
 ## Notes
 
