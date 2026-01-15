@@ -29,6 +29,7 @@ interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
 }
 
 function readPackageJson(pkgPath: string): PackageJson {
@@ -47,6 +48,12 @@ function resolveWorkspaceVersion(depName: string): string | null {
     '@leanspec/ui': 'packages/ui/package.json',
     '@leanspec/mcp': 'packages/mcp/package.json',
     'lean-spec': 'packages/cli/package.json',
+    // HTTP server platform packages
+    '@leanspec/http-darwin-x64': 'packages/http-server/binaries/darwin-x64/package.json',
+    '@leanspec/http-darwin-arm64': 'packages/http-server/binaries/darwin-arm64/package.json',
+    '@leanspec/http-linux-x64': 'packages/http-server/binaries/linux-x64/package.json',
+    '@leanspec/http-linux-arm64': 'packages/http-server/binaries/linux-arm64/package.json',
+    '@leanspec/http-windows-x64': 'packages/http-server/binaries/windows-x64/package.json',
   };
 
   const pkgPath = pkgMap[depName];
@@ -96,6 +103,7 @@ function processPackage(pkgPath: string): boolean {
   changed = replaceWorkspaceDeps(pkg.dependencies, 'dependencies') || changed;
   changed = replaceWorkspaceDeps(pkg.devDependencies, 'devDependencies') || changed;
   changed = replaceWorkspaceDeps(pkg.peerDependencies, 'peerDependencies') || changed;
+  changed = replaceWorkspaceDeps(pkg.optionalDependencies, 'optionalDependencies') || changed;
 
   if (changed) {
     // Create backup
@@ -120,6 +128,7 @@ function main() {
   const packages = [
     'packages/cli/package.json',
     'packages/mcp/package.json',
+    'packages/http-server/package.json',
     'packages/ui-components/package.json',
     'packages/ui/package.json',
   ];

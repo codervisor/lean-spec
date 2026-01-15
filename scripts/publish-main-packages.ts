@@ -81,6 +81,8 @@ async function verifyPlatformPackages(): Promise<boolean> {
   const packagesToCheck = [
     '@leanspec/cli-darwin-arm64',
     '@leanspec/cli-linux-x64',
+    '@leanspec/http-darwin-arm64',
+    '@leanspec/http-linux-x64',
   ];
 
   for (const pkg of packagesToCheck) {

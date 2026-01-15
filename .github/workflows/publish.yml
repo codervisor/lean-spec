@@ -93,6 +93,10 @@ jobs:
         working-directory: rust
         run: cargo build --release --target ${{ matrix.target }} --package leanspec-mcp
 
+      - name: Build HTTP server binary
+        working-directory: rust
+        run: cargo build --release --target ${{ matrix.target }} --package leanspec-http
+
       - name: Prepare artifacts
         shell: bash
         run: |
@@ -101,9 +105,11 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp rust/target/${{ matrix.target }}/release/lean-spec.exe dist/${{ matrix.platform }}/
             cp rust/target/${{ matrix.target }}/release/leanspec-mcp.exe dist/${{ matrix.platform }}/
+            cp rust/target/${{ matrix.target }}/release/leanspec-http.exe dist/${{ matrix.platform }}/
           else
             cp rust/target/${{ matrix.target }}/release/lean-spec dist/${{ matrix.platform }}/
             cp rust/target/${{ matrix.target }}/release/leanspec-mcp dist/${{ matrix.platform }}/
+            cp rust/target/${{ matrix.target }}/release/leanspec-http dist/${{ matrix.platform }}/
           fi
 
           echo "=== Prepared artifacts ==="
@@ -227,6 +233,8 @@ jobs:
             "@leanspec/cli-linux-x64"
             "@leanspec/mcp-darwin-arm64"
             "@leanspec/mcp-linux-x64"
+            "@leanspec/http-darwin-arm64"
+            "@leanspec/http-linux-x64"
           )
 
           for attempt in {1..12}; do

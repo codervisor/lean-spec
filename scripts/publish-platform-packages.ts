@@ -136,6 +136,20 @@ async function publishPlatformPackages(dryRun: boolean, tag?: string): Promise<v
     }
   }
 
+  // Publish HTTP server platform packages
+  console.log('\n📁 HTTP Server Platform Packages:');
+  for (const platform of PLATFORMS) {
+    const packageDir = path.join(PACKAGES_DIR, 'http-server', 'binaries', platform);
+    const result = await publishPackage(packageDir, dryRun, tag);
+    results.push(result);
+
+    if (result.success) {
+      console.log(`  ✓ ${result.package}`);
+    } else {
+      console.log(`  ✗ ${result.package}: ${result.error}`);
+    }
+  }
+
   // Summary
   const successful = results.filter(r => r.success);
   const failed = results.filter(r => !r.success);

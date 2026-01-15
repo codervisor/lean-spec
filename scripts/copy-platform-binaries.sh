@@ -41,10 +41,19 @@ for platform in $PLATFORMS; do
   else
     echo "  ⚠ WARNING: Missing MCP binaries for $platform"
   fi
+  
+  # HTTP server binaries
+  if [ -d "$ARTIFACTS_DIR/binaries-$platform" ]; then
+    mkdir -p "packages/http-server/binaries/$platform"
+    cp "$ARTIFACTS_DIR/binaries-$platform/leanspec-http"* "packages/http-server/binaries/$platform/" || true
+    echo "  ✓ Copied HTTP server binaries"
+  else
+    echo "  ⚠ WARNING: Missing HTTP server binaries for $platform"
+  fi
 done
 
 echo ""
 echo "✅ Binary copying complete"
 echo ""
 echo "Copied binaries:"
-find packages/cli/binaries packages/mcp/binaries -type f \( -name "lean-spec*" -o -name "leanspec-mcp*" \) | sort
+find packages/cli/binaries packages/mcp/binaries packages/http-server/binaries -type f \( -name "lean-spec*" -o -name "leanspec-mcp*" -o -name "leanspec-http*" \) | sort
