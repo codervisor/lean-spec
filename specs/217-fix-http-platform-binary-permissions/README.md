@@ -52,7 +52,7 @@ npm strips file permissions from tarballs. The postinstall script runs after `np
 - [x] Update publish workflow to call manifest generation
 - [x] Test locally with npm pack
 - [ ] Verify in CI with dev publish
-- [ ] Document in publishing guide
+- [x] Document in publishing guide
 
 ## Test
 
