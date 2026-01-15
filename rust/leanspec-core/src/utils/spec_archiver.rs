@@ -54,8 +54,16 @@ impl SpecArchiver {
             .load(spec_path)?
             .ok_or_else(|| ArchiveError::NotFound(spec_path.to_string()))?;
 
+        // Get the spec directory
+        let spec_dir = spec.file_path.parent().ok_or(ArchiveError::InvalidPath)?;
+
         // Check if already archived
-        if spec.path.starts_with("archived/") {
+        if spec_dir
+            .parent()
+            .and_then(|parent| parent.file_name())
+            .map(|name| name == "archived")
+            .unwrap_or(false)
+        {
             return Err(ArchiveError::AlreadyArchived);
         }
 
@@ -65,9 +73,6 @@ impl SpecArchiver {
         if !archived_dir.exists() {
             fs::create_dir_all(&archived_dir)?;
         }
-
-        // Get the spec directory
-        let spec_dir = spec.file_path.parent().ok_or(ArchiveError::InvalidPath)?;
         let spec_dir_name = spec_dir
             .file_name()
             .and_then(|n| n.to_str())
@@ -102,13 +107,18 @@ impl SpecArchiver {
             .load(spec_path)?
             .ok_or_else(|| ArchiveError::NotFound(spec_path.to_string()))?;
 
-        // Check if actually archived
-        if !spec.path.starts_with("archived/") {
-            return Err(ArchiveError::InvalidPath);
-        }
-
         // Get the spec directory
         let spec_dir = spec.file_path.parent().ok_or(ArchiveError::InvalidPath)?;
+
+        // Check if actually archived
+        if !spec_dir
+            .parent()
+            .and_then(|parent| parent.file_name())
+            .map(|name| name == "archived")
+            .unwrap_or(false)
+        {
+            return Err(ArchiveError::InvalidPath);
+        }
         let spec_dir_name = spec_dir
             .file_name()
             .and_then(|n| n.to_str())

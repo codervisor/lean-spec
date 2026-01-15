@@ -64,7 +64,7 @@ impl SpecLoader {
 
             // Only process README.md files
             if path.file_name().map(|n| n == "README.md").unwrap_or(false) {
-                if let Some(spec) = self.load_spec_from_path(path)? {
+                if let Some(spec) = self.load_spec_from_path(path, false)? {
                     specs.push(spec);
                 }
             }
@@ -82,10 +82,11 @@ impl SpecLoader {
 
     /// Load a single spec by path/name
     pub fn load(&self, spec_path: &str) -> Result<Option<SpecInfo>, LoadError> {
+        let allow_archived = spec_path.starts_with("archived/");
         // Try direct path first
         let readme_path = self.specs_dir.join(spec_path).join("README.md");
         if readme_path.exists() {
-            return self.load_spec_from_path(&readme_path);
+            return self.load_spec_from_path(&readme_path, allow_archived);
         }
 
         // Try fuzzy matching
@@ -99,7 +100,7 @@ impl SpecLoader {
                 if dir_name.contains(spec_path) || spec_path.contains(&*dir_name) {
                     let readme_path = entry.path().join("README.md");
                     if readme_path.exists() {
-                        return self.load_spec_from_path(&readme_path);
+                        return self.load_spec_from_path(&readme_path, allow_archived);
                     }
                 }
             }
@@ -109,7 +110,11 @@ impl SpecLoader {
     }
 
     /// Load a spec from a README.md file path
-    fn load_spec_from_path(&self, path: &Path) -> Result<Option<SpecInfo>, LoadError> {
+    fn load_spec_from_path(
+        &self,
+        path: &Path,
+        allow_archived: bool,
+    ) -> Result<Option<SpecInfo>, LoadError> {
         let content = std::fs::read_to_string(path)?;
 
         // Get spec directory name
@@ -123,15 +128,17 @@ impl SpecLoader {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
 
-        // Skip archived specs directory and specs inside it
+        // Skip archived specs directory
         if spec_path == "archived" {
             return Ok(None);
         }
 
         // Check if this spec is inside the archived directory
-        if let Some(parent) = spec_dir.parent() {
-            if parent.file_name().map(|n| n == "archived").unwrap_or(false) {
-                return Ok(None);
+        if !allow_archived {
+            if let Some(parent) = spec_dir.parent() {
+                if parent.file_name().map(|n| n == "archived").unwrap_or(false) {
+                    return Ok(None);
+                }
             }
         }
 
@@ -207,7 +214,7 @@ impl SpecLoader {
         let readme_path = spec_dir.join("README.md");
         std::fs::write(&readme_path, template_content)?;
 
-        self.load_spec_from_path(&readme_path)?
+        self.load_spec_from_path(&readme_path, false)?
             .ok_or_else(|| LoadError::ParseError {
                 path: readme_path.display().to_string(),
                 reason: "Failed to load created spec".to_string(),
