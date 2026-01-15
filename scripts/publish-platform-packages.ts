@@ -35,6 +35,7 @@ interface PublishResult {
   package: string;
   success: boolean;
   error?: string;
+  type?: string;
 }
 
 async function fileExists(filePath: string): Promise<boolean> {
@@ -106,47 +107,64 @@ async function publishPlatformPackages(dryRun: boolean, tag?: string): Promise<v
     console.log('🔍 DRY RUN - No packages will be published\n');
   }
 
-  const results: PublishResult[] = [];
+  // Collect all package directories to publish
+  const packagesToPublish: Array<{ type: string; dir: string }> = [];
 
-  // Publish CLI platform packages
-  console.log('📁 CLI Platform Packages:');
+  // CLI platform packages
   for (const platform of PLATFORMS) {
-    const packageDir = path.join(PACKAGES_DIR, 'cli', 'binaries', platform);
-    const result = await publishPackage(packageDir, dryRun, tag);
-    results.push(result);
+    packagesToPublish.push({
+      type: 'CLI',
+      dir: path.join(PACKAGES_DIR, 'cli', 'binaries', platform)
+    });
+  }
 
-    if (result.success) {
-      console.log(`  ✓ ${result.package}`);
-    } else {
-      console.log(`  ✗ ${result.package}: ${result.error}`);
+  // MCP platform packages
+  for (const platform of PLATFORMS) {
+    packagesToPublish.push({
+      type: 'MCP',
+      dir: path.join(PACKAGES_DIR, 'mcp', 'binaries', platform)
+    });
+  }
+
+  // HTTP server platform packages
+  for (const platform of PLATFORMS) {
+    packagesToPublish.push({
+      type: 'HTTP',
+      dir: path.join(PACKAGES_DIR, 'http-server', 'binaries', platform)
+    });
+  }
+
+  console.log(`Publishing ${packagesToPublish.length} platform packages in parallel...\n`);
+
+  // Publish all packages in parallel for faster publishing
+  const results = await Promise.all(
+    packagesToPublish.map(async ({ type, dir }) => {
+      const result = await publishPackage(dir, dryRun, tag);
+      return { ...result, type };
+    })
+  );
+
+  // Group and display results by type
+  const groupedResults: Record<string, PublishResult[]> = {
+    CLI: [],
+    MCP: [],
+    HTTP: []
+  };
+
+  for (const result of results) {
+    if (result.type && result.type in groupedResults) {
+      groupedResults[result.type].push(result);
     }
   }
 
-  // Publish MCP platform packages
-  console.log('\n📁 MCP Platform Packages:');
-  for (const platform of PLATFORMS) {
-    const packageDir = path.join(PACKAGES_DIR, 'mcp', 'binaries', platform);
-    const result = await publishPackage(packageDir, dryRun, tag);
-    results.push(result);
-
-    if (result.success) {
-      console.log(`  ✓ ${result.package}`);
-    } else {
-      console.log(`  ✗ ${result.package}: ${result.error}`);
-    }
-  }
-
-  // Publish HTTP server platform packages
-  console.log('\n📁 HTTP Server Platform Packages:');
-  for (const platform of PLATFORMS) {
-    const packageDir = path.join(PACKAGES_DIR, 'http-server', 'binaries', platform);
-    const result = await publishPackage(packageDir, dryRun, tag);
-    results.push(result);
-
-    if (result.success) {
-      console.log(`  ✓ ${result.package}`);
-    } else {
-      console.log(`  ✗ ${result.package}: ${result.error}`);
+  for (const [type, typeResults] of Object.entries(groupedResults)) {
+    console.log(`\n📁 ${type} Platform Packages:`);
+    for (const result of typeResults) {
+      if (result.success) {
+        console.log(`  ✓ ${result.package}`);
+      } else {
+        console.log(`  ✗ ${result.package}: ${result.error}`);
+      }
     }
   }
 

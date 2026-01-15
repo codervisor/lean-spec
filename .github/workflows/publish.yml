@@ -241,9 +241,18 @@ jobs:
             "@leanspec/http-linux-x64"
           )
 
-          for attempt in {1..12}; do
-            echo "Attempt ${attempt}: checking npm registry..."
+          echo "Waiting 30 seconds before checking to allow all packages to finish publishing..."
+          sleep 30
+
+          # Exponential backoff: start with short waits, increase gradually
+          wait_times=(5 5 10 10 15 15 20 20 30 30 30 30 40 40 40 40 50 50 60 60)
+          
+          for attempt in {1..20}; do
+            wait_time=${wait_times[$((attempt-1))]}
+            echo ""
+            echo "Attempt ${attempt}/20: checking npm registry..."
             missing=0
+            missing_packages=()
 
             for pkg in "${packages[@]}"; do
               if npm view "$pkg@$TAG" version >/dev/null 2>&1; then
@@ -251,19 +260,25 @@ jobs:
               else
                 echo "  ✗ $pkg@$TAG not available"
                 missing=1
+                missing_packages+=("$pkg")
               fi
             done
 
             if [ "$missing" -eq 0 ]; then
-              echo "All platform packages available."
+              echo ""
+              echo "✅ All platform packages available!"
               exit 0
             fi
 
-            echo "Waiting for npm registry propagation..."
-            sleep 20
+            echo ""
+            echo "Missing ${#missing_packages[@]} package(s): ${missing_packages[*]}"
+            echo "Waiting ${wait_time}s for npm registry propagation..."
+            sleep "$wait_time"
           done
 
-          echo "Platform packages not visible after waiting."
+          echo ""
+          echo "❌ Platform packages not visible after 20 attempts."
+          echo "Missing packages: ${missing_packages[*]}"
           exit 1
       
       - name: Build TypeScript packages
