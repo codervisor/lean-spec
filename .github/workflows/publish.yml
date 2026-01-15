@@ -159,10 +159,13 @@ jobs:
         run: |
           pnpm tsx scripts/bump-dev-version.ts ${{ github.run_id }}
           pnpm sync-versions
+          pnpm sync-rust-versions
       
       - name: Sync versions (stable release)
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dev }}
-        run: pnpm sync-versions
+        run: |
+          pnpm sync-versions
+          pnpm sync-rust-versions
       
       - name: Publish platform packages
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
@@ -213,10 +216,13 @@ jobs:
         run: |
           pnpm tsx scripts/bump-dev-version.ts ${{ github.run_id }}
           pnpm sync-versions
+          pnpm sync-rust-versions
       
       - name: Sync versions (stable release)
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dev }}
-        run: pnpm sync-versions
+        run: |
+          pnpm sync-versions
+          pnpm sync-rust-versions
 
       - name: Wait for platform packages to propagate
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
