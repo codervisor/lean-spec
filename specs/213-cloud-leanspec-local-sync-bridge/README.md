@@ -35,6 +35,8 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 
 **Cloud service (SaaS)**
 - Multi-project UI with per-machine views.
+- **Global Machine Context**: Top-level switcher determining which machine's data is viewed.
+- **Machine Management**: Dedicated view to manage connected bridges (similar to Projects).
 - WebSocket/HTTP API for sync events and edit commands.
 - Stores last-known per-machine spec state and metadata (no global merge).
 
@@ -55,7 +57,8 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 - [ ] Define bridge ↔ cloud protocol (event types, payload limits, auth handshake).
 - [ ] Implement local bridge (file watcher, event queue, WebSocket client, edit executor).
 - [ ] Add cloud sync API (ingest events, per-machine storage, publish updates).
-- [ ] Add cloud UI machine picker + status badge (online/offline/last seen).
+- [ ] UI: Implement Global Machine Switcher in top app bar.
+- [ ] UI: Create Machine Management page (list, status, rename, revoke).
 - [ ] Add remote metadata edit flow with conflict check (timestamp/version).
 - [ ] Document setup and security model (API key/device flow, audit log).
 
@@ -64,7 +67,9 @@ Provide always-on, remote access to local LeanSpec projects by deploying the UI 
 - [ ] All phase-specific criteria below are met.
 
 ### Phase 1: Remote Viewing
-- [ ] Cloud UI lists projects and machines with last sync time.
+- [ ] Global Machine Switcher persists selection across navigation.
+- [ ] Machine Management page lists bridges + status (online/offline).
+- [ ] Cloud UI lists projects for the selected machine.
 - [ ] Local change appears in cloud UI within 3 seconds on stable network.
 - [ ] Bridge runs on Mac/Windows/Linux with <50MB RAM idle.
 - [ ] Auth works with API key or device flow; all traffic over TLS.
