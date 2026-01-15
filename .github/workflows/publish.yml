@@ -211,6 +211,38 @@ jobs:
       - name: Sync versions (stable release)
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dev }}
         run: pnpm sync-versions
+
+      - name: Wait for platform packages to propagate
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          packages=("lean-spec-darwin-arm64" "lean-spec-linux-x64")
+
+          for attempt in {1..12}; do
+            echo "Attempt ${attempt}: checking npm registry..."
+            missing=0
+
+            for pkg in "${packages[@]}"; do
+              if npm view "$pkg" version >/dev/null 2>&1; then
+                echo "  ✓ $pkg available"
+              else
+                echo "  ✗ $pkg not available"
+                missing=1
+              fi
+            done
+
+            if [ "$missing" -eq 0 ]; then
+              echo "All platform packages available."
+              exit 0
+            fi
+
+            echo "Waiting for npm registry propagation..."
+            sleep 20
+          done
+
+          echo "Platform packages not visible after waiting."
+          exit 1
       
       - name: Build TypeScript packages
         run: pnpm build
