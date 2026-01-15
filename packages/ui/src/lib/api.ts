@@ -9,7 +9,6 @@ import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph, MachinesResp
 class ProjectAPI {
   private backend: BackendAdapter;
   private _currentProjectId: string | null = null;
-  private _currentMachineId: string | null = null;
 
   constructor() {
     this.backend = getBackend();
@@ -20,7 +19,6 @@ class ProjectAPI {
   }
 
   setCurrentMachineId(machineId: string | null) {
-    this._currentMachineId = machineId;
     this.backend.setMachineId(machineId);
   }
 
