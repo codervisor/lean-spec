@@ -198,6 +198,10 @@ jobs:
       - name: Copy binaries for validation
         run: ./scripts/copy-platform-binaries.sh artifacts/
 
+      - name: Ensure CLI binaries are executable
+        run: |
+          chmod +x packages/cli/binaries/linux-x64/lean-spec || true
+
       - name: Auto-bump dev version
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
         run: |
