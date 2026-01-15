@@ -24,20 +24,28 @@ The CI publish workflow is publishing packages with `workspace:*` dependencies t
 npm error Unsupported URL Type "workspace:": workspace:*
 ```
 
-**Root Cause:** The publish workflow never calls `pnpm prepare-publish` to replace `workspace:*` with actual versions before publishing.
+**Root Causes:** 
+1. The publish workflow calls `pnpm prepare-publish`, but the script was incomplete
+2. **The `prepare-publish.ts` script was missing CLI and MCP platform packages in its mapping**, causing them to remain as `workspace:*`
 
 **Impact:** Dev versions are broken and cannot be installed via npx/npm.
 
 ## Design
 
-The fix requires adding the missing `prepare-publish` and `restore-packages` steps to the CI workflow:
+The fix requires two changes:
 
-1. **Before publishing** → Run `pnpm prepare-publish` to replace `workspace:*` with `^0.2.x` versions
-2. **After publishing** → Run `pnpm restore-packages` to revert package.json files
+1. **Fix `prepare-publish.ts`** → Add all platform packages (CLI, MCP, HTTP) to the `pkgMap` so they get properly resolved
+2. **CI workflow** → Ensure `prepare-publish` and `restore-packages` steps are called (already implemented)
 
-This ensures npm packages have proper semver dependencies instead of pnpm-specific `workspace:` protocol.
+The `prepare-publish.ts` script was only mapping HTTP platform packages but missing CLI and MCP platform packages, causing warnings like:
+```
+⚠️  Unknown workspace package: @leanspec/cli-darwin-arm64
+```
 
-## Plan
+This warning was non-fatal, so the script continued and left those de (was already added)
+- [x] Add `pnpm restore-packages` cleanup step after publishing (was already added)
+- [x] **Fix `prepare-publish.ts` to include CLI and MCP platform packages in pkgMap**
+- [x] Test locally with `pnpm prepare-publish` to verify all workspace:* are replaced
 
 - [x] Create spec to track this fix
 - [x] Add `pnpm prepare-publish` step before publishing main packages
@@ -54,4 +62,11 @@ This ensures npm packages have proper semver dependencies instead of pnpm-specif
 
 ## Notes
 
+1. The CI workflow DID call `prepare-publish`, but it was incomplete
+2. The script showed warnings for unknown packages but didn't fail, so the issue wasn't caught
+3. The script originally only handled HTTP platform packages (from the initial Rust migration)
+4. When CLI platform packages were created, they weren't added to the `pkgMap`
+5. Manual releases would have caught this during user installation testing
+
+**How discovered:** User tried `npm i -g @leanspec/ui@dev` after a dev publish and got `workspace:*` errors
 **Why this was missed:** The publishing documentation mentions `prepare-publish` but the CI workflow never implemented it. Manual releases would have caught this, but automated dev releases bypassed the check.

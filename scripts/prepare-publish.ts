@@ -48,6 +48,18 @@ function resolveWorkspaceVersion(depName: string): string | null {
     '@leanspec/ui': 'packages/ui/package.json',
     '@leanspec/mcp': 'packages/mcp/package.json',
     'lean-spec': 'packages/cli/package.json',
+    // CLI platform packages
+    '@leanspec/cli-darwin-x64': 'packages/cli/binaries/darwin-x64/package.json',
+    '@leanspec/cli-darwin-arm64': 'packages/cli/binaries/darwin-arm64/package.json',
+    '@leanspec/cli-linux-x64': 'packages/cli/binaries/linux-x64/package.json',
+    '@leanspec/cli-linux-arm64': 'packages/cli/binaries/linux-arm64/package.json',
+    '@leanspec/cli-windows-x64': 'packages/cli/binaries/windows-x64/package.json',
+    // MCP platform packages
+    '@leanspec/mcp-darwin-x64': 'packages/mcp/binaries/darwin-x64/package.json',
+    '@leanspec/mcp-darwin-arm64': 'packages/mcp/binaries/darwin-arm64/package.json',
+    '@leanspec/mcp-linux-x64': 'packages/mcp/binaries/linux-x64/package.json',
+    '@leanspec/mcp-linux-arm64': 'packages/mcp/binaries/linux-arm64/package.json',
+    '@leanspec/mcp-windows-x64': 'packages/mcp/binaries/windows-x64/package.json',
     // HTTP server platform packages
     '@leanspec/http-darwin-x64': 'packages/http-server/binaries/darwin-x64/package.json',
     '@leanspec/http-darwin-arm64': 'packages/http-server/binaries/darwin-arm64/package.json',
