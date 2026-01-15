@@ -33,23 +33,23 @@ Main Package (lean-spec)
 
 ### Platform Packages (CLI)
 
-| Package | Platform |
-|---------|----------|
-| `@leanspec/cli-darwin-x64` | macOS Intel |
+| Package                      | Platform            |
+| ---------------------------- | ------------------- |
+| `@leanspec/cli-darwin-x64`   | macOS Intel         |
 | `@leanspec/cli-darwin-arm64` | macOS Apple Silicon |
-| `@leanspec/cli-linux-x64` | Linux x86_64 |
-| `@leanspec/cli-linux-arm64` | Linux ARM64 |
-| `@leanspec/cli-windows-x64` | Windows x64 |
+| `@leanspec/cli-linux-x64`    | Linux x86_64        |
+| `@leanspec/cli-linux-arm64`  | Linux ARM64         |
+| `@leanspec/cli-windows-x64`  | Windows x64         |
 
 ### Platform Packages (MCP)
 
-| Package | Platform |
-|---------|----------|
-| `@leanspec/mcp-darwin-x64` | macOS Intel |
+| Package                      | Platform            |
+| ---------------------------- | ------------------- |
+| `@leanspec/mcp-darwin-x64`   | macOS Intel         |
 | `@leanspec/mcp-darwin-arm64` | macOS Apple Silicon |
-| `@leanspec/mcp-linux-x64` | Linux x86_64 |
-| `@leanspec/mcp-linux-arm64` | Linux ARM64 |
-| `@leanspec/mcp-windows-x64` | Windows x64 |
+| `@leanspec/mcp-linux-x64`    | Linux x86_64        |
+| `@leanspec/mcp-linux-arm64`  | Linux ARM64         |
+| `@leanspec/mcp-windows-x64`  | Windows x64         |
 
 ## Directory Structure
 
@@ -95,7 +95,15 @@ This updates:
 - All workspace package versions
 - All platform package versions
 
-### Step 2: Publish Platform Packages
+### Step 2: Generate Platform Manifests
+
+```bash
+pnpm tsx scripts/generate-platform-manifests.ts
+```
+
+This creates `package.json` and `postinstall.js` for all platform packages. The postinstall script sets executable permissions on Unix binaries (npm strips file permissions during packaging).
+
+### Step 3: Publish Platform Packages
 
 ```bash
 pnpm publish:platforms [--dry-run]
@@ -103,7 +111,7 @@ pnpm publish:platforms [--dry-run]
 
 This publishes all platform-specific binary packages. Platform packages **must** be published before main packages.
 
-### Step 3: Publish Main Packages
+### Step 4: Publish Main Packages
 
 ```bash
 pnpm publish:main [--dry-run]
@@ -152,6 +160,21 @@ spawn(binaryPath, process.argv.slice(2), { stdio: 'inherit' });
 Same pattern as CLI wrapper, but for MCP binary (`leanspec-mcp`).
 
 ## Troubleshooting
+
+### Binary permissions error (EACCES)
+
+```
+Error: spawn EACCES
+```
+
+This means the binary doesn't have execute permissions. This should be automatically fixed by the postinstall script, but if it persists:
+
+```bash
+# Manual fix
+chmod +x /path/to/node_modules/@leanspec/cli-darwin-arm64/lean-spec
+```
+
+**Root cause:** npm strips file permissions when creating tarballs. The `postinstall.js` script (included in platform packages) runs `chmod 0o755` on the binary after installation.
 
 ### Binary not found
 

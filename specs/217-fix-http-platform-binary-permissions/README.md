@@ -98,6 +98,18 @@ npx @leanspec/http-darwin-arm64@dev  # Should not error
 
 ### Files Changed
 
-- `scripts/copy-platform-binaries.sh` - Add manifest generation call
-- NEW: `scripts/generate-platform-manifests.ts` - Extract from copy-rust-binaries.mjs
-- `.github/workflows/publish.yml` - Verify step includes new script
+- `scripts/generate-platform-manifests.ts` - NEW: Standalone script to generate package.json and postinstall.js for platform packages
+- `.github/workflows/publish.yml` - Added manifest generation step before platform package validation
+- `specs/217-fix-http-platform-binary-permissions/` - NEW: This spec
+
+### Implementation Details
+
+The `generate-platform-manifests.ts` script:
+1. Reads the root package version
+2. For each platform + binary combination:
+   - Checks if binary exists
+   - Generates `package.json` with proper `files` array and `scripts.postinstall`
+   - Generates `postinstall.js` that runs `chmod 0o755` on the binary (Unix) or no-op (Windows)
+3. Ensures consistent metadata across all platform packages
+
+This runs in CI after binaries are copied but before publishing, ensuring all published packages have the necessary postinstall scripts.
