@@ -118,7 +118,6 @@ npx @leanspec/ui --specs ./specs --port 3100 --no-open
 
 | 变量 | 描述 | 设置者 |
 |------|------|--------|
-| `SPECS_MODE` | 操作模式（始终为 "filesystem"） | 包 |
 | `SPECS_DIR` | Spec目录的绝对路径 | 包 |
 | `PORT` | 服务器端口 | CLI 选项 |
 | `NODE_ENV` | Node 环境 | Node.js |
@@ -232,7 +231,7 @@ function getCachedSpec(id: string) {
 
 1. **CLI 解析**：`bin/ui.js` 解析命令行参数
 2. **Spec检测**：自动检测Spec目录或使用 `--specs` 选项
-3. **环境设置**：设置 `SPECS_MODE=filesystem` 和 `SPECS_DIR`
+3. **环境设置**：设置 `SPECS_DIR`
 4. **服务器启动**：启动 Next.js standalone 服务器
 5. **浏览器启动**：打开默认浏览器（除非 `--no-open`）
 

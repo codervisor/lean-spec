@@ -66,7 +66,7 @@ function DesktopRootLayout() {
   const navigationRightSlot = <WindowControls />;
 
   const effectiveProjectId = useMemo(() => {
-    if (projectId && projectId !== 'default') return projectId;
+    if (projectId) return projectId;
     return activeProjectId || projects[0]?.id;
   }, [activeProjectId, projectId, projects]);
 
@@ -83,18 +83,16 @@ function DesktopRootLayout() {
     return `/projects/${nextProjectId}${nextRest}${location.search}`;
   };
 
-  // Desktop uses a route alias like ui: `/projects/default`.
-  // Once desktop state is loaded, normalize it to the real active project id.
   useEffect(() => {
     if (loading) return;
 
     if (!projectId) {
-      navigate('/projects/default', { replace: true });
+      if (effectiveProjectId) {
+        navigate(replaceProjectInPath(effectiveProjectId), { replace: true });
+      } else {
+        navigate('/projects', { replace: true });
+      }
       return;
-    }
-
-    if (projectId === 'default' && effectiveProjectId) {
-      navigate(replaceProjectInPath(effectiveProjectId), { replace: true });
     }
   }, [effectiveProjectId, loading, navigate, projectId]);
 
@@ -211,7 +209,7 @@ function DesktopProjectsLayout() {
 
   return (
     <DesktopProjectProvider
-      projectId={activeProjectId || projects[0]?.id || 'default'}
+      projectId={activeProjectId || projects[0]?.id || ''}
       projects={projects}
       onSwitchProject={switchDesktopProject}
     >
@@ -227,7 +225,7 @@ function DesktopProjectsLayout() {
 const router = createHashRouter([
   {
     path: '/',
-    element: <Navigate to="/projects/default" replace />,
+    element: <Navigate to="/projects" replace />,
   },
   {
     path: '/projects',

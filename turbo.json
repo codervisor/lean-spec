@@ -25,7 +25,6 @@
       "cache": false,
       "persistent": true,
       "passThroughEnv": [
-        "SPECS_MODE",
         "SPECS_DIR",
         "VITE_API_URL"
       ]
@@ -34,7 +33,6 @@
       "cache": false,
       "persistent": true,
       "passThroughEnv": [
-        "SPECS_MODE",
         "SPECS_DIR",
         "VITE_API_URL"
       ]
@@ -47,7 +45,6 @@
       "cache": false,
       "persistent": true,
       "passThroughEnv": [
-        "SPECS_MODE",
         "SPECS_DIR",
         "TAURI_DEBUG"
       ]

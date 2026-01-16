@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ProjectSwitcher } from './ProjectSwitcher';
-import { useMachine } from '../contexts';
+import { useMachine, useProject } from '../contexts';
 
 const STORAGE_KEY = 'main-sidebar-collapsed';
 
@@ -65,7 +65,9 @@ interface MainSidebarProps {
 export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarProps) {
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const { currentProject } = useProject();
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { t } = useTranslation('common');
   const { machineModeEnabled } = useMachine();
   const [collapsed, setCollapsed] = useState(() => {

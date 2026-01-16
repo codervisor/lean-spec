@@ -1,15 +1,18 @@
 ---
-status: planned
-created: '2025-11-02'
-tags:
-  - feature
-  - ide
-  - vscode
+status: archived
+created: 2025-11-02
 priority: low
+tags:
+- feature
+- ide
+- vscode
 depends_on:
-  - 067-monorepo-core-extraction
-created_at: '2025-11-20T05:50:48.128Z'
-updated_at: '2025-11-26T06:04:04.065Z'
+- 067-monorepo-core-extraction
+created_at: 2025-11-20T05:50:48.128Z
+updated_at: 2026-01-16T06:55:18.893885Z
+transitions:
+- status: archived
+  at: 2026-01-16T06:55:18.893885Z
 ---
 
 # vscode-extension

@@ -17,6 +17,7 @@ import { PriorityBadge } from './PriorityBadge';
 import { useTranslation } from 'react-i18next';
 import type { Spec } from '../types/api';
 import { api } from '../lib/api';
+import { useProject } from '../contexts';
 
 const RECENT_STORAGE_KEY = 'leanspec-recent-searches';
 
@@ -26,7 +27,9 @@ const formatSpecNumber = (specNumber: number | null) =>
 export function QuickSearch() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const { currentProject } = useProject();
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);

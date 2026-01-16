@@ -109,6 +109,38 @@ impl SpecLoader {
         Ok(None)
     }
 
+    /// Load a spec by exact path/name only (no fuzzy matching)
+    /// This is safer for destructive operations like archiving
+    pub fn load_exact(&self, spec_path: &str) -> Result<Option<SpecInfo>, LoadError> {
+        let allow_archived = spec_path.starts_with("archived/");
+
+        // Try direct path first
+        let readme_path = self.specs_dir.join(spec_path).join("README.md");
+        if readme_path.exists() {
+            return self.load_spec_from_path(&readme_path, allow_archived);
+        }
+
+        // Try with just the number prefix - but only if it's a number
+        // Support both "001" format and "1" format
+        if spec_path.chars().all(|c| c.is_ascii_digit()) {
+            // Parse as number and also try as string with leading zeros
+            let spec_num = spec_path.parse::<u32>().ok();
+
+            // Load all specs to find exact number match
+            let all_specs = self.load_all()?;
+            for spec in all_specs {
+                if let Some(num) = spec.number() {
+                    // Match both "001" and "1" formats
+                    if Some(num) == spec_num || spec.path.starts_with(&format!("{}-", spec_path)) {
+                        return Ok(Some(spec));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
     /// Load a spec from a README.md file path
     fn load_spec_from_path(
         &self,

@@ -10,7 +10,7 @@ interface ActivityItemProps {
   basePath?: string;
 }
 
-export function ActivityItem({ spec, action, time, basePath = '/projects/default' }: ActivityItemProps) {
+export function ActivityItem({ spec, action, time, basePath = '/projects' }: ActivityItemProps) {
   const displayTitle = spec.title || spec.specName;
   const specUrl = `${basePath}/specs/${spec.specName}`;
   const { i18n } = useTranslation('common');

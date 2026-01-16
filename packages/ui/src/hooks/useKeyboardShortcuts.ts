@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useProject } from '../contexts';
 
 export interface KeyboardShortcut {
   key: string;
@@ -43,33 +44,47 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 export function useGlobalShortcuts() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const { currentProject } = useProject();
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;
 
   const shortcuts: KeyboardShortcut[] = [
     {
       key: 'h',
       description: 'Go to dashboard (home)',
-      action: useCallback(() => navigate(basePath), [basePath, navigate]),
+      action: useCallback(() => navigate(basePath ?? '/projects'), [basePath, navigate]),
     },
     {
       key: 'g',
       description: 'Go to specs list',
-      action: useCallback(() => navigate(`${basePath}/specs`), [basePath, navigate]),
+      action: useCallback(() => {
+        if (!basePath) return;
+        navigate(`${basePath}/specs`);
+      }, [basePath, navigate]),
     },
     {
       key: 's',
       description: 'Go to stats',
-      action: useCallback(() => navigate(`${basePath}/stats`), [basePath, navigate]),
+      action: useCallback(() => {
+        if (!basePath) return;
+        navigate(`${basePath}/stats`);
+      }, [basePath, navigate]),
     },
     {
       key: 'd',
       description: 'Go to dependencies',
-      action: useCallback(() => navigate(`${basePath}/dependencies`), [basePath, navigate]),
+      action: useCallback(() => {
+        if (!basePath) return;
+        navigate(`${basePath}/dependencies`);
+      }, [basePath, navigate]),
     },
     {
       key: ',',
       description: 'Go to settings',
-      action: useCallback(() => navigate(`${basePath}/settings`), [basePath, navigate]),
+      action: useCallback(() => {
+        if (!basePath) return;
+        navigate(`${basePath}/settings`);
+      }, [basePath, navigate]),
     },
     {
       key: '/',

@@ -1,14 +1,17 @@
 ---
-status: planned
-created: '2025-11-13'
-tags:
-  - process
-  - maintenance
-  - workflow
-  - best-practices
+status: archived
+created: 2025-11-13
 priority: high
-created_at: '2025-11-13T13:08:46.014Z'
-updated_at: '2025-11-26T06:03:50.934Z'
+tags:
+- process
+- maintenance
+- workflow
+- best-practices
+created_at: 2025-11-13T13:08:46.014Z
+updated_at: 2026-01-16T06:55:02.832213Z
+transitions:
+- status: archived
+  at: 2026-01-16T06:55:02.832213Z
 ---
 
 # archiving-strategy

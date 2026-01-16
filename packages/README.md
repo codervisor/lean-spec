@@ -138,5 +138,5 @@ Platform-specific binary packages (published separately):
 
 ## Migration Notes
 
-- Vite SPA replaces the former Next.js UI
+- Vite SPA is the primary UI implementation
 - Rust remains the single source of truth for backend logic

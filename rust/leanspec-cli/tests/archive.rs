@@ -125,3 +125,71 @@ fn test_archive_preserves_spec_content() {
     // Priority and tags should be preserved
     assert_eq!(fm.get("priority").and_then(|v| v.as_str()), Some("high"));
 }
+
+#[test]
+fn test_archive_batch() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "first-spec");
+    create_spec(cwd, "second-spec");
+    create_spec(cwd, "third-spec");
+
+    // Archive multiple specs at once
+    let result = exec_cli(&["archive", "001-first-spec", "002-second-spec"], cwd);
+    assert!(result.success);
+
+    // Both should be archived
+    let archived_dir = cwd.join("specs").join("archived");
+    assert!(dir_exists(&archived_dir.join("001-first-spec")));
+    assert!(dir_exists(&archived_dir.join("002-second-spec")));
+
+    // Third spec should still be in specs/
+    assert!(dir_exists(&cwd.join("specs").join("003-third-spec")));
+}
+
+#[test]
+fn test_archive_batch_with_errors() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "valid-spec");
+
+    // Try to archive mix of valid and invalid specs
+    let result = exec_cli(&["archive", "001-valid-spec", "999-nonexistent"], cwd);
+
+    // Should fail due to nonexistent spec
+    assert!(!result.success);
+
+    // Valid spec should NOT be archived (all-or-nothing is not enforced, but command should fail)
+    // Actually, looking at the code, it will archive valid ones and report errors
+    // Let's verify the actual behavior
+    let archived_dir = cwd.join("specs").join("archived");
+    assert!(dir_exists(&archived_dir.join("001-valid-spec")));
+}
+
+#[test]
+fn test_archive_requires_exact_match() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "my-feature-spec");
+
+    // Fuzzy matching should not work - must provide exact path
+    let result = exec_cli(&["archive", "feature"], cwd);
+    assert!(!result.success);
+
+    // Original should still exist
+    assert!(dir_exists(&cwd.join("specs").join("001-my-feature-spec")));
+
+    // Exact match by number should work
+    let result = exec_cli(&["archive", "001"], cwd);
+    assert!(result.success);
+
+    // Now it should be archived
+    let archived_dir = cwd.join("specs").join("archived");
+    assert!(dir_exists(&archived_dir.join("001-my-feature-spec")));
+}

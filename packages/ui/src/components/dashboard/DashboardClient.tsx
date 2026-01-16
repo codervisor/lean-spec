@@ -31,7 +31,7 @@ interface DashboardClientProps {
   basePath?: string;
 }
 
-export function DashboardClient({ specs, stats, projectColor, projectName, basePath = '/projects/default' }: DashboardClientProps) {
+export function DashboardClient({ specs, stats, projectColor, projectName, basePath = '/projects' }: DashboardClientProps) {
   const { t } = useTranslation('common');
   const { isWideMode } = useLayout();
   const inProgressSpecs = specs

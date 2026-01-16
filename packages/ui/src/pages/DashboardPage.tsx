@@ -18,7 +18,7 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
   const projectColor = currentProject && 'color' in currentProject ? (currentProject as { color?: string }).color : undefined;
-  const basePath = currentProject?.id ? `/projects/${currentProject.id}` : '/projects/default';
+  const basePath = currentProject?.id ? `/projects/${currentProject.id}` : '/projects';
 
   const loadData = useCallback(async () => {
     if (projectLoading || !currentProject) return;

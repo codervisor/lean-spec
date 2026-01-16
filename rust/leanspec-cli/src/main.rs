@@ -65,10 +65,11 @@ enum Commands {
         spec: String,
     },
 
-    /// Move spec to archived/
+    /// Move spec(s) to archived/
     Archive {
-        /// Spec path or number
-        spec: String,
+        /// Spec paths or numbers (supports batch operations)
+        #[arg(required = true)]
+        specs: Vec<String>,
 
         /// Preview changes without applying
         #[arg(long)]
@@ -463,7 +464,7 @@ fn main() -> ExitCode {
             &cli.output,
         ),
         Commands::Analyze { spec } => commands::analyze::run(&specs_dir, &spec, &cli.output),
-        Commands::Archive { spec, dry_run } => commands::archive::run(&specs_dir, &spec, dry_run),
+        Commands::Archive { specs, dry_run } => commands::archive::run(&specs_dir, &specs, dry_run),
         Commands::Backfill {
             specs,
             dry_run,

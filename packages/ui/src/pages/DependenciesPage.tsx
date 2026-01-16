@@ -47,7 +47,8 @@ export function DependenciesPage() {
   const projectReady = !projectId || currentProject?.id === projectId;
 
   const specParam = searchParams.get('spec');
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
 
   // Helper to generate project-scoped URLs
   const getSpecUrl = React.useCallback((specNumber: number | string) => {

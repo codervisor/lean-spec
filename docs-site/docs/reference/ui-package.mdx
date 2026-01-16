@@ -118,7 +118,6 @@ The package uses these environment variables internally:
 
 | Variable | Description | Set By |
 |----------|-------------|--------|
-| `SPECS_MODE` | Operation mode (always "filesystem") | Package |
 | `SPECS_DIR` | Absolute path to specs directory | Package |
 | `PORT` | Server port | CLI option |
 | `NODE_ENV` | Node environment | Node.js |
@@ -230,7 +229,7 @@ function getCachedSpec(id: string) {
 
 1. **CLI Parsing**: `bin/ui.js` parses command-line arguments
 2. **Specs Detection**: Auto-detects specs directory or uses `--specs` option
-3. **Environment Setup**: Sets `SPECS_MODE=filesystem` and `SPECS_DIR`
+3. **Environment Setup**: Sets `SPECS_DIR`
 4. **Server Start**: Launches Next.js standalone server
 5. **Browser Launch**: Opens default browser (unless `--no-open`)
 

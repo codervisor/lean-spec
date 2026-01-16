@@ -7,7 +7,7 @@ import { QuickSearch } from './QuickSearch';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-import { useLayout } from '../contexts';
+import { useLayout, useProject } from '../contexts';
 
 interface BreadcrumbItem {
   label: string;
@@ -124,8 +124,10 @@ function Breadcrumb({ basePath }: { basePath: string }) {
 export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: NavigationProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
+  const { currentProject } = useProject();
   const { isWideMode, toggleWideMode } = useLayout();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
 
   const toggleSidebar = () => {
     onToggleSidebar?.();

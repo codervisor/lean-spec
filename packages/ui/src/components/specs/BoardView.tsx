@@ -52,7 +52,7 @@ const STATUS_CONFIG: Record<SpecStatus, {
   }
 };
 
-export function BoardView({ specs, onStatusChange, basePath = '/projects/default', canEdit = true }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');

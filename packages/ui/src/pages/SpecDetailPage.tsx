@@ -54,8 +54,9 @@ export function SpecDetailPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const basePath = `/projects/${projectId}`;
   const { currentProject, loading: projectLoading } = useProject();
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { isWideMode } = useLayout();
   const { machineModeEnabled, isMachineAvailable } = useMachine();
   const { t, i18n } = useTranslation(['common', 'errors']);
@@ -472,10 +473,7 @@ export function SpecDetailPage() {
                         <DialogDescription className="flex flex-col gap-2">
                           <span>{t('specDetail.dialogs.dependenciesDescription')}</span>
                           <Link
-                            to={projectId
-                              ? `/projects/${projectId}/dependencies?spec=${spec.specNumber || spec.id}`
-                              : `/dependencies?spec=${spec.specNumber || spec.id}`
-                            }
+                            to={`${basePath}/dependencies?spec=${spec.specNumber || spec.id}`}
                             className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline w-fit"
                             onClick={() => setDependenciesDialogOpen(false)}
                           >
@@ -507,9 +505,7 @@ export function SpecDetailPage() {
                               archivedSubtitle: t('dependencyGraph.statusSubtitles.archived'),
                             }}
                             onNodeClick={(specId) => {
-                              const url = projectId
-                                ? `/projects/${projectId}/specs/${specId}`
-                                : `/projects/default/specs/${specId}`;
+                              const url = `${basePath}/specs/${specId}`;
                               navigate(url);
                               setDependenciesDialogOpen(false);
                             }}

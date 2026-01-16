@@ -11,7 +11,7 @@ interface SpecListItemProps {
   basePath?: string;
 }
 
-export function SpecListItem({ spec, basePath = '/projects/default' }: SpecListItemProps) {
+export function SpecListItem({ spec, basePath = '/projects' }: SpecListItemProps) {
   const displayTitle = spec.title || spec.specName;
   const specUrl = `${basePath}/specs/${spec.specName}`;
 

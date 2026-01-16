@@ -21,8 +21,9 @@ type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
   const { projectId } = useParams<{ projectId: string }>();
-  const basePath = projectId ? `/projects/${projectId}` : '/projects/default';
   const { currentProject, loading: projectLoading } = useProject();
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { isWideMode } = useLayout();
   const { machineModeEnabled, isMachineAvailable } = useMachine();
   const projectReady = !projectId || currentProject?.id === projectId;

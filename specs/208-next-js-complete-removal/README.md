@@ -96,20 +96,14 @@ packages/
 ├── ui-components/        # ✅ SHARED - Component library
 ├── http-server/          # ✅ RUST - HTTP server
 ├── desktop/              # ✅ ACTIVE - Uses ui + Tauri
-├── ui-legacy-nextjs/     # 🗄️ ARCHIVED - For reference only
-│   ├── Not published to npm
-│   ├── Not built in CI
-│   └── Kept for emergency rollback
 └── ...
 ```
 
 ### Removal Strategy
 
-**Phase 1: Archive Next.js**
+**Phase 1: Remove Legacy Next.js Package**
 ```bash
-git mv packages/ui packages/ui-legacy-nextjs
-echo "# ARCHIVED: This is the legacy Next.js implementation" > packages/ui-legacy-nextjs/ARCHIVED.md
-# Mark as private in package.json
+rm -rf packages/ui-legacy-nextjs
 ```
 
 **Phase 2: Promote Vite**
@@ -132,14 +126,12 @@ git mv packages/ui-vite packages/ui
 - Update CONTRIBUTING.md
 - Update packages/README.md architecture diagram
 
-### What Gets Archived
+### What Gets Removed
 
-**Files to move to `packages/ui-legacy-nextjs/`**:
-- All Next.js configuration (next.config.js, etc.)
-- SSR/SSG pages and API routes
-- Server-side utilities
-- Next.js-specific dependencies
-- Old translation files (packages/ui/src/locales/)
+**Deleted entirely**:
+- Legacy Next.js package folder and all SSR/SSG assets
+- Legacy API route and server utilities
+- Next.js-specific dependencies and configuration
 
 **Keep as Reference**:
 - Test files may have useful patterns
@@ -249,10 +241,8 @@ Option 2: **Fresh start**
 ### Risk Mitigation
 
 **Rollback Plan**:
-1. Keep `ui-legacy-nextjs` in repo (not on npm)
-2. Git tag before rename: `pre-nextjs-removal`
-3. Can revert if critical issue found
-4. Emergency: `git mv packages/ui-legacy-nextjs packages/ui`
+1. Use git tag before removal: `pre-nextjs-removal`
+2. Revert via git history if needed
 
 **Testing Strategy**:
 1. Full CI/CD run after rename
@@ -270,7 +260,6 @@ Option 2: **Fresh start**
 
 **After Rename**:
 - Primary: `packages/ui/src/locales/en/common.json` (from ui-vite)
-- Archived: `packages/ui-legacy-nextjs/src/locales/en/common.json`
 - MCP: `packages/mcp/src/locales/en/common.json` (no change)
 
 **AGENTS.md Update Required**:
@@ -307,7 +296,7 @@ Option 2: **Fresh start**
   - [ ] Record bundle sizes and build times
   - [ ] Note any known issues or limitations
 
-### Phase 2: Archive Next.js Package (1 hour)
+### Phase 2: Remove Next.js Package (1 hour)
 
 - [x] **Create git tag for rollback**
   ```bash
@@ -315,62 +304,9 @@ Option 2: **Fresh start**
   git push origin pre-nextjs-removal
   ```
 
-- [x] **Move Next.js to archive**
+- [x] **Delete legacy Next.js package from repo**
   ```bash
-  git mv packages/ui packages/ui-legacy-nextjs
-  ```
-
-- [x] **Create ARCHIVED.md in legacy package**
-  ```markdown
-  # ARCHIVED: Next.js UI Implementation
-  
-  This is the legacy Next.js SSR implementation of LeanSpec web UI.
-  
-  **Status**: Archived on 2026-01-12
-  **Replaced by**: @leanspec/ui (Vite SPA)
-  **Reason**: Migrated to Vite + Rust for 99.7% smaller bundle and 10x performance
-  
-  ## History
-  - Served LeanSpec v0.1.0 - v0.2.x
-  - Replaced by Vite SPA in v0.3.0
-  - Kept for reference and emergency rollback only
-  
-  ## Do Not Use
-  - Not published to npm
-  - Not maintained
-  - Not tested in CI
-  
-  ## See Also
-  - Spec 184: Unified UI Architecture
-  - Spec 187: Vite SPA Migration
-  - Spec 208: Next.js Complete Removal
-  ```
-
-- [x] **Mark as private in package.json**
-  ```json
-  {
-    "name": "@leanspec/ui-legacy-nextjs",
-    "version": "0.2.12",
-    "private": true,
-    "description": "ARCHIVED: Legacy Next.js implementation"
-  }
-  ```
-
-- [x] **Remove from pnpm-workspace.yaml**
-  ```diff
-  packages:
-    - 'packages/*'
-  + - '!packages/ui-legacy-nextjs'
-  ```
-
-- [x] **Remove from turbo.json**
-  ```diff
-  {
-    "pipeline": {
-  -   "@leanspec/ui#build": { ... },
-  -   "@leanspec/ui#dev": { ... }
-    }
-  }
+  rm -rf packages/ui-legacy-nextjs
   ```
 
 ### Phase 3: Promote Vite to Primary UI (1 hour)
@@ -452,8 +388,7 @@ Option 2: **Fresh start**
 - [x] **Update pnpm-workspace.yaml overrides**
   ```diff
   packageExtensions:
-    # Keep Next.js overrides for legacy package (archived)
-    # But remove from active workspace
+    # No legacy Next.js package remains in the workspace
   ```
 
 - [x] **Verify workspace integrity**
@@ -508,7 +443,7 @@ Option 2: **Fresh start**
 - [ ] **Update .github/workflows/publish-*.yml**
   - [ ] Update package paths in build steps
   - [ ] Verify @leanspec/ui gets published
-  - [ ] Ensure ui-legacy-nextjs does NOT get published
+  - [ ] Ensure legacy Next.js UI is not published (package removed)
 
 - [x] **Update version sync scripts**
   ```diff
@@ -519,7 +454,7 @@ Option 2: **Fresh start**
   - 'packages/ui-vite',
   + 'packages/ui',
     'packages/desktop',
-    // Do NOT include ui-legacy-nextjs
+    // Do NOT include legacy Next.js package
   ];
   ```
 
@@ -599,7 +534,7 @@ Option 2: **Fresh start**
   git add -A
   git commit -m "feat: Remove Next.js UI, promote Vite+Rust as primary architecture
   
-  - Archive packages/ui → packages/ui-legacy-nextjs
+  - Remove legacy Next.js package
   - Rename packages/ui-vite → packages/ui
   - Update all references and documentation
   - Remove Next.js from CI/CD workflows
@@ -607,7 +542,7 @@ Option 2: **Fresh start**
   
   BREAKING CHANGE: @leanspec/ui is now Vite SPA (was Next.js)
   - No user-facing breakage (CLI handles new architecture)
-  - Old Next.js code archived in ui-legacy-nextjs
+  - Old Next.js code removed from the repo
   
   See Spec 208 for full migration details"
   ```
@@ -650,7 +585,7 @@ Option 2: **Fresh start**
   - Desktop app automatically uses new architecture
   
   ### Archived
-  - Next.js implementation moved to ui-legacy-nextjs (not published)
+  - Next.js implementation removed from the repo
   - Kept in repo for reference and emergency rollback
   
   See Spec 208 for full details.
@@ -658,13 +593,14 @@ Option 2: **Fresh start**
 
 ## Implementation Notes
 
-- Archived Next.js UI to `packages/ui-legacy-nextjs` with private package.json and ARCHIVED.md, and excluded it from the workspace.
+- Removed legacy Next.js UI package from the repo.
 - Promoted the Vite SPA to `@leanspec/ui` (v0.3.0) and updated desktop imports, turbo config, root scripts, and workspace references.
 - Documentation refreshed: root README, CONTRIBUTING, packages/README, AGENTS/CLAUDE translation guidance, and docs/test-strategy path.
 - Release tooling updated: version sync skips the legacy package; publish-main-packages now publishes `@leanspec/ui`.
 - Ran `pnpm install --frozen-lockfile=false` to refresh the lockfile after renames (only platform binary warnings observed).
 - Bin launcher for the Vite UI and docs-site updates remain pending.
 - Tests not run (not requested yet).
+- Removed the legacy Next.js package from the repo and deleted desktop legacy UI server support.
 
 ## Test
 
@@ -852,7 +788,7 @@ Option 2: **Fresh start**
 - Better error handling
 
 **Mid-term (v0.4.0+)**:
-- Consider removing ui-legacy-nextjs from repo entirely
+- Legacy Next.js package removed from the repo
 - Extract more shared components
 - WebSocket for live updates
 - Advanced visualization features

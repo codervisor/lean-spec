@@ -14,7 +14,7 @@ The desktop app has migrated from a **hybrid architecture** (Tauri + Node.js ser
 ```
 Desktop App
 ├── Tauri Shell (Rust) - Window management, tray, shortcuts
-└── Next.js Server (Node.js) - UI + API backend
+└── Legacy Node.js UI server (removed)
     └── @leanspec/core (TypeScript) - Spec operations
 ```
 
@@ -62,7 +62,6 @@ Desktop App
 - `projects.rs` - Project registry and management
 - `config.rs` - Desktop configuration
 - `tray.rs` - System tray integration
-- `ui_server.rs` - Legacy Node.js server (optional, disabled by default)
 
 **Tauri Commands**:
 
@@ -262,23 +261,6 @@ pnpm bundle:windows
 }
 ```
 
-## Legacy Mode (Optional)
-
-For backward compatibility, the Node.js server mode can be enabled:
-
-```bash
-# Enable legacy iframe mode
-export LEANSPEC_ENABLE_UI_SERVER=1
-pnpm dev:desktop
-```
-
-This will:
-1. Bundle the Next.js standalone server
-2. Start Node.js as a sidecar process
-3. Load UI in iframe instead of native SPA
-
-**Note**: This mode is deprecated and will be removed in v0.3.0.
-
 ## Security
 
 ### Content Security Policy
@@ -321,18 +303,16 @@ Defined in `src-tauri/capabilities/desktop-main.json`:
 
 If you're working on desktop code that predates the migration:
 
-1. **Don't use Next.js API routes** - Use Tauri commands instead
+1. **Don't use legacy HTTP API routes** - Use Tauri commands instead
 2. **Don't use `fetch('/api/...')** - Use `invoke('command_name', { params })`
 3. **Don't import `@leanspec/core`** - Functionality now in Rust backend
-4. **Use React Router** instead of Next.js file-based routing
+4. **Use React Router** for client-side routing
 5. **No SSR/SSG** - Everything is client-side rendered
 
 ### Breaking Changes
 
-- Node.js server scripts removed (`prepare:ui`, `download:node`, `build:sidecar`)
-- `uiUrl` in bootstrap payload is now optional (will be `undefined` in native mode)
+- Legacy Node.js UI server support removed
 - iframe-based `App.tsx` replaced with Router-based `AppRouter`
-- Bundle resources no longer include `ui-standalone` or `resources/node`
 
 ## Future Improvements
 

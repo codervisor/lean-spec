@@ -178,16 +178,16 @@ specsDir: ./specs
 
 ### Phase 3: Remove Legacy Mode Code
 - [x] Remove `SPECS_MODE` checks from CLI UI launcher; always run multi-project
-- [ ] Remove `SPECS_MODE` checks from UI server
-- [ ] Remove `isDefaultProject()` utility
-- [ ] Remove `DEFAULT_PROJECT_ID` constant
+- [x] Remove `SPECS_MODE` checks from UI server
+- [x] Remove `isDefaultProject()` utility
+- [x] Remove `DEFAULT_PROJECT_ID` constant
 - [ ] Update API routes to remove mode branching
-- [ ] Remove fallback to 'default' in frontend
+- [x] Remove fallback to 'default' in frontend
 
 ### Phase 4: Update Desktop & Web UI
 - [ ] Remove mode conditional rendering
 - [ ] Always show project switcher
-- [ ] Update root redirect logic
+- [x] Update root redirect logic
 - [ ] Test single-project user experience
 
 ### Phase 5: Documentation & Communication
@@ -215,7 +215,7 @@ specsDir: ./specs
 - [ ] Desktop app works with new structure
 - [ ] Web UI works with new structure
 - [x] CLI commands work without SPECS_MODE (CLI no longer sets/reads SPECS_MODE)
-- [ ] URLs are intuitive (no /projects/default)
+- [x] URLs are intuitive (no /projects/default)
 - [ ] Migration guide is clear and tested
 
 ## Implementation Notes

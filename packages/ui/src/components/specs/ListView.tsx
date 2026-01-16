@@ -9,7 +9,7 @@ interface ListViewProps {
   basePath?: string;
 }
 
-export function ListView({ specs, basePath = '/projects/default' }: ListViewProps) {
+export function ListView({ specs, basePath = '/projects' }: ListViewProps) {
   const { t } = useTranslation('common');
 
   if (specs.length === 0) {

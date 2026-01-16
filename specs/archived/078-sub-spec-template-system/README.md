@@ -1,18 +1,21 @@
 ---
-status: planned
-created: '2025-11-13'
-tags:
-  - templates
-  - cli
-  - dx
-  - ai-first
-  - sub-specs
+status: archived
+created: 2025-11-13
 priority: medium
-created_at: '2025-11-13T13:31:48.324Z'
-updated_at: '2025-12-04T06:46:17.075Z'
+tags:
+- templates
+- cli
+- dx
+- ai-first
+- sub-specs
 depends_on:
-  - 012-sub-spec-files
-  - 073-template-engine-agents-md
+- 012-sub-spec-files
+- 073-template-engine-agents-md
+created_at: 2025-11-13T13:31:48.324Z
+updated_at: 2026-01-16T06:54:54.295050Z
+transitions:
+- status: archived
+  at: 2026-01-16T06:54:54.295050Z
 ---
 
 # sub-spec-template-system

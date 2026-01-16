@@ -1,42 +1,41 @@
 [package]
+authors = ["LeanSpec Team"]
+description = "LeanSpec Desktop application"
+edition = "2021"
+license = "MIT"
 name = "leanspec-desktop"
 version = "0.1.0"
-edition = "2021"
-description = "LeanSpec Desktop application"
-authors = ["LeanSpec Team"]
-license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = {version = "0.4", features = ["serde"]}
 dirs = "5.0"
 dunce = "1.0"
 hex = "0.4"
 once_cell = "1.19"
 parking_lot = "0.12"
-portpicker = "0.1"
-serde = { version = "1.0", features = ["derive"] }
+serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 serde_yaml = "0.9"
-thiserror = "1.0"
-tokio = { version = "1.41", features = ["rt-multi-thread", "macros"] }
-tauri = { version = "2", features = ["tray-icon"] }
-tauri-plugin-dialog = { version = "2" }
-tauri-plugin-global-shortcut = { version = "2" }
-tauri-plugin-log = { version = "2" }
-tauri-plugin-notification = { version = "2" }
-tauri-plugin-opener = { version = "2" }
-tauri-plugin-shell = { version = "2" }
-tauri-plugin-updater = { version = "2" }
-tauri-plugin-window-state = { version = "2" }
-walkdir = "2.5"
 sha2 = "0.10"
-uuid = { version = "1.10", features = ["v4"] }
+tauri = {version = "2", features = ["tray-icon"]}
+tauri-plugin-dialog = {version = "2"}
+tauri-plugin-global-shortcut = {version = "2"}
+tauri-plugin-log = {version = "2"}
+tauri-plugin-notification = {version = "2"}
+tauri-plugin-opener = {version = "2"}
+tauri-plugin-shell = {version = "2"}
+tauri-plugin-updater = {version = "2"}
+tauri-plugin-window-state = {version = "2"}
 tempfile = "3.23.0"
+thiserror = "1.0"
+tokio = {version = "1.41", features = ["rt-multi-thread", "macros"]}
+uuid = {version = "1.10", features = ["v4"]}
+walkdir = "2.5"
 
 [features]
-default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+default = ["custom-protocol"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = {version = "2", features = []}
