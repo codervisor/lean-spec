@@ -16,6 +16,8 @@ transitions:
   at: 2026-01-12T13:34:02.981347Z
 ---
 
+# Next.js Complete Removal
+
 ## Overview
 
 **Context**: Over the past months, LeanSpec has successfully migrated from Next.js SSR architecture to a modern Vite SPA + Rust HTTP Server architecture. The migration work is complete and proven through specs 184-207.
