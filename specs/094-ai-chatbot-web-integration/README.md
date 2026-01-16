@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2025-11-17
 priority: high
 tags:
@@ -10,7 +10,10 @@ tags:
 depends_on:
 - 187-vite-spa-migration
 created_at: 2025-11-17T06:31:22.346Z
-updated_at: 2026-01-16T07:23:35.249214Z
+updated_at: 2026-01-16T09:05:18.460430452Z
+transitions:
+- status: in-progress
+  at: 2026-01-16T09:05:18.460430452Z
 ---
 
 # AI Chatbot for Web UI
@@ -457,6 +460,12 @@ MAX_STEPS=10
 - ✅ No crashes or errors in 100-message chat session
 - ✅ Published to npm and installable: `npm install -g @leanspec/chat-server`
 - ✅ Works in all deployment scenarios: local dev, Docker, systemd, desktop
+
+## Implementation Notes
+
+- 2026-01-16: Bootstrapped the repo so LeanSpec CLI works locally (pnpm install + rust binary build).
+- 2026-01-16: Baseline lint fails in `packages/desktop` due to missing eslint config (existing issue); build/test ran successfully.
+- 2026-01-16: Set spec status to in-progress; awaiting scope confirmation for full implementation.
 
 ## Notes
 
