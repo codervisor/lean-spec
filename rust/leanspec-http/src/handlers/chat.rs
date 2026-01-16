@@ -83,7 +83,7 @@ pub async fn proxy_chat(
     let response = match config.transport {
         ChatTransport::Unix(socket_path) => {
             let client = reqwest::Client::builder()
-                .unix_socket_path(socket_path)
+                .unix_socket(socket_path)
                 .build()
                 .map_err(|e| {
                     (
