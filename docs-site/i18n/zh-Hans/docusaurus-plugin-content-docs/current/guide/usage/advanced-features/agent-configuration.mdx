@@ -17,6 +17,33 @@ sidebar_position: 2
 - 指定工作流程和命令
 - 设置质量标准
 
+## Agent Skills（SKILL.md）
+
+LeanSpec 现在支持 **Agent Skills** 的 SKILL.md 文件。推荐将 **SDD 方法论** 放入 SKILL.md，让 AGENTS.md 只保留**项目特定规则**。
+
+**项目级 Skill 位置：**
+
+- .lean-spec/skills/leanspec-sdd/SKILL.md
+
+**为什么使用 Skill？**
+- 跨平台：可用于 Claude、Cursor、Codex 等支持 Skills 的工具
+- 可移植：纳入 git 管理，跨项目共享
+- AGENTS.md 精简：控制在 100 行以内，只写团队规则
+
+**最小化 AGENTS.md 示例（配合 Skill）：**
+
+```markdown
+# AI 代理指令
+
+## 项目：Example
+
+核心 SDD 工作流定义在 .lean-spec/skills/leanspec-sdd/SKILL.md。
+
+## 项目特定规则
+- 使用 pnpm 而非 npm
+- UI 文案同时更新 en 与 zh-CN 语言包
+```
+
 ## 多工具支持
 
 不同的 AI 工具期望不同的指令文件名。LeanSpec 自动创建符号链接以确保所有工具都能找到指令：

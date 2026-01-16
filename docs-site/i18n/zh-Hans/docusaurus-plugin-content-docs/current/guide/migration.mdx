@@ -315,6 +315,30 @@ CLAUDE.md
 AGENTS.md（在项目根目录）
 ```
 
+### 可选：将 SDD 工作流迁移到 Agent Skills
+
+LeanSpec 支持通过 SKILL.md 提供 **Agent Skills**。这样 AGENTS.md 可以保持精简，仅包含项目特定规则。
+
+**推荐步骤：**
+1. 添加 skill 目录：.lean-spec/skills/leanspec-sdd/
+2. 将 SDD 方法论写入 SKILL.md
+3. 将 AGENTS.md 缩减为项目特定规则（<100 行）
+4. 在 AGENTS.md 中添加指向 skill 的简短说明
+5. 提交 skill 目录便于共享
+
+**最小化 AGENTS.md 示例：**
+
+```
+# AI 代理指令
+
+## 项目：Your Project
+
+核心 SDD 工作流定义在 .lean-spec/skills/leanspec-sdd/SKILL.md。
+
+## 项目特定规则
+- 使用 pnpm 而非 npm
+```
+
 ### 迁移策略
 
 1. **审查源工具的现有 AI 指导**

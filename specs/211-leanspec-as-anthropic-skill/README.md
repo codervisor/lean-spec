@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-12
 priority: high
 tags:
@@ -9,8 +9,12 @@ tags:
 - cross-platform
 - addon
 created_at: 2026-01-12T13:55:05.053133Z
-updated_at: 2026-01-16T07:31:51.445207Z
+updated_at: 2026-01-16T10:36:14.703516Z
+transitions:
+- status: in-progress
+  at: 2026-01-16T10:36:14.703516Z
 ---
+
 # LeanSpec Agent Skill Support
 
 ## Overview
@@ -164,29 +168,29 @@ Agent: "Spec created. Ready to implement?"
 
 ### Core Requirements
 
-- [ ] **SKILL.md created** - Valid Agent Skills format with frontmatter + instructions
-- [ ] **Methodology documented** - SDD workflow encoded in markdown
-- [ ] **Tool references** - Clear instructions for using MCP tools or CLI commands
-- [ ] **Workflow guidance** - Step-by-step instructions for each SDD phase
-- [ ] **Discovery behavior** - Agents learn to run board/search before creating specs
-- [ ] **Context economy** - Instructions explain <2000 token principle and validation
-- [ ] **Cross-platform compatible** - Works with Claude, Cursor, Codex, etc.
+- [x] **SKILL.md created** - Valid Agent Skills format with frontmatter + instructions
+- [x] **Methodology documented** - SDD workflow encoded in markdown
+- [x] **Tool references** - Clear instructions for using MCP tools or CLI commands
+- [x] **Workflow guidance** - Step-by-step instructions for each SDD phase
+- [x] **Discovery behavior** - Agents learn to run board/search before creating specs
+- [x] **Context economy** - Instructions explain <2000 token principle and validation
+- [x] **Cross-platform compatible** - Works with Claude, Cursor, Codex, etc.
 
 ### Integration Requirements
 
-- [ ] **Compatible with existing tools** - Works with current @leanspec/mcp and CLI
-- [ ] **No breaking changes** - Skill is additive, doesn't replace existing tools
-- [ ] **Validation** - Skill passes `skills-ref validate` check
-- [ ] **Progressive disclosure** - SKILL.md under 500 lines, detailed content in references/
+- [x] **Compatible with existing tools** - Works with current @leanspec/mcp and CLI
+- [x] **No breaking changes** - Skill is additive, doesn't replace existing tools
+- [x] **Validation** - Skill passes `skills-ref validate` check
+- [x] **Progressive disclosure** - SKILL.md under 500 lines, detailed content in references/
 
 ### User Experience Requirements
 
-- [ ] **Easy setup** - Users add skill to their project or global skills directory
-- [ ] **Auto-activation** - Agents detect LeanSpec projects and activate skill
-- [ ] **Shareable** - Can be version-controlled and shared via git
-- [ ] **Intuitive** - Agents naturally follow SDD after reading skill
-- [ ] **Onboarding simplification** - SKILL.md reduces AGENTS.md to <100 lines (project-specific rules only)
-- [ ] **Migration guide** - Documentation shows how to move from AGENTS.md to SKILL.md approach
+- [x] **Easy setup** - Users add skill to their project or global skills directory
+- [x] **Auto-activation** - Agents detect LeanSpec projects and activate skill
+- [x] **Shareable** - Can be version-controlled and shared via git
+- [x] **Intuitive** - Agents naturally follow SDD after reading skill
+- [x] **Onboarding simplification** - SKILL.md reduces AGENTS.md to <100 lines (project-specific rules only)
+- [x] **Migration guide** - Documentation shows how to move from AGENTS.md to SKILL.md approach
 
 ## Out of Scope
 

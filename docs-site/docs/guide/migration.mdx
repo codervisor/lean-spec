@@ -315,6 +315,30 @@ CLAUDE.md
 AGENTS.md (in project root)
 ```
 
+### Optional: Move SDD Workflow to Agent Skills
+
+LeanSpec supports **Agent Skills** via SKILL.md. This lets you keep AGENTS.md short and project-specific.
+
+**Recommended steps:**
+1. Add the skill folder: .lean-spec/skills/leanspec-sdd/
+2. Put SDD methodology in SKILL.md
+3. Reduce AGENTS.md to project-specific rules only (<100 lines)
+4. Add a short note in AGENTS.md that references the skill
+5. Commit the skill folder so it is shareable
+
+**Minimal AGENTS.md example:**
+
+```
+# AI Agent Instructions
+
+## Project: Your Project
+
+Core SDD workflow is defined in .lean-spec/skills/leanspec-sdd/SKILL.md.
+
+## Project-Specific Rules
+- Use pnpm instead of npm
+```
+
 ### Migration Strategy
 
 1. **Review existing AI guidance** from source tool
