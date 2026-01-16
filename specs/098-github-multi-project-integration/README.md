@@ -1,19 +1,18 @@
 ---
 status: planned
-created: '2025-11-17'
+created: 2025-11-17
+priority: low
 tags:
-  - web
-  - github
-  - integration
-  - v0.3
-priority: high
-created_at: '2025-11-17T08:19:16.821Z'
+- web
+- github
+- integration
+- v0.3
 depends_on:
-  - 082-web-realtime-sync-architecture
-  - 151-multi-project-architecture-refactoring
-updated_at: '2025-12-05T07:13:42.491Z'
+- 082-web-realtime-sync-architecture
+- 151-multi-project-architecture-refactoring
+created_at: 2025-11-17T08:19:16.821Z
+updated_at: 2026-01-16T07:35:20.981302Z
 ---
-
 # GitHub Multi-Project Integration
 
 > **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17 · **Tags**: web, github, integration, v0.3
