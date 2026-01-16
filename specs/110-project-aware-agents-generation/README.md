@@ -1,19 +1,18 @@
 ---
-status: planned
-created: '2025-11-20'
-tags:
-  - init
-  - templates
-  - ai-agents
-  - dx
+status: complete
+created: 2025-11-20
 priority: high
-created_at: '2025-11-20T06:23:35.088Z'
-updated_at: '2025-11-26T06:04:18.723Z'
+tags:
+- init
+- templates
+- ai-agents
+- dx
 depends_on:
-  - 073-template-engine-agents-md
-  - 086-template-component-deduplication
+- 073-template-engine-agents-md
+- 086-template-component-deduplication
+created_at: 2025-11-20T06:23:35.088Z
+updated_at: 2026-01-16T06:37:09.341622Z
 ---
-
 # Context-Aware AGENTS.md Generation for Init
 
 > **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-20 · **Tags**: init, templates, ai-agents, dx

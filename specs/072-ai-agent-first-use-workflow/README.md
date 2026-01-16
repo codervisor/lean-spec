@@ -1,23 +1,21 @@
 ---
-status: planned
-created: '2025-11-13'
-tags:
-  - onboarding
-  - ai-agents
-  - ux
-  - mcp
+status: complete
+created: 2025-11-13
 priority: high
-created_at: '2025-11-13T08:20:28.110Z'
-updated_at: '2025-11-26T06:04:18.719Z'
+tags:
+- onboarding
+- ai-agents
+- ux
+- mcp
+created_at: 2025-11-13T08:20:28.110Z
+updated_at: 2026-01-16T06:37:00.966145Z
 transitions:
-  - status: in-progress
-    at: '2025-11-13T08:21:45.345Z'
-  - status: planned
-    at: '2025-11-17T08:18:44.417Z'
-  - 122-ai-agent-deps-management-fix
+- status: in-progress
+  at: 2025-11-13T08:21:45.345Z
+- status: planned
+  at: 2025-11-17T08:18:44.417Z
 ---
-
-# ai-agent-first-use-workflow
+# AI Agent First Use Workflow
 
 > **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-13 · **Tags**: onboarding, ai-agents, ux, mcp
 
