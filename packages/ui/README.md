@@ -4,7 +4,7 @@ Primary Vite-based Single Page Application for LeanSpec spec management (web + d
 
 ## Overview
 
-This is a lightweight, fast SPA built with Vite that replaces the previous Next.js implementation. It provides a modern UI for viewing and managing LeanSpec specifications.
+This is a lightweight, fast SPA built with Vite. It provides a modern UI for viewing and managing LeanSpec specifications.
 
 ## Architecture
 
@@ -70,15 +70,6 @@ The built static files can be:
 1. Served by the Rust HTTP server
 2. Deployed to any static hosting (Vercel, Netlify, etc.)
 3. Bundled in the Tauri desktop app
-
-## Migration from Next.js
-
-This SPA replaces the previous Next.js implementation with:
-- ✅ ~99% smaller bundle (sub-MB Vite assets vs 129MB+ Next.js)
-- ✅ Faster dev HMR and builds
-- ✅ Simpler architecture (no SSR overhead)
-- ✅ Same features and functionality
-- ✅ Better performance
 
 ## License
 

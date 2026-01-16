@@ -48,7 +48,6 @@ export interface DesktopProject {
 }
 
 export interface DesktopBootstrapPayload {
-  uiUrl?: string; // Optional in native SPA mode (spec 169 Phase 5)
   activeProjectId?: string;
   config: DesktopConfig;
   projects: DesktopProject[];

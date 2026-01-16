@@ -1,7 +1,6 @@
 /**
  * Project Context Client Component
  * Displays project-level context files (AGENTS.md, config, README, etc.)
- * Aligned with Next.js UI implementation - uses structured ProjectContext
  * Spec 131 - UI Project Context Visibility
  */
 

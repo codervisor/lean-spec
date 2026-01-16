@@ -1,7 +1,7 @@
 //! Tauri commands for spec operations
 //!
 //! These commands expose the Rust spec operations library to the UI frontend,
-//! replacing the need for Next.js API routes.
+//! replacing legacy HTTP API routes.
 
 use std::path::Path;
 use tauri::State;

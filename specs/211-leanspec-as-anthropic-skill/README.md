@@ -45,13 +45,17 @@ Currently, users must:
 ### Strategic Vision
 
 **Current**: LeanSpec via MCP + CLI + AGENTS.md  
-**Addition**: LeanSpec Agent Skill for cross-platform SDD methodology
+**Future**: LeanSpec Agent Skill for cross-platform SDD methodology
+
+**Key Insight**: SKILL.md serves as **primary onboarding** - teams no longer need massive AGENTS.md files with duplicated SDD instructions.
 
 ```
 ┌────────────────────────────────────────────────────────┐
 │              LeanSpec Agent Skill                      │
 │           (SKILL.md in .lean-spec/skills/)             │
 ├────────────────────────────────────────────────────────┤
+│                                                        │
+│  Replaces: Heavy AGENTS.md with SDD instructions       │
 │                                                        │
 │  When activated by compatible agents:                  │
 │  • Teaches SDD workflow (discover → design → code)     │
@@ -61,6 +65,8 @@ Currently, users must:
 │  • Works across Claude, Cursor, Codex, etc.            │
 │                                                        │
 │  Does NOT replace: MCP server, CLI, or core tools      │
+│                                                        │
+│  AGENTS.md becomes: Project-specific rules only        │
 │                                                        │
 └────────────────────────────────────────────────────────┘
 ```
@@ -105,22 +111,37 @@ See references/ for detailed workflow steps, examples, and patterns.
 
 **Before (without Agent Skill)**:
 ```
+Project requires 500+ line AGENTS.md explaining:
+- SDD workflow
+- When to create specs
+- Token limits
+- Discovery process
+- Common patterns
+
 User: "Let's implement feature X"
 Agent: "Should I create a spec first?"
 User: "Yes, follow SDD methodology in AGENTS.md..."
-Agent: [needs to read and parse AGENTS.md]
+Agent: [needs to read and parse lengthy AGENTS.md]
 ```
 
 **After (with Agent Skill)**:
 ```
+AGENTS.md becomes minimal (50-100 lines):
+- Project-specific rules only
+- Team conventions
+- Custom workflows
+
 User: "Let's implement feature X"
 Agent: [Detects LeanSpec project, activates leanspec-sdd skill]
+Agent: [SKILL.md teaches SDD automatically]
 Agent: "Checking existing specs..."
 Agent: [Runs lean-spec board and search]
 Agent: "No existing spec found. Creating spec 211-feature-x following SDD..."
 Agent: [Creates spec, validates <2000 tokens, links dependencies]
 Agent: "Spec created. Ready to implement?"
 ```
+
+**Onboarding Benefit**: New team members don't need to read/maintain massive AGENTS.md. SKILL.md provides standard SOP automatically.
 
 **Cross-platform**: Works with Claude, Cursor, Codex, and any skill-compatible agent.
 
@@ -134,6 +155,9 @@ Agent: "Spec created. Ready to implement?"
 | **Dependency Management** | Use link/unlink to track relationships            | MCP or CLI             |
 | **Quality Gates**         | Validate before marking complete                  | validate tool/command  |
 | **Best Practices**        | Common patterns, anti-patterns, spec structure    | Examples in SKILL.md   |
+| **Onboarding**            | Standard SOP without requiring AGENTS.md bloat    | SKILL.md as primary    |
+
+**Key Benefit**: SKILL.md serves as **primary onboarding mechanism**. Projects only need minimal AGENTS.md for custom rules.
 
 **Note**: Skill is **methodology teaching**, not tool replacement.
 
@@ -162,6 +186,8 @@ Agent: "Spec created. Ready to implement?"
 - [ ] **Auto-activation** - Agents detect LeanSpec projects and activate skill
 - [ ] **Shareable** - Can be version-controlled and shared via git
 - [ ] **Intuitive** - Agents naturally follow SDD after reading skill
+- [ ] **Onboarding simplification** - SKILL.md reduces AGENTS.md to <100 lines (project-specific rules only)
+- [ ] **Migration guide** - Documentation shows how to move from AGENTS.md to SKILL.md approach
 
 ## Out of Scope
 
@@ -222,7 +248,58 @@ Agent: "Spec created. Ready to implement?"
 
 **Strategy**: Skill references MCP/CLI, doesn't replace them. Provides methodology layer.
 
-### 3. Methodology Encoding
+### 3. SKILL.md vs AGENTS.md: Onboarding Optimization
+
+| Aspect              | Traditional AGENTS.md              | With SKILL.md                      |
+| ------------------- | ---------------------------------- | ---------------------------------- |
+| **Size**            | 500-1000+ lines                    | 50-100 lines                       |
+| **Content**         | SDD workflow + project rules       | Project-specific rules only        |
+| **Maintenance**     | Update methodology + project rules | Update project rules only          |
+| **Onboarding**      | Read entire AGENTS.md file         | SKILL.md auto-loads                |
+| **Portability**     | Project-specific                   | SKILL.md works across projects     |
+| **Duplication**     | Every project repeats SDD docs     | SKILL.md shared across projects    |
+| **Cross-platform**  | Tool-dependent parsing             | Standard Agent Skills format       |
+| **Version Control** | Must sync across projects          | SKILL.md version managed centrally |
+
+**Key Insight**: SKILL.md becomes the **standard SDD SOP**. AGENTS.md shrinks to project-specific customizations only.
+
+**Example AGENTS.md (before SKILL.md)**:
+```markdown
+# AI Agent Instructions
+
+## LeanSpec SDD Methodology
+
+1. Always check specs first: `lean-spec board`
+2. Search before creating: `lean-spec search "query"`
+3. Keep specs under 2000 tokens
+4. Update status before coding: `--status in-progress`
+...
+[400+ lines of SDD instructions]
+
+## Project-Specific Rules
+- Use pnpm instead of npm
+- All UI changes require design review
+```
+
+**Example AGENTS.md (with SKILL.md)**:
+```markdown
+# AI Agent Instructions
+
+## Project: LeanSpec
+
+Lightweight spec methodology for AI-powered development.
+
+**Note**: Core SDD workflow is in `.lean-spec/skills/leanspec-sdd/SKILL.md`
+
+## Project-Specific Rules
+- Use pnpm instead of npm
+- All UI changes require design review
+- Deploy staging before production
+```
+
+**Migration Path**: Existing projects can gradually move SDD instructions from AGENTS.md to SKILL.md adoption.
+
+### 4. Methodology Encoding
 
 **SKILL.md structure** (main sections):
 
@@ -241,7 +318,7 @@ Agent: "Spec created. Ready to implement?"
 - references/BEST-PRACTICES.md: Patterns and anti-patterns
 - references/EXAMPLES.md: Sample specs
 
-### 4. Skill Location
+### 5. Skill Location
 
 **Where to place the skill**:
 
@@ -310,13 +387,15 @@ Agent: "Spec created. Ready to implement?"
 
 ## Success Metrics
 
-| Metric               | Target                                  | Measurement                        |
-| -------------------- | --------------------------------------- | ---------------------------------- |
-| **Skill adoption**   | 100+ projects using skill in 3 months   | Git analytics                      |
-| **Agent compliance** | >70% of sessions follow SDD workflow    | Session analysis (where available) |
-| **Context economy**  | >75% of specs <2000 tokens              | `tokens` tool data                 |
-| **Discovery rate**   | >80% check board/search before creating | Tool usage logs                    |
-| **Cross-platform**   | Works with 3+ agent tools               | Testing verification               |
+| Metric                  | Target                                  | Measurement                        |
+| ----------------------- | --------------------------------------- | ---------------------------------- |
+| **Skill adoption**      | 100+ projects using skill in 3 months   | Git analytics                      |
+| **Agent compliance**    | >70% of sessions follow SDD workflow    | Session analysis (where available) |
+| **Context economy**     | >75% of specs <2000 tokens              | `tokens` tool data                 |
+| **Discovery rate**      | >80% check board/search before creating | Tool usage logs                    |
+| **Cross-platform**      | Works with 3+ agent tools               | Testing verification               |
+| **AGENTS.md reduction** | <100 lines per project (vs 500+ before) | File size comparison               |
+| **Onboarding time**     | <5 min to understand SDD (vs 30+ min)   | User feedback                      |
 
 ## Technical Challenges
 
@@ -382,6 +461,8 @@ Agent: "Spec created. Ready to implement?"
 - "Drop-in methodology for AI-powered teams"
 
 **For LeanSpec Users**:
+- "Eliminate 500+ line AGENTS.md files - use SKILL.md as standard SOP"
+- "Onboard new team members in <5 minutes"
 - "Share SDD workflow across your team via Agent Skills"
 - "Works with any Agent Skills-compatible tool"
 - "Addon feature - complements existing MCP and CLI"
@@ -391,16 +472,20 @@ Agent: "Spec created. Ready to implement?"
 **For Individual Developers**:
 - Quick setup: drop SKILL.md in project or user directory
 - Agents automatically learn SDD workflow
+- No need to maintain massive AGENTS.md files
 - Works across multiple AI coding tools
 
 **For Teams**:
-- Version-controlled methodology
-- Consistent development practices
-- Easy onboarding for new team members
+- **Onboarding revolution**: 5-minute ramp-up vs 30+ minutes reading AGENTS.md
+- AGENTS.md shrinks from 500+ lines to <100 lines (project-specific rules only)
+- Version-controlled methodology via standard SKILL.md
+- Consistent development practices across all projects
+- New team members instantly productive
 
 **For Organizations**:
-- Portable skill definition
-- Works with multiple agent platforms
+- **Reduce onboarding costs**: Standard SOP via SKILL.md, not per-project documentation
+- Portable skill definition works across multiple agent platforms
+- Centralized methodology updates (update SKILL.md once, affects all projects)
 - Measurable quality improvements via spec validation
 
 ## Related Specs

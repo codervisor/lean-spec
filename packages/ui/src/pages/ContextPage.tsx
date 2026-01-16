@@ -2,7 +2,6 @@
  * Project Context Page
  * Displays project-level context files for AI agents and development workflows
  * Spec 131 - UI Project Context Visibility
- * Aligned with Next.js UI implementation
  */
 
 import { useEffect, useState } from 'react';

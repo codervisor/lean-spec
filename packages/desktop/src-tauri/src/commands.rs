@@ -13,8 +13,6 @@ use crate::tray;
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DesktopBootstrapPayload {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ui_url: Option<String>,
     pub active_project_id: Option<String>,
     pub config: crate::config::DesktopConfig,
     pub projects: Vec<DesktopProject>,
@@ -45,7 +43,6 @@ pub async fn desktop_switch_project(
     mutate_config(|config| {
         config.active_project_id = Some(project_id.clone());
     });
-    state.ui_server.stop();
 
     if let Some(project) = project {
         notify(&app, "Active project switched", &format!("Now tracking {}", project.name));
@@ -68,7 +65,6 @@ pub async fn desktop_add_project(app: AppHandle, state: State<'_, DesktopState>)
             mutate_config(|config| {
                 config.active_project_id = Some(project.id.clone());
             });
-            state.ui_server.stop();
 
             notify(&app, "Project added", &format!("{} is now available", project.name));
         }
@@ -127,7 +123,6 @@ pub async fn desktop_remove_project(
         mutate_config(|config| {
             config.active_project_id = None;
         });
-        state.ui_server.stop();
     }
     
     build_and_publish(&app, &state).map_err(|error| error.to_string())
@@ -174,23 +169,7 @@ fn build_payload(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstr
         .and_then(|id| state.project_store.find(id));
     let active_project_id = active_project.as_ref().map(|project| project.id.clone());
 
-    // Native SPA mode (spec 169 Phase 5) - no Node.js server needed
-    // UI server only used if explicitly enabled via environment variable
-    let ui_url = std::env::var("LEANSPEC_ENABLE_UI_SERVER").ok().and_then(|_| {
-        match state.ui_server.ensure_running(app, active_project.as_ref()) {
-            Ok(url) => {
-                eprintln!("Legacy UI server started at: {}", url);
-                Some(url)
-            }
-            Err(e) => {
-                eprintln!("Failed to start legacy UI server (this is normal in native SPA mode): {}", e);
-                None
-            }
-        }
-    });
-
     Ok(DesktopBootstrapPayload {
-        ui_url,
         active_project_id,
         config,
         projects,

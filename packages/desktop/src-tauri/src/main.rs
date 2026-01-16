@@ -7,36 +7,20 @@ mod shortcuts;
 mod specs;
 mod state;
 mod tray;
-mod ui_server;
 
 use tauri::WindowEvent;
 
 use commands::{
-    desktop_add_project,
-    desktop_bootstrap,
-    desktop_check_updates,
-    desktop_version,
-    desktop_refresh_projects,
-    desktop_switch_project,
-    desktop_validate_project,
-    desktop_toggle_favorite,
-    desktop_remove_project,
-    desktop_rename_project,
-};
-use specs::{
-    get_specs,
-    get_spec_detail,
-    get_project_stats,
-    get_dependency_graph,
-    get_spec_dependencies_cmd,
-    search_specs,
-    get_specs_by_status,
-    get_all_tags,
-    validate_spec_cmd,
-    validate_all_specs_cmd,
-    update_spec_status,
+    desktop_add_project, desktop_bootstrap, desktop_check_updates, desktop_refresh_projects,
+    desktop_remove_project, desktop_rename_project, desktop_switch_project,
+    desktop_toggle_favorite, desktop_validate_project, desktop_version,
 };
 use shortcuts::register_shortcuts;
+use specs::{
+    get_all_tags, get_dependency_graph, get_project_stats, get_spec_dependencies_cmd,
+    get_spec_detail, get_specs, get_specs_by_status, search_specs, update_spec_status,
+    validate_all_specs_cmd, validate_spec_cmd,
+};
 use state::DesktopState;
 
 fn main() {

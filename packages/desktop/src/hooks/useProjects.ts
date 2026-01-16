@@ -15,7 +15,6 @@ import {
 interface UseProjectsState {
   projects: DesktopProject[];
   activeProjectId?: string;
-  uiUrl?: string;
   loading: boolean;
   error?: string;
   config?: DesktopBootstrapPayload['config'];
@@ -28,7 +27,6 @@ export function useProjects() {
     setState({
       projects: payload.projects,
       activeProjectId: payload.activeProjectId,
-      uiUrl: payload.uiUrl,
       config: payload.config,
       loading: false,
     });

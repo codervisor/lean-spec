@@ -2,7 +2,7 @@
  * @leanspec/ui-components
  *
  * Framework-agnostic, tree-shakeable UI components for LeanSpec.
- * Works with any React setup (Next.js, Vite, etc.)
+ * Works with any React setup (Vite, CRA, etc.)
  */
 
 // Import styles - consumers should import '@leanspec/ui-components/styles.css' separately
