@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
+import rehypeHighlight from 'rehype-highlight';
 import { MermaidDiagram } from '../MermaidDiagram';
 import type { ComponentPropsWithoutRef } from 'react';
 import type { Components } from 'react-markdown';
@@ -37,7 +38,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <article className="prose prose-sm sm:prose-base dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSlug]}
+        rehypePlugins={[rehypeSlug, rehypeHighlight]}
         components={markdownComponents}
       >
         {content}
