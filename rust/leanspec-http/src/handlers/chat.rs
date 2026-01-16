@@ -26,7 +26,7 @@ struct ChatServerConfig {
 impl ChatServerConfig {
     fn from_env() -> Self {
         let transport = env::var("LEANSPEC_CHAT_TRANSPORT").unwrap_or_default();
-        if transport.to_ascii_lowercase() == "http" {
+        if transport.eq_ignore_ascii_case("http") {
             return Self {
                 transport: ChatTransport::Http(resolve_http_url()),
             };
