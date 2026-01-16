@@ -1,20 +1,19 @@
 ---
-status: planned
-created: '2025-12-05'
-tags:
-  - cli
-  - mcp
-  - dx
-  - governance
-  - metadata
+status: complete
+created: 2025-12-05
 priority: medium
-created_at: '2025-12-05T05:24:38.286Z'
+tags:
+- cli
+- mcp
+- dx
+- governance
+- metadata
 depends_on:
-  - 134-ui-metadata-editing
-  - 124-advanced-search-capabilities
-updated_at: '2025-12-05T05:25:39.016Z'
+- 134-ui-metadata-editing
+- 124-advanced-search-capabilities
+created_at: 2025-12-05T05:24:38.286Z
+updated_at: 2026-01-16T07:30:20.820492Z
 ---
-
 # Tag Management and Governance
 
 > **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-12-05 · **Tags**: cli, mcp, dx, governance, metadata

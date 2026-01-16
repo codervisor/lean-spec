@@ -1,26 +1,25 @@
 ---
-status: in-progress
-created: '2025-12-12'
-tags:
-  - desktop
-  - ui
-  - ux
-  - projects
-  - management
-  - navigation
+status: complete
+created: 2025-12-12
 priority: high
-created_at: '2025-12-12T05:49:19.788Z'
+tags:
+- desktop
+- ui
+- ux
+- projects
+- management
+- navigation
 depends_on:
-  - 148-leanspec-desktop-app
-  - 112-project-management-ui
-  - 141-multi-project-management-ui-improvements
-  - 163-multi-tasking-ui-enhancements
-updated_at: '2025-12-12T07:50:44.038Z'
+- 148-leanspec-desktop-app
+- 112-project-management-ui
+- 141-multi-project-management-ui-improvements
+- 163-multi-tasking-ui-enhancements
+created_at: 2025-12-12T05:49:19.788Z
+updated_at: 2026-01-16T07:30:54.672095Z
 transitions:
-  - status: in-progress
-    at: '2025-12-12T07:50:44.038Z'
+- status: in-progress
+  at: 2025-12-12T07:50:44.038Z
 ---
-
 # Desktop Projects Management Page
 
 ## Overview

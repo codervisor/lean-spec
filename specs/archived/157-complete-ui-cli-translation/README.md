@@ -1,23 +1,25 @@
 ---
-status: in-progress
+status: archived
 created: '2025-12-09'
+priority: high
 tags:
   - i18n
   - ux
   - chinese-market
-priority: high
-created_at: '2025-12-09T14:27:09.883Z'
 depends_on:
   - 091-chinese-localization-strategy
-updated_at: '2025-12-09T14:29:54.700Z'
+created_at: '2025-12-09T14:27:09.883Z'
+updated_at: '2026-01-16T07:31:32.165Z'
 transitions:
   - status: in-progress
     at: '2025-12-09T14:29:54.700Z'
+  - status: archived
+    at: '2026-01-16T07:30:08.372072Z'
 ---
 
 # Complete UI and CLI Chinese Translation Implementation
 
-> **Status**: ⏳ In progress · **Priority**: High · **Created**: 2025-12-09 · **Tags**: i18n, ux, chinese-market
+> **Status**: 📦 Archived · **Priority**: High · **Created**: 2025-12-09 · **Tags**: i18n, ux, chinese-market
 
 ## Overview
 
@@ -218,6 +220,20 @@ Follow spec 115 and docs-site/AGENTS.md:
 - [ ] No performance degradation
 
 ## Notes
+
+### Archived 2026-01-16
+
+**Decision**: Not prioritizing CLI i18n. UI localization is complete and sufficient for user needs.
+
+**Rationale**:
+- UI i18n work completed successfully (context viewer, stats, dependencies, timeline all localized)
+- CLI is primarily used by developers comfortable with English
+- Limited ROI on CLI translation effort
+- Resources better allocated to other features
+
+**Status at Archive**:
+- ✅ UI fully localized (primary user-facing surfaces)
+- ⏸️ CLI i18n deferred (low priority)
 
 ### Progress Log
 - **2025-12-10**
