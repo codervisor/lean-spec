@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.18] - 2026-01-16
+
+### Fixed
+- **Critical**: Fixed EACCES permission error for platform binaries
+  - npm doesn't preserve file permissions when installing packages
+  - Added postinstall scripts to all platform packages (CLI, MCP, HTTP) to set execute permissions
+  - Fixes error: `spawn leanspec-http EACCES` when running `npx @leanspec/ui`
+  - All Unix binaries now automatically get execute permissions (0o755) after installation
+
 ## [0.2.17] - 2026-01-15
 
 ### Fixed
