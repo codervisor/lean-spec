@@ -2,6 +2,8 @@
   "navigation": {
     "home": "Home",
     "specs": "Specs",
+    "chat": "AI Chat",
+    "chatDescription": "Talk with LeanSpec AI",
     "dependencies": "Dependencies",
     "stats": "Stats",
     "context": "Context",
@@ -66,6 +68,19 @@
     "remove": "Remove",
     "report": "Report",
     "open": "Open"
+  },
+  "chat": {
+    "title": "LeanSpec AI Chat",
+    "subtitle": "Manage specs conversationally without leaving the browser.",
+    "modelLabel": "Model",
+    "clear": "Clear",
+    "empty": "Ask me to list, create, update, or validate specs.",
+    "placeholder": "Ask LeanSpec to manage your specs...",
+    "helper": "Tips: “List all specs”, “Create a spec for rate limiting”, “Mark 082 complete”.",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "disabledTitle": "AI chat is disabled",
+    "disabledDescription": "Set VITE_ENABLE_AI=true to enable the chat experience."
   },
   "spec": {
     "spec": "Spec",

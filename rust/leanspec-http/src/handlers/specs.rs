@@ -9,8 +9,8 @@ use std::fs;
 use std::path::Path as FsPath;
 
 use leanspec_core::{
-    DependencyGraph, MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions,
-    SpecLoader, SpecStats, SpecStatus, SpecWriter,
+    DependencyGraph, FrontmatterParser, LeanSpecConfig, MetadataUpdate as CoreMetadataUpdate,
+    SpecArchiver, SpecFilterOptions, SpecLoader, SpecStats, SpecStatus, SpecWriter, TemplateLoader,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -18,8 +18,9 @@ use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 use crate::types::{
-    ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse, SpecDetail,
-    SpecSummary, StatsResponse, SubSpec,
+    CreateSpecRequest, ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest,
+    SearchResponse, SpecDetail, SpecRawResponse, SpecRawUpdateRequest, SpecSummary, StatsResponse,
+    SubSpec,
 };
 use crate::utils::resolve_project;
 
@@ -83,6 +84,57 @@ fn strip_frontmatter(content: &str) -> String {
     }
 
     body
+}
+
+fn hash_raw_content(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+fn render_template(template: &str, name: &str, status: &str, priority: &str, date: &str) -> String {
+    template
+        .replace("{name}", name)
+        .replace("{status}", status)
+        .replace("{priority}", priority)
+        .replace("{date}", date)
+}
+
+fn load_project_config(project_path: &FsPath) -> Option<LeanSpecConfig> {
+    let config_json = project_path.join(".lean-spec/config.json");
+    if config_json.exists() {
+        if let Ok(content) = fs::read_to_string(&config_json) {
+            if let Ok(config) = serde_json::from_str::<LeanSpecConfig>(&content) {
+                return Some(config);
+            }
+        }
+    }
+
+    let config_yaml = project_path.join(".lean-spec/config.yaml");
+    if config_yaml.exists() {
+        if let Ok(content) = fs::read_to_string(&config_yaml) {
+            if let Ok(config) = serde_yaml::from_str::<LeanSpecConfig>(&content) {
+                return Some(config);
+            }
+        }
+    }
+
+    None
+}
+
+fn rebuild_with_frontmatter(
+    frontmatter: &leanspec_core::SpecFrontmatter,
+    body: &str,
+) -> Result<String, (StatusCode, Json<ApiError>)> {
+    let yaml = serde_yaml::to_string(frontmatter).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let trimmed_body = body.trim_start_matches('\n');
+    Ok(format!("---\n{}---\n{}", yaml, trimmed_body))
 }
 
 fn hash_content(content: &str) -> String {
@@ -359,6 +411,113 @@ pub async fn list_project_specs(
     }))
 }
 
+/// POST /api/projects/:projectId/specs - Create a spec in a project
+pub async fn create_project_spec(
+    State(state): State<AppState>,
+    Path(project_id): Path<String>,
+    headers: HeaderMap,
+    Json(request): Json<CreateSpecRequest>,
+) -> ApiResult<Json<SpecDetail>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Spec creation not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, project) = get_spec_loader(&state, &project_id).await?;
+    let spec_name = request.name.trim();
+    if spec_name.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request("Spec name is required")),
+        ));
+    }
+
+    let spec_dir = project.specs_dir.join(spec_name);
+    if spec_dir.exists() {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ApiError::invalid_request("Spec already exists")),
+        ));
+    }
+
+    let today = chrono::Utc::now().date_naive().to_string();
+    let status = request
+        .status
+        .clone()
+        .unwrap_or_else(|| "planned".to_string());
+    let priority = request
+        .priority
+        .clone()
+        .unwrap_or_else(|| "medium".to_string());
+    let title = request
+        .title
+        .clone()
+        .unwrap_or_else(|| spec_name.to_string());
+
+    let template_content = if let Some(content) = &request.content {
+        content.clone()
+    } else {
+        let template_loader = if let Some(config) = load_project_config(&project.path) {
+            TemplateLoader::with_config(&project.path, config)
+        } else {
+            TemplateLoader::new(&project.path)
+        };
+        let template = template_loader
+            .load(request.template.as_deref())
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError::internal_error(&e.to_string())),
+                )
+            })?;
+        render_template(&template, &title, &status, &priority, &today)
+    };
+
+    let parser = FrontmatterParser::new();
+    let (mut frontmatter, body) = parser.parse(&template_content).map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request(&e.to_string())),
+        )
+    })?;
+
+    if let Ok(parsed) = status.parse() {
+        frontmatter.status = parsed;
+    }
+
+    if let Ok(parsed) = priority.parse() {
+        frontmatter.priority = Some(parsed);
+    }
+
+    if let Some(tags) = request.tags.clone() {
+        frontmatter.tags = tags;
+    }
+
+    if let Some(assignee) = request.assignee.clone() {
+        frontmatter.assignee = Some(assignee);
+    }
+
+    if let Some(depends_on) = request.depends_on.clone() {
+        frontmatter.depends_on = depends_on;
+    }
+
+    let full_content = rebuild_with_frontmatter(&frontmatter, &body)?;
+    let created = loader
+        .create_spec(spec_name, &title, &full_content)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+    Ok(Json(SpecDetail::from(&created)))
+}
+
 /// GET /api/projects/:projectId/specs/:spec - Get a spec within a project
 pub async fn get_project_spec(
     State(state): State<AppState>,
@@ -452,6 +611,267 @@ pub async fn get_project_spec(
     }
 
     Ok(Json(detail))
+}
+
+/// GET /api/projects/:projectId/specs/:spec/raw - Get raw spec content
+pub async fn get_project_spec_raw(
+    State(state): State<AppState>,
+    Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
+) -> ApiResult<Json<SpecRawResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Raw spec access not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    let content = fs::read_to_string(&spec.file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let content_hash = hash_raw_content(&content);
+
+    Ok(Json(SpecRawResponse {
+        content,
+        content_hash,
+        file_path: spec.file_path.to_string_lossy().to_string(),
+    }))
+}
+
+/// PATCH /api/projects/:projectId/specs/:spec/raw - Update raw spec content
+pub async fn update_project_spec_raw(
+    State(state): State<AppState>,
+    Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
+    Json(request): Json<SpecRawUpdateRequest>,
+) -> ApiResult<Json<SpecRawResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Raw spec updates not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    let current = fs::read_to_string(&spec.file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let current_hash = hash_raw_content(&current);
+
+    if let Some(expected) = &request.expected_content_hash {
+        if expected != &current_hash {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
+            ));
+        }
+    }
+
+    loader
+        .update_spec(&spec_id, &request.content)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+    let new_hash = hash_raw_content(&request.content);
+    Ok(Json(SpecRawResponse {
+        content: request.content,
+        content_hash: new_hash,
+        file_path: spec.file_path.to_string_lossy().to_string(),
+    }))
+}
+
+/// GET /api/projects/:projectId/specs/:spec/subspecs/:file/raw - Get raw sub-spec content
+pub async fn get_project_subspec_raw(
+    State(state): State<AppState>,
+    Path((project_id, spec_id, file)): Path<(String, String, String)>,
+    headers: HeaderMap,
+) -> ApiResult<Json<SpecRawResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Raw sub-spec access not supported for synced machines",
+            )),
+        ));
+    }
+
+    if file.contains('/') || file.contains('\\') {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request("Invalid sub-spec file")),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    let parent_dir = spec.file_path.parent().ok_or_else(|| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error("Missing spec directory")),
+        )
+    })?;
+    let file_path = parent_dir.join(&file);
+    if !file_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiError::invalid_request("Sub-spec not found")),
+        ));
+    }
+
+    let content = fs::read_to_string(&file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let content_hash = hash_raw_content(&content);
+
+    Ok(Json(SpecRawResponse {
+        content,
+        content_hash,
+        file_path: file_path.to_string_lossy().to_string(),
+    }))
+}
+
+/// PATCH /api/projects/:projectId/specs/:spec/subspecs/:file/raw - Update raw sub-spec content
+pub async fn update_project_subspec_raw(
+    State(state): State<AppState>,
+    Path((project_id, spec_id, file)): Path<(String, String, String)>,
+    headers: HeaderMap,
+    Json(request): Json<SpecRawUpdateRequest>,
+) -> ApiResult<Json<SpecRawResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Raw sub-spec updates not supported for synced machines",
+            )),
+        ));
+    }
+
+    if file.contains('/') || file.contains('\\') {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request("Invalid sub-spec file")),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    let parent_dir = spec.file_path.parent().ok_or_else(|| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error("Missing spec directory")),
+        )
+    })?;
+    let file_path = parent_dir.join(&file);
+
+    if !file_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiError::invalid_request("Sub-spec not found")),
+        ));
+    }
+
+    let current = fs::read_to_string(&file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+    let current_hash = hash_raw_content(&current);
+
+    if let Some(expected) = &request.expected_content_hash {
+        if expected != &current_hash {
+            return Err((
+                StatusCode::CONFLICT,
+                Json(ApiError::invalid_request("Content hash mismatch").with_details(current_hash)),
+            ));
+        }
+    }
+
+    fs::write(&file_path, &request.content).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let new_hash = hash_raw_content(&request.content);
+    Ok(Json(SpecRawResponse {
+        content: request.content,
+        content_hash: new_hash,
+        file_path: file_path.to_string_lossy().to_string(),
+    }))
 }
 
 /// POST /api/projects/:projectId/search - Search specs in a project

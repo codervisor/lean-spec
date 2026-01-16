@@ -4,6 +4,7 @@ import { SpecDetailLayout } from '../components/SpecDetailLayout';
 import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
+import { ChatPage } from '../pages/ChatPage';
 import { SpecDetailPage } from '../pages/SpecDetailPage';
 import { SpecsPage } from '../pages/SpecsPage';
 import { StatsPage } from '../pages/StatsPage';
@@ -32,5 +33,6 @@ export function createProjectRoutes(): RouteObject[] {
     { path: 'dependencies', element: <DependenciesPage /> },
     { path: 'dependencies/:specName', element: <DependenciesPage /> },
     { path: 'context', element: <ContextPage /> },
+    { path: 'chat', element: <ChatPage /> },
   ];
 }

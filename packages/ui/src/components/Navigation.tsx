@@ -31,6 +31,7 @@ function parsePathname(pathname: string): { page: string; specId?: string; query
 
   if (path === '/') return { page: 'home' };
   if (path === '/stats') return { page: 'stats' };
+  if (path === '/chat') return { page: 'chat' };
   if (path === '/dependencies') return { page: 'dependencies' };
   if (path === '/context') return { page: 'context' };
   if (path === '/settings') return { page: 'settings' };
@@ -51,6 +52,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
 
   const homeLabel = t('navigation.home');
   const specsLabel = t('navigation.specs');
+  const chatLabel = t('navigation.chat');
   const statsLabel = t('navigation.stats');
   const depsLabel = t('navigation.dependencies');
   const contextLabel = t('navigation.context');
@@ -68,6 +70,10 @@ function Breadcrumb({ basePath }: { basePath: string }) {
 
     case 'stats':
       items = [{ label: homeLabel, to: basePath }, { label: statsLabel }];
+      break;
+
+    case 'chat':
+      items = [{ label: homeLabel, to: basePath }, { label: chatLabel }];
       break;
 
     case 'dependencies':

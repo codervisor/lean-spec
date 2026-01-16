@@ -104,6 +104,38 @@ pub struct SpecDetail {
     pub sub_specs: Option<Vec<SubSpec>>,
 }
 
+/// Raw spec content response
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecRawResponse {
+    pub content: String,
+    pub content_hash: String,
+    pub file_path: String,
+}
+
+/// Request to update raw spec content
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecRawUpdateRequest {
+    pub content: String,
+    pub expected_content_hash: Option<String>,
+}
+
+/// Create spec request
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSpecRequest {
+    pub name: String,
+    pub title: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub assignee: Option<String>,
+    pub depends_on: Option<Vec<String>>,
+    pub template: Option<String>,
+    pub content: Option<String>,
+}
+
 impl From<&SpecInfo> for SpecDetail {
     fn from(spec: &SpecInfo) -> Self {
         Self {

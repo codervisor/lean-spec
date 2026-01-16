@@ -2,6 +2,8 @@
   "navigation": {
     "home": "首页",
     "specs": "规范",
+    "chat": "AI 聊天",
+    "chatDescription": "与 LeanSpec AI 对话",
     "dependencies": "依赖关系",
     "stats": "统计",
     "context": "上下文",
@@ -66,6 +68,19 @@
     "remove": "移除",
     "report": "报告",
     "open": "打开"
+  },
+  "chat": {
+    "title": "LeanSpec AI 聊天",
+    "subtitle": "在浏览器内用对话管理规范。",
+    "modelLabel": "模型",
+    "clear": "清空",
+    "empty": "可以请求列出、创建、更新或校验规范。",
+    "placeholder": "向 LeanSpec 发出管理规范的请求...",
+    "helper": "示例：“列出所有规范”、“创建限流规范”、“将 082 标记为完成”。",
+    "send": "发送",
+    "thinking": "思考中...",
+    "disabledTitle": "AI 聊天已禁用",
+    "disabledDescription": "设置 VITE_ENABLE_AI=true 以启用聊天功能。"
   },
   "spec": {
     "spec": "规范",

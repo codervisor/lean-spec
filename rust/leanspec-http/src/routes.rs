@@ -43,6 +43,7 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         // Health endpoint
         .route("/health", get(handlers::health_check))
+        .route("/api/chat", post(handlers::proxy_chat))
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))
@@ -59,8 +60,28 @@ pub fn create_router(state: AppState) -> Router {
             get(handlers::list_project_specs),
         )
         .route(
+            "/api/projects/{id}/specs",
+            post(handlers::create_project_spec),
+        )
+        .route(
             "/api/projects/{id}/specs/{spec}",
             get(handlers::get_project_spec),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}/raw",
+            get(handlers::get_project_spec_raw),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}/raw",
+            patch(handlers::update_project_spec_raw),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}/subspecs/{file}/raw",
+            get(handlers::get_project_subspec_raw),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}/subspecs/{file}/raw",
+            patch(handlers::update_project_subspec_raw),
         )
         .route(
             "/api/projects/{id}/dependencies",

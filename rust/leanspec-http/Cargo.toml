@@ -1,13 +1,13 @@
 [package]
-name = "leanspec-http"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
 description = "Rust HTTP server for LeanSpec UI using Axum"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "leanspec-http"
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [lib]
 name = "leanspec_http"
@@ -19,21 +19,23 @@ path = "src/main.rs"
 
 [dependencies]
 # Core library
-leanspec-core = { path = "../leanspec-core" }
+leanspec-core = {path = "../leanspec-core"}
 
 # Web framework
-axum = { version = "0.8.7", features = ["ws"] }
+axum = {version = "0.8.7", features = ["ws"]}
 tower = "0.5.2"
-tower-http = { version = "0.6.8", features = ["cors", "trace", "fs"] }
+tower-http = {version = "0.6.8", features = ["cors", "trace", "fs"]}
 
 # Async runtime
 tokio.workspace = true
 
 # Serialization
+bytes = "1.7"
+futures-util = "0.3"
+reqwest = {version = "0.12", features = ["json", "stream", "unix-socket"]}
 serde.workspace = true
 serde_json.workspace = true
 sha2 = "0.10"
-futures-util = "0.3"
 
 # Date/time
 chrono.workspace = true
@@ -46,11 +48,11 @@ walkdir.workspace = true
 dirs = "5.0"
 
 # Unique IDs
-uuid = { version = "1.10", features = ["v4"] }
+uuid = {version = "1.10", features = ["v4"]}
 
 # Tracing
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = {version = "0.3", features = ["env-filter"]}
 
 # CLI
 clap.workspace = true
@@ -59,6 +61,6 @@ clap.workspace = true
 serde_yaml.workspace = true
 
 [dev-dependencies]
+reqwest = {version = "0.12", features = ["json"]}
 tempfile.workspace = true
-reqwest = { version = "0.12", features = ["json"] }
-tokio = { version = "1.42", features = ["full", "test-util"] }
+tokio = {version = "1.42", features = ["full", "test-util"]}
