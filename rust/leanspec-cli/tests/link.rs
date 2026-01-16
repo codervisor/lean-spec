@@ -47,8 +47,17 @@ fn test_link_multiple_dependencies() {
     create_spec(cwd, "api");
 
     // API depends on both auth and database
-    link_specs(cwd, "003-api", "001-auth");
-    link_specs(cwd, "003-api", "002-database");
+    let result = exec_cli(
+        &[
+            "link",
+            "003-api",
+            "--depends-on",
+            "001-auth",
+            "002-database",
+        ],
+        cwd,
+    );
+    assert!(result.success);
 
     let content = read_file(&cwd.join("specs").join("003-api").join("README.md"));
     // Should contain both dependencies
@@ -78,6 +87,31 @@ fn test_link_chain() {
 }
 
 #[test]
+fn test_link_already_linked_dependency() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "database");
+    create_spec(cwd, "api");
+
+    // Link once
+    link_specs(cwd, "002-api", "001-database");
+
+    // Link again (should be a no-op, not an error)
+    let result = exec_cli(&["link", "002-api", "--depends-on", "001-database"], cwd);
+    assert!(result.success);
+
+    let content = read_file(&cwd.join("specs").join("002-api").join("README.md"));
+    let fm = parse_frontmatter(&content);
+
+    if let Some(serde_yaml::Value::Sequence(deps)) = fm.get("depends_on") {
+        let dep_strs: Vec<&str> = deps.iter().filter_map(|v| v.as_str()).collect();
+        assert_eq!(dep_strs.iter().filter(|d| **d == "001-database").count(), 1);
+    }
+}
+
+#[test]
 fn test_unlink_depends_on() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -100,6 +134,50 @@ fn test_unlink_depends_on() {
     if let Some(serde_yaml::Value::Sequence(deps)) = fm.get("depends_on") {
         let dep_strs: Vec<&str> = deps.iter().filter_map(|v| v.as_str()).collect();
         assert!(!dep_strs.contains(&"001-database"));
+    }
+}
+
+#[test]
+fn test_unlink_multiple_dependencies() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "auth");
+    create_spec(cwd, "database");
+    create_spec(cwd, "api");
+
+    let link_result = exec_cli(
+        &[
+            "link",
+            "003-api",
+            "--depends-on",
+            "001-auth",
+            "002-database",
+        ],
+        cwd,
+    );
+    assert!(link_result.success);
+
+    let unlink_result = exec_cli(
+        &[
+            "unlink",
+            "003-api",
+            "--depends-on",
+            "001-auth",
+            "002-database",
+        ],
+        cwd,
+    );
+    assert!(unlink_result.success);
+
+    let content = read_file(&cwd.join("specs").join("003-api").join("README.md"));
+    let fm = parse_frontmatter(&content);
+
+    if let Some(serde_yaml::Value::Sequence(deps)) = fm.get("depends_on") {
+        let dep_strs: Vec<&str> = deps.iter().filter_map(|v| v.as_str()).collect();
+        assert!(!dep_strs.contains(&"001-auth"));
+        assert!(!dep_strs.contains(&"002-database"));
     }
 }
 
@@ -127,6 +205,6 @@ fn test_unlink_nonexistent_dependency() {
 
     // Try to unlink something that was never linked
     let result = unlink_specs(cwd, "001-api", "999-nonexistent");
-    // May succeed (no-op) or fail, but shouldn't crash
-    assert!(result.exit_code >= 0);
+    // Should fail with error handling
+    assert!(!result.success);
 }

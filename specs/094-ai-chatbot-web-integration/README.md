@@ -1,14 +1,16 @@
 ---
 status: planned
-created: '2025-11-17'
-tags:
-  - web
-  - ai
-  - ux
-  - v0.3.0
+created: 2025-11-17
 priority: high
-created_at: '2025-11-17T06:31:22.346Z'
-updated_at: '2025-11-26T06:04:10.960Z'
+tags:
+- web
+- ai
+- ux
+- v0.3.0
+depends_on:
+- 187-vite-spa-migration
+created_at: 2025-11-17T06:31:22.346Z
+updated_at: 2026-01-16T07:23:35.249214Z
 ---
 
 # AI Chatbot for Web UI
@@ -20,7 +22,7 @@ updated_at: '2025-11-26T06:04:10.960Z'
 
 ## Overview
 
-Add an AI chatbot to `@leanspec/web` that **transforms it from read-only to fully interactive**. Users can create, update, and manage specs through natural conversation - no CLI or IDE required.
+Add an AI chatbot to `@leanspec/ui` (Vite SPA) that **transforms it from read-only to fully interactive**. Users can create, update, and manage specs through natural conversation - no CLI or IDE required.
 
 **Core Value**: The web UI becomes a complete spec management tool accessible to everyone (not just developers with terminal access). Users can "talk to their specs" for all operations: viewing, creating, editing, and managing.
 
@@ -28,14 +30,14 @@ Add an AI chatbot to `@leanspec/web` that **transforms it from read-only to full
 
 ## Problem
 
-**The core gap**: `@leanspec/web` is currently **read-only**. Users can browse and view specs, but cannot create, update, or manage them without switching to CLI or VS Code.
+**The core gap**: `@leanspec/ui` is currently **partially interactive**. Users can browse and view specs, edit some metadata, but cannot create specs or perform complex operations without switching to CLI or VS Code.
 
-**Current limitations**:
+**Current limitations** (as of UI Vite SPA):
 - ❌ **No spec creation** - Must drop to terminal: `lean-spec create ...`
-- ❌ **No status updates** - Must use CLI: `lean-spec update 082 --status complete`
-- ❌ **No metadata editing** - Can't change priority, tags, assignee from UI
+- ❌ **No status updates via chat** - Must use CLI: `lean-spec update 082 --status complete`
+- ✅ **Metadata editing** - Can change priority, tags via UI (added in spec 187)
 - ❌ **No content editing** - Can't modify spec README or sub-specs
-- ✅ **Read-only browsing** - Can view, search, filter (but that's it)
+- ✅ **Interactive browsing** - Can view, search, filter, edit metadata
 
 **The bigger problem**: Write operations are **locked behind developer tools**:
 - Non-technical users (PMs, designers) can't participate
@@ -63,33 +65,33 @@ Add an AI chatbot to `@leanspec/web` that **transforms it from read-only to full
 
 ### Architecture
 
-**Tech Stack** (as requested):
-- **AI SDK** (`ai` package from Vercel) - Universal AI abstraction layer
-- **AI UI Elements** (`@ai-sdk/ui-elements`) - Pre-built chat components
-- **Backend**: Next.js API routes for LLM integration
+**Tech Stack**:
+- **AI SDK** v6 (`ai` package from Vercel) - Universal AI abstraction layer (https://ai-sdk.dev)
+- **AI Elements** - Pre-built chat components (https://ai-sdk.dev/elements)
+- **Backend**: Rust HTTP server with dedicated chat API endpoint
 - **Model**: OpenAI GPT-4o (recommended), with pluggable provider support
 
 **Component Structure**:
 ```
-packages/web/src/
+packages/ui/src/                    # Vite SPA (not Next.js)
 ├── components/
 │   ├── chat/
 │   │   ├── chatbot-button.tsx      # Floating action button
 │   │   ├── chatbot-panel.tsx       # Slide-out chat panel
 │   │   ├── chatbot-message.tsx     # Message bubbles
 │   │   └── chatbot-context.tsx     # React context for chat state
-│   └── ui/
-│       └── ...existing shadcn components
-├── app/api/
-│   └── chat/
-│       └── route.ts                # AI SDK streaming endpoint
+│   └── ...existing components
 └── lib/
     ├── ai/
     │   ├── tools.ts                # LeanSpec function tools
     │   ├── prompts.ts              # System prompts
     │   └── context.ts              # Context builders
-    └── db/
-        └── ...existing queries
+    └── api.ts                      # Existing API client
+
+rust/leanspec-http/src/             # Rust HTTP server
+├── handlers/
+│   └── chat.rs                     # Chat API endpoint
+└── routes.rs                       # Route registration
 ```
 
 ### Chat UI/UX
@@ -180,17 +182,18 @@ AI: [calls create_spec(...)]
 ## Plan
 
 ### Phase 1: Core Chat UI (Week 1)
-- [ ] Install `ai` and `@ai-sdk/ui-elements` packages
+- [ ] Install `ai` package (Vercel AI SDK v6)
+- [ ] Implement chat UI components (button, panel, messages) following ai-sdk.dev/elements patterns
 - [ ] Create chat button + slide-out panel components
 - [ ] Implement chat context provider
 - [ ] Add basic message rendering (user/assistant bubbles)
 - [ ] Style with Tailwind/shadcn design system
 
 ### Phase 2: AI Backend (Week 1-2)
-- [ ] Set up Next.js API route (`/api/chat`)
-- [ ] Integrate AI SDK with OpenAI provider
-- [ ] Implement streaming responses
-- [ ] Add environment variable for API keys
+- [ ] Create Rust HTTP endpoint (`/api/chat`) in leanspec-http server
+- [ ] Integrate AI SDK v6 with OpenAI provider (https://ai-sdk.dev)
+- [ ] Implement streaming responses via SSE or WebSocket
+- [ ] Add environment variable for API keys (secure storage)
 - [ ] Error handling and rate limiting
 
 ### Phase 3: Tool Implementation (Week 2)
@@ -280,11 +283,11 @@ AI_TEMPERATURE=0.7             # Response creativity
 - **Function Calling**: Easy tool integration
 - **React Hooks**: `useChat()` hook simplifies state management
 
-### Why @ai-sdk/ui-elements?
-- **Pre-built Components**: Chat UI out-of-the-box
-- **Customizable**: Tailwind-compatible styling
-- **Accessible**: WCAG-compliant components
-- **Maintained**: Official Vercel package
+### Why AI Elements (ai-sdk.dev/elements)?
+- **Pre-built Patterns**: Chat UI patterns and examples at https://ai-sdk.dev/elements
+- **Customizable**: Framework-agnostic, works with React + Tailwind
+- **Best Practices**: Official patterns from Vercel AI SDK team
+- **Well-documented**: Comprehensive guides and examples
 
 ### Alternative Considered: Custom MCP Integration
 **Pros**: Reuse existing MCP server, full CLI parity

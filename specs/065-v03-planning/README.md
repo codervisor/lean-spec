@@ -1,23 +1,22 @@
 ---
 status: planned
-created: '2025-11-11'
+created: 2025-11-11
+priority: medium
 tags:
-  - release
-  - planning
-  - milestone
-  - v0.3.0
-  - performance
-  - ai-agents
-priority: critical
-created_at: '2025-11-11T06:41:08.335Z'
+- release
+- planning
+- milestone
+- v0.3.0
+- performance
+- ai-agents
 depends_on:
-  - 059-programmatic-spec-management
-  - 067-monorepo-core-extraction
-  - 035-live-specs-showcase
-  - 075-intelligent-search-engine
-updated_at: '2025-11-26T06:03:50.934Z'
+- 059-programmatic-spec-management
+- 067-monorepo-core-extraction
+- 035-live-specs-showcase
+- 075-intelligent-search-engine
+created_at: 2025-11-11T06:41:08.335Z
+updated_at: 2026-01-16T07:26:51.212928Z
 ---
-
 # LeanSpec v0.3 - Performance & AI Agent Optimization
 
 > **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-11-11 · **Tags**: release, planning, milestone, v0.3.0, performance, ai-agents

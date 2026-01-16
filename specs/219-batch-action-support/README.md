@@ -1,16 +1,21 @@
 ---
-status: in-progress
-created: '2026-01-16'
-tags:
-  - cli
-  - ux
+status: complete
+created: 2026-01-16
 priority: high
-created_at: '2026-01-16T07:13:55.473739+00:00'
+tags:
+- cli
+- ux
+created_at: 2026-01-16T07:13:55.473739Z
+updated_at: 2026-01-16T07:26:30.995177Z
+completed_at: 2026-01-16T07:26:30.995177Z
+transitions:
+- status: complete
+  at: 2026-01-16T07:26:30.995177Z
 ---
 
 # Batch Action Support for Core Commands
 
-> **Status**: ⏳ In-progress · **Created**: 2026-01-16 · **Priority**: High · **Tags**: cli, ux
+> **Status**: ✅ Complete · **Created**: 2026-01-16 · **Priority**: High · **Tags**: cli, ux
 
 ## Overview
 
@@ -83,9 +88,9 @@ Link {
 | **archive**  | ✅ Implemented | A       | -        |
 | **backfill** | ✅ Existing    | A       | -        |
 | **compact**  | ✅ Existing    | B       | -        |
-| **update**   | ⏳ Planned     | A       | High     |
-| **link**     | ⏳ Planned     | B       | Medium   |
-| **unlink**   | ⏳ Planned     | B       | Medium   |
+| **update**   | ✅ Implemented | A       | High     |
+| **link**     | ✅ Implemented | B       | Medium   |
+| **unlink**   | ✅ Implemented | B       | Medium   |
 
 ## Plan
 
@@ -99,26 +104,26 @@ Link {
 
 ### Phase 2: Update Command Batch Support
 
-- [ ] Change `spec: String` to `specs: Vec<String>`
-- [ ] Update command handler to iterate over specs
-- [ ] Apply same frontmatter changes to all specs
-- [ ] Add batch update tests
-- [ ] Document batch update usage
+- [x] Change `spec: String` to `specs: Vec<String>`
+- [x] Update command handler to iterate over specs
+- [x] Apply same frontmatter changes to all specs
+- [x] Add batch update tests
+- [x] Document batch update usage
 
 ### Phase 3: Link/Unlink Batch Support
 
-- [ ] Change `depends_on: String` to `depends_on: Vec<String>`
-- [ ] Update link command to handle multiple dependencies
-- [ ] Update unlink command to handle multiple dependencies
-- [ ] Add batch link/unlink tests
-- [ ] Update help text and examples
+- [x] Change `depends_on: String` to `depends_on: Vec<String>`
+- [x] Update link command to handle multiple dependencies
+- [x] Update unlink command to handle multiple dependencies
+- [x] Add batch link/unlink tests
+- [x] Update help text and examples
 
 ### Phase 4: Documentation & Polish
 
-- [ ] Update CLI help text for all modified commands
-- [ ] Update AGENTS.md with batch operation patterns
-- [ ] Add batch operation examples to docs site
-- [ ] Create integration tests covering common workflows
+- [x] Update CLI help text for all modified commands
+- [x] Update AGENTS.md with batch operation patterns
+- [x] Add batch operation examples to docs site
+- [x] Create integration tests covering common workflows
 
 ## Test
 
@@ -133,18 +138,18 @@ Link {
 
 ### Update Command
 
-- [ ] Batch update status on multiple specs
-- [ ] Batch update priority on multiple specs
-- [ ] Batch add/remove tags on multiple specs
-- [ ] Mixed valid/invalid specs handling
-- [ ] Completion verification with batch
+- [x] Batch update status on multiple specs
+- [x] Batch update priority on multiple specs
+- [x] Batch add/remove tags on multiple specs
+- [x] Mixed valid/invalid specs handling
+- [x] Completion verification with batch
 
 ### Link/Unlink Command
 
-- [ ] Link one spec to multiple dependencies
-- [ ] Unlink one spec from multiple dependencies
-- [ ] Detect already-linked dependencies
-- [ ] Error handling for non-existent targets
+- [x] Link one spec to multiple dependencies
+- [x] Unlink one spec from multiple dependencies
+- [x] Detect already-linked dependencies
+- [x] Error handling for non-existent targets
 
 ## Notes
 

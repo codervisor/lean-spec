@@ -11,9 +11,12 @@ tags:
 depends_on:
 - 191-rust-http-api-test-suite
 - 186-rust-http-server
+- 187-vite-spa-migration
 created_at: 2025-12-20T07:13:29.722091Z
-updated_at: 2026-01-12T08:27:02.057474881Z
+updated_at: 2026-01-16T07:23:31.468695Z
+completed_at: 2026-01-16T07:23:31.468695Z
 ---
+
 # API Contract Validation Test Suite
 
 ## Overview

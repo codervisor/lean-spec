@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: '2025-12-04'
 tags:
   - cursor
@@ -11,12 +11,15 @@ priority: medium
 created_at: '2025-12-04T07:23:15.903Z'
 depends_on:
   - 034-copilot-slash-commands
-updated_at: '2025-12-04T07:23:15.981Z'
+updated_at: '2026-01-16T07:26:23.286Z'
+transitions:
+  - status: archived
+    at: '2026-01-16T07:26:23.286Z'
 ---
 
 # Cursor IDE Slash Commands Integration
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-12-04 · **Tags**: cursor, slash-commands, ai, ux, ide-integration
+> **Status**: 📦 Archived · **Priority**: Medium · **Created**: 2025-12-04 · **Tags**: cursor, slash-commands, ai, ux, ide-integration
 
 ## Overview
 

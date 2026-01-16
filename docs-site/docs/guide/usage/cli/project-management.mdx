@@ -185,6 +185,9 @@ Use `depends_on` for hard dependencies:
 ```bash
 # Spec A depends on Spec B
 lean-spec link spec-a --depends-on spec-b
+
+# Spec A depends on multiple specs
+lean-spec link spec-a --depends-on spec-b spec-c
 ```
 
 Shows differently from each side:

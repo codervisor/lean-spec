@@ -228,6 +228,45 @@ fn test_link_specs_dependency_chain() {
 }
 
 #[test]
+fn test_batch_update_and_link_workflow() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "auth");
+    create_spec(cwd, "api");
+    create_spec(cwd, "frontend");
+
+    let update_result = exec_cli(
+        &["update", "001-auth", "002-api", "--status", "in-progress"],
+        cwd,
+    );
+    assert!(update_result.success);
+
+    let link_result = exec_cli(
+        &[
+            "link",
+            "003-frontend",
+            "--depends-on",
+            "001-auth",
+            "002-api",
+        ],
+        cwd,
+    );
+    assert!(link_result.success);
+
+    let frontend_content = read_file(&cwd.join("specs").join("003-frontend").join("README.md"));
+    let frontend_fm = parse_frontmatter(&frontend_content);
+    if let Some(serde_yaml::Value::Sequence(deps)) = frontend_fm.get("depends_on") {
+        let dep_strs: Vec<&str> = deps.iter().filter_map(|v| v.as_str()).collect();
+        assert!(dep_strs.contains(&"001-auth"));
+        assert!(dep_strs.contains(&"002-api"));
+    } else {
+        panic!("Expected depends_on to be a sequence");
+    }
+}
+
+#[test]
 fn test_list_specs_by_status() {
     let ctx = TestContext::new();
     let cwd = ctx.path();

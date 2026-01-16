@@ -5,7 +5,11 @@ use leanspec_core::{FrontmatterParser, SpecLoader};
 use std::collections::HashMap;
 use std::error::Error;
 
-pub fn run(specs_dir: &str, spec: &str, depends_on: &str) -> Result<(), Box<dyn Error>> {
+pub fn run(specs_dir: &str, spec: &str, depends_on: &[String]) -> Result<(), Box<dyn Error>> {
+    if depends_on.is_empty() {
+        return Err("At least one dependency is required".into());
+    }
+
     let loader = SpecLoader::new(specs_dir);
 
     // Load source spec
@@ -13,53 +17,92 @@ pub fn run(specs_dir: &str, spec: &str, depends_on: &str) -> Result<(), Box<dyn 
         .load(spec)?
         .ok_or_else(|| format!("Spec not found: {}", spec))?;
 
-    // Find target in depends_on (support partial matching)
-    let target_path = spec_info
-        .frontmatter
-        .depends_on
-        .iter()
-        .find(|d| d.contains(depends_on) || depends_on.contains(d.as_str()))
-        .cloned();
+    let mut errors = Vec::new();
+    let mut removed = Vec::new();
+    let mut depends_on_list = spec_info.frontmatter.depends_on.clone();
 
-    let target_path = target_path
-        .ok_or_else(|| format!("{} does not depend on {}", spec_info.path, depends_on))?;
+    for dep in depends_on {
+        let target_spec = match loader.load(dep) {
+            Ok(Some(info)) => info,
+            Ok(None) => {
+                errors.push(format!("Target spec not found: {}", dep));
+                continue;
+            }
+            Err(e) => {
+                errors.push(format!("Error loading target spec {}: {}", dep, e));
+                continue;
+            }
+        };
 
-    // Read current content
-    let content = std::fs::read_to_string(&spec_info.file_path)?;
+        // Check for self-reference
+        if spec_info.path == target_spec.path {
+            errors.push("Cannot unlink a spec from itself".to_string());
+            continue;
+        }
 
-    // Remove dependency
-    let depends_on_list: Vec<_> = spec_info
-        .frontmatter
-        .depends_on
-        .iter()
-        .filter(|d| *d != &target_path)
-        .cloned()
-        .collect();
+        if !depends_on_list.contains(&target_spec.path) {
+            errors.push(format!(
+                "{} does not depend on {}",
+                spec_info.path, target_spec.path
+            ));
+            continue;
+        }
 
-    let tags_sequence: Vec<serde_yaml::Value> = depends_on_list
-        .iter()
-        .map(|t| serde_yaml::Value::String(t.clone()))
-        .collect();
+        depends_on_list.retain(|d| d != &target_spec.path);
+        removed.push(target_spec.path.clone());
+    }
 
-    let mut updates: HashMap<String, serde_yaml::Value> = HashMap::new();
-    updates.insert(
-        "depends_on".to_string(),
-        serde_yaml::Value::Sequence(tags_sequence),
-    );
+    if !removed.is_empty() {
+        // Read current content
+        let content = std::fs::read_to_string(&spec_info.file_path)?;
 
-    // Apply updates
-    let parser = FrontmatterParser::new();
-    let new_content = parser.update_frontmatter(&content, &updates)?;
+        let tags_sequence: Vec<serde_yaml::Value> = depends_on_list
+            .iter()
+            .map(|t| serde_yaml::Value::String(t.clone()))
+            .collect();
 
-    // Write back
-    std::fs::write(&spec_info.file_path, &new_content)?;
+        let mut updates: HashMap<String, serde_yaml::Value> = HashMap::new();
+        updates.insert(
+            "depends_on".to_string(),
+            serde_yaml::Value::Sequence(tags_sequence),
+        );
+
+        // Apply updates
+        let parser = FrontmatterParser::new();
+        let new_content = parser.update_frontmatter(&content, &updates)?;
+
+        // Write back
+        std::fs::write(&spec_info.file_path, &new_content)?;
+
+        for target in &removed {
+            println!(
+                "{} Unlinked: {} ✗ {}",
+                "✓".green(),
+                spec_info.path.cyan(),
+                target.cyan()
+            );
+        }
+    }
+
+    if !errors.is_empty() {
+        println!();
+        println!("{} Errors encountered:", "⚠️".yellow());
+        for error in &errors {
+            println!("  • {}", error);
+        }
+        println!();
+    }
 
     println!(
-        "{} Unlinked: {} ✗ {}",
+        "{} Successfully unlinked {} dependency(ies), {} errors",
         "✓".green(),
-        spec_info.path.cyan(),
-        target_path.cyan()
+        removed.len(),
+        errors.len()
     );
+
+    if !errors.is_empty() {
+        return Err(format!("Failed to unlink {} dependency(ies)", errors.len()).into());
+    }
 
     Ok(())
 }

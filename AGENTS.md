@@ -45,6 +45,17 @@ Lightweight spec methodology for AI-powered development.
 
 **Local Development:** Use `node bin/lean-spec.js <command>` instead of `npx lean-spec`. Build first with `pnpm build`.
 
+### Batch Operations
+
+Use batch arguments to reduce repetitive commands:
+
+```bash
+lean-spec update 001-feature-a 002-feature-b --status in-progress
+lean-spec archive 001-feature-a 002-feature-b
+lean-spec link 003-api --depends-on 001-auth 002-database
+lean-spec unlink 003-api --depends-on 001-auth 002-database
+```
+
 ## ⚠️ Core Rules
 
 | Rule                                | Details                                                                                                                                          |

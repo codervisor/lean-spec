@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: '2025-11-03'
 tags:
   - vscode
@@ -9,16 +9,19 @@ tags:
   - v0.2.0-optional
 priority: medium
 created_at: '2025-11-03T00:00:00Z'
-updated_at: '2025-11-26T06:03:45.111Z'
+updated_at: '2026-01-16T07:23:04.394Z'
 depends_on:
   - 067-monorepo-core-extraction
   - 017-vscode-extension
   - 072-ai-agent-first-use-workflow
+transitions:
+  - status: archived
+    at: '2026-01-16T07:23:04.394Z'
 ---
 
 # GitHub Copilot Chat Slash Commands & Prompts
 
-> **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-03 · **Tags**: vscode, copilot, ai, ux, v0.2.0-optional
+> **Status**: 📦 Archived · **Priority**: Medium · **Created**: 2025-11-03 · **Tags**: vscode, copilot, ai, ux, v0.2.0-optional
 
 **Project**: lean-spec  
 **Team**: Core Development

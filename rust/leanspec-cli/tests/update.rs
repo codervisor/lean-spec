@@ -177,6 +177,70 @@ fn test_update_by_number() {
 }
 
 #[test]
+fn test_update_batch_status() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "api");
+    create_spec(cwd, "frontend");
+
+    let result = exec_cli(
+        &[
+            "update",
+            "001-api",
+            "002-frontend",
+            "--status",
+            "in-progress",
+        ],
+        cwd,
+    );
+    assert!(result.success);
+
+    let api_content = read_file(&cwd.join("specs").join("001-api").join("README.md"));
+    let api_fm = parse_frontmatter(&api_content);
+    assert_eq!(
+        api_fm.get("status").and_then(|v| v.as_str()),
+        Some("in-progress")
+    );
+
+    let frontend_content = read_file(&cwd.join("specs").join("002-frontend").join("README.md"));
+    let frontend_fm = parse_frontmatter(&frontend_content);
+    assert_eq!(
+        frontend_fm.get("status").and_then(|v| v.as_str()),
+        Some("in-progress")
+    );
+}
+
+#[test]
+fn test_update_batch_mixed_valid_invalid() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "api");
+
+    let result = exec_cli(
+        &[
+            "update",
+            "001-api",
+            "999-missing",
+            "--status",
+            "in-progress",
+        ],
+        cwd,
+    );
+    assert!(!result.success);
+
+    let api_content = read_file(&cwd.join("specs").join("001-api").join("README.md"));
+    let api_fm = parse_frontmatter(&api_content);
+    assert_eq!(
+        api_fm.get("status").and_then(|v| v.as_str()),
+        Some("in-progress")
+    );
+}
+
+#[test]
 fn test_update_completed_timestamp() {
     let ctx = TestContext::new();
     let cwd = ctx.path();

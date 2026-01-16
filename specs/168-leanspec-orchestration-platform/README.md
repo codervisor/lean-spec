@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2025-12-12
-priority: critical
+priority: high
 tags:
 - architecture
 - ai-agents
@@ -16,9 +16,8 @@ depends_on:
 - 123-ai-coding-agent-integration
 - 213-cloud-leanspec-local-sync-bridge
 created_at: 2025-12-12T07:50:22.373Z
-updated_at: 2026-01-14T07:59:38.875478Z
+updated_at: 2026-01-16T07:26:43.673344Z
 ---
-
 # LeanSpec as AI Coding Session Orchestration Platform
 
 > **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-12-12 · **Tags**: architecture, ai-agents, desktop, orchestration, sdd-lifecycle, agent-relay, devlog

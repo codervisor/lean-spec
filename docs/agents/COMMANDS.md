@@ -90,16 +90,21 @@ lean-spec update <spec> --assignee "Name"
 
 # Combine multiple updates
 lean-spec update <spec> --status in-progress --priority high
+
+# Batch update multiple specs
+lean-spec update 001-feature-a 002-feature-b --status in-progress
 ```
 
 ### Manage Relationships
 ```bash
 # Add dependencies
 lean-spec link <spec> --depends-on other-spec
+lean-spec link <spec> --depends-on dep-a dep-b
 lean-spec link <spec> --related other-spec
 
 # Remove relationships
 lean-spec unlink <spec> --depends-on other-spec
+lean-spec unlink <spec> --depends-on dep-a dep-b
 lean-spec unlink <spec> --related other-spec
 
 # View dependency graph
@@ -113,6 +118,7 @@ lean-spec deps <spec> --json         # JSON output
 ### Archive Spec
 ```bash
 lean-spec archive <spec>
+lean-spec archive 001-feature-a 002-feature-b
 ```
 Moves spec to `archived/` directory.
 

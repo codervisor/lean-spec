@@ -1,15 +1,15 @@
 ---
 status: planned
-created: '2025-12-04'
+created: 2025-12-04
+priority: high
 tags:
-  - marketing
-  - growth
-  - strategy
-  - community
-priority: critical
-created_at: '2025-12-04T01:43:22.417Z'
+- marketing
+- growth
+- strategy
+- community
+created_at: 2025-12-04T01:43:22.417Z
+updated_at: 2026-01-16T07:26:36.670816Z
 ---
-
 # LeanSpec Growth Marketing Strategy v2
 
 > **Status**: 📅 Planned · **Priority**: Critical · **Created**: 2025-12-04

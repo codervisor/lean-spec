@@ -214,9 +214,9 @@ enum Commands {
         /// Spec to link from
         spec: String,
 
-        /// Spec to depend on
-        #[arg(long)]
-        depends_on: String,
+        /// Spec(s) to depend on
+        #[arg(long, required = true, num_args = 1..)]
+        depends_on: Vec<String>,
     },
 
     /// List all specs with optional filtering
@@ -375,15 +375,16 @@ enum Commands {
         /// Spec to unlink from
         spec: String,
 
-        /// Spec to remove from dependencies
-        #[arg(long)]
-        depends_on: String,
+        /// Spec(s) to remove from dependencies
+        #[arg(long, required = true, num_args = 1..)]
+        depends_on: Vec<String>,
     },
 
     /// Update a spec's frontmatter
     Update {
-        /// Spec path or number
-        spec: String,
+        /// Spec path(s) or number(s)
+        #[arg(required = true, num_args = 1..)]
+        specs: Vec<String>,
 
         /// New status
         #[arg(short, long)]
@@ -582,7 +583,7 @@ fn main() -> ExitCode {
             commands::unlink::run(&specs_dir, &spec, &depends_on)
         }
         Commands::Update {
-            spec,
+            specs,
             status,
             priority,
             assignee,
@@ -591,7 +592,7 @@ fn main() -> ExitCode {
             force,
         } => commands::update::run(
             &specs_dir,
-            &spec,
+            &specs,
             status,
             priority,
             assignee,

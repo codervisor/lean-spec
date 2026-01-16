@@ -199,11 +199,11 @@ lean-spec list --status planned --json
 更新Spec元数据。
 
 ```bash
-lean-spec update <spec> [options]
+lean-spec update <spec> [<spec> ...] [options]
 ```
 
 **参数：**
-- `<spec>` - Spec标识符（必需）。可以是：
+- `<spec>` - 一个或多个Spec标识符（必需）。每个可以是：
   - Spec编号：`42` 或 `042`
   - Spec名称：`unified-dashboard`
   - 完整文件夹：`045-unified-dashboard`
@@ -232,6 +232,9 @@ lean-spec update 1 --field epic=PROJ-123
 
 # 更新多个字段
 lean-spec update 1 --status=complete --priority=high
+
+# 批量更新多个Spec
+lean-spec update 001-user-auth 002-password-reset --status=in-progress
 ```
 
 **输出：**
@@ -303,7 +306,7 @@ lean-spec search "password" --field epic=PROJ-123
 归档已完成的Spec。
 
 ```bash
-lean-spec archive <spec>
+lean-spec archive <spec> [<spec> ...]
 ```
 
 **参数：**
@@ -320,6 +323,9 @@ lean-spec archive 1
 
 # 按名称归档
 lean-spec archive user-auth
+
+# 批量归档多个Spec
+lean-spec archive 001-user-auth 002-password-reset
 ```
 
 **输出：**
