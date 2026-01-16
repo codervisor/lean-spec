@@ -1,7 +1,7 @@
 ---
 status: in-progress
 created: 2026-01-14
-priority: medium
+priority: high
 tags:
 - architecture
 - refactoring
@@ -10,12 +10,11 @@ tags:
 depends_on:
 - 151-multi-project-architecture-refactoring
 created_at: 2026-01-14T09:48:44.690848Z
-updated_at: 2026-01-14T10:07:32.136856Z
+updated_at: 2026-01-16T07:31:55.210743Z
 transitions:
 - status: in-progress
   at: 2026-01-14T10:07:32.136856Z
 ---
-
 # Remove Single-Project Mode and SPECS_MODE Environment Variable
 
 ## Overview

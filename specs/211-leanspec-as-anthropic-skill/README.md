@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-12
-priority: medium
+priority: high
 tags:
 - agent-skills
 - integration
@@ -9,9 +9,8 @@ tags:
 - cross-platform
 - addon
 created_at: 2026-01-12T13:55:05.053133Z
-updated_at: 2026-01-12T13:55:05.053133Z
+updated_at: 2026-01-16T07:31:51.445207Z
 ---
-
 # LeanSpec Agent Skill Support
 
 ## Overview

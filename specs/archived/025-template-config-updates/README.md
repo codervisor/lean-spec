@@ -1,17 +1,20 @@
 ---
-status: planned
+status: archived
 created: '2025-11-03'
 tags:
   - templates
   - polish
 priority: low
 created_at: '2025-11-26T02:36:00.273Z'
-updated_at: '2025-11-26T02:36:00.273Z'
+updated_at: '2026-01-16T07:32:43.934Z'
+transitions:
+  - status: archived
+    at: '2026-01-16T07:32:43.934Z'
 ---
 
 # Template Config Updates
 
-> **Status**: 🗓️ Planned · **Priority**: Low · **Created**: 2025-11-03 · **Tags**: templates, polish
+> **Status**: 📦 Archived · **Priority**: Low · **Created**: 2025-11-03 · **Tags**: templates, polish
 
 
 > Update all template configs to use new format consistently

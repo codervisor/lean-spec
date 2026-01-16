@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: '2025-12-05'
 tags:
   - cli
@@ -8,11 +8,15 @@ tags:
   - dependencies
 priority: medium
 created_at: '2025-12-05T07:16:51.033Z'
+updated_at: '2026-01-16T07:32:19.621Z'
+transitions:
+  - status: archived
+    at: '2026-01-16T07:32:19.621Z'
 ---
 
 # Add requiredBy Parameter to Link Command
 
-> **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-12-05
+> **Status**: 📦 Archived · **Priority**: Medium · **Created**: 2025-12-05 · **Tags**: cli, mcp, dx, dependencies
 
 ## Overview
 
