@@ -295,6 +295,13 @@ Rules:
 Context economy: stay focused.`;
 ```
 
+## MVP Focus
+
+Initial delivery prioritizes the end-to-end MVP path:
+- Phase 1: Chat server package setup
+- Phase 3: Rust HTTP proxy handler
+- Phase 5: Chat UI components (feature-flagged)
+
 ## Plan
 
 ### Phase 1: Node.js Chat Server Package Setup (2 days)
@@ -465,7 +472,7 @@ MAX_STEPS=10
 
 - 2026-01-16: Bootstrapped the repo so LeanSpec CLI works locally (pnpm install + rust binary build).
 - 2026-01-16: Baseline lint fails in `packages/desktop` due to missing eslint config (existing issue); build/test ran successfully.
-- 2026-01-16: Set spec status to in-progress; awaiting scope confirmation for full implementation.
+- 2026-01-16: Set spec status to in-progress; MVP delivery focus confirmed (Phases 1, 3, 5).
 
 ## Notes
 
