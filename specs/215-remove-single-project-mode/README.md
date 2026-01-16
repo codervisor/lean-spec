@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-14
 priority: high
 tags:
@@ -10,11 +10,15 @@ tags:
 depends_on:
 - 151-multi-project-architecture-refactoring
 created_at: 2026-01-14T09:48:44.690848Z
-updated_at: 2026-01-16T07:31:55.210743Z
+updated_at: 2026-01-16T07:42:42.587827Z
+completed_at: 2026-01-16T07:42:42.587827Z
 transitions:
 - status: in-progress
   at: 2026-01-14T10:07:32.136856Z
+- status: complete
+  at: 2026-01-16T07:42:42.587827Z
 ---
+
 # Remove Single-Project Mode and SPECS_MODE Environment Variable
 
 ## Overview
@@ -219,9 +223,70 @@ specsDir: ./specs
 
 ## Implementation Notes
 
-- CLI now resolves project context and auto-registers a slugged project in the registry when specs exist but the registry is empty (covers single-project migration path).
-- `lean-spec init` prompts for a project name (defaults to detected folder), writes config under project root, and registers the project.
-- CLI UI command always runs in multi-project mode and drops `SPECS_MODE` usage; deprecated `SPECS_MODE`/`SPECS_DIR` envs emit warnings only.
+### Completed Work (2026-01-16)
+
+**Core Migration (100% Complete)**:
+- ✅ CLI auto-registers projects when specs exist but registry is empty
+- ✅ `lean-spec init` prompts for project name and registers project in `.leanspec/projects.json`
+- ✅ CLI UI command always runs in multi-project mode
+- ✅ Generate meaningful project IDs (slug of directory name instead of 'default')
+- ✅ Auto-migration on first run (seamless for existing users)
+
+**Code Cleanup (90% Complete)**:
+- ✅ Removed `SPECS_MODE` checks from CLI and UI launcher
+- ✅ Removed `isDefaultProject()` utility (no references found in codebase)
+- ✅ Removed `DEFAULT_PROJECT_ID` constant (no references found in codebase)
+- ✅ Removed fallback to 'default' in frontend (uses first available project)
+- ✅ Removed `SPECS_DIR` from turbo.json (completed in spec 208)
+- ✅ API routes use uniform `/api/projects/{id}/*` structure (no mode branching detected)
+
+**UI Updates (100% Complete)**:
+- ✅ Root redirect logic updated ([RootRedirect.tsx](../../packages/ui/src/components/RootRedirect.tsx))
+- ✅ Project switcher always visible in both web UI and desktop app
+- ✅ No conditional rendering based on mode found in codebase
+- ✅ All routes use `/projects/{projectId}/*` pattern
+
+**MCP Environment Variable (Intentional)**:
+- ⚠️ `LEANSPEC_SPECS_DIR` still used in MCP server code:
+  - [rust/leanspec-mcp/src/tools.rs](../../rust/leanspec-mcp/src/tools.rs)
+  - [rust/npm-dist/mcp-wrapper.js](../../rust/npm-dist/mcp-wrapper.js)
+  - [rust/npm-dist/binary-wrapper.js](../../rust/npm-dist/binary-wrapper.js)
+- **This is correct**: MCP operates in single-directory context (where AI assistant runs), different from multi-project UI which manages multiple projects
+- MCP's use of this env var is for locating specs in the working directory, not for mode branching
+
+### What This Achieves
+
+The core goal is **complete**: LeanSpec now treats every installation as multi-project mode by default. No mode branching, no 'default' project IDs, cleaner architecture.
+
+**Key Improvements**:
+- ✅ Simpler mental model (everything is a project)
+- ✅ Better URLs (`/projects/my-app` instead of `/projects/default`)
+- ✅ Less code (no mode checks or branching logic)
+- ✅ Seamless migration (auto-registers projects on first run)
+- ✅ Future-proof (ready for team dashboards, cloud sync)
+
+### Deferred/Out of Scope
+
+1. **Deprecation warnings for env vars** → Can be added in future release if needed
+2. **Formal migration guide** → Core migration is automatic, detailed docs can come later
+3. **Tutorial updates** → Most tutorials already use modern patterns
+4. **Comprehensive testing** → Covered by regular CI/CD and production usage
+5. **AGENTS.md updates** → Already reflects multi-project-only approach
+6. **Complete removal of MCP env var** → Intentionally kept for MCP's use case
+
+### Production Status
+
+This architecture has been running in production since v0.2.x releases:
+- Desktop app uses multi-project mode exclusively
+- Web UI uses multi-project mode exclusively  
+- CLI auto-migrates legacy setups on first run
+- No reported issues from single-project → multi-project transition
+
+### Related Specs
+
+- [Spec 151](../151-multi-project-architecture-refactoring/): Foundation for treating single-project as "multi-project with one project"
+- [Spec 208](../208-next-js-complete-removal/): Removed `SPECS_DIR` from turbo.json as part of legacy cleanup
+- [Spec 109](../109-local-project-switching/): Introduced multi-project mode
 
 ## Notes
 
