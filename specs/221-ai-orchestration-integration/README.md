@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-16
-priority: critical
+priority: medium
 tags:
 - orchestration
 - integration
@@ -18,9 +18,8 @@ depends_on:
 - 211-leanspec-as-anthropic-skill
 - 123-ai-coding-agent-integration
 created_at: 2026-01-16T07:46:14.630001Z
-updated_at: 2026-01-16T07:46:22.231130Z
+updated_at: 2026-01-16T08:48:00.396767Z
 ---
-
 # AI Orchestration Integration: Unified Workflow
 
 ## Overview
