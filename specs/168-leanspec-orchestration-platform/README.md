@@ -121,36 +121,72 @@ See [DESIGN.md](./DESIGN.md) for detailed architecture, UI flows, and integratio
 
 ## Plan
 
-### Phase 1: Architecture & Design (Week 1)
+### Phase 1: Foundation Enhancement (Week 1-2)
 - [x] Create spec 168 (this document)
+- [x] Add competitive landscape analysis
+- [x] Clarify LeanSpec-native UX approach (build on existing desktop + chatbot)
 - [ ] Create DESIGN.md with detailed architecture
-- [ ] Review with team
-- [ ] Define API contracts
+- [ ] Define API contracts between desktop, chatbot, and agent-relay
+- [ ] Enhance Rust agent command with ralph/burst flags (stub)
+- [ ] Add `--max-iterations <n>` flag support
 
-### Phase 2: Core Integration (Week 2)
-- [ ] Implement agent-relay client
-- [ ] Implement orchestrator
-- [ ] Implement session manager
+### Phase 2: Desktop Orchestration UI (Week 3-4) 🎯
+**Goal**: Enhance existing LeanSpec Desktop with orchestration capabilities
 
-### Phase 3: Desktop UI (Week 3)
-- [ ] Implement session views
-- [ ] Implement implementation flow
-- [ ] System integration (tray, shortcuts, notifications)
+- [ ] **Enhanced Spec Detail View**
+  - [ ] Add "Implement with AI" action button (primary CTA)
+  - [ ] Show implementation status banner when agent running
+  - [ ] Live task status section (current phase, progress)
+  - [ ] Agent activity log (condensed view, expandable)
+  
+- [ ] **AI Orchestration Panel**
+  - [ ] Trigger panel: agent selector, mode (guided/autonomous), ralph toggle
+  - [ ] Collapsible terminal output stream (preserves existing spec view)
+  - [ ] Phase progress indicators (inline status chips)
+  - [ ] Quick controls: pause/resume/cancel
+  
+- [ ] **Chatbot Integration (Spec 94)**
+  - [ ] Embed AI chat panel (slide-out from right)
+  - [ ] Context-aware: knows current spec, can trigger implementation
+  - [ ] Natural language commands: "implement this spec with Claude"
+  - [ ] Show implementation status in chat history
+  
+- [ ] **Implementation Status Tracking**
+  - [ ] Visual indicators on spec cards: idle/running/validating/complete
+  - [ ] Real-time updates without page refresh
+  - [ ] Session history view (past implementations)
+  - [ ] Error state handling with actionable feedback
 
-### Phase 4: Validation System (Week 4)
-- [ ] Implement validation runner
-- [ ] Implement AI code review
-- [ ] Implement validation UI
+### Phase 3: Agent-Relay Integration (Week 5-6)
+- [ ] Implement agent-relay client library
+- [ ] Session manager with persistence
+- [ ] WebSocket connection for real-time updates
+- [ ] Graceful fallback to basic dispatch if agent-relay unavailable
 
-### Phase 5: Devlog Integration (Week 5)
-- [ ] Implement telemetry client
-- [ ] Implement metrics views
-- [ ] End-to-end testing
+### Phase 4: Validation System (Week 7-8)
+- [ ] Integrate with Ralph mode critic (spec 171)
+- [ ] Test runner integration (npm test, pytest, cargo test)
+- [ ] Spec verification checks
+- [ ] Validation results UI with actionable feedback
 
-### Phase 6: Documentation & Launch (Week 6)
-- [ ] Update documentation
-- [ ] Create video tutorials
+### Phase 5: Devlog Integration (Week 9-10)
+- [ ] Telemetry client for session logging
+- [ ] Metrics dashboard: completion rates, iteration counts, token usage
+- [ ] Session history and replay
+- [ ] Analytics views for team performance
+
+### Phase 6: Polish & Launch (Week 11-12)
+- [ ] Performance optimization (streaming, rendering)
+- [ ] Error handling and recovery
+- [ ] Documentation and video tutorials
 - [ ] Release v0.5.0-orchestration
+
+**Success Metrics**:
+- Can dispatch spec to agent from Desktop in <3 clicks
+- Real-time output appears within 500ms
+- Session state persists across app restarts
+- Ralph mode converges to quality code in <10 iterations (75%+ cases)
+- User satisfaction: >4.5/5 (vs vibe-kanban baseline)
 
 ## Test
 
@@ -212,6 +248,70 @@ Spec 159 established separation of concerns at the **implementation level**. Thi
 **Before**: "LeanSpec is a lightweight spec management tool for AI-powered development."
 
 **After**: "LeanSpec is the orchestration platform for AI coding sessions. Create specs, implement them with AI agents, validate the results, and track everything - all from one unified interface."
+
+### Competitive Landscape: LeanSpec vs Vibe-Kanban
+
+**Vibe-Kanban** (github.com/BloopAI/vibe-kanban) is an orchestration tool that provides kanban-style task management for AI coding agents (16.4k stars, actively maintained).
+
+#### Strategic Differentiation
+
+**Vibe-Kanban**: Task-centric kanban board for agent switching
+- Focus: Visual task board with drag-and-drop, multi-agent orchestration
+- Workflow: Create task → Assign agent → Monitor via terminal → Manual completion
+- Value: Better UX for managing multiple agents than CLI-only tools
+
+**LeanSpec**: Spec-driven orchestration with autonomous quality loops
+- Focus: Spec lifecycle automation with built-in validation
+- Workflow: Design spec → Auto-implement → Auto-validate → Auto-complete
+- Value: End-to-end SDD methodology + autonomous quality loops + existing UI foundation
+
+#### Why LeanSpec's Approach is Different
+
+**1. Build on Existing Strengths**
+- ✅ Already have desktop app (spec 148) with native GUI
+- ✅ Already have spec detail views, metadata editing
+- ✅ Already have chatbot (spec 94) for conversational interface
+- ❌ Don't need to replicate kanban boards - specs already organized by status
+
+**2. Spec-Centric vs Task-Centric**
+- **Vibe-Kanban**: Tasks are the unit of work (kanban cards)
+- **LeanSpec**: Specs are the unit of work (design documents)
+- **Advantage**: Specs contain requirements, validation criteria, and context - tasks don't
+
+**3. Conversational + Visual**
+- **Vibe-Kanban**: Pure visual interface (click buttons, drag cards)
+- **LeanSpec**: Hybrid interface (visual spec browsing + AI chat orchestration)
+- **Advantage**: "Implement this spec with Claude" in chat is faster than 5 UI clicks
+
+**4. Autonomous Quality Loops**
+- **Vibe-Kanban**: Manual supervision, no validation
+- **LeanSpec**: Ralph mode (spec 171) + critic/validator iterates until quality achieved
+- **Advantage**: Set it and forget it, agent self-corrects until tests pass
+
+#### Feature Comparison (What We Don't Need to Copy)
+
+| Vibe-Kanban Feature         | LeanSpec Equivalent                          | Why Different?                               |
+| --------------------------- | -------------------------------------------- | -------------------------------------------- |
+| Kanban board UI             | Status filtering + list/grid views           | Specs already organized, no need for columns |
+| Drag-and-drop status change | Chat: "mark spec 82 in-progress"             | Conversational > mouse dragging              |
+| Task creation modal         | Chat: "create spec for X"                    | Natural language > form filling              |
+| Agent selector dropdown     | Chat: "use Claude" or quick action button    | Context-aware selection                      |
+| Terminal output panel       | Collapsible activity log + status indicators | Non-intrusive, preserves spec view           |
+| Parallel task view          | Multi-project dashboard (already exists)     | Already have this via spec 148               |
+
+#### Market Positioning
+
+**Vibe-Kanban positioning**: "Get 10X more out of coding agents" (productivity multiplier)
+
+**LeanSpec positioning**: "AI orchestration platform for spec-driven development" (methodology + automation)
+
+**Not competing directly** - Serving different needs:
+- Vibe-Kanban = Visual task board for agent juggling
+- LeanSpec = Spec-driven development with AI assistance
+
+**Target Users**:
+- **Vibe-Kanban**: Individual developers switching between multiple agents
+- **LeanSpec**: Teams practicing SDD with automated quality assurance
 
 ### Related Specs
 

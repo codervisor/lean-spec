@@ -1,22 +1,21 @@
 ---
-status: in-progress
-created: '2025-12-10'
-tags:
-  - desktop
-  - ui
-  - ux
-  - os-integration
-  - tauri
+status: complete
+created: 2025-12-10
 priority: medium
-created_at: '2025-12-10T08:41:06.205Z'
+tags:
+- desktop
+- ui
+- ux
+- os-integration
+- tauri
 depends_on:
-  - 148-leanspec-desktop-app
-updated_at: '2025-12-10T08:51:47.855Z'
+- 148-leanspec-desktop-app
+created_at: 2025-12-10T08:41:06.205Z
+updated_at: 2026-01-16T07:45:23.145052Z
 transitions:
-  - status: in-progress
-    at: '2025-12-10T08:51:47.855Z'
+- status: in-progress
+  at: 2025-12-10T08:51:47.855Z
 ---
-
 # Native Menu Bar for Desktop App
 
 > **Status**: ⏳ In progress · **Priority**: Medium · **Created**: 2025-12-10 · **Tags**: desktop, ui, ux, os-integration, tauri
