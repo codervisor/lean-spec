@@ -10,7 +10,6 @@ packages/
 ├── mcp/               - @leanspec/mcp: MCP server wrapper
 ├── desktop/           - @leanspec/desktop: Tauri desktop app
 ├── ui/                - @leanspec/ui: Primary Vite SPA (web + desktop)
-├── ui-legacy-nextjs/  - Archived Next.js UI (not built/published)
 └── ui-components/     - Shared component library
 ```
 
@@ -36,7 +35,6 @@ packages/
 
 - Single UI codebase (@leanspec/ui) for web and desktop
 - Rust provides backend for both HTTP server and Tauri commands
-- Archived Next.js implementation remains in `ui-legacy-nextjs` for reference only
 
 ## lean-spec (CLI)
 
@@ -86,13 +84,6 @@ pnpm --filter @leanspec/ui dev       # Vite dev server
 pnpm --filter @leanspec/ui build     # build SPA assets
 pnpm --filter @leanspec/ui preview   # preview production build
 ```
-
-## @leanspec/ui-legacy-nextjs (Archived)
-
-Legacy Next.js implementation kept for rollback/reference:
-- Marked `private` and excluded from workspace builds
-- Not published to npm
-- See `packages/ui-legacy-nextjs/ARCHIVED.md` for details
 
 ## @leanspec/desktop
 
@@ -148,5 +139,4 @@ Platform-specific binary packages (published separately):
 ## Migration Notes
 
 - Vite SPA replaces the former Next.js UI
-- Archived Next.js code lives in `packages/ui-legacy-nextjs`
 - Rust remains the single source of truth for backend logic

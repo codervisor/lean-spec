@@ -1,6 +1,6 @@
 # @leanspec/ui
 
-Primary Vite-based Single Page Application for LeanSpec spec management (web + desktop). The legacy Next.js implementation is archived in `packages/ui-legacy-nextjs/`.
+Primary Vite-based Single Page Application for LeanSpec spec management (web + desktop).
 
 ## Overview
 

@@ -103,7 +103,7 @@ lean-spec init
 #### Phase 3: Remove Legacy Code
 
 **Files to remove/simplify:**
-- `packages/ui-legacy-nextjs/src/lib/projects/constants.ts` (DEFAULT_PROJECT_ID)
+- Legacy default-project constants (remove any remaining `DEFAULT_PROJECT_ID` usage)
 - All `isDefaultProject()` checks
 - All `SPECS_MODE` environment variable checks
 - All mode branching logic

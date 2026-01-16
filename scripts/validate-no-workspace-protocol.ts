@@ -84,9 +84,6 @@ async function findWorkspaceReferences(): Promise<WorkspaceRef[]> {
     // Skip private packages (not published to npm)
     if (pkg.private) continue;
 
-    // Skip archived packages
-    if (pkg.name === '@leanspec/ui-legacy-nextjs') continue;
-
     const depTypes = [
       'dependencies',
       'devDependencies',

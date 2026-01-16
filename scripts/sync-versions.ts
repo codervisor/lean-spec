@@ -99,12 +99,6 @@ async function syncVersions(dryRun: boolean = false): Promise<void> {
       const packageName = pkg.name;
       const currentVersion = pkg.version;
 
-      if (packageName === '@leanspec/ui-legacy-nextjs' || packageLabel === 'ui-legacy-nextjs') {
-        console.log(`ℹ ${packageName || packageLabel}: archived package (skipped)`);
-        skipped++;
-        continue;
-      }
-
       if (currentVersion === targetVersion) {
         console.log(`✓ ${packageName}: ${currentVersion} (already synced)`);
         skipped++;
