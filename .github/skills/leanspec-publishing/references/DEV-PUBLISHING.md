@@ -89,5 +89,5 @@ npm view lean-spec optionalDependencies
 
 ## See Also
 
-- [Full Publishing Guide](agents/PUBLISHING.md) - Complete release process
-- [npm Distribution](npm-distribution.md) - Architecture details
+- [Full Publishing Guide](./PUBLISHING.md) - Complete release process
+- [npm Distribution](./npm-distribution.md) - Architecture details

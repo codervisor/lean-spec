@@ -4,6 +4,16 @@
 
 Lightweight spec methodology for AI-powered development.
 
+## Available Skills
+
+This project provides specialized skills for progressive discovery:
+
+- **leanspec-sdd** - Spec-Driven Development methodology (always active in this project)
+- **leanspec-development** - Development workflows, testing, and contributing
+- **leanspec-publishing** - Publishing, releases, and npm distribution
+
+See [.github/skills/](.github/skills/) for skill implementations.
+
 ## Project-Specific Rules
 
 1. Always use `pnpm` instead of `npm` where applicable.
