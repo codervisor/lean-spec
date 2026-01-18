@@ -4,9 +4,6 @@
 
 Lightweight spec methodology for AI-powered development.
 
-**Core SDD workflow** is defined in .lean-spec/skills/leanspec-sdd/SKILL.md.
-Keep this file focused on project-specific rules only.
-
 ## Project-Specific Rules
 
 1. Always use `pnpm` instead of `npm` where applicable.
