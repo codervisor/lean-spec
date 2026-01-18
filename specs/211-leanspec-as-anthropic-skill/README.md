@@ -210,11 +210,14 @@ Agent: "Spec created. Ready to implement?"
 - ✅ **MCP tools** - list, view, create, update, etc. (exists)
 - ✅ **Token counting** - Spec 069 (complete)
 - ✅ **Validation** - Spec 018 (complete)
+- ✅ **AI Tool Detection** - Spec 126 (complete) - Used for smart defaults in skill installation
 
 **Related** (coordinated but independent):
 - **168-leanspec-orchestration-platform** - Desktop app orchestration (parallel)
 - **171-burst-mode-orchestrator** - Ralph mode: autonomous iterative development pattern (parallel)
 - **123-ai-coding-agent-integration** - Agent dispatch (exists)
+- **127-init-agents-merge-automation** - AGENTS.md merge automation (complete)
+- **145-mcp-config-auto-setup** - MCP config auto-setup during init (complete)
 
 ## Design Considerations
 
@@ -334,6 +337,262 @@ Lightweight spec methodology for AI-powered development.
 
 **Note**: Exact paths depend on the agent tool being used. See https://agentskills.io for details.
 
+### 6. Skill Discovery & Onboarding Integration
+
+**Critical Feature**: `lean-spec init` must offer to set up agent skills support automatically, detecting existing skills infrastructure and offering appropriate installation options.
+
+#### Common Skills Folder Patterns
+
+Different AI coding tools use different conventions for skills:
+
+| AI Tool        | Project-Level Skills | User-Level Skills    | Status        |
+| -------------- | -------------------- | -------------------- | ------------- |
+| Claude         | `.claude/skills/`    | `~/.claude/skills/`  | Common        |
+| GitHub Copilot | `.github/skills/`    | `~/.copilot/skills/` | Emerging      |
+| Cursor         | `.cursor/skills/`    | `~/.cursor/skills/`  | Tool-specific |
+| Generic        | `.skills/`           | `~/.skills/`         | Fallback      |
+
+#### Detection Strategy
+
+During `lean-spec init`, detect existing skills folders using pattern matching:
+
+**Project-Level Detection** (check in current directory):
+- `.github/skills/` (GitHub Copilot convention)
+- `.claude/skills/` (Claude Desktop/Code convention)
+- `.cursor/skills/` (Cursor IDE convention)
+- `.skills/` (Generic fallback)
+
+**User-Level Detection** (check in `~` home directory):
+- `~/.copilot/skills/` (GitHub Copilot global)
+- `~/.claude/skills/` (Claude global)
+- `~/.cursor/skills/` (Cursor global)
+- `~/.skills/` (Generic global)
+
+**Detection Logic**:
+```typescript
+interface SkillsLocation {
+  type: 'project' | 'user';
+  path: string;
+  tool: 'github' | 'claude' | 'cursor' | 'generic';
+  exists: boolean;
+}
+
+async function detectSkillsLocations(): Promise<SkillsLocation[]> {
+  const projectPaths = [
+    { path: '.github/skills', tool: 'github' },
+    { path: '.claude/skills', tool: 'claude' },
+    { path: '.cursor/skills', tool: 'cursor' },
+    { path: '.skills', tool: 'generic' },
+  ];
+  
+  const userPaths = [
+    { path: '~/.copilot/skills', tool: 'github' },
+    { path: '~/.claude/skills', tool: 'claude' },
+    { path: '~/.cursor/skills', tool: 'cursor' },
+    { path: '~/.skills', tool: 'generic' },
+  ];
+  
+  // Check each location for existence
+  // Return list of found and potential locations
+}
+```
+
+#### Onboarding Flow Options
+
+**Scenario 1: No Existing Skills Folders**
+```
+$ lean-spec init
+
+Welcome to LeanSpec! 🚀
+
+? Which AI tools do you use? (auto-detected)
+  ◉ GitHub Copilot
+  ◯ Claude Code
+  ◯ Cursor
+
+? Install LeanSpec Agent Skill? (Recommended)
+  ❯ Yes - Project-level (.lean-spec/skills/leanspec-sdd/)
+    Yes - User-level (~/.copilot/skills/leanspec-sdd/)
+    No - Skip for now
+
+Installing skill to .lean-spec/skills/leanspec-sdd/...
+  ✓ SKILL.md created
+  ✓ references/ directory created
+  ✓ Compatible with: GitHub Copilot, Claude, Cursor, Codex
+
+💡 Tip: Compatible agents will auto-discover this skill
+```
+
+**Scenario 2: Existing Project Skills Folder Detected**
+```
+$ lean-spec init
+
+🔍 Detected: .github/skills/ (GitHub Copilot)
+
+? Install LeanSpec skill? (Recommended)
+  ❯ Yes - Install to .github/skills/leanspec-sdd/
+    Yes - Also install to .lean-spec/skills/leanspec-sdd/
+    Yes - User-level (~/.copilot/skills/leanspec-sdd/)
+    No - Skip for now
+
+Installing to .github/skills/leanspec-sdd/...
+  ✓ Skill installed
+  ✓ GitHub Copilot will auto-discover on next reload
+```
+
+**Scenario 3: Multiple Skills Locations Detected**
+```
+$ lean-spec init
+
+🔍 Detected existing skills folders:
+   • .claude/skills/ (Claude Code)
+   • ~/.copilot/skills/ (GitHub Copilot, user-level)
+
+? Where should we install the LeanSpec skill?
+  ◉ .claude/skills/leanspec-sdd/ (project, git-tracked)
+  ◉ ~/.copilot/skills/leanspec-sdd/ (user, all projects)
+  ◯ .lean-spec/skills/leanspec-sdd/ (project, LeanSpec standard)
+  ◯ Skip installation
+
+Installing to selected locations...
+  ✓ .claude/skills/leanspec-sdd/ created
+  ✓ ~/.copilot/skills/leanspec-sdd/ created
+```
+
+#### Implementation Approach
+
+**Option A: Copy Skill Files** (Recommended for v1)
+- Copy SKILL.md and references/ from bundled template
+- Each installation location gets its own copy
+- Easy to customize per-project or per-user
+- ✅ Simple, no symlink complexity
+- ⚠️ Updates require re-copying
+
+**Option B: Symlink to Bundled Skill**
+- Create symlink to skill in lean-spec installation
+- Single source of truth
+- Automatic updates
+- ⚠️ Windows compatibility issues
+- ⚠️ Breaks if lean-spec uninstalled/moved
+
+**Option C: Hybrid Approach**
+- Copy to `.lean-spec/skills/leanspec-sdd/` (canonical location)
+- Symlink from `.github/skills/`, `.claude/skills/`, etc. to `.lean-spec/skills/leanspec-sdd/`
+- Single source of truth within project
+- Tool-specific folders just link to it
+- ✅ Best of both worlds
+- ⚠️ Still has Windows symlink issues
+
+**Chosen for v1: Option A (Copy)**
+- Simplest to implement
+- Works everywhere (Windows, macOS, Linux)
+- Users can customize as needed
+- Future enhancement: `lean-spec sync-skill` to update from template
+
+#### User-Level vs Project-Level Strategy
+
+**Project-Level Skills** (`.lean-spec/skills/`, `.github/skills/`, etc.):
+- ✅ Git-tracked (team shares same methodology)
+- ✅ Version-controlled with project
+- ✅ Can customize per-project
+- ⚠️ Requires setup per project
+
+**User-Level Skills** (`~/.copilot/skills/`, `~/.claude/skills/`, etc.):
+- ✅ Works across all projects
+- ✅ Setup once, use everywhere
+- ✅ Personal workflow preferences
+- ⚠️ Not shared with team
+- ⚠️ Harder to version control
+
+**Recommendation in init**: Offer both, default to project-level for teams, user-level for individual developers
+
+#### CLI Flags for Non-Interactive Mode
+
+```bash
+# Install to project-level default location
+lean-spec init -y --skill
+
+# Install to specific locations
+lean-spec init -y --skill-project      # .lean-spec/skills/
+lean-spec init -y --skill-github       # .github/skills/
+lean-spec init -y --skill-claude       # .claude/skills/
+lean-spec init -y --skill-user         # ~/.copilot/skills/ or ~/.claude/skills/
+lean-spec init -y --skill-all          # All detected locations
+
+# Skip skill installation
+lean-spec init -y --no-skill
+```
+
+#### Integration with AI Tool Detection (Spec 126)
+
+**Leverage Existing Detection**: Reuse the AI tool detection logic from spec 126 to provide smart defaults for skill installation locations.
+
+**Detection-to-Location Mapping**:
+
+| Detected Tool          | Suggest Skills Folder(s)                                      |
+| ---------------------- | ------------------------------------------------------------- |
+| GitHub Copilot         | `.github/skills/` (project), `~/.copilot/skills/` (user)      |
+| Claude Desktop/Code    | `.claude/skills/` (project), `~/.claude/skills/` (user)       |
+| Cursor                 | `.cursor/skills/` (project), `~/.cursor/skills/` (user)       |
+| Generic (no detection) | `.lean-spec/skills/` (project), `~/.skills/` (user, fallback) |
+
+**Enhanced Onboarding Flow**:
+```
+$ lean-spec init
+
+🔍 Detected AI tools:
+   • GitHub Copilot (github.copilot extension installed)
+   • Claude Code (~/.claude directory found)
+
+? Install LeanSpec Agent Skill?
+  ❯ Yes - Project-level skills
+    Yes - User-level skills (across all projects)
+    No - Skip for now
+
+? Where should we install the skill? (Select all that apply)
+  ◉ .github/skills/leanspec-sdd/ (for GitHub Copilot)
+  ◉ .claude/skills/leanspec-sdd/ (for Claude Code)
+  ◯ .lean-spec/skills/leanspec-sdd/ (LeanSpec standard location)
+  ◯ ~/.copilot/skills/leanspec-sdd/ (user-level, all projects)
+
+Installing skill...
+  ✓ .github/skills/leanspec-sdd/ created
+  ✓ .claude/skills/leanspec-sdd/ created
+  
+💡 Tip: Restart your AI tools to discover the new skill
+```
+
+**Logic**:
+1. Run AI tool detection (from spec 126)
+2. Map detected tools to recommended skills folders
+3. Pre-select those folders in the checkbox prompt
+4. Also show generic options (`.lean-spec/skills/`, `~/.skills/`)
+5. User can adjust selection before confirming
+
+**Benefits**:
+- Zero-config experience for most users
+- Intelligent defaults based on actual installed tools
+- Still allows manual override/customization
+- Consistent with existing onboarding flow
+
+#### Success Indicators
+
+After skill installation, verify:
+- ✅ SKILL.md exists in target location(s)
+- ✅ references/ directory created with supporting docs
+- ✅ File permissions are correct (readable by AI tools)
+- ✅ If using symlinks, links are valid
+
+Show helpful message:
+```
+✓ LeanSpec Agent Skill installed!
+
+Next: Restart your AI coding tool to discover the skill.
+      Try asking: "What skills are available?"
+      
+Compatible tools: GitHub Copilot, Claude, Cursor, Codex, and more
+```
+
 ## Implementation Strategy
 
 ### Phase 1: SKILL.md Creation (1 week)
@@ -362,20 +621,54 @@ Lightweight spec methodology for AI-powered development.
 - Working examples with Claude, Cursor, Codex
 - Compatibility notes
 
-### Phase 3: Testing & Refinement (1 week)
+### Phase 3: Onboarding Integration (3-5 days)
+
+**Goals**:
+- [ ] Implement skills folder detection logic
+- [ ] Add skill installation prompt to `lean-spec init`
+- [ ] Support project-level and user-level installation
+- [ ] Handle multiple detected locations
+- [ ] Add CLI flags for non-interactive mode
+
+**Deliverables**:
+- `detectSkillsLocations()` function in init command
+- Skills installation flow integrated into init
+- CLI flags: `--skill`, `--skill-project`, `--skill-github`, `--skill-claude`, `--skill-user`, `--no-skill`
+- Success messages and next steps
+
+**Tasks**:
+- [ ] Add skills folder detection (`.github/skills/`, `.claude/skills/`, `~/.copilot/skills/`, etc.)
+- [ ] Create skill copying logic (copy SKILL.md + references/)
+- [ ] Add interactive prompts for skill location selection
+- [ ] Handle multiple detected locations with checkbox prompt
+- [ ] Add validation after installation
+- [ ] Update success message with skill-specific guidance
+- [ ] Test on macOS, Linux, Windows
+
+### Phase 4: Testing & Refinement (1 week)
 
 **Goals**:
 - [ ] Test skill with real LeanSpec projects
 - [ ] Verify agents follow SDD workflow
 - [ ] Measure token count of SKILL.md (<500 lines)
 - [ ] Gather feedback from different agent tools
+- [ ] Test onboarding flow with different scenarios
 
 **Deliverables**:
 - Test reports per agent (Claude, Cursor, Codex, etc.)
+- Onboarding flow test results (no skills, project skills, user skills, multiple)
 - Refinement list
 - Performance metrics
 
-### Phase 4: Distribution (3-5 days)
+**Test Scenarios**:
+- [ ] Fresh project, no existing skills folders → prompts for installation
+- [ ] Project with `.github/skills/` → detects and offers to install there
+- [ ] User with `~/.copilot/skills/` → detects and offers user-level
+- [ ] Multiple skills folders detected → offers checkbox selection
+- [ ] Non-interactive mode with `--skill` flag
+- [ ] Skill installed correctly and discoverable by AI tools
+
+### Phase 5: Distribution (3-5 days)
 
 **Goals**:
 - [ ] Bundle skill with lean-spec installation
@@ -387,6 +680,7 @@ Lightweight spec methodology for AI-powered development.
 - Installation guide
 - Blog post
 - PR to agentskills/community-skills repo
+- Documentation updates for onboarding flow
 
 ## Success Metrics
 
@@ -436,23 +730,54 @@ Lightweight spec methodology for AI-powered development.
 1. **Should we bundle the skill with lean-spec installation?**
    - Or distribute separately via GitHub?
    - Pros/cons of each approach
+   - **Answer**: Yes, bundle with installation for seamless onboarding
 
 2. **How do we handle skill updates?**
    - Version in metadata field
    - Migration path for existing users
+   - Consider `lean-spec sync-skill` command to update from template
 
 3. **What's the best skill location?**
    - Project-level (.lean-spec/skills/)?
    - User-level (~/.codex/skills/)?
    - Both with override behavior?
+   - **Recommendation**: Offer both during init, default to project-level for teams
 
 4. **How detailed should references/ be?**
    - Balance between completeness and token usage
    - Progressive disclosure strategy
+   - Target: <500 lines total across all reference files
 
 5. **Should we create tool-specific variants?**
    - One skill for all agents?
    - Or optimize for each (Claude, Cursor, Codex)?
+   - **Answer**: Start with universal skill, create variants if needed
+
+6. **Onboarding: How aggressive should skill installation be?**
+   - Default to "Yes" for skill installation?
+   - Show "Skip for now" option prominently?
+   - **Recommendation**: Default to Yes but make skipping easy
+
+7. **Multiple skills locations: Copy or symlink?**
+   - If user wants skill in `.github/skills/` AND `.claude/skills/`, should we:
+     - Copy to both locations (simple, works everywhere)
+     - Create one canonical location + symlinks (single source of truth)
+   - **Decision for v1**: Copy to all selected locations
+
+8. **Should we detect AI tools first, then suggest matching skills folders?**
+   - Example: Detected GitHub Copilot → suggest `.github/skills/`
+   - Example: Detected Claude → suggest `.claude/skills/`
+   - **Answer**: Yes, align suggestions with detected tools (leverage spec 126 logic)
+
+9. **What if user has both project and user-level skills folders?**
+   - Install to both automatically?
+   - Ask which one to prioritize?
+   - **Recommendation**: Show both options, let user choose (multi-select)
+
+10. **Should we create a `lean-spec install-skill` command for post-init installation?**
+    - Allows adding skill to existing projects
+    - Useful for users who skipped during init
+    - **Answer**: Yes, add this command in Phase 5
 
 ## Marketing & Positioning
 
@@ -498,6 +823,12 @@ Lightweight spec methodology for AI-powered development.
 - **069-token-counting-utils**: Context economy measurement (complete)
 - **018-spec-validation**: Quality gates (complete)
 - **117-simplify-template-system**: Template structure (complete)
+
+**Onboarding Integration**:
+- **126-ai-tool-auto-detection**: Detection of installed AI tools (complete) - **Critical for skill location suggestions**
+- **127-init-agents-merge-automation**: AGENTS.md merge automation (complete)
+- **145-mcp-config-auto-setup**: MCP config auto-setup during init (complete)
+- **121-mcp-first-agent-experience**: MCP-first AGENTS.md and multi-tool symlinks (complete)
 
 **Parallel Work**:
 - **168-leanspec-orchestration-platform**: Desktop app (separate concern)

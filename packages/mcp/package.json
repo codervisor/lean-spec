@@ -25,9 +25,17 @@
   },
   "files": [
     "bin/",
+    "binaries/",
     "README.md",
     "LICENSE"
   ],
+  "optionalDependencies": {
+    "@leanspec/mcp-darwin-arm64": "workspace:*",
+    "@leanspec/mcp-darwin-x64": "workspace:*",
+    "@leanspec/mcp-linux-arm64": "workspace:*",
+    "@leanspec/mcp-linux-x64": "workspace:*",
+    "@leanspec/mcp-windows-x64": "workspace:*"
+  },
   "dependencies": {
     "lean-spec": "workspace:*"
   },

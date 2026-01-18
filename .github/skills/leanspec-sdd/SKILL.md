@@ -74,9 +74,9 @@ Use MCP tools when available. Use CLI as fallback.
 - Document trade-offs and decisions as they happen.
 
 See detailed guidance in:
-- references/WORKFLOW.md
-- references/BEST-PRACTICES.md
-- references/EXAMPLES.md
+- [references/WORKFLOW.md](./references/WORKFLOW.md)
+- [references/BEST-PRACTICES.md](./references/BEST-PRACTICES.md)
+- [references/EXAMPLES.md](./references/EXAMPLES.md)
 
 ## Setup & Activation
 
