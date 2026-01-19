@@ -34,9 +34,6 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             platform: linux-x64
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            platform: linux-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             platform: windows-x64
@@ -73,22 +70,6 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-build-
-
-      - name: Install cross-compilation tools (Linux ARM64)
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-          
-          # Add ARM64 architecture and install ARM64 OpenSSL dev libs
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev:arm64
-
-          mkdir -p ~/.cargo
-          echo "[target.aarch64-unknown-linux-gnu]" >> ~/.cargo/config.toml
-          echo 'linker = "aarch64-linux-gnu-gcc"' >> ~/.cargo/config.toml
 
       - name: Build CLI binary
         working-directory: rust
@@ -355,7 +336,7 @@ jobs:
           echo "✅ All packages published successfully!"
           echo ""
           echo "Published:"
-          echo "  - CLI with platform binaries (darwin-x64, darwin-arm64, linux-x64, linux-arm64, windows-x64)"
+          echo "  - CLI with platform binaries (darwin-x64, darwin-arm64, linux-x64, windows-x64)"
           echo "  - MCP with platform binaries"
           echo "  - UI Components"
           echo "  - HTTP Server"
