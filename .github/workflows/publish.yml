@@ -154,6 +154,9 @@ jobs:
       - name: Generate platform package manifests
         run: pnpm tsx scripts/generate-platform-manifests.ts
       
+      - name: Add platform dependencies to parent packages
+        run: pnpm tsx scripts/add-platform-deps.ts
+      
       - name: Validate platform binaries
         run: pnpm tsx scripts/validate-platform-binaries.ts
       
@@ -207,6 +210,12 @@ jobs:
 
       - name: Copy binaries for validation
         run: ./scripts/copy-platform-binaries.sh artifacts/
+      
+      - name: Generate platform package manifests
+        run: pnpm tsx scripts/generate-platform-manifests.ts
+      
+      - name: Add platform dependencies to parent packages
+        run: pnpm tsx scripts/add-platform-deps.ts
 
       - name: Ensure CLI binaries are executable
         run: |

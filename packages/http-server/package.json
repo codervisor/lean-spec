@@ -34,13 +34,6 @@
     "README.md",
     "LICENSE"
   ],
-  "optionalDependencies": {
-    "@leanspec/http-darwin-arm64": "workspace:*",
-    "@leanspec/http-darwin-x64": "workspace:*",
-    "@leanspec/http-linux-arm64": "workspace:*",
-    "@leanspec/http-linux-x64": "workspace:*",
-    "@leanspec/http-windows-x64": "workspace:*"
-  },
   "engines": {
     "node": ">=20"
   },
