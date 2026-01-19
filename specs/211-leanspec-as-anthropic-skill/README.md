@@ -8,8 +8,10 @@ tags:
 - sdd
 - cross-platform
 - addon
+depends_on:
+- 222-cross-tool-agent-skills-compatibility
 created_at: 2026-01-12T13:55:05.053133Z
-updated_at: 2026-01-16T10:36:14.703516Z
+updated_at: 2026-01-18T14:06:24.609462Z
 transitions:
 - status: in-progress
   at: 2026-01-16T10:36:14.703516Z
@@ -21,7 +23,7 @@ transitions:
 
 ### Problem & Motivation
 
-**Agent Skills** is an open standard format (https://agentskills.io) originally developed by Anthropic and now adopted across the AI coding ecosystem by Claude, Cursor, OpenAI Codex, Letta, Factory, and others. Skills are SKILL.md files that package instructions, scripts, and resources that agents can discover and use.
+**Agent Skills** is an open standard format (https://agentskills.io) originally developed by Anthropic and now adopted across the AI coding ecosystem by Claude, Cursor, GitHub Copilot, OpenAI Codex, Gemini CLI, Letta, Factory, and others. Skills are SKILL.md files that package instructions, scripts, and resources that agents can discover and use.
 
 Currently, users must:
 - Configure LeanSpec via MCP server
@@ -55,7 +57,7 @@ Currently, users must:
 ```
 ┌────────────────────────────────────────────────────────┐
 │              LeanSpec Agent Skill                      │
-│           (SKILL.md in .lean-spec/skills/)             │
+│      (SKILL.md in tool-specific skills folders)        │
 ├────────────────────────────────────────────────────────┤
 │                                                        │
 │  Replaces: Heavy AGENTS.md with SDD instructions       │
@@ -73,6 +75,24 @@ Currently, users must:
 │                                                        │
 └────────────────────────────────────────────────────────┘
 ```
+
+## Scope Clarification
+
+**This Spec (211)**: Creating the **content** of the LeanSpec Agent Skill
+- SKILL.md file structure and content
+- Methodology encoding (SDD workflow, context economy, best practices)
+- Tool reference documentation (MCP vs CLI)
+- References/ directory content (WORKFLOW.md, BEST-PRACTICES.md, EXAMPLES.md)
+- Basic installation during `lean-spec init`
+
+**Spec 222**: Cross-tool **distribution and compatibility** system
+- Comprehensive tool detection (all major AI coding tools)
+- Platform-specific installation strategies (Windows copy vs macOS/Linux symlink)
+- Multi-tool simultaneous installation
+- Tool-specific optimizations and adapters
+- Version management and sync mechanisms
+
+**Relationship**: 211 creates what to install, 222 handles how to install it across all tools and platforms.
 
 ## High-Level Approach
 
@@ -194,14 +214,20 @@ Agent: "Spec created. Ready to implement?"
 
 ## Out of Scope
 
-**NOT included in initial Skill**:
+**NOT included in this spec** (211):
 - ❌ New MCP tools (use existing ones)
 - ❌ CLI modifications (skill references existing commands)
 - ❌ Desktop app integration (handled by spec 168)
 - ❌ Complex workflow orchestration (handled by spec 171)
-- ❌ Tool-specific implementations (skill is cross-platform)
+- ❌ Comprehensive cross-tool compatibility system (handled by spec 222)
+- ❌ Platform-specific installation optimization (handled by spec 222)
+- ❌ Tool-specific variants and adapters (handled by spec 222)
+- ❌ Advanced version management and sync (handled by spec 222)
 
-**Why**: The Skill teaches methodology. Infrastructure already exists.
+**Why**: 
+- This spec focuses on creating the SKILL.md content and basic installation
+- Spec 222 handles the complete cross-tool distribution and compatibility infrastructure
+- The Skill teaches methodology; tooling already exists
 
 ## Dependencies
 
@@ -213,6 +239,7 @@ Agent: "Spec created. Ready to implement?"
 - ✅ **AI Tool Detection** - Spec 126 (complete) - Used for smart defaults in skill installation
 
 **Related** (coordinated but independent):
+- **222-cross-tool-agent-skills-compatibility** - Cross-tool compatibility strategy (planned) - **Critical for installation system**
 - **168-leanspec-orchestration-platform** - Desktop app orchestration (parallel)
 - **171-burst-mode-orchestrator** - Ralph mode: autonomous iterative development pattern (parallel)
 - **123-ai-coding-agent-integration** - Agent dispatch (exists)
@@ -229,17 +256,19 @@ Agent: "Spec created. Ready to implement?"
 - **Optional directories**: scripts/, references/, assets/
 - **Cross-platform**: Works with any skills-compatible agent
 
-**LeanSpec Skill structure**:
+**LeanSpec Skill structure** (example for Claude):
 ```
-.lean-spec/skills/leanspec-sdd/
-├── SKILL.md                # Main skill file
+.claude/skills/leanspec-sdd/      # Tool-specific location
+├── SKILL.md                      # Main skill file
 ├── references/
-│   ├── WORKFLOW.md         # Detailed SDD workflow
-│   ├── BEST-PRACTICES.md   # Common patterns
-│   └── EXAMPLES.md         # Example specs
+│   ├── WORKFLOW.md               # Detailed SDD workflow
+│   ├── BEST-PRACTICES.md         # Common patterns
+│   └── EXAMPLES.md               # Example specs
 └── scripts/
-    └── validate-spec.sh    # Optional validation script
+    └── validate-spec.sh          # Optional validation script
 ```
+
+**Note**: Different tools use different locations (`.github/skills/` for Copilot, `.cursor/skills/` for Cursor, etc.). See spec 222 for complete tool compatibility matrix.
 
 ### 2. Agent Skill vs MCP Server
 
@@ -324,18 +353,30 @@ Lightweight spec methodology for AI-powered development.
 - references/BEST-PRACTICES.md: Patterns and anti-patterns
 - references/EXAMPLES.md: Sample specs
 
-### 5. Skill Location
+### 5. Skill Location Strategy
 
-**Where to place the skill**:
+**Tool-Specific Locations** (based on spec 222 research):
 
-| Scope       | Location                                        | Use Case                            |
-| ----------- | ----------------------------------------------- | ----------------------------------- |
-| **Project** | `$PROJECT_ROOT/.lean-spec/skills/leanspec-sdd/` | Team-specific SDD variations        |
-| **User**    | `~/.codex/skills/leanspec-sdd/` (Codex)         | Personal preference across projects |
-| **User**    | `~/.cursor/skills/leanspec-sdd/` (Cursor)       | Personal preference across projects |
-| **Global**  | Bundled with lean-spec installation             | Default for all users (future)      |
+| AI Tool            | Project-Level     | User-Level           |
+| ------------------ | ----------------- | -------------------- |
+| **GitHub Copilot** | `.github/skills/` | `~/.copilot/skills/` |
+| **Claude Code**    | `.claude/skills/` | `~/.claude/skills/`  |
+| **Cursor**         | `.cursor/skills/` | `~/.cursor/skills/`  |
+| **Codex CLI**      | `.codex/skills/`  | `~/.codex/skills/`   |
+| **Gemini CLI**     | `.gemini/skills/` | `~/.gemini/skills/`  |
+| **VS Code**        | `.vscode/skills/` | `~/.vscode/skills/`  |
+| **Generic**        | `.skills/`        | `~/.skills/`         |
 
-**Note**: Exact paths depend on the agent tool being used. See https://agentskills.io for details.
+**Installation Strategy** (see spec 222 for full details):
+- Detect which AI tools are installed
+- Offer to install skill to tool-specific location(s)
+- Support multiple simultaneous installations
+- Windows: copy-based installation (default)
+- macOS/Linux: symlink option available
+
+**Scope Recommendations**:
+- **Project-Level**: Git-tracked, shared with team, per-project customization
+- **User-Level**: Works across all projects, personal preferences
 
 ### 6. Skill Discovery & Onboarding Integration
 
@@ -343,14 +384,19 @@ Lightweight spec methodology for AI-powered development.
 
 #### Common Skills Folder Patterns
 
-Different AI coding tools use different conventions for skills:
+Different AI coding tools use different conventions for skills (see spec 222 for complete compatibility matrix):
 
-| AI Tool        | Project-Level Skills | User-Level Skills    | Status        |
-| -------------- | -------------------- | -------------------- | ------------- |
-| Claude         | `.claude/skills/`    | `~/.claude/skills/`  | Common        |
-| GitHub Copilot | `.github/skills/`    | `~/.copilot/skills/` | Emerging      |
-| Cursor         | `.cursor/skills/`    | `~/.cursor/skills/`  | Tool-specific |
-| Generic        | `.skills/`           | `~/.skills/`         | Fallback      |
+| AI Tool        | Project-Level Skills | User-Level Skills    | Status   |
+| -------------- | -------------------- | -------------------- | -------- |
+| Claude         | `.claude/skills/`    | `~/.claude/skills/`  | Common   |
+| GitHub Copilot | `.github/skills/`    | `~/.copilot/skills/` | Common   |
+| Cursor         | `.cursor/skills/`    | `~/.cursor/skills/`  | Common   |
+| Codex CLI      | `.codex/skills/`     | `~/.codex/skills/`   | Emerging |
+| Gemini CLI     | `.gemini/skills/`    | `~/.gemini/skills/`  | Emerging |
+| VS Code        | `.vscode/skills/`    | `~/.vscode/skills/`  | Common   |
+| Generic        | `.skills/`           | `~/.skills/`         | Fallback |
+
+**Note**: This spec focuses on creating the SKILL.md content. Spec 222 handles the cross-tool installation system and compatibility details.
 
 #### Detection Strategy
 
@@ -368,20 +414,24 @@ During `lean-spec init`, detect existing skills folders using pattern matching:
 - `~/.cursor/skills/` (Cursor global)
 - `~/.skills/` (Generic global)
 
-**Detection Logic**:
+**Detection Logic** (see spec 222 for full implementation with all tools):
 ```typescript
 interface SkillsLocation {
   type: 'project' | 'user';
   path: string;
-  tool: 'github' | 'claude' | 'cursor' | 'generic';
+  tool: 'github' | 'claude' | 'cursor' | 'codex' | 'gemini' | 'vscode' | 'generic';
   exists: boolean;
 }
 
+// Simplified example - see spec 222 for complete TOOL_CONFIGS with detection hints
 async function detectSkillsLocations(): Promise<SkillsLocation[]> {
   const projectPaths = [
     { path: '.github/skills', tool: 'github' },
     { path: '.claude/skills', tool: 'claude' },
     { path: '.cursor/skills', tool: 'cursor' },
+    { path: '.codex/skills', tool: 'codex' },
+    { path: '.gemini/skills', tool: 'gemini' },
+    { path: '.vscode/skills', tool: 'vscode' },
     { path: '.skills', tool: 'generic' },
   ];
   
@@ -389,6 +439,9 @@ async function detectSkillsLocations(): Promise<SkillsLocation[]> {
     { path: '~/.copilot/skills', tool: 'github' },
     { path: '~/.claude/skills', tool: 'claude' },
     { path: '~/.cursor/skills', tool: 'cursor' },
+    { path: '~/.codex/skills', tool: 'codex' },
+    { path: '~/.gemini/skills', tool: 'gemini' },
+    { path: '~/.vscode/skills', tool: 'vscode' },
     { path: '~/.skills', tool: 'generic' },
   ];
   
@@ -411,16 +464,17 @@ Welcome to LeanSpec! 🚀
   ◯ Cursor
 
 ? Install LeanSpec Agent Skill? (Recommended)
-  ❯ Yes - Project-level (.lean-spec/skills/leanspec-sdd/)
+  ❯ Yes - Project-level (.github/skills/leanspec-sdd/ for Copilot)
     Yes - User-level (~/.copilot/skills/leanspec-sdd/)
     No - Skip for now
 
-Installing skill to .lean-spec/skills/leanspec-sdd/...
+Installing skill to .github/skills/leanspec-sdd/...
   ✓ SKILL.md created
   ✓ references/ directory created
-  ✓ Compatible with: GitHub Copilot, Claude, Cursor, Codex
+  ✓ Compatible with: GitHub Copilot, Claude, Cursor, Codex, and more
 
 💡 Tip: Compatible agents will auto-discover this skill
+💡 For other tools, see: lean-spec install-skill --help
 ```
 
 **Scenario 2: Existing Project Skills Folder Detected**
@@ -430,9 +484,8 @@ $ lean-spec init
 🔍 Detected: .github/skills/ (GitHub Copilot)
 
 ? Install LeanSpec skill? (Recommended)
-  ❯ Yes - Install to .github/skills/leanspec-sdd/
-    Yes - Also install to .lean-spec/skills/leanspec-sdd/
-    Yes - User-level (~/.copilot/skills/leanspec-sdd/)
+  ❯ Yes - Install to .github/skills/leanspec-sdd/ (for this tool)
+    Yes - User-level (~/.copilot/skills/leanspec-sdd/) (for all projects)
     No - Skip for now
 
 Installing to .github/skills/leanspec-sdd/...
@@ -449,9 +502,8 @@ $ lean-spec init
    • ~/.copilot/skills/ (GitHub Copilot, user-level)
 
 ? Where should we install the LeanSpec skill?
-  ◉ .claude/skills/leanspec-sdd/ (project, git-tracked)
-  ◉ ~/.copilot/skills/leanspec-sdd/ (user, all projects)
-  ◯ .lean-spec/skills/leanspec-sdd/ (project, LeanSpec standard)
+  ◉ .claude/skills/leanspec-sdd/ (project, git-tracked, for Claude)
+  ◉ ~/.copilot/skills/leanspec-sdd/ (user, all projects, for Copilot)
   ◯ Skip installation
 
 Installing to selected locations...
@@ -475,52 +527,59 @@ Installing to selected locations...
 - ⚠️ Windows compatibility issues
 - ⚠️ Breaks if lean-spec uninstalled/moved
 
-**Option C: Hybrid Approach**
-- Copy to `.lean-spec/skills/leanspec-sdd/` (canonical location)
-- Symlink from `.github/skills/`, `.claude/skills/`, etc. to `.lean-spec/skills/leanspec-sdd/`
+**Option C: Hybrid Approach** (deferred to spec 222)
+- Copy to one tool-specific location as canonical
+- Symlink from other tool folders to canonical location
 - Single source of truth within project
-- Tool-specific folders just link to it
 - ✅ Best of both worlds
 - ⚠️ Still has Windows symlink issues
 
-**Chosen for v1: Option A (Copy)**
+**Chosen for v1: Option A (Copy)** - See spec 222 for implementation details
 - Simplest to implement
 - Works everywhere (Windows, macOS, Linux)
-- Users can customize as needed
+- Users can customize per-tool as needed
+- Each tool gets its own copy in its preferred location
 - Future enhancement: `lean-spec sync-skill` to update from template
 
 #### User-Level vs Project-Level Strategy
 
-**Project-Level Skills** (`.lean-spec/skills/`, `.github/skills/`, etc.):
+**Project-Level Skills** (`.github/skills/`, `.claude/skills/`, `.cursor/skills/`, etc.):
 - ✅ Git-tracked (team shares same methodology)
 - ✅ Version-controlled with project
 - ✅ Can customize per-project
+- ✅ Tool-specific locations ensure proper discovery
 - ⚠️ Requires setup per project
 
-**User-Level Skills** (`~/.copilot/skills/`, `~/.claude/skills/`, etc.):
+**User-Level Skills** (`~/.copilot/skills/`, `~/.claude/skills/`, `~/.cursor/skills/`, etc.):
 - ✅ Works across all projects
 - ✅ Setup once, use everywhere
 - ✅ Personal workflow preferences
+- ✅ Tool-specific locations ensure proper discovery
 - ⚠️ Not shared with team
 - ⚠️ Harder to version control
 
-**Recommendation in init**: Offer both, default to project-level for teams, user-level for individual developers
+**Recommendation in init**: Offer both, default to project-level for teams, user-level for individual developers. See spec 222 for complete cross-tool installation strategy.
 
 #### CLI Flags for Non-Interactive Mode
 
 ```bash
-# Install to project-level default location
+# Install to detected tool's default location
 lean-spec init -y --skill
 
-# Install to specific locations
-lean-spec init -y --skill-project      # .lean-spec/skills/
-lean-spec init -y --skill-github       # .github/skills/
-lean-spec init -y --skill-claude       # .claude/skills/
-lean-spec init -y --skill-user         # ~/.copilot/skills/ or ~/.claude/skills/
-lean-spec init -y --skill-all          # All detected locations
+# Install to specific tool locations
+lean-spec init -y --skill-github       # .github/skills/ (GitHub Copilot)
+lean-spec init -y --skill-claude       # .claude/skills/ (Claude Code)
+lean-spec init -y --skill-cursor       # .cursor/skills/ (Cursor)
+lean-spec init -y --skill-codex        # .codex/skills/ (Codex CLI)
+lean-spec init -y --skill-gemini       # .gemini/skills/ (Gemini CLI)
+lean-spec init -y --skill-vscode       # .vscode/skills/ (VS Code)
+lean-spec init -y --skill-user         # Tool-specific user-level location
+lean-spec init -y --skill-all          # All detected tool locations
 
 # Skip skill installation
 lean-spec init -y --no-skill
+
+# See spec 222 for complete flag reference
 ```
 
 #### Integration with AI Tool Detection (Spec 126)
@@ -552,8 +611,8 @@ $ lean-spec init
 ? Where should we install the skill? (Select all that apply)
   ◉ .github/skills/leanspec-sdd/ (for GitHub Copilot)
   ◉ .claude/skills/leanspec-sdd/ (for Claude Code)
-  ◯ .lean-spec/skills/leanspec-sdd/ (LeanSpec standard location)
   ◯ ~/.copilot/skills/leanspec-sdd/ (user-level, all projects)
+  ◯ ~/.claude/skills/leanspec-sdd/ (user-level, all projects)
 
 Installing skill...
   ✓ .github/skills/leanspec-sdd/ created
@@ -637,13 +696,14 @@ Compatible tools: GitHub Copilot, Claude, Cursor, Codex, and more
 - Success messages and next steps
 
 **Tasks**:
-- [ ] Add skills folder detection (`.github/skills/`, `.claude/skills/`, `~/.copilot/skills/`, etc.)
+- [ ] Add skills folder detection for all major tools (see spec 222 for complete list)
 - [ ] Create skill copying logic (copy SKILL.md + references/)
-- [ ] Add interactive prompts for skill location selection
-- [ ] Handle multiple detected locations with checkbox prompt
+- [ ] Add interactive prompts for tool-specific skill location selection
+- [ ] Handle multiple detected tools with checkbox prompt
 - [ ] Add validation after installation
-- [ ] Update success message with skill-specific guidance
+- [ ] Update success message with tool-specific guidance
 - [ ] Test on macOS, Linux, Windows
+- [ ] Coordinate with spec 222 for cross-tool compatibility implementation
 
 ### Phase 4: Testing & Refinement (1 week)
 
@@ -824,8 +884,11 @@ Compatible tools: GitHub Copilot, Claude, Cursor, Codex, and more
 - **018-spec-validation**: Quality gates (complete)
 - **117-simplify-template-system**: Template structure (complete)
 
+**Cross-Tool Compatibility**:
+- **222-cross-tool-agent-skills-compatibility**: Cross-tool installation system, platform compatibility, tool detection (planned) - **Critical coordination point**
+
 **Onboarding Integration**:
-- **126-ai-tool-auto-detection**: Detection of installed AI tools (complete) - **Critical for skill location suggestions**
+- **126-ai-tool-auto-detection**: Detection of installed AI tools (complete) - **Used by spec 222**
 - **127-init-agents-merge-automation**: AGENTS.md merge automation (complete)
 - **145-mcp-config-auto-setup**: MCP config auto-setup during init (complete)
 - **121-mcp-first-agent-experience**: MCP-first AGENTS.md and multi-tool symlinks (complete)
@@ -836,11 +899,12 @@ Compatible tools: GitHub Copilot, Claude, Cursor, Codex, and more
 
 ## Next Steps
 
-1. **Research Anthropic Skills API/format** - Understand technical requirements
-2. **Create Skill prototype** - Build minimal working Skill
-3. **Test with real projects** - Validate SDD workflow effectiveness
-4. **Gather feedback** - Iterate on methodology encoding
-5. **Launch publicly** - Position LeanSpec as methodology, not just tooling
+1. **Create SKILL.md content** - Build universal skill following Agent Skills spec
+2. **Coordinate with spec 222** - Align on installation system and tool detection
+3. **Create Skill prototype** - Build minimal working Skill with references/
+4. **Test with real projects** - Validate SDD workflow effectiveness across tools
+5. **Gather feedback** - Iterate on methodology encoding
+6. **Launch publicly** - Position LeanSpec as cross-tool methodology standard
 
 ## Notes
 
