@@ -8,12 +8,15 @@
  * IMPORTANT: Run publish-platform-packages.ts FIRST!
  * Platform packages must be available on npm before publishing main packages.
  * 
+ * ⚠️  IMPORTANT: This script should ONLY be run in CI/CD!
+ * 
  * Usage:
- *   tsx scripts/publish-main-packages.ts [--dry-run] [--tag <tag>]
+ *   tsx scripts/publish-main-packages.ts [--dry-run] [--tag <tag>] [--allow-local]
  *   
  * Options:
- *   --dry-run    Run without actually publishing
- *   --tag <tag>  Publish with a dist-tag (e.g., dev, beta, next)
+ *   --dry-run      Run without actually publishing
+ *   --tag <tag>    Publish with a dist-tag (e.g., dev, beta, next)
+ *   --allow-local  Override CI-only check (use with caution)
  */
 
 import { execSync } from 'node:child_process';
@@ -26,6 +29,29 @@ const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
+
+function checkCIEnvironment(allowLocal: boolean): void {
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  
+  if (!isCI && !allowLocal) {
+    console.error('❌ ERROR: This script should only be run in CI/CD!');
+    console.error('');
+    console.error('Publishing should happen through the GitHub Actions workflow.');
+    console.error('This ensures platform packages are properly published first.');
+    console.error('');
+    console.error('If you absolutely must publish locally (not recommended):');
+    console.error('  tsx scripts/publish-main-packages.ts --allow-local');
+    console.error('');
+    console.error('Recommended: Use the GitHub Actions workflow instead:');
+    console.error('  gh workflow run publish.yml');
+    process.exit(1);
+  }
+  
+  if (!isCI && allowLocal) {
+    console.warn('⚠️  WARNING: Running in local mode (--allow-local)');
+    console.warn('');
+  }
+}
 
 interface PublishResult {
   package: string;
@@ -189,6 +215,10 @@ async function publishMainPackages(dryRun: boolean, tag?: string): Promise<void>
 // Parse CLI args
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const allowLocal = args.includes('--allow-local');
+
+// Check CI environment before proceeding
+checkCIEnvironment(allowLocal);
 
 let tag: string | undefined;
 const tagIndex = args.indexOf('--tag');
