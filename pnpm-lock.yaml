@@ -61,6 +61,14 @@ importers:
 
   packages/cli: {}
 
+  packages/cli/binaries/darwin-arm64: {}
+
+  packages/cli/binaries/darwin-x64: {}
+
+  packages/cli/binaries/linux-x64: {}
+
+  packages/cli/binaries/windows-x64: {}
+
   packages/desktop:
     dependencies:
       '@leanspec/ui':
@@ -160,12 +168,24 @@ importers:
       vite:
         specifier: ^6.4.1
         version: 6.4.1(@types/node@20.19.27)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.21.0)
+    optionalDependencies:
+      '@leanspec/chat-server':
+        specifier: workspace:*
+        version: link:../chat-server
 
   packages/http-server:
     devDependencies:
       nodemon:
         specifier: ^3.1.11
         version: 3.1.11
+
+  packages/http-server/binaries/darwin-arm64: {}
+
+  packages/http-server/binaries/darwin-x64: {}
+
+  packages/http-server/binaries/linux-x64: {}
+
+  packages/http-server/binaries/windows-x64: {}
 
   packages/mcp:
     dependencies:
@@ -190,6 +210,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.8
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      ai:
+        specifier: ^6.0.39
+        version: 6.0.39(zod@3.25.76)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -332,6 +355,10 @@ importers:
       vitest:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/ui@4.0.16)(jiti@2.6.1)(jsdom@27.3.0)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.21.0)
+    optionalDependencies:
+      '@leanspec/chat-server':
+        specifier: workspace:*
+        version: link:../chat-server
 
   packages/ui-components:
     dependencies:

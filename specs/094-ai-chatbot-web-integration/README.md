@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2025-11-17
 priority: high
 tags:
@@ -10,12 +10,15 @@ tags:
 depends_on:
 - 187-vite-spa-migration
 created_at: 2025-11-17T06:31:22.346Z
-updated_at: 2026-01-16T07:23:35.249214Z
+updated_at: 2026-01-19T08:17:48.521994193Z
+transitions:
+- status: in-progress
+  at: 2026-01-19T08:17:48.521994193Z
 ---
 
 # AI Chatbot for Web UI
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17 · **Tags**: web, ai, ux, v0.3.0
+> **Status**: 🚧 In Progress · **Priority**: High · **Created**: 2025-11-17 · **Tags**: web, ai, ux, v0.3.0
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -295,65 +298,65 @@ Context economy: stay focused.`;
 ## Plan
 
 ### Phase 1: Node.js Chat Server Package Setup (2 days)
-- [ ] Create `packages/chat-server` package with standalone build
-- [ ] Add package.json with proper bin entry: `"bin": { "leanspec-chat": "./dist/index.js" }`
-- [ ] Install: `pnpm add ai @ai-sdk/openai zod express`
-- [ ] Implement server with Unix socket + HTTP support:
+- [x] Create `packages/chat-server` package with standalone build
+- [x] Add package.json with proper bin entry: `"bin": { "leanspec-chat": "./dist/index.js" }`
+- [x] Install: `pnpm add ai @ai-sdk/openai zod express`
+- [x] Implement server with Unix socket + HTTP support:
   - Default: Unix socket `/tmp/leanspec-chat.sock`
   - Fallback: HTTP dynamic port (write to `~/.leanspec/chat-port.txt`)
   - Config: `LEANSPEC_CHAT_SOCKET` or `LEANSPEC_CHAT_TRANSPORT=http`
-- [ ] Create `/api/chat` endpoint with `streamText()`
-- [ ] Add `/health` endpoint
-- [ ] Build script: `esbuild` to bundle into single `dist/index.js`
+- [x] Create `/api/chat` endpoint with `streamText()`
+- [x] Add `/health` endpoint
+- [x] Build script: `esbuild` to bundle into single `dist/index.js`
 - [ ] Test: `curl --unix-socket /tmp/leanspec-chat.sock http://localhost/health`
-- [ ] Add to `pnpm-workspace.yaml`
+- [x] Add to `pnpm-workspace.yaml`
 
 ### Phase 2: CI/CD Integration (1 day)
 - [ ] Add `build-chat-server` job to `.github/workflows/publish.yml`
 - [ ] Add unit tests: `vitest` for tool schemas and prompts
 - [ ] Add integration tests: Mock AI SDK streaming
-- [ ] Add `publish-chat-server` job (publish before main packages)
-- [ ] Update `publish-main` to wait for chat-server publication
+- [x] Add `publish-chat-server` job (publish before main packages)
+- [x] Update `publish-main` to wait for chat-server publication
 - [ ] Test dev version publish: `gh workflow run publish.yml --field dev=true`
 
 ### Phase 3: Rust HTTP Proxy Handler (1 day)
-- [ ] Add dependencies to `rust/leanspec-http/Cargo.toml`: `hyperlocal`, `reqwest`
-- [ ] Create `rust/leanspec-http/src/handlers/chat.rs`
-- [ ] Implement `ChatServerConfig::from_env()` (reads socket/port config)
-- [ ] Implement proxy route: `POST /api/chat` → Unix socket/HTTP → SSE stream
+- [x] Add dependencies to `rust/leanspec-http/Cargo.toml`: `hyperlocal`, `reqwest`
+- [x] Create `rust/leanspec-http/src/handlers/chat.rs`
+- [x] Implement `ChatServerConfig::from_env()` (reads socket/port config)
+- [x] Implement proxy route: `POST /api/chat` → Unix socket/HTTP → SSE stream
 - [ ] Add health check integration: Ping chat server, restart if unhealthy
 - [ ] Test: Browser calls `/api/chat` → Node.js responds via proxy
 
 ### Phase 4: Tool Implementation (3 days)
-- [ ] Create `packages/chat-server/src/tools/leanspec-tools.ts`
-- [ ] Implement 9 core tools: list, search, get, create, update, link, deps, stats, validate
-- [ ] Implement 5 content editing tools: edit_section, update_checklist, append, edit_subspec, get_content
-- [ ] Create tool registry in `index.ts`
-- [ ] Register tools in Node.js chat server with proper Zod schemas
+- [x] Create `packages/chat-server/src/tools/leanspec-tools.ts`
+- [x] Implement 9 core tools: list, search, get, create, update, link, deps, stats, validate
+- [x] Implement 5 content editing tools: edit_section, update_checklist, append, edit_subspec, get_content
+- [x] Create tool registry in `index.ts`
+- [x] Register tools in Node.js chat server with proper Zod schemas
 - [ ] Test: Each tool via curl to `/api/chat` (through Rust proxy)
 
 ### Phase 5: Chat UI Components (2 days)
-- [ ] Install in UI package: `pnpm add ai @ai-sdk/react`
+- [x] Install in UI package: `pnpm add ai @ai-sdk/react`
 - [ ] Run: `npx ai-elements@latest` (installs shadcn components)
-- [ ] Create `/chat` route in Vite router
-- [ ] Build chat page: `<Conversation>`, `<Message>`, `<PromptInput>`
-- [ ] Add `<Tool>` component for execution display
-- [ ] Wire up `useChat({ api: '/api/chat' })`
-- [ ] Add feature flag: Only load chat if `VITE_ENABLE_AI=true`
+- [x] Create `/chat` route in Vite router
+- [x] Build chat page: `<Conversation>`, `<Message>`, `<PromptInput>`
+- [x] Add `<Tool>` component for execution display
+- [x] Wire up `useChat({ api: '/api/chat' })`
+- [x] Add feature flag: Only load chat if `VITE_ENABLE_AI=true`
 - [ ] Test: Send message → stream response → tool execution
 
 ### Phase 6: Multi-Step & Polish (2 days)
-- [ ] Add `stopWhen: stepCountIs(10)` to Node.js server
-- [ ] Implement system prompt with LeanSpec rules
-- [ ] Add model picker UI (GPT-4o, Claude, Deepseek)
-- [ ] Chat history persistence (localStorage)
+- [x] Add `stopWhen: stepCountIs(10)` to Node.js server
+- [x] Implement system prompt with LeanSpec rules
+- [x] Add model picker UI (GPT-4o, Claude, Deepseek)
+- [x] Chat history persistence (localStorage)
 - [ ] Message actions: copy, retry, feedback
 - [ ] Mobile-responsive layout
-- [ ] Error handling: tool failures, timeouts, chat server unavailable
-- [ ] Loading states and retry logic
+- [x] Error handling: tool failures, timeouts, chat server unavailable
+- [x] Loading states and retry logic
 
 ### Phase 7: Process Management (1 day)
-- [ ] Add development script: `pnpm dev:all` (concurrently runs HTTP + chat + UI)
+- [x] Add development script: `pnpm dev:all` (concurrently runs HTTP + chat + UI)
 - [ ] Docker Compose configuration for production deployment
 - [ ] Systemd service files for self-hosted deployment
 - [ ] Health check monitoring in Rust HTTP server
@@ -369,7 +372,7 @@ Context economy: stay focused.`;
 - [ ] Verify: Dev and stable release workflows work end-to-end
 
 ### Phase 9: Optional - Desktop Integration (Future)
-- [ ] Add `@leanspec/chat-server` as optional dependency to desktop
+- [x] Add `@leanspec/chat-server` as optional dependency to desktop
 - [ ] Implement ChatServerManager in Rust for subprocess management
 - [ ] Add feature flag: `cargo build --features ai-chat`
 - [ ] Test: Desktop app with AI chat enabled

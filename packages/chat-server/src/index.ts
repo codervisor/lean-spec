@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { streamText, stepCountIs } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { createLeanSpecTools } from './tools';
 import { systemPrompt } from './prompts';
 
@@ -38,11 +38,36 @@ app.post('/api/chat', async (req, res) => {
     const maxSteps = Number.parseInt(process.env.MAX_STEPS ?? '10', 10);
     const modelName = model ?? process.env.DEFAULT_MODEL ?? 'gpt-4o';
 
+    // Transform messages from UI format (with parts) to AI SDK format (with content)
+    const transformedMessages = messages.map((msg: any) => {
+      if (msg.parts && Array.isArray(msg.parts)) {
+        // Extract text content from parts array
+        const textContent = msg.parts
+          .filter((part: any) => part.type === 'text')
+          .map((part: any) => part.text)
+          .join('\n');
+        
+        return {
+          role: msg.role,
+          content: textContent,
+        };
+      }
+      // If already in correct format, return as-is
+      return msg;
+    });
+
+    // Create OpenAI provider with custom baseURL if specified (for OpenRouter, etc.)
+    const apiKey = process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY ?? 'no-key-set';
+    const openaiProvider = createOpenAI({
+      apiKey,
+      baseURL: process.env.OPENAI_BASE_URL ?? (process.env.OPENROUTER_API_KEY ? 'https://openrouter.ai/api/v1' : undefined),
+    });
+
     const result = streamText({
-      model: openai(modelName) as any,
+      model: openaiProvider(modelName) as any,
       tools,
       system: systemPrompt,
-      messages,
+      messages: transformedMessages,
       stopWhen: stepCountIs(Number.isFinite(maxSteps) ? maxSteps : 10),
     });
 

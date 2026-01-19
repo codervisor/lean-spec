@@ -167,10 +167,57 @@ jobs:
           pnpm tsx scripts/publish-platform-packages.ts $TAG_ARG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # Step 3: Publish chat-server (must happen before main packages)
+  publish-chat-server:
+    needs: publish-platform
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Auto-bump dev version
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dev }}
+        run: |
+          pnpm tsx scripts/bump-dev-version.ts ${{ github.run_id }}
+          pnpm sync-versions
+
+      - name: Sync versions (stable release)
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dev }}
+        run: |
+          pnpm sync-versions
+
+      - name: Build chat-server
+        run: pnpm --filter @leanspec/chat-server build
+
+      - name: Publish chat-server
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
+        run: |
+          TAG_ARG=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            TAG_ARG="--tag dev"
+          fi
+          npm publish --access public $TAG_ARG
+        working-directory: packages/chat-server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   
   # Step 3: Publish main packages (AFTER platform packages are available)
   publish-main:
-    needs: publish-platform
+    needs: [publish-platform, publish-chat-server]
     runs-on: ubuntu-latest
     permissions:
       contents: read
