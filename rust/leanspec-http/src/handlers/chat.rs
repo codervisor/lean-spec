@@ -14,6 +14,7 @@ use crate::state::AppState;
 
 #[derive(Debug, Clone)]
 enum ChatTransport {
+    #[cfg(unix)]
     Unix(PathBuf),
     Http(String),
 }
@@ -32,13 +33,16 @@ impl ChatServerConfig {
             };
         }
 
-        let socket_path = env::var("LEANSPEC_CHAT_SOCKET")
-            .unwrap_or_else(|_| "/tmp/leanspec-chat.sock".to_string());
-        let socket_path = PathBuf::from(socket_path);
-        if socket_path.exists() {
-            return Self {
-                transport: ChatTransport::Unix(socket_path),
-            };
+        #[cfg(unix)]
+        {
+            let socket_path = env::var("LEANSPEC_CHAT_SOCKET")
+                .unwrap_or_else(|_| "/tmp/leanspec-chat.sock".to_string());
+            let socket_path = PathBuf::from(socket_path);
+            if socket_path.exists() {
+                return Self {
+                    transport: ChatTransport::Unix(socket_path),
+                };
+            }
         }
 
         Self {
@@ -81,29 +85,63 @@ pub async fn proxy_chat(
 ) -> ApiResult<Response> {
     let config = ChatServerConfig::from_env();
     let response = match config.transport {
+        #[cfg(unix)]
         ChatTransport::Unix(socket_path) => {
-            let client = reqwest::Client::builder()
-                .unix_socket(socket_path)
-                .build()
-                .map_err(|e| {
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        axum::Json(ApiError::internal_error(&e.to_string())),
-                    )
-                })?;
+            // Use hyperlocal with hyper for Unix socket connection
+            use http_body_util::{BodyExt, Full};
+            use hyper_util::client::legacy::Client;
+            use hyper_util::rt::TokioExecutor;
 
-            client
-                .post("http://localhost/api/chat")
-                .headers(copy_headers(&headers))
-                .body(body.to_vec())
-                .send()
-                .await
-                .map_err(|e| {
-                    (
-                        StatusCode::BAD_GATEWAY,
-                        axum::Json(ApiError::invalid_request(&e.to_string())),
-                    )
-                })?
+            let connector = hyperlocal::UnixConnector;
+            let client: Client<_, Full<Bytes>> =
+                Client::builder(TokioExecutor::new()).build(connector);
+
+            let uri = hyperlocal::Uri::new(&socket_path, "/api/chat");
+            let mut req = hyper::Request::builder().method("POST").uri(uri);
+
+            // Copy relevant headers
+            if let Some(content_type) = headers.get(axum::http::header::CONTENT_TYPE) {
+                req = req.header(axum::http::header::CONTENT_TYPE, content_type);
+            }
+            if let Some(accept) = headers.get(axum::http::header::ACCEPT) {
+                req = req.header(axum::http::header::ACCEPT, accept);
+            }
+
+            let req = req.body(Full::new(body)).map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(ApiError::internal_error(&e.to_string())),
+                )
+            })?;
+
+            let resp = client.request(req).await.map_err(|e| {
+                (
+                    StatusCode::BAD_GATEWAY,
+                    axum::Json(ApiError::invalid_request(&e.to_string())),
+                )
+            })?;
+
+            // Convert hyper response to axum Response
+            let status = resp.status();
+            let response_headers = resp.headers().clone();
+            let body_stream = resp
+                .into_body()
+                .into_data_stream()
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e));
+
+            let mut builder = Response::builder().status(status);
+            for (key, value) in response_headers.iter() {
+                if !key.as_str().eq_ignore_ascii_case("content-length") {
+                    builder = builder.header(key, value);
+                }
+            }
+
+            return builder.body(Body::from_stream(body_stream)).map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(ApiError::internal_error(&e.to_string())),
+                )
+            });
         }
         ChatTransport::Http(base_url) => {
             let client = reqwest::Client::new();

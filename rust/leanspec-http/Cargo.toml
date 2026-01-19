@@ -32,8 +32,14 @@ tokio.workspace = true
 # Serialization
 bytes = "1.7"
 futures-util = "0.3"
-reqwest = {version = "0.12", features = ["json", "stream"]}
+reqwest = {version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"]}
 serde.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+hyperlocal = "0.9"
+hyper = "1.8"
+hyper-util = {version = "0.1", features = ["client-legacy", "http1"]}
+http-body-util = "0.1"
 serde_json.workspace = true
 sha2 = "0.10"
 

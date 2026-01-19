@@ -80,6 +80,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu
+          
+          # Add ARM64 architecture and install ARM64 OpenSSL dev libs
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev:arm64
 
           mkdir -p ~/.cargo
           echo "[target.aarch64-unknown-linux-gnu]" >> ~/.cargo/config.toml
