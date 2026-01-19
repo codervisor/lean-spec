@@ -65,6 +65,8 @@ importers:
 
   packages/cli/binaries/darwin-x64: {}
 
+  packages/cli/binaries/linux-arm64: {}
+
   packages/cli/binaries/linux-x64: {}
 
   packages/cli/binaries/windows-x64: {}
@@ -182,6 +184,8 @@ importers:
   packages/http-server/binaries/darwin-arm64: {}
 
   packages/http-server/binaries/darwin-x64: {}
+
+  packages/http-server/binaries/linux-arm64: {}
 
   packages/http-server/binaries/linux-x64: {}
 
