@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/chat-server",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "LeanSpec AI chat server sidecar",
   "type": "commonjs",
   "main": "dist/index.js",
