@@ -1,22 +1,22 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { ChatContainer } from '../components/chat';
+import { ModelPicker } from '../components/chat/ModelPicker';
 import { useLeanSpecChat } from '../lib/use-chat';
 import { useProject } from '../contexts';
-import { Trash2, Settings2 } from 'lucide-react';
+import { Trash2, Settings2, Sliders } from 'lucide-react';
 import { useState } from 'react';
-
-const AVAILABLE_MODELS = [
-  { id: 'gpt-4o', name: 'GPT-4o' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-] as const;
 
 export function ChatPage() {
   const { t } = useTranslation('common');
+  const navigate = useNavigate();
   const { currentProject, loading: projectLoading } = useProject();
   const enableAi = import.meta.env.VITE_ENABLE_AI !== 'false';
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
+    providerId: 'openai',
+    modelId: 'gpt-4o',
+  });
   const [showSettings, setShowSettings] = useState(false);
 
   const {
@@ -26,7 +26,10 @@ export function ChatPage() {
     error,
     reload,
     clearChat,
-  } = useLeanSpecChat({ model: selectedModel });
+  } = useLeanSpecChat({ 
+    providerId: selectedModel.providerId,
+    modelId: selectedModel.modelId,
+  });
 
   if (!enableAi) {
     return (
@@ -75,14 +78,23 @@ export function ChatPage() {
           <p className="text-xs text-muted-foreground">{t('chat.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Settings Toggle */}
+          {/* Model Settings Toggle */}
           <Button
             variant={showSettings ? 'secondary' : 'ghost'}
             size="icon"
             onClick={() => setShowSettings(!showSettings)}
-            title={t('navigation.settings')}
+            title={t('chat.toggleModelSettings')}
           >
             <Settings2 className="h-4 w-4" />
+          </Button>
+          {/* Advanced Settings */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('settings')}
+            title={t('chat.settings.title')}
+          >
+            <Sliders className="h-4 w-4" />
           </Button>
           {/* Clear Chat */}
           <Button
@@ -99,19 +111,12 @@ export function ChatPage() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="px-4 py-2 border-b bg-muted/50 flex items-center gap-4">
-          <label className="text-sm font-medium">{t('chat.modelLabel')}:</label>
-          <select
+        <div className="px-4 py-2 border-b bg-muted/50">
+          <ModelPicker
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="text-sm px-2 py-1 rounded border bg-background"
-          >
-            {AVAILABLE_MODELS.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedModel}
+            disabled={isLoading}
+          />
         </div>
       )}
 

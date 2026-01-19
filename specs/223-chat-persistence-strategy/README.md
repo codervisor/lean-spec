@@ -8,8 +8,10 @@ tags:
 - storage
 - cloud-sync
 - ui
+depends_on:
+- 224-ai-chat-configuration-improvements
 created_at: 2026-01-19T07:54:03.056027248Z
-updated_at: 2026-01-19T07:54:03.056027248Z
+updated_at: 2026-01-19T08:51:03.338020758Z
 ---
 
 # Chat Message Persistence Strategy (Local & Cloud)
@@ -25,16 +27,15 @@ LeanSpec currently stores chat messages in browser localStorage (key: `leanspec-
 
 **Why now?**
 - Current localStorage implementation is fragile (size limits, no error handling, single global history)
-- Users need chat history to persist across browser sessions and device crashes
-- Cloud sync enables multi-device workflows and team collaboration
-- Foundation for future features (search, analytics, export)
+- Users need chat history to persist reliably across sessions and device crashes
+- Desktop application requires proper file-system based storage
+- Foundation for future features (search, analytics, export, cloud sync)
 
 **Current State:**
-- Single global chat history in localStorage (`leanspec-chat-history`)
-- ~5MB localStorage limit (browser-dependent)
-- No per-project isolation
-- No cloud backup
-- No conversation management (only clear all)
+- Chat persistence not yet implemented (localStorage version was never published)
+- Need proper storage solution from the start
+- Must support desktop/MCP/HTTP contexts
+- Requires per-project isolation
 
 ## Design
 
@@ -48,37 +49,120 @@ LeanSpec currently stores chat messages in browser localStorage (key: `leanspec-
 │  │  - Load messages for current project                 │   │
 │  │  - Save messages incrementally                       │   │
 │  │  - Sync with cloud (if enabled)                      │   │
+│  └───────────────────┬──────────────────────────────────┘   │
+└────────────────────────┼──────────────────────────────────────┘
+                         │ HTTP/REST API
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Rust Backend (HTTP Server)                     │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  Chat API Handlers                                   │   │
+│  │  - POST /api/chat/conversations                      │   │
+│  │  - GET /api/chat/conversations/:id                   │   │
+│  │  - DELETE /api/chat/conversations/:id                │   │
+│  └───────────────────┬──────────────────────────────────┘   │
+│                      │                                       │
+│  ┌───────────────────▼──────────────────────────────────┐   │
+│  │  SQLite Storage (rusqlite)                           │   │
+│  │  ~/.leanspec/chat.db                                 │   │
 │  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
-        ▼                 ▼                 ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   IndexedDB  │  │  localStorage│  │  Cloud API   │
-│   (primary)  │  │  (fallback)  │  │  (optional)  │
-└──────────────┘  └──────────────┘  └──────────────┘
+└─────────────────────────────────────────────────────────────┘
+                         │
+                         │ (Optional Cloud Sync - Phase 2)
+                         ▼
+        ┌──────────────────────────────────┐
+        │  Cloud API (via sync-bridge)     │
+        └──────────────────────────────────┘
 ```
+
+**Storage Location:**
+- Linux/macOS: `~/.leanspec/chat.db` (or `$XDG_DATA_HOME/leanspec/chat.db`)
+- Windows: `%APPDATA%\leanspec\chat.db`
 
 ### Storage Options
 
-#### 1. Local Storage (Phase 1: MVP)
+We need a robust local storage solution that works across desktop and web contexts, with proper data management, backup capabilities, and performance.
 
-**Option A: IndexedDB (Recommended for production)**
-- **Capacity**: ~50MB-1GB+ (browser-dependent)
-- **Performance**: Fast indexed queries
-- **Structure**: Proper database with indexes
-- **Use case**: Primary local storage
+#### Option A: SQLite (Recommended)
 
-**Option B: localStorage (Current, keep as fallback)**
-- **Capacity**: ~5MB
-- **Performance**: Synchronous, slower for large data
-- **Use case**: Fallback + lightweight preferences
+**Pros:**
+- **Capacity**: Gigabytes of storage (file-system based)
+- **Performance**: Mature database with indexes, transactions, and query optimization
+- **Reliability**: ACID compliance, battle-tested for decades
+- **Cross-platform**: Works on desktop (native), web (WASM), and server
+- **SQL queries**: Powerful querying and analytics capabilities
+- **Backup**: Single file can be easily backed up/restored
 
-**Implementation Strategy:**
+**Cons:**
+- **Bundle size**: sql.js (WASM) adds ~2MB to web bundle
+- **Complexity**: Requires schema migrations, connection management
+- **Web limitations**: WASM performance overhead compared to native
+
+**Implementation Paths:**
+- **All contexts**: Use native Rust SQLite backend via HTTP API
+- **Desktop/MCP/HTTP**: Native Rust implementation with `rusqlite`
+- **UI**: Communicate with Rust backend via HTTP/REST API
+- **No Node.js SQLite adapter**: Avoid the ai-sdk compromise by keeping all backend logic in Rust
+
+**Database Schema:**
+```sql
+-- conversations table
+CREATE TABLE conversations (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  message_count INTEGER DEFAULT 0,
+  last_message TEXT,
+  tags TEXT, -- JSON array
+  archived INTEGER DEFAULT 0,
+  cloud_id TEXT,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_conversations_project_id ON conversations(project_id);
+CREATE INDEX idx_conversations_created_at ON conversations(created_at);
+CREATE INDEX idx_conversations_updated_at ON conversations(updated_at);
+
+-- messages table
+CREATE TABLE messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
+  content TEXT NOT NULL,
+  timestamp INTEGER NOT NULL,
+  metadata TEXT, -- JSON object
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX idx_messages_project_id ON messages(project_id);
+CREATE INDEX idx_messages_timestamp ON messages(timestamp);
+
+-- sync_metadata table (for cloud sync)
+CREATE TABLE sync_metadata (
+  conversation_id TEXT PRIMARY KEY,
+  cloud_id TEXT,
+  last_synced_at INTEGER,
+  sync_status TEXT CHECK(sync_status IN ('local-only', 'synced', 'conflict', 'pending')),
+  version INTEGER DEFAULT 1,
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+);
+```
+
+#### Recommendation: Rust-Only Backend with SQLite
+
+**Primary Storage: SQLite via Rust Backend**
+- Use native SQLite on all platforms (via Rust)
+- Store database at `~/.leanspec/chat.db` (XDG_DATA_HOME on Linux)
+- Single file, easy to backup by copying the database file
+- UI communicates with Rust backend via HTTP/REST API
+- No Node.js SQLite dependencies - pure Rust implementation
+
+**API Communication Pattern:**
 ```typescript
-// Storage adapter pattern
-interface ChatStorageAdapter {
+// UI calls Rust backend
+interface ChatAPI {
   saveConversation(projectId: string, messages: Message[]): Promise<void>;
   loadConversation(projectId: string): Promise<Message[]>;
   listConversations(projectId: string): Promise<ConversationMetadata[]>;
@@ -86,58 +170,19 @@ interface ChatStorageAdapter {
   clearProject(projectId: string): Promise<void>;
 }
 
-class IndexedDBAdapter implements ChatStorageAdapter {
-  // Primary implementation
-}
-
-class LocalStorageAdapter implements ChatStorageAdapter {
-  // Fallback implementation
-}
-```
-
-**IndexedDB Schema:**
-```typescript
-// Database: leanspec-chat-v1
-// Object Stores:
-
-// 1. conversations
-{
-  id: string;              // UUID
-  projectId: string;       // Project identifier
-  title: string;           // Auto-generated from first message
-  createdAt: number;       // Timestamp
-  updatedAt: number;       // Timestamp
-  messageCount: number;
-  lastMessage?: string;    // Preview text
-  tags?: string[];
-  archived: boolean;
-}
-// Indexes: projectId, createdAt, updatedAt
-
-// 2. messages
-{
-  id: string;              // UUID
-  conversationId: string;  // Foreign key
-  projectId: string;       // Denormalized for queries
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: number;
-  metadata?: {
-    model?: string;
-    tokens?: number;
-    error?: string;
-    toolCalls?: any[];
-  };
-}
-// Indexes: conversationId, projectId, timestamp
-
-// 3. sync_metadata (for cloud sync)
-{
-  conversationId: string;
-  cloudId?: string;        // Remote ID if synced
-  lastSyncedAt?: number;
-  syncStatus: 'local-only' | 'synced' | 'conflict' | 'pending';
-  version: number;         // For conflict resolution
+// Rust backend handles all SQLite operations
+class RustChatBackend implements ChatAPI {
+  constructor(private baseUrl: string) {}
+  
+  async saveConversation(projectId: string, messages: Message[]): Promise<void> {
+    await fetch(`${this.baseUrl}/api/chat/conversations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId, messages }),
+    });
+  }
+  
+  // ... other methods
 }
 ```
 
@@ -212,56 +257,6 @@ interface ConversationMetadata {
 }
 ```
 
-### Migration Strategy
-
-**From Current localStorage Implementation:**
-
-```typescript
-// packages/ui/src/lib/migrate-chat-storage.ts
-
-async function migrateFromLocalStorage(): Promise<void> {
-  const oldKey = 'leanspec-chat-history';
-  const oldData = localStorage.getItem(oldKey);
-  
-  if (!oldData) return;
-  
-  try {
-    const messages: UIMessage[] = JSON.parse(oldData);
-    
-    if (messages.length === 0) return;
-    
-    // Create a conversation from old messages
-    const conversation: Conversation = {
-      id: generateUUID(),
-      projectId: 'default', // Assign to default project
-      title: generateTitle(messages[0].content),
-      messages: messages.map(msg => ({
-        id: msg.id,
-        conversationId: 'migrated',
-        role: msg.role,
-        content: msg.content,
-        timestamp: Date.now(),
-      })),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      archived: false,
-    };
-    
-    // Save to IndexedDB
-    const adapter = new IndexedDBAdapter();
-    await adapter.saveConversation('default', conversation.messages);
-    
-    // Remove old data
-    localStorage.removeItem(oldKey);
-    
-    console.log('[Migration] Successfully migrated chat history to IndexedDB');
-  } catch (error) {
-    console.error('[Migration] Failed to migrate chat history:', error);
-    // Keep old data intact on error
-  }
-}
-```
-
 ### UI Components
 
 **New Conversations Sidebar:**
@@ -296,175 +291,214 @@ async function migrateFromLocalStorage(): Promise<void> {
 
 ## Plan
 
-### Phase 1: Local IndexedDB Storage (MVP)
+### Phase 1: Local SQLite Storage (MVP)
 
-- [ ] **1.1 Create IndexedDB Adapter**
-  - Implement `ChatStorageAdapter` interface
-  - Create IndexedDB schema (conversations, messages, sync_metadata stores)
-  - Add indexes for efficient queries
-  - Error handling and fallback logic
+- [ ] **1.1 Create SQLite Schema & Migrations**
+  - Define SQL schema (conversations, messages, sync_metadata tables)
+  - Create migration system for schema versioning
+  - Add seed data for testing
+  - Write schema documentation
 
-- [ ] **1.2 Update useLeanSpecChat Hook**
-  - Replace localStorage calls with storage adapter
-  - Add conversation management functions
+- [ ] **1.2 Implement Rust SQLite Backend** (for all contexts: desktop/MCP/HTTP)
+  - Use `rusqlite` crate for simplicity and reliability
+  - Implement `ChatStorageAdapter` trait in Rust
+  - Add connection pooling and transaction support
+  - Create HTTP API endpoints for UI to communicate with Rust backend
+  - Expose NAPI bindings if direct Node.js integration is needed
+  - Error handling and logging
+  - Ensure cross-platform compatibility (Linux/macOS/Windows)
+
+- [ ] **1.3 Update useLeanSpecChat Hook**
+  - Replace localStorage calls with Rust backend API
+  - Add conversation management functions (create, list, delete)
   - Implement auto-save on message completion
   - Add loading states and error handling
+  - Handle offline/database unavailable scenarios
 
-- [ ] **1.3 Build Conversations UI**
+- [ ] **1.4 Build Conversations UI**
   - Create conversations sidebar component
   - Implement conversation list with grouping (Today/Yesterday/Last 7 days)
   - Add conversation search and filtering
   - Add "New Chat" and "Delete Conversation" actions
-
-- [ ] **1.4 Migration Logic**
-  - Detect old localStorage data on app startup
-  - Migrate to IndexedDB with user notification
-  - Clean up old localStorage key after successful migration
-  - Add migration status indicator in UI
+  - Show storage usage and database location
 
 - [ ] **1.5 Testing**
-  - Unit tests for IndexedDB adapter
-  - Integration tests for conversation CRUD
+  - Unit tests for Rust SQLite backend
+  - Integration tests for conversation CRUD via HTTP API
   - Migration tests with various data states
-  - Performance tests with large conversation histories
+  - Performance tests with large conversation histories (10k+ messages)
+  - Cross-platform database compatibility tests
 
 ### Phase 2: Cloud Sync (Optional Enhancement)
 
-- [ ] **2.1 Backend API Endpoints**
+- [ ] **2.1 Sync Protocol**
+  - Implement incremental sync (only new messages since last sync)
+  - Add compression for large conversation payloads
+  - Define sync protocol version for compatibility
+  - Use JSON for sync payloads with message deltas
+
+- [ ] **2.2 Backend API Endpoints**
   - `GET /api/v1/chat/conversations?projectId={id}` - List conversations
-  - `GET /api/v1/chat/conversations/{id}` - Get conversation details
-  - `POST /api/v1/chat/conversations` - Create/update conversation
+  - `GET /api/v1/chat/conversations/{id}/messages` - Get messages
+  - `POST /api/v1/chat/conversations/{id}/sync` - Upload message delta
   - `DELETE /api/v1/chat/conversations/{id}` - Delete conversation
   - Add authentication and project ownership validation
 
-- [ ] **2.2 Cloud Sync Service**
-  - Implement CloudSyncService interface
+- [ ] **2.3 Cloud Sync Service**
+  - Implement CloudSyncService interface in Rust/Node.js
   - Add sync queue for offline changes
   - Implement conflict resolution strategy (last-write-wins or manual)
   - Add retry logic with exponential backoff
+  - Store sync metadata in SQLite
 
-- [ ] **2.3 Sync UI**
+- [ ] **2.4 Sync UI**
   - Add sync status indicator (synced/pending/error)
   - Add manual sync trigger button
   - Show sync conflicts and resolution UI
   - Add sync settings (auto-sync on/off, sync interval)
+  - Display last sync timestamp
 
-- [ ] **2.4 Client-Side Encryption (Optional)**
+- [ ] **2.5 Client-Side Encryption (Optional)**
   - Generate encryption key from user password/device
   - Encrypt message content before upload
-  - Store encryption metadata in sync_metadata
+  - Store encryption metadata in sync_metadata table
   - Add key management UI
+  - Document encryption format
 
-- [ ] **2.5 Testing**
+- [ ] **2.6 Testing**
   - Test sync with multiple devices (simulate)
   - Test conflict resolution scenarios
   - Test offline mode and sync queue
   - Load testing with large conversation histories
+  - Test incremental delta sync efficiency
 
 ### Phase 3: Advanced Features (Future)
 
-- [ ] **3.1 Conversation Export**
-  - Export to Markdown format
-  - Export to JSON format
+- [ ] **3.1 Full-Text Search**
+  - Add SQLite FTS5 extension for full-text search
+  - Index message content for fast search
+  - Implement search UI with filters (date, project, role)
+  - Highlight search results in messages
+
+- [ ] **3.2 Conversation Export** (Future)
+  - Export to Markdown format (conversation transcript)
+  - Export to JSON format (structured data)
   - Export selected conversations or all
+  - Add export to PDF (via Markdown)
+  - Add JSONL export for advanced users
 
-- [ ] **3.2 Conversation Analytics**
-  - Track conversation length, duration
-  - Model usage statistics
-  - Token consumption tracking
+- [ ] **3.3 Conversation Analytics**
+  - Track conversation length, duration in metadata
+  - Model usage statistics (tokens, cost)
+  - Generate usage reports
+  - Visualize conversation trends
 
-- [ ] **3.3 Conversation Sharing**
-  - Generate shareable links (read-only)
+- [ ] **3.4 Conversation Sharing**
+  - Generate shareable links (read-only) via cloud
   - Share with team members
   - Public/private conversation settings
+  - Expire shared links after N days
 
-- [ ] **3.4 Advanced Search**
-  - Full-text search across all messages
-  - Filter by date range, model, tags
-  - Search within specific project
+- [ ] **3.5 Database Maintenance**
+  - Auto-vacuum SQLite database
+  - Archive old conversations to JSONL
+  - Database integrity checks
+  - Backup/restore functionality
 
 ## Test
 
 ### Manual Testing Scenarios
 
-1. **Local Storage**
-   - [ ] Create new conversation and verify persistence across page reload
+1. **Local SQLite Storage**
+   - [ ] Create new conversation and verify persistence across app restart
    - [ ] Create multiple conversations for different projects
-   - [ ] Delete a conversation and verify removal
+   - [ ] Delete a conversation and verify removal from database
    - [ ] Clear all conversations and verify empty state
-   - [ ] Test with 50+ messages in a conversation (performance)
+   - [ ] Test with 1000+ messages in a conversation (performance)
    - [ ] Test with 100+ conversations (list performance)
+   - [ ] Verify database file exists at correct location
+   - [ ] Test concurrent writes (multiple messages saved rapidly)
 
-2. **Migration**
-   - [ ] Create old localStorage data, reload app, verify migration
-   - [ ] Verify migration with empty localStorage
-   - [ ] Verify migration with invalid JSON data (error handling)
-   - [ ] Check that old localStorage key is removed after migration
-
-3. **Cloud Sync** (Phase 2)
+2. **Cloud Sync** (Phase 2)
    - [ ] Enable cloud sync and verify initial upload
    - [ ] Create message on device A, verify sync to device B
    - [ ] Create messages offline, verify sync when online
    - [ ] Test conflict resolution (edit same conversation on 2 devices)
+   - [ ] Test incremental sync (only delta uploaded)
 
-4. **Edge Cases**
-   - [ ] Test with browser in private/incognito mode
-   - [ ] Test with IndexedDB disabled (fall back to localStorage)
-   - [ ] Test with very long messages (10,000+ characters)
+3. **Edge Cases**
+   - [ ] Test with database file locked (concurrent access)
+   - [ ] Test with database file missing (recreate schema)
+   - [ ] Test with corrupted database (error recovery)
+   - [ ] Test with very long messages (100,000+ characters)
    - [ ] Test with special characters, emojis, code blocks
+   - [ ] Test with read-only file system (error handling)
+   - [ ] Test database on different platforms (Linux/macOS/Windows)
 
 ### Automated Tests
 
 ```typescript
 // tests/chat-persistence.test.ts
 
-describe('ChatStorageAdapter', () => {
+describe('Rust Chat Backend API', () => {
+  let apiClient: RustChatBackend;
+  
+  beforeEach(async () => {
+    apiClient = new RustChatBackend('http://localhost:8080');
+    // Clean test database
+    await apiClient.clearProject('test-project');
+  });
+  
   it('should save and load conversation', async () => {
-    const adapter = new IndexedDBAdapter();
-    const messages = [
-      { id: '1', conversationId: 'c1', role: 'user', content: 'Hello', timestamp: Date.now() },
-      { id: '2', conversationId: 'c1', role: 'assistant', content: 'Hi!', timestamp: Date.now() },
+    const messages: Message[] = [
+      { id: '1', conversationId: 'c1', projectId: 'p1', role: 'user', content: 'Hello', timestamp: Date.now() },
+      { id: '2', conversationId: 'c1', projectId: 'p1', role: 'assistant', content: 'Hi!', timestamp: Date.now() },
     ];
     
-    await adapter.saveConversation('project1', messages);
-    const loaded = await adapter.loadConversation('project1');
+    await apiClient.saveConversation('p1', messages);
+    const loaded = await apiClient.loadConversation('c1');
     
-    expect(loaded).toEqual(messages);
+    expect(loaded).toHaveLength(2);
+    expect(loaded[0].content).toBe('Hello');
   });
   
   it('should list conversations by project', async () => {
-    // Test implementation
+    // Create test conversations via API
+    await apiClient.saveConversation('p1', [/* messages */]);
+    await apiClient.saveConversation('p1', [/* messages */]);
+    await apiClient.saveConversation('p2', [/* messages */]);
+    
+    const p1Convos = await apiClient.listConversations('p1');
+    
+    expect(p1Convos).toHaveLength(2);
+    expect(p1Convos.every(c => c.projectId === 'p1')).toBe(true);
   });
   
-  it('should delete conversation', async () => {
-    // Test implementation
+  it('should delete conversation via API', async () => {
+    await apiClient.saveConversation('p1', [/* messages */]);
+    const convos = await apiClient.listConversations('p1');
+    
+    await apiClient.deleteConversation(convos[0].id);
+    
+    const remaining = await apiClient.listConversations('p1');
+    expect(remaining).toHaveLength(0);
   });
   
-  it('should fallback to localStorage if IndexedDB fails', async () => {
-    // Test implementation
-  });
-});
-
-describe('Migration', () => {
-  it('should migrate from old localStorage format', async () => {
-    // Test implementation
-  });
-  
-  it('should handle empty localStorage', async () => {
-    // Test implementation
+  it('should handle API errors gracefully', async () => {
+    // Test implementation with network errors
   });
 });
 ```
 
 ### Success Criteria
 
-- ✅ Chat messages persist across browser sessions
+- ✅ Chat messages persist reliably across app restarts (no data loss)
 - ✅ Conversations are properly isolated by project
-- ✅ Migration from old localStorage completes without data loss
-- ✅ IndexedDB adapter handles 1000+ messages efficiently (<100ms load time)
-- ✅ Fallback to localStorage works when IndexedDB unavailable
+- ✅ SQLite adapter handles 10,000+ messages efficiently (<100ms load time)
+- ✅ Database file created in correct platform-specific location
 - ✅ UI shows loading states and error messages appropriately
-- ✅ (Phase 2) Cloud sync works across multiple devices
+- ✅ Database transactions ensure data consistency (no partial writes)
+- ✅ (Phase 2) Cloud sync works efficiently with incremental updates
 - ✅ (Phase 2) Conflicts are resolved without data loss
 
 ## Notes
@@ -475,56 +509,112 @@ describe('Migration', () => {
 - Average message: ~500 bytes (text only)
 - 5MB limit → ~10,000 messages max
 - Single JSON blob → slow parsing for large histories
+- Browser-only, not suitable for desktop apps
 
-**IndexedDB Approach:**
+**SQLite Approach:**
 - Average message: ~500 bytes
-- 50MB quota → ~100,000 messages (likely sufficient)
-- Paginated loading → fast even with large histories
+- No practical size limit (file-system based)
+- Indexed queries → fast even with 100,000+ messages
+- Works on desktop, web (WASM), server
 
 **Growth Projection:**
 - Typical user: 10-20 messages/day → 7,300 messages/year → ~3.6MB/year
 - Power user: 100 messages/day → 73,000 messages/year → ~36MB/year
-- IndexedDB quota sufficient for 1-2 years of power usage
+- SQLite handles multi-GB databases efficiently
+
+**Database Size Management:**
+- Auto-vacuum on close to reclaim deleted space
+- Soft-delete old conversations (mark as archived)
+- Provide "compact database" command for manual cleanup
+- Future: Add export to JSONL for archival if needed
 
 ### Privacy Considerations
 
 **Local Storage:**
-- Data stored in browser's IndexedDB (not accessible to other apps)
-- Clearing browser data deletes all conversations
-- Private/incognito mode doesn't persist data
+- Data stored in SQLite file at `~/.leanspec/chat.db`
+- Standard file permissions apply (user-only read/write)
+- File can be encrypted with full-disk encryption
+- Easy to backup (single file) or delete (remove file)
 
 **Cloud Storage:**
 - Optional feature (user must explicitly enable)
-- Consider client-side encryption for sensitive content
+- Data can be client-side encrypted before upload
 - Add data retention policy (e.g., auto-delete after 90 days)
-- Provide export/download before deletion
+- User controls sync on/off per project
+- Database file can be manually backed up (single file)
+
+### Implementation Considerations
+
+**Architecture Decision: Rust-Only Backend**
+
+This spec explicitly avoids the Node.js/ai-sdk compromise. The original consideration to use Node.js with better-sqlite3 or ai-sdk has been rejected in favor of a pure Rust implementation for the following reasons:
+
+1. **Consistency**: All backend logic (desktop, MCP, HTTP server) uses the same Rust codebase
+2. **Performance**: Native Rust SQLite bindings are faster than Node.js alternatives
+3. **Reliability**: Single source of truth for data access patterns
+4. **Maintenance**: Fewer moving parts, one language for all backend code
+5. **No compromise**: Avoids splitting backend logic between Rust and Node.js
+
+The UI will communicate with the Rust backend via HTTP/REST API, providing clean separation of concerns.
+
+**SQLite Library Choices:**
+
+**Rust:**
+- `rusqlite` - Synchronous, lightweight, easier API, good for all contexts
+- **Recommendation:** Use `rusqlite` for simplicity and bundle size
+
+**UI to Backend Communication:**
+- HTTP/REST API for all chat operations
+- No need for Node.js SQLite libraries
+- Clean separation: UI (React/TypeScript) ↔ Backend (Rust)
+
+**Database Location:**
+- Follow XDG Base Directory Specification on Linux
+- Use `dirs` crate (Rust) or `env-paths` (Node.js) for cross-platform paths
+- Create directory if it doesn't exist
+- Handle permission errors gracefully
+
+**Connection Management:**
+- Use single connection per process (SQLite is file-locked)
+- Enable WAL mode for better concurrency: `PRAGMA journal_mode=WAL`
+- Set busy timeout: `PRAGMA busy_timeout=5000`
+- Use prepared statements for repeated queries
 
 ### Alternative Approaches Considered
 
-**1. SQLite via WASM**
-- Pros: SQL queries, familiar API
-- Cons: Larger bundle size (~1MB), performance overhead
-- Decision: IndexedDB is sufficient for our use case
+**1. Browser IndexedDB (Original Plan)**
+- Pros: No dependencies, built into browsers
+- Cons: Browser-only, quota limits, not suitable for desktop/MCP
+- Decision: Rejected in favor of SQLite for desktop-first approach
 
-**2. Direct Rust Backend Storage**
-- Pros: Centralized storage, no browser limits
-- Cons: Requires HTTP server always running, complicates desktop app
-- Decision: Keep storage in browser for local-first approach
+**2. Embedded Key-Value Store (e.g., sled, redb)**
+- Pros: Pure Rust, fast, embedded
+- Cons: No SQL, manual indexing, less mature
+- Decision: SQLite more mature and widely supported
 
-**3. File System (Desktop App Only)**
-- Pros: Direct file access, easy backup
-- Cons: Web app incompatible, cross-platform file handling
-- Decision: Use IndexedDB for web, consider file export in desktop
+**4. Remote Database (PostgreSQL, MongoDB)**
+- Pros: Powerful queries, scalable
+- Cons: Requires server always running, network dependency
+- Decision: Keep local-first with optional cloud sync
 
 ### Dependencies
 
-**Phase 1:**
-- `idb` library (2KB, IndexedDB wrapper) - https://github.com/jakearchibald/idb
-- Or native IndexedDB API (no dependencies)
+**Phase 1 (SQLite):**
 
-**Phase 2:**
+**Rust:**
+- `rusqlite` - SQLite bindings for Rust (~50KB overhead)
+- `serde_json` - JSON serialization for metadata
+- `dirs` - Cross-platform directory paths
+- `axum` or `actix-web` - HTTP server framework for API endpoints
+
+**UI (TypeScript/React):**
+- Fetch API for HTTP communication with Rust backend
+- No SQLite dependencies in Node.js/UI layer
+
+**Phase 2 (Cloud Sync):**
 - Existing sync-bridge infrastructure (spec 142)
 - Backend conversation API endpoints (new)
+- Compression library for large payloads (e.g., `flate2` for Rust, `zlib` for Node.js)
 
 ### Related Specs
 
@@ -534,9 +624,13 @@ describe('Migration', () => {
 
 ### Future Enhancements
 
+- **Full-text search**: Use SQLite FTS5 extension for fast search
 - **Conversation branching**: Fork conversation at any message
 - **Conversation templates**: Pre-defined conversation starters
 - **Voice messages**: Record and transcribe audio messages
 - **Collaborative conversations**: Multiple users in same conversation
-- **Conversation versioning**: Track changes over time
-- **AI-powered conversation summaries**: Auto-generate conversation titles
+- **Conversation versioning**: Track changes over time with SQLite triggers
+- **AI-powered summaries**: Auto-generate conversation titles
+- **Database replication**: SQLite replication for multi-device sync
+- **Conversation attachments**: Store file references in database
+- **Export to other formats**: PDF, HTML, CSV for analytics

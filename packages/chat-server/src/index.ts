@@ -6,6 +6,7 @@ import { streamText, stepCountIs } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createLeanSpecTools } from './tools';
 import { systemPrompt } from './prompts';
+import { ConfigManager } from './config';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -23,9 +24,34 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', version: process.env.npm_package_version ?? 'dev' });
 });
 
+// Get chat config (without exposing API keys)
+app.get('/api/chat/config', (_req, res) => {
+  try {
+    const configManager = ConfigManager.getInstance();
+    const config = configManager.getConfigForClient();
+    res.json(config);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: message });
+  }
+});
+
+// Update chat config
+app.put('/api/chat/config', (req, res) => {
+  try {
+    const configManager = ConfigManager.getInstance();
+    configManager.saveConfig(req.body);
+    const config = configManager.getConfigForClient();
+    res.json(config);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    res.status(400).json({ error: message });
+  }
+});
+
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages, projectId, model } = req.body ?? {};
+    const { messages, projectId, providerId, modelId } = req.body ?? {};
 
     if (!Array.isArray(messages)) {
       res.status(400).json({ error: 'messages must be an array' });
@@ -35,8 +61,24 @@ app.post('/api/chat', async (req, res) => {
     const baseUrl = process.env.LEANSPEC_HTTP_URL ?? 'http://127.0.0.1:3030';
     const tools = createLeanSpecTools({ baseUrl, projectId });
 
-    const maxSteps = Number.parseInt(process.env.MAX_STEPS ?? '10', 10);
-    const modelName = model ?? process.env.DEFAULT_MODEL ?? 'gpt-4o';
+    const configManager = ConfigManager.getInstance();
+    const config = configManager.getConfig();
+
+    // Use provided provider/model or fall back to defaults
+    const selectedProviderId = providerId ?? config.settings.defaultProviderId;
+    const selectedModelId = modelId ?? config.settings.defaultModelId;
+
+    const provider = configManager.getProvider(selectedProviderId);
+    if (!provider) {
+      res.status(400).json({ error: `Invalid provider: ${selectedProviderId}` });
+      return;
+    }
+
+    const model = configManager.getModel(selectedProviderId, selectedModelId);
+    if (!model) {
+      res.status(400).json({ error: `Invalid model: ${selectedModelId}` });
+      return;
+    }
 
     // Transform messages from UI format (with parts) to AI SDK format (with content)
     const transformedMessages = messages.map((msg: any) => {
@@ -56,19 +98,26 @@ app.post('/api/chat', async (req, res) => {
       return msg;
     });
 
-    // Create OpenAI provider with custom baseURL if specified (for OpenRouter, etc.)
-    const apiKey = process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY ?? 'no-key-set';
+    // Create provider with resolved API key
+    const apiKey = configManager.resolveProviderApiKey(selectedProviderId);
+    if (!apiKey) {
+      res.status(400).json({ 
+        error: `API key not configured for provider: ${provider.name}. Please configure it in the settings.` 
+      });
+      return;
+    }
+
     const openaiProvider = createOpenAI({
       apiKey,
-      baseURL: process.env.OPENAI_BASE_URL ?? (process.env.OPENROUTER_API_KEY ? 'https://openrouter.ai/api/v1' : undefined),
+      baseURL: provider.baseURL,
     });
 
     const result = streamText({
-      model: openaiProvider(modelName) as any,
+      model: openaiProvider(model.id) as any,
       tools,
       system: systemPrompt,
       messages: transformedMessages,
-      stopWhen: stepCountIs(Number.isFinite(maxSteps) ? maxSteps : 10),
+      stopWhen: stepCountIs(config.settings.maxSteps),
     });
 
     result.pipeTextStreamToResponse(res);

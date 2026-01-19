@@ -37,8 +37,10 @@ function clearStoredMessages() {
 }
 
 interface UseLeanSpecChatOptions {
-  /** Optional model override */
-  model?: string;
+  /** Provider ID (e.g., 'openai', 'anthropic') */
+  providerId?: string;
+  /** Model ID (e.g., 'gpt-4o', 'claude-sonnet-4-5') */
+  modelId?: string;
 }
 
 export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
@@ -53,9 +55,10 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
     api,
     body: {
       projectId: currentProject?.id,
-      model: options.model,
+      providerId: options.providerId,
+      modelId: options.modelId,
     },
-  }), [api, currentProject?.id, options.model]);
+  }), [api, currentProject?.id, options.providerId, options.modelId]);
 
   const chatHook = useAIChat({
     id: 'leanspec-chat',
