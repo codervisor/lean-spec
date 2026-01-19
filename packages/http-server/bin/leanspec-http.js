@@ -28,7 +28,7 @@ const debug = (...args) => DEBUG && console.error('[leanspec-http debug]', ...ar
 // Platform detection mapping
 const PLATFORM_MAP = {
   darwin: { x64: 'darwin-x64', arm64: 'darwin-arm64' },
-  linux: { x64: 'linux-x64', arm64: 'linux-arm64' },
+  linux: { x64: 'linux-x64' },
   win32: { x64: 'windows-x64', arm64: 'windows-arm64' }
 };
 

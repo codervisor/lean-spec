@@ -132,7 +132,6 @@ Published packages:
 Platform-specific binary packages (published separately):
 - `lean-spec-darwin-arm64`
 - `lean-spec-darwin-x64`
-- `lean-spec-linux-arm64`
 - `lean-spec-linux-x64`
 - `lean-spec-windows-x64`
 

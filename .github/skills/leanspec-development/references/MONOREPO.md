@@ -21,7 +21,6 @@ packages/
 │       ├── darwin-x64/
 │       ├── darwin-arm64/
 │       ├── linux-x64/
-│       ├── linux-arm64/
 │       └── windows-x64/
 │
 ├── mcp/              # MCP server wrapper (@leanspec/mcp)
@@ -134,7 +133,6 @@ CLI and MCP packages use optional dependencies for platform-specific binaries:
     "@leanspec/cli-darwin-arm64": "0.3.0",
     "@leanspec/cli-darwin-x64": "0.3.0",
     "@leanspec/cli-linux-x64": "0.3.0",
-    "@leanspec/cli-linux-arm64": "0.3.0",
     "@leanspec/cli-windows-x64": "0.3.0"
   }
 }

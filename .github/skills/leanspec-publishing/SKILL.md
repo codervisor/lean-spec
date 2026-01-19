@@ -84,7 +84,6 @@ Main Package (lean-spec)
     ├── @leanspec/cli-darwin-arm64
     ├── @leanspec/cli-darwin-x64
     ├── @leanspec/cli-linux-x64
-    ├── @leanspec/cli-linux-arm64
     └── @leanspec/cli-windows-x64
 ```
 

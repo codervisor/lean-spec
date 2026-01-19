@@ -17,7 +17,7 @@ import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
 
-const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64'];
+const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'windows-x64'];
 const PACKAGES = ['cli', 'mcp'];
 
 interface PackageInfo {

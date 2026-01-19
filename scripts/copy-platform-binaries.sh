@@ -16,7 +16,7 @@ if [ -z "$1" ]; then
 fi
 
 ARTIFACTS_DIR="$1"
-PLATFORMS="darwin-x64 darwin-arm64 linux-x64 linux-arm64 windows-x64"
+PLATFORMS="darwin-x64 darwin-arm64 linux-x64 windows-x64"
 
 echo "📦 Copying platform binaries from $ARTIFACTS_DIR"
 echo ""

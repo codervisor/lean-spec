@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
 
-const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64'];
+const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'windows-x64'];
 
 interface BinaryCheck {
   path: string;
