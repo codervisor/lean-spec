@@ -14,7 +14,7 @@ import { spawn } from 'child_process';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { accessSync } from 'fs';
+import { accessSync, openSync, readSync, closeSync } from 'fs';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +30,60 @@ const PLATFORM_MAP = {
   linux: { x64: 'linux-x64', arm64: 'linux-arm64' },
   win32: { x64: 'windows-x64', arm64: 'windows-arm64' }
 };
+
+const MACHO_MAGICS = new Set([
+  0xfeedface,
+  0xfeedfacf,
+  0xcefaedfe,
+  0xcffaedfe,
+  0xcafebabe,
+  0xbebafeca,
+]);
+
+function readHeaderBytes(filePath) {
+  const fd = openSync(filePath, 'r');
+  try {
+    const buffer = Buffer.alloc(4);
+    const bytesRead = readSync(fd, buffer, 0, 4, 0);
+    return bytesRead === 4 ? buffer : null;
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function isValidBinaryHeader(filePath, platform) {
+  try {
+    const header = readHeaderBytes(filePath);
+    if (!header) return false;
+
+    if (platform === 'linux') {
+      return header[0] === 0x7f && header[1] === 0x45 && header[2] === 0x4c && header[3] === 0x46;
+    }
+
+    if (platform === 'win32') {
+      return header[0] === 0x4d && header[1] === 0x5a;
+    }
+
+    if (platform === 'darwin') {
+      const magicBE = header.readUInt32BE(0);
+      const magicLE = header.readUInt32LE(0);
+      return MACHO_MAGICS.has(magicBE) || MACHO_MAGICS.has(magicLE);
+    }
+
+    return false;
+  } catch (error) {
+    debug('Failed to read binary header:', error.message);
+    return false;
+  }
+}
+
+function isExecutableBinary(filePath, platform) {
+  if (!isValidBinaryHeader(filePath, platform)) {
+    debug('Invalid binary header:', filePath);
+    return false;
+  }
+  return true;
+}
 
 function getBinaryPath() {
   const platform = process.platform;
@@ -53,8 +107,11 @@ function getBinaryPath() {
   // Try to resolve platform package
   try {
     const resolvedPath = require.resolve(`${packageName}/${binaryName}`);
-    debug('Found platform package binary:', resolvedPath);
-    return resolvedPath;
+    if (isExecutableBinary(resolvedPath, platform)) {
+      debug('Found platform package binary:', resolvedPath);
+      return resolvedPath;
+    }
+    debug('Platform package binary is invalid:', resolvedPath);
   } catch (e) {
     debug('Platform package not found:', packageName, '-', e.message);
   }
@@ -64,8 +121,11 @@ function getBinaryPath() {
     const localPath = join(__dirname, '..', 'binaries', platformKey, binaryName);
     debug('Trying local binary:', localPath);
     accessSync(localPath);
-    debug('Found local binary:', localPath);
-    return localPath;
+    if (isExecutableBinary(localPath, platform)) {
+      debug('Found local binary:', localPath);
+      return localPath;
+    }
+    debug('Local binary is invalid:', localPath);
   } catch (e) {
     debug('Local binary not found:', e.message);
   }
@@ -75,14 +135,23 @@ function getBinaryPath() {
     const rustTargetPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
     debug('Trying rust target binary:', rustTargetPath);
     accessSync(rustTargetPath);
-    debug('Found rust target binary:', rustTargetPath);
-    return rustTargetPath;
+    if (isExecutableBinary(rustTargetPath, platform)) {
+      debug('Found rust target binary:', rustTargetPath);
+      return rustTargetPath;
+    }
+    debug('Rust target binary is invalid:', rustTargetPath);
   } catch (e) {
     debug('Rust target binary not found:', e.message);
   }
 
   console.error(`Binary not found for ${platform}-${arch}`);
   console.error(`Expected package: ${packageName}`);
+  console.error('');
+  console.error('Detected missing or corrupted binary.');
+  console.error('If you installed globally, reinstall to restore the binary:');
+  console.error('  npm uninstall -g lean-spec && npm install -g lean-spec');
+  console.error('');
+  console.error('If your npm config omits optional dependencies, enable them and reinstall.');
   console.error('');
   console.error('To install:');
   console.error('  npm install -g lean-spec');
