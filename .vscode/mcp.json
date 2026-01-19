@@ -2,10 +2,10 @@
 	"servers": {
 		"lean-spec": {
 			"type": "stdio",
-			"command": "node",
+			"command": "npx",
 			"args": [
-				"${workspaceFolder}/bin/lean-spec.js",
-				"mcp"
+				"-y",
+				"@leanspec/mcp"
 			]
 		},
 		"playwright": {

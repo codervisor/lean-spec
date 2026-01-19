@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/chat-server",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "LeanSpec AI chat server sidecar",
   "type": "commonjs",
   "main": "dist/index.js",
@@ -15,7 +15,7 @@
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=cjs --external:express --external:ai --external:@ai-sdk/*",
     "dev": "tsx watch src/index.ts",
-    "test": "vitest",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

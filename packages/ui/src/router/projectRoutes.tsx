@@ -5,6 +5,7 @@ import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
 import { ChatPage } from '../pages/ChatPage';
+import { ChatSettingsPage } from '../pages/ChatSettingsPage';
 import { SpecDetailPage } from '../pages/SpecDetailPage';
 import { SpecsPage } from '../pages/SpecsPage';
 import { StatsPage } from '../pages/StatsPage';
@@ -34,5 +35,6 @@ export function createProjectRoutes(): RouteObject[] {
     { path: 'dependencies/:specName', element: <DependenciesPage /> },
     { path: 'context', element: <ContextPage /> },
     { path: 'chat', element: <ChatPage /> },
+    { path: 'chat/settings', element: <ChatSettingsPage /> },
   ];
 }

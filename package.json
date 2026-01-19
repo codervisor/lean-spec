@@ -1,6 +1,6 @@
 {
   "name": "lean-spec",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "engines": {
@@ -14,7 +14,8 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
+    "dev": "npm run dev:all",
+    "dev:all": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server --filter=@leanspec/chat-server",
     "build:node": "turbo run build",
     "dev:web": "turbo run dev:web --filter=@leanspec/ui",
     "dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",

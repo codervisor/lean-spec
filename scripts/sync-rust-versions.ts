@@ -42,7 +42,6 @@ const PLATFORM_INFO: Record<string, PlatformInfo> = {
   'darwin-x64': { os: 'darwin', cpu: 'x64', label: 'macOS x64' },
   'darwin-arm64': { os: 'darwin', cpu: 'arm64', label: 'macOS ARM64' },
   'linux-x64': { os: 'linux', cpu: 'x64', label: 'Linux x64' },
-  'linux-arm64': { os: 'linux', cpu: 'arm64', label: 'Linux ARM64' },
   'windows-x64': { os: 'win32', cpu: 'x64', label: 'Windows x64' }
 };
 

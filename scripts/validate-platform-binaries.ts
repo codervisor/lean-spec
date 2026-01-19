@@ -23,21 +23,68 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
 
-const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64'];
+const PLATFORMS = ['darwin-x64', 'darwin-arm64', 'linux-x64', 'windows-x64'];
 
 interface BinaryCheck {
   path: string;
   exists: boolean;
   size?: number;
+  headerValid?: boolean;
 }
 
-async function checkBinary(binaryPath: string): Promise<BinaryCheck> {
+const MACHO_MAGICS = new Set([
+  0xfeedface,
+  0xfeedfacf,
+  0xcefaedfe,
+  0xcffaedfe,
+  0xcafebabe,
+  0xbebafeca,
+]);
+
+async function readHeaderBytes(binaryPath: string): Promise<Buffer | null> {
+  try {
+    const handle = await fs.open(binaryPath, 'r');
+    try {
+      const buffer = Buffer.alloc(4);
+      const { bytesRead } = await handle.read(buffer, 0, 4, 0);
+      return bytesRead === 4 ? buffer : null;
+    } finally {
+      await handle.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+function isValidBinaryHeader(header: Buffer | null, platformKey: string): boolean {
+  if (!header) return false;
+
+  if (platformKey.startsWith('linux-')) {
+    return header[0] === 0x7f && header[1] === 0x45 && header[2] === 0x4c && header[3] === 0x46;
+  }
+
+  if (platformKey.startsWith('windows-')) {
+    return header[0] === 0x4d && header[1] === 0x5a;
+  }
+
+  if (platformKey.startsWith('darwin-')) {
+    const magicBE = header.readUInt32BE(0);
+    const magicLE = header.readUInt32LE(0);
+    return MACHO_MAGICS.has(magicBE) || MACHO_MAGICS.has(magicLE);
+  }
+
+  return false;
+}
+
+async function checkBinary(binaryPath: string, platformKey: string): Promise<BinaryCheck> {
   try {
     const stats = await fs.stat(binaryPath);
+    const header = await readHeaderBytes(binaryPath);
     return {
       path: binaryPath,
       exists: true,
-      size: stats.size
+      size: stats.size,
+      headerValid: isValidBinaryHeader(header, platformKey)
     };
   } catch {
     return {
@@ -67,14 +114,15 @@ async function validatePlatformBinaries(): Promise<boolean> {
       platform,
       `lean-spec${cliExt}`
     );
-    const cliCheck = await checkBinary(cliBinaryPath);
+    const cliCheck = await checkBinary(cliBinaryPath, platform);
     checks.push(cliCheck);
 
-    if (cliCheck.exists) {
+    if (cliCheck.exists && cliCheck.headerValid) {
       const sizeKB = ((cliCheck.size || 0) / 1024).toFixed(1);
       console.log(`✅ CLI ${platform}: ${sizeKB} KB`);
     } else {
-      console.log(`❌ CLI ${platform}: MISSING`);
+      const reason = cliCheck.exists ? 'INVALID HEADER' : 'MISSING';
+      console.log(`❌ CLI ${platform}: ${reason}`);
       allValid = false;
     }
 
@@ -86,14 +134,15 @@ async function validatePlatformBinaries(): Promise<boolean> {
       platform,
       `leanspec-mcp${mcpExt}`
     );
-    const mcpCheck = await checkBinary(mcpBinaryPath);
+    const mcpCheck = await checkBinary(mcpBinaryPath, platform);
     checks.push(mcpCheck);
 
-    if (mcpCheck.exists) {
+    if (mcpCheck.exists && mcpCheck.headerValid) {
       const sizeKB = ((mcpCheck.size || 0) / 1024).toFixed(1);
       console.log(`✅ MCP ${platform}: ${sizeKB} KB`);
     } else {
-      console.log(`❌ MCP ${platform}: MISSING`);
+      const reason = mcpCheck.exists ? 'INVALID HEADER' : 'MISSING';
+      console.log(`❌ MCP ${platform}: ${reason}`);
       allValid = false;
     }
 
@@ -105,14 +154,15 @@ async function validatePlatformBinaries(): Promise<boolean> {
       platform,
       `leanspec-http${httpExt}`
     );
-    const httpCheck = await checkBinary(httpBinaryPath);
+    const httpCheck = await checkBinary(httpBinaryPath, platform);
     checks.push(httpCheck);
 
-    if (httpCheck.exists) {
+    if (httpCheck.exists && httpCheck.headerValid) {
       const sizeKB = ((httpCheck.size || 0) / 1024).toFixed(1);
       console.log(`✅ HTTP ${platform}: ${sizeKB} KB`);
     } else {
-      console.log(`❌ HTTP ${platform}: MISSING`);
+      const reason = httpCheck.exists ? 'INVALID HEADER' : 'MISSING';
+      console.log(`❌ HTTP ${platform}: ${reason}`);
       allValid = false;
     }
   }
@@ -123,8 +173,9 @@ async function validatePlatformBinaries(): Promise<boolean> {
     console.log('❌ ERROR: Missing platform binaries. Cannot publish.');
     console.log('\nMissing files:');
     for (const check of checks) {
-      if (!check.exists) {
-        console.log(`  - ${check.path}`);
+      if (!check.exists || !check.headerValid) {
+        const suffix = check.exists ? ' (invalid header)' : '';
+        console.log(`  - ${check.path}${suffix}`);
       }
     }
     return false;

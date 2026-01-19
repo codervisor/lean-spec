@@ -575,7 +575,7 @@ export function SpecDetailPage() {
         {/* Main content with Sidebar */}
         <div className={cn("flex flex-col xl:flex-row xl:items-start mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
-            <MarkdownRenderer content={displayContent} />
+            <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
           </main>
 
           {/* Right Sidebar for TOC (Desktop only) */}

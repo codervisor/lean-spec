@@ -31,20 +31,9 @@ Activate this skill when any of the following are true:
 
 ## Quick Commands
 
-### Development Publishing
+### Production Publishing (Recommended)
 
-```bash
-# Publish dev version via GitHub Actions (all platforms)
-gh workflow run publish.yml --field dev=true
-
-# Dry run (validates without publishing)
-gh workflow run publish.yml --field dev=true --field dry_run=true
-
-# Install dev version
-npm install -g lean-spec@dev
-```
-
-### Production Publishing
+**The standard release process uses GitHub Releases to trigger automated publishing:**
 
 ```bash
 # 1. Update version (root only)
@@ -56,12 +45,33 @@ pnpm sync-versions
 # 3. Validate everything
 pnpm pre-release
 
-# 4. Publish (via GitHub Actions recommended)
-gh workflow run publish.yml
+# 4. Commit and push with tags
+git add .
+git commit -m "chore: release vX.X.X"
+git push --follow-tags
 
-# Or manual publish:
-pnpm publish:platforms  # Platform packages first
-pnpm publish:main       # Main packages second
+# 5. Create GitHub Release (triggers publish workflow automatically)
+gh release create vX.X.X --title "vX.X.X" --notes "Release notes here"
+# Or create via GitHub UI: https://github.com/codervisor/lean-spec/releases/new
+```
+
+**Alternative: Manual workflow dispatch** (not recommended for production)
+```bash
+# Only use if GitHub release trigger is not working
+gh workflow run publish.yml
+```
+
+### Development Publishing
+
+```bash
+# Publish dev version via GitHub Actions (all platforms)
+gh workflow run publish.yml --field dev=true
+
+# Dry run (validates without publishing)
+gh workflow run publish.yml --field dev=true --field dry_run=true
+
+# Install dev version
+npm install -g lean-spec@dev
 ```
 
 ## Version Management
@@ -84,7 +94,6 @@ Main Package (lean-spec)
     ├── @leanspec/cli-darwin-arm64
     ├── @leanspec/cli-darwin-x64
     ├── @leanspec/cli-linux-x64
-    ├── @leanspec/cli-linux-arm64
     └── @leanspec/cli-windows-x64
 ```
 
@@ -121,10 +130,15 @@ pnpm sync-versions
 pnpm pre-release
 # Includes: sync-versions, typecheck, tests, build, validate
 
-# 5. Commit and tag
+# 5. Commit and push with tags
 git add .
 git commit -m "chore: release vX.X.X"
 git push --follow-tags
+
+# 6. Create GitHub Release (triggers automated publish)
+gh release create vX.X.X --title "vX.X.X" --notes "Release notes here"
+# Or use GitHub UI: https://github.com/codervisor/lean-spec/releases/new
+# This automatically triggers .github/workflows/publish.yml
 ```
 
 ### Testing Dev Versions
@@ -191,24 +205,46 @@ For comprehensive documentation, see:
 
 ## CI/CD Integration
 
-Publishing is primarily done via GitHub Actions:
+Publishing is automated via GitHub Actions with two triggers:
 
+### Production: GitHub Release Trigger (Primary)
 ```yaml
 # .github/workflows/publish.yml
+on:
+  release:
+    types: [published]  # Triggers when you create a GitHub release
+
+# This is the recommended production release method
+# Creates a GitHub release → Workflow runs automatically
+```
+
+### Development: Manual Workflow Dispatch
+```yaml
+# .github/workflows/publish.yml
+on:
+  workflow_dispatch:
+    inputs:
+      dev: true         # Publishes with @dev tag
+      dry_run: true     # Validates without publishing
+
+# Use for testing and dev releases only
+```
+
+**Workflow Steps:**
 - Builds Rust binaries for all platforms
 - Syncs versions automatically
 - Publishes platform packages first
 - Publishes main packages second
 - Supports dev tags and dry runs
-```
 
 ## Best Practices
 
 1. **Never manually edit package versions** - Use `npm version` and `pnpm sync-versions`
 2. **Always test with dev versions first** - Use `@dev` tag before stable releases
 3. **Run pre-release checks** - `pnpm pre-release` catches issues early
-4. **Publish via CI** - GitHub Actions ensures consistency across platforms
-5. **Tag releases properly** - Use semantic versioning and git tags
+4. **Use GitHub Releases for production** - This is the primary trigger for publishing
+5. **Manual workflow dispatch is for dev/testing only** - Not recommended for production releases
+6. **Tag releases properly** - Use semantic versioning and git tags
 
 ## Setup & Activation
 

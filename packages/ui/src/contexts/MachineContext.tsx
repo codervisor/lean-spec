@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { api, APIError } from '../lib/api';
-import type { Machine, MachinesResponse } from '../types/api';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { api } from '../lib/api';
+import type { Machine } from '../types/api';
 
 interface MachineContextValue {
   machineModeEnabled: boolean;
@@ -21,51 +21,37 @@ const MachineContext = createContext<MachineContextValue | null>(null);
 const STORAGE_KEY = 'leanspec-current-machine';
 
 export function MachineProvider({ children }: { children: ReactNode }) {
-  const [machines, setMachines] = useState<Machine[]>([]);
+  const [machines] = useState<Machine[]>([]);
   const [currentMachine, setCurrentMachine] = useState<Machine | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [machineModeEnabled, setMachineModeEnabled] = useState(false);
-
-  const applyMachines = useCallback((data: MachinesResponse) => {
-    const nextMachines = data.machines || [];
-    setMachines(nextMachines);
-
-    if (nextMachines.length === 0) {
-      setCurrentMachine(null);
-      api.setCurrentMachineId(null);
-      return;
-    }
-
-    const storedId = localStorage.getItem(STORAGE_KEY);
-    const selected = (storedId ? nextMachines.find((machine) => machine.id === storedId) : null) || nextMachines[0];
-    setCurrentMachine(selected);
-    api.setCurrentMachineId(selected?.id ?? null);
-    if (selected) {
-      localStorage.setItem(STORAGE_KEY, selected.id);
-    }
-  }, []);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
+  const [machineModeEnabled] = useState(false);
 
   const refreshMachines = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.getMachines();
-      setMachineModeEnabled(true);
-      applyMachines(data);
-    } catch (err) {
-      if (err instanceof APIError && err.status === 404) {
-        setMachineModeEnabled(false);
-        setMachines([]);
-        setCurrentMachine(null);
-        api.setCurrentMachineId(null);
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to load machines');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [applyMachines]);
+    // Machine/cloud features are currently disabled
+    // States are already initialized to disabled state, no need to update
+    return;
+
+    // Original implementation (disabled):
+    // setLoading(true);
+    // setError(null);
+    // try {
+    //   const data = await api.getMachines();
+    //   setMachineModeEnabled(true);
+    //   applyMachines(data);
+    // } catch (err) {
+    //   if (err instanceof APIError && err.status === 404) {
+    //     setMachineModeEnabled(false);
+    //     setMachines([]);
+    //     setCurrentMachine(null);
+    //     api.setCurrentMachineId(null);
+    //   } else {
+    //     setError(err instanceof Error ? err.message : 'Failed to load machines');
+    //   }
+    // } finally {
+    //   setLoading(false);
+    // }
+  }, []);
 
   const selectMachine = useCallback((machineId: string) => {
     const machine = machines.find((item) => item.id === machineId) || null;
@@ -95,10 +81,6 @@ export function MachineProvider({ children }: { children: ReactNode }) {
     if (!currentMachine) return false;
     return currentMachine.status === 'online';
   }, [currentMachine, machineModeEnabled]);
-
-  useEffect(() => {
-    refreshMachines();
-  }, [refreshMachines]);
 
   return (
     <MachineContext.Provider
