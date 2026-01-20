@@ -44,6 +44,8 @@ This creates unnecessary complexity:
 - Cleaner architecture (UI is a static asset, not a service)
 - Consistent with desktop app pattern (Tauri serves UI directly)
 - Easier CORS setup (same-origin requests)
+- **Full CLI argument support** (port, host, project path, etc.)
+- Flexible configuration (CLI args > env vars > config file > defaults)
 
 ## Design
 
@@ -222,7 +224,7 @@ Router::new()
 
 import { spawn } from 'child_process';
 import { createRequire } from 'module';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
@@ -235,7 +237,9 @@ const httpServerPath = require.resolve('@leanspec/http-server/bin/leanspec-http.
 console.log('🚀 Starting LeanSpec...');
 
 // Start Rust HTTP server with UI_DIST env var
-const proc = spawn('node', [httpServerPath], {
+// Pass through all CLI arguments to the Rust binary
+const args = process.argv.slice(2);
+const proc = spawn('node', [httpServerPath, ...args], {
   stdio: 'inherit',
   env: { 
     ...process.env,
@@ -275,7 +279,17 @@ const API_BASE = '/api';
 # In root Makefile or build script
 build:
   # 1. Build UI first
-  cd packaui/
+  cd packages/ui && pnpm build
+  # 2. Build Rust HTTP server
+  cd rust/leanspec-http && cargo build --release
+  # 3. Copy binaries to npm packages
+  ./scripts/copy-rust-binaries.mjs
+```
+
+**2. Package Structure**
+
+```
+@leanspec/ui/
 ├── bin/
 │   └── leanspec-ui.js (launcher)
 ├── dist/              (Vite build)
@@ -295,11 +309,9 @@ build:
 1. User runs: `npx @leanspec/ui`
 2. Launcher starts: `@leanspec/http-server` with `LEANSPEC_UI_DIST` env var
 3. Rust server discovers UI files from `@leanspec/ui/dist`
-4. Both UI and API served on port 3000 4. Copy binary to npm-dist
-  # (existing process)
-```
+4. Both UI and API served on port 3000
 
-**2. npm Distribution**
+**3. npm Distribution**
 
 ```
 @leanspec/http-server/
@@ -326,21 +338,171 @@ build:
 
 **Recommendation**: Keep Option 1 for development (faster HMR)
 
+### CLI Arguments
+
+The unified server supports comprehensive CLI arguments, making it flexible for different deployment scenarios:
+
+**Network Configuration:**
+```bash
+npx @leanspec/ui --port 3001              # Custom port
+npx @leanspec/ui --host 0.0.0.0           # Bind to all interfaces (for Docker/remote access)
+npx @leanspec/ui -H 0.0.0.0 -p 8080       # Short flags
+```
+
+**Project Management:**
+```bash
+# Auto-add project and set as current (if not already in registry)
+npx @leanspec/ui --project /path/to/specs  
+npx @leanspec/ui -P ~/my-project           # Short flag
+```
+
+**Configuration:**
+```bash
+npx @leanspec/ui --config ~/custom-config.json  # Custom config file location
+npx @leanspec/ui --no-config                    # Skip loading config file (use defaults)
+```
+
+**Development & Debugging:**
+```bash
+npx @leanspec/ui --verbose                # Enable verbose logging (debug level)
+npx @leanspec/ui -v                       # Short flag
+npx @leanspec/ui --log-level trace        # More granular: trace, debug, info, warn, error
+```
+
+**Browser Control:**
+```bash
+npx @leanspec/ui --open                   # Auto-open browser (default)
+npx @leanspec/ui --no-open                # Don't open browser
+npx @leanspec/ui --browser firefox        # Specify browser to use
+```
+
+**Security & Access:**
+```bash
+npx @leanspec/ui --readonly               # Read-only mode (no modifications allowed)
+npx @leanspec/ui --cors-origins "https://example.com"  # Specify CORS origins
+npx @leanspec/ui --no-cors                # Disable CORS entirely (same-origin only)
+```
+
+**UI Customization:**
+```bash
+npx @leanspec/ui --ui-dist /custom/path   # Override UI files location (for testing)
+npx @leanspec/ui --theme dark             # Force theme: light, dark, auto
+npx @leanspec/ui --locale zh-CN           # Force locale
+```
+
+**Updated Rust Args struct:**
+
+```rust
+/// LeanSpec HTTP Server with embedded UI
+#[derive(Parser, Debug)]
+#[command(name = "leanspec-ui")]
+#[command(about = "Unified HTTP server for LeanSpec web UI")]
+#[command(version)]
+struct Args {
+    /// Host to bind to
+    #[arg(short = 'H', long, default_value = "127.0.0.1", env = "LEANSPEC_HOST")]
+    host: String,
+
+    /// Port to listen on
+    #[arg(short, long, default_value = "3000", env = "PORT")]
+    port: u16,
+
+    /// Project directory (specs root) - auto-adds and selects this project
+    #[arg(short = 'P', long, env = "LEANSPEC_PROJECT")]
+    project: Option<PathBuf>,
+
+    /// Config file path (default: ~/.lean-spec/config.json)
+    #[arg(short = 'c', long, env = "LEANSPEC_CONFIG")]
+    config: Option<PathBuf>,
+
+    /// Skip loading config file
+    #[arg(long)]
+    no_config: bool,
+
+    /// Enable verbose logging (debug level)
+    #[arg(short, long)]
+    verbose: bool,
+
+    /// Log level (trace, debug, info, warn, error)
+    #[arg(long, default_value = "info")]
+    log_level: String,
+
+    /// Auto-open browser on start
+    #[arg(long, default_value = "true")]
+    open: bool,
+
+    /// Browser to open (firefox, chrome, safari, default)
+    #[arg(long)]
+    browser: Option<String>,
+
+    /// Read-only mode (prevent modifications)
+    #[arg(long)]
+    readonly: bool,
+
+    /// UI dist directory (default: auto-detected from @leanspec/ui)
+    #[arg(long, env = "LEANSPEC_UI_DIST")]
+    ui_dist: Option<PathBuf>,
+
+    /// CORS allowed origins (comma-separated)
+    #[arg(long, value_delimiter = ',')]
+    cors_origins: Vec<String>,
+
+    /// Disable CORS entirely
+    #[arg(long)]
+    no_cors: bool,
+
+    /// Force UI theme (light, dark, auto)
+    #[arg(long)]
+    theme: Option<String>,
+
+    /// Force UI locale (en, zh-CN)
+    #[arg(long)]
+    locale: Option<String>,
+}
+```
+
+**Benefits of CLI Args:**
+- ✅ Flexible deployment (Docker, CI/CD, remote servers)
+- ✅ No config file needed for simple use cases
+- ✅ Environment variable support for containerized environments
+- ✅ Better DX (no need to edit config files)
+- ✅ Easier testing (override settings per invocation)
+
+**Project Behavior:**
+- **Without `--project`**: Loads project registry, shows all registered projects
+- **With `--project`**: Auto-adds project to registry if not present, sets as current project
+
 ### Configuration
 
-Update `~/.lean-spec/config.json`:
+Update `~/.lean-spec/config.json` structure for unified server:
 
 ```json
 {
   "server": {
     "host": "127.0.0.1",
-    "port": 3000,  // Single port for both UI and API
+    "port": 3000,           // Single port for both UI and API
+    "openBrowser": true,    // Auto-open browser
+    "browser": "default",   // Browser preference
     "cors": {
-      "enabled": false  // No CORS needed for same-origin
+      "enabled": false,     // No CORS needed for same-origin
+      "origins": []
     }
+  },
+  "ui": {
+    "theme": "auto",
+    "locale": "en"
+  },
+  "security": {
+    "readonly": false       // Read-only mode
   }
 }
 ```
+
+**Priority order:**
+1. CLI arguments (highest priority)
+2. Environment variables
+3. Config file (`~/.lean-spec/config.json`)
+4. Built-in defaults (lowest priority)
 
 ### Backward Compatibility
 
@@ -355,12 +517,24 @@ Update `~/.lean-spec/config.json`:
 - Users running `npx @leanspec/ui`: Works exactly the same (port 3000)
 - Users with bookmarks to `:3000`: No change needed
 - Users accessing API directly on `:3333`: Need to update to `:3000/api`
-- CustBuild UI first: `cd packages/ui && pnpm build`
+- Custom integrations: May need to update API base URL
+
+## Plan
+
+### Prerequisites
+- [ ] Build UI first: `cd packages/ui && pnpm build`
 - [ ] Build Rust HTTP server: `cd rust/leanspec-http && cargo build --release`
 - [ ] No bundling needed - packages stay separate
 - [ ] Update CI build workflow order
 - [ ] Test: Build both, verify they work together
+
 ### Phase 1: Rust HTTP Server Static File Serving (Day 1-2)
+- [ ] Add `tower-http` dependency to `leanspec-http/Cargo.toml`
+- [ ] Implement `get_ui_dist_path()` function with env var support
+- [ ] Add `ServeDir` route to router with SPA fallback
+- [ ] Implement comprehensive CLI arguments (port, host, project, config, etc.)
+- [ ] Add browser auto-open functionality
+- [ ] Implement read-only mode support
 - [ ] Verify `@leanspec/ui` includes `dist/` in published files
 - [ ] Verify `@leanspec/http-server` includes Rust binary
 - [ ] Test: `npm pack` both packages and inspect tarballs
@@ -379,10 +553,11 @@ Update `~/.lean-spec/config.json`:
 - [ ] Verify npm package structure
 - [ ] Test: `npm pack` and inspect tarball
 - [ ] Test: Install from tarball and run
-
-### Phase 4: UI Package Simplification (Day 4-5)
-- [ ] Remove Node.js HTTP server code from `packages/ui/bin/`
-- [ ] Update launcher to only start Rust HTTP server
+pass through all CLI args to Rust server
+- [ ] Update API client to use relative URLs (`/api`)
+- [ ] Remove port 3000 references
+- [ ] Update UI environment detection
+- [ ] Test all CLI arguments work correctly through launcherust HTTP server
 - [ ] Update API client to use relative URLs (`/api`)
 - [ ] Remove port 3000 references
 - [ ] Update UI environment detection
@@ -405,6 +580,18 @@ Update `~/.lean-spec/config.json`:
 - [ ] Test static assets load (CSS, JS, images)
 - [ ] Test MIME types are correct
 - [ ] Test 404 handling
+- [ ] **Test all CLI arguments:**
+  - [ ] `--port`, `--host`
+  - [ ] `--project` 
+  - [ ] `--config`, `--no-config`
+  - [ ] `--verbose`, `--log-level`
+  - [ ] `--open`, `--no-open`, `--browser`
+  - [ ] `--readonly`
+  - [ ] `--cors-origins`, `--no-cors`
+  - [ ] `--theme`, `--locale`
+  - [ ] `--ui-dist`
+- [ ] Test environment variable overrides
+- [ ] Test config file + CLI arg precedence
 - [ ] Test both dev and prod builds
 
 ### Phase 8: Cleanup (Day 8-9)
@@ -433,11 +620,14 @@ Update `~/.lean-spec/config.json`:
 ### E2E Tests
 - [ ] Install from npm: `npm install @leanspec/ui`
 - [ ] Run: `npx @leanspec/ui`
-- [ ] Open: `http://localhost:3000`
+- [ ] Verify browser auto-opens to `http://localhost:3000`
 - [ ] UI loads and displays correctly
 - [ ] API calls work (list projects, etc.)
 - [ ] Navigation works (click links, browser back/forward)
 - [ ] Ctrl+C shuts down cleanly
+- [ ] Test with custom args: `npx @leanspec/ui --port 3001 --no-open`
+- [ ] Test read-only mode: `npx @leanspec/ui --readonly`
+- [ ] Test Docker deployment: `docker run -p 8080:8080 leanspec --host 0.0.0.0 --port 8080`
 
 ### Performance Tests
 - [ ] Static file serving < 10ms for small files
@@ -503,9 +693,13 @@ Add to `leanspec-http/Cargo.toml`:
 [dependencies]
 # Existing dependencies...
 tower-http = { version = "0.6.8", features = ["fs", "trace"] }
+clap = { version = "4.5", features = ["derive", "env"] }  # Already present, add "env" feature
+webbrowser = "1.0"  # For auto-opening browser
 ```
 
 The `fs` feature provides `ServeDir` and `ServeFile` for static file serving.
+The `env` feature for clap allows CLI args to be overridden by environment variables.
+The `webbrowser` crate handles cross-platform browser launching.
 
 ### API Route Precedence
 
