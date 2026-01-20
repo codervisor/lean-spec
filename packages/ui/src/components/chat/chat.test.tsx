@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChatInput } from './ChatInput';
@@ -106,7 +107,7 @@ describe('ChatMessage', () => {
         {
           type: 'tool-list_specs' as const,
           toolCallId: 'tc1',
-          state: 'result',
+          state: 'output-available' as const,
           input: { status: 'in-progress' },
           output: [],
         },
@@ -116,7 +117,7 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={message} />);
     
     expect(screen.getByText('list_specs')).toBeInTheDocument();
-    expect(screen.getByText('completed')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
   });
 });
 
