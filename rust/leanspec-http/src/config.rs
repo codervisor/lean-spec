@@ -109,7 +109,7 @@ impl Default for CorsSettings {
 }
 
 fn default_cors_enabled() -> bool {
-    false
+    true
 }
 
 fn default_cors_origins() -> Vec<String> {
@@ -330,7 +330,7 @@ mod tests {
         let config = ServerConfig::default();
         assert_eq!(config.server.host, "127.0.0.1");
         assert_eq!(config.server.port, 3000);
-        assert!(!config.server.cors.enabled);
+        assert!(config.server.cors.enabled);
         assert_eq!(config.ui.theme, "auto");
         assert_eq!(config.projects.max_recent, 10);
     }
