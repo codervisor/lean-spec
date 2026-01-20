@@ -2,6 +2,8 @@ export interface Model {
   id: string;
   name: string;
   maxTokens?: number;
+  contextWindow?: string;
+  pricing?: { input: number; output: number };
   default?: boolean;
 }
 
