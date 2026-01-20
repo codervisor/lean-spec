@@ -43,16 +43,27 @@ export function ChatPage() {
   // Load threads
   const loadThreads = useCallback(async () => {
     try {
-      const loadedThreads = await ChatApi.getThreads();
+      if (!currentProject?.id) {
+        setThreads([]);
+        return;
+      }
+      const loadedThreads = await ChatApi.getThreads(currentProject.id);
       setThreads(loadedThreads);
     } catch (e) {
       console.error("Failed to load threads", e);
     }
-  }, []);
+  }, [currentProject?.id]);
 
   useEffect(() => {
     let cancelled = false;
-    ChatApi.getThreads()
+    if (!currentProject?.id) {
+      setThreads([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    ChatApi.getThreads(currentProject.id)
       .then((loadedThreads) => {
         if (!cancelled) {
           setThreads(loadedThreads);
@@ -64,7 +75,7 @@ export function ChatPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currentProject?.id]);
 
   const {
     messages,
@@ -114,7 +125,10 @@ export function ChatPage() {
 
   const handleSendMessage = async (text: string) => {
     if (!activeThreadId) {
-      const thread = await ChatApi.createThread(selectedModel);
+      if (!currentProject?.id) {
+        return;
+      }
+      const thread = await ChatApi.createThread(currentProject.id, selectedModel);
       setActiveThreadId(thread.id);
       await loadThreads();
       // We can't send message here because the hook needs to update with new threadId
@@ -132,7 +146,10 @@ export function ChatPage() {
   };
 
   const handleCreateNewChat = async () => {
-    const thread = await ChatApi.createThread(selectedModel);
+    if (!currentProject?.id) {
+      return;
+    }
+    const thread = await ChatApi.createThread(currentProject.id, selectedModel);
     setActiveThreadId(thread.id);
     loadThreads();
   }

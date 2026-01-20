@@ -2,6 +2,7 @@
 //!
 //! Shared state for the HTTP server using Arc for thread-safety.
 
+use crate::chat_store::ChatStore;
 use crate::config::ServerConfig;
 use crate::error::ServerError;
 use crate::project_registry::ProjectRegistry;
@@ -21,6 +22,9 @@ pub struct AppState {
 
     /// Cloud sync state
     pub sync_state: Arc<RwLock<SyncState>>,
+
+    /// Chat session store
+    pub chat_store: Arc<ChatStore>,
 }
 
 impl AppState {
@@ -39,19 +43,24 @@ impl AppState {
             }
         }
 
+        let chat_store = ChatStore::new()?;
+
         Ok(Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
             sync_state: Arc::new(RwLock::new(SyncState::load())),
+            chat_store: Arc::new(chat_store),
         })
     }
 
     /// Create state with an existing registry (for testing)
     pub fn with_registry(config: ServerConfig, registry: ProjectRegistry) -> Self {
+        let chat_store = ChatStore::new().expect("Failed to initialize chat store");
         Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
             sync_state: Arc::new(RwLock::new(SyncState::load())),
+            chat_store: Arc::new(chat_store),
         }
     }
 }

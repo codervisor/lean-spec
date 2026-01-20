@@ -3,7 +3,7 @@
 //! Sets up all API routes with the Axum router.
 
 use axum::{
-    routing::{delete, get, patch, post},
+    routing::{delete, get, patch, post, put},
     Router,
 };
 use tower_http::cors::{Any, CorsLayer};
@@ -44,6 +44,21 @@ pub fn create_router(state: AppState) -> Router {
         // Health endpoint
         .route("/health", get(handlers::health_check))
         .route("/api/chat", post(handlers::proxy_chat))
+        .route("/api/chat/sessions", get(handlers::list_chat_sessions))
+        .route("/api/chat/sessions", post(handlers::create_chat_session))
+        .route("/api/chat/sessions/{id}", get(handlers::get_chat_session))
+        .route(
+            "/api/chat/sessions/{id}",
+            patch(handlers::update_chat_session),
+        )
+        .route(
+            "/api/chat/sessions/{id}",
+            delete(handlers::delete_chat_session),
+        )
+        .route(
+            "/api/chat/sessions/{id}/messages",
+            put(handlers::replace_chat_messages),
+        )
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))

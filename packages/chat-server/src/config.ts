@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import chokidar, { type FSWatcher } from 'chokidar';
 import { z } from 'zod';
 
 const DEFAULT_CONFIG_PATH = path.join(os.homedir(), '.leanspec', 'chat-config.json');
@@ -113,10 +114,12 @@ export class ConfigManager {
   private static instance: ConfigManager;
   private config: ChatConfig;
   private configPath: string;
+  private watcher?: FSWatcher;
 
   private constructor(configPath: string = DEFAULT_CONFIG_PATH) {
     this.configPath = configPath;
     this.config = this.loadConfig();
+    this.startWatcher();
   }
 
   static getInstance(configPath?: string): ConfigManager {
@@ -139,6 +142,29 @@ export class ConfigManager {
     
     // Return default config if file doesn't exist or parsing fails
     return DEFAULT_CONFIG;
+  }
+
+  private startWatcher() {
+    try {
+      this.watcher = chokidar.watch(this.configPath, {
+        ignoreInitial: true,
+        awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
+      });
+
+      const reload = (event: string) => {
+        try {
+          this.config = this.loadConfig();
+          console.log(`[config] reloaded (${event})`);
+        } catch (error) {
+          console.warn('[config] reload failed:', error);
+        }
+      };
+
+      this.watcher.on('change', () => reload('change'));
+      this.watcher.on('add', () => reload('add'));
+    } catch (error) {
+      console.warn('[config] watcher failed to start:', error);
+    }
   }
 
   saveConfig(config: ChatConfig): void {

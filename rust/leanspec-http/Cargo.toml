@@ -47,6 +47,9 @@ walkdir.workspace = true
 # Directories
 dirs = "5.0"
 
+# SQLite
+rusqlite = {version = "0.31", features = ["bundled"]}
+
 # Unique IDs
 uuid = {version = "1.10", features = ["v4"]}
 

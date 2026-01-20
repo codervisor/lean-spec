@@ -2,6 +2,7 @@
 
 mod commands;
 mod config;
+mod keychain;
 mod projects;
 mod shortcuts;
 mod specs;
@@ -11,8 +12,9 @@ mod tray;
 use tauri::WindowEvent;
 
 use commands::{
-    desktop_add_project, desktop_bootstrap, desktop_check_updates, desktop_refresh_projects,
-    desktop_remove_project, desktop_rename_project, desktop_switch_project,
+    desktop_add_project, desktop_bootstrap, desktop_check_updates, desktop_delete_chat_api_key,
+    desktop_get_chat_api_key, desktop_refresh_projects, desktop_remove_project,
+    desktop_rename_project, desktop_store_chat_api_key, desktop_switch_project,
     desktop_toggle_favorite, desktop_validate_project, desktop_version,
 };
 use shortcuts::register_shortcuts;
@@ -46,6 +48,13 @@ fn main() {
             }
         })
         .setup(move |app| {
+            let salt_path = app
+                .path()
+                .app_local_data_dir()
+                .expect("could not resolve app local data path")
+                .join("stronghold-salt.txt");
+            app.handle()
+                .plugin(tauri_plugin_stronghold::Builder::with_argon2(&salt_path).build())?;
             register_shortcuts(&app.handle());
             tray::init_tray(&app.handle(), &tray_projects)?;
             Ok(())
@@ -62,6 +71,9 @@ fn main() {
             desktop_toggle_favorite,
             desktop_remove_project,
             desktop_rename_project,
+            desktop_store_chat_api_key,
+            desktop_get_chat_api_key,
+            desktop_delete_chat_api_key,
             // Spec commands (Phase 1 & 2 of spec 169)
             get_specs,
             get_spec_detail,

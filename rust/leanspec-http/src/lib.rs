@@ -22,6 +22,7 @@
 //! }
 //! ```
 
+pub mod chat_store;
 pub mod config;
 pub mod error;
 pub mod handlers;

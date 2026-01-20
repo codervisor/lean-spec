@@ -4,8 +4,10 @@ use dirs::home_dir;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-static CONFIG: Lazy<RwLock<DesktopConfig>> = Lazy::new(|| RwLock::new(DesktopConfig::load_or_default()));
+static CONFIG: Lazy<RwLock<DesktopConfig>> =
+    Lazy::new(|| RwLock::new(DesktopConfig::load_or_default()));
 
 const CONFIG_DIR: &str = ".lean-spec";
 const CONFIG_FILE: &str = "desktop.json";
@@ -21,6 +23,8 @@ pub struct DesktopConfig {
     pub appearance: AppearancePreferences,
     #[serde(default)]
     pub active_project_id: Option<String>,
+    #[serde(default)]
+    pub keychain_secret: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,6 +96,7 @@ impl Default for DesktopConfig {
                 theme: "system".into(),
             },
             active_project_id: None,
+            keychain_secret: None,
         }
     }
 }
@@ -99,12 +104,13 @@ impl Default for DesktopConfig {
 impl DesktopConfig {
     fn load_or_default() -> Self {
         let path = config_file_path();
-        
+
         // Try JSON first
         match fs::read_to_string(&path) {
             Ok(raw) => match serde_json::from_str::<DesktopConfig>(&raw) {
                 Ok(mut config) => {
                     normalize_config(&mut config);
+                    ensure_keychain_secret(&mut config);
                     return config;
                 }
                 Err(error) => {
@@ -114,17 +120,20 @@ impl DesktopConfig {
             },
             Err(_) => {}
         }
-        
+
         // Migration: Try legacy YAML
-        if let Some(legacy_config) = load_legacy_yaml() {
+        if let Some(mut legacy_config) = load_legacy_yaml() {
             eprintln!("Migrating desktop config from YAML to JSON format");
+            ensure_keychain_secret(&mut legacy_config);
             legacy_config.persist(); // Save as JSON
             backup_legacy_yaml();
             eprintln!("Migration complete: desktop.yaml → desktop.json");
             return legacy_config;
         }
-        
-        Self::default()
+
+        let mut config = Self::default();
+        ensure_keychain_secret(&mut config);
+        config
     }
 
     fn persist(&self) {
@@ -142,12 +151,28 @@ impl DesktopConfig {
 }
 
 fn normalize_config(config: &mut DesktopConfig) {
-    if !matches!(config.appearance.theme.as_str(), "light" | "dark" | "system") {
+    if !matches!(
+        config.appearance.theme.as_str(),
+        "light" | "dark" | "system"
+    ) {
         config.appearance.theme = "system".into();
     }
 
     if !matches!(config.updates.channel.as_str(), "stable" | "beta") {
         config.updates.channel = "stable".into();
+    }
+}
+
+fn ensure_keychain_secret(config: &mut DesktopConfig) {
+    if config
+        .keychain_secret
+        .as_deref()
+        .unwrap_or(" ")
+        .trim()
+        .is_empty()
+    {
+        config.keychain_secret = Some(Uuid::new_v4().to_string());
+        config.persist();
     }
 }
 

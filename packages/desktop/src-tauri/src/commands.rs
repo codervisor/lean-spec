@@ -6,6 +6,7 @@ use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::UpdaterExt;
 
 use crate::config::{mutate_config, read_config};
+use crate::keychain;
 use crate::projects::DesktopProject;
 use crate::state::DesktopState;
 use crate::tray;
@@ -143,6 +144,31 @@ pub async fn desktop_rename_project(
 #[tauri::command]
 pub async fn desktop_version(app: AppHandle) -> Result<String, String> {
     Ok(app.package_info().version.to_string())
+}
+
+#[tauri::command]
+pub async fn desktop_store_chat_api_key(
+    app: AppHandle,
+    provider_id: String,
+    api_key: String,
+) -> Result<(), String> {
+    keychain::store_api_key(&app, &provider_id, &api_key)
+}
+
+#[tauri::command]
+pub async fn desktop_get_chat_api_key(
+    app: AppHandle,
+    provider_id: String,
+) -> Result<Option<String>, String> {
+    keychain::get_api_key(&app, &provider_id)
+}
+
+#[tauri::command]
+pub async fn desktop_delete_chat_api_key(
+    app: AppHandle,
+    provider_id: String,
+) -> Result<(), String> {
+    keychain::delete_api_key(&app, &provider_id)
 }
 
 fn build_and_publish(app: &AppHandle, state: &DesktopState) -> Result<DesktopBootstrapPayload> {

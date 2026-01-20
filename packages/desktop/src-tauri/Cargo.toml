@@ -25,6 +25,7 @@ tauri-plugin-log = {version = "2"}
 tauri-plugin-notification = {version = "2"}
 tauri-plugin-opener = {version = "2"}
 tauri-plugin-shell = {version = "2"}
+tauri-plugin-stronghold = {version = "2", features = ["kdf"]}
 tauri-plugin-updater = {version = "2"}
 tauri-plugin-window-state = {version = "2"}
 tempfile = "3.23.0"
@@ -32,6 +33,7 @@ thiserror = "1.0"
 tokio = {version = "1.41", features = ["rt-multi-thread", "macros"]}
 uuid = {version = "1.10", features = ["v4"]}
 walkdir = "2.5"
+iota_stronghold = "2.1.0"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

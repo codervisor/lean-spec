@@ -3,10 +3,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { streamText, stepCountIs } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createLeanSpecTools } from './tools';
 import { systemPrompt } from './prompts';
 import { ConfigManager } from './config';
+import { ProviderFactory } from './provider-factory';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -49,9 +49,44 @@ app.put('/api/chat/config', (req, res) => {
   }
 });
 
+async function fetchSessionContext(baseUrl: string, sessionId: string) {
+  try {
+    const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/chat/sessions/${sessionId}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = (await response.json()) as { session?: { providerId?: string; modelId?: string } };
+    return data?.session ?? null;
+  } catch (error) {
+    console.warn('[chat] failed to fetch session context:', error);
+    return null;
+  }
+}
+
+async function persistSessionMessages(
+  baseUrl: string,
+  sessionId: string,
+  payload: {
+    projectId?: string;
+    providerId: string;
+    modelId: string;
+    messages: Array<{ role: string; content: string }>;
+  },
+) {
+  try {
+    await fetch(`${baseUrl.replace(/\/$/, '')}/api/chat/sessions/${sessionId}/messages`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    console.warn('[chat] failed to persist session messages:', error);
+  }
+}
+
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages, projectId, providerId, modelId } = req.body ?? {};
+    const { messages, projectId, providerId, modelId, sessionId } = req.body ?? {};
 
     if (!Array.isArray(messages)) {
       res.status(400).json({ error: 'messages must be an array' });
@@ -65,8 +100,18 @@ app.post('/api/chat', async (req, res) => {
     const config = configManager.getConfig();
 
     // Use provided provider/model or fall back to defaults
-    const selectedProviderId = providerId ?? config.settings.defaultProviderId;
-    const selectedModelId = modelId ?? config.settings.defaultModelId;
+    let selectedProviderId = providerId ?? config.settings.defaultProviderId;
+    let selectedModelId = modelId ?? config.settings.defaultModelId;
+
+    if (sessionId) {
+      const session = await fetchSessionContext(baseUrl, sessionId);
+      if (session?.providerId) {
+        selectedProviderId = session.providerId;
+      }
+      if (session?.modelId) {
+        selectedModelId = session.modelId;
+      }
+    }
 
     const provider = configManager.getProvider(selectedProviderId);
     if (!provider) {
@@ -107,20 +152,42 @@ app.post('/api/chat', async (req, res) => {
       return;
     }
 
-    const openaiProvider = createOpenAI({
-      apiKey,
-      baseURL: provider.baseURL,
-    });
+    const aiProvider = ProviderFactory.create(provider, apiKey);
 
     const result = streamText({
-      model: openaiProvider(model.id) as any,
+      model: aiProvider(model.id) as any,
       tools,
       system: systemPrompt,
       messages: transformedMessages,
       stopWhen: stepCountIs(config.settings.maxSteps),
     });
 
-    result.pipeTextStreamToResponse(res);
+    if (sessionId) {
+      void result.text.then((assistantText) => {
+        const trimmed = assistantText?.trim();
+        if (!trimmed) {
+          return;
+        }
+        const persistedMessages = [
+          ...transformedMessages,
+          { role: 'assistant', content: trimmed },
+        ];
+        return persistSessionMessages(baseUrl, sessionId, {
+          projectId,
+          providerId: selectedProviderId,
+          modelId: selectedModelId,
+          messages: persistedMessages,
+        });
+      });
+    }
+
+    result.pipeTextStreamToResponse(res, {
+      headers: {
+        'x-chat-provider-id': selectedProviderId,
+        'x-chat-model-id': selectedModelId,
+        ...(sessionId ? { 'x-chat-session-id': sessionId } : {}),
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ error: message });

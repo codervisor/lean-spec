@@ -494,7 +494,6 @@ export function ChatSettingsPage() {
 - ✅ Form validation and error messages
 - ✅ i18n support (English and Chinese)
 - ✅ Integration with ChatPage via Settings icon (Sliders icon)
-```
 
 ### 5. Security Considerations
 

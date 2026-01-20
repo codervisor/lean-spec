@@ -1,13 +1,5 @@
 import type { UIMessage } from '@ai-sdk/react';
 
-// Simple UUID generator fallback
-function generateId() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
 // Helper to extract text content from UIMessage parts
 function extractTextFromMessage(message: UIMessage): string {
   if (!message.parts) return '';
@@ -33,106 +25,152 @@ export interface ChatThread {
   preview: string;
 }
 
-const STORAGE_KEY_THREADS = 'leanspec-chat-threads';
-const STORAGE_KEY_MESSAGES_PREFIX = 'leanspec-chat-messages-';
+interface ChatSessionDto {
+  id: string;
+  projectId: string;
+  title: string;
+  providerId?: string | null;
+  modelId?: string | null;
+  createdAt: number;
+  updatedAt: number;
+  messageCount: number;
+  preview?: string | null;
+}
+
+interface ChatMessageDto {
+  id: string;
+  sessionId: string;
+  projectId: string;
+  role: UIMessage['role'];
+  content: string;
+  timestamp: number;
+  metadata?: Record<string, unknown> | null;
+}
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
+
+function toThread(session: ChatSessionDto): ChatThread {
+  return {
+    id: session.id,
+    title: session.title,
+    createdAt: new Date(session.createdAt).toISOString(),
+    updatedAt: new Date(session.updatedAt).toISOString(),
+    model: {
+      providerId: session.providerId ?? 'openai',
+      modelId: session.modelId ?? 'gpt-4o',
+    },
+    messageCount: session.messageCount ?? 0,
+    preview: session.preview ?? '',
+  };
+}
+
+function toUIMessage(message: ChatMessageDto): UIMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    parts: [{ type: 'text', text: message.content }],
+  } as UIMessage;
+}
+
+function toMessageInput(messages: UIMessage[]) {
+  return messages.map((message) => ({
+    id: message.id,
+    role: message.role,
+    content: extractTextFromMessage(message),
+  }));
+}
 
 // Mock API Client to be replaced by real backend calls (Spec 223)
 export class ChatApi {
-  static async getThreads(): Promise<ChatThread[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_THREADS);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error('Failed to parse chat threads', e);
+  static async getThreads(projectId?: string): Promise<ChatThread[]> {
+    if (!projectId) return [];
+
+    const res = await fetch(`${API_BASE}/api/chat/sessions?projectId=${encodeURIComponent(projectId)}`);
+    if (!res.ok) {
+      throw new Error('Failed to load chat sessions');
     }
-    return [];
+
+    const sessions: ChatSessionDto[] = await res.json();
+    return sessions.map(toThread);
   }
 
-  static async createThread(model: { providerId: string; modelId: string }, initialMessages: UIMessage[] = []): Promise<ChatThread> {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const threads = await this.getThreads();
-    const newThread: ChatThread = {
-      id: generateId(),
-      title: 'New Chat',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      model,
-      messageCount: initialMessages.length,
-      preview: initialMessages.length > 0 ? extractTextFromMessage(initialMessages[0]) : '',
-    };
-    
-    threads.unshift(newThread);
-    localStorage.setItem(STORAGE_KEY_THREADS, JSON.stringify(threads));
-    
-    if (initialMessages.length > 0) {
-        localStorage.setItem(`${STORAGE_KEY_MESSAGES_PREFIX}${newThread.id}`, JSON.stringify(initialMessages));
+  static async createThread(
+    projectId: string,
+    model: { providerId: string; modelId: string },
+    initialMessages: UIMessage[] = [],
+  ): Promise<ChatThread> {
+    const res = await fetch(`${API_BASE}/api/chat/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId,
+        providerId: model.providerId,
+        modelId: model.modelId,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to create chat session');
     }
-    
-    return newThread;
+
+    const session: ChatSessionDto = await res.json();
+    const thread = toThread(session);
+
+    if (initialMessages.length > 0) {
+      await this.saveMessages(thread.id, initialMessages);
+    }
+
+    return thread;
   }
 
   static async updateThread(id: string, updates: Partial<ChatThread>): Promise<ChatThread> {
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    const threads = await this.getThreads();
-    const index = threads.findIndex(t => t.id === id);
-    if (index === -1) throw new Error('Thread not found');
-    
-    const updated = { ...threads[index], ...updates, updatedAt: new Date().toISOString() };
-    threads[index] = updated;
-    localStorage.setItem(STORAGE_KEY_THREADS, JSON.stringify(threads));
-    return updated;
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: updates.title,
+        providerId: updates.model?.providerId,
+        modelId: updates.model?.modelId,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to update chat session');
+    }
+
+    const session: ChatSessionDto = await res.json();
+    return toThread(session);
   }
 
   static async deleteThread(id: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    const threads = await this.getThreads();
-    const filtered = threads.filter(t => t.id !== id);
-    localStorage.setItem(STORAGE_KEY_THREADS, JSON.stringify(filtered));
-    localStorage.removeItem(`${STORAGE_KEY_MESSAGES_PREFIX}${id}`);
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to delete chat session');
+    }
   }
 
   static async getMessages(threadId: string): Promise<UIMessage[]> {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    try {
-      const stored = localStorage.getItem(`${STORAGE_KEY_MESSAGES_PREFIX}${threadId}`);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch {
-       // ignore
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${threadId}`);
+    if (!res.ok) {
+      throw new Error('Failed to load chat history');
     }
-    return [];
+    const data = await res.json();
+    const messages: ChatMessageDto[] = data?.messages ?? [];
+    return messages.map(toUIMessage);
   }
 
   static async saveMessages(threadId: string, messages: UIMessage[]): Promise<void> {
-    // This is sync in localStorage but backend would be async
-    // Also we need to update the thread preview and count
-    localStorage.setItem(`${STORAGE_KEY_MESSAGES_PREFIX}${threadId}`, JSON.stringify(messages));
-    
-    const threads = await this.getThreads();
-    const index = threads.findIndex(t => t.id === threadId);
-    if (index !== -1) {
-      const thread = threads[index];
-      // Update preview if it's the first message or if we want to show last? 
-      // Spec says: preview: string; // First user message
-      const firstUserMsg = messages.find(m => m.role === 'user');
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${threadId}/messages`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: toMessageInput(messages) }),
+    });
 
-      thread.messageCount = messages.length;
-      thread.updatedAt = new Date().toISOString();
-      if (firstUserMsg && !thread.preview) {
-         thread.preview = extractTextFromMessage(firstUserMsg).slice(0, 100);
-      }
-      
-      localStorage.setItem(STORAGE_KEY_THREADS, JSON.stringify(threads));
+    if (!res.ok) {
+      throw new Error('Failed to save chat messages');
     }
   }
 }

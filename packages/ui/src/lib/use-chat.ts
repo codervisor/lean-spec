@@ -24,12 +24,19 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
     let active = true;
     if (options.threadId) {
         setLoadingHistory(true);
-        ChatApi.getMessages(options.threadId).then(msgs => {
+        ChatApi.getMessages(options.threadId)
+          .then((msgs) => {
             if (active) {
-                setInitialMessages(msgs);
-                setLoadingHistory(false);
+              setInitialMessages(msgs);
+              setLoadingHistory(false);
             }
-        });
+          })
+          .catch(() => {
+            if (active) {
+              setInitialMessages([]);
+              setLoadingHistory(false);
+            }
+          });
     } else {
         setInitialMessages([]);
     }
@@ -44,10 +51,11 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
     api,
     body: {
       projectId: currentProject?.id,
+      sessionId: options.threadId,
       providerId: options.providerId,
       modelId: options.modelId,
     },
-  }), [api, currentProject?.id, options.providerId, options.modelId]);
+  }), [api, currentProject?.id, options.providerId, options.modelId, options.threadId]);
 
   const chatHook = useAIChat({
     id: options.threadId || 'new-chat',

@@ -3,6 +3,7 @@
 //! Route handlers for the HTTP API.
 
 mod chat;
+mod chat_sessions;
 mod health;
 mod local_projects;
 mod projects;
@@ -10,6 +11,7 @@ mod specs;
 mod sync;
 
 pub use chat::*;
+pub use chat_sessions::*;
 pub use health::*;
 pub use local_projects::*;
 pub use projects::*;
