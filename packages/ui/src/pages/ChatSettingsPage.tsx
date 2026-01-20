@@ -282,7 +282,7 @@ export function ChatSettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {config.providers.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
+                      <SelectItem key={p.id} value={p.id} disabled={!p.hasApiKey}>
                         {p.name}
                       </SelectItem>
                     ))}
@@ -501,12 +501,15 @@ function ProviderDialog({ provider, existingIds, onSave, onCancel }: ProviderDia
   const handleSubmit = () => {
     if (!validate()) return;
 
+    const trimmedKey = formData.apiKey.trim();
+
     onSave({
       id: formData.id,
       name: formData.name,
       baseURL: formData.baseURL || undefined,
       models: provider?.models ?? [],
-      hasApiKey: formData.apiKey ? true : formData.hasApiKey,
+      hasApiKey: trimmedKey ? true : formData.hasApiKey,
+      apiKey: trimmedKey || undefined,
     });
   };
 

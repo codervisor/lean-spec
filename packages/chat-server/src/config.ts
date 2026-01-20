@@ -21,9 +21,28 @@ export const ProviderSchema = z.object({
   models: z.array(ModelSchema),
 });
 
+const ProviderUpdateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  baseURL: z.string().url().optional(),
+  apiKey: z.string().optional(),
+  models: z.array(ModelSchema),
+  hasApiKey: z.boolean().optional(),
+});
+
 export const ChatConfigSchema = z.object({
   version: z.string(),
   providers: z.array(ProviderSchema),
+  settings: z.object({
+    maxSteps: z.number().min(1).max(50),
+    defaultProviderId: z.string(),
+    defaultModelId: z.string(),
+  }),
+});
+
+const ChatConfigUpdateSchema = z.object({
+  version: z.string(),
+  providers: z.array(ProviderUpdateSchema),
   settings: z.object({
     maxSteps: z.number().min(1).max(50),
     defaultProviderId: z.string(),
@@ -178,6 +197,28 @@ export class ConfigManager {
     } catch (error) {
       throw new Error(`Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  updateConfig(input: unknown): void {
+    const update = ChatConfigUpdateSchema.parse(input);
+    const existingProviders = new Map(this.config.providers.map((provider) => [provider.id, provider]));
+
+    const mergedProviders: Provider[] = update.providers.map((provider) => {
+      const existing = existingProviders.get(provider.id);
+      return {
+        id: provider.id,
+        name: provider.name,
+        baseURL: provider.baseURL,
+        apiKey: provider.apiKey ?? existing?.apiKey ?? '',
+        models: provider.models,
+      };
+    });
+
+    this.saveConfig({
+      version: update.version,
+      providers: mergedProviders,
+      settings: update.settings,
+    });
   }
 
   getConfig(): ChatConfig {

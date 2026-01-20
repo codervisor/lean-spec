@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
 import os from 'os';
@@ -40,7 +41,7 @@ app.get('/api/chat/config', (_req, res) => {
 app.put('/api/chat/config', (req, res) => {
   try {
     const configManager = ConfigManager.getInstance();
-    configManager.saveConfig(req.body);
+    configManager.updateConfig(req.body);
     const config = configManager.getConfigForClient();
     res.json(config);
   } catch (error) {

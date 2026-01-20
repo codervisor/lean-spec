@@ -13,6 +13,7 @@ export interface Provider {
   baseURL?: string;
   models: Model[];
   hasApiKey: boolean;
+  apiKey?: string;
 }
 
 export interface ChatConfig {
