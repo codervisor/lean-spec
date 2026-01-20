@@ -34,6 +34,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Build dependencies
+        run: |
+          pnpm --filter @leanspec/core build
+          pnpm --filter @leanspec/ui-components build
+          pnpm --filter @leanspec/http-server build
+          pnpm --filter @leanspec/chat-server build
+
       - name: Build UI
         run: pnpm --filter @leanspec/ui build
 
