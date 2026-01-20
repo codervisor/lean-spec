@@ -84,7 +84,7 @@ export class HttpBackendAdapter implements BackendAdapter {
   private machineId: string | null = null;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || import.meta.env.VITE_API_URL || 'http://localhost:3333';
+    this.baseUrl = baseUrl || import.meta.env.VITE_API_URL || '';
   }
 
   setMachineId(machineId: string | null) {

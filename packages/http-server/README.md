@@ -8,6 +8,7 @@ High-performance Rust HTTP server for LeanSpec UI.
 - **Lightweight**: <30MB bundle size
 - **Multi-project**: Support for multiple project workspaces
 - **RESTful API**: JSON API for all spec operations
+- **Unified UI + API**: Serves the Vite UI and `/api/*` from one server
 - **CORS-enabled**: Configurable cross-origin resource sharing
 
 ## Installation
@@ -26,7 +27,7 @@ npx leanspec-http
 
 Options:
 - `--host <host>` - Server host (default: 127.0.0.1)
-- `--port <port>` - Server port (default: 3333)
+- `--port <port>` - Server port (default: 3000)
 - `--help` - Show help message
 
 ### As a library
@@ -34,7 +35,7 @@ Options:
 ```javascript
 import { spawn } from 'child_process';
 
-const server = spawn('leanspec-http', ['--port', '3333']);
+const server = spawn('leanspec-http', ['--port', '3000']);
 ```
 
 ## Configuration
@@ -45,9 +46,9 @@ The server reads configuration from `~/.lean-spec/config.json`:
 {
   "server": {
     "host": "127.0.0.1",
-    "port": 3333,
+    "port": 3000,
     "cors": {
-      "enabled": true,
+      "enabled": false,
       "origins": [
         "http://localhost:5173",
         "http://localhost:3000"

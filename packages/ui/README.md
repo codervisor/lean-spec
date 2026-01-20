@@ -13,7 +13,7 @@ This is a lightweight, fast SPA built with Vite. It provides a modern UI for vie
 - **Routing**: React Router 7 (client-side)
 - **Components**: `@leanspec/ui-components` (shared library)
 - **Styling**: Tailwind CSS 3
-- **Backend**: Connects to Rust HTTP server at `http://localhost:3333`
+- **Backend**: Same-origin API served by the Rust HTTP server at `http://localhost:3000`
 
 ## Features
 
@@ -52,10 +52,10 @@ The API base URL can be configured via environment variable:
 
 ```bash
 # .env.local
-VITE_API_URL=http://localhost:3333
+VITE_API_URL=http://localhost:3000
 ```
 
-Default is `http://localhost:3333` which matches the Rust HTTP server.
+Default is same-origin (`/api`) which matches the unified HTTP server.
 
 ## Build Output
 

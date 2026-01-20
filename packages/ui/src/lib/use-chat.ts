@@ -44,7 +44,7 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
     return () => { active = false; };
   }, [options.threadId]);
 
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3333';
+  const baseUrl = import.meta.env.VITE_API_URL || '';
   const api = `${baseUrl}/api/chat`;
 
   // Create transport with proper options

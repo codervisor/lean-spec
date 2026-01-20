@@ -522,25 +522,25 @@ Update `~/.lean-spec/config.json` structure for unified server:
 ## Plan
 
 ### Prerequisites
-- [ ] Build UI first: `cd packages/ui && pnpm build`
-- [ ] Build Rust HTTP server: `cd rust/leanspec-http && cargo build --release`
-- [ ] No bundling needed - packages stay separate
+- [x] Build UI first: `cd packages/ui && pnpm build`
+- [x] Build Rust HTTP server: `cd rust/leanspec-http && cargo build --release`
+- [x] No bundling needed - packages stay separate
 - [ ] Update CI build workflow order
-- [ ] Test: Build both, verify they work together
+- [x] Test: Build both, verify they work together
 
 ### Phase 1: Rust HTTP Server Static File Serving (Day 1-2)
-- [ ] Add `tower-http` dependency to `leanspec-http/Cargo.toml`
-- [ ] Implement `get_ui_dist_path()` function with env var support
-- [ ] Add `ServeDir` route to router with SPA fallback
-- [ ] Implement comprehensive CLI arguments (port, host, project, config, etc.)
-- [ ] Add browser auto-open functionality
-- [ ] Implement read-only mode support
-- [ ] Verify `@leanspec/ui` includes `dist/` in published files
-- [ ] Verify `@leanspec/http-server` includes Rust binary
+- [x] Add `tower-http` dependency to `leanspec-http/Cargo.toml`
+- [x] Implement `get_ui_dist_path()` function with env var support
+- [x] Add `ServeDir` route to router with SPA fallback
+- [x] Implement comprehensive CLI arguments (port, host, project, config, etc.)
+- [x] Add browser auto-open functionality
+- [x] Implement read-only mode support
+- [x] Verify `@leanspec/ui` includes `dist/` in published files
+- [x] Verify `@leanspec/http-server` includes Rust binary
 - [ ] Test: `npm pack` both packages and inspect tarballs
 - [ ] Test: Install from tarballs and verify UI discovery works
-- [ ] Test: `npx @leanspec/ui` starts successfully
-- [ ] Ensure API routes take precedence
+- [x] Test: `npx @leanspec/ui` starts successfully
+- [x] Ensure API routes take precedence
 
 ### Phase 2: Build Pipeline Integration (Day 2-3)
 - [ ] Create `rust/leanspec-http/ui-dist/` directory
@@ -553,43 +553,42 @@ Update `~/.lean-spec/config.json` structure for unified server:
 - [ ] Verify npm package structure
 - [ ] Test: `npm pack` and inspect tarball
 - [ ] Test: Install from tarball and run
-pass through all CLI args to Rust server
-- [ ] Update API client to use relative URLs (`/api`)
-- [ ] Remove port 3000 references
-- [ ] Update UI environment detection
-- [ ] Test all CLI arguments work correctly through launcherust HTTP server
-- [ ] Update API client to use relative URLs (`/api`)
-- [ ] Remove port 3000 references
-- [ ] Update UI environment detection
+
+### Phase 4: UI Package Updates (Day 4-5)
+- [x] Update `@leanspec/ui` launcher to pass through all CLI args to Rust server
+- [x] Update API client to use relative URLs (`/api`)
+- [x] Remove port 3333 references
+- [x] Update UI environment detection
+- [x] Test all CLI arguments work correctly through launcher
 
 ### Phase 5: Configuration & Documentation (Day 5-6)
-- [ ] Keep default port as 3000 in all configs
+- [x] Keep default port as 3000 in all configs
 - [ ] Update README and docs
 - [ ] Add migration guide for API-only users (port 3333 → 3000)
 - [ ] Update `lean-spec ui` command output messages
 
 ### Phase 6: Development Experience (Day 6)
-- [ ] Update Vite proxy config (if needed)
+- [x] Update Vite proxy config (if needed)
 - [ ] Document dev vs prod modes
 - [ ] Update CONTRIBUTING.md
 
 ### Phase 7: Testing (Day 7-8)
-- [ ] Test unified server serves UI correctly
-- [ ] Test SPA routing works (fallback to index.html)
-- [ ] Test API routes still work
-- [ ] Test static assets load (CSS, JS, images)
-- [ ] Test MIME types are correct
+- [x] Test unified server serves UI correctly
+- [x] Test SPA routing works (fallback to index.html)
+- [x] Test API routes still work
+- [x] Test static assets load (CSS, JS, images)
+- [x] Test MIME types are correct
 - [ ] Test 404 handling
 - [ ] **Test all CLI arguments:**
-  - [ ] `--port`, `--host`
-  - [ ] `--project` 
-  - [ ] `--config`, `--no-config`
-  - [ ] `--verbose`, `--log-level`
-  - [ ] `--open`, `--no-open`, `--browser`
-  - [ ] `--readonly`
-  - [ ] `--cors-origins`, `--no-cors`
-  - [ ] `--theme`, `--locale`
-  - [ ] `--ui-dist`
+  - [x] `--port`, `--host`
+  - [x] `--project` 
+  - [x] `--config`, `--no-config`
+  - [x] `--verbose`, `--log-level`
+  - [x] `--open`, `--no-open`, `--browser`
+  - [x] `--readonly`
+  - [x] `--cors-origins`, `--no-cors`
+  - [x] `--theme`, `--locale`
+  - [x] `--ui-dist`
 - [ ] Test environment variable overrides
 - [ ] Test config file + CLI arg precedence
 - [ ] Test both dev and prod builds
@@ -603,28 +602,28 @@ pass through all CLI args to Rust server
 ## Test
 
 ### Unit Tests
-- [ ] `get_ui_dist_path()` returns correct path in dev/prod
-- [ ] Router ordering: API routes match before static files
-- [ ] SPA fallback serves index.html for unknown routes
+- [x] `get_ui_dist_path()` returns correct path in dev/prod
+- [x] Router ordering: API routes match before static files
+- [x] SPA fallback serves index.html for unknown routes
 
 ### Integration Tests
-- [ ] `GET /` returns index.html (200)
-- [ ] `GET /index.html` returns index.html (200)
-- [ ] `GET /assets/main.js` returns JS file (200)
-- [ ] `GET /projects` returns index.html (SPA fallback) (200)
-- [ ] `GET /api/projects` returns JSON (not index.html) (200)
+- [x] `GET /` returns index.html (200)
+- [x] `GET /index.html` returns index.html (200)
+- [x] `GET /assets/main.js` returns JS file (200)
+- [x] `GET /projects` returns index.html (SPA fallback) (200)
+- [x] `GET /api/projects` returns JSON (not index.html) (200)
 - [ ] `GET /nonexistent.jpg` returns index.html (SPA fallback) (200)
-- [ ] Static files have correct MIME types
-- [ ] API responses have correct Content-Type: application/json
+- [x] Static files have correct MIME types
+- [x] API responses have correct Content-Type: application/json
 
 ### E2E Tests
 - [ ] Install from npm: `npm install @leanspec/ui`
-- [ ] Run: `npx @leanspec/ui`
-- [ ] Verify browser auto-opens to `http://localhost:3000`
-- [ ] UI loads and displays correctly
-- [ ] API calls work (list projects, etc.)
-- [ ] Navigation works (click links, browser back/forward)
-- [ ] Ctrl+C shuts down cleanly
+- [x] Run: `npx @leanspec/ui`
+- [x] Verify browser auto-opens to `http://localhost:3000`
+- [x] UI loads and displays correctly
+- [x] API calls work (list projects, etc.)
+- [x] Navigation works (click links, browser back/forward)
+- [x] Ctrl+C shuts down cleanly
 - [ ] Test with custom args: `npx @leanspec/ui --port 3001 --no-open`
 - [ ] Test read-only mode: `npx @leanspec/ui --readonly`
 - [ ] Test Docker deployment: `docker run -p 8080:8080 leanspec --host 0.0.0.0 --port 8080`

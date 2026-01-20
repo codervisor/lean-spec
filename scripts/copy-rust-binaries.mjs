@@ -150,8 +150,14 @@ try {
     const existingPkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
     let updated = false;
 
-    if (!existingPkg.files?.includes('postinstall.js')) {
-      existingPkg.files = [...(existingPkg.files || []), 'postinstall.js'];
+    const files = new Set(existingPkg.files || []);
+    files.add('postinstall.js');
+    if (binaryName === 'leanspec-http') {
+      files.add('ui-dist');
+      files.add('ui-dist/**');
+    }
+    if (existingPkg.files?.length !== files.size) {
+      existingPkg.files = [...files];
       updated = true;
     }
 
@@ -176,7 +182,9 @@ try {
     os: [platformInfo.os],
     cpu: [platformInfo.cpu],
     main: binaryFileName,
-    files: [binaryFileName, 'postinstall.js'],
+    files: binaryName === 'leanspec-http'
+      ? [binaryFileName, 'postinstall.js', 'ui-dist', 'ui-dist/**']
+      : [binaryFileName, 'postinstall.js'],
     scripts: {
       postinstall: 'node postinstall.js'
     },
@@ -278,7 +286,28 @@ async function copyBinary(binaryName, platformKey, version) {
   }
 
   console.log(`✅ Copied ${binaryName} to ${config.packagePath}/binaries/${platformKey}/`);
+
+  if (binaryName === 'leanspec-http') {
+    await copyUiDist(destDir);
+  }
   return true;
+}
+
+async function copyUiDist(destDir) {
+  const sourceDist = path.join(ROOT, 'packages', 'ui', 'dist');
+  const destDist = path.join(destDir, 'ui-dist');
+
+  try {
+    await fs.access(sourceDist);
+  } catch (e) {
+    console.warn(`⚠️  UI dist not found at ${sourceDist}. Skipping ui-dist copy.`);
+    return;
+  }
+
+  await fs.rm(destDist, { recursive: true, force: true });
+  await fs.mkdir(destDist, { recursive: true });
+  await fs.cp(sourceDist, destDist, { recursive: true });
+  console.log(`✅ Copied UI dist to ${path.relative(ROOT, destDist)}/`);
 }
 
 async function main() {

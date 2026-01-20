@@ -58,7 +58,10 @@ tracing = "0.1"
 tracing-subscriber = {version = "0.3", features = ["env-filter"]}
 
 # CLI
-clap.workspace = true
+clap = { workspace = true, features = ["env"] }
+
+# Browser launching
+webbrowser = "1.0"
 
 # YAML parsing for config migration
 serde_yaml.workspace = true

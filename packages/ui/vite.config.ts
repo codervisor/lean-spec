@@ -12,16 +12,16 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   server: {
-    port: 3000,
+    port: 5173,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:3001',
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
         changeOrigin: true,
       },
     },
   },
   define: {
     // Make environment variables available
-    __API_URL__: JSON.stringify(process.env.VITE_API_URL || 'http://localhost:3001'),
+    __API_URL__: JSON.stringify(process.env.VITE_API_URL || 'http://localhost:3000'),
   },
 })

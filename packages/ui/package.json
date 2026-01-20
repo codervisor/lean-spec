@@ -13,10 +13,10 @@
     "LICENSE"
   ],
   "scripts": {
-    "dev": "vite --port 3000",
+    "dev": "vite --port 5173",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview --port 3000",
+    "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

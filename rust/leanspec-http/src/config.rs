@@ -26,6 +26,10 @@ pub struct ServerConfig {
     /// Cloud sync settings
     #[serde(default)]
     pub sync: SyncSettings,
+
+    /// Security settings
+    #[serde(default)]
+    pub security: SecuritySettings,
 }
 
 /// Server-specific settings
@@ -36,9 +40,21 @@ pub struct ServerSettings {
     #[serde(default = "default_host")]
     pub host: String,
 
-    /// Port to listen on (default: 3333)
+    /// Port to listen on (default: 3000)
     #[serde(default = "default_port")]
     pub port: u16,
+
+    /// Auto-open browser on start
+    #[serde(default = "default_open_browser")]
+    pub open_browser: bool,
+
+    /// Browser preference (optional)
+    #[serde(default)]
+    pub browser: Option<String>,
+
+    /// UI dist directory override
+    #[serde(default)]
+    pub ui_dist: Option<PathBuf>,
 
     /// CORS configuration
     #[serde(default)]
@@ -50,6 +66,9 @@ impl Default for ServerSettings {
         Self {
             host: default_host(),
             port: default_port(),
+            open_browser: default_open_browser(),
+            browser: None,
+            ui_dist: None,
             cors: CorsSettings::default(),
         }
     }
@@ -60,14 +79,18 @@ fn default_host() -> String {
 }
 
 fn default_port() -> u16 {
-    3333
+    3000
+}
+
+fn default_open_browser() -> bool {
+    true
 }
 
 /// CORS settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CorsSettings {
-    /// Enable CORS (default: true)
+    /// Enable CORS (default: false)
     #[serde(default = "default_cors_enabled")]
     pub enabled: bool,
 
@@ -86,7 +109,7 @@ impl Default for CorsSettings {
 }
 
 fn default_cors_enabled() -> bool {
-    true
+    false
 }
 
 fn default_cors_origins() -> Vec<String> {
@@ -164,6 +187,21 @@ pub struct SyncSettings {
     pub token_ttl_seconds: u64,
 }
 
+/// Security settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SecuritySettings {
+    /// Read-only mode (prevent modifications)
+    #[serde(default)]
+    pub readonly: bool,
+}
+
+impl Default for SecuritySettings {
+    fn default() -> Self {
+        Self { readonly: false }
+    }
+}
+
 impl Default for SyncSettings {
     fn default() -> Self {
         Self {
@@ -225,6 +263,11 @@ pub fn projects_path() -> PathBuf {
 pub fn load_config() -> Result<ServerConfig, ServerError> {
     let path = config_path();
 
+    load_config_from_path(&path)
+}
+
+/// Load configuration from a custom path
+pub fn load_config_from_path(path: &PathBuf) -> Result<ServerConfig, ServerError> {
     if !path.exists() {
         // Try to migrate from YAML config
         let yaml_path = config_dir().join("config.yaml");
@@ -292,8 +335,8 @@ mod tests {
     fn test_default_config() {
         let config = ServerConfig::default();
         assert_eq!(config.server.host, "127.0.0.1");
-        assert_eq!(config.server.port, 3333);
-        assert!(config.server.cors.enabled);
+        assert_eq!(config.server.port, 3000);
+        assert!(!config.server.cors.enabled);
         assert_eq!(config.ui.theme, "auto");
         assert_eq!(config.projects.max_recent, 10);
     }

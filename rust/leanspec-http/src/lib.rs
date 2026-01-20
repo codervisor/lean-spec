@@ -17,7 +17,7 @@
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     start_server("127.0.0.1", 3333).await?;
+//!     start_server("127.0.0.1", 3000).await?;
 //!     Ok(())
 //! }
 //! ```
@@ -33,7 +33,7 @@ pub mod sync_state;
 pub mod types;
 pub mod utils;
 
-pub use config::{load_config, ServerConfig};
+pub use config::{load_config, load_config_from_path, ServerConfig};
 pub use error::ServerError;
 pub use project_registry::ProjectRegistry;
 pub use routes::create_router;

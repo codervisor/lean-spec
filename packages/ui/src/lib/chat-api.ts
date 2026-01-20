@@ -52,7 +52,7 @@ interface ChatMessageDto {
   metadata?: Record<string, unknown> | null;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 function toThread(session: ChatSessionDto): ChatThread {
   return {

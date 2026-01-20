@@ -3,12 +3,22 @@
 //! Sets up all API routes with the Axum router.
 
 use axum::{
+    body::Body,
+    extract::State,
+    http::{Method, Request, StatusCode},
+    response::{IntoResponse, Response},
+};
+use axum::{
+    middleware,
     routing::{delete, get, patch, post, put},
     Router,
 };
+use std::path::PathBuf;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 
+use crate::config::ServerConfig;
 use crate::handlers;
 use crate::state::AppState;
 
@@ -40,7 +50,7 @@ pub fn create_router(state: AppState) -> Router {
         CorsLayer::new()
     };
 
-    Router::new()
+    let mut router = Router::new()
         // Health endpoint
         .route("/health", get(handlers::health_check))
         .route("/api/chat", post(handlers::proxy_chat))
@@ -148,10 +158,80 @@ pub fn create_router(state: AppState) -> Router {
             "/api/local-projects/list-directory",
             post(handlers::list_directory),
         )
+        .with_state(state.clone());
+
+    if let Some(ui_dist) = resolve_ui_dist_path(&state.config) {
+        let index_path = ui_dist.join("index.html");
+        let serve_dir = ServeDir::new(ui_dist).not_found_service(ServeFile::new(index_path));
+        router = router.fallback_service(serve_dir);
+    }
+
+    router
         // Add middleware
         .layer(cors)
         .layer(TraceLayer::new_for_http())
-        .with_state(state)
+        .layer(middleware::from_fn_with_state(state, readonly_guard))
+}
+
+fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
+    if let Some(path) = config.server.ui_dist.clone() {
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    if let Ok(path) = std::env::var("LEANSPEC_UI_DIST") {
+        let path = PathBuf::from(path);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    if cfg!(debug_assertions) {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../packages/ui/dist");
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let bundled = exe_dir.join("ui-dist");
+            if bundled.exists() {
+                return Some(bundled);
+            }
+
+            if let Some(scope_dir) = exe_dir.parent() {
+                let scoped_ui = scope_dir.join("ui").join("dist");
+                if scoped_ui.exists() {
+                    return Some(scoped_ui);
+                }
+            }
+        }
+    }
+
+    None
+}
+
+async fn readonly_guard(
+    State(state): State<AppState>,
+    request: Request<Body>,
+    next: middleware::Next,
+) -> Response {
+    if !state.config.security.readonly {
+        return next.run(request).await;
+    }
+
+    let method = request.method();
+    let path = request.uri().path();
+
+    let is_safe_method = matches!(*method, Method::GET | Method::HEAD | Method::OPTIONS);
+
+    if path.starts_with("/api") && !is_safe_method {
+        return (StatusCode::FORBIDDEN, "Server is in read-only mode").into_response();
+    }
+
+    next.run(request).await
 }
 
 #[cfg(test)]
