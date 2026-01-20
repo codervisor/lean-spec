@@ -39,6 +39,7 @@ export function ChatPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>(undefined);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   // Load threads
   const loadThreads = useCallback(async () => {
@@ -131,19 +132,38 @@ export function ChatPage() {
       const thread = await ChatApi.createThread(currentProject.id, selectedModel);
       setActiveThreadId(thread.id);
       await loadThreads();
-      // We can't send message here because the hook needs to update with new threadId
-      // This creates a UX issue where the first message might need to be clicked again or we need to wait.
-      // For now, we rely on the user having created a chat or create one implicitly and ASK them to retry? 
-      // Or just creating the thread sets the state, useLeanSpecChat sees it, and we can call sendMessage?
-      // No, because sendMessage is a stable function reference from previous render? useAIChat usually returns stable sendMessage.
-      // But it uses the ID passed *during render*. 
-
-      // Actually, let's auto-select a thread if none exists on mount.
+      setPendingMessage(text);
     } else {
       sendMessage({ text });
       setTimeout(loadThreads, 1000);
     }
   };
+
+  useEffect(() => {
+    if (activeThreadId && pendingMessage) {
+      sendMessage({ text: pendingMessage });
+      setPendingMessage(null);
+      setTimeout(loadThreads, 1000);
+    }
+  }, [activeThreadId, pendingMessage, sendMessage, loadThreads]);
+
+  useEffect(() => {
+    if (!activeThreadId) {
+      return;
+    }
+    const thread = threads.find(t => t.id === activeThreadId);
+    if (!thread) {
+      return;
+    }
+    if (thread.model.providerId === selectedModel.providerId && thread.model.modelId === selectedModel.modelId) {
+      return;
+    }
+    ChatApi.updateThread(activeThreadId, { model: selectedModel })
+      .then(() => loadThreads())
+      .catch((error) => {
+        console.warn('Failed to update chat model', error);
+      });
+  }, [activeThreadId, selectedModel, threads, loadThreads]);
 
   const handleCreateNewChat = async () => {
     if (!currentProject?.id) {

@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::Json;
 use serde::{Deserialize, Serialize};
 
-use crate::chat_store::{ChatMessageInput, ChatSession};
+use crate::chat_store::{ChatMessageInput, ChatSession, ChatStorageInfo};
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
 
@@ -253,4 +253,27 @@ pub async fn replace_chat_messages(
     };
 
     Ok(Json(session))
+}
+
+pub async fn get_chat_storage_info(
+    State(state): State<AppState>,
+) -> ApiResult<Json<ChatStorageInfo>> {
+    let store = state.chat_store.clone();
+
+    let info = tokio::task::spawn_blocking(move || store.storage_info())
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e)),
+            )
+        })?;
+
+    Ok(Json(info))
 }

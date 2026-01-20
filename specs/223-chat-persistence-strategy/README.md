@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-19
 priority: high
 tags:
@@ -11,7 +11,10 @@ tags:
 depends_on:
 - 224-ai-chat-configuration-improvements
 created_at: 2026-01-19T07:54:03.056027248Z
-updated_at: 2026-01-19T08:51:03.338020758Z
+updated_at: 2026-01-20T05:33:25.701006037Z
+transitions:
+- status: in-progress
+  at: 2026-01-20T05:33:25.701006037Z
 ---
 
 # Chat Message Persistence Strategy (Local & Cloud)
@@ -293,13 +296,13 @@ interface ConversationMetadata {
 
 ### Phase 1: Local SQLite Storage (MVP)
 
-- [ ] **1.1 Create SQLite Schema & Migrations**
+- [x] **1.1 Create SQLite Schema & Migrations**
   - Define SQL schema (conversations, messages, sync_metadata tables)
   - Create migration system for schema versioning
   - Add seed data for testing
   - Write schema documentation
 
-- [ ] **1.2 Implement Rust SQLite Backend** (for all contexts: desktop/MCP/HTTP)
+- [x] **1.2 Implement Rust SQLite Backend** (for all contexts: desktop/MCP/HTTP)
   - Use `rusqlite` crate for simplicity and reliability
   - Implement `ChatStorageAdapter` trait in Rust
   - Add connection pooling and transaction support
@@ -308,14 +311,14 @@ interface ConversationMetadata {
   - Error handling and logging
   - Ensure cross-platform compatibility (Linux/macOS/Windows)
 
-- [ ] **1.3 Update useLeanSpecChat Hook**
+- [x] **1.3 Update useLeanSpecChat Hook**
   - Replace localStorage calls with Rust backend API
   - Add conversation management functions (create, list, delete)
   - Implement auto-save on message completion
   - Add loading states and error handling
   - Handle offline/database unavailable scenarios
 
-- [ ] **1.4 Build Conversations UI**
+- [x] **1.4 Build Conversations UI**
   - Create conversations sidebar component
   - Implement conversation list with grouping (Today/Yesterday/Last 7 days)
   - Add conversation search and filtering

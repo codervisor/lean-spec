@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Button, 
@@ -14,7 +14,8 @@ import {
   Trash2, 
   Pencil 
 } from 'lucide-react';
-import type { ChatThread } from '../../../lib/chat-api';
+import type { ChatThread, ChatStorageInfo } from '../../../lib/chat-api';
+import { ChatApi } from '../../../lib/chat-api';
 import { cn } from '@leanspec/ui-components';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
@@ -45,6 +46,25 @@ export function ChatSidebar({
   const { t } = useTranslation('common');
   const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [storageInfo, setStorageInfo] = useState<ChatStorageInfo | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    ChatApi.getStorageInfo()
+      .then((info) => {
+        if (active) {
+          setStorageInfo(info);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setStorageInfo(null);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredThreads = useMemo(() => {
     if (!searchQuery) return threads;
@@ -125,8 +145,31 @@ export function ChatSidebar({
         <ThreadListGroup title={t('chat.previous7Days') || "Previous 7 Days"} threads={groupedThreads.previous7days} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
         <ThreadListGroup title={t('chat.older') || "Older"} threads={groupedThreads.older} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
       </div>
+
+      <Separator />
+      <div className="px-4 py-3 text-xs text-muted-foreground space-y-1">
+        {storageInfo ? (
+          <>
+            <div>{t('chat.storageUsage', { size: formatBytes(storageInfo.sizeBytes) })}</div>
+            <div className="truncate" title={storageInfo.path}>
+              {t('chat.storageLocation', { path: storageInfo.path })}
+            </div>
+          </>
+        ) : (
+          <div>{t('chat.storageUnavailable')}</div>
+        )}
+      </div>
     </div>
   );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const value = bytes / Math.pow(k, i);
+  return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${sizes[i]}`;
 }
 
 function ThreadListGroup({ 

@@ -47,6 +47,7 @@ pub struct ChatMessageInput {
 #[derive(Debug)]
 pub struct ChatStore {
     conn: Mutex<Connection>,
+    db_path: PathBuf,
 }
 
 impl ChatStore {
@@ -57,16 +58,25 @@ impl ChatStore {
         }
 
         let conn =
-            Connection::open(db_path).map_err(|e| ServerError::ServerError(e.to_string()))?;
+            Connection::open(&db_path).map_err(|e| ServerError::ServerError(e.to_string()))?;
         conn.execute_batch("PRAGMA journal_mode=WAL;\n             PRAGMA busy_timeout=5000;")
             .map_err(|e| ServerError::ServerError(e.to_string()))?;
 
         let store = Self {
             conn: Mutex::new(conn),
+            db_path,
         };
 
         store.init_schema()?;
         Ok(store)
+    }
+
+    pub fn storage_info(&self) -> Result<ChatStorageInfo, String> {
+        let metadata = std::fs::metadata(&self.db_path).map_err(|e| e.to_string())?;
+        Ok(ChatStorageInfo {
+            path: self.db_path.to_string_lossy().to_string(),
+            size_bytes: metadata.len(),
+        })
     }
 
     pub fn list_sessions(&self, project_id: &str) -> Result<Vec<ChatSession>, String> {
@@ -309,45 +319,69 @@ impl ChatStore {
             .conn
             .lock()
             .map_err(|_| ServerError::ServerError("Failed to lock database".to_string()))?;
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS conversations (
-                id TEXT PRIMARY KEY,
-                project_id TEXT NOT NULL,
-                title TEXT NOT NULL,
-                provider_id TEXT,
-                model_id TEXT,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                message_count INTEGER DEFAULT 0,
-                last_message TEXT,
-                tags TEXT,
-                archived INTEGER DEFAULT 0,
-                cloud_id TEXT
-            );
-            CREATE TABLE IF NOT EXISTS messages (
-                id TEXT PRIMARY KEY,
-                conversation_id TEXT NOT NULL,
-                project_id TEXT NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp INTEGER NOT NULL,
-                metadata TEXT,
-                FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-            );
-            CREATE INDEX IF NOT EXISTS idx_conversations_project_id ON conversations(project_id);
-            CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
-            CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);
-            CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
-            CREATE INDEX IF NOT EXISTS idx_messages_project_id ON messages(project_id);
-            CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);",
-        )
-        .map_err(|e| ServerError::ServerError(e.to_string()))?;
+        let current_version: i64 = conn
+            .query_row("PRAGMA user_version", [], |row| row.get(0))
+            .map_err(|e| ServerError::ServerError(e.to_string()))?;
+
+        if current_version < 1 {
+            conn.execute_batch(
+                "CREATE TABLE IF NOT EXISTS conversations (
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    provider_id TEXT,
+                    model_id TEXT,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    message_count INTEGER DEFAULT 0,
+                    last_message TEXT,
+                    tags TEXT,
+                    archived INTEGER DEFAULT 0,
+                    cloud_id TEXT
+                );
+                CREATE TABLE IF NOT EXISTS messages (
+                    id TEXT PRIMARY KEY,
+                    conversation_id TEXT NOT NULL,
+                    project_id TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    timestamp INTEGER NOT NULL,
+                    metadata TEXT,
+                    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+                );
+                CREATE TABLE IF NOT EXISTS sync_metadata (
+                    conversation_id TEXT PRIMARY KEY,
+                    cloud_id TEXT,
+                    last_synced_at INTEGER,
+                    sync_status TEXT CHECK(sync_status IN ('local-only', 'synced', 'conflict', 'pending')),
+                    version INTEGER DEFAULT 1,
+                    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_conversations_project_id ON conversations(project_id);
+                CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
+                CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);
+                CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
+                CREATE INDEX IF NOT EXISTS idx_messages_project_id ON messages(project_id);
+                CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);",
+            )
+            .map_err(|e| ServerError::ServerError(e.to_string()))?;
+
+            conn.execute("PRAGMA user_version = 1", [])
+                .map_err(|e| ServerError::ServerError(e.to_string()))?;
+        }
 
         ensure_column(&conn, "conversations", "provider_id", "provider_id TEXT")?;
         ensure_column(&conn, "conversations", "model_id", "model_id TEXT")?;
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatStorageInfo {
+    pub path: String,
+    pub size_bytes: u64,
 }
 
 fn now_ms() -> i64 {

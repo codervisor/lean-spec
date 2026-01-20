@@ -25,6 +25,11 @@ export interface ChatThread {
   preview: string;
 }
 
+export interface ChatStorageInfo {
+  path: string;
+  sizeBytes: number;
+}
+
 interface ChatSessionDto {
   id: string;
   projectId: string;
@@ -82,6 +87,14 @@ function toMessageInput(messages: UIMessage[]) {
 
 // Mock API Client to be replaced by real backend calls (Spec 223)
 export class ChatApi {
+  static async getStorageInfo(): Promise<ChatStorageInfo> {
+    const res = await fetch(`${API_BASE}/api/chat/storage`);
+    if (!res.ok) {
+      throw new Error('Failed to load chat storage info');
+    }
+    return res.json();
+  }
+
   static async getThreads(projectId?: string): Promise<ChatThread[]> {
     if (!projectId) return [];
 
@@ -162,11 +175,19 @@ export class ChatApi {
     return messages.map(toUIMessage);
   }
 
-  static async saveMessages(threadId: string, messages: UIMessage[]): Promise<void> {
+  static async saveMessages(
+    threadId: string,
+    messages: UIMessage[],
+    options?: { providerId?: string; modelId?: string },
+  ): Promise<void> {
     const res = await fetch(`${API_BASE}/api/chat/sessions/${threadId}/messages`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: toMessageInput(messages) }),
+      body: JSON.stringify({
+        providerId: options?.providerId,
+        modelId: options?.modelId,
+        messages: toMessageInput(messages),
+      }),
     });
 
     if (!res.ok) {

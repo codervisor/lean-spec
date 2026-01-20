@@ -39,6 +39,7 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
           });
     } else {
         setInitialMessages([]);
+        setLoadingHistory(false);
     }
     return () => { active = false; };
   }, [options.threadId]);
@@ -60,10 +61,17 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   const chatHook = useAIChat({
     id: options.threadId || 'new-chat',
     transport,
-    onFinish: ({ messages }) => {
+    onFinish: async ({ messages }) => {
       // Store messages after each completion
       if (options.threadId) {
-        ChatApi.saveMessages(options.threadId, messages);
+        try {
+          await ChatApi.saveMessages(options.threadId, messages, {
+            providerId: options.providerId,
+            modelId: options.modelId,
+          });
+        } catch (error) {
+          console.warn('[LeanSpec Chat] Failed to persist messages:', error);
+        }
       }
     },
     onError: (error) => {
@@ -85,9 +93,14 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   const clearChat = useCallback(() => {
     chatHook.setMessages([]);
     if (options.threadId) {
-        ChatApi.saveMessages(options.threadId, []);
+        ChatApi.saveMessages(options.threadId, [], {
+          providerId: options.providerId,
+          modelId: options.modelId,
+        }).catch((error) => {
+          console.warn('[LeanSpec Chat] Failed to clear messages:', error);
+        });
     }
-  }, [chatHook, options.threadId]);
+  }, [chatHook, options.modelId, options.providerId, options.threadId]);
 
   // Map the new API to our expected interface
   const isLoading = chatHook.status === 'submitted' || chatHook.status === 'streaming' || loadingHistory;

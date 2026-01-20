@@ -59,6 +59,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/chat/sessions/{id}/messages",
             put(handlers::replace_chat_messages),
         )
+        .route("/api/chat/storage", get(handlers::get_chat_storage_info))
         // Project routes
         .route("/api/projects", get(handlers::list_projects))
         .route("/api/projects", post(handlers::add_project))
