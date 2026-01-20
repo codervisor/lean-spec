@@ -17,8 +17,36 @@ on:
     types: [published]
 
 jobs:
+  # Step 0: Build UI (required before Rust binaries)
+  build-ui:
+    name: Build UI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build UI
+        run: pnpm --filter @leanspec/ui build
+
+      - name: Upload UI dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: packages/ui/dist
+          retention-days: 30
+
   # Step 1: Build Rust binaries for ALL platforms
   rust-binaries:
+    needs: build-ui  # UI must be built first
     name: Build Rust binaries (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -70,6 +98,12 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-build-
+
+      - name: Download UI dist
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-dist
+          path: packages/ui/dist
 
       - name: Build CLI binary
         working-directory: rust

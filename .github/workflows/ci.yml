@@ -49,9 +49,17 @@ jobs:
       
       - name: Run tests
         run: pnpm test
+      
+      - name: Upload UI build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: packages/ui/dist
+          retention-days: 1
 
   # Rust build and test
   rust:
+    needs: node  # Ensure UI is built first
     runs-on: ubuntu-latest
     
     steps:
@@ -92,6 +100,22 @@ jobs:
         working-directory: rust
         run: cargo clippy -- -D warnings
       
+      - name: Setup Node.js for UI build
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      
+      - name: Download UI build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-dist
+          path: packages/ui/dist
+      
       - name: Build binaries
         working-directory: rust
         run: cargo build --release
@@ -100,12 +124,7 @@ jobs:
         working-directory: rust
         run: cargo test -- --test-threads=1
       
-      - name: Setup Node.js (for spec validation)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Copy Rust binaries
+      - name: Copy Rust binaries (includes UI dist)
         run: node scripts/copy-rust-binaries.mjs
       
       - name: Validate specs

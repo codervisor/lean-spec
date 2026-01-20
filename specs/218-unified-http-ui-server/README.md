@@ -525,7 +525,7 @@ Update `~/.lean-spec/config.json` structure for unified server:
 - [x] Build UI first: `cd packages/ui && pnpm build`
 - [x] Build Rust HTTP server: `cd rust/leanspec-http && cargo build --release`
 - [x] No bundling needed - packages stay separate
-- [ ] Update CI build workflow order
+- [x] Update CI build workflow order
 - [x] Test: Build both, verify they work together
 
 ### Phase 1: Rust HTTP Server Static File Serving (Day 1-2)
@@ -543,14 +543,14 @@ Update `~/.lean-spec/config.json` structure for unified server:
 - [x] Ensure API routes take precedence
 
 ### Phase 2: Build Pipeline Integration (Day 2-3)
-- [ ] Create `rust/leanspec-http/ui-dist/` directory
-- [ ] Add script to copy `packages/ui/dist` → `rust/leanspec-http/ui-dist`
-- [ ] Update CI build workflow
-- [ ] Test: Build UI, copy, build Rust, verify binary includes UI
+- [x] Create `rust/leanspec-http/ui-dist/` directory
+- [x] Add script to copy `packages/ui/dist` → `rust/leanspec-http/ui-dist`
+- [x] Update CI build workflow
+- [x] Test: Build UI, copy, build Rust, verify binary includes UI
 
 ### Phase 3: npm Distribution (Day 3-4)
-- [ ] Update `scripts/copy-rust-binaries.mjs` to include ui-dist/
-- [ ] Verify npm package structure
+- [x] Update `scripts/copy-rust-binaries.mjs` to include ui-dist/
+- [x] Verify npm package structure
 - [ ] Test: `npm pack` and inspect tarball
 - [ ] Test: Install from tarball and run
 
@@ -563,14 +563,14 @@ Update `~/.lean-spec/config.json` structure for unified server:
 
 ### Phase 5: Configuration & Documentation (Day 5-6)
 - [x] Keep default port as 3000 in all configs
-- [ ] Update README and docs
+- [x] Update README and docs
 - [ ] Add migration guide for API-only users (port 3333 → 3000)
-- [ ] Update `lean-spec ui` command output messages
+- [x] Update `lean-spec ui` command output messages
 
 ### Phase 6: Development Experience (Day 6)
 - [x] Update Vite proxy config (if needed)
-- [ ] Document dev vs prod modes
-- [ ] Update CONTRIBUTING.md
+- [x] Document dev vs prod modes
+- [x] Update CONTRIBUTING.md
 
 ### Phase 7: Testing (Day 7-8)
 - [x] Test unified server serves UI correctly
@@ -578,8 +578,8 @@ Update `~/.lean-spec/config.json` structure for unified server:
 - [x] Test API routes still work
 - [x] Test static assets load (CSS, JS, images)
 - [x] Test MIME types are correct
-- [ ] Test 404 handling
-- [ ] **Test all CLI arguments:**
+- [x] Test 404 handling
+- [x] **Test all CLI arguments:**
   - [x] `--port`, `--host`
   - [x] `--project` 
   - [x] `--config`, `--no-config`
@@ -589,9 +589,9 @@ Update `~/.lean-spec/config.json` structure for unified server:
   - [x] `--cors-origins`, `--no-cors`
   - [x] `--theme`, `--locale`
   - [x] `--ui-dist`
-- [ ] Test environment variable overrides
-- [ ] Test config file + CLI arg precedence
-- [ ] Test both dev and prod builds
+- [x] Test environment variable overrides
+- [x] Test config file + CLI arg precedence
+- [x] Test both dev and prod builds
 
 ### Phase 8: Cleanup (Day 8-9)
 - [ ] Remove old Node.js server code
@@ -612,7 +612,7 @@ Update `~/.lean-spec/config.json` structure for unified server:
 - [x] `GET /assets/main.js` returns JS file (200)
 - [x] `GET /projects` returns index.html (SPA fallback) (200)
 - [x] `GET /api/projects` returns JSON (not index.html) (200)
-- [ ] `GET /nonexistent.jpg` returns index.html (SPA fallback) (200)
+- [x] `GET /nonexistent.jpg` returns index.html (SPA fallback) (200)
 - [x] Static files have correct MIME types
 - [x] API responses have correct Content-Type: application/json
 

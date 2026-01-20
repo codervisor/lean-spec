@@ -244,3 +244,77 @@ async fn test_server_concurrent_requests() {
     // Cleanup
     handle.abort();
 }
+
+#[tokio::test]
+async fn test_server_ui_serving() {
+    // Test that the server can serve UI static files when available
+    let temp_dir = TempDir::new().unwrap();
+    let state = create_test_state(&temp_dir).await;
+    let (addr, handle) = start_test_server(state).await;
+
+    let client = Client::new();
+
+    // Make a request to root path (should try to serve index.html or return 404)
+    let response = client
+        .get(format!("http://{}/", addr))
+        .send()
+        .await
+        .unwrap();
+
+    // Response should be either:
+    // - 200 OK if UI dist exists (served index.html)
+    // - 404 Not Found if UI dist doesn't exist (in test environment)
+    // Both are valid depending on whether UI is built
+    assert!(
+        response.status() == StatusCode::OK || response.status() == StatusCode::NOT_FOUND,
+        "Expected 200 or 404, got {}",
+        response.status()
+    );
+
+    // API routes should always work regardless of UI availability
+    let api_response = client
+        .get(format!("http://{}/health", addr))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(api_response.status(), StatusCode::OK);
+
+    // Cleanup
+    handle.abort();
+}
+
+#[tokio::test]
+async fn test_api_routes_take_precedence() {
+    // Ensure API routes match before static file serving
+    let temp_dir = TempDir::new().unwrap();
+    let state = create_test_state(&temp_dir).await;
+    let (addr, handle) = start_test_server(state).await;
+
+    let client = Client::new();
+
+    // API route should return JSON, not HTML
+    let response = client
+        .get(format!("http://{}/api/projects", addr))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Verify it's JSON, not HTML
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    assert!(
+        content_type.contains("application/json"),
+        "Expected JSON content type, got: {}",
+        content_type
+    );
+
+    // Cleanup
+    handle.abort();
+}

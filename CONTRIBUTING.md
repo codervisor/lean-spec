@@ -31,6 +31,50 @@ pnpm test         # Run tests (with caching)
 pnpm typecheck    # Type check all packages (with caching)
 ```
 
+## Running the Web UI
+
+LeanSpec uses a unified HTTP server architecture where the Rust server serves both the API and UI on a single port (3000).
+
+### Development Mode
+
+**Option 1: Separate Dev Servers (Recommended for UI development)**
+```bash
+# Terminal 1: Start Rust HTTP server (API on port 3000)
+cd rust/leanspec-http
+cargo run
+
+# Terminal 2: Start Vite dev server (UI on port 5173 with HMR)
+cd packages/ui
+pnpm dev
+```
+
+Vite's proxy configuration automatically forwards `/api/*` requests to the Rust server on port 3000. This gives you fast Hot Module Replacement (HMR) for UI changes.
+
+**Option 2: Unified Dev Mode (Testing production-like setup)**
+```bash
+# Build UI once
+cd packages/ui
+pnpm build
+
+# Run unified server (serves both UI and API on port 3000)
+cd rust/leanspec-http
+cargo run
+```
+
+Visit `http://localhost:3000` to see the UI served directly by Rust.
+
+### Production Mode
+
+In production, `npx @leanspec/ui` starts a single Rust HTTP server that serves both the built UI (static files) and API endpoints on port 3000:
+
+```bash
+npx @leanspec/ui
+# or
+npx @leanspec/ui --port 3001 --no-open
+```
+
+All CLI arguments are passed through to the Rust server. See `leanspec-http --help` for all options.
+
 ## Version Management
 
 All packages in the monorepo maintain synchronized versions automatically. The root `package.json` serves as the single source of truth.
@@ -161,6 +205,22 @@ pnpm rust:test
 # Copy binaries to packages
 pnpm rust:copy
 ```
+
+**Important Build Order:**
+When building for production/publishing, the UI must be built **before** Rust binaries:
+
+```bash
+# 1. Build UI first
+pnpm --filter @leanspec/ui build
+
+# 2. Build Rust (HTTP server will include UI dist)
+cd rust && cargo build --release
+
+# 3. Copy binaries (includes UI dist for http-server)
+pnpm rust:copy
+```
+
+The `copy-rust-binaries.mjs` script automatically copies `packages/ui/dist` to the HTTP server's platform packages, enabling the unified server architecture.
 
 ## Testing
 

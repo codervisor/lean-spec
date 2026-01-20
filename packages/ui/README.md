@@ -6,6 +6,33 @@ Primary Vite-based Single Page Application for LeanSpec spec management (web + d
 
 This is a lightweight, fast SPA built with Vite. It provides a modern UI for viewing and managing LeanSpec specifications.
 
+**Unified Server Architecture**: The UI is served by the Rust HTTP server on port 3000. When you run `npx @leanspec/ui`, it starts a single process that serves both the static UI files and the API endpoints. This provides:
+- Single port (default: 3000)
+- Same-origin API requests (no CORS needed)
+- Better performance (no Node.js HTTP server overhead)
+- Simpler deployment
+
+## Usage
+
+```bash
+# Start the unified HTTP server
+npx @leanspec/ui
+
+# Custom port and host
+npx @leanspec/ui --port 3001 --host 0.0.0.0
+
+# Auto-add project
+npx @leanspec/ui --project /path/to/specs
+
+# Read-only mode
+npx @leanspec/ui --readonly
+
+# All CLI arguments are passed to the Rust HTTP server
+npx @leanspec/ui --help
+```
+
+Visit `http://localhost:3000` to access the UI.
+
 ## Architecture
 
 - **Build Tool**: Vite 7 (fast HMR, optimized builds)
@@ -26,24 +53,48 @@ This is a lightweight, fast SPA built with Vite. It provides a modern UI for vie
 
 ## Development
 
+### Development with HMR (Recommended)
+
+For fast UI development with Hot Module Replacement:
+
 ```bash
-# Install dependencies
-pnpm install
+# Terminal 1: Start Rust HTTP server (API on port 3000)
+cd rust/leanspec-http
+cargo run
 
-# Start dev server (runs on http://localhost:5173)
+# Terminal 2: Start Vite dev server (UI on port 5173)
+cd packages/ui
 pnpm dev
+```
 
-# Build for production
+Access the UI at `http://localhost:5173`. Vite's proxy automatically forwards API requests to port 3000.
+
+### Production-like Development
+
+To test the unified server locally:
+
+```bash
+# Build UI
 pnpm build
 
-# Preview production build
-pnpm preview
+# Start unified server (serves UI + API on port 3000)
+cd ../../rust/leanspec-http
+cargo run
+```
 
+Access at `http://localhost:3000`.
+
+### Other Commands
+
+```bash
 # Type check
 pnpm typecheck
 
 # Lint
 pnpm lint
+
+# Preview production build (Vite preview server)
+pnpm preview
 ```
 
 ## Configuration
