@@ -188,18 +188,12 @@ pub struct SyncSettings {
 }
 
 /// Security settings
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct SecuritySettings {
     /// Read-only mode (prevent modifications)
     #[serde(default)]
     pub readonly: bool,
-}
-
-impl Default for SecuritySettings {
-    fn default() -> Self {
-        Self { readonly: false }
-    }
 }
 
 impl Default for SyncSettings {
@@ -279,7 +273,7 @@ pub fn load_config_from_path(path: &PathBuf) -> Result<ServerConfig, ServerError
         return Ok(ServerConfig::default());
     }
 
-    let content = fs::read_to_string(&path)
+    let content = fs::read_to_string(path)
         .map_err(|e| ServerError::ConfigError(format!("Failed to read config: {}", e)))?;
 
     serde_json::from_str(&content)
