@@ -11,6 +11,7 @@
 
 mod common;
 use common::*;
+use std::env;
 
 #[test]
 fn test_init_fresh_project_with_yes_flag() {
@@ -172,6 +173,77 @@ fn test_reinit_recreates_missing_agents_md() {
 
     // AGENTS.md should be recreated
     assert!(file_exists(&agents_path), "AGENTS.md should be recreated");
+}
+
+struct EnvGuard {
+    key: &'static str,
+    previous: Option<String>,
+}
+
+impl EnvGuard {
+    fn set(key: &'static str, value: &str) -> Self {
+        let previous = env::var(key).ok();
+        env::set_var(key, value);
+        Self { key, previous }
+    }
+}
+
+impl Drop for EnvGuard {
+    fn drop(&mut self) {
+        if let Some(prev) = &self.previous {
+            env::set_var(self.key, prev);
+        } else {
+            env::remove_var(self.key);
+        }
+    }
+}
+
+#[test]
+fn test_init_installs_skills_by_default() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    let result = init_project(cwd, true);
+    assert!(result.success, "init should succeed");
+
+    let skill_path = cwd.join(".github/skills/leanspec-sdd/SKILL.md");
+    assert!(file_exists(&skill_path), "leanspec-sdd skill should be installed");
+}
+
+#[test]
+fn test_init_creates_claude_symlink_when_detected() {
+    let _guard = EnvGuard::set("ANTHROPIC_API_KEY", "test-key");
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    let result = init_project(cwd, true);
+    assert!(result.success, "init should succeed");
+
+    assert!(
+        file_exists(&cwd.join("CLAUDE.md")),
+        "CLAUDE.md should be created when Claude is detected"
+    );
+}
+
+#[test]
+fn test_init_writes_vscode_mcp_config_when_detected() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    // Presence of .vscode triggers detection
+    let vscode_dir = cwd.join(".vscode");
+    std::fs::create_dir_all(&vscode_dir).expect("create .vscode");
+
+    let result = init_project(cwd, true);
+    assert!(result.success, "init should succeed");
+
+    let mcp_config = vscode_dir.join("mcp.json");
+    assert!(file_exists(&mcp_config), "mcp.json should be generated for VS Code");
+    let contents = read_file(&mcp_config);
+    assert!(
+        contents.contains("lean-spec"),
+        "mcp.json should register lean-spec server"
+    );
 }
 
 #[test]

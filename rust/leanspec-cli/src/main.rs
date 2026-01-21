@@ -207,6 +207,50 @@ enum Commands {
         /// Template to use for initialization
         #[arg(short, long)]
         template: Option<String>,
+
+        /// Skip AI tool configuration (symlinks)
+        #[arg(long)]
+        no_ai_tools: bool,
+
+        /// Skip MCP server configuration
+        #[arg(long)]
+        no_mcp: bool,
+
+        /// Install LeanSpec agent skills (project-level default)
+        #[arg(long)]
+        skill: bool,
+
+        /// Install skills to .github/skills/
+        #[arg(long)]
+        skill_github: bool,
+
+        /// Install skills to .claude/skills/
+        #[arg(long)]
+        skill_claude: bool,
+
+        /// Install skills to .cursor/skills/
+        #[arg(long)]
+        skill_cursor: bool,
+
+        /// Install skills to .codex/skills/
+        #[arg(long)]
+        skill_codex: bool,
+
+        /// Install skills to .gemini/skills/
+        #[arg(long)]
+        skill_gemini: bool,
+
+        /// Install skills to .vscode/skills/
+        #[arg(long)]
+        skill_vscode: bool,
+
+        /// Install skills to user-level directories (e.g., ~/.copilot/skills)
+        #[arg(long)]
+        skill_user: bool,
+
+        /// Skip skill installation entirely
+        #[arg(long)]
+        no_skill: bool,
     },
 
     /// Link specs together
@@ -510,7 +554,38 @@ fn main() -> ExitCode {
             commands::files::run(&specs_dir, &spec, size, &cli.output)
         }
         Commands::Gantt { status } => commands::gantt::run(&specs_dir, status, &cli.output),
-        Commands::Init { yes, template } => commands::init::run(&specs_dir, yes, template),
+        Commands::Init {
+            yes,
+            template,
+            no_ai_tools,
+            no_mcp,
+            skill,
+            skill_github,
+            skill_claude,
+            skill_cursor,
+            skill_codex,
+            skill_gemini,
+            skill_vscode,
+            skill_user,
+            no_skill,
+        } => commands::init::run(
+            &specs_dir,
+            commands::init::InitOptions {
+                yes,
+                template,
+                no_ai_tools,
+                no_mcp,
+                skill,
+                skill_github,
+                skill_claude,
+                skill_cursor,
+                skill_codex,
+                skill_gemini,
+                skill_vscode,
+                skill_user,
+                no_skill,
+            },
+        ),
         Commands::Link { spec, depends_on } => commands::link::run(&specs_dir, &spec, &depends_on),
         Commands::List {
             status,
