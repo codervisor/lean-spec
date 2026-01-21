@@ -17,7 +17,7 @@ use mcp_config::{
 };
 use skills::{
     build_skill_flags_from_cli, default_selection as default_skill_selection,
-    discover_targets as discover_skill_targets, install_skill, SkillScope,
+    discover_targets as discover_skill_targets, install_skill, SkillScope, SkillTool,
 };
 
 // Embedded AGENTS.md template
@@ -431,16 +431,20 @@ fn handle_skills_install(
     detections: &[AiDetection],
     options: &InitOptions,
 ) -> Result<(), Box<dyn Error>> {
+    let tool_flags = [
+        (SkillTool::Copilot, options.skill_github),
+        (SkillTool::Claude, options.skill_claude),
+        (SkillTool::Cursor, options.skill_cursor),
+        (SkillTool::Codex, options.skill_codex),
+        (SkillTool::Gemini, options.skill_gemini),
+        (SkillTool::VsCode, options.skill_vscode),
+    ];
+
     let flags = build_skill_flags_from_cli(
         options.skill,
         options.no_skill,
-        options.skill_github,
-        options.skill_claude,
-        options.skill_cursor,
-        options.skill_codex,
-        options.skill_gemini,
-        options.skill_vscode,
         options.skill_user,
+        &tool_flags,
     );
 
     if flags.skip {

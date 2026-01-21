@@ -269,7 +269,7 @@ pub fn default_ai_selection(detections: &[DetectionResult]) -> Vec<AiTool> {
         .collect();
 
     if !detected.is_empty() {
-        let has_copilot = detected.iter().any(|t| *t == AiTool::Copilot);
+        let has_copilot = detected.contains(&AiTool::Copilot);
         if !has_copilot {
             let any_non_symlink = detected.iter().any(|t| !config(*t).uses_symlink);
             if !any_non_symlink {

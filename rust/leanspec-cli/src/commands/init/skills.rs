@@ -108,32 +108,14 @@ const SKILL_FILES: &[(&str, &str)] = &[
 pub fn build_skill_flags_from_cli(
     skill: bool,
     no_skill: bool,
-    skill_github: bool,
-    skill_claude: bool,
-    skill_cursor: bool,
-    skill_codex: bool,
-    skill_gemini: bool,
-    skill_vscode: bool,
     skill_user: bool,
+    tool_flags: &[(SkillTool, bool)],
 ) -> SkillFlags {
     let mut explicit = HashSet::new();
-    if skill_github {
-        explicit.insert((SkillTool::Copilot, SkillScope::Project));
-    }
-    if skill_claude {
-        explicit.insert((SkillTool::Claude, SkillScope::Project));
-    }
-    if skill_cursor {
-        explicit.insert((SkillTool::Cursor, SkillScope::Project));
-    }
-    if skill_codex {
-        explicit.insert((SkillTool::Codex, SkillScope::Project));
-    }
-    if skill_gemini {
-        explicit.insert((SkillTool::Gemini, SkillScope::Project));
-    }
-    if skill_vscode {
-        explicit.insert((SkillTool::VsCode, SkillScope::Project));
+    for (tool, enabled) in tool_flags.iter().copied() {
+        if enabled {
+            explicit.insert((tool, SkillScope::Project));
+        }
     }
 
     SkillFlags {
@@ -301,7 +283,7 @@ pub fn default_selection(
             let path = match scope {
                 SkillScope::Project => tool.project_dir(root),
                 SkillScope::User => {
-                    tool.user_dir(home_dir(home_override).as_deref().unwrap_or_else(|| root))
+                    tool.user_dir(home_dir(home_override).as_deref().unwrap_or(root))
                 }
             };
             if seen_paths.insert(path.clone()) {
