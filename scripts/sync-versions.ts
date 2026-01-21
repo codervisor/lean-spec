@@ -3,7 +3,8 @@
  * Sync versions across workspace packages
  * 
  * This script ensures all workspace packages use the same version as the root package.json.
- * It reads the version from the root package.json and updates all packages in the monorepo.
+ * It reads the version from the root package.json and updates all packages in the monorepo,
+ * including the Rust workspace Cargo.toml.
  * 
  * Usage:
  *   pnpm sync-versions [--dry-run]
@@ -18,6 +19,7 @@ const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
+const RUST_CARGO_TOML = path.join(ROOT_DIR, 'rust', 'Cargo.toml');
 
 interface PackageJson {
   name: string;
@@ -70,6 +72,37 @@ async function getPackageDirs(): Promise<string[]> {
     .map(entry => path.join(PACKAGES_DIR, entry.name));
 }
 
+async function syncRustCargoVersion(targetVersion: string, dryRun: boolean): Promise<{ updated: boolean; error?: string }> {
+  try {
+    if (!(await fileExists(RUST_CARGO_TOML))) {
+      return { updated: false, error: 'Cargo.toml not found' };
+    }
+
+    const cargoContent = await fs.readFile(RUST_CARGO_TOML, 'utf-8');
+    const versionRegex = /(\[workspace\.package\]\s+version\s*=\s*)"([^"]+)"/;
+    const match = cargoContent.match(versionRegex);
+
+    if (!match) {
+      return { updated: false, error: 'Could not find [workspace.package] version' };
+    }
+
+    const currentVersion = match[2];
+
+    if (currentVersion === targetVersion) {
+      return { updated: false };
+    }
+
+    if (!dryRun) {
+      const updatedContent = cargoContent.replace(versionRegex, `$1"${targetVersion}"`);
+      await fs.writeFile(RUST_CARGO_TOML, updatedContent, 'utf-8');
+    }
+
+    return { updated: true };
+  } catch (error) {
+    return { updated: false, error: String(error) };
+  }
+}
+
 async function syncVersions(dryRun: boolean = false): Promise<void> {
   console.log('🔄 Syncing workspace package versions...\n');
 
@@ -77,12 +110,29 @@ async function syncVersions(dryRun: boolean = false): Promise<void> {
 
   console.log(`📦 Root version: ${targetVersion}\n`);
 
+  // Sync Rust Cargo.toml first
+  console.log('📦 Rust workspace:');
+  const cargoResult = await syncRustCargoVersion(targetVersion, dryRun);
+  if (cargoResult.error) {
+    console.log(`✗ rust/Cargo.toml: ${cargoResult.error}`);
+  } else if (cargoResult.updated) {
+    console.log(`⚠ rust/Cargo.toml: updated to ${targetVersion}`);
+    if (!dryRun) {
+      console.log(`  ✓ Updated`);
+    } else {
+      console.log(`  ℹ Would update (dry run)`);
+    }
+  } else {
+    console.log(`✓ rust/Cargo.toml: ${targetVersion} (already synced)`);
+  }
+  console.log();
+
   // Get all package directories
   const packageDirs = await getPackageDirs();
 
-  let updated = 0;
-  let skipped = 0;
-  let errors = 0;
+  let updated = cargoResult.updated ? 1 : 0;
+  let skipped = cargoResult.updated ? 0 : 1;
+  let errors = cargoResult.error ? 1 : 0;
 
   for (const packageDir of packageDirs) {
     const packageJsonPath = path.join(packageDir, 'package.json');

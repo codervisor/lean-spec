@@ -1242,7 +1242,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "leanspec-cli"
-version = "0.3.0"
+version = "0.2.19"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -1264,7 +1264,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-core"
-version = "0.3.0"
+version = "0.2.19"
 dependencies = [
  "chrono",
  "petgraph",
@@ -1281,7 +1281,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-http"
-version = "0.3.0"
+version = "0.2.19"
 dependencies = [
  "axum",
  "bytes",
@@ -1314,7 +1314,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-mcp"
-version = "0.3.0"
+version = "0.2.19"
 dependencies = [
  "assert-json-diff",
  "chrono",
@@ -1331,7 +1331,7 @@ dependencies = [
 
 [[package]]
 name = "leanspec-sync-bridge"
-version = "0.3.0"
+version = "0.2.19"
 dependencies = [
  "anyhow",
  "chrono",
