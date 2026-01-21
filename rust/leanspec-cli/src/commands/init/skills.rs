@@ -81,9 +81,7 @@ const SKILL_FILES: &[(&str, &str)] = &[
     ),
     (
         "references/BEST-PRACTICES.md",
-        include_str!(
-            "../../../../../.github/skills/leanspec-sdd/references/BEST-PRACTICES.md"
-        ),
+        include_str!("../../../../../.github/skills/leanspec-sdd/references/BEST-PRACTICES.md"),
     ),
     (
         "references/COMMANDS.md",
@@ -302,8 +300,9 @@ pub fn default_selection(
             // Add synthetic target if it was not discovered
             let path = match scope {
                 SkillScope::Project => tool.project_dir(root),
-                SkillScope::User => tool
-                    .user_dir(home_dir(home_override).as_deref().unwrap_or_else(|| root)),
+                SkillScope::User => {
+                    tool.user_dir(home_dir(home_override).as_deref().unwrap_or_else(|| root))
+                }
             };
             if seen_paths.insert(path.clone()) {
                 selected.push(SkillTarget {

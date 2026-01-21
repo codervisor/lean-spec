@@ -207,7 +207,10 @@ fn test_init_installs_skills_by_default() {
     assert!(result.success, "init should succeed");
 
     let skill_path = cwd.join(".github/skills/leanspec-sdd/SKILL.md");
-    assert!(file_exists(&skill_path), "leanspec-sdd skill should be installed");
+    assert!(
+        file_exists(&skill_path),
+        "leanspec-sdd skill should be installed"
+    );
 }
 
 #[test]
@@ -238,7 +241,10 @@ fn test_init_writes_vscode_mcp_config_when_detected() {
     assert!(result.success, "init should succeed");
 
     let mcp_config = vscode_dir.join("mcp.json");
-    assert!(file_exists(&mcp_config), "mcp.json should be generated for VS Code");
+    assert!(
+        file_exists(&mcp_config),
+        "mcp.json should be generated for VS Code"
+    );
     let contents = read_file(&mcp_config);
     assert!(
         contents.contains("lean-spec"),

@@ -8,8 +8,13 @@ mod ai_tools;
 mod mcp_config;
 mod skills;
 
-use ai_tools::{create_symlinks, default_ai_selection, detect_ai_tools, symlink_capable_tools, AiTool, DetectionResult as AiDetection};
-use mcp_config::{all_tools as all_mcp_tools, configure_mcp, default_mcp_selection, detect_mcp_tools};
+use ai_tools::{
+    create_symlinks, default_ai_selection, detect_ai_tools, symlink_capable_tools, AiTool,
+    DetectionResult as AiDetection,
+};
+use mcp_config::{
+    all_tools as all_mcp_tools, configure_mcp, default_mcp_selection, detect_mcp_tools,
+};
 use skills::{
     build_skill_flags_from_cli, default_selection as default_skill_selection,
     discover_targets as discover_skill_targets, install_skill, SkillScope,
@@ -125,7 +130,11 @@ fn to_absolute(root: &Path, path: &str) -> PathBuf {
 fn scaffold_specs(root: &Path, specs_path: &Path) -> Result<(), Box<dyn Error>> {
     if !specs_path.exists() {
         fs::create_dir_all(specs_path)?;
-        println!("{} Created specs directory: {}", "✓".green(), specs_path.display());
+        println!(
+            "{} Created specs directory: {}",
+            "✓".green(),
+            specs_path.display()
+        );
     }
 
     // Create .lean-spec directory for configuration
@@ -364,7 +373,10 @@ fn handle_mcp_configs(root: &Path, options: &InitOptions) -> Result<(), Box<dyn 
             }
         }
 
-        let labels: Vec<String> = available.iter().map(|tool| tool.name().to_string()).collect();
+        let labels: Vec<String> = available
+            .iter()
+            .map(|tool| tool.name().to_string())
+            .collect();
         let defaults_mask: Vec<bool> = available
             .iter()
             .map(|tool| defaults.contains(tool))
@@ -502,7 +514,12 @@ fn handle_skills_install(
                 result.path.display()
             );
         } else if let Some(err) = result.error {
-            println!("{} Failed to install to {}: {}", "✗".red(), result.path.display(), err);
+            println!(
+                "{} Failed to install to {}: {}",
+                "✗".red(),
+                result.path.display(),
+                err
+            );
         }
     }
 
