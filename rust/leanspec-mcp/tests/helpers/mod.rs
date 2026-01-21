@@ -175,12 +175,10 @@ pub fn set_specs_dir_env(temp_dir: &TempDir) {
     let test_id = TEST_COUNTER.fetch_add(1, Ordering::SeqCst);
     let specs_path = specs_dir(temp_dir);
 
-    // Set the env var - note that parallel tests may still interfere
-    // For true isolation, consider using a per-test env var or mutex
-    std::env::set_var("LEANSPEC_SPECS_DIR", specs_path);
-
-    // Store test_id in temp var (unused but may help with debugging)
+    // Set test-wide env and a per-test override to avoid races in parallel runs
+    std::env::set_var("LEANSPEC_SPECS_DIR", &specs_path);
     std::env::set_var("LEANSPEC_TEST_ID", test_id.to_string());
+    std::env::set_var(format!("LEANSPEC_SPECS_DIR_{}", test_id), specs_path);
 }
 
 /// Assert response is a success with expected structure

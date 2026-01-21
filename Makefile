@@ -108,7 +108,7 @@ rust-build-http:
 	cargo build --release --manifest-path rust/Cargo.toml -p leanspec-http
 
 rust-test:
-	cargo test --manifest-path rust/Cargo.toml
+	RUST_TEST_THREADS=1 cargo test --manifest-path rust/Cargo.toml
 
 rust-test-watch:
 	cargo watch -x 'test --manifest-path rust/Cargo.toml'

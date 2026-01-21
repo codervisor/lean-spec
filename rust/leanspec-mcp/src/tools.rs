@@ -282,7 +282,14 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
 
 /// Call a tool with arguments
 pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
-    let specs_dir = std::env::var("LEANSPEC_SPECS_DIR").unwrap_or_else(|_| "specs".to_string());
+    // Prefer per-test override to avoid env races when tests run in parallel
+    let specs_dir = if let Ok(test_id) = std::env::var("LEANSPEC_TEST_ID") {
+        std::env::var(format!("LEANSPEC_SPECS_DIR_{}", test_id))
+            .or_else(|_| std::env::var("LEANSPEC_SPECS_DIR"))
+            .unwrap_or_else(|_| "specs".to_string())
+    } else {
+        std::env::var("LEANSPEC_SPECS_DIR").unwrap_or_else(|_| "specs".to_string())
+    };
 
     match name {
         "list" => tool_list(&specs_dir, args),
