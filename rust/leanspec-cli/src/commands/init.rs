@@ -20,9 +20,11 @@ use skills::{
     discover_targets as discover_skill_targets, install_skill, SkillScope, SkillTool,
 };
 
-// Embedded AGENTS.md template
-const AGENTS_MD_TEMPLATE: &str =
+// Embedded AGENTS.md templates
+const AGENTS_MD_TEMPLATE_DETAILED: &str =
     include_str!("../../../../packages/cli/templates/standard/AGENTS.md");
+const AGENTS_MD_TEMPLATE_MINIMAL: &str =
+    include_str!("../../../../packages/cli/templates/standard/AGENTS-minimal.md");
 
 // Embedded spec template
 const SPEC_TEMPLATE: &str =
@@ -91,15 +93,20 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
         }
     }
 
+    // Detect AI tools first (needed for skills and symlinks)
+    let ai_detections = detect_ai_tools(None);
+
+    // Determine if skills will be installed (before actual installation)
+    let will_install_skills = should_install_skills(&root, &ai_detections, &options)?;
+
     // Core filesystem scaffolding
     scaffold_specs(&root, &specs_path)?;
     let config_dir = root.join(".lean-spec");
     scaffold_config(&config_dir)?;
     scaffold_templates(&config_dir)?;
-    scaffold_agents(&root, &detected_name)?;
+    scaffold_agents(&root, &detected_name, will_install_skills)?;
 
     // New: AI tool + MCP onboarding
-    let ai_detections = detect_ai_tools(None);
     handle_ai_symlinks(&root, &ai_detections, &options)?;
     handle_mcp_configs(&root, &options)?;
     handle_skills_install(&root, &ai_detections, &options)?;
@@ -256,12 +263,26 @@ fn scaffold_templates(config_dir: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn scaffold_agents(root: &Path, detected_name: &str) -> Result<(), Box<dyn Error>> {
+fn scaffold_agents(
+    root: &Path,
+    detected_name: &str,
+    use_minimal: bool,
+) -> Result<(), Box<dyn Error>> {
     let agents_path = root.join("AGENTS.md");
     if !agents_path.exists() {
-        let agents_content = AGENTS_MD_TEMPLATE.replace("{project_name}", detected_name);
+        let template = if use_minimal {
+            AGENTS_MD_TEMPLATE_MINIMAL
+        } else {
+            AGENTS_MD_TEMPLATE_DETAILED
+        };
+        let agents_content = template.replace("{project_name}", detected_name);
         fs::write(&agents_path, agents_content)?;
-        println!("{} Created AGENTS.md", "✓".green());
+        let msg = if use_minimal {
+            "Created AGENTS.md (minimal - SKILL.md provides SDD workflow)"
+        } else {
+            "Created AGENTS.md"
+        };
+        println!("{} {}", "✓".green(), msg);
     } else {
         println!("{} AGENTS.md already exists (preserved)", "✓".cyan());
     }
@@ -427,6 +448,39 @@ fn handle_mcp_configs(root: &Path, options: &InitOptions) -> Result<(), Box<dyn 
     }
 
     Ok(())
+}
+
+/// Determines if skills will be installed based on options and detections
+fn should_install_skills(
+    root: &Path,
+    detections: &[AiDetection],
+    options: &InitOptions,
+) -> Result<bool, Box<dyn Error>> {
+    let tool_flags = [
+        (SkillTool::Copilot, options.skill_github),
+        (SkillTool::Claude, options.skill_claude),
+        (SkillTool::Cursor, options.skill_cursor),
+        (SkillTool::Codex, options.skill_codex),
+        (SkillTool::Gemini, options.skill_gemini),
+        (SkillTool::VsCode, options.skill_vscode),
+    ];
+
+    let flags = build_skill_flags_from_cli(
+        options.skill,
+        options.no_skill,
+        options.skill_user,
+        &tool_flags,
+    );
+
+    if flags.skip {
+        return Ok(false);
+    }
+
+    let candidates = discover_skill_targets(root, None, detections);
+    let default_selection = default_skill_selection(&flags, &candidates, root, None);
+
+    // Skills will be installed if there are default selections or user enables them
+    Ok(!default_selection.is_empty() || flags.enable)
 }
 
 fn handle_skills_install(
