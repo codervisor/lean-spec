@@ -285,38 +285,39 @@ fn handle_ai_symlinks(
         .filter(|tool| tool.uses_symlink())
         .collect();
 
-    if symlink_candidates.is_empty() {
-        return Ok(());
-    }
-
     let selected_symlinks = if options.yes {
         default_symlink_tools
     } else {
         print_ai_detection(detections);
 
-        let labels: Vec<String> = symlink_candidates
-            .iter()
-            .map(|tool| {
-                let file = tool.symlink_file().unwrap_or("AGENTS.md");
-                format!("{} ({})", file, tool.description())
-            })
-            .collect();
+        if symlink_candidates.is_empty() {
+            // No symlink-capable tools available, skip prompt
+            vec![]
+        } else {
+            let labels: Vec<String> = symlink_candidates
+                .iter()
+                .map(|tool| {
+                    let file = tool.symlink_file().unwrap_or("AGENTS.md");
+                    format!("{} ({})", file, tool.description())
+                })
+                .collect();
 
-        let defaults_mask: Vec<bool> = symlink_candidates
-            .iter()
-            .map(|tool| default_symlink_tools.contains(tool))
-            .collect();
+            let defaults_mask: Vec<bool> = symlink_candidates
+                .iter()
+                .map(|tool| default_symlink_tools.contains(tool))
+                .collect();
 
-        let selected_indexes = MultiSelect::new()
-            .with_prompt("Create symlinks for AI tools?")
-            .items(&labels)
-            .defaults(&defaults_mask)
-            .interact()?;
+            let selected_indexes = MultiSelect::new()
+                .with_prompt("Create symlinks for AI tools?")
+                .items(&labels)
+                .defaults(&defaults_mask)
+                .interact()?;
 
-        selected_indexes
-            .into_iter()
-            .map(|i| symlink_candidates[i])
-            .collect()
+            selected_indexes
+                .into_iter()
+                .map(|i| symlink_candidates[i])
+                .collect()
+        }
     };
 
     if selected_symlinks.is_empty() {
@@ -371,6 +372,8 @@ fn handle_mcp_configs(root: &Path, options: &InitOptions) -> Result<(), Box<dyn 
                         .if_empty(|| "detected".to_string())
                 );
             }
+        } else {
+            println!("\n{}", "No MCP-compatible tools detected".yellow());
         }
 
         let labels: Vec<String> = available
@@ -457,46 +460,53 @@ fn handle_skills_install(
     let selected = if options.yes || flags.enable {
         default_selection
     } else {
-        if !candidates.is_empty() {
-            println!("\n{}", "Install LeanSpec agent skills?".cyan());
+        println!("\n{}", "Install LeanSpec agent skills?".cyan());
+
+        if candidates.is_empty() {
+            println!(
+                "{}",
+                "No skill installation targets detected. You can manually install skills later."
+                    .yellow()
+            );
+            vec![]
+        } else {
+            let labels: Vec<String> = candidates
+                .iter()
+                .map(|target| {
+                    let scope = match target.scope {
+                        SkillScope::Project => "project",
+                        SkillScope::User => "user",
+                    };
+
+                    let mut label = format!("{} ({})", target.path.display(), scope);
+                    if target.recommended {
+                        label.push_str(" – recommended");
+                    } else if target.exists {
+                        label.push_str(" – detected");
+                    }
+                    label
+                })
+                .collect();
+
+            let defaults_mask: Vec<bool> = candidates
+                .iter()
+                .map(|target| {
+                    default_selection
+                        .iter()
+                        .any(|sel| sel.path == target.path && sel.scope == target.scope)
+                })
+                .collect();
+
+            let selected_indexes = MultiSelect::new()
+                .with_prompt("Select skill installation targets")
+                .items(&labels)
+                .defaults(&defaults_mask)
+                .interact()?;
+            selected_indexes
+                .into_iter()
+                .map(|i| candidates[i].clone())
+                .collect()
         }
-
-        let labels: Vec<String> = candidates
-            .iter()
-            .map(|target| {
-                let scope = match target.scope {
-                    SkillScope::Project => "project",
-                    SkillScope::User => "user",
-                };
-
-                let mut label = format!("{} ({})", target.path.display(), scope);
-                if target.recommended {
-                    label.push_str(" – recommended");
-                } else if target.exists {
-                    label.push_str(" – detected");
-                }
-                label
-            })
-            .collect();
-
-        let defaults_mask: Vec<bool> = candidates
-            .iter()
-            .map(|target| {
-                default_selection
-                    .iter()
-                    .any(|sel| sel.path == target.path && sel.scope == target.scope)
-            })
-            .collect();
-
-        let selected_indexes = MultiSelect::new()
-            .with_prompt("Select skill installation targets")
-            .items(&labels)
-            .defaults(&defaults_mask)
-            .interact()?;
-        selected_indexes
-            .into_iter()
-            .map(|i| candidates[i].clone())
-            .collect()
     };
 
     if selected.is_empty() {
@@ -531,12 +541,15 @@ fn handle_skills_install(
 }
 
 fn print_ai_detection(detections: &[AiDetection]) {
-    if detections.is_empty() {
+    let detected_tools: Vec<_> = detections.iter().filter(|d| d.detected).collect();
+
+    if detected_tools.is_empty() {
+        println!("\n{}", "No AI tools detected".yellow());
         return;
     }
 
     println!("\n{}", "Detected AI tools:".cyan());
-    for detection in detections.iter().filter(|d| d.detected) {
+    for detection in detected_tools {
         println!("  • {}", detection.tool.description());
         for reason in &detection.reasons {
             println!("    └─ {}", reason);
