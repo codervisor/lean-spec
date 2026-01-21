@@ -4,6 +4,14 @@ use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
 
+// Embedded AGENTS.md template
+const AGENTS_MD_TEMPLATE: &str =
+    include_str!("../../../../packages/cli/templates/standard/AGENTS.md");
+
+// Embedded spec template
+const SPEC_TEMPLATE: &str =
+    include_str!("../../../../packages/cli/templates/standard/files/README.md");
+
 pub fn run(specs_dir: &str, yes: bool, _template: Option<String>) -> Result<(), Box<dyn Error>> {
     let root = std::env::current_dir()?;
     let specs_path = {
@@ -160,6 +168,58 @@ Visit [leanspec.dev](https://leanspec.dev) for documentation.
         // Create .gitkeep
         fs::write(archived_dir.join(".gitkeep"), "")?;
         println!("{} Created archived directory", "✓".green());
+    }
+
+    // Create .lean-spec/templates directory and copy spec template
+    let templates_dir = config_dir.join("templates");
+    if !templates_dir.exists() {
+        fs::create_dir_all(&templates_dir)?;
+        println!(
+            "{} Created templates directory: {}",
+            "✓".green(),
+            templates_dir.display()
+        );
+    }
+
+    // Copy spec template (standard template uses spec-template.md)
+    let spec_template_path = templates_dir.join("spec-template.md");
+    if !spec_template_path.exists() {
+        fs::write(&spec_template_path, SPEC_TEMPLATE)?;
+        println!("{} Created spec template", "✓".green());
+    }
+
+    // Create AGENTS.md if it doesn't exist
+    let agents_path = root.join("AGENTS.md");
+    if !agents_path.exists() {
+        // Substitute {project_name} with detected project name
+        let agents_content = AGENTS_MD_TEMPLATE.replace("{project_name}", &detected_name);
+        fs::write(&agents_path, agents_content)?;
+        println!("{} Created AGENTS.md", "✓".green());
+
+        // Create CLAUDE.md symlink (default agent-tools behavior)
+        let claude_path = root.join("CLAUDE.md");
+        if !claude_path.exists() {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs as unix_fs;
+                match unix_fs::symlink("AGENTS.md", &claude_path) {
+                    Ok(_) => println!("{} Created CLAUDE.md → AGENTS.md", "✓".green()),
+                    Err(_e) => {
+                        // Fall back to copy on symlink failure
+                        fs::copy(&agents_path, &claude_path)?;
+                        println!("{} Created CLAUDE.md (copy)", "✓".green());
+                    }
+                }
+            }
+            #[cfg(not(unix))]
+            {
+                // Windows: copy instead of symlink (requires admin privileges)
+                fs::copy(&agents_path, &claude_path)?;
+                println!("{} Created CLAUDE.md (copy)", "✓".green());
+            }
+        }
+    } else {
+        println!("{} AGENTS.md already exists (preserved)", "✓".cyan());
     }
 
     println!();

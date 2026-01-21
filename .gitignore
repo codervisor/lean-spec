@@ -44,6 +44,7 @@ packages/http-server/binaries/*/leanspec-http
 packages/http-server/binaries/*/leanspec-http.exe
 packages/http-server/binaries/*/package.json
 packages/http-server/binaries/*/postinstall.js
+packages/http-server/binaries/**/ui-dist
 
 # package-lock.json files
 package-lock.json

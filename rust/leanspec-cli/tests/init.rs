@@ -41,7 +41,6 @@ fn test_init_fresh_project_with_yes_flag() {
 }
 
 #[test]
-#[ignore = "AGENTS.md not implemented in Rust CLI yet"]
 fn test_init_creates_agents_md_with_substitution() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -81,7 +80,6 @@ fn test_init_creates_config_with_defaults() {
 }
 
 #[test]
-#[ignore = "templates directory not implemented in Rust CLI yet"]
 fn test_init_creates_templates_directory() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -156,7 +154,6 @@ fn test_reinit_preserves_existing_agents_md() {
 }
 
 #[test]
-#[ignore = "AGENTS.md recreation not implemented in Rust CLI yet"]
 fn test_reinit_recreates_missing_agents_md() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -230,7 +227,6 @@ fn test_init_with_detailed_template() {
 // Regression tests
 
 #[test]
-#[ignore = "AGENTS.md recreation not implemented in Rust CLI yet"]
 fn test_regression_agents_md_not_preserved_when_deleted() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
@@ -252,7 +248,6 @@ fn test_regression_agents_md_not_preserved_when_deleted() {
 }
 
 #[test]
-#[ignore = "templates directory not implemented in Rust CLI yet"]
 fn test_regression_preserve_missing_templates() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
