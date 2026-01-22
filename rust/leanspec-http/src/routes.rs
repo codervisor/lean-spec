@@ -175,30 +175,16 @@ pub fn create_router(state: AppState) -> Router {
 
 fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
     if let Some(path) = config.server.ui_dist.clone() {
-        eprintln!(
-            "[resolve_ui_dist_path] Checking config.server.ui_dist: {:?}",
-            path
-        );
         if path.exists() {
-            eprintln!("[resolve_ui_dist_path] Using config path: {:?}", path);
             return Some(path);
         }
     }
 
     if let Ok(path) = std::env::var("LEANSPEC_UI_DIST") {
-        eprintln!(
-            "[resolve_ui_dist_path] Found LEANSPEC_UI_DIST env var: {}",
-            path
-        );
         let path = PathBuf::from(path);
         if path.exists() {
-            eprintln!("[resolve_ui_dist_path] Using env path: {:?}", path);
             return Some(path);
-        } else {
-            eprintln!("[resolve_ui_dist_path] Env path does not exist");
         }
-    } else {
-        eprintln!("[resolve_ui_dist_path] LEANSPEC_UI_DIST env var not set");
     }
 
     if cfg!(debug_assertions) {
@@ -224,7 +210,6 @@ fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
         }
     }
 
-    eprintln!("[resolve_ui_dist_path] No UI dist path found, returning None");
     None
 }
 
