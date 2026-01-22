@@ -377,10 +377,10 @@ enum Commands {
         months: usize,
     },
 
-    /// Count tokens in spec(s)
+    /// Count tokens in a spec or any file
     Tokens {
-        /// Specific spec (counts all if not provided)
-        spec: Option<String>,
+        /// Spec or file path to count
+        path: String,
 
         /// Show detailed breakdown
         #[arg(short, long)]
@@ -638,8 +638,8 @@ fn main() -> ExitCode {
             commands::templates::run(&specs_dir, action.as_deref(), name.as_deref(), &cli.output)
         }
         Commands::Timeline { months } => commands::timeline::run(&specs_dir, months, &cli.output),
-        Commands::Tokens { spec, verbose } => {
-            commands::tokens::run(&specs_dir, spec, verbose, &cli.output)
+        Commands::Tokens { path, verbose } => {
+            commands::tokens::run(&specs_dir, &path, verbose, &cli.output)
         }
         Commands::Ui {
             port,

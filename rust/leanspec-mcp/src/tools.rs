@@ -256,13 +256,17 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
         },
         ToolDefinition {
             name: "tokens".to_string(),
-            description: "Count tokens in spec(s) for context economy".to_string(),
+            description: "Count tokens in spec(s) or any file for context economy".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
                     "specPath": {
                         "type": "string",
-                        "description": "Specific spec (counts all if not provided)"
+                        "description": "Specific spec to count (counts all specs if not provided)"
+                    },
+                    "filePath": {
+                        "type": "string",
+                        "description": "Path to any file (markdown, code, text) to count tokens"
                     }
                 },
                 "additionalProperties": false
@@ -928,6 +932,30 @@ fn tool_tokens(specs_dir: &str, args: Value) -> Result<String, String> {
     let loader = SpecLoader::new(specs_dir);
     let counter = TokenCounter::new();
 
+    // Check if filePath is provided (for generic files)
+    if let Some(file_path) = args.get("filePath").and_then(|v| v.as_str()) {
+        let path = Path::new(file_path);
+
+        if !path.exists() {
+            return Err(format!("File not found: {}", file_path));
+        }
+
+        if !path.is_file() {
+            return Err(format!("Not a file: {}", file_path));
+        }
+
+        let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+        let result = counter.count_file(&content);
+
+        return Ok(serde_json::to_string_pretty(&json!({
+            "path": file_path,
+            "total": result.total,
+            "status": format!("{:?}", result.status),
+        }))
+        .map_err(|e| e.to_string())?);
+    }
+
+    // Otherwise, handle as spec (existing behavior)
     if let Some(spec_path) = args.get("specPath").and_then(|v| v.as_str()) {
         let spec = loader
             .load(spec_path)

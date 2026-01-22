@@ -133,6 +133,21 @@ impl TokenCounter {
         }
     }
 
+    /// Count tokens for any file (generic text file, code, markdown, etc.)
+    /// Returns a simple token count without spec-specific parsing
+    pub fn count_file(&self, content: &str) -> TokenCount {
+        let total = self.count(content);
+        let status = self.determine_status(total);
+
+        TokenCount {
+            total,
+            frontmatter: 0,
+            content: total,
+            title: 0,
+            status,
+        }
+    }
+
     /// Determine token status based on thresholds
     fn determine_status(&self, total: usize) -> TokenStatus {
         if total <= self.options.optimal_threshold {

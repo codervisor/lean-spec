@@ -170,3 +170,35 @@ async fn test_tokens_average_calculation() {
         assert_eq!(average, total / count);
     }
 }
+
+#[tokio::test]
+async fn test_tokens_generic_file() {
+    let temp = create_empty_project();
+    let test_file = temp.path().join("test.md");
+    std::fs::write(
+        &test_file,
+        "# Test File\n\nThis is a test file for counting tokens.",
+    )
+    .unwrap();
+    set_specs_dir_env(&temp);
+
+    let result = call_tool("tokens", json!({ "filePath": test_file.to_str().unwrap() })).await;
+    assert!(result.is_ok());
+
+    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    assert!(output["path"].is_string());
+    assert!(output["total"].is_number());
+    assert!(output["status"].is_string());
+    // Generic files don't have frontmatter/content breakdown
+    assert!(!output["frontmatter"].is_number());
+}
+
+#[tokio::test]
+async fn test_tokens_generic_file_not_found() {
+    let temp = create_empty_project();
+    set_specs_dir_env(&temp);
+
+    let result = call_tool("tokens", json!({ "filePath": "/nonexistent/file.md" })).await;
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("not found"));
+}

@@ -127,9 +127,8 @@ Moves spec to `archived/` directory.
 ### Count Tokens
 ```bash
 lean-spec tokens <spec>              # Count tokens in spec
-lean-spec tokens <spec> --detailed   # Content breakdown
-lean-spec tokens                     # All specs by token count
-lean-spec tokens --include-sub-specs # Include sub-spec files
+lean-spec tokens <file-path>         # Count tokens in any file (md, code, text)
+lean-spec tokens <spec> -v           # Show detailed breakdown
 ```
 
 ### Validate Specs
