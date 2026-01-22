@@ -14,3 +14,4 @@ Lightweight spec methodology for AI-powered development.
 	- packages/mcp/src/locales/en/common.json
 	- packages/mcp/src/locales/zh-CN/common.json
 4. Docs updates should include corresponding zh-Hans translations in docs-site/i18n/zh-Hans.
+5. **Prefer runSubagent for context reduction** - Use runSubagent for ALL tasks to reduce context bloat. The subagent operates in its own context and returns only essential findings.
