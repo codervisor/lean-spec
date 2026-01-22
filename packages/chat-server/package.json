@@ -13,7 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=cjs --external:express --external:ai --external:@ai-sdk/*",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=cjs --external:express --external:ai --external:@ai-sdk/* --external:dotenv --external:chokidar --external:zod",
     "dev": "tsx watch src/index.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
