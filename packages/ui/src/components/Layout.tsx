@@ -4,10 +4,11 @@ import type { ReactNode } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
 import { MachineSwitcher } from './MachineSwitcher';
+import { GlobalChatWidget } from './GlobalChatWidget';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { BackToTop } from './shared/BackToTop';
-import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts, useMachine } from '../contexts';
+import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts, useMachine, useChat } from '../contexts';
 import { cn } from '../lib/utils';
 
 /**
@@ -32,6 +33,7 @@ function LayoutContent({
   const { mobileSidebarOpen, toggleMobileSidebar } = useLayout();
   const { toggleHelp } = useKeyboardShortcuts();
   const { machineModeEnabled } = useMachine();
+  const { isChatOpen, closeChat } = useChat();
 
   const resolvedRightSlot = navigationRightSlot ?? (machineModeEnabled ? <MachineSwitcher /> : undefined);
 
@@ -63,6 +65,7 @@ function LayoutContent({
         </main>
       </div>
       <BackToTop />
+      <GlobalChatWidget isOpen={isChatOpen} onClose={closeChat} />
     </div>
   );
 }
