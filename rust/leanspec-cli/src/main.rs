@@ -204,10 +204,6 @@ enum Commands {
         #[arg(short, long)]
         yes: bool,
 
-        /// Template to use for initialization
-        #[arg(short, long)]
-        template: Option<String>,
-
         /// Skip AI tool configuration (symlinks)
         #[arg(long)]
         no_ai_tools: bool,
@@ -556,7 +552,6 @@ fn main() -> ExitCode {
         Commands::Gantt { status } => commands::gantt::run(&specs_dir, status, &cli.output),
         Commands::Init {
             yes,
-            template,
             no_ai_tools,
             no_mcp,
             skill,
@@ -572,7 +567,6 @@ fn main() -> ExitCode {
             &specs_dir,
             commands::init::InitOptions {
                 yes,
-                template,
                 no_ai_tools,
                 no_mcp,
                 skill,

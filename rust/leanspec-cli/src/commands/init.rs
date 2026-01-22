@@ -21,18 +21,14 @@ use skills::{
 };
 
 // Embedded AGENTS.md templates
-const AGENTS_MD_TEMPLATE_DETAILED: &str =
-    include_str!("../../../../packages/cli/templates/standard/AGENTS.md");
-const AGENTS_MD_TEMPLATE_MINIMAL: &str =
-    include_str!("../../../../packages/cli/templates/standard/AGENTS-minimal.md");
+const AGENTS_MD_TEMPLATE_DETAILED: &str = include_str!("../../templates/AGENTS.md");
+const AGENTS_MD_TEMPLATE_WITH_SKILL: &str = include_str!("../../templates/AGENTS-with-skill.md");
 
 // Embedded spec template
-const SPEC_TEMPLATE: &str =
-    include_str!("../../../../packages/cli/templates/standard/files/README.md");
+const SPEC_TEMPLATE: &str = include_str!("../../templates/spec-template.md");
 
 pub struct InitOptions {
     pub yes: bool,
-    pub template: Option<String>,
     pub no_ai_tools: bool,
     pub no_mcp: bool,
     pub skill: bool,
@@ -50,32 +46,33 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     let root = std::env::current_dir()?;
     let specs_path = to_absolute(&root, specs_dir);
 
-    let detected_name = root
-        .file_name()
-        .and_then(|s| s.to_str())
-        .filter(|s| !s.trim().is_empty())
-        .unwrap_or("project")
-        .to_string();
-
-    let default_name = detected_name.clone();
-    let _project_name = if options.yes {
-        default_name
+    // Detect project name for AGENTS.md template substitution
+    let project_name = if options.yes {
+        root.file_name()
+            .and_then(|s| s.to_str())
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or("project")
+            .to_string()
     } else {
+        let detected = root
+            .file_name()
+            .and_then(|s| s.to_str())
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or("project")
+            .to_string();
+
         let input = Input::new()
-            .with_prompt(format!("Project name (detected: {})", detected_name))
-            .default(detected_name.clone())
+            .with_prompt(format!("Project name (detected: {})", detected))
+            .default(detected.clone())
             .interact_text()?;
 
         let trimmed = input.trim();
         if trimmed.is_empty() {
-            detected_name.clone()
+            detected
         } else {
             trimmed.to_string()
         }
     };
-
-    // Template selection is intentionally out of scope for this spec
-    let _ = options.template.as_ref();
 
     // Check if already initialized
     if specs_path.exists() && specs_path.is_dir() {
@@ -104,7 +101,7 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     let config_dir = root.join(".lean-spec");
     scaffold_config(&config_dir)?;
     scaffold_templates(&config_dir)?;
-    scaffold_agents(&root, &detected_name, will_install_skills)?;
+    scaffold_agents(&root, &project_name, will_install_skills)?;
 
     // New: AI tool + MCP onboarding
     handle_ai_symlinks(&root, &ai_detections, &options)?;
@@ -223,9 +220,6 @@ fn scaffold_config(config_dir: &Path) -> Result<(), Box<dyn Error>> {
     if !config_file.exists() {
         let default_config = r#"{
   "specsDir": "specs",
-  "templates": {
-    "default": "minimal"
-  },
   "validation": {
     "maxLines": 400,
     "warnLines": 200,
@@ -265,20 +259,21 @@ fn scaffold_templates(config_dir: &Path) -> Result<(), Box<dyn Error>> {
 
 fn scaffold_agents(
     root: &Path,
-    detected_name: &str,
-    use_minimal: bool,
+    project_name: &str,
+    skills_installed: bool,
 ) -> Result<(), Box<dyn Error>> {
     let agents_path = root.join("AGENTS.md");
     if !agents_path.exists() {
-        let template = if use_minimal {
-            AGENTS_MD_TEMPLATE_MINIMAL
+        // Use with-skill template when skills are installed (SKILL.md provides SDD workflow)
+        let template = if skills_installed {
+            AGENTS_MD_TEMPLATE_WITH_SKILL
         } else {
             AGENTS_MD_TEMPLATE_DETAILED
         };
-        let agents_content = template.replace("{project_name}", detected_name);
+        let agents_content = template.replace("{project_name}", project_name);
         fs::write(&agents_path, agents_content)?;
-        let msg = if use_minimal {
-            "Created AGENTS.md (minimal - SKILL.md provides SDD workflow)"
+        let msg = if skills_installed {
+            "Created AGENTS.md (SKILL.md provides SDD workflow)"
         } else {
             "Created AGENTS.md"
         };

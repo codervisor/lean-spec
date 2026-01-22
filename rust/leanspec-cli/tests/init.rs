@@ -55,11 +55,17 @@ fn test_init_creates_agents_md_with_substitution() {
         !agents_content.contains("{project_name}"),
         "should substitute project_name"
     );
-    // Should contain LeanSpec instructions
+    
+    // AGENTS.md should exist and be valid markdown
     assert!(
-        agents_content.to_lowercase().contains("leanspec")
-            || agents_content.to_lowercase().contains("lean-spec"),
-        "should contain leanspec instructions"
+        agents_content.contains("# "),
+        "should contain a markdown heading"
+    );
+    
+    // Should contain project-specific rules section
+    assert!(
+        agents_content.contains("Project-Specific Rules"),
+        "should contain Project-Specific Rules section"
     );
 }
 
