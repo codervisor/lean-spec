@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useProject } from '../contexts';
+import { useProject, useChat } from '../contexts';
 
 export interface KeyboardShortcut {
   key: string;
@@ -45,6 +45,7 @@ export function useGlobalShortcuts() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
+  const { toggleChat } = useChat();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;
 
@@ -77,6 +78,13 @@ export function useGlobalShortcuts() {
         if (!basePath) return;
         navigate(`${basePath}/dependencies`);
       }, [basePath, navigate]),
+    },
+    {
+      key: 'c',
+      description: 'Toggle AI chat',
+      action: useCallback(() => {
+        toggleChat();
+      }, [toggleChat]),
     },
     {
       key: ',',

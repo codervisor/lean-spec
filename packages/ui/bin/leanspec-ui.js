@@ -18,6 +18,13 @@ const __dirname = dirname(__filename);
 
 const DIST_DIR = join(__dirname, '..', 'dist');
 
+// Debug output
+if (process.env.LEANSPEC_DEBUG === '1') {
+  console.log('[leanspec-ui debug] __dirname:', __dirname);
+  console.log('[leanspec-ui debug] DIST_DIR:', DIST_DIR);
+  console.log('[leanspec-ui debug] DIST_DIR exists:', existsSync(DIST_DIR));
+}
+
 // Check if dist exists
 if (!existsSync(DIST_DIR)) {
   console.error('Error: UI build not found!');
@@ -33,7 +40,7 @@ let httpServerProcess;
 try {
   // Try to resolve @leanspec/http-server
   const httpServerPath = require.resolve('@leanspec/http-server/bin/leanspec-http.js');
-  
+
   console.log('🚀 Starting LeanSpec HTTP server...');
   const args = process.argv.slice(2);
 

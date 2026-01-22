@@ -95,6 +95,8 @@
     "disabledTitle": "AI chat is disabled",
     "disabledDescription": "Set VITE_ENABLE_AI=true to enable the chat experience.",
     "toggleModelSettings": "Toggle model settings",
+    "openChat": "Open AI Chat",
+    "openFullChat": "Full Chat",
     "settings": {
       "title": "Chat Configuration",
       "description": "Configure AI providers, models, and chat behavior",

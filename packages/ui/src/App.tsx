@@ -1,6 +1,19 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import { MachineProvider, ProjectProvider, ThemeProvider, KeyboardShortcutsProvider, SpecsProvider } from './contexts';
+import { MachineProvider, ProjectProvider, ThemeProvider, KeyboardShortcutsProvider, SpecsProvider, ChatProvider } from './contexts';
+import { GlobalChatWidget } from './components/GlobalChatWidget';
+import { useChat } from './contexts';
+
+function AppContent() {
+  const { isChatOpen, closeChat } = useChat();
+
+  return (
+    <>
+      <RouterProvider router={router} />
+      <GlobalChatWidget isOpen={isChatOpen} onClose={closeChat} />
+    </>
+  );
+}
 
 function App() {
   return (
@@ -9,7 +22,9 @@ function App() {
         <ProjectProvider>
           <SpecsProvider>
             <KeyboardShortcutsProvider>
-              <RouterProvider router={router} />
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
             </KeyboardShortcutsProvider>
           </SpecsProvider>
         </ProjectProvider>
