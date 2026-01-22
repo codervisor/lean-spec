@@ -30,7 +30,6 @@ export function ChatPage() {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const { currentProject, loading: projectLoading } = useProject();
-  const enableAi = import.meta.env.VITE_ENABLE_AI !== 'false';
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
     providerId: 'openai',
@@ -185,19 +184,6 @@ export function ChatPage() {
   const handleRenameThread = async (id: string, newTitle: string) => {
     await ChatApi.updateThread(id, { title: newTitle });
     loadThreads();
-  }
-
-  if (!enableAi) {
-    return (
-      <div className="p-6 max-w-3xl mx-auto">
-        <Card>
-          <CardContent className="p-6 space-y-2">
-            <h1 className="text-xl font-semibold">{t('chat.disabledTitle')}</h1>
-            <p className="text-sm text-muted-foreground">{t('chat.disabledDescription')}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
   if (projectLoading) {

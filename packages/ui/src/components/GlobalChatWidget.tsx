@@ -36,7 +36,6 @@ export function GlobalChatWidget({ isOpen, onClose }: GlobalChatWidgetProps) {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
-  const enableAi = import.meta.env.VITE_ENABLE_AI !== 'false';
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
     providerId: 'openai',
@@ -67,10 +66,10 @@ export function GlobalChatWidget({ isOpen, onClose }: GlobalChatWidgetProps) {
   }, [currentProject?.id, activeThreadId]);
 
   useEffect(() => {
-    if (isOpen && enableAi && currentProject?.id) {
+    if (isOpen && currentProject?.id) {
       loadThreads();
     }
-  }, [isOpen, enableAi, currentProject?.id, loadThreads]);
+  }, [isOpen, currentProject?.id, loadThreads]);
 
   const {
     messages,
@@ -147,10 +146,6 @@ export function GlobalChatWidget({ isOpen, onClose }: GlobalChatWidgetProps) {
     navigate(targetPath);
     onClose();
   };
-
-  if (!enableAi) {
-    return null;
-  }
 
   if (!isOpen) {
     return null;

@@ -133,7 +133,6 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
   const { currentProject } = useProject();
   const { isWideMode, toggleWideMode } = useLayout();
   const { toggleChat } = useChat();
-  const enableAi = import.meta.env.VITE_ENABLE_AI !== 'false';
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
 
@@ -190,25 +189,23 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
             <QuickSearch />
           </div>
           <TooltipProvider>
-            {enableAi && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10"
-                    onClick={toggleChat}
-                    data-tauri-drag-region="false"
-                  >
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="sr-only">{t('chat.openChat', 'Open AI Chat')}</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t('chat.openChat', 'Open AI Chat')}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  onClick={toggleChat}
+                  data-tauri-drag-region="false"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  <span className="sr-only">{t('chat.openChat', 'Open AI Chat')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('chat.openChat', 'Open AI Chat')}</p>
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
