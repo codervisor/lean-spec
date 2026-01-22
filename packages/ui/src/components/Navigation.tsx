@@ -194,23 +194,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
             <QuickSearch />
           </div>
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 sm:h-10 sm:w-10"
-                  onClick={toggleChat}
-                  data-tauri-drag-region="false"
-                >
-                  <BotMessageSquare className="h-5 w-5" />
-                  <span className="sr-only">{t('chat.openChat', 'Open AI Chat')}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('chat.openChat', 'Open AI Chat')}</p>
-              </TooltipContent>
-            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -301,6 +285,24 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
               </TooltipTrigger>
               <TooltipContent>
                 <p>{t('navigation.githubTooltip')}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  onClick={toggleChat}
+                  data-tauri-drag-region="false"
+                >
+                  <BotMessageSquare className="h-5 w-5" />
+                  <span className="sr-only">{t('chat.openChat', 'Open AI Chat')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('chat.openChat', 'Open AI Chat')}</p>
               </TooltipContent>
             </Tooltip>
 

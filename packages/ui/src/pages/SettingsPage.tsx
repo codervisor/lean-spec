@@ -9,50 +9,67 @@ export function SettingsPage() {
   const { t } = useTranslation('common');
   const [activeTab, setActiveTab] = useState<'ai' | 'appearance'>('ai');
 
+  const tabs = [
+    { id: 'ai', label: t('settings.tabs.ai'), icon: Cpu },
+    { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette },
+  ] as const;
+
   return (
-    <div className="h-full overflow-auto">
-      <div className="p-6 max-w-6xl mx-auto space-y-6">
-        {/* Header */}
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-background">
+      <div className="border-b p-6 flex-none">
         <div className="flex items-center gap-3">
           <Settings className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
+            <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
             <p className="text-sm text-muted-foreground">{t('settings.description')}</p>
           </div>
         </div>
+      </div>
 
-        {/* Settings Tabs */}
-        <div className="space-y-6">
-          <div className="flex gap-2 border-b">
-            <Button
-              variant={activeTab === 'ai' ? 'default' : 'ghost'}
-              className={cn(
-                "rounded-b-none border-b-2",
-                activeTab === 'ai' ? "border-primary" : "border-transparent"
-              )}
-              onClick={() => setActiveTab('ai')}
-            >
-              <Cpu className="h-4 w-4 mr-2" />
-              {t('settings.tabs.ai')}
-            </Button>
-            <Button
-              variant={activeTab === 'appearance' ? 'default' : 'ghost'}
-              className={cn(
-                "rounded-b-none border-b-2",
-                activeTab === 'appearance' ? "border-primary" : "border-transparent"
-              )}
-              onClick={() => setActiveTab('appearance')}
-            >
-              <Palette className="h-4 w-4 mr-2" />
-              {t('settings.tabs.appearance')}
-            </Button>
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-64 border-r bg-muted/10 p-4 overflow-y-auto hidden md:block">
+          <nav className="space-y-1">
+            {tabs.map((tab) => (
+              <Button
+                key={tab.id}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start",
+                  activeTab === tab.id ? "bg-accent text-accent-foreground" : ""
+                )}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <tab.icon className="mr-2 h-4 w-4" />
+                {tab.label}
+              </Button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Mobile Tab Selector (visible only on small screens) */}
+        <div className="md:hidden p-4 border-b">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {tabs.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab(tab.id)}
+                className="whitespace-nowrap"
+              >
+                <tab.icon className="mr-2 h-4 w-4" />
+                {tab.label}
+              </Button>
+            ))}
           </div>
+        </div>
 
-          <div className="mt-6">
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
             {activeTab === 'ai' && <AISettingsTab />}
             {activeTab === 'appearance' && <AppearanceSettingsTab />}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
