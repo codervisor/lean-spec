@@ -35,11 +35,11 @@ updated_at: 2026-01-12T08:27:30.904768148Z
 
 ## Sub-Specs
 
-| Spec | Focus | Est. Tokens |
-|------|-------|-------------|
-| **[185](../185-ui-components-extraction/)** | Extract shared component library | ~1800 |
-| **[186](../186-rust-http-server/)** | Build Rust HTTP server + multi-project | ~2000 |
-| **[187](../187-vite-spa-migration/)** | Migrate Next.js to Vite SPA | ~1500 |
+| Spec                                        | Focus                                  | Est. Tokens |
+| ------------------------------------------- | -------------------------------------- | ----------- |
+| **[185](../185-ui-components-extraction/)** | Extract shared component library       | ~1800       |
+| **[186](../186-rust-http-server/)**         | Build Rust HTTP server + multi-project | ~2000       |
+| **[187](../187-vite-spa-migration/)**       | Migrate Next.js to Vite SPA            | ~1500       |
 
 **Total**: ~5300 tokens (vs 7714 original)
 
@@ -58,12 +58,16 @@ HTTP Client     Tauri Commands
 Rust HTTP Server     ↓
 (Axum)          leanspec_core
   ↓                  
-leanspec_core   
+leanspec_core
+  ↓ (for AI chat)
+packages/ai-worker
+(IPC: stdin/stdout)
 ```
 
 **Important distinction**:
 - **Web**: Uses HTTP server (browser can't call Rust directly)
 - **Desktop**: Uses Tauri commands (direct Rust calls, no HTTP overhead)
+- **AI Chat**: Both platforms use `@leanspec/ai-worker` via IPC (spawned by Rust server)
 
 ### Key Decisions
 
@@ -88,6 +92,14 @@ leanspec_core
   "projects": { "autoDiscover": true, "maxRecent": 10 }
 }
 ```
+
+**System Requirements**:
+- **Rust**: Backend server and core operations
+- **Node.js**: Required for AI chat features (via `@leanspec/ai-worker`)
+  - Hard minimum: v20+ (works with EOL warning if v20-v21)
+  - Recommended: v22+ (Jod LTS, no warnings)
+  - Best: v24+ (Krypton LTS, maximum support until April 2028)
+- Without Node.js or <v20: All features work except AI chat
 
 ## Plan
 
@@ -152,6 +164,9 @@ AI coding era enables velocity:
 - **[185](../185-ui-components-extraction/)**: Components (sub-spec)
 - **[186](../186-rust-http-server/)**: HTTP server (sub-spec)
 - **[187](../187-vite-spa-migration/)**: Vite SPA (sub-spec)
+- **[218](../218-unified-http-ui-server/)**: Unified HTTP Server with Embedded UI
+- **[236](../236-chat-config-api-migration/)**: Chat Config API Migration to Rust
+- **[237](../237-rust-ipc-ai-chat-bridge/)**: IPC-based AI Chat Bridge (completes unified architecture)
 
 ### Open Questions
 
@@ -159,3 +174,4 @@ AI coding era enables velocity:
 2. **Hot Reload**: File watcher with `notify-rs` for project registry
 3. **Spec File Changes**: Client polling initially, WebSocket upgrade later
 4. **Web Production**: Dev-only (browser security limits)
+5. **Node.js Requirement**: AI chat requires Node.js v18+ runtime (graceful degradation if unavailable)

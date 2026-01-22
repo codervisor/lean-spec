@@ -36,6 +36,7 @@ This creates unnecessary complexity:
 - Serves API on `/api/*` routes
 - Runs on a single port (default 3000)
 - One process, one port, simpler architecture
+- **Note**: Chat integration via IPC worker is covered in [Spec 237](../237-rust-ipc-ai-chat-bridge/)
 
 **Benefits**:
 - Simpler deployment and operation (one command, one process)
@@ -71,8 +72,9 @@ User runs: npx @leanspec/ui (or just leanspec-http)
   ↓
   Rust HTTP process (port 3000)
   ├─> Serves /api/* routes (existing handlers)
-  └─> Serves /* static files (new: tower-http::ServeDir)
-       └─> Embeds UI dist/ from @leanspec/ui
+  ├─> Serves /* static files (new: tower-http::ServeDir)
+  │    └─> Embeds UI dist/ from @leanspec/ui
+  └─> Spawns @leanspec/ai-worker (IPC for AI chat, see spec 237)
 
 Browser: http://localhost:3000
          └─> Same-origin API requests (no CORS needed)
@@ -186,13 +188,19 @@ Router::new()
 **User-Facing Package**: `@leanspec/ui` (unchanged for users)
 - Contains Vite build (`dist/`)
 - Contains launcher (`bin/leanspec-ui.js`)
-- Depends on `@leanspec/http-server`
+- Depends on `@leanspec/http-server` and `@leanspec/ai-worker`
 - Users install: `npx @leanspec/ui`
 
 **Backend Package**: `@leanspec/http-server`
 - Contains Rust binary
 - Discovers UI files from `@leanspec/ui/dist`
+- Spawns `@leanspec/ai-worker` for AI chat (see spec 237)
 - Can be used standalone for API-only scenarios
+
+**AI Worker Package**: `@leanspec/ai-worker` (new in spec 237)
+- IPC-based worker for AI SDK streaming
+- Spawned by Rust HTTP server via stdin/stdout
+- Replaces standalone `@leanspec/chat-server`
 
 ### UI Package Changes
 
@@ -337,6 +345,24 @@ build:
 - Access: http://localhost:3000
 
 **Recommendation**: Keep Option 1 for development (faster HMR)
+
+### System Requirements
+
+**Runtime Dependencies**:
+- **Rust binary**: Included in `@leanspec/http-server` package (no separate install)
+- **Node.js**: Required for AI chat features (via `@leanspec/ai-worker`)
+  - **Hard Minimum**: v20.0.0 (works with EOL warning)
+  - **Recommended**: v22.0.0+ (Jod LTS, supported until April 2027)
+  - **Best**: v24.0.0+ (Krypton LTS, supported until April 2028)
+  - **Note**: v20 reaches EOL April 30, 2026 - will show warnings but continue to work
+  - Download from: https://nodejs.org
+  - Check version: `node --version`
+  - Graceful degradation: AI features disabled if <v20 or not installed
+
+**Why Node.js?**
+- AI SDK ecosystem is JavaScript-native (Vercel AI SDK)
+- IPC worker provides clean separation (Rust manages process)
+- Future: May compile to WASM when ecosystem matures (see spec 237)
 
 ### CLI Arguments
 
@@ -767,3 +793,5 @@ Both use Rust for backend, UI is a static asset.
 - [Spec 103](../103-ui-standalone-consolidation/): UI package consolidation
 - [Spec 187](../187-vite-spa-migration/): Vite SPA (UI build artifact)
 - [Spec 184](../184-ui-packages-consolidation/): Unified UI Architecture (parent)
+- **[Spec 237](../237-rust-ipc-ai-chat-bridge/)**: IPC-based AI Chat Bridge - Completes unified server by integrating chat via IPC worker
+- **[Spec 236](../236-chat-config-api-migration/)**: Chat Config API Migration - Prerequisite for spec 237

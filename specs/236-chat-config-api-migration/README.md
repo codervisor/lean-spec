@@ -54,13 +54,16 @@ The chat-server loads and persists config from `~/.leanspec/chat-config.json`, m
 │  (leanspec-http)│
 └────────┬────────┘
          │
-         │ POST /api/chat (streaming only)
+         │ IPC (stdin/stdout)
          ↓
 ┌─────────────────┐
-│  Chat Server    │ ← Stateless AI SDK wrapper
-│   (Node.js)     │
+│   AI Worker     │ ← Stateless AI SDK wrapper
+│ (@leanspec/     │   (See spec 237 for IPC details)
+│  ai-worker)     │
 └─────────────────┘
 ```
+
+**Note**: Spec 237 transforms the chat-server from HTTP-based to IPC-based `@leanspec/ai-worker`.
 
 ### API Surface (Rust)
 
@@ -192,9 +195,18 @@ Old chat-server can still run independently with its own config for backward com
 
 Future consideration: Should each project have its own chat config? Current design is global user config. Could extend later with project-specific overrides.
 
-### Chat Server Communication
+### AI Worker Communication
 
-Option A: UI → Rust (get config) → Chat Server (with config in request)
-Option B: Chat Server → Rust (fetch config on each request)
+With the IPC-based `@leanspec/ai-worker` (spec 237), config is managed by Rust and passed via IPC:
+- Rust loads config from `~/.leanspec/config/chat.json`
+- Config included in IPC request payload to worker
+- Worker is stateless, receives everything it needs per request
+- Config changes trigger worker reload (no restart needed)
 
-Recommendation: Option A for now (pass config in request). Simpler, more explicit.
+This eliminates the need for the worker to manage its own config file.
+
+### Related Specs
+
+- **Spec 237**: Rust IPC AI Chat Bridge - Transforms chat-server into IPC worker (depends on this spec's config migration)
+- **Spec 218**: Unified HTTP Server - Parent architecture context
+- **Spec 184**: Unified UI Architecture - Overall system architecture
