@@ -220,16 +220,8 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
             </Tooltip>
 
             <LanguageSwitcher />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <ThemeToggle />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('theme.toggleTheme')}</p>
-              </TooltipContent>
-            </Tooltip>
+            <ThemeToggle />
+
 
             <Tooltip>
               <TooltipTrigger asChild>
