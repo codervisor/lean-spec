@@ -379,8 +379,8 @@ enum Commands {
 
     /// Count tokens in a spec or any file
     Tokens {
-        /// Spec or file path to count
-        path: String,
+        /// Spec or file path to count (omit to count all specs)
+        path: Option<String>,
 
         /// Show detailed breakdown
         #[arg(short, long)]
@@ -639,7 +639,7 @@ fn main() -> ExitCode {
         }
         Commands::Timeline { months } => commands::timeline::run(&specs_dir, months, &cli.output),
         Commands::Tokens { path, verbose } => {
-            commands::tokens::run(&specs_dir, &path, verbose, &cli.output)
+            commands::tokens::run(&specs_dir, path.as_deref(), verbose, &cli.output)
         }
         Commands::Ui {
             port,

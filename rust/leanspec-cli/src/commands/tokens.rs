@@ -7,12 +7,19 @@ use std::path::Path;
 
 pub fn run(
     specs_dir: &str,
-    path: &str,
+    path: Option<&str>,
     verbose: bool,
     output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
     let loader = SpecLoader::new(specs_dir);
     let counter = TokenCounter::new();
+
+    // If no path provided, count all specs
+    if path.is_none() {
+        return count_all_specs(&loader, &counter, verbose, output_format);
+    }
+
+    let path = path.unwrap();
 
     // Check if it's a file path or spec reference
     let path_ref = Path::new(path);
@@ -35,6 +42,79 @@ pub fn run(
 
     // Not found
     Err(format!("File or spec not found: {}", path).into())
+}
+
+fn count_all_specs(
+    loader: &SpecLoader,
+    counter: &TokenCounter,
+    _verbose: bool,
+    output_format: &str,
+) -> Result<(), Box<dyn Error>> {
+    let specs = loader.load_all()?;
+
+    if specs.is_empty() {
+        if output_format == "json" {
+            println!("{{\"total\": 0, \"specs\": []}}");
+        } else {
+            println!("No specs found");
+        }
+        return Ok(());
+    }
+
+    let mut total = 0;
+    let mut spec_counts = Vec::new();
+
+    for spec in &specs {
+        let content = std::fs::read_to_string(&spec.file_path)?;
+        let result = counter.count_spec(&content);
+        total += result.total;
+        spec_counts.push((spec.path.clone(), result.total));
+    }
+
+    if output_format == "json" {
+        #[derive(serde::Serialize)]
+        struct AllTokenOutput {
+            total: usize,
+            count: usize,
+            specs: Vec<SpecCount>,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SpecCount {
+            path: String,
+            tokens: usize,
+        }
+
+        let output = AllTokenOutput {
+            total,
+            count: specs.len(),
+            specs: spec_counts
+                .into_iter()
+                .map(|(path, tokens)| SpecCount { path, tokens })
+                .collect(),
+        };
+
+        println!("{}", serde_json::to_string_pretty(&output)?);
+        return Ok(());
+    }
+
+    println!();
+    println!("{} {}", "📊".bold(), "All Specs Token Count".cyan().bold());
+    println!();
+    println!(
+        "  {}: {} tokens across {} specs",
+        "Total".bold(),
+        total,
+        specs.len()
+    );
+
+    if let Some(rec) = counter.recommendation(total) {
+        println!();
+        println!("  {} {}", "💡".yellow(), rec.yellow());
+    }
+
+    println!();
+    Ok(())
 }
 
 fn count_file(

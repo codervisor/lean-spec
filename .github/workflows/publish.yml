@@ -17,9 +17,37 @@ on:
     types: [published]
 
 jobs:
-  # Step 0: Build UI (required before Rust binaries)
+  # Step 0: Run tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build dependencies
+        run: |
+          pnpm --filter @leanspec/ui-components build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: TypeScript typecheck
+        run: pnpm typecheck
+
+  # Step 1: Build UI (required before Rust binaries)
   build-ui:
     name: Build UI
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,9 +79,9 @@ jobs:
           path: packages/ui/dist
           retention-days: 30
 
-  # Step 1: Build Rust binaries for ALL platforms
+  # Step 2: Build Rust binaries for ALL platforms
   rust-binaries:
-    needs: build-ui  # UI must be built first
+    needs: [test, build-ui]  # UI must be built first
     name: Build Rust binaries (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -149,7 +177,7 @@ jobs:
           path: dist/${{ matrix.platform }}
           retention-days: 30
   
-  # Step 2: Publish platform-specific packages (MUST happen before main packages)
+  # Step 3: Publish platform-specific packages (MUST happen before main packages)
   publish-platform:
     needs: rust-binaries
     runs-on: ubuntu-latest
@@ -209,7 +237,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  # Step 3: Publish chat-server (must happen before main packages)
+  # Step 4: Publish chat-server (must happen before main packages)
   publish-chat-server:
     needs: publish-platform
     runs-on: ubuntu-latest
@@ -256,7 +284,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   
-  # Step 3: Publish main packages (AFTER platform packages are available)
+  # Step 5: Publish main packages (AFTER platform packages are available)
   publish-main:
     needs: [publish-platform, publish-chat-server]
     runs-on: ubuntu-latest

@@ -1,6 +1,16 @@
 #!/bin/sh
 # Run full validation before pushing
 
+echo "🧪 Running tests before push..."
+pnpm test
+
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed! Fix the failing tests before pushing."
+  exit 1
+fi
+
+echo "✅ Tests passed!"
+
 echo "🔍 Running TypeScript typecheck before push..."
 pnpm typecheck
 
