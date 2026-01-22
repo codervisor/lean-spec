@@ -1,9 +1,7 @@
 //! Tests for the `board` MCP tool
 
-#[path = "../helpers/mod.rs"]
-mod helpers;
+use crate::helpers::*;
 
-use helpers::*;
 use leanspec_mcp::tools::call_tool;
 use pretty_assertions::assert_eq;
 use serde_json::json;

@@ -195,11 +195,11 @@ Just body content, no frontmatter."#;
 
     // Should have default frontmatter
     assert!(
-        frontmatter.get("status").is_some(),
+        frontmatter.contains_key("status"),
         "should have default status"
     );
     assert!(
-        frontmatter.get("created").is_some() || frontmatter.get("created_at").is_some(),
+        frontmatter.contains_key("created") || frontmatter.contains_key("created_at"),
         "should have created timestamp"
     );
 }
@@ -573,7 +573,7 @@ fn test_create_with_minimal_content() {
 
     // Should still have frontmatter
     assert!(
-        frontmatter.get("status").is_some(),
+        frontmatter.contains_key("status"),
         "should have default status"
     );
 

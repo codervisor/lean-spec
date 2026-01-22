@@ -1,9 +1,7 @@
 //! Tests for the `create` MCP tool
 
-#[path = "../helpers/mod.rs"]
-mod helpers;
+use crate::helpers::*;
 
-use helpers::*;
 use leanspec_mcp::tools::{call_tool, get_tool_definitions};
 use serde_json::json;
 

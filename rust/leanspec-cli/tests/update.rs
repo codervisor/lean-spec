@@ -258,5 +258,5 @@ fn test_update_completed_timestamp() {
     let fm = parse_frontmatter(&content);
 
     // Should have completed timestamp
-    assert!(fm.get("completed").is_some() || fm.get("completed_at").is_some());
+    assert!(fm.contains_key("completed") || fm.contains_key("completed_at"));
 }

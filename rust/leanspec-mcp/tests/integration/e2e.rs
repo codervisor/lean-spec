@@ -1,9 +1,7 @@
 //! End-to-end tests for MCP server
 
-#[path = "../helpers/mod.rs"]
-mod helpers;
+use crate::helpers::*;
 
-use helpers::*;
 use leanspec_mcp::{handle_request, McpRequest};
 use serde_json::json;
 

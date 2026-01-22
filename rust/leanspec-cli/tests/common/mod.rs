@@ -213,13 +213,13 @@ pub fn parse_frontmatter(content: &str) -> std::collections::HashMap<String, ser
     let re = regex::Regex::new(r"^---\n([\s\S]*?)\n---").unwrap();
     if let Some(captures) = re.captures(content) {
         if let Some(yaml_str) = captures.get(1) {
-            if let Ok(parsed) = serde_yaml::from_str::<serde_yaml::Value>(yaml_str.as_str()) {
-                if let serde_yaml::Value::Mapping(map) = parsed {
-                    return map
-                        .into_iter()
-                        .filter_map(|(k, v)| k.as_str().map(|s| (s.to_string(), v)))
-                        .collect();
-                }
+            if let Ok(serde_yaml::Value::Mapping(map)) =
+                serde_yaml::from_str::<serde_yaml::Value>(yaml_str.as_str())
+            {
+                return map
+                    .into_iter()
+                    .filter_map(|(k, v)| k.as_str().map(|s| (s.to_string(), v)))
+                    .collect();
             }
         }
     }

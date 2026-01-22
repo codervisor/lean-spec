@@ -33,8 +33,7 @@ use common::*;
 ///
 /// ## Template for New Regression Tests
 ///
-/// ```rust
-/// #[test]
+/// ```ignore
 /// fn test_regression_issue_NUMBER_brief_description() {
 ///     // SETUP: Create the conditions that triggered the bug
 ///     let ctx = TestContext::new();
@@ -55,7 +54,6 @@ use common::*;
 ///     // - PASS if the bug is fixed (after fix)
 /// }
 /// ```
-
 /// Example: Real regression test for reference
 ///
 /// This test catches the bug where init reported "AGENTS.md preserved"

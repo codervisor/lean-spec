@@ -85,11 +85,11 @@ fn test_create_replaces_template_variables() {
         "should set priority in frontmatter"
     );
     assert!(
-        frontmatter.get("created").is_some(),
+        frontmatter.contains_key("created"),
         "should set created date"
     );
     assert!(
-        frontmatter.get("created_at").is_some(),
+        frontmatter.contains_key("created_at"),
         "should set created_at timestamp"
     );
 }
@@ -117,20 +117,20 @@ fn test_create_generates_frontmatter_correctly() {
 
     // Required fields
     assert!(
-        frontmatter.get("status").is_some(),
+        frontmatter.contains_key("status"),
         "should have status field"
     );
     assert!(
-        frontmatter.get("created").is_some(),
+        frontmatter.contains_key("created"),
         "should have created field"
     );
     assert!(
-        frontmatter.get("priority").is_some(),
+        frontmatter.contains_key("priority"),
         "should have priority field"
     );
-    assert!(frontmatter.get("tags").is_some(), "should have tags field");
+    assert!(frontmatter.contains_key("tags"), "should have tags field");
     assert!(
-        frontmatter.get("created_at").is_some(),
+        frontmatter.contains_key("created_at"),
         "should have created_at field"
     );
 }
@@ -320,7 +320,7 @@ fn test_create_with_all_statuses() {
 
     init_project(cwd, true);
 
-    let statuses = vec!["planned", "in-progress", "complete", "archived"];
+    let statuses = ["planned", "in-progress", "complete", "archived"];
 
     for (idx, status) in statuses.iter().enumerate() {
         let spec_name = format!("spec-{}", status);
@@ -351,7 +351,7 @@ fn test_create_with_all_priorities() {
 
     init_project(cwd, true);
 
-    let priorities = vec!["low", "medium", "high", "critical"];
+    let priorities = ["low", "medium", "high", "critical"];
 
     for (idx, priority) in priorities.iter().enumerate() {
         let spec_name = format!("spec-{}", priority);

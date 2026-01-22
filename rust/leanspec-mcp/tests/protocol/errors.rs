@@ -1,9 +1,7 @@
 //! Error handling tests for MCP protocol
 
-#[path = "../helpers/mod.rs"]
-mod helpers;
+use crate::helpers::*;
 
-use helpers::*;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

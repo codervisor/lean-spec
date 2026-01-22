@@ -947,12 +947,12 @@ fn tool_tokens(specs_dir: &str, args: Value) -> Result<String, String> {
         let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
         let result = counter.count_file(&content);
 
-        return Ok(serde_json::to_string_pretty(&json!({
+        return serde_json::to_string_pretty(&json!({
             "path": file_path,
             "total": result.total,
             "status": format!("{:?}", result.status),
         }))
-        .map_err(|e| e.to_string())?);
+        .map_err(|e| e.to_string());
     }
 
     // Otherwise, handle as spec (existing behavior)

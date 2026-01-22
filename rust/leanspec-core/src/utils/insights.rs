@@ -317,7 +317,7 @@ mod tests {
         let stats = SpecStats::compute(&specs);
         let insights = Insights::generate(&specs, &stats);
 
-        assert!(insights.warnings().len() > 0);
+        assert!(!insights.warnings().is_empty());
     }
 
     #[test]
