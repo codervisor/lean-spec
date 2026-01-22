@@ -19,7 +19,7 @@
     "analytics": "Analytics",
     "projectContext": "Project Context",
     "settings": "Settings",
-    "settingsDescription": "Preferences & configuration",
+    "settingsDescription": "Configure AI models, appearance, and preferences",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
     "githubTooltip": "GitHub repository"
@@ -157,6 +157,69 @@
     "createdAt": "Created",
     "updatedAt": "Updated",
     "completedAt": "Completed"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your preferences and configuration",
+    "tabs": {
+      "ai": "AI Models",
+      "appearance": "Appearance"
+    },
+    "ai": {
+      "providers": "AI Providers",
+      "providersDescription": "Manage OpenAI, Anthropic, Deepseek, and other AI providers",
+      "models": "Models",
+      "addProvider": "Add Provider",
+      "editProvider": "Edit Provider",
+      "addModel": "Add Model",
+      "editModel": "Edit Model",
+      "default": "Default",
+      "keyConfigured": "API Key Set",
+      "noKey": "No API Key",
+      "defaults": "Default Settings",
+      "defaultsDescription": "Configure default provider, model, and behavior",
+      "defaultProvider": "Default Provider",
+      "defaultModel": "Default Model",
+      "maxSteps": "Max Steps",
+      "maxStepsHelp": "Maximum number of tool execution steps (1-50)",
+      "providerId": "Provider ID",
+      "providerIdHelp": "Lowercase identifier (e.g., openai, anthropic)",
+      "providerName": "Display Name",
+      "baseURL": "Base URL",
+      "baseURLHelp": "Optional custom API endpoint (for OpenRouter, etc.)",
+      "apiKey": "API Key",
+      "apiKeyHelp": "Use ${ENV_VAR} for environment variables or paste directly",
+      "modelId": "Model ID",
+      "modelName": "Display Name",
+      "maxTokens": "Max Tokens",
+      "maxTokensHelp": "Context window size (optional)",
+      "providerDialogDescription": "Configure provider details and API credentials",
+      "modelDialogDescription": "Add or edit model information",
+      "errors": {
+        "idRequired": "ID is required",
+        "idExists": "This ID already exists",
+        "idInvalid": "ID must be lowercase letters, numbers, and hyphens only",
+        "nameRequired": "Name is required",
+        "urlInvalid": "URL must start with http:// or https://",
+        "modelIdRequired": "Model ID is required",
+        "modelIdExists": "This model ID already exists",
+        "modelNameRequired": "Model name is required",
+        "maxTokensInvalid": "Max tokens must be a number"
+      }
+    },
+    "appearance": {
+      "theme": "Theme",
+      "themeDescription": "Choose how LeanSpec looks to you",
+      "light": "Light",
+      "lightDescription": "Classic light theme",
+      "dark": "Dark",
+      "darkDescription": "Easy on the eyes",
+      "system": "System",
+      "systemDescription": "Match system preference",
+      "language": "Language",
+      "languageDescription": "Choose your preferred language",
+      "selectLanguage": "Select Language"
+    }
   },
   "theme": {
     "light": "Light",

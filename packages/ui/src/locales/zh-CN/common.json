@@ -19,7 +19,7 @@
     "analytics": "数据分析",
     "projectContext": "项目上下文",
     "settings": "设置",
-    "settingsDescription": "偏好与配置",
+    "settingsDescription": "配置 AI 模型、外观和偏好",
     "toggleMenu": "切换菜单",
     "docsTooltip": "查看文档",
     "githubTooltip": "GitHub 仓库"
@@ -157,6 +157,69 @@
     "createdAt": "创建时间",
     "updatedAt": "更新时间",
     "completedAt": "完成时间"
+  },
+  "settings": {
+    "title": "设置",
+    "description": "管理你的偏好和配置",
+    "tabs": {
+      "ai": "AI 模型",
+      "appearance": "外观"
+    },
+    "ai": {
+      "providers": "AI 提供商",
+      "providersDescription": "管理 OpenAI、Anthropic、Deepseek 等 AI 提供商",
+      "models": "模型",
+      "addProvider": "添加提供商",
+      "editProvider": "编辑提供商",
+      "addModel": "添加模型",
+      "editModel": "编辑模型",
+      "default": "默认",
+      "keyConfigured": "API 密钥已设置",
+      "noKey": "无 API 密钥",
+      "defaults": "默认设置",
+      "defaultsDescription": "配置默认提供商、模型和行为",
+      "defaultProvider": "默认提供商",
+      "defaultModel": "默认模型",
+      "maxSteps": "最大步数",
+      "maxStepsHelp": "工具执行的最大步数 (1-50)",
+      "providerId": "提供商 ID",
+      "providerIdHelp": "小写标识符（例如：openai、anthropic）",
+      "providerName": "显示名称",
+      "baseURL": "基础 URL",
+      "baseURLHelp": "可选的自定义 API 端点（用于 OpenRouter 等）",
+      "apiKey": "API 密钥",
+      "apiKeyHelp": "使用 ${ENV_VAR} 表示环境变量或直接粘贴",
+      "modelId": "模型 ID",
+      "modelName": "显示名称",
+      "maxTokens": "最大 Token 数",
+      "maxTokensHelp": "上下文窗口大小（可选）",
+      "providerDialogDescription": "配置提供商详情和 API 凭据",
+      "modelDialogDescription": "添加或编辑模型信息",
+      "errors": {
+        "idRequired": "ID 是必需的",
+        "idExists": "此 ID 已存在",
+        "idInvalid": "ID 只能包含小写字母、数字和连字符",
+        "nameRequired": "名称是必需的",
+        "urlInvalid": "URL 必须以 http:// 或 https:// 开头",
+        "modelIdRequired": "模型 ID 是必需的",
+        "modelIdExists": "此模型 ID 已存在",
+        "modelNameRequired": "模型名称是必需的",
+        "maxTokensInvalid": "最大 Token 数必须是数字"
+      }
+    },
+    "appearance": {
+      "theme": "主题",
+      "themeDescription": "选择 LeanSpec 的外观",
+      "light": "浅色",
+      "lightDescription": "经典浅色主题",
+      "dark": "深色",
+      "darkDescription": "柔和护眼",
+      "system": "跟随系统",
+      "systemDescription": "匹配系统偏好",
+      "language": "语言",
+      "languageDescription": "选择你的首选语言",
+      "selectLanguage": "选择语言"
+    }
   },
   "theme": {
     "light": "浅色",

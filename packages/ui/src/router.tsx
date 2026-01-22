@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { MachinesPage } from './pages/MachinesPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { RootRedirect } from './components/RootRedirect';
 import { createProjectRoutes } from './router/projectRoutes';
 
@@ -30,6 +31,11 @@ export const router = createBrowserRouter([
     path: '/machines',
     element: <Layout />,
     children: [{ index: true, element: <MachinesPage /> }],
+  },
+  {
+    path: '/settings',
+    element: <Layout />,
+    children: [{ index: true, element: <SettingsPage /> }],
   },
   {
     path: '/projects/:projectId',

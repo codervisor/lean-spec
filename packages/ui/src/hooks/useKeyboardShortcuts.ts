@@ -87,6 +87,15 @@ export function useGlobalShortcuts() {
       }, [toggleChat]),
     },
     {
+      key: 'i',
+      ctrl: true,
+      shift: true,
+      description: 'Toggle AI chat sidebar',
+      action: useCallback(() => {
+        toggleChat();
+      }, [toggleChat]),
+    },
+    {
       key: ',',
       description: 'Go to settings',
       action: useCallback(() => {

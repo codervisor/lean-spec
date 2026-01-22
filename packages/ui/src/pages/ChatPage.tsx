@@ -1,12 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { ChatContainer } from '../components/chat';
 import { EnhancedModelSelector } from '../components/chat/EnhancedModelSelector';
 import { ChatSidebar } from '../components/chat/sidebar/ChatSidebar';
 import { useLeanSpecChat } from '../lib/use-chat';
 import { useProject } from '../contexts';
-import { Trash2, Settings2, Sliders } from 'lucide-react';
+import { Trash2, Settings2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
@@ -28,7 +27,6 @@ function extractTextFromMessage(message: UIMessage): string {
 
 export function ChatPage() {
   const { t } = useTranslation('common');
-  const navigate = useNavigate();
   const { currentProject, loading: projectLoading } = useProject();
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
@@ -235,15 +233,6 @@ export function ChatPage() {
               title={t('chat.toggleModelSettings')}
             >
               <Settings2 className="h-4 w-4" />
-            </Button>
-            {/* Advanced Settings */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('settings')}
-              title={t('chat.settings.title')}
-            >
-              <Sliders className="h-4 w-4" />
             </Button>
             {/* Clear Chat */}
             <Button

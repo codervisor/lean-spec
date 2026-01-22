@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
 import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
 import { MachineSwitcher } from './MachineSwitcher';
-import { GlobalChatWidget } from './GlobalChatWidget';
+import { ChatSidebar } from './chat/ChatSidebar';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useMediaQuery } from '../hooks/use-media-query';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { BackToTop } from './shared/BackToTop';
 import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts, useMachine, useChat } from '../contexts';
@@ -33,7 +34,8 @@ function LayoutContent({
   const { mobileSidebarOpen, toggleMobileSidebar } = useLayout();
   const { toggleHelp } = useKeyboardShortcuts();
   const { machineModeEnabled } = useMachine();
-  const { isChatOpen, closeChat } = useChat();
+  const { isOpen: isChatOpen, sidebarWidth } = useChat();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const resolvedRightSlot = navigationRightSlot ?? (machineModeEnabled ? <MachineSwitcher /> : undefined);
 
@@ -58,14 +60,21 @@ function LayoutContent({
       />
       <div className="flex w-full min-w-0">
         <MainSidebar mobileOpen={mobileSidebarOpen} onMobileClose={toggleMobileSidebar} />
-        <main className="flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)]">
+        <main
+          className={cn(
+            "flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out"
+          )}
+          style={{
+            marginRight: (!isMobile && isChatOpen) ? `${sidebarWidth}px` : 0
+          }}
+        >
           <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>
             <Outlet />
           </ErrorBoundary>
         </main>
       </div>
       <BackToTop />
-      <GlobalChatWidget isOpen={isChatOpen} onClose={closeChat} />
+      <ChatSidebar />
     </div>
   );
 }

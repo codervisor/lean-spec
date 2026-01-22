@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { BookOpen, ChevronRight, Menu, Monitor, Scan, MessageSquare } from 'lucide-react';
+import { BookOpen, ChevronRight, Menu, Monitor, Scan, BotMessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@leanspec/ui-components';
 import { QuickSearch } from './QuickSearch';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
+import { useMediaQuery } from '../hooks/use-media-query';
 import { useLayout, useProject, useChat } from '../contexts';
 
 interface BreadcrumbItem {
@@ -132,7 +133,8 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
   const { isWideMode, toggleWideMode } = useLayout();
-  const { toggleChat } = useChat();
+  const { toggleChat, isOpen: isChatOpen, sidebarWidth } = useChat();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
 
@@ -142,7 +144,10 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
 
   return (
     <header
-      className="sticky top-0 z-50 w-full h-14 border-b border-border bg-background"
+      className="sticky top-0 z-50 h-14 border-b border-border bg-background transition-all duration-300 ease-in-out"
+      style={{
+        marginRight: (!isMobile && isChatOpen) ? `${sidebarWidth}px` : 0
+      }}
       data-tauri-drag-region="true"
       onDoubleClick={onHeaderDoubleClick}
     >
@@ -198,7 +203,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
                   onClick={toggleChat}
                   data-tauri-drag-region="false"
                 >
-                  <MessageSquare className="h-5 w-5" />
+                  <BotMessageSquare className="h-5 w-5" />
                   <span className="sr-only">{t('chat.openChat', 'Open AI Chat')}</span>
                 </Button>
               </TooltipTrigger>
