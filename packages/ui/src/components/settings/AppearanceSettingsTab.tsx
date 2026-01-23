@@ -12,7 +12,7 @@ import {
   SelectValue,
   cn,
 } from '@leanspec/ui-components';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/useTheme';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
