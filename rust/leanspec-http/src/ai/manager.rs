@@ -5,6 +5,12 @@ pub struct AiWorkerManager {
     disabled_reason: Option<String>,
 }
 
+impl Default for AiWorkerManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AiWorkerManager {
     pub fn new() -> Self {
         Self {
