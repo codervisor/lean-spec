@@ -4,9 +4,7 @@ use crate::chat_config::{ChatConfigClient, ChatConfigUpdate};
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
 
-pub async fn get_chat_config(
-    State(state): State<AppState>,
-) -> ApiResult<Json<ChatConfigClient>> {
+pub async fn get_chat_config(State(state): State<AppState>) -> ApiResult<Json<ChatConfigClient>> {
     let config = state.chat_config.read().await.client_config();
     Ok(Json(config))
 }

@@ -178,10 +178,10 @@ fn resolve_chat_config_path() -> Result<PathBuf, ServerError> {
 
 fn load_chat_config(path: &PathBuf) -> Result<ChatConfig, ServerError> {
     if path.exists() {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| ServerError::ConfigError(e.to_string()))?;
-        let config: ChatConfig = serde_json::from_str(&content)
-            .map_err(|e| ServerError::ConfigError(e.to_string()))?;
+        let content =
+            std::fs::read_to_string(path).map_err(|e| ServerError::ConfigError(e.to_string()))?;
+        let config: ChatConfig =
+            serde_json::from_str(&content).map_err(|e| ServerError::ConfigError(e.to_string()))?;
         return Ok(config);
     }
 
@@ -190,8 +190,7 @@ fn load_chat_config(path: &PathBuf) -> Result<ChatConfig, ServerError> {
 
 fn save_chat_config(path: &PathBuf, config: &ChatConfig) -> Result<(), ServerError> {
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| ServerError::ConfigError(e.to_string()))?;
+        std::fs::create_dir_all(parent).map_err(|e| ServerError::ConfigError(e.to_string()))?;
     }
 
     let content = serde_json::to_string_pretty(config)
