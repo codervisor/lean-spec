@@ -76,8 +76,8 @@ html.changing-theme * {
 
 /* Syntax highlighting - VS Code inspired theme */
 .hljs {
-  background: hsl(220 13% 96%);
-  color: hsl(220 14% 10%);
+  background: hsl(var(--muted) / 0.3);
+  color: hsl(var(--foreground));
   padding: 0;
   border-radius: 0.5rem;
   overflow-x: auto;
@@ -85,19 +85,19 @@ html.changing-theme * {
   line-height: 1.7;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  border: 1px solid hsl(220 13% 91%);
+  border: 1px solid hsl(var(--border));
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: hsl(220 10% 40%);
+  color: hsl(var(--muted-foreground));
   font-style: italic;
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-subst {
-  color: hsl(286 60% 50%);
+  color: hsl(var(--primary));
   font-weight: 600;
 }
 
@@ -172,21 +172,21 @@ html.changing-theme * {
 
 /* Syntax highlighting - Dark mode */
 .dark .hljs {
-  background: hsl(220 13% 14%);
-  color: hsl(220 14% 96%);
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  border-color: hsl(220 13% 20%);
+  border-color: hsl(var(--border));
 }
 
 .dark .hljs-comment,
 .dark .hljs-quote {
-  color: hsl(220 10% 45%);
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .hljs-keyword,
 .dark .hljs-selector-tag,
 .dark .hljs-subst {
-  color: hsl(286 60% 72%);
+  color: hsl(var(--primary));
 }
 
 .dark .hljs-number,
@@ -251,7 +251,7 @@ html.changing-theme * {
 /* Prose styling for markdown content */
 .prose {
   max-width: none;
-  color: hsl(222.2 84% 4.9%);
+  color: hsl(var(--foreground));
   font-size: 1rem;
   line-height: 1.75;
 }
@@ -302,20 +302,20 @@ html.changing-theme * {
   line-height: 1.25;
   margin-top: 1.5em;
   margin-bottom: 0.5em;
-  color: hsl(222.2 84% 4.9%);
+  color: hsl(var(--foreground));
   scroll-margin-top: 5rem;
 }
 
 .prose h1 {
   font-size: 2em;
   margin-top: 0;
-  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+  border-bottom: 1px solid hsl(var(--border));
   padding-bottom: 0.25em;
 }
 
 .prose h2 {
   font-size: 1.65em;
-  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+  border-bottom: 1px solid hsl(var(--border));
   padding-bottom: 0.25em;
 }
 
@@ -342,26 +342,25 @@ html.changing-theme * {
 }
 
 .prose a {
-  color: hsl(221 83% 53%);
+  color: hsl(var(--primary));
   text-decoration: underline;
-  text-decoration-color: hsl(221 83% 53% / 0.3);
+  text-decoration-color: hsl(var(--primary) / 0.3);
   transition: all 0.2s;
 }
 
 .prose a:hover {
-  text-decoration-color: hsl(221 83% 53%);
-  color: hsl(221 83% 43%);
+  text-decoration-color: hsl(var(--primary));
+  opacity: 0.8;
 }
 
 .prose :not(pre)>code {
-  background: hsl(220 13% 95%);
-  color: hsl(355 65% 45%);
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--primary));
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
   font-weight: 600;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  border: 1px solid hsl(220 13% 88%);
 }
 
 .prose pre {
@@ -369,7 +368,7 @@ html.changing-theme * {
   overflow-x: auto;
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  border: 1px solid hsl(220 13% 91%);
+  border: 1px solid hsl(var(--border));
 }
 
 .prose pre code {
@@ -381,6 +380,7 @@ html.changing-theme * {
   color: inherit;
   font-weight: 400;
   display: block;
+  box-shadow: none;
 }
 
 .prose ul,
@@ -396,14 +396,14 @@ html.changing-theme * {
 }
 
 .prose blockquote {
-  border-left: 4px solid hsl(221 83% 53%);
+  border-left: 4px solid hsl(var(--primary));
   padding-left: 1em;
   padding-top: 0.25em;
   padding-bottom: 0.25em;
   margin: 1em 0;
-  background: hsl(210 40% 98%);
+  background: hsl(var(--muted) / 0.3);
   border-radius: 0 0.25rem 0.25rem 0;
-  color: hsl(215.4 16.3% 36.9%);
+  color: hsl(var(--muted-foreground));
 }
 
 .prose blockquote p {
@@ -418,7 +418,7 @@ html.changing-theme * {
 
 .prose th,
 .prose td {
-  border: 1px solid hsl(214.3 31.8% 91.4%);
+  border: 1px solid hsl(var(--border));
   padding: 0.5em 1em;
   text-align: left;
 }
@@ -431,7 +431,7 @@ html.changing-theme * {
 
 .prose hr {
   border: none;
-  border-top: 1px solid hsl(214.3 31.8% 91.4%);
+  border-top: 1px solid hsl(var(--border));
   margin: 2em 0;
 }
 
@@ -445,7 +445,7 @@ html.changing-theme * {
 .prose strong,
 .prose b {
   font-weight: 600;
-  color: hsl(222.2 84% 4.9%);
+  color: hsl(var(--foreground));
 }
 
 /* Dark mode prose styling */
@@ -456,7 +456,7 @@ html.changing-theme * {
 .dark .prose strong,
 .dark .prose b {
   font-weight: 600;
-  color: hsl(210 40% 98%);
+  color: hsl(var(--foreground));
 }
 
 .dark .prose h1,
@@ -465,45 +465,45 @@ html.changing-theme * {
 .dark .prose h4,
 .dark .prose h5,
 .dark .prose h6 {
-  color: hsl(210 40% 98%);
+  color: hsl(var(--foreground));
 }
 
 .dark .prose h1,
 .dark .prose h2 {
-  border-bottom-color: hsl(217.2 32.6% 17.5%);
+  border-bottom-color: hsl(var(--border));
 }
 
 .dark .prose a {
-  color: hsl(217 91% 70%);
-  text-decoration-color: hsl(217 91% 70% / 0.3);
+  color: hsl(var(--primary));
+  text-decoration-color: hsl(var(--primary) / 0.3);
 }
 
 .dark .prose a:hover {
-  text-decoration-color: hsl(217 91% 70%);
-  color: hsl(217 91% 80%);
+  text-decoration-color: hsl(var(--primary));
+  opacity: 0.8;
 }
 
 .dark .prose :not(pre)>code {
-  background: hsl(220 13% 18%);
-  color: hsl(355 65% 70%);
-  border-color: hsl(220 13% 25%);
+  background: hsl(var(--muted));
+  color: hsl(var(--primary));
+  border-color: hsl(var(--border));
   font-weight: 600;
 }
 
 .dark .prose pre {
-  border-color: hsl(220 13% 20%);
+  border-color: hsl(var(--border));
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
 }
 
 .dark .prose blockquote {
-  border-left-color: hsl(217 91% 70%);
-  background: hsl(217.2 32.6% 12%);
-  color: hsl(215 20% 75%);
+  border-left-color: hsl(var(--primary));
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .prose th,
 .dark .prose td {
-  border-color: hsl(217.2 32.6% 17.5%);
+  border-color: hsl(var(--border));
 }
 
 .dark .prose th {
@@ -512,7 +512,7 @@ html.changing-theme * {
 }
 
 .dark .prose hr {
-  border-top-color: hsl(217.2 32.6% 17.5%);
+  border-top-color: hsl(var(--border));
 }
 
 /* Custom scrollbar styles */
@@ -621,4 +621,42 @@ html.changing-theme * {
   .snap-mandatory {
     scroll-snap-type: x mandatory;
   }
+}
+
+/* Mermaid diagram styles */
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Override Mermaid's default dark backgrounds */
+.mermaid-diagram .background,
+.mermaid-diagram rect.background {
+  fill: hsl(var(--card)) !important;
+}
+
+.mermaid-diagram .cluster rect {
+  fill: hsl(var(--muted)) !important;
+}
+
+.mermaid-diagram .node rect,
+.mermaid-diagram .node circle,
+.mermaid-diagram .node ellipse,
+.mermaid-diagram .node polygon {
+  fill: hsl(var(--card)) !important;
+  stroke: hsl(var(--primary)) !important;
+}
+
+.mermaid-diagram text {
+  fill: hsl(var(--foreground)) !important;
+}
+
+.mermaid-diagram .edgeLabel {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.mermaid-diagram marker path {
+  fill: hsl(var(--primary)) !important;
+  stroke: hsl(var(--primary)) !important;
 }

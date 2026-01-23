@@ -1,19 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts';
 
 interface MermaidDiagramProps {
   chart: string;
   className?: string;
 }
-
-// Initialize mermaid with configuration
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'default',
-  securityLevel: 'loose',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-});
 
 // Generate unique IDs for Mermaid diagrams using crypto.randomUUID or fallback
 const generateId = () => {
@@ -29,32 +22,44 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [id] = useState(generateId);
+  const { resolvedTheme } = useTheme();
   const { t } = useTranslation(['common', 'errors']);
 
   useEffect(() => {
-    if (!chart || !ref.current) return;
+    if (!chart) return;
+
+    let cancelled = false;
 
     const renderDiagram = async () => {
       try {
         setError(null);
-        // Update theme based on document theme
-        const isDark = document.documentElement.classList.contains('dark');
+        setSvg('');
+        
         mermaid.initialize({
-          theme: isDark ? 'dark' : 'default',
+          startOnLoad: false,
+          theme: resolvedTheme === 'dark' ? 'dark' : 'default',
           securityLevel: 'loose',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         });
 
-        const { svg } = await mermaid.render(id, chart);
-        setSvg(svg);
+        const { svg: renderedSvg } = await mermaid.render(id, chart);
+
+        setSvg(renderedSvg);
       } catch (err) {
-        console.error('Mermaid rendering error:', err);
-        const fallback = t('mermaid.renderError', { ns: 'errors' });
-        setError(err instanceof Error ? err.message : fallback);
+        if (!cancelled) {
+          console.error('Mermaid rendering error:', err);
+          const fallback = t('mermaid.renderError', { ns: 'errors' });
+          setError(err instanceof Error ? err.message : fallback);
+        }
       }
     };
 
     renderDiagram();
-  }, [chart, id]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [chart, id, t, resolvedTheme]);
 
   if (error) {
     return (
@@ -80,6 +85,9 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
       ref={ref}
       className={`mermaid-diagram border rounded-lg p-4 overflow-auto ${className}`}
       dangerouslySetInnerHTML={{ __html: svg }}
+      style={{
+        backgroundColor: 'hsl(var(--card))',
+      }}
     />
   );
 }
