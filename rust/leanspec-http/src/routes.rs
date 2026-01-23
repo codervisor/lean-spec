@@ -176,11 +176,6 @@ pub fn create_router(state: AppState) -> Router {
 }
 
 fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
-    // Skip UI serving in dev mode (for hot reload via Vite)
-    if std::env::var("LEANSPEC_DEV_MODE").is_ok() {
-        return None;
-    }
-
     if let Some(path) = config.server.ui_dist.clone() {
         if path.exists() {
             return Some(path);
@@ -192,6 +187,11 @@ fn resolve_ui_dist_path(config: &ServerConfig) -> Option<PathBuf> {
         if path.exists() {
             return Some(path);
         }
+    }
+
+    // Skip UI serving in dev mode (for hot reload via Vite)
+    if std::env::var("LEANSPEC_DEV_MODE").is_ok() {
+        return None;
     }
 
     if cfg!(debug_assertions) {
