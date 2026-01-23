@@ -1,6 +1,7 @@
 export { ProjectProvider, useProject } from './ProjectContext';
 export { MachineProvider, useMachine } from './MachineContext';
-export { ThemeProvider, useTheme } from './ThemeContext';
+export { ThemeProvider } from './ThemeContext';
+export { useTheme } from './useTheme';
 export { LayoutProvider, useLayout } from './LayoutContext';
 export { SpecsProvider, useSpecs } from './SpecsContext';
 export {

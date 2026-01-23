@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useTheme } from '../contexts';
 import { Button, cn } from '@leanspec/ui-components';
@@ -8,20 +8,6 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" className="h-9 w-9">
-        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      </Button>
-    );
-  }
 
   const themes = [
     { value: 'light', icon: Sun, label: t('settings.appearance.light') },

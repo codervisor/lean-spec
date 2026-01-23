@@ -129,27 +129,32 @@ export function SpecDetailPage() {
             priority: spec.priority || undefined
           };
 
-          const dependsOn = (spec.dependsOn || []).map(id => {
-            const s = findSpec(id);
-            return {
-              specName: s?.specName || id,
-              specNumber: s?.specNumber || undefined,
-              title: s?.title || undefined,
-              status: s?.status || undefined,
-              priority: s?.priority || undefined
-            };
-          });
+          // Filter out self-references (defensive fix for bug where spec depends on itself)
+          const dependsOn = (spec.dependsOn || [])
+            .filter(id => id !== spec.id && id !== spec.specName) // Prevent self-reference
+            .map(id => {
+              const s = findSpec(id);
+              return {
+                specName: s?.specName || id,
+                specNumber: s?.specNumber || undefined,
+                title: s?.title || undefined,
+                status: s?.status || undefined,
+                priority: s?.priority || undefined
+              };
+            });
 
-          const requiredBy = (spec.requiredBy || []).map(id => {
-            const s = findSpec(id);
-            return {
-              specName: s?.specName || id,
-              specNumber: s?.specNumber || undefined,
-              title: s?.title || undefined,
-              status: s?.status || undefined,
-              priority: s?.priority || undefined
-            };
-          });
+          const requiredBy = (spec.requiredBy || [])
+            .filter(id => id !== spec.id && id !== spec.specName) // Prevent self-reference
+            .map(id => {
+              const s = findSpec(id);
+              return {
+                specName: s?.specName || id,
+                specNumber: s?.specNumber || undefined,
+                title: s?.title || undefined,
+                status: s?.status || undefined,
+                priority: s?.priority || undefined
+              };
+            });
 
           setDependencyGraphData({ current, dependsOn, requiredBy });
         } catch (err) {
