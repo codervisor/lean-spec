@@ -112,6 +112,11 @@ export function SpecDetailPage() {
   }, [loadSpec, projectReady]);
 
   useEffect(() => {
+    // Clear cached dependency graph data when spec changes
+    setDependencyGraphData(null);
+  }, [spec?.id, spec?.specName]);
+
+  useEffect(() => {
     if (dependenciesDialogOpen && !dependencyGraphData && spec) {
       const loadGraph = async () => {
         try {

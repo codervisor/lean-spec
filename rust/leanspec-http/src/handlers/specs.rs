@@ -312,13 +312,38 @@ pub async fn list_project_specs(
             .tags
             .map(|s| s.split(',').map(|v| v.to_string()).collect::<Vec<_>>());
 
+        // Build required_by map (which specs depend on each spec)
+        // This is a reverse index: for each dependency, track which specs depend on it
         let mut required_by_map: HashMap<String, Vec<String>> = HashMap::new();
         for spec in project.specs.values() {
             for dep in &spec.depends_on {
-                required_by_map
-                    .entry(dep.clone())
-                    .or_default()
-                    .push(spec.spec_name.clone());
+                // Filter out self-references: a spec shouldn't be in its own required_by list
+                if dep != &spec.spec_name {
+                    // Log for debugging phantom dependencies
+                    #[cfg(debug_assertions)]
+                    eprintln!("DEBUG: Spec '{}' depends on '{}'", spec.spec_name, dep);
+
+                    required_by_map
+                        .entry(dep.clone())
+                        .or_default()
+                        .push(spec.spec_name.clone());
+                }
+            }
+        }
+
+        // Validate the required_by map for debugging
+        #[cfg(debug_assertions)]
+        for (dep, dependents) in &required_by_map {
+            for dependent in dependents {
+                // Sanity check: verify the dependent actually has this dep in its depends_on
+                if let Some(spec) = project.specs.get(dependent) {
+                    if !spec.depends_on.contains(dep) {
+                        eprintln!(
+                            "WARNING: Phantom dependency detected! Spec '{}' shows as depending on '{}' but doesn't have it in depends_on: {:?}",
+                            dependent, dep, spec.depends_on
+                        );
+                    }
+                }
             }
         }
 
@@ -553,10 +578,14 @@ pub async fn get_project_spec(
 
         let mut detail = detail_from_record(&project.id, record);
 
+        // Compute required_by (filter out self-references)
         let required_by = project
             .specs
             .values()
-            .filter(|spec| spec.depends_on.contains(&record.spec_name))
+            .filter(|spec| {
+                // Exclude the current spec itself AND check if it's in depends_on
+                spec.spec_name != record.spec_name && spec.depends_on.contains(&record.spec_name)
+            })
             .map(|spec| spec.spec_name.clone())
             .collect::<Vec<_>>();
 

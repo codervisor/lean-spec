@@ -430,4 +430,27 @@ mod tests {
         assert!(base_idx < middle_idx);
         assert!(middle_idx < top_idx);
     }
+
+    #[test]
+    fn test_self_reference_filtered() {
+        // Test that self-references in depends_on are filtered out
+        let specs = vec![
+            create_spec("001-base", vec![]),
+            create_spec("002-self-ref", vec!["001-base", "002-self-ref"]), // Self-reference
+            create_spec("003-depends", vec!["002-self-ref"]),
+        ];
+
+        let graph = DependencyGraph::new(&specs);
+
+        // Get dependencies for 002-self-ref
+        let complete = graph.get_complete_graph("002-self-ref").unwrap();
+
+        // Should only have 001-base, not itself
+        assert_eq!(complete.depends_on.len(), 1);
+        assert_eq!(complete.depends_on[0].path, "001-base");
+
+        // Should be required by 003-depends, but NOT by itself
+        assert_eq!(complete.required_by.len(), 1);
+        assert_eq!(complete.required_by[0].path, "003-depends");
+    }
 }
