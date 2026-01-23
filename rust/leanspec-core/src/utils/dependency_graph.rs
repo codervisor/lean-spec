@@ -73,20 +73,30 @@ impl DependencyGraph {
         let idx = self.node_indices.get(spec_path)?;
 
         // Get direct dependencies (outgoing edges - what this spec depends on)
+        // Filter out self-references as defensive measure
         let depends_on: Vec<SpecInfo> = self
             .graph
             .neighbors_directed(*idx, Direction::Outgoing)
             .filter_map(|neighbor_idx| {
+                // Skip self-references
+                if neighbor_idx == *idx {
+                    return None;
+                }
                 let path = self.graph.node_weight(neighbor_idx)?;
                 self.specs.get(path).cloned()
             })
             .collect();
 
         // Get direct dependents (incoming edges - what depends on this spec)
+        // Filter out self-references as defensive measure
         let required_by: Vec<SpecInfo> = self
             .graph
             .neighbors_directed(*idx, Direction::Incoming)
             .filter_map(|neighbor_idx| {
+                // Skip self-references
+                if neighbor_idx == *idx {
+                    return None;
+                }
                 let path = self.graph.node_weight(neighbor_idx)?;
                 self.specs.get(path).cloned()
             })

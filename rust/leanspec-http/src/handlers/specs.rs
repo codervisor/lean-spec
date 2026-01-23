@@ -591,11 +591,12 @@ pub async fn get_project_spec(
 
     let mut detail = SpecDetail::from(&spec).with_project_id(project.id.clone());
 
-    // Compute required_by
+    // Compute required_by (filter out self-references)
     if let Some(complete) = dep_graph.get_complete_graph(&spec.path) {
         let required_by: Vec<String> = complete
             .required_by
             .iter()
+            .filter(|s| s.path != spec.path) // Prevent self-reference bug
             .map(|s| s.path.clone())
             .collect();
         detail.required_by = required_by.clone();
