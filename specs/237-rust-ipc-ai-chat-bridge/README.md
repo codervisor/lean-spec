@@ -743,43 +743,43 @@ CMD ["leanspec-http"]
 ## Plan
 
 - [ ] **Phase 1: Create @leanspec/ai-worker Package**
-  - [ ] Create `packages/ai-worker/` directory
-  - [ ] Set up package.json and TypeScript config
-  - [ ] Copy provider factory and tools from chat-server
-  - [ ] Implement IPC worker entry point (worker.ts)
-  - [ ] Implement JSON Lines protocol (stdin/stdout)
-  - [ ] Add health check handler
-  - [ ] Add config reload handler
+  - [x] Create `packages/ai-worker/` directory
+  - [x] Set up package.json and TypeScript config
+  - [x] Copy provider factory and tools from chat-server
+  - [x] Implement IPC worker entry point (worker.ts)
+  - [x] Implement JSON Lines protocol (stdin/stdout)
+  - [x] Add health check handler
+  - [x] Add config reload handler
   - [ ] Build and test standalone: `echo '{"id":"1","type":"health"}' | node dist/worker.js`
 
 - [ ] **Phase 2: Rust AI Worker Manager**
-  - [ ] Create `rust/leanspec-http/src/ai/` module
-  - [ ] Implement `verify_nodejs()` with tiered checks (error <v20, warn v20-v21, ok v22+)
-  - [ ] Implement `AiWorker` struct with process management
-  - [ ] Implement IPC protocol (stdin/stdout communication)
-  - [ ] Implement request/response serialization
-  - [ ] Add worker discovery logic (find worker script)
-  - [ ] Implement worker lifecycle management
-  - [ ] Add health check with timeout
-  - [ ] Add graceful shutdown logic
-  - [ ] Add graceful degradation when Node.js unavailable
-  - [ ] Add environment variables (LEANSPEC_NO_AI, LEANSPEC_NODE_PATH)
+  - [x] Create `rust/leanspec-http/src/ai/` module
+  - [x] Implement `verify_nodejs()` with tiered checks (error <v20, warn v20-v21, ok v22+)
+  - [x] Implement `AiWorker` struct with process management
+  - [x] Implement IPC protocol (stdin/stdout communication)
+  - [x] Implement request/response serialization
+  - [x] Add worker discovery logic (find worker script)
+  - [x] Implement worker lifecycle management
+  - [x] Add health check with timeout
+  - [x] Add graceful shutdown logic
+  - [x] Add graceful degradation when Node.js unavailable
+  - [x] Add environment variables (LEANSPEC_NO_AI, LEANSPEC_NODE_PATH)
   - [ ] Unit tests for worker manager
   - [ ] Unit tests for Node.js detection and error handling
 
 - [ ] **Phase 3: Integrate into HTTP Server**
-  - [ ] Add `AiWorkerManager` to `AppState`
-  - [ ] Update `/api/chat` handler to use IPC worker
-  - [ ] Add error handling for Node.js not found (return 503 with helpful message)
-  - [ ] Convert IPC stream to SSE for browser
-  - [ ] Handle worker errors and retries
-  - [ ] Add fallback to HTTP mode if worker unavailable (transitional)
+  - [x] Add `AiWorkerManager` to `AppState`
+  - [x] Update `/api/chat` handler to use IPC worker
+  - [x] Add error handling for Node.js not found (return 503 with helpful message)
+  - [x] Convert IPC stream to SSE for browser
+  - [x] Handle worker errors and retries
+  - [x] Add fallback to HTTP mode if worker unavailable (transitional)
   - [ ] Update CORS settings (no longer need chat-server port)
 
 - [ ] **Phase 4: Config Management Migration** (Depends on Spec 236)
-  - [ ] Ensure chat config managed by Rust
-  - [ ] Send config to worker in each request
-  - [ ] Implement config reload IPC command
+  - [x] Ensure chat config managed by Rust
+  - [x] Send config to worker in each request
+  - [x] Implement config reload IPC command
   - [ ] Remove config file loading from worker
 
 - [ ] **Phase 5: Testing**
@@ -794,8 +794,8 @@ CMD ["leanspec-http"]
   - [ ] Load testing (ensure no memory leaks)
 
 - [ ] **Phase 6: Package Distribution**
-  - [ ] Update `@leanspec/ui` to depend on `@leanspec/ai-worker`
-  - [ ] Ensure worker script included in npm package
+  - [x] Update `@leanspec/ui` to depend on `@leanspec/ai-worker`
+  - [x] Ensure worker script included in npm package
   - [ ] Update CI/CD to build and publish ai-worker
   - [ ] Test npm install and worker discovery
 

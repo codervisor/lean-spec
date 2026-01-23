@@ -24,6 +24,7 @@
   "dependencies": {
     "@ai-sdk/react": "^3.0.41",
     "@dagrejs/dagre": "^1.1.8",
+    "@leanspec/ai-worker": "workspace:*",
     "@leanspec/http-server": "workspace:*",
     "@leanspec/ui-components": "workspace:*",
     "@radix-ui/react-tooltip": "^1.2.8",

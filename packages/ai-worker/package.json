@@ -1,0 +1,51 @@
+{
+  "name": "@leanspec/ai-worker",
+  "version": "0.2.19",
+  "description": "LeanSpec AI worker for IPC chat",
+  "type": "commonjs",
+  "main": "dist/worker.js",
+  "bin": {
+    "leanspec-ai-worker": "dist/worker.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "esbuild src/worker.ts --bundle --platform=node --target=node20 --outfile=dist/worker.js --format=cjs --external:ai --external:@ai-sdk/* --external:zod --external:dotenv --external:chokidar",
+    "dev": "tsx watch src/worker.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.12",
+    "@ai-sdk/google": "^3.0.10",
+    "@ai-sdk/openai": "^3.0.12",
+    "ai": "^6.0.39",
+    "chokidar": "^4.0.3",
+    "dotenv": "^17.2.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.4",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.9.3",
+    "vitest": "^4.0.16"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "Marvin Zhang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codervisor/lean-spec.git",
+    "directory": "packages/ai-worker"
+  },
+  "homepage": "https://lean-spec.dev",
+  "bugs": {
+    "url": "https://github.com/codervisor/lean-spec/issues"
+  }
+}

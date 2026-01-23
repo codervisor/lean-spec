@@ -53,7 +53,9 @@ pub fn create_router(state: AppState) -> Router {
     let mut router = Router::new()
         // Health endpoint
         .route("/health", get(handlers::health_check))
-        .route("/api/chat", post(handlers::proxy_chat))
+        .route("/api/chat", post(handlers::chat_stream))
+        .route("/api/chat/config", get(handlers::get_chat_config))
+        .route("/api/chat/config", put(handlers::update_chat_config))
         .route("/api/chat/sessions", get(handlers::list_chat_sessions))
         .route("/api/chat/sessions", post(handlers::create_chat_session))
         .route("/api/chat/sessions/{id}", get(handlers::get_chat_session))

@@ -2,6 +2,8 @@
 //!
 //! Shared state for the HTTP server using Arc for thread-safety.
 
+use crate::ai::AiWorkerManager;
+use crate::chat_config::ChatConfigStore;
 use crate::chat_store::ChatStore;
 use crate::config::ServerConfig;
 use crate::error::ServerError;
@@ -9,7 +11,7 @@ use crate::project_registry::ProjectRegistry;
 use crate::sync_state::SyncState;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
 /// Shared application state
 #[derive(Clone)]
@@ -25,6 +27,12 @@ pub struct AppState {
 
     /// Chat session store
     pub chat_store: Arc<ChatStore>,
+
+    /// Chat config store
+    pub chat_config: Arc<RwLock<ChatConfigStore>>,
+
+    /// AI worker manager
+    pub ai_worker: Arc<Mutex<AiWorkerManager>>,
 }
 
 impl AppState {
@@ -44,23 +52,31 @@ impl AppState {
         }
 
         let chat_store = ChatStore::new()?;
+        let chat_config = ChatConfigStore::load_default()?;
+        let ai_worker = AiWorkerManager::new();
 
         Ok(Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
             sync_state: Arc::new(RwLock::new(SyncState::load())),
             chat_store: Arc::new(chat_store),
+            chat_config: Arc::new(RwLock::new(chat_config)),
+            ai_worker: Arc::new(Mutex::new(ai_worker)),
         })
     }
 
     /// Create state with an existing registry (for testing)
     pub fn with_registry(config: ServerConfig, registry: ProjectRegistry) -> Self {
         let chat_store = ChatStore::new().expect("Failed to initialize chat store");
+        let chat_config = ChatConfigStore::load_default().expect("Failed to load chat config");
+        let ai_worker = AiWorkerManager::new();
         Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
             sync_state: Arc::new(RwLock::new(SyncState::load())),
             chat_store: Arc::new(chat_store),
+            chat_config: Arc::new(RwLock::new(chat_config)),
+            ai_worker: Arc::new(Mutex::new(ai_worker)),
         }
     }
 }

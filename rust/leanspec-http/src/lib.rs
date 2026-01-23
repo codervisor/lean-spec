@@ -22,6 +22,8 @@
 //! }
 //! ```
 
+pub mod ai;
+pub mod chat_config;
 pub mod chat_store;
 pub mod config;
 pub mod error;
