@@ -282,6 +282,12 @@ jobs:
         with:
           path: artifacts/
 
+      - name: Download UI dist
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-dist
+          path: packages/ui/dist
+
       - name: Copy binaries for validation
         run: ./scripts/copy-platform-binaries.sh artifacts/
       
