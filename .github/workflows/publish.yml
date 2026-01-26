@@ -102,7 +102,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: rust/target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock', 'rust/**/*.rs') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-build-
 
