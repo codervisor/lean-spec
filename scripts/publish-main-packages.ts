@@ -179,6 +179,22 @@ async function publishMainPackages(dryRun: boolean, tag?: string): Promise<void>
     console.log(`  ✗ ${httpServerResult.package}: ${httpServerResult.error}`);
   }
 
+  const aiWorkerResult = await publishPackage(path.join(PACKAGES_DIR, 'ai-worker'), dryRun, tag);
+  results.push(aiWorkerResult);
+  if (aiWorkerResult.success) {
+    console.log(`  ✓ ${aiWorkerResult.package}`);
+  } else {
+    console.log(`  ✗ ${aiWorkerResult.package}: ${aiWorkerResult.error}`);
+  }
+
+  const chatServerResult = await publishPackage(path.join(PACKAGES_DIR, 'chat-server'), dryRun, tag);
+  results.push(chatServerResult);
+  if (chatServerResult.success) {
+    console.log(`  ✓ ${chatServerResult.package}`);
+  } else {
+    console.log(`  ✗ ${chatServerResult.package}: ${chatServerResult.error}`);
+  }
+
   const uiResult = await publishPackage(path.join(PACKAGES_DIR, 'ui'), dryRun, tag);
   results.push(uiResult);
   if (uiResult.success) {
