@@ -1,4 +1,5 @@
 export * from './ui';
+export * from './ai-elements';
 export * from './spec';
 export * from './layout';
 export * from './project';

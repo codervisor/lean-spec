@@ -1,10 +1,19 @@
-import { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { UIMessage } from '@ai-sdk/react';
 import { ChatMessage } from './ChatMessage';
-import { ChatInput } from './ChatInput';
-import { cn } from '@leanspec/ui-components';
-import { Loader2, MessageSquare } from 'lucide-react';
+import {
+  cn,
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+  PromptInput,
+  PromptInputBody,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputSubmit,
+  Loader,
+} from '@leanspec/ui-components';
+import { MessageSquare } from 'lucide-react';
 
 interface ChatContainerProps {
   messages: UIMessage[];
@@ -31,17 +40,6 @@ function EmptyState() {
   );
 }
 
-function ThinkingIndicator() {
-  const { t } = useTranslation('common');
-
-  return (
-    <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
-      <Loader2 className="h-4 w-4 animate-spin" />
-      <span>{t('chat.thinking')}</span>
-    </div>
-  );
-}
-
 export function ChatContainer({
   messages,
   onSubmit,
@@ -51,35 +49,36 @@ export function ChatContainer({
   className,
 }: ChatContainerProps) {
   const { t } = useTranslation('common');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
-
   const hasMessages = messages.length > 0;
+
+  const handleSubmit = (message: { text: string }) => {
+    if (message.text.trim()) {
+      onSubmit(message.text);
+    }
+  };
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
-        {!hasMessages ? (
-          <EmptyState />
-        ) : (
-          <div className="divide-y divide-border/50">
-            {messages.map((message, index) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                isLast={index === messages.length - 1}
-              />
-            ))}
-            {isLoading && <ThinkingIndicator />}
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+      {/* Messages Area with Conversation */}
+      <Conversation className="flex-1">
+        <ConversationContent>
+          {!hasMessages ? (
+            <EmptyState />
+          ) : (
+            <>
+              {messages.map((message, index) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isLast={index === messages.length - 1}
+                />
+              ))}
+              {isLoading && <Loader size={20} />}
+            </>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
 
       {/* Error Display */}
       {error && (
@@ -96,9 +95,23 @@ export function ChatContainer({
         </div>
       )}
 
-      {/* Input Area */}
+      {/* Input Area with PromptInput */}
       <div className="border-t bg-background p-4">
-        <ChatInput onSubmit={onSubmit} isLoading={isLoading} />
+        <PromptInput onSubmit={handleSubmit}>
+          <PromptInputBody>
+            <PromptInputTextarea
+              placeholder={t('chat.placeholder')}
+              disabled={isLoading}
+            />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <div className="flex-1" />
+            <PromptInputSubmit
+              disabled={isLoading}
+              status={isLoading ? 'submitted' : undefined}
+            />
+          </PromptInputFooter>
+        </PromptInput>
       </div>
     </div>
   );
