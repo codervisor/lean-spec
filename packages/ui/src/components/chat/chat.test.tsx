@@ -24,13 +24,13 @@ vi.mock('react-markdown', () => ({
 
 // Mock remark-gfm
 vi.mock('remark-gfm', () => ({
-  default: () => {},
+  default: () => { },
 }));
 
 describe('ChatInput', () => {
   it('renders input and submit button', () => {
-    render(<ChatInput onSubmit={() => {}} />);
-    
+    render(<ChatInput onSubmit={() => { }} />);
+
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.getByRole('button')).toBeInTheDocument();
   });
@@ -38,37 +38,37 @@ describe('ChatInput', () => {
   it('calls onSubmit with message when form is submitted', () => {
     const onSubmit = vi.fn();
     render(<ChatInput onSubmit={onSubmit} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'Hello world' } });
     fireEvent.submit(input.closest('form')!);
-    
+
     expect(onSubmit).toHaveBeenCalledWith('Hello world');
   });
 
   it('clears input after submit', () => {
-    render(<ChatInput onSubmit={() => {}} />);
-    
+    render(<ChatInput onSubmit={() => { }} />);
+
     const input = screen.getByRole('textbox') as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'Test message' } });
     fireEvent.submit(input.closest('form')!);
-    
+
     expect(input.value).toBe('');
   });
 
   it('does not submit empty messages', () => {
     const onSubmit = vi.fn();
     render(<ChatInput onSubmit={onSubmit} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.submit(input.closest('form')!);
-    
+
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('disables button when loading', () => {
-    render(<ChatInput onSubmit={() => {}} isLoading />);
-    
+    render(<ChatInput onSubmit={() => { }} isLoading />);
+
     expect(screen.getByRole('button')).toBeDisabled();
   });
 });
@@ -80,9 +80,9 @@ describe('ChatMessage', () => {
       role: 'user' as const,
       parts: [{ type: 'text' as const, text: 'Hello, AI!' }],
     };
-    
+
     render(<ChatMessage message={message} />);
-    
+
     expect(screen.getByText('Hello, AI!')).toBeInTheDocument();
   });
 
@@ -92,9 +92,9 @@ describe('ChatMessage', () => {
       role: 'assistant' as const,
       parts: [{ type: 'text' as const, text: 'Hello! How can I help?' }],
     };
-    
+
     render(<ChatMessage message={message} />);
-    
+
     expect(screen.getByText('Hello! How can I help?')).toBeInTheDocument();
   });
 
@@ -113,9 +113,9 @@ describe('ChatMessage', () => {
         },
       ],
     };
-    
+
     render(<ChatMessage message={message} />);
-    
+
     expect(screen.getByText('list_specs')).toBeInTheDocument();
     expect(screen.getByText('Completed')).toBeInTheDocument();
   });
@@ -123,8 +123,8 @@ describe('ChatMessage', () => {
 
 describe('ChatContainer', () => {
   it('shows empty state when no messages', () => {
-    render(<ChatContainer messages={[]} onSubmit={() => {}} />);
-    
+    render(<ChatContainer messages={[]} onSubmit={() => { }} />);
+
     expect(screen.getByText('chat.title')).toBeInTheDocument();
     expect(screen.getByText('chat.empty')).toBeInTheDocument();
   });
@@ -134,9 +134,9 @@ describe('ChatContainer', () => {
       { id: '1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hi' }] },
       { id: '2', role: 'assistant' as const, parts: [{ type: 'text' as const, text: 'Hello!' }] },
     ];
-    
-    render(<ChatContainer messages={messages} onSubmit={() => {}} />);
-    
+
+    render(<ChatContainer messages={messages} onSubmit={() => { }} />);
+
     expect(screen.getByText('Hi')).toBeInTheDocument();
     expect(screen.getByText('Hello!')).toBeInTheDocument();
   });
@@ -144,19 +144,20 @@ describe('ChatContainer', () => {
   it('shows thinking indicator when loading', () => {
     // Need at least one message to show the thinking indicator (not empty state)
     const messages = [{ id: '1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Test' }] }];
-    render(<ChatContainer messages={messages} onSubmit={() => {}} isLoading />);
-    
-    expect(screen.getByText('chat.thinking')).toBeInTheDocument();
+    render(<ChatContainer messages={messages} onSubmit={() => { }} isLoading />);
+
+    // The component shows a Loader spinner (with title "Loader") when loading
+    expect(screen.getByTitle('Loader')).toBeInTheDocument();
   });
 
   it('shows error with retry button', () => {
     const onRetry = vi.fn();
     const error = new Error('Connection failed');
-    
-    render(<ChatContainer messages={[]} onSubmit={() => {}} error={error} onRetry={onRetry} />);
-    
+
+    render(<ChatContainer messages={[]} onSubmit={() => { }} error={error} onRetry={onRetry} />);
+
     expect(screen.getByText('Connection failed')).toBeInTheDocument();
-    
+
     fireEvent.click(screen.getByText('actions.retry'));
     expect(onRetry).toHaveBeenCalled();
   });
