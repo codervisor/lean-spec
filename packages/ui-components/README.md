@@ -77,15 +77,52 @@ function MyComponent() {
 - `ThemeToggle` - Light/dark theme toggle button
 - `BackToTop` - Floating scroll-to-top button
 
-### UI Components
+### UI Components (shadcn/ui)
 
-- `Avatar` - Avatar with image and fallback
+- `Accordion` - Collapsible content sections
+- `Alert` - Feedback messages with variants
+- `Avatar` - Avatar with image and fallback (with size variants)
 - `Badge` - Base badge component with variants
 - `Button` - Button with variants (default, destructive, outline, secondary, ghost, link)
+- `ButtonGroup` - Group of related buttons
 - `Card` - Card container with header, content, footer
+- `Carousel` - Slideable content carousel
+- `Collapsible` - Expandable/collapsible content
+- `Command` - Command palette component
+- `Dialog` - Modal dialog component
+- `DropdownMenu` - Dropdown menu with nested items
+- `HoverCard` - Content shown on hover
 - `Input` - Form input field
+- `InputGroup` - Input with prefix/suffix addons
+- `Popover` - Floating content container
+- `Progress` - Progress bar indicator
+- `ScrollArea` - Custom scrollable container
+- `Select` - Dropdown select component (with size variants)
 - `Separator` - Horizontal or vertical divider
 - `Skeleton` - Loading placeholder
+- `Switch` - Toggle switch
+- `Tabs` - Tabbed content navigation
+- `Textarea` - Multi-line text input
+- `Tooltip` - Contextual information on hover
+
+### AI Elements (Chat/Agent UI)
+
+All 48 AI Elements components for building AI chat interfaces:
+- `Agent`, `AgentTools`, `AgentTool` - AI agent display
+- `Artifact` - Code/content artifacts
+- `Attachments` - File attachments
+- `AudioPlayer` - Audio playback
+- `Canvas` - Drawing canvas
+- `ChainOfThought`, `Reasoning` - AI reasoning display
+- `CodeBlock` - Syntax-highlighted code with copy
+- `Confirmation` - User confirmation dialogs
+- `Conversation`, `ConversationContent` - Chat container
+- `Message`, `MessageContent`, `MessageResponse` - Chat messages
+- `Loader`, `Shimmer` - Loading indicators
+- `PromptInput`, `PromptInputTextarea` - Chat input
+- `Terminal` - Terminal output display
+- `Tool`, `ToolExecution` - Tool call visualization
+- And many more...
 
 ### Layout Components
 

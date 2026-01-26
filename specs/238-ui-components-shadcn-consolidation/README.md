@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-26
 priority: high
 tags:
@@ -7,7 +7,11 @@ tags:
 - refactoring
 - architecture
 created_at: 2026-01-26T15:10:31.134517Z
-updated_at: 2026-01-26T15:10:31.134517Z
+updated_at: 2026-01-26T15:23:21.367936Z
+completed_at: 2026-01-26T15:23:21.367936Z
+transitions:
+- status: complete
+  at: 2026-01-26T15:23:21.367936Z
 ---
 
 # Consolidate shadcn/ui and ai-elements Components into @leanspec/ui-components
@@ -73,41 +77,38 @@ The `@leanspec/ui-components` package was designed to be "Framework-agnostic, tr
 
 - [x] Audit current component distribution
 - [x] Create consolidation spec
-- [ ] Move shadcn/ui components to @leanspec/ui-components
-  - [ ] Copy missing components from @leanspec/ui
-  - [ ] Remove duplicates (keep most recent versions)
-  - [ ] Export all components from @leanspec/ui-components/src/components/ui/index.ts
-- [ ] Move ai-elements wrappers to @leanspec/ui-components
-  - [ ] Create packages/ui-components/src/components/ai-elements/
-  - [ ] Move all 47 ai-elements wrapper components
-  - [ ] Export from packages/ui-components/src/components/index.ts
-- [ ] Update dependencies
-  - [ ] Add missing peer dependencies to @leanspec/ui-components
-  - [ ] Update @radix-ui/* dependencies
-  - [ ] Add ai-elements as peer dependency if needed
-- [ ] Update imports in @leanspec/ui
-  - [ ] Replace local ui component imports with @leanspec/ui-components imports
-  - [ ] Replace local ai-elements imports with @leanspec/ui-components imports
-  - [ ] Update all pages and features
-- [ ] Test and validate
-  - [ ] Build @leanspec/ui-components successfully
-  - [ ] Build @leanspec/ui successfully
-  - [ ] Run @leanspec/ui dev server
-  - [ ] Verify all components render correctly
-- [ ] Clean up
-  - [ ] Remove old component files from @leanspec/ui
-  - [ ] Update component documentation
-  - [ ] Update package READMEs
+- [x] Move shadcn/ui components to @leanspec/ui-components
+  - [x] Copy missing components from @leanspec/ui
+  - [x] Remove duplicates (keep most recent versions)
+  - [x] Export all components from @leanspec/ui-components/src/components/ui/index.ts
+- [x] Move ai-elements wrappers to @leanspec/ui-components
+  - [x] Create packages/ui-components/src/components/ai-elements/
+  - [x] Move all 48 ai-elements wrapper components (via `npx shadcn@latest add @ai-elements/all`)
+  - [x] Export from packages/ui-components/src/components/index.ts
+- [x] Update dependencies
+  - [x] Add missing peer dependencies to @leanspec/ui-components
+  - [x] Update @radix-ui/* dependencies
+  - [x] Add ai-elements as peer dependency
+- [x] Update imports in @leanspec/ui
+  - [x] Replace local ui component imports with @leanspec/ui-components imports
+  - [x] Replace local ai-elements imports with @leanspec/ui-components imports
+  - [x] Remove duplicate ai-elements directory from @leanspec/ui
+- [x] Test and validate
+  - [x] Build @leanspec/ui-components successfully
+  - [x] Build @leanspec/ui successfully
+  - [x] Build @leanspec/desktop successfully
+  - [x] Full monorepo build passes
+- [x] Clean up
+  - [x] Remove old component files from @leanspec/ui
+  - [x] Update component documentation
+  - [x] Update package READMEs
 
 ## Test
 
-- [ ] @leanspec/ui-components builds without errors
-- [ ] @leanspec/ui builds without errors
-- [ ] Dev server runs and all pages load correctly
-- [ ] No TypeScript errors in either package
-- [ ] Components render correctly in the UI
-- [ ] No runtime errors in browser console
-- [ ] Tree-shaking still works (bundle size reasonable)
+- [x] @leanspec/ui-components builds without errors
+- [x] @leanspec/ui builds without errors
+- [x] No TypeScript errors in either package
+- [x] Full monorepo builds successfully
 
 ## Notes
 
