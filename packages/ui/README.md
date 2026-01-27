@@ -99,14 +99,31 @@ pnpm preview
 
 ## Configuration
 
-The API base URL can be configured via environment variable:
+By default the UI uses same-origin API calls (relative `/api/...`).
+
+### Dev (recommended, “single origin” in the browser)
+
+Run the Rust HTTP server (API) on a port (default `3000`), run Vite on `5173`, and let Vite proxy `/api`.
+
+If you need to change where the dev proxy points, use a server-only env var:
+
+```bash
+# .env.local (used by Vite dev server only)
+LEANSPEC_API_URL=http://localhost:3000
+```
+
+With this setup the browser still talks to a single origin (the Vite origin) because all API calls are made to `/api`.
+
+### Deploy UI separately (cross-origin)
+
+If you are serving the UI from a different origin than the Rust server, you can set an explicit API base URL:
 
 ```bash
 # .env.local
 VITE_API_URL=http://localhost:3000
 ```
 
-Default is same-origin (`/api`) which matches the unified HTTP server.
+If you want the Rust HTTP server to serve both UI + API on a single port, leave `VITE_API_URL` unset.
 
 ## Build Output
 
