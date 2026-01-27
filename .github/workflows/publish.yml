@@ -90,7 +90,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
             echo "version=${base_version}-dev.${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           else
-            echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+            echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Sync Rust workspace version
