@@ -44,10 +44,12 @@ export function ChatContainer({
   messages,
   onSubmit,
   isLoading,
+  error,
+  onRetry,
   className,
 }: ChatContainerProps) {
   const { t } = useTranslation('common');
-  const hasMessages = messages.length > 0;
+  const hasMessages = messages.length > 0 || error;
 
   const handleSubmit = (message: { text: string }) => {
     if (message.text.trim()) {
@@ -71,6 +73,19 @@ export function ChatContainer({
                   isLast={index === messages.length - 1}
                 />
               ))}
+              {error && (
+                <div className="flex flex-col items-center gap-2 p-4 text-destructive">
+                  <span>{error.message}</span>
+                  {onRetry && (
+                    <button
+                      onClick={onRetry}
+                      className="text-sm underline hover:no-underline"
+                    >
+                      {t('actions.retry')}
+                    </button>
+                  )}
+                </div>
+              )}
               {isLoading && <Loader size={20} />}
             </>
           )}
