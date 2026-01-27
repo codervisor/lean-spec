@@ -91,8 +91,9 @@ function replaceWorkspaceDeps(deps: Record<string, string> | undefined, depType:
     if (version.startsWith('workspace:')) {
       const resolvedVersion = resolveWorkspaceVersion(name);
       if (resolvedVersion) {
-        deps[name] = `^${resolvedVersion}`;
-        console.log(`  ✓ ${depType}.${name}: workspace:* → ^${resolvedVersion}`);
+        // Use exact versions for internal packages to ensure dev versions work correctly
+        deps[name] = resolvedVersion;
+        console.log(`  ✓ ${depType}.${name}: workspace:* → ${resolvedVersion}`);
         changed = true;
       }
     }
