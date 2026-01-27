@@ -75,6 +75,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js (for version sync)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compute effective version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_version=$(node -p "require('./package.json').version.replace(/-dev\\..*$/, '')")
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dev }}" = "true" ]; then
+            echo "version=${base_version}-dev.${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sync Rust workspace version
+        shell: bash
+        env:
+          LEANSPEC_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+
+          const version = process.env.LEANSPEC_VERSION;
+          if (!version) {
+            console.error('Missing LEANSPEC_VERSION');
+            process.exit(1);
+          }
+
+          const cargoTomlPath = 'rust/Cargo.toml';
+          let content = fs.readFileSync(cargoTomlPath, 'utf8');
+
+          const re = /(\[workspace\.package\][\s\S]*?\nversion = \")([^\"]+)(\")/m;
+          if (!re.test(content)) {
+            console.error('Unable to locate [workspace.package] version in rust/Cargo.toml');
+            process.exit(1);
+          }
+
+          content = content.replace(re, `$1${version}$3`);
+          fs.writeFileSync(cargoTomlPath, content);
+          console.log(`✓ Set rust workspace version to ${version}`);
+          NODE
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -121,6 +168,27 @@ jobs:
       - name: Build HTTP server binary
         working-directory: rust
         run: cargo build --release --target ${{ matrix.target }} --package leanspec-http
+
+      - name: Verify HTTP server binary version
+        shell: bash
+        env:
+          LEANSPEC_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          expected="$LEANSPEC_VERSION"
+          bin="rust/target/${{ matrix.target }}/release/leanspec-http"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            bin="${bin}.exe"
+          fi
+
+          actual=$($bin --version | awk '{print $2}')
+          echo "Expected: $expected"
+          echo "Actual:   $actual"
+
+          if [ "$actual" != "$expected" ]; then
+            echo "❌ Version mismatch: binary reports $actual but expected $expected"
+            exit 1
+          fi
 
       - name: Prepare artifacts
         shell: bash
