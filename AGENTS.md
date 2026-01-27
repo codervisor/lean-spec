@@ -25,6 +25,11 @@ This project uses the Agent Skills framework for domain-specific guidance. **Rea
    - Use when: Preparing releases, publishing to npm
    - Key: Use GitHub Releases to trigger automated publishing
 
+4. **github-actions** - GitHub Actions workflow management
+   - Location: [.github/skills/github-actions/SKILL.md](.github/skills/github-actions/SKILL.md)
+   - Use when: Triggering, monitoring, or debugging CI/CD workflows
+   - Key: Use `gh` CLI for all workflow interactions
+
 ## Project-Specific Rules
 
 1. **Use pnpm** - Never npm or yarn. All package management uses pnpm.
