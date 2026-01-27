@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build && pnpm build:types",
+    "build": "vite build && pnpm run build:types",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
