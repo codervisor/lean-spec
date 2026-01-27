@@ -4,7 +4,6 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '../../lib/utils';
 import { ResizeHandle } from './ResizeHandle';
 import { ChatContainer } from './ChatContainer';
-import { ChatHistory } from './ChatHistory';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { X, Plus, Settings } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
@@ -75,7 +74,7 @@ export function ChatSidebar() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b bg-muted/30">
+        <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14">
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-sm">AI Assistant</h2>
           </div>
@@ -96,9 +95,6 @@ export function ChatSidebar() {
             </Button>
           </div>
         </div>
-
-        {/* History */}
-        <ChatHistory />
 
         {/* Chat Area */}
         <div className="flex-1 min-h-0 bg-background">

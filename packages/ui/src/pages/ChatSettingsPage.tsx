@@ -43,6 +43,8 @@ export function ChatSettingsPage() {
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [showModelDialog, setShowModelDialog] = useState(false);
   const [editingModel, setEditingModel] = useState<{ providerId: string; model: Model | null } | null>(null);
+  const [providerToDelete, setProviderToDelete] = useState<string | null>(null);
+  const [modelToDelete, setModelToDelete] = useState<{ providerId: string; modelId: string } | null>(null);
 
   useEffect(() => {
     loadConfig();
@@ -80,9 +82,13 @@ export function ChatSettingsPage() {
     }
   };
 
-  const handleDeleteProvider = async (providerId: string) => {
-    if (!config) return;
-    if (!confirm(t('chat.settings.confirmDeleteProvider'))) return;
+  const handleDeleteProvider = (providerId: string) => {
+    setProviderToDelete(providerId);
+  };
+
+  const executeDeleteProvider = async () => {
+    if (!config || !providerToDelete) return;
+    const providerId = providerToDelete;
 
     const newConfig = {
       ...config,
@@ -96,6 +102,7 @@ export function ChatSettingsPage() {
     }
 
     await saveConfig(newConfig);
+    setProviderToDelete(null);
   };
 
   const handleSaveProvider = async (provider: Provider) => {
@@ -146,9 +153,13 @@ export function ChatSettingsPage() {
     setEditingModel(null);
   };
 
-  const handleDeleteModel = async (providerId: string, modelId: string) => {
-    if (!config) return;
-    if (!confirm(t('chat.settings.confirmDeleteModel'))) return;
+  const handleDeleteModel = (providerId: string, modelId: string) => {
+    setModelToDelete({ providerId, modelId });
+  };
+
+  const executeDeleteModel = async () => {
+    if (!config || !modelToDelete) return;
+    const { providerId, modelId } = modelToDelete;
 
     const newProviders = config.providers.map((p) => {
       if (p.id !== providerId) return p;
@@ -159,6 +170,7 @@ export function ChatSettingsPage() {
       ...config,
       providers: newProviders,
     });
+    setModelToDelete(null);
   };
 
   const handleUpdateDefaults = async (field: 'maxSteps' | 'defaultProviderId' | 'defaultModelId', value: string | number) => {
@@ -356,6 +368,34 @@ export function ChatSettingsPage() {
           }}
         />
       )}
+
+      {/* Delete Provider Confirmation */}
+      <Dialog open={!!providerToDelete} onOpenChange={(open) => !open && setProviderToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Provider</DialogTitle>
+            <DialogDescription>{t('chat.settings.confirmDeleteProvider')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProviderToDelete(null)}>{t('actions.cancel')}</Button>
+            <Button variant="destructive" onClick={executeDeleteProvider}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Model Confirmation */}
+      <Dialog open={!!modelToDelete} onOpenChange={(open) => !open && setModelToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Model</DialogTitle>
+            <DialogDescription>{t('chat.settings.confirmDeleteModel')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModelToDelete(null)}>{t('actions.cancel')}</Button>
+            <Button variant="destructive" onClick={executeDeleteModel}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

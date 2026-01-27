@@ -44,8 +44,6 @@ export function ChatContainer({
   messages,
   onSubmit,
   isLoading,
-  error,
-  onRetry,
   className,
 }: ChatContainerProps) {
   const { t } = useTranslation('common');
@@ -79,21 +77,6 @@ export function ChatContainer({
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-
-      {/* Error Display */}
-      {error && (
-        <div className="px-4 py-2 bg-destructive/10 border-t border-destructive/20 text-sm text-destructive flex items-center justify-between">
-          <span>{error.message || 'An error occurred'}</span>
-          {onRetry && (
-            <button
-              onClick={onRetry}
-              className="underline hover:no-underline text-xs"
-            >
-              {t('actions.retry')}
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Input Area with PromptInput */}
       <div className="border-t bg-background p-4">
