@@ -29,21 +29,46 @@ if (!existsSync(DIST_DIR)) {
 }
 
 /**
- * Try to resolve @leanspec/http-server, auto-installing if needed
+ * Try to resolve @leanspec/http-server from multiple locations
  */
 function resolveHttpServer() {
+  // Try local resolution first
   try {
     return require.resolve('@leanspec/http-server/bin/leanspec-http.js');
   } catch {
-    return null;
+    // Continue to try other locations
   }
+  
+  // Try resolving from global npm modules
+  try {
+    const npmRoot = spawnSync('npm', ['root', '-g'], { 
+      encoding: 'utf8', 
+      shell: true 
+    });
+    if (npmRoot.status === 0 && npmRoot.stdout) {
+      const globalPath = join(
+        npmRoot.stdout.trim(), 
+        '@leanspec', 
+        'http-server', 
+        'bin', 
+        'leanspec-http.js'
+      );
+      if (existsSync(globalPath)) {
+        return globalPath;
+      }
+    }
+  } catch {
+    // Continue
+  }
+  
+  return null;
 }
 
 /**
- * Auto-install @leanspec/http-server using npm
+ * Auto-install @leanspec/http-server globally using npm
  */
 function installHttpServer() {
-  console.log('📦 @leanspec/http-server not found, installing automatically...');
+  console.log('📦 @leanspec/http-server not found, installing globally...');
   console.log('');
   
   // Get the version of @leanspec/ui to match
@@ -55,10 +80,8 @@ function installHttpServer() {
     ? '@leanspec/http-server@dev' 
     : `@leanspec/http-server@^${version}`;
   
-  // Install to the same location as @leanspec/ui
-  const installDir = join(__dirname, '..');
-  const result = spawnSync('npm', ['install', '--no-save', packageSpec], {
-    cwd: installDir,
+  // Install globally so it persists across npx runs
+  const result = spawnSync('npm', ['install', '-g', packageSpec], {
     stdio: 'inherit',
     shell: true
   });
@@ -73,7 +96,7 @@ function installHttpServer() {
   }
   
   console.log('');
-  console.log('✅ @leanspec/http-server installed successfully');
+  console.log('✅ @leanspec/http-server installed globally');
   console.log('');
 }
 
