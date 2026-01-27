@@ -37,7 +37,6 @@ jobs:
       - name: Build dependencies
         run: |
           pnpm --filter @leanspec/ui-components build
-          pnpm --filter @leanspec/http-server build
           pnpm --filter @leanspec/ai-worker build
 
       - name: Build UI
