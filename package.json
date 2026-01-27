@@ -1,6 +1,6 @@
 {
   "name": "lean-spec",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "private": true,
   "packageManager": "pnpm@10.28.1",
   "engines": {

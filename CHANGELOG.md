@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.20] - 2026-01-27
+
+### Added
+- **AI Chat Configuration Improvements** ([spec 224](https://web.lean-spec.dev/specs/224)) - Full multi-provider support and settings UI
+  - Configuration-driven AI model management via `~/.leanspec/chat-config.json`
+  - Support for OpenAI, Anthropic, Deepseek, OpenRouter and any OpenAI-compatible API
+  - ModelPicker component for quick provider/model selection in chat header
+  - Full Settings page with CRUD operations for providers and models
+  - Environment variable interpolation (`${OPENAI_API_KEY}`) for secure API key management
+  - Config hot-reload without server restart
+  - Default provider/model/maxSteps configuration
+  - i18n support (English and Chinese) for all settings UI
+
+- **IPC-Based AI Chat Bridge** ([spec 237](https://web.lean-spec.dev/specs/237)) - Unified Rust HTTP server with AI worker
+  - Single server process (Rust manages Node.js AI worker via IPC)
+  - JSON Lines protocol for stdin/stdout communication
+  - Automatic worker spawning on first chat request
+  - Node.js version detection with tiered warnings (v20 EOL warning, v22+ recommended)
+  - Graceful degradation when Node.js unavailable
+  - Environment variables: `LEANSPEC_NO_AI`, `LEANSPEC_NODE_PATH`, `LEANSPEC_AI_WORKER`
+
+- **UI Component Consolidation** ([spec 238](https://web.lean-spec.dev/specs/238)) - Unified component library
+  - Consolidated all shadcn/ui components into `@leanspec/ui-components`
+  - Integrated ai-elements wrappers (48 components) into `@leanspec/ui-components`
+  - Cleaner architecture: `@leanspec/ui` focuses on application logic, `@leanspec/ui-components` on reusable components
+  - Added comprehensive Radix UI and ai-elements peer dependencies
+
+- **HTTP Server Auto-Installation** - Seamless UI startup experience
+  - `@leanspec/ui` automatically installs `@leanspec/http-server` if not present
+  - Delete confirmation dialogs for providers and models in settings
+
+- **GitHub Actions Skills** - New documentation for CI/CD workflow management
+  - Added `.github/skills/github-actions/SKILL.md` for workflow triggers and monitoring
+
+### Changed
+- **Mermaid Diagram Enhancements** - Improved theme support and rendering
+  - Better dark/light theme detection and switching
+  - Enhanced component styling for improved visual consistency
+
+- **Settings Page Layout** - Responsive tab navigation with improved styling
+  - Added appearance settings tab with language selection
+  - Better organization of configuration options
+
+- **Theme System Refactoring** - Improved structure and clarity
+  - Refactored theme context and hooks for better maintainability
+  - Centralized theme management
+
+### Fixed
+- **Dependency Graph Self-References** - Prevented specs from referencing themselves in dependency visualization
+  - Filters self-references in dependency graph computation
+  - Clears cache on spec change for accurate updates
+  - Fixed `required_by` computation to exclude self-references
+
+- **ChatContainer Error Handling** - Added error and onRetry handling
+  - Graceful error recovery for chat message failures
+
+- **Theme Context Import Paths** - Fixed inconsistent import paths for theme utilities
+
+- **Tokens Command** - Made path argument optional for better CLI ergonomics
+
+- **Clippy Warnings** - Resolved all Rust linter warnings
+
 ## [0.2.18] - 2026-01-16
 
 ### Fixed

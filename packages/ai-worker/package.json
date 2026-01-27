@@ -1,6 +1,6 @@
 {
   "name": "@leanspec/ai-worker",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "description": "LeanSpec AI worker for IPC chat",
   "type": "commonjs",
   "main": "dist/worker.js",
