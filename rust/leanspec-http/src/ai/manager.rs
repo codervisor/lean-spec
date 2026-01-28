@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_is_ai_disabled_true() {
         let _guard = ENV_LOCK.lock().unwrap();
-        
+
         std::env::set_var("LEANSPEC_NO_AI", "1");
         assert!(is_ai_disabled());
 
@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn test_is_ai_disabled_false() {
         let _guard = ENV_LOCK.lock().unwrap();
-        
+
         std::env::set_var("LEANSPEC_NO_AI", "0");
         assert!(!is_ai_disabled());
 
@@ -114,7 +114,7 @@ mod tests {
     #[test]
     fn test_is_ai_disabled_unset() {
         let _guard = ENV_LOCK.lock().unwrap();
-        
+
         // Ensure LEANSPEC_NO_AI is not set
         std::env::remove_var("LEANSPEC_NO_AI");
         assert!(!is_ai_disabled());
