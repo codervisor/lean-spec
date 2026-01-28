@@ -13,13 +13,13 @@ tags:
 - umbrella
 depends_on:
 - 168-leanspec-orchestration-platform
-- 171-burst-mode-orchestrator
 - 094-ai-chatbot-web-integration
 - 211-leanspec-as-anthropic-skill
 - 123-ai-coding-agent-integration
 - 239-ai-coding-session-management
+- 245-session-orchestration-workflows
 created_at: 2026-01-16T07:46:14.630001Z
-updated_at: 2026-01-28T01:35:54.001566Z
+updated_at: 2026-01-28T09:05:00.402718Z
 ---
 
 # AI Orchestration Integration: Unified Workflow

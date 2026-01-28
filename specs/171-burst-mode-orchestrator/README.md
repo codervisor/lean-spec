@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: 2025-12-17
 priority: high
 tags:
@@ -10,18 +10,24 @@ tags:
 - coding-pattern
 - quality-over-speed
 - ralph
+- superseded
 depends_on:
 - 123-ai-coding-agent-integration
 - 158-persistent-agent-sessions
 - 168-leanspec-orchestration-platform
 - 239-ai-coding-session-management
 created_at: 2025-12-17T09:01:14.343Z
-updated_at: 2026-01-28T01:35:54.007313Z
+updated_at: 2026-01-28T09:04:04.627193Z
+transitions:
+- status: archived
+  at: 2026-01-28T09:04:04.627193Z
 ---
 
 # Ralph Mode (Autonomous AI Development Loop) - Iterative Test-Driven AI Coding Pattern
 
-> **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-17 · **Tags**: ai-agents, orchestration, testing, automation, coding-pattern, quality-over-speed, ralph
+> **⚠️ SUPERCEDED**: This spec has been replaced by [245-session-orchestration-workflows](../245-session-orchestration-workflows/README.md) which provides cleaner abstractions built on session management (spec 239).
+
+> **Status**: 🗓️ Archived · **Priority**: High · **Created**: 2025-12-17 · **Tags**: ai-agents, orchestration, testing, automation, coding-pattern, quality-over-speed, ralph, superseded
 
 
 ## Vision & Objectives

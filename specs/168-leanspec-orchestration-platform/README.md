@@ -16,8 +16,9 @@ depends_on:
 - 123-ai-coding-agent-integration
 - 213-cloud-leanspec-local-sync-bridge
 - 239-ai-coding-session-management
+- 245-session-orchestration-workflows
 created_at: 2025-12-12T07:50:22.373Z
-updated_at: 2026-01-28T01:35:53.996092Z
+updated_at: 2026-01-28T09:04:49.046055Z
 ---
 
 # LeanSpec as AI Coding Session Orchestration Platform

@@ -1,23 +1,23 @@
 ---
 status: planned
-created: '2025-12-18'
-tags:
-  - workflow
-  - automation
-  - documentation
-  - ai-agents
-  - quality
-  - sdd-lifecycle
+created: 2025-12-18
 priority: high
-created_at: '2025-12-18T15:25:08.395Z'
+tags:
+- workflow
+- automation
+- documentation
+- ai-agents
+- quality
+- sdd-lifecycle
 depends_on:
-  - 047-git-backfill-timestamps
-  - 122-ai-agent-deps-management-fix
-  - 174-completion-status-verification-hook
-  - 018-spec-validation
-  - 168-leanspec-orchestration-platform
-  - 171-burst-mode-orchestrator
-updated_at: '2025-12-18T15:53:05.707Z'
+- 047-git-backfill-timestamps
+- 122-ai-agent-deps-management-fix
+- 174-completion-status-verification-hook
+- 018-spec-validation
+- 168-leanspec-orchestration-platform
+- 245-session-orchestration-workflows
+created_at: 2025-12-18T15:25:08.395Z
+updated_at: 2026-01-28T09:05:00.846369Z
 ---
 
 # Knowledge Backflow in SDD Workflow
