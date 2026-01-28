@@ -485,11 +485,6 @@ impl SessionDatabase {
         })
     }
 
-    fn insert_metadata(&self, session_id: &str, key: &str, value: &str) -> CoreResult<()> {
-        let conn = self.conn()?;
-        Self::insert_metadata_with_conn(&conn, session_id, key, value)
-    }
-
     /// Internal helper to insert metadata with an existing connection (avoids deadlock)
     fn insert_metadata_with_conn(
         conn: &Connection,
