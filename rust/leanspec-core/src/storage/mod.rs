@@ -2,8 +2,6 @@
 //!
 //! Provides shared persistence for chat sessions, project registry, and configuration.
 
-#![cfg(feature = "storage")]
-
 pub mod chat_config;
 pub mod chat_store;
 pub mod config;

@@ -2,8 +2,6 @@
 //!
 //! Provides session types, database persistence, and tool adapters.
 
-#![cfg(feature = "sessions")]
-
 pub mod adapter;
 pub mod database;
 pub mod types;
