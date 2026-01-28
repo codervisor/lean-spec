@@ -104,14 +104,6 @@ Create a new route `/sessions/:id` with comprehensive session information and li
 ║ │ 14:32:27 [INFO] Starting iteration 2...               │  ║
 ║ │ ▋                                                      │  ║
 ║ └───────────────────────────────────────────────────────┘  ║
-║                                                             ║
-║ 📋 Session Timeline                                         ║
-║ • 14:32:15 - Session created                              ║
-║ • 14:32:16 - Started                                      ║
-║ • 14:32:20 - File created: src/manager.ts                 ║
-║ • 14:32:25 - Tests passed                                 ║
-║ • 14:32:26 - Iteration 1 complete                         ║
-║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
 ```
 
@@ -124,8 +116,9 @@ Create a new route `/sessions/:id` with comprehensive session information and li
 - Copy session ID
 - View linked spec (click to navigate)
 - Session controls (pause, resume, stop, restart)
-- Timeline of session events
 - Token usage and cost estimation
+
+**Note on Session Events:** AI coding tools (Claude, Copilot, etc.) output unstructured text via stdout only. We cannot reliably extract structured events. The log viewer is the primary interface - any "events" would need to be parsed from logs, which is fragile. We focus on raw log display instead.
 
 ### Spec Detail Integration
 
@@ -173,7 +166,6 @@ Add a "View Sessions" action button to the spec detail page header.
 - [ ] Add log search functionality
 - [ ] Add auto-scroll toggle
 - [ ] Add export logs feature
-- [ ] Add session timeline/events view
 - [ ] Display token usage and cost
 
 ### Phase 3: Spec Detail Integration

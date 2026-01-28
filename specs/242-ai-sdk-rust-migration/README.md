@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-28
 priority: high
 tags:
@@ -12,7 +12,10 @@ depends_on:
 - 240-rust-aisdk-migration-evaluation
 - 241-rust-monorepo-architecture-refactoring
 created_at: 2026-01-28T08:01:20.589461Z
-updated_at: 2026-01-28T08:01:33.022644Z
+updated_at: 2026-01-28T08:40:41.292116Z
+transitions:
+- status: in-progress
+  at: 2026-01-28T08:40:41.292116Z
 ---
 
 # Migrate from Vercel AI SDK (Node.js) to aisdk.rs (Rust)
