@@ -63,6 +63,11 @@ webbrowser = "1.0"
 # YAML parsing for config migration
 serde_yaml.workspace = true
 
+[features]
+default = []
+# AI feature requires leanspec-core/ai which is currently disabled
+ai = ["leanspec-core/ai"]
+
 [dev-dependencies]
 reqwest = {version = "0.12", features = ["json"]}
 tempfile.workspace = true

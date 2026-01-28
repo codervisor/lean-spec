@@ -50,10 +50,10 @@ pub fn create_router(state: AppState) -> Router {
         CorsLayer::new()
     };
 
+    #[allow(unused_mut)]
     let mut router = Router::new()
         // Health endpoint
         .route("/health", get(handlers::health_check))
-        .route("/api/chat", post(handlers::chat_stream))
         .route("/api/chat/config", get(handlers::get_chat_config))
         .route("/api/chat/config", put(handlers::update_chat_config))
         .route("/api/chat/sessions", get(handlers::list_chat_sessions))
@@ -169,8 +169,15 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/sessions/:id/stop", post(handlers::stop_session))
         .route("/api/sessions/:id/logs", get(handlers::get_session_logs))
         .route("/api/sessions/:id/stream", get(handlers::ws_session_logs))
-        .route("/api/tools", get(handlers::list_available_tools))
-        .with_state(state.clone());
+        .route("/api/tools", get(handlers::list_available_tools));
+
+    // AI chat route (only when ai feature is enabled)
+    #[cfg(feature = "ai")]
+    {
+        router = router.route("/api/chat", post(handlers::chat_stream));
+    }
+
+    let mut router = router.with_state(state.clone());
 
     if let Some(ui_dist) = resolve_ui_dist_path(&state.config) {
         let index_path = ui_dist.join("index.html");
