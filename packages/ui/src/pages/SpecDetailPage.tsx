@@ -45,7 +45,6 @@ import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
-import { SessionPanel } from '../components/spec-detail/SessionPanel';
 import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
 
 // Sub-spec with frontend-assigned styling
@@ -638,9 +637,6 @@ export function SpecDetailPage() {
         <div className={cn("flex flex-col xl:flex-row xl:items-start mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
             <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
-            {spec && (
-              <SessionPanel specId={spec.specName} projectPath={currentProject?.path} />
-            )}
           </main>
 
           {/* Right Sidebar for TOC (Desktop only) */}
