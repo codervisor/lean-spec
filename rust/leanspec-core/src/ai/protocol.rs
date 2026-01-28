@@ -1,3 +1,7 @@
+//! AI worker protocol
+
+#![cfg(feature = "ai")]
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -71,8 +75,8 @@ mod tests {
         };
 
         let json = serde_json::to_string(&payload).unwrap();
-        assert!(json.contains("projectId")); // camelCase
-        assert!(json.contains("providerId")); // camelCase
+        assert!(json.contains("projectId"));
+        assert!(json.contains("providerId"));
         assert!(json.contains("proj-123"));
         assert!(json.contains("openai"));
         assert!(json.contains("gpt-4o"));

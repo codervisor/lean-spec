@@ -1,8 +1,17 @@
 ---
-status: planned
-priority: high
+status: in-progress
 created: 2026-01-28
-tags: [rust, architecture, refactoring, technical-debt]
+priority: high
+tags:
+- rust
+- architecture
+- refactoring
+- technical-debt
+created_at: 2026-01-28T06:16:47.903478Z
+updated_at: 2026-01-28T06:16:47.903478Z
+transitions:
+- status: in-progress
+  at: 2026-01-28T06:16:47.903478Z
 ---
 
 # Rust Monorepo Architecture Refactoring: Consolidate into Core

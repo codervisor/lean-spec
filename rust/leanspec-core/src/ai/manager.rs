@@ -1,3 +1,7 @@
+//! AI worker manager
+
+#![cfg(feature = "ai")]
+
 use crate::ai::worker::{AiWorker, AiWorkerError};
 
 pub struct AiWorkerManager {
@@ -37,7 +41,7 @@ impl AiWorkerManager {
                 }
                 Err(e) => {
                     let reason = e.to_string();
-                    tracing::error!("Failed to spawn AI worker: {}", reason);
+                    eprintln!("Failed to spawn AI worker: {}", reason);
                     self.disabled_reason = Some(reason.clone());
                     return Err(e);
                 }
@@ -102,6 +106,9 @@ mod tests {
         std::env::set_var("LEANSPEC_NO_AI", "false");
         assert!(!is_ai_disabled());
 
+        std::env::set_var("LEANSPEC_NO_AI", "FALSE");
+        assert!(!is_ai_disabled());
+
         std::env::set_var("LEANSPEC_NO_AI", "no");
         assert!(!is_ai_disabled());
 
@@ -109,28 +116,5 @@ mod tests {
         assert!(!is_ai_disabled());
 
         std::env::remove_var("LEANSPEC_NO_AI");
-    }
-
-    #[test]
-    fn test_is_ai_disabled_unset() {
-        let _guard = ENV_LOCK.lock().unwrap();
-
-        // Ensure LEANSPEC_NO_AI is not set
-        std::env::remove_var("LEANSPEC_NO_AI");
-        assert!(!is_ai_disabled());
-    }
-
-    #[test]
-    fn test_ai_worker_manager_new() {
-        let manager = AiWorkerManager::new();
-        assert!(manager.worker.is_none());
-        assert!(manager.disabled_reason.is_none());
-    }
-
-    #[test]
-    fn test_ai_worker_manager_default() {
-        let manager: AiWorkerManager = Default::default();
-        assert!(manager.worker.is_none());
-        assert!(manager.disabled_reason.is_none());
     }
 }

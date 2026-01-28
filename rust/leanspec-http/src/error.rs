@@ -3,6 +3,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use leanspec_core::CoreError;
 use serde::Serialize;
 use thiserror::Error;
 
@@ -35,6 +36,25 @@ pub enum ServerError {
 
     #[error("Tool error: {0}")]
     ToolError(String),
+}
+
+impl From<CoreError> for ServerError {
+    fn from(error: CoreError) -> Self {
+        match error {
+            CoreError::DatabaseError(message) => Self::DatabaseError(message),
+            CoreError::ConfigError(message) => Self::ConfigError(message),
+            CoreError::ValidationError(message) => Self::ValidationError(message),
+            CoreError::NotFound(message) => Self::NotFound(message),
+            CoreError::RegistryError(message) => Self::RegistryError(message),
+            CoreError::ToolError(message) => Self::ToolError(message),
+            CoreError::ToolNotFound(tool, details) => Self::ToolNotFound(tool, details),
+            CoreError::AiWorkerError(message) => Self::ServerError(message),
+            CoreError::ServerError(message) => Self::ServerError(message),
+            CoreError::IoError(err) => Self::ServerError(err.to_string()),
+            CoreError::SerializationError(message) => Self::ServerError(message),
+            CoreError::Other(message) => Self::ServerError(message),
+        }
+    }
 }
 
 /// API response error type

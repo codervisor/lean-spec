@@ -3,10 +3,12 @@
 //! Provides high-level session lifecycle management including
 //! creation, execution, monitoring, and control of AI coding sessions.
 
+#![cfg(feature = "sessions")]
+
+use crate::error::{CoreError, CoreResult};
 use crate::sessions::adapter::ToolManager;
-use crate::sessions::db::SessionDatabase;
+use crate::sessions::database::SessionDatabase;
 use crate::sessions::types::*;
-use crate::ServerError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::process::Child;
@@ -55,10 +57,10 @@ impl SessionManager {
         spec_id: Option<String>,
         tool: String,
         mode: SessionMode,
-    ) -> Result<Session, ServerError> {
+    ) -> CoreResult<Session> {
         // Validate tool exists
         if self.tool_manager.get(&tool).is_none() {
-            return Err(ServerError::ConfigError(format!(
+            return Err(CoreError::ConfigError(format!(
                 "Unknown tool: {}. Available: claude, copilot, codex, opencode",
                 tool
             )));
@@ -73,23 +75,23 @@ impl SessionManager {
     }
 
     /// Start a session
-    pub async fn start_session(&self, session_id: &str) -> Result<(), ServerError> {
+    pub async fn start_session(&self, session_id: &str) -> CoreResult<()> {
         // Load session
         let mut session = self
             .db
             .get_session(session_id)?
-            .ok_or_else(|| ServerError::NotFound(format!("Session not found: {}", session_id)))?;
+            .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         // Check if already running
         if session.is_running() {
-            return Err(ServerError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Session is already running".to_string(),
             ));
         }
 
         // Get adapter
         let adapter = self.tool_manager.get(&session.tool).ok_or_else(|| {
-            ServerError::ConfigError(format!("Tool not available: {}", session.tool))
+            CoreError::ConfigError(format!("Tool not available: {}", session.tool))
         })?;
 
         // Validate environment
@@ -125,17 +127,17 @@ impl SessionManager {
         // Spawn process
         let mut child = cmd
             .spawn()
-            .map_err(|e| ServerError::ToolError(format!("Failed to spawn process: {}", e)))?;
+            .map_err(|e| CoreError::ToolError(format!("Failed to spawn process: {}", e)))?;
 
         // Take stdout/stderr handles
         let stdout = child
             .stdout
             .take()
-            .ok_or_else(|| ServerError::ToolError("Failed to capture stdout".to_string()))?;
+            .ok_or_else(|| CoreError::ToolError("Failed to capture stdout".to_string()))?;
         let stderr = child
             .stderr
             .take()
-            .ok_or_else(|| ServerError::ToolError("Failed to capture stderr".to_string()))?;
+            .ok_or_else(|| CoreError::ToolError("Failed to capture stderr".to_string()))?;
 
         // Clone for tasks
         let session_id_stdout = session_id.to_string();
@@ -288,15 +290,15 @@ impl SessionManager {
     }
 
     /// Stop a running session
-    pub async fn stop_session(&self, session_id: &str) -> Result<(), ServerError> {
+    pub async fn stop_session(&self, session_id: &str) -> CoreResult<()> {
         // Load session
         let mut session = self
             .db
             .get_session(session_id)?
-            .ok_or_else(|| ServerError::NotFound(format!("Session not found: {}", session_id)))?;
+            .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
 
         if !session.status.can_stop() {
-            return Err(ServerError::ValidationError(format!(
+            return Err(CoreError::ValidationError(format!(
                 "Cannot stop session with status: {:?}",
                 session.status
             )));
@@ -335,7 +337,7 @@ impl SessionManager {
     }
 
     /// Get session details
-    pub async fn get_session(&self, session_id: &str) -> Result<Option<Session>, ServerError> {
+    pub async fn get_session(&self, session_id: &str) -> CoreResult<Option<Session>> {
         self.db.get_session(session_id)
     }
 
@@ -345,7 +347,7 @@ impl SessionManager {
         spec_id: Option<&str>,
         status: Option<SessionStatus>,
         tool: Option<&str>,
-    ) -> Result<Vec<Session>, ServerError> {
+    ) -> CoreResult<Vec<Session>> {
         self.db.list_sessions(spec_id, status, tool)
     }
 
@@ -354,17 +356,17 @@ impl SessionManager {
         &self,
         session_id: &str,
         limit: Option<usize>,
-    ) -> Result<Vec<SessionLog>, ServerError> {
+    ) -> CoreResult<Vec<SessionLog>> {
         self.db.get_logs(session_id, limit)
     }
 
     /// Get session events
-    pub async fn get_events(&self, session_id: &str) -> Result<Vec<SessionEvent>, ServerError> {
+    pub async fn get_events(&self, session_id: &str) -> CoreResult<Vec<SessionEvent>> {
         self.db.get_events(session_id)
     }
 
     /// Delete a session
-    pub async fn delete_session(&self, session_id: &str) -> Result<(), ServerError> {
+    pub async fn delete_session(&self, session_id: &str) -> CoreResult<()> {
         // Stop if running
         if let Some(session) = self.db.get_session(session_id)? {
             if session.is_running() {
@@ -379,10 +381,10 @@ impl SessionManager {
     pub async fn subscribe_to_logs(
         &self,
         session_id: &str,
-    ) -> Result<broadcast::Receiver<SessionLog>, ServerError> {
+    ) -> CoreResult<broadcast::Receiver<SessionLog>> {
         // Check session exists
         if self.db.get_session(session_id)?.is_none() {
-            return Err(ServerError::NotFound(format!(
+            return Err(CoreError::NotFound(format!(
                 "Session not found: {}",
                 session_id
             )));
@@ -411,7 +413,7 @@ impl SessionManager {
     }
 
     /// Clean up stale sessions (sessions that were running when server restarted)
-    pub async fn cleanup_stale_sessions(&self) -> Result<usize, ServerError> {
+    pub async fn cleanup_stale_sessions(&self) -> CoreResult<usize> {
         // Find sessions marked as running but not in active_sessions
         let all_sessions = self.db.list_sessions(None, None, None)?;
         let active_ids = {

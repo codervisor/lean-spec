@@ -19,7 +19,7 @@ path = "src/main.rs"
 
 [dependencies]
 # Core library
-leanspec-core = {path = "../leanspec-core"}
+leanspec-core = {path = "../leanspec-core", features = ["full"]}
 
 # Web framework
 axum = {version = "0.8.7", features = ["ws"]}
@@ -47,17 +47,8 @@ walkdir.workspace = true
 # Directories
 dirs = "5.0"
 
-# SQLite
-rusqlite = {version = "0.31", features = ["bundled"]}
-
 # Unique IDs
 uuid = {version = "1.10", features = ["v4"]}
-
-# Async trait
-async-trait = "0.1"
-
-# Binary detection
-which = "6.0"
 
 # Tracing
 tracing = "0.1"

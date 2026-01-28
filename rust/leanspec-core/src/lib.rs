@@ -28,12 +28,26 @@
 //! }
 //! ```
 
+pub mod error;
 pub mod parsers;
 pub mod types;
 pub mod utils;
 pub mod validators;
 
+#[cfg(any(feature = "sessions", feature = "storage"))]
+pub mod db;
+
+#[cfg(feature = "sessions")]
+pub mod sessions;
+
+#[cfg(feature = "storage")]
+pub mod storage;
+
+#[cfg(feature = "ai")]
+pub mod ai;
+
 // Re-exports for convenience
+pub use error::{CoreError, CoreResult};
 pub use parsers::FrontmatterParser;
 pub use types::{
     CheckboxItem, CompletionVerificationResult, IssueSeverity, LeanSpecConfig, Progress,

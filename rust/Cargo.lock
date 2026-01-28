@@ -1277,7 +1277,6 @@ dependencies = [
  "dialoguer",
  "indicatif",
  "leanspec-core",
- "leanspec-http",
  "predicates",
  "pretty_assertions",
  "regex",
@@ -1294,24 +1293,29 @@ dependencies = [
 name = "leanspec-core"
 version = "0.2.20"
 dependencies = [
+ "async-trait",
  "chrono",
+ "dirs",
  "petgraph",
  "pretty_assertions",
  "regex",
+ "rusqlite",
  "serde",
  "serde_json",
  "serde_yaml",
  "tempfile",
  "thiserror 2.0.17",
  "tiktoken-rs",
+ "tokio",
+ "uuid",
  "walkdir",
+ "which",
 ]
 
 [[package]]
 name = "leanspec-http"
 version = "0.2.20"
 dependencies = [
- "async-trait",
  "axum",
  "bytes",
  "chrono",
@@ -1324,7 +1328,6 @@ dependencies = [
  "hyperlocal",
  "leanspec-core",
  "reqwest",
- "rusqlite",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1339,7 +1342,6 @@ dependencies = [
  "uuid",
  "walkdir",
  "webbrowser",
- "which",
 ]
 
 [[package]]

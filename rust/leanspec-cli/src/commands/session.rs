@@ -1,6 +1,6 @@
 use colored::Colorize;
-use leanspec_http::config::config_dir;
-use leanspec_http::sessions::{SessionDatabase, SessionManager, SessionMode, SessionStatus};
+use leanspec_core::sessions::{SessionDatabase, SessionManager, SessionMode, SessionStatus};
+use leanspec_core::storage::config::config_dir;
 use std::error::Error;
 use std::time::Duration;
 

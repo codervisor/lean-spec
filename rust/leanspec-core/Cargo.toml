@@ -1,28 +1,43 @@
 [package]
-name = "leanspec-core"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
+description = "Core library for LeanSpec - spec parsing, validation, sessions, storage, and AI worker management"
+edition.workspace = true
 homepage.workspace = true
-description = "Core library for LeanSpec - spec parsing, validation, and dependency graph computation"
+license.workspace = true
+name = "leanspec-core"
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [lib]
 name = "leanspec_core"
 path = "src/lib.rs"
 
 [dependencies]
-serde.workspace = true
-serde_yaml.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-walkdir.workspace = true
-regex.workspace = true
 chrono.workspace = true
 petgraph.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
 tiktoken-rs.workspace = true
+walkdir.workspace = true
+
+# Optional dependencies for infrastructure features
+async-trait = {version = "0.1", optional = true}
+dirs = {version = "5.0", optional = true}
+rusqlite = {version = "0.31", features = ["bundled"], optional = true}
+tokio = {workspace = true, optional = true}
+uuid = {version = "1.10", features = ["v4"], optional = true}
+which = {version = "6.0", optional = true}
+
+[features]
+ai = ["tokio", "async-trait", "uuid"]
+default = []
+full = ["sessions", "storage", "ai"]
+sessions = ["rusqlite", "tokio", "uuid", "async-trait", "which"]
+storage = ["rusqlite", "tokio", "dirs", "uuid"]
 
 [dev-dependencies]
 pretty_assertions.workspace = true

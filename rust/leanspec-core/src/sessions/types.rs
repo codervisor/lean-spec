@@ -3,6 +3,8 @@
 //! Core types for session management including session configuration,
 //! status tracking, and log/event structures.
 
+#![cfg(feature = "sessions")]
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

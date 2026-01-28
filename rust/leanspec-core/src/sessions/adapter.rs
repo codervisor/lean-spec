@@ -4,8 +4,10 @@
 //! Each adapter handles tool-specific logic for spawning processes,
 //! environment setup, and validation.
 
+#![cfg(feature = "sessions")]
+
+use crate::error::{CoreError, CoreResult};
 use crate::sessions::types::SessionConfig;
-use crate::ServerError;
 use std::path::PathBuf;
 use std::process::Stdio;
 use tokio::process::Command;
@@ -17,16 +19,16 @@ pub trait ToolAdapter: Send + Sync {
     fn name(&self) -> &str;
 
     /// Check if the tool is available and properly configured
-    async fn validate_environment(&self) -> Result<(), ServerError>;
+    async fn validate_environment(&self) -> CoreResult<()>;
 
     /// Build the command for running a session
-    fn build_command(&self, config: &SessionConfig) -> Result<Command, ServerError>;
+    fn build_command(&self, config: &SessionConfig) -> CoreResult<Command>;
 
     /// Check if tool supports PTY/interactive mode
     fn supports_pty(&self) -> bool;
 
     /// Get tool version
-    async fn get_version(&self) -> Result<String, ServerError>;
+    async fn get_version(&self) -> CoreResult<String>;
 }
 
 /// Tool manager - registry of all adapters
@@ -54,7 +56,7 @@ impl ToolManager {
             .map(|a| a.as_ref())
     }
 
-    /// List all available adapters
+    /// List all adapters
     pub fn list(&self) -> Vec<&dyn ToolAdapter> {
         self.adapters.iter().map(|a| a.as_ref()).collect()
     }
@@ -106,9 +108,9 @@ impl ToolAdapter for ClaudeAdapter {
         "claude"
     }
 
-    async fn validate_environment(&self) -> Result<(), ServerError> {
+    async fn validate_environment(&self) -> CoreResult<()> {
         if self.find_binary().is_none() {
-            return Err(ServerError::ToolNotFound(
+            return Err(CoreError::ToolNotFound(
                 "claude".to_string(),
                 "Claude Code not found. Install with: npm install -g @anthropic-ai/claude-code"
                     .to_string(),
@@ -117,7 +119,7 @@ impl ToolAdapter for ClaudeAdapter {
 
         // Check API key
         if std::env::var("ANTHROPIC_API_KEY").is_err() {
-            return Err(ServerError::ConfigError(
+            return Err(CoreError::ConfigError(
                 "ANTHROPIC_API_KEY not set".to_string(),
             ));
         }
@@ -125,9 +127,9 @@ impl ToolAdapter for ClaudeAdapter {
         Ok(())
     }
 
-    fn build_command(&self, config: &SessionConfig) -> Result<Command, ServerError> {
+    fn build_command(&self, config: &SessionConfig) -> CoreResult<Command> {
         let binary = self.find_binary().ok_or_else(|| {
-            ServerError::ToolNotFound("claude".to_string(), "Not found".to_string())
+            CoreError::ToolNotFound("claude".to_string(), "Not found".to_string())
         })?;
 
         let mut cmd = Command::new(binary);
@@ -161,18 +163,18 @@ impl ToolAdapter for ClaudeAdapter {
         true
     }
 
-    async fn get_version(&self) -> Result<String, ServerError> {
+    async fn get_version(&self) -> CoreResult<String> {
         if let Some(binary) = self.find_binary() {
             let output = Command::new(binary)
                 .arg("--version")
                 .output()
                 .await
-                .map_err(|e| ServerError::ToolError(format!("Failed to get version: {}", e)))?;
+                .map_err(|e| CoreError::ToolError(format!("Failed to get version: {}", e)))?;
 
             let version = String::from_utf8_lossy(&output.stdout);
             Ok(version.trim().to_string())
         } else {
-            Err(ServerError::ToolNotFound(
+            Err(CoreError::ToolNotFound(
                 "claude".to_string(),
                 "Not found".to_string(),
             ))
@@ -202,14 +204,14 @@ impl CopilotAdapter {
         self.gh_binary.as_ref()
     }
 
-    async fn check_copilot_extension(&self) -> Result<bool, ServerError> {
+    async fn check_copilot_extension(&self) -> CoreResult<bool> {
         if let Some(gh) = self.find_binary() {
             let output = Command::new(gh)
                 .args(["extension", "list"])
                 .output()
                 .await
                 .map_err(|e| {
-                    ServerError::ToolError(format!("Failed to check extensions: {}", e))
+                    CoreError::ToolError(format!("Failed to check extensions: {}", e))
                 })?;
 
             let output_str = String::from_utf8_lossy(&output.stdout);
@@ -226,16 +228,16 @@ impl ToolAdapter for CopilotAdapter {
         "copilot"
     }
 
-    async fn validate_environment(&self) -> Result<(), ServerError> {
+    async fn validate_environment(&self) -> CoreResult<()> {
         if self.find_binary().is_none() {
-            return Err(ServerError::ToolNotFound(
+            return Err(CoreError::ToolNotFound(
                 "gh".to_string(),
                 "GitHub CLI not found. Install from: https://cli.github.com".to_string(),
             ));
         }
 
         if !self.check_copilot_extension().await? {
-            return Err(ServerError::ToolNotFound(
+            return Err(CoreError::ToolNotFound(
                 "copilot".to_string(),
                 "GitHub Copilot extension not installed. Run: gh extension install github/copilot"
                     .to_string(),
@@ -248,10 +250,10 @@ impl ToolAdapter for CopilotAdapter {
             .args(["auth", "status"])
             .output()
             .await
-            .map_err(|e| ServerError::ToolError(format!("Failed to check auth: {}", e)))?;
+            .map_err(|e| CoreError::ToolError(format!("Failed to check auth: {}", e)))?;
 
         if !output.status.success() {
-            return Err(ServerError::ConfigError(
+            return Err(CoreError::ConfigError(
                 "Not authenticated with GitHub. Run: gh auth login".to_string(),
             ));
         }
@@ -259,10 +261,10 @@ impl ToolAdapter for CopilotAdapter {
         Ok(())
     }
 
-    fn build_command(&self, config: &SessionConfig) -> Result<Command, ServerError> {
+    fn build_command(&self, config: &SessionConfig) -> CoreResult<Command> {
         let binary = self
             .find_binary()
-            .ok_or_else(|| ServerError::ToolNotFound("gh".to_string(), "Not found".to_string()))?;
+            .ok_or_else(|| CoreError::ToolNotFound("gh".to_string(), "Not found".to_string()))?;
 
         let mut cmd = Command::new(binary);
         cmd.arg("copilot").arg("suggest");
@@ -288,18 +290,18 @@ impl ToolAdapter for CopilotAdapter {
         false // Copilot suggest is non-interactive
     }
 
-    async fn get_version(&self) -> Result<String, ServerError> {
+    async fn get_version(&self) -> CoreResult<String> {
         if let Some(binary) = self.find_binary() {
             let output = Command::new(binary)
                 .arg("--version")
                 .output()
                 .await
-                .map_err(|e| ServerError::ToolError(format!("Failed to get version: {}", e)))?;
+                .map_err(|e| CoreError::ToolError(format!("Failed to get version: {}", e)))?;
 
             let version = String::from_utf8_lossy(&output.stdout);
             Ok(format!("gh {}", version.trim()))
         } else {
-            Err(ServerError::ToolNotFound(
+            Err(CoreError::ToolNotFound(
                 "gh".to_string(),
                 "Not found".to_string(),
             ))
@@ -336,9 +338,9 @@ impl ToolAdapter for CodexAdapter {
         "codex"
     }
 
-    async fn validate_environment(&self) -> Result<(), ServerError> {
+    async fn validate_environment(&self) -> CoreResult<()> {
         if self.find_binary().is_none() {
-            return Err(ServerError::ToolNotFound(
+            return Err(CoreError::ToolNotFound(
                 "codex".to_string(),
                 "Codex CLI not found. Install from: https://github.com/microsoft/codex-cli"
                     .to_string(),
@@ -347,7 +349,7 @@ impl ToolAdapter for CodexAdapter {
 
         // Check OpenAI API key
         if std::env::var("OPENAI_API_KEY").is_err() {
-            return Err(ServerError::ConfigError(
+            return Err(CoreError::ConfigError(
                 "OPENAI_API_KEY not set".to_string(),
             ));
         }
@@ -355,9 +357,9 @@ impl ToolAdapter for CodexAdapter {
         Ok(())
     }
 
-    fn build_command(&self, config: &SessionConfig) -> Result<Command, ServerError> {
+    fn build_command(&self, config: &SessionConfig) -> CoreResult<Command> {
         let binary = self.find_binary().ok_or_else(|| {
-            ServerError::ToolNotFound("codex".to_string(), "Not found".to_string())
+            CoreError::ToolNotFound("codex".to_string(), "Not found".to_string())
         })?;
 
         let mut cmd = Command::new(binary);
@@ -382,18 +384,18 @@ impl ToolAdapter for CodexAdapter {
         true
     }
 
-    async fn get_version(&self) -> Result<String, ServerError> {
+    async fn get_version(&self) -> CoreResult<String> {
         if let Some(binary) = self.find_binary() {
             let output = Command::new(binary)
                 .arg("--version")
                 .output()
                 .await
-                .map_err(|e| ServerError::ToolError(format!("Failed to get version: {}", e)))?;
+                .map_err(|e| CoreError::ToolError(format!("Failed to get version: {}", e)))?;
 
             let version = String::from_utf8_lossy(&output.stdout);
             Ok(version.trim().to_string())
         } else {
-            Err(ServerError::ToolNotFound(
+            Err(CoreError::ToolNotFound(
                 "codex".to_string(),
                 "Not found".to_string(),
             ))
@@ -430,9 +432,9 @@ impl ToolAdapter for OpenCodeAdapter {
         "opencode"
     }
 
-    async fn validate_environment(&self) -> Result<(), ServerError> {
+    async fn validate_environment(&self) -> CoreResult<()> {
         if self.find_binary().is_none() {
-            return Err(ServerError::ToolNotFound(
+            return Err(CoreError::ToolNotFound(
                 "opencode".to_string(),
                 "OpenCode not found. Install from: https://opencode.ai".to_string(),
             ));
@@ -440,9 +442,9 @@ impl ToolAdapter for OpenCodeAdapter {
         Ok(())
     }
 
-    fn build_command(&self, config: &SessionConfig) -> Result<Command, ServerError> {
+    fn build_command(&self, config: &SessionConfig) -> CoreResult<Command> {
         let binary = self.find_binary().ok_or_else(|| {
-            ServerError::ToolNotFound("opencode".to_string(), "Not found".to_string())
+            CoreError::ToolNotFound("opencode".to_string(), "Not found".to_string())
         })?;
 
         let mut cmd = Command::new(binary);
@@ -466,18 +468,18 @@ impl ToolAdapter for OpenCodeAdapter {
         true
     }
 
-    async fn get_version(&self) -> Result<String, ServerError> {
+    async fn get_version(&self) -> CoreResult<String> {
         if let Some(binary) = self.find_binary() {
             let output = Command::new(binary)
                 .arg("--version")
                 .output()
                 .await
-                .map_err(|e| ServerError::ToolError(format!("Failed to get version: {}", e)))?;
+                .map_err(|e| CoreError::ToolError(format!("Failed to get version: {}", e)))?;
 
             let version = String::from_utf8_lossy(&output.stdout);
             Ok(version.trim().to_string())
         } else {
-            Err(ServerError::ToolNotFound(
+            Err(CoreError::ToolNotFound(
                 "opencode".to_string(),
                 "Not found".to_string(),
             ))

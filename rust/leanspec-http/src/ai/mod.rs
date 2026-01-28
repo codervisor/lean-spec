@@ -1,7 +1,3 @@
-pub mod manager;
-pub mod protocol;
-pub mod worker;
+//! AI worker re-exports (core)
 
-pub use manager::AiWorkerManager;
-pub use protocol::{WorkerChatPayload, WorkerRequest, WorkerResponse};
-pub use worker::{AiWorker, AiWorkerError};
+pub use leanspec_core::ai::*;

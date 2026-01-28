@@ -3,9 +3,10 @@
 //! SQLite persistence layer for session management.
 //! Handles migrations, CRUD operations, and queries.
 
+#![cfg(feature = "sessions")]
+
+use crate::error::{CoreError, CoreResult};
 use crate::sessions::types::*;
-use crate::sessions::Session;
-use crate::ServerError;
 use chrono::{DateTime, Utc};
 use rusqlite::{params, params_from_iter, types::Value, Connection, OptionalExtension};
 use std::collections::HashMap;
@@ -19,9 +20,9 @@ pub struct SessionDatabase {
 
 impl SessionDatabase {
     /// Initialize database at the given path
-    pub fn new<P: AsRef<Path>>(db_path: P) -> Result<Self, ServerError> {
+    pub fn new<P: AsRef<Path>>(db_path: P) -> CoreResult<Self> {
         let conn = Connection::open(db_path).map_err(|e| {
-            ServerError::DatabaseError(format!("Failed to open session database: {}", e))
+            CoreError::DatabaseError(format!("Failed to open session database: {}", e))
         })?;
 
         let db = Self {
@@ -33,10 +34,16 @@ impl SessionDatabase {
     }
 
     /// Initialize in-memory database (for testing)
-    pub fn new_in_memory() -> Result<Self, ServerError> {
+    pub fn new_in_memory() -> CoreResult<Self> {
         let conn = Connection::open_in_memory().map_err(|e| {
-            ServerError::DatabaseError(format!("Failed to create in-memory database: {}", e))
+            CoreError::DatabaseError(format!("Failed to create in-memory database: {}", e))
         })?;
+
+        // Enable WAL mode for in-memory database
+        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")
+            .map_err(|e| {
+                CoreError::DatabaseError(format!("Failed to configure database: {}", e))
+            })?;
 
         let db = Self {
             conn: Mutex::new(conn),
@@ -47,7 +54,7 @@ impl SessionDatabase {
     }
 
     /// Create tables and indexes
-    fn init_tables(&self) -> Result<(), ServerError> {
+    fn init_tables(&self) -> CoreResult<()> {
         let conn = self.conn()?;
         // Sessions table
         conn.execute(
@@ -68,7 +75,7 @@ impl SessionDatabase {
                 )",
             [],
         )
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         // Session metadata table
         conn.execute(
@@ -81,7 +88,7 @@ impl SessionDatabase {
                 )",
             [],
         )
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         // Session logs table
         conn.execute(
@@ -95,7 +102,7 @@ impl SessionDatabase {
                 )",
             [],
         )
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         // Session events table
         conn.execute(
@@ -109,7 +116,7 @@ impl SessionDatabase {
                 )",
             [],
         )
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+        .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         // Indexes
         conn.execute(
@@ -142,7 +149,7 @@ impl SessionDatabase {
     }
 
     /// Insert a new session
-    pub fn insert_session(&self, session: &Session) -> Result<(), ServerError> {
+    pub fn insert_session(&self, session: &Session) -> CoreResult<()> {
         let conn = self.conn()?;
         conn.execute(
             "INSERT INTO sessions (
@@ -166,7 +173,7 @@ impl SessionDatabase {
                 session.updated_at.to_rfc3339(),
             ],
         )
-        .map_err(|e| ServerError::DatabaseError(format!("Failed to insert session: {}", e)))?;
+        .map_err(|e| CoreError::DatabaseError(format!("Failed to insert session: {}", e)))?;
 
         // Save metadata
         for (key, value) in &session.metadata {
@@ -179,14 +186,14 @@ impl SessionDatabase {
         Ok(())
     }
 
-    fn conn(&self) -> Result<std::sync::MutexGuard<'_, Connection>, ServerError> {
+    fn conn(&self) -> CoreResult<std::sync::MutexGuard<'_, Connection>> {
         self.conn
             .lock()
-            .map_err(|_| ServerError::DatabaseError("Session database lock poisoned".to_string()))
+            .map_err(|_| CoreError::DatabaseError("Session database lock poisoned".to_string()))
     }
 
     /// Update an existing session
-    pub fn update_session(&self, session: &Session) -> Result<(), ServerError> {
+    pub fn update_session(&self, session: &Session) -> CoreResult<()> {
         let conn = self.conn()?;
         conn.execute(
             "UPDATE sessions SET
@@ -217,7 +224,7 @@ impl SessionDatabase {
                 session.id,
             ],
         )
-        .map_err(|e| ServerError::DatabaseError(format!("Failed to update session: {}", e)))?;
+        .map_err(|e| CoreError::DatabaseError(format!("Failed to update session: {}", e)))?;
 
         // Update metadata
         conn.execute(
@@ -233,16 +240,16 @@ impl SessionDatabase {
     }
 
     /// Delete a session and all related data
-    pub fn delete_session(&self, session_id: &str) -> Result<(), ServerError> {
+    pub fn delete_session(&self, session_id: &str) -> CoreResult<()> {
         let conn = self.conn()?;
         conn.execute("DELETE FROM sessions WHERE id = ?1", [session_id])
-            .map_err(|e| ServerError::DatabaseError(format!("Failed to delete session: {}", e)))?;
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to delete session: {}", e)))?;
 
         Ok(())
     }
 
     /// Get a session by ID
-    pub fn get_session(&self, session_id: &str) -> Result<Option<Session>, ServerError> {
+    pub fn get_session(&self, session_id: &str) -> CoreResult<Option<Session>> {
         let conn = self.conn()?;
         let mut stmt = conn
             .prepare(
@@ -252,12 +259,12 @@ impl SessionDatabase {
                     created_at, updated_at
                 FROM sessions WHERE id = ?1",
             )
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         let session = stmt
             .query_row([session_id], |row| self.row_to_session(row))
             .optional()
-            .map_err(|e| ServerError::DatabaseError(format!("Failed to get session: {}", e)))?;
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to get session: {}", e)))?;
 
         if let Some(mut session) = session {
             session.metadata = self.load_metadata(session_id)?;
@@ -273,7 +280,7 @@ impl SessionDatabase {
         spec_id: Option<&str>,
         status: Option<SessionStatus>,
         tool: Option<&str>,
-    ) -> Result<Vec<Session>, ServerError> {
+    ) -> CoreResult<Vec<Session>> {
         let conn = self.conn()?;
         let mut query = String::from(
             "SELECT
@@ -300,15 +307,15 @@ impl SessionDatabase {
 
         let mut stmt = conn
             .prepare(&query)
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         let rows = stmt
             .query_map(params_from_iter(params), |row| self.row_to_session(row))
-            .map_err(|e| ServerError::DatabaseError(format!("Failed to list sessions: {}", e)))?;
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to list sessions: {}", e)))?;
 
         let mut sessions = Vec::new();
         for row in rows {
-            let row = row.map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            let row = row.map_err(|e| CoreError::DatabaseError(e.to_string()))?;
             sessions.push(row);
         }
 
@@ -321,7 +328,7 @@ impl SessionDatabase {
     }
 
     /// Insert a log entry
-    pub fn insert_log(&self, log: &SessionLog) -> Result<(), ServerError> {
+    pub fn insert_log(&self, log: &SessionLog) -> CoreResult<()> {
         let conn = self.conn()?;
         conn.execute(
             "INSERT INTO session_logs (session_id, timestamp, level, message)
@@ -333,18 +340,13 @@ impl SessionDatabase {
                 log.message,
             ],
         )
-        .map_err(|e| ServerError::DatabaseError(format!("Failed to insert log: {}", e)))?;
+        .map_err(|e| CoreError::DatabaseError(format!("Failed to insert log: {}", e)))?;
 
         Ok(())
     }
 
     /// Insert a log entry (convenience method)
-    pub fn log_message(
-        &self,
-        session_id: &str,
-        level: LogLevel,
-        message: &str,
-    ) -> Result<(), ServerError> {
+    pub fn log_message(&self, session_id: &str, level: LogLevel, message: &str) -> CoreResult<()> {
         let log = SessionLog {
             id: 0, // Auto-incremented
             session_id: session_id.to_string(),
@@ -356,11 +358,7 @@ impl SessionDatabase {
     }
 
     /// Get logs for a session
-    pub fn get_logs(
-        &self,
-        session_id: &str,
-        limit: Option<usize>,
-    ) -> Result<Vec<SessionLog>, ServerError> {
+    pub fn get_logs(&self, session_id: &str, limit: Option<usize>) -> CoreResult<Vec<SessionLog>> {
         let conn = self.conn()?;
         let mut query = String::from(
             "SELECT id, session_id, timestamp, level, message
@@ -372,7 +370,7 @@ impl SessionDatabase {
 
         let mut stmt = conn
             .prepare(&query)
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         let mut params: Vec<Value> = vec![Value::from(session_id.to_string())];
         if let Some(limit) = limit {
@@ -389,11 +387,11 @@ impl SessionDatabase {
                     message: row.get(4)?,
                 })
             })
-            .map_err(|e| ServerError::DatabaseError(format!("Failed to get logs: {}", e)))?;
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to get logs: {}", e)))?;
 
         let mut logs = Vec::new();
         for row in rows {
-            let row = row.map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            let row = row.map_err(|e| CoreError::DatabaseError(e.to_string()))?;
             logs.push(row);
         }
 
@@ -408,7 +406,7 @@ impl SessionDatabase {
         session_id: &str,
         event_type: EventType,
         data: Option<String>,
-    ) -> Result<(), ServerError> {
+    ) -> CoreResult<()> {
         let conn = self.conn()?;
         conn.execute(
             "INSERT INTO session_events (session_id, event_type, data, timestamp)
@@ -420,20 +418,20 @@ impl SessionDatabase {
                 Utc::now().to_rfc3339(),
             ],
         )
-        .map_err(|e| ServerError::DatabaseError(format!("Failed to insert event: {}", e)))?;
+        .map_err(|e| CoreError::DatabaseError(format!("Failed to insert event: {}", e)))?;
 
         Ok(())
     }
 
     /// Get events for a session
-    pub fn get_events(&self, session_id: &str) -> Result<Vec<SessionEvent>, ServerError> {
+    pub fn get_events(&self, session_id: &str) -> CoreResult<Vec<SessionEvent>> {
         let conn = self.conn()?;
         let mut stmt = conn
             .prepare(
                 "SELECT id, session_id, event_type, data, timestamp
                 FROM session_events WHERE session_id = ? ORDER BY id ASC",
             )
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         let rows = stmt
             .query_map([session_id], |row| {
@@ -445,11 +443,11 @@ impl SessionDatabase {
                     timestamp: parse_datetime(row.get(4)?),
                 })
             })
-            .map_err(|e| ServerError::DatabaseError(format!("Failed to get events: {}", e)))?;
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to get events: {}", e)))?;
 
         let mut events = Vec::new();
         for row in rows {
-            let row = row.map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            let row = row.map_err(|e| CoreError::DatabaseError(e.to_string()))?;
             events.push(row);
         }
 
@@ -477,32 +475,32 @@ impl SessionDatabase {
         })
     }
 
-    fn insert_metadata(&self, session_id: &str, key: &str, value: &str) -> Result<(), ServerError> {
+    fn insert_metadata(&self, session_id: &str, key: &str, value: &str) -> CoreResult<()> {
         let conn = self.conn()?;
         conn.execute(
             "INSERT INTO session_metadata (session_id, key, value) VALUES (?1, ?2, ?3)",
             [session_id, key, value],
         )
-        .map_err(|e| ServerError::DatabaseError(format!("Failed to insert metadata: {}", e)))?;
+        .map_err(|e| CoreError::DatabaseError(format!("Failed to insert metadata: {}", e)))?;
 
         Ok(())
     }
 
-    fn load_metadata(&self, session_id: &str) -> Result<HashMap<String, String>, ServerError> {
+    fn load_metadata(&self, session_id: &str) -> CoreResult<HashMap<String, String>> {
         let conn = self.conn()?;
         let mut stmt = conn
             .prepare("SELECT key, value FROM session_metadata WHERE session_id = ?")
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
 
         let rows = stmt
             .query_map([session_id], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
             })
-            .map_err(|e| ServerError::DatabaseError(format!("Failed to load metadata: {}", e)))?;
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to load metadata: {}", e)))?;
 
         let mut metadata = HashMap::new();
         for row in rows {
-            let (key, value) = row.map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+            let (key, value) = row.map_err(|e| CoreError::DatabaseError(e.to_string()))?;
             metadata.insert(key, value);
         }
 

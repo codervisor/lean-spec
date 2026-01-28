@@ -19,8 +19,7 @@ clap.workspace = true
 colored.workspace = true
 dialoguer.workspace = true
 indicatif.workspace = true
-leanspec-core = {path = "../leanspec-core"}
-leanspec-http = {path = "../leanspec-http"}
+leanspec-core = {path = "../leanspec-core", features = ["sessions", "storage"]}
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true

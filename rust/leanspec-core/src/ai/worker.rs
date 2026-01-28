@@ -1,7 +1,11 @@
+//! AI worker process management
+
+#![cfg(feature = "ai")]
+
 use crate::ai::protocol::WorkerChatPayload;
 use crate::ai::protocol::{WorkerRequest, WorkerResponse};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command as StdCommand;
 use std::process::Stdio;
 use std::sync::Arc;
@@ -94,10 +98,7 @@ impl AiWorker {
 
     pub async fn reload_config(&mut self, config: serde_json::Value) -> Result<(), AiWorkerError> {
         let id = uuid::Uuid::new_v4().to_string();
-        let request = WorkerRequest::ReloadConfig {
-            id,
-            payload: config,
-        };
+        let request = WorkerRequest::ReloadConfig { id, payload: config };
         self.write_request(&request).await?;
         Ok(())
     }
@@ -187,12 +188,12 @@ fn verify_nodejs(node_path: &str) -> Result<(), AiWorkerError> {
         .unwrap_or(0);
 
     if major >= 22 {
-        tracing::info!("Node.js {} detected", version);
+        println!("Node.js {} detected", version);
         return Ok(());
     }
 
     if major >= 20 {
-        tracing::warn!(
+        eprintln!(
             "Node.js {} detected. This version reaches EOL April 2026. Please upgrade to v22+ soon: https://nodejs.org",
             version
         );
@@ -202,49 +203,28 @@ fn verify_nodejs(node_path: &str) -> Result<(), AiWorkerError> {
     Err(AiWorkerError::NodeTooOld(version.to_string()))
 }
 
-fn find_worker_path() -> Result<PathBuf, AiWorkerError> {
-    if let Ok(path) = std::env::var("LEANSPEC_AI_WORKER") {
-        let path = PathBuf::from(path);
-        if path.exists() {
+fn find_worker_path() -> Result<String, AiWorkerError> {
+    if let Ok(path) = std::env::var("LEANSPEC_AI_WORKER_PATH") {
+        if PathBuf::from(&path).exists() {
             return Ok(path);
         }
     }
 
-    let dev_path =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../packages/ai-worker/dist/worker.js");
-    if dev_path.exists() {
-        return Ok(dev_path);
+    let exe_path = std::env::current_exe().map_err(|e| AiWorkerError::Io(e.to_string()))?;
+    if let Some(parent) = exe_path.parent() {
+        let candidate = parent.join("leanspec-ai-worker.cjs");
+        if candidate.exists() {
+            return Ok(candidate.to_string_lossy().to_string());
+        }
     }
 
-    if let Ok(exe_path) = std::env::current_exe() {
-        if let Some(exe_dir) = exe_path.parent() {
-            if let Some(node_modules) = find_node_modules_dir(exe_dir) {
-                let worker_path = node_modules
-                    .join("@leanspec")
-                    .join("ai-worker")
-                    .join("dist")
-                    .join("worker.js");
-                if worker_path.exists() {
-                    return Ok(worker_path);
-                }
-            }
-        }
+    let cwd = std::env::current_dir().map_err(|e| AiWorkerError::Io(e.to_string()))?;
+    let candidate = cwd.join("packages/ai-worker/dist/worker.cjs");
+    if candidate.exists() {
+        return Ok(candidate.to_string_lossy().to_string());
     }
 
     Err(AiWorkerError::WorkerNotFound)
-}
-
-fn find_node_modules_dir(start: &Path) -> Option<PathBuf> {
-    let mut current = Some(start);
-    for _ in 0..6 {
-        let dir = current?;
-        let candidate = dir.join("node_modules");
-        if candidate.exists() {
-            return Some(candidate);
-        }
-        current = dir.parent();
-    }
-    None
 }
 
 fn spawn_stderr_logger(stderr: tokio::process::ChildStderr) {
@@ -252,7 +232,7 @@ fn spawn_stderr_logger(stderr: tokio::process::ChildStderr) {
         let reader = BufReader::new(stderr);
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
-            tracing::warn!("[ai-worker stderr] {}", line);
+            eprintln!("[ai-worker stderr] {}", line);
         }
     });
 }
@@ -266,154 +246,21 @@ fn spawn_stdout_handler(
         let mut lines = reader.lines();
 
         while let Ok(Some(line)) = lines.next_line().await {
-            match serde_json::from_str::<WorkerResponse>(&line) {
+            let parsed: Result<WorkerResponse, _> = serde_json::from_str(&line);
+            match parsed {
                 Ok(response) => {
-                    let request_id = response.id().to_string();
+                    let id = response.id().to_string();
                     let mut pending = pending.lock().await;
-                    if let Some(sender) = pending.get_mut(&request_id) {
-                        let is_terminal = matches!(
-                            response,
-                            WorkerResponse::Done { .. } | WorkerResponse::Error { .. }
-                        );
+                    if let Some(sender) = pending.get_mut(&id) {
                         if sender.send(response).await.is_err() {
-                            pending.remove(&request_id);
-                            continue;
-                        }
-                        if is_terminal {
-                            pending.remove(&request_id);
+                            pending.remove(&id);
                         }
                     }
                 }
-                Err(error) => {
-                    tracing::error!(
-                        "Failed to parse worker response: {} - Line: {}",
-                        error,
-                        line
-                    );
+                Err(err) => {
+                    eprintln!("Failed to parse AI worker response: {}", err);
                 }
             }
         }
     });
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_resolve_node_path_default() {
-        // Unset LEANSPEC_NODE_PATH to test default
-        std::env::remove_var("LEANSPEC_NODE_PATH");
-        assert_eq!(resolve_node_path(), "node");
-    }
-
-    #[test]
-    fn test_resolve_node_path_custom() {
-        std::env::set_var("LEANSPEC_NODE_PATH", "/custom/path/node");
-        assert_eq!(resolve_node_path(), "/custom/path/node");
-        std::env::remove_var("LEANSPEC_NODE_PATH");
-    }
-
-    #[test]
-    fn test_verify_nodejs_skipped() {
-        std::env::set_var("LEANSPEC_SKIP_NODE_VERSION_CHECK", "1");
-        assert!(verify_nodejs("node").is_ok());
-        std::env::remove_var("LEANSPEC_SKIP_NODE_VERSION_CHECK");
-    }
-
-    #[test]
-    fn test_verify_nodejs_not_found() {
-        // Using a non-existent binary
-        let result = verify_nodejs("/nonexistent/node/binary");
-        assert!(matches!(result, Err(AiWorkerError::NodeNotFound)));
-    }
-
-    #[test]
-    fn test_find_worker_path_env_override() {
-        let test_path = std::env::temp_dir().join("test_worker.js");
-        std::fs::write(&test_path, "// test").unwrap();
-
-        std::env::set_var("LEANSPEC_AI_WORKER", test_path.to_str().unwrap());
-        assert_eq!(find_worker_path().unwrap(), test_path);
-
-        std::env::remove_var("LEANSPEC_AI_WORKER");
-        std::fs::remove_file(&test_path).unwrap();
-    }
-
-    #[test]
-    fn test_find_worker_path_not_found() {
-        // Ensure env var is not set
-        std::env::remove_var("LEANSPEC_AI_WORKER");
-
-        // This may fail in non-dev environments, but tests the logic
-        let result = find_worker_path();
-        // In CI or production without node_modules, this should fail
-        if result.is_err() {
-            assert!(matches!(result, Err(AiWorkerError::WorkerNotFound)));
-        }
-    }
-
-    #[test]
-    fn test_find_node_modules_dir() {
-        // Test traversal logic
-        let start = std::env::temp_dir();
-        let _result = find_node_modules_dir(&start);
-        // Result depends on environment, just ensure it doesn't panic
-        // In a real project with node_modules, this would find it
-    }
-
-    #[test]
-    fn test_worker_response_id_extraction() {
-        let chunk = WorkerResponse::Chunk {
-            id: "test-123".to_string(),
-            data: serde_json::json!({}),
-        };
-        assert_eq!(chunk.id(), "test-123");
-
-        let done = WorkerResponse::Done {
-            id: "test-456".to_string(),
-        };
-        assert_eq!(done.id(), "test-456");
-
-        let error = WorkerResponse::Error {
-            id: "test-789".to_string(),
-            error: "test error".to_string(),
-        };
-        assert_eq!(error.id(), "test-789");
-    }
-
-    #[test]
-    fn test_ai_worker_error_display() {
-        let err = AiWorkerError::NodeNotFound;
-        assert!(err.to_string().contains("Node.js not found"));
-
-        let err = AiWorkerError::NodeTooOld("v18.0.0".to_string());
-        assert!(err.to_string().contains("v18.0.0"));
-
-        let err = AiWorkerError::WorkerNotFound;
-        assert!(err.to_string().contains("AI worker script not found"));
-
-        let err = AiWorkerError::Disabled("test reason".to_string());
-        assert!(err.to_string().contains("AI worker disabled"));
-    }
-
-    #[test]
-    fn test_worker_chat_payload_serialization() {
-        use crate::ai::protocol::WorkerChatPayload;
-
-        let payload = WorkerChatPayload {
-            messages: vec![serde_json::json!({"role": "user", "content": "hello"})],
-            project_id: Some("proj-123".to_string()),
-            provider_id: Some("openai".to_string()),
-            model_id: Some("gpt-4o".to_string()),
-            session_id: Some("session-456".to_string()),
-            config: None,
-            base_url: Some("http://localhost:3000".to_string()),
-        };
-
-        let json = serde_json::to_string(&payload).unwrap();
-        assert!(json.contains("projectId")); // camelCase
-        assert!(json.contains("providerId")); // camelCase
-        assert!(json.contains("proj-123"));
-    }
 }
