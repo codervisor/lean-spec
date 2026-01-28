@@ -543,17 +543,15 @@ mod tests {
     fn test_build_openai_messages_with_system_prompt() {
         let messages = vec![];
         let result = build_openai_messages(messages, "Test system prompt");
-        
+
         assert_eq!(result.len(), 1);
         match &result[0] {
-            ChatCompletionRequestMessage::System(msg) => {
-                match &msg.content {
-                    ChatCompletionRequestSystemMessageContent::Text(text) => {
-                        assert_eq!(text, "Test system prompt");
-                    }
-                    _ => panic!("Expected text content"),
+            ChatCompletionRequestMessage::System(msg) => match &msg.content {
+                ChatCompletionRequestSystemMessageContent::Text(text) => {
+                    assert_eq!(text, "Test system prompt");
                 }
-            }
+                _ => panic!("Expected text content"),
+            },
             _ => panic!("Expected system message"),
         }
     }
@@ -568,19 +566,17 @@ mod tests {
             }],
             metadata: None,
         }];
-        
+
         let result = ui_messages_to_openai(messages);
         assert_eq!(result.len(), 1);
-        
+
         match &result[0] {
-            ChatCompletionRequestMessage::User(msg) => {
-                match &msg.content {
-                    ChatCompletionRequestUserMessageContent::Text(text) => {
-                        assert_eq!(text, "Hello");
-                    }
-                    _ => panic!("Expected text content"),
+            ChatCompletionRequestMessage::User(msg) => match &msg.content {
+                ChatCompletionRequestUserMessageContent::Text(text) => {
+                    assert_eq!(text, "Hello");
                 }
-            }
+                _ => panic!("Expected text content"),
+            },
             _ => panic!("Expected user message"),
         }
     }
@@ -595,19 +591,17 @@ mod tests {
             }],
             metadata: None,
         }];
-        
+
         let result = ui_messages_to_openai(messages);
         assert_eq!(result.len(), 1);
-        
+
         match &result[0] {
-            ChatCompletionRequestMessage::Assistant(msg) => {
-                match &msg.content {
-                    Some(ChatCompletionRequestAssistantMessageContent::Text(text)) => {
-                        assert_eq!(text, "Hi there");
-                    }
-                    _ => panic!("Expected text content"),
+            ChatCompletionRequestMessage::Assistant(msg) => match &msg.content {
+                Some(ChatCompletionRequestAssistantMessageContent::Text(text)) => {
+                    assert_eq!(text, "Hi there");
                 }
-            }
+                _ => panic!("Expected text content"),
+            },
             _ => panic!("Expected assistant message"),
         }
     }
@@ -622,7 +616,7 @@ mod tests {
             }],
             metadata: None,
         }];
-        
+
         let result = ui_messages_to_openai(messages);
         assert!(result.is_empty());
     }
@@ -642,7 +636,7 @@ mod tests {
             ],
             metadata: None,
         };
-        
+
         let text = ui_message_text(&message);
         assert_eq!(text, "Line 1\nLine 2");
     }
@@ -657,7 +651,7 @@ mod tests {
             }],
             metadata: None,
         }];
-        
+
         let (anthropic_msgs, system_extra) = build_anthropic_messages(messages);
         assert!(anthropic_msgs.is_empty());
         assert_eq!(system_extra, "System prompt");
@@ -683,16 +677,16 @@ mod tests {
                 metadata: None,
             },
         ];
-        
+
         let (anthropic_msgs, system_extra) = build_anthropic_messages(messages);
         assert_eq!(anthropic_msgs.len(), 2);
         assert!(system_extra.is_empty());
-        
+
         match &anthropic_msgs[0].role {
             anthropic::types::Role::User => {}
             _ => panic!("Expected user role"),
         }
-        
+
         match &anthropic_msgs[1].role {
             anthropic::types::Role::Assistant => {}
             _ => panic!("Expected assistant role"),
