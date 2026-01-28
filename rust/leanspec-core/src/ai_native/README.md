@@ -1,8 +1,8 @@
 # AI Native Module - Migration Plan
 
-## Current Status: DISABLED
+## Current Status: ENABLED
 
-The AI feature is temporarily disabled due to compatibility issues with the `aisdk` crate (Rust 2024 edition let-chains).
+The AI feature now uses native Rust providers (`async-openai` + `anthropic`) and is enabled in the `full` feature set.
 
 ## Migration Plan
 
@@ -68,30 +68,17 @@ let tool = ChatCompletionTool {
 };
 ```
 
-### Migration Steps
+### Migration Steps (Completed)
 
-1. **Add JsonSchema derive** to all input types in `tools/mod.rs`
-2. **Rewrite `providers.rs`** to create `async_openai::Client` and `anthropic::Client`
-3. **Rewrite `chat.rs`** with provider-specific streaming:
-   - OpenAI/OpenRouter: Use `async-openai` streaming API
-   - Anthropic: Use `anthropic` crate streaming API
-4. **Update tool definitions** to use `ChatCompletionTool` format
-5. **Test with each provider**
+1. ✅ Add JsonSchema derive to all input types in `tools/mod.rs`
+2. ✅ Rewrite `providers.rs` to create `async_openai::Client` and `anthropic::Client`
+3. ✅ Rewrite `chat.rs` with provider-specific streaming
+4. ✅ Update tool definitions to use `ChatCompletionTool` format
+5. ✅ Re-enable AI in `full` feature
 
-### Re-enabling AI Feature
+### Feature Flag
 
-After completing migration:
-
-```toml
-# In leanspec-core/Cargo.toml
-[features]
-full = ["sessions", "storage", "ai"]  # Re-add "ai"
-```
-
-```toml
-# In leanspec-http/Cargo.toml - optionally enable AI
-leanspec-core = { path = "../leanspec-core", features = ["full"] }
-```
+AI is enabled via `leanspec-core` `full` feature and inherits into `leanspec-http` via the `full` feature set.
 
 ### Testing
 

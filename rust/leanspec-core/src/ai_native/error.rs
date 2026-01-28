@@ -14,6 +14,12 @@ pub enum AiError {
     Provider(String),
     #[error("Tool error: {0}")]
     Tool(String),
+    #[error("Tool execution failed: {tool_name} - {message}")]
+    ToolExecution { tool_name: String, message: String },
     #[error("Serialization error: {0}")]
     Serialization(String),
+    #[error("Stream error: {0}")]
+    Stream(String),
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
 }

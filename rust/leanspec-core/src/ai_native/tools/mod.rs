@@ -1,13 +1,42 @@
 //! LeanSpec AI tools (native)
 
-use aisdk::core::tools::{Tool, ToolExecute, ToolList};
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use async_openai::types::chat::{ChatCompletionTool, ChatCompletionTools, FunctionObject};
 use regex::Regex;
 use schemars::schema_for;
+use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::ai_native::error::AiError;
+
+type ToolExecutor = Arc<dyn Fn(Value) -> Result<String, String> + Send + Sync + 'static>;
+
+#[derive(Clone)]
+pub struct ToolRegistry {
+    tools: Vec<ChatCompletionTools>,
+    executors: Arc<HashMap<String, ToolExecutor>>,
+}
+
+impl ToolRegistry {
+    pub fn tools(&self) -> &[ChatCompletionTools] {
+        &self.tools
+    }
+
+    pub fn execute(&self, name: &str, input: Value) -> Result<String, AiError> {
+        let executor = self
+            .executors
+            .get(name)
+            .ok_or_else(|| AiError::Tool(format!("Unknown tool: {}", name)))?;
+        executor(input).map_err(|e| AiError::ToolExecution {
+            tool_name: name.to_string(),
+            message: e,
+        })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ToolContext {
@@ -15,7 +44,7 @@ pub struct ToolContext {
     pub project_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListSpecsInput {
     pub project_id: Option<String>,
@@ -24,7 +53,7 @@ pub struct ListSpecsInput {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchSpecsInput {
     pub project_id: Option<String>,
@@ -34,14 +63,14 @@ pub struct SearchSpecsInput {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecIdInput {
     pub project_id: Option<String>,
     pub spec_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSpecStatusInput {
     pub project_id: Option<String>,
@@ -49,7 +78,7 @@ pub struct UpdateSpecStatusInput {
     pub status: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct LinkSpecsInput {
     pub project_id: Option<String>,
@@ -57,14 +86,14 @@ pub struct LinkSpecsInput {
     pub depends_on: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ValidateSpecsInput {
     pub project_id: Option<String>,
     pub spec_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSpecInput {
     pub project_id: Option<String>,
@@ -73,7 +102,7 @@ pub struct UpdateSpecInput {
     pub expected_content_hash: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSpecSectionInput {
     pub project_id: Option<String>,
@@ -84,7 +113,7 @@ pub struct UpdateSpecSectionInput {
     pub expected_content_hash: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ToggleChecklistInput {
     pub project_id: Option<String>,
@@ -94,7 +123,7 @@ pub struct ToggleChecklistInput {
     pub expected_content_hash: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SubSpecInput {
     pub project_id: Option<String>,
@@ -102,7 +131,7 @@ pub struct SubSpecInput {
     pub file: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSubSpecInput {
     pub project_id: Option<String>,
@@ -150,12 +179,9 @@ fn fetch_json(method: &str, url: &str, body: Option<Value>) -> Result<Value, Str
 
     let response = request.send().map_err(|e| e.to_string())?;
     if !response.status().is_success() {
+        let status = response.status();
         let text = response.text().unwrap_or_default();
-        return Err(format!(
-            "LeanSpec API error ({}): {}",
-            response.status(),
-            text
-        ));
+        return Err(format!("LeanSpec API error ({}): {}", status, text));
     }
 
     response.json::<Value>().map_err(|e| e.to_string())
@@ -336,28 +362,37 @@ fn toggle_checklist_item_in_body(
     Ok(lines.join("\n"))
 }
 
-fn make_tool<F, I>(name: &str, description: &str, execute: F) -> Tool
+fn make_tool<F, I>(name: &str, description: &str, execute: F) -> Result<(ChatCompletionTools, ToolExecutor), AiError>
 where
     F: Fn(Value) -> Result<String, String> + Send + Sync + 'static,
-    I: schemars::JsonSchema,
+    I: JsonSchema,
 {
-    Tool {
-        name: name.to_string(),
-        description: description.to_string(),
-        input_schema: schema_for!(I),
-        execute: ToolExecute::new(Box::new(execute)),
-    }
+    let schema = schema_for!(I);
+    let params = serde_json::to_value(&schema).map_err(|e| AiError::Serialization(e.to_string()))?;
+    let tool = ChatCompletionTools::Function(ChatCompletionTool {
+        function: FunctionObject {
+            name: name.to_string(),
+            description: Some(description.to_string()),
+            parameters: Some(params),
+            strict: None,
+        },
+    });
+
+    Ok((tool, Arc::new(execute)))
 }
 
-pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
+pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
     let ToolContext {
         base_url,
         project_id,
     } = context;
 
+    let mut tools: Vec<ChatCompletionTools> = Vec::new();
+    let mut executors: HashMap<String, ToolExecutor> = HashMap::new();
+
     let base_url_list = base_url.clone();
     let project_id_list = project_id.clone();
-    let list_specs = make_tool::<_, ListSpecsInput>(
+    let (list_specs_tool, list_specs_exec) = make_tool::<_, ListSpecsInput>(
         "list_specs",
         "List specs with optional filters",
         move |value| {
@@ -387,12 +422,16 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             let value = fetch_json("GET", &url, None)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(list_specs_tool);
+    executors.insert("list_specs".to_string(), list_specs_exec);
 
     let base_url_search = base_url.clone();
     let project_id_search = project_id.clone();
-    let search_specs =
-        make_tool::<_, SearchSpecsInput>("search_specs", "Search specs by query", move |value| {
+    let (search_specs_tool, search_specs_exec) = make_tool::<_, SearchSpecsInput>(
+        "search_specs",
+        "Search specs by query",
+        move |value| {
             let params: SearchSpecsInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_search)?;
             let url = format!(
@@ -410,12 +449,17 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             });
             let value = fetch_json("POST", &url, Some(body))?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        });
+        },
+    )?;
+    tools.push(search_specs_tool);
+    executors.insert("search_specs".to_string(), search_specs_exec);
 
     let base_url_get = base_url.clone();
     let project_id_get = project_id.clone();
-    let get_spec =
-        make_tool::<_, SpecIdInput>("get_spec", "Get a spec by name or number", move |value| {
+    let (get_spec_tool, get_spec_exec) = make_tool::<_, SpecIdInput>(
+        "get_spec",
+        "Get a spec by name or number",
+        move |value| {
             let params: SpecIdInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_get)?;
             let url = format!(
@@ -426,11 +470,14 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             );
             let value = fetch_json("GET", &url, None)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        });
+        },
+    )?;
+    tools.push(get_spec_tool);
+    executors.insert("get_spec".to_string(), get_spec_exec);
 
     let base_url_status = base_url.clone();
     let project_id_status = project_id.clone();
-    let update_spec_status = make_tool::<_, UpdateSpecStatusInput>(
+    let (update_spec_status_tool, update_spec_status_exec) = make_tool::<_, UpdateSpecStatusInput>(
         "update_spec_status",
         "Update spec status",
         move |value| {
@@ -446,12 +493,16 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             let value = fetch_json("POST", &url, Some(body))?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(update_spec_status_tool);
+    executors.insert("update_spec_status".to_string(), update_spec_status_exec);
 
     let base_url_link = base_url.clone();
     let project_id_link = project_id.clone();
-    let link_specs =
-        make_tool::<_, LinkSpecsInput>("link_specs", "Link spec dependency", move |value| {
+    let (link_specs_tool, link_specs_exec) = make_tool::<_, LinkSpecsInput>(
+        "link_specs",
+        "Link spec dependency",
+        move |value| {
             let params: LinkSpecsInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_link)?;
             let url = format!(
@@ -463,12 +514,17 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             let body = serde_json::json!({ "dependsOn": params.depends_on });
             let value = fetch_json("POST", &url, Some(body))?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        });
+        },
+    )?;
+    tools.push(link_specs_tool);
+    executors.insert("link_specs".to_string(), link_specs_exec);
 
     let base_url_unlink = base_url.clone();
     let project_id_unlink = project_id.clone();
-    let unlink_specs =
-        make_tool::<_, LinkSpecsInput>("unlink_specs", "Remove spec dependency", move |value| {
+    let (unlink_specs_tool, unlink_specs_exec) = make_tool::<_, LinkSpecsInput>(
+        "unlink_specs",
+        "Remove spec dependency",
+        move |value| {
             let params: LinkSpecsInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_unlink)?;
             let url = format!(
@@ -480,11 +536,14 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             );
             let value = fetch_json("DELETE", &url, None)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        });
+        },
+    )?;
+    tools.push(unlink_specs_tool);
+    executors.insert("unlink_specs".to_string(), unlink_specs_exec);
 
     let base_url_validate = base_url.clone();
     let project_id_validate = project_id.clone();
-    let validate_specs = make_tool::<_, ValidateSpecsInput>(
+    let (validate_specs_tool, validate_specs_exec) = make_tool::<_, ValidateSpecsInput>(
         "validate_specs",
         "Validate all specs or a single spec",
         move |value| {
@@ -502,21 +561,28 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             let value = fetch_json("POST", &url, Some(body))?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(validate_specs_tool);
+    executors.insert("validate_specs".to_string(), validate_specs_exec);
 
     let base_url_read = base_url.clone();
     let project_id_read = project_id.clone();
-    let read_spec =
-        make_tool::<_, SpecIdInput>("read_spec", "Read raw spec content", move |value| {
+    let (read_spec_tool, read_spec_exec) = make_tool::<_, SpecIdInput>(
+        "read_spec",
+        "Read raw spec content",
+        move |value| {
             let params: SpecIdInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_read)?;
             let value = get_spec_raw(&base_url_read, &project_id, &params.spec_id)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        });
+        },
+    )?;
+    tools.push(read_spec_tool);
+    executors.insert("read_spec".to_string(), read_spec_exec);
 
     let base_url_update = base_url.clone();
     let project_id_update = project_id.clone();
-    let update_spec = make_tool::<_, UpdateSpecInput>(
+    let (update_spec_tool, update_spec_exec) = make_tool::<_, UpdateSpecInput>(
         "update_spec",
         "Update spec content with full replacement",
         move |value| {
@@ -531,11 +597,13 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             )?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(update_spec_tool);
+    executors.insert("update_spec".to_string(), update_spec_exec);
 
     let base_url_section = base_url.clone();
     let project_id_section = project_id.clone();
-    let update_spec_section = make_tool::<_, UpdateSpecSectionInput>(
+    let (update_spec_section_tool, update_spec_section_exec) = make_tool::<_, UpdateSpecSectionInput>(
         "update_spec_section",
         "Replace or append a section in spec content",
         move |value| {
@@ -555,11 +623,13 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             )?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(update_spec_section_tool);
+    executors.insert("update_spec_section".to_string(), update_spec_section_exec);
 
     let base_url_checklist = base_url.clone();
     let project_id_checklist = project_id.clone();
-    let toggle_checklist_item = make_tool::<_, ToggleChecklistInput>(
+    let (toggle_checklist_item_tool, toggle_checklist_item_exec) = make_tool::<_, ToggleChecklistInput>(
         "toggle_checklist_item",
         "Check or uncheck a checklist item in a spec",
         move |value| {
@@ -578,11 +648,13 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             )?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(toggle_checklist_item_tool);
+    executors.insert("toggle_checklist_item".to_string(), toggle_checklist_item_exec);
 
     let base_url_subspec = base_url.clone();
     let project_id_subspec = project_id.clone();
-    let read_subspec = make_tool::<_, SubSpecInput>(
+    let (read_subspec_tool, read_subspec_exec) = make_tool::<_, SubSpecInput>(
         "read_subspec",
         "Read raw content of a sub-spec file",
         move |value| {
@@ -596,11 +668,13 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             )?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(read_subspec_tool);
+    executors.insert("read_subspec".to_string(), read_subspec_exec);
 
     let base_url_update_subspec = base_url.clone();
     let project_id_update_subspec = project_id.clone();
-    let update_subspec = make_tool::<_, UpdateSubSpecInput>(
+    let (update_subspec_tool, update_subspec_exec) = make_tool::<_, UpdateSubSpecInput>(
         "update_subspec",
         "Update raw content of a sub-spec file",
         move |value| {
@@ -616,21 +690,12 @@ pub fn build_tools(context: ToolContext) -> Result<ToolList, AiError> {
             )?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
         },
-    );
+    )?;
+    tools.push(update_subspec_tool);
+    executors.insert("update_subspec".to_string(), update_subspec_exec);
 
-    Ok(ToolList::new(vec![
-        list_specs,
-        search_specs,
-        get_spec,
-        update_spec_status,
-        link_specs,
-        unlink_specs,
-        validate_specs,
-        read_spec,
-        update_spec,
-        update_spec_section,
-        toggle_checklist_item,
-        read_subspec,
-        update_subspec,
-    ]))
+    Ok(ToolRegistry {
+        tools,
+        executors: Arc::new(executors),
+    })
 }

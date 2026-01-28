@@ -1,15 +1,16 @@
-//! Provider factory for aisdk
+//! Provider factory for native Rust AI clients
+
+use async_openai::config::OpenAIConfig;
+use async_openai::Client as OpenAIClient;
 
 use crate::ai_native::error::AiError;
 use crate::storage::chat_config::{ChatConfig, ChatProvider};
-use aisdk::core::DynamicModel;
-use aisdk::providers::{Anthropic, OpenAI, OpenRouter};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ProviderClient {
-    OpenAI(OpenAI<DynamicModel>),
-    Anthropic(Anthropic<DynamicModel>),
-    OpenRouter(OpenRouter<DynamicModel>),
+    OpenAI(OpenAIClient<OpenAIConfig>),
+    Anthropic(anthropic::client::Client),
+    OpenRouter(OpenAIClient<OpenAIConfig>),
 }
 
 impl ProviderClient {
@@ -36,6 +37,7 @@ fn resolve_api_key(template: &str) -> String {
 pub struct ProviderSelection {
     pub provider_id: String,
     pub model_id: String,
+    pub model_max_tokens: Option<u32>,
     pub provider: ProviderClient,
 }
 
@@ -61,43 +63,33 @@ pub fn select_provider(
         return Err(AiError::MissingApiKey(provider.name.clone()));
     }
 
-    let provider_client = build_provider(provider, model.id.as_str(), &api_key)?;
+    let provider_client = build_provider(provider, &api_key)?;
 
     Ok(ProviderSelection {
         provider_id: provider.id.clone(),
         model_id: model.id.clone(),
+        model_max_tokens: model.max_tokens,
         provider: provider_client,
     })
 }
 
-fn build_provider(
-    provider: &ChatProvider,
-    model_id: &str,
-    api_key: &str,
-) -> Result<ProviderClient, AiError> {
+fn build_provider(provider: &ChatProvider, api_key: &str) -> Result<ProviderClient, AiError> {
     match provider.id.as_str() {
         "openai" => {
-            let mut builder = OpenAI::<DynamicModel>::builder()
-                .model_name(model_id)
-                .api_key(api_key);
+            let mut config = OpenAIConfig::new().with_api_key(api_key.to_string());
             if let Some(base_url) = provider.base_url.clone() {
                 if !base_url.is_empty() {
-                    builder = builder.base_url(base_url);
+                    config = config.with_api_base(base_url);
                 }
             }
-            Ok(ProviderClient::OpenAI(
-                builder
-                    .build()
-                    .map_err(|e| AiError::Provider(e.to_string()))?,
-            ))
+            Ok(ProviderClient::OpenAI(OpenAIClient::with_config(config)))
         }
         "anthropic" => {
-            let mut builder = Anthropic::<DynamicModel>::builder()
-                .model_name(model_id)
-                .api_key(api_key);
+            let mut builder = anthropic::client::ClientBuilder::default();
+            builder.api_key(api_key.to_string());
             if let Some(base_url) = provider.base_url.clone() {
                 if !base_url.is_empty() {
-                    builder = builder.base_url(base_url);
+                    builder.api_base(base_url);
                 }
             }
             Ok(ProviderClient::Anthropic(
@@ -107,19 +99,15 @@ fn build_provider(
             ))
         }
         "openrouter" => {
-            let mut builder = OpenRouter::<DynamicModel>::builder()
-                .model_name(model_id)
-                .api_key(api_key);
-            let base_url = provider
-                .base_url
-                .clone()
-                .unwrap_or_else(|| "https://openrouter.ai/api/v1".to_string());
-            builder = builder.base_url(base_url);
-            Ok(ProviderClient::OpenRouter(
-                builder
-                    .build()
-                    .map_err(|e| AiError::Provider(e.to_string()))?,
-            ))
+            let mut config = OpenAIConfig::new().with_api_key(api_key.to_string());
+            if let Some(base_url) = provider.base_url.clone() {
+                if !base_url.is_empty() {
+                    config = config.with_api_base(base_url);
+                }
+            }
+            Ok(ProviderClient::OpenRouter(OpenAIClient::with_config(
+                config,
+            )))
         }
         other => Err(AiError::InvalidProvider(other.to_string())),
     }

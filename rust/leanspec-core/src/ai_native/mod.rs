@@ -1,4 +1,4 @@
-//! Native Rust AI integration using aisdk
+//! Native Rust AI integration using async-openai and anthropic
 
 pub mod chat;
 pub mod error;
