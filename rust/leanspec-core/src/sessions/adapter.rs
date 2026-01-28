@@ -210,9 +210,7 @@ impl CopilotAdapter {
                 .args(["extension", "list"])
                 .output()
                 .await
-                .map_err(|e| {
-                    CoreError::ToolError(format!("Failed to check extensions: {}", e))
-                })?;
+                .map_err(|e| CoreError::ToolError(format!("Failed to check extensions: {}", e)))?;
 
             let output_str = String::from_utf8_lossy(&output.stdout);
             Ok(output_str.contains("copilot"))
@@ -349,18 +347,16 @@ impl ToolAdapter for CodexAdapter {
 
         // Check OpenAI API key
         if std::env::var("OPENAI_API_KEY").is_err() {
-            return Err(CoreError::ConfigError(
-                "OPENAI_API_KEY not set".to_string(),
-            ));
+            return Err(CoreError::ConfigError("OPENAI_API_KEY not set".to_string()));
         }
 
         Ok(())
     }
 
     fn build_command(&self, config: &SessionConfig) -> CoreResult<Command> {
-        let binary = self.find_binary().ok_or_else(|| {
-            CoreError::ToolNotFound("codex".to_string(), "Not found".to_string())
-        })?;
+        let binary = self
+            .find_binary()
+            .ok_or_else(|| CoreError::ToolNotFound("codex".to_string(), "Not found".to_string()))?;
 
         let mut cmd = Command::new(binary);
 

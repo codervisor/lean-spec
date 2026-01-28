@@ -98,7 +98,10 @@ impl AiWorker {
 
     pub async fn reload_config(&mut self, config: serde_json::Value) -> Result<(), AiWorkerError> {
         let id = uuid::Uuid::new_v4().to_string();
-        let request = WorkerRequest::ReloadConfig { id, payload: config };
+        let request = WorkerRequest::ReloadConfig {
+            id,
+            payload: config,
+        };
         self.write_request(&request).await?;
         Ok(())
     }

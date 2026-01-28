@@ -57,8 +57,7 @@ impl ChatStore {
     pub fn new() -> CoreResult<Self> {
         let db_path = resolve_db_path()?;
         if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| CoreError::Other(e.to_string()))?;
+            std::fs::create_dir_all(parent).map_err(|e| CoreError::Other(e.to_string()))?;
         }
 
         let conn = Connection::open(&db_path).map_err(|e| CoreError::Other(e.to_string()))?;
@@ -401,12 +400,7 @@ fn resolve_db_path() -> CoreResult<PathBuf> {
     ))
 }
 
-fn ensure_column(
-    conn: &Connection,
-    table: &str,
-    column: &str,
-    definition: &str,
-) -> CoreResult<()> {
+fn ensure_column(conn: &Connection, table: &str, column: &str, definition: &str) -> CoreResult<()> {
     let mut stmt = conn
         .prepare(&format!("PRAGMA table_info({})", table))
         .map_err(|e| CoreError::Other(e.to_string()))?;
