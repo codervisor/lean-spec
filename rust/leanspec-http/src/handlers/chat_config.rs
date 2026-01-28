@@ -21,16 +21,6 @@ pub async fn update_chat_config(
         )
     })?;
 
-    let config = store.config();
-    drop(store);
-
-    if let Ok(value) = serde_json::to_value(&config) {
-        let mut manager = state.ai_worker.lock().await;
-        if let Err(error) = manager.reload_config(value).await {
-            tracing::warn!("Failed to reload AI worker config: {}", error);
-        }
-    }
-
     let config = state.chat_config.read().await.client_config();
     Ok(Json(config))
 }

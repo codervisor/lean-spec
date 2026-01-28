@@ -2,7 +2,6 @@
 //!
 //! Shared state for the HTTP server using Arc for thread-safety.
 
-use crate::ai::AiWorkerManager;
 use crate::chat_config::ChatConfigStore;
 use crate::chat_store::ChatStore;
 use crate::config::{config_dir, ServerConfig};
@@ -13,7 +12,7 @@ use crate::sync_state::SyncState;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
 /// Shared application state
 #[derive(Clone)]
@@ -32,9 +31,6 @@ pub struct AppState {
 
     /// Chat config store
     pub chat_config: Arc<RwLock<ChatConfigStore>>,
-
-    /// AI worker manager
-    pub ai_worker: Arc<Mutex<AiWorkerManager>>,
 
     /// Session manager for AI coding sessions
     pub session_manager: Arc<SessionManager>,
@@ -58,8 +54,6 @@ impl AppState {
 
         let chat_store = ChatStore::new()?;
         let chat_config = ChatConfigStore::load_default()?;
-        let ai_worker = AiWorkerManager::new();
-
         let sessions_dir = config_dir();
         fs::create_dir_all(&sessions_dir).map_err(|e| {
             ServerError::ConfigError(format!("Failed to create sessions dir: {}", e))
@@ -73,7 +67,6 @@ impl AppState {
             sync_state: Arc::new(RwLock::new(SyncState::load())),
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
-            ai_worker: Arc::new(Mutex::new(ai_worker)),
             session_manager,
         })
     }
@@ -82,7 +75,6 @@ impl AppState {
     pub fn with_registry(config: ServerConfig, registry: ProjectRegistry) -> Self {
         let chat_store = ChatStore::new().expect("Failed to initialize chat store");
         let chat_config = ChatConfigStore::load_default().expect("Failed to load chat config");
-        let ai_worker = AiWorkerManager::new();
         let session_db = SessionDatabase::new_in_memory()
             .expect("Failed to initialize in-memory session database");
         let session_manager = Arc::new(SessionManager::new(session_db));
@@ -92,7 +84,6 @@ impl AppState {
             sync_state: Arc::new(RwLock::new(SyncState::load())),
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
-            ai_worker: Arc::new(Mutex::new(ai_worker)),
             session_manager,
         }
     }

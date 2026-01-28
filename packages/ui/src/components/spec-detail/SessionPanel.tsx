@@ -1,20 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, cn } from '@leanspec/ui-components';
-import { Play, Square, Terminal, Plus, Loader2 } from 'lucide-react';
+import { Play, Square, Terminal, Plus, Loader2, ArrowUpRight } from 'lucide-react';
 import { api } from '../../lib/api';
-import type { Session, SessionLog, SessionMode, SessionStatus } from '../../types/api';
+import type { Session, SessionLog, SessionStatus } from '../../types/api';
 import { useTranslation } from 'react-i18next';
-
-const STATUS_STYLES: Record<SessionStatus, string> = {
-  pending: 'bg-muted text-muted-foreground',
-  running: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  paused: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  completed: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
-  failed: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-  cancelled: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-300',
-};
-
-const MODES: SessionMode[] = ['guided', 'autonomous', 'ralph'];
+import { SESSION_STATUS_STYLES } from '../../lib/session-utils';
+import { SessionCreateDialog } from '../sessions/SessionCreateDialog';
+import { useProject } from '../../contexts';
 
 interface SessionPanelProps {
   specId: string;
@@ -23,19 +16,18 @@ interface SessionPanelProps {
 
 export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
   const { t } = useTranslation('common');
+  const { projectId } = useParams<{ projectId: string }>();
+  const { currentProject } = useProject();
+  const resolvedProjectId = projectId ?? currentProject?.id;
+  const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tools, setTools] = useState<string[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [logs, setLogs] = useState<SessionLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
-
-  const [tool, setTool] = useState('claude');
-  const [mode, setMode] = useState<SessionMode>('autonomous');
 
   const canCreate = Boolean(projectPath);
 
@@ -52,19 +44,9 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
     }
   }, [specId, t]);
 
-  const loadTools = useCallback(async () => {
-    try {
-      const available = await api.listAvailableTools();
-      setTools(available.length ? available : ['claude', 'copilot', 'codex', 'opencode']);
-    } catch {
-      setTools(['claude', 'copilot', 'codex', 'opencode']);
-    }
-  }, []);
-
   useEffect(() => {
     void loadSessions();
-    void loadTools();
-  }, [loadSessions, loadTools]);
+  }, [loadSessions]);
 
   const statusLabel = useCallback(
     (status: SessionStatus) => t(`sessions.status.${status}`),
@@ -75,26 +57,6 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
     if (!iso) return t('sessions.labels.unknownTime');
     return new Date(iso).toLocaleString();
   }, [t]);
-
-  const runCreate = useCallback(async () => {
-    if (!projectPath) return;
-    setCreating(true);
-    try {
-      const created = await api.createSession({
-        projectPath,
-        specId,
-        tool,
-        mode,
-      });
-      await api.startSession(created.id);
-      await loadSessions();
-      setCreateOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('sessions.errors.create'));
-    } finally {
-      setCreating(false);
-    }
-  }, [projectPath, specId, tool, mode, loadSessions, t]);
 
   const handleStart = useCallback(async (sessionId: string) => {
     await api.startSession(sessionId);
@@ -193,7 +155,7 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
                 <div>
                   <div className="flex items-center gap-2 text-sm font-medium">
                     {session.tool}
-                    <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', STATUS_STYLES[session.status])}>
+                    <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
                       {statusLabel(session.status)}
                     </span>
                   </div>
@@ -202,6 +164,12 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="gap-1" asChild>
+                    <Link to={`${basePath}/sessions/${session.id}`}>
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                      {t('sessions.actions.view')}
+                    </Link>
+                  </Button>
                   {session.status === 'pending' && (
                     <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleStart(session.id)}>
                       <Play className="h-3.5 w-3.5" />
@@ -225,48 +193,13 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
         )}
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="w-[min(520px,90vw)]">
-          <DialogHeader>
-            <DialogTitle>{t('sessions.dialogs.createTitle')}</DialogTitle>
-            <DialogDescription>{t('sessions.dialogs.createDescription')}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.tool')}</label>
-              <select
-                value={tool}
-                onChange={(e) => setTool(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                {tools.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.mode')}</label>
-              <select
-                value={mode}
-                onChange={(e) => setMode(e.target.value as SessionMode)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                {MODES.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setCreateOpen(false)}>
-              {t('actions.cancel')}
-            </Button>
-            <Button size="sm" onClick={() => void runCreate()} disabled={!canCreate || creating}>
-              {creating ? t('actions.loading') : t('sessions.actions.run')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SessionCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        projectPath={projectPath}
+        defaultSpecId={specId}
+        onCreated={() => void loadSessions()}
+      />
 
       <Dialog open={logsOpen} onOpenChange={setLogsOpen}>
         <DialogContent className="w-[min(900px,90vw)] max-w-4xl max-h-[80vh] overflow-hidden">

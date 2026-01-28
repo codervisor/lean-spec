@@ -6,6 +6,8 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
 import { ChatPage } from '../pages/ChatPage';
 import { ChatSettingsPage } from '../pages/ChatSettingsPage';
+import { SessionDetailPage } from '../pages/SessionDetailPage';
+import { SessionsPage } from '../pages/SessionsPage';
 import { SpecDetailPage } from '../pages/SpecDetailPage';
 import { SpecsPage } from '../pages/SpecsPage';
 import { StatsPage } from '../pages/StatsPage';
@@ -28,6 +30,13 @@ export function createProjectRoutes(): RouteObject[] {
           element: <SpecDetailLayout />,
           children: [{ path: ':specName', element: <SpecDetailPage /> }],
         },
+      ],
+    },
+    {
+      path: 'sessions',
+      children: [
+        { index: true, element: <SessionsPage /> },
+        { path: ':sessionId', element: <SessionDetailPage /> },
       ],
     },
     { path: 'stats', element: <StatsPage /> },

@@ -145,41 +145,41 @@ Add a "View Sessions" action button to the spec detail page header.
 
 ### Phase 1: Sessions List Page
 
-- [ ] Create `/sessions` route and page component
-- [ ] Implement session list UI with status indicators
-- [ ] Add filtering by status, tool, mode, spec
-- [ ] Add sorting (started_at, duration, status)
-- [ ] Add pagination/infinite scroll
-- [ ] Add search functionality
-- [ ] Add quick action buttons (view, stop, retry)
-- [ ] Add to navigation menu
+- [x] Create `/sessions` route and page component
+- [x] Implement session list UI with status indicators
+- [x] Add filtering by status, tool, mode, spec
+- [x] Add sorting (started_at, duration, status)
+- [x] Add pagination/infinite scroll
+- [x] Add search functionality
+- [x] Add quick action buttons (view, stop, retry)
+- [x] Add to navigation menu
 
 ### Phase 2: Session Detail Page
 
-- [ ] Create `/sessions/:id` route and page component
-- [ ] Build session info header with controls
-- [ ] Implement log viewer component with WebSocket
-- [ ] Add log filtering by level
-- [ ] Add log search functionality
-- [ ] Add auto-scroll toggle
-- [ ] Add export logs feature
-- [ ] Display token usage and cost
+- [x] Create `/sessions/:id` route and page component
+- [x] Build session info header with controls
+- [x] Implement log viewer component with WebSocket
+- [x] Add log filtering by level
+- [x] Add log search functionality
+- [x] Add auto-scroll toggle
+- [x] Add export logs feature
+- [x] Display token usage and cost
 
 ### Phase 3: Spec Detail Integration
 
-- [ ] Add session count badge to spec header
-- [ ] Add "View Sessions" action button
-- [ ] Add "New Session" quick action
-- [ ] Link sessions list with spec filter pre-applied
-- [ ] Update session panel to link to detail page
+- [x] Add session count badge to spec header
+- [x] Add "View Sessions" action button
+- [x] Add "New Session" quick action
+- [x] Link sessions list with spec filter pre-applied
+- [x] Update session panel to link to detail page
 
 ### Phase 4: Navigation & Polish
 
-- [ ] Add sessions link to main navigation
-- [ ] Ensure mobile responsiveness
-- [ ] Add loading states
-- [ ] Add empty states
-- [ ] Add error handling
+- [x] Add sessions link to main navigation
+- [x] Ensure mobile responsiveness
+- [x] Add loading states
+- [x] Add empty states
+- [x] Add error handling
 
 ## Test
 

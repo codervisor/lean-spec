@@ -46,6 +46,9 @@ pub mod storage;
 #[cfg(feature = "ai")]
 pub mod ai;
 
+#[cfg(feature = "ai")]
+pub mod ai_native;
+
 // Re-exports for convenience
 pub use error::{CoreError, CoreResult};
 pub use parsers::FrontmatterParser;

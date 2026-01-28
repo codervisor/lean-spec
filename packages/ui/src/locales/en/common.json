@@ -15,6 +15,8 @@
     "closeMenu": "Close menu",
     "dashboard": "Dashboard",
     "allSpecifications": "All Specifications",
+    "sessions": "Sessions",
+    "sessionsDescription": "Monitor AI sessions",
     "dependencyGraph": "Dependency Graph",
     "analytics": "Analytics",
     "projectContext": "Project Context",
@@ -87,12 +89,28 @@
       "run": "Run Session",
       "start": "Start",
       "stop": "Stop",
-      "logs": "View Logs"
+      "logs": "View Logs",
+      "view": "View",
+      "retry": "Retry",
+      "export": "Export",
+      "copyId": "Copy ID",
+      "back": "Back to Sessions",
+      "restart": "Restart",
+      "viewSpec": "View Spec"
     },
     "labels": {
       "tool": "Tool",
       "mode": "Mode",
       "started": "Started",
+      "ended": "Ended",
+      "duration": "Duration",
+      "status": "Status",
+      "spec": "Spec",
+      "noSpec": "No spec",
+      "tokens": "Tokens",
+      "cost": "Estimated cost",
+      "costUnknown": "Unknown",
+      "costApprox": "≈${{value}}",
       "unknownTime": "Unknown"
     },
     "dialogs": {
@@ -104,6 +122,49 @@
       "load": "Failed to load sessions.",
       "create": "Failed to create session.",
       "noProjectPath": "Project path missing for this workspace."
+    }
+  },
+  "sessionsPage": {
+    "title": "Sessions",
+    "description": "Monitor AI coding sessions across specs.",
+    "count": "{{count}} sessions",
+    "filters": {
+      "search": "Search by session, spec, or tool",
+      "status": "Status",
+      "tool": "Tool",
+      "mode": "Mode",
+      "spec": "Spec"
+    },
+    "sort": {
+      "startedDesc": "Started (newest)",
+      "startedAsc": "Started (oldest)",
+      "durationDesc": "Duration (longest)",
+      "status": "Status"
+    },
+    "buttons": {
+      "loadMore": "Load more",
+      "refresh": "Refresh list"
+    },
+    "state": {
+      "errorTitle": "Unable to load sessions",
+      "emptyTitle": "No sessions yet",
+      "emptyDescription": "Create a new session to start tracking AI runs.",
+      "noResultsTitle": "No matching sessions",
+      "noResultsDescription": "Try adjusting your filters or search."
+    }
+  },
+  "sessionDetail": {
+    "title": "Session {{id}}",
+    "description": "Live logs and session details.",
+    "logsTitle": "Live Logs",
+    "logsDescription": "Streaming output from this session.",
+    "filters": {
+      "search": "Search logs",
+      "autoScroll": "Auto-scroll"
+    },
+    "state": {
+      "notFoundTitle": "Session unavailable",
+      "notFoundDescription": "The session could not be loaded."
     }
   },
   "chat": {

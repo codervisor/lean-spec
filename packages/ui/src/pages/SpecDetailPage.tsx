@@ -9,7 +9,9 @@ import {
   Maximize2,
   Minimize2,
   List as ListIcon,
-  ExternalLink
+  ExternalLink,
+  Terminal,
+  Plus
 } from 'lucide-react';
 import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
@@ -43,6 +45,8 @@ import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
+import { SessionPanel } from '../components/spec-detail/SessionPanel';
+import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
 
 // Sub-spec with frontend-assigned styling
 interface EnrichedSubSpec extends SubSpec {
@@ -71,6 +75,9 @@ export function SpecDetailPage() {
   const [dependencyGraphData, setDependencyGraphData] = useState<CompleteSpecRelationships | null>(null);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const { setMobileOpen } = useSpecDetailLayoutContext();
+  const [sessionCount, setSessionCount] = useState<number | null>(null);
+  const [sessionCountLoading, setSessionCountLoading] = useState(false);
+  const [createSessionOpen, setCreateSessionOpen] = useState(false);
 
   const describeError = useCallback((err: unknown) => {
     if (err instanceof APIError) {
@@ -169,6 +176,23 @@ export function SpecDetailPage() {
       void loadGraph();
     }
   }, [dependenciesDialogOpen, dependencyGraphData, spec]);
+
+  const loadSessionCount = useCallback(async () => {
+    if (!spec?.specName) return;
+    setSessionCountLoading(true);
+    try {
+      const data = await api.listSessions({ specId: spec.specName });
+      setSessionCount(data.length);
+    } catch {
+      setSessionCount(null);
+    } finally {
+      setSessionCountLoading(false);
+    }
+  }, [spec?.specName]);
+
+  useEffect(() => {
+    void loadSessionCount();
+  }, [loadSessionCount]);
 
   const subSpecs: EnrichedSubSpec[] = useMemo(() => {
     const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);
@@ -525,6 +549,34 @@ export function SpecDetailPage() {
                     </DialogContent>
                   </Dialog>
 
+                  <Link to={`${basePath}/sessions?spec=${encodeURIComponent(spec.specName)}`} className="inline-flex">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Terminal className="mr-1.5 h-3.5 w-3.5" />
+                      {t('sessions.actions.view')}
+                      <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                        {sessionCountLoading ? '…' : sessionCount ?? 0}
+                      </span>
+                    </Button>
+                  </Link>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCreateSessionOpen(true)}
+                    disabled={!currentProject?.path}
+                    className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    title={!currentProject?.path ? t('sessions.errors.noProjectPath') : undefined}
+                  >
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    {t('sessions.actions.new')}
+                  </Button>
+
                   {/* Focus Mode Toggle */}
                   <Button
                     type="button"
@@ -586,6 +638,9 @@ export function SpecDetailPage() {
         <div className={cn("flex flex-col xl:flex-row xl:items-start mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
             <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
+            {spec && (
+              <SessionPanel specId={spec.specName} projectPath={currentProject?.path} />
+            )}
           </main>
 
           {/* Right Sidebar for TOC (Desktop only) */}
@@ -607,6 +662,15 @@ export function SpecDetailPage() {
         </div>
         <BackToTop />
       </div>
+      {spec && (
+        <SessionCreateDialog
+          open={createSessionOpen}
+          onOpenChange={setCreateSessionOpen}
+          projectPath={currentProject?.path}
+          defaultSpecId={spec.specName}
+          onCreated={() => void loadSessionCount()}
+        />
+      )}
     </PageTransition>
   );
 }

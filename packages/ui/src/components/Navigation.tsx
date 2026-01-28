@@ -43,6 +43,12 @@ function parsePathname(pathname: string): { page: string; specId?: string; query
   if (path.startsWith('/specs/')) {
     return { page: 'spec-detail', specId: path.split('/')[2] };
   }
+  if (path === '/sessions' || path.startsWith('/sessions?')) {
+    return { page: 'sessions', query: path.split('?')[1] };
+  }
+  if (path.startsWith('/sessions/')) {
+    return { page: 'session-detail', specId: path.split('/')[2] };
+  }
 
   return { page: 'unknown' };
 }
@@ -59,6 +65,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
   const contextLabel = t('navigation.context');
   const settingsLabel = t('navigation.settings');
   const machinesLabel = t('navigation.machines');
+  const sessionsLabel = t('navigation.sessions');
 
   const parsed = parsePathname(location.pathname);
 
@@ -102,6 +109,18 @@ function Breadcrumb({ basePath }: { basePath: string }) {
       items = [
         { label: homeLabel, to: basePath },
         { label: specsLabel, to: `${basePath}/specs` },
+        { label: parsed.specId || '' },
+      ];
+      break;
+
+    case 'sessions':
+      items = [{ label: homeLabel, to: basePath }, { label: sessionsLabel }];
+      break;
+
+    case 'session-detail':
+      items = [
+        { label: homeLabel, to: basePath },
+        { label: sessionsLabel, to: `${basePath}/sessions` },
         { label: parsed.specId || '' },
       ];
       break;

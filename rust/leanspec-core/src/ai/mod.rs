@@ -1,9 +1,3 @@
-//! AI worker management
+//! AI module (native)
 
-pub mod manager;
-pub mod protocol;
-pub mod worker;
-
-pub use manager::AiWorkerManager;
-pub use protocol::{WorkerChatPayload, WorkerRequest, WorkerResponse};
-pub use worker::{AiWorker, AiWorkerError};
+pub use crate::ai_native::*;

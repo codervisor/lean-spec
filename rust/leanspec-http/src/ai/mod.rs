@@ -1,3 +1,3 @@
-//! AI worker re-exports (core)
+//! AI native re-exports (core)
 
-pub use leanspec_core::ai::*;
+pub use leanspec_core::ai_native::*;

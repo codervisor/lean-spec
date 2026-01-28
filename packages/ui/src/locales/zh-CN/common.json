@@ -15,6 +15,8 @@
     "closeMenu": "关闭菜单",
     "dashboard": "仪表板",
     "allSpecifications": "所有规范",
+    "sessions": "会话",
+    "sessionsDescription": "监控 AI 会话",
     "dependencyGraph": "依赖图",
     "analytics": "数据分析",
     "projectContext": "项目上下文",
@@ -87,12 +89,28 @@
       "run": "运行会话",
       "start": "开始",
       "stop": "停止",
-      "logs": "查看日志"
+      "logs": "查看日志",
+      "view": "查看",
+      "retry": "重试",
+      "export": "导出",
+      "copyId": "复制 ID",
+      "back": "返回会话列表",
+      "restart": "重新启动",
+      "viewSpec": "查看规范"
     },
     "labels": {
       "tool": "工具",
       "mode": "模式",
       "started": "开始时间",
+      "ended": "结束时间",
+      "duration": "持续时间",
+      "status": "状态",
+      "spec": "规范",
+      "noSpec": "未关联规范",
+      "tokens": "令牌",
+      "cost": "预估费用",
+      "costUnknown": "未知",
+      "costApprox": "约 ${{value}}",
       "unknownTime": "未知"
     },
     "dialogs": {
@@ -104,6 +122,49 @@
       "load": "加载会话失败。",
       "create": "创建会话失败。",
       "noProjectPath": "当前工作区缺少项目路径。"
+    }
+  },
+  "sessionsPage": {
+    "title": "会话",
+    "description": "跨规范监控 AI 编码会话。",
+    "count": "{{count}} 个会话",
+    "filters": {
+      "search": "按会话、规范或工具搜索",
+      "status": "状态",
+      "tool": "工具",
+      "mode": "模式",
+      "spec": "规范"
+    },
+    "sort": {
+      "startedDesc": "开始时间（最新）",
+      "startedAsc": "开始时间（最早）",
+      "durationDesc": "持续时间（最长）",
+      "status": "状态"
+    },
+    "buttons": {
+      "loadMore": "加载更多",
+      "refresh": "刷新列表"
+    },
+    "state": {
+      "errorTitle": "无法加载会话",
+      "emptyTitle": "暂无会话",
+      "emptyDescription": "创建新会话以开始跟踪 AI 运行情况。",
+      "noResultsTitle": "没有匹配的会话",
+      "noResultsDescription": "尝试调整筛选条件或搜索关键词。"
+    }
+  },
+  "sessionDetail": {
+    "title": "会话 {{id}}",
+    "description": "实时日志与会话详情。",
+    "logsTitle": "实时日志",
+    "logsDescription": "来自该会话的实时输出。",
+    "filters": {
+      "search": "搜索日志",
+      "autoScroll": "自动滚动"
+    },
+    "state": {
+      "notFoundTitle": "会话不可用",
+      "notFoundDescription": "无法加载该会话。"
     }
   },
   "chat": {
