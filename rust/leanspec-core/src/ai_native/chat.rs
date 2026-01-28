@@ -1,8 +1,8 @@
 //! Chat streaming implementation using async-openai and anthropic
 
 use async_openai::types::chat::{
-    ChatCompletionMessageToolCall, ChatCompletionMessageToolCalls,
-    ChatCompletionMessageToolCallChunk, ChatCompletionRequestAssistantMessage,
+    ChatCompletionMessageToolCall, ChatCompletionMessageToolCallChunk,
+    ChatCompletionMessageToolCalls, ChatCompletionRequestAssistantMessage,
     ChatCompletionRequestAssistantMessageContent, ChatCompletionRequestMessage,
     ChatCompletionRequestSystemMessage, ChatCompletionRequestSystemMessageContent,
     ChatCompletionRequestToolMessage, ChatCompletionRequestToolMessageContent,
@@ -304,9 +304,10 @@ async fn run_openai_conversation(
         ));
 
         for call in round.tool_calls {
-            let input = serde_json::from_str::<serde_json::Value>(&call.arguments).map_err(|e| {
-                AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
-            })?;
+            let input =
+                serde_json::from_str::<serde_json::Value>(&call.arguments).map_err(|e| {
+                    AiError::Tool(format!("Invalid tool input JSON for {}: {}", call.name, e))
+                })?;
 
             let _ = sender.send(StreamEvent::ToolInputStart {
                 tool_call_id: call.id.clone(),
@@ -321,9 +322,10 @@ async fn run_openai_conversation(
             let registry = tools.clone();
             let tool_name = call.name.clone();
             let exec_input = input.clone();
-            let result = tokio::task::spawn_blocking(move || registry.execute(&tool_name, exec_input))
-                .await
-                .map_err(|e| AiError::Tool(e.to_string()))??;
+            let result =
+                tokio::task::spawn_blocking(move || registry.execute(&tool_name, exec_input))
+                    .await
+                    .map_err(|e| AiError::Tool(e.to_string()))??;
 
             let output_value = serde_json::from_str::<serde_json::Value>(&result)
                 .unwrap_or_else(|_| serde_json::Value::String(result.clone()));

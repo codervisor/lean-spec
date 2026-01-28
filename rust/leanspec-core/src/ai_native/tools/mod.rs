@@ -362,13 +362,18 @@ fn toggle_checklist_item_in_body(
     Ok(lines.join("\n"))
 }
 
-fn make_tool<F, I>(name: &str, description: &str, execute: F) -> Result<(ChatCompletionTools, ToolExecutor), AiError>
+fn make_tool<F, I>(
+    name: &str,
+    description: &str,
+    execute: F,
+) -> Result<(ChatCompletionTools, ToolExecutor), AiError>
 where
     F: Fn(Value) -> Result<String, String> + Send + Sync + 'static,
     I: JsonSchema,
 {
     let schema = schema_for!(I);
-    let params = serde_json::to_value(&schema).map_err(|e| AiError::Serialization(e.to_string()))?;
+    let params =
+        serde_json::to_value(&schema).map_err(|e| AiError::Serialization(e.to_string()))?;
     let tool = ChatCompletionTools::Function(ChatCompletionTool {
         function: FunctionObject {
             name: name.to_string(),
@@ -428,10 +433,8 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
 
     let base_url_search = base_url.clone();
     let project_id_search = project_id.clone();
-    let (search_specs_tool, search_specs_exec) = make_tool::<_, SearchSpecsInput>(
-        "search_specs",
-        "Search specs by query",
-        move |value| {
+    let (search_specs_tool, search_specs_exec) =
+        make_tool::<_, SearchSpecsInput>("search_specs", "Search specs by query", move |value| {
             let params: SearchSpecsInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_search)?;
             let url = format!(
@@ -449,17 +452,14 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
             });
             let value = fetch_json("POST", &url, Some(body))?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+        })?;
     tools.push(search_specs_tool);
     executors.insert("search_specs".to_string(), search_specs_exec);
 
     let base_url_get = base_url.clone();
     let project_id_get = project_id.clone();
-    let (get_spec_tool, get_spec_exec) = make_tool::<_, SpecIdInput>(
-        "get_spec",
-        "Get a spec by name or number",
-        move |value| {
+    let (get_spec_tool, get_spec_exec) =
+        make_tool::<_, SpecIdInput>("get_spec", "Get a spec by name or number", move |value| {
             let params: SpecIdInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_get)?;
             let url = format!(
@@ -470,8 +470,7 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
             );
             let value = fetch_json("GET", &url, None)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+        })?;
     tools.push(get_spec_tool);
     executors.insert("get_spec".to_string(), get_spec_exec);
 
@@ -499,10 +498,8 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
 
     let base_url_link = base_url.clone();
     let project_id_link = project_id.clone();
-    let (link_specs_tool, link_specs_exec) = make_tool::<_, LinkSpecsInput>(
-        "link_specs",
-        "Link spec dependency",
-        move |value| {
+    let (link_specs_tool, link_specs_exec) =
+        make_tool::<_, LinkSpecsInput>("link_specs", "Link spec dependency", move |value| {
             let params: LinkSpecsInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_link)?;
             let url = format!(
@@ -514,17 +511,14 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
             let body = serde_json::json!({ "dependsOn": params.depends_on });
             let value = fetch_json("POST", &url, Some(body))?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+        })?;
     tools.push(link_specs_tool);
     executors.insert("link_specs".to_string(), link_specs_exec);
 
     let base_url_unlink = base_url.clone();
     let project_id_unlink = project_id.clone();
-    let (unlink_specs_tool, unlink_specs_exec) = make_tool::<_, LinkSpecsInput>(
-        "unlink_specs",
-        "Remove spec dependency",
-        move |value| {
+    let (unlink_specs_tool, unlink_specs_exec) =
+        make_tool::<_, LinkSpecsInput>("unlink_specs", "Remove spec dependency", move |value| {
             let params: LinkSpecsInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_unlink)?;
             let url = format!(
@@ -536,8 +530,7 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
             );
             let value = fetch_json("DELETE", &url, None)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+        })?;
     tools.push(unlink_specs_tool);
     executors.insert("unlink_specs".to_string(), unlink_specs_exec);
 
@@ -567,16 +560,13 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
 
     let base_url_read = base_url.clone();
     let project_id_read = project_id.clone();
-    let (read_spec_tool, read_spec_exec) = make_tool::<_, SpecIdInput>(
-        "read_spec",
-        "Read raw spec content",
-        move |value| {
+    let (read_spec_tool, read_spec_exec) =
+        make_tool::<_, SpecIdInput>("read_spec", "Read raw spec content", move |value| {
             let params: SpecIdInput = tool_input(value)?;
             let project_id = ensure_project_id(params.project_id, &project_id_read)?;
             let value = get_spec_raw(&base_url_read, &project_id, &params.spec_id)?;
             serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+        })?;
     tools.push(read_spec_tool);
     executors.insert("read_spec".to_string(), read_spec_exec);
 
@@ -603,54 +593,60 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
 
     let base_url_section = base_url.clone();
     let project_id_section = project_id.clone();
-    let (update_spec_section_tool, update_spec_section_exec) = make_tool::<_, UpdateSpecSectionInput>(
-        "update_spec_section",
-        "Replace or append a section in spec content",
-        move |value| {
-            let params: UpdateSpecSectionInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_section)?;
-            let raw = get_spec_raw(&base_url_section, &project_id, &params.spec_id)?;
-            let (frontmatter, body) = split_frontmatter(&raw.content);
-            let mode = params.mode.unwrap_or_else(|| "replace".to_string());
-            let updated_body = update_section(&body, &params.section, &params.content, &mode)?;
-            let rebuilt = rebuild_content(frontmatter, &updated_body);
-            let value = update_spec_raw(
-                &base_url_section,
-                &project_id,
-                &params.spec_id,
-                &rebuilt,
-                params.expected_content_hash.or(Some(raw.content_hash)),
-            )?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+    let (update_spec_section_tool, update_spec_section_exec) =
+        make_tool::<_, UpdateSpecSectionInput>(
+            "update_spec_section",
+            "Replace or append a section in spec content",
+            move |value| {
+                let params: UpdateSpecSectionInput = tool_input(value)?;
+                let project_id = ensure_project_id(params.project_id, &project_id_section)?;
+                let raw = get_spec_raw(&base_url_section, &project_id, &params.spec_id)?;
+                let (frontmatter, body) = split_frontmatter(&raw.content);
+                let mode = params.mode.unwrap_or_else(|| "replace".to_string());
+                let updated_body = update_section(&body, &params.section, &params.content, &mode)?;
+                let rebuilt = rebuild_content(frontmatter, &updated_body);
+                let value = update_spec_raw(
+                    &base_url_section,
+                    &project_id,
+                    &params.spec_id,
+                    &rebuilt,
+                    params.expected_content_hash.or(Some(raw.content_hash)),
+                )?;
+                serde_json::to_string(&value).map_err(|e| e.to_string())
+            },
+        )?;
     tools.push(update_spec_section_tool);
     executors.insert("update_spec_section".to_string(), update_spec_section_exec);
 
     let base_url_checklist = base_url.clone();
     let project_id_checklist = project_id.clone();
-    let (toggle_checklist_item_tool, toggle_checklist_item_exec) = make_tool::<_, ToggleChecklistInput>(
-        "toggle_checklist_item",
-        "Check or uncheck a checklist item in a spec",
-        move |value| {
-            let params: ToggleChecklistInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_checklist)?;
-            let raw = get_spec_raw(&base_url_checklist, &project_id, &params.spec_id)?;
-            let (frontmatter, body) = split_frontmatter(&raw.content);
-            let updated = toggle_checklist_item_in_body(&body, &params.item_text, params.checked)?;
-            let rebuilt = rebuild_content(frontmatter, &updated);
-            let value = update_spec_raw(
-                &base_url_checklist,
-                &project_id,
-                &params.spec_id,
-                &rebuilt,
-                params.expected_content_hash.or(Some(raw.content_hash)),
-            )?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
+    let (toggle_checklist_item_tool, toggle_checklist_item_exec) =
+        make_tool::<_, ToggleChecklistInput>(
+            "toggle_checklist_item",
+            "Check or uncheck a checklist item in a spec",
+            move |value| {
+                let params: ToggleChecklistInput = tool_input(value)?;
+                let project_id = ensure_project_id(params.project_id, &project_id_checklist)?;
+                let raw = get_spec_raw(&base_url_checklist, &project_id, &params.spec_id)?;
+                let (frontmatter, body) = split_frontmatter(&raw.content);
+                let updated =
+                    toggle_checklist_item_in_body(&body, &params.item_text, params.checked)?;
+                let rebuilt = rebuild_content(frontmatter, &updated);
+                let value = update_spec_raw(
+                    &base_url_checklist,
+                    &project_id,
+                    &params.spec_id,
+                    &rebuilt,
+                    params.expected_content_hash.or(Some(raw.content_hash)),
+                )?;
+                serde_json::to_string(&value).map_err(|e| e.to_string())
+            },
+        )?;
     tools.push(toggle_checklist_item_tool);
-    executors.insert("toggle_checklist_item".to_string(), toggle_checklist_item_exec);
+    executors.insert(
+        "toggle_checklist_item".to_string(),
+        toggle_checklist_item_exec,
+    );
 
     let base_url_subspec = base_url.clone();
     let project_id_subspec = project_id.clone();
