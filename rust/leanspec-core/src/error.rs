@@ -35,10 +35,6 @@ pub enum CoreError {
     #[error("Tool '{0}' not found: {1}")]
     ToolNotFound(String, String),
 
-    /// AI worker error
-    #[error("AI worker error: {0}")]
-    AiWorkerError(String),
-
     /// Server error (for backward compatibility)
     #[error("Server error: {0}")]
     ServerError(String),

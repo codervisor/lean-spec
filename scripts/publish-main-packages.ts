@@ -179,14 +179,6 @@ async function publishMainPackages(dryRun: boolean, tag?: string): Promise<void>
     console.log(`  ✗ ${httpServerResult.package}: ${httpServerResult.error}`);
   }
 
-  const aiWorkerResult = await publishPackage(path.join(PACKAGES_DIR, 'ai-worker'), dryRun, tag);
-  results.push(aiWorkerResult);
-  if (aiWorkerResult.success) {
-    console.log(`  ✓ ${aiWorkerResult.package}`);
-  } else {
-    console.log(`  ✗ ${aiWorkerResult.package}: ${aiWorkerResult.error}`);
-  }
-
   const chatServerResult = await publishPackage(path.join(PACKAGES_DIR, 'chat-server'), dryRun, tag);
   results.push(chatServerResult);
   if (chatServerResult.success) {

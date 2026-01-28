@@ -76,7 +76,6 @@ pub async fn chat_stream(
 
     if let Some(session_id) = payload.session_id.clone() {
         let store = state.chat_store.clone();
-        let project_id = payload.project_id.clone();
         let messages = payload.messages.clone();
         let mut completion = result.completion;
         tokio::spawn(async move {
@@ -103,7 +102,6 @@ pub async fn chat_stream(
                     )
                 })
                 .await;
-                let _ = project_id;
             }
         });
     }
@@ -115,7 +113,9 @@ pub async fn chat_stream(
         }
     })
     .chain(stream::once(async { Ok(sse_done()) }))
-    .map(|item: Result<String, std::convert::Infallible>| Bytes::from(item.unwrap_or_default()));
+    .map(|item: Result<String, std::convert::Infallible>| {
+        Bytes::from(item.unwrap_or_else(|_| String::new()))
+    });
 
     let response = Response::builder()
         .status(StatusCode::OK)

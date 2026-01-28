@@ -45,7 +45,6 @@ function resolveWorkspaceVersion(depName: string): string | null {
   const pkgMap: Record<string, string> = {
     '@leanspec/http-server': 'packages/http-server/package.json',
     '@leanspec/chat-server': 'packages/chat-server/package.json',
-    '@leanspec/ai-worker': 'packages/ai-worker/package.json',
     '@leanspec/ui-components': 'packages/ui-components/package.json',
     '@leanspec/ui': 'packages/ui/package.json',
     '@leanspec/mcp': 'packages/mcp/package.json',

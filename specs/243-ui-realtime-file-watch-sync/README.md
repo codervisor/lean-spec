@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-28
 priority: medium
 tags:
@@ -8,8 +8,12 @@ tags:
 - websocket
 - file-watch
 - ux
+depends_on:
+- 082-web-realtime-sync-architecture
+- 186-rust-http-server
+- 184-ui-packages-consolidation
 created_at: 2026-01-28T08:03:59.019975Z
-updated_at: 2026-01-28T08:03:59.019975Z
+updated_at: 2026-01-28T09:48:12.168602Z
 ---
 
 # UI Realtime File Watch & Sync
@@ -35,6 +39,8 @@ Implement true realtime sync that pushes spec changes from backend to frontend a
 5. User sees changes appear instantly without refresh
 
 ## Design
+
+The architecture uses a three-tier approach with file watching, push communication, and reactive UI updates.
 
 ### Architecture Overview
 
@@ -87,148 +93,19 @@ Implement true realtime sync that pushes spec changes from backend to frontend a
 
 ### Implementation Details
 
-#### Backend: File Watcher Service
+See `IMPLEMENTATION.md` for detailed code examples, API specifications, and configuration options.
 
-```rust
-// rust/leanspec-http/src/watcher.rs
-use notify::{Watcher, RecursiveMode, Event};
-use tokio::sync::broadcast;
+Key implementation points:
+- Use Rust `notify` crate for cross-platform file watching
+- Broadcast channel for distributing events to SSE clients
+- React Query integration for automatic cache invalidation
+- Exponential backoff for connection retries
 
-pub struct FileWatcher {
-    watcher: notify::RecommendedWatcher,
-    tx: broadcast::Sender<SpecChangeEvent>,
-}
+## Edge Cases & Error Handling
 
-#[derive(Clone, Debug)]
-pub enum SpecChangeEvent {
-    Created(String),   // spec path
-    Modified(String),
-    Deleted(String),
-}
+Handling edge cases and errors gracefully is critical for production reliability.
 
-impl FileWatcher {
-    pub fn new(specs_dir: PathBuf) -> Result<Self> {
-        let (tx, _) = broadcast::channel(100);
-        let tx_clone = tx.clone();
-        
-        let mut watcher = notify::recommended_watcher(move |res: Result<Event, _>| {
-            if let Ok(event) = res {
-                let change = parse_event(event);
-                let _ = tx_clone.send(change);
-            }
-        })?;
-        
-        watcher.watch(&specs_dir, RecursiveMode::Recursive)?;
-        
-        Ok(Self { watcher, tx })
-    }
-    
-    pub fn subscribe(&self) -> broadcast::Receiver<SpecChangeEvent> {
-        self.tx.subscribe()
-    }
-}
-```
-
-#### Backend: SSE Endpoint
-
-```rust
-// rust/leanspec-http/src/routes/events.rs
-use axum::response::Sse;
-use futures::stream::Stream;
-
-pub async fn sse_handler(
-    State(state): State<AppState>,
-) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    let mut rx = state.file_watcher.subscribe();
-    
-    let stream = async_stream::stream! {
-        loop {
-            match rx.recv().await {
-                Ok(change) => {
-                    let data = serde_json::to_string(&change).unwrap();
-                    yield Ok(Event::default().data(data));
-                }
-                Err(_) => break,
-            }
-        }
-    };
-    
-    Sse::new(stream).keep_alive(KeepAlive::default())
-}
-```
-
-#### Frontend: SSE Client Hook
-
-```typescript
-// packages/ui-components/src/hooks/useSpecSync.ts
-import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-
-export function useSpecSync() {
-  const queryClient = useQueryClient();
-  
-  useEffect(() => {
-    const eventSource = new EventSource('/api/events/specs');
-    
-    eventSource.onmessage = (event) => {
-      const change = JSON.parse(event.data);
-      
-      // Invalidate affected queries
-      if (change.type === 'Modified' || change.type === 'Created') {
-        queryClient.invalidateQueries(['spec', change.path]);
-        queryClient.invalidateQueries(['specs']); // List view
-      } else if (change.type === 'Deleted') {
-        queryClient.removeQueries(['spec', change.path]);
-        queryClient.invalidateQueries(['specs']);
-      }
-      
-      // Show toast notification
-      toast.info(`Spec ${change.path} ${change.type.toLowerCase()}`);
-    };
-    
-    eventSource.onerror = () => {
-      console.error('SSE connection lost, reconnecting...');
-      eventSource.close();
-    };
-    
-    return () => eventSource.close();
-  }, [queryClient]);
-}
-```
-
-#### Frontend: Integration
-
-```typescript
-// packages/ui/src/App.tsx
-export function App() {
-  useSpecSync(); // Enable realtime sync globally
-  
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        {/* routes */}
-      </Router>
-    </QueryClientProvider>
-  );
-}
-```
-
-### Configuration
-
-```bash
-# Backend
-ENABLE_FILE_WATCH=true        # Enable file watching
-FILE_WATCH_DEBOUNCE_MS=300    # Debounce multiple changes
-SSE_KEEPALIVE_SEC=15          # Keep connection alive
-
-# Frontend
-VITE_SSE_ENABLED=true         # Enable SSE client
-VITE_SSE_RECONNECT_MS=3000    # Reconnect delay
-```
-
-### Edge Cases & Error Handling
-
-**File Watcher:**
+### File Watcher Edge Cases
 - Debounce rapid changes (e.g., VSCode auto-save)
 - Ignore temp files (.swp, ~, .tmp)
 - Handle file lock conflicts
@@ -246,9 +123,11 @@ VITE_SSE_RECONNECT_MS=3000    # Reconnect delay
 - Only send changes for watched specs
 - Compress large payloads
 
-### Performance Impact
+## Performance Impact
 
-**Backend:**
+Understanding the performance implications helps with capacity planning.
+
+### Backend Overhead
 - File watcher: ~5-10MB memory overhead
 - SSE connections: ~1KB per connection
 - CPU: Negligible (<1% with 100 connections)
@@ -263,8 +142,15 @@ VITE_SSE_RECONNECT_MS=3000    # Reconnect delay
 - SSE: 1 connection, only data when changed
 - **Result: 90% reduction in unnecessary requests**
 
+---
+
+*Implementation details: See IMPLEMENTATION.md for detailed code examples and API specifications.*
+
 ## Plan
 
+Implementation is broken into phases for incremental delivery:
+
+### Phase 1: Backend Infrastructure
 - [ ] Research file watching libraries (Rust `notify` vs Node `chokidar`)
 - [ ] Implement backend file watcher service
   - [ ] Set up `notify` crate in rust/leanspec-http
@@ -304,7 +190,34 @@ VITE_SSE_RECONNECT_MS=3000    # Reconnect delay
   - [ ] Add troubleshooting section
 - [ ] Update spec 082 with realtime sync info
 
+### Phase 2: Frontend Integration
+- [ ] Create frontend SSE client hook
+  - [ ] Implement useSpecSync() hook
+  - [ ] Integrate with React Query for cache invalidation
+  - [ ] Add reconnection logic with exponential backoff
+  - [ ] Add toast notifications for changes
+  - [ ] Test with network interruptions
+- [ ] Integrate into UI packages
+  - [ ] Add to @leanspec/ui (Vite app)
+  - [ ] Add to @leanspec/desktop (Tauri app)
+  - [ ] Add configuration options
+  - [ ] Test in both dev and production builds
+
+### Phase 3: Testing & Documentation
+- [ ] Performance testing
+  - [ ] Test with 100 concurrent connections
+  - [ ] Measure memory/CPU impact
+  - [ ] Test rapid file changes (100+ changes/sec)
+  - [ ] Verify debouncing works correctly
+- [ ] Documentation
+  - [ ] Update architecture docs
+  - [ ] Add deployment guide (Vercel/self-hosted)
+  - [ ] Add troubleshooting section
+- [ ] Update spec 082 with realtime sync info
+
 ## Test
+
+Test plan covers functional, performance, and deployment scenarios.
 
 ### Functional Tests
 
@@ -373,6 +286,8 @@ VITE_SSE_RECONNECT_MS=3000    # Reconnect delay
 - [ ] Alternative: webhook-based sync
 
 ## Notes
+
+Additional context, considerations, and future plans for this feature.
 
 ### Dependencies
 

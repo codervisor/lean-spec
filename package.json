@@ -15,7 +15,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "npm run dev:all",
-    "dev:all": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server --filter=@leanspec/ai-worker",
+    "dev:all": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
     "build:node": "turbo run build",
     "dev:web": "turbo run dev:web --filter=@leanspec/ui",
     "dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",

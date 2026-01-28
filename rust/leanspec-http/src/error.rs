@@ -48,7 +48,6 @@ impl From<CoreError> for ServerError {
             CoreError::RegistryError(message) => Self::RegistryError(message),
             CoreError::ToolError(message) => Self::ToolError(message),
             CoreError::ToolNotFound(tool, details) => Self::ToolNotFound(tool, details),
-            CoreError::AiWorkerError(message) => Self::ServerError(message),
             CoreError::ServerError(message) => Self::ServerError(message),
             CoreError::IoError(err) => Self::ServerError(err.to_string()),
             CoreError::SerializationError(message) => Self::ServerError(message),

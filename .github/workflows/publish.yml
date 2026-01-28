@@ -35,9 +35,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build dependencies
-        run: |
-          pnpm --filter @leanspec/ui-components build
-          pnpm --filter @leanspec/ai-worker build
+        run: pnpm --filter @leanspec/ui-components build
 
       - name: Build UI
         run: pnpm --filter @leanspec/ui build
