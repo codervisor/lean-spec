@@ -82,6 +82,26 @@ Works with any AI coding assistant via MCP or CLI:
 
 ---
 
+## Agent Skills
+
+Teach your AI assistant the Spec-Driven Development methodology:
+
+```bash
+npx skills add codervisor/lean-spec --skill leanspec-sdd
+```
+
+This installs the **leanspec-sdd** skill which teaches AI agents:
+- When to create specs vs. implement directly
+- How to discover existing specs before creating new ones
+- Best practices for context economy and progressive disclosure
+- Complete SDD workflow (Discover → Design → Implement → Validate)
+
+**Compatible with:** Claude Code, Cursor, Windsurf, GitHub Copilot, and other [Agent Skills](https://skills.sh/) compatible tools.
+
+📖 [View skill documentation →](skills/leanspec-sdd/SKILL.md)
+
+---
+
 ## Features
 
 | Feature             | Description                                                   |

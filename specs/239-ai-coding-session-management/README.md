@@ -566,92 +566,103 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
 
 ### Phase 1: Core Infrastructure (Weeks 1-2)
 
-- [ ] **Database Schema**
-  - [ ] Create migrations for sessions tables
-  - [ ] Implement SQLite persistence layer
-  - [ ] Add indexes for performance
-  - [ ] Write database tests
+- [x] **Database Schema**
+  - [x] Create migrations for sessions tables
+  - [x] Implement SQLite persistence layer
+  - [x] Add indexes for performance
+  - [x] Write database tests
 
-- [ ] **Session Manager (Rust)**
-  - [ ] Define SessionManager struct
-  - [ ] Implement CRUD operations
-  - [ ] Add session lifecycle methods
-  - [ ] Write unit tests
+- [x] **Session Manager (Rust)**
+  - [x] Define SessionManager struct
+  - [x] Implement CRUD operations
+  - [x] Add session lifecycle methods
+  - [x] Write unit tests
 
-- [ ] **Tool Adapter Framework**
-  - [ ] Define ToolAdapter trait
-  - [ ] Implement ToolManager registry
-  - [ ] Create adapter discovery system
-  - [ ] Add validation and error handling
+- [x] **Tool Adapter Framework**
+  - [x] Define ToolAdapter trait
+  - [x] Implement ToolManager registry
+  - [x] Create adapter discovery system
+  - [x] Add validation and error handling
 
 ### Phase 2: Tool Adapters (Weeks 3-4)
 
-- [ ] **Claude Code Adapter**
-  - [ ] Research Claude Code CLI API
-  - [ ] Implement ClaudeAdapter struct
-  - [ ] Handle PTY for interactive mode
-  - [ ] Test with sample spec
+- [x] **Claude Code Adapter**
+  - [x] Research Claude Code CLI API
+  - [x] Implement ClaudeAdapter struct
+  - [x] Handle PTY for interactive mode
+  - [x] Test with sample spec
 
-- [ ] **GitHub Copilot Adapter**
-  - [ ] Research gh copilot CLI API
-  - [ ] Implement CopilotAdapter struct
-  - [ ] Handle authentication flow
-  - [ ] Test with sample spec
+- [x] **GitHub Copilot Adapter**
+  - [x] Research gh copilot CLI API
+  - [x] Implement CopilotAdapter struct
+  - [x] Handle authentication flow
+  - [x] Test with sample spec
 
-- [ ] **Codex-CLI Adapter**
-  - [ ] Research Codex-CLI API
-  - [ ] Implement CodexAdapter struct
-  - [ ] Test with sample spec
+- [x] **Codex-CLI Adapter**
+  - [x] Research Codex-CLI API
+  - [x] Implement CodexAdapter struct
+  - [x] Test with sample spec
 
-- [ ] **OpenCode Adapter**
-  - [ ] Research OpenCode CLI
-  - [ ] Implement OpenCodeAdapter struct
-  - [ ] Test with sample spec
+- [x] **OpenCode Adapter**
+  - [x] Research OpenCode CLI
+  - [x] Implement OpenCodeAdapter struct
+  - [x] Test with sample spec
 
 ### Phase 3: Process Management (Week 5)
 
-- [ ] **Session Process**
-  - [ ] Implement PTY/TTY spawning
-  - [ ] Add stdout/stderr capturing
-  - [ ] Handle process lifecycle (start, pause, stop)
-  - [ ] Implement graceful shutdown
+- [x] **Session Process**
+  - [x] Implement PTY/TTY spawning
+  - [x] Add stdout/stderr capturing
+  - [x] Handle process lifecycle (start, stop)
+  - [ ] Handle process lifecycle (pause, resume)
+  - [x] Implement graceful shutdown
 
-- [ ] **Log Collection**
-  - [ ] Stream logs to database
-  - [ ] Buffer logs for WebSocket
+- [x] **Log Collection**
+  - [x] Stream logs to database
+  - [x] Buffer logs for WebSocket
   - [ ] Implement log rotation/archival
   - [ ] Add log compression
 
 ### Phase 4: HTTP API & WebSocket (Week 6)
 
-- [ ] **HTTP Endpoints**
-  - [ ] POST /api/sessions (create)
-  - [ ] POST /api/sessions/:id/start
-  - [ ] GET /api/sessions (list)
-  - [ ] GET /api/sessions/:id (details)
-  - [ ] GET /api/sessions/:id/logs
-  - [ ] DELETE /api/sessions/:id
+- [x] **HTTP Endpoints**
+  - [x] POST /api/sessions (create)
+  - [x] POST /api/sessions/:id/start
+  - [x] POST /api/sessions/:id/stop
+  - [x] GET /api/sessions (list)
+  - [x] GET /api/sessions/:id (details)
+  - [x] GET /api/sessions/:id/logs
+  - [x] DELETE /api/sessions/:id
+  - [ ] POST /api/sessions/:id/pause (not implemented)
+  - [ ] POST /api/sessions/:id/resume (not implemented)
 
-- [ ] **WebSocket Server**
-  - [ ] Implement WS handler in Rust
-  - [ ] Subscribe/unsubscribe protocol
-  - [ ] Broadcast session events
-  - [ ] Stream logs in real-time
+- [x] **WebSocket Server**
+  - [x] Implement WS handler in Rust
+  - [x] Subscribe/unsubscribe protocol
+  - [x] Broadcast session events
+  - [x] Stream logs in real-time
 
 ### Phase 5: CLI Commands (Week 7)
 
-- [ ] **Session Commands**
-  - [ ] lean-spec session create
-  - [ ] lean-spec session start
-  - [ ] lean-spec session run (create + start)
-  - [ ] lean-spec session list
-  - [ ] lean-spec session view
-  - [ ] lean-spec session logs
-  - [ ] lean-spec session pause/resume
-  - [ ] lean-spec session stop
-  - [ ] lean-spec session delete
+- [x] **Session Commands**
+  - [x] lean-spec session create
+  - [x] lean-spec session start
+  - [x] lean-spec session run (create + start)
+  - [x] lean-spec session list
+  - [x] lean-spec session view
+  - [x] lean-spec session logs
+  - [ ] lean-spec session pause/resume (not implemented)
+  - [x] lean-spec session stop
+  - [x] lean-spec session delete
+  - [ ] lean-spec session archive (not implemented)
 
 ### Phase 6: UI Components (Weeks 8-9)
+
+- [x] **Session Create Dialog**
+  - [x] Tool selection
+  - [x] Mode selection  
+  - [x] Spec selection
+  - [x] Create and start integration
 
 - [ ] **Session List View**
   - [ ] Fetch sessions from API
@@ -667,17 +678,21 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
 
 - [ ] **Session Integration**
   - [ ] Add session section to spec detail
-  - [ ] "New Session" button
+  - [x] "New Session" button
   - [ ] Session history timeline
   - [ ] Quick actions (retry, archive)
 
 ### Phase 7: Testing & Polish (Week 10)
 
+- [x] **Unit Tests**
+  - [x] SessionManager CRUD operations
+  - [x] Tool adapter validation
+  - [x] Database persistence layer
+
 - [ ] **Integration Tests**
   - [ ] End-to-end session lifecycle
   - [ ] WebSocket streaming accuracy
   - [ ] Multi-session concurrency
-  - [ ] Database persistence
 
 - [ ] **Performance Testing**
   - [ ] Log streaming latency (<500ms)
@@ -694,11 +709,11 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
 ## Test
 
 ### Unit Tests
-- [ ] SessionManager CRUD operations
-- [ ] Tool adapter validation
-- [ ] Process spawning and control
-- [ ] Log collection and buffering
-- [ ] Database migrations
+- [x] SessionManager CRUD operations
+- [x] Tool adapter validation
+- [x] Process spawning and control
+- [x] Log collection and buffering
+- [x] Database migrations
 
 ### Integration Tests
 - [ ] Full session lifecycle (create → start → complete)
@@ -714,10 +729,10 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
 - [ ] WebSocket connection stability (24h+)
 
 ### User Acceptance Tests
-- [ ] Create session from Desktop UI
+- [x] Create session from Desktop UI
 - [ ] Monitor session in real-time
 - [ ] Pause and resume session
-- [ ] View historical session logs
+- [x] View historical session logs
 - [ ] Retry failed session
 
 ## Notes
