@@ -1,6 +1,6 @@
 import { getBackend, APIError, type BackendAdapter } from "./backend-adapter";
 import i18n from "./i18n";
-import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph, MachinesResponse } from "../types/api";
+import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph, MachinesResponse, Session, SessionLog, SessionMode } from "../types/api";
 
 /**
  * Project-aware API wrapper
@@ -77,6 +77,38 @@ class ProjectAPI {
 
   async getDependencies(specName?: string): Promise<DependencyGraph> {
     return this.backend.getDependencies(this.getCurrentProjectId(), specName);
+  }
+
+  listSessions(params?: { specId?: string; status?: string; tool?: string }): Promise<Session[]> {
+    return this.backend.listSessions(params);
+  }
+
+  getSession(sessionId: string): Promise<Session> {
+    return this.backend.getSession(sessionId);
+  }
+
+  createSession(payload: { projectPath: string; specId?: string | null; tool: string; mode: SessionMode }): Promise<Session> {
+    return this.backend.createSession(payload);
+  }
+
+  startSession(sessionId: string): Promise<Session> {
+    return this.backend.startSession(sessionId);
+  }
+
+  stopSession(sessionId: string): Promise<Session> {
+    return this.backend.stopSession(sessionId);
+  }
+
+  deleteSession(sessionId: string): Promise<void> {
+    return this.backend.deleteSession(sessionId);
+  }
+
+  getSessionLogs(sessionId: string): Promise<SessionLog[]> {
+    return this.backend.getSessionLogs(sessionId);
+  }
+
+  listAvailableTools(): Promise<string[]> {
+    return this.backend.listAvailableTools();
   }
 }
 

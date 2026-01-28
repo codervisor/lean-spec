@@ -17,6 +17,9 @@ import type {
   ListSpecsResponse,
   ProjectContext,
   MachinesResponse,
+  Session,
+  SessionLog,
+  SessionMode,
 } from '../types/api';
 
 export class APIError extends Error {
@@ -74,6 +77,21 @@ export interface BackendAdapter {
   getContextFile(path: string): Promise<ContextFileContent>;
   getProjectContext(projectId: string): Promise<ProjectContext>;
   listDirectory(path?: string): Promise<DirectoryListResponse>;
+
+  // Sessions
+  listSessions(params?: { specId?: string; status?: string; tool?: string }): Promise<Session[]>;
+  getSession(sessionId: string): Promise<Session>;
+  createSession(payload: {
+    projectPath: string;
+    specId?: string | null;
+    tool: string;
+    mode: SessionMode;
+  }): Promise<Session>;
+  startSession(sessionId: string): Promise<Session>;
+  stopSession(sessionId: string): Promise<Session>;
+  deleteSession(sessionId: string): Promise<void>;
+  getSessionLogs(sessionId: string): Promise<SessionLog[]>;
+  listAvailableTools(): Promise<string[]>;
 }
 
 /**
@@ -288,6 +306,68 @@ export class HttpBackendAdapter implements BackendAdapter {
       body: JSON.stringify({ path }),
     });
   }
+
+  async listSessions(params?: { specId?: string; status?: string; tool?: string }): Promise<Session[]> {
+    const query = params
+      ? new URLSearchParams(
+        Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
+          if (typeof value === 'string' && value.length > 0) {
+            acc.push([key === 'specId' ? 'spec_id' : key, value]);
+          }
+          return acc;
+        }, [])
+      ).toString()
+      : '';
+    const endpoint = query ? `/api/sessions?${query}` : '/api/sessions';
+    return this.fetchAPI<Session[]>(endpoint);
+  }
+
+  async getSession(sessionId: string): Promise<Session> {
+    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}`);
+  }
+
+  async createSession(payload: {
+    projectPath: string;
+    specId?: string | null;
+    tool: string;
+    mode: SessionMode;
+  }): Promise<Session> {
+    return this.fetchAPI<Session>('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({
+        project_path: payload.projectPath,
+        spec_id: payload.specId ?? null,
+        tool: payload.tool,
+        mode: payload.mode,
+      }),
+    });
+  }
+
+  async startSession(sessionId: string): Promise<Session> {
+    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/start`, {
+      method: 'POST',
+    });
+  }
+
+  async stopSession(sessionId: string): Promise<Session> {
+    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/stop`, {
+      method: 'POST',
+    });
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.fetchAPI(`/api/sessions/${encodeURIComponent(sessionId)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getSessionLogs(sessionId: string): Promise<SessionLog[]> {
+    return this.fetchAPI<SessionLog[]>(`/api/sessions/${encodeURIComponent(sessionId)}/logs`);
+  }
+
+  async listAvailableTools(): Promise<string[]> {
+    return this.fetchAPI<string[]>('/api/tools');
+  }
 }
 
 /**
@@ -420,6 +500,38 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async listDirectory(_path = ''): Promise<DirectoryListResponse> {
     throw new Error('listDirectory is not implemented for the Tauri backend yet');
+  }
+
+  async listSessions(): Promise<Session[]> {
+    throw new Error('listSessions is not implemented for the Tauri backend yet');
+  }
+
+  async getSession(_sessionId: string): Promise<Session> {
+    throw new Error('getSession is not implemented for the Tauri backend yet');
+  }
+
+  async createSession(): Promise<Session> {
+    throw new Error('createSession is not implemented for the Tauri backend yet');
+  }
+
+  async startSession(): Promise<Session> {
+    throw new Error('startSession is not implemented for the Tauri backend yet');
+  }
+
+  async stopSession(): Promise<Session> {
+    throw new Error('stopSession is not implemented for the Tauri backend yet');
+  }
+
+  async deleteSession(): Promise<void> {
+    throw new Error('deleteSession is not implemented for the Tauri backend yet');
+  }
+
+  async getSessionLogs(): Promise<SessionLog[]> {
+    throw new Error('getSessionLogs is not implemented for the Tauri backend yet');
+  }
+
+  async listAvailableTools(): Promise<string[]> {
+    throw new Error('listAvailableTools is not implemented for the Tauri backend yet');
   }
 }
 

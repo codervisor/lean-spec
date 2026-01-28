@@ -1,6 +1,9 @@
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
 
+export type SessionStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
+export type SessionMode = 'guided' | 'autonomous' | 'ralph';
+
 export interface SubSpec {
   name: string;
   file: string;
@@ -37,6 +40,26 @@ export interface SpecDetail extends Spec {
   content?: string;
   subSpecs?: SubSpec[];
   metadata?: Record<string, unknown>;
+}
+
+export interface Session {
+  id: string;
+  projectPath: string;
+  specId?: string | null;
+  tool: string;
+  mode: SessionMode;
+  status: SessionStatus;
+  startedAt: string;
+  endedAt?: string | null;
+  durationMs?: number | null;
+  tokenCount?: number | null;
+}
+
+export interface SessionLog {
+  id: number;
+  timestamp: string;
+  level: string;
+  message: string;
 }
 
 export type MachineStatus = 'online' | 'offline';

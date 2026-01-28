@@ -59,6 +59,7 @@ impl SessionDatabase {
                     mode TEXT NOT NULL,
                     status TEXT NOT NULL,
                     exit_code INTEGER,
+                    started_at TEXT NOT NULL,
                     ended_at TEXT,
                     duration_ms INTEGER,
                     token_count INTEGER,
@@ -634,6 +635,17 @@ mod tests {
     fn test_logs() {
         let db = SessionDatabase::new_in_memory().unwrap();
 
+        // Create a session first (required for FOREIGN KEY constraint)
+        let session = Session::new(
+            "test-session".to_string(),
+            "/test/project".to_string(),
+            None,
+            "claude".to_string(),
+            SessionMode::Autonomous,
+        );
+        db.insert_session(&session).unwrap();
+
+
         db.log_message("test-session", LogLevel::Stdout, "Hello world")
             .unwrap();
         db.log_message("test-session", LogLevel::Info, "Info message")
@@ -650,6 +662,17 @@ mod tests {
     #[test]
     fn test_events() {
         let db = SessionDatabase::new_in_memory().unwrap();
+
+        // Create a session first (required for FOREIGN KEY constraint)
+        let session = Session::new(
+            "test-session".to_string(),
+            "/test/project".to_string(),
+            None,
+            "claude".to_string(),
+            SessionMode::Autonomous,
+        );
+        db.insert_session(&session).unwrap();
+
 
         db.insert_event("test-session", EventType::Created, None)
             .unwrap();
