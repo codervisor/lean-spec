@@ -90,30 +90,30 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
         let result = match selection.provider {
             ProviderClient::OpenAI(client) => {
                 let mut messages = build_openai_messages(messages, SYSTEM_PROMPT);
-                run_openai_conversation(
+                run_openai_conversation(OpenAiConversationParams {
                     client,
-                    &selected_model_id_for_task,
-                    &mut messages,
+                    model_id: &selected_model_id_for_task,
+                    messages: &mut messages,
                     tools,
                     max_steps,
                     max_tokens,
-                    &sender,
-                    &text_id,
-                )
+                    sender: &sender,
+                    text_id: &text_id,
+                })
                 .await
             }
             ProviderClient::OpenRouter(client) => {
                 let mut messages = build_openai_messages(messages, SYSTEM_PROMPT);
-                run_openai_conversation(
+                run_openai_conversation(OpenAiConversationParams {
                     client,
-                    &selected_model_id_for_task,
-                    &mut messages,
+                    model_id: &selected_model_id_for_task,
+                    messages: &mut messages,
                     tools,
                     max_steps,
                     max_tokens,
-                    &sender,
-                    &text_id,
-                )
+                    sender: &sender,
+                    text_id: &text_id,
+                })
                 .await
             }
             ProviderClient::Anthropic(client) => {
@@ -246,15 +246,28 @@ fn ui_message_text(message: &UIMessage) -> String {
         .join("\n")
 }
 
-async fn run_openai_conversation(
+struct OpenAiConversationParams<'a> {
     client: async_openai::Client<async_openai::config::OpenAIConfig>,
-    model_id: &str,
-    messages: &mut Vec<ChatCompletionRequestMessage>,
+    model_id: &'a str,
+    messages: &'a mut Vec<ChatCompletionRequestMessage>,
     tools: ToolRegistry,
     max_steps: u32,
     max_tokens: Option<u32>,
-    sender: &mpsc::UnboundedSender<StreamEvent>,
-    text_id: &str,
+    sender: &'a mpsc::UnboundedSender<StreamEvent>,
+    text_id: &'a str,
+}
+
+async fn run_openai_conversation(
+    OpenAiConversationParams {
+        client,
+        model_id,
+        messages,
+        tools,
+        max_steps,
+        max_tokens,
+        sender,
+        text_id,
+    }: OpenAiConversationParams<'_>,
 ) -> Result<String, AiError> {
     let mut assistant_text = String::new();
 

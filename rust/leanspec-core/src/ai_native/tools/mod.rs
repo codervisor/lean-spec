@@ -293,8 +293,8 @@ fn update_section(
     let mut start: Option<usize> = None;
     for (i, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
-        if trimmed.starts_with("## ") {
-            let title = trimmed[3..].trim().to_lowercase();
+        if let Some(stripped) = trimmed.strip_prefix("## ") {
+            let title = stripped.trim().to_lowercase();
             if title == target {
                 start = Some(i + 1);
                 break;
@@ -304,8 +304,8 @@ fn update_section(
 
     let start = start.ok_or_else(|| format!("Section not found: {}", section))?;
     let mut end = lines.len();
-    for i in start..lines.len() {
-        if lines[i].trim().starts_with("## ") {
+    for (i, line) in lines.iter().enumerate().skip(start) {
+        if line.trim().starts_with("## ") {
             end = i;
             break;
         }
@@ -326,7 +326,7 @@ fn update_section(
         );
     } else {
         let mut insert = vec![String::new()];
-        insert.extend(updated_lines.drain(..));
+        insert.append(&mut updated_lines);
         insert.push(String::new());
         lines.splice(start..end, insert);
     }
