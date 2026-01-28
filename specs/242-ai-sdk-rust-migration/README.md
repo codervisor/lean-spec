@@ -18,30 +18,37 @@ transitions:
   at: 2026-01-28T08:40:41.292116Z
 ---
 
-# Migrate from Vercel AI SDK (Node.js) to aisdk.rs (Rust)
+# Migrate AI Chat from Node.js to Native Rust
 
 ## Overview
 
-**Context**: Spec 240 evaluated the feasibility of migrating from the Vercel AI SDK (Node.js) to aisdk.rs (Rust). The evaluation concluded that:
+**Context**: Originally planned to use `aisdk.rs` for Rust-native AI integration, but discovered compatibility issues during implementation:
 
-1. ✅ Migration is **feasible** and should use **full migration** (not hybrid)
-2. ✅ aisdk.rs is **actively maintained** (latest commit 4 days ago)
-3. ✅ Feature parity exists for all core functionality
-4. ✅ Provider support is available for required providers
+- `aisdk-macros` (dependency of `aisdk`) uses **Rust 2024 edition**
+- Let-chains (`&& let` patterns) are unstable in stable Rust 1.86
+- All versions of `aisdk` (0.2.0, 0.3.0, 0.4.0) have this issue
 
-**Decision**: Proceed with full migration to achieve a pure Rust stack.
+**Updated Decision**: Use `async-openai` + `anthropic` crates instead.
 
 **Goals**:
 - Eliminate Node.js dependency from LeanSpec architecture
 - Reduce deployment complexity (single binary instead of two processes)
 - Remove IPC overhead between Rust HTTP server and Node.js worker
-- Leverage type safety and performance benefits of Rust
-- Align with Spec 241's consolidated core architecture
+- Use stable, well-maintained Rust libraries
 
-**Provider Requirements**:
-- ✅ **OpenRouter** - Unified access to multiple models
-- ✅ **OpenAI** - GPT-4o, GPT-4o-mini, GPT-5.2 series
-- ✅ **Anthropic** - Claude 3.5 Sonnet, Claude 4.5 Sonnet
+**Current Status**: AI feature **DISABLED** (build works, feature gated behind `ai` flag)
+
+**Provider Strategy**:
+- **OpenAI/OpenRouter**: Use `async-openai` (v0.32+, 3k+ GitHub stars, stable Rust 1.75+)
+- **Anthropic**: Use `anthropic` SDK (v0.0.8+)
+
+**Why Not aisdk.rs?**:
+
+| Issue                 | Details                                   |
+| --------------------- | ----------------------------------------- |
+| Rust 2024 Edition     | `aisdk-macros` uses unstable features     |
+| Let-chains            | `&& let` patterns not stable in Rust 1.86 |
+| All versions affected | 0.2.0, 0.3.0, 0.4.0 all have the issue    |
 
 **Non-Goals**:
 - Maintaining Node.js worker as fallback (clean break)
@@ -50,7 +57,16 @@ transitions:
 
 ## Design
 
-**See [DESIGN.md](./DESIGN.md) for detailed architecture, implementation strategy, and technical specifications.**
+**See [DESIGN.md](./DESIGN.md) for original aisdk-based design.**  
+**See [async-openai migration plan](../../rust/leanspec-core/src/ai_native/README.md) for updated approach.**
+
+### Updated Library Choice
+
+| Provider   | Crate          | Version | Notes                                  |
+| ---------- | -------------- | ------- | -------------------------------------- |
+| OpenAI     | `async-openai` | 0.32+   | Mature, stable Rust 1.75+, great docs  |
+| OpenRouter | `async-openai` | 0.32+   | OpenAI-compatible with custom base URL |
+| Anthropic  | `anthropic`    | 0.0.8+  | Official Rust SDK                      |
 
 ### Summary
 
@@ -63,6 +79,8 @@ transitions:
 - SSE streaming compatible with Vercel AI SDK frontend (`useChat` hook)
 - Support for OpenRouter, OpenAI, and Anthropic providers
 - All 14 LeanSpec tools ported to native Rust
+
+**Key Difference from Original Plan**: Using `async-openai` + `anthropic` instead of unified `aisdk` crate.
 
 **Frontend Compatibility**: See [AI_SDK_ALIGNMENT.md](./AI_SDK_ALIGNMENT.md) for SSE protocol specifications.
 
@@ -164,22 +182,53 @@ mod tests {
 
 ## Plan
 
-**See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the detailed 10-phase implementation plan.**
+**See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the original aisdk-based implementation plan.**
 
-**Summary Timeline**:
+**Updated Status (async-openai approach)**:
 
-- **Optimistic**: 10-12 days (experienced with aisdk.rs)
-- **Realistic**: 14-18 days (includes learning curve)
-- **Pessimistic**: 20+ days (if blockers encountered)
+### Phase 1: Foundation ✅ COMPLETE
+- [x] Discover aisdk.rs compatibility issues
+- [x] Evaluate alternatives (async-openai + anthropic)
+- [x] Update `Cargo.toml` with new dependencies
+- [x] Add feature flags for conditional compilation
+- [x] Create migration plan documentation at `ai_native/README.md`
+- [x] Build passes with AI disabled
 
-**Key Phases**:
+### Phase 2: Provider Implementation (2 days) - NOT STARTED
+- [ ] Implement OpenAI provider using `async-openai`
+- [ ] Implement OpenRouter provider (reuse OpenAI with custom base URL)
+- [ ] Implement Anthropic provider using `anthropic`
+- [ ] Create unified `ProviderClient` enum
 
-1. **Setup & Dependencies** (1 day) - aisdk.rs integration, module structure
-2. **Provider Implementation** (2 days) - OpenRouter, OpenAI, Anthropic support
-3. **Tool Migration** (3-4 days) - Port all 14 LeanSpec tools to Rust
-4. **Chat Streaming** (2 days) - SSE streaming, multi-step agent loop
-5. **HTTP Handler Integration** (1 day) - Replace IPC with native calls
-6. **Cleanup** (1 day) - Remove Node.js worker, update dependencies
+### Phase 3: Tool Migration (3 days) - NOT STARTED
+- [ ] Add `#[derive(JsonSchema)]` to all input structs
+- [ ] Convert `make_tool` to use `ChatCompletionTool` format
+- [ ] Test tool schema generation with schemars
+- [ ] Verify tool call/response cycle
+
+### Phase 4: Chat Streaming (2 days) - NOT STARTED
+- [ ] Implement SSE streaming for OpenAI/OpenRouter
+- [ ] Implement SSE streaming for Anthropic
+- [ ] Maintain compatibility with frontend `useChat` hook
+- [ ] Test multi-step agent loop
+
+### Phase 5: Integration (1 day) - NOT STARTED
+- [ ] Connect HTTP handler to new implementation
+- [ ] Remove IPC bridge code
+- [ ] Update error handling
+
+### Phase 6: Testing & Cleanup (2 days) - NOT STARTED
+- [ ] Integration tests with real providers
+- [ ] Performance benchmarks
+- [ ] Remove Node.js ai-worker package
+- [ ] Update documentation
+
+**Revised Timeline**:
+- **Optimistic**: 8-10 days
+- **Realistic**: 12-14 days
+- **Current Phase**: Foundation complete, ready for Phase 2
+
+**Key Changes from Original Plan**:
 7. **Documentation** (1 day) - Update README, installation guides
 8. **Testing** (2 days) - Integration tests, benchmarks, validation
 9. **Deployment** (1 day) - Staging, rollout, monitoring
@@ -304,15 +353,15 @@ Spec 241 consolidated infrastructure into `leanspec-core`. This migration follow
 
 ### Migration Risks & Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| aisdk.rs missing features | High | Low | Pre-verify all features with PoC |
-| UI incompatibility | High | Medium | Test SSE format early, iterate |
-| Performance regression | Medium | Low | Benchmark continuously, optimize |
-| Provider API changes | Medium | Low | Abstract providers, easy to swap |
-| Tool execution bugs | Medium | Medium | Comprehensive unit/integration tests |
-| Memory leaks | Medium | Low | Rust's safety guarantees + testing |
-| Documentation gaps | Low | Medium | Write docs as we code |
+| Risk                      | Impact | Likelihood | Mitigation                           |
+| ------------------------- | ------ | ---------- | ------------------------------------ |
+| aisdk.rs missing features | High   | Low        | Pre-verify all features with PoC     |
+| UI incompatibility        | High   | Medium     | Test SSE format early, iterate       |
+| Performance regression    | Medium | Low        | Benchmark continuously, optimize     |
+| Provider API changes      | Medium | Low        | Abstract providers, easy to swap     |
+| Tool execution bugs       | Medium | Medium     | Comprehensive unit/integration tests |
+| Memory leaks              | Medium | Low        | Rust's safety guarantees + testing   |
+| Documentation gaps        | Low    | Medium     | Write docs as we code                |
 
 ### Timeline Estimate
 

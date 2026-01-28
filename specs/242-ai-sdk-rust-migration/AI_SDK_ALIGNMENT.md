@@ -2,9 +2,11 @@
 
 ## Overview
 
-This document provides the detailed specifications for aligning the Rust backend implementation (using aisdk.rs) with the Vercel AI SDK frontend (useChat hook). This alignment ensures seamless compatibility between the Rust HTTP server and the existing frontend UI.
+This document provides the detailed specifications for aligning the Rust backend implementation (using `async-openai` and `anthropic` crates) with the Vercel AI SDK frontend (useChat hook). This alignment ensures seamless compatibility between the Rust HTTP server and the existing frontend UI.
 
 **Goal**: Replace the Node.js AI worker with native Rust implementation while maintaining 100% compatibility with the existing frontend using AI SDK's `useChat` hook.
+
+**Note on Provider Choice**: Originally planned to use `aisdk.rs`, but discovered Rust 2024 edition compatibility issues. Switched to `async-openai` (for OpenAI/OpenRouter) and `anthropic` crate (for Anthropic).
 
 ---
 
@@ -247,6 +249,8 @@ data: {"type":"source-document","sourceId":"doc_123","title":"Document","mediaTy
 
 ### 4.1 Rust Types
 
+**Note**: Using `async-openai` for OpenAI/OpenRouter and `anthropic` crate for Anthropic. Both implement the same SSE event protocol for frontend compatibility.
+
 ```rust
 // rust/leanspec-core/src/ai_native/types.rs
 
@@ -409,7 +413,7 @@ use axum::{
     Json,
 };
 use futures::StreamExt;
-use leanspec_core::ai_native::{UIMessage, StreamEvent, stream_chat};
+use leanspec_core::ai_native::{UIMessage, StreamEvent, stream_chat, ChatConfig, ProviderClient};
 
 pub async fn chat_handler(
     State(state): State<AppState>,
@@ -418,14 +422,17 @@ pub async fn chat_handler(
     // Extract messages from request
     let messages = request.messages;
     
+    // Create provider client based on configuration
+    let provider_client = create_provider_client(&request.provider_id, &state.config).await?;
+    
     // Call Rust AI module (no IPC!)
     let stream = stream_chat(ChatConfig {
         messages,
-        provider_id: "openai".to_string(),
-        model_id: "gpt-4o".to_string(),
-        system_prompt: "You are a helpful assistant.".to_string(),
-        max_steps: 5,
-        tools_enabled: true,
+        provider: provider_client,
+        model_id: request.model_id,
+        system_prompt: request.system_prompt,
+        max_steps: request.max_steps,
+        tools_enabled: request.tools_enabled,
     }).await?;
     
     // Convert to SSE stream
@@ -446,6 +453,26 @@ pub async fn chat_handler(
 #[derive(Deserialize)]
 struct ChatRequest {
     messages: Vec<UIMessage>,
+    provider_id: String,
+    model_id: String,
+    system_prompt: String,
+    max_steps: u32,
+    tools_enabled: bool,
+}
+
+async fn create_provider_client(
+    provider_id: &str,
+    config: &AppConfig,
+) -> Result<ProviderClient, ApiError> {
+    match provider_id {
+        "openai" => Ok(ProviderClient::openai(&config.openai_api_key)?),
+        "openrouter" => Ok(ProviderClient::openrouter(
+            &config.openrouter_api_key,
+            "https://openrouter.ai/api/v1",
+        )?),
+        "anthropic" => Ok(ProviderClient::anthropic(&config.anthropic_api_key)?),
+        _ => Err(ApiError::BadRequest(format!("Unknown provider: {}", provider_id))),
+    }
 }
 ```
 
@@ -453,7 +480,45 @@ struct ChatRequest {
 
 ## 5. Tool Calling Flow
 
-### 5.1 Complete Tool Call Sequence
+### 5.1 Provider-Specific Tool Format
+
+Different providers have different tool schemas:
+
+**OpenAI (async-openai)**:
+```rust
+use async_openai::types::{
+    ChatCompletionTool, 
+    ChatCompletionToolType,
+    FunctionObject,
+};
+
+fn create_openai_tool(name: &str, description: &str, schema: serde_json::Value) -> ChatCompletionTool {
+    ChatCompletionTool {
+        r#type: ChatCompletionToolType::Function,
+        function: FunctionObject {
+            name: name.to_string(),
+            description: Some(description.to_string()),
+            parameters: Some(schema),
+            strict: Some(false),
+        },
+    }
+}
+```
+
+**Anthropic**:
+```rust
+use anthropic::types::Tool;
+
+fn create_anthropic_tool(name: &str, description: &str, schema: serde_json::Value) -> Tool {
+    Tool {
+        name: name.to_string(),
+        description: description.to_string(),
+        input_schema: schema,
+    }
+}
+```
+
+### 5.2 Complete Tool Call Sequence
 
 1. **User sends message**:
    ```json
@@ -505,9 +570,9 @@ struct ChatRequest {
    data: [DONE]
    ```
 
-### 5.2 Rust Tool Execution
+### 5.3 Rust Tool Execution
 
-Tools must be executed **synchronously** within the streaming loop:
+Tools must be executed **synchronously** within the streaming loop. The implementation differs by provider:
 
 ```rust
 // rust/leanspec-core/src/ai_native/agent_loop.rs
@@ -522,40 +587,13 @@ pub async fn stream_chat(config: ChatConfig) -> Result<impl Stream<Item = Stream
             break;
         }
         
-        // Call LLM
-        let response = provider.stream_text(&messages).await?;
-        
-        // Track tool calls in this step
-        let mut tool_calls = Vec::new();
-        let mut has_tool_calls = false;
-        
-        for chunk in response {
-            match chunk {
-                Chunk::Text(text) => {
-                    yield StreamEvent::TextDelta { id: text_id.clone(), delta: text };
-                }
-                Chunk::ToolCall(call) => {
-                    has_tool_calls = true;
-                    yield StreamEvent::ToolInputStart { 
-                        tool_call_id: call.id.clone(), 
-                        tool_name: call.name.clone() 
-                    };
-                    yield StreamEvent::ToolInputAvailable { 
-                        tool_call_id: call.id.clone(),
-                        tool_name: call.name.clone(),
-                        input: call.input.clone() 
-                    };
-                    
-                    // Execute tool immediately
-                    let result = execute_tool(&call.name, &call.input).await?;
-                    
-                    yield StreamEvent::ToolOutputAvailable {
-                        tool_call_id: call.id.clone(),
-                        output: result.clone(),
-                    };
-                    
-                    tool_calls.push((call, result));
-                }
+        // Stream from provider based on type
+        match &config.provider {
+            ProviderClient::OpenAI(client) => {
+                stream_openai(client, &messages, &config).await?
+            }
+            ProviderClient::Anthropic(client) => {
+                stream_anthropic(client, &messages, &config).await?
             }
         }
         
@@ -570,6 +608,112 @@ pub async fn stream_chat(config: ChatConfig) -> Result<impl Stream<Item = Stream
     }
     
     yield StreamEvent::Finish;
+}
+
+// OpenAI-compatible streaming (includes OpenRouter)
+async fn stream_openai(
+    client: &async_openai::Client<async_openai::config::OpenAIConfig>,
+    messages: &[UIMessage],
+    config: &ChatConfig,
+) -> Result<StreamEvents> {
+    use async_openai::types::{
+        CreateChatCompletionRequestArgs,
+        ChatCompletionRequestMessage,
+    };
+    
+    let request = CreateChatCompletionRequestArgs::default()
+        .model(&config.model_id)
+        .messages(convert_to_openai_messages(messages))
+        .tools(get_tool_definitions_openai())
+        .stream(true)
+        .build()?;
+    
+    let mut stream = client.chat().create_stream(request).await?;
+    
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(response) => {
+                for choice in response.choices {
+                    if let Some(tool_calls) = choice.delta.tool_calls {
+                        // Handle tool call streaming
+                        for tool_call in tool_calls {
+                            yield StreamEvent::ToolInputStart {
+                                tool_call_id: tool_call.id.clone(),
+                                tool_name: tool_call.function.name.clone(),
+                            };
+                            // ... stream tool input deltas ...
+                            
+                            // Execute tool
+                            let result = execute_tool(&tool_call.function.name, 
+                                                      &tool_call.function.arguments).await?;
+                            yield StreamEvent::ToolOutputAvailable {
+                                tool_call_id: tool_call.id.clone(),
+                                output: result,
+                            };
+                        }
+                    }
+                    if let Some(content) = choice.delta.content {
+                        yield StreamEvent::TextDelta {
+                            id: format!("text_{}", choice.index),
+                            delta: content,
+                        };
+                    }
+                }
+            }
+            Err(e) => {
+                yield StreamEvent::Error {
+                    error_text: format!("OpenAI error: {}", e),
+                };
+            }
+        }
+    }
+}
+
+// Anthropic streaming
+async fn stream_anthropic(
+    client: &anthropic::Client,
+    messages: &[UIMessage],
+    config: &ChatConfig,
+) -> Result<StreamEvents> {
+    use anthropic::types::MessageRequest;
+    
+    let request = MessageRequest::builder()
+        .model(&config.model_id)
+        .messages(convert_to_anthropic_messages(messages))
+        .tools(get_tool_definitions_anthropic())
+        .stream(true)
+        .build()?;
+    
+    let mut stream = client.messages().create_stream(request).await?;
+    
+    while let Some(event) = stream.next().await {
+        match event {
+            Ok(anthropic::types::StreamEvent::ContentBlockStart { content_block }) => {
+                // Handle tool use start
+                if let anthropic::types::ContentBlock::ToolUse { id, name, .. } = content_block {
+                    yield StreamEvent::ToolInputStart {
+                        tool_call_id: id,
+                        tool_name: name,
+                    };
+                }
+            }
+            Ok(anthropic::types::StreamEvent::ContentBlockDelta { delta }) => {
+                // Handle text and tool input deltas
+                match delta {
+                    anthropic::types::ContentDelta::TextDelta { text } => {
+                        yield StreamEvent::TextDelta { id: "text_1".to_string(), delta: text };
+                    }
+                    // ... handle tool input deltas ...
+                }
+            }
+            // ... handle other events ...
+            Err(e) => {
+                yield StreamEvent::Error {
+                    error_text: format!("Anthropic error: {}", e),
+                };
+            }
+        }
+    }
 }
 ```
 
@@ -708,6 +852,7 @@ await sendMessage({ text: "list all specs" });
 | **IPC**            | JSON Lines over stdin/stdout  | Direct function calls       |
 | **Streaming**      | Node.js streams               | Rust futures::Stream        |
 | **Tool Execution** | Async event loop              | Tokio async runtime         |
+| **Providers**      | Vercel AI SDK unified API     | async-openai + anthropic    |
 | **Error Handling** | Try-catch + IPC serialization | Result types + ? operator   |
 | **Type Safety**    | TypeScript (runtime)          | Rust (compile-time)         |
 | **Deployment**     | Node.js + Rust binary         | Single Rust binary          |

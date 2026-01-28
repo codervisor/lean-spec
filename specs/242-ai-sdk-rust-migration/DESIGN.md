@@ -2,7 +2,7 @@
 
 **Parent Spec**: [242-ai-sdk-rust-migration](./README.md)
 
-This document contains the detailed design specifications for migrating from Vercel AI SDK (Node.js) to aisdk.rs (Rust).
+This document contains the detailed design specifications for migrating from Vercel AI SDK (Node.js) to native Rust using `async-openai` and `anthropic` crates.
 
 ---
 
@@ -43,8 +43,8 @@ This document contains the detailed design specifications for migrating from Ver
 │ (leanspec-http)                 │   Pure Rust stack
 │ ├─ Chat config                  │   
 │ ├─ Session persistence          │   
-│ └─ AI Module (native)           │   Direct function calls
-│    ├─ aisdk.rs providers        │   Zero IPC overhead
+│    └─ AI Module (native)           │   Direct function calls
+│       ├─ async-openai/anthropic    │   Zero IPC overhead
 │    ├─ 14 Tool implementations   │   Type-safe
 │    └─ Stream handling           │   
 └─────────────────────────────────┘
@@ -89,11 +89,13 @@ rust/
         └── chat_handler.rs # Updated to use ai_native
 ```
 
-### aisdk.rs Integration
+### Provider Integration
 
 > **Note**: See [AI_SDK_ALIGNMENT.md](./AI_SDK_ALIGNMENT.md) for detailed SSE protocol specifications and frontend compatibility requirements.
 
-The Rust implementation uses aisdk.rs for AI provider integration. The streaming protocol follows the Vercel AI SDK's `useChat` hook expectations with SSE events.
+The Rust implementation uses `async-openai` for OpenAI/OpenRouter providers and the `anthropic` crate for Anthropic integration. The streaming protocol follows the Vercel AI SDK's `useChat` hook expectations with SSE events.
+
+**Why not aisdk.rs?** During Phase 1, we discovered that `aisdk-macros` (a dependency of `aisdk`) uses Rust 2024 edition features (let-chains) that are unstable in Rust 1.86. All versions of `aisdk` (0.2.0, 0.3.0, 0.4.0) are affected. We switched to `async-openai` + `anthropic` which are stable, mature alternatives.
 
 ```rust
 // rust/leanspec-core/src/ai_native/streaming.rs
@@ -181,15 +183,15 @@ pub fn sse_done() -> String {
 
 ### Tool Implementation Strategy
 
-**Approach**: Each tool is a separate Rust module with type-safe schema:
+**Approach**: Each tool is a separate Rust module with JSON Schema generation using `schemars`:
 
 ```rust
 // rust/leanspec-core/src/ai_native/tools/list_specs.rs
 
-use aisdk::macros::tool;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ListSpecsInput {
     pub project_id: Option<String>,
     pub status: Option<String>,
@@ -197,10 +199,6 @@ pub struct ListSpecsInput {
     pub tags: Option<Vec<String>>,
 }
 
-#[tool(
-    name = "list_specs",
-    description = "List specs with optional filters"
-)]
 pub async fn list_specs(input: ListSpecsInput) -> Result<String, ToolError> {
     let project_id = input.project_id
         .ok_or_else(|| ToolError::MissingField("project_id"))?;
@@ -215,20 +213,31 @@ pub async fn list_specs(input: ListSpecsInput) -> Result<String, ToolError> {
     
     Ok(serde_json::to_string(&specs)?)
 }
+
+/// Generate JSON schema for the tool
+pub fn tool_schema() -> serde_json::Value {
+    let schema = schemars::schema_for!(ListSpecsInput);
+    serde_json::json!({
+        "name": "list_specs",
+        "description": "List specs with optional filters",
+        "parameters": schema,
+    })
+}
 ```
 
 ### Provider Support
 
 **Required Providers**:
 
-1. **OpenRouter** - Priority for unified access
-2. **OpenAI** - GPT-4o, GPT-4o-mini, GPT-5.2
-3. **Anthropic** - Claude 3.5/4.5 Sonnet
+1. **OpenRouter** - Priority for unified access (uses `async-openai` with custom base URL)
+2. **OpenAI** - GPT-4o, GPT-4o-mini, GPT-5.2 (uses `async-openai`)
+3. **Anthropic** - Claude 3.5/4.5 Sonnet (uses `anthropic` crate)
 
 ```rust
 // rust/leanspec-core/src/ai_native/providers.rs
 
-use aisdk::providers::{OpenAI, Anthropic};
+use async_openai::Client as OpenAIClient;
+use anthropic::Client as AnthropicClient;
 
 pub enum LeanSpecProvider {
     OpenRouter { api_key: String, base_url: String },
@@ -236,18 +245,28 @@ pub enum LeanSpecProvider {
     Anthropic { api_key: String },
 }
 
+pub enum ProviderClient {
+    OpenAI(OpenAIClient<async_openai::config::OpenAIConfig>),
+    Anthropic(AnthropicClient),
+}
+
 impl LeanSpecProvider {
-    pub fn create_client(&self) -> Box<dyn LanguageModel> {
+    pub fn create_client(&self) -> ProviderClient {
         match self {
             Self::OpenRouter { api_key, base_url } => {
                 // OpenRouter uses OpenAI-compatible API
-                Box::new(OpenAI::new(api_key).with_base_url(base_url))
+                let config = async_openai::config::OpenAIConfig::new()
+                    .with_api_key(api_key)
+                    .with_api_base(base_url);
+                ProviderClient::OpenAI(OpenAIClient::with_config(config))
             }
             Self::OpenAI { api_key } => {
-                Box::new(OpenAI::new(api_key))
+                let config = async_openai::config::OpenAIConfig::new()
+                    .with_api_key(api_key);
+                ProviderClient::OpenAI(OpenAIClient::with_config(config))
             }
             Self::Anthropic { api_key } => {
-                Box::new(Anthropic::new(api_key))
+                ProviderClient::Anthropic(AnthropicClient::new(api_key))
             }
         }
     }
@@ -336,7 +355,7 @@ struct ChatRequest {
 - ✅ `rust/leanspec-core/src/ai_native/error.rs` (~100 lines)
 
 **Files to Update**:
-- 🔄 `rust/leanspec-core/Cargo.toml` (add aisdk dependencies)
+- 🔄 `rust/leanspec-core/Cargo.toml` (add async-openai, anthropic, schemars dependencies)
 - 🔄 `rust/leanspec-core/src/lib.rs` (export ai_native module)
 - 🔄 `rust/leanspec-http/src/handlers/chat_handler.rs` (use ai_native)
 - 🔄 `rust/leanspec-http/Cargo.toml` (remove IPC dependencies)

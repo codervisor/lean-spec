@@ -1,6 +1,6 @@
 # Implementation Plan: AI SDK Rust Migration
 
-This document contains the detailed implementation phases for migrating from Vercel AI SDK (Node.js) to aisdk.rs (Rust).
+This document contains the detailed implementation phases for migrating from Vercel AI SDK (Node.js) to native Rust using `async-openai` and `anthropic` crates.
 
 **Parent Spec**: [242-ai-sdk-rust-migration](./README.md)
 
@@ -8,27 +8,30 @@ This document contains the detailed implementation phases for migrating from Ver
 
 ## Implementation Phases
 
-### Phase 1: Setup & Dependencies (1 day)
+### Phase 1: Setup & Dependencies (1 day) ✅ COMPLETE
 
-- [ ] Research latest aisdk.rs version and API
-- [ ] Add aisdk dependencies to `leanspec-core/Cargo.toml`
+- [x] ~~Research latest aisdk.rs version and API~~ → Discovered incompatibility (Rust 2024 edition issues)
+- [x] Evaluate alternatives → Selected `async-openai` + `anthropic` crates
+- [x] Add dependencies to `leanspec-core/Cargo.toml`
 - [ ] Create `ai_native` module structure in `leanspec-core`
 - [ ] Setup feature flag for ai_native (allow incremental rollout)
 - [ ] Add test dependencies (tokio-test, mockito)
 - [ ] Verify compilation
 
-### Phase 2: Provider Implementation (2 days)
+### Phase 2: Provider Implementation (2 days) - NOT STARTED
 
-- [ ] Implement `providers.rs` with OpenRouter support
-- [ ] Implement OpenAI provider integration
-- [ ] Implement Anthropic provider integration
-- [ ] Add provider factory with API key resolution
+- [ ] Implement `providers.rs` with unified `ProviderClient` enum
+- [ ] Implement OpenAI provider using `async-openai` crate
+- [ ] Implement OpenRouter provider (OpenAI-compatible with custom base URL)
+- [ ] Implement Anthropic provider using `anthropic` crate
+- [ ] Add provider factory with API key resolution from config
 - [ ] Write unit tests for each provider
 - [ ] Test streaming with each provider (manual verification)
 
-### Phase 3: Tool Migration (3-4 days)
+### Phase 3: Tool Migration (3 days) - NOT STARTED
 
-- [ ] Create tools module structure
+- [ ] Create tools module structure with JSON schema support
+- [ ] Add `#[derive(JsonSchema)]` to all input structs using `schemars`
 - [ ] Port `list_specs` tool → `tools/list_specs.rs`
 - [ ] Port `search_specs` tool → `tools/search_specs.rs`
 - [ ] Port `get_spec` tool → `tools/get_spec.rs`
@@ -42,18 +45,21 @@ This document contains the detailed implementation phases for migrating from Ver
 - [ ] Port `toggle_checklist_item` tool → `tools/toggle_checklist_item.rs`
 - [ ] Port `read_subspec` tool → `tools/read_subspec.rs`
 - [ ] Port `update_subspec` tool → `tools/update_subspec.rs`
+- [ ] Convert `make_tool` to use `ChatCompletionTool` format (OpenAI schema)
+- [ ] Test tool schema generation with schemars
 - [ ] Write unit tests for each tool
-- [ ] Create tool registry/factory
+- [ ] Create tool registry for provider integration
 
-### Phase 4: Chat Streaming (2 days)
+### Phase 4: Chat Streaming (2 days) - NOT STARTED
 
-- [ ] Implement `chat.rs` with aisdk.rs integration
-- [ ] Implement streaming logic (text chunks)
+- [ ] Implement `chat.rs` with `async-openai` streaming
+- [ ] Implement SSE streaming for OpenAI/OpenRouter providers
+- [ ] Implement SSE streaming for Anthropic provider
 - [ ] Implement tool call/result streaming
 - [ ] Add max_steps support (multi-step agents)
 - [ ] Add error propagation
 - [ ] Write integration tests for streaming
-- [ ] Test SSE format compatibility with UI
+- [ ] Test SSE format compatibility with UI (useChat hook)
 
 ### Phase 5: HTTP Handler Integration (1 day)
 
@@ -137,7 +143,7 @@ This document contains the detailed implementation phases for migrating from Ver
 
 ### Files to Update
 
-- 🔄 `rust/leanspec-core/Cargo.toml` (add aisdk dependencies)
+- 🔄 `rust/leanspec-core/Cargo.toml` (add async-openai, anthropic, schemars dependencies)
 - 🔄 `rust/leanspec-core/src/lib.rs` (export ai_native module)
 - 🔄 `rust/leanspec-http/src/handlers/chat_handler.rs` (use ai_native)
 - 🔄 `rust/leanspec-http/Cargo.toml` (remove IPC dependencies)
@@ -149,23 +155,24 @@ This document contains the detailed implementation phases for migrating from Ver
 
 ## Timeline Estimate
 
-### Optimistic (experienced with aisdk.rs): 10-12 days
+### Optimistic: 8-10 days
 
-- Phase 1-2: 3 days (setup + providers)
+- Phase 1: 1 day (foundation complete)
+- Phase 2: 2 days (providers)
 - Phase 3: 3 days (tools)
-- Phase 4-5: 2 days (chat + HTTP)
+- Phase 4: 2 days (chat streaming)
+- Phase 5: 1 day (HTTP integration)
 - Phase 6-7: 1 day (cleanup + docs)
-- Phase 8-10: 2 days (testing + deployment)
 
-### Realistic (learning aisdk.rs): 14-18 days
+### Realistic: 12-14 days
 
-- Add 2-3 days for learning curve
-- Add 1-2 days for edge cases
+- Add 1-2 days for provider API differences
+- Add 1-2 days for tool schema generation
 - Add 1 day for unexpected issues
 
-### Pessimistic (major blockers): 20+ days
+### Pessimistic: 18+ days
 
-- If aisdk.rs has missing features: +5 days
+- If provider streaming differences: +3 days
 - If UI compatibility issues: +3 days
 - If performance problems: +2 days
 
@@ -184,3 +191,17 @@ If migration fails or encounters blockers:
 5. **Revisit in 6 months**: Wait for aisdk.rs maturity
 
 **Note**: Design for clean git history with atomic commits per phase.
+
+### Key Changes from aisdk.rs to async-openai/anthropic
+
+1. **No unified provider trait** - Must implement separate logic for OpenAI-compatible vs Anthropic APIs
+2. **Different streaming APIs** - `async-openai` uses `ChatCompletionResponseStream`, Anthropic uses its own streaming format
+3. **Tool schema format** - OpenAI uses specific JSON Schema format, need to convert from schemars
+4. **No `#[tool]` macro** - Must manually define tool schemas and execution mapping
+5. **More explicit error handling** - Direct API error types instead of unified abstraction
+
+**Benefits of the switch**:
+- ✅ Stable Rust (no 2024 edition requirements)
+- ✅ Mature, well-tested crates (3k+ GitHub stars for async-openai)
+- ✅ Better documentation and community support
+- ✅ More predictable API (closer to raw OpenAI/Anthropic APIs)
