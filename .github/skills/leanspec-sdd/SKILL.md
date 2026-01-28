@@ -26,6 +26,7 @@ Activate this skill when any of the following are true:
 3. **Intent Over Implementation**: Capture why first, then how.
 4. **Progressive Disclosure**: Keep SKILL.md concise; use references for details.
 5. **No Manual Frontmatter**: Use tools to update status, tags, dependencies.
+6. **Verify Against Reality**: When asked about completion or progress, check the actual codebase, commits, and changes—not just the spec status.
 
 ## Core SDD Workflow
 
@@ -46,7 +47,12 @@ Activate this skill when any of the following are true:
 ### 4) Validate & Complete
 - Run `validate` (or `lean-spec validate`) before completion.
 - Ensure all checklist items are checked.
-- Update status to `complete` only when criteria are met.
+- **Verify actual implementation**: When asked about completion status or progress:
+  - Check git commits and file changes
+  - Review actual code implementations
+  - Verify test coverage and results
+  - Don't rely solely on spec status field
+- Update status to `complete` only when both spec criteria **and** actual implementation are verified.
 
 ## Tool Reference
 
