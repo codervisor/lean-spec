@@ -22,6 +22,7 @@
     "build": "turbo run build",
     "build:rust": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",
     "test": "turbo run test",
+    "test:rust": "cargo test --manifest-path rust/Cargo.toml",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
