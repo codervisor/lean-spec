@@ -14,7 +14,7 @@ name = "leanspec_core"
 path = "src/lib.rs"
 
 [dependencies]
-aisdk = {version = "0.4.0", features = ["openai", "openrouter", "anthropic", "macros"], optional = true}
+aisdk = {version = "0.4.0", features = ["openai", "openrouter", "anthropic"], optional = true}
 chrono.workspace = true
 petgraph.workspace = true
 regex.workspace = true
