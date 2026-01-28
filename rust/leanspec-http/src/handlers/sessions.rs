@@ -20,7 +20,7 @@ use serde_json::json;
 
 /// Request to create a new session
 #[derive(Debug, Deserialize)]
-pub struct CreateSessionRequest {
+pub struct CreateToolSessionRequest {
     pub project_path: String,
     pub spec_id: Option<String>,
     pub tool: String,
@@ -63,7 +63,7 @@ impl From<Session> for SessionResponse {
 /// Create a new session (does not start it)
 pub async fn create_session(
     State(state): State<AppState>,
-    Json(req): Json<CreateSessionRequest>,
+    Json(req): Json<CreateToolSessionRequest>,
 ) -> ApiResult<Json<SessionResponse>> {
     let manager = state.session_manager.clone();
 

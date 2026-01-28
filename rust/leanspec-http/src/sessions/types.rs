@@ -58,12 +58,12 @@ impl Session {
             mode,
             status: SessionStatus::Pending,
             exit_code: None,
-            started_at: now.clone(),
+            started_at: now,
             ended_at: None,
             duration_ms: None,
             token_count: None,
             metadata: HashMap::new(),
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
         }
     }
@@ -83,12 +83,10 @@ impl Session {
 
     /// Calculate duration if session has ended
     pub fn calculate_duration(&self) -> Option<u64> {
-        if let Some(ended) = self.ended_at {
-            Some((ended - self.started_at).num_milliseconds() as u64)
-        } else {
-            None
-        }
+        self.ended_at
+            .map(|ended| (ended - self.started_at).num_milliseconds() as u64)
     }
+
 
     /// Update duration_ms if session has ended
     pub fn update_duration(&mut self) {

@@ -82,6 +82,12 @@ pub struct ClaudeAdapter {
     binary_path: Option<PathBuf>,
 }
 
+impl Default for ClaudeAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ClaudeAdapter {
     pub fn new() -> Self {
         Self {
@@ -179,6 +185,12 @@ pub struct CopilotAdapter {
     gh_binary: Option<PathBuf>,
 }
 
+impl Default for CopilotAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CopilotAdapter {
     pub fn new() -> Self {
         Self {
@@ -193,7 +205,7 @@ impl CopilotAdapter {
     async fn check_copilot_extension(&self) -> Result<bool, ServerError> {
         if let Some(gh) = self.find_binary() {
             let output = Command::new(gh)
-                .args(&["extension", "list"])
+                .args(["extension", "list"])
                 .output()
                 .await
                 .map_err(|e| {
@@ -233,7 +245,7 @@ impl ToolAdapter for CopilotAdapter {
         // Check authentication
         let gh = self.find_binary().unwrap();
         let output = Command::new(gh)
-            .args(&["auth", "status"])
+            .args(["auth", "status"])
             .output()
             .await
             .map_err(|e| ServerError::ToolError(format!("Failed to check auth: {}", e)))?;
@@ -298,6 +310,12 @@ impl ToolAdapter for CopilotAdapter {
 /// Codex CLI adapter
 pub struct CodexAdapter {
     binary_path: Option<PathBuf>,
+}
+
+impl Default for CodexAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CodexAdapter {
@@ -386,6 +404,12 @@ impl ToolAdapter for CodexAdapter {
 /// OpenCode adapter
 pub struct OpenCodeAdapter {
     binary_path: Option<PathBuf>,
+}
+
+impl Default for OpenCodeAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl OpenCodeAdapter {
