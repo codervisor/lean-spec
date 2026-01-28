@@ -200,7 +200,7 @@ describe('Worker Protocol', () => {
       const request = {
         id: 'req-123',
         type: 'chat',
-        payload: {},
+        payload: {} as { messages?: unknown[] },
       };
 
       expect(request.payload.messages).toBeUndefined();
@@ -265,7 +265,7 @@ describe('Worker Protocol', () => {
     });
 
     it('should handle malformed chunk response', () => {
-      const response = {
+      const response: { id: string; type: string; data?: unknown } = {
         id: 'req-123',
         type: 'chunk',
         // Missing data field
