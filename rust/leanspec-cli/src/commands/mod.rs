@@ -6,6 +6,7 @@ pub mod deps;
 pub mod link;
 pub mod list;
 pub mod search;
+pub mod session;
 pub mod stats;
 pub mod tokens;
 pub mod unlink;

@@ -4,10 +4,17 @@ import { Settings, Palette, Cpu } from 'lucide-react';
 import { Button, cn } from '@leanspec/ui-components';
 import { AISettingsTab } from '../components/settings/AISettingsTab';
 import { AppearanceSettingsTab } from '../components/settings/AppearanceSettingsTab';
+import { SettingsSkeleton } from '../components/shared/Skeletons';
+import { useProject } from '../contexts';
 
 export function SettingsPage() {
   const { t } = useTranslation('common');
+  const { loading: projectLoading } = useProject();
   const [activeTab, setActiveTab] = useState<'ai' | 'appearance'>('ai');
+
+  if (projectLoading) {
+    return <SettingsSkeleton />;
+  }
 
   const tabs = [
     { id: 'ai', label: t('settings.tabs.ai'), icon: Cpu },

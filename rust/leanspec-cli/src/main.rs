@@ -478,6 +478,66 @@ enum Commands {
         #[arg(long)]
         raw: bool,
     },
+
+    /// Manage AI coding sessions
+    Session {
+        #[command(subcommand)]
+        action: SessionSubcommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum SessionSubcommand {
+    Create {
+        #[arg(long)]
+        project_path: String,
+
+        #[arg(long)]
+        spec: Option<String>,
+
+        #[arg(long, default_value = "claude")]
+        tool: String,
+
+        #[arg(long, default_value = "autonomous")]
+        mode: String,
+    },
+    Run {
+        #[arg(long)]
+        project_path: String,
+
+        #[arg(long)]
+        spec: Option<String>,
+
+        #[arg(long, default_value = "claude")]
+        tool: String,
+
+        #[arg(long, default_value = "autonomous")]
+        mode: String,
+    },
+    Start {
+        session_id: String,
+    },
+    Stop {
+        session_id: String,
+    },
+    Delete {
+        session_id: String,
+    },
+    View {
+        session_id: String,
+    },
+    List {
+        #[arg(long)]
+        spec: Option<String>,
+        #[arg(long)]
+        status: Option<String>,
+        #[arg(long)]
+        tool: Option<String>,
+    },
+    Logs {
+        session_id: String,
+    },
+    Tools,
 }
 
 fn main() -> ExitCode {
@@ -682,6 +742,41 @@ fn main() -> ExitCode {
             warnings_only,
             &cli.output,
         ),
+        Commands::Session { action } => {
+            use commands::session::SessionCommand as Cmd;
+            let cmd = match action {
+                SessionSubcommand::Create {
+                    project_path,
+                    spec,
+                    tool,
+                    mode,
+                } => Cmd::Create {
+                    project_path,
+                    spec,
+                    tool,
+                    mode,
+                },
+                SessionSubcommand::Run {
+                    project_path,
+                    spec,
+                    tool,
+                    mode,
+                } => Cmd::Run {
+                    project_path,
+                    spec,
+                    tool,
+                    mode,
+                },
+                SessionSubcommand::Start { session_id } => Cmd::Start { session_id },
+                SessionSubcommand::Stop { session_id } => Cmd::Stop { session_id },
+                SessionSubcommand::Delete { session_id } => Cmd::Delete { session_id },
+                SessionSubcommand::View { session_id } => Cmd::View { session_id },
+                SessionSubcommand::List { spec, status, tool } => Cmd::List { spec, status, tool },
+                SessionSubcommand::Logs { session_id } => Cmd::Logs { session_id },
+                SessionSubcommand::Tools => Cmd::Tools,
+            };
+            commands::session::run(cmd)
+        }
         Commands::View { spec, raw } => commands::view::run(&specs_dir, &spec, raw, &cli.output),
     };
 

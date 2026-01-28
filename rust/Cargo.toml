@@ -1,51 +1,51 @@
 [workspace]
 members = [
-    "leanspec-core",
-    "leanspec-cli",
-    "leanspec-mcp",
-    "leanspec-http",
-    "leanspec-sync-bridge",
+  "leanspec-core",
+  "leanspec-cli",
+  "leanspec-mcp",
+  "leanspec-http",
+  "leanspec-sync-bridge",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "0.2.20"
-edition = "2021"
-rust-version = "1.70"
 authors = ["LeanSpec Contributors"]
+description = "Lightweight spec methodology for AI-powered development"
+edition = "2021"
+homepage = "https://lean-spec.dev"
 license = "MIT"
 repository = "https://github.com/codervisor/lean-spec"
-homepage = "https://lean-spec.dev"
-description = "Lightweight spec methodology for AI-powered development"
+rust-version = "1.70"
+version = "0.2.20"
 
 [workspace.dependencies]
 # Core dependencies
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-serde_json = "1.0"
-thiserror = "2.0"
-walkdir = "2.5"
-regex = "1.11"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = {version = "0.4", features = ["serde"]}
 petgraph = "0.8"
+regex = "1.11"
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+serde_yaml = "0.9"
+thiserror = "2.0"
 tiktoken-rs = "0.6"
+walkdir = "2.5"
 
 # CLI dependencies
-clap = { version = "4.5", features = ["derive", "color"] }
+clap = {version = "4.5", features = ["derive", "color"]}
 colored = "3.0"
 dialoguer = "0.11"
 indicatif = "0.17"
 
 # Async runtime
-tokio = { version = "1.42", features = ["full"] }
+tokio = {version = "1.42", features = ["full"]}
 
 # Testing
 pretty_assertions = "1.4"
 tempfile = "3.14"
 
 [profile.release]
-lto = true
 codegen-units = 1
-strip = true
+lto = true
 opt-level = "z"
 panic = "abort"
+strip = true

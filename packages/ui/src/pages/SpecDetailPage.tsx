@@ -35,6 +35,7 @@ import { TableOfContents, TableOfContentsSidebar } from '../components/spec-deta
 import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
+import { SessionPanel } from '../components/spec-detail/SessionPanel';
 import { BackToTop } from '../components/shared/BackToTop';
 import { useProject, useLayout, useMachine } from '../contexts';
 import { useTranslation } from 'react-i18next';
@@ -586,6 +587,12 @@ export function SpecDetailPage() {
         <div className={cn("flex flex-col xl:flex-row xl:items-start mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
           <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
             <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
+            {spec?.specName && (
+              <SessionPanel
+                specId={spec.specName}
+                projectPath={currentProject?.path ?? null}
+              />
+            )}
           </main>
 
           {/* Right Sidebar for TOC (Desktop only) */}

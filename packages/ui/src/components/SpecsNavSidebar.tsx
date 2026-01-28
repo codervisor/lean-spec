@@ -36,6 +36,7 @@ import { cn } from '../lib/utils';
 import { formatRelativeTime } from '../lib/date-utils';
 import { useTranslation } from 'react-i18next';
 import { useProject, useSpecs } from '../contexts';
+import { SpecsNavSidebarSkeleton } from './shared/Skeletons';
 
 const STORAGE_KEYS = {
   collapsed: 'specs-nav-sidebar-collapsed',
@@ -571,9 +572,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
           <div className="flex-1 overflow-hidden">
             {loading ? (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                {t('actions.loading')}
-              </div>
+              <SpecsNavSidebarSkeleton />
             ) : filteredSpecs.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 {t('specsNavSidebar.noResults')}

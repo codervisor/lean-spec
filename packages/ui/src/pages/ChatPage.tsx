@@ -3,6 +3,7 @@ import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { ChatContainer } from '../components/chat';
 import { EnhancedModelSelector } from '../components/chat/EnhancedModelSelector';
 import { ChatSidebar } from '../components/chat/sidebar/ChatSidebar';
+import { ChatSkeleton } from '../components/shared/Skeletons';
 import { useLeanSpecChat } from '../lib/use-chat';
 import { useProject } from '../contexts';
 import { Trash2, Settings2 } from 'lucide-react';
@@ -185,11 +186,7 @@ export function ChatPage() {
   }
 
   if (projectLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted-foreground">{t('actions.loading')}</div>
-      </div>
-    );
+    return <ChatSkeleton />;
   }
 
   if (!currentProject) {

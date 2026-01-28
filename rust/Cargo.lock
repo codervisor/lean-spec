@@ -1277,6 +1277,7 @@ dependencies = [
  "dialoguer",
  "indicatif",
  "leanspec-core",
+ "leanspec-http",
  "predicates",
  "pretty_assertions",
  "regex",
@@ -1285,6 +1286,7 @@ dependencies = [
  "serde_yaml",
  "tempfile",
  "thiserror 2.0.17",
+ "tokio",
  "walkdir",
 ]
 

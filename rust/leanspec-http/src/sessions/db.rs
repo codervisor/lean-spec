@@ -645,7 +645,6 @@ mod tests {
         );
         db.insert_session(&session).unwrap();
 
-
         db.log_message("test-session", LogLevel::Stdout, "Hello world")
             .unwrap();
         db.log_message("test-session", LogLevel::Info, "Info message")
@@ -672,7 +671,6 @@ mod tests {
             SessionMode::Autonomous,
         );
         db.insert_session(&session).unwrap();
-
 
         db.insert_event("test-session", EventType::Created, None)
             .unwrap();

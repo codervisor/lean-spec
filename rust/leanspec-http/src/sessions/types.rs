@@ -87,7 +87,6 @@ impl Session {
             .map(|ended| (ended - self.started_at).num_milliseconds() as u64)
     }
 
-
     /// Update duration_ms if session has ended
     pub fn update_duration(&mut self) {
         if let Some(duration) = self.calculate_duration() {

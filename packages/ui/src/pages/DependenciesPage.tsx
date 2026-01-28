@@ -29,6 +29,7 @@ import { cn } from '../lib/utils';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
 import { useProject, useLayout } from '../contexts';
+import { DependenciesSkeleton } from '../components/shared/Skeletons';
 
 import { nodeTypes } from '../components/dependencies/SpecNode';
 import { SpecSidebar } from '../components/dependencies/SpecSidebar';
@@ -581,13 +582,7 @@ export function DependenciesPage() {
   const hasFilters = statusFilter.length > 0 || focusedNodeId;
 
   if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <p className="text-muted-foreground">{t('dependenciesPage.state.loading')}</p>
-        </div>
-      </div>
-    );
+    return <DependenciesSkeleton />;
   }
 
   if (error || !data) {

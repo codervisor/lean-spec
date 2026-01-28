@@ -69,6 +69,43 @@
     "report": "Report",
     "open": "Open"
   },
+  "sessions": {
+    "title": "AI Sessions",
+    "subtitle": "Run and monitor AI coding sessions for this spec.",
+    "empty": "No sessions yet.",
+    "emptyLogs": "No logs recorded yet.",
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "new": "New Session",
+      "run": "Run Session",
+      "start": "Start",
+      "stop": "Stop",
+      "logs": "View Logs"
+    },
+    "labels": {
+      "tool": "Tool",
+      "mode": "Mode",
+      "started": "Started",
+      "unknownTime": "Unknown"
+    },
+    "dialogs": {
+      "createTitle": "Create AI Session",
+      "createDescription": "Choose the tool and mode, then start the session.",
+      "logsTitle": "Session Logs"
+    },
+    "errors": {
+      "load": "Failed to load sessions.",
+      "create": "Failed to create session.",
+      "noProjectPath": "Project path missing for this workspace."
+    }
+  },
   "chat": {
     "title": "LeanSpec AI Chat",
     "subtitle": "Manage specs conversationally without leaving the browser.",

@@ -1,37 +1,39 @@
 [package]
-name = "leanspec-cli"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
 authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
 description = "Command-line interface for LeanSpec"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "leanspec-cli"
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [[bin]]
 name = "lean-spec"
 path = "src/main.rs"
 
 [dependencies]
-leanspec-core = { path = "../leanspec-core" }
+chrono.workspace = true
 clap.workspace = true
 colored.workspace = true
 dialoguer.workspace = true
 indicatif.workspace = true
+leanspec-core = {path = "../leanspec-core"}
+leanspec-http = {path = "../leanspec-http"}
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
 thiserror.workspace = true
-chrono.workspace = true
+tokio.workspace = true
 walkdir.workspace = true
 
 [dev-dependencies]
-tempfile.workspace = true
-pretty_assertions.workspace = true
 assert_cmd = "2.0"
-predicates = "3.1"
-serde_yaml.workspace = true
-serde_json.workspace = true
 chrono.workspace = true
+predicates = "3.1"
+pretty_assertions.workspace = true
 regex.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+tempfile.workspace = true

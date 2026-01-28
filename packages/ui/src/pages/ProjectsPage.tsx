@@ -23,6 +23,7 @@ import { CreateProjectDialog } from '../components/projects/CreateProjectDialog'
 import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvatar';
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { PageHeader } from '../components/shared/PageHeader';
+import { ProjectsSkeleton } from '../components/shared/Skeletons';
 import { useProject, useLayout, useMachine } from '../contexts';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
@@ -54,6 +55,10 @@ export function ProjectsPage() {
   } = useProject();
   const { machineModeEnabled, currentMachine } = useMachine();
   const { isWideMode } = useLayout();
+
+  if (loading) {
+    return <ProjectsSkeleton />;
+  }
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
