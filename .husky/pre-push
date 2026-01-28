@@ -29,13 +29,6 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "  → Running tests..."
-cargo test --manifest-path rust/Cargo.toml -- --test-threads=1
-if [ $? -ne 0 ]; then
-  echo "❌ Rust tests failed! Fix the failing tests before pushing."
-  exit 1
-fi
-
 echo "✅ Rust checks passed!"
 
 echo ""

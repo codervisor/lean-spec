@@ -1,15 +1,15 @@
 #!/usr/bin/env tsx
 /**
- * Sync versions for Rust binary platform packages
+ * Sync versions for Rust workspace and binary platform packages
  * 
- * This script ensures all platform-specific binary packages use the same version 
- * as the root package.json. It updates:
+ * This script ensures all Rust packages use the same version as the root package.json. It updates:
+ * - Rust workspace version in rust/Cargo.toml
  * - CLI platform packages (lean-spec-darwin-x64, etc.)
  * - MCP platform packages (@leanspec/mcp-darwin-x64, etc.)
  * - HTTP server platform packages (@leanspec/http-darwin-x64, etc.)
  * 
  * Usage:
- *   pnpm sync-rust-versions [--dry-run]
+ *   pnpm sync-versions:rust [--dry-run]
  */
 
 import fs from 'node:fs/promises';
@@ -20,6 +20,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, '..');
+const RUST_DIR = path.join(ROOT_DIR, 'rust');
+const RUST_CARGO_TOML = path.join(RUST_DIR, 'Cargo.toml');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
 const REPOSITORY_URL = 'https://github.com/codervisor/lean-spec.git';
 
@@ -155,8 +157,45 @@ async function resolveTargetVersion(): Promise<string> {
   throw new Error('Unable to resolve target version from root or CLI package.json');
 }
 
+async function getCurrentRustVersion(): Promise<string | null> {
+  try {
+    const cargoContent = await fs.readFile(RUST_CARGO_TOML, 'utf-8');
+    const versionMatch = cargoContent.match(/^\[workspace\.package\][^]*?^version\s*=\s*"([^"]+)"/m);
+    return versionMatch ? versionMatch[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+async function updateRustWorkspaceVersion(targetVersion: string, dryRun: boolean): Promise<boolean> {
+  try {
+    const cargoContent = await fs.readFile(RUST_CARGO_TOML, 'utf-8');
+    const currentVersion = await getCurrentRustVersion();
+
+    if (currentVersion === targetVersion) {
+      console.log(`  ✓ rust/Cargo.toml: ${currentVersion} (synced)`);
+      return false;
+    }
+
+    console.log(`  ⚠ rust/Cargo.toml: ${currentVersion ?? 'unknown'} → ${targetVersion}`);
+
+    if (!dryRun) {
+      const updatedContent = cargoContent.replace(
+        /^(\[workspace\.package\][^]*?^version\s*=\s*")[^"]+(")/m,
+        `$1${targetVersion}$2`
+      );
+      await fs.writeFile(RUST_CARGO_TOML, updatedContent, 'utf-8');
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`  ✗ rust/Cargo.toml: ${error}`);
+    throw error;
+  }
+}
+
 async function syncRustVersions(dryRun: boolean = false): Promise<void> {
-  console.log('🔄 Syncing Rust binary platform package versions...\n');
+  console.log('🔄 Syncing Rust workspace and platform package versions...\n');
 
   const targetVersion = await resolveTargetVersion();
 
@@ -167,8 +206,22 @@ async function syncRustVersions(dryRun: boolean = false): Promise<void> {
   let created = 0;
   let errors = 0;
 
+  // Update Rust workspace version
+  console.log('🦀 Rust Workspace:');
+  try {
+    const wasUpdated = await updateRustWorkspaceVersion(targetVersion, dryRun);
+    if (wasUpdated) {
+      updated++;
+    } else {
+      skipped++;
+    }
+  } catch {
+    errors++;
+  }
+
+  // Update platform packages
   for (const family of PACKAGE_FAMILIES) {
-    console.log(`${family === PACKAGE_FAMILIES[0] ? '' : '\n'}📁 ${family.label} Platform Packages:`);
+    console.log(`\n📁 ${family.label} Platform Packages:`);
 
     for (const platform of PLATFORMS) {
       const packageDir = path.join(family.packageDir, platform);
@@ -225,9 +278,9 @@ async function syncRustVersions(dryRun: boolean = false): Promise<void> {
   if (dryRun && updated > 0) {
     console.log(`\n💡 Run without --dry-run to apply changes`);
   } else if (!dryRun && updated > 0) {
-    console.log(`\n✅ Rust platform package version sync complete!`);
+    console.log(`\n✅ Rust workspace and platform package version sync complete!`);
   } else if (updated === 0 && errors === 0) {
-    console.log(`\n✅ All Rust platform packages already in sync!`);
+    console.log(`\n✅ All Rust packages already in sync!`);
   }
 
   if (errors > 0) {
