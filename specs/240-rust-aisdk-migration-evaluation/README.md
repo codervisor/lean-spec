@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-01-28
 priority: medium
 tags:
@@ -9,7 +9,11 @@ tags:
 - evaluation
 - migration
 created_at: 2026-01-28T03:18:51.318976Z
-updated_at: 2026-01-28T03:18:51.318976Z
+updated_at: 2026-01-28T07:59:24.921871Z
+completed_at: 2026-01-28T07:59:24.921871Z
+transitions:
+- status: complete
+  at: 2026-01-28T07:59:24.921871Z
 ---
 
 # Evaluate Migration from Node.js AI SDK to Rust aisdk
