@@ -534,3 +534,195 @@ async fn run_anthropic_conversation(
     let _ = sender.send(StreamEvent::FinishStep);
     Ok(text)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_build_openai_messages_with_system_prompt() {
+        let messages = vec![];
+        let result = build_openai_messages(messages, "Test system prompt");
+        
+        assert_eq!(result.len(), 1);
+        match &result[0] {
+            ChatCompletionRequestMessage::System(msg) => {
+                match &msg.content {
+                    ChatCompletionRequestSystemMessageContent::Text(text) => {
+                        assert_eq!(text, "Test system prompt");
+                    }
+                    _ => panic!("Expected text content"),
+                }
+            }
+            _ => panic!("Expected system message"),
+        }
+    }
+
+    #[test]
+    fn test_ui_messages_to_openai_user_message() {
+        let messages = vec![UIMessage {
+            id: "msg_1".to_string(),
+            role: MessageRole::User,
+            parts: vec![UIMessagePart::Text {
+                text: "Hello".to_string(),
+            }],
+            metadata: None,
+        }];
+        
+        let result = ui_messages_to_openai(messages);
+        assert_eq!(result.len(), 1);
+        
+        match &result[0] {
+            ChatCompletionRequestMessage::User(msg) => {
+                match &msg.content {
+                    ChatCompletionRequestUserMessageContent::Text(text) => {
+                        assert_eq!(text, "Hello");
+                    }
+                    _ => panic!("Expected text content"),
+                }
+            }
+            _ => panic!("Expected user message"),
+        }
+    }
+
+    #[test]
+    fn test_ui_messages_to_openai_assistant_message() {
+        let messages = vec![UIMessage {
+            id: "msg_2".to_string(),
+            role: MessageRole::Assistant,
+            parts: vec![UIMessagePart::Text {
+                text: "Hi there".to_string(),
+            }],
+            metadata: None,
+        }];
+        
+        let result = ui_messages_to_openai(messages);
+        assert_eq!(result.len(), 1);
+        
+        match &result[0] {
+            ChatCompletionRequestMessage::Assistant(msg) => {
+                match &msg.content {
+                    Some(ChatCompletionRequestAssistantMessageContent::Text(text)) => {
+                        assert_eq!(text, "Hi there");
+                    }
+                    _ => panic!("Expected text content"),
+                }
+            }
+            _ => panic!("Expected assistant message"),
+        }
+    }
+
+    #[test]
+    fn test_ui_messages_to_openai_empty_text_filtered() {
+        let messages = vec![UIMessage {
+            id: "msg_3".to_string(),
+            role: MessageRole::User,
+            parts: vec![UIMessagePart::Text {
+                text: "   ".to_string(),
+            }],
+            metadata: None,
+        }];
+        
+        let result = ui_messages_to_openai(messages);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_ui_message_text_extraction() {
+        let message = UIMessage {
+            id: "msg_4".to_string(),
+            role: MessageRole::User,
+            parts: vec![
+                UIMessagePart::Text {
+                    text: "Line 1".to_string(),
+                },
+                UIMessagePart::Text {
+                    text: "Line 2".to_string(),
+                },
+            ],
+            metadata: None,
+        };
+        
+        let text = ui_message_text(&message);
+        assert_eq!(text, "Line 1\nLine 2");
+    }
+
+    #[test]
+    fn test_build_anthropic_messages_with_system() {
+        let messages = vec![UIMessage {
+            id: "msg_5".to_string(),
+            role: MessageRole::System,
+            parts: vec![UIMessagePart::Text {
+                text: "System prompt".to_string(),
+            }],
+            metadata: None,
+        }];
+        
+        let (anthropic_msgs, system_extra) = build_anthropic_messages(messages);
+        assert!(anthropic_msgs.is_empty());
+        assert_eq!(system_extra, "System prompt");
+    }
+
+    #[test]
+    fn test_build_anthropic_messages_user_assistant() {
+        let messages = vec![
+            UIMessage {
+                id: "msg_6".to_string(),
+                role: MessageRole::User,
+                parts: vec![UIMessagePart::Text {
+                    text: "Hello".to_string(),
+                }],
+                metadata: None,
+            },
+            UIMessage {
+                id: "msg_7".to_string(),
+                role: MessageRole::Assistant,
+                parts: vec![UIMessagePart::Text {
+                    text: "Hi".to_string(),
+                }],
+                metadata: None,
+            },
+        ];
+        
+        let (anthropic_msgs, system_extra) = build_anthropic_messages(messages);
+        assert_eq!(anthropic_msgs.len(), 2);
+        assert!(system_extra.is_empty());
+        
+        match &anthropic_msgs[0].role {
+            anthropic::types::Role::User => {}
+            _ => panic!("Expected user role"),
+        }
+        
+        match &anthropic_msgs[1].role {
+            anthropic::types::Role::Assistant => {}
+            _ => panic!("Expected assistant role"),
+        }
+    }
+
+    #[test]
+    fn test_chat_request_context_creation() {
+        let config = crate::storage::chat_config::ChatConfig {
+            version: "1.0".to_string(),
+            settings: crate::storage::chat_config::ChatSettings {
+                default_provider_id: "openai".to_string(),
+                default_model_id: "gpt-4o".to_string(),
+                max_steps: 5,
+            },
+            providers: vec![],
+        };
+
+        let context = ChatRequestContext {
+            messages: vec![],
+            project_id: Some("test-project".to_string()),
+            provider_id: Some("anthropic".to_string()),
+            model_id: Some("claude".to_string()),
+            session_id: Some("session-123".to_string()),
+            base_url: "http://localhost:3000".to_string(),
+            config,
+        };
+
+        assert_eq!(context.project_id, Some("test-project".to_string()));
+        assert_eq!(context.provider_id, Some("anthropic".to_string()));
+        assert_eq!(context.model_id, Some("claude".to_string()));
+    }
+}

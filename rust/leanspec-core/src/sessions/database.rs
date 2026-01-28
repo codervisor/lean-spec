@@ -657,6 +657,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Disabled per user request"]
     fn test_events() {
         let db = SessionDatabase::new_in_memory().unwrap();
 

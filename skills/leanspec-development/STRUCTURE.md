@@ -12,7 +12,6 @@ lean-spec/
 │   ├── ui/            # @leanspec/ui (Web interface)
 │   ├── ui-components/ # Shared UI components (internal)
 │   ├── desktop/       # Tauri desktop app (not published)
-│   ├── ai-worker/     # AI worker for IPC chat (replaces chat-server)
 │   └── http-server/   # HTTP server (experimental)
 │
 ├── rust/              # Rust implementations

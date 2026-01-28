@@ -695,3 +695,187 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
         executors: Arc::new(executors),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_base_url() {
+        assert_eq!(
+            normalize_base_url("http://localhost:3000"),
+            "http://localhost:3000"
+        );
+        assert_eq!(
+            normalize_base_url("http://localhost:3000/"),
+            "http://localhost:3000"
+        );
+        assert_eq!(
+            normalize_base_url("http://localhost:3000//"),
+            "http://localhost:3000"
+        );
+    }
+
+    #[test]
+    fn test_ensure_project_id_with_input() {
+        let result = ensure_project_id(
+            Some("my-project".to_string()),
+            &Some("fallback".to_string()),
+        );
+        assert_eq!(result.unwrap(), "my-project");
+    }
+
+    #[test]
+    fn test_ensure_project_id_with_fallback() {
+        let result = ensure_project_id(None, &Some("fallback".to_string()));
+        assert_eq!(result.unwrap(), "fallback");
+    }
+
+    #[test]
+    fn test_ensure_project_id_missing() {
+        let result = ensure_project_id(None, &None);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("projectId is required"));
+    }
+
+    #[test]
+    fn test_tool_input_parsing() {
+        let value = serde_json::json!({ "projectId": "test", "specId": "123" });
+        let result: Result<SpecIdInput, _> = tool_input(value);
+        assert!(result.is_ok());
+        let input = result.unwrap();
+        assert_eq!(input.spec_id, "123");
+    }
+
+    #[test]
+    fn test_split_frontmatter_with_frontmatter() {
+        let content = "---\ntitle: Test\n---\n\n# Body";
+        let (fm, body) = split_frontmatter(content);
+        assert!(fm.is_some());
+        assert!(body.contains("# Body"));
+    }
+
+    #[test]
+    fn test_split_frontmatter_without_frontmatter() {
+        let content = "# Just Body";
+        let (fm, body) = split_frontmatter(content);
+        assert!(fm.is_none());
+        assert_eq!(body, "# Just Body");
+    }
+
+    #[test]
+    fn test_rebuild_content_with_frontmatter() {
+        let frontmatter = Some("---\ntitle: Test\n---".to_string());
+        let body = "# Header\nContent";
+        let result = rebuild_content(frontmatter, body);
+        assert!(result.contains("---"));
+        assert!(result.contains("# Header"));
+    }
+
+    #[test]
+    fn test_rebuild_content_without_frontmatter() {
+        let result = rebuild_content(None, "# Header");
+        assert_eq!(result, "# Header");
+    }
+
+    #[test]
+    fn test_update_section_replace() {
+        let body = "# Title\n\n## Section A\nContent A\n\n## Section B\nContent B";
+        let result = update_section(body, "Section A", "New Content", "replace");
+        assert!(result.is_ok());
+        let updated = result.unwrap();
+        assert!(updated.contains("New Content"));
+        assert!(!updated.contains("Content A"));
+    }
+
+    #[test]
+    fn test_update_section_append() {
+        let body = "# Title\n\n## Section A\nContent A";
+        let result = update_section(body, "Section A", "New Content", "append");
+        assert!(result.is_ok());
+        let updated = result.unwrap();
+        assert!(updated.contains("Content A"));
+        assert!(updated.contains("New Content"));
+    }
+
+    #[test]
+    fn test_update_section_not_found() {
+        let body = "# Title\n\n## Section A\nContent A";
+        let result = update_section(body, "NonExistent", "Content", "replace");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Section not found"));
+    }
+
+    #[test]
+    fn test_toggle_checklist_item_check() {
+        let body = "- [ ] Item 1\n- [ ] Item 2";
+        let result = toggle_checklist_item_in_body(body, "Item 1", true);
+        assert!(result.is_ok());
+        let updated = result.unwrap();
+        assert!(updated.contains("- [x] Item 1"));
+        assert!(updated.contains("- [ ] Item 2"));
+    }
+
+    #[test]
+    fn test_toggle_checklist_item_uncheck() {
+        let body = "- [x] Item 1\n- [x] Item 2";
+        let result = toggle_checklist_item_in_body(body, "Item 2", false);
+        assert!(result.is_ok());
+        let updated = result.unwrap();
+        assert!(updated.contains("- [x] Item 1"));
+        assert!(updated.contains("- [ ] Item 2"));
+    }
+
+    #[test]
+    fn test_toggle_checklist_item_not_found() {
+        let body = "- [ ] Item 1";
+        let result = toggle_checklist_item_in_body(body, "NonExistent", true);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Checklist item not found"));
+    }
+
+    #[test]
+    fn test_toggle_checklist_item_case_insensitive() {
+        let body = "- [ ] ITEM ONE";
+        let result = toggle_checklist_item_in_body(body, "item one", true);
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("- [x] ITEM ONE"));
+    }
+
+    #[test]
+    fn test_tool_registry_empty() {
+        let registry = ToolRegistry {
+            tools: vec![],
+            executors: Arc::new(HashMap::new()),
+        };
+        assert!(registry.tools().is_empty());
+    }
+
+    #[test]
+    fn test_build_tools_empty_context() {
+        let context = ToolContext {
+            base_url: "http://localhost:3000".to_string(),
+            project_id: None,
+        };
+        let registry = build_tools(context);
+        assert!(registry.is_ok());
+        let reg = registry.unwrap();
+        assert!(!reg.tools().is_empty());
+        assert_eq!(reg.tools().len(), 13);
+    }
+
+    #[test]
+    fn test_list_specs_input_schema() {
+        let schema = schema_for!(ListSpecsInput);
+        let schema_json = serde_json::to_value(&schema).unwrap();
+        assert!(schema_json.get("properties").is_some());
+    }
+
+    #[test]
+    fn test_search_specs_input_schema() {
+        let schema = schema_for!(SearchSpecsInput);
+        let schema_json = serde_json::to_value(&schema).unwrap();
+        assert!(schema_json.get("properties").is_some());
+        assert!(schema_json["properties"].get("query").is_some());
+    }
+}
