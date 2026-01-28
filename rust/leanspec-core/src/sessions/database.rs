@@ -39,8 +39,8 @@ impl SessionDatabase {
             CoreError::DatabaseError(format!("Failed to create in-memory database: {}", e))
         })?;
 
-        // Enable WAL mode for in-memory database
-        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")
+        // Configure database for testing (WAL mode not supported for in-memory)
+        conn.execute_batch("PRAGMA busy_timeout=5000;")
             .map_err(|e| {
                 CoreError::DatabaseError(format!("Failed to configure database: {}", e))
             })?;
@@ -175,13 +175,13 @@ impl SessionDatabase {
         )
         .map_err(|e| CoreError::DatabaseError(format!("Failed to insert session: {}", e)))?;
 
-        // Save metadata
+        // Save metadata (use internal method to avoid deadlock)
         for (key, value) in &session.metadata {
-            self.insert_metadata(&session.id, key, value)?;
+            Self::insert_metadata_with_conn(&conn, &session.id, key, value)?;
         }
 
-        // Log created event
-        self.insert_event(&session.id, EventType::Created, None)?;
+        // Log created event (use internal method to avoid deadlock)
+        Self::insert_event_with_conn(&conn, &session.id, EventType::Created, None)?;
 
         Ok(())
     }
@@ -226,14 +226,14 @@ impl SessionDatabase {
         )
         .map_err(|e| CoreError::DatabaseError(format!("Failed to update session: {}", e)))?;
 
-        // Update metadata
+        // Update metadata (use internal method to avoid deadlock)
         conn.execute(
             "DELETE FROM session_metadata WHERE session_id = ?1",
             [&session.id],
         )
         .ok();
         for (key, value) in &session.metadata {
-            self.insert_metadata(&session.id, key, value)?;
+            Self::insert_metadata_with_conn(&conn, &session.id, key, value)?;
         }
 
         Ok(())
@@ -408,6 +408,16 @@ impl SessionDatabase {
         data: Option<String>,
     ) -> CoreResult<()> {
         let conn = self.conn()?;
+        Self::insert_event_with_conn(&conn, session_id, event_type, data)
+    }
+
+    /// Internal helper to insert event with an existing connection (avoids deadlock)
+    fn insert_event_with_conn(
+        conn: &Connection,
+        session_id: &str,
+        event_type: EventType,
+        data: Option<String>,
+    ) -> CoreResult<()> {
         conn.execute(
             "INSERT INTO session_events (session_id, event_type, data, timestamp)
                 VALUES (?1, ?2, ?3, ?4)",
@@ -477,6 +487,16 @@ impl SessionDatabase {
 
     fn insert_metadata(&self, session_id: &str, key: &str, value: &str) -> CoreResult<()> {
         let conn = self.conn()?;
+        Self::insert_metadata_with_conn(&conn, session_id, key, value)
+    }
+
+    /// Internal helper to insert metadata with an existing connection (avoids deadlock)
+    fn insert_metadata_with_conn(
+        conn: &Connection,
+        session_id: &str,
+        key: &str,
+        value: &str,
+    ) -> CoreResult<()> {
         conn.execute(
             "INSERT INTO session_metadata (session_id, key, value) VALUES (?1, ?2, ?3)",
             [session_id, key, value],
