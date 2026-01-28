@@ -295,3 +295,125 @@ fn spawn_stdout_handler(
         }
     });
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_resolve_node_path_default() {
+        // Unset LEANSPEC_NODE_PATH to test default
+        std::env::remove_var("LEANSPEC_NODE_PATH");
+        assert_eq!(resolve_node_path(), "node");
+    }
+
+    #[test]
+    fn test_resolve_node_path_custom() {
+        std::env::set_var("LEANSPEC_NODE_PATH", "/custom/path/node");
+        assert_eq!(resolve_node_path(), "/custom/path/node");
+        std::env::remove_var("LEANSPEC_NODE_PATH");
+    }
+
+    #[test]
+    fn test_verify_nodejs_skipped() {
+        std::env::set_var("LEANSPEC_SKIP_NODE_VERSION_CHECK", "1");
+        assert!(verify_nodejs("node").is_ok());
+        std::env::remove_var("LEANSPEC_SKIP_NODE_VERSION_CHECK");
+    }
+
+    #[test]
+    fn test_verify_nodejs_not_found() {
+        // Using a non-existent binary
+        let result = verify_nodejs("/nonexistent/node/binary");
+        assert!(matches!(result, Err(AiWorkerError::NodeNotFound)));
+    }
+
+    #[test]
+    fn test_find_worker_path_env_override() {
+        let test_path = std::env::temp_dir().join("test_worker.js");
+        std::fs::write(&test_path, "// test").unwrap();
+
+        std::env::set_var("LEANSPEC_AI_WORKER", test_path.to_str().unwrap());
+        assert_eq!(find_worker_path().unwrap(), test_path);
+
+        std::env::remove_var("LEANSPEC_AI_WORKER");
+        std::fs::remove_file(&test_path).unwrap();
+    }
+
+    #[test]
+    fn test_find_worker_path_not_found() {
+        // Ensure env var is not set
+        std::env::remove_var("LEANSPEC_AI_WORKER");
+
+        // This may fail in non-dev environments, but tests the logic
+        let result = find_worker_path();
+        // In CI or production without node_modules, this should fail
+        if result.is_err() {
+            assert!(matches!(result, Err(AiWorkerError::WorkerNotFound)));
+        }
+    }
+
+    #[test]
+    fn test_find_node_modules_dir() {
+        // Test traversal logic
+        let start = std::env::temp_dir();
+        let _result = find_node_modules_dir(&start);
+        // Result depends on environment, just ensure it doesn't panic
+        // In a real project with node_modules, this would find it
+    }
+
+    #[test]
+    fn test_worker_response_id_extraction() {
+        let chunk = WorkerResponse::Chunk {
+            id: "test-123".to_string(),
+            data: serde_json::json!({}),
+        };
+        assert_eq!(chunk.id(), "test-123");
+
+        let done = WorkerResponse::Done {
+            id: "test-456".to_string(),
+        };
+        assert_eq!(done.id(), "test-456");
+
+        let error = WorkerResponse::Error {
+            id: "test-789".to_string(),
+            error: "test error".to_string(),
+        };
+        assert_eq!(error.id(), "test-789");
+    }
+
+    #[test]
+    fn test_ai_worker_error_display() {
+        let err = AiWorkerError::NodeNotFound;
+        assert!(err.to_string().contains("Node.js not found"));
+
+        let err = AiWorkerError::NodeTooOld("v18.0.0".to_string());
+        assert!(err.to_string().contains("v18.0.0"));
+
+        let err = AiWorkerError::WorkerNotFound;
+        assert!(err.to_string().contains("AI worker script not found"));
+
+        let err = AiWorkerError::Disabled("test reason".to_string());
+        assert!(err.to_string().contains("AI worker disabled"));
+    }
+
+    #[test]
+    fn test_worker_chat_payload_serialization() {
+        use crate::ai::protocol::WorkerChatPayload;
+
+        let payload = WorkerChatPayload {
+            messages: vec![serde_json::json!({"role": "user", "content": "hello"})],
+            project_id: Some("proj-123".to_string()),
+            provider_id: Some("openai".to_string()),
+            model_id: Some("gpt-4o".to_string()),
+            session_id: Some("session-456".to_string()),
+            config: None,
+            base_url: Some("http://localhost:3000".to_string()),
+        };
+
+        let json = serde_json::to_string(&payload).unwrap();
+        assert!(json.contains("projectId")); // camelCase
+        assert!(json.contains("providerId")); // camelCase
+        assert!(json.contains("proj-123"));
+    }
+}

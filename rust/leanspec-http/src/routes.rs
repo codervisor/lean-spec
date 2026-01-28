@@ -160,6 +160,16 @@ pub fn create_router(state: AppState) -> Router {
             "/api/local-projects/list-directory",
             post(handlers::list_directory),
         )
+        // Session routes
+        .route("/api/sessions", get(handlers::list_sessions))
+        .route("/api/sessions", post(handlers::create_session))
+        .route("/api/sessions/:id", get(handlers::get_session))
+        .route("/api/sessions/:id", delete(handlers::delete_session))
+        .route("/api/sessions/:id/start", post(handlers::start_session))
+        .route("/api/sessions/:id/stop", post(handlers::stop_session))
+        .route("/api/sessions/:id/logs", get(handlers::get_session_logs))
+        .route("/api/sessions/:id/stream", get(handlers::ws_session_logs))
+        .route("/api/tools", get(handlers::list_available_tools))
         .with_state(state.clone());
 
     if let Some(ui_dist) = resolve_ui_dist_path(&state.config) {

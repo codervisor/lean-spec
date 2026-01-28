@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED
+
+This package is **deprecated** and will be removed in a future version. 
+
+Please use `@leanspec/ai-worker` instead, which provides IPC-based AI chat functionality.
+
+---
+
 # @leanspec/chat-server
 
 Standalone AI chat sidecar for LeanSpec UI.

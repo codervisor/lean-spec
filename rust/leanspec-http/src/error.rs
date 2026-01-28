@@ -20,6 +20,21 @@ pub enum ServerError {
 
     #[error("Project registry error: {0}")]
     RegistryError(String),
+
+    #[error("Database error: {0}")]
+    DatabaseError(String),
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+
+    #[error("Not found: {0}")]
+    NotFound(String),
+
+    #[error("Tool not found: {0}. {1}")]
+    ToolNotFound(String, String),
+
+    #[error("Tool error: {0}")]
+    ToolError(String),
 }
 
 /// API response error type

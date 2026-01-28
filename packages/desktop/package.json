@@ -37,9 +37,6 @@
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0"
   },
-  "optionalDependencies": {
-    "@leanspec/chat-server": "workspace:*"
-  },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
     "@tauri-apps/cli": "^2.9.6",

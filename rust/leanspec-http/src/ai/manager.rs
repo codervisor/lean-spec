@@ -61,3 +61,76 @@ fn is_ai_disabled() -> bool {
         Err(_) => false,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Mutex;
+
+    // Static mutex to ensure tests don't run in parallel and interfere with env vars
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn test_is_ai_disabled_true() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        
+        std::env::set_var("LEANSPEC_NO_AI", "1");
+        assert!(is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "true");
+        assert!(is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "TRUE");
+        assert!(is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "yes");
+        assert!(is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "YES");
+        assert!(is_ai_disabled());
+
+        std::env::remove_var("LEANSPEC_NO_AI");
+    }
+
+    #[test]
+    fn test_is_ai_disabled_false() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        
+        std::env::set_var("LEANSPEC_NO_AI", "0");
+        assert!(!is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "false");
+        assert!(!is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "no");
+        assert!(!is_ai_disabled());
+
+        std::env::set_var("LEANSPEC_NO_AI", "NO");
+        assert!(!is_ai_disabled());
+
+        std::env::remove_var("LEANSPEC_NO_AI");
+    }
+
+    #[test]
+    fn test_is_ai_disabled_unset() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        
+        // Ensure LEANSPEC_NO_AI is not set
+        std::env::remove_var("LEANSPEC_NO_AI");
+        assert!(!is_ai_disabled());
+    }
+
+    #[test]
+    fn test_ai_worker_manager_new() {
+        let manager = AiWorkerManager::new();
+        assert!(manager.worker.is_none());
+        assert!(manager.disabled_reason.is_none());
+    }
+
+    #[test]
+    fn test_ai_worker_manager_default() {
+        let manager: AiWorkerManager = Default::default();
+        assert!(manager.worker.is_none());
+        assert!(manager.disabled_reason.is_none());
+    }
+}

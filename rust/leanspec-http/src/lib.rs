@@ -30,6 +30,7 @@ pub mod error;
 pub mod handlers;
 pub mod project_registry;
 pub mod routes;
+pub mod sessions;
 pub mod state;
 pub mod sync_state;
 pub mod types;
@@ -39,6 +40,10 @@ pub use config::{load_config, load_config_from_path, ServerConfig};
 pub use error::ServerError;
 pub use project_registry::ProjectRegistry;
 pub use routes::create_router;
+pub use sessions::{
+    Session, SessionConfig, SessionEvent, SessionLog, SessionManager, SessionMode, SessionStatus,
+    ToolAdapter, ToolManager,
+};
 pub use state::AppState;
 
 /// Start the HTTP server on the given host and port

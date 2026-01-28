@@ -15,9 +15,11 @@ depends_on:
 - 148-leanspec-desktop-app
 - 123-ai-coding-agent-integration
 - 213-cloud-leanspec-local-sync-bridge
+- 239-ai-coding-session-management
 created_at: 2025-12-12T07:50:22.373Z
-updated_at: 2026-01-16T07:26:43.673344Z
+updated_at: 2026-01-28T01:35:53.996092Z
 ---
+
 # LeanSpec as AI Coding Session Orchestration Platform
 
 > **Status**: 🗓️ Planned · **Priority**: Critical · **Created**: 2025-12-12 · **Tags**: architecture, ai-agents, desktop, orchestration, sdd-lifecycle, agent-relay, devlog

@@ -1,7 +1,8 @@
 {
   "name": "@leanspec/chat-server",
   "version": "0.2.20",
-  "description": "LeanSpec AI chat server sidecar",
+  "description": "⚠️ DEPRECATED: Use @leanspec/ai-worker instead",
+  "deprecated": "Use @leanspec/ai-worker instead. This package is no longer maintained.",
   "type": "commonjs",
   "main": "dist/index.js",
   "bin": {

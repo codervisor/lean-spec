@@ -5,10 +5,12 @@
 use crate::ai::AiWorkerManager;
 use crate::chat_config::ChatConfigStore;
 use crate::chat_store::ChatStore;
-use crate::config::ServerConfig;
+use crate::config::{config_dir, ServerConfig};
 use crate::error::ServerError;
 use crate::project_registry::ProjectRegistry;
+use crate::sessions::{SessionDatabase, SessionManager};
 use crate::sync_state::SyncState;
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
@@ -33,6 +35,9 @@ pub struct AppState {
 
     /// AI worker manager
     pub ai_worker: Arc<Mutex<AiWorkerManager>>,
+
+    /// Session manager for AI coding sessions
+    pub session_manager: Arc<SessionManager>,
 }
 
 impl AppState {
@@ -55,6 +60,13 @@ impl AppState {
         let chat_config = ChatConfigStore::load_default()?;
         let ai_worker = AiWorkerManager::new();
 
+        let sessions_dir = config_dir();
+        fs::create_dir_all(&sessions_dir).map_err(|e| {
+            ServerError::ConfigError(format!("Failed to create sessions dir: {}", e))
+        })?;
+        let session_db = SessionDatabase::new(sessions_dir.join("sessions.db"))?;
+        let session_manager = Arc::new(SessionManager::new(session_db));
+
         Ok(Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
@@ -62,6 +74,7 @@ impl AppState {
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
             ai_worker: Arc::new(Mutex::new(ai_worker)),
+            session_manager,
         })
     }
 
@@ -70,6 +83,9 @@ impl AppState {
         let chat_store = ChatStore::new().expect("Failed to initialize chat store");
         let chat_config = ChatConfigStore::load_default().expect("Failed to load chat config");
         let ai_worker = AiWorkerManager::new();
+        let session_db = SessionDatabase::new_in_memory()
+            .expect("Failed to initialize in-memory session database");
+        let session_manager = Arc::new(SessionManager::new(session_db));
         Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
@@ -77,6 +93,7 @@ impl AppState {
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
             ai_worker: Arc::new(Mutex::new(ai_worker)),
+            session_manager,
         }
     }
 }

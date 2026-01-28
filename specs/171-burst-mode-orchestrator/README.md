@@ -14,8 +14,9 @@ depends_on:
 - 123-ai-coding-agent-integration
 - 158-persistent-agent-sessions
 - 168-leanspec-orchestration-platform
+- 239-ai-coding-session-management
 created_at: 2025-12-17T09:01:14.343Z
-updated_at: 2026-01-12T14:04:21.296425Z
+updated_at: 2026-01-28T01:35:54.007313Z
 ---
 
 # Ralph Mode (Autonomous AI Development Loop) - Iterative Test-Driven AI Coding Pattern

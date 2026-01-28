@@ -53,12 +53,18 @@ rusqlite = {version = "0.31", features = ["bundled"]}
 # Unique IDs
 uuid = {version = "1.10", features = ["v4"]}
 
+# Async trait
+async-trait = "0.1"
+
+# Binary detection
+which = "6.0"
+
 # Tracing
 tracing = "0.1"
 tracing-subscriber = {version = "0.3", features = ["env-filter"]}
 
 # CLI
-clap = { workspace = true, features = ["env"] }
+clap = {workspace = true, features = ["env"]}
 
 # Browser launching
 webbrowser = "1.0"
@@ -67,10 +73,10 @@ webbrowser = "1.0"
 serde_yaml.workspace = true
 
 [target.'cfg(unix)'.dependencies]
-hyperlocal = "0.9"
+http-body-util = "0.1"
 hyper = "1.8"
 hyper-util = {version = "0.1", features = ["client-legacy", "http1"]}
-http-body-util = "0.1"
+hyperlocal = "0.9"
 
 [dev-dependencies]
 reqwest = {version = "0.12", features = ["json"]}

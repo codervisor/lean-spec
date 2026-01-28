@@ -17,9 +17,11 @@ depends_on:
 - 094-ai-chatbot-web-integration
 - 211-leanspec-as-anthropic-skill
 - 123-ai-coding-agent-integration
+- 239-ai-coding-session-management
 created_at: 2026-01-16T07:46:14.630001Z
-updated_at: 2026-01-16T08:48:00.396767Z
+updated_at: 2026-01-28T01:35:54.001566Z
 ---
+
 # AI Orchestration Integration: Unified Workflow
 
 ## Overview
