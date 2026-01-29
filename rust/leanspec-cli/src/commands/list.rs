@@ -4,6 +4,7 @@ use colored::Colorize;
 use leanspec_core::{SpecFilterOptions, SpecInfo, SpecLoader, SpecPriority, SpecStatus};
 use std::error::Error;
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     specs_dir: &str,
     status: Option<String>,
