@@ -14,8 +14,7 @@ import {
   Plus,
   CornerDownRight,
   ChevronRight,
-  Layers,
-  FileText
+  Network
 } from 'lucide-react';
 import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
@@ -75,6 +74,7 @@ export function SpecDetailPage() {
   const headerRef = useRef<HTMLElement>(null);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [dependenciesDialogOpen, setDependenciesDialogOpen] = useState(false);
+  const [hierarchyDialogOpen, setHierarchyDialogOpen] = useState(false);
   const [dependencyGraphData, setDependencyGraphData] = useState<CompleteSpecRelationships | null>(null);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const { setMobileOpen } = useSpecDetailLayoutContext();
@@ -326,6 +326,8 @@ export function SpecDetailPage() {
   const dependsOn = spec.dependsOn || [];
   const requiredBy = spec.requiredBy || [];
   const hasRelationships = dependsOn.length > 0 || requiredBy.length > 0;
+  const children = spec.children || [];
+  const hasHierarchy = !!spec.parent || children.length > 0;
 
   return (
     <PageTransition className="flex-1 min-w-0">
@@ -372,8 +374,8 @@ export function SpecDetailPage() {
                 {spec.parent && (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
                     <Link to={`${basePath}/specs/${spec.parent}`} className="hover:text-primary hover:underline flex items-center gap-1 group">
-                       <CornerDownRight className="h-3 w-3 group-hover:text-primary" />
-                       <span className="font-medium">{spec.parent}</span>
+                      <CornerDownRight className="h-3 w-3 group-hover:text-primary" />
+                      <span className="font-medium">{spec.parent}</span>
                     </Link>
                     <ChevronRight className="h-3 w-3 opacity-50" />
                     <span className="truncate opacity-70">{displayTitle}</span>
@@ -470,7 +472,6 @@ export function SpecDetailPage() {
                     >
                       <Clock className="mr-1.5 h-3.5 w-3.5" />
                       {t('specDetail.buttons.viewTimeline')}
-                      <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
                     </Button>
                     <DialogContent className="w-[min(900px,90vw)] max-w-3xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -514,7 +515,6 @@ export function SpecDetailPage() {
                     >
                       <GitBranch className="mr-1.5 h-3.5 w-3.5" />
                       {t('specDetail.buttons.viewDependencies')}
-                      <Maximize2 className="ml-1.5 h-3.5 w-3.5" />
                     </Button>
                     <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
                       <DialogHeader>
@@ -564,6 +564,96 @@ export function SpecDetailPage() {
                     </DialogContent>
                   </Dialog>
 
+                  {/* View Hierarchy */}
+                  <Dialog open={hierarchyDialogOpen} onOpenChange={setHierarchyDialogOpen}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-haspopup="dialog"
+                      aria-expanded={hierarchyDialogOpen}
+                      onClick={() => setHierarchyDialogOpen(true)}
+                      disabled={!hasHierarchy}
+                      className={cn(
+                        'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
+                        !hasHierarchy && 'cursor-not-allowed opacity-50'
+                      )}
+                    >
+                      <Network className="mr-1.5 h-3.5 w-3.5" />
+                      {t('specDetail.buttons.viewHierarchy')}
+                    </Button>
+                    <DialogContent className="w-[min(600px,90vw)] max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{t('specDetail.dialogs.hierarchyTitle')}</DialogTitle>
+                        <DialogDescription>{t('specDetail.dialogs.hierarchyDescription')}</DialogDescription>
+                      </DialogHeader>
+                      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+                        {/* Parent Section */}
+                        {spec.parent && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+                              <CornerDownRight className="h-3.5 w-3.5" />
+                              {t('specDetail.hierarchy.parent')}
+                            </h4>
+                            <Link
+                              to={`${basePath}/specs/${spec.parent}`}
+                              onClick={() => setHierarchyDialogOpen(false)}
+                              className="flex items-center gap-2 p-3 rounded-md border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all text-sm group"
+                            >
+                              <span className="truncate flex-1 font-medium">{spec.parent}</span>
+                              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                            </Link>
+                          </div>
+                        )}
+
+                        {/* Current Spec */}
+                        <div>
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <Network className="h-3.5 w-3.5" />
+                            {t('specDetail.hierarchy.current')}
+                          </h4>
+                          <div className="flex items-center gap-2 p-3 rounded-md border-2 border-primary/50 bg-primary/5 text-sm">
+                            <span className="truncate flex-1 font-medium">
+                              {spec.specNumber && <span className="text-muted-foreground">#{spec.specNumber} </span>}
+                              {displayTitle}
+                            </span>
+                            <StatusBadge status={spec.status || 'planned'} />
+                          </div>
+                        </div>
+
+                        {/* Children Section */}
+                        {children.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+                              <ChevronRight className="h-3.5 w-3.5" />
+                              {t('specDetail.hierarchy.children')} ({children.length})
+                            </h4>
+                            <div className="space-y-1.5">
+                              {children.map(childName => (
+                                <Link
+                                  key={childName}
+                                  to={`${basePath}/specs/${childName}`}
+                                  onClick={() => setHierarchyDialogOpen(false)}
+                                  className="flex items-center gap-2 p-3 rounded-md border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all text-sm group"
+                                >
+                                  <span className="truncate flex-1">{childName}</span>
+                                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* No hierarchy message */}
+                        {!spec.parent && children.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-4 italic">
+                            {t('specDetail.hierarchy.noRelationships')}
+                          </p>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                   <Link to={`${basePath}/sessions?spec=${encodeURIComponent(spec.specName)}`} className="inline-flex">
                     <Button
                       type="button"
@@ -592,6 +682,7 @@ export function SpecDetailPage() {
                     {t('sessions.actions.new')}
                   </Button>
 
+
                   {/* Focus Mode Toggle */}
                   <Button
                     type="button"
@@ -605,28 +696,6 @@ export function SpecDetailPage() {
                     {t('specDetail.buttons.focus')}
                   </Button>
                 </div>
-
-                {/* Children Section */}
-                {spec.children && spec.children.length > 0 && (
-                   <div className="mt-4 pt-4 border-t w-full">
-                       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <Layers className="h-3.5 w-3.5" />
-                          {t('specDetail.children', 'Child Specs')} ({spec.children.length})
-                       </h3>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-                          {spec.children.map(childName => (
-                              <Link 
-                                key={childName}
-                                to={`${basePath}/specs/${childName}`}
-                                className="flex items-center gap-2 p-2 rounded-md border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all text-sm group"
-                              >
-                                 <FileText className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                                 <span className="truncate flex-1">{childName}</span>
-                              </Link>
-                          ))}
-                       </div>
-                   </div>
-                )}
               </>
             )}
           </div>

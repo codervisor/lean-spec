@@ -564,6 +564,7 @@
     "buttons": {
       "viewTimeline": "查看时间线",
       "viewDependencies": "查看依赖",
+      "viewHierarchy": "查看层级",
       "focus": "专注模式",
       "exitFocus": "退出专注模式"
     },
@@ -572,7 +573,15 @@
       "timelineDescription": "查看创建、更新和完成节点。",
       "dependenciesTitle": "依赖关系图",
       "dependenciesDescription": "展示前置关系与关联规范。",
-      "dependenciesLink": "在依赖页面中查看"
+      "dependenciesLink": "在依赖页面中查看",
+      "hierarchyTitle": "规范层级",
+      "hierarchyDescription": "父子规范的层级关系。"
+    },
+    "hierarchy": {
+      "parent": "父规范",
+      "current": "当前规范",
+      "children": "子规范",
+      "noRelationships": "此规范没有父子层级关系。"
     },
     "tabs": {
       "overview": "概览"

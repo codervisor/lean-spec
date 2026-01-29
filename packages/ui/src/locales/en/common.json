@@ -571,6 +571,7 @@
     "buttons": {
       "viewTimeline": "View Timeline",
       "viewDependencies": "View Dependencies",
+      "viewHierarchy": "View Hierarchy",
       "focus": "Focus",
       "exitFocus": "Exit focus mode"
     },
@@ -579,7 +580,15 @@
       "timelineDescription": "Created, updated, and completion milestones.",
       "dependenciesTitle": "Dependency Graph",
       "dependenciesDescription": "Precedence requirements and connected specs rendered with automatic layout.",
-      "dependenciesLink": "View in full dependencies page"
+      "dependenciesLink": "View in full dependencies page",
+      "hierarchyTitle": "Spec Hierarchy",
+      "hierarchyDescription": "Parent and child specification relationships."
+    },
+    "hierarchy": {
+      "parent": "Parent Spec",
+      "current": "Current Spec",
+      "children": "Child Specs",
+      "noRelationships": "This spec has no parent or child relationships."
     },
     "tabs": {
       "overview": "Overview"
