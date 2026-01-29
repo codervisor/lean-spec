@@ -12,7 +12,7 @@ pub use adapter::{
     ClaudeAdapter, CodexAdapter, CopilotAdapter, OpenCodeAdapter, ToolAdapter, ToolManager,
 };
 pub use database::SessionDatabase;
-pub use manager::SessionManager;
+pub use manager::{ArchiveOptions, SessionManager};
 pub use types::{
     EventType, LogLevel, Session, SessionConfig, SessionEvent, SessionLog, SessionMode,
     SessionStatus,

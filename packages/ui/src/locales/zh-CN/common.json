@@ -90,6 +90,7 @@
       "start": "开始",
       "pause": "暂停",
       "resume": "继续",
+      "archive": "归档",
       "stop": "停止",
       "logs": "查看日志",
       "view": "查看",
@@ -158,6 +159,11 @@
   "sessionDetail": {
     "title": "会话 {{id}}",
     "description": "实时日志与会话详情。",
+    "eventsTitle": "会话时间线",
+    "eventsDescription": "记录该会话的生命周期事件。",
+    "eventsEmpty": "暂无事件记录。",
+    "archiveSuccess": "已归档到 {{path}}",
+    "archiveError": "归档会话日志失败。",
     "logsTitle": "实时日志",
     "logsDescription": "来自该会话的实时输出。",
     "filters": {

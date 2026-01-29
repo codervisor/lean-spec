@@ -67,6 +67,18 @@ export interface SessionLog {
   message: string;
 }
 
+export interface SessionArchiveResult {
+  path: string;
+}
+
+export interface SessionEvent {
+  id: number;
+  timestamp: string;
+  eventType?: string;
+  event_type?: string;
+  data?: string | null;
+}
+
 export type MachineStatus = 'online' | 'offline';
 
 export interface Machine {

@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Paus
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
-import type { Session, SessionLog } from '../types/api';
+import type { Session, SessionEvent, SessionLog } from '../types/api';
 import { useLayout, useProject } from '../contexts';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader } from '../components/shared/PageHeader';
@@ -29,9 +29,14 @@ export function SessionDetailPage() {
 
   const [session, setSession] = useState<Session | null>(null);
   const [logs, setLogs] = useState<SessionLog[]>([]);
+  const [events, setEvents] = useState<SessionEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [archivePath, setArchivePath] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [archiveLoading, setArchiveLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<Set<string>>(new Set());
   const [autoScroll, setAutoScroll] = useState(true);
@@ -62,10 +67,22 @@ export function SessionDetailPage() {
     }
   }, [projectLoading, projectReady, sessionId]);
 
+  const loadEvents = useCallback(async () => {
+    if (!sessionId || !projectReady || projectLoading) return;
+    setEventsLoading(true);
+    try {
+      const data = await api.getSessionEvents(sessionId);
+      setEvents(data);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, [projectLoading, projectReady, sessionId]);
+
   useEffect(() => {
     void loadSession();
     void loadLogs();
-  }, [loadSession, loadLogs]);
+    void loadEvents();
+  }, [loadSession, loadLogs, loadEvents]);
 
   useEffect(() => {
     if (!session || session.status !== 'running') return;
@@ -122,6 +139,15 @@ export function SessionDetailPage() {
   const durationLabel = session ? formatSessionDuration(session) : null;
   const tokenLabel = session ? formatTokenCount(session.tokenCount) : null;
   const costEstimate = session ? estimateSessionCost(session.tokenCount) : null;
+
+  const formatEventLabel = (event: SessionEvent) => {
+    const raw = event.eventType ?? (event as { event_type?: string }).event_type ?? '';
+    return raw
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  };
 
   const handleToggleLevel = (level: string) => {
     setLevelFilter((prev) => {
@@ -187,6 +213,20 @@ export function SessionDetailPage() {
   const handleCopyId = async () => {
     if (!session?.id) return;
     await navigator.clipboard.writeText(session.id);
+  };
+
+  const handleArchive = async () => {
+    if (!session) return;
+    setArchiveLoading(true);
+    setArchiveError(null);
+    try {
+      const result = await api.archiveSession(session.id, { compress: true });
+      setArchivePath(result.path);
+    } catch (err) {
+      setArchiveError(err instanceof Error ? err.message : t('sessionDetail.archiveError'));
+    } finally {
+      setArchiveLoading(false);
+    }
   };
 
   if (loading) {
@@ -323,6 +363,34 @@ export function SessionDetailPage() {
           </CardContent>
         </Card>
 
+        <Card className="border-border/60">
+          <CardContent className="p-4 space-y-3">
+            <div>
+              <div className="text-sm font-semibold">{t('sessionDetail.eventsTitle')}</div>
+              <p className="text-xs text-muted-foreground">{t('sessionDetail.eventsDescription')}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
+              {eventsLoading ? (
+                <div className="text-muted-foreground">{t('actions.loading')}</div>
+              ) : events.length === 0 ? (
+                <div className="text-muted-foreground">{t('sessionDetail.eventsEmpty')}</div>
+              ) : (
+                <div className="space-y-2">
+                  {events.map((event) => (
+                    <div key={event.id} className="flex flex-wrap items-center gap-2">
+                      <span className="text-muted-foreground">[{event.timestamp}]</span>
+                      <span className="font-semibold">{formatEventLabel(event)}</span>
+                      {event.data ? (
+                        <span className="text-muted-foreground">{event.data}</span>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-border/60 flex-1 min-h-0">
           <CardContent className="p-4 space-y-3 h-full flex flex-col">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -331,6 +399,10 @@ export function SessionDetailPage() {
                 <p className="text-xs text-muted-foreground">{t('sessionDetail.logsDescription')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" className="gap-1" onClick={handleArchive} disabled={archiveLoading}>
+                  <Download className="h-3.5 w-3.5" />
+                  {archiveLoading ? t('actions.loading') : t('sessions.actions.archive')}
+                </Button>
                 <Button size="sm" variant="outline" className="gap-1" onClick={handleExport}>
                   <Download className="h-3.5 w-3.5" />
                   {t('sessions.actions.export')}
@@ -340,6 +412,17 @@ export function SessionDetailPage() {
                 </Button>
               </div>
             </div>
+
+            {(archivePath || archiveError) && (
+              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
+                {archivePath && (
+                  <div className="text-muted-foreground">{t('sessionDetail.archiveSuccess', { path: archivePath })}</div>
+                )}
+                {archiveError && (
+                  <div className="text-destructive">{archiveError}</div>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-2">
               <input

@@ -107,12 +107,20 @@ class ProjectAPI {
     return this.backend.stopSession(sessionId);
   }
 
+  archiveSession(sessionId: string, options?: { compress?: boolean }) {
+    return this.backend.archiveSession(sessionId, options);
+  }
+
   deleteSession(sessionId: string): Promise<void> {
     return this.backend.deleteSession(sessionId);
   }
 
   getSessionLogs(sessionId: string): Promise<SessionLog[]> {
     return this.backend.getSessionLogs(sessionId);
+  }
+
+  getSessionEvents(sessionId: string) {
+    return this.backend.getSessionEvents(sessionId);
   }
 
   listAvailableTools(): Promise<string[]> {

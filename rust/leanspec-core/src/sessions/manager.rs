@@ -10,10 +10,16 @@ use crate::sessions::adapter::ToolManager;
 use crate::sessions::database::SessionDatabase;
 use crate::sessions::types::*;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::process::Child;
 use tokio::sync::{broadcast, Mutex, RwLock};
 use uuid::Uuid;
+
+use flate2::write::GzEncoder;
+use flate2::Compression;
 
 #[cfg(unix)]
 use nix::sys::signal::{kill, Signal};
@@ -42,6 +48,12 @@ struct ActiveSessionHandle {
     /// Stderr task handle
     #[allow(dead_code)]
     stderr_task: tokio::task::JoinHandle<()>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ArchiveOptions {
+    pub output_dir: Option<PathBuf>,
+    pub compress: bool,
 }
 
 impl SessionManager {
@@ -339,6 +351,79 @@ impl SessionManager {
         }
 
         Ok(())
+    }
+
+    /// Archive session logs to a file
+    pub async fn archive_session(
+        &self,
+        session_id: &str,
+        options: ArchiveOptions,
+    ) -> CoreResult<PathBuf> {
+        let session = self
+            .db
+            .get_session(session_id)?
+            .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
+
+        let base_dir = options.output_dir.unwrap_or_else(|| {
+            PathBuf::from(&session.project_path)
+                .join(".leanspec")
+                .join("sessions")
+        });
+
+        std::fs::create_dir_all(&base_dir).map_err(|e| {
+            CoreError::ToolError(format!("Failed to create archive directory: {}", e))
+        })?;
+
+        let file_name = if options.compress {
+            format!("{}.log.gz", session_id)
+        } else {
+            format!("{}.log", session_id)
+        };
+        let archive_path = base_dir.join(file_name);
+
+        let logs = self.db.get_logs(session_id, None)?;
+
+        if options.compress {
+            let file = File::create(&archive_path).map_err(|e| {
+                CoreError::ToolError(format!("Failed to create archive file: {}", e))
+            })?;
+            let mut encoder = GzEncoder::new(file, Compression::default());
+            for log in logs {
+                writeln!(
+                    encoder,
+                    "[{}] {} {}",
+                    log.timestamp.to_rfc3339(),
+                    format!("{:?}", log.level).to_lowercase(),
+                    log.message
+                )
+                .map_err(|e| CoreError::ToolError(format!("Failed to write archive: {}", e)))?;
+            }
+            encoder
+                .finish()
+                .map_err(|e| CoreError::ToolError(format!("Failed to finalize archive: {}", e)))?;
+        } else {
+            let mut file = File::create(&archive_path).map_err(|e| {
+                CoreError::ToolError(format!("Failed to create archive file: {}", e))
+            })?;
+            for log in logs {
+                writeln!(
+                    file,
+                    "[{}] {} {}",
+                    log.timestamp.to_rfc3339(),
+                    format!("{:?}", log.level).to_lowercase(),
+                    log.message
+                )
+                .map_err(|e| CoreError::ToolError(format!("Failed to write archive: {}", e)))?;
+            }
+        }
+
+        self.db.insert_event(
+            session_id,
+            EventType::Archived,
+            Some(archive_path.to_string_lossy().to_string()),
+        )?;
+
+        Ok(archive_path)
     }
 
     /// Pause a running session

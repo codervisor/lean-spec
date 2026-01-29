@@ -90,6 +90,7 @@
       "start": "Start",
       "pause": "Pause",
       "resume": "Resume",
+      "archive": "Archive",
       "stop": "Stop",
       "logs": "View Logs",
       "view": "View",
@@ -158,6 +159,11 @@
   "sessionDetail": {
     "title": "Session {{id}}",
     "description": "Live logs and session details.",
+    "eventsTitle": "Session Timeline",
+    "eventsDescription": "Lifecycle events captured for this session.",
+    "eventsEmpty": "No events recorded yet.",
+    "archiveSuccess": "Archived to {{path}}",
+    "archiveError": "Failed to archive session logs.",
     "logsTitle": "Live Logs",
     "logsDescription": "Streaming output from this session.",
     "filters": {

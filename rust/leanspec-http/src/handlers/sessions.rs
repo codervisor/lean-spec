@@ -14,7 +14,9 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
 use crate::error::{ApiError, ApiResult};
-use crate::sessions::{Session, SessionLog, SessionMode, SessionStatus};
+use crate::sessions::{
+    ArchiveOptions, Session, SessionEvent, SessionLog, SessionMode, SessionStatus,
+};
 use crate::state::AppState;
 use serde_json::json;
 
@@ -41,6 +43,19 @@ pub struct SessionResponse {
     pub ended_at: Option<String>,
     pub duration_ms: Option<u64>,
     pub token_count: Option<u64>,
+}
+
+/// Request to archive session logs
+#[derive(Debug, Deserialize)]
+pub struct ArchiveSessionRequest {
+    #[serde(default)]
+    pub compress: bool,
+}
+
+/// Response for session archive
+#[derive(Debug, Serialize)]
+pub struct ArchiveSessionResponse {
+    pub path: String,
 }
 
 impl From<Session> for SessionResponse {
@@ -201,6 +216,35 @@ pub async fn stop_session(
     Ok(Json(SessionResponse::from(session)))
 }
 
+/// Archive session logs to disk
+pub async fn archive_session(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+    Json(req): Json<ArchiveSessionRequest>,
+) -> ApiResult<Json<ArchiveSessionResponse>> {
+    let manager = state.session_manager.clone();
+
+    let archive_path = manager
+        .archive_session(
+            &session_id,
+            ArchiveOptions {
+                output_dir: None,
+                compress: req.compress,
+            },
+        )
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&e.to_string())),
+            )
+        })?;
+
+    Ok(Json(ArchiveSessionResponse {
+        path: archive_path.to_string_lossy().to_string(),
+    }))
+}
+
 /// Pause a running session
 pub async fn pause_session(
     State(state): State<AppState>,
@@ -289,6 +333,25 @@ pub async fn get_session_logs(
     Ok(Json(log_dto))
 }
 
+/// Get events for a session
+pub async fn get_session_events(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+) -> ApiResult<Json<Vec<SessionEventDto>>> {
+    let manager = state.session_manager.clone();
+
+    let events = manager.get_events(&session_id).await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let event_dto: Vec<SessionEventDto> = events.into_iter().map(SessionEventDto::from).collect();
+
+    Ok(Json(event_dto))
+}
+
 /// DTO for session logs
 #[derive(Debug, Serialize)]
 pub struct SessionLogDto {
@@ -305,6 +368,26 @@ impl From<SessionLog> for SessionLogDto {
             timestamp: log.timestamp.to_rfc3339(),
             level: format!("{:?}", log.level).to_lowercase(),
             message: log.message,
+        }
+    }
+}
+
+/// DTO for session events
+#[derive(Debug, Serialize)]
+pub struct SessionEventDto {
+    pub id: i64,
+    pub timestamp: String,
+    pub event_type: String,
+    pub data: Option<String>,
+}
+
+impl From<SessionEvent> for SessionEventDto {
+    fn from(event: SessionEvent) -> Self {
+        Self {
+            id: event.id,
+            timestamp: event.timestamp.to_rfc3339(),
+            event_type: format!("{:?}", event.event_type).to_lowercase(),
+            data: event.data,
         }
     }
 }

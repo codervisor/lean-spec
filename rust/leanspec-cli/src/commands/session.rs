@@ -1,5 +1,7 @@
 use colored::Colorize;
-use leanspec_core::sessions::{SessionDatabase, SessionManager, SessionMode, SessionStatus};
+use leanspec_core::sessions::{
+    ArchiveOptions, SessionDatabase, SessionManager, SessionMode, SessionStatus,
+};
 use leanspec_core::storage::config::config_dir;
 use std::error::Error;
 use std::time::Duration;
@@ -57,6 +59,11 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
         SessionCommand::Pause { session_id } => pause_session(&session_id),
         SessionCommand::Resume { session_id } => resume_session(&session_id),
         SessionCommand::Stop { session_id } => stop_session(&session_id),
+        SessionCommand::Archive {
+            session_id,
+            output_dir,
+            compress,
+        } => archive_session(&session_id, output_dir, compress),
         SessionCommand::Delete { session_id } => delete_session(&session_id),
         SessionCommand::View { session_id } => view_session(&session_id),
         SessionCommand::List { spec, status, tool } => list_sessions(spec, status, tool),
@@ -89,6 +96,11 @@ pub enum SessionCommand {
     },
     Stop {
         session_id: String,
+    },
+    Archive {
+        session_id: String,
+        output_dir: Option<String>,
+        compress: bool,
     },
     Delete {
         session_id: String,
@@ -230,6 +242,38 @@ fn stop_session(session_id: &str) -> Result<(), Box<dyn Error>> {
             "✓".green(),
             session.id.bold(),
             session.status
+        );
+        Ok(())
+    })
+}
+
+fn archive_session(
+    session_id: &str,
+    output_dir: Option<String>,
+    compress: bool,
+) -> Result<(), Box<dyn Error>> {
+    let session_id = session_id.to_string();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    rt.block_on(async move {
+        let manager = build_manager()?;
+        let archive_path = manager
+            .archive_session(
+                &session_id,
+                ArchiveOptions {
+                    output_dir: output_dir.map(std::path::PathBuf::from),
+                    compress,
+                },
+            )
+            .await
+            .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+
+        println!(
+            "{} Session {} archived to {}",
+            "✓".green(),
+            session_id.bold(),
+            archive_path.display()
         );
         Ok(())
     })

@@ -526,6 +526,15 @@ enum SessionSubcommand {
     Stop {
         session_id: String,
     },
+    Archive {
+        session_id: String,
+
+        #[arg(long)]
+        output_dir: Option<String>,
+
+        #[arg(long, default_value_t = false)]
+        compress: bool,
+    },
     Delete {
         session_id: String,
     },
@@ -777,6 +786,15 @@ fn main() -> ExitCode {
                 SessionSubcommand::Pause { session_id } => Cmd::Pause { session_id },
                 SessionSubcommand::Resume { session_id } => Cmd::Resume { session_id },
                 SessionSubcommand::Stop { session_id } => Cmd::Stop { session_id },
+                SessionSubcommand::Archive {
+                    session_id,
+                    output_dir,
+                    compress,
+                } => Cmd::Archive {
+                    session_id,
+                    output_dir,
+                    compress,
+                },
                 SessionSubcommand::Delete { session_id } => Cmd::Delete { session_id },
                 SessionSubcommand::View { session_id } => Cmd::View { session_id },
                 SessionSubcommand::List { spec, status, tool } => Cmd::List { spec, status, tool },

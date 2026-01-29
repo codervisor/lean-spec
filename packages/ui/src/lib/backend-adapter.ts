@@ -18,6 +18,8 @@ import type {
   ProjectContext,
   MachinesResponse,
   Session,
+  SessionArchiveResult,
+  SessionEvent,
   SessionLog,
   SessionMode,
   SpecTokenResponse,
@@ -95,8 +97,10 @@ export interface BackendAdapter {
   pauseSession(sessionId: string): Promise<Session>;
   resumeSession(sessionId: string): Promise<Session>;
   stopSession(sessionId: string): Promise<Session>;
+  archiveSession(sessionId: string, options?: { compress?: boolean }): Promise<SessionArchiveResult>;
   deleteSession(sessionId: string): Promise<void>;
   getSessionLogs(sessionId: string): Promise<SessionLog[]>;
+  getSessionEvents(sessionId: string): Promise<SessionEvent[]>;
   listAvailableTools(): Promise<string[]>;
 }
 
@@ -385,6 +389,15 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
+  async archiveSession(sessionId: string, options?: { compress?: boolean }): Promise<SessionArchiveResult> {
+    return this.fetchAPI<SessionArchiveResult>(`/api/sessions/${encodeURIComponent(sessionId)}/archive`, {
+      method: 'POST',
+      body: JSON.stringify({
+        compress: options?.compress ?? false,
+      }),
+    });
+  }
+
   async deleteSession(sessionId: string): Promise<void> {
     await this.fetchAPI(`/api/sessions/${encodeURIComponent(sessionId)}`, {
       method: 'DELETE',
@@ -393,6 +406,10 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async getSessionLogs(sessionId: string): Promise<SessionLog[]> {
     return this.fetchAPI<SessionLog[]>(`/api/sessions/${encodeURIComponent(sessionId)}/logs`);
+  }
+
+  async getSessionEvents(sessionId: string): Promise<SessionEvent[]> {
+    return this.fetchAPI<SessionEvent[]>(`/api/sessions/${encodeURIComponent(sessionId)}/events`);
   }
 
   async listAvailableTools(): Promise<string[]> {
@@ -568,12 +585,20 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('stopSession is not implemented for the Tauri backend yet');
   }
 
+  async archiveSession(): Promise<SessionArchiveResult> {
+    throw new Error('archiveSession is not implemented for the Tauri backend yet');
+  }
+
   async deleteSession(): Promise<void> {
     throw new Error('deleteSession is not implemented for the Tauri backend yet');
   }
 
   async getSessionLogs(): Promise<SessionLog[]> {
     throw new Error('getSessionLogs is not implemented for the Tauri backend yet');
+  }
+
+  async getSessionEvents(): Promise<SessionEvent[]> {
+    throw new Error('getSessionEvents is not implemented for the Tauri backend yet');
   }
 
   async listAvailableTools(): Promise<string[]> {
