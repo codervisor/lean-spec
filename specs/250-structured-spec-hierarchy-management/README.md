@@ -147,31 +147,31 @@ SUGGEST: Add 'parent: 168-leanspec-orchestration-platform' to spec 249
 ## Plan
 
 ### Phase 1: Core Data Model (1-2 days)
-- [ ] Add `parent` field support to spec frontmatter parser
-- [ ] Add `is_umbrella` boolean field (or auto-detect from children)
-- [ ] Update types in both TypeScript and Rust
+- [x] Add `parent` field support to spec frontmatter parser
+- [x] Add `is_umbrella` boolean field (or auto-detect from children)
+- [x] Update types in both TypeScript and Rust
 - [ ] Migration: Add parent field to existing umbrella-child pairs
 
 ### Phase 2: CLI Commands (2-3 days)
-- [ ] Add `--hierarchy` flag to `list` command
-- [ ] Create new `children` subcommand
-- [ ] Enhance `validate` to check parent-child consistency
-- [ ] Update `view` to show parent/children
+- [x] Add `--hierarchy` flag to `list` command
+- [x] Create new `children` subcommand
+- [x] Enhance `validate` to check parent-child consistency
+- [x] Update `view` to show parent/children
 
 ### Phase 3: Board View (1-2 days)
-- [ ] Add "group by parent" option to board
-- [ ] Show tree indentation in list views
-- [ ] Visual indicator for umbrella specs (umbrella icon 🌂)
+- [x] Add "group by parent" option to board
+- [x] Show tree indentation in list views
+- [x] Visual indicator for umbrella specs (umbrella icon 🌂)
 
 ### Phase 4: MCP Tools (1 day)
-- [ ] Add `set_parent` tool
-- [ ] Add `list_children` tool
-- [ ] Update `view` tool output
+- [x] Add `set_parent` tool
+- [x] Add `list_children` tool
+- [x] Update `view` tool output
 
 ### Phase 5: Validation & Polish (1 day)
-- [ ] Add circular dependency detection for parents
-- [ ] Add orphan detection
-- [ ] Add umbrella completeness warnings
+- [x] Add circular dependency detection for parents
+- [x] Add orphan detection
+- [x] Add umbrella completeness warnings
 - [ ] Update documentation
 
 ## Test
@@ -185,6 +185,14 @@ SUGGEST: Add 'parent: 168-leanspec-orchestration-platform' to spec 249
 - [ ] Validation catches status inconsistencies
 
 ## Notes
+
+### Progress Update (2026-01-29)
+
+- Added `parent`/`is_umbrella` support in core frontmatter parsing and validation.
+- Implemented CLI hierarchy output, `children` command, parent-aware board grouping, and validation rules.
+- Added MCP tools for parent/children/umbrella and updated view output.
+- Extended HTTP/sync responses and UI types for parent/children fields.
+- Documentation and migration of existing specs still pending.
 
 ### Backwards Compatibility
 

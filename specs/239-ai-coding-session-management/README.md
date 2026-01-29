@@ -614,14 +614,14 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
   - [x] Implement PTY/TTY spawning
   - [x] Add stdout/stderr capturing
   - [x] Handle process lifecycle (start, stop)
-  - [ ] Handle process lifecycle (pause, resume)
+  - [x] Handle process lifecycle (pause, resume)
   - [x] Implement graceful shutdown
 
 - [x] **Log Collection**
   - [x] Stream logs to database
   - [x] Buffer logs for WebSocket
-  - [ ] Implement log rotation/archival
-  - [ ] Add log compression
+  - [x] Implement log rotation/archival
+  - [x] Add log compression
 
 ### Phase 4: HTTP API & WebSocket (Week 6)
 
@@ -633,8 +633,11 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
   - [x] GET /api/sessions/:id (details)
   - [x] GET /api/sessions/:id/logs
   - [x] DELETE /api/sessions/:id
-  - [ ] POST /api/sessions/:id/pause (not implemented)
-  - [ ] POST /api/sessions/:id/resume (not implemented)
+  - [x] POST /api/sessions/:id/pause
+  - [x] POST /api/sessions/:id/resume
+  - [x] POST /api/sessions/:id/archive
+  - [x] POST /api/sessions/:id/logs/rotate
+  - [x] GET /api/sessions/:id/events
 
 - [x] **WebSocket Server**
   - [x] Implement WS handler in Rust
@@ -651,10 +654,12 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
   - [x] lean-spec session list
   - [x] lean-spec session view
   - [x] lean-spec session logs
-  - [ ] lean-spec session pause/resume (not implemented)
+  - [x] lean-spec session pause
+  - [x] lean-spec session resume
   - [x] lean-spec session stop
   - [x] lean-spec session delete
-  - [ ] lean-spec session archive (not implemented)
+  - [x] lean-spec session archive
+  - [x] lean-spec session rotate-logs
 
 ### Phase 6: UI Components (Weeks 8-9)
 
@@ -664,23 +669,23 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
   - [x] Spec selection
   - [x] Create and start integration
 
-- [ ] **Session List View**
-  - [ ] Fetch sessions from API
-  - [ ] Display session cards
-  - [ ] Status indicators and badges
-  - [ ] Filter by status/tool
+- [x] **Session List View**
+  - [x] Fetch sessions from API
+  - [x] Display session cards
+  - [x] Status indicators and badges
+  - [x] Filter by status/tool/mode/spec
 
-- [ ] **Session Detail View**
-  - [ ] Real-time terminal output
-  - [ ] WebSocket integration
-  - [ ] Auto-scroll and scroll lock
-  - [ ] Session controls (pause/stop)
+- [x] **Session Detail View**
+  - [x] Real-time terminal output
+  - [x] WebSocket integration
+  - [x] Auto-scroll and scroll lock
+  - [x] Session controls (pause/resume/stop)
 
-- [ ] **Session Integration**
-  - [ ] Add session section to spec detail
+- [x] **Session Integration**
+  - [x] Add session section to spec detail
   - [x] "New Session" button
-  - [ ] Session history timeline
-  - [ ] Quick actions (retry, archive)
+  - [x] Session history timeline (events)
+  - [x] Quick actions (archive)
 
 ### Phase 7: Testing & Polish (Week 10)
 
@@ -730,8 +735,8 @@ export function SessionControls({ sessionId, status, ...handlers }: SessionContr
 
 ### User Acceptance Tests
 - [x] Create session from Desktop UI
-- [ ] Monitor session in real-time
-- [ ] Pause and resume session
+- [x] Monitor session in real-time
+- [x] Pause and resume session
 - [x] View historical session logs
 - [ ] Retry failed session
 
