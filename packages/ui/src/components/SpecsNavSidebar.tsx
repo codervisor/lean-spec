@@ -57,6 +57,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     const stored = sessionStorage.getItem(STORAGE_KEYS.statusFilter);
@@ -183,69 +184,67 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       }
 
       return (
-        <div style={style} className="px-1">
-          <div className="mb-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to={`${basePath}/specs/${spec.specName}`}
-                  onClick={() => onMobileOpenChange?.(false)}
-                  className={cn(
-                    'flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors',
-                    isActive
-                      ? 'bg-accent text-accent-foreground font-medium'
-                      : 'hover:bg-accent/50'
+        <div style={style} className="px-2 py-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                to={`${basePath}/specs/${spec.specName}`}
+                onClick={() => onMobileOpenChange?.(false)}
+                className={cn(
+                  'flex flex-col gap-1 p-1.5 rounded-md text-sm transition-colors h-full justify-center',
+                  isActive
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'hover:bg-accent/50'
+                )}
+              >
+                <div className="flex items-center gap-1.5 w-full">
+                  {spec.specNumber && (
+                    <span className="text-xs font-mono text-muted-foreground shrink-0">
+                      #{spec.specNumber}
+                    </span>
                   )}
-                >
-                  <div className="flex items-center gap-1.5">
-                    {spec.specNumber && (
-                      <span className="text-xs font-mono text-muted-foreground shrink-0">
-                        #{spec.specNumber}
-                      </span>
-                    )}
-                    <span className="truncate text-xs leading-relaxed">{displayTitle}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {spec.status && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">
-                          {getStatusLabel(spec.status, t)}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                    {spec.priority && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">
-                          {getPriorityLabel(spec.priority, t)}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                    {spec.updatedAt && (
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatRelativeTime(spec.updatedAt, i18n.language)}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[300px]">
-                <div className="space-y-1">
-                  <div className="font-semibold">{displayTitle}</div>
-                  <div className="text-xs text-muted-foreground">{spec.specName}</div>
+                  <span className="truncate text-xs leading-relaxed flex-1">{displayTitle}</span>
                 </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+                <div className="flex items-center gap-1.5 flex-wrap w-full">
+                  {spec.status && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <StatusBadge status={spec.status} iconOnly className="text-[10px] scale-90" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {getStatusLabel(spec.status, t)}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {spec.priority && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <PriorityBadge priority={spec.priority} iconOnly className="text-[10px] scale-90" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {getPriorityLabel(spec.priority, t)}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {spec.updatedAt && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {formatRelativeTime(spec.updatedAt, i18n.language)}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-[300px]">
+              <div className="space-y-1">
+                <div className="font-semibold">{displayTitle}</div>
+                <div className="text-xs text-muted-foreground">{spec.specName}</div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         </div>
       );
     },
@@ -469,8 +468,22 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                                 : `${t('specsNavSidebar.tags')}: ${tagFilter.length} ${t('specsNavSidebar.selected')}`}
                             </AccordionTrigger>
                             <AccordionContent className="pb-2">
-                               <div className="space-y-1 px-2">
-                                {allTags.map((tag) => (
+                               <div className="px-2 pb-2">
+                                 <div className="relative">
+                                   <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                                   <Input
+                                     type="text"
+                                     placeholder={t('specsNavSidebar.searchTags') ?? 'Search tags...'}
+                                     value={tagSearchQuery}
+                                     onChange={(e) => setTagSearchQuery(e.target.value)}
+                                     className="h-8 pl-8 text-xs bg-background"
+                                   />
+                                 </div>
+                               </div>
+                               <div className="space-y-1 px-2 max-h-48 overflow-y-auto">
+                                {allTags
+                                  .filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                                  .map((tag) => (
                                   <div
                                     key={tag}
                                     className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
@@ -481,9 +494,14 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                                         <Check className="h-3 w-3" />
                                       )}
                                     </div>
-                                    <span className="text-sm flex-1">{tag}</span>
+                                    <span className="text-sm flex-1 break-all">{tag}</span>
                                   </div>
                                 ))}
+                                {allTags.filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase())).length === 0 && (
+                                  <div className="text-xs text-muted-foreground text-center py-2">
+                                    {t('specsNavSidebar.noTagsFound') ?? 'No tags found'}
+                                  </div>
+                                )}
                               </div>
                             </AccordionContent>
                           </AccordionItem>
@@ -540,7 +558,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 listRef={listRef}
                 defaultHeight={listHeight}
                 rowCount={filteredSpecs.length}
-                rowHeight={56}
+                rowHeight={60}
                 overscanCount={6}
                 rowComponent={RowComponent}
                 rowProps={{}}
