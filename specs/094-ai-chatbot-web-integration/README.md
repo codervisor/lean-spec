@@ -9,8 +9,10 @@ tags:
 - v0.3.0
 depends_on:
 - 187-vite-spa-migration
+- 223-chat-persistence-strategy
+- 227-ai-chat-ui-ux-modernization
 created_at: 2025-11-17T06:31:22.346Z
-updated_at: 2026-01-19T08:17:48.521994193Z
+updated_at: 2026-01-29T02:35:16.697139092Z
 transitions:
 - status: in-progress
   at: 2026-01-19T08:17:48.521994193Z

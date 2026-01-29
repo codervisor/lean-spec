@@ -437,7 +437,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                           </AccordionTrigger>
                           <AccordionContent className="pb-2">
                              <div className="space-y-1 px-2">
-                              {(['low', 'medium', 'high', 'critical'] as const).map((priority) => (
+                              {(['critical', 'high', 'medium', 'low'] as const).map((priority) => (
                                 <div
                                   key={priority}
                                   className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"

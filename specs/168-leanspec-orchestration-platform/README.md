@@ -17,8 +17,12 @@ depends_on:
 - 213-cloud-leanspec-local-sync-bridge
 - 239-ai-coding-session-management
 - 245-session-orchestration-workflows
+- 244-session-ui-enhancement
+- 249-sessions-sidebar-unified-ux
+- 243-ui-realtime-file-watch-sync
+- 160-ui-tokens-validation-display
 created_at: 2025-12-12T07:50:22.373Z
-updated_at: 2026-01-28T09:04:49.046055Z
+updated_at: 2026-01-29T02:35:17.694215474Z
 ---
 
 # LeanSpec as AI Coding Session Orchestration Platform
