@@ -347,7 +347,12 @@ fn print_by_parent(specs: &[leanspec_core::SpecInfo]) {
 
         for spec in group {
             let status_emoji = spec.frontmatter.status_emoji();
-            println!("  {} {} - {}", status_emoji, spec.path.cyan(), spec.title.dimmed());
+            println!(
+                "  {} {} - {}",
+                status_emoji,
+                spec.path.cyan(),
+                spec.title.dimmed()
+            );
         }
     }
 

@@ -75,7 +75,11 @@ fn print_json(specs: &[&SpecInfo]) -> Result<(), Box<dyn Error>> {
 fn print_compact(specs: &[&SpecInfo]) {
     for spec in specs {
         let status_icon = spec.frontmatter.status_emoji();
-        let umbrella_icon = if is_umbrella(spec, specs) { "🌂 " } else { "" };
+        let umbrella_icon = if is_umbrella(spec, specs) {
+            "🌂 "
+        } else {
+            ""
+        };
         println!(
             "{} {}{} - {}",
             status_icon,
@@ -103,7 +107,11 @@ fn print_detailed(specs: &[&SpecInfo]) {
             SpecStatus::Archived => "white",
         };
 
-        let umbrella_icon = if is_umbrella(spec, specs) { "🌂 " } else { "" };
+        let umbrella_icon = if is_umbrella(spec, specs) {
+            "🌂 "
+        } else {
+            ""
+        };
         println!();
         println!(
             "{} {}{}",
@@ -171,7 +179,11 @@ fn print_hierarchy(specs: &[&SpecInfo]) {
     }
 
     for children in children_map.values_mut() {
-        children.sort_by(|a, b| a.number().cmp(&b.number()).then_with(|| a.path.cmp(&b.path)));
+        children.sort_by(|a, b| {
+            a.number()
+                .cmp(&b.number())
+                .then_with(|| a.path.cmp(&b.path))
+        });
     }
 
     let mut roots: Vec<&SpecInfo> = specs
@@ -187,7 +199,11 @@ fn print_hierarchy(specs: &[&SpecInfo]) {
         .copied()
         .collect();
 
-    roots.sort_by(|a, b| a.number().cmp(&b.number()).then_with(|| a.path.cmp(&b.path)));
+    roots.sort_by(|a, b| {
+        a.number()
+            .cmp(&b.number())
+            .then_with(|| a.path.cmp(&b.path))
+    });
 
     let mut visited = std::collections::HashSet::new();
     for (idx, root) in roots.iter().enumerate() {
@@ -209,7 +225,11 @@ fn print_tree(
 ) {
     let status_icon = spec.frontmatter.status_emoji();
     let branch = if is_last { "└──" } else { "├──" };
-    let umbrella_icon = if is_umbrella(spec, all_specs) { "🌂 " } else { "" };
+    let umbrella_icon = if is_umbrella(spec, all_specs) {
+        "🌂 "
+    } else {
+        ""
+    };
     println!(
         "{}{} {} {}{} - {}",
         prefix,
@@ -234,7 +254,14 @@ fn print_tree(
 
         for (idx, child) in children.iter().enumerate() {
             let last_child = idx == children.len() - 1;
-            print_tree(child, &next_prefix, last_child, children_map, visited, all_specs);
+            print_tree(
+                child,
+                &next_prefix,
+                last_child,
+                children_map,
+                visited,
+                all_specs,
+            );
         }
     }
 }
@@ -244,5 +271,7 @@ fn is_umbrella(spec: &SpecInfo, specs: &[&SpecInfo]) -> bool {
         return true;
     }
 
-    specs.iter().any(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
+    specs
+        .iter()
+        .any(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
 }

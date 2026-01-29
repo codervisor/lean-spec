@@ -61,6 +61,9 @@ export interface LightweightSpec {
   githubUrl?: string | null;
   dependsOn: string[];
   requiredBy: string[];
+  parent?: string | null;
+  children?: string[];
+  isUmbrella?: boolean | null;
   subSpecsCount?: number;
 }
 

@@ -31,6 +31,19 @@ pub fn run(
     let struct_validator = StructureValidator::new();
     let line_validator = LineCountValidator::new();
 
+    let spec_map: std::collections::HashMap<String, &leanspec_core::SpecInfo> =
+        all_specs.iter().map(|s| (s.path.clone(), s)).collect();
+    let mut children_map: std::collections::HashMap<String, Vec<&leanspec_core::SpecInfo>> =
+        std::collections::HashMap::new();
+    for spec in &all_specs {
+        if let Some(parent) = spec.frontmatter.parent.as_deref() {
+            children_map
+                .entry(parent.to_string())
+                .or_default()
+                .push(spec);
+        }
+    }
+
     let mut all_results: Vec<ValidationResult> = Vec::new();
     let mut error_count = 0;
     let mut warning_count = 0;
@@ -42,6 +55,8 @@ pub fn run(
         result.merge(fm_validator.validate(spec));
         result.merge(struct_validator.validate(spec));
         result.merge(line_validator.validate(spec));
+
+        validate_parent_relationships(spec, &spec_map, &children_map, &mut result);
 
         // Check dependencies if requested
         if check_deps {
@@ -95,6 +110,70 @@ fn validate_dependencies(
     if graph.has_circular_dependency(&spec.path) {
         result.add_error("dependencies", "Circular dependency detected");
     }
+}
+
+fn validate_parent_relationships(
+    spec: &leanspec_core::SpecInfo,
+    spec_map: &std::collections::HashMap<String, &leanspec_core::SpecInfo>,
+    children_map: &std::collections::HashMap<String, Vec<&leanspec_core::SpecInfo>>,
+    result: &mut ValidationResult,
+) {
+    if let Some(parent) = spec.frontmatter.parent.as_deref() {
+        if parent == spec.path {
+            result.add_error("parent", "Spec cannot be its own parent");
+        } else if !spec_map.contains_key(parent) {
+            result.add_warning("parent", format!("Parent spec not found: {}", parent));
+        } else if has_parent_cycle(&spec.path, spec_map) {
+            result.add_error("parent", "Circular parent relationship detected");
+        }
+    }
+
+    if spec.frontmatter.is_umbrella.unwrap_or(false)
+        && children_map.get(&spec.path).map_or(true, |c| c.is_empty())
+    {
+        result.add_warning("parent", "Umbrella spec has no children");
+    }
+
+    if let Some(children) = children_map.get(&spec.path) {
+        if spec.frontmatter.status == leanspec_core::SpecStatus::Complete {
+            let has_incomplete_child = children.iter().any(|child| {
+                child.frontmatter.status != leanspec_core::SpecStatus::Complete
+                    && child.frontmatter.status != leanspec_core::SpecStatus::Archived
+            });
+            if has_incomplete_child {
+                result.add_warning(
+                    "parent",
+                    "Parent marked complete while child specs are still active",
+                );
+            }
+        }
+    }
+}
+
+fn has_parent_cycle(
+    spec_path: &str,
+    spec_map: &std::collections::HashMap<String, &leanspec_core::SpecInfo>,
+) -> bool {
+    let mut seen = std::collections::HashSet::new();
+    let mut current = spec_path.to_string();
+
+    while let Some(spec) = spec_map.get(&current) {
+        let Some(parent) = spec.frontmatter.parent.as_deref() else {
+            return false;
+        };
+
+        if parent == spec_path {
+            return true;
+        }
+
+        if !seen.insert(parent.to_string()) {
+            return true;
+        }
+
+        current = parent.to_string();
+    }
+
+    false
 }
 
 fn print_json(results: &[ValidationResult]) -> Result<(), Box<dyn Error>> {

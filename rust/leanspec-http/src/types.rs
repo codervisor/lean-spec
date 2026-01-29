@@ -26,6 +26,12 @@ pub struct SpecSummary {
     pub completed_at: Option<DateTime<Utc>>,
     pub file_path: String,
     pub depends_on: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
+    #[serde(default)]
+    pub children: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_umbrella: Option<bool>,
     #[serde(default)]
     pub required_by: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -57,6 +63,9 @@ impl From<&SpecInfo> for SpecSummary {
             completed_at: spec.frontmatter.completed_at,
             file_path: spec.file_path.to_string_lossy().to_string(),
             depends_on: spec.frontmatter.depends_on.clone(),
+            parent: spec.frontmatter.parent.clone(),
+            children: Vec::new(),
+            is_umbrella: spec.frontmatter.is_umbrella,
             required_by: Vec::new(), // Will be computed when needed
             content_hash: Some(hash_content(&spec.content)),
             token_count: None,
@@ -103,6 +112,12 @@ pub struct SpecDetail {
     pub completed_at: Option<DateTime<Utc>>,
     pub file_path: String,
     pub depends_on: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
+    #[serde(default)]
+    pub children: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_umbrella: Option<bool>,
     #[serde(default)]
     pub required_by: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -169,6 +184,9 @@ impl From<&SpecInfo> for SpecDetail {
             completed_at: spec.frontmatter.completed_at,
             file_path: spec.file_path.to_string_lossy().to_string(),
             depends_on: spec.frontmatter.depends_on.clone(),
+            parent: spec.frontmatter.parent.clone(),
+            children: Vec::new(),
+            is_umbrella: spec.frontmatter.is_umbrella,
             required_by: Vec::new(), // Will be computed when needed
             content_hash: Some(hash_content(&spec.content)),
             token_count: None,
@@ -492,6 +510,10 @@ pub struct FrontmatterResponse {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub depends_on: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_umbrella: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub assignee: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<DateTime<Utc>>,
@@ -509,6 +531,8 @@ impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
             priority: fm.priority.map(|p| p.to_string()),
             tags: fm.tags.clone(),
             depends_on: fm.depends_on.clone(),
+            parent: fm.parent.clone(),
+            is_umbrella: fm.is_umbrella,
             assignee: fm.assignee.clone(),
             created_at: fm.created_at,
             updated_at: fm.updated_at,

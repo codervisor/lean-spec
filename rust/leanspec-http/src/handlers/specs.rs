@@ -188,6 +188,9 @@ fn summary_from_record(project_id: &str, record: &crate::sync_state::SpecRecord)
             .clone()
             .unwrap_or_else(|| record.spec_name.clone()),
         depends_on: record.depends_on.clone(),
+        parent: record.parent.clone(),
+        children: Vec::new(),
+        is_umbrella: record.is_umbrella,
         required_by: Vec::new(),
         content_hash: Some(record.content_hash.clone()),
         token_count: None,
@@ -217,6 +220,9 @@ fn detail_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) 
             .clone()
             .unwrap_or_else(|| record.spec_name.clone()),
         depends_on: record.depends_on.clone(),
+        parent: record.parent.clone(),
+        children: Vec::new(),
+        is_umbrella: record.is_umbrella,
         required_by: Vec::new(),
         content_hash: Some(record.content_hash.clone()),
         token_count: None,
@@ -359,6 +365,17 @@ pub async fn list_project_specs(
             }
         }
 
+        // Build children map (parent -> children)
+        let mut children_map: HashMap<String, Vec<String>> = HashMap::new();
+        for spec in project.specs.values() {
+            if let Some(parent) = &spec.parent {
+                children_map
+                    .entry(parent.clone())
+                    .or_default()
+                    .push(spec.spec_name.clone());
+            }
+        }
+
         // Validate the required_by map for debugging
         #[cfg(debug_assertions)]
         for (dep, dependents) in &required_by_map {
@@ -408,6 +425,10 @@ pub async fn list_project_specs(
                     .cloned()
                     .unwrap_or_default();
                 summary.required_by = required_by.clone();
+                summary.children = children_map
+                    .get(&spec.spec_name)
+                    .cloned()
+                    .unwrap_or_default();
                 summary.relationships = Some(crate::types::SpecRelationships {
                     depends_on: summary.depends_on.clone(),
                     required_by: Some(required_by),
@@ -453,6 +474,27 @@ pub async fn list_project_specs(
         .iter()
         .filter(|s| filters.matches(s))
         .map(|s| SpecSummary::from(s).with_project_id(&project.id))
+        .collect();
+
+    let mut children_map: HashMap<String, Vec<String>> = HashMap::new();
+    for spec in &all_specs {
+        if let Some(parent) = spec.frontmatter.parent.as_deref() {
+            children_map
+                .entry(parent.to_string())
+                .or_default()
+                .push(spec.path.clone());
+        }
+    }
+
+    let filtered_specs: Vec<SpecSummary> = filtered_specs
+        .into_iter()
+        .map(|mut summary| {
+            summary.children = children_map
+                .get(&summary.spec_name)
+                .cloned()
+                .unwrap_or_default();
+            summary
+        })
         .collect();
 
     let total = filtered_specs.len();
@@ -617,7 +659,15 @@ pub async fn get_project_spec(
             .map(|spec| spec.spec_name.clone())
             .collect::<Vec<_>>();
 
+        let children = project
+            .specs
+            .values()
+            .filter(|spec| spec.parent.as_deref() == Some(record.spec_name.as_str()))
+            .map(|spec| spec.spec_name.clone())
+            .collect::<Vec<_>>();
+
         detail.required_by = required_by.clone();
+        detail.children = children;
         detail.relationships = Some(crate::types::SpecRelationships {
             depends_on: detail.depends_on.clone(),
             required_by: Some(required_by),
@@ -662,6 +712,13 @@ pub async fn get_project_spec(
             required_by: Some(required_by),
         });
     }
+
+    let children: Vec<String> = all_specs
+        .iter()
+        .filter(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
+        .map(|s| s.path.clone())
+        .collect();
+    detail.children = children;
 
     let sub_specs = detect_sub_specs(&detail.file_path);
     if !sub_specs.is_empty() {
@@ -1497,6 +1554,8 @@ pub async fn update_project_metadata(
                 priority: spec.priority.clone(),
                 tags: spec.tags.clone(),
                 depends_on: spec.depends_on.clone(),
+                parent: spec.parent.clone(),
+                is_umbrella: spec.is_umbrella,
                 assignee: spec.assignee.clone(),
                 created_at: spec.created_at,
                 updated_at: spec.updated_at,
