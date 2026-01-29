@@ -35,7 +35,6 @@ pub fn run(
             assignee: Option<String>,
             parent: Option<String>,
             children: Vec<String>,
-            is_umbrella: Option<bool>,
             content: String,
         }
 
@@ -50,7 +49,6 @@ pub fn run(
             assignee: spec_info.frontmatter.assignee.clone(),
             parent: spec_info.frontmatter.parent.clone(),
             children: children.iter().map(|s| s.path.clone()).collect(),
-            is_umbrella: spec_info.frontmatter.is_umbrella,
             content: spec_info.content.clone(),
         };
 

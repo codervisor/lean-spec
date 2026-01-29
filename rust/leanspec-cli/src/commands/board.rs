@@ -327,10 +327,9 @@ fn print_by_parent(specs: &[leanspec_core::SpecInfo]) {
         let (label, icon) = if key == "(no-parent)" {
             ("No parent".to_string(), "📂")
         } else if let Some(parent) = spec_map.get(&key) {
-            let umbrella_icon = if parent.frontmatter.is_umbrella.unwrap_or(false)
-                || specs
-                    .iter()
-                    .any(|s| s.frontmatter.parent.as_deref() == Some(parent.path.as_str()))
+            let umbrella_icon = if specs
+                .iter()
+                .any(|s| s.frontmatter.parent.as_deref() == Some(parent.path.as_str()))
             {
                 "🌂"
             } else {

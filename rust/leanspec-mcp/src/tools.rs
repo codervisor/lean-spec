@@ -444,7 +444,6 @@ fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> {
         "assignee": spec.frontmatter.assignee,
         "parent": spec.frontmatter.parent,
         "children": children,
-        "is_umbrella": spec.frontmatter.is_umbrella,
         "content": spec.content,
     });
 
@@ -957,9 +956,7 @@ fn tool_list_umbrellas(specs_dir: &str) -> Result<String, String> {
 
     let umbrellas: Vec<_> = specs
         .iter()
-        .filter(|s| {
-            s.frontmatter.is_umbrella.unwrap_or(false) || child_counts.contains_key(&s.path)
-        })
+        .filter(|s| child_counts.contains_key(&s.path))
         .map(|s| {
             json!({
                 "path": s.path,
@@ -1440,7 +1437,6 @@ fn build_frontmatter_from_scratch(
         tags: tags.to_vec(),
         depends_on: Vec::new(),
         parent: None,
-        is_umbrella: None,
         assignee: None,
         reviewer: None,
         issue: None,

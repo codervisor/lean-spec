@@ -148,7 +148,7 @@ SUGGEST: Add 'parent: 168-leanspec-orchestration-platform' to spec 249
 
 ### Phase 1: Core Data Model (1-2 days)
 - [x] Add `parent` field support to spec frontmatter parser
-- [x] Add `is_umbrella` boolean field (or auto-detect from children)
+- [x] Auto-detect umbrella specs from children
 - [x] Update types in both TypeScript and Rust
 - [ ] Migration: Add parent field to existing umbrella-child pairs
 
@@ -188,7 +188,7 @@ SUGGEST: Add 'parent: 168-leanspec-orchestration-platform' to spec 249
 
 ### Progress Update (2026-01-29)
 
-- Added `parent`/`is_umbrella` support in core frontmatter parsing and validation.
+- Added `parent` support and child-based umbrella detection in core frontmatter parsing and validation.
 - Implemented CLI hierarchy output, `children` command, parent-aware board grouping, and validation rules.
 - Added MCP tools for parent/children/umbrella and updated view output.
 - Extended HTTP/sync responses and UI types for parent/children fields.
@@ -197,7 +197,7 @@ SUGGEST: Add 'parent: 168-leanspec-orchestration-platform' to spec 249
 ### Backwards Compatibility
 
 - `parent` field is optional - existing specs work unchanged
-- Umbrella detection can be manual (`is_umbrella: true`) or automatic (has children)
+- Umbrella detection is automatic (has children)
 - No breaking changes to existing CLI commands
 
 ### Related Work

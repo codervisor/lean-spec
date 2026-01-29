@@ -51,7 +51,6 @@ fn print_json(specs: &[&SpecInfo]) -> Result<(), Box<dyn Error>> {
         tags: &'a Vec<String>,
         assignee: &'a Option<String>,
         parent: &'a Option<String>,
-        is_umbrella: &'a Option<bool>,
     }
 
     let output: Vec<_> = specs
@@ -64,7 +63,6 @@ fn print_json(specs: &[&SpecInfo]) -> Result<(), Box<dyn Error>> {
             tags: &s.frontmatter.tags,
             assignee: &s.frontmatter.assignee,
             parent: &s.frontmatter.parent,
-            is_umbrella: &s.frontmatter.is_umbrella,
         })
         .collect();
 
@@ -267,10 +265,6 @@ fn print_tree(
 }
 
 fn is_umbrella(spec: &SpecInfo, specs: &[&SpecInfo]) -> bool {
-    if spec.frontmatter.is_umbrella.unwrap_or(false) {
-        return true;
-    }
-
     specs
         .iter()
         .any(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))

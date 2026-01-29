@@ -284,7 +284,6 @@ mod tests {
                 tags: Vec::new(),
                 depends_on: Vec::new(),
                 parent: None,
-                is_umbrella: None,
                 assignee: assignee.map(String::from),
                 reviewer: None,
                 issue: None,

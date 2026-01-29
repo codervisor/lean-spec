@@ -64,8 +64,6 @@ pub struct SpecRecord {
     pub depends_on: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_umbrella: Option<bool>,
     pub file_path: Option<String>,
 }
 

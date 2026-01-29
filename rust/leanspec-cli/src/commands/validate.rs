@@ -128,12 +128,6 @@ fn validate_parent_relationships(
         }
     }
 
-    if spec.frontmatter.is_umbrella.unwrap_or(false)
-        && children_map.get(&spec.path).map_or(true, |c| c.is_empty())
-    {
-        result.add_warning("parent", "Umbrella spec has no children");
-    }
-
     if let Some(children) = children_map.get(&spec.path) {
         if spec.frontmatter.status == leanspec_core::SpecStatus::Complete {
             let has_incomplete_child = children.iter().any(|child| {

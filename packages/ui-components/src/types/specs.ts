@@ -63,7 +63,6 @@ export interface LightweightSpec {
   requiredBy: string[];
   parent?: string | null;
   children?: string[];
-  isUmbrella?: boolean | null;
   subSpecsCount?: number;
 }
 

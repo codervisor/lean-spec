@@ -106,9 +106,6 @@ pub struct SpecFrontmatter {
     pub parent: Option<String>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub is_umbrella: Option<bool>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assignee: Option<String>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
