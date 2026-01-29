@@ -957,7 +957,9 @@ fn tool_list_umbrellas(specs_dir: &str) -> Result<String, String> {
 
     let umbrellas: Vec<_> = specs
         .iter()
-        .filter(|s| s.frontmatter.is_umbrella.unwrap_or(false) || child_counts.contains_key(&s.path))
+        .filter(|s| {
+            s.frontmatter.is_umbrella.unwrap_or(false) || child_counts.contains_key(&s.path)
+        })
         .map(|s| {
             json!({
                 "path": s.path,
