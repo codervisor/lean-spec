@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-20
-priority: medium
+priority: low
 tags:
 - ux
 - organization
@@ -12,12 +12,14 @@ depends_on:
 - 081-web-app-ux-redesign
 - 150-tag-management
 created_at: 2026-01-20T02:02:33.426173530Z
-updated_at: 2026-01-20T02:02:38.809304162Z
+updated_at: 2026-01-29T02:57:09.031887638Z
 ---
 
-# Hierarchical Spec Grouping
+# Category-based Spec Organization
 
 ## Problem & Motivation
+
+> **Note**: This spec is for **categorization** (grouping specs by module/release). For **umbrella ownership** (parent-child spec tracking), see [spec 250](../250-structured-spec-hierarchy-management/). These are complementary features.
 
 With 181 specs and growing, flat organization becomes limiting for:
 
