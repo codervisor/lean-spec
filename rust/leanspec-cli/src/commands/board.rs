@@ -18,9 +18,10 @@ pub fn run(specs_dir: &str, group_by: &str, output_format: &str) -> Result<(), B
         "priority" => print_by_priority(&specs),
         "assignee" => print_by_assignee(&specs),
         "tag" => print_by_tag(&specs),
+        "parent" => print_by_parent(&specs),
         _ => {
             return Err(format!(
-                "Invalid group-by value: {}. Valid: status, priority, assignee, tag",
+                "Invalid group-by value: {}. Valid: status, priority, assignee, tag, parent",
                 group_by
             )
             .into());
@@ -73,6 +74,11 @@ fn print_json(specs: &[leanspec_core::SpecInfo], group_by: &str) -> Result<(), B
                 }
                 continue;
             }
+            "parent" => spec
+                .frontmatter
+                .parent
+                .clone()
+                .unwrap_or_else(|| "(no-parent)".to_string()),
             _ => "unknown".to_string(),
         };
         groups.entry(key).or_default().push(spec);
@@ -287,6 +293,61 @@ fn print_by_tag(specs: &[leanspec_core::SpecInfo]) {
 
         if group.len() > 10 {
             println!("  ... and {} more", group.len() - 10);
+        }
+    }
+
+    println!();
+}
+
+fn print_by_parent(specs: &[leanspec_core::SpecInfo]) {
+    let mut groups: HashMap<String, Vec<&leanspec_core::SpecInfo>> = HashMap::new();
+    let spec_map: HashMap<String, &leanspec_core::SpecInfo> =
+        specs.iter().map(|s| (s.path.clone(), s)).collect();
+
+    for spec in specs {
+        let key = spec
+            .frontmatter
+            .parent
+            .clone()
+            .unwrap_or_else(|| "(no-parent)".to_string());
+        groups.entry(key).or_default().push(spec);
+    }
+
+    println!();
+    println!("{}", "═".repeat(60).dimmed());
+    println!("{}", " BY PARENT ".bold().cyan());
+    println!("{}", "═".repeat(60).dimmed());
+
+    let mut keys: Vec<_> = groups.keys().cloned().collect();
+    keys.sort();
+
+    for key in keys {
+        let group = &groups[&key];
+
+        let (label, icon) = if key == "(no-parent)" {
+            ("No parent".to_string(), "📂")
+        } else if let Some(parent) = spec_map.get(&key) {
+            let umbrella_icon = if parent.frontmatter.is_umbrella.unwrap_or(false)
+                || specs
+                    .iter()
+                    .any(|s| s.frontmatter.parent.as_deref() == Some(parent.path.as_str()))
+            {
+                "🌂"
+            } else {
+                "📁"
+            };
+            (format!("{} - {}", parent.path, parent.title), umbrella_icon)
+        } else {
+            (format!("Missing parent: {}", key), "⚠")
+        };
+
+        println!();
+        println!("{} {} ({})", icon, label.bold(), group.len());
+        println!("{}", "─".repeat(40).dimmed());
+
+        for spec in group {
+            let status_emoji = spec.frontmatter.status_emoji();
+            println!("  {} {} - {}", status_emoji, spec.path.cyan(), spec.title.dimmed());
         }
     }
 

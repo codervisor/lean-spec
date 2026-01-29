@@ -140,6 +140,8 @@ mod tests {
                 priority,
                 tags: tags.iter().map(|s| s.to_string()).collect(),
                 depends_on: Vec::new(),
+                parent: None,
+                is_umbrella: None,
                 assignee: None,
                 reviewer: None,
                 issue: None,

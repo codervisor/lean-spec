@@ -120,6 +120,9 @@ impl FrontmatterParser {
         let tags = self.parse_string_array(map.get("tags"));
         let depends_on = self.parse_string_array(map.get("depends_on"));
 
+        let parent = map.get("parent").and_then(|v| v.as_str()).map(String::from);
+        let is_umbrella = map.get("is_umbrella").and_then(|v| v.as_bool());
+
         let assignee = map
             .get("assignee")
             .and_then(|v| v.as_str())
@@ -187,6 +190,8 @@ impl FrontmatterParser {
             "priority",
             "tags",
             "depends_on",
+            "parent",
+            "is_umbrella",
             "assignee",
             "reviewer",
             "issue",
@@ -217,6 +222,8 @@ impl FrontmatterParser {
             priority,
             tags,
             depends_on,
+            parent,
+            is_umbrella,
             assignee,
             reviewer,
             issue,
@@ -300,6 +307,12 @@ impl FrontmatterParser {
                 }
                 "depends_on" => {
                     frontmatter.depends_on = self.parse_string_array(Some(value));
+                }
+                "parent" => {
+                    frontmatter.parent = value.as_str().map(String::from).filter(|s| !s.is_empty());
+                }
+                "is_umbrella" => {
+                    frontmatter.is_umbrella = value.as_bool();
                 }
                 "assignee" => frontmatter.assignee = value.as_str().map(String::from),
                 "reviewer" => frontmatter.reviewer = value.as_str().map(String::from),

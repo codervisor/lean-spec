@@ -64,6 +64,7 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
             output_dir,
             compress,
         } => archive_session(&session_id, output_dir, compress),
+        SessionCommand::RotateLogs { session_id, keep } => rotate_logs(&session_id, keep),
         SessionCommand::Delete { session_id } => delete_session(&session_id),
         SessionCommand::View { session_id } => view_session(&session_id),
         SessionCommand::List { spec, status, tool } => list_sessions(spec, status, tool),
@@ -101,6 +102,10 @@ pub enum SessionCommand {
         session_id: String,
         output_dir: Option<String>,
         compress: bool,
+    },
+    RotateLogs {
+        session_id: String,
+        keep: usize,
     },
     Delete {
         session_id: String,
@@ -274,6 +279,28 @@ fn archive_session(
             "✓".green(),
             session_id.bold(),
             archive_path.display()
+        );
+        Ok(())
+    })
+}
+
+fn rotate_logs(session_id: &str, keep: usize) -> Result<(), Box<dyn Error>> {
+    let session_id = session_id.to_string();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    rt.block_on(async move {
+        let manager = build_manager()?;
+        let deleted = manager
+            .rotate_logs(&session_id, keep)
+            .await
+            .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+
+        println!(
+            "{} Pruned {} log entries for session {}",
+            "✓".green(),
+            deleted,
+            session_id.bold()
         );
         Ok(())
     })

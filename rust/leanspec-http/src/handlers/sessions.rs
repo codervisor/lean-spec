@@ -58,6 +58,23 @@ pub struct ArchiveSessionResponse {
     pub path: String,
 }
 
+/// Request to rotate logs
+#[derive(Debug, Deserialize)]
+pub struct RotateLogsRequest {
+    #[serde(default = "default_rotate_keep")]
+    pub keep: usize,
+}
+
+fn default_rotate_keep() -> usize {
+    10_000
+}
+
+/// Response for log rotation
+#[derive(Debug, Serialize)]
+pub struct RotateLogsResponse {
+    pub deleted: usize,
+}
+
 impl From<Session> for SessionResponse {
     fn from(session: Session) -> Self {
         Self {
@@ -243,6 +260,27 @@ pub async fn archive_session(
     Ok(Json(ArchiveSessionResponse {
         path: archive_path.to_string_lossy().to_string(),
     }))
+}
+
+/// Rotate session logs to keep recent entries
+pub async fn rotate_session_logs(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+    Json(req): Json<RotateLogsRequest>,
+) -> ApiResult<Json<RotateLogsResponse>> {
+    let manager = state.session_manager.clone();
+
+    let deleted = manager
+        .rotate_logs(&session_id, req.keep)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request(&e.to_string())),
+            )
+        })?;
+
+    Ok(Json(RotateLogsResponse { deleted }))
 }
 
 /// Pause a running session

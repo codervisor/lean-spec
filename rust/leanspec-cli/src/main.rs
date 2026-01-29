@@ -108,7 +108,7 @@ enum Commands {
 
     /// Show project board view
     Board {
-        /// Group by: status, priority, assignee, tag
+        /// Group by: status, priority, assignee, tag, parent
         #[arg(short, long, default_value = "status")]
         group_by: String,
     },
@@ -280,6 +280,16 @@ enum Commands {
         /// Show compact output
         #[arg(short, long)]
         compact: bool,
+
+        /// Show parent-child hierarchy tree
+        #[arg(long)]
+        hierarchy: bool,
+    },
+
+    /// List child specs for a parent
+    Children {
+        /// Spec path or number
+        spec: String,
     },
 
     /// Start MCP server for AI assistants
@@ -535,6 +545,12 @@ enum SessionSubcommand {
         #[arg(long, default_value_t = false)]
         compress: bool,
     },
+    RotateLogs {
+        session_id: String,
+
+        #[arg(long, default_value_t = 10_000)]
+        keep: usize,
+    },
     Delete {
         session_id: String,
     },
@@ -662,6 +678,7 @@ fn main() -> ExitCode {
             priority,
             assignee,
             compact,
+            hierarchy,
         } => commands::list::run(
             &specs_dir,
             status,
@@ -669,8 +686,10 @@ fn main() -> ExitCode {
             priority,
             assignee,
             compact,
+            hierarchy,
             &cli.output,
         ),
+        Commands::Children { spec } => commands::children::run(&specs_dir, &spec, &cli.output),
         Commands::Mcp => commands::mcp::run(&specs_dir),
         Commands::Migrate {
             input_path,
@@ -795,6 +814,9 @@ fn main() -> ExitCode {
                     output_dir,
                     compress,
                 },
+                SessionSubcommand::RotateLogs { session_id, keep } => {
+                    Cmd::RotateLogs { session_id, keep }
+                }
                 SessionSubcommand::Delete { session_id } => Cmd::Delete { session_id },
                 SessionSubcommand::View { session_id } => Cmd::View { session_id },
                 SessionSubcommand::List { spec, status, tool } => Cmd::List { spec, status, tool },

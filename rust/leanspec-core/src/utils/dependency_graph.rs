@@ -337,6 +337,8 @@ mod tests {
                 priority: None,
                 tags: Vec::new(),
                 depends_on: depends_on.iter().map(|s| s.to_string()).collect(),
+                parent: None,
+                is_umbrella: None,
                 assignee: None,
                 reviewer: None,
                 issue: None,

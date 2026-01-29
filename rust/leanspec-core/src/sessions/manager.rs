@@ -512,6 +512,27 @@ impl SessionManager {
         self.db.get_logs(session_id, limit)
     }
 
+    /// Rotate logs to keep only the most recent entries
+    pub async fn rotate_logs(&self, session_id: &str, keep: usize) -> CoreResult<usize> {
+        if self.db.get_session(session_id)?.is_none() {
+            return Err(CoreError::NotFound(format!(
+                "Session not found: {}",
+                session_id
+            )));
+        }
+
+        let deleted = self.db.prune_logs(session_id, keep)?;
+        if deleted > 0 {
+            self.db.insert_event(
+                session_id,
+                EventType::Archived,
+                Some(format!("pruned_logs:{}", deleted)),
+            )?;
+        }
+
+        Ok(deleted)
+    }
+
     /// Get session events
     pub async fn get_events(&self, session_id: &str) -> CoreResult<Vec<SessionEvent>> {
         self.db.get_events(session_id)

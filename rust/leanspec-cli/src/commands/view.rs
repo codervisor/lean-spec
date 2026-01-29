@@ -16,6 +16,12 @@ pub fn run(
         .load(spec)?
         .ok_or_else(|| format!("Spec not found: {}", spec))?;
 
+    let all_specs = loader.load_all()?;
+    let children: Vec<&leanspec_core::SpecInfo> = all_specs
+        .iter()
+        .filter(|s| s.frontmatter.parent.as_deref() == Some(spec_info.path.as_str()))
+        .collect();
+
     if output_format == "json" {
         #[derive(serde::Serialize)]
         struct SpecOutput {
@@ -27,6 +33,9 @@ pub fn run(
             tags: Vec<String>,
             depends_on: Vec<String>,
             assignee: Option<String>,
+            parent: Option<String>,
+            children: Vec<String>,
+            is_umbrella: Option<bool>,
             content: String,
         }
 
@@ -39,6 +48,9 @@ pub fn run(
             tags: spec_info.frontmatter.tags.clone(),
             depends_on: spec_info.frontmatter.depends_on.clone(),
             assignee: spec_info.frontmatter.assignee.clone(),
+            parent: spec_info.frontmatter.parent.clone(),
+            children: children.iter().map(|s| s.path.clone()).collect(),
+            is_umbrella: spec_info.frontmatter.is_umbrella,
             content: spec_info.content.clone(),
         };
 
@@ -84,6 +96,22 @@ pub fn run(
 
     if let Some(assignee) = &spec_info.frontmatter.assignee {
         println!("{}: {}", "Assignee".bold(), assignee);
+    }
+
+    if let Some(parent) = &spec_info.frontmatter.parent {
+        println!("{}: {}", "Parent".bold(), parent);
+    }
+
+    if !children.is_empty() {
+        println!(
+            "{}: {}",
+            "Children".bold(),
+            children
+                .iter()
+                .map(|s| s.path.clone())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
     }
 
     if !spec_info.frontmatter.depends_on.is_empty() {

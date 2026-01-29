@@ -223,6 +223,8 @@ mod tests {
                 priority: None,
                 tags: Vec::new(),
                 depends_on: Vec::new(),
+                parent: None,
+                is_umbrella: None,
                 assignee: None,
                 reviewer: None,
                 issue: None,

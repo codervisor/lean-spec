@@ -400,6 +400,29 @@ impl SessionDatabase {
         Ok(logs)
     }
 
+    /// Prune logs to keep only the most recent entries
+    pub fn prune_logs(&self, session_id: &str, keep: usize) -> CoreResult<usize> {
+        let conn = self.conn()?;
+        let mut stmt = conn
+            .prepare(
+                "DELETE FROM session_logs
+                 WHERE session_id = ?1
+                 AND id NOT IN (
+                   SELECT id FROM session_logs
+                   WHERE session_id = ?1
+                   ORDER BY id DESC
+                   LIMIT ?2
+                 )",
+            )
+            .map_err(|e| CoreError::DatabaseError(e.to_string()))?;
+
+        let deleted = stmt
+            .execute(params![session_id, keep as i64])
+            .map_err(|e| CoreError::DatabaseError(format!("Failed to prune logs: {}", e)))?;
+
+        Ok(deleted)
+    }
+
     /// Insert a session event
     pub fn insert_event(
         &self,

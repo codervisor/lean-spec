@@ -183,6 +183,10 @@ pub fn create_router(state: AppState) -> Router {
         )
         .route("/api/sessions/{id}/logs", get(handlers::get_session_logs))
         .route(
+            "/api/sessions/{id}/logs/rotate",
+            post(handlers::rotate_session_logs),
+        )
+        .route(
             "/api/sessions/{id}/events",
             get(handlers::get_session_events),
         )
