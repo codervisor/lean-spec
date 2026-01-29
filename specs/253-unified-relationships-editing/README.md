@@ -13,15 +13,18 @@ tags:
 - editing
 depends_on:
 - 250-structured-spec-hierarchy-management
+- 252-leanspec-ui-hierarchy-support
 - 134-ui-metadata-editing
 parent: 250-structured-spec-hierarchy-management
 created_at: 2026-01-29T13:53:10.363790Z
 updated_at: 2026-01-29T13:53:27.379850Z
 ---
 
-# Unified Relationships Editing in UI with MCP/CLI Integration
+# Unified Relationships Editing UI (Optimized Experience)
 
 ## Overview
+
+**Builds on**: [252-leanspec-ui-hierarchy-support](../252-leanspec-ui-hierarchy-support/README.md) (foundational display components)
 
 ### Problem
 
@@ -83,12 +86,12 @@ Create a **unified Relationships panel** that:
 5. **Click spec chip** → Navigates to that spec
 
 **Relationship Types Editable**:
-| Field | Direction | Action |
-|-------|-----------|--------|
-| Parent | Set | `set_parent` / `lean-spec parent` |
-| Children | Add (sets parent on child) | `set_parent` on target spec |
-| Depends On | Add/Remove | `link`/`unlink --depends-on` |
-| Required By | Add (sets depends_on on target) | `link` on target spec |
+| Field       | Direction                       | Action                            |
+| ----------- | ------------------------------- | --------------------------------- |
+| Parent      | Set                             | `set_parent` / `lean-spec parent` |
+| Children    | Add (sets parent on child)      | `set_parent` on target spec       |
+| Depends On  | Add/Remove                      | `link`/`unlink --depends-on`      |
+| Required By | Add (sets depends_on on target) | `link` on target spec             |
 
 ### MCP/CLI: Enhanced `view` Output
 
@@ -181,26 +184,37 @@ interface SpecUpdateRequest {
 
 ## Notes
 
-### Relationship to Existing Specs
+### Relationship to Sibling Specs
+
+This is part of the **spec 250 hierarchy management** initiative:
+
+| Spec           | Focus             | Scope                                             |
+| -------------- | ----------------- | ------------------------------------------------- |
+| **252**        | Foundational UI   | Read-only display, visualization, tree components |
+| **253 (this)** | Optimized UI      | Unified editing experience (builds on 252)        |
+| **254**        | Optimized CLI/MCP | Streamlined `rel` command interface               |
+
+### Relationship to Other Specs
 
 **Supersedes**:
 - **146-dependencies-editor-ui** - Dependencies only, now unified
-- **252-leanspec-ui-hierarchy-support** - Hierarchy UI, now unified
 
 **Extends**:
+- **252-leanspec-ui-hierarchy-support** - Foundational hierarchy display
 - **250-structured-spec-hierarchy-management** - Data model done, adds UI
 
 **Depends On**:
+- 252 for foundational hierarchy UI components
 - 250 for parent/children fields (✅ in-progress)
 - 134-ui-metadata-editing for patterns (✅ complete)
 
 ### ADO Comparison
 
-| ADO | LeanSpec |
-|-----|----------|
-| Parent/Child | parent/children |
-| Predecessor/Successor | depends_on/required_by |
-| Related | (not implemented, per spec 139) |
+| ADO                   | LeanSpec                        |
+| --------------------- | ------------------------------- |
+| Parent/Child          | parent/children                 |
+| Predecessor/Successor | depends_on/required_by          |
+| Related               | (not implemented, per spec 139) |
 
 ### AI Agent Benefits
 

@@ -15,15 +15,17 @@ created_at: 2026-01-29T09:10:46.895660085Z
 updated_at: 2026-01-29T09:10:46.895660085Z
 ---
 
-# LeanSpec UI - Hierarchy Management Support (Spec 250 UI Components)
+# LeanSpec UI - Foundational Hierarchy Display
 
 > **Status**: planned · **Priority**: medium · **Created**: 2026-01-29
 
 ## Overview
 
-Spec 250 introduces structured hierarchy management for LeanSpec, including parent-child relationships between specs. The `@leanspec/ui` package needs corresponding UI components to visualize and interact with these hierarchical relationships in the web interface.
+Spec 250 introduces structured hierarchy management for LeanSpec. This spec provides the **foundational UI components** for visualizing and displaying these hierarchical relationships in the web interface.
 
-Without these components:
+**Scope**: Read-only display and visualization. Editing capabilities are handled by [253-unified-relationships-editing](../253-unified-relationships-editing/README.md).
+
+Without these foundational components:
 - Users cannot visualize spec hierarchy in the UI
 - No way to see parent-child relationships in spec cards
 - Board view cannot group specs by parent umbrella
@@ -99,6 +101,16 @@ Without these components:
 - [ ] Expand/collapse works for umbrella specs in sidebar
 
 ## Notes
+
+### Relationship to Sibling Specs
+
+This is part of the **spec 250 hierarchy management** initiative:
+
+| Spec           | Focus             | Scope                                             |
+| -------------- | ----------------- | ------------------------------------------------- |
+| **252 (this)** | Foundational UI   | Read-only display, visualization, tree components |
+| **253**        | Optimized UI      | Unified editing experience (builds on 252)        |
+| **254**        | Optimized CLI/MCP | Streamlined `rel` command interface               |
 
 ### Related Work
 

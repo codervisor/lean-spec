@@ -17,7 +17,7 @@ created_at: 2026-01-29T14:06:00.766831Z
 updated_at: 2026-01-29T14:06:09.858641Z
 ---
 
-# Streamlined Relationship Commands for CLI/MCP
+# Streamlined Relationship Commands for CLI/MCP (Optimized Interface)
 
 ## Overview
 
@@ -250,6 +250,16 @@ lean-spec rel add 254 --parent 250 --depends-on 085
 
 - **v0.x.0** (this release): Deprecation warnings added
 - **v0.(x+2).0**: Old commands/tools removed
+
+### Relationship to Sibling Specs
+
+This is part of the **spec 250 hierarchy management** initiative:
+
+| Spec           | Focus             | Scope                                             |
+| -------------- | ----------------- | ------------------------------------------------- |
+| **252**        | Foundational UI   | Read-only display, visualization, tree components |
+| **253**        | Optimized UI      | Unified editing experience (builds on 252)        |
+| **254 (this)** | Optimized CLI/MCP | Streamlined `rel` command interface               |
 
 ### Related Specs
 
