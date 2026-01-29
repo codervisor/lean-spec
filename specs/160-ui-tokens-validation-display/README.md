@@ -536,19 +536,23 @@ getSpecValidation(projectId: string, specName: string): Promise<ValidationResult
 - [ ] Create `GET /api/projects/{id}/specs/{name}/validation` endpoint
 - [ ] Add methods to `backend-adapter.ts` interface
 
-### Phase 2: Visual Components (2 days)
-- [ ] Create `TokenBadge` component (follow StatusBadge pattern)
-- [ ] Create `ValidationStatus` component (icon + badge variants)
-- [ ] Create `TokenProgressBar` component
+### Phase 2: Button & Dialog Components (2 days)
+- [ ] Create `TokenButton` component (clickable button variant)
+- [ ] Create `ValidationButton` component (clickable button variant)
+- [ ] Create `TokenDetailsDialog` component (full breakdown)
+- [ ] Create `ValidationDialog` component (issues or success state)
+- [ ] Create `TokenProgressBar` component (for dialog)
 - [ ] Add Storybook stories for all components
-- [ ] Implement responsive variants (sm/md sizes)
+- [ ] Implement responsive variants (sm/md sizes for buttons)
 
 ### Phase 3: Page Integration (1-2 days)
-- [ ] Add token badge to ListView (sortable column)
-- [ ] Add validation icon to ListView
-- [ ] Add token count to SpecDetailPage metadata row
-- [ ] Create Context Economy sidebar card for detail page
-- [ ] Create Validation Issues card (conditional display)
+- [ ] Add `TokenButton` to ListView (clickable, opens dialog)
+- [ ] Add `ValidationButton` to ListView (clickable, opens dialog)
+- [ ] Add sort button to ListView header (sort by tokens asc/desc)
+- [ ] Add filter button to ListView toolbar (filter by validation status)
+- [ ] Add `TokenButton` to SpecDetailPage metadata row
+- [ ] Add `ValidationButton` to SpecDetailPage metadata row
+- [ ] Integrate dialogs with page state management
 
 ### Phase 4: Stats Dashboard (1 day)
 - [ ] Add Token Distribution chart to StatsPage
@@ -582,19 +586,27 @@ getSpecValidation(projectId: string, specName: string): Promise<ValidationResult
 - [ ] TokenProgressBar calculates width percentage correctly
 
 ### Integration Tests
-- [ ] Token count displays in ListView next to status badge
-- [ ] Clicking token badge sorts specs by token count
-- [ ] Validation icon filters specs when clicked
-- [ ] SpecDetailPage shows token count in metadata row
-- [ ] Context Economy card renders in sidebar
-- [ ] Validation Issues card shows only when issues exist
+- [ ] Token button displays in ListView next to status badge
+- [ ] Clicking token button opens TokenDetailsDialog
+- [ ] TokenDetailsDialog shows correct breakdown data
+- [ ] Validation button opens ValidationDialog on click
+- [ ] ValidationDialog shows correct error details
+- [ ] Sort button in header sorts specs by token count
+- [ ] Filter button filters specs by validation status
+- [ ] SpecDetailPage shows token and validation buttons in metadata row
+- [ ] Dialogs close correctly (close button, outside click, escape key)
 
 ### E2E Tests
-- [ ] Browse specs and see token badges with correct colors
-- [ ] Hover token badge shows tooltip with exact count
-- [ ] View spec detail and see Context Economy sidebar card
+- [ ] Browse specs and see token buttons with correct colors
+- [ ] Click token button opens dialog with full breakdown
+- [ ] Token dialog shows progress bar and performance estimates
+- [ ] View spec detail and click validation button
+- [ ] Validation dialog shows error list with "View in Spec" links
+- [ ] Pass state shows success message in validation dialog
 - [ ] Dashboard shows Token Distribution chart
+- [ ] Sort and filter buttons work correctly
 - [ ] Responsive layout works on mobile/tablet/desktop
+- [ ] Dialogs are accessible (keyboard navigation, screen readers)
 
 ### Accessibility Tests
 - [ ] Token badges have aria-label with exact count
@@ -617,17 +629,21 @@ getSpecValidation(projectId: string, specName: string): Promise<ValidationResult
 
 ### Implementation Decisions
 - **On-demand calculation**: Use tiktoken directly (<50ms/spec), no caching for v1
-- **Validation refresh**: Check on page load + manual refresh button
-- **Token breakdown**: Show in sidebar card (always visible) + tooltip on hover
-- **Sorting**: Token column is sortable (asc/desc toggle on click)
-- **Filtering**: Validation icon acts as filter toggle (show only issues)
+- **Validation refresh**: Check on page load + manual refresh button in dialog
+- **Token breakdown**: Show in dialog only (clean UI, detailed on demand)
+- **Dialogs**: Click badges to open detailed dialogs (no sidebar cards)
+- **Sorting**: Separate sort button in table header (not on token badge)
+- **Filtering**: Separate filter button in toolbar (not on validation badge)
+- **Dialogs**: Use shadcn/ui Dialog component, consistent with existing dialogs (Timeline, Dependencies)
 
 ### Visual References
 See existing components for styling patterns:
 - `StatusBadge.tsx`: Badge sizing, colors, dark mode
-- `PriorityBadge.tsx`: Icon + label layout
+- `PriorityBadge.tsx`: Icon + label layout  
 - `ListView.tsx`: Spec list layout and spacing
 - `SpecDetailPage.tsx`: Header metadata row styling
+- `SpecTimeline` dialog: Dialog structure and sizing pattern
+- `SpecDependencyGraph` dialog: Full-size dialog pattern
 
 ### Design Decisions
 - Color coding: Green (optimal: <2k), Yellow (good: 2-3.5k), Orange (warning: 3.5-5k), Red (critical: >5k)
