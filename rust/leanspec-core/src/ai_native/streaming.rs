@@ -82,18 +82,30 @@ mod tests {
             message_id: "msg_123".to_string(),
         };
         let sse = event.to_sse_string();
-        assert!(sse.starts_with("data: ") && sse.ends_with("\n\n"), "SSE format");
+        assert!(
+            sse.starts_with("data: ") && sse.ends_with("\n\n"),
+            "SSE format"
+        );
         assert!(sse.contains("\"type\":\"start\""));
         assert!(sse.contains("\"messageId\":\"msg_123\""));
 
         // Test text events
-        let text_start = StreamEvent::TextStart { id: "t1".to_string() };
-        assert!(text_start.to_sse_string().contains("\"type\":\"text-start\""));
+        let text_start = StreamEvent::TextStart {
+            id: "t1".to_string(),
+        };
+        assert!(text_start
+            .to_sse_string()
+            .contains("\"type\":\"text-start\""));
 
-        let text_delta = StreamEvent::TextDelta { id: "t1".to_string(), delta: "Hello".to_string() };
+        let text_delta = StreamEvent::TextDelta {
+            id: "t1".to_string(),
+            delta: "Hello".to_string(),
+        };
         assert!(text_delta.to_sse_string().contains("\"delta\":\"Hello\""));
 
-        let text_end = StreamEvent::TextEnd { id: "t1".to_string() };
+        let text_end = StreamEvent::TextEnd {
+            id: "t1".to_string(),
+        };
         assert!(text_end.to_sse_string().contains("\"type\":\"text-end\""));
 
         // Test tool events
@@ -110,21 +122,35 @@ mod tests {
             tool_name: "get_spec".to_string(),
             input: serde_json::json!({ "id": "test" }),
         };
-        assert!(tool_available.to_sse_string().contains("\"type\":\"tool-input-available\""));
+        assert!(tool_available
+            .to_sse_string()
+            .contains("\"type\":\"tool-input-available\""));
 
         let tool_output = StreamEvent::ToolOutputAvailable {
             tool_call_id: "call_2".to_string(),
             output: serde_json::json!({ "result": "success" }),
         };
-        assert!(tool_output.to_sse_string().contains("\"result\":\"success\""));
+        assert!(tool_output
+            .to_sse_string()
+            .contains("\"result\":\"success\""));
 
         // Test step and control events
-        assert!(StreamEvent::StartStep.to_sse_string().contains("\"type\":\"start-step\""));
-        assert!(StreamEvent::FinishStep.to_sse_string().contains("\"type\":\"finish-step\""));
-        assert!(StreamEvent::Finish.to_sse_string().contains("\"type\":\"finish\""));
+        assert!(StreamEvent::StartStep
+            .to_sse_string()
+            .contains("\"type\":\"start-step\""));
+        assert!(StreamEvent::FinishStep
+            .to_sse_string()
+            .contains("\"type\":\"finish-step\""));
+        assert!(StreamEvent::Finish
+            .to_sse_string()
+            .contains("\"type\":\"finish\""));
 
-        let error = StreamEvent::Error { error_text: "Something went wrong".to_string() };
-        assert!(error.to_sse_string().contains("\"errorText\":\"Something went wrong\""));
+        let error = StreamEvent::Error {
+            error_text: "Something went wrong".to_string(),
+        };
+        assert!(error
+            .to_sse_string()
+            .contains("\"errorText\":\"Something went wrong\""));
 
         // Test done marker
         assert_eq!(sse_done(), "data: [DONE]\n\n");
