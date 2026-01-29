@@ -11,6 +11,7 @@ depends_on:
 - 187-vite-spa-migration
 - 223-chat-persistence-strategy
 - 227-ai-chat-ui-ux-modernization
+parent: 221-ai-orchestration-integration
 created_at: 2025-11-17T06:31:22.346Z
 updated_at: 2026-01-29T02:35:16.697139092Z
 transitions:

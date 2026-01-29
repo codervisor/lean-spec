@@ -7,6 +7,7 @@ tags:
 - backend
 - chat
 - rust
+parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-22T15:34:19.126101Z
 updated_at: 2026-01-22T15:34:19.126101Z
 ---

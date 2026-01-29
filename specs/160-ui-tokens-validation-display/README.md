@@ -11,6 +11,7 @@ depends_on:
 - 035-live-specs-showcase
 - 018-spec-validation
 - 069-token-counting-utils
+parent: 168-leanspec-orchestration-platform
 created_at: 2025-12-10T06:39:09.954Z
 updated_at: 2026-01-29T01:44:36.360075409Z
 transitions:

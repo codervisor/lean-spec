@@ -21,6 +21,7 @@ depends_on:
 - 249-sessions-sidebar-unified-ux
 - 243-ui-realtime-file-watch-sync
 - 160-ui-tokens-validation-display
+parent: 221-ai-orchestration-integration
 created_at: 2025-12-12T07:50:22.373Z
 updated_at: 2026-01-29T02:35:17.694215474Z
 ---

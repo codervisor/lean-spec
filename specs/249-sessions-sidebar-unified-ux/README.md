@@ -11,6 +11,7 @@ tags:
 depends_on:
 - 239-ai-coding-session-management
 - 244-session-ui-enhancement
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-29T02:16:30.380254118Z
 updated_at: 2026-01-29T02:16:42.518679220Z
 ---

@@ -9,6 +9,7 @@ tags:
 - persistence
 - monitoring
 - orchestration
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-28T01:35:46.459300Z
 updated_at: 2026-01-28T01:40:28.412619Z
 transitions:

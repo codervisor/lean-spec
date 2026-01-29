@@ -12,6 +12,7 @@ depends_on:
 - 082-web-realtime-sync-architecture
 - 186-rust-http-server
 - 184-ui-packages-consolidation
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-28T08:03:59.019975Z
 updated_at: 2026-01-28T09:48:12.168602Z
 ---

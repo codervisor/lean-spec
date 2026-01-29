@@ -9,6 +9,7 @@ tags:
 - automation
 depends_on:
 - 018-spec-validation
+parent: 229-spec-edit-corruption-hooks
 created_at: 2026-01-20T03:16:27.829219851Z
 updated_at: 2026-01-20T03:20:55.054610486Z
 ---

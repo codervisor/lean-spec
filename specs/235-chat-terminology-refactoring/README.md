@@ -7,6 +7,7 @@ tags:
 - chat
 - ai
 - technical-debt
+parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-22T14:41:42.166295Z
 updated_at: 2026-01-22T14:41:42.166295Z
 ---

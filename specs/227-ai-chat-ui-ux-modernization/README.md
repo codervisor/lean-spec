@@ -8,6 +8,7 @@ tags:
 - chat
 - ai
 - frontend
+parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-20T01:53:50.707242729Z
 updated_at: 2026-01-20T01:53:56.917574362Z
 transitions:

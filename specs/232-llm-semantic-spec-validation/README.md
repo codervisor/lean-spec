@@ -8,6 +8,7 @@ tags:
 - llm
 - ai
 - semantic
+parent: 229-spec-edit-corruption-hooks
 created_at: 2026-01-20T03:16:27.831295218Z
 updated_at: 2026-01-20T03:16:27.831295218Z
 ---

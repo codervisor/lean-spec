@@ -10,6 +10,7 @@ tags:
 - enhancement
 depends_on:
 - 239-ai-coding-session-management
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-28T08:07:42.931963Z
 updated_at: 2026-01-28T09:20:13.777191Z
 transitions:

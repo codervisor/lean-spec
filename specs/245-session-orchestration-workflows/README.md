@@ -9,6 +9,7 @@ tags:
 - workflows
 - quality
 - automation
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-28T09:03:50.502569Z
 updated_at: 2026-01-28T09:03:50.502569Z
 ---

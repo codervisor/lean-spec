@@ -10,6 +10,7 @@ tags:
 - ui
 depends_on:
 - 224-ai-chat-configuration-improvements
+parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-19T07:54:03.056027248Z
 updated_at: 2026-01-20T05:33:25.701006037Z
 transitions:
