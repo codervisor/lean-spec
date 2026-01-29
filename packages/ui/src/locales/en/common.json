@@ -88,6 +88,8 @@
       "new": "New Session",
       "run": "Run Session",
       "start": "Start",
+      "pause": "Pause",
+      "resume": "Resume",
       "stop": "Stop",
       "logs": "View Logs",
       "view": "View",

@@ -95,6 +95,14 @@ class ProjectAPI {
     return this.backend.startSession(sessionId);
   }
 
+  pauseSession(sessionId: string): Promise<Session> {
+    return this.backend.pauseSession(sessionId);
+  }
+
+  resumeSession(sessionId: string): Promise<Session> {
+    return this.backend.resumeSession(sessionId);
+  }
+
   stopSession(sessionId: string): Promise<Session> {
     return this.backend.stopSession(sessionId);
   }

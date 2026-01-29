@@ -174,6 +174,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/sessions/{id}", get(handlers::get_session))
         .route("/api/sessions/{id}", delete(handlers::delete_session))
         .route("/api/sessions/{id}/start", post(handlers::start_session))
+        .route("/api/sessions/{id}/pause", post(handlers::pause_session))
+        .route("/api/sessions/{id}/resume", post(handlers::resume_session))
         .route("/api/sessions/{id}/stop", post(handlers::stop_session))
         .route("/api/sessions/{id}/logs", get(handlers::get_session_logs))
         .route("/api/sessions/{id}/stream", get(handlers::ws_session_logs))

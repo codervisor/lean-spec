@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Download, Copy, Play, Square, RotateCcw, Pause } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
@@ -147,6 +147,18 @@ export function SessionDetailPage() {
     await loadSession();
   };
 
+  const handlePause = async () => {
+    if (!session) return;
+    await api.pauseSession(session.id);
+    await loadSession();
+  };
+
+  const handleResume = async () => {
+    if (!session) return;
+    await api.resumeSession(session.id);
+    await loadSession();
+  };
+
   const handleRestart = async () => {
     if (!session || !currentProject?.path) return;
     const created = await api.createSession({
@@ -241,16 +253,34 @@ export function SessionDetailPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {session.status === 'running' && (
-                  <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop()}>
-                    <Square className="h-3.5 w-3.5" />
-                    {t('sessions.actions.stop')}
-                  </Button>
+                  <>
+                    <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handlePause()}>
+                      <Pause className="h-3.5 w-3.5" />
+                      {t('sessions.actions.pause')}
+                    </Button>
+                    <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop()}>
+                      <Square className="h-3.5 w-3.5" />
+                      {t('sessions.actions.stop')}
+                    </Button>
+                  </>
                 )}
-                {(session.status === 'pending' || session.status === 'paused') && (
+                {session.status === 'pending' && (
                   <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleStart()}>
                     <Play className="h-3.5 w-3.5" />
                     {t('sessions.actions.start')}
                   </Button>
+                )}
+                {session.status === 'paused' && (
+                  <>
+                    <Button size="sm" variant="secondary" className="gap-1" onClick={() => void handleResume()}>
+                      <Play className="h-3.5 w-3.5" />
+                      {t('sessions.actions.resume')}
+                    </Button>
+                    <Button size="sm" variant="destructive" className="gap-1" onClick={() => void handleStop()}>
+                      <Square className="h-3.5 w-3.5" />
+                      {t('sessions.actions.stop')}
+                    </Button>
+                  </>
                 )}
                 <Button size="sm" variant="outline" className="gap-1" onClick={() => void handleRestart()}>
                   <RotateCcw className="h-3.5 w-3.5" />

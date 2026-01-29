@@ -92,6 +92,8 @@ export interface BackendAdapter {
     mode: SessionMode;
   }): Promise<Session>;
   startSession(sessionId: string): Promise<Session>;
+  pauseSession(sessionId: string): Promise<Session>;
+  resumeSession(sessionId: string): Promise<Session>;
   stopSession(sessionId: string): Promise<Session>;
   deleteSession(sessionId: string): Promise<void>;
   getSessionLogs(sessionId: string): Promise<SessionLog[]>;
@@ -365,6 +367,18 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
+  async pauseSession(sessionId: string): Promise<Session> {
+    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/pause`, {
+      method: 'POST',
+    });
+  }
+
+  async resumeSession(sessionId: string): Promise<Session> {
+    return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/resume`, {
+      method: 'POST',
+    });
+  }
+
   async stopSession(sessionId: string): Promise<Session> {
     return this.fetchAPI<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/stop`, {
       method: 'POST',
@@ -540,6 +554,14 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async startSession(): Promise<Session> {
     throw new Error('startSession is not implemented for the Tauri backend yet');
+  }
+
+  async pauseSession(): Promise<Session> {
+    throw new Error('pauseSession is not implemented for the Tauri backend yet');
+  }
+
+  async resumeSession(): Promise<Session> {
+    throw new Error('resumeSession is not implemented for the Tauri backend yet');
   }
 
   async stopSession(): Promise<Session> {

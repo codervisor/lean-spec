@@ -15,6 +15,11 @@ use tokio::process::Child;
 use tokio::sync::{broadcast, Mutex, RwLock};
 use uuid::Uuid;
 
+#[cfg(unix)]
+use nix::sys::signal::{kill, Signal};
+#[cfg(unix)]
+use nix::unistd::Pid;
+
 /// Manages the lifecycle of AI coding sessions
 pub struct SessionManager {
     /// Database for session persistence
@@ -336,6 +341,68 @@ impl SessionManager {
         Ok(())
     }
 
+    /// Pause a running session
+    pub async fn pause_session(&self, session_id: &str) -> CoreResult<()> {
+        let mut session = self
+            .db
+            .get_session(session_id)?
+            .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
+
+        if !session.status.can_pause() {
+            return Err(CoreError::ValidationError(format!(
+                "Cannot pause session with status: {:?}",
+                session.status
+            )));
+        }
+
+        let process = {
+            let active = self.active_sessions.read().await;
+            active.get(session_id).map(|handle| handle.process.clone())
+        }
+        .ok_or_else(|| CoreError::ValidationError("Session is not running".to_string()))?;
+
+        let mut child = process.lock().await;
+        pause_child(&mut child)?;
+
+        session.status = SessionStatus::Paused;
+        session.touch();
+        self.db.update_session(&session)?;
+        self.db.insert_event(session_id, EventType::Paused, None)?;
+
+        Ok(())
+    }
+
+    /// Resume a paused session
+    pub async fn resume_session(&self, session_id: &str) -> CoreResult<()> {
+        let mut session = self
+            .db
+            .get_session(session_id)?
+            .ok_or_else(|| CoreError::NotFound(format!("Session not found: {}", session_id)))?;
+
+        if !session.status.can_resume() {
+            return Err(CoreError::ValidationError(format!(
+                "Cannot resume session with status: {:?}",
+                session.status
+            )));
+        }
+
+        let process = {
+            let active = self.active_sessions.read().await;
+            active.get(session_id).map(|handle| handle.process.clone())
+        }
+        .ok_or_else(|| CoreError::ValidationError("Session is not running".to_string()))?;
+
+        let mut child = process.lock().await;
+        resume_child(&mut child)?;
+
+        session.status = SessionStatus::Running;
+        session.touch();
+        self.db.update_session(&session)?;
+        self.db.insert_event(session_id, EventType::Resumed, None)?;
+
+        Ok(())
+    }
+
     /// Get session details
     pub async fn get_session(&self, session_id: &str) -> CoreResult<Option<Session>> {
         self.db.get_session(session_id)
@@ -444,6 +511,40 @@ impl SessionManager {
 
         Ok(cleaned)
     }
+}
+
+#[cfg(unix)]
+fn pause_child(child: &mut Child) -> CoreResult<()> {
+    let pid = child
+        .id()
+        .ok_or_else(|| CoreError::ToolError("Process ID unavailable".to_string()))?;
+    kill(Pid::from_raw(pid as i32), Signal::SIGSTOP)
+        .map_err(|e| CoreError::ToolError(format!("Failed to pause process: {}", e)))?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn pause_child(_child: &mut Child) -> CoreResult<()> {
+    Err(CoreError::ValidationError(
+        "Pause/resume is not supported on this platform".to_string(),
+    ))
+}
+
+#[cfg(unix)]
+fn resume_child(child: &mut Child) -> CoreResult<()> {
+    let pid = child
+        .id()
+        .ok_or_else(|| CoreError::ToolError("Process ID unavailable".to_string()))?;
+    kill(Pid::from_raw(pid as i32), Signal::SIGCONT)
+        .map_err(|e| CoreError::ToolError(format!("Failed to resume process: {}", e)))?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn resume_child(_child: &mut Child) -> CoreResult<()> {
+    Err(CoreError::ValidationError(
+        "Pause/resume is not supported on this platform".to_string(),
+    ))
 }
 
 async fn cleanup_session(

@@ -517,6 +517,12 @@ enum SessionSubcommand {
     Start {
         session_id: String,
     },
+    Pause {
+        session_id: String,
+    },
+    Resume {
+        session_id: String,
+    },
     Stop {
         session_id: String,
     },
@@ -768,6 +774,8 @@ fn main() -> ExitCode {
                     mode,
                 },
                 SessionSubcommand::Start { session_id } => Cmd::Start { session_id },
+                SessionSubcommand::Pause { session_id } => Cmd::Pause { session_id },
+                SessionSubcommand::Resume { session_id } => Cmd::Resume { session_id },
                 SessionSubcommand::Stop { session_id } => Cmd::Stop { session_id },
                 SessionSubcommand::Delete { session_id } => Cmd::Delete { session_id },
                 SessionSubcommand::View { session_id } => Cmd::View { session_id },

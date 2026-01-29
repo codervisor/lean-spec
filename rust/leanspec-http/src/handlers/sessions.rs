@@ -201,6 +201,72 @@ pub async fn stop_session(
     Ok(Json(SessionResponse::from(session)))
 }
 
+/// Pause a running session
+pub async fn pause_session(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+) -> ApiResult<Json<SessionResponse>> {
+    let manager = state.session_manager.clone();
+
+    manager.pause_session(&session_id).await.map_err(|e| {
+        (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request(&e.to_string())),
+        )
+    })?;
+
+    let session = manager
+        .get_session(&session_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(ApiError::not_found("Session")),
+            )
+        })?;
+
+    Ok(Json(SessionResponse::from(session)))
+}
+
+/// Resume a paused session
+pub async fn resume_session(
+    State(state): State<AppState>,
+    Path(session_id): Path<String>,
+) -> ApiResult<Json<SessionResponse>> {
+    let manager = state.session_manager.clone();
+
+    manager.resume_session(&session_id).await.map_err(|e| {
+        (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(ApiError::invalid_request(&e.to_string())),
+        )
+    })?;
+
+    let session = manager
+        .get_session(&session_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                Json(ApiError::not_found("Session")),
+            )
+        })?;
+
+    Ok(Json(SessionResponse::from(session)))
+}
+
 /// Get logs for a session
 pub async fn get_session_logs(
     State(state): State<AppState>,

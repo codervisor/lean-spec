@@ -54,6 +54,8 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
             mode,
         } => create_session(project_path, spec, tool, mode, true),
         SessionCommand::Start { session_id } => start_session(&session_id),
+        SessionCommand::Pause { session_id } => pause_session(&session_id),
+        SessionCommand::Resume { session_id } => resume_session(&session_id),
         SessionCommand::Stop { session_id } => stop_session(&session_id),
         SessionCommand::Delete { session_id } => delete_session(&session_id),
         SessionCommand::View { session_id } => view_session(&session_id),
@@ -77,6 +79,12 @@ pub enum SessionCommand {
         mode: String,
     },
     Start {
+        session_id: String,
+    },
+    Pause {
+        session_id: String,
+    },
+    Resume {
         session_id: String,
     },
     Stop {
@@ -140,6 +148,62 @@ fn start_session(session_id: &str) -> Result<(), Box<dyn Error>> {
     rt.block_on(async move {
         let manager = build_manager()?;
         start_and_wait(manager, &session_id).await
+    })
+}
+
+fn pause_session(session_id: &str) -> Result<(), Box<dyn Error>> {
+    let session_id = session_id.to_string();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    rt.block_on(async move {
+        let manager = build_manager()?;
+        manager
+            .pause_session(&session_id)
+            .await
+            .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+
+        let session = manager
+            .get_session(&session_id)
+            .await
+            .map_err(|e| Box::<dyn Error>::from(e.to_string()))?
+            .ok_or_else(|| Box::<dyn Error>::from("Session not found"))?;
+
+        println!(
+            "{} Session {} paused (status: {:?})",
+            "✓".green(),
+            session.id.bold(),
+            session.status
+        );
+        Ok(())
+    })
+}
+
+fn resume_session(session_id: &str) -> Result<(), Box<dyn Error>> {
+    let session_id = session_id.to_string();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    rt.block_on(async move {
+        let manager = build_manager()?;
+        manager
+            .resume_session(&session_id)
+            .await
+            .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+
+        let session = manager
+            .get_session(&session_id)
+            .await
+            .map_err(|e| Box::<dyn Error>::from(e.to_string()))?
+            .ok_or_else(|| Box::<dyn Error>::from("Session not found"))?;
+
+        println!(
+            "{} Session {} resumed (status: {:?})",
+            "✓".green(),
+            session.id.bold(),
+            session.status
+        );
+        Ok(())
     })
 }
 
