@@ -6,17 +6,13 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  PlayCircle,
-  CheckCircle2,
-  Archive,
-  AlertCircle,
-  ArrowUp,
-  Minus,
-  ArrowDown,
   Check,
 } from 'lucide-react';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
   Button,
   Input,
   Popover,
@@ -376,15 +372,126 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
               <div className="flex items-center gap-1">
-                <Button
-                  variant={showFilters || hasActiveFilters ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="h-7 w-7 p-0"
-                  onClick={() => setShowFilters((prev) => !prev)}
-                  title={showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
-                >
-                  <Filter className="h-4 w-4" />
-                </Button>
+                <Popover open={showFilters} onOpenChange={setShowFilters}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={showFilters || hasActiveFilters ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      title={showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
+                    >
+                      <Filter className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="start" sideOffset={8}>
+                    <div className="flex items-center justify-between px-4 py-3 border-b">
+                      <span className="font-medium text-sm">{t('specsNavSidebar.filtersLabel')}</span>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto px-2 py-1 text-xs"
+                          onClick={resetFilters}
+                        >
+                          {t('specsNavSidebar.clearFilters')}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+                      <Accordion type="multiple" className="w-full">
+                        <AccordionItem value="status" className="border-b-0">
+                          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline text-xs">
+                             {statusFilter.length === 0
+                              ? t('specsNavSidebar.select.status.all')
+                              : `${t('specsNavSidebar.status')}: ${statusFilter.length} ${t('specsNavSidebar.selected')}`}
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-2">
+                             <div className="space-y-1 px-2">
+                              {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => (
+                                <div
+                                  key={status}
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                                  onClick={() => toggleStatus(status)}
+                                >
+                                  <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", statusFilter.includes(status) ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
+                                    {statusFilter.includes(status) && (
+                                      <Check className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <StatusBadge status={status} iconOnly className="scale-90" />
+                                    <span className="text-sm">
+                                      {getStatusLabel(status, t)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="priority" className="border-b-0 border-t">
+                          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline text-xs">
+                             {priorityFilter.length === 0
+                              ? t('specsNavSidebar.select.priority.all')
+                              : `${t('specsNavSidebar.priority')}: ${priorityFilter.length} ${t('specsNavSidebar.selected')}`}
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-2">
+                             <div className="space-y-1 px-2">
+                              {(['low', 'medium', 'high', 'critical'] as const).map((priority) => (
+                                <div
+                                  key={priority}
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                                  onClick={() => togglePriority(priority)}
+                                >
+                                  <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", priorityFilter.includes(priority) ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
+                                    {priorityFilter.includes(priority) && (
+                                      <Check className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <PriorityBadge priority={priority} iconOnly className="scale-90" />
+                                    <span className="text-sm">
+                                      {getPriorityLabel(priority, t)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+
+                        {allTags.length > 0 && (
+                          <AccordionItem value="tags" className="border-b-0 border-t">
+                            <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline text-xs">
+                               {tagFilter.length === 0
+                                ? t('specsNavSidebar.select.tag.all')
+                                : `${t('specsNavSidebar.tags')}: ${tagFilter.length} ${t('specsNavSidebar.selected')}`}
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-2">
+                               <div className="space-y-1 px-2">
+                                {allTags.map((tag) => (
+                                  <div
+                                    key={tag}
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                                    onClick={() => toggleTag(tag)}
+                                  >
+                                    <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", tagFilter.includes(tag) ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
+                                      {tagFilter.includes(tag) && (
+                                        <Check className="h-3 w-3" />
+                                      )}
+                                    </div>
+                                    <span className="text-sm flex-1">{tag}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+                      </Accordion>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 {onMobileOpenChange && (
                   <Button
                     variant="ghost"
@@ -419,155 +526,6 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               />
             </div>
 
-            {showFilters && (
-              <div className="space-y-2 pt-2 border-t">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">{t('specsNavSidebar.filtersLabel')}</span>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={resetFilters}
-                    >
-                      {t('specsNavSidebar.clearFilters')}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Status Filter */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-full justify-between text-xs font-normal"
-                    >
-                      <span className="truncate">
-                        {statusFilter.length === 0
-                          ? t('specsNavSidebar.select.status.all')
-                          : `${t('specsNavSidebar.status')}: ${statusFilter.length} ${t('specsNavSidebar.selected')}`}
-                      </span>
-                      <ChevronRight className="h-3 w-3 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2" align="start">
-                    <div className="space-y-1">
-                      {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => (
-                        <div
-                          key={status}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
-                          onClick={() => toggleStatus(status)}
-                        >
-                          <div className="flex items-center justify-center w-4 h-4 border rounded">
-                            {statusFilter.includes(status) && (
-                              <Check className="h-3 w-3" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-1">
-                            {status === 'planned' && <Clock className="h-4 w-4" />}
-                            {status === 'in-progress' && <PlayCircle className="h-4 w-4" />}
-                            {status === 'complete' && <CheckCircle2 className="h-4 w-4" />}
-                            {status === 'archived' && <Archive className="h-4 w-4" />}
-                            <span className="text-sm">
-                              {status === 'planned' && t('status.planned')}
-                              {status === 'in-progress' && t('status.inProgress')}
-                              {status === 'complete' && t('status.complete')}
-                              {status === 'archived' && t('status.archived')}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Priority Filter */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-full justify-between text-xs font-normal"
-                    >
-                      <span className="truncate">
-                        {priorityFilter.length === 0
-                          ? t('specsNavSidebar.select.priority.all')
-                          : `${t('specsNavSidebar.priority')}: ${priorityFilter.length} ${t('specsNavSidebar.selected')}`}
-                      </span>
-                      <ChevronRight className="h-3 w-3 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2" align="start">
-                    <div className="space-y-1">
-                      {(['low', 'medium', 'high', 'critical'] as const).map((priority) => (
-                        <div
-                          key={priority}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
-                          onClick={() => togglePriority(priority)}
-                        >
-                          <div className="flex items-center justify-center w-4 h-4 border rounded">
-                            {priorityFilter.includes(priority) && (
-                              <Check className="h-3 w-3" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-1">
-                            {priority === 'low' && <ArrowDown className="h-4 w-4" />}
-                            {priority === 'medium' && <Minus className="h-4 w-4" />}
-                            {priority === 'high' && <ArrowUp className="h-4 w-4" />}
-                            {priority === 'critical' && <AlertCircle className="h-4 w-4" />}
-                            <span className="text-sm">
-                              {priority === 'low' && t('priority.low')}
-                              {priority === 'medium' && t('priority.medium')}
-                              {priority === 'high' && t('priority.high')}
-                              {priority === 'critical' && t('priority.critical')}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Tag Filter */}
-                {allTags.length > 0 && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-full justify-between text-xs font-normal"
-                      >
-                        <span className="truncate">
-                          {tagFilter.length === 0
-                            ? t('specsNavSidebar.select.tag.all')
-                            : `${t('specsNavSidebar.tags')}: ${tagFilter.length} ${t('specsNavSidebar.selected')}`}
-                        </span>
-                        <ChevronRight className="h-3 w-3 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-56 p-2 max-h-64 overflow-y-auto" align="start">
-                      <div className="space-y-1">
-                        {allTags.map((tag) => (
-                          <div
-                            key={tag}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
-                            onClick={() => toggleTag(tag)}
-                          >
-                            <div className="flex items-center justify-center w-4 h-4 border rounded">
-                              {tagFilter.includes(tag) && (
-                                <Check className="h-3 w-3" />
-                              )}
-                            </div>
-                            <span className="text-sm flex-1">{tag}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </div>
-            )}
           </div>
 
           <div className="flex-1 overflow-hidden">

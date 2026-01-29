@@ -31,6 +31,12 @@ pub struct SpecSummary {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content_hash: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_count: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validation_status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub relationships: Option<SpecRelationships>,
 }
 
@@ -53,6 +59,9 @@ impl From<&SpecInfo> for SpecSummary {
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
             content_hash: Some(hash_content(&spec.content)),
+            token_count: None,
+            token_status: None,
+            validation_status: None,
             relationships: None,
         }
     }
@@ -98,6 +107,12 @@ pub struct SpecDetail {
     pub required_by: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_count: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validation_status: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub relationships: Option<SpecRelationships>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -156,6 +171,9 @@ impl From<&SpecInfo> for SpecDetail {
             depends_on: spec.frontmatter.depends_on.clone(),
             required_by: Vec::new(), // Will be computed when needed
             content_hash: Some(hash_content(&spec.content)),
+            token_count: None,
+            token_status: None,
+            validation_status: None,
             relationships: None,
             sub_specs: None,
         }
@@ -361,6 +379,46 @@ pub struct DependencyEdge {
 pub struct ValidationResponse {
     pub is_valid: bool,
     pub issues: Vec<ValidationIssue>,
+}
+
+/// Spec token response
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecTokenResponse {
+    pub token_count: usize,
+    pub token_status: String,
+    pub token_breakdown: TokenBreakdown,
+}
+
+/// Token breakdown for a spec
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TokenBreakdown {
+    pub frontmatter: usize,
+    pub content: usize,
+    pub title: usize,
+}
+
+/// Spec validation response
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecValidationResponse {
+    pub status: String,
+    pub issues: Vec<SpecValidationIssue>,
+}
+
+/// Spec validation issue
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecValidationIssue {
+    pub severity: String,
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line: Option<usize>,
+    #[serde(rename = "type")]
+    pub r#type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggestion: Option<String>,
 }
 
 /// Project validation summary

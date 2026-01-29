@@ -9,8 +9,10 @@ use std::fs;
 use std::path::Path as FsPath;
 
 use leanspec_core::{
-    DependencyGraph, FrontmatterParser, LeanSpecConfig, MetadataUpdate as CoreMetadataUpdate,
-    SpecArchiver, SpecFilterOptions, SpecLoader, SpecStats, SpecStatus, SpecWriter, TemplateLoader,
+    DependencyGraph, FrontmatterParser, FrontmatterValidator, LeanSpecConfig,
+    LineCountValidator, MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions,
+    SpecLoader, SpecStats, SpecStatus, SpecWriter, StructureValidator, TemplateLoader, TokenCounter,
+    TokenStatus, ValidationResult,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -19,8 +21,9 @@ use crate::state::AppState;
 use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 use crate::types::{
     CreateSpecRequest, ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest,
-    SearchResponse, SpecDetail, SpecRawResponse, SpecRawUpdateRequest, SpecSummary, StatsResponse,
-    SubSpec,
+    SearchResponse, SpecDetail, SpecRawResponse, SpecRawUpdateRequest, SpecSummary,
+    SpecTokenResponse, SpecValidationIssue, SpecValidationResponse, StatsResponse, SubSpec,
+    TokenBreakdown,
 };
 use crate::utils::resolve_project;
 
@@ -147,6 +150,25 @@ fn spec_number_from_name(name: &str) -> Option<u32> {
     name.split('-').next()?.parse().ok()
 }
 
+fn token_status_label(status: TokenStatus) -> &'static str {
+    match status {
+        TokenStatus::Optimal => "optimal",
+        TokenStatus::Good => "good",
+        TokenStatus::Warning => "warning",
+        TokenStatus::Excessive => "critical",
+    }
+}
+
+fn validation_status_label(result: &ValidationResult) -> &'static str {
+    if result.has_errors() {
+        "fail"
+    } else if result.has_warnings() {
+        "warn"
+    } else {
+        "pass"
+    }
+}
+
 fn summary_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) -> SpecSummary {
     SpecSummary {
         project_id: Some(project_id.to_string()),
@@ -168,6 +190,9 @@ fn summary_from_record(project_id: &str, record: &crate::sync_state::SpecRecord)
         depends_on: record.depends_on.clone(),
         required_by: Vec::new(),
         content_hash: Some(record.content_hash.clone()),
+        token_count: None,
+        token_status: None,
+        validation_status: None,
         relationships: None,
     }
 }
@@ -194,6 +219,9 @@ fn detail_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) 
         depends_on: record.depends_on.clone(),
         required_by: Vec::new(),
         content_hash: Some(record.content_hash.clone()),
+        token_count: None,
+        token_status: None,
+        validation_status: None,
         relationships: None,
         sub_specs: None,
     }
@@ -641,6 +669,114 @@ pub async fn get_project_spec(
     }
 
     Ok(Json(detail))
+}
+
+/// GET /api/projects/:projectId/specs/:spec/tokens - Get token counts for a spec
+pub async fn get_project_spec_tokens(
+    State(state): State<AppState>,
+    Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
+) -> ApiResult<Json<SpecTokenResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Token counting not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    let content = fs::read_to_string(&spec.file_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let counter = TokenCounter::new();
+    let result = counter.count_spec(&content);
+
+    Ok(Json(SpecTokenResponse {
+        token_count: result.total,
+        token_status: token_status_label(result.status).to_string(),
+        token_breakdown: TokenBreakdown {
+            frontmatter: result.frontmatter,
+            content: result.content,
+            title: result.title,
+        },
+    }))
+}
+
+/// GET /api/projects/:projectId/specs/:spec/validation - Validate a spec
+pub async fn get_project_spec_validation(
+    State(state): State<AppState>,
+    Path((project_id, spec_id)): Path<(String, String)>,
+    headers: HeaderMap,
+) -> ApiResult<Json<SpecValidationResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Spec validation not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+    let spec = loader.load(&spec_id).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    let spec = spec.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError::spec_not_found(&spec_id)),
+        )
+    })?;
+
+    let fm_validator = FrontmatterValidator::new();
+    let struct_validator = StructureValidator::new();
+    let line_validator = LineCountValidator::new();
+
+    let mut result = ValidationResult::new(&spec.path);
+    result.merge(fm_validator.validate(&spec));
+    result.merge(struct_validator.validate(&spec));
+    result.merge(line_validator.validate(&spec));
+
+    let issues = result
+        .issues
+        .iter()
+        .map(|issue| SpecValidationIssue {
+            severity: issue.severity.to_string(),
+            message: issue.message.clone(),
+            line: issue.line,
+            r#type: issue.category.clone(),
+            suggestion: issue.suggestion.clone(),
+        })
+        .collect();
+
+    Ok(Json(SpecValidationResponse {
+        status: validation_status_label(&result).to_string(),
+        issues,
+    }))
 }
 
 /// GET /api/projects/:projectId/specs/:spec/raw - Get raw spec content

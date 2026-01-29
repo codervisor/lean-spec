@@ -1,18 +1,21 @@
 ---
-status: planned
-created: '2025-12-10'
-tags:
-  - ui
-  - validation
-  - tokens
-  - feature
+status: in-progress
+created: 2025-12-10
 priority: medium
-created_at: '2025-12-10T06:39:09.954Z'
-updated_at: '2025-12-10T06:39:36.213Z'
+tags:
+- ui
+- validation
+- tokens
+- feature
 depends_on:
-  - 035-live-specs-showcase
-  - 018-spec-validation
-  - 069-token-counting-utils
+- 035-live-specs-showcase
+- 018-spec-validation
+- 069-token-counting-utils
+created_at: 2025-12-10T06:39:09.954Z
+updated_at: 2026-01-29T01:44:36.360075409Z
+transitions:
+- status: in-progress
+  at: 2026-01-29T01:44:36.360075409Z
 ---
 
 # UI Display of Tokens and Validation Results

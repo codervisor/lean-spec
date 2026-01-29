@@ -1,5 +1,7 @@
 export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
+export type TokenStatus = 'optimal' | 'good' | 'warning' | 'critical';
+export type ValidationStatus = 'pass' | 'warn' | 'fail';
 
 export type SessionStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 export type SessionMode = 'guided' | 'autonomous' | 'ralph';
@@ -29,6 +31,9 @@ export interface Spec {
   dependsOn?: string[];
   requiredBy?: string[];
   filePath?: string;
+  tokenCount?: number;
+  tokenStatus?: TokenStatus;
+  validationStatus?: ValidationStatus;
   relationships?: {
     dependsOn: string[];
     requiredBy?: string[];
@@ -220,4 +225,29 @@ export interface ListSpecsResponse {
   specs: Spec[];
   total: number;
   projectId?: string;
+}
+
+export interface TokenBreakdown {
+  frontmatter: number;
+  content: number;
+  title: number;
+}
+
+export interface SpecTokenResponse {
+  tokenCount: number;
+  tokenStatus: TokenStatus;
+  tokenBreakdown: TokenBreakdown;
+}
+
+export interface SpecValidationIssue {
+  severity: 'info' | 'warning' | 'error';
+  message: string;
+  line?: number;
+  type: string;
+  suggestion?: string | null;
+}
+
+export interface SpecValidationResponse {
+  status: ValidationStatus;
+  issues: SpecValidationIssue[];
 }

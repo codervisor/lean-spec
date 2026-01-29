@@ -20,6 +20,8 @@ import type {
   Session,
   SessionLog,
   SessionMode,
+  SpecTokenResponse,
+  SpecValidationResponse,
 } from '../types/api';
 
 export class APIError extends Error {
@@ -61,6 +63,8 @@ export interface BackendAdapter {
   // Spec operations
   getSpecs(projectId: string, params?: ListParams): Promise<Spec[]>;
   getSpec(projectId: string, specName: string): Promise<SpecDetail>;
+  getSpecTokens(projectId: string, specName: string): Promise<SpecTokenResponse>;
+  getSpecValidation(projectId: string, specName: string): Promise<SpecValidationResponse>;
   updateSpec(
     projectId: string,
     specName: string,
@@ -243,6 +247,18 @@ export class HttpBackendAdapter implements BackendAdapter {
       `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}`
     );
     return 'spec' in data ? data.spec : data;
+  }
+
+  async getSpecTokens(projectId: string, specName: string): Promise<SpecTokenResponse> {
+    return this.fetchAPI<SpecTokenResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/tokens`
+    );
+  }
+
+  async getSpecValidation(projectId: string, specName: string): Promise<SpecValidationResponse> {
+    return this.fetchAPI<SpecValidationResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/validation`
+    );
   }
 
   async updateSpec(
@@ -449,6 +465,14 @@ export class TauriBackendAdapter implements BackendAdapter {
       specId: specName,
     });
     return spec;
+  }
+
+  async getSpecTokens(_projectId: string, _specName: string): Promise<SpecTokenResponse> {
+    throw new Error('getSpecTokens is not implemented for the Tauri backend yet');
+  }
+
+  async getSpecValidation(_projectId: string, _specName: string): Promise<SpecValidationResponse> {
+    throw new Error('getSpecValidation is not implemented for the Tauri backend yet');
   }
 
   async updateSpec(

@@ -96,6 +96,14 @@ pub fn create_router(state: AppState) -> Router {
             get(handlers::get_project_spec),
         )
         .route(
+            "/api/projects/{id}/specs/{spec}/tokens",
+            get(handlers::get_project_spec_tokens),
+        )
+        .route(
+            "/api/projects/{id}/specs/{spec}/validation",
+            get(handlers::get_project_spec_validation),
+        )
+        .route(
             "/api/projects/{id}/specs/{spec}/raw",
             get(handlers::get_project_spec_raw),
         )
