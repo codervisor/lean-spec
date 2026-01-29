@@ -267,7 +267,8 @@ impl SessionDatabase {
             .map_err(|e| CoreError::DatabaseError(format!("Failed to get session: {}", e)))?;
 
         if let Some(mut session) = session {
-            session.metadata = self.load_metadata(session_id)?;
+            // Use internal helper to avoid deadlock (we already hold conn lock)
+            session.metadata = Self::load_metadata_with_conn(&conn, session_id)?;
             Ok(Some(session))
         } else {
             Ok(None)
@@ -319,9 +320,9 @@ impl SessionDatabase {
             sessions.push(row);
         }
 
-        // Load metadata for each session
+        // Load metadata for each session (use internal helper to avoid deadlock)
         for session in &mut sessions {
-            session.metadata = self.load_metadata(&session.id)?;
+            session.metadata = Self::load_metadata_with_conn(&conn, &session.id)?;
         }
 
         Ok(sessions)
@@ -524,8 +525,11 @@ impl SessionDatabase {
         Ok(())
     }
 
-    fn load_metadata(&self, session_id: &str) -> CoreResult<HashMap<String, String>> {
-        let conn = self.conn()?;
+    /// Internal helper to load metadata with an existing connection (avoids deadlock)
+    fn load_metadata_with_conn(
+        conn: &Connection,
+        session_id: &str,
+    ) -> CoreResult<HashMap<String, String>> {
         let mut stmt = conn
             .prepare("SELECT key, value FROM session_metadata WHERE session_id = ?")
             .map_err(|e| CoreError::DatabaseError(e.to_string()))?;

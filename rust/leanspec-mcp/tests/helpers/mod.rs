@@ -2,9 +2,9 @@
 
 #![allow(dead_code)]
 
+use leanspec_mcp::tools::set_test_specs_dir;
 use serde_json::{json, Value};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
 use tempfile::TempDir;
 
 const DEFAULT_TEMPLATE: &str = r"---
@@ -32,8 +32,6 @@ priority: medium
 
 ## Notes
 ";
-
-static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Creates a test project with sample specs
 pub fn create_test_project(specs: &[(&str, &str, Option<&str>)]) -> TempDir {
@@ -169,16 +167,10 @@ pub fn specs_dir(temp_dir: &TempDir) -> PathBuf {
     temp_dir.path().join("specs")
 }
 
-/// Set LEANSPEC_SPECS_DIR environment variable with unique identifier
+/// Set specs directory for the current thread (thread-safe for parallel tests)
 pub fn set_specs_dir_env(temp_dir: &TempDir) {
-    // Use atomic counter to create unique env var name per test
-    let test_id = TEST_COUNTER.fetch_add(1, Ordering::SeqCst);
     let specs_path = specs_dir(temp_dir);
-
-    // Set test-wide env and a per-test override to avoid races in parallel runs
-    std::env::set_var("LEANSPEC_SPECS_DIR", &specs_path);
-    std::env::set_var("LEANSPEC_TEST_ID", test_id.to_string());
-    std::env::set_var(format!("LEANSPEC_SPECS_DIR_{}", test_id), specs_path);
+    set_test_specs_dir(Some(specs_path.to_string_lossy().to_string()));
 }
 
 /// Assert response is a success with expected structure

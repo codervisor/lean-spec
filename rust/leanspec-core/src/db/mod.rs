@@ -112,6 +112,7 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::NamedTempFile;
 
     #[test]
     fn test_in_memory_database() {
@@ -131,7 +132,9 @@ mod tests {
 
     #[test]
     fn test_wal_mode_enabled() {
-        let db = Database::open_in_memory().unwrap();
+        // WAL mode only works with file-based databases, not in-memory
+        let temp_file = NamedTempFile::new().unwrap();
+        let db = Database::open(temp_file.path()).unwrap();
         let journal_mode: String = db
             .query_row("PRAGMA journal_mode", &[], |row| row.get(0))
             .unwrap()

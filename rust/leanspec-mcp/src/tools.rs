@@ -8,8 +8,21 @@ use leanspec_core::{
     SpecStats, SpecStatus, TemplateLoader, TokenCounter,
 };
 use serde_json::{json, Value};
+use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
+
+thread_local! {
+    /// Thread-local specs directory override for tests
+    static TEST_SPECS_DIR: RefCell<Option<String>> = const { RefCell::new(None) };
+}
+
+/// Set the specs directory for the current thread (used by tests)
+pub fn set_test_specs_dir(path: Option<String>) {
+    TEST_SPECS_DIR.with(|cell| {
+        *cell.borrow_mut() = path;
+    });
+}
 
 /// Get all tool definitions
 pub fn get_tool_definitions() -> Vec<ToolDefinition> {
@@ -329,14 +342,11 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
 
 /// Call a tool with arguments
 pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
-    // Prefer per-test override to avoid env races when tests run in parallel
-    let specs_dir = if let Ok(test_id) = std::env::var("LEANSPEC_TEST_ID") {
-        std::env::var(format!("LEANSPEC_SPECS_DIR_{}", test_id))
-            .or_else(|_| std::env::var("LEANSPEC_SPECS_DIR"))
-            .unwrap_or_else(|_| "specs".to_string())
-    } else {
-        std::env::var("LEANSPEC_SPECS_DIR").unwrap_or_else(|_| "specs".to_string())
-    };
+    // Use thread-local specs directory if set (for tests), otherwise use env var
+    let specs_dir = TEST_SPECS_DIR
+        .with(|cell| cell.borrow().clone())
+        .or_else(|| std::env::var("LEANSPEC_SPECS_DIR").ok())
+        .unwrap_or_else(|| "specs".to_string());
 
     match name {
         "list" => tool_list(&specs_dir, args),
@@ -1210,6 +1220,17 @@ fn tool_stats(specs_dir: &str) -> Result<String, String> {
 // Helper functions
 
 fn create_content_description() -> String {
+    // Skip caching when thread-local is set (tests), rebuild description each time
+    if TEST_SPECS_DIR.with(|cell| cell.borrow().is_some()) {
+        return build_template_body_description().unwrap_or_else(|e| {
+            eprintln!(
+                "Warning: failed to load spec template for create tool description: {}",
+                e
+            );
+            CREATE_CONTENT_FALLBACK.to_string()
+        });
+    }
+
     static DESCRIPTION: OnceLock<String> = OnceLock::new();
 
     DESCRIPTION
@@ -1226,7 +1247,11 @@ fn create_content_description() -> String {
 }
 
 fn build_template_body_description() -> Result<String, String> {
-    let specs_dir = std::env::var("LEANSPEC_SPECS_DIR").unwrap_or_else(|_| "specs".to_string());
+    // Use thread-local specs directory if set (for tests), otherwise use env var
+    let specs_dir = TEST_SPECS_DIR
+        .with(|cell| cell.borrow().clone())
+        .or_else(|| std::env::var("LEANSPEC_SPECS_DIR").ok())
+        .unwrap_or_else(|| "specs".to_string());
     let project_root = resolve_project_root(&specs_dir)?;
     let config = load_config(&project_root);
     let loader = TemplateLoader::with_config(&project_root, config);

@@ -521,12 +521,12 @@ mod tests {
     #[test]
     fn test_project_deserializes_without_added_at() {
         let json = r#"{
-            \"id\": \"legacy-id\",
-            \"name\": \"Legacy Project\",
-            \"path\": \"/tmp/legacy\",
-            \"specsDir\": \"/tmp/legacy/specs\",
-            \"favorite\": false,
-            \"lastAccessed\": \"2024-01-01T00:00:00Z\"
+            "id": "legacy-id",
+            "name": "Legacy Project",
+            "path": "/tmp/legacy",
+            "specsDir": "/tmp/legacy/specs",
+            "favorite": false,
+            "lastAccessed": "2024-01-01T00:00:00Z"
         }"#;
 
         let project: Project = serde_json::from_str(json).unwrap();

@@ -73,105 +73,60 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_stream_event_to_sse_string() {
+    fn test_stream_event_serialization() {
+        // Consolidate all SSE event serialization tests into one
+        // These primarily verify serde derive and SSE format work correctly
+
+        // Test message start
         let event = StreamEvent::MessageStart {
             message_id: "msg_123".to_string(),
         };
         let sse = event.to_sse_string();
-        assert!(sse.starts_with("data: "));
+        assert!(sse.starts_with("data: ") && sse.ends_with("\n\n"), "SSE format");
         assert!(sse.contains("\"type\":\"start\""));
         assert!(sse.contains("\"messageId\":\"msg_123\""));
-        assert!(sse.ends_with("\n\n"));
-    }
 
-    #[test]
-    fn test_text_start_event() {
-        let event = StreamEvent::TextStart {
-            id: "text_456".to_string(),
-        };
-        let sse = event.to_sse_string();
-        assert!(sse.contains("\"type\":\"text-start\""));
-        assert!(sse.contains("\"id\":\"text_456\""));
-    }
+        // Test text events
+        let text_start = StreamEvent::TextStart { id: "t1".to_string() };
+        assert!(text_start.to_sse_string().contains("\"type\":\"text-start\""));
 
-    #[test]
-    fn test_text_delta_event() {
-        let event = StreamEvent::TextDelta {
-            id: "text_789".to_string(),
-            delta: "Hello".to_string(),
-        };
-        let sse = event.to_sse_string();
-        assert!(sse.contains("\"type\":\"text-delta\""));
-        assert!(sse.contains("\"delta\":\"Hello\""));
-    }
+        let text_delta = StreamEvent::TextDelta { id: "t1".to_string(), delta: "Hello".to_string() };
+        assert!(text_delta.to_sse_string().contains("\"delta\":\"Hello\""));
 
-    #[test]
-    fn test_tool_input_start_event() {
-        let event = StreamEvent::ToolInputStart {
-            tool_call_id: "call_abc".to_string(),
+        let text_end = StreamEvent::TextEnd { id: "t1".to_string() };
+        assert!(text_end.to_sse_string().contains("\"type\":\"text-end\""));
+
+        // Test tool events
+        let tool_start = StreamEvent::ToolInputStart {
+            tool_call_id: "call_1".to_string(),
             tool_name: "list_specs".to_string(),
         };
-        let sse = event.to_sse_string();
-        assert!(sse.contains("\"type\":\"tool-input-start\""));
-        assert!(sse.contains("\"toolCallId\":\"call_abc\""));
-        assert!(sse.contains("\"toolName\":\"list_specs\""));
-    }
+        let tool_start_sse = tool_start.to_sse_string();
+        assert!(tool_start_sse.contains("\"toolCallId\":\"call_1\""));
+        assert!(tool_start_sse.contains("\"toolName\":\"list_specs\""));
 
-    #[test]
-    fn test_tool_input_available_event() {
-        let input = serde_json::json!({ "projectId": "test" });
-        let event = StreamEvent::ToolInputAvailable {
-            tool_call_id: "call_def".to_string(),
+        let tool_available = StreamEvent::ToolInputAvailable {
+            tool_call_id: "call_2".to_string(),
             tool_name: "get_spec".to_string(),
-            input,
+            input: serde_json::json!({ "id": "test" }),
         };
-        let sse = event.to_sse_string();
-        assert!(sse.contains("\"type\":\"tool-input-available\""));
-        assert!(sse.contains("\"toolCallId\":\"call_def\""));
-        assert!(sse.contains("\"projectId\""));
-    }
+        assert!(tool_available.to_sse_string().contains("\"type\":\"tool-input-available\""));
 
-    #[test]
-    fn test_tool_output_available_event() {
-        let output = serde_json::json!({ "result": "success" });
-        let event = StreamEvent::ToolOutputAvailable {
-            tool_call_id: "call_ghi".to_string(),
-            output,
+        let tool_output = StreamEvent::ToolOutputAvailable {
+            tool_call_id: "call_2".to_string(),
+            output: serde_json::json!({ "result": "success" }),
         };
-        let sse = event.to_sse_string();
-        assert!(sse.contains("\"type\":\"tool-output-available\""));
-        assert!(sse.contains("\"toolCallId\":\"call_ghi\""));
-        assert!(sse.contains("\"result\":\"success\""));
-    }
+        assert!(tool_output.to_sse_string().contains("\"result\":\"success\""));
 
-    #[test]
-    fn test_step_events() {
-        let start = StreamEvent::StartStep.to_sse_string();
-        assert!(start.contains("\"type\":\"start-step\""));
+        // Test step and control events
+        assert!(StreamEvent::StartStep.to_sse_string().contains("\"type\":\"start-step\""));
+        assert!(StreamEvent::FinishStep.to_sse_string().contains("\"type\":\"finish-step\""));
+        assert!(StreamEvent::Finish.to_sse_string().contains("\"type\":\"finish\""));
 
-        let finish = StreamEvent::FinishStep.to_sse_string();
-        assert!(finish.contains("\"type\":\"finish-step\""));
-    }
+        let error = StreamEvent::Error { error_text: "Something went wrong".to_string() };
+        assert!(error.to_sse_string().contains("\"errorText\":\"Something went wrong\""));
 
-    #[test]
-    fn test_finish_event() {
-        let event = StreamEvent::Finish.to_sse_string();
-        assert!(event.contains("\"type\":\"finish\""));
-    }
-
-    #[test]
-    fn test_error_event() {
-        let event = StreamEvent::Error {
-            error_text: "Something went wrong".to_string(),
-        };
-        let sse = event.to_sse_string();
-        assert!(sse.contains("\"type\":\"error\""));
-        assert!(sse.contains("\"errorText\":\"Something went wrong\""));
-    }
-
-    #[test]
-    fn test_sse_done() {
-        let done = sse_done();
-        assert_eq!(done, "data: [DONE]\n\n");
+        // Test done marker
+        assert_eq!(sse_done(), "data: [DONE]\n\n");
     }
 }

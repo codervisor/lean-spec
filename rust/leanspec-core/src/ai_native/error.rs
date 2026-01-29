@@ -29,62 +29,53 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_missing_api_key_error() {
-        let err = AiError::MissingApiKey("openai".to_string());
-        assert_eq!(err.to_string(), "Missing API key for provider: openai");
-    }
+    fn test_error_display() {
+        // Consolidate all error variant display tests into one
+        // These primarily verify thiserror derive works correctly
+        let test_cases: Vec<(AiError, &str)> = vec![
+            (
+                AiError::MissingApiKey("openai".to_string()),
+                "Missing API key for provider: openai",
+            ),
+            (
+                AiError::InvalidProvider("unknown".to_string()),
+                "Invalid provider: unknown",
+            ),
+            (
+                AiError::InvalidModel("gpt-99".to_string()),
+                "Invalid model: gpt-99",
+            ),
+            (
+                AiError::Provider("Rate limited".to_string()),
+                "AI provider error: Rate limited",
+            ),
+            (
+                AiError::Tool("Tool not found".to_string()),
+                "Tool error: Tool not found",
+            ),
+            (
+                AiError::ToolExecution {
+                    tool_name: "list_specs".to_string(),
+                    message: "Invalid input".to_string(),
+                },
+                "Tool execution failed: list_specs - Invalid input",
+            ),
+            (
+                AiError::Serialization("Invalid JSON".to_string()),
+                "Serialization error: Invalid JSON",
+            ),
+            (
+                AiError::Stream("Connection lost".to_string()),
+                "Stream error: Connection lost",
+            ),
+            (
+                AiError::InvalidRequest("Empty messages".to_string()),
+                "Invalid request: Empty messages",
+            ),
+        ];
 
-    #[test]
-    fn test_invalid_provider_error() {
-        let err = AiError::InvalidProvider("unknown".to_string());
-        assert_eq!(err.to_string(), "Invalid provider: unknown");
-    }
-
-    #[test]
-    fn test_invalid_model_error() {
-        let err = AiError::InvalidModel("gpt-99".to_string());
-        assert_eq!(err.to_string(), "Invalid model: gpt-99");
-    }
-
-    #[test]
-    fn test_provider_error() {
-        let err = AiError::Provider("Rate limited".to_string());
-        assert_eq!(err.to_string(), "AI provider error: Rate limited");
-    }
-
-    #[test]
-    fn test_tool_error() {
-        let err = AiError::Tool("Tool not found".to_string());
-        assert_eq!(err.to_string(), "Tool error: Tool not found");
-    }
-
-    #[test]
-    fn test_tool_execution_error() {
-        let err = AiError::ToolExecution {
-            tool_name: "list_specs".to_string(),
-            message: "Invalid input".to_string(),
-        };
-        assert_eq!(
-            err.to_string(),
-            "Tool execution failed: list_specs - Invalid input"
-        );
-    }
-
-    #[test]
-    fn test_serialization_error() {
-        let err = AiError::Serialization("Invalid JSON".to_string());
-        assert_eq!(err.to_string(), "Serialization error: Invalid JSON");
-    }
-
-    #[test]
-    fn test_stream_error() {
-        let err = AiError::Stream("Connection lost".to_string());
-        assert_eq!(err.to_string(), "Stream error: Connection lost");
-    }
-
-    #[test]
-    fn test_invalid_request_error() {
-        let err = AiError::InvalidRequest("Empty messages".to_string());
-        assert_eq!(err.to_string(), "Invalid request: Empty messages");
+        for (error, expected) in test_cases {
+            assert_eq!(error.to_string(), expected, "Failed for {:?}", error);
+        }
     }
 }
