@@ -77,31 +77,31 @@ pub struct SkillInstallResult {
 const SKILL_FILES: &[(&str, &str)] = &[
     (
         "SKILL.md",
-        include_str!("../../../../../.github/skills/leanspec-sdd/SKILL.md"),
+        include_str!("../../../../../skills/leanspec-sdd/SKILL.md"),
     ),
     (
         "references/BEST-PRACTICES.md",
-        include_str!("../../../../../.github/skills/leanspec-sdd/references/BEST-PRACTICES.md"),
+        include_str!("../../../../../skills/leanspec-sdd/references/BEST-PRACTICES.md"),
     ),
     (
         "references/COMMANDS.md",
-        include_str!("../../../../../.github/skills/leanspec-sdd/references/COMMANDS.md"),
+        include_str!("../../../../../skills/leanspec-sdd/references/COMMANDS.md"),
     ),
     (
         "references/EXAMPLES.md",
-        include_str!("../../../../../.github/skills/leanspec-sdd/references/EXAMPLES.md"),
+        include_str!("../../../../../skills/leanspec-sdd/references/EXAMPLES.md"),
     ),
     (
         "references/WORKFLOW.md",
-        include_str!("../../../../../.github/skills/leanspec-sdd/references/WORKFLOW.md"),
+        include_str!("../../../../../skills/leanspec-sdd/references/WORKFLOW.md"),
     ),
     (
         "references/WORKFLOWS.md",
-        include_str!("../../../../../.github/skills/leanspec-sdd/references/WORKFLOWS.md"),
+        include_str!("../../../../../skills/leanspec-sdd/references/WORKFLOWS.md"),
     ),
     (
         "scripts/validate-spec.sh",
-        include_str!("../../../../../.github/skills/leanspec-sdd/scripts/validate-spec.sh"),
+        include_str!("../../../../../skills/leanspec-sdd/scripts/validate-spec.sh"),
     ),
 ];
 
