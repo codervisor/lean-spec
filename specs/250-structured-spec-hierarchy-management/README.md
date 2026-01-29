@@ -75,12 +75,13 @@ depends_on:
 ```bash
 $ lean-spec list --hierarchy
 
-#249 Sessions Sidebar UX (planned)
-  └── Parent: #168 Orchestration Platform
-      └── Umbrella: #221 AI Orchestration Integration
-
-#244 Session UI Enhancement (in-progress)
-  └── Parent: #168 Orchestration Platform
+#221 AI Orchestration Integration (umbrella)
+└── #168 Orchestration Platform (umbrella)
+    ├── #239 Session Management (in-progress)
+    ├── #244 Session UI Enhancement (in-progress)
+    ├── #249 Sessions Sidebar UX (planned)
+    ├── #243 Realtime File Watch (in-progress)
+    └── #160 Tokens/Validation Display (in-progress)
 ```
 
 **2. Show all children of an umbrella:**
