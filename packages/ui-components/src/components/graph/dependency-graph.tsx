@@ -33,6 +33,7 @@ interface SpecNodeData {
   href?: string;
   interactive?: boolean;
   isCurrent?: boolean;
+  specId?: string;
 }
 
 const statusIcons = {
@@ -259,6 +260,7 @@ function buildGraph(
         status: node.status,
         priority: node.priority,
         interactive: true,
+        specId: node.specNumber ? node.specNumber.toString() : node.specName,
       },
       position: { x: 0, y: 0 },
       draggable: false,
@@ -314,6 +316,7 @@ function buildGraph(
         status: node.status,
         priority: node.priority,
         interactive: true,
+        specId: node.specNumber ? node.specNumber.toString() : node.specName,
       },
       position: { x: 0, y: 0 },
       draggable: false,
@@ -422,7 +425,7 @@ function DependencyGraphInner({
   const handleNodeClick = React.useCallback(
     (_: React.MouseEvent, node: Node<SpecNodeData>) => {
       if (!node?.data || !node.data.interactive || !onNodeClick) return;
-      const specId = node.id.split('-').pop();
+      const specId = node.data.specId;
       if (specId) onNodeClick(specId);
     },
     [onNodeClick]
