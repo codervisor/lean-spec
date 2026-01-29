@@ -82,6 +82,36 @@ export function SpecDetailPage() {
   const [sessionCountLoading, setSessionCountLoading] = useState(false);
   const [createSessionOpen, setCreateSessionOpen] = useState(false);
 
+  const [showSidebar, setShowSidebar] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const observerRef = useRef<ResizeObserver | null>(null);
+
+  const mainContentRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      // Initial check
+      setShowSidebar(node.clientWidth >= 1024);
+
+      observerRef.current = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setShowSidebar(entry.contentRect.width >= 1024);
+        }
+      });
+      observerRef.current.observe(node);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
   const describeError = useCallback((err: unknown) => {
     if (err instanceof APIError) {
       switch (err.status) {
@@ -741,7 +771,13 @@ export function SpecDetailPage() {
         </header>
 
         {/* Main content with Sidebar */}
-        <div className={cn("flex flex-col xl:flex-row xl:items-start mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
+        <div
+          ref={mainContentRef}
+          className={cn("flex flex-col mx-auto w-full",
+            showSidebar ? "flex-row items-start" : "",
+            isWideMode ? "max-w-full" : "max-w-7xl"
+          )}
+        >
           <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
             <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
           </main>
@@ -749,7 +785,8 @@ export function SpecDetailPage() {
           {/* Right Sidebar for TOC (Desktop only) */}
           <aside
             className={cn(
-              "hidden xl:block w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide",
+              "w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide",
+              showSidebar ? "block" : "hidden",
               subSpecs.length > 0
                 ? "top-[calc(16.375rem-3.5rem)] h-[calc(100vh-16.375rem)]"
                 : "top-[calc(13.125rem-3.5rem)] h-[calc(100vh-13.125rem)]"
@@ -760,7 +797,7 @@ export function SpecDetailPage() {
         </div>
 
         {/* Floating action buttons (Mobile/Tablet only) */}
-        <div className="xl:hidden">
+        <div className={showSidebar ? "hidden" : "block"}>
           <TableOfContents content={displayContent} />
         </div>
         <BackToTop />
