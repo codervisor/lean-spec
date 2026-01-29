@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
+import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbrella } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -37,6 +37,7 @@ export function SpecsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('id-desc');
+  const [groupByParent, setGroupByParent] = useState(false);
 
   const [searchParams] = useSearchParams();
   const initializedFromQuery = useRef(false);
@@ -227,33 +228,47 @@ export function SpecsPage() {
           title={t('specsPage.title')}
           description={t('specsPage.description')}
           actions={(
-            <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
-              <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "h-8",
-                  viewMode === 'list' && "bg-background shadow-sm"
-                )}
-                title={t('specsPage.views.listTooltip')}
-              >
-                <List className="w-4 h-4 mr-1.5" />
-                {t('specsPage.views.list')}
-              </Button>
-              <Button
-                variant={viewMode === 'board' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('board')}
-                className={cn(
-                  "h-8",
-                  viewMode === 'board' && "bg-background shadow-sm"
-                )}
-                title={t('specsPage.views.boardTooltip')}
-              >
-                <LayoutGrid className="w-4 h-4 mr-1.5" />
-                {t('specsPage.views.board')}
-              </Button>
+            <div className="flex items-center gap-3">
+              {viewMode === 'board' && (
+                  <Button
+                    variant={groupByParent ? "secondary" : "outline"}
+                    size="sm"
+                    className="h-8 gap-1.5"
+                    onClick={() => setGroupByParent(!groupByParent)}
+                    title="Group specs by umbrella/parent"
+                  >
+                     <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
+                     <span className="hidden sm:inline">Group by Parent</span>
+                  </Button>
+              )}
+              <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
+                <Button
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    "h-8",
+                    viewMode === 'list' && "bg-background shadow-sm"
+                  )}
+                  title={t('specsPage.views.listTooltip')}
+                >
+                  <List className="w-4 h-4 mr-1.5" />
+                  {t('specsPage.views.list')}
+                </Button>
+                <Button
+                  variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('board')}
+                  className={cn(
+                    "h-8",
+                    viewMode === 'board' && "bg-background shadow-sm"
+                  )}
+                  title={t('specsPage.views.boardTooltip')}
+                >
+                  <LayoutGrid className="w-4 h-4 mr-1.5" />
+                  {t('specsPage.views.board')}
+                </Button>
+              </div>
             </div>
           )}
         />
@@ -263,6 +278,7 @@ export function SpecsPage() {
             {t('machines.unavailable')}
           </div>
         )}
+
 
         <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
 
@@ -324,6 +340,7 @@ export function SpecsPage() {
             onStatusChange={handleStatusChange}
             canEdit={!machineModeEnabled || isMachineAvailable}
             basePath={basePath}
+            groupByParent={groupByParent}
           />
         )}
       </div>

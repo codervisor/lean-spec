@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -7,6 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  ListTree,
+  AlignJustify
 } from 'lucide-react';
 import {
   Accordion,
@@ -18,6 +20,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  HierarchyTree
 } from '@leanspec/ui-components';
 import {
   List,
@@ -40,6 +43,7 @@ const STORAGE_KEYS = {
   statusFilter: 'specs-nav-sidebar-status-filter',
   priorityFilter: 'specs-nav-sidebar-priority-filter',
   tagFilter: 'specs-nav-sidebar-tag-filter',
+  viewMode: 'specs-nav-sidebar-view-mode',
 };
 
 interface SpecsNavSidebarProps {
@@ -49,6 +53,7 @@ interface SpecsNavSidebarProps {
 
 export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: SpecsNavSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
   const { refreshTrigger } = useSpecs();
@@ -78,6 +83,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(STORAGE_KEYS.collapsed) === 'true';
   });
+  const [viewMode, setViewMode] = useState<'list' | 'tree'>(() => {
+    if (typeof window === 'undefined') return 'list';
+    return (sessionStorage.getItem(STORAGE_KEYS.viewMode) as 'list' | 'tree') || 'list';
+  });
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
   const [initialScrollOffset] = useState<number>(() => {
     if (typeof window === 'undefined') return 0;
@@ -96,6 +105,8 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, [location.pathname]);
 
   const prevActiveSpecId = useRef(activeSpecId);
+  const activeSpec = useMemo(() => specs.find(s => s.specName === activeSpecId), [specs, activeSpecId]);
+  const activeSpecActualId = activeSpec?.id || activeSpecId;
 
   useEffect(() => {
     // Wait for project to be available before loading specs
@@ -132,6 +143,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     );
     localStorage.setItem(STORAGE_KEYS.collapsed, String(collapsed));
   }, [collapsed]);
+  
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.viewMode, viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     mobileOpenRef.current = mobileOpen;
@@ -141,6 +156,12 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     if (!mobileOpenRef.current) return;
     onMobileOpenChange?.(false);
   }, [location.pathname, onMobileOpenChange]);
+
+  const handleSpecClick = useCallback((spec: Spec) => {
+    const path = `${basePath}/specs/${spec.specName}`;
+    navigate(path);
+    if (mobileOpen) onMobileOpenChange?.(false);
+  }, [basePath, navigate, mobileOpen, onMobileOpenChange]);
 
   const filteredSpecs = useMemo(() => {
     let result = specs;
@@ -275,6 +296,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
   // Restore initial scroll position only once on mount
   useEffect(() => {
+    if (viewMode === 'tree') return; // Skip for tree view
     const el = listRef.current?.element;
     if (!el || hasRestoredInitialScroll.current) return;
 
@@ -282,10 +304,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       el.scrollTop = initialScrollOffset;
       hasRestoredInitialScroll.current = true;
     }
-  }, [initialScrollOffset, listHeight, showFilters, filteredSpecs.length]);
+  }, [initialScrollOffset, listHeight, showFilters, filteredSpecs.length, viewMode]);
 
   // Scroll to active spec when it changes or on initial load (if no stored scroll offset)
   useEffect(() => {
+    if (viewMode === 'tree') return; // Skip for tree view
     // Wait until the specs are loaded AND the list is actually rendered.
     if (loading) return;
     if (!activeSpecId || filteredSpecs.length === 0) return;
@@ -308,9 +331,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     // Active spec isn't currently visible (e.g., filtered out). Don't mark initial scroll
     // as handled so we can scroll once it becomes visible again.
     prevActiveSpecId.current = activeSpecId;
-  }, [filteredSpecs, activeSpecId, initialScrollOffset, loading]);
+  }, [filteredSpecs, activeSpecId, initialScrollOffset, loading, viewMode]);
 
   useEffect(() => {
+    if (viewMode === 'tree') return;
     const el = listRef.current?.element;
     if (!el) return;
 
@@ -320,7 +344,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [viewMode]);
 
   const resetFilters = () => {
     setStatusFilter([]);
@@ -371,6 +395,16 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
               <div className="flex items-center gap-1">
+                <Button
+                  variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setViewMode(viewMode === 'list' ? 'tree' : 'list')}
+                  title={viewMode === 'list' ? t('specsNavSidebar.switchToTree') : t('specsNavSidebar.switchToList')}
+                >
+                  {viewMode === 'list' ? <ListTree className="h-4 w-4" /> : <AlignJustify className="h-4 w-4" />}
+                </Button>
+                
                 <Popover open={showFilters} onOpenChange={setShowFilters}>
                   <PopoverTrigger asChild>
                     <Button
@@ -382,6 +416,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                       <Filter className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
+
                   <PopoverContent className="w-80 p-0" align="start" sideOffset={8}>
                     <div className="flex items-center justify-between px-4 py-3 border-b">
                       <span className="font-medium text-sm">{t('specsNavSidebar.filtersLabel')}</span>
@@ -552,6 +587,14 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             ) : filteredSpecs.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 {t('specsNavSidebar.noResults')}
+              </div>
+            ) : viewMode === 'tree' ? (
+              <div className="h-full overflow-y-auto px-2 py-2">
+                 <HierarchyTree 
+                    specs={filteredSpecs as Spec[]} 
+                    onSpecClick={handleSpecClick}
+                    selectedSpecId={activeSpecActualId}
+                 />
               </div>
             ) : (
               <List<Record<string, never>>

@@ -11,7 +11,11 @@ import {
   List as ListIcon,
   ExternalLink,
   Terminal,
-  Plus
+  Plus,
+  CornerDownRight,
+  ChevronRight,
+  Layers,
+  FileText
 } from 'lucide-react';
 import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
@@ -364,6 +368,18 @@ export function SpecDetailPage() {
             ) : (
               /* Normal mode: Full multi-line header */
               <>
+                {/* Breadcrumb Hierarchy */}
+                {spec.parent && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                    <Link to={`${basePath}/specs/${spec.parent}`} className="hover:text-primary hover:underline flex items-center gap-1 group">
+                       <CornerDownRight className="h-3 w-3 group-hover:text-primary" />
+                       <span className="font-medium">{spec.parent}</span>
+                    </Link>
+                    <ChevronRight className="h-3 w-3 opacity-50" />
+                    <span className="truncate opacity-70">{displayTitle}</span>
+                  </div>
+                )}
+
                 {/* Line 1: Spec number + H1 Title */}
                 <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
                   <h1 className="text-lg sm:text-xl font-bold tracking-tight">
@@ -589,6 +605,28 @@ export function SpecDetailPage() {
                     {t('specDetail.buttons.focus')}
                   </Button>
                 </div>
+
+                {/* Children Section */}
+                {spec.children && spec.children.length > 0 && (
+                   <div className="mt-4 pt-4 border-t w-full">
+                       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <Layers className="h-3.5 w-3.5" />
+                          {t('specDetail.children', 'Child Specs')} ({spec.children.length})
+                       </h3>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                          {spec.children.map(childName => (
+                              <Link 
+                                key={childName}
+                                to={`${basePath}/specs/${childName}`}
+                                className="flex items-center gap-2 p-2 rounded-md border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all text-sm group"
+                              >
+                                 <FileText className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                 <span className="truncate flex-1">{childName}</span>
+                              </Link>
+                          ))}
+                       </div>
+                   </div>
+                )}
               </>
             )}
           </div>

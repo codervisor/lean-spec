@@ -38,7 +38,11 @@ export interface Spec {
     dependsOn: string[];
     requiredBy?: string[];
   };
+  parent?: string | null;
+  children?: string[];
+  subSpecsCount?: number;
 }
+
 
 export interface SpecDetail extends Spec {
   contentMd?: string;

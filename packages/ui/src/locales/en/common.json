@@ -264,6 +264,11 @@
     "updatedAt": "Updated",
     "completedAt": "Completed"
   },
+  "specs": {
+    "hierarchy": {
+      "umbrella": "Umbrella Spec"
+    }
+  },
   "settings": {
     "title": "Settings",
     "description": "Manage your preferences and configuration",
@@ -488,7 +493,9 @@
     },
     "badges": {
       "subSpecs": "+{{count}} files"
-    }
+    },
+    "switchToTree": "Switch to Tree",
+    "switchToList": "Switch to List"
   },
   "specsPage": {
     "title": "Specifications",
@@ -587,6 +594,7 @@
       "dependsOn": "Depends on",
       "requiredBy": "Required by"
     },
+    "children": "Child Specs",
     "links": {
       "backToSpecs": "Back to specs",
       "reportIssue": "Report issue"

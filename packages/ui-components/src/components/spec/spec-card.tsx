@@ -2,7 +2,7 @@
  * SpecCard component for displaying a compact spec summary
  */
 
-import { FileText } from 'lucide-react';
+import { FileText, Umbrella, CornerDownRight, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusBadge } from './status-badge';
 import { PriorityBadge } from './priority-badge';
@@ -15,7 +15,7 @@ export interface SpecCardProps {
   /** Spec data to display */
   spec: Pick<
     LightweightSpec,
-    'specNumber' | 'specName' | 'title' | 'status' | 'priority' | 'tags' | 'updatedAt'
+    'specNumber' | 'specName' | 'title' | 'status' | 'priority' | 'tags' | 'updatedAt' | 'parent' | 'children' | 'subSpecsCount'
   >;
   /** Click handler */
   onClick?: () => void;
@@ -44,6 +44,11 @@ export function SpecCard({
   const tags = spec.tags || [];
   const visibleTags = tags.slice(0, maxTags);
   const remainingTagsCount = tags.length - maxTags;
+  
+  // Hierarchy info
+  const hasChildren = (spec.children && spec.children.length > 0) || (spec.subSpecsCount && spec.subSpecsCount > 0);
+  const childrenCount = spec.children?.length || spec.subSpecsCount || 0;
+  const parentName = spec.parent;
 
   return (
     <Card
@@ -65,8 +70,18 @@ export function SpecCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+            {hasChildren ? (
+              <Umbrella className="h-4 w-4 text-primary shrink-0" />
+            ) : (
+              <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+            )}
             <span className="text-sm font-medium text-muted-foreground">{displayNumber}</span>
+            {parentName && (
+              <div className="flex items-center text-xs text-muted-foreground ml-1 max-w-[120px] truncate">
+                <CornerDownRight className="h-3 w-3 mr-0.5" />
+                <span className="truncate" title={`Child of ${parentName}`}>{parentName}</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <StatusBadge status={spec.status} iconOnly />
@@ -91,6 +106,12 @@ export function SpecCard({
           {remainingTagsCount > 0 && (
             <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
               +{remainingTagsCount}
+            </Badge>
+          )}
+          {hasChildren && (
+            <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 ml-auto flex items-center gap-1 border-primary/20 bg-primary/5">
+              <Layers className="h-3 w-3" />
+              <span>{childrenCount}</span>
             </Badge>
           )}
         </div>
