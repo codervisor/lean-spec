@@ -27,11 +27,11 @@ Consolidate duplicate UI utilities so @leanspec/ui uses the shared implementatio
 
 ## Plan
 
-- [ ] Locate usages of packages/ui/src/lib/date-utils.ts, packages/ui/src/lib/utils.ts, and packages/ui/src/hooks/use-local-storage.ts.
-- [ ] Move or re-create these utilities in packages/ui-components with identical APIs.
-- [ ] Update @leanspec/ui imports to point to ui-components equivalents.
-- [ ] Add re-export stubs in @leanspec/ui if external imports rely on old paths.
-- [ ] Delete the old utility files and remove the empty packages/ui/src/lib/__tests__/ directory.
+- [x] Locate usages of packages/ui/src/lib/date-utils.ts, packages/ui/src/lib/utils.ts, and packages/ui/src/hooks/use-local-storage.ts.
+- [x] Move or re-create these utilities in packages/ui-components with identical APIs.
+- [x] Update @leanspec/ui imports to point to ui-components equivalents.
+- [x] Add re-export stubs in @leanspec/ui if external imports rely on old paths.
+- [x] Delete the old utility files and remove the empty packages/ui/src/lib/__tests__/ directory.
 
 ## Test
 

@@ -1,8 +1,7 @@
 import { CheckCircle2, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { Badge } from '@leanspec/ui-components';
+import { cn } from '@leanspec/ui-components';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-import type { ValidationStatus, SpecValidationResponse } from '../types/api';
+import type { ValidationStatus } from '../types/api';
 import { useState, useEffect } from 'react';
 import { getBackend } from '../lib/backend-adapter';
 
@@ -34,14 +33,14 @@ const statusConfig = {
   }
 };
 
-export function ValidationBadge({ 
+export function ValidationBadge({
   status: initialStatus,
   projectId,
   specName,
   errorCount: initialErrorCount,
-  className, 
+  className,
   size = 'sm',
-  onClick 
+  onClick
 }: ValidationBadgeProps) {
   const [status, setStatus] = useState<ValidationStatus | undefined>(initialStatus);
   const [errorCount, setErrorCount] = useState<number | undefined>(initialErrorCount);

@@ -1,8 +1,7 @@
 import { FileText, Loader2 } from 'lucide-react';
 import { tokenStatusClasses, formatCompactTokenCount, formatFullTokenCount, resolveTokenStatus } from '../lib/token-utils';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-import type { SpecTokenResponse } from '../types/api';
 import { useState, useEffect } from 'react';
 import { getBackend } from '../lib/backend-adapter';
 
@@ -16,14 +15,14 @@ interface TokenBadgeProps {
   showIcon?: boolean;
 }
 
-export function TokenBadge({ 
-  count: initialCount, 
+export function TokenBadge({
+  count: initialCount,
   projectId,
   specName,
-  className, 
+  className,
   size = 'sm',
   onClick,
-  showIcon = true 
+  showIcon = true
 }: TokenBadgeProps) {
   const [count, setCount] = useState<number | undefined>(initialCount);
   const [loading, setLoading] = useState(false);
@@ -57,9 +56,9 @@ export function TokenBadge({
   const colorClass = tokenStatusClasses[status];
   const compactCount = formatCompactTokenCount(count);
   const fullCount = formatFullTokenCount(count);
-  
+
   const content = (
-    <div 
+    <div
       className={cn(
         'inline-flex items-center justify-center rounded transition-all duration-200 border border-transparent',
         size === 'sm' ? 'h-5 px-2 text-xs font-medium' : 'h-6 px-3 text-sm font-medium',
