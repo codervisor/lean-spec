@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::specs::frontmatter::{parse_frontmatter, extract_title};
+use crate::specs::frontmatter::{extract_title, parse_frontmatter};
 
 /// A full spec with all content
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -152,7 +152,12 @@ impl SpecReader {
             }
 
             // Check if directory name matches spec pattern (digits followed by dash)
-            if !dir_name.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+            if !dir_name
+                .chars()
+                .next()
+                .map(|c| c.is_ascii_digit())
+                .unwrap_or(false)
+            {
                 continue;
             }
 
@@ -163,7 +168,12 @@ impl SpecReader {
     }
 
     /// Load a single spec from a directory
-    fn load_spec_from_dir(&self, spec_dir: &Path, spec_name: &str, is_archived: bool) -> Option<Spec> {
+    fn load_spec_from_dir(
+        &self,
+        spec_dir: &Path,
+        spec_name: &str,
+        is_archived: bool,
+    ) -> Option<Spec> {
         let readme_path = spec_dir.join("README.md");
         let content = fs::read_to_string(&readme_path).ok()?;
 
@@ -183,11 +193,26 @@ impl SpecReader {
         let title = extract_title(&body);
         let id = format!("fs-{}", spec_name);
 
-        // Build file path
+        // Build file path - legacy support for archived/ folder
         let file_path = if is_archived {
             format!("specs/archived/{}/README.md", spec_name)
         } else {
             format!("specs/{}/README.md", spec_name)
+        };
+
+        // Log deprecation warning for specs in archived/ folder
+        if is_archived {
+            eprintln!(
+                "⚠️  DEPRECATED: Spec '{}' is in archived/ folder. Run 'lean-spec migrate-archived' to migrate.",
+                spec_name
+            );
+        }
+
+        // Override status to archived if in archived/ folder (legacy compat)
+        let status = if is_archived {
+            "archived".to_string()
+        } else {
+            frontmatter.status_or_default().to_string()
         };
 
         // TODO: Implement sub-specs tracking feature
@@ -201,7 +226,7 @@ impl SpecReader {
             spec_number,
             spec_name: spec_name.to_string(),
             title,
-            status: frontmatter.status_or_default().to_string(),
+            status,
             priority: frontmatter.priority.clone(),
             tags: frontmatter.tags.clone(),
             assignee: frontmatter.assignee.clone(),
@@ -210,7 +235,9 @@ impl SpecReader {
             created_at: frontmatter.get_created(),
             updated_at: frontmatter.get_updated(),
             completed_at: frontmatter.completed_at.as_ref().and_then(|s| {
-                chrono::DateTime::parse_from_rfc3339(s).ok().map(|dt| dt.with_timezone(&Utc))
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|dt| dt.with_timezone(&Utc))
             }),
             file_path,
             github_url: None,
@@ -221,7 +248,7 @@ impl SpecReader {
     }
 
     /// Count sub-spec files in a directory
-    /// 
+    ///
     /// Currently unused but may be useful for future sub-spec tracking features.
     #[allow(dead_code)]
     fn count_sub_specs(&self, spec_dir: &Path) -> i32 {
@@ -301,9 +328,15 @@ impl SpecReader {
             .into_iter()
             .filter(|s| {
                 s.spec_name.to_lowercase().contains(&lower_query)
-                    || s.title.as_deref().unwrap_or("").to_lowercase().contains(&lower_query)
+                    || s.title
+                        .as_deref()
+                        .unwrap_or("")
+                        .to_lowercase()
+                        .contains(&lower_query)
                     || s.content_md.to_lowercase().contains(&lower_query)
-                    || s.tags.iter().any(|t| t.to_lowercase().contains(&lower_query))
+                    || s.tags
+                        .iter()
+                        .any(|t| t.to_lowercase().contains(&lower_query))
             })
             .collect()
     }
@@ -388,9 +421,11 @@ mod tests {
         assert_eq!(specs[1].spec_number, Some(2));
         assert_eq!(specs[1].status, "in-progress");
         assert_eq!(specs[1].depends_on, vec!["001-first-spec"]);
-        
+
         // Check required_by is computed correctly
-        assert!(specs[0].required_by.contains(&"002-second-spec".to_string()));
+        assert!(specs[0]
+            .required_by
+            .contains(&"002-second-spec".to_string()));
     }
 
     #[test]
@@ -425,7 +460,11 @@ mod tests {
 
     #[test]
     fn test_dependency_matches() {
-        assert!(dependency_matches("001-first-spec", "001-first-spec", Some(1)));
+        assert!(dependency_matches(
+            "001-first-spec",
+            "001-first-spec",
+            Some(1)
+        ));
         assert!(dependency_matches("001", "001-first-spec", Some(1)));
         assert!(dependency_matches("1", "001-first-spec", Some(1)));
         assert!(!dependency_matches("002", "001-first-spec", Some(1)));

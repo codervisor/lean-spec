@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Status-Only Archiving** ([spec 256](https://web.lean-spec.dev/specs/256)) - Simplified archive workflow
+  - Archiving now only sets `status: archived` in frontmatter (no file move)
+  - Specs stay in `specs/` folder, not moved to `archived/` subfolder
+  - Git history preserved, links never break
+  - **DEPRECATED**: `archived/` folder support - run `lean-spec migrate-archived` to migrate
+  - Legacy `archived/` folder still recognized with deprecation warning
+  - Added `lean-spec migrate-archived` command for migration
+
 ## [0.2.20] - 2026-01-27
 
 ### Added

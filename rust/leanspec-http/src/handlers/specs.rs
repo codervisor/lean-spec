@@ -1627,7 +1627,7 @@ pub async fn update_project_metadata(
         .map(|s| s == "archived")
         .unwrap_or(false);
 
-    // If archiving, use the archiver to move the spec to archived/ folder
+    // If archiving, use the archiver to set status (no file move)
     if is_archiving {
         let archiver = SpecArchiver::new(&project.specs_dir);
         archiver.archive(&spec_id).map_err(|e| {
@@ -1637,9 +1637,8 @@ pub async fn update_project_metadata(
             )
         })?;
 
-        // Reload the spec from its new location
-        let archived_path = format!("archived/{}", spec_id);
-        let updated_spec = loader.load(&archived_path).map_err(|e| {
+        // Reload the spec from the same location (status-only archiving)
+        let updated_spec = loader.load(&spec_id).map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiError::internal_error(&e.to_string())),
@@ -1650,7 +1649,7 @@ pub async fn update_project_metadata(
             .ok_or_else(|| {
                 (
                     StatusCode::NOT_FOUND,
-                    Json(ApiError::spec_not_found(&archived_path)),
+                    Json(ApiError::spec_not_found(&spec_id)),
                 )
             })?
             .frontmatter;

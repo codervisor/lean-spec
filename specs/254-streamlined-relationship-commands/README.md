@@ -181,43 +181,43 @@ lean-spec rel add 254 --parent 250 --depends-on 085
 ## Plan
 
 ### Phase 1: Core Implementation
-- [ ] Create `rel` command with view/add/rm subcommands
-- [ ] Create unified `relationships` MCP tool
-- [ ] Add deprecation warnings to old commands
-- [ ] Update command registry
+- [x] Create `rel` command with view/add/rm subcommands
+- [x] Create unified `relationships` MCP tool
+- [x] Add deprecation warnings to old commands
+- [x] Update command registry
 
 ### Phase 2: Deprecation Setup
-- [ ] Add deprecation util function
-- [ ] Wire deprecation to `link`, `unlink`, `set-parent`, `deps`, `children`
-- [ ] Wire deprecation to MCP tools: `link`, `unlink`, `set_parent`, `deps`, `list_children`, `list_umbrellas`
-- [ ] Log deprecation warnings to stderr (CLI) / response prefix (MCP)
+- [x] Add deprecation util function
+- [x] Wire deprecation to `link`, `unlink`, `set-parent`, `deps`, `children`
+- [x] Wire deprecation to MCP tools: `link`, `unlink`, `set_parent`, `deps`, `list_children`, `list_umbrellas`
+- [x] Log deprecation warnings to stderr (CLI) / response prefix (MCP)
 
 ### Phase 3: Documentation
-- [ ] Create "Spec Relationships" reference doc
-- [ ] Update CLI help with `rel` examples
-- [ ] Update MCP tool descriptions
-- [ ] Update AGENTS.md with new commands
+- [x] Create "Spec Relationships" reference doc
+- [x] Update CLI help with `rel` examples
+- [x] Update MCP tool descriptions
+- [x] Update AGENTS.md with new commands
 
 ### Phase 4: SKILL Update
-- [ ] Update leanspec-sdd SKILL with `rel` command
-- [ ] Replace all references to old commands
-- [ ] Add relationship decision guide
+- [x] Update leanspec-sdd SKILL with `rel` command
+- [x] Replace all references to old commands
+- [x] Add relationship decision guide
 
 ## Test
 
-- [ ] `rel <spec>` shows all relationships
-- [ ] `rel add --parent` sets parent correctly
-- [ ] `rel add --depends-on` adds dependency
-- [ ] `rel add --child` sets parent on target spec
-- [ ] `rel rm --parent` clears parent
-- [ ] `rel rm --depends-on` removes dependency
-- [ ] `rel rm --child` clears parent on target spec
-- [ ] Multiple flags in single command work
-- [ ] MCP `relationships` tool with action=view
-- [ ] MCP `relationships` tool with action=add
-- [ ] MCP `relationships` tool with action=remove
-- [ ] Deprecation warnings appear on old commands
-- [ ] Old commands still function correctly
+- [x] `rel <spec>` shows all relationships
+- [x] `rel add --parent` sets parent correctly
+- [x] `rel add --depends-on` adds dependency
+- [x] `rel add --child` sets parent on target spec
+- [x] `rel rm --parent` clears parent
+- [x] `rel rm --depends-on` removes dependency
+- [x] `rel rm --child` clears parent on target spec
+- [x] Multiple flags in single command work
+- [x] MCP `relationships` tool with action=view
+- [x] MCP `relationships` tool with action=add
+- [x] MCP `relationships` tool with action=remove
+- [x] Deprecation warnings appear on old commands
+- [x] Old commands still function correctly
 
 ## Notes
 

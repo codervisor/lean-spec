@@ -1,7 +1,7 @@
 //! Spec file loading and management
 
 use crate::parsers::FrontmatterParser;
-use crate::types::{LeanSpecConfig, SpecInfo};
+use crate::types::{LeanSpecConfig, SpecInfo, SpecStatus};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 use walkdir::WalkDir;
@@ -160,18 +160,29 @@ impl SpecLoader {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
 
-        // Skip archived specs directory
+        // Skip archived specs directory itself
         if spec_path == "archived" {
             return Ok(None);
         }
 
-        // Check if this spec is inside the archived directory
-        if !allow_archived {
-            if let Some(parent) = spec_dir.parent() {
-                if parent.file_name().map(|n| n == "archived").unwrap_or(false) {
-                    return Ok(None);
-                }
-            }
+        // Check if this spec is inside the archived directory (legacy behavior)
+        let is_in_archived_folder = spec_dir
+            .parent()
+            .and_then(|p| p.file_name())
+            .map(|n| n == "archived")
+            .unwrap_or(false);
+
+        if is_in_archived_folder && !allow_archived {
+            return Ok(None);
+        }
+
+        // Log deprecation warning for archived folder usage
+        if is_in_archived_folder {
+            eprintln!(
+                "⚠️  DEPRECATED: Spec '{}' is in archived/ folder. \
+                 Run 'lean-spec migrate-archived' to migrate to status-based archiving.",
+                spec_path
+            );
         }
 
         // Skip top-level README.md (specs/README.md) - not a spec
@@ -190,7 +201,7 @@ impl SpecLoader {
         }
 
         // Parse frontmatter
-        let (frontmatter, body) = match self.parser.parse(&content) {
+        let (mut frontmatter, body) = match self.parser.parse(&content) {
             Ok(result) => result,
             Err(e) => {
                 return Err(LoadError::ParseError {
@@ -199,6 +210,11 @@ impl SpecLoader {
                 });
             }
         };
+
+        // Override status to archived if spec is in archived/ folder (legacy compat)
+        if is_in_archived_folder {
+            frontmatter.status = SpecStatus::Archived;
+        }
 
         // Extract title from content
         let title = body

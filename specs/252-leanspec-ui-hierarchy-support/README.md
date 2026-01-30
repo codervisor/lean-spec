@@ -78,27 +78,27 @@ Without these foundational components:
 
 ## Plan
 
-- [ ] Create `HierarchyTree` component with tree visualization
-- [ ] Update `SpecCard` to show parent and children indicators
-- [ ] Add umbrella icon indicator for umbrella specs
-- [ ] Update Board view with "group by parent" option
-- [ ] Update Spec detail view with parent/children sections
-- [ ] Add hierarchy breadcrumb navigation
-- [ ] Update GraphQL queries to fetch parent/children data
-- [ ] Add TypeScript types for parent-child relationships
-- [ ] Style updates for visual hierarchy indicators
-- [ ] Implement Specs Nav Sidebar with tree-view mode
+- [x] Create `HierarchyTree` component with tree visualization
+- [x] Update `SpecCard` to show parent and children indicators
+- [x] Add umbrella icon indicator for umbrella specs
+- [x] Update Board view with "group by parent" option
+- [x] Update Spec detail view with parent/children sections
+- [x] Add hierarchy breadcrumb navigation
+- [x] Update GraphQL queries to fetch parent/children data
+- [x] Add TypeScript types for parent-child relationships
+- [x] Style updates for visual hierarchy indicators
+- [x] Implement Specs Nav Sidebar with tree-view mode
 
 ## Test
 
-- [ ] Hierarchy tree renders correctly with nested specs
-- [ ] Spec cards show parent link when applicable
-- [ ] Umbrella specs display umbrella icon
-- [ ] Board grouping by parent works as expected
-- [ ] Spec detail shows parent and children sections
-- [ ] Breadcrumb navigation works across hierarchy levels
-- [ ] Specs nav sidebar tree-view displays hierarchy correctly
-- [ ] Expand/collapse works for umbrella specs in sidebar
+- [x] Hierarchy tree renders correctly with nested specs
+- [x] Spec cards show parent link when applicable
+- [x] Umbrella specs display umbrella icon
+- [x] Board grouping by parent works as expected
+- [x] Spec detail shows parent and children sections
+- [x] Breadcrumb navigation works across hierarchy levels
+- [x] Specs nav sidebar tree-view displays hierarchy correctly
+- [x] Expand/collapse works for umbrella specs in sidebar
 
 ## Notes
 

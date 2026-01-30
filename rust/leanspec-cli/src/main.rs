@@ -65,7 +65,7 @@ enum Commands {
         spec: String,
     },
 
-    /// Move spec(s) to archived/
+    /// Archive spec(s) by setting status to archived
     Archive {
         /// Spec paths or numbers (supports batch operations)
         #[arg(required = true)]
@@ -342,6 +342,13 @@ enum Commands {
         /// Auto-run backfill after migration
         #[arg(long)]
         backfill: bool,
+    },
+
+    /// Migrate specs from archived/ folder to status-based archiving
+    MigrateArchived {
+        /// Preview without making changes
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// Open spec in editor
@@ -744,6 +751,9 @@ fn main() -> ExitCode {
             backfill,
             &cli.output,
         ),
+        Commands::MigrateArchived { dry_run } => {
+            commands::migrate_archived::run(&specs_dir, dry_run)
+        }
         Commands::Open { spec, editor } => commands::open::run(&specs_dir, &spec, editor),
         Commands::Search { query, limit } => {
             commands::search::run(&specs_dir, &query, limit, &cli.output)

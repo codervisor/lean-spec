@@ -141,46 +141,46 @@ interface SpecUpdateRequest {
 ## Plan
 
 ### Phase 1: Component Foundation
-- [ ] Create `SpecSearchPicker` component (searchable spec dropdown)
-- [ ] Create `RelationshipSection` component (renders one relationship type)
-- [ ] Create `RelationshipsEditor` dialog component
-- [ ] Add i18n translations for new UI strings
+- [x] Create `SpecSearchPicker` component (searchable spec dropdown)
+- [x] Create `RelationshipSection` component (renders one relationship type)
+- [x] Create `RelationshipsEditor` dialog component
+- [x] Add i18n translations for new UI strings
 
 ### Phase 2: Hierarchy Editing
-- [ ] Implement parent selection (set/clear)
-- [ ] Implement children display with add/remove (updates child's parent)
-- [ ] Wire to `set_parent` API endpoint
-- [ ] Handle self-reference and cycle detection
+- [x] Implement parent selection (set/clear)
+- [x] Implement children display with add/remove (updates child's parent)
+- [x] Wire to `set_parent` API endpoint
+- [x] Handle self-reference and cycle detection
 
 ### Phase 3: Dependencies Editing  
-- [ ] Implement "Depends On" add/remove
-- [ ] Implement "Required By" display with add
-- [ ] Wire to `link`/`unlink` API endpoints
+- [x] Implement "Depends On" add/remove
+- [x] Implement "Required By" display with add
+- [x] Wire to `link`/`unlink` API endpoints
 
 ### Phase 4: Integration
-- [ ] Replace "View Dependencies" + "View Hierarchy" buttons with "Relationships"
-- [ ] Update MCP `view` tool to output relationships section
-- [ ] Update CLI `view` command similarly
+- [x] Replace "View Dependencies" + "View Hierarchy" buttons with "Relationships"
+- [x] Update MCP `view` tool to output relationships section
+- [x] Update CLI `view` command similarly
 
 ### Phase 5: Polish
-- [ ] Keyboard navigation, loading states, accessibility
+- [x] Keyboard navigation, loading states, accessibility
 
 ## Test
 
 **UI Tests**
-- [ ] "Relationships" button opens unified panel
-- [ ] All 4 relationship types display correctly
-- [ ] Spec search filters by number, name, title
-- [ ] Adding/removing relationships works
-- [ ] Clicking spec chip navigates to spec
+- [x] "Relationships" button opens unified panel
+- [x] All 4 relationship types display correctly
+- [x] Spec search filters by number, name, title
+- [x] Adding/removing relationships works
+- [x] Clicking spec chip navigates to spec
 
 **API Tests**
-- [ ] Setting parent updates frontmatter
-- [ ] Adding/removing deps works
-- [ ] Circular dependency prevented
+- [x] Setting parent updates frontmatter
+- [x] Adding/removing deps works
+- [x] Circular dependency prevented
 
 **MCP/CLI Tests**
-- [ ] `view` output includes Relationships section
+- [x] `view` output includes Relationships section
 
 ## Notes
 
