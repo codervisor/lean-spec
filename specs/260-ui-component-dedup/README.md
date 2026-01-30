@@ -28,11 +28,11 @@ Remove duplicated UI primitives under packages/ui/src/components/ui and standard
 
 ## Plan
 
-- [ ] Inventory duplicated components in packages/ui/src/components/ui and map them to their equivalents in packages/ui-components/src/components/ui.
-- [ ] Update import/export paths in @leanspec/ui to use ui-components versions.
-- [ ] Add or adjust re-exports (if needed) so external imports remain stable.
-- [ ] Remove duplicated component files from packages/ui/src/components/ui once imports are updated.
-- [ ] Verify no remaining references to deleted files.
+- [x] Inventory duplicated components in packages/ui/src/components/ui and map them to their equivalents in packages/ui-components/src/components/ui.
+- [x] Update import/export paths in @leanspec/ui to use ui-components versions.
+- [x] Add or adjust re-exports (if needed) so external imports remain stable.
+- [x] Remove duplicated component files from packages/ui/src/components/ui once imports are updated.
+- [x] Verify no remaining references to deleted files.
 
 ## Test
 
@@ -41,4 +41,4 @@ Remove duplicated UI primitives under packages/ui/src/components/ui and standard
 
 ## Notes
 
-Track any component API differences discovered during mapping and resolve them before deletion.
+No API differences detected; @leanspec/ui already imports from @leanspec/ui-components directly, so the per-component wrappers were removed.

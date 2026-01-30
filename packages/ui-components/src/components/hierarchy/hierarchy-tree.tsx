@@ -24,8 +24,37 @@ interface TreeNodeProps {
   selectedSpecId?: string;
 }
 
-function TreeNode({ node, onSpecClick, selectedSpecId }: TreeNodeProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+function TreeNode({ node, onSpecClick, selectedSpecId, defaultExpandedIds }: TreeNodeProps & { defaultExpandedIds?: Set<string> }) {
+  // Check if this node or any of its descendants matches the selected ID
+  // If so, we must be expanded to show the selection path
+  // However, we only want to force this on initial selection/change, allowing user to toggle later
+
+  // Initialize state based on whether this node is a parent of the selected item
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (defaultExpandedIds && defaultExpandedIds.has(node.id || node.specName)) {
+      return true;
+    }
+    return true; // Default to open
+  });
+
+  // Watch for external selection changes specifically to reveal the active item
+  // If the selected item is a descendant, ensure this folder opens
+  useEffect(() => {
+    if (!selectedSpecId) return;
+
+    // Helper to check if a specific node ID is in the subtree of the current node
+    const isDescendant = (n: HierarchyNode, targetId: string): boolean => {
+      if (!n.childNodes) return false;
+      return n.childNodes.some(child =>
+        (child.id === targetId || child.specName === targetId) || isDescendant(child, targetId)
+      );
+    };
+
+    if (isDescendant(node, selectedSpecId)) {
+      setIsExpanded(true);
+    }
+  }, [selectedSpecId, node]);
+
   const hasChildren = node.childNodes && node.childNodes.length > 0;
 
   const handleToggle = (e: React.MouseEvent) => {
@@ -115,21 +144,24 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className }:
     // Skip if selection hasn't changed and we've already done initial scroll
     if (prevSelectedSpecId.current === selectedSpecId && hasScrolledInitially.current) return;
 
-    // Find the element with the matching data-spec-id
-    const element = containerRef.current.querySelector(`[data-spec-id="${selectedSpecId}"]`);
-    if (element) {
-      // Use requestAnimationFrame to defer scroll (align with list-view behavior)
-      const raf = requestAnimationFrame(() => {
-        // Use 'nearest' (equivalent to list-view's 'smart') - only scrolls if element is out of view
+    // Use setTimeout to ensure DOM is ready and layout is stable
+    // requestAnimationFrame can sometimes fire before styles/layout are fully settled
+    const timeoutId = setTimeout(() => {
+      if (!containerRef.current) return;
+
+      // Use CSS.escape if available to handle special characters in IDs
+      const safeId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(selectedSpecId) : selectedSpecId;
+
+      const element = containerRef.current.querySelector(`[data-spec-id="${safeId}"]`);
+      if (element) {
         element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      });
-      hasScrolledInitially.current = true;
-      prevSelectedSpecId.current = selectedSpecId;
-      return () => cancelAnimationFrame(raf);
-    }
+        hasScrolledInitially.current = true;
+      }
+    }, 100);
 
     prevSelectedSpecId.current = selectedSpecId;
-  }, [selectedSpecId, specs.length]); // Also run when specs change (initial load)
+    return () => clearTimeout(timeoutId);
+  }, [selectedSpecId, specs]); // Also run when specs change (initial load)
 
   if (!specs || specs.length === 0) {
     return (
@@ -138,6 +170,8 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className }:
       </div>
     );
   }
+  // no-op since state is handled internally in TreeNode now
+  const defaultExpandedIds = useMemo(() => new Set<string>(), []);
 
   return (
     <div ref={containerRef} className={cn("flex flex-col gap-0.5", className)}>
@@ -147,6 +181,7 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className }:
           node={node}
           onSpecClick={onSpecClick}
           selectedSpecId={selectedSpecId}
+          defaultExpandedIds={defaultExpandedIds}
         />
       ))}
     </div>

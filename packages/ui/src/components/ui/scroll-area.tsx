@@ -1,1 +1,0 @@
-export { ScrollArea, ScrollBar } from "@leanspec/ui-components"

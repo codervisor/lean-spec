@@ -1,1 +1,0 @@
-export { Separator } from "@leanspec/ui-components"

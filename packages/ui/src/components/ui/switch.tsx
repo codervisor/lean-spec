@@ -1,1 +1,0 @@
-export { Switch } from "@leanspec/ui-components"

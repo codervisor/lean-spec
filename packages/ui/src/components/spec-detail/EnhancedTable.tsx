@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClipboardIcon, DownloadIcon, CheckIcon } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button } from '@leanspec/ui-components';
 
 // Helper to extract text from React nodes recursively
 export function extractTextFromNode(node: React.ReactNode): string {

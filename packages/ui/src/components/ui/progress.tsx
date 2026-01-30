@@ -1,1 +1,0 @@
-export { Progress } from "@leanspec/ui-components"
