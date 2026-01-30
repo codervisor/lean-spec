@@ -80,6 +80,24 @@ Use MCP tools when available. Use CLI as fallback.
 - Always check dependencies and link specs that block each other.
 - Document trade-offs and decisions as they happen.
 
+## Choosing Relationship Type
+
+**Parent/Child** = Decomposition (organizational)
+- "This spec is a piece of that umbrella's scope"
+- Spec doesn't make sense without the parent context
+- Parent completes when all children complete
+
+**Depends On** = Blocking (technical)
+- "This spec needs that spec done first"
+- Specs are independent work items
+- Could be completely unrelated areas
+
+**Rule**: Never use both parent AND depends_on for the same spec pair.
+
+**Test**: If the other spec didn't exist, would your spec still make sense?
+- NO → Use parent (it's part of that scope)
+- YES → Use depends_on (it's just a blocker)
+
 See detailed guidance in:
 - [references/WORKFLOW.md](./references/WORKFLOW.md)
 - [references/BEST-PRACTICES.md](./references/BEST-PRACTICES.md)

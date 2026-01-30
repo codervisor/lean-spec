@@ -1,6 +1,6 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import { MachineProvider, ProjectProvider, ThemeProvider, KeyboardShortcutsProvider, SpecsProvider, ChatProvider } from './contexts';
+import { MachineProvider, ProjectProvider, ThemeProvider, KeyboardShortcutsProvider, SpecsProvider, ChatProvider, SessionsProvider } from './contexts';
 
 function App() {
   return (
@@ -10,7 +10,9 @@ function App() {
           <SpecsProvider>
             <KeyboardShortcutsProvider>
               <ChatProvider>
-                <RouterProvider router={router} />
+                <SessionsProvider>
+                  <RouterProvider router={router} />
+                </SessionsProvider>
               </ChatProvider>
             </KeyboardShortcutsProvider>
           </SpecsProvider>

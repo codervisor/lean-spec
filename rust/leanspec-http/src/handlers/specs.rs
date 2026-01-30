@@ -9,10 +9,10 @@ use std::fs;
 use std::path::Path as FsPath;
 
 use leanspec_core::{
-    DependencyGraph, FrontmatterParser, FrontmatterValidator, LeanSpecConfig, LineCountValidator,
-    MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions, SpecLoader, SpecStats,
-    SpecStatus, SpecWriter, StructureValidator, TemplateLoader, TokenCounter, TokenStatus,
-    ValidationResult,
+    CompletionVerifier, DependencyGraph, FrontmatterParser, FrontmatterValidator, LeanSpecConfig,
+    LineCountValidator, MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions,
+    SpecLoader, SpecStats, SpecStatus, SpecWriter, StructureValidator, TemplateLoader,
+    TokenCounter, TokenStatus, ValidationResult,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -1685,7 +1685,7 @@ pub async fn update_project_metadata(
     }
 
     if let Some(status_str) = &updates.status {
-        let status = status_str.parse().map_err(|_| {
+        let status: SpecStatus = status_str.parse().map_err(|_| {
             (
                 StatusCode::BAD_REQUEST,
                 Json(ApiError::invalid_request(&format!(
@@ -1694,6 +1694,37 @@ pub async fn update_project_metadata(
                 ))),
             )
         })?;
+
+        // Check umbrella completion when marking as complete
+        if status == SpecStatus::Complete && !updates.force.unwrap_or(false) {
+            let all_specs = loader.load_all().map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError::internal_error(&e.to_string())),
+                )
+            })?;
+
+            let umbrella_verification =
+                CompletionVerifier::verify_umbrella_completion(&spec_id, &all_specs);
+
+            if !umbrella_verification.is_complete {
+                let incomplete_paths: Vec<_> = umbrella_verification
+                    .incomplete_children
+                    .iter()
+                    .map(|c| format!("{} ({})", c.path, c.status))
+                    .collect();
+
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiError::invalid_request(&format!(
+                        "Cannot mark umbrella spec complete: {} child spec(s) are not complete: {}",
+                        umbrella_verification.incomplete_children.len(),
+                        incomplete_paths.join(", ")
+                    ))),
+                ));
+            }
+        }
+
         core_updates = core_updates.with_status(status);
     }
 

@@ -1,19 +1,8 @@
 name: Desktop Build
 
+# DISABLED: Desktop build not ready yet - only manual dispatch allowed
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'packages/desktop/**'
-      - 'packages/ui/**'
-      - '.github/workflows/desktop-build.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'packages/desktop/**'
-      - 'packages/ui/**'
-      - '.github/workflows/desktop-build.yml'
 
 jobs:
   build:

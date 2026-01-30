@@ -7,12 +7,13 @@ use crate::chat_store::ChatStore;
 use crate::config::{config_dir, ServerConfig};
 use crate::error::ServerError;
 use crate::project_registry::ProjectRegistry;
+use crate::watcher::{sse_connection_limit, watch_debounce, watch_enabled, FileWatcher};
 use crate::sessions::{SessionDatabase, SessionManager};
 use crate::sync_state::SyncState;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Semaphore};
 
 /// Shared application state
 #[derive(Clone)]
@@ -34,6 +35,12 @@ pub struct AppState {
 
     /// Session manager for AI coding sessions
     pub session_manager: Arc<SessionManager>,
+
+    /// File watcher for spec changes
+    pub file_watcher: Option<Arc<FileWatcher>>,
+
+    /// SSE connection limiter
+    pub sse_connections: Arc<Semaphore>,
 }
 
 impl AppState {
@@ -61,6 +68,25 @@ impl AppState {
         let session_db = SessionDatabase::new(sessions_dir.join("sessions.db"))?;
         let session_manager = Arc::new(SessionManager::new(session_db));
 
+        let file_watcher = if watch_enabled() {
+            let roots: Vec<_> = registry.all().iter().map(|p| p.specs_dir.clone()).collect();
+            if roots.is_empty() {
+                None
+            } else {
+                match FileWatcher::new(roots, watch_debounce()) {
+                    Ok(watcher) => Some(Arc::new(watcher)),
+                    Err(err) => {
+                        tracing::warn!("Failed to initialize spec watcher: {}", err);
+                        None
+                    }
+                }
+            }
+        } else {
+            None
+        };
+
+        let sse_connections = Arc::new(Semaphore::new(sse_connection_limit()));
+
         Ok(Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
@@ -68,6 +94,8 @@ impl AppState {
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
             session_manager,
+            file_watcher,
+            sse_connections,
         })
     }
 
@@ -78,6 +106,13 @@ impl AppState {
         let session_db = SessionDatabase::new_in_memory()
             .expect("Failed to initialize in-memory session database");
         let session_manager = Arc::new(SessionManager::new(session_db));
+        let file_watcher = if watch_enabled() {
+            let roots: Vec<_> = registry.all().iter().map(|p| p.specs_dir.clone()).collect();
+            FileWatcher::new(roots, watch_debounce()).ok().map(Arc::new)
+        } else {
+            None
+        };
+        let sse_connections = Arc::new(Semaphore::new(sse_connection_limit()));
         Self {
             config: Arc::new(config),
             registry: Arc::new(RwLock::new(registry)),
@@ -85,6 +120,8 @@ impl AppState {
             chat_store: Arc::new(chat_store),
             chat_config: Arc::new(RwLock::new(chat_config)),
             session_manager,
+            file_watcher,
+            sse_connections,
         }
     }
 }

@@ -9,3 +9,4 @@ export {
   useKeyboardShortcuts,
 } from './KeyboardShortcutsContext';
 export { ChatProvider, useChat } from './ChatContext';
+export { SessionsProvider, useSessions } from './SessionsContext';

@@ -5,6 +5,7 @@ import { Navigation } from './Navigation';
 import { MainSidebar } from './MainSidebar';
 import { MachineSwitcher } from './MachineSwitcher';
 import { ChatSidebar } from './chat/ChatSidebar';
+import { SessionsDrawer } from './sessions/SessionsDrawer';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useMediaQuery } from '../hooks/use-media-query';
 import { ErrorBoundary } from './shared/ErrorBoundary';
@@ -75,6 +76,7 @@ function LayoutContent({
       </div>
       <BackToTop />
       <ChatSidebar />
+      <SessionsDrawer />
     </div>
   );
 }

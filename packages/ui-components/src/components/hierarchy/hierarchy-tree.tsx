@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '../spec/status-badge';
 import { PriorityBadge } from '../spec/priority-badge';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import type { LightweightSpec } from '@/types/specs';
 
 interface HierarchyNode extends LightweightSpec {
@@ -62,7 +63,7 @@ function TreeNode({ node, onSpecClick, selectedSpecId }: TreeNodeProps) {
           onClick={hasChildren ? handleToggle : undefined}
         >
           {hasChildren && (
-            isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
+            <ChevronRight className={cn("h-3 w-3 transition-transform duration-200", isExpanded && "rotate-90")} />
           )}
         </div>
 
@@ -77,17 +78,21 @@ function TreeNode({ node, onSpecClick, selectedSpecId }: TreeNodeProps) {
         </div>
       </div>
 
-      {hasChildren && isExpanded && (
-        <div className="ml-2 pl-2 border-l border-border/50 flex flex-col gap-0.5 mt-0.5">
-          {node.childNodes.map(child => (
-            <TreeNode
-              key={child.id || child.specName}
-              node={child}
-              onSpecClick={onSpecClick}
-              selectedSpecId={selectedSpecId}
-            />
-          ))}
-        </div>
+      {hasChildren && (
+        <Collapsible open={isExpanded}>
+          <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+            <div className="ml-2 pl-2 border-l border-border/50 flex flex-col gap-0.5 mt-0.5">
+              {node.childNodes.map(child => (
+                <TreeNode
+                  key={child.id || child.specName}
+                  node={child}
+                  onSpecClick={onSpecClick}
+                  selectedSpecId={selectedSpecId}
+                />
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );

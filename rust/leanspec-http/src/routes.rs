@@ -140,6 +140,8 @@ pub fn create_router(state: AppState) -> Router {
             "/api/projects/{id}/specs/{spec}/metadata",
             patch(handlers::update_project_metadata),
         )
+        // Spec events (SSE)
+        .route("/api/events/specs", get(handlers::spec_events))
         // Cloud sync routes
         .route("/api/sync/machines", get(handlers::list_machines))
         .route("/api/sync/machines/{id}", patch(handlers::rename_machine))

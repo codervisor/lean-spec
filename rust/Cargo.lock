@@ -1708,6 +1708,7 @@ dependencies = [
 name = "leanspec-http"
 version = "0.2.21"
 dependencies = [
+ "async-stream",
  "axum",
  "bytes",
  "chrono",
@@ -1715,6 +1716,7 @@ dependencies = [
  "dirs",
  "futures-util",
  "leanspec-core",
+ "notify",
  "reqwest 0.12.26",
  "serde",
  "serde_json",

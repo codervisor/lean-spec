@@ -94,6 +94,60 @@ pub enum VerificationError {
     IoError(String),
 }
 
+/// Summary of an incomplete child spec
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IncompleteChildSpec {
+    /// Path of the child spec
+    pub path: String,
+    /// Title of the child spec
+    pub title: String,
+    /// Current status of the child spec
+    pub status: String,
+}
+
+/// Result of umbrella completion verification
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UmbrellaVerificationResult {
+    /// Whether the umbrella spec can be marked as complete
+    pub is_complete: bool,
+    /// List of incomplete child specs
+    pub incomplete_children: Vec<IncompleteChildSpec>,
+    /// Progress metrics for children
+    pub progress: Progress,
+    /// Actionable suggestions for the agent
+    pub suggestions: Vec<String>,
+}
+
+impl UmbrellaVerificationResult {
+    /// Create a result indicating successful completion (all children complete)
+    pub fn success() -> Self {
+        Self {
+            is_complete: true,
+            incomplete_children: Vec::new(),
+            progress: Progress {
+                completed: 0,
+                total: 0,
+                percentage: 100.0,
+            },
+            suggestions: Vec::new(),
+        }
+    }
+
+    /// Create a result indicating the spec has no children (not an umbrella)
+    pub fn not_umbrella() -> Self {
+        Self {
+            is_complete: true,
+            incomplete_children: Vec::new(),
+            progress: Progress {
+                completed: 0,
+                total: 0,
+                percentage: 100.0,
+            },
+            suggestions: Vec::new(),
+        }
+    }
+}
+
 impl std::fmt::Display for VerificationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

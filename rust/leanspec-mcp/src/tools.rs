@@ -4,8 +4,9 @@ use crate::protocol::ToolDefinition;
 use chrono::Utc;
 use leanspec_core::parsers::ParseError;
 use leanspec_core::{
-    DependencyGraph, FrontmatterParser, LeanSpecConfig, SpecFrontmatter, SpecLoader, SpecPriority,
-    SpecStats, SpecStatus, TemplateLoader, TokenCounter,
+    validate_dependency_addition, validate_parent_assignment, DependencyGraph, FrontmatterParser,
+    LeanSpecConfig, SpecFrontmatter, SpecLoader, SpecPriority, SpecStats, SpecStatus,
+    TemplateLoader, TokenCounter,
 };
 use serde_json::{json, Value};
 use std::cell::RefCell;
@@ -604,6 +605,7 @@ fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
                 .parent()
                 .ok_or("Invalid spec path")?;
 
+            // Check checklist items
             let verification = leanspec_core::CompletionVerifier::verify_completion(spec_dir)
                 .map_err(|e| e.to_string())?;
 
@@ -627,6 +629,37 @@ fn tool_update(specs_dir: &str, args: Value) -> Result<String, String> {
                         "outstanding": outstanding,
                         "progress": verification.progress.to_string(),
                         "suggestions": verification.suggestions
+                    }
+                })).map_err(|e| e.to_string())?);
+            }
+
+            // Check umbrella spec children
+            let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+            let umbrella_verification =
+                leanspec_core::CompletionVerifier::verify_umbrella_completion(
+                    &spec.path, &all_specs,
+                );
+
+            if !umbrella_verification.is_complete {
+                let incomplete_children: Vec<_> = umbrella_verification
+                    .incomplete_children
+                    .iter()
+                    .map(|child| {
+                        json!({
+                            "path": child.path,
+                            "title": child.title,
+                            "status": child.status
+                        })
+                    })
+                    .collect();
+
+                return Err(serde_json::to_string_pretty(&json!({
+                    "error": "INCOMPLETE_CHILDREN",
+                    "message": format!("Cannot mark umbrella spec complete: {} child spec(s) are not complete", umbrella_verification.incomplete_children.len()),
+                    "details": {
+                        "incomplete_children": incomplete_children,
+                        "progress": umbrella_verification.progress.to_string(),
+                        "suggestions": umbrella_verification.suggestions
                     }
                 })).map_err(|e| e.to_string())?);
             }
@@ -837,9 +870,14 @@ fn tool_link(specs_dir: &str, args: Value) -> Result<String, String> {
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Target spec not found: {}", depends_on))?;
 
+    let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+
     if spec.frontmatter.depends_on.contains(&target.path) {
         return Ok(format!("{} already depends on {}", spec.path, target.path));
     }
+
+    validate_dependency_addition(&spec.path, &target.path, &all_specs)
+        .map_err(|e| e.to_string())?;
 
     let content = std::fs::read_to_string(&spec.file_path).map_err(|e| e.to_string())?;
 
@@ -940,14 +978,14 @@ fn tool_set_parent(specs_dir: &str, args: Value) -> Result<String, String> {
         .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
 
     if let Some(parent_path) = parent {
-        if parent_path == spec.path {
-            return Err("Spec cannot be its own parent".to_string());
-        }
-
         let parent_spec = loader
             .load(parent_path)
             .map_err(|e| e.to_string())?
             .ok_or_else(|| format!("Parent spec not found: {}", parent_path))?;
+
+        let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+        validate_parent_assignment(&spec.path, &parent_spec.path, &all_specs)
+            .map_err(|e| e.to_string())?;
 
         let mut updates: std::collections::HashMap<String, serde_yaml::Value> =
             std::collections::HashMap::new();

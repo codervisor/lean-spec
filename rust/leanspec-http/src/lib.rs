@@ -36,6 +36,7 @@ pub mod state;
 pub mod sync_state;
 pub mod types;
 pub mod utils;
+pub mod watcher;
 
 pub use config::{load_config, load_config_from_path, ServerConfig};
 pub use error::ServerError;

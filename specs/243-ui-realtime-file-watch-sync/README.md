@@ -14,7 +14,7 @@ depends_on:
 - 184-ui-packages-consolidation
 parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-28T08:03:59.019975Z
-updated_at: 2026-01-28T09:48:12.168602Z
+updated_at: 2026-01-30T03:35:31.011489Z
 ---
 
 # UI Realtime File Watch & Sync

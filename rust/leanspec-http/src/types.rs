@@ -485,6 +485,9 @@ pub struct MetadataUpdate {
     pub remove_depends_on: Option<Vec<String>>,
     pub parent: Option<Option<String>>,
     pub expected_content_hash: Option<String>,
+    /// Skip completion verification when setting status to complete
+    #[serde(default)]
+    pub force: Option<bool>,
 }
 
 /// Metadata update response

@@ -182,6 +182,14 @@ enum Commands {
     Examples,
 
     /// Manage spec relationships (hierarchy and dependencies)
+    ///
+    /// Use parent/child for hierarchy and depends-on for blockers.
+    /// Never use both for the same spec pair.
+    ///
+    /// Examples:
+    ///   lean-spec rel add 257 --parent 250
+    ///   lean-spec rel add 257 --depends-on 254
+    ///   lean-spec rel rm 257 --depends-on 254
     Rel {
         /// Arguments: <spec> or <action> <spec>
         #[arg(trailing_var_arg = true, required = true)]

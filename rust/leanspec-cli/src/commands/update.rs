@@ -98,6 +98,45 @@ pub fn run(
                     ));
                     continue;
                 }
+
+                // Check umbrella spec children
+                let all_specs = loader.load_all()?;
+                let umbrella_verification =
+                    CompletionVerifier::verify_umbrella_completion(&spec_info.path, &all_specs);
+
+                if !umbrella_verification.is_complete {
+                    println!(
+                        "\n{} Umbrella spec has {} incomplete child spec(s):\n",
+                        "⚠️".yellow(),
+                        umbrella_verification.incomplete_children.len()
+                    );
+
+                    for child in &umbrella_verification.incomplete_children {
+                        println!(
+                            "  {} {} ({})",
+                            "•".dimmed(),
+                            child.path,
+                            child.status.yellow()
+                        );
+                    }
+
+                    println!();
+                    println!(
+                        "  {}: {}",
+                        "Progress".dimmed(),
+                        umbrella_verification.progress.to_string().dimmed()
+                    );
+                    println!();
+                    println!("{}", "Suggestions:".cyan());
+                    for suggestion in &umbrella_verification.suggestions {
+                        println!("  • {}", suggestion);
+                    }
+                    println!();
+                    println!("Use {} to mark complete anyway.", "--force".yellow());
+
+                    errors.push(format!("{} has incomplete child specs", spec_info.path));
+                    continue;
+                }
             }
         }
 

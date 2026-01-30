@@ -19,7 +19,16 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom';
-import { ThemeProvider, KeyboardShortcutsProvider, ProjectProvider, useProject } from '@leanspec/ui/src/contexts';
+import {
+  ThemeProvider,
+  KeyboardShortcutsProvider,
+  ProjectProvider,
+  MachineProvider,
+  SpecsProvider,
+  ChatProvider,
+  SessionsProvider,
+  useProject,
+} from '@leanspec/ui/src/contexts';
 import { Layout } from '@leanspec/ui/src/components/Layout';
 import { Navigation } from '@leanspec/ui/src/components/Navigation';
 import { ProjectsPage } from '@leanspec/ui/src/pages/ProjectsPage';
@@ -241,11 +250,19 @@ const router = createHashRouter([
 const App = () => {
   return (
     <ThemeProvider>
-      <ProjectProvider>
-        <KeyboardShortcutsProvider>
-          <RouterProvider router={router} />
-        </KeyboardShortcutsProvider>
-      </ProjectProvider>
+      <MachineProvider>
+        <ProjectProvider>
+          <SpecsProvider>
+            <KeyboardShortcutsProvider>
+              <ChatProvider>
+                <SessionsProvider>
+                  <RouterProvider router={router} />
+                </SessionsProvider>
+              </ChatProvider>
+            </KeyboardShortcutsProvider>
+          </SpecsProvider>
+        </ProjectProvider>
+      </MachineProvider>
     </ThemeProvider>
   );
 };

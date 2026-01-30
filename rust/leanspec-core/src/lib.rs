@@ -30,6 +30,7 @@
 
 pub mod error;
 pub mod parsers;
+pub mod relationships;
 pub mod types;
 pub mod utils;
 pub mod validators;
@@ -52,10 +53,13 @@ pub mod ai_native;
 // Re-exports for convenience
 pub use error::{CoreError, CoreResult};
 pub use parsers::FrontmatterParser;
+pub use relationships::{
+    validate_dependency_addition, validate_parent_assignment, RelationshipError,
+};
 pub use types::{
-    CheckboxItem, CompletionVerificationResult, IssueSeverity, LeanSpecConfig, Progress,
-    SpecFilterOptions, SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus, StatusTransition,
-    ValidationIssue, ValidationResult,
+    CheckboxItem, CompletionVerificationResult, IncompleteChildSpec, IssueSeverity, LeanSpecConfig,
+    Progress, SpecFilterOptions, SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus,
+    StatusTransition, UmbrellaVerificationResult, ValidationIssue, ValidationResult,
 };
 pub use utils::{
     ArchiveError, CompleteDependencyGraph, DependencyGraph, DiscoveredProject, DiscoveryError,

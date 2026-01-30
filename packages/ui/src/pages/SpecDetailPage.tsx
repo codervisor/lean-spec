@@ -9,7 +9,6 @@ import {
   Minimize2,
   List as ListIcon,
   Terminal,
-  Plus,
   CornerDownRight,
   ChevronRight,
   Link2
@@ -37,14 +36,13 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
-import { useProject, useLayout, useMachine } from '../contexts';
+import { useProject, useLayout, useMachine, useSessions } from '../contexts';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatRelativeTime } from '../lib/date-utils';
 import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
-import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
 import { RelationshipsEditor } from '../components/relationships/RelationshipsEditor';
 
 // Sub-spec with frontend-assigned styling
@@ -73,9 +71,7 @@ export function SpecDetailPage() {
   const [relationshipsDialogOpen, setRelationshipsDialogOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const { setMobileOpen } = useSpecDetailLayoutContext();
-  const [sessionCount, setSessionCount] = useState<number | null>(null);
-  const [sessionCountLoading, setSessionCountLoading] = useState(false);
-  const [createSessionOpen, setCreateSessionOpen] = useState(false);
+  const { openDrawer, sessions } = useSessions();
 
   const [showSidebar, setShowSidebar] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   const observerRef = useRef<ResizeObserver | null>(null);
@@ -147,22 +143,15 @@ export function SpecDetailPage() {
   }, [loadSpec, projectReady]);
 
 
-  const loadSessionCount = useCallback(async () => {
-    if (!spec?.specName) return;
-    setSessionCountLoading(true);
-    try {
-      const data = await api.listSessions({ specId: spec.specName });
-      setSessionCount(data.length);
-    } catch {
-      setSessionCount(null);
-    } finally {
-      setSessionCountLoading(false);
-    }
-  }, [spec?.specName]);
+  const activeSessionsCount = useMemo(() => {
+    if (!spec?.specName) return 0;
+    return sessions.filter(s => s.specId === spec.specName && (s.status === 'running' || s.status === 'pending')).length;
+  }, [sessions, spec?.specName]);
 
-  useEffect(() => {
-    void loadSessionCount();
-  }, [loadSessionCount]);
+  const totalSessionsCount = useMemo(() => {
+    if (!spec?.specName) return 0;
+    return sessions.filter(s => s.specId === spec.specName).length;
+  }, [sessions, spec?.specName]);
 
   const subSpecs: EnrichedSubSpec[] = useMemo(() => {
     const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);
@@ -475,32 +464,21 @@ export function SpecDetailPage() {
                     {t('relationships.button')}
                   </Button>
 
-                  <Link to={`${basePath}/sessions?spec=${encodeURIComponent(spec.specName)}`} className="inline-flex">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Terminal className="mr-1.5 h-3.5 w-3.5" />
-                      {t('sessions.actions.view')}
-                      <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
-                        {sessionCountLoading ? '…' : sessionCount ?? 0}
-                      </span>
-                    </Button>
-                  </Link>
-
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setCreateSessionOpen(true)}
-                    disabled={!currentProject?.path}
+                    onClick={() => openDrawer(spec.specName)}
                     className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    title={!currentProject?.path ? t('sessions.errors.noProjectPath') : undefined}
                   >
-                    <Plus className="mr-1.5 h-3.5 w-3.5" />
-                    {t('sessions.actions.new')}
+                    <Terminal className="mr-1.5 h-3.5 w-3.5" />
+                    {t('sessionsDrawer.title', 'Sessions')}
+                    <span className={cn(
+                      "ml-2 rounded-full px-2 py-0.5 text-[10px]",
+                      activeSessionsCount > 0 ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+                    )}>
+                      {activeSessionsCount > 0 ? `● ${activeSessionsCount}` : totalSessionsCount}
+                    </span>
                   </Button>
 
 
@@ -593,15 +571,6 @@ export function SpecDetailPage() {
         </div>
         <BackToTop />
       </div>
-      {spec && (
-        <SessionCreateDialog
-          open={createSessionOpen}
-          onOpenChange={setCreateSessionOpen}
-          projectPath={currentProject?.path}
-          defaultSpecId={spec.specName}
-          onCreated={() => void loadSessionCount()}
-        />
-      )}
       {spec && (
         <RelationshipsEditor
           spec={spec}

@@ -1,7 +1,10 @@
 //! Unified relationships command
 
 use colored::Colorize;
-use leanspec_core::{DependencyGraph, FrontmatterParser, SpecLoader};
+use leanspec_core::{
+    validate_dependency_addition, validate_parent_assignment, DependencyGraph, FrontmatterParser,
+    SpecLoader,
+};
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -162,6 +165,8 @@ fn update_relationships(
         .load(spec)?
         .ok_or_else(|| format!("Spec not found: {}", spec))?;
 
+    let mut working_specs = loader.load_all()?;
+
     let mut updates: HashMap<String, serde_yaml::Value> = HashMap::new();
     let mut depends_on = spec_info.frontmatter.depends_on.clone();
 
@@ -170,22 +175,23 @@ fn update_relationships(
             if parent.is_empty() {
                 return Err("Parent spec is required for add".into());
             }
-            if parent == spec_info.path {
-                return Err("Spec cannot be its own parent".into());
-            }
+            validate_parent_assignment(&spec_info.path, &parent, &working_specs)
+                .map_err(|e| e.to_string())?;
+            let parent_value = parent.clone();
             updates.insert("parent".to_string(), serde_yaml::Value::String(parent));
+            set_parent_in_specs(&mut working_specs, &spec_info.path, Some(parent_value));
         } else {
             updates.insert("parent".to_string(), serde_yaml::Value::Null);
+            set_parent_in_specs(&mut working_specs, &spec_info.path, None);
         }
     }
 
     if !rel_args.depends_on.is_empty() {
         if is_add {
             for dep in rel_args.depends_on {
-                if dep == spec_info.path {
-                    return Err("Spec cannot depend on itself".into());
-                }
                 if !depends_on.contains(&dep) {
+                    validate_dependency_addition(&spec_info.path, &dep, &working_specs)
+                        .map_err(|e| e.to_string())?;
                     depends_on.push(dep);
                 }
             }
@@ -210,9 +216,17 @@ fn update_relationships(
                 .load(child)?
                 .ok_or_else(|| format!("Child spec not found: {}", child))?;
             if is_add {
+                validate_parent_assignment(&child_info.path, &spec_info.path, &working_specs)
+                    .map_err(|e| e.to_string())?;
                 set_parent_for(specs_dir, &child_info.path, Some(spec_info.path.clone()))?;
+                set_parent_in_specs(
+                    &mut working_specs,
+                    &child_info.path,
+                    Some(spec_info.path.clone()),
+                );
             } else {
                 set_parent_for(specs_dir, &child_info.path, None)?;
+                set_parent_in_specs(&mut working_specs, &child_info.path, None);
             }
             updated_children = true;
         }
@@ -259,4 +273,10 @@ fn set_parent_for(
     let new_content = parser.update_frontmatter(&content, &updates)?;
     std::fs::write(&spec_info.file_path, &new_content)?;
     Ok(())
+}
+
+fn set_parent_in_specs(specs: &mut [leanspec_core::SpecInfo], spec: &str, parent: Option<String>) {
+    if let Some(target) = specs.iter_mut().find(|s| s.path == spec) {
+        target.frontmatter.parent = parent;
+    }
 }

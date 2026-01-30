@@ -1,9 +1,12 @@
 //! Completion verification for specs
 //!
 //! Validates that a spec can be marked as complete by checking for unchecked
-//! checkbox items in the spec content.
+//! checkbox items in the spec content and verifying child specs are complete.
 
-use crate::types::{CheckboxItem, CompletionVerificationResult, Progress};
+use crate::types::{
+    CheckboxItem, CompletionVerificationResult, IncompleteChildSpec, Progress, SpecInfo,
+    SpecStatus, UmbrellaVerificationResult,
+};
 use regex::Regex;
 use std::path::Path;
 
@@ -109,6 +112,88 @@ impl CompletionVerifier {
         }
 
         suggestions.push("Or use --force to mark complete anyway".to_string());
+
+        suggestions
+    }
+
+    /// Verify if an umbrella spec is ready to be marked as complete
+    ///
+    /// Checks that all child specs have status "complete".
+    /// Returns a verification result containing:
+    /// - Whether all children are complete
+    /// - List of incomplete child specs
+    /// - Progress metrics
+    /// - Suggestions for completing outstanding specs
+    pub fn verify_umbrella_completion(
+        spec_path: &str,
+        all_specs: &[SpecInfo],
+    ) -> UmbrellaVerificationResult {
+        // Find children of this spec
+        let children: Vec<&SpecInfo> = all_specs
+            .iter()
+            .filter(|s| s.frontmatter.parent.as_deref() == Some(spec_path))
+            .collect();
+
+        if children.is_empty() {
+            return UmbrellaVerificationResult::not_umbrella();
+        }
+
+        let incomplete: Vec<IncompleteChildSpec> = children
+            .iter()
+            .filter(|s| s.frontmatter.status != SpecStatus::Complete)
+            .map(|s| IncompleteChildSpec {
+                path: s.path.clone(),
+                title: s.title.clone(),
+                status: s.frontmatter.status.to_string(),
+            })
+            .collect();
+
+        let completed = children.len() - incomplete.len();
+        let total = children.len();
+        let percentage = if total > 0 {
+            (completed as f64 / total as f64) * 100.0
+        } else {
+            100.0
+        };
+
+        let progress = Progress {
+            completed,
+            total,
+            percentage,
+        };
+
+        let suggestions = Self::generate_umbrella_suggestions(&incomplete);
+
+        UmbrellaVerificationResult {
+            is_complete: incomplete.is_empty(),
+            incomplete_children: incomplete,
+            progress,
+            suggestions,
+        }
+    }
+
+    /// Generate actionable suggestions for incomplete umbrella spec
+    fn generate_umbrella_suggestions(incomplete: &[IncompleteChildSpec]) -> Vec<String> {
+        if incomplete.is_empty() {
+            return Vec::new();
+        }
+
+        let mut suggestions = vec![format!(
+            "Complete {} child spec(s) before marking umbrella as complete",
+            incomplete.len()
+        )];
+
+        // List first few incomplete specs
+        let specs_to_show: Vec<_> = incomplete.iter().take(3).collect();
+        for spec in &specs_to_show {
+            suggestions.push(format!("  - {} ({})", spec.path, spec.status));
+        }
+
+        if incomplete.len() > 3 {
+            suggestions.push(format!("  ... and {} more", incomplete.len() - 3));
+        }
+
+        suggestions.push("Or use force=true to mark complete anyway".to_string());
 
         suggestions
     }
@@ -230,5 +315,152 @@ No checkboxes here.
         let result = CompletionVerifier::verify_content(content).unwrap();
         assert_eq!(result.progress.completed, 2);
         assert_eq!(result.outstanding.len(), 1);
+    }
+
+    // Helper function to create test specs
+    fn create_test_spec(
+        path: &str,
+        title: &str,
+        status: SpecStatus,
+        parent: Option<&str>,
+    ) -> SpecInfo {
+        use crate::types::SpecFrontmatter;
+        SpecInfo {
+            path: path.to_string(),
+            title: title.to_string(),
+            frontmatter: SpecFrontmatter {
+                status,
+                created: "2025-01-01".to_string(),
+                priority: None,
+                tags: vec![],
+                depends_on: vec![],
+                parent: parent.map(String::from),
+                assignee: None,
+                reviewer: None,
+                issue: None,
+                pr: None,
+                epic: None,
+                breaking: None,
+                due: None,
+                updated: None,
+                completed: None,
+                created_at: None,
+                updated_at: None,
+                completed_at: None,
+                transitions: vec![],
+                custom: std::collections::HashMap::new(),
+            },
+            content: String::new(),
+            file_path: std::path::PathBuf::new(),
+            is_sub_spec: false,
+            parent_spec: None,
+        }
+    }
+
+    #[test]
+    fn test_umbrella_no_children() {
+        let specs = vec![create_test_spec(
+            "001-parent",
+            "Parent Spec",
+            SpecStatus::Planned,
+            None,
+        )];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(result.is_complete);
+        assert!(result.incomplete_children.is_empty());
+    }
+
+    #[test]
+    fn test_umbrella_all_children_complete() {
+        let specs = vec![
+            create_test_spec("001-parent", "Parent Spec", SpecStatus::InProgress, None),
+            create_test_spec(
+                "002-child-a",
+                "Child A",
+                SpecStatus::Complete,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "003-child-b",
+                "Child B",
+                SpecStatus::Complete,
+                Some("001-parent"),
+            ),
+        ];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(result.is_complete);
+        assert!(result.incomplete_children.is_empty());
+        assert_eq!(result.progress.completed, 2);
+        assert_eq!(result.progress.total, 2);
+    }
+
+    #[test]
+    fn test_umbrella_some_children_incomplete() {
+        let specs = vec![
+            create_test_spec("001-parent", "Parent Spec", SpecStatus::InProgress, None),
+            create_test_spec(
+                "002-child-a",
+                "Child A",
+                SpecStatus::Complete,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "003-child-b",
+                "Child B",
+                SpecStatus::InProgress,
+                Some("001-parent"),
+            ),
+            create_test_spec(
+                "004-child-c",
+                "Child C",
+                SpecStatus::Planned,
+                Some("001-parent"),
+            ),
+        ];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(!result.is_complete);
+        assert_eq!(result.incomplete_children.len(), 2);
+        assert_eq!(result.progress.completed, 1);
+        assert_eq!(result.progress.total, 3);
+        assert!((result.progress.percentage - 33.33).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_umbrella_suggestions() {
+        let specs = vec![
+            create_test_spec("001-parent", "Parent Spec", SpecStatus::InProgress, None),
+            create_test_spec(
+                "002-child-a",
+                "Child A",
+                SpecStatus::Planned,
+                Some("001-parent"),
+            ),
+        ];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(!result.suggestions.is_empty());
+        assert!(result.suggestions[0].contains("Complete 1 child spec"));
+        assert!(result.suggestions.iter().any(|s| s.contains("force=true")));
+    }
+
+    #[test]
+    fn test_umbrella_only_counts_direct_children() {
+        let specs = vec![
+            create_test_spec("001-parent", "Parent Spec", SpecStatus::InProgress, None),
+            create_test_spec(
+                "002-child",
+                "Child",
+                SpecStatus::Complete,
+                Some("001-parent"),
+            ),
+            create_test_spec("003-other", "Other Spec", SpecStatus::Planned, None), // Not a child
+        ];
+
+        let result = CompletionVerifier::verify_umbrella_completion("001-parent", &specs);
+        assert!(result.is_complete);
+        assert_eq!(result.progress.total, 1);
     }
 }
