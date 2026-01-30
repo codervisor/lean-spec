@@ -1,10 +1,10 @@
 ---
 status: planned
 created: 2026-01-29
+priority: medium
 created_at: 2026-01-29T14:15:50.066725Z
-updated_at: 2026-01-29T14:15:50.066725Z
+updated_at: 2026-01-30T00:56:59.979324Z
 ---
-
 # Spec Edit History Review via Git Integration
 
 ## Context
