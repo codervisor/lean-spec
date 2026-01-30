@@ -3,13 +3,15 @@ import type { Spec } from '../../types/api';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
 import { useTranslation } from 'react-i18next';
+import { HierarchyList } from './HierarchyList';
 
 interface ListViewProps {
   specs: Spec[];
   basePath?: string;
+  groupByParent?: boolean;
 }
 
-export function ListView({ specs, basePath = '/projects' }: ListViewProps) {
+export function ListView({ specs, basePath = '/projects', groupByParent = false }: ListViewProps) {
   const { t } = useTranslation('common');
 
   if (specs.length === 0) {
@@ -18,6 +20,10 @@ export function ListView({ specs, basePath = '/projects' }: ListViewProps) {
         {t('specsPage.list.empty')}
       </div>
     );
+  }
+
+  if (groupByParent) {
+    return <HierarchyList specs={specs} basePath={basePath} />;
   }
 
   return (

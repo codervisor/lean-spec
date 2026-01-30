@@ -5,10 +5,7 @@ import { StatusBadge } from '../spec/status-badge';
 import { PriorityBadge } from '../spec/priority-badge';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import type { LightweightSpec } from '@/types/specs';
-
-interface HierarchyNode extends LightweightSpec {
-  childNodes: HierarchyNode[];
-}
+import { buildHierarchy, type HierarchyNode } from '@/lib/hierarchy';
 
 export interface HierarchyTreeProps {
   /** Flat list of all specs to render in the tree */
@@ -103,58 +100,35 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className }:
 
   // Memoize tree construction
   const treeRoots = useMemo(() => {
-    const nodeMap = new Map<string, HierarchyNode>();
-
-    // Initialize nodes
-    specs.forEach(spec => {
-      const id = spec.id || spec.specName;
-      // create a shallow copy with added childNodes array
-      nodeMap.set(id, { ...spec, childNodes: [] });
-    });
-
-    const roots: HierarchyNode[] = [];
-
-    // Build hierarchy
-    specs.forEach(spec => {
-      const id = spec.id || spec.specName;
-      const node = nodeMap.get(id)!;
-
-      // Check if it has a parent that exists in our set
-      // Try by parent ID/Name first
-      const parentId = spec.parent;
-
-      if (parentId && nodeMap.has(parentId)) {
-        const parentNode = nodeMap.get(parentId)!;
-        parentNode.childNodes.push(node);
-      } else {
-        // No parent, or parent not in this list -> it's a root
-        roots.push(node);
-      }
-    });
-
-    // Sort by spec number or name (descending, newest first - same as flat list)
-    const sortNodes = (nodes: HierarchyNode[]) => {
-      nodes.sort((a, b) => {
-        if (a.specNumber && b.specNumber) return b.specNumber - a.specNumber;
-        return b.specName.localeCompare(a.specName);
-      });
-      nodes.forEach(node => sortNodes(node.childNodes));
-    };
-
-    sortNodes(roots);
-    return roots;
+    return buildHierarchy(specs);
   }, [specs]);
 
+  // Track previous selection to avoid unnecessary scrolls (align with list-view behavior)
+  const prevSelectedSpecId = useRef<string | undefined>(undefined);
+  const hasScrolledInitially = useRef(false);
+
   // Scroll to selected element on mount or when selection changes
+  // Aligned with list-view behavior: use 'nearest' (smart scroll) and skip if selection unchanged
   useEffect(() => {
-    if (selectedSpecId && containerRef.current) {
-      // Find the element with the matching data-spec-id
-      const element = containerRef.current.querySelector(`[data-spec-id="${selectedSpecId}"]`);
-      if (element) {
-        // Use scrollIntoView with block: 'center' to put it in the middle of validation
-        element.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      }
+    if (!selectedSpecId || !containerRef.current) return;
+
+    // Skip if selection hasn't changed and we've already done initial scroll
+    if (prevSelectedSpecId.current === selectedSpecId && hasScrolledInitially.current) return;
+
+    // Find the element with the matching data-spec-id
+    const element = containerRef.current.querySelector(`[data-spec-id="${selectedSpecId}"]`);
+    if (element) {
+      // Use requestAnimationFrame to defer scroll (align with list-view behavior)
+      const raf = requestAnimationFrame(() => {
+        // Use 'nearest' (equivalent to list-view's 'smart') - only scrolls if element is out of view
+        element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+      hasScrolledInitially.current = true;
+      prevSelectedSpecId.current = selectedSpecId;
+      return () => cancelAnimationFrame(raf);
     }
+
+    prevSelectedSpecId.current = selectedSpecId;
   }, [selectedSpecId, specs.length]); // Also run when specs change (initial load)
 
   if (!specs || specs.length === 0) {

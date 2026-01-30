@@ -53,7 +53,7 @@ function SearchableSelect({
           className="w-full justify-between font-normal"
         >
           {value
-            ? options.find((option) => option.value === value)?.label
+            ? (options.find((option) => option.value === value)?.label ?? value)
             : placeholder ?? "Select..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>

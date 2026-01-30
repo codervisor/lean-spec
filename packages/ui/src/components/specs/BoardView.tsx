@@ -1,6 +1,6 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, PlayCircle, CheckCircle2, Archive, Umbrella, CornerDownRight, Layers } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, Umbrella, CornerDownRight, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../PriorityBadge';
 import { cn } from '@leanspec/ui-components';
@@ -15,6 +15,8 @@ interface BoardViewProps {
   canEdit?: boolean;
   groupByParent?: boolean;
 }
+
+const COLLAPSE_THRESHOLD = 3;
 
 const STATUS_CONFIG: Record<SpecStatus, {
   icon: typeof Clock;
@@ -52,6 +54,57 @@ const STATUS_CONFIG: Record<SpecStatus, {
     borderClass: 'border-gray-200 dark:border-gray-800'
   }
 };
+
+interface BoardGroupProps {
+  parentName: string;
+  specs: Spec[];
+  renderCard: (spec: Spec, isChild?: boolean) => React.ReactNode;
+}
+
+function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const visibleSpecs = isExpanded ? specs : specs.slice(0, COLLAPSE_THRESHOLD);
+  const hiddenCount = specs.length - visibleSpecs.length;
+
+  return (
+    <div className="space-y-2 bg-secondary/10 p-2 rounded-lg border border-border/50">
+      <div className="flex items-center gap-2 mb-2 px-1">
+        <Umbrella className="h-4 w-4 text-primary" />
+        <h5 className="text-sm font-semibold text-foreground truncate flex-1" title={parentName}>{parentName}</h5>
+        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">{specs.length}</span>
+      </div>
+      <div className="pl-3 border-l-2 border-muted ml-2 space-y-2 relative">
+        {/* Dot indicators for tree line */}
+        {visibleSpecs.map((spec) => (
+          <div key={spec.specName} className="relative">
+            {/* Connection line dot */}
+            <div className="absolute -left-[19px] top-6 w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
+            {renderCard(spec, true)}
+          </div>
+        ))}
+
+        {hiddenCount > 0 && (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
+          >
+            <ChevronDown className="h-3 w-3" />
+            Show {hiddenCount} more
+          </button>
+        )}
+        {isExpanded && specs.length > COLLAPSE_THRESHOLD && (
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
+          >
+            <ChevronDown className="h-3 w-3 rotate-180" />
+            Show less
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true, groupByParent = false }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -109,44 +162,50 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
     }
   };
 
-  const renderCard = (spec: Spec) => (
+  const renderCard = (spec: Spec, isChild = false) => (
     <div
       key={spec.specName}
       draggable={canEdit}
       onDragStart={(e) => handleDragStart(spec, e)}
       className={cn(
-        "bg-background p-4 rounded-xl border shadow-sm cursor-move hover:border-primary/50 transition-all group/card relative",
+        "bg-background rounded-xl border shadow-sm cursor-move hover:border-primary/50 transition-all group/card relative",
+        isChild ? "p-3 border-border/60" : "p-4",
         draggingId === spec.specName && "opacity-50",
         !canEdit && "cursor-not-allowed opacity-70"
       )}
     >
       <Link to={`${basePath}/specs/${spec.specName}`} className="select-none h-full flex flex-col">
-          {/* Umbrella Icon */}
-          {(spec.children && spec.children.length > 0) && (
-            <div className="absolute top-3 right-3 text-primary/50" title={t('specs.hierarchy.umbrella', 'Umbrella Spec')}>
-              <Umbrella className="w-4 h-4" />
-            </div>
-          )}
-          
+        {/* Umbrella Icon */}
+        {(spec.children && spec.children.length > 0 && !isChild) && (
+          <div className="absolute top-3 right-3 text-primary/50" title={t('specs.hierarchy.umbrella', 'Umbrella Spec')}>
+            <Umbrella className="w-4 h-4" />
+          </div>
+        )}
+
         {/* Top: #ID */}
         <div className="text-xs text-muted-foreground font-mono mb-1 flex items-center gap-1">
           <span>#{spec.specNumber || spec.specName.split('-')[0].replace(/^0+/, '')}</span>
+          {isChild && (spec.children && spec.children.length > 0) && (
+            <Umbrella className="w-3 h-3 text-primary/40 ml-1" />
+          )}
         </div>
 
         {/* Middle: Title & Filename */}
-        <div className="space-y-1.5 mb-4 flex-1">
-          <h4 className="font-semibold text-base leading-snug group-hover/card:text-primary transition-colors pr-6">
+        <div className={cn("space-y-1 mb-3 flex-1", isChild ? "mb-2" : "mb-4")}>
+          <h4 className={cn("font-semibold leading-snug group-hover/card:text-primary transition-colors pr-6", isChild ? "text-sm" : "text-base")}>
             {spec.title || spec.specName}
           </h4>
-          <div className="text-xs text-muted-foreground font-mono truncate">
-            {spec.specName}
-          </div>
-          
-          {/* Parent Indicator */}
+          {!isChild && (
+            <div className="text-xs text-muted-foreground font-mono truncate">
+              {spec.specName}
+            </div>
+          )}
+
+          {/* Parent Indicator - shown only when NOT grouped by parent */}
           {spec.parent && !groupByParent && (
             <div className="flex items-center text-xs text-muted-foreground mt-1 bg-muted/30 p-1 rounded w-fit max-w-full">
-               <CornerDownRight className="h-3 w-3 mr-1 flex-shrink-0" />
-               <span className="truncate">In: {spec.parent}</span>
+              <CornerDownRight className="h-3 w-3 mr-1 flex-shrink-0" />
+              <span className="truncate">In: {spec.parent}</span>
             </div>
           )}
         </div>
@@ -154,27 +213,27 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
         {/* Bottom: Priority & Tags */}
         <div className="flex items-center justify-between gap-2 mt-auto">
           {spec.priority && (
-            <PriorityBadge priority={spec.priority} className="h-6 px-2.5 rounded-md" />
+            <PriorityBadge priority={spec.priority} className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5" : "h-6 px-2.5")} iconOnly={isChild} />
           )}
 
           <div className="flex items-center gap-1.5 justify-end ml-auto">
-            {spec.children && spec.children.length > 0 && (
-                <span className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary font-medium flex items-center gap-1">
-                    <Layers className="h-3 w-3" />
-                    {spec.children.length}
-                </span>
+            {spec.children && spec.children.length > 0 && !isChild && (
+              <span className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary font-medium flex items-center gap-1">
+                <Layers className="h-3 w-3" />
+                {spec.children.length}
+              </span>
             )}
-          
+
             {spec.tags && spec.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 justify-end">
-                {spec.tags.slice(0, 2).map((tag: string) => (
+                {spec.tags.slice(0, isChild ? 1 : 2).map((tag: string) => (
                   <span key={tag} className="text-[10px] px-2 py-0.5 bg-secondary/30 border border-border/50 rounded-md text-muted-foreground font-mono">
                     {tag}
                   </span>
                 ))}
-                {spec.tags.length > 2 && (
+                {spec.tags.length > (isChild ? 1 : 2) && (
                   <span className="text-[10px] px-2 py-0.5 bg-secondary/30 border border-border/50 rounded-md text-muted-foreground font-mono">
-                    +{spec.tags.length - 2}
+                    +{spec.tags.length - (isChild ? 1 : 2)}
                   </span>
                 )}
               </div>
@@ -186,56 +245,52 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
   );
 
   const renderColumnContent = (columnSpecs: Spec[]) => {
-      if (!groupByParent) {
-          return (
-              <div className="space-y-2">
-                  {columnSpecs.map(renderCard)}
-              </div>
-          );
-      }
-
-      // Group by parent
-      const groups = new Map<string, Spec[]>();
-      const orphans: Spec[] = [];
-
-      columnSpecs.forEach(spec => {
-          if (spec.parent) {
-              if (!groups.has(spec.parent)) {
-                  groups.set(spec.parent, []);
-              }
-              groups.get(spec.parent)!.push(spec);
-          } else {
-              orphans.push(spec);
-          }
-      });
-      
-      const sortedGroups = Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
+    if (!groupByParent) {
       return (
-          <div className="space-y-4">
-              {orphans.length > 0 && (
-                  <div className="space-y-2">
-                       {orphans.length > 0 && sortedGroups.length > 0 && (
-                           <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Independent ({orphans.length})</h5>
-                       )}
-                       {orphans.map(renderCard)}
-                  </div>
-              )}
-              
-              {sortedGroups.map(([parentName, groupSpecs]) => (
-                  <div key={parentName} className="space-y-2 bg-secondary/10 p-2 rounded-lg border border-border/50">
-                      <div className="flex items-center gap-2 mb-2 px-1">
-                          <Umbrella className="h-3.5 w-3.5 text-muted-foreground" />
-                          <h5 className="text-xs font-semibold text-foreground truncate" title={parentName}>{parentName}</h5>
-                          <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">{groupSpecs.length}</span>
-                      </div>
-                      <div className="pl-2 border-l-2 border-muted ml-1.5 space-y-2">
-                         {groupSpecs.map(renderCard)}
-                      </div>
-                  </div>
-              ))}
-          </div>
+        <div className="space-y-2">
+          {columnSpecs.map(s => renderCard(s))}
+        </div>
       );
+    }
+
+    // Group by parent
+    const groups = new Map<string, Spec[]>();
+    const orphans: Spec[] = [];
+
+    columnSpecs.forEach(spec => {
+      if (spec.parent) {
+        if (!groups.has(spec.parent)) {
+          groups.set(spec.parent, []);
+        }
+        groups.get(spec.parent)!.push(spec);
+      } else {
+        orphans.push(spec);
+      }
+    });
+
+    const sortedGroups = Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+    return (
+      <div className="space-y-4">
+        {orphans.length > 0 && (
+          <div className="space-y-2">
+            {orphans.length > 0 && sortedGroups.length > 0 && (
+              <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Independent ({orphans.length})</h5>
+            )}
+            {orphans.map(s => renderCard(s))}
+          </div>
+        )}
+
+        {sortedGroups.map(([parentName, groupSpecs]) => (
+          <BoardGroup
+            key={parentName}
+            parentName={parentName}
+            specs={groupSpecs}
+            renderCard={renderCard}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (

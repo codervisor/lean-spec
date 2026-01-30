@@ -216,27 +216,27 @@ pub fn validate_dependency_addition(
 ## Plan
 
 ### Phase 1: Parent Cycle Detection
-- [ ] Extract cycle detection to shared utility in leanspec-core
-- [ ] Add cycle check to MCP `set_parent` tool
-- [ ] Add cycle check to MCP `relationships` tool (parent operations)
-- [ ] Add cycle check to CLI `rel add --parent` command
-- [ ] Add descriptive error message showing the cycle path
+- [x] Extract cycle detection to shared utility in leanspec-core
+- [x] Add cycle check to MCP `set_parent` tool
+- [x] Add cycle check to MCP `relationships` tool (parent operations)
+- [x] Add cycle check to CLI `rel add --parent` command
+- [x] Add descriptive error message showing the cycle path
 
 ### Phase 1.5: Dependency Cycle Detection
-- [ ] Add dependency cycle check to MCP `link` tool
-- [ ] Add dependency cycle check to MCP `relationships` tool (depends_on operations)
-- [ ] Add dependency cycle check to CLI `rel add --depends-on` command
-- [ ] Add descriptive error message showing the cycle path
+- [x] Add dependency cycle check to MCP `link` tool
+- [x] Add dependency cycle check to MCP `relationships` tool (depends_on operations)
+- [x] Add dependency cycle check to CLI `rel add --depends-on` command
+- [x] Add descriptive error message showing the cycle path
 
 ### Phase 2: Hierarchy/Dependency Conflict Detection
-- [ ] Implement conflict detection in leanspec-core
-- [ ] Add conflict check to MCP `relationships` tool (depends_on operations)
-- [ ] Add conflict check to CLI `rel add --depends-on` command
-- [ ] Add clear error messages explaining the conflict
+- [x] Implement conflict detection in leanspec-core
+- [x] Add conflict check to MCP `relationships` tool (depends_on operations)
+- [x] Add conflict check to CLI `rel add --depends-on` command
+- [x] Add clear error messages explaining the conflict
 
 ### Phase 3: Documentation
-- [ ] Update SKILL.md with relationship decision tree
-- [ ] Add examples to CLI help
+- [x] Update SKILL.md with relationship decision tree
+- [x] Add examples to CLI help
 
 ## Test
 
