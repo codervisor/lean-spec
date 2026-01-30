@@ -16,8 +16,8 @@ use tokio_tungstenite::tungstenite::Message;
 use url::Url;
 use uuid::Uuid;
 
-use leanspec_core::{MetadataUpdate, SpecLoader, SpecPriority, SpecStatus, SpecWriter};
 use leanspec_core::utils::hash_content;
+use leanspec_core::{MetadataUpdate, SpecLoader, SpecPriority, SpecStatus, SpecWriter};
 
 #[derive(Parser, Debug)]
 #[command(name = "leanspec-sync-bridge")]

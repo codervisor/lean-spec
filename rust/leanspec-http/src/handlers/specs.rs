@@ -8,13 +8,13 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path as FsPath;
 
+use leanspec_core::utils::hash_content;
 use leanspec_core::{
     CompletionVerifier, DependencyGraph, FrontmatterParser, FrontmatterValidator, LeanSpecConfig,
     LineCountValidator, MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions,
     SpecLoader, SpecStats, SpecStatus, SpecWriter, StructureValidator, TemplateLoader,
     TokenCounter, TokenStatus, ValidationResult,
 };
-use leanspec_core::utils::hash_content;
 
 use crate::error::{ApiError, ApiResult};
 use crate::project_registry::Project;
