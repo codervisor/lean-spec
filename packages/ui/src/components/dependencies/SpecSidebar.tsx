@@ -1,6 +1,6 @@
 import { Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import type { SpecNode, FocusedNodeDetails } from './types';
 
 const statusIcons = {

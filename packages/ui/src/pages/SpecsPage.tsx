@@ -7,7 +7,7 @@ import type { Spec, SpecStatus } from '../types/api';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';

@@ -3,7 +3,7 @@ import mermaid from 'mermaid';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts';
 import { Dialog, DialogContent } from '@leanspec/ui-components';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 interface MermaidDiagramProps {
   chart: string;

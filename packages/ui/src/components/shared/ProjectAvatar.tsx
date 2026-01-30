@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@leanspec/ui-components';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 interface ProjectAvatarProps {
   name: string;

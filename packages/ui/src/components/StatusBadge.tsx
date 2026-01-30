@@ -1,6 +1,6 @@
 import { Clock, PlayCircle, CheckCircle2, Archive } from 'lucide-react';
 import { Badge } from '@leanspec/ui-components';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
 interface StatusBadgeProps {

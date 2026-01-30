@@ -13,7 +13,7 @@ import {
   Legend
 } from 'recharts';
 import { AlertCircle, FileText, Clock, PlayCircle, CheckCircle2, TrendingUp } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@leanspec/ui-components';
+import { Button, Card, CardContent, CardHeader, CardTitle, cn } from '@leanspec/ui-components';
 import { Link } from 'react-router-dom';
 import { StatCard } from '../components/dashboard/StatCard';
 import { api } from '../lib/api';
@@ -22,7 +22,6 @@ import { StatsSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { useTranslation } from 'react-i18next';
 import { useProject, useLayout } from '../contexts';
-import { cn } from '../lib/utils';
 
 const STATUS_COLORS = {
   planned: '#3B82F6',

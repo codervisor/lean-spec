@@ -26,7 +26,7 @@ import { PageHeader } from '../components/shared/PageHeader';
 import { ProjectsSkeleton } from '../components/shared/Skeletons';
 import { useProject, useLayout, useMachine } from '../contexts';
 import { api } from '../lib/api';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 dayjs.extend(relativeTime);
 

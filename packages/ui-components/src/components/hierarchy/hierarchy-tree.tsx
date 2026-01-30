@@ -3,9 +3,9 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '../spec/status-badge';
 import { PriorityBadge } from '../spec/priority-badge';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import type { LightweightSpec } from '@/types/specs';
 import { buildHierarchy, type HierarchyNode } from '@/lib/hierarchy';
+import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 
 export interface HierarchyTreeProps {
   /** Flat list of all specs to render in the tree */
@@ -15,153 +15,185 @@ export interface HierarchyTreeProps {
   /** Currently selected spec ID */
   selectedSpecId?: string;
   /** Class name */
-  className?: string;
+  className?: string; // Kept for width/margin styling but height is separate
+  /** Height of the list implementation */
+  height?: number;
+  /** Width of the list implementation */
+  width?: number | string;
 }
 
-interface TreeNodeProps {
+interface FlatNode {
   node: HierarchyNode;
-  onSpecClick?: (spec: LightweightSpec) => void;
-  selectedSpecId?: string;
+  depth: number;
 }
 
-function TreeNode({ node, onSpecClick, selectedSpecId, defaultExpandedIds }: TreeNodeProps & { defaultExpandedIds?: Set<string> }) {
-  // Check if this node or any of its descendants matches the selected ID
-  // If so, we must be expanded to show the selection path
-  // However, we only want to force this on initial selection/change, allowing user to toggle later
-
-  // Initialize state based on whether this node is a parent of the selected item
-  const [isExpanded, setIsExpanded] = useState(() => {
-    if (defaultExpandedIds && defaultExpandedIds.has(node.id || node.specName)) {
-      return true;
+// Helper to flatten the tree based on expanded status
+function flattenTree(nodes: HierarchyNode[], expandedIds: Set<string>, depth = 0, result: FlatNode[] = []) {
+  for (const node of nodes) {
+    result.push({ node, depth });
+    const id = node.id || node.specName;
+    if (node.childNodes && node.childNodes.length > 0 && expandedIds.has(id)) {
+      flattenTree(node.childNodes, expandedIds, depth + 1, result);
     }
-    return true; // Default to open
-  });
-
-  // Watch for external selection changes specifically to reveal the active item
-  // If the selected item is a descendant, ensure this folder opens
-  useEffect(() => {
-    if (!selectedSpecId) return;
-
-    // Helper to check if a specific node ID is in the subtree of the current node
-    const isDescendant = (n: HierarchyNode, targetId: string): boolean => {
-      if (!n.childNodes) return false;
-      return n.childNodes.some(child =>
-        (child.id === targetId || child.specName === targetId) || isDescendant(child, targetId)
-      );
-    };
-
-    if (isDescendant(node, selectedSpecId)) {
-      setIsExpanded(true);
-    }
-  }, [selectedSpecId, node]);
-
-  const hasChildren = node.childNodes && node.childNodes.length > 0;
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(!isExpanded);
-  };
-
-  const handleClick = () => {
-    onSpecClick?.(node);
-  };
-
-  const isSelected = selectedSpecId === (node.id || node.specName);
-
-  return (
-    <div className="select-none">
-      <div
-        className={cn(
-          "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group",
-          isSelected
-            ? "bg-accent/80 font-medium text-accent-foreground"
-            : "hover:bg-accent/50 text-foreground/80 hover:text-foreground"
-        )}
-        onClick={handleClick}
-        data-spec-id={node.id || node.specName}
-      >
-        <div
-          className={cn(
-            "mr-0.5 h-4 w-4 flex items-center justify-center rounded-sm transition-colors shrink-0",
-            !hasChildren && "invisible",
-            !isSelected && "group-hover:bg-muted/50 text-muted-foreground/70 hover:text-foreground"
-          )}
-          onClick={hasChildren ? handleToggle : undefined}
-        >
-          {hasChildren && (
-            <ChevronRight className={cn("h-3 w-3 transition-transform duration-200", isExpanded && "rotate-90")} />
-          )}
-        </div>
-
-        <span className="truncate flex-1" title={node.title || node.specName}>
-          {node.specNumber ? <span className="opacity-60 mr-1.5 font-mono text-xs">#{String(node.specNumber).padStart(3, '0')}</span> : ''}
-          {node.title || node.specName}
-        </span>
-
-        <div className="ml-2 shrink-0 flex items-center gap-1">
-          <StatusBadge status={node.status} iconOnly className="px-1 h-5 min-w-5 justify-center" />
-          {node.priority && <PriorityBadge priority={node.priority} iconOnly className="px-1 h-5 min-w-5 justify-center" />}
-        </div>
-      </div>
-
-      {hasChildren && (
-        <Collapsible open={isExpanded}>
-          <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-            <div className="ml-2 pl-2 border-l border-border/50 flex flex-col gap-0.5 mt-0.5">
-              {node.childNodes.map(child => (
-                <TreeNode
-                  key={child.id || child.specName}
-                  node={child}
-                  onSpecClick={onSpecClick}
-                  selectedSpecId={selectedSpecId}
-                />
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-    </div>
-  );
+  }
+  return result;
 }
 
-export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className }: HierarchyTreeProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+// Helper to get all node IDs
+function getAllNodeIds(nodes: HierarchyNode[]): Set<string> {
+  const ids = new Set<string>();
+  const traverse = (n: HierarchyNode[]) => {
+    for (const node of n) {
+      if (node.childNodes && node.childNodes.length > 0) {
+        ids.add(node.id || node.specName);
+        traverse(node.childNodes);
+      }
+    }
+  };
+  traverse(nodes);
+  return ids;
+}
+
+export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, height = 600, width = "100%" }: HierarchyTreeProps) {
+  const listRef = useRef<ListImperativeAPI>(null);
 
   // Memoize tree construction
   const treeRoots = useMemo(() => {
     return buildHierarchy(specs);
   }, [specs]);
 
-  // Track previous selection to avoid unnecessary scrolls (align with list-view behavior)
+  // State for expanded nodes
+  // Default to all expanded for initial view
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => getAllNodeIds(treeRoots));
+  const hasInitialized = useRef(false);
+
+  // Flatten the tree for rendering
+  const flatData = useMemo(() => {
+    return flattenTree(treeRoots, expandedIds);
+  }, [treeRoots, expandedIds]);
+
+  // Track scroll sync
   const prevSelectedSpecId = useRef<string | undefined>(undefined);
-  const hasScrolledInitially = useRef(false);
 
-  // Scroll to selected element on mount or when selection changes
-  // Aligned with list-view behavior: use 'nearest' (smart scroll) and skip if selection unchanged
+  // Initialization: Expand all recursive nodes on mount or when specs change drastically
   useEffect(() => {
-    if (!selectedSpecId || !containerRef.current) return;
+    if (!hasInitialized.current && treeRoots.length > 0) {
+      setExpandedIds(getAllNodeIds(treeRoots));
+      hasInitialized.current = true;
+    }
+  }, [treeRoots]);
 
-    // Skip if selection hasn't changed and we've already done initial scroll
-    if (prevSelectedSpecId.current === selectedSpecId && hasScrolledInitially.current) return;
+  // Auto-expand/scroll logic
+  useEffect(() => {
+    if (!selectedSpecId) return;
 
-    // Use setTimeout to ensure DOM is ready and layout is stable
-    // requestAnimationFrame can sometimes fire before styles/layout are fully settled
-    const timeoutId = setTimeout(() => {
-      if (!containerRef.current) return;
+    // 1. Ensure the selected node's parents are expanded
+    let needsExpansion = false;
+    const newExpanded = new Set(expandedIds);
 
-      // Use CSS.escape if available to handle special characters in IDs
-      const safeId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(selectedSpecId) : selectedSpecId;
+    // DFS to find path to selected node
+    const findPath = (nodes: HierarchyNode[], target: string, path: string[]): string[] | undefined => {
+      for (const node of nodes) {
+        const id = node.id || node.specName;
+        if (id === target) return path;
 
-      const element = containerRef.current.querySelector(`[data-spec-id="${safeId}"]`);
-      if (element) {
-        element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        hasScrolledInitially.current = true;
+        if (node.childNodes && node.childNodes.length > 0) {
+          const res = findPath(node.childNodes, target, [...path, id]);
+          if (res) return res;
+        }
       }
-    }, 100);
+      return undefined;
+    };
 
-    prevSelectedSpecId.current = selectedSpecId;
-    return () => clearTimeout(timeoutId);
-  }, [selectedSpecId, specs]); // Also run when specs change (initial load)
+    const path = findPath(treeRoots, selectedSpecId, []);
+
+    if (path) {
+      for (const id of path) {
+        if (!newExpanded.has(id)) {
+          newExpanded.add(id);
+          needsExpansion = true;
+        }
+      }
+    }
+
+    if (needsExpansion) {
+      setExpandedIds(newExpanded);
+    }
+  }, [selectedSpecId, treeRoots]);
+
+  // Effect to scroll once flatData is ready and contains our item
+  useEffect(() => {
+    if (!selectedSpecId || !listRef.current) return;
+    if (prevSelectedSpecId.current === selectedSpecId) return;
+
+    const index = flatData.findIndex(item => (item.node.id || item.node.specName) === selectedSpecId);
+
+    if (index >= 0) {
+      listRef.current.scrollToRow({ index, align: "smart" });
+      prevSelectedSpecId.current = selectedSpecId;
+    }
+  }, [selectedSpecId, flatData]);
+
+  const toggleNode = (node: HierarchyNode) => {
+    const id = node.id || node.specName;
+    const newExpanded = new Set(expandedIds);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedIds(newExpanded);
+  };
+
+  const Row = ({ index, style }: RowComponentProps) => {
+    const { node, depth } = flatData[index];
+    const id = node.id || node.specName;
+    const hasChildren = node.childNodes && node.childNodes.length > 0;
+    const isExpanded = expandedIds.has(id);
+    const isSelected = selectedSpecId === id;
+
+    // We render the content with padding for depth
+    return (
+      <div style={style}>
+        <div
+          className={cn(
+            "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group mr-2",
+            isSelected
+              ? "bg-accent/80 font-medium text-accent-foreground"
+              : "hover:bg-accent/50 text-foreground/80 hover:text-foreground"
+          )}
+          style={{ marginLeft: `${depth * 16}px` }}
+          onClick={() => onSpecClick?.(node)}
+        >
+          <div
+            className={cn(
+              "mr-0.5 h-4 w-4 flex items-center justify-center rounded-sm transition-colors shrink-0",
+              !hasChildren && "invisible",
+              !isSelected && "group-hover:bg-muted/50 text-muted-foreground/70 hover:text-foreground"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleNode(node);
+            }}
+          >
+            {hasChildren && (
+              <ChevronRight className={cn("h-3 w-3 transition-transform duration-200", isExpanded && "rotate-90")} />
+            )}
+          </div>
+
+          <span className="truncate flex-1" title={node.title || node.specName}>
+            {node.specNumber ? <span className="opacity-60 mr-1.5 font-mono text-xs">#{String(node.specNumber).padStart(3, '0')}</span> : ''}
+            {node.title || node.specName}
+          </span>
+
+          <div className="ml-2 shrink-0 flex items-center gap-1">
+            <StatusBadge status={node.status} iconOnly className="px-1 h-5 min-w-5 justify-center" />
+            {node.priority && <PriorityBadge priority={node.priority} iconOnly className="px-1 h-5 min-w-5 justify-center" />}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (!specs || specs.length === 0) {
     return (
@@ -170,20 +202,18 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className }:
       </div>
     );
   }
-  // no-op since state is handled internally in TreeNode now
-  const defaultExpandedIds = useMemo(() => new Set<string>(), []);
 
   return (
-    <div ref={containerRef} className={cn("flex flex-col gap-0.5", className)}>
-      {treeRoots.map(node => (
-        <TreeNode
-          key={node.id || node.specName}
-          node={node}
-          onSpecClick={onSpecClick}
-          selectedSpecId={selectedSpecId}
-          defaultExpandedIds={defaultExpandedIds}
-        />
-      ))}
+    <div className={cn("flex flex-col h-full", className)}>
+      <List
+        listRef={listRef}
+        rowCount={flatData.length}
+        rowHeight={30} // Consistent small row height
+        style={{ height, width }}
+        className="no-scrollbar" // Optional: custom scrollbar styling if needed
+        rowComponent={Row}
+        rowProps={{}}
+      />
     </div>
   );
 }

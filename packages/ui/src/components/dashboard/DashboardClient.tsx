@@ -21,7 +21,7 @@ import { SpecListItem, type DashboardSpec } from './SpecListItem';
 import { ActivityItem } from './ActivityItem';
 import { useTranslation } from 'react-i18next';
 import { useLayout } from '../../contexts';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 interface DashboardClientProps {
   specs: DashboardSpec[];

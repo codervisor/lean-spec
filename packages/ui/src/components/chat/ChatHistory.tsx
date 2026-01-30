@@ -1,7 +1,7 @@
 import { History, ChevronDown, MessageSquare, Trash2, Search } from 'lucide-react';
 import { useChat } from '../../contexts/ChatContext';
 import { Badge, Input } from '@leanspec/ui-components';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { useState } from 'react';
 
 export function ChatHistory() {

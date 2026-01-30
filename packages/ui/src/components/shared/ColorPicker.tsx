@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@leanspec/ui-components';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
 const PROJECT_COLORS = [

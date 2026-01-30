@@ -11,7 +11,7 @@ import { PageHeader } from '../components/shared/PageHeader';
 import { PageTransition } from '../components/shared/PageTransition';
 import { SESSION_STATUS_DOT_STYLES, SESSION_STATUS_STYLES, formatSessionDuration } from '../lib/session-utils';
 import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 const PAGE_SIZE = 20;
 

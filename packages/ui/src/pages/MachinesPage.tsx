@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Cpu, Pencil, PlugZap, WifiOff, Zap } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, Input } from '@leanspec/ui-components';
+import { Button, Card, CardContent, CardHeader, cn, Input } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/shared/PageHeader';
 import { MachinesSkeleton } from '../components/shared/Skeletons';
 import { useLayout, useMachine } from '../contexts';
-import { cn } from '../lib/utils';
 
 export function MachinesPage() {
   const { t } = useTranslation('common');

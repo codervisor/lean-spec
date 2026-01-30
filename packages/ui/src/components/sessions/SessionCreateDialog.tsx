@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import type { Session, SessionMode } from '../../types/api';
 import { api } from '../../lib/api';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 const MODES: SessionMode[] = ['guided', 'autonomous', 'ralph'];
 

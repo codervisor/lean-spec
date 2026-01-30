@@ -11,7 +11,7 @@ import { useMediaQuery } from '../hooks/use-media-query';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { BackToTop } from './shared/BackToTop';
 import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts, useMachine, useChat } from '../contexts';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 /**
  * Layout component that wraps all project-scoped pages.

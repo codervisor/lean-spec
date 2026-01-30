@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { useLocalStorage } from '../hooks/use-local-storage';
+import { useLocalStorage } from '@leanspec/ui-components';
 import { useProject } from './ProjectContext';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 

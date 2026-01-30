@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronRight, Folder, Home, Loader2 } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { DirectoryListResponse } from '../../types/api';
 import { useTranslation } from 'react-i18next';

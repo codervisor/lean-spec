@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { ResizeHandle } from './ResizeHandle';
 import { ChatContainer } from './ChatContainer';
 import { useLeanSpecChat } from '../../lib/use-chat';

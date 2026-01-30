@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, Clock, Loader2, PlayCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';

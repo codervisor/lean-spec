@@ -25,7 +25,7 @@ import ReactFlow, {
   type ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
 import { useProject, useLayout } from '../contexts';

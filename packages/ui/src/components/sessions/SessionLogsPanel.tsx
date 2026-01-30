@@ -4,7 +4,7 @@ import { ArrowLeft, Pause, Square, Download } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { SessionLog, Session } from '../../types/api';
 import { useSessions } from '../../contexts/SessionsContext';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 interface SessionLogsPanelProps {
     sessionId: string;

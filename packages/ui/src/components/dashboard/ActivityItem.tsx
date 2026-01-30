@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
+import { formatRelativeTime } from '@leanspec/ui-components';
 import type { DashboardSpec } from './SpecListItem';
-import { formatRelativeTime } from '../../lib/date-utils';
 import { useTranslation } from 'react-i18next';
 
 interface ActivityItemProps {

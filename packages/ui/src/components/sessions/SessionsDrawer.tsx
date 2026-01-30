@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSessions } from '../../contexts/SessionsContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 import { Button } from '@leanspec/ui-components';
 import { X, Plus } from 'lucide-react';
 import { ResizeHandle } from '../chat/ResizeHandle';

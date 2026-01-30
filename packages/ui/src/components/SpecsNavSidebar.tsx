@@ -16,6 +16,8 @@ import {
   AccordionItem,
   AccordionTrigger,
   Button,
+  cn,
+  formatRelativeTime,
   Input,
   Popover,
   PopoverContent,
@@ -31,8 +33,6 @@ import { PriorityBadge, getPriorityLabel } from './PriorityBadge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 import { api } from '../lib/api';
 import type { Spec } from '../types/api';
-import { cn } from '../lib/utils';
-import { formatRelativeTime } from '../lib/date-utils';
 import { useTranslation } from 'react-i18next';
 import { useProject, useSpecs } from '../contexts';
 import { SpecsNavSidebarSkeleton } from './shared/Skeletons';
@@ -635,11 +635,12 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 {t('specsNavSidebar.noResults')}
               </div>
             ) : viewMode === 'tree' ? (
-              <div className="h-full overflow-y-auto px-2 py-2">
+              <div className="h-full px-2 py-0.5">
                 <HierarchyTree
                   specs={filteredSpecs as Spec[]}
                   onSpecClick={handleSpecClick}
                   selectedSpecId={activeSpecActualId}
+                  height={listHeight}
                 />
               </div>
             ) : (

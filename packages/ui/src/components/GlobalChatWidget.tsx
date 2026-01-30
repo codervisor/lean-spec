@@ -9,7 +9,7 @@ import { useLeanSpecChat } from '../lib/use-chat';
 import { useProject } from '../contexts';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
-import { cn } from '../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 interface GlobalChatWidgetProps {
   isOpen: boolean;

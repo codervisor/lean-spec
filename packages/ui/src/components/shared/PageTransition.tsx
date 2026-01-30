@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { cn } from '../../lib/utils';
+import { cn } from '@leanspec/ui-components';
 
 interface PageTransitionProps {
   className?: string;
