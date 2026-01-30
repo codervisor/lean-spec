@@ -4,7 +4,9 @@ import rehypeSlug from 'rehype-slug';
 import rehypeHighlight from 'rehype-highlight';
 import { Link } from 'react-router-dom';
 import { MermaidDiagram } from '../MermaidDiagram';
-import type { ComponentPropsWithoutRef, AnchorHTMLAttributes } from 'react';
+import { EnhancedCodeBlock } from './EnhancedCodeBlock';
+import { EnhancedTable, extractTextFromNode } from './EnhancedTable';
+import { isValidElement, type ComponentPropsWithoutRef, type AnchorHTMLAttributes } from 'react';
 import type { Components } from 'react-markdown';
 
 /**
@@ -126,21 +128,42 @@ function MarkdownLink({ href, children, specName, basePath, ...props }: Markdown
 
 function useMarkdownComponents(specName: string, basePath: string): Components {
   return {
-    code({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) {
-      const inline = !className?.includes('language-');
-      const match = /language-(\w+)/.exec(className || '');
-      const language = match ? match[1] : null;
-      const code = String(children).replace(/\n$/, '');
+    pre({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
+      if (isValidElement(children) && (children.type === 'code' || (children.props as any).className?.includes('language-'))) {
+        const childProps = children.props as ComponentPropsWithoutRef<'code'>;
+        const className = childProps.className || '';
+        const match = /language-(\w+)/.exec(className);
+        const language = match ? match[1] : null;
 
-      if (!inline && language === 'mermaid') {
-        return <MermaidDiagram chart={code} className="my-4" />;
+        if (language === 'mermaid') {
+          const code = extractTextFromNode(childProps.children);
+          return <MermaidDiagram chart={code} className="my-4" />;
+        }
+
+        const codeText = extractTextFromNode(childProps.children);
+
+        return (
+          <EnhancedCodeBlock language={language} code={codeText}>
+            <pre className="!bg-transparent !m-0 !p-0 !shadow-none">
+              <code className={className} {...childProps}>
+                {childProps.children}
+              </code>
+            </pre>
+          </EnhancedCodeBlock>
+        );
       }
 
+      return <pre {...props}>{children}</pre>;
+    },
+    code({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) {
       return (
         <code className={className} {...props}>
           {children}
         </code>
       );
+    },
+    table({ children }: ComponentPropsWithoutRef<'table'>) {
+      return <EnhancedTable>{children}</EnhancedTable>;
     },
     a({ href, children, ...props }) {
       return (

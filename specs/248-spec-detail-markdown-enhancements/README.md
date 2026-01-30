@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-01-29
 priority: medium
 tags:
@@ -13,7 +13,7 @@ updated_at: 2026-01-29T01:15:22.716843137Z
 
 # Spec Detail Page Markdown Rendering Enhancements
 
-> **Status**: 🟡 Planned · **Priority**: Medium · **Created**: 2025-01-29 · **Tags**: ui, ux, markdown, enhancement
+> **Status**: 🟢 Complete · **Priority**: Medium · **Created**: 2025-01-29 · **Tags**: ui, ux, markdown, enhancement
 
 **Project**: lean-spec  
 **Team**: Core Development
@@ -213,61 +213,61 @@ function useMarkdownComponents(specName: string, basePath: string): Components {
 ## Plan
 
 ### Phase 1: Advanced Code Blocks
-- [ ] Create `EnhancedCodeBlock` component with copy button
-- [ ] Add language badge display for fenced code blocks
-- [ ] Implement copy-to-clipboard with visual feedback
-- [ ] Style hover states and button positioning
-- [ ] Handle inline code vs block code differentiation
+- [x] Create `EnhancedCodeBlock` component with copy button
+- [x] Add language badge display for fenced code blocks
+- [x] Implement copy-to-clipboard with visual feedback
+- [x] Style hover states and button positioning
+- [x] Handle inline code vs block code differentiation
 
 ### Phase 2: Optimized Mermaid Diagrams  
-- [ ] Remove outer border from `MermaidDiagram` container
-- [ ] Create `MermaidModal` dialog component for enlarged view
-- [ ] Add click handler to open modal from inline diagram
-- [ ] Ensure dark mode works correctly in modal
-- [ ] Add keyboard shortcuts (Escape to close)
+- [x] Remove outer border from `MermaidDiagram` container
+- [x] Create `MermaidModal` dialog component for enlarged view
+- [x] Add click handler to open modal from inline diagram
+- [x] Ensure dark mode works correctly in modal
+- [x] Add keyboard shortcuts (Escape to close)
 
 ### Phase 3: Advanced Tables
-- [ ] Create table data extraction utility (parse from AST or DOM)
-- [ ] Implement `EnhancedTable` wrapper component
-- [ ] Add copy-as-TSV functionality (Excel-compatible)
-- [ ] Add CSV export/download functionality
-- [ ] Style toolbar and action buttons
+- [x] Create table data extraction utility (parse from AST or DOM)
+- [x] Implement `EnhancedTable` wrapper component
+- [x] Add copy-as-TSV functionality (Excel-compatible)
+- [x] Add CSV export/download functionality
+- [x] Style toolbar and action buttons
 
 ### Phase 4: Polish & Testing
-- [ ] Add tooltips to all action buttons
-- [ ] Ensure accessibility (ARIA labels, keyboard nav)
-- [ ] Test with various markdown content (edge cases)
-- [ ] Add loading states where needed
-- [ ] Document usage in component
+- [x] Add tooltips to all action buttons
+- [x] Ensure accessibility (ARIA labels, keyboard nav)
+- [x] Test with various markdown content (edge cases)
+- [x] Add loading states where needed
+- [x] Document usage in component
 
 ## Test
 
 ### Code Block Tests
-- [ ] Copy button appears on hover for fenced code blocks
-- [ ] Language badge shows correct language name
-- [ ] Copying works and shows success feedback
-- [ ] Inline code (`like this`) does not show copy button
-- [ ] Code blocks without language specified work correctly
+- [x] Copy button appears on hover for fenced code blocks
+- [x] Language badge shows correct language name
+- [x] Copying works and shows success feedback
+- [x] Inline code (`like this`) does not show copy button
+- [x] Code blocks without language specified work correctly
 
 ### Mermaid Diagram Tests
-- [ ] Diagrams render without double border
-- [ ] Clicking diagram opens enlarged modal
-- [ ] Modal displays diagram at larger size
-- [ ] Modal closes on Escape or click outside
-- [ ] Dark mode theme applies in modal
+- [x] Diagrams render without double border
+- [x] Clicking diagram opens enlarged modal
+- [x] Modal displays diagram at larger size
+- [x] Modal closes on Escape or click outside
+- [x] Dark mode theme applies in modal
 
 ### Table Tests
-- [ ] Copy button copies as TSV (paste into Excel works)
-- [ ] Export downloads valid CSV file
-- [ ] Tables with special characters export correctly
-- [ ] Empty cells handled properly
-- [ ] Multi-row, multi-column tables work
+- [x] Copy button copies as TSV (paste into Excel works)
+- [x] Export downloads valid CSV file
+- [x] Tables with special characters export correctly
+- [x] Empty cells handled properly
+- [x] Multi-row, multi-column tables work
 
 ### General Tests
-- [ ] No regressions in existing markdown rendering
-- [ ] Performance acceptable with many code blocks/tables
-- [ ] Works on mobile (touch-friendly buttons)
-- [ ] Accessibility: screen reader announces actions
+- [x] No regressions in existing markdown rendering
+- [x] Performance acceptable with many code blocks/tables
+- [x] Works on mobile (touch-friendly buttons)
+- [x] Accessibility: screen reader announces actions
 
 ## Dependencies
 

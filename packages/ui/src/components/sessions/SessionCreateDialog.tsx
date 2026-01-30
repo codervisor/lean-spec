@@ -1,10 +1,94 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@leanspec/ui-components';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import type { Session, SessionMode } from '../../types/api';
 import { api } from '../../lib/api';
+import { cn } from '../../lib/utils';
 
 const MODES: SessionMode[] = ['guided', 'autonomous', 'ralph'];
+
+interface SearchableSelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyText?: string;
+}
+
+function SearchableSelect({
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  searchPlaceholder,
+  emptyText,
+}: SearchableSelectProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {value
+            ? options.find((option) => option.value === value)?.label
+            : placeholder ?? "Select..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder ?? "Search..."} />
+          <CommandList>
+            <CommandEmpty>{emptyText ?? "No results found."}</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => {
+                    onValueChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface SessionCreateDialogProps {
   open: boolean;
@@ -73,6 +157,13 @@ export function SessionCreateDialog({
     }
   }, [projectPath, showSpecSelect, specId, defaultSpecId, tool, mode, onCreated, onOpenChange, t]);
 
+  const specSelectOptions = [
+    { value: '', label: t('sessions.labels.noSpec') },
+    ...(specOptions?.map((o) => ({ value: o.id, label: o.label })) ?? []),
+  ];
+  const toolOptions = tools.map((t) => ({ value: t, label: t }));
+  const modeOptions = MODES.map((m) => ({ value: m, label: m }));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[min(520px,90vw)]">
@@ -89,41 +180,31 @@ export function SessionCreateDialog({
           {showSpecSelect && (
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.spec')}</label>
-              <select
+              <SearchableSelect
                 value={specId}
-                onChange={(event) => setSpecId(event.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                <option value="">{t('sessions.labels.noSpec')}</option>
-                {specOptions?.map((option) => (
-                  <option key={option.id} value={option.id}>{option.label}</option>
-                ))}
-              </select>
+                onValueChange={setSpecId}
+                options={specSelectOptions}
+                placeholder={t('sessions.labels.spec')}
+              />
             </div>
           )}
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.tool')}</label>
-            <select
+            <SearchableSelect
               value={tool}
-              onChange={(event) => setTool(event.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            >
-              {tools.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
+              onValueChange={setTool}
+              options={toolOptions}
+              placeholder={t('sessions.labels.tool')}
+            />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.mode')}</label>
-            <select
+            <SearchableSelect
               value={mode}
-              onChange={(event) => setMode(event.target.value as SessionMode)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            >
-              {MODES.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
+              onValueChange={(val) => setMode(val as SessionMode)}
+              options={modeOptions}
+              placeholder={t('sessions.labels.mode')}
+            />
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">

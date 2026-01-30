@@ -125,6 +125,45 @@ related:
 
 **Why**: `related` was ambiguous. `depends_on` expresses clear blocking relationships.
 
+### 7. Use shadcn/ui Components (No Native HTML Form Elements)
+
+**ALWAYS use shadcn/ui components** instead of native HTML form elements.
+
+```typescript
+// ✅ Correct - shadcn/ui components
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+
+<Input placeholder="Enter value" />
+<Select><SelectTrigger><SelectValue /></SelectTrigger></Select>
+<Button>Click me</Button>
+<Checkbox />
+<Textarea />
+
+// ❌ Wrong - Native HTML elements
+<input type="text" />
+<select><option>...</option></select>
+<button>Click me</button>
+<input type="checkbox" />
+<textarea />
+```
+
+**Components to use:**
+| Instead of                | Use                                               |
+| ------------------------- | ------------------------------------------------- |
+| `<input>`                 | `<Input>` from `@/components/ui/input`            |
+| `<select>`                | `<Select>` from `@/components/ui/select`          |
+| `<button>`                | `<Button>` from `@/components/ui/button`          |
+| `<textarea>`              | `<Textarea>` from `@/components/ui/textarea`      |
+| `<input type="checkbox">` | `<Checkbox>` from `@/components/ui/checkbox`      |
+| `<input type="radio">`    | `<RadioGroup>` from `@/components/ui/radio-group` |
+| `<dialog>`                | `<Dialog>` from `@/components/ui/dialog`          |
+
+**Why**: Ensures consistent styling, accessibility (ARIA), keyboard navigation, and theme support across the application.
+
 ## Testing Rules
 
 ### What to Test

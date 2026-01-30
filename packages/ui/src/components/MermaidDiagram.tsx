@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts';
+import { Dialog, DialogContent } from './ui/dialog';
+import { cn } from '../lib/utils';
 
 interface MermaidDiagramProps {
   chart: string;
@@ -22,6 +24,7 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [id] = useState(generateId);
+  const [isOpen, setIsOpen] = useState(false);
   const { resolvedTheme } = useTheme();
   const { t } = useTranslation(['common', 'errors']);
 
@@ -34,7 +37,7 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
       try {
         setError(null);
         setSvg('');
-        
+
         mermaid.initialize({
           startOnLoad: false,
           theme: resolvedTheme === 'dark' ? 'dark' : 'default',
@@ -81,13 +84,28 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   }
 
   return (
-    <div
-      ref={ref}
-      className={`mermaid-diagram border rounded-lg p-4 overflow-auto ${className}`}
-      dangerouslySetInnerHTML={{ __html: svg }}
-      style={{
-        backgroundColor: 'hsl(var(--card))',
-      }}
-    />
+    <>
+      <div
+        ref={ref}
+        className={cn(
+          "mermaid-diagram overflow-auto cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors",
+          className
+        )}
+        dangerouslySetInnerHTML={{ __html: svg }}
+        onClick={() => setIsOpen(true)}
+        role="button"
+        aria-label="Click to enlarge diagram"
+        title="Click to enlarge"
+      />
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto p-12">
+          <div
+            className="mermaid-diagram-modal w-full h-full flex items-center justify-center min-h-[300px]"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

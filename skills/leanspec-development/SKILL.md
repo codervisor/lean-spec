@@ -112,6 +112,16 @@ Rules enforced by hooks or CI:
 
 4. **Rust Quality** - Must pass `cargo clippy -- -D warnings`
 
+5. **Use shadcn/ui** - No native HTML form elements (`<input>`, `<select>`, `<button>`, etc.)
+   ```typescript
+   // ✅ Good - shadcn/ui
+   import { Input } from '@/components/ui/input';
+   <Input placeholder="..." />
+   
+   // ❌ Bad - native HTML
+   <input type="text" />
+   ```
+
 **See [RULES.md](./references/RULES.md) for complete requirements.**
 
 ## Reference Documentation
