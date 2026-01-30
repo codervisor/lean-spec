@@ -26,7 +26,12 @@ export { Badge, badgeVariants, type BadgeProps } from './badge';
 export { Button, buttonVariants, type ButtonProps } from './button';
 
 // Button Group
-export { ButtonGroup } from './button-group';
+export {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+  buttonGroupVariants,
+} from './button-group';
 
 // Card
 export {
@@ -113,13 +118,21 @@ export {
 export { Input, type InputProps } from './input';
 
 // Input Group
-export { InputGroup } from './input-group';
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupInput,
+  InputGroupTextarea,
+} from './input-group';
 
 // Popover
 export {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  PopoverAnchor,
 } from './popover';
 
 // Progress

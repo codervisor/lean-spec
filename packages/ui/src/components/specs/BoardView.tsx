@@ -1,6 +1,6 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, PlayCircle, CheckCircle2, Archive, Umbrella, CornerDownRight, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, Umbrella, CornerDownRight, Layers, ChevronDown } from 'lucide-react';
 import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../PriorityBadge';
 import { cn } from '@leanspec/ui-components';

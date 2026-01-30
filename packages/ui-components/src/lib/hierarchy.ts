@@ -1,4 +1,4 @@
-import { LightweightSpec } from '@/types/specs';
+import { LightweightSpec } from '../types/specs';
 
 export interface HierarchyNode extends LightweightSpec {
   childNodes: HierarchyNode[];
