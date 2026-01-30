@@ -1035,14 +1035,14 @@ fn tool_relationships(specs_dir: &str, args: Value) -> Result<String, String> {
                         all_specs
                             .iter()
                             .find(|s| s.path == *path)
-                            .map(|s| to_summary(s))
+                            .map(to_summary)
                             .unwrap_or_else(|| json!({ "path": path }))
                     }).collect::<Vec<_>>(),
                     "required_by": required_by.iter().map(|s| to_summary(s)).collect::<Vec<_>>()
                 }
             });
 
-            return serde_json::to_string_pretty(&output).map_err(|e| e.to_string());
+            serde_json::to_string_pretty(&output).map_err(|e| e.to_string())
         }
         "add" | "remove" => {
             let rel_type = rel_type.ok_or("Missing required parameter: type")?;

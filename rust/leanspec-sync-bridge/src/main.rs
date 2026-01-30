@@ -489,6 +489,7 @@ impl CommandOutcome {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn apply_metadata(
     state: &Arc<Mutex<BridgeState>>,
     project_id: &str,

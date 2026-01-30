@@ -141,6 +141,8 @@ lean-spec list [options]
 - `--field <name=value>` - Filter by custom field (can specify multiple)
 - `--sort <field>` - Sort by field (`id`, `created`, `name`, `status`, `priority`) (default: `id`)
 - `--order <order>` - Sort order (`asc`, `desc`) (default: `desc`)
+- `--compact` - Show compact output
+- `--hierarchy` - Show parent-child hierarchy tree
 - `--json` - Output as JSON
 
 **Examples:**
@@ -171,6 +173,9 @@ lean-spec list --field epic=PROJ-123
 # JSON output for programmatic use
 lean-spec list --json
 lean-spec list --status planned --json
+
+# Hierarchy tree view
+lean-spec list --hierarchy
 ```
 
 **Output:**
@@ -185,6 +190,17 @@ lean-spec list --status planned --json
 ```
 
 **Note**: Output shows flat structure (default). With date-grouping configured, paths would be `specs/YYYYMMDD/NNN-name/`.
+
+**Hierarchy output** (with `--hierarchy`):
+```
+#221 AI Orchestration Integration (umbrella)
+└── #168 Orchestration Platform (umbrella)
+  ├── #239 Session Management (in-progress)
+  ├── #244 Session UI Enhancement (complete)
+  ├── #249 Sessions Sidebar UX (planned)
+  ├── #243 Realtime File Watch (in-progress)
+  └── #160 Tokens/Validation Display (planned)
+```
 
 **Status Icons:**
 - 📅 Planned
@@ -247,6 +263,40 @@ lean-spec update 001-user-auth 002-password-reset --status=in-progress
 - Setting status to `complete` automatically adds `completed` timestamp
 - Visual badges in README.md are auto-updated
 - Both frontmatter and badges stay in sync
+
+---
+
+### `lean-spec children`
+
+List child specs for a parent (deprecated in favor of `lean-spec rel view`).
+
+```bash
+lean-spec children <spec>
+```
+
+**Arguments:**
+- `<spec>` - Spec identifier (required). Can be:
+  - Spec number: `42` or `042`
+  - Spec name: `unified-dashboard`
+  - Full folder: `045-unified-dashboard`
+
+**Examples:**
+
+```bash
+# List children of an umbrella spec
+lean-spec children 168
+```
+
+**Output:**
+```
+Children of 168-leanspec-orchestration-platform
+────────────────────────────────────────
+  ⏳ 239-ai-coding-session-management - AI Coding Session Management and Monitoring Infrastructure
+  ✅ 244-session-ui-enhancement - Session UI Enhancement - List, Detail, and Spec Integration
+  📅 249-sessions-sidebar-unified-ux - Unified Sessions UX with Right Drawer
+```
+
+**Note**: Prefer `lean-spec rel view <spec>` for relationship details.
 
 ---
 
@@ -624,6 +674,7 @@ lean-spec board [options]
 - `--completion-only` - Show only completion summary
 - `--tag <tag>` - Filter by tag
 - `--assignee <name>` - Filter by assignee
+- `--group-by <mode>` - Group by `status`, `priority`, `assignee`, `tag`, or `parent` (default: `status`)
 - `--json` - Output as JSON
 
 **Output:**

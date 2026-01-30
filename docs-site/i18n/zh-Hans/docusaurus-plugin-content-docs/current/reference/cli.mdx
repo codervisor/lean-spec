@@ -141,6 +141,8 @@ lean-spec list [options]
 - `--field <name=value>` - 按自定义字段过滤（可指定多个）
 - `--sort <field>` - 按字段排序（`id`、`created`、`name`、`status`、`priority`）（默认：`id`）
 - `--order <order>` - 排序顺序（`asc`、`desc`）（默认：`desc`）
+- `--compact` - 显示紧凑输出
+- `--hierarchy` - 显示父子层级树
 - `--json` - 以 JSON 格式输出
 
 **示例：**
@@ -171,6 +173,9 @@ lean-spec list --field epic=PROJ-123
 # JSON 输出用于程序化使用
 lean-spec list --json
 lean-spec list --status planned --json
+
+# 层级树视图
+lean-spec list --hierarchy
 ```
 
 **输出：**
@@ -185,6 +190,17 @@ lean-spec list --status planned --json
 ```
 
 **注意**：输出显示扁平结构（默认）。配置日期分组后，路径将为 `specs/YYYYMMDD/NNN-name/`。
+
+**层级输出**（使用 `--hierarchy`）：
+```
+#221 AI Orchestration Integration (umbrella)
+└── #168 Orchestration Platform (umbrella)
+  ├── #239 Session Management (in-progress)
+  ├── #244 Session UI Enhancement (complete)
+  ├── #249 Sessions Sidebar UX (planned)
+  ├── #243 Realtime File Watch (in-progress)
+  └── #160 Tokens/Validation Display (planned)
+```
 
 **状态图标：**
 - 📅 计划中
@@ -247,6 +263,40 @@ lean-spec update 001-user-auth 002-password-reset --status=in-progress
 - 将状态设置为 `complete` 会自动添加 `completed` 时间戳
 - README.md 中的可视徽章自动更新
 - frontmatter和徽章保持同步
+
+---
+
+### `lean-spec children`
+
+列出某个父 Spec 的子 Spec（已弃用，推荐使用 `lean-spec rel view`）。
+
+```bash
+lean-spec children <spec>
+```
+
+**参数：**
+- `<spec>` - Spec 标识符（必需）。可以是：
+  - Spec 编号：`42` 或 `042`
+  - Spec 名称：`unified-dashboard`
+  - 完整文件夹：`045-unified-dashboard`
+
+**示例：**
+
+```bash
+# 列出伞形 Spec 的子 Spec
+lean-spec children 168
+```
+
+**输出：**
+```
+Children of 168-leanspec-orchestration-platform
+────────────────────────────────────────
+  ⏳ 239-ai-coding-session-management - AI Coding Session Management and Monitoring Infrastructure
+  ✅ 244-session-ui-enhancement - Session UI Enhancement - List, Detail, and Spec Integration
+  📅 249-sessions-sidebar-unified-ux - Unified Sessions UX with Right Drawer
+```
+
+**注意**：推荐使用 `lean-spec rel view <spec>` 查看关系详情。
 
 ---
 
@@ -612,6 +662,7 @@ lean-spec board
 ║                    LeanSpec 看板                          ║
 ╠═══════════════════════════════════════════════════════════╣
 ║ 计划中           进行中              完成                 ║
+- `--group-by <mode>` - 按 `status`、`priority`、`assignee`、`tag` 或 `parent` 分组（默认：`status`）
 ╠─────────────────┬────────────────────┬────────────────────╣
 ║ user-auth       │ api-gateway        │ login-ui           ║
 ║ rate-limiting   │ database-setup     │ password-hash      ║
