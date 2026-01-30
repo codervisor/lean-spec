@@ -143,7 +143,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     );
     localStorage.setItem(STORAGE_KEYS.collapsed, String(collapsed));
   }, [collapsed]);
-  
+
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEYS.viewMode, viewMode);
   }, [viewMode]);
@@ -162,6 +162,46 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     navigate(path);
     if (mobileOpen) onMobileOpenChange?.(false);
   }, [basePath, navigate, mobileOpen, onMobileOpenChange]);
+
+  // Helper: expand filtered specs to include all descendants (for tree view)
+  // This ensures umbrella progress visibility even when children have different statuses
+  const expandWithDescendants = useCallback((filtered: Spec[], allSpecs: Spec[]): Spec[] => {
+    // Build children map
+    const childrenMap = new Map<string, Spec[]>();
+    for (const spec of allSpecs) {
+      const parentId = spec.parent;
+      if (parentId) {
+        if (!childrenMap.has(parentId)) {
+          childrenMap.set(parentId, []);
+        }
+        childrenMap.get(parentId)!.push(spec);
+      }
+    }
+
+    // Collect all matching spec IDs
+    const resultIds = new Set(filtered.map(s => s.specName || s.id));
+
+    // Recursively add descendants
+    const addDescendants = (specId: string) => {
+      const children = childrenMap.get(specId);
+      if (children) {
+        for (const child of children) {
+          const childId = child.specName || child.id;
+          if (childId && !resultIds.has(childId)) {
+            resultIds.add(childId);
+            addDescendants(childId);
+          }
+        }
+      }
+    };
+
+    for (const spec of filtered) {
+      addDescendants(spec.specName || spec.id || '');
+    }
+
+    // Return specs that are in the result set
+    return allSpecs.filter(s => resultIds.has(s.specName || s.id || ''));
+  }, []);
 
   const filteredSpecs = useMemo(() => {
     let result = specs;
@@ -190,8 +230,14 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       );
     }
 
+    // For tree view, expand to include all descendants of matching specs
+    // This ensures umbrella specs show their full hierarchy for progress visibility
+    if (viewMode === 'tree' && (statusFilter.length > 0 || priorityFilter.length > 0)) {
+      result = expandWithDescendants(result, specs);
+    }
+
     return [...result].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
-  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter]);
+  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants]);
 
   const RowComponent = useCallback(
     (rowProps: { index: number; style: CSSProperties }) => {
@@ -404,7 +450,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 >
                   {viewMode === 'list' ? <ListTree className="h-4 w-4" /> : <AlignJustify className="h-4 w-4" />}
                 </Button>
-                
+
                 <Popover open={showFilters} onOpenChange={setShowFilters}>
                   <PopoverTrigger asChild>
                     <Button
@@ -435,12 +481,12 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                       <Accordion type="multiple" className="w-full">
                         <AccordionItem value="status" className="border-b-0">
                           <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline text-xs">
-                             {statusFilter.length === 0
+                            {statusFilter.length === 0
                               ? t('specsNavSidebar.select.status.all')
                               : `${t('specsNavSidebar.status')}: ${statusFilter.length} ${t('specsNavSidebar.selected')}`}
                           </AccordionTrigger>
                           <AccordionContent className="pb-2">
-                             <div className="space-y-1 px-2">
+                            <div className="space-y-1 px-2">
                               {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => (
                                 <div
                                   key={status}
@@ -463,15 +509,15 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                             </div>
                           </AccordionContent>
                         </AccordionItem>
-                        
+
                         <AccordionItem value="priority" className="border-b-0 border-t">
                           <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline text-xs">
-                             {priorityFilter.length === 0
+                            {priorityFilter.length === 0
                               ? t('specsNavSidebar.select.priority.all')
                               : `${t('specsNavSidebar.priority')}: ${priorityFilter.length} ${t('specsNavSidebar.selected')}`}
                           </AccordionTrigger>
                           <AccordionContent className="pb-2">
-                             <div className="space-y-1 px-2">
+                            <div className="space-y-1 px-2">
                               {(['critical', 'high', 'medium', 'low'] as const).map((priority) => (
                                 <div
                                   key={priority}
@@ -498,40 +544,40 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                         {allTags.length > 0 && (
                           <AccordionItem value="tags" className="border-b-0 border-t">
                             <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline text-xs">
-                               {tagFilter.length === 0
+                              {tagFilter.length === 0
                                 ? t('specsNavSidebar.select.tag.all')
                                 : `${t('specsNavSidebar.tags')}: ${tagFilter.length} ${t('specsNavSidebar.selected')}`}
                             </AccordionTrigger>
                             <AccordionContent className="pb-2">
-                               <div className="px-2 pb-2">
-                                 <div className="relative">
-                                   <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                                   <Input
-                                     type="text"
-                                     placeholder={t('specsNavSidebar.searchTags') ?? 'Search tags...'}
-                                     value={tagSearchQuery}
-                                     onChange={(e) => setTagSearchQuery(e.target.value)}
-                                     className="h-8 pl-8 text-xs bg-background"
-                                   />
-                                 </div>
-                               </div>
-                               <div className="space-y-1 px-2 max-h-48 overflow-y-auto">
+                              <div className="px-2 pb-2">
+                                <div className="relative">
+                                  <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                                  <Input
+                                    type="text"
+                                    placeholder={t('specsNavSidebar.searchTags') ?? 'Search tags...'}
+                                    value={tagSearchQuery}
+                                    onChange={(e) => setTagSearchQuery(e.target.value)}
+                                    className="h-8 pl-8 text-xs bg-background"
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-1 px-2 max-h-48 overflow-y-auto">
                                 {allTags
                                   .filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase()))
                                   .map((tag) => (
-                                  <div
-                                    key={tag}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
-                                    onClick={() => toggleTag(tag)}
-                                  >
-                                    <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", tagFilter.includes(tag) ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
-                                      {tagFilter.includes(tag) && (
-                                        <Check className="h-3 w-3" />
-                                      )}
+                                    <div
+                                      key={tag}
+                                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                                      onClick={() => toggleTag(tag)}
+                                    >
+                                      <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", tagFilter.includes(tag) ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
+                                        {tagFilter.includes(tag) && (
+                                          <Check className="h-3 w-3" />
+                                        )}
+                                      </div>
+                                      <span className="text-sm flex-1 break-all">{tag}</span>
                                     </div>
-                                    <span className="text-sm flex-1 break-all">{tag}</span>
-                                  </div>
-                                ))}
+                                  ))}
                                 {allTags.filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase())).length === 0 && (
                                   <div className="text-xs text-muted-foreground text-center py-2">
                                     {t('specsNavSidebar.noTagsFound') ?? 'No tags found'}
@@ -590,11 +636,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               </div>
             ) : viewMode === 'tree' ? (
               <div className="h-full overflow-y-auto px-2 py-2">
-                 <HierarchyTree 
-                    specs={filteredSpecs as Spec[]} 
-                    onSpecClick={handleSpecClick}
-                    selectedSpecId={activeSpecActualId}
-                 />
+                <HierarchyTree
+                  specs={filteredSpecs as Spec[]}
+                  onSpecClick={handleSpecClick}
+                  selectedSpecId={activeSpecActualId}
+                />
               </div>
             ) : (
               <List<Record<string, never>>

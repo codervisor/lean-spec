@@ -145,9 +145,49 @@ export function SpecsPage() {
     setTagFilter('all');
   }, []);
 
+  // Helper: expand filtered specs to include all descendants (for groupByParent mode)
+  // This ensures umbrella progress visibility even when children have different statuses
+  const expandWithDescendants = useCallback((filtered: Spec[], allSpecs: Spec[]): Spec[] => {
+    // Build children map
+    const childrenMap = new Map<string, Spec[]>();
+    for (const spec of allSpecs) {
+      const parentId = spec.parent;
+      if (parentId) {
+        if (!childrenMap.has(parentId)) {
+          childrenMap.set(parentId, []);
+        }
+        childrenMap.get(parentId)!.push(spec);
+      }
+    }
+
+    // Collect all matching spec IDs
+    const resultIds = new Set(filtered.map(s => s.specName || s.id));
+
+    // Recursively add descendants
+    const addDescendants = (specId: string) => {
+      const children = childrenMap.get(specId);
+      if (children) {
+        for (const child of children) {
+          const childId = child.specName || child.id;
+          if (childId && !resultIds.has(childId)) {
+            resultIds.add(childId);
+            addDescendants(childId);
+          }
+        }
+      }
+    };
+
+    for (const spec of filtered) {
+      addDescendants(spec.specName || spec.id || '');
+    }
+
+    // Return specs that are in the result set
+    return allSpecs.filter(s => resultIds.has(s.specName || s.id || ''));
+  }, []);
+
   // Filter specs based on search and filters
   const filteredSpecs = useMemo(() => {
-    const filtered = specs.filter(spec => {
+    let filtered = specs.filter(spec => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
@@ -171,6 +211,12 @@ export function SpecsPage() {
 
       return true;
     });
+
+    // For groupByParent mode, expand to include all descendants of matching specs
+    // This ensures umbrella specs show their full hierarchy for progress visibility
+    if (groupByParent && (statusFilter !== 'all' || priorityFilter !== 'all')) {
+      filtered = expandWithDescendants(filtered, specs);
+    }
 
     const sorted = [...filtered];
     switch (sortBy) {
@@ -200,7 +246,7 @@ export function SpecsPage() {
     }
 
     return sorted;
-  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter]);
+  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants]);
 
   if (loading) {
     return (

@@ -30,18 +30,73 @@ pub fn run(
 
     let filtered: Vec<_> = specs.iter().filter(|s| filter.matches(s)).collect();
 
+    // For hierarchy mode, expand to include all descendants of matching specs
+    // This ensures when filtering by status (e.g., in-progress), we show complete
+    // children of matching umbrella specs for full progress visibility
+    let expanded = if hierarchy {
+        expand_with_descendants(&filtered, &specs)
+    } else {
+        filtered
+    };
+
     if output_format == "json" {
-        print_json(&filtered)?;
+        print_json(&expanded)?;
     } else if hierarchy {
         warn_deprecated("lean-spec list --hierarchy", "lean-spec rel view");
-        print_hierarchy(&filtered);
+        print_hierarchy(&expanded);
     } else if compact {
-        print_compact(&filtered);
+        print_compact(&expanded);
     } else {
-        print_detailed(&filtered);
+        print_detailed(&expanded);
     }
 
     Ok(())
+}
+
+/// Expand filtered specs to include all descendants of matching specs.
+/// This is used in hierarchy mode so that umbrella progress is visible
+/// even when children have different statuses than the filter.
+fn expand_with_descendants<'a>(
+    filtered: &[&'a SpecInfo],
+    all_specs: &'a [SpecInfo],
+) -> Vec<&'a SpecInfo> {
+    use std::collections::{HashMap, HashSet};
+
+    // Build children map from all specs
+    let mut children_map: HashMap<&str, Vec<&SpecInfo>> = HashMap::new();
+    for spec in all_specs {
+        if let Some(parent) = spec.frontmatter.parent.as_deref() {
+            children_map.entry(parent).or_default().push(spec);
+        }
+    }
+
+    // Start with filtered specs
+    let mut result_paths: HashSet<&str> = filtered.iter().map(|s| s.path.as_str()).collect();
+
+    // Recursively add all descendants
+    fn add_descendants<'a>(
+        spec_path: &str,
+        children_map: &HashMap<&str, Vec<&'a SpecInfo>>,
+        result_paths: &mut HashSet<&'a str>,
+    ) {
+        if let Some(children) = children_map.get(spec_path) {
+            for child in children {
+                if result_paths.insert(child.path.as_str()) {
+                    add_descendants(child.path.as_str(), children_map, result_paths);
+                }
+            }
+        }
+    }
+
+    for spec in filtered {
+        add_descendants(spec.path.as_str(), &children_map, &mut result_paths);
+    }
+
+    // Build result from all_specs to maintain consistent references
+    all_specs
+        .iter()
+        .filter(|s| result_paths.contains(s.path.as_str()))
+        .collect()
 }
 
 fn print_json(specs: &[&SpecInfo]) -> Result<(), Box<dyn Error>> {
