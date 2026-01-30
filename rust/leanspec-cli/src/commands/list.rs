@@ -1,5 +1,6 @@
 //! List command implementation
 
+use super::deprecation::warn_deprecated;
 use colored::Colorize;
 use leanspec_core::{SpecFilterOptions, SpecInfo, SpecLoader, SpecPriority, SpecStatus};
 use std::error::Error;
@@ -32,6 +33,7 @@ pub fn run(
     if output_format == "json" {
         print_json(&filtered)?;
     } else if hierarchy {
+        warn_deprecated("lean-spec list --hierarchy", "lean-spec rel view");
         print_hierarchy(&filtered);
     } else if compact {
         print_compact(&filtered);

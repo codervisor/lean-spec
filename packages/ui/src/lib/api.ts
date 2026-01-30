@@ -62,7 +62,12 @@ class ProjectAPI {
 
   async updateSpec(
     specName: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & {
+      expectedContentHash?: string;
+      parent?: string | null;
+      addDependsOn?: string[];
+      removeDependsOn?: string[];
+    }
   ): Promise<void> {
     return this.backend.updateSpec(this.getCurrentProjectId(), specName, updates);
   }

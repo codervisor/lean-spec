@@ -269,6 +269,35 @@
       "umbrella": "Umbrella Spec"
     }
   },
+  "relationships": {
+    "title": "Relationships",
+    "description": "Manage hierarchy and dependencies for this spec.",
+    "button": "Relationships",
+    "sections": {
+      "hierarchy": "Hierarchy",
+      "dependencies": "Dependencies"
+    },
+    "parent": "Parent",
+    "children": "Children",
+    "dependsOn": "Depends On",
+    "requiredBy": "Required By",
+    "actions": {
+      "setParent": "Set parent",
+      "addChild": "Add child",
+      "addDependsOn": "Add dependency",
+      "addRequiredBy": "Add dependent",
+      "viewHierarchy": "View in hierarchy",
+      "viewDependencies": "View dependency graph"
+    },
+    "empty": {
+      "parent": "No parent set",
+      "children": "No children",
+      "dependsOn": "No dependencies",
+      "requiredBy": "No dependents",
+      "noSpecs": "No specs found"
+    },
+    "confirmRemove": "Remove relationship to {{label}}?"
+  },
   "settings": {
     "title": "Settings",
     "description": "Manage your preferences and configuration",

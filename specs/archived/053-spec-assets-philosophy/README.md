@@ -1,13 +1,16 @@
 ---
-status: planned
-created: '2025-11-05'
-tags:
-  - philosophy
-  - documentation
-  - guidelines
+status: archived
+created: 2025-11-05
 priority: low
-created_at: '2025-11-26T02:35:37.510Z'
-updated_at: '2025-11-26T02:35:37.772Z'
+tags:
+- philosophy
+- documentation
+- guidelines
+created_at: 2025-11-26T02:35:37.510Z
+updated_at: 2026-01-30T01:46:09.243390Z
+transitions:
+- status: archived
+  at: 2026-01-30T01:46:09.243390Z
 ---
 
 # Spec Assets and Artifact Management Philosophy

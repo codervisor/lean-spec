@@ -1536,6 +1536,9 @@ pub async fn update_project_metadata(
                     status: updates.status.clone(),
                     priority: updates.priority.clone(),
                     tags: updates.tags.clone(),
+                    add_depends_on: updates.add_depends_on.clone(),
+                    remove_depends_on: updates.remove_depends_on.clone(),
+                    parent: updates.parent.clone(),
                     expected_content_hash: updates.expected_content_hash.clone(),
                 },
                 created_at: chrono::Utc::now(),
@@ -1661,6 +1664,26 @@ pub async fn update_project_metadata(
 
     // Convert HTTP metadata update to core metadata update
     let mut core_updates = CoreMetadataUpdate::new();
+    let spec_info = spec.as_ref().unwrap();
+    let mut depends_on = spec_info.frontmatter.depends_on.clone();
+
+    if let Some(additions) = &updates.add_depends_on {
+        for dep in additions {
+            if dep == &spec_id {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiError::invalid_request("Spec cannot depend on itself")),
+                ));
+            }
+            if !depends_on.contains(dep) {
+                depends_on.push(dep.clone());
+            }
+        }
+    }
+
+    if let Some(removals) = &updates.remove_depends_on {
+        depends_on.retain(|dep| !removals.contains(dep));
+    }
 
     if let Some(status_str) = &updates.status {
         let status = status_str.parse().map_err(|_| {
@@ -1694,6 +1717,22 @@ pub async fn update_project_metadata(
 
     if let Some(assignee) = updates.assignee {
         core_updates = core_updates.with_assignee(assignee);
+    }
+
+    if updates.add_depends_on.is_some() || updates.remove_depends_on.is_some() {
+        core_updates = core_updates.with_depends_on(depends_on);
+    }
+
+    if let Some(parent) = updates.parent {
+        if let Some(parent_name) = parent.as_deref() {
+            if parent_name == spec_id {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiError::invalid_request("Spec cannot be its own parent")),
+                ));
+            }
+        }
+        core_updates = core_updates.with_parent(parent);
     }
 
     // Update metadata using spec writer

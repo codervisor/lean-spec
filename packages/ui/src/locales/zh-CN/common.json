@@ -264,6 +264,35 @@
     "updatedAt": "更新时间",
     "completedAt": "完成时间"
   },
+  "relationships": {
+    "title": "关系",
+    "description": "管理当前规范的层级与依赖关系。",
+    "button": "关系",
+    "sections": {
+      "hierarchy": "层级",
+      "dependencies": "依赖"
+    },
+    "parent": "父规范",
+    "children": "子规范",
+    "dependsOn": "依赖",
+    "requiredBy": "被依赖",
+    "actions": {
+      "setParent": "设置父规范",
+      "addChild": "添加子规范",
+      "addDependsOn": "添加依赖",
+      "addRequiredBy": "添加被依赖",
+      "viewHierarchy": "在层级中查看",
+      "viewDependencies": "查看依赖图"
+    },
+    "empty": {
+      "parent": "未设置父规范",
+      "children": "暂无子规范",
+      "dependsOn": "暂无依赖",
+      "requiredBy": "暂无被依赖",
+      "noSpecs": "暂无规范"
+    },
+    "confirmRemove": "移除与 {{label}} 的关系？"
+  },
   "settings": {
     "title": "设置",
     "description": "管理你的偏好和配置",

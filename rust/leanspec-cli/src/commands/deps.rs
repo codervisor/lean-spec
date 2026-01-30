@@ -1,5 +1,6 @@
 //! Deps command implementation
 
+use super::deprecation::warn_deprecated;
 use colored::Colorize;
 use leanspec_core::{DependencyGraph, SpecLoader};
 use std::error::Error;
@@ -12,6 +13,7 @@ pub fn run(
     downstream_only: bool,
     output_format: &str,
 ) -> Result<(), Box<dyn Error>> {
+    warn_deprecated("lean-spec deps", "lean-spec rel");
     let loader = SpecLoader::new(specs_dir);
     let all_specs = loader.load_all()?;
 

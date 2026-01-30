@@ -3,18 +3,16 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
   RefreshCcw,
-  GitBranch,
   Home,
   Clock,
   Maximize2,
   Minimize2,
   List as ListIcon,
-  ExternalLink,
   Terminal,
   Plus,
   CornerDownRight,
   ChevronRight,
-  Network
+  Link2
 } from 'lucide-react';
 import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
@@ -26,10 +24,8 @@ import {
   DialogTitle,
   DialogDescription,
   SpecTimeline,
-  SpecDependencyGraph,
   StatusBadge,
   PriorityBadge,
-  type CompleteSpecRelationships
 } from '@leanspec/ui-components';
 import { APIError, api } from '../lib/api';
 import { StatusEditor } from '../components/metadata-editors/StatusEditor';
@@ -49,6 +45,7 @@ import { PageTransition } from '../components/shared/PageTransition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
 import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
+import { RelationshipsEditor } from '../components/relationships/RelationshipsEditor';
 
 // Sub-spec with frontend-assigned styling
 interface EnrichedSubSpec extends SubSpec {
@@ -73,9 +70,7 @@ export function SpecDetailPage() {
   const currentSubSpec = searchParams.get('subspec');
   const headerRef = useRef<HTMLElement>(null);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
-  const [dependenciesDialogOpen, setDependenciesDialogOpen] = useState(false);
-  const [hierarchyDialogOpen, setHierarchyDialogOpen] = useState(false);
-  const [dependencyGraphData, setDependencyGraphData] = useState<CompleteSpecRelationships | null>(null);
+  const [relationshipsDialogOpen, setRelationshipsDialogOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const { setMobileOpen } = useSpecDetailLayoutContext();
   const [sessionCount, setSessionCount] = useState<number | null>(null);
@@ -151,64 +146,6 @@ export function SpecDetailPage() {
     void loadSpec();
   }, [loadSpec, projectReady]);
 
-  useEffect(() => {
-    // Clear cached dependency graph data when spec changes
-    setDependencyGraphData(null);
-  }, [spec?.id, spec?.specName]);
-
-  useEffect(() => {
-    if (dependenciesDialogOpen && !dependencyGraphData && spec) {
-      const loadGraph = async () => {
-        try {
-          // Fetch all specs to get details for dependencies
-          // In a real app, we should have a dedicated endpoint for this
-          const allSpecs = await api.getSpecs();
-
-          const findSpec = (idOrName: string) =>
-            allSpecs.find(s => s.id === idOrName || s.specName === idOrName);
-
-          const current = {
-            specName: spec.specName,
-            specNumber: spec.specNumber || undefined,
-            status: spec.status || undefined,
-            priority: spec.priority || undefined
-          };
-
-          // Filter out self-references (defensive fix for bug where spec depends on itself)
-          const dependsOn = (spec.dependsOn || [])
-            .filter(id => id !== spec.id && id !== spec.specName) // Prevent self-reference
-            .map(id => {
-              const s = findSpec(id);
-              return {
-                specName: s?.specName || id,
-                specNumber: s?.specNumber || undefined,
-                title: s?.title || undefined,
-                status: s?.status || undefined,
-                priority: s?.priority || undefined
-              };
-            });
-
-          const requiredBy = (spec.requiredBy || [])
-            .filter(id => id !== spec.id && id !== spec.specName) // Prevent self-reference
-            .map(id => {
-              const s = findSpec(id);
-              return {
-                specName: s?.specName || id,
-                specNumber: s?.specNumber || undefined,
-                title: s?.title || undefined,
-                status: s?.status || undefined,
-                priority: s?.priority || undefined
-              };
-            });
-
-          setDependencyGraphData({ current, dependsOn, requiredBy });
-        } catch (err) {
-          console.error('Failed to load dependency graph data', err);
-        }
-      };
-      void loadGraph();
-    }
-  }, [dependenciesDialogOpen, dependencyGraphData, spec]);
 
   const loadSessionCount = useCallback(async () => {
     if (!spec?.specName) return;
@@ -352,12 +289,6 @@ export function SpecDetailPage() {
       />
     );
   }
-
-  const dependsOn = spec.dependsOn || [];
-  const requiredBy = spec.requiredBy || [];
-  const hasRelationships = dependsOn.length > 0 || requiredBy.length > 0;
-  const children = spec.children || [];
-  const hasHierarchy = !!spec.parent || children.length > 0;
 
   return (
     <PageTransition className="flex-1 min-w-0">
@@ -529,160 +460,20 @@ export function SpecDetailPage() {
                     </DialogContent>
                   </Dialog>
 
-                  <Dialog open={dependenciesDialogOpen} onOpenChange={setDependenciesDialogOpen}>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      aria-haspopup="dialog"
-                      aria-expanded={dependenciesDialogOpen}
-                      onClick={() => setDependenciesDialogOpen(true)}
-                      disabled={!hasRelationships}
-                      className={cn(
-                        'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
-                        !hasRelationships && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-                      {t('specDetail.buttons.viewDependencies')}
-                    </Button>
-                    <DialogContent className="flex h-[85vh] w-[min(1200px,95vw)] max-w-6xl flex-col gap-4 overflow-hidden">
-                      <DialogHeader>
-                        <DialogTitle>{t('specDetail.dialogs.dependenciesTitle')}</DialogTitle>
-                        <DialogDescription className="flex flex-col gap-2">
-                          <span>{t('specDetail.dialogs.dependenciesDescription')}</span>
-                          <Link
-                            to={`${basePath}/dependencies?spec=${spec.specNumber || spec.id}`}
-                            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline w-fit"
-                            onClick={() => setDependenciesDialogOpen(false)}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            {t('specDetail.dialogs.dependenciesLink')}
-                          </Link>
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="min-h-0 flex-1">
-                        {dependencyGraphData && (
-                          <SpecDependencyGraph
-                            relationships={dependencyGraphData}
-                            specNumber={spec.specNumber}
-                            specTitle={displayTitle}
-                            labels={{
-                              title: t('dependencyGraph.header.title'),
-                              subtitle: t('dependencyGraph.header.subtitle'),
-                              badge: t('dependencyGraph.header.badge'),
-                              currentBadge: t('dependencyGraph.badges.current'),
-                              currentSubtitle: t('dependencyGraph.badges.currentSubtitle'),
-                              dependsOnBadge: t('dependencyGraph.badges.dependsOn'),
-                              dependsOnSubtitle: t('dependencyGraph.badges.dependsOnSubtitle'),
-                              requiredByBadge: t('dependencyGraph.badges.requiredBy'),
-                              requiredBySubtitle: t('dependencyGraph.badges.requiredBySubtitle'),
-                              completedSubtitle: t('dependencyGraph.statusSubtitles.completed'),
-                              inProgressSubtitle: t('dependencyGraph.statusSubtitles.inProgress'),
-                              plannedBlockingSubtitle: t('dependencyGraph.statusSubtitles.plannedBlocking'),
-                              plannedCanProceedSubtitle: t('dependencyGraph.statusSubtitles.plannedCanProceed'),
-                              archivedSubtitle: t('dependencyGraph.statusSubtitles.archived'),
-                            }}
-                            onNodeClick={(specId) => {
-                              const url = `${basePath}/specs/${specId}`;
-                              navigate(url);
-                              setDependenciesDialogOpen(false);
-                            }}
-                          />
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* View Hierarchy */}
-                  <Dialog open={hierarchyDialogOpen} onOpenChange={setHierarchyDialogOpen}>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      aria-haspopup="dialog"
-                      aria-expanded={hierarchyDialogOpen}
-                      onClick={() => setHierarchyDialogOpen(true)}
-                      disabled={!hasHierarchy}
-                      className={cn(
-                        'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
-                        !hasHierarchy && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      <Network className="mr-1.5 h-3.5 w-3.5" />
-                      {t('specDetail.buttons.viewHierarchy')}
-                    </Button>
-                    <DialogContent className="w-[min(600px,90vw)] max-w-2xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>{t('specDetail.dialogs.hierarchyTitle')}</DialogTitle>
-                        <DialogDescription>{t('specDetail.dialogs.hierarchyDescription')}</DialogDescription>
-                      </DialogHeader>
-                      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
-                        {/* Parent Section */}
-                        {spec.parent && (
-                          <div>
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
-                              <CornerDownRight className="h-3.5 w-3.5" />
-                              {t('specDetail.hierarchy.parent')}
-                            </h4>
-                            <Link
-                              to={`${basePath}/specs/${spec.parent}`}
-                              onClick={() => setHierarchyDialogOpen(false)}
-                              className="flex items-center gap-2 p-3 rounded-md border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all text-sm group"
-                            >
-                              <span className="truncate flex-1 font-medium">{spec.parent}</span>
-                              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                            </Link>
-                          </div>
-                        )}
-
-                        {/* Current Spec */}
-                        <div>
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
-                            <Network className="h-3.5 w-3.5" />
-                            {t('specDetail.hierarchy.current')}
-                          </h4>
-                          <div className="flex items-center gap-2 p-3 rounded-md border-2 border-primary/50 bg-primary/5 text-sm">
-                            <span className="truncate flex-1 font-medium">
-                              {spec.specNumber && <span className="text-muted-foreground">#{spec.specNumber} </span>}
-                              {displayTitle}
-                            </span>
-                            <StatusBadge status={spec.status || 'planned'} />
-                          </div>
-                        </div>
-
-                        {/* Children Section */}
-                        {children.length > 0 && (
-                          <div>
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
-                              <ChevronRight className="h-3.5 w-3.5" />
-                              {t('specDetail.hierarchy.children')} ({children.length})
-                            </h4>
-                            <div className="space-y-1.5">
-                              {children.map(childName => (
-                                <Link
-                                  key={childName}
-                                  to={`${basePath}/specs/${childName}`}
-                                  onClick={() => setHierarchyDialogOpen(false)}
-                                  className="flex items-center gap-2 p-3 rounded-md border bg-card hover:border-primary/50 hover:bg-accent/50 transition-all text-sm group"
-                                >
-                                  <span className="truncate flex-1">{childName}</span>
-                                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                                </Link>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* No hierarchy message */}
-                        {!spec.parent && children.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-4 italic">
-                            {t('specDetail.hierarchy.noRelationships')}
-                          </p>
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-haspopup="dialog"
+                    aria-expanded={relationshipsDialogOpen}
+                    onClick={() => setRelationshipsDialogOpen(true)}
+                    className={cn(
+                      'h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground'
+                    )}
+                  >
+                    <Link2 className="mr-1.5 h-3.5 w-3.5" />
+                    {t('relationships.button')}
+                  </Button>
 
                   <Link to={`${basePath}/sessions?spec=${encodeURIComponent(spec.specName)}`} className="inline-flex">
                     <Button
@@ -809,6 +600,16 @@ export function SpecDetailPage() {
           projectPath={currentProject?.path}
           defaultSpecId={spec.specName}
           onCreated={() => void loadSessionCount()}
+        />
+      )}
+      {spec && (
+        <RelationshipsEditor
+          spec={spec}
+          open={relationshipsDialogOpen}
+          onOpenChange={setRelationshipsDialogOpen}
+          basePath={basePath}
+          disabled={machineModeEnabled && !isMachineAvailable}
+          onUpdated={() => void loadSpec()}
         />
       )}
     </PageTransition>

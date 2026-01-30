@@ -21,6 +21,10 @@ pub fn run(
         .iter()
         .filter(|s| s.frontmatter.parent.as_deref() == Some(spec_info.path.as_str()))
         .collect();
+    let required_by: Vec<&leanspec_core::SpecInfo> = all_specs
+        .iter()
+        .filter(|s| s.frontmatter.depends_on.contains(&spec_info.path))
+        .collect();
 
     if output_format == "json" {
         #[derive(serde::Serialize)]
@@ -32,6 +36,7 @@ pub fn run(
             priority: Option<String>,
             tags: Vec<String>,
             depends_on: Vec<String>,
+            required_by: Vec<String>,
             assignee: Option<String>,
             parent: Option<String>,
             children: Vec<String>,
@@ -46,6 +51,7 @@ pub fn run(
             priority: spec_info.frontmatter.priority.map(|p| p.to_string()),
             tags: spec_info.frontmatter.tags.clone(),
             depends_on: spec_info.frontmatter.depends_on.clone(),
+            required_by: required_by.iter().map(|s| s.path.clone()).collect(),
             assignee: spec_info.frontmatter.assignee.clone(),
             parent: spec_info.frontmatter.parent.clone(),
             children: children.iter().map(|s| s.path.clone()).collect(),
@@ -96,8 +102,27 @@ pub fn run(
         println!("{}: {}", "Assignee".bold(), assignee);
     }
 
+    println!();
+    println!("{}", "Relationships".bold());
+
     if let Some(parent) = &spec_info.frontmatter.parent {
         println!("{}: {}", "Parent".bold(), parent);
+    } else {
+        println!("{}: (none)", "Parent".bold());
+    }
+
+    if !required_by.is_empty() {
+        println!(
+            "{}: {}",
+            "Required By".bold(),
+            required_by
+                .iter()
+                .map(|s| s.path.clone())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    } else {
+        println!("{}: (none)", "Required By".bold());
     }
 
     if !children.is_empty() {
@@ -110,6 +135,8 @@ pub fn run(
                 .collect::<Vec<_>>()
                 .join(", ")
         );
+    } else {
+        println!("{}: (none)", "Children".bold());
     }
 
     if !spec_info.frontmatter.depends_on.is_empty() {
@@ -118,6 +145,8 @@ pub fn run(
             "Depends on".bold(),
             spec_info.frontmatter.depends_on.join(", ")
         );
+    } else {
+        println!("{}: (none)", "Depends on".bold());
     }
 
     println!();

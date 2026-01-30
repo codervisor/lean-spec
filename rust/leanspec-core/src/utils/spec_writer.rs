@@ -33,6 +33,8 @@ pub struct MetadataUpdate {
     pub priority: Option<SpecPriority>,
     pub tags: Option<Vec<String>>,
     pub assignee: Option<String>,
+    pub depends_on: Option<Vec<String>>,
+    pub parent: Option<Option<String>>,
 }
 
 impl MetadataUpdate {
@@ -57,6 +59,16 @@ impl MetadataUpdate {
 
     pub fn with_assignee(mut self, assignee: String) -> Self {
         self.assignee = Some(assignee);
+        self
+    }
+
+    pub fn with_depends_on(mut self, depends_on: Vec<String>) -> Self {
+        self.depends_on = Some(depends_on);
+        self
+    }
+
+    pub fn with_parent(mut self, parent: Option<String>) -> Self {
+        self.parent = Some(parent);
         self
     }
 }
@@ -107,6 +119,14 @@ impl SpecWriter {
             } else {
                 frontmatter.assignee = Some(assignee);
             }
+        }
+
+        if let Some(depends_on) = updates.depends_on {
+            frontmatter.depends_on = depends_on;
+        }
+
+        if let Some(parent) = updates.parent {
+            frontmatter.parent = parent.filter(|value| !value.trim().is_empty());
         }
 
         // Update timestamp

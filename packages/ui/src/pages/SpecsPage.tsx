@@ -71,8 +71,16 @@ export function SpecsPage() {
     if (initializedFromQuery.current) return;
     const initialTag = searchParams.get('tag');
     const initialQuery = searchParams.get('q');
+    const initialView = searchParams.get('view');
+    const initialGroupByParent = searchParams.get('groupByParent');
     if (initialTag) setTagFilter(initialTag);
     if (initialQuery) setSearchQuery(initialQuery);
+    if (initialView === 'board' || initialView === 'list') {
+      setViewMode(initialView);
+    }
+    if (initialGroupByParent === '1' || initialGroupByParent === 'true') {
+      setGroupByParent(true);
+    }
     initializedFromQuery.current = true;
   }, [searchParams]);
 
@@ -230,16 +238,16 @@ export function SpecsPage() {
           actions={(
             <div className="flex items-center gap-3">
               {viewMode === 'board' && (
-                  <Button
-                    variant={groupByParent ? "secondary" : "outline"}
-                    size="sm"
-                    className="h-8 gap-1.5"
-                    onClick={() => setGroupByParent(!groupByParent)}
-                    title="Group specs by umbrella/parent"
-                  >
-                     <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
-                     <span className="hidden sm:inline">Group by Parent</span>
-                  </Button>
+                <Button
+                  variant={groupByParent ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  onClick={() => setGroupByParent(!groupByParent)}
+                  title="Group specs by umbrella/parent"
+                >
+                  <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
+                  <span className="hidden sm:inline">Group by Parent</span>
+                </Button>
               )}
               <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
                 <Button

@@ -70,7 +70,12 @@ export interface BackendAdapter {
   updateSpec(
     projectId: string,
     specName: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & {
+      expectedContentHash?: string;
+      parent?: string | null;
+      addDependsOn?: string[];
+      removeDependsOn?: string[];
+    }
   ): Promise<void>;
 
   // Stats and dependencies
@@ -270,7 +275,12 @@ export class HttpBackendAdapter implements BackendAdapter {
   async updateSpec(
     projectId: string,
     specName: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & {
+      expectedContentHash?: string;
+      parent?: string | null;
+      addDependsOn?: string[];
+      removeDependsOn?: string[];
+    }
   ): Promise<void> {
     await this.fetchAPI(`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/metadata`, {
       method: 'PATCH',
@@ -509,16 +519,23 @@ export class TauriBackendAdapter implements BackendAdapter {
   async updateSpec(
     projectId: string,
     specName: string,
-    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & { expectedContentHash?: string }
+    updates: Partial<Pick<Spec, 'status' | 'priority' | 'tags'>> & {
+      expectedContentHash?: string;
+      parent?: string | null;
+      addDependsOn?: string[];
+      removeDependsOn?: string[];
+    }
   ): Promise<void> {
     // For now, only status update is supported
-    if (updates.status) {
+    if (updates.status && !updates.parent && !updates.addDependsOn?.length && !updates.removeDependsOn?.length) {
       await this.invoke('update_spec_status', {
         projectId,
         specId: specName,
         newStatus: updates.status,
       });
+      return;
     }
+    throw new Error('Relationship updates are not implemented for the Tauri backend yet');
   }
 
   async getStats(projectId: string): Promise<Stats> {

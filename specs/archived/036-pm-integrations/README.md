@@ -1,15 +1,18 @@
 ---
-status: planned
-created: '2025-11-03'
-tags:
-  - integration
-  - pm
-  - github
-  - jira
-  - ado
+status: archived
+created: 2025-11-03
 priority: low
-created_at: '2025-11-20T05:50:48.136Z'
-updated_at: '2025-11-26T02:54:21.233Z'
+tags:
+- integration
+- pm
+- github
+- jira
+- ado
+created_at: 2025-11-20T05:50:48.136Z
+updated_at: 2026-01-30T01:46:08.406312Z
+transitions:
+- status: archived
+  at: 2026-01-30T01:46:08.406312Z
 ---
 
 # External PM Systems Integration

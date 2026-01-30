@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: 2025-11-17
 priority: low
 tags:
@@ -11,8 +11,12 @@ depends_on:
 - 082-web-realtime-sync-architecture
 - 151-multi-project-architecture-refactoring
 created_at: 2025-11-17T08:19:16.821Z
-updated_at: 2026-01-16T07:35:20.981302Z
+updated_at: 2026-01-30T01:46:09.246613Z
+transitions:
+- status: archived
+  at: 2026-01-30T01:46:09.246613Z
 ---
+
 # GitHub Multi-Project Integration
 
 > **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-11-17 · **Tags**: web, github, integration, v0.3

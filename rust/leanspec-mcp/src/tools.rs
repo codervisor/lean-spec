@@ -251,6 +251,36 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
             }),
         },
         ToolDefinition {
+            name: "relationships".to_string(),
+            description: "Manage spec relationships (hierarchy and dependencies)".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "specPath": {
+                        "type": "string",
+                        "description": "Spec path or number"
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "Action to perform",
+                        "enum": ["view", "add", "remove"],
+                        "default": "view"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Relationship type",
+                        "enum": ["parent", "child", "depends_on"]
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "Target spec path or number"
+                    }
+                },
+                "required": ["specPath"],
+                "additionalProperties": false
+            }),
+        },
+        ToolDefinition {
             name: "list_children".to_string(),
             description: "List direct children of a parent spec".to_string(),
             input_schema: json!({
@@ -354,18 +384,44 @@ pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
         "create" => tool_create(&specs_dir, args),
         "update" => tool_update(&specs_dir, args),
         "validate" => tool_validate(&specs_dir, args),
-        "deps" => tool_deps(&specs_dir, args),
-        "link" => tool_link(&specs_dir, args),
-        "unlink" => tool_unlink(&specs_dir, args),
-        "set_parent" => tool_set_parent(&specs_dir, args),
-        "list_children" => tool_list_children(&specs_dir, args),
-        "list_umbrellas" => tool_list_umbrellas(&specs_dir),
+        "deps" => with_deprecation_warning(
+            tool_deps(&specs_dir, args),
+            "Use relationships with action=view instead of deps",
+        ),
+        "link" => with_deprecation_warning(
+            tool_link(&specs_dir, args),
+            "Use relationships with action=add type=depends_on instead of link",
+        ),
+        "unlink" => with_deprecation_warning(
+            tool_unlink(&specs_dir, args),
+            "Use relationships with action=remove type=depends_on instead of unlink",
+        ),
+        "set_parent" => with_deprecation_warning(
+            tool_set_parent(&specs_dir, args),
+            "Use relationships with action=add/remove type=parent instead of set_parent",
+        ),
+        "list_children" => with_deprecation_warning(
+            tool_list_children(&specs_dir, args),
+            "Use relationships with action=view instead of list_children",
+        ),
+        "list_umbrellas" => with_deprecation_warning(
+            tool_list_umbrellas(&specs_dir),
+            "Use relationships with action=view instead of list_umbrellas",
+        ),
+        "relationships" => tool_relationships(&specs_dir, args),
         "search" => tool_search(&specs_dir, args),
         "board" => tool_board(&specs_dir, args),
         "tokens" => tool_tokens(&specs_dir, args),
         "stats" => tool_stats(&specs_dir),
         _ => Err(format!("Unknown tool: {}", name)),
     }
+}
+
+fn with_deprecation_warning(
+    result: Result<String, String>,
+    warning: &str,
+) -> Result<String, String> {
+    result.map(|output| format!("DEPRECATED: {}\n{}", warning, output))
 }
 
 fn tool_list(specs_dir: &str, args: Value) -> Result<String, String> {
@@ -442,6 +498,11 @@ fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> {
         .filter(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
         .map(|s| s.path.clone())
         .collect();
+    let required_by: Vec<String> = all_specs
+        .iter()
+        .filter(|s| s.frontmatter.depends_on.contains(&spec.path))
+        .map(|s| s.path.clone())
+        .collect();
 
     let output = json!({
         "path": spec.path,
@@ -454,6 +515,7 @@ fn tool_view(specs_dir: &str, args: Value) -> Result<String, String> {
         "assignee": spec.frontmatter.assignee,
         "parent": spec.frontmatter.parent,
         "children": children,
+        "required_by": required_by,
         "content": spec.content,
     });
 
@@ -916,6 +978,115 @@ fn tool_set_parent(specs_dir: &str, args: Value) -> Result<String, String> {
 
     std::fs::write(&spec.file_path, &new_content).map_err(|e| e.to_string())?;
     Ok(format!("Cleared parent for {}", spec.path))
+}
+
+fn tool_relationships(specs_dir: &str, args: Value) -> Result<String, String> {
+    let spec_path = args
+        .get("specPath")
+        .and_then(|v| v.as_str())
+        .ok_or("Missing required parameter: specPath")?;
+
+    let action = args
+        .get("action")
+        .and_then(|v| v.as_str())
+        .unwrap_or("view");
+
+    let rel_type = args.get("type").and_then(|v| v.as_str());
+    let target = args.get("target").and_then(|v| v.as_str());
+
+    match action {
+        "view" => {
+            let loader = SpecLoader::new(specs_dir);
+            let spec = loader
+                .load(spec_path)
+                .map_err(|e| e.to_string())?
+                .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
+
+            let all_specs = loader.load_all().map_err(|e| e.to_string())?;
+            let children: Vec<_> = all_specs
+                .iter()
+                .filter(|s| s.frontmatter.parent.as_deref() == Some(spec.path.as_str()))
+                .collect();
+            let required_by: Vec<_> = all_specs
+                .iter()
+                .filter(|s| s.frontmatter.depends_on.contains(&spec.path))
+                .collect();
+
+            let to_summary = |s: &leanspec_core::SpecInfo| {
+                json!({
+                    "path": s.path,
+                    "title": s.title,
+                    "status": s.frontmatter.status.to_string()
+                })
+            };
+
+            let output = json!({
+                "spec": {
+                    "path": spec.path,
+                    "title": spec.title,
+                    "status": spec.frontmatter.status.to_string(),
+                },
+                "hierarchy": {
+                    "parent": spec.frontmatter.parent,
+                    "children": children.iter().map(|s| to_summary(s)).collect::<Vec<_>>()
+                },
+                "dependencies": {
+                    "depends_on": spec.frontmatter.depends_on.iter().map(|path| {
+                        all_specs
+                            .iter()
+                            .find(|s| s.path == *path)
+                            .map(|s| to_summary(s))
+                            .unwrap_or_else(|| json!({ "path": path }))
+                    }).collect::<Vec<_>>(),
+                    "required_by": required_by.iter().map(|s| to_summary(s)).collect::<Vec<_>>()
+                }
+            });
+
+            return serde_json::to_string_pretty(&output).map_err(|e| e.to_string());
+        }
+        "add" | "remove" => {
+            let rel_type = rel_type.ok_or("Missing required parameter: type")?;
+            let target = target.ok_or("Missing required parameter: target")?;
+
+            match rel_type {
+                "parent" => {
+                    if action == "add" {
+                        tool_set_parent(
+                            specs_dir,
+                            json!({ "specPath": spec_path, "parent": target }),
+                        )
+                    } else {
+                        tool_set_parent(specs_dir, json!({ "specPath": spec_path, "parent": null }))
+                    }
+                }
+                "child" => {
+                    if action == "add" {
+                        tool_set_parent(
+                            specs_dir,
+                            json!({ "specPath": target, "parent": spec_path }),
+                        )
+                    } else {
+                        tool_set_parent(specs_dir, json!({ "specPath": target, "parent": null }))
+                    }
+                }
+                "depends_on" => {
+                    if action == "add" {
+                        tool_link(
+                            specs_dir,
+                            json!({ "specPath": spec_path, "dependsOn": target }),
+                        )
+                    } else {
+                        tool_unlink(
+                            specs_dir,
+                            json!({ "specPath": spec_path, "dependsOn": target }),
+                        )
+                    }
+                }
+                _ => Err("Invalid relationship type".to_string()),
+            }
+        }
+        _ => Err("Invalid action".to_string()),
+    }
 }
 
 fn tool_list_children(specs_dir: &str, args: Value) -> Result<String, String> {

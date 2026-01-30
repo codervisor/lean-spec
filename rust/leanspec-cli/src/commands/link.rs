@@ -1,11 +1,13 @@
 //! Link command implementation
 
+use super::deprecation::warn_deprecated;
 use colored::Colorize;
 use leanspec_core::{FrontmatterParser, SpecLoader};
 use std::collections::HashMap;
 use std::error::Error;
 
 pub fn run(specs_dir: &str, spec: &str, depends_on: &[String]) -> Result<(), Box<dyn Error>> {
+    warn_deprecated("lean-spec link", "lean-spec rel add --depends-on");
     if depends_on.is_empty() {
         return Err("At least one dependency is required".into());
     }

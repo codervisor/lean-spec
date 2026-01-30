@@ -119,6 +119,9 @@ enum SyncCommand {
         status: Option<String>,
         priority: Option<String>,
         tags: Option<Vec<String>>,
+        add_depends_on: Option<Vec<String>>,
+        remove_depends_on: Option<Vec<String>>,
+        parent: Option<Option<String>>,
         expected_content_hash: Option<String>,
     },
     RenameMachine {
@@ -398,6 +401,9 @@ async fn handle_command(
             status,
             priority,
             tags,
+            add_depends_on,
+            remove_depends_on,
+            parent,
             expected_content_hash,
         } => {
             apply_metadata(
@@ -407,6 +413,9 @@ async fn handle_command(
                 status,
                 priority,
                 tags,
+                add_depends_on,
+                remove_depends_on,
+                parent,
                 expected_content_hash,
             )
             .await
@@ -487,6 +496,9 @@ async fn apply_metadata(
     status: Option<String>,
     priority: Option<String>,
     tags: Option<Vec<String>>,
+    add_depends_on: Option<Vec<String>>,
+    remove_depends_on: Option<Vec<String>>,
+    parent: Option<Option<String>>,
     expected_content_hash: Option<String>,
 ) -> Result<CommandOutcome> {
     let project = {
@@ -511,6 +523,7 @@ async fn apply_metadata(
     }
 
     let mut update = MetadataUpdate::new();
+    let mut depends_on = spec.frontmatter.depends_on.clone();
     if let Some(status) = status {
         update = update.with_status(status.parse::<SpecStatus>().map_err(|e| anyhow!(e))?);
     }
@@ -519,6 +532,24 @@ async fn apply_metadata(
     }
     if let Some(tags) = tags {
         update = update.with_tags(tags);
+    }
+    let has_depends_updates = add_depends_on.is_some() || remove_depends_on.is_some();
+
+    if let Some(additions) = add_depends_on {
+        for dep in additions {
+            if !depends_on.contains(&dep) {
+                depends_on.push(dep);
+            }
+        }
+    }
+    if let Some(removals) = remove_depends_on {
+        depends_on.retain(|dep| !removals.contains(dep));
+    }
+    if has_depends_updates {
+        update = update.with_depends_on(depends_on);
+    }
+    if let Some(parent) = parent {
+        update = update.with_parent(parent);
     }
 
     let writer = SpecWriter::new(&specs_dir);

@@ -181,6 +181,25 @@ enum Commands {
     /// List example projects
     Examples,
 
+    /// Manage spec relationships (hierarchy and dependencies)
+    Rel {
+        /// Arguments: <spec> or <action> <spec>
+        #[arg(trailing_var_arg = true, required = true)]
+        args: Vec<String>,
+
+        /// Set or clear parent relationship
+        #[arg(long, num_args = 0..=1, default_missing_value = "")]
+        parent: Option<String>,
+
+        /// Add or remove child relationships
+        #[arg(long = "child", num_args = 1..)]
+        child: Vec<String>,
+
+        /// Add or remove dependency relationships
+        #[arg(long = "depends-on", num_args = 1..)]
+        depends_on: Vec<String>,
+    },
+
     /// List files in a spec directory
     Files {
         /// Spec path or number
@@ -636,6 +655,21 @@ fn main() -> ExitCode {
             upstream,
             downstream,
         } => commands::deps::run(&specs_dir, &spec, depth, upstream, downstream, &cli.output),
+        Commands::Rel {
+            args,
+            parent,
+            child,
+            depends_on,
+        } => commands::rel::run(
+            &specs_dir,
+            commands::rel::RelArgs {
+                args,
+                parent,
+                children: child,
+                depends_on,
+            },
+            &cli.output,
+        ),
         Commands::Examples => commands::examples::run(&cli.output),
         Commands::Files { spec, size } => {
             commands::files::run(&specs_dir, &spec, size, &cli.output)

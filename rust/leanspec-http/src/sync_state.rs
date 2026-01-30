@@ -108,6 +108,9 @@ pub enum SyncCommand {
         status: Option<String>,
         priority: Option<String>,
         tags: Option<Vec<String>>,
+        add_depends_on: Option<Vec<String>>,
+        remove_depends_on: Option<Vec<String>>,
+        parent: Option<Option<String>>,
         expected_content_hash: Option<String>,
     },
     RenameMachine {

@@ -1,15 +1,18 @@
 ---
-status: planned
-created: '2025-12-04'
-tags:
-  - i18n
-  - web-app
-  - future
+status: archived
+created: 2025-12-04
 priority: low
-created_at: '2025-12-04T12:42:25.749Z'
+tags:
+- i18n
+- web-app
+- future
 depends_on:
-  - 091-chinese-localization-strategy
-updated_at: '2025-12-04T12:42:25.824Z'
+- 091-chinese-localization-strategy
+created_at: 2025-12-04T12:42:25.749Z
+updated_at: 2026-01-30T01:46:09.248945Z
+transitions:
+- status: archived
+  at: 2026-01-30T01:46:09.248945Z
 ---
 
 # On-Demand Spec Translation

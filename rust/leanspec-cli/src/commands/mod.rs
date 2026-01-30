@@ -3,9 +3,11 @@
 pub mod board;
 pub mod children;
 pub mod create;
+pub mod deprecation;
 pub mod deps;
 pub mod link;
 pub mod list;
+pub mod rel;
 pub mod search;
 pub mod session;
 pub mod stats;

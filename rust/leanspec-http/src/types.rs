@@ -479,6 +479,11 @@ pub struct MetadataUpdate {
     pub priority: Option<String>,
     pub tags: Option<Vec<String>>,
     pub assignee: Option<String>,
+    #[serde(default)]
+    pub add_depends_on: Option<Vec<String>>,
+    #[serde(default)]
+    pub remove_depends_on: Option<Vec<String>>,
+    pub parent: Option<Option<String>>,
     pub expected_content_hash: Option<String>,
 }
 

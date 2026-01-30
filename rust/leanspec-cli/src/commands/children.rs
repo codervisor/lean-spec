@@ -1,10 +1,12 @@
 //! Children command implementation
 
+use super::deprecation::warn_deprecated;
 use colored::Colorize;
 use leanspec_core::{SpecInfo, SpecLoader};
 use std::error::Error;
 
 pub fn run(specs_dir: &str, spec: &str, output_format: &str) -> Result<(), Box<dyn Error>> {
+    warn_deprecated("lean-spec children", "lean-spec rel view");
     let loader = SpecLoader::new(specs_dir);
     let parent_spec = loader
         .load(spec)?

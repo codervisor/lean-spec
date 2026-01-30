@@ -67,7 +67,8 @@ Use MCP tools when available. Use CLI as fallback.
 | Create spec | `create` | `lean-spec create <name>` |
 | Update status | `update` | `lean-spec update <spec> --status <status>` |
 | Dependencies | `deps` | `lean-spec deps <spec>` |
-| Link / unlink | `link` / `unlink` | `lean-spec link <spec> --depends-on <other>` |
+| Relationships | `relationships` | `lean-spec rel <spec>` |
+| Link / unlink (deprecated) | `link` / `unlink` | `lean-spec link/unlink <spec> --depends-on <other>` |
 | Token count | `tokens` | `lean-spec tokens <spec>` |
 | Validate | `validate` | `lean-spec validate` |
 
