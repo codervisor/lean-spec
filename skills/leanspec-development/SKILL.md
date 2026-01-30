@@ -24,8 +24,8 @@ Activate when:
 
 | Goal | Reference |
 |------|-----------|
-| **Mandatory rules & conventions** | [RULES.md](./RULES.md) |
-| **Monorepo structure & packages** | [STRUCTURE.md](./STRUCTURE.md) |
+| **Mandatory rules & conventions** | [RULES.md](./references/RULES.md) |
+| **Monorepo structure & packages** | [STRUCTURE.md](./references/STRUCTURE.md) |
 
 **Everything else**: Read root `README.md`, `package.json` scripts, or explore the codebase.
 
@@ -123,12 +123,3 @@ Rules enforced by hooks or CI:
    ```
 
 **See [RULES.md](./references/RULES.md) for complete requirements.**
-
-## Reference Documentation
-
-- [SETUP.md](./references/SETUP.md) - Environment setup, troubleshooting
-- [CONTRIBUTING.md](./references/CONTRIBUTING.md) - Workflow, testing patterns, examples
-- [RULES.md](./references/RULES.md) - Mandatory requirements with rationale
-- [COMMANDS.md](./references/COMMANDS.md) - Complete command reference
-- [MONOREPO.md](./references/MONOREPO.md) - Turborepo, versioning, structure
-- [RUST-QUALITY.md](./references/RUST-QUALITY.md) - Clippy enforcement, hooks
