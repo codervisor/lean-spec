@@ -21,8 +21,8 @@ export function EnhancedCodeBlock({ language, code, children }: EnhancedCodeBloc
   };
 
   return (
-    <div className="relative group my-4 rounded-lg bg-muted text-sm border">
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/50 rounded-t-lg">
+    <div className="relative group my-4 rounded-lg bg-muted border dark:border-white/10">
+      <div className="flex items-center justify-between px-4 py-2 border-b dark:border-white/10 bg-muted/50 dark:bg-black/20 rounded-t-lg">
         {language ? (
           <span className="text-xs text-muted-foreground font-mono uppercase">
             {language}

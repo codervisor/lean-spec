@@ -144,7 +144,7 @@ function useMarkdownComponents(specName: string, basePath: string): Components {
 
         return (
           <EnhancedCodeBlock language={language} code={codeText}>
-            <pre className="!bg-transparent !m-0 !p-0 !shadow-none">
+            <pre className="!bg-transparent !m-0 !p-0 !shadow-none !border-0">
               <code className={className} {...childProps}>
                 {childProps.children}
               </code>
@@ -154,13 +154,6 @@ function useMarkdownComponents(specName: string, basePath: string): Components {
       }
 
       return <pre {...props}>{children}</pre>;
-    },
-    code({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) {
-      return (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
     },
     table({ children }: ComponentPropsWithoutRef<'table'>) {
       return <EnhancedTable>{children}</EnhancedTable>;

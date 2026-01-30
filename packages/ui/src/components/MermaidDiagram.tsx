@@ -23,20 +23,23 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [id] = useState(generateId);
   const [isOpen, setIsOpen] = useState(false);
   const { resolvedTheme } = useTheme();
   const { t } = useTranslation(['common', 'errors']);
 
   useEffect(() => {
-    if (!chart) return;
+    if (!chart || chart.trim().length === 0) {
+      setSvg('');
+      return;
+    }
 
     let cancelled = false;
 
     const renderDiagram = async () => {
       try {
         setError(null);
-        setSvg('');
+        // Don't clear SVG immediately to avoid flash during re-render
+        // unless it's a completely new diagram
 
         mermaid.initialize({
           startOnLoad: false,
@@ -45,9 +48,13 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
           fontFamily: 'system-ui, -apple-system, sans-serif',
         });
 
+        // Use a unique ID for every render to avoid collisions/race conditions
+        const id = generateId();
         const { svg: renderedSvg } = await mermaid.render(id, chart);
 
-        setSvg(renderedSvg);
+        if (!cancelled) {
+          setSvg(renderedSvg);
+        }
       } catch (err) {
         if (!cancelled) {
           console.error('Mermaid rendering error:', err);
@@ -62,7 +69,11 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [chart, id, t, resolvedTheme]);
+  }, [chart, t, resolvedTheme]);
+
+  if (!chart || chart.trim().length === 0) {
+    return null;
+  }
 
   if (error) {
     return (
