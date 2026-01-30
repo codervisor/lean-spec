@@ -43,9 +43,9 @@ impl FileWatcher {
         .map_err(|e| ServerError::ServerError(format!("Failed to start watcher: {e}")))?;
 
         for root in &roots {
-            watcher
-                .watch(root, RecursiveMode::Recursive)
-                .map_err(|e| ServerError::ServerError(format!("Failed to watch {}: {e}", root.display())))?;
+            watcher.watch(root, RecursiveMode::Recursive).map_err(|e| {
+                ServerError::ServerError(format!("Failed to watch {}: {e}", root.display()))
+            })?;
         }
 
         let roots_clone = roots.clone();
@@ -173,9 +173,12 @@ fn should_ignore_path(path: &Path) -> bool {
     }
 
     let lower = file_name.to_lowercase();
-    let ignored_suffixes = [".swp", ".tmp", ".temp", "~", ".bak", ".ds_store"]; 
+    let ignored_suffixes = [".swp", ".tmp", ".temp", "~", ".bak", ".ds_store"];
 
-    if ignored_suffixes.iter().any(|suffix| lower.ends_with(suffix)) {
+    if ignored_suffixes
+        .iter()
+        .any(|suffix| lower.ends_with(suffix))
+    {
         return true;
     }
 
@@ -186,7 +189,11 @@ fn should_ignore_path(path: &Path) -> bool {
     true
 }
 
-fn to_spec_event(roots: &[PathBuf], path: PathBuf, change_type: SpecChangeType) -> Option<SpecChangeEvent> {
+fn to_spec_event(
+    roots: &[PathBuf],
+    path: PathBuf,
+    change_type: SpecChangeType,
+) -> Option<SpecChangeEvent> {
     if should_ignore_path(&path) {
         return None;
     }

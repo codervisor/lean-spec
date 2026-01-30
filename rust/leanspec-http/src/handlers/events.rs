@@ -30,10 +30,7 @@ pub async fn spec_events(State(state): State<AppState>) -> ApiResult<Response> {
         .map_err(|_| {
             (
                 StatusCode::TOO_MANY_REQUESTS,
-                axum::Json(ApiError::new(
-                    "SSE_LIMIT",
-                    "Too many SSE connections",
-                )),
+                axum::Json(ApiError::new("SSE_LIMIT", "Too many SSE connections")),
             )
         })?;
 
