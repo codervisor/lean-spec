@@ -75,6 +75,7 @@
     "title": "AI Sessions",
     "subtitle": "Run and monitor AI coding sessions for this spec.",
     "empty": "No sessions yet.",
+    "emptyForSpec": "No sessions for this spec",
     "emptyLogs": "No logs recorded yet.",
     "status": {
       "pending": "Pending",
@@ -99,7 +100,8 @@
       "copyId": "Copy ID",
       "back": "Back to Sessions",
       "restart": "Restart",
-      "viewSpec": "View Spec"
+      "viewSpec": "View Spec",
+      "createAndStart": "Create & Start"
     },
     "labels": {
       "tool": "Tool",
@@ -109,12 +111,17 @@
       "duration": "Duration",
       "status": "Status",
       "spec": "Spec",
+      "specId": "Spec ID",
+      "specIdPlaceholder": "Expected Spec ID",
       "noSpec": "No spec",
       "tokens": "Tokens",
       "cost": "Estimated cost",
       "costUnknown": "Unknown",
       "costApprox": "≈${{value}}",
-      "unknownTime": "Unknown"
+      "unknownTime": "Unknown",
+      "autoScroll": "Auto-scroll",
+      "logs": "Logs",
+      "completed": "Completed"
     },
     "dialogs": {
       "createTitle": "Create AI Session",
@@ -547,12 +554,15 @@
       "sort": "Sort by",
       "statusAll": "All Status",
       "priorityAll": "All Priority",
+      "validationIssuesOnly": "Issues only",
       "filteredCount": "{{filtered}} of {{total}} specs",
       "sortOptions": {
         "id-desc": "Newest First",
         "id-asc": "Oldest First",
         "updated-desc": "Recently Updated",
-        "title-asc": "Title (A-Z)"
+        "title-asc": "Title (A-Z)",
+        "token-desc": "Token Count (High → Low)",
+        "token-asc": "Token Count (Low → High)"
       }
     },
     "metadata": {
@@ -641,6 +651,17 @@
   "statsPage": {
     "title": "Project Statistics",
     "description": "Comprehensive metrics and insights",
+    "tokenDistribution": {
+      "title": "Token Distribution",
+      "empty": "No token data available yet.",
+      "unknown": "{{count}} specs missing token data",
+      "buckets": {
+        "optimal": "Optimal",
+        "good": "Good",
+        "warning": "Warning",
+        "critical": "Critical"
+      }
+    },
     "cards": {
       "total": {
         "title": "Total Specs",
@@ -921,6 +942,49 @@
     "createSection": "Create new",
     "createTag": "Create \"{{tag}}\"",
     "removeTag": "Remove {{tag}} tag"
+  },
+  "tokens": {
+    "tokens": "tokens",
+    "status": "Status: {{status}}",
+    "clickForDetails": "Click for details",
+    "contextEconomy": "Context Economy: {{specName}}",
+    "detailedBreakdown": "Detailed breakdown of token usage for this spec.",
+    "composition": "Composition",
+    "proseContent": "Prose & Content",
+    "frontmatter": "Frontmatter",
+    "performance": {
+      "optimal": "Excellent! This spec is highly efficient for AI context.",
+      "good": "Good size. Well within comfortable limits for most models.",
+      "warning": "Getting large. Consider splitting if functionality grows.",
+      "critical": "Too large. This spec consumes significant context and may degrade AI performance."
+    },
+    "progressThresholds": {
+      "optimal": "Optimal Limit (2k)",
+      "good": "Good Limit (3.5k)"
+    }
+  },
+  "validation": {
+    "status": {
+      "pass": "Passed",
+      "warn": "Warnings",
+      "fail": "Failed"
+    },
+    "passLabel": "Pass",
+    "issue": "issue",
+    "issues": "issues",
+    "issuesFound": "{{count}} issues found",
+    "validationLabel": "Validation: {{label}}",
+    "clickForDetails": "Click for details",
+    "dialog": {
+      "title": "Validation: {{specName}}",
+      "passTitle": "Spec Validated",
+      "passBody": "This spec meets all LeanSpec quality standards and structure requirements.",
+      "passDescription": "All quality checks passed successfully.",
+      "issueDescription": "Found {{count}} issues that require attention.",
+      "suggestion": "Suggestion:",
+      "line": "Line {{line}}",
+      "loading": "Loading validation details..."
+    }
   },
   "desktopMenu": {
     "close": "Close",

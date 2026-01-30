@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tool
 import type { ValidationStatus } from '../types/api';
 import { useState, useEffect } from 'react';
 import { getBackend } from '../lib/backend-adapter';
+import { useTranslation } from 'react-i18next';
 
 interface ValidationBadgeProps {
   status?: ValidationStatus;
@@ -19,17 +20,17 @@ const statusConfig = {
   pass: {
     icon: CheckCircle2,
     className: 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20',
-    label: 'Passed'
+    labelKey: 'validation.status.pass'
   },
   warn: {
     icon: AlertTriangle,
     className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    label: 'Warnings'
+    labelKey: 'validation.status.warn'
   },
   fail: {
     icon: XCircle,
     className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    label: 'Failed'
+    labelKey: 'validation.status.fail'
   }
 };
 
@@ -42,6 +43,7 @@ export function ValidationBadge({
   size = 'sm',
   onClick
 }: ValidationBadgeProps) {
+  const { t } = useTranslation('common');
   const [status, setStatus] = useState<ValidationStatus | undefined>(initialStatus);
   const [errorCount, setErrorCount] = useState<number | undefined>(initialErrorCount);
   const [loading, setLoading] = useState(false);
@@ -80,6 +82,7 @@ export function ValidationBadge({
   const config = statusConfig[status] || statusConfig.pass;
   const Icon = config.icon;
   const isPass = status === 'pass';
+  const label = t(config.labelKey);
 
   const content = (
     <div
@@ -97,14 +100,14 @@ export function ValidationBadge({
         }
       }}
       role={onClick ? 'button' : 'status'}
-      aria-label={`Validation: ${config.label}`}
+      aria-label={t('validation.validationLabel', { label })}
     >
       <Icon className={cn("shrink-0", size === 'sm' ? "h-3.5 w-3.5" : "h-4 w-4", !isPass && errorCount ? "mr-1.5" : "")} />
       {!isPass && errorCount !== undefined && errorCount > 0 && (
         <span className="tabular-nums tracking-tight">{errorCount}</span>
       )}
-      {size === 'md' && isPass && <span className="ml-1.5">Pass</span>}
-      {size === 'md' && !isPass && <span className="ml-1 opacity-80 font-normal">{errorCount === 1 ? 'issue' : 'issues'}</span>}
+      {size === 'md' && isPass && <span className="ml-1.5">{t('validation.passLabel')}</span>}
+      {size === 'md' && !isPass && <span className="ml-1 opacity-80 font-normal">{errorCount === 1 ? t('validation.issue') : t('validation.issues')}</span>}
     </div>
   );
 
@@ -116,9 +119,9 @@ export function ValidationBadge({
         </TooltipTrigger>
         <TooltipContent side="top">
           <div className="text-xs">
-            <p className="font-semibold">{config.label}</p>
-            {!isPass && errorCount && <p className="opacity-80">{errorCount} issues found</p>}
-            {onClick && <p className="mt-1 text-[10px] opacity-60">Click for details</p>}
+            <p className="font-semibold">{label}</p>
+            {!isPass && errorCount && <p className="opacity-80">{t('validation.issuesFound', { count: errorCount })}</p>}
+            {onClick && <p className="mt-1 text-[10px] opacity-60">{t('validation.clickForDetails')}</p>}
           </div>
         </TooltipContent>
       </Tooltip>

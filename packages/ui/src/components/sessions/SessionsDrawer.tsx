@@ -8,8 +8,10 @@ import { ResizeHandle } from '../chat/ResizeHandle';
 import { SessionCard } from './SessionCard';
 import { SessionCreateForm } from './SessionCreateForm';
 import { SessionLogsPanel } from './SessionLogsPanel';
+import { useTranslation } from 'react-i18next';
 
 export function SessionsDrawer() {
+  const { t } = useTranslation('common');
   const {
     isOpen,
     toggleDrawer,
@@ -67,7 +69,7 @@ export function SessionsDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14 shrink-0">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-sm">Sessions</h2>
+            <h2 className="font-semibold text-sm">{t('sessions.title')}</h2>
              {specFilter && (
               <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex items-center gap-1">
                 {specFilter}
@@ -109,13 +111,13 @@ export function SessionsDrawer() {
                          />
                      ) : (
                         <Button className="w-full" onClick={() => setIsCreating(true)}>
-                            <Plus className="mr-2 h-4 w-4" /> New Session
+                            <Plus className="mr-2 h-4 w-4" /> {t('sessions.actions.new')}
                         </Button>
                      )}
                      
                      {filteredSessions.length === 0 && !isCreating ? (
                          <div className="text-center text-muted-foreground text-sm py-8">
-                             {specFilter ? 'No sessions for this spec' : 'No sessions yet'}
+                             {specFilter ? t('sessions.emptyForSpec') : t('sessions.empty')}
                          </div>
                      ) : (
                          <>
@@ -129,7 +131,7 @@ export function SessionsDrawer() {
                                 <div className="mt-4">
                                     <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
                                         <div className="h-px bg-border flex-1" />
-                                        Completed
+                                        {t('sessions.labels.completed')}
                                         <div className="h-px bg-border flex-1" />
                                     </div>
                                     <div className="flex flex-col gap-1">

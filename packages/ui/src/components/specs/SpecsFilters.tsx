@@ -165,6 +165,8 @@ export function SpecsFilters({
               <SelectItem value="id-asc">{t('specsPage.filters.sortOptions.id-asc')}</SelectItem>
               <SelectItem value="updated-desc">{t('specsPage.filters.sortOptions.updated-desc')}</SelectItem>
               <SelectItem value="title-asc">{t('specsPage.filters.sortOptions.title-asc')}</SelectItem>
+              <SelectItem value="token-desc">{t('specsPage.filters.sortOptions.token-desc')}</SelectItem>
+              <SelectItem value="token-asc">{t('specsPage.filters.sortOptions.token-asc')}</SelectItem>
             </SelectContent>
           </Select>
 

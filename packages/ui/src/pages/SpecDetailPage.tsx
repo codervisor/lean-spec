@@ -11,7 +11,8 @@ import {
   Terminal,
   CornerDownRight,
   ChevronRight,
-  Link2
+  Link2,
+  Loader2
 } from 'lucide-react';
 import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
@@ -29,10 +30,11 @@ import {
   PriorityBadge,
 } from '@leanspec/ui-components';
 import { APIError, api } from '../lib/api';
+import { getBackend } from '../lib/backend-adapter';
 import { StatusEditor } from '../components/metadata-editors/StatusEditor';
 import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
 import { TagsEditor } from '../components/metadata-editors/TagsEditor';
-import type { SubSpec } from '../types/api';
+import type { SubSpec, SpecTokenResponse, SpecValidationResponse } from '../types/api';
 import { TableOfContents, TableOfContentsSidebar } from '../components/spec-detail/TableOfContents';
 import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
@@ -45,6 +47,10 @@ import { PageTransition } from '../components/shared/PageTransition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
 import type { LucideIcon } from 'lucide-react';
 import { RelationshipsEditor } from '../components/relationships/RelationshipsEditor';
+import { TokenBadge } from '../components/TokenBadge';
+import { ValidationBadge } from '../components/ValidationBadge';
+import { TokenDetailsDialog } from '../components/specs/TokenDetailsDialog';
+import { ValidationDialog } from '../components/specs/ValidationDialog';
 
 // Sub-spec with frontend-assigned styling
 interface EnrichedSubSpec extends SubSpec {
@@ -71,8 +77,15 @@ export function SpecDetailPage() {
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [relationshipsDialogOpen, setRelationshipsDialogOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
+  const [tokenDialogLoading, setTokenDialogLoading] = useState(false);
+  const [tokenDialogData, setTokenDialogData] = useState<SpecTokenResponse | null>(null);
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [validationDialogLoading, setValidationDialogLoading] = useState(false);
+  const [validationDialogData, setValidationDialogData] = useState<SpecValidationResponse | null>(null);
   const { setMobileOpen } = useSpecDetailLayoutContext();
   const { openDrawer, sessions } = useSessions();
+  const backend = getBackend();
 
   const [showSidebar, setShowSidebar] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   const observerRef = useRef<ResizeObserver | null>(null);
@@ -142,6 +155,24 @@ export function SpecDetailPage() {
   useEffect(() => {
     void loadSpec();
   }, [loadSpec, projectReady]);
+
+  useEffect(() => {
+    if (!tokenDialogOpen || !resolvedProjectId || !spec?.specName) return;
+    setTokenDialogLoading(true);
+    backend.getSpecTokens(resolvedProjectId, spec.specName)
+      .then((data) => setTokenDialogData(data))
+      .catch(() => setTokenDialogData(null))
+      .finally(() => setTokenDialogLoading(false));
+  }, [backend, resolvedProjectId, spec?.specName, tokenDialogOpen]);
+
+  useEffect(() => {
+    if (!validationDialogOpen || !resolvedProjectId || !spec?.specName) return;
+    setValidationDialogLoading(true);
+    backend.getSpecValidation(resolvedProjectId, spec.specName)
+      .then((data) => setValidationDialogData(data))
+      .catch(() => setValidationDialogData(null))
+      .finally(() => setValidationDialogLoading(false));
+  }, [backend, resolvedProjectId, spec?.specName, validationDialogOpen]);
 
 
   const activeSessionsCount = useMemo(() => {
@@ -313,6 +344,24 @@ export function SpecDetailPage() {
                   </h1>
                   <StatusBadge status={spec.status || 'planned'} />
                   <PriorityBadge priority={spec.priority || 'medium'} />
+                  <TokenBadge
+                    projectId={resolvedProjectId}
+                    specName={spec.specName}
+                    size="sm"
+                    onClick={() => {
+                      if (!resolvedProjectId) return;
+                      setTokenDialogOpen(true);
+                    }}
+                  />
+                  <ValidationBadge
+                    projectId={resolvedProjectId}
+                    specName={spec.specName}
+                    size="sm"
+                    onClick={() => {
+                      if (!resolvedProjectId) return;
+                      setValidationDialogOpen(true);
+                    }}
+                  />
                 </div>
                 <Button
                   type="button"
@@ -386,6 +435,27 @@ export function SpecDetailPage() {
                     disabled={machineModeEnabled && !isMachineAvailable}
                     onChange={(tags) => applySpecPatch({ tags })}
                   />
+                  <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+                  <div className="flex items-center gap-2">
+                    <TokenBadge
+                      projectId={resolvedProjectId}
+                      specName={spec.specName}
+                      size="md"
+                      onClick={() => {
+                        if (!resolvedProjectId) return;
+                        setTokenDialogOpen(true);
+                      }}
+                    />
+                    <ValidationBadge
+                      projectId={resolvedProjectId}
+                      specName={spec.specName}
+                      size="md"
+                      onClick={() => {
+                        if (!resolvedProjectId) return;
+                        setValidationDialogOpen(true);
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {machineModeEnabled && !isMachineAvailable && (
@@ -480,7 +550,7 @@ export function SpecDetailPage() {
                     className="h-8 rounded-full border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Terminal className="mr-1.5 h-3.5 w-3.5" />
-                    {t('sessionsDrawer.title', 'Sessions')}
+                    {t('navigation.sessions')}
                     <span className={cn(
                       "ml-2 rounded-full px-2 py-0.5 text-[10px]",
                       activeSessionsCount > 0 ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
@@ -588,6 +658,54 @@ export function SpecDetailPage() {
           disabled={machineModeEnabled && !isMachineAvailable}
           onUpdated={() => void loadSpec()}
         />
+      )}
+      {spec?.specName && tokenDialogOpen && tokenDialogData && (
+        <TokenDetailsDialog
+          open={tokenDialogOpen}
+          onClose={() => {
+            setTokenDialogOpen(false);
+            setTokenDialogData(null);
+          }}
+          specName={spec.specName}
+          data={tokenDialogData}
+        />
+      )}
+      {spec?.specName && tokenDialogOpen && tokenDialogLoading && !tokenDialogData && (
+        <Dialog open={tokenDialogOpen} onOpenChange={() => setTokenDialogOpen(false)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('actions.loading')}</DialogTitle>
+              <DialogDescription>{t('tokens.detailedBreakdown')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {spec?.specName && validationDialogOpen && validationDialogData && (
+        <ValidationDialog
+          open={validationDialogOpen}
+          onClose={() => {
+            setValidationDialogOpen(false);
+            setValidationDialogData(null);
+          }}
+          specName={spec.specName}
+          data={validationDialogData}
+        />
+      )}
+      {spec?.specName && validationDialogOpen && validationDialogLoading && !validationDialogData && (
+        <Dialog open={validationDialogOpen} onOpenChange={() => setValidationDialogOpen(false)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('actions.loading')}</DialogTitle>
+              <DialogDescription>{t('validation.dialog.loading')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </PageTransition>
   );

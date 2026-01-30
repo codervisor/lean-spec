@@ -4,6 +4,7 @@ import { cn } from '@leanspec/ui-components';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 import { useState, useEffect } from 'react';
 import { getBackend } from '../lib/backend-adapter';
+import { useTranslation } from 'react-i18next';
 
 interface TokenBadgeProps {
   count?: number;
@@ -24,6 +25,7 @@ export function TokenBadge({
   onClick,
   showIcon = true
 }: TokenBadgeProps) {
+  const { t } = useTranslation('common');
   const [count, setCount] = useState<number | undefined>(initialCount);
   const [loading, setLoading] = useState(false);
   const backend = getBackend();
@@ -73,11 +75,11 @@ export function TokenBadge({
         }
       }}
       role={onClick ? 'button' : 'status'}
-      aria-label={`${fullCount} tokens, status: ${status}`}
+      aria-label={`${fullCount} ${t('tokens.tokens')}, ${t('tokens.status', { status })}`}
     >
       {showIcon && <FileText className={cn("shrink-0 opacity-70", size === 'sm' ? "h-3.5 w-3.5 mr-1.5" : "h-4 w-4 mr-2")} />}
       <span className="tabular-nums tracking-tight">{size === 'md' && !showIcon ? fullCount : compactCount}</span>
-      {size === 'md' && <span className="ml-1 opacity-70 font-normal">tokens</span>}
+      {size === 'md' && <span className="ml-1 opacity-70 font-normal">{t('tokens.tokens')}</span>}
     </div>
   );
 
@@ -89,9 +91,9 @@ export function TokenBadge({
         </TooltipTrigger>
         <TooltipContent side="top">
           <div className="text-xs">
-            <p className="font-semibold">{fullCount} tokens</p>
-            <p className="opacity-80 capitalize">Status: {status}</p>
-            {onClick && <p className="mt-1 text-[10px] opacity-60">Click for details</p>}
+            <p className="font-semibold">{fullCount} {t('tokens.tokens')}</p>
+            <p className="opacity-80 capitalize">{t('tokens.status', { status })}</p>
+            {onClick && <p className="mt-1 text-[10px] opacity-60">{t('tokens.clickForDetails')}</p>}
           </div>
         </TooltipContent>
       </Tooltip>

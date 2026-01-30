@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import type { SessionLog, Session } from '../../types/api';
 import { useSessions } from '../../contexts/SessionsContext';
 import { cn } from '@leanspec/ui-components';
+import { useTranslation } from 'react-i18next';
 
 interface SessionLogsPanelProps {
     sessionId: string;
@@ -12,26 +13,27 @@ interface SessionLogsPanelProps {
 }
 
 export function SessionLogsPanel({ sessionId, onBack }: SessionLogsPanelProps) {
+    const { t } = useTranslation('common');
     const { stopSession, pauseSession } = useSessions();
     const [session, setSession] = useState<Session | null>(null);
     const [logs, setLogs] = useState<SessionLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [autoScroll, setAutoScroll] = useState(true);
     const logRef = useRef<HTMLDivElement>(null);
-    
+
     useEffect(() => {
         const fetchDetails = async () => {
-             try {
-                 const s = await api.getSession(sessionId);
-                 setSession(s);
-                 const l = await api.getSessionLogs(sessionId);
-                 setLogs(l);
-             } finally {
-                 setLoading(false);
-             }
+            try {
+                const s = await api.getSession(sessionId);
+                setSession(s);
+                const l = await api.getSessionLogs(sessionId);
+                setLogs(l);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchDetails();
-        
+
         const interval = setInterval(fetchDetails, 2000);
         return () => clearInterval(interval);
     }, [sessionId]);
@@ -42,7 +44,7 @@ export function SessionLogsPanel({ sessionId, onBack }: SessionLogsPanelProps) {
         }
     }, [logs, autoScroll]);
 
-    if(loading && !session) return <div className="p-4 text-xs">Loading...</div>;
+    if (loading && !session) return <div className="p-4 text-xs">{t('actions.loading')}</div>;
 
     return (
         <div className="flex flex-col h-full">
@@ -54,34 +56,34 @@ export function SessionLogsPanel({ sessionId, onBack }: SessionLogsPanelProps) {
                     {session?.tool} • #{session?.specId}
                 </div>
             </div>
-            
+
             <div className="flex items-center gap-2 mb-2 px-1">
                 {session?.status === 'running' && (
-                     <>
+                    <>
                         <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => session && pauseSession(session.id)}>
-                            <Pause className="h-3 w-3 mr-1" /> Pause
+                            <Pause className="h-3 w-3 mr-1" /> {t('sessions.actions.pause')}
                         </Button>
                         <Button size="sm" variant="destructive" className="h-7 text-xs flex-1" onClick={() => session && stopSession(session.id)}>
-                            <Square className="h-3 w-3 mr-1" /> Stop
+                            <Square className="h-3 w-3 mr-1" /> {t('sessions.actions.stop')}
                         </Button>
-                     </>
+                    </>
                 )}
             </div>
 
             <div className="flex items-center justify-between mb-2 px-1">
-                <div className="text-xs font-semibold">Logs</div>
+                <div className="text-xs font-semibold">{t('sessions.labels.logs')}</div>
                 <div className="flex gap-1">
-                     <Button size="icon" variant="ghost" className="h-6 w-6">
+                    <Button size="icon" variant="ghost" className="h-6 w-6">
                         <Download className="h-3 w-3" />
-                     </Button>
-                     <Button 
-                        size="sm" 
-                        variant={autoScroll ? "secondary" : "ghost"} 
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant={autoScroll ? "secondary" : "ghost"}
                         className="h-6 text-[10px] px-2"
                         onClick={() => setAutoScroll(!autoScroll)}
-                     >
-                        Auto-scroll
-                     </Button>
+                    >
+                        {t('sessions.labels.autoScroll')}
+                    </Button>
                 </div>
             </div>
 

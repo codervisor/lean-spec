@@ -11,7 +11,7 @@ interface SessionCardProps {
 
 export function SessionCard({ session, compact }: SessionCardProps) {
     const { startSession, stopSession, pauseSession, setActiveSessionId } = useSessions();
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation('common');
 
     const handleAction = async (e: React.MouseEvent, action: () => Promise<void>) => {
         e.stopPropagation();
@@ -39,7 +39,7 @@ export function SessionCard({ session, compact }: SessionCardProps) {
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <StatusIcon status={session.status} className={cn("h-4 w-4", getStatusTextColor(session.status))} />
-                        <span className="font-semibold">{formatStatus(session.status)}</span>
+                        <span className="font-semibold">{t(`sessions.status.${session.status}`)}</span>
                         <span className="text-xs text-muted-foreground ml-auto">{session.durationMs ? `${Math.round(session.durationMs / 1000)}s` : ''}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -61,23 +61,23 @@ export function SessionCard({ session, compact }: SessionCardProps) {
 
             <div className="flex items-center gap-2 mt-2">
                 <Button variant="outline" size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => setActiveSessionId(session.id)}>
-                    <FileText className="h-3 w-3" /> Logs
+                    <FileText className="h-3 w-3" /> {t('sessions.labels.logs')}
                 </Button>
 
                 {session.status === 'running' && (
                     <>
                         <Button variant="secondary" size="sm" className="h-7 text-xs px-2 gap-1" onClick={(e) => handleAction(e, () => pauseSession(session.id))}>
-                            <Pause className="h-3 w-3" /> Pause
+                            <Pause className="h-3 w-3" /> {t('sessions.actions.pause')}
                         </Button>
                         <Button variant="destructive" size="sm" className="h-7 text-xs px-2 gap-1" onClick={(e) => handleAction(e, () => stopSession(session.id))}>
-                            <Square className="h-3 w-3" /> Stop
+                            <Square className="h-3 w-3" /> {t('sessions.actions.stop')}
                         </Button>
                     </>
                 )}
 
                 {session.status === 'pending' && (
                     <Button variant="secondary" size="sm" className="h-7 text-xs px-2 gap-1" onClick={(e) => handleAction(e, () => startSession(session.id))}>
-                        <Play className="h-3 w-3" /> Start
+                        <Play className="h-3 w-3" /> {t('sessions.actions.start')}
                     </Button>
                 )}
             </div>
@@ -113,8 +113,4 @@ function StatusIcon({ status, className }: { status: string, className?: string 
         case 'completed': return <Check className={className} />;
         default: return <Clock className={className} />;
     }
-}
-
-function formatStatus(status: string) {
-    return status.charAt(0).toUpperCase() + status.slice(1);
 }

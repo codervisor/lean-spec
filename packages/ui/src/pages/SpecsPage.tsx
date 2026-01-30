@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbrella } from 'lucide-react';
+import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbrella, AlertTriangle } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -15,7 +15,7 @@ import { useProject, useLayout, useMachine } from '../contexts';
 import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
-type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
+type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'token-desc' | 'token-asc';
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
@@ -37,6 +37,7 @@ export function SpecsPage() {
   const [tagFilter, setTagFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('id-desc');
   const [groupByParent, setGroupByParent] = useState(false);
+  const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(false);
 
   const [searchParams] = useSearchParams();
   const initializedFromQuery = useRef(false);
@@ -142,6 +143,7 @@ export function SpecsPage() {
     setStatusFilter('all');
     setPriorityFilter('all');
     setTagFilter('all');
+    setShowValidationIssuesOnly(false);
   }, []);
 
   // Helper: expand filtered specs to include all descendants (for groupByParent mode)
@@ -208,6 +210,11 @@ export function SpecsPage() {
         return false;
       }
 
+      if (showValidationIssuesOnly) {
+        const hasIssues = spec.validationStatus && spec.validationStatus !== 'pass';
+        if (!hasIssues) return false;
+      }
+
       return true;
     });
 
@@ -238,6 +245,20 @@ export function SpecsPage() {
           return titleA.localeCompare(titleB);
         });
         break;
+      case 'token-desc':
+        sorted.sort((a, b) => {
+          const aTokens = a.tokenCount ?? -1;
+          const bTokens = b.tokenCount ?? -1;
+          return bTokens - aTokens;
+        });
+        break;
+      case 'token-asc':
+        sorted.sort((a, b) => {
+          const aTokens = a.tokenCount ?? Number.POSITIVE_INFINITY;
+          const bTokens = b.tokenCount ?? Number.POSITIVE_INFINITY;
+          return aTokens - bTokens;
+        });
+        break;
       case 'id-desc':
       default:
         sorted.sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
@@ -245,7 +266,7 @@ export function SpecsPage() {
     }
 
     return sorted;
-  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants]);
+  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly]);
 
   if (loading) {
     return (
@@ -291,6 +312,16 @@ export function SpecsPage() {
               >
                 <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
                 <span className="hidden sm:inline">Group by Parent</span>
+              </Button>
+              <Button
+                variant={showValidationIssuesOnly ? "secondary" : "outline"}
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => setShowValidationIssuesOnly(!showValidationIssuesOnly)}
+                title={t('specsPage.filters.validationIssuesOnly')}
+              >
+                <AlertTriangle className={cn("w-3.5 h-3.5", showValidationIssuesOnly ? "text-primary" : "text-muted-foreground")} />
+                <span className="hidden sm:inline">{t('specsPage.filters.validationIssuesOnly')}</span>
               </Button>
               <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
                 <Button
@@ -384,7 +415,7 @@ export function SpecsPage() {
             )}
           />
         ) : viewMode === 'list' ? (
-          <ListView specs={filteredSpecs} basePath={basePath} groupByParent={groupByParent} />
+          <ListView specs={filteredSpecs} basePath={basePath} groupByParent={groupByParent} projectId={resolvedProjectId} />
         ) : (
           <BoardView
             specs={filteredSpecs}

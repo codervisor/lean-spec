@@ -75,6 +75,7 @@
     "title": "AI 会话",
     "subtitle": "为该规范运行并监控 AI 编码会话。",
     "empty": "暂无会话。",
+    "emptyForSpec": "该规范暂无会话",
     "emptyLogs": "暂无日志记录。",
     "status": {
       "pending": "等待中",
@@ -99,7 +100,8 @@
       "copyId": "复制 ID",
       "back": "返回会话列表",
       "restart": "重新启动",
-      "viewSpec": "查看规范"
+      "viewSpec": "查看规范",
+      "createAndStart": "创建并启动"
     },
     "labels": {
       "tool": "工具",
@@ -109,12 +111,17 @@
       "duration": "持续时间",
       "status": "状态",
       "spec": "规范",
+      "specId": "规范 ID",
+      "specIdPlaceholder": "输入规范 ID",
       "noSpec": "未关联规范",
       "tokens": "令牌",
       "cost": "预估费用",
       "costUnknown": "未知",
       "costApprox": "约 ${{value}}",
-      "unknownTime": "未知"
+      "unknownTime": "未知",
+      "autoScroll": "自动滚动",
+      "logs": "日志",
+      "completed": "已完成"
     },
     "dialogs": {
       "createTitle": "创建 AI 会话",
@@ -540,12 +547,15 @@
       "sort": "排序",
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
+      "validationIssuesOnly": "仅显示问题",
       "filteredCount": "{{filtered}} / {{total}} 个规范",
       "sortOptions": {
         "id-desc": "最新优先",
-        "id-asc": "最旧优先",
+        "id-asc": "最早优先",
         "updated-desc": "最近更新",
-        "title-asc": "标题 (A-Z)"
+        "title-asc": "标题 (A-Z)",
+        "token-desc": "Token 数量（高 → 低)",
+        "token-asc": "Token 数量（低 → 高)"
       }
     },
     "metadata": {
@@ -633,6 +643,17 @@
   "statsPage": {
     "title": "项目统计",
     "description": "查看项目的整体指标与洞察",
+    "tokenDistribution": {
+      "title": "Token 分布",
+      "empty": "暂无 Token 数据。",
+      "unknown": "{{count}} 个规范缺少 Token 数据",
+      "buckets": {
+        "optimal": "最佳",
+        "good": "良好",
+        "warning": "偏大",
+        "critical": "严重"
+      }
+    },
     "cards": {
       "total": {
         "title": "规范总数",
@@ -913,6 +934,49 @@
     "createSection": "创建新标签",
     "createTag": "创建「{{tag}}」",
     "removeTag": "移除 {{tag}} 标签"
+  },
+  "tokens": {
+    "tokens": "个令牌",
+    "status": "状态: {{status}}",
+    "clickForDetails": "点击查看详情",
+    "contextEconomy": "上下文效率: {{specName}}",
+    "detailedBreakdown": "该规范的令牌使用详情。",
+    "composition": "组成结构",
+    "proseContent": "正文内容",
+    "frontmatter": "元数据",
+    "performance": {
+      "optimal": "非常好！该规范对 AI 上下文非常高效。",
+      "good": "良好大小。在大多数模型的舒适范围内。",
+      "warning": "偏大。如果功能继续增长，建议考虑拆分。",
+      "critical": "过大。该规范消耗大量上下文，可能影响 AI 性能。"
+    },
+    "progressThresholds": {
+      "optimal": "最佳限制 (2k)",
+      "good": "良好限制 (3.5k)"
+    }
+  },
+  "validation": {
+    "status": {
+      "pass": "通过",
+      "warn": "警告",
+      "fail": "失败"
+    },
+    "passLabel": "通过",
+    "issue": "个问题",
+    "issues": "个问题",
+    "issuesFound": "发现 {{count}} 个问题",
+    "validationLabel": "校验: {{label}}",
+    "clickForDetails": "点击查看详情",
+    "dialog": {
+      "title": "校验: {{specName}}",
+      "passTitle": "规范已通过校验",
+      "passBody": "该规范符合 LeanSpec 质量标准与结构要求。",
+      "passDescription": "所有质量检查均已通过。",
+      "issueDescription": "发现 {{count}} 个需要关注的问题。",
+      "suggestion": "建议：",
+      "line": "第 {{line}} 行",
+      "loading": "正在加载校验详情..."
+    }
   },
   "desktopMenu": {
     "close": "关闭",

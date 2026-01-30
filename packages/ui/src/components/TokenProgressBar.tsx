@@ -1,5 +1,6 @@
 import { TOKEN_THRESHOLDS, tokenProgressClasses, getTokenProgressPercent, resolveTokenStatus } from '../lib/token-utils';
 import { cn } from '@leanspec/ui-components';
+import { useTranslation } from 'react-i18next';
 
 interface TokenProgressBarProps {
   current: number;
@@ -14,6 +15,7 @@ export function TokenProgressBar({
   className,
   showBenchmarks = true
 }: TokenProgressBarProps) {
+  const { t } = useTranslation('common');
   const percent = getTokenProgressPercent(current, max);
   const status = resolveTokenStatus(current);
   const colorClass = tokenProgressClasses[status];
@@ -38,14 +40,14 @@ export function TokenProgressBar({
             <div
               className="absolute top-0 bottom-0 w-px bg-background/50 z-10"
               style={{ left: `${optimalPos}%` }}
-              title="Optimal Limit (2k)"
+              title={t('tokens.progressThresholds.optimal')}
             />
           )}
           {goodPos < 100 && (
             <div
               className="absolute top-0 bottom-0 w-px bg-background/50 z-10"
               style={{ left: `${goodPos}%` }}
-              title="Good Limit (3.5k)"
+              title={t('tokens.progressThresholds.good')}
             />
           )}
         </>

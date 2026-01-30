@@ -3,6 +3,7 @@ import { useSessions } from '../../contexts/SessionsContext';
 import { Button } from '@leanspec/ui-components';
 import { Play } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface SessionCreateFormProps {
     onCancel: () => void;
@@ -11,6 +12,7 @@ interface SessionCreateFormProps {
 }
 
 export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: SessionCreateFormProps) {
+    const { t } = useTranslation('common');
     const { createSession } = useSessions();
     const [specId, setSpecId] = useState(defaultSpecId || '');
     const [tools, setTools] = useState<string[]>([]);
@@ -47,21 +49,21 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
 
     return (
         <div className="border rounded-md p-3 bg-muted/20">
-            <h3 className="font-semibold text-sm mb-3">New Session</h3>
+            <h3 className="font-semibold text-sm mb-3">{t('sessions.actions.new')}</h3>
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <div className="space-y-1">
-                    <label className="text-xs font-medium">Spec ID</label>
+                    <label className="text-xs font-medium">{t('sessions.labels.specId')}</label>
                     <input 
                         className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors"
                         value={specId} 
                         onChange={e => setSpecId(e.target.value)} 
-                        placeholder="Expected Spec ID"
+                        placeholder={t('sessions.labels.specIdPlaceholder')}
                     />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
                      <div className="space-y-1">
-                        <label className="text-xs font-medium">Tool</label>
+                        <label className="text-xs font-medium">{t('sessions.labels.tool')}</label>
                         <select 
                             className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                             value={tool}
@@ -73,7 +75,7 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
                         </select>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-medium">Mode</label>
+                        <label className="text-xs font-medium">{t('sessions.labels.mode')}</label>
                         <select 
                             className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
                             value={mode}
@@ -88,10 +90,10 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
 
                 <div className="flex items-center gap-2 mt-2">
                     <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="flex-1">
-                        Cancel
+                        {t('actions.cancel')}
                     </Button>
                     <Button type="submit" size="sm" className="flex-1 gap-1" disabled={loading}>
-                        <Play className="h-3 w-3" /> Create & Start
+                        <Play className="h-3 w-3" /> {t('sessions.actions.createAndStart')}
                     </Button>
                 </div>
             </form>

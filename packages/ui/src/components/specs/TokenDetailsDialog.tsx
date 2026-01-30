@@ -3,6 +3,7 @@ import { formatFullTokenCount, resolveTokenStatus, TOKEN_THRESHOLDS } from '../.
 import { TokenProgressBar } from '../TokenProgressBar';
 import type { SpecTokenResponse } from '../../types/api';
 import { FileText, Code, AlignLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TokenDetailsDialogProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface TokenDetailsDialogProps {
 }
 
 export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetailsDialogProps) {
+  const { t } = useTranslation('common');
   const { tokenCount, tokenBreakdown } = data;
   const status = resolveTokenStatus(tokenCount);
   const formattedCount = formatFullTokenCount(tokenCount);
@@ -23,10 +25,10 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
 
   const getPerformanceMessage = () => {
     switch (status) {
-      case 'optimal': return "Excellent! This spec is highly efficient for AI context.";
-      case 'good': return "Good size. Well within comfortable limits for most models.";
-      case 'warning': return "Getting large. Consider splitting if functionality grows.";
-      case 'critical': return "Too large. This spec consumes significant context and may degrade AI performance.";
+      case 'optimal': return t('tokens.performance.optimal');
+      case 'good': return t('tokens.performance.good');
+      case 'warning': return t('tokens.performance.warning');
+      case 'critical': return t('tokens.performance.critical');
       default: return "";
     }
   };
@@ -37,10 +39,10 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Context Economy: {specName}
+            {t('tokens.contextEconomy', { specName })}
           </DialogTitle>
           <DialogDescription>
-            Detailed breakdown of token usage for this spec.
+            {t('tokens.detailedBreakdown')}
           </DialogDescription>
         </DialogHeader>
 
@@ -49,10 +51,10 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
           <div className="text-center space-y-2">
             <div className="text-4xl font-bold tracking-tight">
               {formattedCount}
-              <span className="text-base font-normal text-muted-foreground ml-2">tokens</span>
+              <span className="text-base font-normal text-muted-foreground ml-2">{t('tokens.tokens')}</span>
             </div>
             <p className={`text-sm font-medium capitalize text-${status === 'critical' ? 'red' : status === 'warning' ? 'orange' : status === 'good' ? 'blue' : 'green'}-600`}>
-              Status: {status}
+              {t('tokens.status', { status })}
             </p>
           </div>
 
@@ -71,12 +73,12 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
           </div>
 
           <div className="border-t pt-4">
-            <h4 className="text-sm font-medium mb-3">Composition</h4>
+            <h4 className="text-sm font-medium mb-3">{t('tokens.composition')}</h4>
             <div className="space-y-3">
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="flex items-center gap-2 text-muted-foreground">
-                    <AlignLeft className="h-3.5 w-3.5" /> Prose & Content
+                    <AlignLeft className="h-3.5 w-3.5" /> {t('tokens.proseContent')}
                   </span>
                   <span>{formatFullTokenCount(tokenBreakdown.content)} ({prosePercent}%)</span>
                 </div>
@@ -88,7 +90,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="flex items-center gap-2 text-muted-foreground">
-                    <Code className="h-3.5 w-3.5" /> Frontmatter
+                    <Code className="h-3.5 w-3.5" /> {t('tokens.frontmatter')}
                   </span>
                   <span>{formatFullTokenCount(tokenBreakdown.frontmatter)} ({frontmatterPercent}%)</span>
                 </div>
@@ -101,7 +103,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
         </div>
 
         <DialogFooter>
-          <Button variant="secondary" onClick={onClose}>Close</Button>
+          <Button variant="secondary" onClick={onClose}>{t('actions.close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

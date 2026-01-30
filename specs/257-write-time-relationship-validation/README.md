@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-30
 priority: medium
 tags:
@@ -15,9 +15,12 @@ depends_on:
 parent: 250-structured-spec-hierarchy-management
 created_at: 2026-01-30T02:29:00.569713Z
 updated_at: 2026-01-30T03:21:20.388030Z
+completed: 2026-01-30
 transitions:
 - status: in-progress
   at: 2026-01-30T03:21:20.388030Z
+- status: complete
+  at: 2026-01-30T14:52:00.000000Z
 ---
 
 # Write-Time Relationship Validation
@@ -241,28 +244,28 @@ pub fn validate_dependency_addition(
 ## Test
 
 **Parent Cycles:**
-- [ ] Direct self-reference rejected: `A → A`
-- [ ] Two-node cycle rejected: `A → B → A`
-- [ ] Multi-node cycle rejected: `A → B → C → A`
-- [ ] Valid parent assignment works
+- [x] Direct self-reference rejected: `A → A`
+- [x] Two-node cycle rejected: `A → B → A`
+- [x] Multi-node cycle rejected: `A → B → C → A`
+- [x] Valid parent assignment works
 
 **Dependency Cycles:**
-- [ ] Self-dependency rejected: `A depends_on A`
-- [ ] Two-node cycle rejected: `A depends_on B depends_on A`
-- [ ] Multi-node cycle rejected: `A → B → C → A`
-- [ ] Valid dependency addition works
+- [x] Self-dependency rejected: `A depends_on A`
+- [x] Two-node cycle rejected: `A depends_on B depends_on A`
+- [x] Multi-node cycle rejected: `A → B → C → A`
+- [x] Valid dependency addition works
 
 **Hierarchy/Dependency Conflicts:**
-- [ ] Cannot `depends_on` your own parent
-- [ ] Cannot `depends_on` your own children
-- [ ] Parent cannot `depends_on` its child
-- [ ] Unrelated specs can have dependencies freely
-- [ ] Clearing relationships always works
+- [x] Cannot `depends_on` your own parent
+- [x] Cannot `depends_on` your own children
+- [x] Parent cannot `depends_on` its child
+- [x] Unrelated specs can have dependencies freely
+- [x] Clearing relationships always works
 
 **Error Messages:**
-- [ ] Parent cycle error shows full path
-- [ ] Dependency cycle error shows full path
-- [ ] Conflict error explains the issue clearly
+- [x] Parent cycle error shows full path
+- [x] Dependency cycle error shows full path
+- [x] Conflict error explains the issue clearly
 
 ## Notes
 

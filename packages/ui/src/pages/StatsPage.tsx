@@ -22,6 +22,7 @@ import { StatsSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { useTranslation } from 'react-i18next';
 import { useProject, useLayout } from '../contexts';
+import { resolveTokenStatus, tokenProgressClasses } from '../lib/token-utils';
 
 const STATUS_COLORS = {
   planned: '#3B82F6',
@@ -123,6 +124,32 @@ export function StatsPage() {
       .map(([month, count]) => ({ month, count }));
   }, [i18n.language, specs]);
 
+  const tokenDistribution = useMemo(() => {
+    const counts = {
+      optimal: 0,
+      good: 0,
+      warning: 0,
+      critical: 0,
+      unknown: 0,
+    };
+
+    specs.forEach((spec) => {
+      if (typeof spec.tokenCount === 'number') {
+        const status = resolveTokenStatus(spec.tokenCount);
+        counts[status] += 1;
+      } else {
+        counts.unknown += 1;
+      }
+    });
+
+    const knownTotal = counts.optimal + counts.good + counts.warning + counts.critical;
+
+    return {
+      counts,
+      knownTotal,
+    };
+  }, [specs]);
+
   const completionRate = stats?.completionRate.toFixed(1) || '0.0';
 
   if (projectLoading || loading) {
@@ -206,6 +233,43 @@ export function StatsPage() {
           }
         />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('statsPage.tokenDistribution.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tokenDistribution.knownTotal === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('statsPage.tokenDistribution.empty')}</p>
+          ) : (
+            <div className="space-y-4">
+              {(['optimal', 'good', 'warning', 'critical'] as const).map((status) => {
+                const count = tokenDistribution.counts[status];
+                const percent = tokenDistribution.knownTotal > 0 ? (count / tokenDistribution.knownTotal) * 100 : 0;
+                return (
+                  <div key={status} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{t(`statsPage.tokenDistribution.buckets.${status}`)}</span>
+                      <span className="text-muted-foreground">{count}</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div
+                        className={cn('h-2 rounded-full transition-all duration-500', tokenProgressClasses[status])}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {tokenDistribution.counts.unknown > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {t('statsPage.tokenDistribution.unknown', { count: tokenDistribution.counts.unknown })}
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <div className="grid gap-6 md:grid-cols-2">
