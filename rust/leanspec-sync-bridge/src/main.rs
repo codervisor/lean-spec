@@ -5,7 +5,6 @@ use futures_util::{SinkExt, StreamExt};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -18,6 +17,7 @@ use url::Url;
 use uuid::Uuid;
 
 use leanspec_core::{MetadataUpdate, SpecLoader, SpecPriority, SpecStatus, SpecWriter};
+use leanspec_core::utils::hash_content;
 
 #[derive(Parser, Debug)]
 #[command(name = "leanspec-sync-bridge")]
@@ -661,12 +661,6 @@ fn spec_record_from_info(spec: &leanspec_core::SpecInfo) -> SpecRecord {
         depends_on: spec.frontmatter.depends_on.clone(),
         file_path: Some(spec.file_path.to_string_lossy().to_string()),
     }
-}
-
-fn hash_content(content: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(content.as_bytes());
-    format!("{:x}", hasher.finalize())
 }
 
 #[derive(Clone)]

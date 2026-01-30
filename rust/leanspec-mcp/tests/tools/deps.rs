@@ -16,7 +16,9 @@ async fn test_deps_show_dependencies() {
     let result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(result.is_ok());
 
-    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    let output_raw = result.unwrap();
+    let output_text = strip_deprecation_warning(&output_raw);
+    let output: serde_json::Value = serde_json::from_str(output_text).unwrap();
     assert_eq!(output["spec"], "002-feature");
     assert!(output["dependsOn"].is_array());
     assert!(!output["dependsOn"].as_array().unwrap().is_empty());
@@ -33,7 +35,9 @@ async fn test_deps_show_required_by() {
     let result = call_tool("deps", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
-    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    let output_raw = result.unwrap();
+    let output_text = strip_deprecation_warning(&output_raw);
+    let output: serde_json::Value = serde_json::from_str(output_text).unwrap();
     assert_eq!(output["spec"], "001-base");
     assert!(output["requiredBy"].is_array());
     assert!(!output["requiredBy"].as_array().unwrap().is_empty());
@@ -47,7 +51,9 @@ async fn test_deps_no_dependencies() {
     let result = call_tool("deps", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
-    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    let output_raw = result.unwrap();
+    let output_text = strip_deprecation_warning(&output_raw);
+    let output: serde_json::Value = serde_json::from_str(output_text).unwrap();
     assert!(output["dependsOn"].as_array().unwrap().is_empty());
     assert!(output["requiredBy"].as_array().unwrap().is_empty());
 }
@@ -64,7 +70,9 @@ async fn test_deps_with_depth() {
     let result = call_tool("deps", json!({ "specPath": "003", "depth": 2 })).await;
     assert!(result.is_ok());
 
-    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    let output_raw = result.unwrap();
+    let output_text = strip_deprecation_warning(&output_raw);
+    let output: serde_json::Value = serde_json::from_str(output_text).unwrap();
     // Should show full dependency chain within depth
     assert!(!output["dependsOn"].as_array().unwrap().is_empty());
 }
@@ -98,7 +106,9 @@ async fn test_deps_circular_detection() {
     let result = call_tool("deps", json!({ "specPath": "001" })).await;
     assert!(result.is_ok());
 
-    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    let output_raw = result.unwrap();
+    let output_text = strip_deprecation_warning(&output_raw);
+    let output: serde_json::Value = serde_json::from_str(output_text).unwrap();
     assert_eq!(output["hasCircular"], true);
 }
 
@@ -133,7 +143,9 @@ async fn test_deps_output_structure() {
     let result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(result.is_ok());
 
-    let output: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
+    let output_raw = result.unwrap();
+    let output_text = strip_deprecation_warning(&output_raw);
+    let output: serde_json::Value = serde_json::from_str(output_text).unwrap();
 
     // Check structure
     assert!(output["spec"].is_string());

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-30
 priority: medium
 tags:
@@ -8,7 +8,10 @@ tags:
 - tooling
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:20:04.859416Z
-updated_at: 2026-01-30T09:20:14.593811Z
+updated_at: 2026-01-30T09:58:56.382402Z
+transitions:
+- status: in-progress
+  at: 2026-01-30T09:58:56.382402Z
 ---
 
 # Config Standardization

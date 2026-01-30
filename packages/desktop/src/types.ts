@@ -1,3 +1,14 @@
+import type {
+  DependencyGraph as UiDependencyGraph,
+  DependencyInfo as UiDependencyInfo,
+  LightweightSpec as UiLightweightSpec,
+  Spec as UiSpec,
+  SpecDependencies as UiSpecDependencies,
+  StatsResult as UiStatsResult,
+  ValidationIssue as UiValidationIssue,
+  ValidationResult as UiValidationResult,
+} from '@leanspec/ui-components';
+
 export interface DesktopWindowPreferences {
   width: number;
   height: number;
@@ -58,109 +69,25 @@ export interface DesktopBootstrapPayload {
 // ============================================================================
 
 /** A full spec with all content */
-export interface Spec {
-  id: string;
-  projectId: string;
-  specNumber: number | null;
-  specName: string;
-  title: string | null;
-  status: string;
-  priority: string | null;
-  tags: string[];
-  assignee: string | null;
-  contentMd: string;
-  contentHtml: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-  completedAt: string | null;
-  filePath: string;
-  githubUrl: string | null;
-  syncedAt: string;
-  dependsOn: string[];
-  requiredBy: string[];
-}
+export type Spec = UiSpec;
 
 /** Lightweight spec without full content (for list views) */
-export interface LightweightSpec {
-  id: string;
-  projectId: string;
-  specNumber: number | null;
-  specName: string;
-  title: string | null;
-  status: string;
-  priority: string | null;
-  tags: string[];
-  assignee: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-  completedAt: string | null;
-  filePath: string;
-  githubUrl: string | null;
-  dependsOn: string[];
-  requiredBy: string[];
-  subSpecsCount: number;
-}
+export type LightweightSpec = UiLightweightSpec;
 
 /** Statistics result for a project */
-export interface StatsResult {
-  totalProjects: number;
-  totalSpecs: number;
-  specsByStatus: { status: string; count: number }[];
-  specsByPriority: { priority: string; count: number }[];
-  completionRate: number;
-  activeSpecs: number;
-  totalTags: number;
-  avgTagsPerSpec: number;
-  specsWithDependencies: number;
-}
-
-/** Dependency graph node */
-export interface DependencyNode {
-  id: string;
-  name: string;
-  number: number;
-  status: string;
-  priority: string;
-  tags: string[];
-}
-
-/** Dependency graph edge */
-export interface DependencyEdge {
-  source: string;
-  target: string;
-  type: 'dependsOn';
-}
+export type StatsResult = UiStatsResult;
 
 /** Complete dependency graph */
-export interface DependencyGraph {
-  nodes: DependencyNode[];
-  edges: DependencyEdge[];
-}
+export type DependencyGraph = UiDependencyGraph;
 
 /** Dependencies for a specific spec */
-export interface SpecDependencies {
-  dependsOn: DependencyInfo[];
-  requiredBy: DependencyInfo[];
-}
+export type SpecDependencies = UiSpecDependencies;
 
 /** Information about a dependency */
-export interface DependencyInfo {
-  specName: string;
-  title: string | null;
-  status: string;
-}
+export type DependencyInfo = UiDependencyInfo;
 
 /** Validation result */
-export interface ValidationResult {
-  specName: string;
-  valid: boolean;
-  issues: ValidationIssue[];
-}
+export type ValidationResult = UiValidationResult;
 
 /** Validation issue */
-export interface ValidationIssue {
-  severity: 'error' | 'warning' | 'info';
-  code: string;
-  message: string;
-  line: number | null;
-}
+export type ValidationIssue = UiValidationIssue;

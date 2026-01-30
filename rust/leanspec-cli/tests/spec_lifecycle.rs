@@ -59,15 +59,13 @@ fn test_create_update_archive_workflow() {
     let result = archive_spec(cwd, "001-my-feature");
     assert!(result.success, "archive should succeed");
 
-    // Original location should be gone
-    assert!(!dir_exists(&spec_dir), "original spec dir should be gone");
+    // Spec should remain in place (status-only archiving)
+    assert!(dir_exists(&spec_dir), "spec dir should remain");
 
-    // Should be in archived folder
-    let archived_dir = cwd.join("specs").join("archived").join("001-my-feature");
-    assert!(
-        dir_exists(&archived_dir),
-        "spec should be in archived folder"
-    );
+    // Status should be updated to archived
+    let content = read_file(&readme_path);
+    let fm = parse_frontmatter(&content);
+    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("archived"));
 }
 
 #[test]

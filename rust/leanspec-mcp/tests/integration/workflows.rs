@@ -147,7 +147,9 @@ async fn test_link_deps_unlink_workflow() {
     let deps_result = call_tool("deps", json!({ "specPath": "002" })).await;
     assert!(deps_result.is_ok());
 
-    let deps_output: serde_json::Value = serde_json::from_str(&deps_result.unwrap()).unwrap();
+    let deps_raw = deps_result.unwrap();
+    let deps_text = strip_deprecation_warning(&deps_raw);
+    let deps_output: serde_json::Value = serde_json::from_str(deps_text).unwrap();
     // Dependencies might be in dependsOn field
     assert!(deps_output["dependsOn"].is_array());
 

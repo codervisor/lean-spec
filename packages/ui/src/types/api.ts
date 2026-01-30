@@ -1,55 +1,45 @@
-export type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
-export type SpecPriority = 'low' | 'medium' | 'high' | 'critical';
+import type {
+  LightweightSpec as UiLightweightSpec,
+  SpecRelationships as UiSpecRelationships,
+  SpecPriority as UiSpecPriority,
+  SpecStatus as UiSpecStatus,
+  SpecWithMetadata as UiSpecWithMetadata,
+  SubSpec as UiSubSpec,
+} from '@leanspec/ui-components';
+
+export type SpecStatus = UiSpecStatus;
+export type SpecPriority = UiSpecPriority;
 export type TokenStatus = 'optimal' | 'good' | 'warning' | 'critical';
 export type ValidationStatus = 'pass' | 'warn' | 'fail';
 
 export type SessionStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 export type SessionMode = 'guided' | 'autonomous' | 'ralph';
 
-export interface SubSpec {
-  name: string;
-  file: string;
-  content: string;
-  // Note: icon and color are assigned in frontend via getSubSpecStyle()
-  // Backend no longer provides these fields
-}
-
-export interface Spec {
-  id: string;
-  specName: string;
-  specNumber?: number | null;
-  title?: string | null;
+export type SubSpec = UiSubSpec & {
+  file?: string;
+  name?: string;
   content?: string;
+};
+
+export type Spec = UiLightweightSpec & {
+  content?: string;
+  contentMd?: string;
   contentHash?: string;
-  status: SpecStatus;
-  priority?: SpecPriority | null;
-  tags?: string[];
-  assignee?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-  completedAt?: string;
-  dependsOn?: string[];
-  requiredBy?: string[];
-  filePath?: string;
   tokenCount?: number;
   tokenStatus?: TokenStatus;
   validationStatus?: ValidationStatus;
-  relationships?: {
-    dependsOn: string[];
-    requiredBy?: string[];
-  };
-  parent?: string | null;
-  children?: string[];
-  subSpecsCount?: number;
-}
+  relationships?: UiSpecRelationships;
+};
 
-
-export interface SpecDetail extends Spec {
-  contentMd?: string;
+export type SpecDetail = UiSpecWithMetadata & {
   content?: string;
-  subSpecs?: SubSpec[];
+  contentHash?: string;
+  tokenCount?: number;
+  tokenStatus?: TokenStatus;
+  validationStatus?: ValidationStatus;
   metadata?: Record<string, unknown>;
-}
+  subSpecs?: SubSpec[];
+};
 
 export interface Session {
   id: string;

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-30
 priority: high
 tags:
@@ -8,7 +8,10 @@ tags:
 - dedupe
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:33.073388Z
-updated_at: 2026-01-30T09:20:14.416305Z
+updated_at: 2026-01-30T09:49:14.484107Z
+transitions:
+- status: in-progress
+  at: 2026-01-30T09:49:14.484107Z
 ---
 
 # UI Utilities Consolidation

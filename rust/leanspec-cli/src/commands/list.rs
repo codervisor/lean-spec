@@ -19,9 +19,18 @@ pub fn run(
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all()?;
 
-    // Build filter
+    // Build filter (exclude archived by default)
+    let status_filter = status
+        .map(|s| vec![s.parse().unwrap_or(SpecStatus::Planned)])
+        .unwrap_or_else(|| {
+            vec![
+                SpecStatus::Planned,
+                SpecStatus::InProgress,
+                SpecStatus::Complete,
+            ]
+        });
     let filter = SpecFilterOptions {
-        status: status.map(|s| vec![s.parse().unwrap_or(SpecStatus::Planned)]),
+        status: Some(status_filter),
         tags,
         priority: priority.map(|p| vec![p.parse().unwrap_or(SpecPriority::Medium)]),
         assignee,

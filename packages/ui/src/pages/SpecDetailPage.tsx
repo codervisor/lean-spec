@@ -22,6 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  formatDate,
+  formatRelativeTime,
   SpecTimeline,
   StatusBadge,
   PriorityBadge,
@@ -38,7 +40,6 @@ import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
 import { useProject, useLayout, useMachine, useSessions } from '../contexts';
 import { useTranslation } from 'react-i18next';
-import { formatDate, formatRelativeTime } from '../lib/date-utils';
 import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
 import { getSubSpecStyle, formatSubSpecName } from '../lib/sub-spec-utils';
@@ -159,14 +160,21 @@ export function SpecDetailPage() {
     return raw
       .map((entry) => {
         if (!entry || typeof entry !== 'object') return null;
-        const content = (entry as Record<string, unknown>).content;
+        const record = entry as Record<string, unknown>;
+        const content = typeof record.content === 'string'
+          ? record.content
+          : typeof record.contentMd === 'string'
+            ? record.contentMd
+            : null;
         if (typeof content !== 'string') return null;
 
-        const file = typeof (entry as Record<string, unknown>).file === 'string'
-          ? (entry as Record<string, unknown>).file as string
-          : typeof (entry as Record<string, unknown>).name === 'string'
-            ? (entry as Record<string, unknown>).name as string
-            : '';
+        const file = typeof record.filename === 'string'
+          ? record.filename
+          : typeof record.file === 'string'
+            ? record.file
+            : typeof record.name === 'string'
+              ? record.name
+              : '';
 
         // Use frontend styling logic based on filename
         const style = getSubSpecStyle(file);
@@ -199,7 +207,7 @@ export function SpecDetailPage() {
   if (currentSubSpec && spec && subSpecs.length > 0) {
     const subSpecData = subSpecs.find(s => s.file === currentSubSpec);
     if (subSpecData) {
-      displayContent = subSpecData.content;
+      displayContent = subSpecData.content ?? subSpecData.contentMd ?? '';
     }
   }
 
@@ -522,7 +530,7 @@ export function SpecDetailPage() {
                     return (
                       <button
                         key={subSpec.file}
-                        onClick={() => handleSubSpecSwitch(subSpec.file)}
+                        onClick={() => handleSubSpecSwitch(subSpec.file ?? null)}
                         className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors ${currentSubSpec === subSpec.file
                           ? 'bg-background text-foreground shadow-sm'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'

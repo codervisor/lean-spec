@@ -3,7 +3,7 @@ import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbre
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
-import type { Spec } from '../types/api';
+import type { Spec, SpecStatus } from '../types/api';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
@@ -15,7 +15,6 @@ import { useProject, useLayout, useMachine } from '../contexts';
 import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
-type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc';
 
 export function SpecsPage() {
@@ -283,18 +282,16 @@ export function SpecsPage() {
           description={t('specsPage.description')}
           actions={(
             <div className="flex items-center gap-3">
-              {viewMode === 'board' && (
-                <Button
-                  variant={groupByParent ? "secondary" : "outline"}
-                  size="sm"
-                  className="h-8 gap-1.5"
-                  onClick={() => setGroupByParent(!groupByParent)}
-                  title="Group specs by umbrella/parent"
-                >
-                  <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
-                  <span className="hidden sm:inline">Group by Parent</span>
-                </Button>
-              )}
+              <Button
+                variant={groupByParent ? "secondary" : "outline"}
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => setGroupByParent(!groupByParent)}
+                title="Group specs by umbrella/parent"
+              >
+                <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
+                <span className="hidden sm:inline">Group by Parent</span>
+              </Button>
               <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
                 <Button
                   variant={viewMode === 'list' ? 'secondary' : 'ghost'}
@@ -387,7 +384,7 @@ export function SpecsPage() {
             )}
           />
         ) : viewMode === 'list' ? (
-          <ListView specs={filteredSpecs} basePath={basePath} />
+          <ListView specs={filteredSpecs} basePath={basePath} groupByParent={groupByParent} />
         ) : (
           <BoardView
             specs={filteredSpecs}

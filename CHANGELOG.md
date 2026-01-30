@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Structured Spec Hierarchy Management** ([spec 250](https://web.lean-spec.dev/specs/250)) - Parent-child relationships for umbrella specs
+  - New `parent` field in frontmatter for organizational grouping (distinct from `depends_on` technical dependencies)
+  - Auto-detection of umbrella specs (specs with children get umbrella indicator 🌂)
+  - `lean-spec list --hierarchy` - Tree view showing parent-child nesting
+  - `lean-spec children <spec>` - List all direct children of an umbrella spec
+  - `lean-spec board --group-by parent` - Board view grouped by parent umbrellas
+  - MCP tools: `set_parent`, `list_children`, `list_umbrellas` for AI agent workflows
+  - Enhanced `view` command/tool showing parent and children relationships
+  - Hierarchy validation: circular parent detection, orphan detection, status consistency checks
+  - UI list view: `groupByParent` toggle with collapsible tree groups matching sidebar design
+  - UI board view: de-emphasized child specs, auto-collapse after 3 children with "[+X more]" toggle
+  - **Related specs:** [252](https://web.lean-spec.dev/specs/252) (UI hierarchy display), [253](https://web.lean-spec.dev/specs/253) (relationships editing UI), [254](https://web.lean-spec.dev/specs/254) (streamlined commands), [258](https://web.lean-spec.dev/specs/258) (UI visualization enhancement)
+
 ### Changed
 - **Status-Only Archiving** ([spec 256](https://web.lean-spec.dev/specs/256)) - Simplified archive workflow
   - Archiving now only sets `status: archived` in frontmatter (no file move)

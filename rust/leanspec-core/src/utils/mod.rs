@@ -1,6 +1,7 @@
 //! Utility functions and structures
 
 mod dependency_graph;
+mod hash;
 mod insights;
 mod project_discovery;
 mod spec_archiver;
@@ -11,6 +12,7 @@ mod template_loader;
 mod token_counter;
 
 pub use dependency_graph::{CompleteDependencyGraph, DependencyGraph, ImpactRadius};
+pub use hash::hash_content;
 pub use insights::Insights;
 pub use project_discovery::{DiscoveredProject, DiscoveryError, ProjectDiscovery};
 pub use spec_archiver::{ArchiveError, SpecArchiver};

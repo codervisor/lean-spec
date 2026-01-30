@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-01-30
 priority: medium
 tags:
@@ -10,7 +10,13 @@ tags:
 - tree-view
 parent: 250-structured-spec-hierarchy-management
 created_at: 2026-01-30T02:35:28.245859Z
-updated_at: 2026-01-30T02:35:31.993830Z
+updated_at: 2026-01-30T09:53:21.444695Z
+completed_at: 2026-01-30T09:53:21.444695Z
+transitions:
+- status: in-progress
+  at: 2026-01-30T09:51:19.467070Z
+- status: complete
+  at: 2026-01-30T09:53:21.444695Z
 ---
 
 # UI Hierarchy Visualization Enhancement
@@ -77,41 +83,41 @@ Focus on umbrella specs with collapsed/de-emphasized children:
 
 Align the specs list page list-view with the nav sidebar design:
 
-| Feature | Nav Sidebar | List View (proposed) |
-|---------|-------------|---------------------|
-| Tree structure | ✅ Collapsible | ✅ Add collapsible groups |
-| Indentation | ✅ Visual hierarchy | ✅ Match indent style |
-| Expand/collapse | ✅ Arrow toggles | ✅ Add same controls |
-| Status indicators | ✅ Colored dots | ✅ Match styling |
+| Feature           | Nav Sidebar        | List View (proposed)     |
+| ----------------- | ------------------ | ------------------------ |
+| Tree structure    | ✅ Collapsible      | ✅ Add collapsible groups |
+| Indentation       | ✅ Visual hierarchy | ✅ Match indent style     |
+| Expand/collapse   | ✅ Arrow toggles    | ✅ Add same controls      |
+| Status indicators | ✅ Colored dots     | ✅ Match styling          |
 
 ## Plan
 
 ### Phase 1: List View Parent Grouping
-- [ ] Add `groupByParent` option to list view state
-- [ ] Implement tree-structure rendering for grouped specs
-- [ ] Add expand/collapse controls for umbrella groups
-- [ ] Sync view toggle with URL params
+- [x] Add `groupByParent` option to list view state
+- [x] Implement tree-structure rendering for grouped specs
+- [x] Add expand/collapse controls for umbrella groups
+- [x] Sync view toggle with URL params
 
 ### Phase 2: Board Tree-View Redesign
-- [ ] Reduce visual prominence of child specs in board
-- [ ] Add umbrella icon (🌂) to parent specs
-- [ ] Implement auto-collapse for children (show first N, "[+X more]")
-- [ ] Add expand/collapse all toggle
+- [x] Reduce visual prominence of child specs in board
+- [x] Add umbrella icon (🌂) to parent specs
+- [x] Implement auto-collapse for children (show first N, "[+X more]")
+- [x] Add expand/collapse all toggle
 
 ### Phase 3: Consistent Tree Styling
-- [ ] Extract shared tree-view component from sidebar
-- [ ] Apply consistent styling to list view groups
-- [ ] Match indentation, icons, and collapse behavior
-- [ ] Ensure responsive behavior on mobile
+- [x] Extract shared tree-view component from sidebar
+- [x] Apply consistent styling to list view groups
+- [x] Match indentation, icons, and collapse behavior
+- [x] Ensure responsive behavior on mobile
 
 ## Test
 
-- [ ] List view can toggle between flat and grouped modes
-- [ ] Board tree-view shows umbrellas prominently
-- [ ] Children are visually de-emphasized in board
-- [ ] Expand/collapse works in both list and board
-- [ ] Tree styling matches sidebar design
-- [ ] Mobile layout works correctly
+- [x] List view can toggle between flat and grouped modes
+- [x] Board tree-view shows umbrellas prominently
+- [x] Children are visually de-emphasized in board
+- [x] Expand/collapse works in both list and board
+- [x] Tree styling matches sidebar design
+- [x] Mobile layout works correctly
 
 ## Notes
 

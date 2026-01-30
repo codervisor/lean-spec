@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-01-30
 priority: high
 tags:
@@ -8,7 +8,10 @@ tags:
 - api
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:40.583464Z
-updated_at: 2026-01-30T09:20:14.523303Z
+updated_at: 2026-01-30T09:53:32.214168Z
+transitions:
+- status: in-progress
+  at: 2026-01-30T09:53:32.214168Z
 ---
 
 # Type Definitions Consolidation

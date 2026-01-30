@@ -20,12 +20,14 @@ fn test_archive_spec() {
     let result = archive_spec(cwd, "001-to-archive");
     assert!(result.success);
 
-    // Original should be gone
-    assert!(!dir_exists(&original_path));
+    // Spec should still exist (status-only archive)
+    assert!(dir_exists(&original_path));
 
-    // Should be in archived folder
-    let archived_path = cwd.join("specs").join("archived").join("001-to-archive");
-    assert!(dir_exists(&archived_path));
+    // Status should be updated to archived
+    let readme_path = original_path.join("README.md");
+    let content = read_file(&readme_path);
+    let fm = parse_frontmatter(&content);
+    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("archived"));
 }
 
 #[test]
@@ -40,8 +42,13 @@ fn test_archive_by_number() {
     let result = archive_spec(cwd, "001");
     assert!(result.success);
 
-    let archived_path = cwd.join("specs").join("archived").join("001-my-spec");
-    assert!(dir_exists(&archived_path));
+    let spec_path = cwd.join("specs").join("001-my-spec");
+    assert!(dir_exists(&spec_path));
+
+    let readme_path = spec_path.join("README.md");
+    let content = read_file(&readme_path);
+    let fm = parse_frontmatter(&content);
+    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("archived"));
 }
 
 #[test]
@@ -74,7 +81,7 @@ fn test_archive_nonexistent_spec() {
 }
 
 #[test]
-fn test_archive_creates_archived_directory() {
+fn test_archive_does_not_create_archived_directory() {
     let ctx = TestContext::new();
     let cwd = ctx.path();
 
@@ -82,13 +89,17 @@ fn test_archive_creates_archived_directory() {
     create_spec(cwd, "first-archive");
     update_spec(cwd, "001-first-archive", &[("status", "complete")]);
 
-    // archived/ directory may not exist yet
-    let archived_dir = cwd.join("specs").join("archived");
-
     archive_spec(cwd, "001-first-archive");
 
-    // archived/ directory should be created
-    assert!(dir_exists(&archived_dir));
+    // archived/ may exist, but spec should not be moved there
+    let archived_dir = cwd.join("specs").join("archived");
+    assert!(!dir_exists(&archived_dir.join("001-first-archive")));
+
+    let spec_path = cwd.join("specs").join("001-first-archive");
+    let readme_path = spec_path.join("README.md");
+    let content = read_file(&readme_path);
+    let fm = parse_frontmatter(&content);
+    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("archived"));
 }
 
 #[test]
@@ -109,7 +120,6 @@ fn test_archive_preserves_spec_content() {
     // Check archived content exists and has the expected structure
     let archived_readme = cwd
         .join("specs")
-        .join("archived")
         .join("001-detailed-spec")
         .join("README.md");
     let archived_content = read_file(&archived_readme);
@@ -140,10 +150,27 @@ fn test_archive_batch() {
     let result = exec_cli(&["archive", "001-first-spec", "002-second-spec"], cwd);
     assert!(result.success);
 
-    // Both should be archived
-    let archived_dir = cwd.join("specs").join("archived");
-    assert!(dir_exists(&archived_dir.join("001-first-spec")));
-    assert!(dir_exists(&archived_dir.join("002-second-spec")));
+    // Both should be archived in place
+    let first_spec = cwd.join("specs").join("001-first-spec");
+    let second_spec = cwd.join("specs").join("002-second-spec");
+    assert!(dir_exists(&first_spec));
+    assert!(dir_exists(&second_spec));
+
+    let first_readme = first_spec.join("README.md");
+    let first_content = read_file(&first_readme);
+    let first_fm = parse_frontmatter(&first_content);
+    assert_eq!(
+        first_fm.get("status").and_then(|v| v.as_str()),
+        Some("archived")
+    );
+
+    let second_readme = second_spec.join("README.md");
+    let second_content = read_file(&second_readme);
+    let second_fm = parse_frontmatter(&second_content);
+    assert_eq!(
+        second_fm.get("status").and_then(|v| v.as_str()),
+        Some("archived")
+    );
 
     // Third spec should still be in specs/
     assert!(dir_exists(&cwd.join("specs").join("003-third-spec")));
@@ -166,8 +193,13 @@ fn test_archive_batch_with_errors() {
     // Valid spec should NOT be archived (all-or-nothing is not enforced, but command should fail)
     // Actually, looking at the code, it will archive valid ones and report errors
     // Let's verify the actual behavior
-    let archived_dir = cwd.join("specs").join("archived");
-    assert!(dir_exists(&archived_dir.join("001-valid-spec")));
+    let spec_path = cwd.join("specs").join("001-valid-spec");
+    assert!(dir_exists(&spec_path));
+
+    let readme_path = spec_path.join("README.md");
+    let content = read_file(&readme_path);
+    let fm = parse_frontmatter(&content);
+    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("archived"));
 }
 
 #[test]
@@ -190,6 +222,11 @@ fn test_archive_requires_exact_match() {
     assert!(result.success);
 
     // Now it should be archived
-    let archived_dir = cwd.join("specs").join("archived");
-    assert!(dir_exists(&archived_dir.join("001-my-feature-spec")));
+    let spec_path = cwd.join("specs").join("001-my-feature-spec");
+    assert!(dir_exists(&spec_path));
+
+    let readme_path = spec_path.join("README.md");
+    let content = read_file(&readme_path);
+    let fm = parse_frontmatter(&content);
+    assert_eq!(fm.get("status").and_then(|v| v.as_str()), Some("archived"));
 }

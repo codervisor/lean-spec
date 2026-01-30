@@ -14,6 +14,7 @@ use leanspec_core::{
     SpecLoader, SpecStats, SpecStatus, SpecWriter, StructureValidator, TemplateLoader,
     TokenCounter, TokenStatus, ValidationResult,
 };
+use leanspec_core::utils::hash_content;
 
 use crate::error::{ApiError, ApiResult};
 use crate::project_registry::Project;
@@ -138,12 +139,6 @@ fn rebuild_with_frontmatter(
 
     let trimmed_body = body.trim_start_matches('\n');
     Ok(format!("---\n{}---\n{}", yaml, trimmed_body))
-}
-
-fn hash_content(content: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(content.as_bytes());
-    format!("{:x}", hasher.finalize())
 }
 
 fn spec_number_from_name(name: &str) -> Option<u32> {

@@ -26,6 +26,7 @@ schemars = {version = "0.8", optional = true}
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
+sha2 = "0.10"
 thiserror.workspace = true
 tiktoken-rs.workspace = true
 urlencoding = {version = "2.1", optional = true}

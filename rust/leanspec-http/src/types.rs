@@ -3,9 +3,9 @@
 //! These types match the existing Next.js API responses for compatibility.
 
 use chrono::{DateTime, Utc};
+use leanspec_core::utils::hash_content;
 use leanspec_core::{SpecInfo, SpecPriority, SpecStats, SpecStatus};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 
 /// Lightweight spec for list views
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -546,12 +546,6 @@ impl From<&leanspec_core::SpecFrontmatter> for FrontmatterResponse {
 pub struct HealthResponse {
     pub status: String,
     pub version: String,
-}
-
-fn hash_content(content: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(content.as_bytes());
-    format!("{:x}", hasher.finalize())
 }
 
 /// Context file representation
