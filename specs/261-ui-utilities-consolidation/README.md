@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-30
 priority: high
 tags:
@@ -8,10 +8,13 @@ tags:
 - dedupe
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:33.073388Z
-updated_at: 2026-01-30T09:49:14.484107Z
+updated_at: 2026-01-30T14:42:56.867100Z
+completed_at: 2026-01-30T14:42:56.867100Z
 transitions:
 - status: in-progress
   at: 2026-01-30T09:49:14.484107Z
+- status: complete
+  at: 2026-01-30T14:42:56.867100Z
 ---
 
 # UI Utilities Consolidation
@@ -35,8 +38,8 @@ Consolidate duplicate UI utilities so @leanspec/ui uses the shared implementatio
 
 ## Test
 
-- [ ] pnpm pre-release
-- [ ] No TypeScript errors in @leanspec/ui
+- [x] pnpm pre-release
+- [x] No TypeScript errors in @leanspec/ui
 
 ## Notes
 
