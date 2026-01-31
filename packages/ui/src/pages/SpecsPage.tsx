@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbrella, AlertTriangle } from 'lucide-react';
+import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbrella, AlertTriangle, Archive } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -38,6 +38,10 @@ export function SpecsPage() {
   const [sortBy, setSortBy] = useState<SortOption>('id-desc');
   const [groupByParent, setGroupByParent] = useState(false);
   const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(false);
+  const [showArchived, setShowArchived] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('specs-page-show-archived') === 'true';
+  });
 
   const [searchParams] = useSearchParams();
   const initializedFromQuery = useRef(false);
@@ -87,6 +91,10 @@ export function SpecsPage() {
   useEffect(() => {
     localStorage.setItem('specs-view-mode', viewMode);
   }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem('specs-page-show-archived', String(showArchived));
+  }, [showArchived]);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     if (machineModeEnabled && !isMachineAvailable) {
@@ -189,6 +197,11 @@ export function SpecsPage() {
   // Filter specs based on search and filters
   const filteredSpecs = useMemo(() => {
     let filtered = specs.filter(spec => {
+      // Hide archived specs by default unless showArchived is true or archived is explicitly selected
+      if (!showArchived && statusFilter !== 'archived' && spec.status === 'archived') {
+        return false;
+      }
+
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
@@ -266,7 +279,7 @@ export function SpecsPage() {
     }
 
     return sorted;
-  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly]);
+  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived]);
 
   if (loading) {
     return (
@@ -322,6 +335,16 @@ export function SpecsPage() {
               >
                 <AlertTriangle className={cn("w-3.5 h-3.5", showValidationIssuesOnly ? "text-primary" : "text-muted-foreground")} />
                 <span className="hidden sm:inline">{t('specsPage.filters.validationIssuesOnly')}</span>
+              </Button>
+              <Button
+                variant={showArchived ? "secondary" : "outline"}
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => setShowArchived(!showArchived)}
+                title={showArchived ? t('specsPage.filters.hideArchived') : t('specsPage.filters.showArchived')}
+              >
+                <Archive className={cn("w-3.5 h-3.5", showArchived ? "text-primary" : "text-muted-foreground")} />
+                <span className="hidden sm:inline">{showArchived ? t('specsPage.filters.hideArchived') : t('specsPage.filters.showArchived')}</span>
               </Button>
               <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
                 <Button
@@ -423,6 +446,7 @@ export function SpecsPage() {
             canEdit={!machineModeEnabled || isMachineAvailable}
             basePath={basePath}
             groupByParent={groupByParent}
+            showArchived={showArchived}
           />
         )}
       </div>

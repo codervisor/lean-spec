@@ -531,7 +531,9 @@
       "subSpecs": "+{{count}} files"
     },
     "switchToTree": "Switch to Tree",
-    "switchToList": "Switch to List"
+    "switchToList": "Switch to List",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived"
   },
   "specsPage": {
     "title": "Specifications",
@@ -555,6 +557,8 @@
       "statusAll": "All Status",
       "priorityAll": "All Priority",
       "validationIssuesOnly": "Issues only",
+      "showArchived": "Show archived",
+      "hideArchived": "Hide archived",
       "filteredCount": "{{filtered}} of {{total}} specs",
       "sortOptions": {
         "id-desc": "Newest First",

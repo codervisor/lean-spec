@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings, Terminal } from 'lucide-react';
+import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { useMachine, useProject } from '../contexts';

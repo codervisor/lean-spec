@@ -524,7 +524,11 @@
     },
     "badges": {
       "subSpecs": "+{{count}} 个文件"
-    }
+    },
+    "switchToTree": "切换到树形视图",
+    "switchToList": "切换到列表视图",
+    "showArchived": "显示已归档",
+    "hideArchived": "隐藏已归档"
   },
   "specsPage": {
     "title": "规范列表",
@@ -548,6 +552,8 @@
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
       "validationIssuesOnly": "仅显示问题",
+      "showArchived": "显示已归档",
+      "hideArchived": "隐藏已归档",
       "filteredCount": "{{filtered}} / {{total}} 个规范",
       "sortOptions": {
         "id-desc": "最新优先",

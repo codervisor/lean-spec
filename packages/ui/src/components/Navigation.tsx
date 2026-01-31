@@ -9,7 +9,7 @@ import { QuickSearch } from './QuickSearch';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-import { useMediaQuery } from '../hooks/use-media-query';
+// import { useMediaQuery } from '../hooks/use-media-query';
 import { useLayout, useProject } from '../contexts';
 // TODO: AI Chat temporarily disabled - not ready yet
 // import { useChat } from '../contexts';
@@ -158,7 +158,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
   const { isWideMode, toggleWideMode } = useLayout();
   // TODO: AI Chat temporarily disabled - not ready yet
   // const { toggleChat, isOpen: isChatOpen, sidebarWidth } = useChat();
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  // const isMobile = useMediaQuery('(max-width: 768px)');
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
 

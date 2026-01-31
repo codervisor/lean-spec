@@ -8,7 +8,8 @@ import {
   ChevronRight,
   Check,
   ListTree,
-  AlignJustify
+  AlignJustify,
+  Archive
 } from 'lucide-react';
 import {
   Accordion,
@@ -44,6 +45,7 @@ const STORAGE_KEYS = {
   priorityFilter: 'specs-nav-sidebar-priority-filter',
   tagFilter: 'specs-nav-sidebar-tag-filter',
   viewMode: 'specs-nav-sidebar-view-mode',
+  showArchived: 'specs-nav-sidebar-show-archived',
 };
 
 interface SpecsNavSidebarProps {
@@ -79,6 +81,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return stored ? JSON.parse(stored) : [];
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [showArchived, setShowArchived] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem(STORAGE_KEYS.showArchived) === 'true';
+  });
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(STORAGE_KEYS.collapsed) === 'true';
@@ -206,6 +212,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const filteredSpecs = useMemo(() => {
     let result = specs;
 
+    // Hide archived specs by default unless showArchived is true or archived is explicitly selected in status filter
+    if (!showArchived && !statusFilter.includes('archived')) {
+      result = result.filter((spec) => spec.status !== 'archived');
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -237,7 +248,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     }
 
     return [...result].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
-  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants]);
+  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants, showArchived]);
 
   const RowComponent = useCallback(
     (rowProps: { index: number; style: CSSProperties }) => {
@@ -340,6 +351,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     sessionStorage.setItem(STORAGE_KEYS.tagFilter, JSON.stringify(tagFilter));
   }, [tagFilter]);
 
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.showArchived, String(showArchived));
+  }, [showArchived]);
+
   // Restore initial scroll position only once on mount
   useEffect(() => {
     if (viewMode === 'tree') return; // Skip for tree view
@@ -430,7 +445,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
         <aside
           className={cn(
-            'border-r bg-background flex flex-col overflow-hidden',
+            'border-r bg-background flex flex-col overflow-hidden transition-all duration-300 flex-shrink-0',
             mobileOpen
               ? 'fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl'
               : 'hidden lg:flex lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)]',
@@ -454,7 +469,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 <Popover open={showFilters} onOpenChange={setShowFilters}>
                   <PopoverTrigger asChild>
                     <Button
-                      variant={showFilters || hasActiveFilters ? 'secondary' : 'ghost'}
+                      variant={showFilters || hasActiveFilters || showArchived ? 'secondary' : 'ghost'}
                       size="sm"
                       className="h-7 w-7 p-0"
                       title={showFilters ? t('specsNavSidebar.toggleFilters.hide') : t('specsNavSidebar.toggleFilters.show')}
@@ -464,14 +479,17 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   </PopoverTrigger>
 
                   <PopoverContent className="w-80 p-0" align="start" sideOffset={8}>
-                    <div className="flex items-center justify-between px-4 py-3 border-b">
-                      <span className="font-medium text-sm">{t('specsNavSidebar.filtersLabel')}</span>
-                      {hasActiveFilters && (
+                    <div className="flex items-center justify-between px-4 py-2 border-b">
+                      <span className="font-medium text-sm py-1">{t('specsNavSidebar.filtersLabel')}</span>
+                      {(hasActiveFilters || showArchived) && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-auto px-2 py-1 text-xs"
-                          onClick={resetFilters}
+                          onClick={() => {
+                            resetFilters();
+                            setShowArchived(false);
+                          }}
                         >
                           {t('specsNavSidebar.clearFilters')}
                         </Button>
@@ -487,7 +505,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                           </AccordionTrigger>
                           <AccordionContent className="pb-2">
                             <div className="space-y-1 px-2">
-                              {(['planned', 'in-progress', 'complete', 'archived'] as const).map((status) => (
+                              {(['planned', 'in-progress', 'complete'] as const).map((status) => (
                                 <div
                                   key={status}
                                   className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
@@ -506,6 +524,25 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                                   </div>
                                 </div>
                               ))}
+                              {showArchived && (
+                                <div
+                                  key="archived"
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                                  onClick={() => toggleStatus('archived')}
+                                >
+                                  <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", statusFilter.includes('archived') ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
+                                    {statusFilter.includes('archived') && (
+                                      <Check className="h-3 w-3" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <StatusBadge status="archived" iconOnly className="scale-90" />
+                                    <span className="text-sm">
+                                      {getStatusLabel('archived', t)}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -588,6 +625,31 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                           </AccordionItem>
                         )}
                       </Accordion>
+
+                      {/* Show Archived Toggle */}
+                      <div
+                        className="flex items-center gap-2 px-4 py-3 border-t hover:bg-accent cursor-pointer group"
+                        onClick={() => {
+                          const newValue = !showArchived;
+                          setShowArchived(newValue);
+                          // Clear archived from status filter when hiding archived specs
+                          if (!newValue && statusFilter.includes('archived')) {
+                            setStatusFilter(prev => prev.filter(s => s !== 'archived'));
+                          }
+                        }}
+                      >
+                        <div className={cn("flex items-center justify-center w-4 h-4 border rounded transition-colors", showArchived ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50")}>
+                          {showArchived && (
+                            <Check className="h-3 w-3" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-1">
+                          <Archive className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {t('specsNavSidebar.showArchived')}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -662,7 +724,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           <Button
             variant="ghost"
             size="sm"
-            className="hidden lg:flex h-10 w-5 p-0 absolute z-50 top-2 left-0 bg-background border border-l-0 rounded-r-md rounded-l-none shadow-md hover:w-6 hover:bg-accent transition-all items-center justify-center"
+            className="hidden lg:flex h-9 w-5 p-0 absolute z-50 top-2 left-0 bg-background border border-l-0 rounded-r-md rounded-l-none shadow-md hover:w-6 hover:bg-accent transition-all items-center justify-center"
             onClick={() => setCollapsed(false)}
             title={t('specSidebar.expand')}
           >

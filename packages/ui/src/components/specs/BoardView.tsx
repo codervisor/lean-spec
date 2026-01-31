@@ -14,6 +14,7 @@ interface BoardViewProps {
   basePath?: string;
   canEdit?: boolean;
   groupByParent?: boolean;
+  showArchived?: boolean;
 }
 
 const COLLAPSE_THRESHOLD = 3;
@@ -106,15 +107,18 @@ function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
   );
 }
 
-export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true, groupByParent = false }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
 
   const columns = useMemo(() => {
     const cols: SpecStatus[] = ['planned', 'in-progress', 'complete'];
+    if (showArchived) {
+      cols.push('archived');
+    }
     return cols;
-  }, []);
+  }, [showArchived]);
 
   const specsByStatus = useMemo(() => {
     const grouped: Record<SpecStatus, Spec[]> = {
