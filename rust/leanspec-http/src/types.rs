@@ -4,7 +4,10 @@
 
 use chrono::{DateTime, Utc};
 use leanspec_core::utils::hash_content;
-use leanspec_core::{SpecInfo, SpecPriority, SpecStats, SpecStatus};
+use leanspec_core::{
+    FrontmatterValidator, LineCountValidator, SpecInfo, SpecPriority, SpecStats, SpecStatus,
+    StructureValidator, TokenCounter, TokenStatus, ValidationResult,
+};
 use serde::{Deserialize, Serialize};
 
 /// Lightweight spec for list views
@@ -46,6 +49,38 @@ pub struct SpecSummary {
 
 impl From<&SpecInfo> for SpecSummary {
     fn from(spec: &SpecInfo) -> Self {
+        // Compute token count from spec content
+        let counter = TokenCounter::new();
+        let token_result = counter.count_spec(&spec.content);
+        let token_status_str = match token_result.status {
+            TokenStatus::Optimal => "optimal",
+            TokenStatus::Good => "good",
+            TokenStatus::Warning => "warning",
+            TokenStatus::Excessive => "critical",
+        };
+
+        // Compute validation status
+        let fm_validator = FrontmatterValidator::new();
+        let struct_validator = StructureValidator::new();
+        let line_validator = LineCountValidator::new();
+
+        let mut validation_result = ValidationResult::new(&spec.path);
+        validation_result.merge(fm_validator.validate(spec));
+        validation_result.merge(struct_validator.validate(spec));
+        validation_result.merge(line_validator.validate(spec));
+
+        let validation_status_str = if validation_result.errors.is_empty() {
+            "pass"
+        } else if validation_result
+            .errors
+            .iter()
+            .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
+        {
+            "fail"
+        } else {
+            "warn"
+        };
+
         Self {
             project_id: None,
             id: spec.path.clone(),
@@ -65,9 +100,9 @@ impl From<&SpecInfo> for SpecSummary {
             children: Vec::new(),
             required_by: Vec::new(), // Will be computed when needed
             content_hash: Some(hash_content(&spec.content)),
-            token_count: None,
-            token_status: None,
-            validation_status: None,
+            token_count: Some(token_result.total),
+            token_status: Some(token_status_str.to_string()),
+            validation_status: Some(validation_status_str.to_string()),
             relationships: None,
         }
     }

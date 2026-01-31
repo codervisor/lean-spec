@@ -149,15 +149,15 @@ fn map_event_kind(kind: &EventKind) -> Option<SpecChangeType> {
     use notify::event::{CreateKind, ModifyKind, RemoveKind};
 
     match kind {
-        EventKind::Create(CreateKind::File) | EventKind::Create(CreateKind::Any) => {
-            Some(SpecChangeType::Created)
-        }
+        EventKind::Create(CreateKind::File)
+        | EventKind::Create(CreateKind::Folder)
+        | EventKind::Create(CreateKind::Any) => Some(SpecChangeType::Created),
         EventKind::Modify(ModifyKind::Data(_))
         | EventKind::Modify(ModifyKind::Any)
         | EventKind::Modify(ModifyKind::Name(_)) => Some(SpecChangeType::Modified),
-        EventKind::Remove(RemoveKind::File) | EventKind::Remove(RemoveKind::Any) => {
-            Some(SpecChangeType::Deleted)
-        }
+        EventKind::Remove(RemoveKind::File)
+        | EventKind::Remove(RemoveKind::Folder)
+        | EventKind::Remove(RemoveKind::Any) => Some(SpecChangeType::Deleted),
         _ => None,
     }
 }

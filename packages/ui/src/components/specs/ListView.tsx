@@ -96,6 +96,7 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
                 {spec.status && <StatusBadge status={spec.status} />}
                 {spec.priority && <PriorityBadge priority={spec.priority} />}
                 <TokenBadge
+                  count={spec.tokenCount}
                   projectId={projectId}
                   specName={spec.specName}
                   size="sm"
@@ -106,6 +107,7 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
                   }}
                 />
                 <ValidationBadge
+                  status={spec.validationStatus}
                   projectId={projectId}
                   specName={spec.specName}
                   size="sm"
