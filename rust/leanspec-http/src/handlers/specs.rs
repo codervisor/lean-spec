@@ -10,10 +10,10 @@ use std::path::Path as FsPath;
 
 use leanspec_core::utils::hash_content;
 use leanspec_core::{
-    CompletionVerifier, DependencyGraph, FrontmatterParser, FrontmatterValidator, LeanSpecConfig,
-    LineCountValidator, MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions,
-    SpecLoader, SpecStats, SpecStatus, SpecWriter, StructureValidator, TemplateLoader,
-    TokenCounter, TokenStatus, ValidationResult,
+    global_frontmatter_validator, global_line_count_validator, global_structure_validator,
+    global_token_counter, CompletionVerifier, DependencyGraph, FrontmatterParser, LeanSpecConfig,
+    MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions, SpecLoader, SpecStats,
+    SpecStatus, SpecWriter, TemplateLoader, TokenStatus, ValidationResult,
 };
 
 use crate::error::{ApiError, ApiResult};
@@ -466,7 +466,7 @@ pub async fn list_project_specs(
     let filtered_specs: Vec<SpecSummary> = all_specs
         .iter()
         .filter(|s| filters.matches(s))
-        .map(|s| SpecSummary::from(s).with_project_id(&project.id))
+        .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
         .collect();
 
     let mut children_map: HashMap<String, Vec<String>> = HashMap::new();
@@ -758,7 +758,7 @@ pub async fn get_project_spec_tokens(
         )
     })?;
 
-    let counter = TokenCounter::new();
+    let counter = global_token_counter();
     let result = counter.count_spec(&content);
 
     Ok(Json(SpecTokenResponse {
@@ -802,9 +802,9 @@ pub async fn get_project_spec_validation(
         )
     })?;
 
-    let fm_validator = FrontmatterValidator::new();
-    let struct_validator = StructureValidator::new();
-    let line_validator = LineCountValidator::new();
+    let fm_validator = global_frontmatter_validator();
+    let struct_validator = global_structure_validator();
+    let line_validator = global_line_count_validator();
 
     let mut result = ValidationResult::new(&spec.path);
     result.merge(fm_validator.validate(&spec));
@@ -1232,7 +1232,7 @@ pub async fn search_project_specs(
             }
             true
         })
-        .map(|s| SpecSummary::from(s).with_project_id(&project.id))
+        .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
         .collect();
 
     // Sort by relevance (title matches first, then by spec number)

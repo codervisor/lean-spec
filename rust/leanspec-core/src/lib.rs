@@ -62,11 +62,12 @@ pub use types::{
     StatusTransition, UmbrellaVerificationResult, ValidationError, ValidationResult,
 };
 pub use utils::{
-    ArchiveError, CompleteDependencyGraph, DependencyGraph, DiscoveredProject, DiscoveryError,
-    ImpactRadius, Insights, LoadError, MetadataUpdate, ProjectDiscovery, SpecArchiver, SpecLoader,
-    SpecStats, SpecWriter, TemplateError, TemplateLoader, TokenCount, TokenCounter, TokenStatus,
-    WriteError,
+    global_token_counter, ArchiveError, CompleteDependencyGraph, DependencyGraph,
+    DiscoveredProject, DiscoveryError, ImpactRadius, Insights, LoadError, MetadataUpdate,
+    ProjectDiscovery, SpecArchiver, SpecLoader, SpecStats, SpecWriter, TemplateError,
+    TemplateLoader, TokenCount, TokenCounter, TokenStatus, WriteError,
 };
 pub use validators::{
+    global_frontmatter_validator, global_line_count_validator, global_structure_validator,
     CompletionVerifier, FrontmatterValidator, LineCountValidator, StructureValidator,
 };

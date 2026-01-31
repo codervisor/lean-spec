@@ -1,6 +1,9 @@
 //! Token counting for context economy
 
+use once_cell::sync::Lazy;
 use tiktoken_rs::{cl100k_base, CoreBPE};
+
+static GLOBAL_TOKEN_COUNTER: Lazy<TokenCounter> = Lazy::new(TokenCounter::new);
 
 /// Token count result
 #[derive(Debug, Clone, Default)]
@@ -190,6 +193,11 @@ impl Default for TokenCounter {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Global token counter instance (shared BPE encoder)
+pub fn global_token_counter() -> &'static TokenCounter {
+    &GLOBAL_TOKEN_COUNTER
 }
 
 #[cfg(test)]

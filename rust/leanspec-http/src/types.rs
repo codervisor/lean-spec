@@ -5,8 +5,9 @@
 use chrono::{DateTime, Utc};
 use leanspec_core::utils::hash_content;
 use leanspec_core::{
-    FrontmatterValidator, LineCountValidator, SpecInfo, SpecPriority, SpecStats, SpecStatus,
-    StructureValidator, TokenCounter, TokenStatus, ValidationResult,
+    global_frontmatter_validator, global_line_count_validator, global_structure_validator,
+    global_token_counter, SpecInfo, SpecPriority, SpecStats, SpecStatus, TokenStatus,
+    ValidationResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +51,7 @@ pub struct SpecSummary {
 impl From<&SpecInfo> for SpecSummary {
     fn from(spec: &SpecInfo) -> Self {
         // Compute token count from spec content
-        let counter = TokenCounter::new();
+        let counter = global_token_counter();
         let token_result = counter.count_spec(&spec.content);
         let token_status_str = match token_result.status {
             TokenStatus::Optimal => "optimal",
@@ -60,9 +61,9 @@ impl From<&SpecInfo> for SpecSummary {
         };
 
         // Compute validation status
-        let fm_validator = FrontmatterValidator::new();
-        let struct_validator = StructureValidator::new();
-        let line_validator = LineCountValidator::new();
+        let fm_validator = global_frontmatter_validator();
+        let struct_validator = global_structure_validator();
+        let line_validator = global_line_count_validator();
 
         let mut validation_result = ValidationResult::new(&spec.path);
         validation_result.merge(fm_validator.validate(spec));
@@ -109,6 +110,33 @@ impl From<&SpecInfo> for SpecSummary {
 }
 
 impl SpecSummary {
+    pub fn from_without_computed(spec: &SpecInfo) -> Self {
+        Self {
+            project_id: None,
+            id: spec.path.clone(),
+            spec_number: spec.number(),
+            spec_name: spec.path.clone(),
+            title: Some(spec.title.clone()),
+            status: spec.frontmatter.status.to_string(),
+            priority: spec.frontmatter.priority.map(|p| p.to_string()),
+            tags: spec.frontmatter.tags.clone(),
+            assignee: spec.frontmatter.assignee.clone(),
+            created_at: spec.frontmatter.created_at,
+            updated_at: spec.frontmatter.updated_at,
+            completed_at: spec.frontmatter.completed_at,
+            file_path: spec.file_path.to_string_lossy().to_string(),
+            depends_on: spec.frontmatter.depends_on.clone(),
+            parent: spec.frontmatter.parent.clone(),
+            children: Vec::new(),
+            required_by: Vec::new(),
+            content_hash: Some(hash_content(&spec.content)),
+            token_count: None,
+            token_status: None,
+            validation_status: None,
+            relationships: None,
+        }
+    }
+
     pub fn with_project_id(mut self, project_id: &str) -> Self {
         self.project_id = Some(project_id.to_string());
         self

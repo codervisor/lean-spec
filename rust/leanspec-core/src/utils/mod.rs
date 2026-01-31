@@ -20,4 +20,4 @@ pub use spec_loader::{LoadError, SpecLoader};
 pub use spec_writer::{MetadataUpdate, SpecWriter, WriteError};
 pub use stats::SpecStats;
 pub use template_loader::{TemplateError, TemplateLoader};
-pub use token_counter::{TokenCount, TokenCounter, TokenStatus};
+pub use token_counter::{global_token_counter, TokenCount, TokenCounter, TokenStatus};
