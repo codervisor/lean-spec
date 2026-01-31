@@ -23,7 +23,7 @@ use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 use crate::types::{
     CreateSpecRequest, ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest,
     SearchResponse, SpecDetail, SpecRawResponse, SpecRawUpdateRequest, SpecSummary,
-    SpecTokenResponse, SpecValidationIssue, SpecValidationResponse, StatsResponse, SubSpec,
+    SpecTokenResponse, SpecValidationError, SpecValidationResponse, StatsResponse, SubSpec,
     TokenBreakdown,
 };
 use crate::utils::resolve_project;
@@ -811,21 +811,21 @@ pub async fn get_project_spec_validation(
     result.merge(struct_validator.validate(&spec));
     result.merge(line_validator.validate(&spec));
 
-    let issues = result
-        .issues
+    let errors = result
+        .errors
         .iter()
-        .map(|issue| SpecValidationIssue {
-            severity: issue.severity.to_string(),
-            message: issue.message.clone(),
-            line: issue.line,
-            r#type: issue.category.clone(),
-            suggestion: issue.suggestion.clone(),
+        .map(|error| SpecValidationError {
+            severity: error.severity.to_string(),
+            message: error.message.clone(),
+            line: error.line,
+            r#type: error.category.clone(),
+            suggestion: error.suggestion.clone(),
         })
         .collect();
 
     Ok(Json(SpecValidationResponse {
         status: validation_status_label(&result).to_string(),
-        issues,
+        errors,
     }))
 }
 

@@ -1,4 +1,4 @@
-import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, Umbrella, AlertTriangle } from 'lucide-react';
+import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, Umbrella, AlertTriangle, Check, ChevronDown, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -11,6 +11,9 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   cn,
 } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
@@ -20,12 +23,12 @@ type ViewMode = 'list' | 'board';
 interface SpecsFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (status: string) => void;
-  priorityFilter: string;
-  onPriorityFilterChange: (priority: string) => void;
-  tagFilter: string;
-  onTagFilterChange: (tag: string) => void;
+  statusFilter: string[];
+  onStatusFilterChange: (status: string[]) => void;
+  priorityFilter: string[];
+  onPriorityFilterChange: (priority: string[]) => void;
+  tagFilter: string[];
+  onTagFilterChange: (tag: string[]) => void;
   sortBy: string;
   onSortByChange: (sort: string) => void;
   uniqueStatuses: string[];
@@ -42,6 +45,7 @@ interface SpecsFiltersProps {
   onShowValidationIssuesOnlyChange: (value: boolean) => void;
   showArchived: boolean;
   onShowArchivedChange: (value: boolean) => void;
+  loadingValidation?: boolean;
 }
 
 export function SpecsFilters({
@@ -69,6 +73,7 @@ export function SpecsFilters({
   onShowValidationIssuesOnlyChange,
   showArchived,
   onShowArchivedChange,
+  loadingValidation,
 }: SpecsFiltersProps) {
   const { t } = useTranslation('common');
 
@@ -103,8 +108,32 @@ export function SpecsFilters({
 
   const formatStatus = (status: string) => statusKeyMap[status] ? t(statusKeyMap[status]) : status;
   const formatPriority = (priority: string) => priorityKeyMap[priority] ? t(priorityKeyMap[priority]) : priority;
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || showValidationIssuesOnly;
+  const hasActiveFilters = searchQuery || statusFilter.length > 0 || priorityFilter.length > 0 || tagFilter.length > 0 || showValidationIssuesOnly;
   const hasActiveSettings = groupByParent || showValidationIssuesOnly || showArchived;
+
+  const toggleStatus = (status: string) => {
+    onStatusFilterChange(
+      statusFilter.includes(status)
+        ? statusFilter.filter(s => s !== status)
+        : [...statusFilter, status]
+    );
+  };
+
+  const togglePriority = (priority: string) => {
+    onPriorityFilterChange(
+      priorityFilter.includes(priority)
+        ? priorityFilter.filter(p => p !== priority)
+        : [...priorityFilter, priority]
+    );
+  };
+
+  const toggleTag = (tag: string) => {
+    onTagFilterChange(
+      tagFilter.includes(tag)
+        ? tagFilter.filter(t => t !== tag)
+        : [...tagFilter, tag]
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -128,57 +157,124 @@ export function SpecsFilters({
             <span className="text-sm font-medium">{t('specsNavSidebar.filtersLabel')}</span>
           </div>
 
-          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder={t('specsPage.filters.statusAll')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('specsPage.filters.statusAll')}</SelectItem>
-              {uniqueStatuses.map(status => {
-                const StatusIcon = statusIcons[status];
-                return (
-                  <SelectItem key={status} value={status}>
-                    <div className="flex items-center gap-2">
-                      {StatusIcon && <StatusIcon className="h-4 w-4" />}
-                      <span>{formatStatus(status)}</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[140px] justify-between h-9 px-3">
+                <span className="truncate">
+                  {statusFilter.length === 0
+                    ? t('specsPage.filters.statusAll')
+                    : statusFilter.length === 1
+                      ? formatStatus(statusFilter[0])
+                      : `${statusFilter.length} ${t('specsNavSidebar.selected')}`}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[180px] p-1" align="start">
+              <div className="space-y-1">
+                {uniqueStatuses.map(status => {
+                  const StatusIcon = statusIcons[status];
+                  const isSelected = statusFilter.includes(status);
+                  return (
+                    <div
+                      key={status}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                      onClick={() => toggleStatus(status)}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center w-4 h-4 border rounded transition-colors",
+                        isSelected ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50"
+                      )}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                      <div className="flex items-center gap-2 flex-1">
+                        {StatusIcon && <StatusIcon className="h-4 w-4" />}
+                        <span className="text-sm">{formatStatus(status)}</span>
+                      </div>
                     </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-          <Select value={priorityFilter} onValueChange={onPriorityFilterChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder={t('specsPage.filters.priorityAll')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('specsPage.filters.priorityAll')}</SelectItem>
-              {uniquePriorities.map(priority => {
-                const PriorityIcon = priorityIcons[priority];
-                return (
-                  <SelectItem key={priority} value={priority}>
-                    <div className="flex items-center gap-2">
-                      {PriorityIcon && <PriorityIcon className="h-4 w-4" />}
-                      <span>{formatPriority(priority)}</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[140px] justify-between h-9 px-3">
+                <span className="truncate">
+                  {priorityFilter.length === 0
+                    ? t('specsPage.filters.priorityAll')
+                    : priorityFilter.length === 1
+                      ? formatPriority(priorityFilter[0])
+                      : `${priorityFilter.length} ${t('specsNavSidebar.selected')}`}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[180px] p-1" align="start">
+              <div className="space-y-1">
+                {uniquePriorities.map(priority => {
+                  const PriorityIcon = priorityIcons[priority];
+                  const isSelected = priorityFilter.includes(priority);
+                  return (
+                    <div
+                      key={priority}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                      onClick={() => togglePriority(priority)}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center w-4 h-4 border rounded transition-colors",
+                        isSelected ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50"
+                      )}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                      <div className="flex items-center gap-2 flex-1">
+                        {PriorityIcon && <PriorityIcon className="h-4 w-4" />}
+                        <span className="text-sm">{formatPriority(priority)}</span>
+                      </div>
                     </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-          <Select value={tagFilter} onValueChange={onTagFilterChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder={t('specsNavSidebar.select.tag.all')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('specsNavSidebar.select.tag.all')}</SelectItem>
-              {uniqueTags.map(tag => (
-                <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[140px] justify-between h-9 px-3">
+                <span className="truncate">
+                  {tagFilter.length === 0
+                    ? t('specsNavSidebar.select.tag.all')
+                    : tagFilter.length === 1
+                      ? tagFilter[0]
+                      : `${tagFilter.length} ${t('specsNavSidebar.selected')}`}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[180px] p-1" align="start">
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {uniqueTags.map(tag => {
+                  const isSelected = tagFilter.includes(tag);
+                  return (
+                    <div
+                      key={tag}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group"
+                      onClick={() => toggleTag(tag)}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center w-4 h-4 border rounded transition-colors",
+                        isSelected ? "bg-primary border-primary text-primary-foreground" : "group-hover:border-primary/50"
+                      )}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                      <span className="text-sm flex-1 break-all">{tag}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
 
           <Select value={sortBy} onValueChange={onSortByChange}>
             <SelectTrigger className="w-[160px]">
@@ -206,7 +302,10 @@ export function SpecsFilters({
             </Button>
           )}
 
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            {loadingValidation && showValidationIssuesOnly && (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            )}
             {t('specsPage.filters.filteredCount', { filtered: filteredCount, total: totalSpecs })}
           </span>
         </div>
@@ -235,7 +334,6 @@ export function SpecsFilters({
               <DropdownMenuCheckboxItem
                 checked={showValidationIssuesOnly}
                 onCheckedChange={onShowValidationIssuesOnlyChange}
-                disabled
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 {t('specsPage.filters.withErrors')}

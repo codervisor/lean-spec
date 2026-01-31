@@ -12,7 +12,7 @@ interface ValidationDialogProps {
 
 export function ValidationDialog({ open, onClose, specName, data }: ValidationDialogProps) {
   const { t } = useTranslation('common');
-  const { status, issues } = data;
+  const { status, errors } = data;
   const isPass = status === 'pass';
   const headerIcon = status === 'fail' ? XCircle : AlertTriangle;
   const HeaderIcon = isPass ? CheckCircle2 : headerIcon;
@@ -46,7 +46,7 @@ export function ValidationDialog({ open, onClose, specName, data }: ValidationDi
           <DialogDescription>
             {isPass
               ? t('validation.dialog.passDescription')
-              : t('validation.dialog.issueDescription', { count: issues.length })}
+              : t('validation.dialog.errorDescription', { count: errors.length })}
           </DialogDescription>
         </DialogHeader>
 
@@ -61,24 +61,24 @@ export function ValidationDialog({ open, onClose, specName, data }: ValidationDi
             </div>
           ) : (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-              {issues.map((issue, idx) => {
-                const severity = issue.severity === 'error' ? 'error' : issue.severity === 'info' ? 'info' : 'warning';
+              {errors.map((validationError, idx) => {
+                const severity = validationError.severity === 'error' ? 'error' : validationError.severity === 'info' ? 'info' : 'warning';
                 const config = severityStyles[severity];
-                const IssueIcon = config.icon;
+                const ErrorIcon = config.icon;
 
                 return (
                   <div key={idx} className={cn("p-3 rounded-lg border text-sm space-y-1", config.className)}>
                     <div className="flex items-start gap-2">
-                      <IssueIcon className={cn("h-4 w-4 mt-0.5 shrink-0", config.iconClassName)} />
+                      <ErrorIcon className={cn("h-4 w-4 mt-0.5 shrink-0", config.iconClassName)} />
                       <div className="flex-1">
-                        <p className="font-medium text-foreground">{issue.message}</p>
-                        {issue.line && (
-                          <p className="text-xs opacity-70 mt-1">{t('validation.dialog.line', { line: issue.line })}</p>
+                        <p className="font-medium text-foreground">{validationError.message}</p>
+                        {validationError.line && (
+                          <p className="text-xs opacity-70 mt-1">{t('validation.dialog.line', { line: validationError.line })}</p>
                         )}
-                        {issue.suggestion && (
+                        {validationError.suggestion && (
                           <div className="mt-2 text-xs bg-background/50 p-2 rounded border border-border/50">
                             <span className="font-semibold block mb-1">{t('validation.dialog.suggestion')}</span>
-                            {issue.suggestion}
+                            {validationError.suggestion}
                           </div>
                         )}
                       </div>

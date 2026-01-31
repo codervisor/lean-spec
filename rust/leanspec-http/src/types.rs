@@ -390,7 +390,7 @@ pub struct DependencyEdge {
 #[serde(rename_all = "camelCase")]
 pub struct ValidationResponse {
     pub is_valid: bool,
-    pub issues: Vec<ValidationIssue>,
+    pub errors: Vec<ValidationError>,
 }
 
 /// Spec token response
@@ -416,13 +416,13 @@ pub struct TokenBreakdown {
 #[serde(rename_all = "camelCase")]
 pub struct SpecValidationResponse {
     pub status: String,
-    pub issues: Vec<SpecValidationIssue>,
+    pub errors: Vec<SpecValidationError>,
 }
 
-/// Spec validation issue
+/// Spec validation error
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SpecValidationIssue {
+pub struct SpecValidationError {
     pub severity: String,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -454,18 +454,18 @@ pub struct ProjectValidationSummary {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ValidationIssue {
+pub struct ValidationError {
     pub severity: String,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spec: Option<String>,
 }
 
-impl From<&leanspec_core::ValidationIssue> for ValidationIssue {
-    fn from(issue: &leanspec_core::ValidationIssue) -> Self {
+impl From<&leanspec_core::ValidationError> for ValidationError {
+    fn from(error: &leanspec_core::ValidationError) -> Self {
         Self {
-            severity: issue.severity.to_string(),
-            message: issue.message.clone(),
+            severity: error.severity.to_string(),
+            message: error.message.clone(),
             spec: None,
         }
     }

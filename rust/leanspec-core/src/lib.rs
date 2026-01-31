@@ -57,9 +57,9 @@ pub use relationships::{
     validate_dependency_addition, validate_parent_assignment, RelationshipError,
 };
 pub use types::{
-    CheckboxItem, CompletionVerificationResult, IncompleteChildSpec, IssueSeverity, LeanSpecConfig,
+    CheckboxItem, CompletionVerificationResult, ErrorSeverity, IncompleteChildSpec, LeanSpecConfig,
     Progress, SpecFilterOptions, SpecFrontmatter, SpecInfo, SpecPriority, SpecStatus,
-    StatusTransition, UmbrellaVerificationResult, ValidationIssue, ValidationResult,
+    StatusTransition, UmbrellaVerificationResult, ValidationError, ValidationResult,
 };
 pub use utils::{
     ArchiveError, CompleteDependencyGraph, DependencyGraph, DiscoveredProject, DiscoveryError,

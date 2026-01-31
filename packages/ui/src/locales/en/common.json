@@ -957,6 +957,12 @@
   "tokens": {
     "tokens": "tokens",
     "status": "Status: {{status}}",
+    "statusLabels": {
+      "optimal": "Optimal",
+      "good": "Good",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
     "clickForDetails": "Click for details",
     "contextEconomy": "Context Economy: {{specName}}",
     "detailedBreakdown": "Detailed breakdown of token usage for this spec.",
@@ -981,9 +987,9 @@
       "fail": "Failed"
     },
     "passLabel": "Pass",
-    "issue": "issue",
-    "issues": "issues",
-    "issuesFound": "{{count}} issues found",
+    "error": "error",
+    "errors": "errors",
+    "errorsFound": "{{count}} errors found",
     "validationLabel": "Validation: {{label}}",
     "clickForDetails": "Click for details",
     "dialog": {
@@ -991,7 +997,7 @@
       "passTitle": "Spec Validated",
       "passBody": "This spec meets all LeanSpec quality standards and structure requirements.",
       "passDescription": "All quality checks passed successfully.",
-      "issueDescription": "Found {{count}} issues that require attention.",
+      "errorDescription": "Found {{count}} errors that require attention.",
       "suggestion": "Suggestion:",
       "line": "Line {{line}}",
       "loading": "Loading validation details..."

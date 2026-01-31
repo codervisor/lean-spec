@@ -166,49 +166,49 @@ impl std::fmt::Display for VerificationError {
 
 impl std::error::Error for VerificationError {}
 
-/// Severity of a validation issue
+/// Severity of a validation error
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum IssueSeverity {
+pub enum ErrorSeverity {
     Info,
     Warning,
     Error,
 }
 
-impl std::fmt::Display for IssueSeverity {
+impl std::fmt::Display for ErrorSeverity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            IssueSeverity::Info => write!(f, "info"),
-            IssueSeverity::Warning => write!(f, "warning"),
-            IssueSeverity::Error => write!(f, "error"),
+            ErrorSeverity::Info => write!(f, "info"),
+            ErrorSeverity::Warning => write!(f, "warning"),
+            ErrorSeverity::Error => write!(f, "error"),
         }
     }
 }
 
-/// A validation issue found in a spec
+/// A validation error found in a spec
 #[derive(Debug, Clone)]
-pub struct ValidationIssue {
-    /// Severity of the issue
-    pub severity: IssueSeverity,
+pub struct ValidationError {
+    /// Severity of the error
+    pub severity: ErrorSeverity,
 
-    /// Description of the issue
+    /// Description of the error
     pub message: String,
 
-    /// Line number where the issue was found (if applicable)
+    /// Line number where the error was found (if applicable)
     pub line: Option<usize>,
 
-    /// Category of the issue (e.g., "frontmatter", "structure", "content")
+    /// Category of the error (e.g., "frontmatter", "structure", "content")
     pub category: String,
 
-    /// Suggestion for fixing the issue
+    /// Suggestion for fixing the error
     pub suggestion: Option<String>,
 }
 
-impl std::fmt::Display for ValidationIssue {
+impl std::fmt::Display for ValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let severity_icon = match self.severity {
-            IssueSeverity::Info => "ℹ️",
-            IssueSeverity::Warning => "⚠️",
-            IssueSeverity::Error => "❌",
+            ErrorSeverity::Info => "ℹ️",
+            ErrorSeverity::Warning => "⚠️",
+            ErrorSeverity::Error => "❌",
         };
 
         if let Some(line) = self.line {
@@ -229,8 +229,8 @@ pub struct ValidationResult {
     /// Path of the spec that was validated
     pub spec_path: String,
 
-    /// List of issues found
-    pub issues: Vec<ValidationIssue>,
+    /// List of errors found
+    pub errors: Vec<ValidationError>,
 }
 
 impl ValidationResult {
@@ -238,19 +238,19 @@ impl ValidationResult {
     pub fn new(spec_path: impl Into<String>) -> Self {
         Self {
             spec_path: spec_path.into(),
-            issues: Vec::new(),
+            errors: Vec::new(),
         }
     }
 
-    /// Add an issue to the result
-    pub fn add_issue(&mut self, issue: ValidationIssue) {
-        self.issues.push(issue);
+    /// Add an error to the result
+    pub fn add(&mut self, error: ValidationError) {
+        self.errors.push(error);
     }
 
-    /// Add an error issue
+    /// Add an error-level validation error
     pub fn add_error(&mut self, category: impl Into<String>, message: impl Into<String>) {
-        self.issues.push(ValidationIssue {
-            severity: IssueSeverity::Error,
+        self.errors.push(ValidationError {
+            severity: ErrorSeverity::Error,
             message: message.into(),
             line: None,
             category: category.into(),
@@ -258,10 +258,10 @@ impl ValidationResult {
         });
     }
 
-    /// Add a warning issue
+    /// Add a warning-level validation error
     pub fn add_warning(&mut self, category: impl Into<String>, message: impl Into<String>) {
-        self.issues.push(ValidationIssue {
-            severity: IssueSeverity::Warning,
+        self.errors.push(ValidationError {
+            severity: ErrorSeverity::Warning,
             message: message.into(),
             line: None,
             category: category.into(),
@@ -269,10 +269,10 @@ impl ValidationResult {
         });
     }
 
-    /// Add an info issue
+    /// Add an info-level validation error
     pub fn add_info(&mut self, category: impl Into<String>, message: impl Into<String>) {
-        self.issues.push(ValidationIssue {
-            severity: IssueSeverity::Info,
+        self.errors.push(ValidationError {
+            severity: ErrorSeverity::Info,
             message: message.into(),
             line: None,
             category: category.into(),
@@ -280,42 +280,42 @@ impl ValidationResult {
         });
     }
 
-    /// Check if validation passed (no errors)
+    /// Check if validation passed (no error-level errors)
     pub fn is_valid(&self) -> bool {
         !self.has_errors()
     }
 
-    /// Check if there are any errors
+    /// Check if there are any error-level errors
     pub fn has_errors(&self) -> bool {
-        self.issues
+        self.errors
             .iter()
-            .any(|i| i.severity == IssueSeverity::Error)
+            .any(|i| i.severity == ErrorSeverity::Error)
     }
 
     /// Check if there are any warnings
     pub fn has_warnings(&self) -> bool {
-        self.issues
+        self.errors
             .iter()
-            .any(|i| i.severity == IssueSeverity::Warning)
+            .any(|i| i.severity == ErrorSeverity::Warning)
     }
 
-    /// Get only error issues
-    pub fn errors(&self) -> impl Iterator<Item = &ValidationIssue> {
-        self.issues
+    /// Get only error-level errors
+    pub fn errors(&self) -> impl Iterator<Item = &ValidationError> {
+        self.errors
             .iter()
-            .filter(|i| i.severity == IssueSeverity::Error)
+            .filter(|i| i.severity == ErrorSeverity::Error)
     }
 
-    /// Get only warning issues
-    pub fn warnings(&self) -> impl Iterator<Item = &ValidationIssue> {
-        self.issues
+    /// Get only warning-level errors
+    pub fn warnings(&self) -> impl Iterator<Item = &ValidationError> {
+        self.errors
             .iter()
-            .filter(|i| i.severity == IssueSeverity::Warning)
+            .filter(|i| i.severity == ErrorSeverity::Warning)
     }
 
     /// Merge another validation result into this one
     pub fn merge(&mut self, other: ValidationResult) {
-        self.issues.extend(other.issues);
+        self.errors.extend(other.errors);
     }
 }
 
@@ -338,16 +338,16 @@ mod tests {
     }
 
     #[test]
-    fn test_issue_display() {
-        let issue = ValidationIssue {
-            severity: IssueSeverity::Error,
+    fn test_error_display() {
+        let error = ValidationError {
+            severity: ErrorSeverity::Error,
             message: "Missing required field".to_string(),
             line: Some(5),
             category: "frontmatter".to_string(),
             suggestion: None,
         };
 
-        let display = format!("{}", issue);
+        let display = format!("{}", error);
         assert!(display.contains("frontmatter"));
         assert!(display.contains("Missing required field"));
     }

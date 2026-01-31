@@ -31,18 +31,6 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
   const [validationDialogData, setValidationDialogData] = useState<SpecValidationResponse | null>(null);
   const [activeSpecName, setActiveSpecName] = useState<string | null>(null);
 
-  if (specs.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground border rounded-lg bg-secondary/10">
-        {t('specsPage.list.empty')}
-      </div>
-    );
-  }
-
-  if (groupByParent) {
-    return <HierarchyList specs={specs} basePath={basePath} />;
-  }
-
   const closeTokenDialog = () => {
     setTokenDialogOpen(false);
     setTokenDialogLoading(false);
@@ -72,6 +60,18 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
       .catch(() => setValidationDialogData(null))
       .finally(() => setValidationDialogLoading(false));
   }, [activeSpecName, backend, projectId, validationDialogOpen]);
+
+  if (specs.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground border rounded-lg bg-secondary/10">
+        {t('specsPage.list.empty')}
+      </div>
+    );
+  }
+
+  if (groupByParent) {
+    return <HierarchyList specs={specs} basePath={basePath} />;
+  }
 
   return (
     <>

@@ -44,9 +44,11 @@ const STORAGE_KEYS = {
   statusFilter: 'specs-nav-sidebar-status-filter',
   priorityFilter: 'specs-nav-sidebar-priority-filter',
   tagFilter: 'specs-nav-sidebar-tag-filter',
-  viewMode: 'specs-nav-sidebar-view-mode',
   showArchived: 'specs-nav-sidebar-show-archived',
 };
+
+// Shared key for hierarchy view - synced with SpecsPage
+const HIERARCHY_VIEW_KEY = 'specs-hierarchy-view';
 
 interface SpecsNavSidebarProps {
   mobileOpen?: boolean;
@@ -91,7 +93,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   });
   const [viewMode, setViewMode] = useState<'list' | 'tree'>(() => {
     if (typeof window === 'undefined') return 'list';
-    return (sessionStorage.getItem(STORAGE_KEYS.viewMode) as 'list' | 'tree') || 'list';
+    return sessionStorage.getItem(HIERARCHY_VIEW_KEY) === 'true' ? 'tree' : 'list';
   });
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
   const [initialScrollOffset] = useState<number>(() => {
@@ -151,8 +153,19 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   }, [collapsed]);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.viewMode, viewMode);
+    sessionStorage.setItem(HIERARCHY_VIEW_KEY, String(viewMode === 'tree'));
   }, [viewMode]);
+
+  // Sync viewMode when changed from SpecsPage (storage event)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === HIERARCHY_VIEW_KEY && e.storageArea === sessionStorage) {
+        setViewMode(e.newValue === 'true' ? 'tree' : 'list');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     mobileOpenRef.current = mobileOpen;

@@ -54,7 +54,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetai
               <span className="text-base font-normal text-muted-foreground ml-2">{t('tokens.tokens')}</span>
             </div>
             <p className={`text-sm font-medium capitalize text-${status === 'critical' ? 'red' : status === 'warning' ? 'orange' : status === 'good' ? 'blue' : 'green'}-600`}>
-              {t('tokens.status', { status })}
+              {t('tokens.status', { status: t(`tokens.statusLabels.${status}`) })}
             </p>
           </div>
 

@@ -1,6 +1,6 @@
 //! Structure validation for spec content
 
-use crate::types::{IssueSeverity, SpecInfo, ValidationIssue, ValidationResult};
+use crate::types::{ErrorSeverity, SpecInfo, ValidationError, ValidationResult};
 use regex::Regex;
 
 /// Options for structure validation
@@ -10,18 +10,28 @@ pub struct StructureOptions {
     pub required_sections: Vec<String>,
 
     /// Check for orphan spec sections (h3 not under h2)
+    /// Disabled by default as it produces too many false positives
     pub check_heading_hierarchy: bool,
 
     /// Require title (h1) to match spec name
     pub validate_title_match: bool,
+
+    /// Check for empty sections
+    /// This now properly recognizes subsections as content
+    pub check_empty_sections: bool,
+
+    /// Skip required sections check for archived/complete specs
+    pub skip_completed_checks: bool,
 }
 
 impl Default for StructureOptions {
     fn default() -> Self {
         Self {
-            required_sections: vec!["Overview".to_string(), "Plan".to_string()],
-            check_heading_hierarchy: true,
+            required_sections: vec!["Overview".to_string()],
+            check_heading_hierarchy: false, // Disabled: too many false positives
             validate_title_match: false,
+            check_empty_sections: true,
+            skip_completed_checks: true, // Skip checks for archived/complete specs
         }
     }
 }
@@ -54,39 +64,76 @@ impl StructureValidator {
         // Check for required title (h1)
         self.validate_title(&headings, spec, &mut result);
 
-        // Check for required sections
-        self.validate_required_sections(&headings, &mut result);
+        // Skip some checks for archived/complete specs
+        let is_completed = matches!(
+            spec.frontmatter.status,
+            crate::types::SpecStatus::Complete | crate::types::SpecStatus::Archived
+        );
 
-        // Check heading hierarchy if enabled
+        // Check for required sections (skip for completed specs)
+        if !(self.options.skip_completed_checks && is_completed) {
+            self.validate_required_sections(&headings, &mut result);
+        }
+
+        // Check heading hierarchy if enabled (disabled by default)
         if self.options.check_heading_hierarchy {
             self.validate_heading_hierarchy(&headings, &mut result);
         }
 
         // Check for empty sections
-        self.validate_section_content(spec, &headings, &mut result);
+        if self.options.check_empty_sections {
+            self.validate_section_content(spec, &headings, &mut result);
+        }
 
         result
     }
 
     /// Extract all headings from markdown content
+    /// Skips headings inside code blocks to avoid false positives
     fn extract_headings(&self, content: &str) -> Vec<Heading> {
         let heading_regex = Regex::new(r"^(#{1,6})\s+(.+)$").unwrap();
+        // Opening fence: ``` or more, optionally followed by language identifier
+        let open_fence_regex = Regex::new(r"^(`{3,})").unwrap();
+        // Closing fence: ``` or more, followed only by optional whitespace
+        let close_fence_regex = Regex::new(r"^(`{3,})\s*$").unwrap();
 
-        content
-            .lines()
-            .enumerate()
-            .filter_map(|(line_num, line)| {
-                heading_regex.captures(line).map(|cap| {
-                    let level = cap.get(1).unwrap().as_str().len();
-                    let text = cap.get(2).unwrap().as_str().trim().to_string();
-                    Heading {
-                        level,
-                        text,
-                        line: line_num + 1,
+        let mut in_code_block = false;
+        let mut fence_len = 0usize;
+        let mut headings = Vec::new();
+
+        for (line_num, line) in content.lines().enumerate() {
+            if !in_code_block {
+                // Check for opening fence
+                if let Some(cap) = open_fence_regex.captures(line) {
+                    in_code_block = true;
+                    fence_len = cap.get(1).unwrap().as_str().len();
+                    continue;
+                }
+            } else {
+                // Check for closing fence (must be only backticks + whitespace)
+                if let Some(cap) = close_fence_regex.captures(line) {
+                    let current_fence_len = cap.get(1).unwrap().as_str().len();
+                    if current_fence_len >= fence_len {
+                        in_code_block = false;
+                        fence_len = 0;
                     }
-                })
-            })
-            .collect()
+                }
+                // Stay in code block, skip heading detection
+                continue;
+            }
+
+            if let Some(cap) = heading_regex.captures(line) {
+                let level = cap.get(1).unwrap().as_str().len();
+                let text = cap.get(2).unwrap().as_str().trim().to_string();
+                headings.push(Heading {
+                    level,
+                    text,
+                    line: line_num + 1,
+                });
+            }
+        }
+
+        headings
     }
 
     fn validate_title(&self, headings: &[Heading], spec: &SpecInfo, result: &mut ValidationResult) {
@@ -147,8 +194,8 @@ impl StructureValidator {
                 2 => in_h2 = true,
                 3 => {
                     if !in_h2 {
-                        result.issues.push(ValidationIssue {
-                            severity: IssueSeverity::Warning,
+                        result.errors.push(ValidationError {
+                            severity: ErrorSeverity::Warning,
                             message: format!("h3 '{}' not under an h2 section", heading.text),
                             line: Some(heading.line),
                             category: "structure".to_string(),
@@ -172,12 +219,29 @@ impl StructureValidator {
         let lines: Vec<&str> = spec.content.lines().collect();
 
         for (i, heading) in headings.iter().enumerate() {
-            // Find content until next heading
+            // Only check h2 sections for emptiness
+            if heading.level != 2 {
+                continue;
+            }
+
+            // Find content until next heading at same or higher level
             let start_line = heading.line;
             let end_line = headings
                 .get(i + 1)
                 .map(|h| h.line)
                 .unwrap_or(lines.len() + 1);
+
+            // Check if the next heading is a subsection (h3, h4, etc.)
+            // If so, the section is not empty - it has subsections as content
+            let next_heading = headings.get(i + 1);
+            let has_subsection = next_heading
+                .map(|h| h.level > heading.level)
+                .unwrap_or(false);
+
+            if has_subsection {
+                // Section has subsections, not empty
+                continue;
+            }
 
             // Count non-empty lines between headings
             let content_lines: usize = lines
@@ -187,7 +251,7 @@ impl StructureValidator {
                 .filter(|line| !line.trim().is_empty())
                 .count();
 
-            if content_lines == 0 && heading.level == 2 {
+            if content_lines == 0 {
                 result.add_warning("structure", format!("Empty section: ## {}", heading.text));
             }
         }
@@ -286,18 +350,18 @@ This is the overview.
     fn test_missing_required_section() {
         let content = r#"# Test Spec
 
-## Overview
+## Plan
 
-This is the overview.
+This is the plan section.
 "#;
 
         let spec = create_test_spec(content);
         let validator = StructureValidator::new();
         let result = validator.validate(&spec);
 
-        // Should have warning for missing Plan section
+        // Should have warning for missing Overview section (the only required section by default)
         assert!(result.has_warnings());
-        assert!(result.warnings().any(|w| w.message.contains("Plan")));
+        assert!(result.warnings().any(|w| w.message.contains("Overview")));
     }
 
     #[test]

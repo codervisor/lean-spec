@@ -70,6 +70,7 @@ export function TokenBadge({
       )}
       onClick={(e) => {
         if (onClick) {
+          e.preventDefault();
           e.stopPropagation();
           onClick();
         }

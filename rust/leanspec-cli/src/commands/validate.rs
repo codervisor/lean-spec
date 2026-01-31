@@ -174,11 +174,11 @@ fn print_json(results: &[ValidationResult]) -> Result<(), Box<dyn Error>> {
     #[derive(serde::Serialize)]
     struct JsonResult {
         spec: String,
-        issues: Vec<JsonIssue>,
+        errors: Vec<JsonError>,
     }
 
     #[derive(serde::Serialize)]
-    struct JsonIssue {
+    struct JsonError {
         severity: String,
         category: String,
         message: String,
@@ -189,10 +189,10 @@ fn print_json(results: &[ValidationResult]) -> Result<(), Box<dyn Error>> {
         .iter()
         .map(|r| JsonResult {
             spec: r.spec_path.clone(),
-            issues: r
-                .issues
+            errors: r
+                .errors
                 .iter()
-                .map(|i| JsonIssue {
+                .map(|i| JsonError {
                     severity: format!("{:?}", i.severity).to_lowercase(),
                     category: i.category.clone(),
                     message: i.message.clone(),

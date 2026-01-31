@@ -951,6 +951,12 @@
   "tokens": {
     "tokens": "个令牌",
     "status": "状态: {{status}}",
+    "statusLabels": {
+      "optimal": "最佳",
+      "good": "良好",
+      "warning": "警告",
+      "critical": "严重"
+    },
     "clickForDetails": "点击查看详情",
     "contextEconomy": "上下文效率: {{specName}}",
     "detailedBreakdown": "该规范的令牌使用详情。",
@@ -975,9 +981,9 @@
       "fail": "失败"
     },
     "passLabel": "通过",
-    "issue": "个问题",
-    "issues": "个问题",
-    "issuesFound": "发现 {{count}} 个问题",
+    "error": "个错误",
+    "errors": "个错误",
+    "errorsFound": "发现 {{count}} 个错误",
     "validationLabel": "校验: {{label}}",
     "clickForDetails": "点击查看详情",
     "dialog": {
@@ -985,7 +991,7 @@
       "passTitle": "规范已通过校验",
       "passBody": "该规范符合 LeanSpec 质量标准与结构要求。",
       "passDescription": "所有质量检查均已通过。",
-      "issueDescription": "发现 {{count}} 个需要关注的问题。",
+      "errorDescription": "发现 {{count}} 个需要关注的错误。",
       "suggestion": "建议：",
       "line": "第 {{line}} 行",
       "loading": "正在加载校验详情..."

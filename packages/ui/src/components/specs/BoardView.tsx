@@ -68,26 +68,19 @@ function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
   const hiddenCount = specs.length - visibleSpecs.length;
 
   return (
-    <div className="space-y-2 bg-secondary/10 p-2 rounded-lg border border-border/50">
-      <div className="flex items-center gap-2 mb-2 px-1">
-        <Umbrella className="h-4 w-4 text-primary" />
-        <h5 className="text-sm font-semibold text-foreground truncate flex-1" title={parentName}>{parentName}</h5>
-        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">{specs.length}</span>
+    <div className="space-y-2 mt-4 first:mt-0">
+      <div className="flex items-center gap-2 px-1 pb-1 border-b border-border/30">
+        <Umbrella className="h-3.5 w-3.5 text-primary/70" />
+        <h5 className="text-xs font-semibold text-foreground/80 truncate flex-1" title={parentName}>{parentName}</h5>
+        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground font-mono">{specs.length}</span>
       </div>
-      <div className="pl-3 border-l-2 border-muted ml-2 space-y-2 relative">
-        {/* Dot indicators for tree line */}
-        {visibleSpecs.map((spec) => (
-          <div key={spec.specName} className="relative">
-            {/* Connection line dot */}
-            <div className="absolute -left-[19px] top-6 w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
-            {renderCard(spec, true)}
-          </div>
-        ))}
+      <div className="space-y-2">
+        {visibleSpecs.map((spec) => renderCard(spec, false))}
 
         {hiddenCount > 0 && (
           <button
             onClick={() => setIsExpanded(true)}
-            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
+            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-secondary/50 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
           >
             <ChevronDown className="h-3 w-3" />
             Show {hiddenCount} more
@@ -96,7 +89,7 @@ function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
         {isExpanded && specs.length > COLLAPSE_THRESHOLD && (
           <button
             onClick={() => setIsExpanded(false)}
-            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
+            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-secondary/50 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
           >
             <ChevronDown className="h-3 w-3 rotate-180" />
             Show less
@@ -279,7 +272,11 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
         {orphans.length > 0 && (
           <div className="space-y-2">
             {orphans.length > 0 && sortedGroups.length > 0 && (
-              <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Independent ({orphans.length})</h5>
+              <div className="flex items-center gap-2 px-1 pb-1 border-b border-border/30 mb-2">
+                <Layers className="h-3.5 w-3.5 text-primary/70" />
+                <h5 className="text-xs font-semibold text-foreground/80 truncate flex-1">Independent</h5>
+                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground font-mono">{orphans.length}</span>
+              </div>
             )}
             {orphans.map(s => renderCard(s))}
           </div>

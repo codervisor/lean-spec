@@ -245,7 +245,7 @@ export interface SpecTokenResponse {
   tokenBreakdown: TokenBreakdown;
 }
 
-export interface SpecValidationIssue {
+export interface SpecValidationError {
   severity: 'info' | 'warning' | 'error';
   message: string;
   line?: number;
@@ -255,5 +255,5 @@ export interface SpecValidationIssue {
 
 export interface SpecValidationResponse {
   status: ValidationStatus;
-  issues: SpecValidationIssue[];
+  errors: SpecValidationError[];
 }

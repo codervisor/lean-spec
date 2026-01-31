@@ -30,7 +30,11 @@ export function SpecsProvider({ children }: SpecsProviderProps) {
   const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
   const sseEnabledEnv = import.meta.env.VITE_SSE_ENABLED as string | undefined;
   const sseEnabled = sseEnabledEnv ? sseEnabledEnv === 'true' : !isTauri;
-  const sseUrl = (import.meta.env.VITE_SSE_URL as string | undefined) || '/api/events/specs';
+  const apiBaseUrl = import.meta.env.VITE_API_URL as string | undefined;
+  const defaultSseUrl = apiBaseUrl
+    ? `${apiBaseUrl.replace(/\/$/, '')}/api/events/specs`
+    : '/api/events/specs';
+  const sseUrl = (import.meta.env.VITE_SSE_URL as string | undefined) || defaultSseUrl;
   const reconnectMs = Number.parseInt(
     (import.meta.env.VITE_SSE_RECONNECT_MS as string | undefined) || '3000',
     10,

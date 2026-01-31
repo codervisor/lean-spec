@@ -91,7 +91,8 @@ pub fn get_tool_definitions() -> Vec<ToolDefinition> {
                     "priority": {
                         "type": "string",
                         "description": "Priority level",
-                        "enum": ["low", "medium", "high", "critical"]
+                        "enum": ["low", "medium", "high", "critical"],
+                        "default": "medium"
                     },
                     "template": {
                         "type": "string",
@@ -534,7 +535,10 @@ fn tool_create(specs_dir: &str, args: Value) -> Result<String, String> {
         .get("status")
         .and_then(|v| v.as_str())
         .unwrap_or("planned");
-    let priority = args.get("priority").and_then(|v| v.as_str());
+    let priority = args
+        .get("priority")
+        .and_then(|v| v.as_str())
+        .or(Some("medium"));
     let template_name = args.get("template").and_then(|v| v.as_str());
     let content_override = args.get("content").and_then(|v| v.as_str());
     let tags: Vec<String> = args
@@ -767,7 +771,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
     let struct_validator = leanspec_core::StructureValidator::new();
     let line_validator = leanspec_core::LineCountValidator::new();
 
-    let mut issues = Vec::new();
+    let mut validation_errors = Vec::new();
 
     let specs_to_validate = if let Some(spec_path) = args.get("specPath").and_then(|v| v.as_str()) {
         let spec = loader
@@ -786,7 +790,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
         result.merge(line_validator.validate(spec));
 
         if result.has_errors() || result.has_warnings() {
-            issues.push(json!({
+            validation_errors.push(json!({
                 "spec": spec.path,
                 "errors": result.errors().map(|i| i.message.clone()).collect::<Vec<_>>(),
                 "warnings": result.warnings().map(|i| i.message.clone()).collect::<Vec<_>>(),
@@ -794,7 +798,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
         }
     }
 
-    if issues.is_empty() {
+    if validation_errors.is_empty() {
         Ok(format!(
             "All {} specs passed validation",
             specs_to_validate.len()
@@ -802,7 +806,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
     } else {
         serde_json::to_string_pretty(&json!({
             "total": specs_to_validate.len(),
-            "issues": issues
+            "errors": validation_errors
         }))
         .map_err(|e| e.to_string())
     }

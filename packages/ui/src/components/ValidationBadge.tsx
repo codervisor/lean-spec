@@ -58,7 +58,7 @@ export function ValidationBadge({
       backend.getSpecValidation(projectId, specName)
         .then(res => {
           setStatus(res.status);
-          setErrorCount(res.issues.length);
+          setErrorCount(res.errors.length);
         })
         .catch(() => {
           setStatus(undefined);
@@ -95,6 +95,7 @@ export function ValidationBadge({
       )}
       onClick={(e) => {
         if (onClick) {
+          e.preventDefault();
           e.stopPropagation();
           onClick();
         }
@@ -107,7 +108,7 @@ export function ValidationBadge({
         <span className="tabular-nums tracking-tight">{errorCount}</span>
       )}
       {size === 'md' && isPass && <span className="ml-1.5">{t('validation.passLabel')}</span>}
-      {size === 'md' && !isPass && <span className="ml-1 opacity-80 font-normal">{errorCount === 1 ? t('validation.issue') : t('validation.issues')}</span>}
+      {size === 'md' && !isPass && <span className="ml-1 opacity-80 font-normal">{errorCount === 1 ? t('validation.error') : t('validation.errors')}</span>}
     </div>
   );
 
@@ -120,7 +121,7 @@ export function ValidationBadge({
         <TooltipContent side="top">
           <div className="text-xs">
             <p className="font-semibold">{label}</p>
-            {!isPass && errorCount && <p className="opacity-80">{t('validation.issuesFound', { count: errorCount })}</p>}
+            {!isPass && errorCount && <p className="opacity-80">{t('validation.errorsFound', { count: errorCount })}</p>}
             {onClick && <p className="mt-1 text-[10px] opacity-60">{t('validation.clickForDetails')}</p>}
           </div>
         </TooltipContent>

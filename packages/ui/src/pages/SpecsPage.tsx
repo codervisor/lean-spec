@@ -3,7 +3,8 @@ import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
-import type { Spec, SpecStatus } from '../types/api';
+import type { Spec, SpecStatus, ValidationStatus } from '../types/api';
+import { getBackend } from '../lib/backend-adapter';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
@@ -16,6 +17,63 @@ import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
 type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'token-desc' | 'token-asc';
+
+const STORAGE_KEY = 'specs-page-preferences';
+// Shared key for hierarchy view - synced with SpecsNavSidebar
+const HIERARCHY_VIEW_KEY = 'specs-hierarchy-view';
+
+interface SpecsPagePreferences {
+  viewMode: ViewMode;
+  sortBy: SortOption;
+  statusFilter: string[];
+  priorityFilter: string[];
+  tagFilter: string[];
+  // groupByParent moved to sessionStorage with shared key
+  showValidationIssuesOnly: boolean;
+  showArchived: boolean;
+}
+
+const DEFAULT_PREFERENCES: SpecsPagePreferences = {
+  viewMode: 'list',
+  sortBy: 'id-desc',
+  statusFilter: [],
+  priorityFilter: [],
+  tagFilter: [],
+  showValidationIssuesOnly: false,
+  showArchived: false,
+};
+
+function loadHierarchyView(): boolean {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem(HIERARCHY_VIEW_KEY) === 'true';
+}
+
+function saveHierarchyView(value: boolean): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(HIERARCHY_VIEW_KEY, String(value));
+}
+
+function loadPreferences(): SpecsPagePreferences {
+  if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return DEFAULT_PREFERENCES;
+    const parsed = JSON.parse(saved) as Partial<SpecsPagePreferences>;
+    return { ...DEFAULT_PREFERENCES, ...parsed };
+  } catch {
+    return DEFAULT_PREFERENCES;
+  }
+}
+
+function savePreferences(prefs: Partial<SpecsPagePreferences>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = loadPreferences();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }));
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
@@ -30,27 +88,29 @@ export function SpecsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Load saved preferences
+  const savedPrefs = useMemo(() => loadPreferences(), []);
+
+  // Filters (initialized from localStorage)
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [tagFilter, setTagFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('id-desc');
-  const [groupByParent, setGroupByParent] = useState(false);
-  const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(false);
-  const [showArchived, setShowArchived] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('specs-page-show-archived') === 'true';
-  });
+  const [statusFilter, setStatusFilter] = useState<string[]>(savedPrefs.statusFilter);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>(savedPrefs.priorityFilter);
+  const [tagFilter, setTagFilter] = useState<string[]>(savedPrefs.tagFilter);
+  const [sortBy, setSortBy] = useState<SortOption>(savedPrefs.sortBy);
+  const [groupByParent, setGroupByParent] = useState(loadHierarchyView);
+  const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(savedPrefs.showValidationIssuesOnly);
+  const [showArchived, setShowArchived] = useState<boolean>(savedPrefs.showArchived);
+
+  // Validation statuses fetched when showValidationIssuesOnly is enabled
+  const [validationStatuses, setValidationStatuses] = useState<Record<string, ValidationStatus>>({});
+  const [loadingValidation, setLoadingValidation] = useState(false);
+  const validationFetchedRef = useRef(false);
 
   const [searchParams] = useSearchParams();
   const initializedFromQuery = useRef(false);
 
-  // View State
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const saved = localStorage.getItem('specs-view-mode');
-    return (saved === 'board' || saved === 'list') ? saved : 'list';
-  });
+  // View State (initialized from localStorage)
+  const [viewMode, setViewMode] = useState<ViewMode>(savedPrefs.viewMode);
 
   const loadSpecs = useCallback(async () => {
     if (!projectReady || projectLoading) return;
@@ -71,13 +131,55 @@ export function SpecsPage() {
     void loadSpecs();
   }, [loadSpecs]);
 
+  // Fetch validation statuses when filter is enabled
+  useEffect(() => {
+    if (!showValidationIssuesOnly || validationFetchedRef.current || specs.length === 0 || !resolvedProjectId) {
+      return;
+    }
+
+    const fetchValidation = async () => {
+      setLoadingValidation(true);
+      const backend = getBackend();
+      const statuses: Record<string, ValidationStatus> = {};
+
+      // Fetch validation for all specs in parallel (batched)
+      const results = await Promise.allSettled(
+        specs.map(async (spec) => {
+          try {
+            const result = await backend.getSpecValidation(resolvedProjectId, spec.specName);
+            return { specName: spec.specName, status: result.status as ValidationStatus };
+          } catch {
+            return { specName: spec.specName, status: undefined };
+          }
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value.status) {
+          statuses[result.value.specName] = result.value.status;
+        }
+      }
+
+      setValidationStatuses(statuses);
+      setLoadingValidation(false);
+      validationFetchedRef.current = true;
+    };
+
+    void fetchValidation();
+  }, [showValidationIssuesOnly, specs, resolvedProjectId]);
+
+  // Reset validation fetch flag when specs change (to refetch if needed)
+  useEffect(() => {
+    validationFetchedRef.current = false;
+  }, [specs]);
+
   useEffect(() => {
     if (initializedFromQuery.current) return;
     const initialTag = searchParams.get('tag');
     const initialQuery = searchParams.get('q');
     const initialView = searchParams.get('view');
     const initialGroupByParent = searchParams.get('groupByParent');
-    if (initialTag) setTagFilter(initialTag);
+    if (initialTag) setTagFilter([initialTag]);
     if (initialQuery) setSearchQuery(initialQuery);
     if (initialView === 'board' || initialView === 'list') {
       setViewMode(initialView);
@@ -88,13 +190,34 @@ export function SpecsPage() {
     initializedFromQuery.current = true;
   }, [searchParams]);
 
+  // Persist preferences to localStorage (except groupByParent which uses sessionStorage)
   useEffect(() => {
-    localStorage.setItem('specs-view-mode', viewMode);
-  }, [viewMode]);
+    savePreferences({
+      viewMode,
+      sortBy,
+      statusFilter,
+      priorityFilter,
+      tagFilter,
+      showValidationIssuesOnly,
+      showArchived,
+    });
+  }, [viewMode, sortBy, statusFilter, priorityFilter, tagFilter, showValidationIssuesOnly, showArchived]);
 
+  // Persist groupByParent to sessionStorage (shared with sidebar)
   useEffect(() => {
-    localStorage.setItem('specs-page-show-archived', String(showArchived));
-  }, [showArchived]);
+    saveHierarchyView(groupByParent);
+  }, [groupByParent]);
+
+  // Sync groupByParent when changed from sidebar (storage event)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === HIERARCHY_VIEW_KEY && e.storageArea === sessionStorage) {
+        setGroupByParent(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     if (machineModeEnabled && !isMachineAvailable) {
@@ -148,10 +271,11 @@ export function SpecsPage() {
 
   const handleClearFilters = useCallback(() => {
     setSearchQuery('');
-    setStatusFilter('all');
-    setPriorityFilter('all');
-    setTagFilter('all');
+    setStatusFilter([]);
+    setPriorityFilter([]);
+    setTagFilter([]);
     setShowValidationIssuesOnly(false);
+    // Note: settings (groupByParent, showArchived) and view preferences are not cleared
   }, []);
 
   // Helper: expand filtered specs to include all descendants (for groupByParent mode)
@@ -198,7 +322,7 @@ export function SpecsPage() {
   const filteredSpecs = useMemo(() => {
     let filtered = specs.filter(spec => {
       // Hide archived specs by default unless showArchived is true or archived is explicitly selected
-      if (!showArchived && statusFilter !== 'archived' && spec.status === 'archived') {
+      if (!showArchived && !statusFilter.includes('archived') && spec.status === 'archived') {
         return false;
       }
 
@@ -211,20 +335,23 @@ export function SpecsPage() {
         if (!matchesSearch) return false;
       }
 
-      if (statusFilter !== 'all' && spec.status !== statusFilter) {
+      if (statusFilter.length > 0 && spec.status && !statusFilter.includes(spec.status)) {
         return false;
       }
 
-      if (priorityFilter !== 'all' && spec.priority !== priorityFilter) {
+      if (priorityFilter.length > 0 && spec.priority && !priorityFilter.includes(spec.priority)) {
         return false;
       }
 
-      if (tagFilter !== 'all' && !spec.tags?.includes(tagFilter)) {
+      if (tagFilter.length > 0 && !spec.tags?.some(tag => tagFilter.includes(tag))) {
         return false;
       }
 
       if (showValidationIssuesOnly) {
-        const hasIssues = spec.validationStatus && spec.validationStatus !== 'pass';
+        // Check both the spec's own validationStatus and the separately fetched status
+        const fetchedStatus = validationStatuses[spec.specName];
+        const effectiveStatus = spec.validationStatus || fetchedStatus;
+        const hasIssues = effectiveStatus && effectiveStatus !== 'pass';
         if (!hasIssues) return false;
       }
 
@@ -233,7 +360,7 @@ export function SpecsPage() {
 
     // For groupByParent mode, expand to include all descendants of matching specs
     // This ensures umbrella specs show their full hierarchy for progress visibility
-    if (groupByParent && (statusFilter !== 'all' || priorityFilter !== 'all')) {
+    if (groupByParent && (statusFilter.length > 0 || priorityFilter.length > 0)) {
       filtered = expandWithDescendants(filtered, specs);
     }
 
@@ -279,7 +406,7 @@ export function SpecsPage() {
     }
 
     return sorted;
-  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived]);
+  }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived, validationStatuses]);
 
   if (loading) {
     return (
@@ -347,6 +474,7 @@ export function SpecsPage() {
           onShowValidationIssuesOnlyChange={setShowValidationIssuesOnly}
           showArchived={showArchived}
           onShowArchivedChange={setShowArchived}
+          loadingValidation={loadingValidation}
         />
       </div>
 
