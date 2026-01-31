@@ -21,6 +21,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - UI board view: de-emphasized child specs, auto-collapse after 3 children with "[+X more]" toggle
   - **Related specs:** [252](https://web.lean-spec.dev/specs/252) (UI hierarchy display), [253](https://web.lean-spec.dev/specs/253) (relationships editing UI), [254](https://web.lean-spec.dev/specs/254) (streamlined commands), [258](https://web.lean-spec.dev/specs/258) (UI visualization enhancement)
 
+- **Unified Relationships Editing UI** ([spec 253](https://web.lean-spec.dev/specs/253)) - ADO-style relationship management
+  - Single "Relationships" panel replacing separate "View Dependencies" and "View Hierarchy" buttons
+  - Inline editing for all relationship types: parent, children, depends_on, required_by
+  - ADO-style searchable spec picker dropdown for adding relationships
+  - Click spec chips to navigate, [×] to remove relationships
+  - Enhanced `view` command/tool output with prominent Relationships section
+
+- **Streamlined Relationship Commands** ([spec 254](https://web.lean-spec.dev/specs/254)) - Unified CLI/MCP interface
+  - New `lean-spec rel` command for all relationship operations (view/add/rm)
+  - `lean-spec rel <spec>` - View all relationships in one place
+  - `lean-spec rel add <spec> --parent/--depends-on/--child` - Add relationships
+  - `lean-spec rel rm <spec> --parent/--depends-on/--child` - Remove relationships
+  - MCP `relationships` tool unifying all relationship operations
+  - Deprecation notices on old `link`, `unlink`, `set-parent`, `deps`, `children` commands
+
+- **Write-Time Relationship Validation** ([spec 257](https://web.lean-spec.dev/specs/257)) - Prevent invalid relationship states
+  - Parent cycle detection: prevents circular parent chains (A→B→C→A)
+  - Dependency cycle detection: prevents circular depends_on chains
+  - Hierarchy/dependency conflict detection: prevents depends_on on parent or children
+  - Clear error messages with cycle path visualization
+  - Validation in MCP tools (`set_parent`, `link`, `relationships`) and CLI (`rel add`)
+
+- **UI Utilities Consolidation** ([spec 261](https://web.lean-spec.dev/specs/261)) - Deduplicated shared code
+  - Consolidated duplicate utilities from `@leanspec/ui` into `@leanspec/ui-components`
+  - Moved date-utils, utils, use-local-storage to shared package
+  - Re-export stubs in `@leanspec/ui` for backwards compatibility
+
+- **Enhanced Markdown Rendering** - Improved spec content display
+  - New components for code blocks with copy button
+  - Better table rendering with improved styling
+  - Responsive sidebar visibility with resize observer
+  - Spec edit history viewer via git integration
+
+- **Token Counting and Validation UI** - Interactive spec analysis
+  - Token count display with i18n support
+  - Validation dialogs showing spec health
+  - Visual design system for token/validation interactions
+
 ### Changed
 - **Status-Only Archiving** ([spec 256](https://web.lean-spec.dev/specs/256)) - Simplified archive workflow
   - Archiving now only sets `status: archived` in frontmatter (no file move)
@@ -29,6 +67,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **DEPRECATED**: `archived/` folder support - run `lean-spec migrate-archived` to migrate
   - Legacy `archived/` folder still recognized with deprecation warning
   - Added `lean-spec migrate-archived` command for migration
+
+- **Rust Monorepo Architecture Refactoring** - Consolidated core modules
+  - Sessions, storage, and AI modules consolidated into leanspec-core
+  - Re-exported storage modules for cleaner API
+  - Improved database schema and fixed potential deadlocks
+
+### Fixed
+- **Mermaid Diagram Rendering** - Fixed logic and empty chart handling
+- **Spec Navigation** - Fixed incorrect spec ID in dependency graph node data
+- **Clippy Warnings** - Resolved all Rust linter warnings across codebase
+- **Skills Path References** - Updated to relative paths for improved portability
+- **Sidebar Layout** - Adjusted row height for improved layout
+- **TypeCheck Errors** - Added type annotations in AI worker tests
 
 ## [0.2.20] - 2026-01-27
 
