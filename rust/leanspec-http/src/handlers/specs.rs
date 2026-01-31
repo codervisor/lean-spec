@@ -165,6 +165,20 @@ fn validation_status_label(result: &ValidationResult) -> &'static str {
 }
 
 fn summary_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) -> SpecSummary {
+    // Compute token count from content
+    let counter = global_token_counter();
+    let token_result = counter.count_spec(&record.content_md);
+    let token_status_str = token_status_label(token_result.status);
+
+    // For synced machines, we do a lightweight validation check
+    // Full validation requires the full spec structure which we don't have
+    // Set pass/warn based on content length heuristics
+    let validation_status_str = if record.content_md.trim().is_empty() {
+        "warn"
+    } else {
+        "pass"
+    };
+
     SpecSummary {
         project_id: Some(project_id.to_string()),
         id: record.spec_name.clone(),
@@ -187,14 +201,26 @@ fn summary_from_record(project_id: &str, record: &crate::sync_state::SpecRecord)
         children: Vec::new(),
         required_by: Vec::new(),
         content_hash: Some(record.content_hash.clone()),
-        token_count: None,
-        token_status: None,
-        validation_status: None,
+        token_count: Some(token_result.total),
+        token_status: Some(token_status_str.to_string()),
+        validation_status: Some(validation_status_str.to_string()),
         relationships: None,
     }
 }
 
 fn detail_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) -> SpecDetail {
+    // Compute token count from content
+    let counter = global_token_counter();
+    let token_result = counter.count_spec(&record.content_md);
+    let token_status_str = token_status_label(token_result.status);
+
+    // Lightweight validation for synced machines
+    let validation_status_str = if record.content_md.trim().is_empty() {
+        "warn"
+    } else {
+        "pass"
+    };
+
     SpecDetail {
         project_id: Some(project_id.to_string()),
         id: record.spec_name.clone(),
@@ -218,9 +244,9 @@ fn detail_from_record(project_id: &str, record: &crate::sync_state::SpecRecord) 
         children: Vec::new(),
         required_by: Vec::new(),
         content_hash: Some(record.content_hash.clone()),
-        token_count: None,
-        token_status: None,
-        validation_status: None,
+        token_count: Some(token_result.total),
+        token_status: Some(token_status_str.to_string()),
+        validation_status: Some(validation_status_str.to_string()),
         relationships: None,
         sub_specs: None,
     }
@@ -466,7 +492,7 @@ pub async fn list_project_specs(
     let filtered_specs: Vec<SpecSummary> = all_specs
         .iter()
         .filter(|s| filters.matches(s))
-        .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
+        .map(|s| SpecSummary::from(s).with_project_id(&project.id))
         .collect();
 
     let mut children_map: HashMap<String, Vec<String>> = HashMap::new();
@@ -1232,7 +1258,7 @@ pub async fn search_project_specs(
             }
             true
         })
-        .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
+        .map(|s| SpecSummary::from(s).with_project_id(&project.id))
         .collect();
 
     // Sort by relevance (title matches first, then by spec number)
