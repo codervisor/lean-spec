@@ -415,7 +415,7 @@ export function SpecDetailPage() {
                   </Button>
                 </div>
 
-                {/* Line 2: Status, Priority, Tags */}
+                {/* Line 2: Status, Priority, Tokens, Validation */}
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusEditor
                     specName={spec.specName}
@@ -433,14 +433,7 @@ export function SpecDetailPage() {
                   />
 
                   <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
-                  <TagsEditor
-                    specName={spec.specName}
-                    value={tags}
-                    expectedContentHash={spec.contentHash}
-                    disabled={machineModeEnabled && !isMachineAvailable}
-                    onChange={(tags) => applySpecPatch({ tags })}
-                  />
-                  <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+
                   <div className="flex items-center gap-2">
                     <TokenBadge
                       projectId={resolvedProjectId}
@@ -461,6 +454,17 @@ export function SpecDetailPage() {
                       }}
                     />
                   </div>
+                </div>
+
+                {/* Line 3: Tags */}
+                <div className="mt-2">
+                  <TagsEditor
+                    specName={spec.specName}
+                    value={tags}
+                    expectedContentHash={spec.contentHash}
+                    disabled={machineModeEnabled && !isMachineAvailable}
+                    onChange={(tags) => applySpecPatch({ tags })}
+                  />
                 </div>
 
                 {machineModeEnabled && !isMachineAvailable && (
