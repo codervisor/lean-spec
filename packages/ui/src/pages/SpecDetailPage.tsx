@@ -8,7 +8,8 @@ import {
   Maximize2,
   Minimize2,
   List as ListIcon,
-  Terminal,
+  // TODO: AI Sessions temporarily disabled - not ready yet
+  // Terminal,
   CornerDownRight,
   ChevronRight,
   Link2,
@@ -40,7 +41,9 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
-import { useProject, useLayout, useMachine, useSessions } from '../contexts';
+import { useProject, useLayout, useMachine } from '../contexts';
+// TODO: AI Sessions temporarily disabled - not ready yet
+// import { useSessions } from '../contexts';
 import { useTranslation } from 'react-i18next';
 import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
@@ -84,7 +87,8 @@ export function SpecDetailPage() {
   const [validationDialogLoading, setValidationDialogLoading] = useState(false);
   const [validationDialogData, setValidationDialogData] = useState<SpecValidationResponse | null>(null);
   const { setMobileOpen } = useSpecDetailLayoutContext();
-  const { openDrawer, sessions } = useSessions();
+  // TODO: AI Sessions temporarily disabled - not ready yet
+  // const { openDrawer, sessions } = useSessions();
   const backend = getBackend();
 
   const [showSidebar, setShowSidebar] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
@@ -175,15 +179,16 @@ export function SpecDetailPage() {
   }, [backend, resolvedProjectId, spec?.specName, validationDialogOpen]);
 
 
-  const activeSessionsCount = useMemo(() => {
-    if (!spec?.specName) return 0;
-    return sessions.filter(s => s.specId === spec.specName && (s.status === 'running' || s.status === 'pending')).length;
-  }, [sessions, spec?.specName]);
+  // TODO: AI Sessions temporarily disabled - not ready yet
+  // const activeSessionsCount = useMemo(() => {
+  //   if (!spec?.specName) return 0;
+  //   return sessions.filter(s => s.specId === spec.specName && (s.status === 'running' || s.status === 'pending')).length;
+  // }, [sessions, spec?.specName]);
 
-  const totalSessionsCount = useMemo(() => {
-    if (!spec?.specName) return 0;
-    return sessions.filter(s => s.specId === spec.specName).length;
-  }, [sessions, spec?.specName]);
+  // const totalSessionsCount = useMemo(() => {
+  //   if (!spec?.specName) return 0;
+  //   return sessions.filter(s => s.specId === spec.specName).length;
+  // }, [sessions, spec?.specName]);
 
   const subSpecs: EnrichedSubSpec[] = useMemo(() => {
     const raw = (spec?.subSpecs as unknown) ?? (spec?.metadata?.sub_specs as unknown);
@@ -542,6 +547,7 @@ export function SpecDetailPage() {
                     {t('relationships.button')}
                   </Button>
 
+                  {/* TODO: AI Sessions temporarily disabled - not ready yet
                   <Button
                     type="button"
                     variant="outline"
@@ -558,6 +564,7 @@ export function SpecDetailPage() {
                       {activeSessionsCount > 0 ? `● ${activeSessionsCount}` : totalSessionsCount}
                     </span>
                   </Button>
+                  */}
 
 
                   {/* Focus Mode Toggle */}

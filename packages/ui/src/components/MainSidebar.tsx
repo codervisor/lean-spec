@@ -93,7 +93,8 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
   const navItems = [
     { path: basePath, label: t('navigation.home'), description: t('navigation.dashboard'), icon: Home },
     { path: `${basePath}/specs`, label: t('navigation.specs'), description: t('navigation.allSpecifications'), icon: FileText },
-    { path: `${basePath}/sessions`, label: t('navigation.sessions'), description: t('navigation.sessionsDescription'), icon: Terminal },
+    // TODO: AI Sessions temporarily disabled - not ready yet
+    // { path: `${basePath}/sessions`, label: t('navigation.sessions'), description: t('navigation.sessionsDescription'), icon: Terminal },
     { path: `${basePath}/dependencies`, label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
     { path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
     { path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },

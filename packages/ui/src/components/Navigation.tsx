@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { BookOpen, ChevronRight, Menu, Monitor, Scan, BotMessageSquare } from 'lucide-react';
+import { BookOpen, ChevronRight, Menu, Monitor, Scan } from 'lucide-react';
+// TODO: AI Chat temporarily disabled - not ready yet
+// import { BotMessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@leanspec/ui-components';
 import { QuickSearch } from './QuickSearch';
@@ -8,7 +10,9 @@ import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 import { useMediaQuery } from '../hooks/use-media-query';
-import { useLayout, useProject, useChat } from '../contexts';
+import { useLayout, useProject } from '../contexts';
+// TODO: AI Chat temporarily disabled - not ready yet
+// import { useChat } from '../contexts';
 
 interface BreadcrumbItem {
   label: string;
@@ -152,7 +156,8 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
   const { isWideMode, toggleWideMode } = useLayout();
-  const { toggleChat, isOpen: isChatOpen, sidebarWidth } = useChat();
+  // TODO: AI Chat temporarily disabled - not ready yet
+  // const { toggleChat, isOpen: isChatOpen, sidebarWidth } = useChat();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
@@ -164,9 +169,10 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
   return (
     <header
       className="sticky top-0 z-50 h-14 border-b border-border bg-background transition-all duration-300 ease-in-out"
-      style={{
-        marginRight: (!isMobile && isChatOpen) ? `${sidebarWidth}px` : 0
-      }}
+      // TODO: AI Chat temporarily disabled - not ready yet
+      // style={{
+      //   marginRight: (!isMobile && isChatOpen) ? `${sidebarWidth}px` : 0
+      // }}
       data-tauri-drag-region="true"
       onDoubleClick={onHeaderDoubleClick}
     >
@@ -299,6 +305,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
               </TooltipContent>
             </Tooltip>
 
+            {/* TODO: AI Chat temporarily disabled - not ready yet
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -316,6 +323,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
                 <p>{t('chat.openChat', 'Open AI Chat')}</p>
               </TooltipContent>
             </Tooltip>
+            */}
 
             {rightSlot && (
               <div className="ml-2 flex items-center" data-tauri-drag-region="false">
