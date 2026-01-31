@@ -369,6 +369,11 @@
     "system": "跟随系统",
     "toggleTheme": "切换主题"
   },
+  "wideMode": {
+    "toggle": "切换布局模式",
+    "normal": "标准",
+    "wide": "宽屏"
+  },
   "language": {
     "english": "English",
     "chinese": "中文",
@@ -551,9 +556,11 @@
       "sort": "排序",
       "statusAll": "全部状态",
       "priorityAll": "全部优先级",
-      "validationIssuesOnly": "仅显示问题",
+      "groupByParent": "按父级分组",
+      "withErrors": "有校验错误",
       "showArchived": "显示已归档",
       "hideArchived": "隐藏已归档",
+      "settings": "设置",
       "filteredCount": "{{filtered}} / {{total}} 个规范",
       "sortOptions": {
         "id-desc": "最新优先",

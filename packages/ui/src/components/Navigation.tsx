@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { BookOpen, ChevronRight, Menu, Monitor, Scan } from 'lucide-react';
+import { BookOpen, ChevronRight, Menu } from 'lucide-react';
 // TODO: AI Chat temporarily disabled - not ready yet
 // import { BotMessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -8,9 +8,10 @@ import { Button } from '@leanspec/ui-components';
 import { QuickSearch } from './QuickSearch';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { WideModeToggle } from './WideModeToggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 // import { useMediaQuery } from '../hooks/use-media-query';
-import { useLayout, useProject } from '../contexts';
+import { useProject } from '../contexts';
 // TODO: AI Chat temporarily disabled - not ready yet
 // import { useChat } from '../contexts';
 
@@ -155,7 +156,6 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useProject();
-  const { isWideMode, toggleWideMode } = useLayout();
   // TODO: AI Chat temporarily disabled - not ready yet
   // const { toggleChat, isOpen: isChatOpen, sidebarWidth } = useChat();
   // const isMobile = useMediaQuery('(max-width: 768px)');
@@ -219,31 +219,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
             <QuickSearch />
           </div>
           <TooltipProvider>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 sm:h-10 sm:w-10"
-                  onClick={toggleWideMode}
-                  data-tauri-drag-region="false"
-                >
-                  {isWideMode ? (
-                    <Scan className="h-5 w-5" />
-                  ) : (
-                    <Monitor className="h-5 w-5" />
-                  )}
-                  <span className="sr-only">
-                    {isWideMode ? t('navigation.stdMode') : t('navigation.wideMode')}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isWideMode ? t('navigation.stdMode') : t('navigation.wideMode')}</p>
-              </TooltipContent>
-            </Tooltip>
-
+            <WideModeToggle />
             <LanguageSwitcher />
             <ThemeToggle />
 

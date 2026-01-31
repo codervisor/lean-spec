@@ -1,4 +1,4 @@
-import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
+import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, Umbrella, AlertTriangle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -7,8 +7,15 @@ import {
   SelectValue,
   Input,
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  cn,
 } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
+
+type ViewMode = 'list' | 'board';
 
 interface SpecsFiltersProps {
   searchQuery: string;
@@ -27,6 +34,14 @@ interface SpecsFiltersProps {
   onClearFilters: () => void;
   totalSpecs: number;
   filteredCount: number;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  groupByParent: boolean;
+  onGroupByParentChange: (value: boolean) => void;
+  showValidationIssuesOnly: boolean;
+  onShowValidationIssuesOnlyChange: (value: boolean) => void;
+  showArchived: boolean;
+  onShowArchivedChange: (value: boolean) => void;
 }
 
 export function SpecsFilters({
@@ -46,6 +61,14 @@ export function SpecsFilters({
   onClearFilters,
   totalSpecs,
   filteredCount,
+  viewMode,
+  onViewModeChange,
+  groupByParent,
+  onGroupByParentChange,
+  showValidationIssuesOnly,
+  onShowValidationIssuesOnlyChange,
+  showArchived,
+  onShowArchivedChange,
 }: SpecsFiltersProps) {
   const { t } = useTranslation('common');
 
@@ -80,7 +103,8 @@ export function SpecsFilters({
 
   const formatStatus = (status: string) => statusKeyMap[status] ? t(statusKeyMap[status]) : status;
   const formatPriority = (priority: string) => priorityKeyMap[priority] ? t(priorityKeyMap[priority]) : priority;
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all';
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || showValidationIssuesOnly;
+  const hasActiveSettings = groupByParent || showValidationIssuesOnly || showArchived;
 
   return (
     <div className="space-y-4">
@@ -175,16 +199,86 @@ export function SpecsFilters({
               onClick={onClearFilters}
               variant="ghost"
               size="sm"
-              className="h-8 gap-1"
+              className="h-9 gap-1"
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4" />
               {t('specsNavSidebar.clearFilters')}
             </Button>
           )}
+
+          <span className="text-sm text-muted-foreground">
+            {t('specsPage.filters.filteredCount', { filtered: filteredCount, total: totalSpecs })}
+          </span>
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          {t('specsPage.filters.filteredCount', { filtered: filteredCount, total: totalSpecs })}
+        <div className="flex items-center gap-2">
+          {/* Settings Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={hasActiveSettings ? "secondary" : "outline"}
+                size="sm"
+                className="h-9 gap-1.5"
+              >
+                <Settings className={cn("w-4 h-4", hasActiveSettings ? "text-primary" : "text-muted-foreground")} />
+                <span className="hidden sm:inline">{t('specsPage.filters.settings')}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuCheckboxItem
+                checked={groupByParent}
+                onCheckedChange={onGroupByParentChange}
+              >
+                <Umbrella className="w-4 h-4 mr-2" />
+                {t('specsPage.filters.groupByParent')}
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showValidationIssuesOnly}
+                onCheckedChange={onShowValidationIssuesOnlyChange}
+                disabled
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                {t('specsPage.filters.withErrors')}
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showArchived}
+                onCheckedChange={onShowArchivedChange}
+              >
+                <Archive className="w-4 h-4 mr-2" />
+                {showArchived ? t('specsPage.filters.hideArchived') : t('specsPage.filters.showArchived')}
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* View Mode Switch */}
+          <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border h-9">
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('list')}
+              className={cn(
+                "h-7",
+                viewMode === 'list' && "bg-background shadow-sm"
+              )}
+              title={t('specsPage.views.listTooltip')}
+            >
+              <List className="w-4 h-4 mr-1.5" />
+              {t('specsPage.views.list')}
+            </Button>
+            <Button
+              variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('board')}
+              className={cn(
+                "h-7",
+                viewMode === 'board' && "bg-background shadow-sm"
+              )}
+              title={t('specsPage.views.boardTooltip')}
+            >
+              <LayoutGrid className="w-4 h-4 mr-1.5" />
+              {t('specsPage.views.board')}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

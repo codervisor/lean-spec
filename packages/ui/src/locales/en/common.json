@@ -374,6 +374,11 @@
     "system": "System",
     "toggleTheme": "Toggle theme"
   },
+  "wideMode": {
+    "toggle": "Toggle layout mode",
+    "normal": "Normal",
+    "wide": "Wide"
+  },
   "language": {
     "english": "English",
     "chinese": "中文",
@@ -556,9 +561,11 @@
       "sort": "Sort by",
       "statusAll": "All Status",
       "priorityAll": "All Priority",
-      "validationIssuesOnly": "Issues only",
+      "groupByParent": "Group by Parent",
+      "withErrors": "With Errors",
       "showArchived": "Show archived",
       "hideArchived": "Hide archived",
+      "settings": "Settings",
       "filteredCount": "{{filtered}} of {{total}} specs",
       "sortOptions": {
         "id-desc": "Newest First",

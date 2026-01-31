@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LayoutGrid, List, AlertCircle, FileQuestion, FilterX, RefreshCcw, Umbrella, AlertTriangle, Archive } from 'lucide-react';
+import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -314,68 +314,6 @@ export function SpecsPage() {
         <PageHeader
           title={t('specsPage.title')}
           description={t('specsPage.description')}
-          actions={(
-            <div className="flex items-center gap-3">
-              <Button
-                variant={groupByParent ? "secondary" : "outline"}
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={() => setGroupByParent(!groupByParent)}
-                title="Group specs by umbrella/parent"
-              >
-                <Umbrella className={cn("w-3.5 h-3.5", groupByParent ? "text-primary" : "text-muted-foreground")} />
-                <span className="hidden sm:inline">Group by Parent</span>
-              </Button>
-              <Button
-                variant={showValidationIssuesOnly ? "secondary" : "outline"}
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={() => setShowValidationIssuesOnly(!showValidationIssuesOnly)}
-                title={t('specsPage.filters.validationIssuesOnly')}
-              >
-                <AlertTriangle className={cn("w-3.5 h-3.5", showValidationIssuesOnly ? "text-primary" : "text-muted-foreground")} />
-                <span className="hidden sm:inline">{t('specsPage.filters.validationIssuesOnly')}</span>
-              </Button>
-              <Button
-                variant={showArchived ? "secondary" : "outline"}
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={() => setShowArchived(!showArchived)}
-                title={showArchived ? t('specsPage.filters.hideArchived') : t('specsPage.filters.showArchived')}
-              >
-                <Archive className={cn("w-3.5 h-3.5", showArchived ? "text-primary" : "text-muted-foreground")} />
-                <span className="hidden sm:inline">{showArchived ? t('specsPage.filters.hideArchived') : t('specsPage.filters.showArchived')}</span>
-              </Button>
-              <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border">
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    "h-8",
-                    viewMode === 'list' && "bg-background shadow-sm"
-                  )}
-                  title={t('specsPage.views.listTooltip')}
-                >
-                  <List className="w-4 h-4 mr-1.5" />
-                  {t('specsPage.views.list')}
-                </Button>
-                <Button
-                  variant={viewMode === 'board' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('board')}
-                  className={cn(
-                    "h-8",
-                    viewMode === 'board' && "bg-background shadow-sm"
-                  )}
-                  title={t('specsPage.views.boardTooltip')}
-                >
-                  <LayoutGrid className="w-4 h-4 mr-1.5" />
-                  {t('specsPage.views.board')}
-                </Button>
-              </div>
-            </div>
-          )}
         />
 
         {machineModeEnabled && !isMachineAvailable && (
@@ -383,9 +321,6 @@ export function SpecsPage() {
             {t('machines.unavailable')}
           </div>
         )}
-
-
-        <p className="text-sm text-muted-foreground">{t('specsPage.count', { count: filteredSpecs.length })}</p>
 
         <SpecsFilters
           searchQuery={searchQuery}
@@ -404,6 +339,14 @@ export function SpecsPage() {
           onClearFilters={handleClearFilters}
           totalSpecs={specs.length}
           filteredCount={filteredSpecs.length}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          groupByParent={groupByParent}
+          onGroupByParentChange={setGroupByParent}
+          showValidationIssuesOnly={showValidationIssuesOnly}
+          onShowValidationIssuesOnlyChange={setShowValidationIssuesOnly}
+          showArchived={showArchived}
+          onShowArchivedChange={setShowArchived}
         />
       </div>
 
