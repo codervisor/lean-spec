@@ -65,6 +65,8 @@ export interface BackendAdapter {
 
   // Spec operations
   getSpecs(projectId: string, params?: ListParams): Promise<Spec[]>;
+  /** Get specs with optional pre-built hierarchy tree for performance */
+  getSpecsWithHierarchy(projectId: string, params?: ListParams): Promise<ListSpecsResponse>;
   getSpec(projectId: string, specName: string): Promise<SpecDetail>;
   getSpecTokens(projectId: string, specName: string): Promise<SpecTokenResponse>;
   getSpecValidation(projectId: string, specName: string): Promise<SpecValidationResponse>;
@@ -240,10 +242,16 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async getSpecs(projectId: string, params?: ListParams): Promise<Spec[]> {
+    const data = await this.getSpecsWithHierarchy(projectId, params);
+    return data.specs || [];
+  }
+
+  async getSpecsWithHierarchy(projectId: string, params?: ListParams): Promise<ListSpecsResponse> {
     const query = params
       ? new URLSearchParams(
         Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
           if (typeof value === 'string' && value.length > 0) acc.push([key, value]);
+          if (typeof value === 'boolean') acc.push([key, String(value)]);
           return acc;
         }, [])
       ).toString()
@@ -251,8 +259,7 @@ export class HttpBackendAdapter implements BackendAdapter {
     const endpoint = query
       ? `/api/projects/${encodeURIComponent(projectId)}/specs?${query}`
       : `/api/projects/${encodeURIComponent(projectId)}/specs`;
-    const data = await this.fetchAPI<ListSpecsResponse>(endpoint);
-    return data.specs || [];
+    return this.fetchAPI<ListSpecsResponse>(endpoint);
   }
 
   async getSpec(projectId: string, specName: string): Promise<SpecDetail> {
@@ -510,6 +517,12 @@ export class TauriBackendAdapter implements BackendAdapter {
       projectId
     });
     return specs;
+  }
+
+  async getSpecsWithHierarchy(projectId: string, params?: ListParams): Promise<ListSpecsResponse> {
+    // Tauri backend doesn't support server-side hierarchy yet
+    const specs = await this.getSpecs(projectId, params);
+    return { specs, total: specs.length };
   }
 
   async getSpec(projectId: string, specName: string): Promise<SpecDetail> {

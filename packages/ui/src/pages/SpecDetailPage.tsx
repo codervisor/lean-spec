@@ -41,7 +41,7 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
-import { useProject, useLayout, useMachine } from '../contexts';
+import { useProject, useLayout, useMachine, useSpecs } from '../contexts';
 // TODO: AI Sessions temporarily disabled - not ready yet
 // import { useSessions } from '../contexts';
 import { useTranslation } from 'react-i18next';
@@ -70,6 +70,7 @@ export function SpecDetailPage() {
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { isWideMode } = useLayout();
   const { machineModeEnabled, isMachineAvailable } = useMachine();
+  const { refreshTrigger } = useSpecs();
   const { t, i18n } = useTranslation(['common', 'errors']);
   const projectReady = !projectId || currentProject?.id === projectId;
   const [spec, setSpec] = useState<SpecDetail | null>(null);
@@ -204,7 +205,7 @@ export function SpecDetailPage() {
 
   useEffect(() => {
     void loadSpec();
-  }, [loadSpec, projectReady]);
+  }, [loadSpec, projectReady, refreshTrigger]);
 
   useEffect(() => {
     if (!tokenDialogOpen || !resolvedProjectId || !spec?.specName) return;

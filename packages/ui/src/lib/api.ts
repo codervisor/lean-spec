@@ -56,6 +56,14 @@ class ProjectAPI {
     return this.backend.getSpecs(this.getCurrentProjectId(), params);
   }
 
+  /**
+   * Get specs with optional pre-built hierarchy tree for performance.
+   * Use hierarchy: true to get server-side computed tree structure.
+   */
+  async getSpecsWithHierarchy(params?: ListParams): Promise<import('../types/api').ListSpecsResponse> {
+    return this.backend.getSpecsWithHierarchy(this.getCurrentProjectId(), params);
+  }
+
   async getSpec(specName: string): Promise<SpecDetail> {
     return this.backend.getSpec(this.getCurrentProjectId(), specName);
   }

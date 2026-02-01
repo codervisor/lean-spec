@@ -17,7 +17,7 @@ interface ValidationBadgeProps {
 const statusConfig = {
   pass: {
     icon: CheckCircle2,
-    className: 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20',
+    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     labelKey: 'validation.status.pass'
   },
   warn: {

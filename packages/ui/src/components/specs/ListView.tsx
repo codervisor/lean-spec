@@ -1,17 +1,12 @@
 import { Link } from 'react-router-dom';
-import type { Spec, SpecTokenResponse, SpecValidationResponse } from '../../types/api';
+import type { Spec, HierarchyNode } from '../../types/api';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
 import { useTranslation } from 'react-i18next';
 import { HierarchyList } from './HierarchyList';
 import { TokenBadge } from '../TokenBadge';
 import { ValidationBadge } from '../ValidationBadge';
-import { TokenDetailsDialog } from './TokenDetailsDialog';
-import { ValidationDialog } from './ValidationDialog';
-import { memo, useCallback, useEffect, useState } from 'react';
-import { getBackend } from '../../lib/backend-adapter';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@leanspec/ui-components';
-import { Loader2 } from 'lucide-react';
+import { memo } from 'react';
 
 interface SpecListItemProps {
   spec: Spec;
@@ -75,64 +70,16 @@ const SpecListItem = memo(function SpecListItem({
 
 interface ListViewProps {
   specs: Spec[];
+  /** Pre-built hierarchy from server - if provided, skips client-side tree building */
+  hierarchy?: HierarchyNode[];
   basePath?: string;
   groupByParent?: boolean;
-  projectId?: string;
+  onTokenClick?: (specName: string) => void;
+  onValidationClick?: (specName: string) => void;
 }
 
-export function ListView({ specs, basePath = '/projects', groupByParent = false, projectId }: ListViewProps) {
+export function ListView({ specs, hierarchy, basePath = '/projects', groupByParent = false, onTokenClick, onValidationClick }: ListViewProps) {
   const { t } = useTranslation('common');
-  const backend = getBackend();
-  const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
-  const [tokenDialogLoading, setTokenDialogLoading] = useState(false);
-  const [tokenDialogData, setTokenDialogData] = useState<SpecTokenResponse | null>(null);
-  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
-  const [validationDialogLoading, setValidationDialogLoading] = useState(false);
-  const [validationDialogData, setValidationDialogData] = useState<SpecValidationResponse | null>(null);
-  const [activeSpecName, setActiveSpecName] = useState<string | null>(null);
-
-  const closeTokenDialog = useCallback(() => {
-    setTokenDialogOpen(false);
-    setTokenDialogLoading(false);
-    setTokenDialogData(null);
-  }, []);
-
-  const closeValidationDialog = useCallback(() => {
-    setValidationDialogOpen(false);
-    setValidationDialogLoading(false);
-    setValidationDialogData(null);
-  }, []);
-
-  // Stable callbacks for spec item clicks
-  const handleTokenClick = useCallback((specName: string) => {
-    if (!projectId) return;
-    setActiveSpecName(specName);
-    setTokenDialogOpen(true);
-  }, [projectId]);
-
-  const handleValidationClick = useCallback((specName: string) => {
-    if (!projectId) return;
-    setActiveSpecName(specName);
-    setValidationDialogOpen(true);
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!tokenDialogOpen || !activeSpecName || !projectId) return;
-    setTokenDialogLoading(true);
-    backend.getSpecTokens(projectId, activeSpecName)
-      .then((data) => setTokenDialogData(data))
-      .catch(() => setTokenDialogData(null))
-      .finally(() => setTokenDialogLoading(false));
-  }, [activeSpecName, backend, projectId, tokenDialogOpen]);
-
-  useEffect(() => {
-    if (!validationDialogOpen || !activeSpecName || !projectId) return;
-    setValidationDialogLoading(true);
-    backend.getSpecValidation(projectId, activeSpecName)
-      .then((data) => setValidationDialogData(data))
-      .catch(() => setValidationDialogData(null))
-      .finally(() => setValidationDialogLoading(false));
-  }, [activeSpecName, backend, projectId, validationDialogOpen]);
 
   if (specs.length === 0) {
     return (
@@ -143,68 +90,26 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
   }
 
   if (groupByParent) {
-    return <HierarchyList specs={specs} basePath={basePath} />;
+    return (
+      <HierarchyList
+        specs={specs}
+        hierarchy={hierarchy}
+        onValidationClick={onValidationClick}
+      />
+    );
   }
 
   return (
-    <>
-      <div className="h-full overflow-y-auto space-y-2">
-        {specs.map((spec) => (
-          <SpecListItem
-            key={spec.specName}
-            spec={spec}
-            basePath={basePath}
-            onTokenClick={handleTokenClick}
-            onValidationClick={handleValidationClick}
-          />
-        ))}
-      </div>
-
-      {activeSpecName && tokenDialogOpen && tokenDialogData && (
-        <TokenDetailsDialog
-          open={tokenDialogOpen}
-          onClose={closeTokenDialog}
-          specName={activeSpecName}
-          data={tokenDialogData}
+    <div className="h-full overflow-y-auto space-y-2">
+      {specs.map((spec) => (
+        <SpecListItem
+          key={spec.specName}
+          spec={spec}
+          basePath={basePath}
+          onTokenClick={(name) => onTokenClick?.(name)}
+          onValidationClick={(name) => onValidationClick?.(name)}
         />
-      )}
-
-      {activeSpecName && tokenDialogOpen && tokenDialogLoading && !tokenDialogData && (
-        <Dialog open={tokenDialogOpen} onOpenChange={closeTokenDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('actions.loading')}</DialogTitle>
-              <DialogDescription>{t('tokens.detailedBreakdown')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {activeSpecName && validationDialogOpen && validationDialogData && (
-        <ValidationDialog
-          open={validationDialogOpen}
-          onClose={closeValidationDialog}
-          specName={activeSpecName}
-          data={validationDialogData}
-        />
-      )}
-
-      {activeSpecName && validationDialogOpen && validationDialogLoading && !validationDialogData && (
-        <Dialog open={validationDialogOpen} onOpenChange={closeValidationDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('actions.loading')}</DialogTitle>
-              <DialogDescription>{t('validation.dialog.loading')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
+      ))}
+    </div>
   );
 }

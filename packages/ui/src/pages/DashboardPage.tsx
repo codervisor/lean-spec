@@ -4,7 +4,7 @@ import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import type { Stats } from '../types/api';
-import { useProject } from '../contexts';
+import { useProject, useSpecs } from '../contexts';
 import { DashboardClient } from '../components/dashboard/DashboardClient';
 import type { DashboardSpec } from '../components/dashboard/SpecListItem';
 import { DashboardSkeleton } from '../components/shared/Skeletons';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 export function DashboardPage() {
   const { currentProject, loading: projectLoading } = useProject();
+  const { refreshTrigger } = useSpecs();
   const [specs, setSpecs] = useState<DashboardSpec[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,7 @@ export function DashboardPage() {
 
   useEffect(() => {
     void loadData();
-  }, [loadData]);
+  }, [loadData, refreshTrigger]);
 
   if (projectLoading || loading) {
     return <DashboardSkeleton />;

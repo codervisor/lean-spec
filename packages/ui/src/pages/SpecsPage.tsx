@@ -1,18 +1,21 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
-import { Button, Card, CardContent } from '@leanspec/ui-components';
+import { AlertCircle, FileQuestion, FilterX, RefreshCcw, Loader2 } from 'lucide-react';
+import { Button, Card, CardContent, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
-import type { Spec, SpecStatus, ValidationStatus } from '../types/api';
+import type { Spec, SpecStatus, ValidationStatus, HierarchyNode } from '../types/api';
 import { getBackend } from '../lib/backend-adapter';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
+import { TokenDetailsDialog } from '../components/specs/TokenDetailsDialog';
+import { ValidationDialog } from '../components/specs/ValidationDialog';
 import { cn } from '@leanspec/ui-components';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
-import { useProject, useLayout, useMachine } from '../contexts';
+import { useProject, useLayout, useMachine, useSpecs } from '../contexts';
+import { useSpecActionDialogs } from '../hooks/useSpecActionDialogs';
 import { useTranslation } from 'react-i18next';
 
 type ViewMode = 'list' | 'board';
@@ -77,16 +80,33 @@ function savePreferences(prefs: Partial<SpecsPagePreferences>): void {
 
 export function SpecsPage() {
   const [specs, setSpecs] = useState<Spec[]>([]);
+  // Pre-built hierarchy from server - used when groupByParent is true for performance
+  const [hierarchy, setHierarchy] = useState<HierarchyNode[] | undefined>(undefined);
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, loading: projectLoading } = useProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { isWideMode } = useLayout();
   const { machineModeEnabled, isMachineAvailable } = useMachine();
+  const { refreshTrigger } = useSpecs();
   const projectReady = !projectId || currentProject?.id === projectId;
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const {
+    activeSpecName,
+    tokenDialogOpen,
+    tokenDialogLoading,
+    tokenDialogData,
+    closeTokenDialog,
+    handleTokenClick,
+    validationDialogOpen,
+    validationDialogLoading,
+    validationDialogData,
+    closeValidationDialog,
+    handleValidationClick,
+  } = useSpecActionDialogs(resolvedProjectId);
 
   // Load saved preferences
   const savedPrefs = useMemo(() => loadPreferences(), []);
@@ -117,8 +137,11 @@ export function SpecsPage() {
     if (!projectReady || projectLoading) return;
     try {
       setLoading(true);
-      const data = await api.getSpecs();
-      setSpecs(data);
+      // Always request hierarchy data from server - server-side computation is faster
+      // and the hierarchy will be ready when user toggles "Group by Parent"
+      const response = await api.getSpecsWithHierarchy({ hierarchy: true });
+      setSpecs(response.specs);
+      setHierarchy(response.hierarchy);
       setError(null);
     } catch (err: unknown) {
       console.error('Failed to load specs', err);
@@ -130,7 +153,7 @@ export function SpecsPage() {
 
   useEffect(() => {
     void loadSpecs();
-  }, [loadSpecs]);
+  }, [loadSpecs, refreshTrigger]);
 
   // Fetch batch metadata (tokens, validation) after specs load
   useEffect(() => {
@@ -551,8 +574,14 @@ export function SpecsPage() {
             )}
           />
         ) : viewMode === 'list' ? (
-          <ListView specs={filteredSpecs} basePath={basePath} groupByParent={groupByParent} projectId={resolvedProjectId} />
-        ) : (
+          <ListView
+            specs={filteredSpecs}
+            hierarchy={hierarchy}
+            basePath={basePath}
+            groupByParent={groupByParent}
+            onTokenClick={handleTokenClick}
+            onValidationClick={handleValidationClick}
+          />) : (
           <BoardView
             specs={filteredSpecs}
             onStatusChange={handleStatusChange}
@@ -560,9 +589,57 @@ export function SpecsPage() {
             basePath={basePath}
             groupByParent={groupByParent}
             showArchived={showArchived}
+            onTokenClick={handleTokenClick}
+            onValidationClick={handleValidationClick}
           />
         )}
       </div>
+
+      {activeSpecName && tokenDialogOpen && tokenDialogData && (
+        <TokenDetailsDialog
+          open={tokenDialogOpen}
+          onClose={closeTokenDialog}
+          specName={activeSpecName}
+          data={tokenDialogData}
+        />
+      )}
+
+      {activeSpecName && tokenDialogOpen && tokenDialogLoading && !tokenDialogData && (
+        <Dialog open={tokenDialogOpen} onOpenChange={closeTokenDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('actions.loading')}</DialogTitle>
+              <DialogDescription>{t('tokens.detailedBreakdown')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {activeSpecName && validationDialogOpen && validationDialogData && (
+        <ValidationDialog
+          open={validationDialogOpen}
+          onClose={closeValidationDialog}
+          specName={activeSpecName}
+          data={validationDialogData}
+        />
+      )}
+
+      {activeSpecName && validationDialogOpen && validationDialogLoading && !validationDialogData && (
+        <Dialog open={validationDialogOpen} onOpenChange={closeValidationDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('actions.loading')}</DialogTitle>
+              <DialogDescription>{t('validation.dialog.loading')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

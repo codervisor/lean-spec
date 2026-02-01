@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Clock, PlayCircle, CheckCircle2, Archive, Umbrella, CornerDownRight, Layers, ChevronDown } from 'lucide-react';
 import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../PriorityBadge';
+import { TokenBadge } from '../TokenBadge';
+import { ValidationBadge } from '../ValidationBadge';
 import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +17,8 @@ interface BoardViewProps {
   canEdit?: boolean;
   groupByParent?: boolean;
   showArchived?: boolean;
+  onTokenClick?: (specName: string) => void;
+  onValidationClick?: (specName: string) => void;
 }
 
 const COLLAPSE_THRESHOLD = 3;
@@ -100,7 +104,7 @@ function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
   );
 }
 
-export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false, onTokenClick, onValidationClick }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
@@ -207,33 +211,47 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
           )}
         </div>
 
-        {/* Bottom: Priority & Tags */}
+        {/* Tags */}
+        {spec.tags && spec.tags.length > 0 && (
+          <div className={cn("flex flex-wrap gap-1.5 mb-3", isChild && "mb-2")}>
+            {spec.tags.slice(0, isChild ? 2 : 4).map((tag: string) => (
+              <span key={tag} className="text-[10px] px-2 py-0.5 bg-secondary/30 border border-border/50 rounded-md text-muted-foreground font-mono truncate max-w-[120px]">
+                {tag}
+              </span>
+            ))}
+            {spec.tags.length > (isChild ? 2 : 4) && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-secondary/20 border border-border/30 rounded-md text-muted-foreground/70 font-mono">
+                +{spec.tags.length - (isChild ? 2 : 4)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Bottom: Priority & Stats */}
         <div className="flex items-center justify-between gap-2 mt-auto">
           {spec.priority && (
             <PriorityBadge priority={spec.priority} className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5" : "h-6 px-2.5")} iconOnly={isChild} />
           )}
 
           <div className="flex items-center gap-1.5 justify-end ml-auto">
+            <TokenBadge
+              count={spec.tokenCount}
+              size="sm"
+              onClick={onTokenClick ? () => onTokenClick(spec.specName) : undefined}
+              className={cn(isChild && "px-1.5 h-5 scale-90 origin-right")}
+              showIcon={!isChild}
+            />
+            <ValidationBadge
+              status={spec.validationStatus}
+              size="sm"
+              onClick={onValidationClick ? () => onValidationClick(spec.specName) : undefined}
+              className={cn(isChild && "px-1.5 h-5 scale-90 origin-right")}
+            />
             {spec.children && spec.children.length > 0 && !isChild && (
               <span className="text-[10px] px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-md text-primary font-medium flex items-center gap-1">
                 <Layers className="h-3 w-3" />
                 {spec.children.length}
               </span>
-            )}
-
-            {spec.tags && spec.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 justify-end">
-                {spec.tags.slice(0, isChild ? 1 : 2).map((tag: string) => (
-                  <span key={tag} className="text-[10px] px-2 py-0.5 bg-secondary/30 border border-border/50 rounded-md text-muted-foreground font-mono">
-                    {tag}
-                  </span>
-                ))}
-                {spec.tags.length > (isChild ? 1 : 2) && (
-                  <span className="text-[10px] px-2 py-0.5 bg-secondary/30 border border-border/50 rounded-md text-muted-foreground font-mono">
-                    +{spec.tags.length - (isChild ? 1 : 2)}
-                  </span>
-                )}
-              </div>
             )}
           </div>
         </div>

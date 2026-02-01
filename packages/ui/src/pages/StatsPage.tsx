@@ -21,7 +21,7 @@ import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { useTranslation } from 'react-i18next';
-import { useProject, useLayout } from '../contexts';
+import { useProject, useLayout, useSpecs } from '../contexts';
 import { resolveTokenStatus, tokenProgressClasses } from '../lib/token-utils';
 
 const STATUS_COLORS = {
@@ -46,6 +46,7 @@ export function StatsPage() {
   const { t, i18n } = useTranslation('common');
   const { currentProject, loading: projectLoading } = useProject();
   const { isWideMode } = useLayout();
+  const { refreshTrigger } = useSpecs();
 
   const loadStats = useCallback(async () => {
     if (projectLoading || !currentProject) return;
@@ -65,7 +66,7 @@ export function StatsPage() {
 
   useEffect(() => {
     void loadStats();
-  }, [loadStats]);
+  }, [loadStats, refreshTrigger]);
 
   // Prepare data for charts - must be before any conditional returns
   const statusCounts = useMemo(() => stats?.specsByStatus.reduce<Record<string, number>>((acc: Record<string, number>, entry: { status: string; count: number }) => {

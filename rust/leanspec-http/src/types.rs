@@ -321,6 +321,18 @@ pub struct ListSpecsResponse {
     pub total: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
+    /// Pre-built hierarchy tree (only when hierarchy=true query param)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hierarchy: Option<Vec<HierarchyNode>>,
+}
+
+/// Hierarchical node for tree view - pre-computed server-side for performance
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HierarchyNode {
+    #[serde(flatten)]
+    pub spec: SpecSummary,
+    pub child_nodes: Vec<HierarchyNode>,
 }
 
 /// Query parameters for list specs
@@ -331,6 +343,9 @@ pub struct ListSpecsQuery {
     pub priority: Option<String>,
     pub tags: Option<String>,
     pub assignee: Option<String>,
+    /// When true, return pre-built hierarchy tree structure for performance
+    #[serde(default)]
+    pub hierarchy: Option<bool>,
 }
 
 /// Response for search endpoint

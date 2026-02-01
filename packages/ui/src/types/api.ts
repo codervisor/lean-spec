@@ -225,12 +225,37 @@ export interface ListParams {
   priority?: string;
   tag?: string;
   search?: string;
+  /** When true, server returns pre-built hierarchy tree for performance */
+  hierarchy?: boolean;
 }
 
 export interface ListSpecsResponse {
   specs: Spec[];
   total: number;
   projectId?: string;
+  /** Pre-built hierarchy tree (only when hierarchy=true query param) */
+  hierarchy?: HierarchyNode[];
+}
+
+/** Hierarchical node for tree view - pre-computed server-side for performance */
+export interface HierarchyNode {
+  // All Spec fields are flattened here
+  id: string;
+  specNumber?: number;
+  specName: string;
+  title?: string | null;
+  status?: SpecStatus;
+  priority?: SpecPriority;
+  tags?: string[];
+  parent?: string | null;
+  children?: string[];
+  dependsOn?: string[];
+  requiredBy?: string[];
+  tokenCount?: number;
+  tokenStatus?: TokenStatus;
+  validationStatus?: ValidationStatus;
+  // Nested children
+  childNodes: HierarchyNode[];
 }
 
 export interface TokenBreakdown {

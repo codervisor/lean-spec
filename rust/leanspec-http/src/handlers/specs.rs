@@ -96,6 +96,78 @@ fn hash_raw_content(content: &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
+/// Build a hierarchical tree structure from a flat list of specs.
+/// This is done server-side for performance - avoids client-side tree building.
+fn build_hierarchy(specs: Vec<crate::types::SpecSummary>) -> Vec<crate::types::HierarchyNode> {
+    use std::collections::HashMap;
+
+    // Create a map of spec_name -> SpecSummary
+    let spec_map: HashMap<String, crate::types::SpecSummary> = specs
+        .iter()
+        .map(|s| (s.spec_name.clone(), s.clone()))
+        .collect();
+
+    // Create a map of parent -> children specs
+    let mut children_specs: HashMap<String, Vec<crate::types::SpecSummary>> = HashMap::new();
+    let mut roots: Vec<crate::types::SpecSummary> = Vec::new();
+
+    for spec in specs {
+        if let Some(parent) = &spec.parent {
+            if spec_map.contains_key(parent) {
+                children_specs.entry(parent.clone()).or_default().push(spec);
+            } else {
+                // Parent not in list, treat as root
+                roots.push(spec);
+            }
+        } else {
+            roots.push(spec);
+        }
+    }
+
+    // Recursive function to build nodes
+    fn build_node(
+        spec: crate::types::SpecSummary,
+        children_map: &HashMap<String, Vec<crate::types::SpecSummary>>,
+    ) -> crate::types::HierarchyNode {
+        let mut child_nodes: Vec<crate::types::HierarchyNode> = children_map
+            .get(&spec.spec_name)
+            .map(|children| {
+                children
+                    .iter()
+                    .cloned()
+                    .map(|c| build_node(c, children_map))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        // Sort children by spec_number descending (newest first)
+        child_nodes.sort_by(|a, b| match (b.spec.spec_number, a.spec.spec_number) {
+            (Some(bn), Some(an)) => bn.cmp(&an),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => b.spec.spec_name.cmp(&a.spec.spec_name),
+        });
+
+        crate::types::HierarchyNode { spec, child_nodes }
+    }
+
+    // Build root nodes
+    let mut root_nodes: Vec<crate::types::HierarchyNode> = roots
+        .into_iter()
+        .map(|s| build_node(s, &children_specs))
+        .collect();
+
+    // Sort roots by spec_number descending
+    root_nodes.sort_by(|a, b| match (b.spec.spec_number, a.spec.spec_number) {
+        (Some(bn), Some(an)) => bn.cmp(&an),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => b.spec.spec_name.cmp(&a.spec.spec_name),
+    });
+
+    root_nodes
+}
+
 fn render_template(template: &str, name: &str, status: &str, priority: &str, date: &str) -> String {
     template
         .replace("{name}", name)
@@ -458,10 +530,18 @@ pub async fn list_project_specs(
 
         let total = filtered_specs.len();
 
+        // Build hierarchy if requested - computed server-side for performance
+        let hierarchy = if query.hierarchy.unwrap_or(false) {
+            Some(build_hierarchy(filtered_specs.clone()))
+        } else {
+            None
+        };
+
         return Ok(Json(ListSpecsResponse {
             specs: filtered_specs,
             total,
             project_id: Some(project.id.clone()),
+            hierarchy,
         }));
     }
 
@@ -518,10 +598,18 @@ pub async fn list_project_specs(
 
     let total = filtered_specs.len();
 
+    // Build hierarchy if requested - computed server-side for performance
+    let hierarchy = if query.hierarchy.unwrap_or(false) {
+        Some(build_hierarchy(filtered_specs.clone()))
+    } else {
+        None
+    };
+
     Ok(Json(ListSpecsResponse {
         specs: filtered_specs,
         total,
         project_id: Some(project.id),
+        hierarchy,
     }))
 }
 

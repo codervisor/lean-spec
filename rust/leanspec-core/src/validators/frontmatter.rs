@@ -66,13 +66,6 @@ impl FrontmatterValidator {
     fn validate_status(&self, spec: &SpecInfo, result: &mut ValidationResult) {
         // Status is always valid if parsing succeeded (enum enforced)
         // But we can add warnings for certain patterns
-        if spec.frontmatter.status == SpecStatus::InProgress {
-            // Check if there's an assignee
-            if spec.frontmatter.assignee.is_none() {
-                result.add_info("frontmatter", "In-progress spec without assignee");
-            }
-        }
-
         if spec.frontmatter.status == SpecStatus::Complete {
             // Check if completed date is set
             if spec.frontmatter.completed.is_none() && spec.frontmatter.completed_at.is_none() {
