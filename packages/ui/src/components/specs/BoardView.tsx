@@ -137,6 +137,14 @@ function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragSta
         {/* Metadata Row */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-1.5">
+            {/* Status Icon */}
+            {spec.status && STATUS_CONFIG[spec.status as SpecStatus] && (() => {
+              const statusConfig = STATUS_CONFIG[spec.status as SpecStatus];
+              const StatusIcon = statusConfig.icon;
+              return (
+                <StatusIcon className={cn("h-3.5 w-3.5", statusConfig.colorClass)} />
+              );
+            })()}
             {spec.priority && (
               <PriorityBadge priority={spec.priority} className="h-5 text-[10px] px-1.5" />
             )}
@@ -155,12 +163,14 @@ function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragSta
               onClick={onTokenClick ? () => onTokenClick(spec.specName) : undefined}
               className="h-5 px-1.5 scale-90 origin-right"
             />
-            <ValidationBadge
-              status={spec.validationStatus}
-              size="sm"
-              onClick={onValidationClick ? () => onValidationClick(spec.specName) : undefined}
-              className="h-5 px-1.5 scale-90 origin-right"
-            />
+            {spec.validationStatus && spec.validationStatus !== 'pass' && (
+              <ValidationBadge
+                status={spec.validationStatus}
+                size="sm"
+                onClick={onValidationClick ? () => onValidationClick(spec.specName) : undefined}
+                className="h-5 px-1.5 scale-90 origin-right"
+              />
+            )}
           </div>
         </div>
       </div>

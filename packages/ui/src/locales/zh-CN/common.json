@@ -958,7 +958,7 @@
       "critical": "严重"
     },
     "clickForDetails": "点击查看详情",
-    "contextEconomy": "上下文效率: {{specName}}",
+    "contextEconomy": "上下文效率",
     "detailedBreakdown": "该规范的令牌使用详情。",
     "composition": "组成结构",
     "proseContent": "正文内容",

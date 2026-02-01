@@ -964,7 +964,7 @@
       "critical": "Critical"
     },
     "clickForDetails": "Click for details",
-    "contextEconomy": "Context Economy: {{specName}}",
+    "contextEconomy": "Context Economy",
     "detailedBreakdown": "Detailed breakdown of token usage for this spec.",
     "composition": "Composition",
     "proseContent": "Prose & Content",
