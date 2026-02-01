@@ -2,6 +2,7 @@
 // This allows the same UI code to work in both browser and Tauri contexts
 
 import type {
+  BatchMetadataResponse,
   ContextFileContent,
   ContextFileListItem,
   DependencyGraph,
@@ -67,6 +68,7 @@ export interface BackendAdapter {
   getSpec(projectId: string, specName: string): Promise<SpecDetail>;
   getSpecTokens(projectId: string, specName: string): Promise<SpecTokenResponse>;
   getSpecValidation(projectId: string, specName: string): Promise<SpecValidationResponse>;
+  getBatchMetadata(projectId: string, specNames: string[]): Promise<BatchMetadataResponse>;
   updateSpec(
     projectId: string,
     specName: string,
@@ -269,6 +271,16 @@ export class HttpBackendAdapter implements BackendAdapter {
   async getSpecValidation(projectId: string, specName: string): Promise<SpecValidationResponse> {
     return this.fetchAPI<SpecValidationResponse>(
       `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(specName)}/validation`
+    );
+  }
+
+  async getBatchMetadata(projectId: string, specNames: string[]): Promise<BatchMetadataResponse> {
+    return this.fetchAPI<BatchMetadataResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/specs/batch-metadata`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ specNames }),
+      }
     );
   }
 
@@ -514,6 +526,10 @@ export class TauriBackendAdapter implements BackendAdapter {
 
   async getSpecValidation(_projectId: string, _specName: string): Promise<SpecValidationResponse> {
     throw new Error('getSpecValidation is not implemented for the Tauri backend yet');
+  }
+
+  async getBatchMetadata(_projectId: string, _specNames: string[]): Promise<BatchMetadataResponse> {
+    throw new Error('getBatchMetadata is not implemented for the Tauri backend yet');
   }
 
   async updateSpec(

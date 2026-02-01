@@ -8,10 +8,70 @@ import { TokenBadge } from '../TokenBadge';
 import { ValidationBadge } from '../ValidationBadge';
 import { TokenDetailsDialog } from './TokenDetailsDialog';
 import { ValidationDialog } from './ValidationDialog';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { getBackend } from '../../lib/backend-adapter';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@leanspec/ui-components';
 import { Loader2 } from 'lucide-react';
+
+interface SpecListItemProps {
+  spec: Spec;
+  basePath: string;
+  onTokenClick: (specName: string) => void;
+  onValidationClick: (specName: string) => void;
+}
+
+// Memoized spec item to prevent re-renders when dialog state changes
+const SpecListItem = memo(function SpecListItem({
+  spec,
+  basePath,
+  onTokenClick,
+  onValidationClick,
+}: SpecListItemProps) {
+  return (
+    <Link
+      to={`${basePath}/specs/${spec.specName}`}
+      className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors bg-background"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+              #{spec.specNumber}
+            </span>
+            <h3 className="font-medium truncate">{spec.title}</h3>
+          </div>
+          <p className="text-sm text-muted-foreground truncate">{spec.specName}</p>
+        </div>
+        <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
+          {spec.status && <StatusBadge status={spec.status} />}
+          {spec.priority && <PriorityBadge priority={spec.priority} />}
+          <TokenBadge
+            count={spec.tokenCount}
+            size="sm"
+            onClick={() => onTokenClick(spec.specName)}
+          />
+          <ValidationBadge
+            status={spec.validationStatus}
+            size="sm"
+            onClick={() => onValidationClick(spec.specName)}
+          />
+        </div>
+      </div>
+      {spec.tags && spec.tags.length > 0 && (
+        <div className="flex gap-2 mt-3 flex-wrap">
+          {spec.tags.map((tag: string) => (
+            <span
+              key={tag}
+              className="text-xs px-2 py-0.5 bg-secondary rounded text-secondary-foreground"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </Link>
+  );
+});
 
 interface ListViewProps {
   specs: Spec[];
@@ -31,17 +91,30 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
   const [validationDialogData, setValidationDialogData] = useState<SpecValidationResponse | null>(null);
   const [activeSpecName, setActiveSpecName] = useState<string | null>(null);
 
-  const closeTokenDialog = () => {
+  const closeTokenDialog = useCallback(() => {
     setTokenDialogOpen(false);
     setTokenDialogLoading(false);
     setTokenDialogData(null);
-  };
+  }, []);
 
-  const closeValidationDialog = () => {
+  const closeValidationDialog = useCallback(() => {
     setValidationDialogOpen(false);
     setValidationDialogLoading(false);
     setValidationDialogData(null);
-  };
+  }, []);
+
+  // Stable callbacks for spec item clicks
+  const handleTokenClick = useCallback((specName: string) => {
+    if (!projectId) return;
+    setActiveSpecName(specName);
+    setTokenDialogOpen(true);
+  }, [projectId]);
+
+  const handleValidationClick = useCallback((specName: string) => {
+    if (!projectId) return;
+    setActiveSpecName(specName);
+    setValidationDialogOpen(true);
+  }, [projectId]);
 
   useEffect(() => {
     if (!tokenDialogOpen || !activeSpecName || !projectId) return;
@@ -77,61 +150,13 @@ export function ListView({ specs, basePath = '/projects', groupByParent = false,
     <>
       <div className="h-full overflow-y-auto space-y-2">
         {specs.map((spec) => (
-          <Link
+          <SpecListItem
             key={spec.specName}
-            to={`${basePath}/specs/${spec.specName}`}
-            className="block p-4 border rounded-lg hover:bg-secondary/50 transition-colors bg-background"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                    #{spec.specNumber}
-                  </span>
-                  <h3 className="font-medium truncate">{spec.title}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground truncate">{spec.specName}</p>
-              </div>
-              <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
-                {spec.status && <StatusBadge status={spec.status} />}
-                {spec.priority && <PriorityBadge priority={spec.priority} />}
-                <TokenBadge
-                  count={spec.tokenCount}
-                  projectId={projectId}
-                  specName={spec.specName}
-                  size="sm"
-                  onClick={() => {
-                    if (!projectId) return;
-                    setActiveSpecName(spec.specName);
-                    setTokenDialogOpen(true);
-                  }}
-                />
-                <ValidationBadge
-                  status={spec.validationStatus}
-                  projectId={projectId}
-                  specName={spec.specName}
-                  size="sm"
-                  onClick={() => {
-                    if (!projectId) return;
-                    setActiveSpecName(spec.specName);
-                    setValidationDialogOpen(true);
-                  }}
-                />
-              </div>
-            </div>
-            {spec.tags && spec.tags.length > 0 && (
-              <div className="flex gap-2 mt-3 flex-wrap">
-                {spec.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="text-xs px-2 py-0.5 bg-secondary rounded text-secondary-foreground"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Link>
+            spec={spec}
+            basePath={basePath}
+            onTokenClick={handleTokenClick}
+            onValidationClick={handleValidationClick}
+          />
         ))}
       </div>
 

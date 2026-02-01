@@ -10,6 +10,7 @@ use leanspec_core::{
     ValidationResult,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Lightweight spec for list views
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -526,6 +527,29 @@ pub struct SpecValidationError {
     pub r#type: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suggestion: Option<String>,
+}
+
+/// Batch metadata request
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchMetadataRequest {
+    pub spec_names: Vec<String>,
+}
+
+/// Batch metadata response - tokens and validation for multiple specs
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchMetadataResponse {
+    pub specs: HashMap<String, SpecMetadata>,
+}
+
+/// Metadata for a single spec (tokens + validation)
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecMetadata {
+    pub token_count: usize,
+    pub token_status: String,
+    pub validation_status: String,
 }
 
 /// Project validation summary

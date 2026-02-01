@@ -26,6 +26,7 @@ interface TagsEditorProps {
   expectedContentHash?: string;
   disabled?: boolean;
   className?: string;
+  compact?: boolean;
 }
 
 export function TagsEditor({
@@ -35,6 +36,7 @@ export function TagsEditor({
   expectedContentHash,
   disabled = false,
   className,
+  compact = false,
 }: TagsEditorProps) {
   const [tags, setTags] = useState<string[]>(value || []);
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -113,31 +115,52 @@ export function TagsEditor({
     !tags.includes(searchValue.trim()) &&
     !allTags.includes(searchValue.trim());
 
+  const MAX_VISIBLE_TAGS = 3;
+  const visibleTags = compact && tags.length > MAX_VISIBLE_TAGS ? tags.slice(0, MAX_VISIBLE_TAGS) : tags;
+  const hiddenTagsCount = tags.length - visibleTags.length;
+
+  const renderTag = (tag: string) => (
+    <Badge
+      key={tag}
+      variant="outline"
+      className={cn(
+        "text-xs pr-1 gap-1",
+        disabled && "opacity-50"
+      )}
+    >
+      {tag}
+      {!disabled && (
+        <button
+          onClick={() => handleRemoveTag(tag)}
+          disabled={isUpdating}
+          className="ml-1 rounded-full hover:bg-muted p-0.5 transition-colors"
+          aria-label={t('editors.removeTag', { tag })}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </Badge>
+  );
+
   return (
     <div className={cn("relative", className)}>
       <div className="flex gap-1 flex-wrap items-center">
-        {tags.map((tag) => (
-          <Badge
-            key={tag}
-            variant="outline"
-            className={cn(
-              "text-xs pr-1 gap-1",
-              disabled && "opacity-50"
-            )}
-          >
-            {tag}
-            {!disabled && (
-              <button
-                onClick={() => handleRemoveTag(tag)}
-                disabled={isUpdating}
-                className="ml-1 rounded-full hover:bg-muted p-0.5 transition-colors"
-                aria-label={t('editors.removeTag', { tag })}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </Badge>
-        ))}
+        {visibleTags.map(renderTag)}
+
+        {hiddenTagsCount > 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted h-6 px-2 text-xs">
+                +{hiddenTagsCount}
+              </Badge>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-2" align="start">
+              <div className="flex flex-wrap gap-1">
+                {tags.map(renderTag)}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
 
         {!disabled && (
           <Popover open={isOpen} onOpenChange={setIsOpen}>

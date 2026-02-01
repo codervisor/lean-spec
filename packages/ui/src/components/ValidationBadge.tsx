@@ -1,9 +1,7 @@
-import { CheckCircle2, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 import type { ValidationStatus } from '../types/api';
-import { useState, useEffect } from 'react';
-import { getBackend } from '../lib/backend-adapter';
 import { useTranslation } from 'react-i18next';
 
 interface ValidationBadgeProps {
@@ -36,44 +34,14 @@ const statusConfig = {
 
 export function ValidationBadge({
   status: initialStatus,
-  projectId,
-  specName,
   errorCount: initialErrorCount,
   className,
   size = 'sm',
   onClick
 }: ValidationBadgeProps) {
   const { t } = useTranslation('common');
-  const [status, setStatus] = useState<ValidationStatus | undefined>(initialStatus);
-  const [errorCount, setErrorCount] = useState<number | undefined>(initialErrorCount);
-  const [loading, setLoading] = useState(false);
-  const backend = getBackend();
-
-  useEffect(() => {
-    if (initialStatus !== undefined) {
-      setStatus(initialStatus);
-      setErrorCount(initialErrorCount);
-    } else if (projectId && specName) {
-      setLoading(true);
-      backend.getSpecValidation(projectId, specName)
-        .then(res => {
-          setStatus(res.status);
-          setErrorCount(res.errors.length);
-        })
-        .catch(() => {
-          setStatus(undefined);
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [initialStatus, initialErrorCount, projectId, specName]);
-
-  if (loading) {
-    return (
-      <div className={cn("inline-flex items-center justify-center bg-muted/50 rounded text-muted-foreground", size === 'sm' ? "h-5 px-2" : "h-6 px-3", className)}>
-        <Loader2 className="h-3 w-3 animate-spin" />
-      </div>
-    );
-  }
+  const status = initialStatus;
+  const errorCount = initialErrorCount;
 
   if (!status) {
     return null;

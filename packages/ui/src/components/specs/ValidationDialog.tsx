@@ -13,7 +13,8 @@ interface ValidationDialogProps {
 export function ValidationDialog({ open, onClose, specName, data }: ValidationDialogProps) {
   const { t } = useTranslation('common');
   const { status, errors } = data;
-  const isPass = status === 'pass';
+  // If pass but we have warnings/info messages (errors array not empty), treat as needing list view
+  const isPass = status === 'pass' && (!errors || errors.length === 0);
   const headerIcon = status === 'fail' ? XCircle : AlertTriangle;
   const HeaderIcon = isPass ? CheckCircle2 : headerIcon;
 

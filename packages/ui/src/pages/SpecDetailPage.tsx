@@ -86,6 +86,12 @@ export function SpecDetailPage() {
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationDialogLoading, setValidationDialogLoading] = useState(false);
   const [validationDialogData, setValidationDialogData] = useState<SpecValidationResponse | null>(null);
+  const [asyncMetadata, setAsyncMetadata] = useState<{
+    tokenCount?: number;
+    tokenStatus?: import('../types/api').TokenStatus;
+    validationStatus?: import('../types/api').ValidationStatus;
+    validationErrors?: number;
+  }>({});
   const { setMobileOpen } = useSpecDetailLayoutContext();
   // TODO: AI Sessions temporarily disabled - not ready yet
   // const { openDrawer, sessions } = useSessions();
@@ -155,6 +161,46 @@ export function SpecDetailPage() {
       setLoading(false);
     }
   }, [describeError, projectLoading, projectReady, specName]);
+
+  // Fetch tokens and validation asynchronously
+  useEffect(() => {
+    if (!spec?.specName || !resolvedProjectId) return;
+
+    // Reset metadata when spec changes to clear old badges
+    setAsyncMetadata({});
+
+    const specId = spec.specName;
+    const fetchTokens = async () => {
+      try {
+        const data = await backend.getSpecTokens(resolvedProjectId, specId);
+        setAsyncMetadata(prev => ({
+          ...prev,
+          tokenCount: data.tokenCount,
+          tokenStatus: data.tokenStatus
+        }));
+      } catch (err) {
+        // Silently fail for badges
+        console.debug('Failed to async fetch tokens', err);
+      }
+    };
+
+    const fetchValidation = async () => {
+      try {
+        const data = await backend.getSpecValidation(resolvedProjectId, specId);
+        setAsyncMetadata(prev => ({
+          ...prev,
+          validationStatus: data.status,
+          validationErrors: data.errors.length
+        }));
+      } catch (err) {
+        // Silently fail for badges
+        console.debug('Failed to async fetch validation', err);
+      }
+    };
+
+    void fetchTokens();
+    void fetchValidation();
+  }, [backend, resolvedProjectId, spec?.specName]);
 
   useEffect(() => {
     void loadSpec();
@@ -251,6 +297,13 @@ export function SpecDetailPage() {
   const displayTitle = spec?.title || spec?.specName || '';
   const tags = useMemo(() => spec?.tags || [], [spec?.tags]);
   const updatedRelative = spec?.updatedAt ? formatRelativeTime(spec.updatedAt, i18n.language) : null;
+
+  const currentTokenCount = asyncMetadata.tokenCount ?? spec?.tokenCount;
+  const currentValidationStatus = asyncMetadata.validationStatus ?? spec?.validationStatus;
+  const showMetadataBadges = useMemo(() =>
+    currentTokenCount !== undefined || currentValidationStatus !== undefined,
+    [currentTokenCount, currentValidationStatus]
+  );
 
   // Handle scroll padding for sticky header
   useEffect(() => {
@@ -350,8 +403,7 @@ export function SpecDetailPage() {
                   <StatusBadge status={spec.status || 'planned'} />
                   <PriorityBadge priority={spec.priority || 'medium'} />
                   <TokenBadge
-                    projectId={resolvedProjectId}
-                    specName={spec.specName}
+                    count={currentTokenCount}
                     size="sm"
                     onClick={() => {
                       if (!resolvedProjectId) return;
@@ -359,8 +411,8 @@ export function SpecDetailPage() {
                     }}
                   />
                   <ValidationBadge
-                    projectId={resolvedProjectId}
-                    specName={spec.specName}
+                    status={currentValidationStatus}
+                    errorCount={asyncMetadata.validationErrors}
                     size="sm"
                     onClick={() => {
                       if (!resolvedProjectId) return;
@@ -415,7 +467,7 @@ export function SpecDetailPage() {
                   </Button>
                 </div>
 
-                {/* Line 2: Status, Priority, Tokens, Validation */}
+                {/* Line 2: Status, Priority, Tokens, Validation, Tags */}
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusEditor
                     specName={spec.specName}
@@ -432,38 +484,40 @@ export function SpecDetailPage() {
                     onChange={(priority) => applySpecPatch({ priority })}
                   />
 
+                  {showMetadataBadges && <>
+                    <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+
+                    <div className="flex items-center gap-2">
+                      <TokenBadge
+                        count={currentTokenCount}
+                        size="md"
+                        onClick={() => {
+                          if (!resolvedProjectId) return;
+                          setTokenDialogOpen(true);
+                        }}
+                      />
+                      <ValidationBadge
+                        status={currentValidationStatus}
+                        errorCount={asyncMetadata.validationErrors}
+                        size="md"
+                        onClick={() => {
+                          if (!resolvedProjectId) return;
+                          setValidationDialogOpen(true);
+                        }}
+                      />
+                    </div>
+                  </>}
+
                   <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
 
-                  <div className="flex items-center gap-2">
-                    <TokenBadge
-                      projectId={resolvedProjectId}
-                      specName={spec.specName}
-                      size="md"
-                      onClick={() => {
-                        if (!resolvedProjectId) return;
-                        setTokenDialogOpen(true);
-                      }}
-                    />
-                    <ValidationBadge
-                      projectId={resolvedProjectId}
-                      specName={spec.specName}
-                      size="md"
-                      onClick={() => {
-                        if (!resolvedProjectId) return;
-                        setValidationDialogOpen(true);
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Line 3: Tags */}
-                <div className="mt-2">
                   <TagsEditor
                     specName={spec.specName}
                     value={tags}
                     expectedContentHash={spec.contentHash}
                     disabled={machineModeEnabled && !isMachineAvailable}
                     onChange={(tags) => applySpecPatch({ tags })}
+                    compact={true}
+                    className="min-w-0"
                   />
                 </div>
 

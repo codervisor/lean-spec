@@ -104,6 +104,10 @@ pub fn create_router(state: AppState) -> Router {
             get(handlers::get_project_spec_validation),
         )
         .route(
+            "/api/projects/{id}/specs/batch-metadata",
+            post(handlers::batch_spec_metadata),
+        )
+        .route(
             "/api/projects/{id}/specs/{spec}/raw",
             get(handlers::get_project_spec_raw),
         )

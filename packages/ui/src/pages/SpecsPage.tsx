@@ -105,6 +105,7 @@ export function SpecsPage() {
   const [validationStatuses, setValidationStatuses] = useState<Record<string, ValidationStatus>>({});
   const [loadingValidation, setLoadingValidation] = useState(false);
   const validationFetchedRef = useRef(false);
+  const metadataFetchedRef = useRef(false);
 
   const [searchParams] = useSearchParams();
   const initializedFromQuery = useRef(false);
@@ -131,7 +132,59 @@ export function SpecsPage() {
     void loadSpecs();
   }, [loadSpecs]);
 
-  // Fetch validation statuses when filter is enabled
+  // Fetch batch metadata (tokens, validation) after specs load
+  useEffect(() => {
+    if (metadataFetchedRef.current || specs.length === 0 || !resolvedProjectId || loading) {
+      return;
+    }
+
+    const fetchMetadata = async () => {
+      const backend = getBackend();
+
+      try {
+        const specNames = specs.map((spec) => spec.specName);
+        const batchResult = await backend.getBatchMetadata(resolvedProjectId, specNames);
+
+        // Update specs with metadata
+        setSpecs((prevSpecs) =>
+          prevSpecs.map((spec) => {
+            const metadata = batchResult.specs[spec.specName];
+            if (metadata) {
+              return {
+                ...spec,
+                tokenCount: metadata.tokenCount,
+                tokenStatus: metadata.tokenStatus,
+                validationStatus: metadata.validationStatus,
+              };
+            }
+            return spec;
+          })
+        );
+
+        // Also update validation statuses for filter
+        const statuses: Record<string, ValidationStatus> = {};
+        for (const [specName, metadata] of Object.entries(batchResult.specs)) {
+          statuses[specName] = metadata.validationStatus as ValidationStatus;
+        }
+        setValidationStatuses(statuses);
+        validationFetchedRef.current = true;
+      } catch {
+        // Silently fail - specs still work without metadata
+      }
+
+      metadataFetchedRef.current = true;
+    };
+
+    void fetchMetadata();
+  }, [specs, resolvedProjectId, loading]);
+
+  // Reset metadata fetch flag when project changes
+  useEffect(() => {
+    metadataFetchedRef.current = false;
+    validationFetchedRef.current = false;
+  }, [resolvedProjectId]);
+
+  // Fetch validation statuses when filter is enabled (if not already fetched)
   useEffect(() => {
     if (!showValidationIssuesOnly || validationFetchedRef.current || specs.length === 0 || !resolvedProjectId) {
       return;
@@ -142,22 +195,16 @@ export function SpecsPage() {
       const backend = getBackend();
       const statuses: Record<string, ValidationStatus> = {};
 
-      // Fetch validation for all specs in parallel (batched)
-      const results = await Promise.allSettled(
-        specs.map(async (spec) => {
-          try {
-            const result = await backend.getSpecValidation(resolvedProjectId, spec.specName);
-            return { specName: spec.specName, status: result.status as ValidationStatus };
-          } catch {
-            return { specName: spec.specName, status: undefined };
-          }
-        })
-      );
+      try {
+        // Fetch metadata for all specs in a single batch request
+        const specNames = specs.map((spec) => spec.specName);
+        const batchResult = await backend.getBatchMetadata(resolvedProjectId, specNames);
 
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value.status) {
-          statuses[result.value.specName] = result.value.status;
+        for (const [specName, metadata] of Object.entries(batchResult.specs)) {
+          statuses[specName] = metadata.validationStatus as ValidationStatus;
         }
+      } catch {
+        // Fall back silently if batch fails
       }
 
       setValidationStatuses(statuses);
@@ -167,11 +214,6 @@ export function SpecsPage() {
 
     void fetchValidation();
   }, [showValidationIssuesOnly, specs, resolvedProjectId]);
-
-  // Reset validation fetch flag when specs change (to refetch if needed)
-  useEffect(() => {
-    validationFetchedRef.current = false;
-  }, [specs]);
 
   useEffect(() => {
     if (initializedFromQuery.current) return;

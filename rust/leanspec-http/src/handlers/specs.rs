@@ -21,10 +21,10 @@ use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 use crate::types::{
-    CreateSpecRequest, ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest,
-    SearchResponse, SpecDetail, SpecRawResponse, SpecRawUpdateRequest, SpecSummary,
-    SpecTokenResponse, SpecValidationError, SpecValidationResponse, StatsResponse, SubSpec,
-    TokenBreakdown,
+    BatchMetadataRequest, BatchMetadataResponse, CreateSpecRequest, ListSpecsQuery,
+    ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse, SpecDetail, SpecMetadata,
+    SpecRawResponse, SpecRawUpdateRequest, SpecSummary, SpecTokenResponse, SpecValidationError,
+    SpecValidationResponse, StatsResponse, SubSpec, TokenBreakdown,
 };
 use crate::utils::resolve_project;
 
@@ -492,7 +492,7 @@ pub async fn list_project_specs(
     let filtered_specs: Vec<SpecSummary> = all_specs
         .iter()
         .filter(|s| filters.matches(s))
-        .map(|s| SpecSummary::from(s).with_project_id(&project.id))
+        .map(|s| SpecSummary::from_without_computed(s).with_project_id(&project.id))
         .collect();
 
     let mut children_map: HashMap<String, Vec<String>> = HashMap::new();
@@ -1802,4 +1802,82 @@ pub async fn update_project_metadata(
         spec_id: spec_id.clone(),
         frontmatter: crate::types::FrontmatterResponse::from(&frontmatter),
     }))
+}
+
+/// POST /api/projects/:projectId/specs/batch-metadata - Get tokens and validation for multiple specs
+pub async fn batch_spec_metadata(
+    State(state): State<AppState>,
+    Path(project_id): Path<String>,
+    headers: HeaderMap,
+    Json(request): Json<BatchMetadataRequest>,
+) -> ApiResult<Json<BatchMetadataResponse>> {
+    if machine_id_from_headers(&headers).is_some() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ApiError::invalid_request(
+                "Batch metadata not supported for synced machines",
+            )),
+        ));
+    }
+
+    let (loader, _project) = get_spec_loader(&state, &project_id).await?;
+
+    let all_specs = loader.load_all().map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError::internal_error(&e.to_string())),
+        )
+    })?;
+
+    // Build a map of spec_name -> SpecInfo for quick lookup
+    let spec_map: HashMap<String, _> = all_specs.iter().map(|s| (s.path.clone(), s)).collect();
+
+    let counter = global_token_counter();
+    let fm_validator = global_frontmatter_validator();
+    let struct_validator = global_structure_validator();
+    let line_validator = global_line_count_validator();
+
+    let mut result: HashMap<String, SpecMetadata> = HashMap::new();
+
+    for spec_name in &request.spec_names {
+        if let Some(spec) = spec_map.get(spec_name) {
+            // Compute token count
+            let token_result = counter.count_spec(&spec.content);
+            let token_status_str = match token_result.status {
+                TokenStatus::Optimal => "optimal",
+                TokenStatus::Good => "good",
+                TokenStatus::Warning => "warning",
+                TokenStatus::Excessive => "critical",
+            };
+
+            // Compute validation status
+            let mut validation_result = ValidationResult::new(&spec.path);
+            validation_result.merge(fm_validator.validate(spec));
+            validation_result.merge(struct_validator.validate(spec));
+            validation_result.merge(line_validator.validate(spec));
+
+            let validation_status_str = if validation_result.errors.is_empty() {
+                "pass"
+            } else if validation_result
+                .errors
+                .iter()
+                .any(|e| e.severity == leanspec_core::ErrorSeverity::Error)
+            {
+                "fail"
+            } else {
+                "warn"
+            };
+
+            result.insert(
+                spec_name.clone(),
+                SpecMetadata {
+                    token_count: token_result.total,
+                    token_status: token_status_str.to_string(),
+                    validation_status: validation_status_str.to_string(),
+                },
+            );
+        }
+    }
+
+    Ok(Json(BatchMetadataResponse { specs: result }))
 }

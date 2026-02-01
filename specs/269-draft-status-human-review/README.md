@@ -1,5 +1,6 @@
 ---
 status: planned
+priority: medium
 created: 2026-01-31
 created_at: 2026-01-31T06:11:02.684844Z
 updated_at: 2026-01-31T06:11:02.684844Z

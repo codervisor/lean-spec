@@ -257,3 +257,15 @@ export interface SpecValidationResponse {
   status: ValidationStatus;
   errors: SpecValidationError[];
 }
+
+/** Metadata for a single spec (tokens + validation) */
+export interface SpecMetadata {
+  tokenCount: number;
+  tokenStatus: TokenStatus;
+  validationStatus: ValidationStatus;
+}
+
+/** Batch metadata response - tokens and validation for multiple specs */
+export interface BatchMetadataResponse {
+  specs: Record<string, SpecMetadata>;
+}
