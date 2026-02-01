@@ -2,7 +2,7 @@
 
 use colored::Colorize;
 use leanspec_core::{
-    DependencyGraph, FrontmatterValidator, LineCountValidator, SpecLoader, StructureValidator,
+    DependencyGraph, FrontmatterValidator, SpecLoader, StructureValidator, TokenCountValidator,
     ValidationResult,
 };
 use std::error::Error;
@@ -29,7 +29,7 @@ pub fn run(
 
     let fm_validator = FrontmatterValidator::new();
     let struct_validator = StructureValidator::new();
-    let line_validator = LineCountValidator::new();
+    let token_validator = TokenCountValidator::new();
 
     let spec_map: std::collections::HashMap<String, &leanspec_core::SpecInfo> =
         all_specs.iter().map(|s| (s.path.clone(), s)).collect();
@@ -54,7 +54,7 @@ pub fn run(
         // Run validators
         result.merge(fm_validator.validate(spec));
         result.merge(struct_validator.validate(spec));
-        result.merge(line_validator.validate(spec));
+        result.merge(token_validator.validate(spec));
 
         validate_parent_relationships(spec, &spec_map, &children_map, &mut result);
 

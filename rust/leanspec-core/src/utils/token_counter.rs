@@ -166,6 +166,14 @@ impl TokenCounter {
         }
     }
 
+    /// Count tokens for a spec (simple version - only total and status)
+    /// Use this for batch operations where detailed breakdown is not needed
+    pub fn count_spec_simple(&self, full_content: &str) -> (usize, TokenStatus) {
+        let total = self.count(full_content);
+        let status = self.determine_status(total);
+        (total, status)
+    }
+
     /// Analyze content for detailed token breakdown
     fn analyze_content(&self, content: &str) -> DetailedBreakdown {
         let mut code_blocks = 0usize;
@@ -205,7 +213,7 @@ impl TokenCounter {
             }
 
             // H2 section detection
-            if line.starts_with("## ") {
+            if let Some(heading) = line.strip_prefix("## ") {
                 // Save previous section if any
                 if !current_section_heading.is_empty() {
                     let section_text = current_section_lines.join("\n");
@@ -215,7 +223,7 @@ impl TokenCounter {
                         tokens: section_tokens,
                     });
                 }
-                current_section_heading = line[3..].trim().to_string();
+                current_section_heading = heading.trim().to_string();
                 current_section_lines.clear();
                 continue;
             }

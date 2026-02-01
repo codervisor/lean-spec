@@ -769,7 +769,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
 
     let fm_validator = leanspec_core::FrontmatterValidator::new();
     let struct_validator = leanspec_core::StructureValidator::new();
-    let line_validator = leanspec_core::LineCountValidator::new();
+    let token_validator = leanspec_core::TokenCountValidator::new();
 
     let mut validation_errors = Vec::new();
 
@@ -787,7 +787,7 @@ fn tool_validate(specs_dir: &str, args: Value) -> Result<String, String> {
         let mut result = leanspec_core::ValidationResult::new(&spec.path);
         result.merge(fm_validator.validate(spec));
         result.merge(struct_validator.validate(spec));
-        result.merge(line_validator.validate(spec));
+        result.merge(token_validator.validate(spec));
 
         if result.has_errors() || result.has_warnings() {
             validation_errors.push(json!({

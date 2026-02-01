@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::specs::constants::{VALID_STATUSES, VALID_PRIORITIES};
+use crate::specs::constants::{VALID_PRIORITIES, VALID_STATUSES};
 use crate::specs::frontmatter::parse_frontmatter;
 use crate::specs::reader::Spec;
 
@@ -95,20 +95,6 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
         });
     }
 
-    // Check line count (spec 169 mentions line limits)
-    let line_count = spec.content_md.lines().count();
-    if line_count > 400 {
-        issues.push(ValidationIssue {
-            severity: IssueSeverity::Warning,
-            code: "excessive-length".to_string(),
-            message: format!(
-                "Spec has {} lines, which exceeds recommended maximum of 400",
-                line_count
-            ),
-            line: None,
-        });
-    }
-
     // Check for required sections
     let has_overview = body.contains("## Overview") || body.contains("## overview");
     // Note: Validation for Design, Plan, Test sections was removed as these are
@@ -144,7 +130,7 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
             severity: IssueSeverity::Warning,
             code: "high-token-count".to_string(),
             message: format!(
-                "Estimated {} tokens. Consider splitting if over 5000.",
+                "Spec has {} tokens, exceeds maximum of 5000. Consider splitting into smaller specs.",
                 estimated_tokens
             ),
             line: None,
@@ -154,7 +140,7 @@ pub fn validate_spec(spec: &Spec) -> ValidationResult {
             severity: IssueSeverity::Info,
             code: "moderate-token-count".to_string(),
             message: format!(
-                "Estimated {} tokens. Consider splitting if content grows.",
+                "Spec has {} tokens, approaching maximum of 5000. Consider splitting if content grows.",
                 estimated_tokens
             ),
             line: None,
@@ -188,7 +174,7 @@ pub fn validate_all_specs(specs: &[Spec]) -> Vec<ValidationResult> {
     // Check for broken dependencies
     for (result, spec) in results.iter_mut().zip(specs.iter()) {
         let (frontmatter, _) = parse_frontmatter(&spec.content_md);
-        
+
         for dep in &frontmatter.depends_on {
             let trimmed = dep.trim();
             if trimmed.is_empty() {
@@ -212,7 +198,12 @@ pub fn validate_all_specs(specs: &[Spec]) -> Vec<ValidationResult> {
                     line: None,
                 });
                 // Update valid status if this creates an error
-                if result.valid && result.issues.iter().any(|i| i.severity == IssueSeverity::Error) {
+                if result.valid
+                    && result
+                        .issues
+                        .iter()
+                        .any(|i| i.severity == IssueSeverity::Error)
+                {
                     result.valid = false;
                 }
             }
@@ -226,8 +217,11 @@ pub fn validate_all_specs(specs: &[Spec]) -> Vec<ValidationResult> {
 /// Uses a rough heuristic of ~4 characters per token for English text
 fn estimate_tokens(content: &str) -> i32 {
     let word_count = content.split_whitespace().count();
-    let special_chars = content.chars().filter(|c| !c.is_alphanumeric() && !c.is_whitespace()).count();
-    
+    let special_chars = content
+        .chars()
+        .filter(|c| !c.is_alphanumeric() && !c.is_whitespace())
+        .count();
+
     // Roughly 1.3 tokens per word + 0.5 for special chars
     ((word_count as f64 * 1.3) + (special_chars as f64 * 0.5)).ceil() as i32
 }
@@ -290,9 +284,12 @@ Test criteria.
 "#;
         let spec = create_test_spec_with_content(content);
         let result = validate_spec(&spec);
-        
+
         assert!(result.valid);
-        assert!(result.issues.iter().all(|i| i.severity != IssueSeverity::Error));
+        assert!(result
+            .issues
+            .iter()
+            .all(|i| i.severity != IssueSeverity::Error));
     }
 
     #[test]
@@ -305,7 +302,7 @@ priority: high
 "#;
         let spec = create_test_spec_with_content(content);
         let result = validate_spec(&spec);
-        
+
         assert!(!result.valid);
         assert!(result.issues.iter().any(|i| i.code == "missing-status"));
     }
@@ -320,7 +317,7 @@ status: invalid-status
 "#;
         let spec = create_test_spec_with_content(content);
         let result = validate_spec(&spec);
-        
+
         assert!(!result.valid);
         assert!(result.issues.iter().any(|i| i.code == "invalid-status"));
     }
@@ -329,10 +326,10 @@ status: invalid-status
     fn test_estimate_tokens() {
         let short_text = "Hello world";
         let long_text = "Hello world ".repeat(1000);
-        
+
         let short_tokens = estimate_tokens(short_text);
         let long_tokens = estimate_tokens(&long_text);
-        
+
         assert!(short_tokens < 10);
         assert!(long_tokens > 2000);
     }

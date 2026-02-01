@@ -5,7 +5,7 @@
 use chrono::{DateTime, Utc};
 use leanspec_core::utils::hash_content;
 use leanspec_core::{
-    global_frontmatter_validator, global_line_count_validator, global_structure_validator,
+    global_frontmatter_validator, global_structure_validator, global_token_count_validator,
     global_token_counter, SpecInfo, SpecPriority, SpecStats, SpecStatus, TokenStatus,
     ValidationResult,
 };
@@ -64,12 +64,12 @@ impl From<&SpecInfo> for SpecSummary {
         // Compute validation status
         let fm_validator = global_frontmatter_validator();
         let struct_validator = global_structure_validator();
-        let line_validator = global_line_count_validator();
+        let token_validator = global_token_count_validator();
 
         let mut validation_result = ValidationResult::new(&spec.path);
         validation_result.merge(fm_validator.validate(spec));
         validation_result.merge(struct_validator.validate(spec));
-        validation_result.merge(line_validator.validate(spec));
+        validation_result.merge(token_validator.validate(spec));
 
         let validation_status_str = if validation_result.errors.is_empty() {
             "pass"
@@ -240,12 +240,12 @@ impl From<&SpecInfo> for SpecDetail {
         // Compute validation status
         let fm_validator = global_frontmatter_validator();
         let struct_validator = global_structure_validator();
-        let line_validator = global_line_count_validator();
+        let token_validator = global_token_count_validator();
 
         let mut validation_result = ValidationResult::new(&spec.path);
         validation_result.merge(fm_validator.validate(spec));
         validation_result.merge(struct_validator.validate(spec));
-        validation_result.merge(line_validator.validate(spec));
+        validation_result.merge(token_validator.validate(spec));
 
         let validation_status_str = if validation_result.errors.is_empty() {
             "pass"

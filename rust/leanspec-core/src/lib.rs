@@ -68,6 +68,6 @@ pub use utils::{
     TemplateLoader, TokenCount, TokenCounter, TokenStatus, WriteError,
 };
 pub use validators::{
-    global_frontmatter_validator, global_line_count_validator, global_structure_validator,
-    CompletionVerifier, FrontmatterValidator, LineCountValidator, StructureValidator,
+    global_frontmatter_validator, global_structure_validator, global_token_count_validator,
+    CompletionVerifier, FrontmatterValidator, StructureValidator, TokenCountValidator,
 };

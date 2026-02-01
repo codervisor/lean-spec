@@ -10,7 +10,7 @@ use std::path::Path as FsPath;
 
 use leanspec_core::utils::hash_content;
 use leanspec_core::{
-    global_frontmatter_validator, global_line_count_validator, global_structure_validator,
+    global_frontmatter_validator, global_structure_validator, global_token_count_validator,
     global_token_counter, CompletionVerifier, DependencyGraph, FrontmatterParser, LeanSpecConfig,
     MetadataUpdate as CoreMetadataUpdate, SpecArchiver, SpecFilterOptions, SpecLoader, SpecStats,
     SpecStatus, SpecWriter, TemplateLoader, TokenStatus, ValidationResult,
@@ -933,12 +933,12 @@ pub async fn get_project_spec_validation(
 
     let fm_validator = global_frontmatter_validator();
     let struct_validator = global_structure_validator();
-    let line_validator = global_line_count_validator();
+    let token_validator = global_token_count_validator();
 
     let mut result = ValidationResult::new(&spec.path);
     result.merge(fm_validator.validate(&spec));
     result.merge(struct_validator.validate(&spec));
-    result.merge(line_validator.validate(&spec));
+    result.merge(token_validator.validate(&spec));
 
     let errors = result
         .errors
@@ -1938,15 +1938,15 @@ pub async fn batch_spec_metadata(
     let counter = global_token_counter();
     let fm_validator = global_frontmatter_validator();
     let struct_validator = global_structure_validator();
-    let line_validator = global_line_count_validator();
+    let token_validator = global_token_count_validator();
 
     let mut result: HashMap<String, SpecMetadata> = HashMap::new();
 
     for spec_name in &request.spec_names {
         if let Some(spec) = spec_map.get(spec_name) {
-            // Compute token count
-            let token_result = counter.count_spec(&spec.content);
-            let token_status_str = match token_result.status {
+            // Compute token count (simple version - no detailed breakdown)
+            let (total, status) = counter.count_spec_simple(&spec.content);
+            let token_status_str = match status {
                 TokenStatus::Optimal => "optimal",
                 TokenStatus::Good => "good",
                 TokenStatus::Warning => "warning",
@@ -1957,7 +1957,7 @@ pub async fn batch_spec_metadata(
             let mut validation_result = ValidationResult::new(&spec.path);
             validation_result.merge(fm_validator.validate(spec));
             validation_result.merge(struct_validator.validate(spec));
-            validation_result.merge(line_validator.validate(spec));
+            validation_result.merge(token_validator.validate(spec));
 
             let validation_status_str = if validation_result.errors.is_empty() {
                 "pass"
@@ -1974,7 +1974,7 @@ pub async fn batch_spec_metadata(
             result.insert(
                 spec_name.clone(),
                 SpecMetadata {
-                    token_count: token_result.total,
+                    token_count: total,
                     token_status: token_status_str.to_string(),
                     validation_status: validation_status_str.to_string(),
                 },

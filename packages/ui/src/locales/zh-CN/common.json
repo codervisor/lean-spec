@@ -980,9 +980,9 @@
   },
   "validation": {
     "status": {
-      "pass": "通过",
-      "warn": "警告",
-      "fail": "失败"
+      "pass": "校验通过",
+      "warn": "校验警告",
+      "fail": "校验失败"
     },
     "passLabel": "通过",
     "error": "个错误",

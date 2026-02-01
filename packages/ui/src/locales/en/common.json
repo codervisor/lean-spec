@@ -986,9 +986,9 @@
   },
   "validation": {
     "status": {
-      "pass": "Passed",
-      "warn": "Warnings",
-      "fail": "Failed"
+      "pass": "Validation Passed",
+      "warn": "Validation Warnings",
+      "fail": "Validation Failed"
     },
     "passLabel": "Pass",
     "error": "error",
