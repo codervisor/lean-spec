@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Umbrella } from 'lucide-react';
+import { ChevronRight, FolderTree } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { cn, buildHierarchy, type HierarchyNode as UiHierarchyNode } from '@leanspec/ui-components';
 import type { Spec, HierarchyNode } from '../../types/api';
@@ -65,7 +65,7 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  {hasChildren && <Umbrella className="h-3.5 w-3.5 text-primary/70" />}
+                  {hasChildren && <FolderTree className="h-3.5 w-3.5 text-primary/70" />}
                   <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
                     #{node.specNumber}
                   </span>

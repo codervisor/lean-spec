@@ -1,4 +1,4 @@
-import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, Umbrella, AlertTriangle, Check, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, Filter, X, Clock, PlayCircle, CheckCircle2, Archive, AlertCircle, ArrowUp, Minus, ArrowDown, Settings, List, LayoutGrid, FolderTree, AlertTriangle, Check, ChevronDown, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -328,7 +328,7 @@ export function SpecsFilters({
                 checked={groupByParent}
                 onCheckedChange={onGroupByParentChange}
               >
-                <Umbrella className="w-4 h-4 mr-2" />
+                <FolderTree className="w-4 h-4 mr-2" />
                 {t('specsPage.filters.groupByParent')}
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem

@@ -1,6 +1,6 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, PlayCircle, CheckCircle2, Archive, Umbrella, CornerDownRight, Layers, ChevronDown } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown } from 'lucide-react';
 import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../PriorityBadge';
 import { TokenBadge } from '../TokenBadge';
@@ -74,7 +74,7 @@ function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
   return (
     <div className="space-y-2 mt-4 first:mt-0">
       <div className="flex items-center gap-2 px-1 pb-1 border-b border-border/30">
-        <Umbrella className="h-3.5 w-3.5 text-primary/70" />
+        <FolderTree className="h-3.5 w-3.5 text-primary/70" />
         <h5 className="text-xs font-semibold text-foreground/80 truncate flex-1" title={parentName}>{parentName}</h5>
         <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground font-mono">{specs.length}</span>
       </div>
@@ -176,10 +176,10 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
       )}
     >
       <Link to={`${basePath}/specs/${spec.specName}`} className="select-none h-full flex flex-col">
-        {/* Umbrella Icon */}
+        {/* Parent Spec Icon */}
         {(spec.children && spec.children.length > 0 && !isChild) && (
-          <div className="absolute top-3 right-3 text-primary/50" title={t('specs.hierarchy.umbrella', 'Umbrella Spec')}>
-            <Umbrella className="w-4 h-4" />
+          <div className="absolute top-3 right-3 text-primary/50" title={t('specs.hierarchy.umbrella', 'Parent Spec')}>
+            <FolderTree className="w-4 h-4" />
           </div>
         )}
 
@@ -187,7 +187,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
         <div className="text-xs text-muted-foreground font-mono mb-1 flex items-center gap-1">
           <span>#{spec.specNumber || spec.specName.split('-')[0].replace(/^0+/, '')}</span>
           {isChild && (spec.children && spec.children.length > 0) && (
-            <Umbrella className="w-3 h-3 text-primary/40 ml-1" />
+            <FolderTree className="w-3 h-3 text-primary/40 ml-1" />
           )}
         </div>
 

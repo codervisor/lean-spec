@@ -94,6 +94,8 @@ export function ListView({ specs, hierarchy, basePath = '/projects', groupByPare
       <HierarchyList
         specs={specs}
         hierarchy={hierarchy}
+        basePath={basePath}
+        onTokenClick={onTokenClick}
         onValidationClick={onValidationClick}
       />
     );
