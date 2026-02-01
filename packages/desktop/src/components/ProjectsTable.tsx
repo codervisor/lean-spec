@@ -1,11 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import {
   Star,
   MoreVertical,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
-  ChevronUp,
   ChevronDown,
 } from 'lucide-react';
 import type { DesktopProject } from '../types';
@@ -73,7 +72,7 @@ export function ProjectsTable({
   onSortChange,
   onOpen,
   onToggleFavorite,
-  onRename,
+  onRename: _onRename,
   onRemove,
   onValidate,
 }: ProjectsTableProps) {

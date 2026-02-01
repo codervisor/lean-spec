@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-16
-priority: medium
+priority: low
 tags:
 - ui
 - ux
@@ -10,9 +10,8 @@ tags:
 depends_on:
 - 216-restore-unarchive-command
 created_at: 2026-01-16T07:24:58.756100Z
-updated_at: 2026-01-16T07:25:02.983673Z
+updated_at: 2026-02-01T15:39:34.312057Z
 ---
-
 # UI Archived Spec Visibility
 
 ## Overview

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-30
 priority: high
 tags:
@@ -8,10 +8,13 @@ tags:
 - api
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:40.583464Z
-updated_at: 2026-01-30T09:53:32.214168Z
+updated_at: 2026-02-01T15:24:31.630208Z
+completed_at: 2026-02-01T15:24:31.630208Z
 transitions:
 - status: in-progress
   at: 2026-01-30T09:53:32.214168Z
+- status: complete
+  at: 2026-02-01T15:24:31.630208Z
 ---
 
 # Type Definitions Consolidation
@@ -28,16 +31,16 @@ Consolidate spec/API types into a single canonical source to remove fragmentatio
 
 ## Plan
 
-- [ ] Identify current spec/API type definitions in packages/ui/src/types/api.ts and packages/desktop/src/types.ts.
-- [ ] Define canonical interfaces in packages/ui-components/src/types/specs.ts and ensure they include all required fields.
-- [ ] Update @leanspec/ui and @leanspec/desktop to import these types instead of local copies.
-- [ ] Replace content field usage with contentMd where needed, adding compatibility adapters only if required.
-- [ ] Remove or deprecate the duplicated type definitions.
+- [x] Identify current spec/API type definitions in packages/ui/src/types/api.ts and packages/desktop/src/types.ts.
+- [x] Define canonical interfaces in packages/ui-components/src/types/specs.ts and ensure they include all required fields.
+- [x] Update @leanspec/ui and @leanspec/desktop to import these types instead of local copies.
+- [x] Replace content field usage with contentMd where needed, adding compatibility adapters only if required.
+- [x] Remove or deprecate the duplicated type definitions.
 
 ## Test
 
-- [ ] pnpm pre-release
-- [ ] No TypeScript errors after consolidation
+- [x] pnpm pre-release
+- [x] No TypeScript errors after consolidation
 
 ## Notes
 

@@ -46,19 +46,19 @@ This umbrella spec captures cross-cutting decisions that guide the child refacto
 
 Work is tracked in child specs:
 
-- [ ] UI component deduplication: specs/260-ui-component-dedup/README.md
-- [ ] UI utilities consolidation: specs/261-ui-utilities-consolidation/README.md
-- [ ] Type definitions consolidation: specs/262-type-definitions-consolidation/README.md
-- [ ] Rust spec handler consolidation: specs/263-rust-spec-handler-consolidation/README.md
+- [x] UI component deduplication: specs/260-ui-component-dedup/README.md
+- [x] UI utilities consolidation: specs/261-ui-utilities-consolidation/README.md
+- [x] Type definitions consolidation: specs/262-type-definitions-consolidation/README.md
+- [x] Rust spec handler consolidation: specs/263-rust-spec-handler-consolidation/README.md
 - [ ] Chat server retirement: specs/264-chat-server-retirement/README.md
-- [ ] Config standardization: specs/265-config-standardization/README.md
+- [x] Config standardization: specs/265-config-standardization/README.md
 - [ ] Test coverage improvements: specs/266-test-coverage-improvements/README.md
 
 ## Test
 
-- [ ] pnpm pre-release
-- [ ] cargo clippy -- -D warnings
-- [ ] No TypeScript errors after type consolidation
+- [x] pnpm pre-release
+- [x] cargo clippy -- -D warnings
+- [x] No TypeScript errors after type consolidation
 
 ## Notes
 

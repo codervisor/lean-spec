@@ -11,7 +11,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import type { DesktopProject } from '../types';
-import { useProjectsManager, type FilterTab, type SortOption, type ViewMode } from '../hooks/useProjectsManager';
+import { useProjectsManager, type FilterTab, type SortOption } from '../hooks/useProjectsManager';
 import { ProjectCard } from './ProjectCard';
 import { ProjectsTable } from './ProjectsTable';
 import styles from './projects-manager.module.css';
@@ -194,7 +194,6 @@ export function ProjectsManager({
       <div className={styles.content}>
         {manager.filteredProjects.length === 0 ? (
           <EmptyState
-            hasProjects={projects.length > 0}
             searchQuery={manager.searchQuery}
             filterTab={manager.filterTab}
             onAddProject={onAddProject}
@@ -243,14 +242,13 @@ export function ProjectsManager({
 }
 
 interface EmptyStateProps {
-  hasProjects: boolean;
   searchQuery: string;
   filterTab: FilterTab;
   onAddProject: () => void;
   onClearSearch: () => void;
 }
 
-function EmptyState({ hasProjects, searchQuery, filterTab, onAddProject, onClearSearch }: EmptyStateProps) {
+function EmptyState({ searchQuery, filterTab, onAddProject, onClearSearch }: EmptyStateProps) {
   if (searchQuery) {
     return (
       <div className={styles.emptyState}>

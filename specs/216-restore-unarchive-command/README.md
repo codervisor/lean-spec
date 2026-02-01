@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-14
-priority: medium
+priority: low
 tags:
 - cli
 - mcp
@@ -10,9 +10,8 @@ tags:
 depends_on:
 - 077-archiving-strategy
 created_at: 2026-01-14T13:42:47.864515Z
-updated_at: 2026-01-14T13:43:09.644676Z
+updated_at: 2026-02-01T15:40:40.122199Z
 ---
-
 # Restore/Unarchive Command for Spec Lifecycle Management
 
 ## Overview

@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-18
-priority: high
+priority: medium
 tags:
 - agent-skills
 - compatibility
@@ -13,9 +13,8 @@ tags:
 - vscode
 - copilot
 created_at: 2026-01-18T12:27:52.575289Z
-updated_at: 2026-01-18T12:27:52.575289Z
+updated_at: 2026-02-01T15:37:46.065777Z
 ---
-
 # Cross-Tool Agent Skills Compatibility Strategy
 
 ## Overview

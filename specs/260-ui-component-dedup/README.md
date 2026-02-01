@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-30
 priority: high
 tags:
@@ -8,10 +8,13 @@ tags:
 - dedupe
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:24.223247Z
-updated_at: 2026-01-30T09:35:24.076141Z
+updated_at: 2026-02-01T15:22:52.957908Z
+completed_at: 2026-02-01T15:22:52.957908Z
 transitions:
 - status: in-progress
   at: 2026-01-30T09:35:24.076141Z
+- status: complete
+  at: 2026-02-01T15:22:52.957908Z
 ---
 
 # UI Component Deduplication
@@ -36,8 +39,8 @@ Remove duplicated UI primitives under packages/ui/src/components/ui and standard
 
 ## Test
 
-- [ ] pnpm pre-release
-- [ ] @leanspec/ui builds without TypeScript errors
+- [x] pnpm pre-release
+- [x] @leanspec/ui builds without TypeScript errors
 
 ## Notes
 

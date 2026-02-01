@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-30
 priority: high
 tags:
@@ -8,10 +8,13 @@ tags:
 - backend
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:49.348075Z
-updated_at: 2026-01-30T09:57:33.195316Z
+updated_at: 2026-02-01T15:32:50.700363Z
+completed_at: 2026-02-01T15:32:50.700363Z
 transitions:
 - status: in-progress
   at: 2026-01-30T09:57:33.195316Z
+- status: complete
+  at: 2026-02-01T15:32:50.700363Z
 ---
 
 # Rust Spec Handler Consolidation
@@ -28,16 +31,16 @@ Reduce duplication between MCP and HTTP spec handlers by extracting shared logic
 
 ## Plan
 
-- [ ] Identify duplicated helpers in rust/leanspec-http/src/handlers/specs.rs, rust/leanspec-http/src/types.rs, and rust/leanspec-sync-bridge/src/main.rs (e.g., hash_content).
-- [ ] Add shared helpers in rust/leanspec-core/src/utils (or a new utils submodule) and update imports.
-- [ ] Refactor HTTP handlers to rely on core helpers for hashing and common transformations.
-- [ ] Split rust/leanspec-mcp/src/tools.rs into modules (e.g., specs, relationships, validation, templates) without changing behavior.
-- [ ] Verify no duplicate hashing functions remain outside core utilities.
+- [x] Identify duplicated helpers in rust/leanspec-http/src/handlers/specs.rs, rust/leanspec-http/src/types.rs, and rust/leanspec-sync-bridge/src/main.rs (e.g., hash_content).
+- [x] Add shared helpers in rust/leanspec-core/src/utils (or a new utils submodule) and update imports.
+- [x] Refactor HTTP handlers to rely on core helpers for hashing and common transformations.
+- [x] Split rust/leanspec-mcp/src/tools.rs into modules (e.g., specs, relationships, validation, templates) without changing behavior.
+- [x] Verify no duplicate hashing functions remain outside core utilities.
 
 ## Test
 
-- [ ] cargo clippy -- -D warnings
-- [ ] All existing Rust tests pass
+- [x] cargo clippy -- -D warnings
+- [x] All existing Rust tests pass
 
 ## Notes
 
