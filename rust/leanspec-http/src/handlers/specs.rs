@@ -21,10 +21,11 @@ use crate::project_registry::Project;
 use crate::state::AppState;
 use crate::sync_state::{machine_id_from_headers, PendingCommand, SyncCommand};
 use crate::types::{
-    BatchMetadataRequest, BatchMetadataResponse, CreateSpecRequest, ListSpecsQuery,
-    ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse, SpecDetail, SpecMetadata,
-    SpecRawResponse, SpecRawUpdateRequest, SpecSummary, SpecTokenResponse, SpecValidationError,
-    SpecValidationResponse, StatsResponse, SubSpec, TokenBreakdown,
+    BatchMetadataRequest, BatchMetadataResponse, CreateSpecRequest, DetailedBreakdown,
+    ListSpecsQuery, ListSpecsResponse, MetadataUpdate, SearchRequest, SearchResponse,
+    SectionTokenCount, SpecDetail, SpecMetadata, SpecRawResponse, SpecRawUpdateRequest,
+    SpecSummary, SpecTokenResponse, SpecValidationError, SpecValidationResponse, StatsResponse,
+    SubSpec, TokenBreakdown,
 };
 use crate::utils::resolve_project;
 
@@ -882,6 +883,20 @@ pub async fn get_project_spec_tokens(
             frontmatter: result.frontmatter,
             content: result.content,
             title: result.title,
+            detailed: DetailedBreakdown {
+                code_blocks: result.detailed.code_blocks,
+                checklists: result.detailed.checklists,
+                prose: result.detailed.prose,
+                sections: result
+                    .detailed
+                    .sections
+                    .into_iter()
+                    .map(|s| SectionTokenCount {
+                        heading: s.heading,
+                        tokens: s.tokens,
+                    })
+                    .collect(),
+            },
         },
     }))
 }

@@ -969,6 +969,10 @@
     "composition": "Composition",
     "proseContent": "Prose & Content",
     "frontmatter": "Frontmatter",
+    "prose": "Prose",
+    "codeBlocks": "Code Blocks",
+    "checklists": "Checklists",
+    "sectionBreakdown": "Section Breakdown",
     "performance": {
       "optimal": "Excellent! This spec is highly efficient for AI context.",
       "good": "Good size. Well within comfortable limits for most models.",

@@ -963,6 +963,10 @@
     "composition": "组成结构",
     "proseContent": "正文内容",
     "frontmatter": "元数据",
+    "prose": "正文",
+    "codeBlocks": "代码块",
+    "checklists": "清单项",
+    "sectionBreakdown": "分区详情",
     "performance": {
       "optimal": "非常好！该规范对 AI 上下文非常高效。",
       "good": "良好大小。在大多数模型的舒适范围内。",

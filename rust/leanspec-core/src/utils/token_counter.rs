@@ -5,6 +5,28 @@ use tiktoken_rs::{cl100k_base, CoreBPE};
 
 static GLOBAL_TOKEN_COUNTER: Lazy<TokenCounter> = Lazy::new(TokenCounter::new);
 
+/// Section token count (for h2 sections)
+#[derive(Debug, Clone, Default)]
+pub struct SectionTokenCount {
+    /// Section heading
+    pub heading: String,
+    /// Token count for this section
+    pub tokens: usize,
+}
+
+/// Detailed content breakdown
+#[derive(Debug, Clone, Default)]
+pub struct DetailedBreakdown {
+    /// Tokens in code blocks
+    pub code_blocks: usize,
+    /// Tokens in checklists (- [ ] items)
+    pub checklists: usize,
+    /// Tokens in plain prose/text
+    pub prose: usize,
+    /// Tokens per h2 section
+    pub sections: Vec<SectionTokenCount>,
+}
+
 /// Token count result
 #[derive(Debug, Clone, Default)]
 pub struct TokenCount {
@@ -19,6 +41,9 @@ pub struct TokenCount {
 
     /// Title tokens
     pub title: usize,
+
+    /// Detailed breakdown of content
+    pub detailed: DetailedBreakdown,
 
     /// Status relative to thresholds
     pub status: TokenStatus,
@@ -101,14 +126,13 @@ impl TokenCounter {
         let total = self.count(full_content);
 
         // Try to split frontmatter and content
-        let (frontmatter_tokens, content_tokens, title_tokens) =
+        let (frontmatter_tokens, content_str, title_tokens) =
             if full_content.trim_start().starts_with("---") {
                 if let Some(end_idx) = full_content[3..].find("\n---") {
                     let frontmatter = &full_content[..end_idx + 7]; // Include both ---
                     let content = &full_content[end_idx + 7..];
 
                     let fm_tokens = self.count(frontmatter);
-                    let content_tokens = self.count(content);
 
                     // Extract title tokens
                     let title_tokens = content
@@ -117,13 +141,18 @@ impl TokenCounter {
                         .map(|l| self.count(l))
                         .unwrap_or(0);
 
-                    (fm_tokens, content_tokens, title_tokens)
+                    (fm_tokens, content.to_string(), title_tokens)
                 } else {
-                    (0, total, 0)
+                    (0, full_content.to_string(), 0)
                 }
             } else {
-                (0, total, 0)
+                (0, full_content.to_string(), 0)
             };
+
+        let content_tokens = self.count(&content_str);
+
+        // Compute detailed breakdown
+        let detailed = self.analyze_content(&content_str);
 
         let status = self.determine_status(total);
 
@@ -132,7 +161,98 @@ impl TokenCounter {
             frontmatter: frontmatter_tokens,
             content: content_tokens,
             title: title_tokens,
+            detailed,
             status,
+        }
+    }
+
+    /// Analyze content for detailed token breakdown
+    fn analyze_content(&self, content: &str) -> DetailedBreakdown {
+        let mut code_blocks = 0usize;
+        let mut checklists = 0usize;
+        let mut prose = 0usize;
+        let mut sections: Vec<SectionTokenCount> = Vec::new();
+
+        // Track current section
+        let mut current_section_heading = String::new();
+        let mut current_section_lines: Vec<&str> = Vec::new();
+
+        // Parse line by line
+        let mut in_code_block = false;
+        let mut code_block_lines: Vec<&str> = Vec::new();
+
+        for line in content.lines() {
+            // Code block detection
+            if line.trim_start().starts_with("```") {
+                if in_code_block {
+                    // End of code block
+                    code_block_lines.push(line);
+                    let block_text = code_block_lines.join("\n");
+                    code_blocks += self.count(&block_text);
+                    code_block_lines.clear();
+                    in_code_block = false;
+                } else {
+                    // Start of code block
+                    in_code_block = true;
+                    code_block_lines.push(line);
+                }
+                continue;
+            }
+
+            if in_code_block {
+                code_block_lines.push(line);
+                continue;
+            }
+
+            // H2 section detection
+            if line.starts_with("## ") {
+                // Save previous section if any
+                if !current_section_heading.is_empty() {
+                    let section_text = current_section_lines.join("\n");
+                    let section_tokens = self.count(&section_text);
+                    sections.push(SectionTokenCount {
+                        heading: current_section_heading.clone(),
+                        tokens: section_tokens,
+                    });
+                }
+                current_section_heading = line[3..].trim().to_string();
+                current_section_lines.clear();
+                continue;
+            }
+
+            // Checklist detection
+            let trimmed = line.trim_start();
+            if trimmed.starts_with("- [ ]")
+                || trimmed.starts_with("- [x]")
+                || trimmed.starts_with("- [X]")
+            {
+                checklists += self.count(line);
+            } else if !line.trim().is_empty() && !line.starts_with("# ") {
+                // Regular prose (not title, not empty)
+                prose += self.count(line);
+            }
+
+            // Add to current section
+            if !current_section_heading.is_empty() {
+                current_section_lines.push(line);
+            }
+        }
+
+        // Save last section
+        if !current_section_heading.is_empty() && !current_section_lines.is_empty() {
+            let section_text = current_section_lines.join("\n");
+            let section_tokens = self.count(&section_text);
+            sections.push(SectionTokenCount {
+                heading: current_section_heading,
+                tokens: section_tokens,
+            });
+        }
+
+        DetailedBreakdown {
+            code_blocks,
+            checklists,
+            prose,
+            sections,
         }
     }
 
@@ -147,6 +267,7 @@ impl TokenCounter {
             frontmatter: 0,
             content: total,
             title: 0,
+            detailed: DetailedBreakdown::default(),
             status,
         }
     }

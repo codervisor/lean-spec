@@ -513,6 +513,28 @@ pub struct SpecTokenResponse {
     pub token_breakdown: TokenBreakdown,
 }
 
+/// Section token count for h2 sections
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SectionTokenCount {
+    pub heading: String,
+    pub tokens: usize,
+}
+
+/// Detailed content breakdown
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct DetailedBreakdown {
+    /// Tokens in code blocks
+    pub code_blocks: usize,
+    /// Tokens in checklists (- [ ] items)
+    pub checklists: usize,
+    /// Tokens in plain prose/text
+    pub prose: usize,
+    /// Tokens per h2 section
+    pub sections: Vec<SectionTokenCount>,
+}
+
 /// Token breakdown for a spec
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -520,6 +542,8 @@ pub struct TokenBreakdown {
     pub frontmatter: usize,
     pub content: usize,
     pub title: usize,
+    /// Detailed breakdown by content type
+    pub detailed: DetailedBreakdown,
 }
 
 /// Spec validation response

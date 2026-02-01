@@ -91,7 +91,9 @@ export function SpecsPage() {
   const { refreshTrigger } = useSpecs();
   const projectReady = !projectId || currentProject?.id === projectId;
   const { t } = useTranslation('common');
-  const [loading, setLoading] = useState(true);
+  // Track initial load separately from subsequent refreshes
+  // Only initial load shows skeleton, refreshes update silently
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -136,7 +138,7 @@ export function SpecsPage() {
   const loadSpecs = useCallback(async () => {
     if (!projectReady || projectLoading) return;
     try {
-      setLoading(true);
+      // Don't set loading state - initial load is already true, refreshes are silent
       // Always request hierarchy data from server - server-side computation is faster
       // and the hierarchy will be ready when user toggles "Group by Parent"
       const response = await api.getSpecsWithHierarchy({ hierarchy: true });
@@ -147,7 +149,7 @@ export function SpecsPage() {
       console.error('Failed to load specs', err);
       setError(t('specsPage.state.errorDescription'));
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
     }
   }, [projectLoading, projectReady, t]);
 
@@ -157,7 +159,7 @@ export function SpecsPage() {
 
   // Fetch batch metadata (tokens, validation) after specs load
   useEffect(() => {
-    if (metadataFetchedRef.current || specs.length === 0 || !resolvedProjectId || loading) {
+    if (metadataFetchedRef.current || specs.length === 0 || !resolvedProjectId || initialLoading) {
       return;
     }
 
@@ -199,7 +201,7 @@ export function SpecsPage() {
     };
 
     void fetchMetadata();
-  }, [specs, resolvedProjectId, loading]);
+  }, [specs, resolvedProjectId, initialLoading]);
 
   // Reset metadata fetch flag when project changes
   useEffect(() => {
@@ -473,7 +475,7 @@ export function SpecsPage() {
     return sorted;
   }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived, validationStatuses]);
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="p-4 sm:p-6">
         <SpecListSkeleton />

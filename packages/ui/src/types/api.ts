@@ -258,10 +258,23 @@ export interface HierarchyNode {
   childNodes: HierarchyNode[];
 }
 
+export interface SectionTokenCount {
+  heading: string;
+  tokens: number;
+}
+
+export interface DetailedBreakdown {
+  codeBlocks: number;
+  checklists: number;
+  prose: number;
+  sections: SectionTokenCount[];
+}
+
 export interface TokenBreakdown {
   frontmatter: number;
   content: number;
   title: number;
+  detailed: DetailedBreakdown;
 }
 
 export interface SpecTokenResponse {

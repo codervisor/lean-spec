@@ -27,7 +27,7 @@ pub struct StructureOptions {
 impl Default for StructureOptions {
     fn default() -> Self {
         Self {
-            required_sections: vec!["Overview".to_string()],
+            required_sections: vec![],
             check_heading_hierarchy: false, // Disabled: too many false positives
             validate_title_match: false,
             check_empty_sections: true,
@@ -356,10 +356,15 @@ This is the plan section.
 "#;
 
         let spec = create_test_spec(content);
-        let validator = StructureValidator::new();
+        // Configure validator to require Overview section for this test
+        let options = StructureOptions {
+            required_sections: vec!["Overview".to_string()],
+            ..Default::default()
+        };
+        let validator = StructureValidator::with_options(options);
         let result = validator.validate(&spec);
 
-        // Should have warning for missing Overview section (the only required section by default)
+        // Should have warning for missing Overview section
         assert!(result.has_warnings());
         assert!(result.warnings().any(|w| w.message.contains("Overview")));
     }

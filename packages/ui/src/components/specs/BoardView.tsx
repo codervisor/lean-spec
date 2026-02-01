@@ -1,6 +1,6 @@
 import { useState, useMemo, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown } from 'lucide-react';
+import { Clock, PlayCircle, CheckCircle2, Archive, FolderTree, CornerDownRight, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Spec } from '../../types/api';
 import { PriorityBadge } from '../PriorityBadge';
 import { TokenBadge } from '../TokenBadge';
@@ -60,46 +60,211 @@ const STATUS_CONFIG: Record<SpecStatus, {
   }
 };
 
+interface SpecCardCompactProps {
+  spec: Spec;
+  basePath: string;
+  canEdit?: boolean;
+  draggingId?: string | null;
+  onDragStart?: (spec: Spec, e: DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: () => void;
+  onTokenClick?: (specName: string) => void;
+  onValidationClick?: (specName: string) => void;
+  // For umbrella specs
+  childCount?: number;
+  isExpanded?: boolean;
+  onToggle?: () => void;
+}
+
+/** Compact card style used for both umbrella and independent specs */
+function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragStart, onDragEnd, onTokenClick, onValidationClick, childCount, isExpanded, onToggle }: SpecCardCompactProps) {
+  const isUmbrella = childCount !== undefined && onToggle !== undefined;
+  return (
+    <div
+      className={cn(
+        "bg-background rounded-xl border border-primary/20 shadow-sm relative overflow-hidden group/parent hover:border-primary/50 hover:shadow-md transition-all",
+        draggingId === spec.specName && "opacity-50",
+        canEdit ? "cursor-move" : "cursor-not-allowed opacity-70"
+      )}
+      draggable={canEdit}
+      onDragStart={onDragStart ? (e) => onDragStart(spec, e) : undefined}
+      onDragEnd={onDragEnd}
+    >
+      {/* Accent Header/Background */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 to-primary/10" />
+
+      <div className="p-3 pb-2 flex flex-col gap-2">
+        {/* Header Row */}
+        <div className="flex items-start justify-between gap-2">
+          <Link to={`${basePath}/specs/${spec.specName}`} className="flex-1 min-w-0 group hover:text-primary transition-colors">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[10px] font-mono font-medium text-primary/70 bg-primary/5 px-1 rounded">
+                #{spec.specNumber || spec.specName.split('-')[0].replace(/^0+/, '')}
+              </span>
+              {isUmbrella && <FolderTree className="h-3 w-3 text-primary/40" />}
+            </div>
+            <h4 className="font-semibold text-sm truncate leading-tight" title={spec.title || spec.specName}>
+              {spec.title || spec.specName}
+            </h4>
+          </Link>
+
+          {isUmbrella && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onToggle!();
+              }}
+              className="p-1 hover:bg-muted rounded-md text-muted-foreground transition-colors"
+            >
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+          )}
+        </div>
+
+        {/* Tags */}
+        {spec.tags && spec.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {spec.tags.slice(0, 3).map((tag: string) => (
+              <span key={tag} className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-full">
+                {tag}
+              </span>
+            ))}
+            {spec.tags.length > 3 && (
+              <span className="text-[10px] text-muted-foreground">+{spec.tags.length - 3}</span>
+            )}
+          </div>
+        )}
+
+        {/* Metadata Row */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-1.5">
+            {spec.priority && (
+              <PriorityBadge priority={spec.priority} className="h-5 text-[10px] px-1.5" />
+            )}
+            {isUmbrella && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1" title={`${childCount} children`}>
+                <Layers className="h-3 w-3" />
+                {childCount}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <TokenBadge
+              count={spec.tokenCount}
+              size="sm"
+              onClick={onTokenClick ? () => onTokenClick(spec.specName) : undefined}
+              className="h-5 px-1.5 scale-90 origin-right"
+            />
+            <ValidationBadge
+              status={spec.validationStatus}
+              size="sm"
+              onClick={onValidationClick ? () => onValidationClick(spec.specName) : undefined}
+              className="h-5 px-1.5 scale-90 origin-right"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Collapse Hint Bar (visible when collapsed, umbrella only) */}
+      {isUmbrella && !isExpanded && (
+        <div
+          onClick={onToggle}
+          className="bg-muted/30 p-1 flex justify-center cursor-pointer hover:bg-muted/50 transition-colors border-t border-border/20"
+        >
+          <ChevronDown className="h-3 w-3 text-muted-foreground/50" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface BoardGroupProps {
   parentName: string;
   specs: Spec[];
-  renderCard: (spec: Spec, isChild?: boolean) => React.ReactNode;
+  parentSpec?: Spec;
+  basePath: string;
+  onTokenClick?: (specName: string) => void;
+  onValidationClick?: (specName: string) => void;
 }
 
-function BoardGroup({ parentName, specs, renderCard }: BoardGroupProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const visibleSpecs = isExpanded ? specs : specs.slice(0, COLLAPSE_THRESHOLD);
-  const hiddenCount = specs.length - visibleSpecs.length;
+interface BoardGroupExtendedProps extends BoardGroupProps {
+  canEdit?: boolean;
+  draggingId?: string | null;
+  onDragStart?: (spec: Spec, e: DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: () => void;
+}
+
+function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onValidationClick, canEdit, draggingId, onDragStart, onDragEnd }: BoardGroupExtendedProps) {
+  // Session storage key
+  const storageKey = `leanspec_board_expanded_${parentName}`;
+
+  // Default expanded if few children, otherwise collapsed
+  const defaultExpanded = specs.length <= COLLAPSE_THRESHOLD;
+
+  const [isExpanded, setIsExpanded] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      return stored !== null ? stored === 'true' : defaultExpanded;
+    } catch {
+      return defaultExpanded;
+    }
+  });
+
+  const handleToggle = () => {
+    const newState = !isExpanded;
+    setIsExpanded(newState);
+    try {
+      sessionStorage.setItem(storageKey, String(newState));
+    } catch (e) {
+      // ignore
+    }
+  };
 
   return (
     <div className="space-y-2 mt-4 first:mt-0">
-      <div className="flex items-center gap-2 px-1 pb-1 border-b border-border/30">
-        <FolderTree className="h-3.5 w-3.5 text-primary/70" />
-        <h5 className="text-xs font-semibold text-foreground/80 truncate flex-1" title={parentName}>{parentName}</h5>
-        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground font-mono">{specs.length}</span>
-      </div>
-      <div className="space-y-2">
-        {visibleSpecs.map((spec) => renderCard(spec, false))}
+      {parentSpec ? (
+        <SpecCardCompact
+          spec={parentSpec}
+          childCount={specs.length}
+          isExpanded={isExpanded}
+          onToggle={handleToggle}
+          basePath={basePath}
+          canEdit={canEdit}
+          draggingId={draggingId}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onTokenClick={onTokenClick}
+          onValidationClick={onValidationClick}
+        />
+      ) : (
+        <div
+          className="flex items-center gap-2 px-1 pb-1 border-b border-border/30 cursor-pointer hover:bg-muted/20 rounded p-1"
+          onClick={handleToggle}
+        >
+          <FolderTree className="h-3.5 w-3.5 text-primary/70" />
+          <h5 className="text-xs font-semibold text-foreground/80 truncate flex-1" title={parentName}>{parentName}</h5>
+          <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground font-mono">{specs.length}</span>
+          {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+        </div>
+      )}
 
-        {hiddenCount > 0 && (
-          <button
-            onClick={() => setIsExpanded(true)}
-            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-secondary/50 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
-          >
-            <ChevronDown className="h-3 w-3" />
-            Show {hiddenCount} more
-          </button>
-        )}
-        {isExpanded && specs.length > COLLAPSE_THRESHOLD && (
-          <button
-            onClick={() => setIsExpanded(false)}
-            className="w-full text-xs text-muted-foreground hover:text-primary hover:bg-secondary/50 py-1.5 rounded flex items-center justify-center gap-1 transition-colors"
-          >
-            <ChevronDown className="h-3 w-3 rotate-180" />
-            Show less
-          </button>
-        )}
-      </div>
+      {isExpanded && (
+        <div className={cn("space-y-2 transition-all", parentSpec && "pl-2 border-l-2 border-border/30 ml-2")}>
+          {specs.map((spec) => (
+            <SpecCardCompact
+              key={spec.specName}
+              spec={spec}
+              basePath={basePath}
+              canEdit={canEdit}
+              draggingId={draggingId}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onTokenClick={onTokenClick}
+              onValidationClick={onValidationClick}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -108,6 +273,11 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
+
+  // Spec Map for parent lookup
+  const specMap = useMemo(() => {
+    return new Map(specs.map(s => [s.specName, s]));
+  }, [specs]);
 
   const columns = useMemo(() => {
     const cols: SpecStatus[] = ['planned', 'in-progress', 'complete'];
@@ -140,6 +310,18 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setActiveDropZone(null);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    // Only clear if leaving the column entirely (not entering a child element)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setActiveDropZone(null);
+    }
+  };
+
   const handleDragOver = (status: SpecStatus, e: DragEvent<HTMLDivElement>) => {
     if (!canEdit) return;
     e.preventDefault();
@@ -168,9 +350,10 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
       key={spec.specName}
       draggable={canEdit}
       onDragStart={(e) => handleDragStart(spec, e)}
+      onDragEnd={handleDragEnd}
       className={cn(
         "bg-background rounded-xl border shadow-sm cursor-move hover:border-primary/50 transition-all group/card relative",
-        isChild ? "p-3 border-border/60" : "p-4",
+        isChild ? "p-2.5 border-border/50 text-sm shadow-none bg-background/50" : "p-4",
         draggingId === spec.specName && "opacity-50",
         !canEdit && "cursor-not-allowed opacity-70"
       )}
@@ -185,15 +368,15 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
 
         {/* Top: #ID */}
         <div className="text-xs text-muted-foreground font-mono mb-1 flex items-center gap-1">
-          <span>#{spec.specNumber || spec.specName.split('-')[0].replace(/^0+/, '')}</span>
+          <span className={cn(isChild && "text-[10px]")}>#{spec.specNumber || spec.specName.split('-')[0].replace(/^0+/, '')}</span>
           {isChild && (spec.children && spec.children.length > 0) && (
             <FolderTree className="w-3 h-3 text-primary/40 ml-1" />
           )}
         </div>
 
         {/* Middle: Title & Filename */}
-        <div className={cn("space-y-1 mb-3 flex-1", isChild ? "mb-2" : "mb-4")}>
-          <h4 className={cn("font-semibold leading-snug group-hover/card:text-primary transition-colors pr-6", isChild ? "text-sm" : "text-base")}>
+        <div className={cn("space-y-1 mb-3 flex-1", isChild ? "mb-1.5" : "mb-4")}>
+          <h4 className={cn("font-semibold leading-snug group-hover/card:text-primary transition-colors pr-6", isChild ? "text-xs" : "text-base")}>
             {spec.title || spec.specName}
           </h4>
           {!isChild && (
@@ -213,7 +396,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
 
         {/* Tags */}
         {spec.tags && spec.tags.length > 0 && (
-          <div className={cn("flex flex-wrap gap-1.5 mb-3", isChild && "mb-2")}>
+          <div className={cn("flex flex-wrap gap-1.5 mb-3", isChild ? "mb-1.5" : "mb-3")}>
             {spec.tags.slice(0, isChild ? 2 : 4).map((tag: string) => (
               <span key={tag} className="text-[10px] px-2 py-0.5 bg-secondary/30 border border-border/50 rounded-md text-muted-foreground font-mono truncate max-w-[120px]">
                 {tag}
@@ -230,7 +413,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
         {/* Bottom: Priority & Stats */}
         <div className="flex items-center justify-between gap-2 mt-auto">
           {spec.priority && (
-            <PriorityBadge priority={spec.priority} className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5" : "h-6 px-2.5")} iconOnly={isChild} />
+            <PriorityBadge priority={spec.priority} className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5 scale-90 origin-left" : "h-6 px-2.5")} iconOnly={isChild} />
           )}
 
           <div className="flex items-center gap-1.5 justify-end ml-auto">
@@ -268,48 +451,96 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
       );
     }
 
-    // Group by parent
-    const groups = new Map<string, Spec[]>();
+    // When grouping by parent:
+    // - Umbrella specs (specs with children) show with ALL their children nested
+    // - Child specs are excluded from top-level (they appear nested under parent)
+    // - Orphan specs (no parent, no children) appear independently
+
+    const umbrellaSpecs: Spec[] = [];
     const orphans: Spec[] = [];
 
+    // Set of all child spec names (to exclude from independent rendering)
+    const allChildNames = new Set<string>();
+    specs.forEach(spec => {
+      if (spec.children && spec.children.length > 0) {
+        spec.children.forEach(childName => allChildNames.add(childName));
+      }
+    });
+
     columnSpecs.forEach(spec => {
-      if (spec.parent) {
-        if (!groups.has(spec.parent)) {
-          groups.set(spec.parent, []);
-        }
-        groups.get(spec.parent)!.push(spec);
+      // Is this spec a child of another spec? Skip it at top level
+      if (allChildNames.has(spec.specName)) {
+        return;
+      }
+
+      // Is this an umbrella spec (has children)?
+      if (spec.children && spec.children.length > 0) {
+        umbrellaSpecs.push(spec);
       } else {
         orphans.push(spec);
       }
     });
 
-    const sortedGroups = Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    // Sort umbrellas by spec name
+    umbrellaSpecs.sort((a, b) => a.specName.localeCompare(b.specName));
 
     return (
-      <div className="space-y-4">
-        {orphans.length > 0 && (
-          <div className="space-y-2">
-            {orphans.length > 0 && sortedGroups.length > 0 && (
-              <div className="flex items-center gap-2 px-1 pb-1 border-b border-border/30 mb-2">
-                <Layers className="h-3.5 w-3.5 text-primary/70" />
-                <h5 className="text-xs font-semibold text-foreground/80 truncate flex-1">Independent</h5>
-                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground font-mono">{orphans.length}</span>
-              </div>
-            )}
-            {orphans.map(s => renderCard(s))}
-          </div>
-        )}
-
-        {sortedGroups.map(([parentName, groupSpecs]) => (
-          <BoardGroup
-            key={parentName}
-            parentName={parentName}
-            specs={groupSpecs}
-            renderCard={renderCard}
+      <div className="space-y-2">
+        {/* Independent specs - use compact card style, no header */}
+        {orphans.map(s => (
+          <SpecCardCompact
+            key={s.specName}
+            spec={s}
+            basePath={basePath}
+            canEdit={canEdit}
+            draggingId={draggingId}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onTokenClick={onTokenClick}
+            onValidationClick={onValidationClick}
           />
         ))}
+
+        {umbrellaSpecs.map((parentSpec) => {
+          // Get ALL children of this umbrella spec (from full specs list, not just this column)
+          const childSpecs = (parentSpec.children || [])
+            .map(childName => specMap.get(childName))
+            .filter((s): s is Spec => s !== undefined);
+
+          return (
+            <BoardGroup
+              key={parentSpec.specName}
+              parentName={parentSpec.specName}
+              specs={childSpecs}
+              parentSpec={parentSpec}
+              basePath={basePath}
+              canEdit={canEdit}
+              draggingId={draggingId}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onTokenClick={onTokenClick}
+              onValidationClick={onValidationClick}
+            />
+          );
+        })}
       </div>
     );
+  };
+
+  // Compute column count: when groupByParent, count only umbrellas + orphans (not nested children)
+  const getColumnCount = (columnSpecs: Spec[]) => {
+    if (!groupByParent) {
+      return columnSpecs.length;
+    }
+
+    const allChildNames = new Set<string>();
+    specs.forEach(spec => {
+      if (spec.children && spec.children.length > 0) {
+        spec.children.forEach(childName => allChildNames.add(childName));
+      }
+    });
+
+    return columnSpecs.filter(spec => !allChildNames.has(spec.specName)).length;
   };
 
   return (
@@ -328,6 +559,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
               isDropActive && "bg-secondary/60 border-primary/50 ring-2 ring-primary/20"
             )}
             onDragOver={(e) => handleDragOver(status, e)}
+            onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(status, e)}
           >
             {/* Column Header */}
@@ -343,7 +575,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
                   {t(config.titleKey)}
                 </span>
                 <span className="text-xs px-2 py-0.5 bg-background/50 rounded-full text-muted-foreground">
-                  {statusSpecs.length}
+                  {getColumnCount(statusSpecs)}
                 </span>
               </div>
             </div>
