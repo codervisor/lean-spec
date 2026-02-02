@@ -23,7 +23,7 @@
 //! for spec in &specs {
 //!     let result = validator.validate(spec);
 //!     if !result.is_valid() {
-//!         println!("Issues in {}: {:?}", spec.path, result.issues);
+//!         println!("Errors in {}: {:?}", spec.path, result.errors);
 //!     }
 //! }
 //! ```
