@@ -72,8 +72,8 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
     return flattenTree(treeRoots, expandedIds);
   }, [treeRoots, expandedIds]);
 
-  // Track when selectedSpecId changes to trigger scroll
-  const prevSelectedSpecId = useRef<string | undefined>(undefined);
+  // Track whether we've done the initial scroll
+  const hasScrolledToSelected = useRef(false);
 
   // Initialization: Expand all recursive nodes on mount or when specs change drastically
   useEffect(() => {
@@ -122,16 +122,19 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
   }, [selectedSpecId, treeRoots]);
 
   // Effect to scroll once flatData is ready and contains our item
-  // Only scroll when selectedSpecId actually changes (not on expand/collapse)
   useEffect(() => {
+    // Skip if no selection
     if (!selectedSpecId || !listRef.current) return;
-    if (prevSelectedSpecId.current === selectedSpecId) return;
 
+    // Skip if already scrolled
+    if (hasScrolledToSelected.current) return;
+
+    // Check if we found the item in the current flattened (visible) list
     const index = flatData.findIndex(item => (item.node.id || item.node.specName) === selectedSpecId);
 
     if (index >= 0) {
       listRef.current.scrollToRow({ index, align: "smart" });
-      prevSelectedSpecId.current = selectedSpecId;
+      hasScrolledToSelected.current = true;
     }
   }, [selectedSpecId, flatData]);
 
