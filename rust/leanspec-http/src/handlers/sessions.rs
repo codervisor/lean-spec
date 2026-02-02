@@ -459,17 +459,12 @@ pub struct ListRunnersRequest {
     pub project_path: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Default, Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum RunnerScope {
+    #[default]
     Project,
     Global,
-}
-
-impl Default for RunnerScope {
-    fn default() -> Self {
-        RunnerScope::Project
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -931,7 +926,7 @@ fn resolve_scope_path(project_path: &str, scope: RunnerScope) -> PathBuf {
 }
 
 fn load_or_default_runners_file(
-    path: &PathBuf,
+    path: &std::path::Path,
 ) -> leanspec_core::CoreResult<leanspec_core::sessions::runner::RunnersFile> {
     match read_runners_file(path)? {
         Some(file) => Ok(file),
