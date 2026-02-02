@@ -320,8 +320,8 @@ AGENTS.md (in project root)
 LeanSpec supports **Agent Skills** via SKILL.md. This lets you keep AGENTS.md short and project-specific.
 
 **Recommended steps:**
-1. Add the skill folder: .lean-spec/skills/leanspec-sdd/
-2. Put SDD methodology in SKILL.md
+1. Install the skill via `lean-spec skill install`
+2. Use the installed SKILL.md at .github/skills/leanspec-sdd/
 3. Reduce AGENTS.md to project-specific rules only (<100 lines)
 4. Add a short note in AGENTS.md that references the skill
 5. Commit the skill folder so it is shareable
@@ -333,7 +333,7 @@ LeanSpec supports **Agent Skills** via SKILL.md. This lets you keep AGENTS.md sh
 
 ## Project: Your Project
 
-Core SDD workflow is defined in .lean-spec/skills/leanspec-sdd/SKILL.md.
+Core SDD workflow is defined in .github/skills/leanspec-sdd/SKILL.md.
 
 ## Project-Specific Rules
 - Use pnpm instead of npm

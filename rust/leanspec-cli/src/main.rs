@@ -2,7 +2,7 @@
 
 mod commands;
 
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 use colored::Colorize;
 use std::process::ExitCode;
 
@@ -276,6 +276,13 @@ enum Commands {
         no_skill: bool,
     },
 
+    /// Manage agent skills via skills.sh
+    Skill {
+        /// Action: install, update, list
+        #[arg(default_value = "help")]
+        action: String,
+    },
+
     /// Link specs together
     Link {
         /// Spec to link from
@@ -489,6 +496,46 @@ enum Commands {
         /// Remove tags
         #[arg(long)]
         remove_tags: Option<String>,
+
+        /// Replace text (repeatable: --replace "old" "new")
+        #[arg(long = "replace", num_args = 2, value_names = ["OLD", "NEW"], action = ArgAction::Append)]
+        replacements: Vec<String>,
+
+        /// Replace all matches (applies to all --replace entries)
+        #[arg(long, conflicts_with = "match_first")]
+        match_all: bool,
+
+        /// Replace first match only (applies to all --replace entries)
+        #[arg(long, conflicts_with = "match_all")]
+        match_first: bool,
+
+        /// Check checklist item (repeatable)
+        #[arg(long, action = ArgAction::Append)]
+        check: Vec<String>,
+
+        /// Uncheck checklist item (repeatable)
+        #[arg(long, action = ArgAction::Append)]
+        uncheck: Vec<String>,
+
+        /// Section heading to update
+        #[arg(long)]
+        section: Option<String>,
+
+        /// Replace content for section
+        #[arg(long, conflicts_with_all = ["append", "prepend"])]
+        section_content: Option<String>,
+
+        /// Append content to section
+        #[arg(long, conflicts_with = "section_content")]
+        append: Option<String>,
+
+        /// Prepend content to section
+        #[arg(long, conflicts_with = "section_content")]
+        prepend: Option<String>,
+
+        /// Replace full body content (frontmatter preserved)
+        #[arg(long)]
+        content: Option<String>,
 
         /// Skip completion verification when setting status to complete
         #[arg(short, long)]
@@ -720,6 +767,7 @@ fn main() -> ExitCode {
                 no_skill,
             },
         ),
+        Commands::Skill { action } => commands::skill::run(&action),
         Commands::Link { spec, depends_on } => commands::link::run(&specs_dir, &spec, &depends_on),
         Commands::List {
             status,
@@ -804,6 +852,16 @@ fn main() -> ExitCode {
             assignee,
             add_tags,
             remove_tags,
+            replacements,
+            match_all,
+            match_first,
+            check,
+            uncheck,
+            section,
+            section_content,
+            append,
+            prepend,
+            content,
             force,
         } => commands::update::run(
             &specs_dir,
@@ -813,6 +871,16 @@ fn main() -> ExitCode {
             assignee,
             add_tags,
             remove_tags,
+            replacements,
+            match_all,
+            match_first,
+            check,
+            uncheck,
+            section,
+            section_content,
+            append,
+            prepend,
+            content,
             force,
         ),
         Commands::Validate {

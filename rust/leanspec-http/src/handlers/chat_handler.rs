@@ -77,7 +77,9 @@ pub async fn chat_stream(
     if let Some(session_id) = payload.session_id.clone() {
         let store = state.chat_store.clone();
         let messages = payload.messages.clone();
-        let mut completion = result.completion;
+        let completion = result.completion;
+        let provider_id_for_store = selected_provider_id.clone();
+        let model_id_for_store = selected_model_id.clone();
         tokio::spawn(async move {
             if let Ok(Some(assistant_text)) = completion.await {
                 let trimmed = assistant_text.trim();
@@ -96,8 +98,8 @@ pub async fn chat_stream(
                 let _ = tokio::task::spawn_blocking(move || {
                     store.replace_messages(
                         &session_id,
-                        Some(selected_provider_id),
-                        Some(selected_model_id),
+                        Some(provider_id_for_store),
+                        Some(model_id_for_store),
                         persisted,
                     )
                 })
@@ -114,7 +116,7 @@ pub async fn chat_stream(
     })
     .chain(stream::once(async { Ok(sse_done()) }))
     .map(|item: Result<String, std::convert::Infallible>| {
-        Bytes::from(item.unwrap_or_else(|_| String::new()))
+        Ok::<_, std::convert::Infallible>(Bytes::from(item.unwrap_or_else(|_| String::new())))
     });
 
     let response = Response::builder()

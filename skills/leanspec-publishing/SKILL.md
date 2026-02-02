@@ -6,6 +6,7 @@ metadata:
   author: LeanSpec
   version: 0.1.0
   homepage: https://leanspec.dev
+  internal: true
 ---
 
 # LeanSpec Publishing Skill

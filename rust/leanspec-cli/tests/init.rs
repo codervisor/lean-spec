@@ -211,11 +211,10 @@ fn test_init_installs_skills_by_default() {
 
     let result = init_project(cwd, true);
     assert!(result.success, "init should succeed");
-
-    let skill_path = cwd.join(".github/skills/leanspec-sdd/SKILL.md");
     assert!(
-        file_exists(&skill_path),
-        "leanspec-sdd skill should be installed"
+        result.stdout.contains("Installing agent skills"),
+        "init should attempt skill install: {}",
+        result.stdout
     );
 }
 

@@ -1,12 +1,11 @@
 use colored::Colorize;
-use dialoguer::{Input, MultiSelect};
+use dialoguer::{Confirm, Input, MultiSelect};
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 mod ai_tools;
 mod mcp_config;
-mod skills;
 
 use ai_tools::{
     create_symlinks, default_ai_selection, detect_ai_tools, symlink_capable_tools, AiTool,
@@ -15,10 +14,7 @@ use ai_tools::{
 use mcp_config::{
     all_tools as all_mcp_tools, configure_mcp, default_mcp_selection, detect_mcp_tools,
 };
-use skills::{
-    build_skill_flags_from_cli, default_selection as default_skill_selection,
-    discover_targets as discover_skill_targets, install_skill, SkillScope, SkillTool,
-};
+use crate::commands::skill;
 
 // Embedded AGENTS.md templates
 const AGENTS_MD_TEMPLATE_DETAILED: &str = include_str!("../../templates/AGENTS.md");
@@ -94,7 +90,7 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     let ai_detections = detect_ai_tools(None);
 
     // Determine if skills will be installed (before actual installation)
-    let will_install_skills = should_install_skills(&root, &ai_detections, &options)?;
+    let will_install_skills = decide_skill_install(&options)?;
 
     // Core filesystem scaffolding
     scaffold_specs(&root, &specs_path)?;
@@ -106,7 +102,7 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     // New: AI tool + MCP onboarding
     handle_ai_symlinks(&root, &ai_detections, &options)?;
     handle_mcp_configs(&root, &options)?;
-    handle_skills_install(&root, &ai_detections, &options)?;
+    handle_skills_install(will_install_skills)?;
 
     println!();
     println!("{}", "LeanSpec initialized successfully! 🎉".green().bold());
@@ -446,144 +442,58 @@ fn handle_mcp_configs(root: &Path, options: &InitOptions) -> Result<(), Box<dyn 
 }
 
 /// Determines if skills will be installed based on options and detections
-fn should_install_skills(
-    root: &Path,
-    detections: &[AiDetection],
-    options: &InitOptions,
-) -> Result<bool, Box<dyn Error>> {
-    let tool_flags = [
-        (SkillTool::Copilot, options.skill_github),
-        (SkillTool::Claude, options.skill_claude),
-        (SkillTool::Cursor, options.skill_cursor),
-        (SkillTool::Codex, options.skill_codex),
-        (SkillTool::Gemini, options.skill_gemini),
-        (SkillTool::VsCode, options.skill_vscode),
-    ];
-
-    let flags = build_skill_flags_from_cli(
-        options.skill,
-        options.no_skill,
-        options.skill_user,
-        &tool_flags,
-    );
-
-    if flags.skip {
+fn decide_skill_install(options: &InitOptions) -> Result<bool, Box<dyn Error>> {
+    if options.no_skill {
         return Ok(false);
     }
 
-    let candidates = discover_skill_targets(root, None, detections);
-    let default_selection = default_skill_selection(&flags, &candidates, root, None);
+    let location_flags = options.skill_github
+        || options.skill_claude
+        || options.skill_cursor
+        || options.skill_codex
+        || options.skill_gemini
+        || options.skill_vscode
+        || options.skill_user;
 
-    // Skills will be installed if there are default selections or user enables them
-    Ok(!default_selection.is_empty() || flags.enable)
+    if location_flags {
+        println!(
+            "{} Skill location flags are ignored when using skills.sh.",
+            "⚠".yellow()
+        );
+    }
+
+    if options.skill || location_flags {
+        return Ok(true);
+    }
+
+    if options.yes {
+        return Ok(true);
+    }
+
+    let confirm = Confirm::new()
+        .with_prompt("Install LeanSpec agent skills? (recommended)")
+        .default(true)
+        .interact()?;
+
+    Ok(confirm)
 }
 
-fn handle_skills_install(
-    root: &Path,
-    detections: &[AiDetection],
-    options: &InitOptions,
-) -> Result<(), Box<dyn Error>> {
-    let tool_flags = [
-        (SkillTool::Copilot, options.skill_github),
-        (SkillTool::Claude, options.skill_claude),
-        (SkillTool::Cursor, options.skill_cursor),
-        (SkillTool::Codex, options.skill_codex),
-        (SkillTool::Gemini, options.skill_gemini),
-        (SkillTool::VsCode, options.skill_vscode),
-    ];
-
-    let flags = build_skill_flags_from_cli(
-        options.skill,
-        options.no_skill,
-        options.skill_user,
-        &tool_flags,
-    );
-
-    if flags.skip {
+fn handle_skills_install(install_skills: bool) -> Result<(), Box<dyn Error>> {
+    if !install_skills {
         return Ok(());
     }
 
-    let candidates = discover_skill_targets(root, None, detections);
-    let default_selection = default_skill_selection(&flags, &candidates, root, None);
-
-    let selected = if options.yes || flags.enable {
-        default_selection
-    } else {
-        println!("\n{}", "Install LeanSpec agent skills?".cyan());
-
-        if candidates.is_empty() {
-            println!(
-                "{}",
-                "No skill installation targets detected. You can manually install skills later."
-                    .yellow()
-            );
-            vec![]
-        } else {
-            let labels: Vec<String> = candidates
-                .iter()
-                .map(|target| {
-                    let scope = match target.scope {
-                        SkillScope::Project => "project",
-                        SkillScope::User => "user",
-                    };
-
-                    let mut label = format!("{} ({})", target.path.display(), scope);
-                    if target.recommended {
-                        label.push_str(" – recommended");
-                    } else if target.exists {
-                        label.push_str(" – detected");
-                    }
-                    label
-                })
-                .collect();
-
-            let defaults_mask: Vec<bool> = candidates
-                .iter()
-                .map(|target| {
-                    default_selection
-                        .iter()
-                        .any(|sel| sel.path == target.path && sel.scope == target.scope)
-                })
-                .collect();
-
-            let selected_indexes = MultiSelect::new()
-                .with_prompt("Select skill installation targets")
-                .items(&labels)
-                .defaults(&defaults_mask)
-                .interact()?;
-            selected_indexes
-                .into_iter()
-                .map(|i| candidates[i].clone())
-                .collect()
-        }
-    };
-
-    if selected.is_empty() {
-        return Ok(());
-    }
-
-    let results = install_skill(&selected);
-    for result in results {
-        if result.created {
-            println!(
-                "{} Installed leanspec-sdd to {}",
-                "✓".green(),
-                result.path.display()
-            );
-        } else if result.skipped {
-            println!(
-                "{} {} already has leanspec-sdd (skipped)",
-                "•".cyan(),
-                result.path.display()
-            );
-        } else if let Some(err) = result.error {
-            println!(
-                "{} Failed to install to {}: {}",
-                "✗".red(),
-                result.path.display(),
-                err
-            );
-        }
+    println!("\n{}", "Installing agent skills...".cyan());
+    if let Err(err) = skill::install() {
+        println!(
+            "{} Failed to install agent skills: {}",
+            "⚠".yellow(),
+            err
+        );
+        println!(
+            "{} You can retry with: lean-spec skill install",
+            "•".cyan()
+        );
     }
 
     Ok(())

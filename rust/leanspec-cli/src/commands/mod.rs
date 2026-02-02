@@ -26,6 +26,7 @@ pub mod files;
 pub mod gantt;
 pub mod init;
 pub mod open;
+pub mod skill;
 pub mod timeline;
 
 // Additional commands (spec 170)

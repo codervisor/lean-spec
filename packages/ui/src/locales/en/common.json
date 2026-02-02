@@ -538,7 +538,17 @@
     "switchToTree": "Switch to Tree",
     "switchToList": "Switch to List",
     "showArchived": "Show archived",
-    "hideArchived": "Hide archived"
+    "hideArchived": "Hide archived",
+    "sort": {
+      "label": "Sort By",
+      "newest": "Newest First",
+      "oldest": "Oldest First",
+      "updated": "Recently Updated",
+      "titleAsc": "Title (A-Z)",
+      "titleDesc": "Title (Z-A)",
+      "priorityHigh": "Priority (High-Low)",
+      "priorityLow": "Priority (Low-High)"
+    }
   },
   "specsPage": {
     "title": "Specifications",

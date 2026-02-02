@@ -62,10 +62,13 @@ pub use types::{
     StatusTransition, UmbrellaVerificationResult, ValidationError, ValidationResult,
 };
 pub use utils::{
-    global_token_counter, ArchiveError, CompleteDependencyGraph, DependencyGraph,
-    DiscoveredProject, DiscoveryError, ImpactRadius, Insights, LoadError, MetadataUpdate,
-    ProjectDiscovery, SpecArchiver, SpecLoader, SpecStats, SpecWriter, TemplateError,
-    TemplateLoader, TokenCount, TokenCounter, TokenStatus, WriteError,
+    apply_checklist_toggles, apply_replacements, apply_section_updates, global_token_counter,
+    hash_content, rebuild_content, split_frontmatter, ArchiveError, ChecklistToggle,
+    ChecklistToggleResult, CompleteDependencyGraph, DependencyGraph, DiscoveredProject,
+    DiscoveryError, ImpactRadius, Insights, LoadError, MatchMode, MetadataUpdate, ProjectDiscovery,
+    Replacement, ReplacementResult, SectionMode, SectionUpdate, SpecArchiver, SpecLoader,
+    SpecStats, SpecWriter, TemplateError, TemplateLoader, TokenCount, TokenCounter, TokenStatus,
+    WriteError,
 };
 pub use validators::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,

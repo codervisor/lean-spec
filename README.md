@@ -87,7 +87,11 @@ Works with any AI coding assistant via MCP or CLI:
 Teach your AI assistant the Spec-Driven Development methodology:
 
 ```bash
-npx skills add codervisor/lean-spec --skill leanspec-sdd
+# Recommended (uses skills.sh)
+lean-spec skill install
+
+# Or directly via skills.sh
+npx skills add codervisor/lean-spec -y
 ```
 
 This installs the **leanspec-sdd** skill which teaches AI agents:

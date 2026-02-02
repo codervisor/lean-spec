@@ -260,3 +260,67 @@ fn test_update_completed_timestamp() {
     // Should have completed timestamp
     assert!(fm.contains_key("completed") || fm.contains_key("completed_at"));
 }
+
+#[test]
+fn test_update_replace_content() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "my-spec");
+
+    let result = exec_cli(
+        &[
+            "update",
+            "001-my-spec",
+            "--replace",
+            "## Overview",
+            "## Overview\n\nReplaced overview.",
+        ],
+        cwd,
+    );
+    assert!(result.success);
+
+    let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
+    assert!(content.contains("Replaced overview."));
+}
+
+#[test]
+fn test_update_checklist_toggle() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "my-spec");
+
+    let result = exec_cli(&["update", "001-my-spec", "--check", "Task 1"], cwd);
+    assert!(result.success);
+
+    let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
+    assert!(content.contains("- [x] Task 1"));
+}
+
+#[test]
+fn test_update_section_append() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "my-spec");
+
+    let result = exec_cli(
+        &[
+            "update",
+            "001-my-spec",
+            "--section",
+            "Overview",
+            "--append",
+            "Appended details.",
+        ],
+        cwd,
+    );
+    assert!(result.success);
+
+    let content = read_file(&cwd.join("specs").join("001-my-spec").join("README.md"));
+    assert!(content.contains("Appended details."));
+}

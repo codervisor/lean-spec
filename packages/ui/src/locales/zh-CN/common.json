@@ -533,7 +533,17 @@
     "switchToTree": "切换到树形视图",
     "switchToList": "切换到列表视图",
     "showArchived": "显示已归档",
-    "hideArchived": "隐藏已归档"
+    "hideArchived": "隐藏已归档",
+    "sort": {
+      "label": "排序",
+      "newest": "最新优先",
+      "oldest": "最早优先",
+      "updated": "最近更新",
+      "titleAsc": "标题 (A-Z)",
+      "titleDesc": "标题 (Z-A)",
+      "priorityHigh": "优先级（高→低）",
+      "priorityLow": "优先级（低→高）"
+    }
   },
   "specsPage": {
     "title": "规范列表",

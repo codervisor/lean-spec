@@ -9,7 +9,8 @@ import {
   Check,
   ListTree,
   AlignJustify,
-  Archive
+  Archive,
+  ArrowUpDown
 } from 'lucide-react';
 import {
   Accordion,
@@ -23,7 +24,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  HierarchyTree
+  HierarchyTree,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
 } from '@leanspec/ui-components';
 import {
   List,
@@ -89,6 +96,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
         if (legacy) return JSON.parse(legacy);
     }
     return [];
+  });
+  
+  const [sortBy, setSortBy] = useState<string>(() => {
+    return storage.get(STORAGE_KEYS.SIDEBAR_SORT, 'id-desc');
   });
   
   const [showFilters, setShowFilters] = useState(false);
@@ -310,8 +321,41 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       result = expandWithDescendants(result, specs);
     }
 
-    return [...result].sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
-  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants, showArchived]);
+    return [...result].sort((a, b) => {
+      const priorityOrder: Record<string, number> = {
+        'critical': 4,
+        'high': 3,
+        'medium': 2,
+        'low': 1,
+      };
+      switch (sortBy) {
+        case 'id-asc':
+          return (a.specNumber || 0) - (b.specNumber || 0);
+        case 'updated-desc': {
+          if (!a.updatedAt) return 1;
+          if (!b.updatedAt) return -1;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        }
+        case 'title-asc':
+          return (a.title || a.specName || '').toLowerCase().localeCompare((b.title || b.specName || '').toLowerCase());
+        case 'title-desc':
+          return (b.title || b.specName || '').toLowerCase().localeCompare((a.title || a.specName || '').toLowerCase());
+        case 'priority-desc': {
+          const scoreA = priorityOrder[a.priority || ''] || 0;
+          const scoreB = priorityOrder[b.priority || ''] || 0;
+          return scoreB - scoreA;
+        }
+        case 'priority-asc': {
+          const scoreA = priorityOrder[a.priority || ''] || 0;
+          const scoreB = priorityOrder[b.priority || ''] || 0;
+          return scoreA - scoreB;
+        }
+        case 'id-desc':
+        default:
+          return (b.specNumber || 0) - (a.specNumber || 0);
+      }
+    });
+  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants, showArchived, sortBy]);
 
   const RowComponent = useCallback(
     (rowProps: { index: number; style: CSSProperties }) => {
@@ -413,6 +457,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   useEffect(() => {
     storage.set(STORAGE_KEYS.SIDEBAR_FILTER_TAGS, tagFilter);
   }, [tagFilter]);
+
+  useEffect(() => {
+    storage.set(STORAGE_KEYS.SIDEBAR_SORT, sortBy);
+  }, [sortBy]);
 
   useEffect(() => {
     storage.set(STORAGE_KEYS.SHOW_ARCHIVED, showArchived);
@@ -528,6 +576,53 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 >
                   {viewMode === 'list' ? <ListTree className="h-4 w-4" /> : <AlignJustify className="h-4 w-4" />}
                 </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant={sortBy !== 'id-desc' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      title={t('specsNavSidebar.sort.label') ?? 'Sort'}
+                    >
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuLabel>{t('specsNavSidebar.sort.label') ?? 'Sort By'}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSortBy('id-desc')}>
+                      {t('specsNavSidebar.sort.newest') ?? 'Newest First'}
+                      {sortBy === 'id-desc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('id-asc')}>
+                      {t('specsNavSidebar.sort.oldest') ?? 'Oldest First'}
+                      {sortBy === 'id-asc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('updated-desc')}>
+                      {t('specsNavSidebar.sort.updated') ?? 'Recently Updated'}
+                      {sortBy === 'updated-desc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSortBy('title-asc')}>
+                      {t('specsNavSidebar.sort.titleAsc') ?? 'Title (A-Z)'}
+                      {sortBy === 'title-asc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('title-desc')}>
+                      {t('specsNavSidebar.sort.titleDesc') ?? 'Title (Z-A)'}
+                      {sortBy === 'title-desc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSortBy('priority-desc')}>
+                      {t('specsNavSidebar.sort.priorityHigh') ?? 'Priority (High-Low)'}
+                      {sortBy === 'priority-desc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('priority-asc')}>
+                      {t('specsNavSidebar.sort.priorityLow') ?? 'Priority (Low-High)'}
+                      {sortBy === 'priority-asc' && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <Popover open={showFilters} onOpenChange={setShowFilters}>
                   <PopoverTrigger asChild>

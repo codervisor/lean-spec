@@ -1,5 +1,6 @@
 //! Utility functions and structures
 
+mod content_ops;
 mod dependency_graph;
 mod hash;
 mod insights;
@@ -11,6 +12,11 @@ mod stats;
 mod template_loader;
 mod token_counter;
 
+pub use content_ops::{
+    apply_checklist_toggles, apply_replacements, apply_section_updates, rebuild_content,
+    split_frontmatter, ChecklistToggle, ChecklistToggleResult, MatchMode, Replacement,
+    ReplacementResult, SectionMode, SectionUpdate,
+};
 pub use dependency_graph::{CompleteDependencyGraph, DependencyGraph, ImpactRadius};
 pub use hash::hash_content;
 pub use insights::Insights;

@@ -165,6 +165,82 @@ async fn test_update_no_changes() {
 }
 
 #[tokio::test]
+async fn test_update_replacements() {
+    let temp = create_test_project(&[("001-feature-a", "planned", None)]);
+    set_specs_dir_env(&temp);
+
+    let result = call_tool(
+        "update",
+        json!({
+            "specPath": "001",
+            "replacements": [{
+                "oldString": "Test spec content.",
+                "newString": "Updated spec content."
+            }]
+        }),
+    )
+    .await;
+    assert!(result.is_ok());
+
+    let content =
+        std::fs::read_to_string(temp.path().join("specs/001-feature-a/README.md")).unwrap();
+    assert!(content.contains("Updated spec content."));
+}
+
+#[tokio::test]
+async fn test_update_section_update() {
+    let temp = create_test_project(&[("001-feature-a", "planned", None)]);
+    set_specs_dir_env(&temp);
+
+    let result = call_tool(
+        "update",
+        json!({
+            "specPath": "001",
+            "sectionUpdates": [{
+                "section": "Overview",
+                "content": "Replaced overview content.",
+                "mode": "replace"
+            }]
+        }),
+    )
+    .await;
+    assert!(result.is_ok());
+
+    let content =
+        std::fs::read_to_string(temp.path().join("specs/001-feature-a/README.md")).unwrap();
+    assert!(content.contains("Replaced overview content."));
+}
+
+#[tokio::test]
+async fn test_update_checklist_toggles() {
+    let temp = create_test_project(&[("001-feature-a", "planned", None)]);
+    set_specs_dir_env(&temp);
+
+    let path = temp.path().join("specs/001-feature-a/README.md");
+    let mut content = std::fs::read_to_string(&path).unwrap();
+    content.push_str("\n- [ ] Task 1\n");
+    std::fs::write(&path, content).unwrap();
+
+    let result = call_tool(
+        "update",
+        json!({
+            "specPath": "001",
+            "checklistToggles": [{
+                "itemText": "Task 1",
+                "checked": true
+            }]
+        }),
+    )
+    .await;
+    assert!(result.is_ok());
+    let output = result.unwrap();
+    assert!(output.contains("Checklist updates:"));
+
+    let updated = std::fs::read_to_string(&path).unwrap();
+    assert!(updated.contains("- [x] Task 1"));
+}
+
+#[tokio::test]
 async fn test_update_duplicate_tag_ignored() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);
