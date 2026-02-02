@@ -79,21 +79,27 @@ async function syncRustCargoVersion(targetVersion: string, dryRun: boolean): Pro
     }
 
     const cargoContent = await fs.readFile(RUST_CARGO_TOML, 'utf-8');
-    const versionRegex = /(\[workspace\.package\]\s+version\s*=\s*)"([^"]+)"/;
-    const match = cargoContent.match(versionRegex);
+    // Match [workspace.package] section, then find version = "..." anywhere within it
+    // Uses multiline mode to handle version not being immediately after section header
+    const versionReadRegex = /^\[workspace\.package\][^]*?^version\s*=\s*"([^"]+)"/m;
+    const match = cargoContent.match(versionReadRegex);
 
     if (!match) {
       return { updated: false, error: 'Could not find [workspace.package] version' };
     }
 
-    const currentVersion = match[2];
+    const currentVersion = match[1];
 
     if (currentVersion === targetVersion) {
       return { updated: false };
     }
 
     if (!dryRun) {
-      const updatedContent = cargoContent.replace(versionRegex, `$1"${targetVersion}"`);
+      // Replace using a pattern that preserves the structure
+      const updatedContent = cargoContent.replace(
+        /^(\[workspace\.package\][^]*?^version\s*=\s*")[^"]+(")/m,
+        `$1${targetVersion}$2`
+      );
       await fs.writeFile(RUST_CARGO_TOML, updatedContent, 'utf-8');
     }
 
