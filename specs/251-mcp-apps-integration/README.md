@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-29
-priority: high
+priority: medium
 tags:
 - mcp
 - ui
@@ -10,9 +10,8 @@ tags:
 - interactive
 - desktop
 created_at: 2026-01-29T02:59:43.652456205Z
-updated_at: 2026-01-29T02:59:43.652456205Z
+updated_at: 2026-02-02T08:12:51.476286256Z
 ---
-
 # MCP Apps Integration for Interactive Spec UI
 
 ## Overview

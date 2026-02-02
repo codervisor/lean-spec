@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-28
-priority: high
+priority: medium
 tags:
 - ui
 - feature
@@ -9,9 +9,8 @@ tags:
 - code-viewing
 - dx
 created_at: 2026-01-28T11:25:25.130174Z
-updated_at: 2026-01-28T11:25:25.130174Z
+updated_at: 2026-02-02T08:12:42.745626942Z
 ---
-
 # Codebase File Viewing in @leanspec/ui
 
 ## Overview

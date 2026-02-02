@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2025-12-18
-priority: high
+priority: medium
 tags:
 - workflow
 - automation
@@ -17,9 +17,8 @@ depends_on:
 - 168-leanspec-orchestration-platform
 - 245-session-orchestration-workflows
 created_at: 2025-12-18T15:25:08.395Z
-updated_at: 2026-01-28T09:05:00.846369Z
+updated_at: 2026-02-02T08:13:45.803546755Z
 ---
-
 # Knowledge Backflow in SDD Workflow
 
 > **Status**: 🗓️ Planned · **Priority**: High · **Created**: 2025-12-18 · **Tags**: workflow, automation, documentation, ai-agents, quality, sdd-lifecycle

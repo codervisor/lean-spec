@@ -1,16 +1,15 @@
 ---
 status: planned
 created: 2026-01-28
-priority: high
+priority: medium
 tags:
 - ui
 - daemon
 - ux
 - cli
 created_at: 2026-01-28T12:01:41.642256Z
-updated_at: 2026-01-28T12:01:41.642256Z
+updated_at: 2026-02-02T08:12:48.462789169Z
 ---
-
 # UI Daemon Mode: Run @leanspec/ui in Background
 
 ## Overview

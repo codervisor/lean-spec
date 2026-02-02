@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { CheckCircle2, Clock, Loader2, PlayCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { useSpecs } from '../../contexts';
+import { statusConfig } from '../badge-config';
 
-const STATUS_OPTIONS: Array<{ value: NonNullable<Spec['status']>; labelKey: `status.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [
-  { value: 'planned', labelKey: 'status.planned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', Icon: Clock },
-  { value: 'in-progress', labelKey: 'status.inProgress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', Icon: PlayCircle },
-  { value: 'complete', labelKey: 'status.complete', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', Icon: CheckCircle2 },
-];
+const STATUS_OPTIONS = Object.entries(statusConfig)
+  .map(([value, config]) => ({
+    value: value as NonNullable<Spec['status']>,
+    labelKey: config.labelKey,
+    className: config.className,
+    Icon: config.icon,
+  }));
 
 interface StatusEditorProps {
   specName: string;

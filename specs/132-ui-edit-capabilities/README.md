@@ -1,16 +1,15 @@
 ---
-status: planned
-created: '2025-11-28'
+status: archived
+created: 2025-11-28
+priority: low
 tags:
-  - ui
-  - feature
-  - dx
-  - crud
-priority: medium
-created_at: '2025-11-28T03:30:16.617Z'
-updated_at: '2025-11-28T03:30:16.691Z'
+- ui
+- feature
+- dx
+- crud
+created_at: 2025-11-28T03:30:16.617Z
+updated_at: 2026-02-02T08:18:11.068513807Z
 ---
-
 # UI Edit Capabilities
 
 > **Status**: 🗓️ Planned · **Priority**: Medium · **Created**: 2025-11-28 · **Tags**: ui, feature, dx, crud

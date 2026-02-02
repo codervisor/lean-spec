@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-02-02
-priority: high
+priority: medium
 tags:
 - documentation
 - docs-site
@@ -11,9 +11,8 @@ tags:
 depends_on:
 - 278-docs-site-orchestration-pivot
 created_at: 2026-02-02T05:25:24.062029495Z
-updated_at: 2026-02-02T05:25:37.085531575Z
+updated_at: 2026-02-02T08:13:26.884956301Z
 ---
-
 # End-to-End AI Coding Platform Comparison
 
 ## Overview

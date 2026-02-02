@@ -1,15 +1,14 @@
 ---
 status: planned
 created: 2026-02-01
-priority: high
+priority: medium
 tags:
 - validation
 - ux
 - workflow
 created_at: 2026-02-01T07:36:06.783810Z
-updated_at: 2026-02-01T07:36:06.783810Z
+updated_at: 2026-02-02T08:12:54.676887766Z
 ---
-
 # Flexible Spec Completion Validation
 
 ## Overview

@@ -1,17 +1,17 @@
 ---
 status: planned
-created: '2025-12-10'
+created: 2025-12-10
+priority: low
 tags:
-  - ui
-  - desktop
-  - ux
-  - feature
-  - multi-tasking
-  - productivity
-priority: medium
-created_at: '2025-12-10T09:52:01.202Z'
+- ui
+- desktop
+- ux
+- feature
+- multi-tasking
+- productivity
+created_at: 2025-12-10T09:52:01.202Z
+updated_at: 2026-02-02T08:14:17.495078366Z
 ---
-
 # Advanced Multi-Tasking UI Features for UI and Desktop
 
 > **Status**: 📅 Planned · **Priority**: Medium · **Created**: 2025-12-10

@@ -1,5 +1,7 @@
 import { LightweightSpec } from '../types/specs';
 
+export type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'title-desc' | 'priority-desc' | 'priority-asc';
+
 export interface HierarchyNode extends LightweightSpec {
   childNodes: HierarchyNode[];
 }
@@ -8,9 +10,10 @@ export interface HierarchyNode extends LightweightSpec {
  * Builds a hierarchical tree structure from a flat list of specs.
  *
  * @param specs Flat list of specs
+ * @param sortBy Sort option for the hierarchy nodes (default: 'id-desc')
  * @returns Array of root nodes, each containing their children recursively
  */
-export function buildHierarchy(specs: LightweightSpec[]): HierarchyNode[] {
+export function buildHierarchy(specs: LightweightSpec[], sortBy: SortOption = 'id-desc'): HierarchyNode[] {
   const nodeMap = new Map<string, HierarchyNode>();
 
   // Initialize nodes
@@ -40,11 +43,43 @@ export function buildHierarchy(specs: LightweightSpec[]): HierarchyNode[] {
     }
   });
 
-  // Sort by spec number or name (descending, newest first - same as flat list)
+  // Priority order map
+  const priorityOrder: Record<string, number> = {
+    'critical': 4,
+    'high': 3,
+    'medium': 2,
+    'low': 1,
+  };
+
+  // Sort nodes recursively based on sortBy option
   const sortNodes = (nodes: HierarchyNode[]) => {
     nodes.sort((a, b) => {
-      if (a.specNumber && b.specNumber) return b.specNumber - a.specNumber;
-      return b.specName.localeCompare(a.specName);
+      switch (sortBy) {
+        case 'id-asc':
+          return (a.specNumber || 0) - (b.specNumber || 0);
+        case 'updated-desc': {
+          if (!a.updatedAt) return 1;
+          if (!b.updatedAt) return -1;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        }
+        case 'title-asc':
+          return (a.title || a.specName || '').toLowerCase().localeCompare((b.title || b.specName || '').toLowerCase());
+        case 'title-desc':
+          return (b.title || b.specName || '').toLowerCase().localeCompare((a.title || a.specName || '').toLowerCase());
+        case 'priority-desc': {
+          const scoreA = priorityOrder[a.priority || ''] || 0;
+          const scoreB = priorityOrder[b.priority || ''] || 0;
+          return scoreB - scoreA;
+        }
+        case 'priority-asc': {
+          const scoreA = priorityOrder[a.priority || ''] || 0;
+          const scoreB = priorityOrder[b.priority || ''] || 0;
+          return scoreA - scoreB;
+        }
+        case 'id-desc':
+        default:
+          return (b.specNumber || 0) - (a.specNumber || 0);
+      }
     });
     nodes.forEach(node => sortNodes(node.childNodes));
   };

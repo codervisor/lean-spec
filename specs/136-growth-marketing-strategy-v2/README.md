@@ -1,14 +1,14 @@
 ---
 status: planned
 created: 2025-12-04
-priority: high
+priority: low
 tags:
 - marketing
 - growth
 - strategy
 - community
 created_at: 2025-12-04T01:43:22.417Z
-updated_at: 2026-01-16T07:26:36.670816Z
+updated_at: 2026-02-02T08:14:26.549467035Z
 ---
 # LeanSpec Growth Marketing Strategy v2
 

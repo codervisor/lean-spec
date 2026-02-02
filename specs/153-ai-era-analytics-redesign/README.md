@@ -1,17 +1,17 @@
 ---
 status: planned
-created: '2025-12-05'
+created: 2025-12-05
+priority: low
 tags:
-  - analytics
-  - velocity
-  - ux
-  - mcp
-  - cli
-  - v0.3.0
-priority: high
-created_at: '2025-12-05T07:44:57.547Z'
+- analytics
+- velocity
+- ux
+- mcp
+- cli
+- v0.3.0
+created_at: 2025-12-05T07:44:57.547Z
+updated_at: 2026-02-02T08:14:22.688657002Z
 ---
-
 # AI-Era Analytics & Velocity Redesign
 
 > **Status**: 📅 Planned · **Priority**: High · **Created**: 2025-12-05

@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-12
-priority: high
+priority: medium
 tags:
 - search
 - embeddings
@@ -17,9 +17,8 @@ depends_on:
 - 147-json-config-format
 - 184-ui-packages-consolidation
 created_at: 2026-01-12T13:35:04.956817Z
-updated_at: 2026-01-12T13:35:11.301764Z
+updated_at: 2026-02-02T08:13:38.660211570Z
 ---
-
 # Embeddings-Based Search with PgVector Storage
 
 ## Problem & Motivation

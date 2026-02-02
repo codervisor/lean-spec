@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-02-02
-priority: high
+priority: medium
 tags:
 - documentation
 - docs-site
@@ -14,9 +14,8 @@ depends_on:
 - 221-ai-orchestration-integration
 - 250-structured-spec-hierarchy-management
 created_at: 2026-02-02T05:17:36.940073469Z
-updated_at: 2026-02-02T05:17:53.068476867Z
+updated_at: 2026-02-02T08:13:00.113506700Z
 ---
-
 # Documentation Site Update: AI Orchestration Platform Pivot
 
 ## Overview

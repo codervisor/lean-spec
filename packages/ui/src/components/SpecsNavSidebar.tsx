@@ -861,6 +861,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   onSpecClick={handleSpecClick}
                   selectedSpecId={activeSpecActualId}
                   height={listHeight}
+                  sortBy={sortBy as 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'title-desc' | 'priority-desc' | 'priority-asc'}
                 />
               </div>
             ) : (

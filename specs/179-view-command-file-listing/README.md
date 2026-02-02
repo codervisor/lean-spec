@@ -1,15 +1,15 @@
 ---
 status: planned
-created: '2025-12-18'
+created: 2025-12-18
+priority: low
 tags:
-  - cli
-  - mcp
-  - ux
-  - enhancement
-priority: medium
-created_at: '2025-12-18T08:11:21.446795738+00:00'
+- cli
+- mcp
+- ux
+- enhancement
+created_at: 2025-12-18T08:11:21.446795738Z
+updated_at: 2026-02-02T08:14:11.887481645Z
 ---
-
 # Add File Listing to View Command Output
 
 > **Status**: 🗓️ Planned · **Created**: 2025-12-18 · **Priority**: Medium · **Tags**: cli, mcp, ux, enhancement

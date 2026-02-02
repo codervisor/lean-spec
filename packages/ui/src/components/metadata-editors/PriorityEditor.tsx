@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { AlertCircle, ArrowDown, ArrowUp, Loader2, Minus } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { useSpecs } from '../../contexts';
+import { priorityConfig } from '../badge-config';
 
-const PRIORITY_OPTIONS: Array<{ value: NonNullable<Spec['priority']>; labelKey: `priority.${string}`; className: string; Icon: React.ComponentType<{ className?: string }> }> = [
-  { value: 'critical', labelKey: 'priority.critical', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', Icon: AlertCircle },
-  { value: 'high', labelKey: 'priority.high', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', Icon: ArrowUp },
-  { value: 'medium', labelKey: 'priority.medium', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', Icon: Minus },
-  { value: 'low', labelKey: 'priority.low', className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400', Icon: ArrowDown },
-];
+const PRIORITY_OPTIONS = Object.entries(priorityConfig).map(([value, config]) => ({
+  value: value as NonNullable<Spec['priority']>,
+  labelKey: config.labelKey,
+  className: config.className,
+  Icon: config.icon,
+}));
 
 interface PriorityEditorProps {
   specName: string;

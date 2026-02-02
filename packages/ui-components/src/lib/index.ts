@@ -11,4 +11,4 @@ export {
   getContrastColor,
   getInitials,
 } from './color-utils';
-export { buildHierarchy, type HierarchyNode } from './hierarchy';
+export { buildHierarchy, type HierarchyNode, type SortOption } from './hierarchy';

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { StatusBadge } from '../spec/status-badge';
 import { PriorityBadge } from '../spec/priority-badge';
 import type { LightweightSpec } from '@/types/specs';
-import { buildHierarchy, type HierarchyNode } from '@/lib/hierarchy';
+import { buildHierarchy, type HierarchyNode, type SortOption } from '@/lib/hierarchy';
 import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 
 export interface HierarchyTreeProps {
@@ -20,6 +20,8 @@ export interface HierarchyTreeProps {
   height?: number;
   /** Width of the list implementation */
   width?: number | string;
+  /** Sort option for the hierarchy (default: 'id-desc') */
+  sortBy?: SortOption;
 }
 
 interface FlatNode {
@@ -54,13 +56,13 @@ function getAllNodeIds(nodes: HierarchyNode[]): Set<string> {
   return ids;
 }
 
-export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, height = 600, width = "100%" }: HierarchyTreeProps) {
+export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, height = 600, width = "100%", sortBy = 'id-desc' }: HierarchyTreeProps) {
   const listRef = useRef<ListImperativeAPI>(null);
 
   // Memoize tree construction
   const treeRoots = useMemo(() => {
-    return buildHierarchy(specs);
-  }, [specs]);
+    return buildHierarchy(specs, sortBy);
+  }, [specs, sortBy]);
 
   // State for expanded nodes
   // Default to all expanded for initial view
