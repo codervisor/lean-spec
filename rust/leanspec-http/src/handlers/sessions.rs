@@ -781,12 +781,13 @@ pub async fn set_default_runner(
         ));
     }
 
-    let registry = RunnerRegistry::load(PathBuf::from(&req.project_path).as_path()).map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let registry =
+        RunnerRegistry::load(PathBuf::from(&req.project_path).as_path()).map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
 
     if registry.get(&req.runner_id).is_none() {
         return Err((
@@ -929,14 +930,18 @@ fn resolve_scope_path(project_path: &str, scope: RunnerScope) -> PathBuf {
     }
 }
 
-fn load_or_default_runners_file(path: &PathBuf) -> leanspec_core::CoreResult<leanspec_core::sessions::runner::RunnersFile> {
+fn load_or_default_runners_file(
+    path: &PathBuf,
+) -> leanspec_core::CoreResult<leanspec_core::sessions::runner::RunnersFile> {
     match read_runners_file(path)? {
         Some(file) => Ok(file),
         None => Ok(default_runners_file()),
     }
 }
 
-fn load_runner_sources(project_path: &str) -> leanspec_core::CoreResult<(HashSet<String>, HashSet<String>)> {
+fn load_runner_sources(
+    project_path: &str,
+) -> leanspec_core::CoreResult<(HashSet<String>, HashSet<String>)> {
     let global = read_runners_file(&global_runners_path())?
         .map(|file| file.runners.keys().cloned().collect::<HashSet<_>>())
         .unwrap_or_default();
