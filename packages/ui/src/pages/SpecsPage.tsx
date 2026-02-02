@@ -324,6 +324,27 @@ export function SpecsPage() {
     }
   }, [isMachineAvailable, machineModeEnabled]);
 
+  const handlePriorityChange = useCallback(async (spec: Spec, newPriority: string) => {
+    if (machineModeEnabled && !isMachineAvailable) {
+      return;
+    }
+    const oldPriority = spec.priority;
+    // Optimistic update
+    setSpecs(prev => prev.map(s =>
+      s.specName === spec.specName ? { ...s, priority: newPriority } : s
+    ));
+
+    try {
+      await api.updateSpec(spec.specName, { priority: newPriority, expectedContentHash: spec.contentHash });
+    } catch (err) {
+      // Revert on error
+      setSpecs(prev => prev.map(s =>
+        s.specName === spec.specName ? { ...s, priority: oldPriority } : s
+      ));
+      console.error('Failed to update priority:', err);
+    }
+  }, [isMachineAvailable, machineModeEnabled]);
+
   // Get unique values for filters
   const uniqueStatuses = useMemo(() => {
     const statuses = specs.map((s) => s.status).filter((s): s is SpecStatus => Boolean(s));
@@ -615,10 +636,13 @@ export function SpecsPage() {
             sortBy={sortBy}
             onTokenClick={handleTokenClick}
             onValidationClick={handleValidationClick}
+            onStatusChange={handleStatusChange}
+            onPriorityChange={handlePriorityChange}
           />) : (
           <BoardView
             specs={filteredSpecs}
             onStatusChange={handleStatusChange}
+            onPriorityChange={handlePriorityChange}
             canEdit={!machineModeEnabled || isMachineAvailable}
             basePath={basePath}
             groupByParent={groupByParent}

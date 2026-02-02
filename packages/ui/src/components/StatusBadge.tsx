@@ -1,48 +1,21 @@
-import { Clock, PlayCircle, CheckCircle2, Archive } from 'lucide-react';
-import { Badge } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { Badge, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
+import { statusConfig } from './badge-config';
 
 interface StatusBadgeProps {
   status: string;
   className?: string;
   iconOnly?: boolean;
+  editable?: boolean;
+  onChange?: (status: string) => void;
 }
 
-const statusConfig: Record<string, { icon: typeof Clock; labelKey: `status.${string}`; className: string }> = {
-  'planned': {
-    icon: Clock,
-    labelKey: 'status.planned',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-  },
-  'in-progress': {
-    icon: PlayCircle,
-    labelKey: 'status.inProgress',
-    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-  },
-  'complete': {
-    icon: CheckCircle2,
-    labelKey: 'status.complete',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-  },
-  'archived': {
-    icon: Archive,
-    labelKey: 'status.archived',
-    className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-  }
-};
-
-export function getStatusLabel(status: string, t: (key: string) => string) {
-  const config = statusConfig[status] || statusConfig['planned'];
-  return t(config.labelKey);
-}
-
-export function StatusBadge({ status, className, iconOnly = false }: StatusBadgeProps) {
+export function StatusBadge({ status, className, iconOnly = false, editable = false, onChange }: StatusBadgeProps) {
   const config = statusConfig[status] || statusConfig['planned'];
   const Icon = config.icon;
   const { t } = useTranslation('common');
 
-  return (
+  const content = (
     <Badge
       variant="outline"
       className={cn(
@@ -50,10 +23,41 @@ export function StatusBadge({ status, className, iconOnly = false }: StatusBadge
         !iconOnly && 'gap-1.5',
         config.className,
         className,
+        editable && "cursor-pointer hover:opacity-80 transition-opacity"
       )}
     >
       <Icon className="h-3.5 w-3.5" />
       {!iconOnly && t(config.labelKey)}
     </Badge>
+  );
+
+  if (!editable || !onChange) {
+    return content;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        {content}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+        {Object.entries(statusConfig).map(([key, config]) => {
+          const ItemIcon = config.icon;
+          return (
+            <DropdownMenuItem
+              key={key}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(key);
+              }}
+              className="gap-2"
+            >
+              <ItemIcon className={cn("h-3.5 w-3.5", key === status ? "opacity-100" : "opacity-50")} />
+              {t(config.labelKey)}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -72,9 +72,6 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
     return flattenTree(treeRoots, expandedIds);
   }, [treeRoots, expandedIds]);
 
-  // Track scroll sync
-  const prevSelectedSpecId = useRef<string | undefined>(undefined);
-
   // Initialization: Expand all recursive nodes on mount or when specs change drastically
   useEffect(() => {
     if (!hasInitialized.current && treeRoots.length > 0) {
@@ -124,13 +121,11 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
   // Effect to scroll once flatData is ready and contains our item
   useEffect(() => {
     if (!selectedSpecId || !listRef.current) return;
-    if (prevSelectedSpecId.current === selectedSpecId) return;
 
     const index = flatData.findIndex(item => (item.node.id || item.node.specName) === selectedSpecId);
 
     if (index >= 0) {
       listRef.current.scrollToRow({ index, align: "smart" });
-      prevSelectedSpecId.current = selectedSpecId;
     }
   }, [selectedSpecId, flatData]);
 

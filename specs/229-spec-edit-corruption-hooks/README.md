@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-01-20
-priority: high
+priority: medium
 tags:
 - quality
 - validation
@@ -13,9 +13,8 @@ depends_on:
 - 231-structural-corruption-auto-fix
 - 232-llm-semantic-spec-validation
 created_at: 2026-01-20T03:20:55.050856355Z
-updated_at: 2026-01-20T03:20:55.053751091Z
+updated_at: 2026-02-02T02:58:17.439500084Z
 ---
-
 # Spec Edit Corruption Detection & Auto-Fix (Orchestration)
 
 > **Status**: Planned · **Priority**: High · **Created**: 2026-01-20

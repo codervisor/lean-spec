@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, FolderTree } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@radix-ui/react-collapsible';
 import { cn, buildHierarchy, type HierarchyNode as UiHierarchyNode } from '@leanspec/ui-components';
-import type { Spec, HierarchyNode } from '../../types/api';
+import type { Spec, HierarchyNode, SpecStatus } from '../../types/api';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
 import { TokenBadge } from '../TokenBadge';
@@ -22,6 +22,8 @@ interface HierarchyListProps {
   sortBy?: SortOption;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
+  onStatusChange?: (spec: Spec, status: SpecStatus) => void;
+  onPriorityChange?: (spec: Spec, priority: string) => void;
 }
 
 // Sort helper function for hierarchy nodes
@@ -85,13 +87,24 @@ function sortNodes(nodes: TreeNode[], sortBy: SortOption): TreeNode[] {
 }
 
 // Memoized recursive item component to prevent cascade re-renders
-const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, depth = 0, sortBy = 'id-desc', onTokenClick, onValidationClick }: {
+const HierarchyListItem = memo(function HierarchyListItem({ 
+  node, 
+  basePath, 
+  depth = 0, 
+  sortBy = 'id-desc', 
+  onTokenClick, 
+  onValidationClick,
+  onNodeStatusChange,
+  onNodePriorityChange 
+}: {
   node: TreeNode;
   basePath: string;
   depth: number;
   sortBy?: SortOption;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
+  onNodeStatusChange?: (specName: string, status: string) => void;
+  onNodePriorityChange?: (specName: string, priority: string) => void;
 }) {
   // Only expand first level by default for better initial render performance
   const [isExpanded, setIsExpanded] = useState(depth < 1);
@@ -113,7 +126,7 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
           {/* Toggle */}
           <div
             className={cn(
-              "p-4 cursor-pointer text-muted-foreground hover:text-foreground h-full flex items-center",
+              "w-8 h-full px-2 py-5 cursor-pointer text-muted-foreground hover:text-foreground flex items-center",
               !hasChildren && "invisible pointer-events-none"
             )}
             onClick={toggleExpanded}
@@ -138,8 +151,20 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
                 <p className="text-sm text-muted-foreground truncate">{node.specName}</p>
               </div>
               <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
-                {node.status && <StatusBadge status={node.status} />}
-                {node.priority && <PriorityBadge priority={node.priority} />}
+                {node.status && (
+                  <StatusBadge 
+                    status={node.status} 
+                    editable={!!onNodeStatusChange}
+                    onChange={(status) => onNodeStatusChange?.(node.specName, status)}
+                  />
+                )}
+                {node.priority && (
+                  <PriorityBadge 
+                    priority={node.priority} 
+                    editable={!!onNodePriorityChange}
+                    onChange={(priority) => onNodePriorityChange?.(node.specName, priority)}
+                  />
+                )}
                 <TokenBadge
                   count={(node as HierarchyNode).tokenCount}
                   size="sm"
@@ -178,6 +203,8 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
                   sortBy={sortBy}
                   onTokenClick={onTokenClick}
                   onValidationClick={onValidationClick}
+                  onNodeStatusChange={onNodeStatusChange}
+                  onNodePriorityChange={onNodePriorityChange}
                 />
               ))}
             </div>
@@ -212,11 +239,39 @@ function filterHierarchy(nodes: TreeNode[], allowedIds: Set<string>): TreeNode[]
   return result;
 }
 
-export const HierarchyList = memo(function HierarchyList({ specs, hierarchy, basePath = '/projects', sortBy = 'id-desc', onTokenClick, onValidationClick }: HierarchyListProps) {
+export const HierarchyList = memo(function HierarchyList({ 
+  specs, 
+  hierarchy, 
+  basePath = '/projects', 
+  sortBy = 'id-desc', 
+  onTokenClick, 
+  onValidationClick,
+  onStatusChange,
+  onPriorityChange
+}: HierarchyListProps) {
   // Build a set of allowed spec IDs from the filtered specs
   const allowedSpecIds = useMemo(() => {
     return new Set(specs.map(s => s.specName));
   }, [specs]);
+
+  // Create a quick lookup map for specs to support callbacks
+  const specMap = useMemo(() => {
+    return new Map(specs.map(s => [s.specName, s]));
+  }, [specs]);
+
+  const handleNodeStatusChange = useCallback((specName: string, status: string) => {
+    const spec = specMap.get(specName);
+    if (spec && onStatusChange) {
+      onStatusChange(spec, status as SpecStatus);
+    }
+  }, [specMap, onStatusChange]);
+
+  const handleNodePriorityChange = useCallback((specName: string, priority: string) => {
+    const spec = specMap.get(specName);
+    if (spec && onPriorityChange) {
+      onPriorityChange(spec, priority);
+    }
+  }, [specMap, onPriorityChange]);
 
   // Use pre-built hierarchy from server if available, otherwise build client-side
   const roots = useMemo(() => {
@@ -248,6 +303,8 @@ export const HierarchyList = memo(function HierarchyList({ specs, hierarchy, bas
           sortBy={sortBy}
           onTokenClick={onTokenClick}
           onValidationClick={onValidationClick}
+          onNodeStatusChange={onStatusChange ? handleNodeStatusChange : undefined}
+          onNodePriorityChange={onPriorityChange ? handleNodePriorityChange : undefined}
         />
       ))}
     </div>

@@ -13,6 +13,7 @@ type SpecStatus = 'planned' | 'in-progress' | 'complete' | 'archived';
 interface BoardViewProps {
   specs: Spec[];
   onStatusChange: (spec: Spec, status: SpecStatus) => void;
+  onPriorityChange?: (spec: Spec, priority: string) => void;
   basePath?: string;
   canEdit?: boolean;
   groupByParent?: boolean;
@@ -69,6 +70,7 @@ interface SpecCardCompactProps {
   onDragEnd?: () => void;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
+  onPriorityChange?: (spec: Spec, priority: string) => void;
   // For umbrella specs
   childCount?: number;
   isExpanded?: boolean;
@@ -76,7 +78,7 @@ interface SpecCardCompactProps {
 }
 
 /** Compact card style used for both umbrella and independent specs */
-function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragStart, onDragEnd, onTokenClick, onValidationClick, childCount, isExpanded, onToggle }: SpecCardCompactProps) {
+function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragStart, onDragEnd, onTokenClick, onValidationClick, onPriorityChange, childCount, isExpanded, onToggle }: SpecCardCompactProps) {
   const isUmbrella = childCount !== undefined && onToggle !== undefined;
   return (
     <div
@@ -146,7 +148,12 @@ function SpecCardCompact({ spec, basePath, canEdit = true, draggingId, onDragSta
               );
             })()}
             {spec.priority && (
-              <PriorityBadge priority={spec.priority} className="h-5 text-[10px] px-1.5" />
+              <PriorityBadge 
+                priority={spec.priority} 
+                className="h-5 text-[10px] px-1.5" 
+                editable={!!onPriorityChange && canEdit}
+                onChange={(priority) => onPriorityChange?.(spec, priority)}
+              />
             )}
             {isUmbrella && (
               <span className="text-[10px] text-muted-foreground flex items-center gap-1" title={`${childCount} children`}>
@@ -195,6 +202,7 @@ interface BoardGroupProps {
   basePath: string;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
+  onPriorityChange?: (spec: Spec, priority: string) => void;
 }
 
 interface BoardGroupExtendedProps extends BoardGroupProps {
@@ -204,7 +212,7 @@ interface BoardGroupExtendedProps extends BoardGroupProps {
   onDragEnd?: () => void;
 }
 
-function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onValidationClick, canEdit, draggingId, onDragStart, onDragEnd }: BoardGroupExtendedProps) {
+function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onValidationClick, onPriorityChange, canEdit, draggingId, onDragStart, onDragEnd }: BoardGroupExtendedProps) {
   // Session storage key
   const storageKey = `leanspec_board_expanded_${parentName}`;
 
@@ -225,7 +233,7 @@ function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onV
     setIsExpanded(newState);
     try {
       sessionStorage.setItem(storageKey, String(newState));
-    } catch (e) {
+    } catch {
       // ignore
     }
   };
@@ -245,6 +253,7 @@ function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onV
           onDragEnd={onDragEnd}
           onTokenClick={onTokenClick}
           onValidationClick={onValidationClick}
+          onPriorityChange={onPriorityChange}
         />
       ) : (
         <div
@@ -271,6 +280,7 @@ function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onV
               onDragEnd={onDragEnd}
               onTokenClick={onTokenClick}
               onValidationClick={onValidationClick}
+              onPriorityChange={onPriorityChange}
             />
           ))}
         </div>
@@ -279,7 +289,7 @@ function BoardGroup({ parentName, specs, parentSpec, basePath, onTokenClick, onV
   );
 }
 
-export function BoardView({ specs, onStatusChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false, onTokenClick, onValidationClick }: BoardViewProps) {
+export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = '/projects', canEdit = true, groupByParent = false, showArchived = false, onTokenClick, onValidationClick }: BoardViewProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<SpecStatus | null>(null);
   const { t } = useTranslation('common');
@@ -423,7 +433,13 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
         {/* Bottom: Priority & Stats */}
         <div className="flex items-center justify-between gap-2 mt-auto">
           {spec.priority && (
-            <PriorityBadge priority={spec.priority} className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5 scale-90 origin-left" : "h-6 px-2.5")} iconOnly={isChild} />
+            <PriorityBadge 
+                priority={spec.priority} 
+                className={cn("rounded-md", isChild ? "h-5 text-[10px] px-1.5 scale-90 origin-left" : "h-6 px-2.5")} 
+                iconOnly={isChild} 
+                editable={!!onPriorityChange && canEdit}
+                onChange={(priority) => onPriorityChange?.(spec, priority)}
+            />
           )}
 
           <div className="flex items-center gap-1.5 justify-end ml-auto">
@@ -508,6 +524,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
             onDragEnd={handleDragEnd}
             onTokenClick={onTokenClick}
             onValidationClick={onValidationClick}
+            onPriorityChange={onPriorityChange}
           />
         ))}
 
@@ -530,6 +547,7 @@ export function BoardView({ specs, onStatusChange, basePath = '/projects', canEd
               onDragEnd={handleDragEnd}
               onTokenClick={onTokenClick}
               onValidationClick={onValidationClick}
+              onPriorityChange={onPriorityChange}
             />
           );
         })}

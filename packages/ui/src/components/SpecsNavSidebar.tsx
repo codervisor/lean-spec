@@ -29,8 +29,9 @@ import {
   List,
   type ListImperativeAPI,
 } from 'react-window';
-import { StatusBadge, getStatusLabel } from './StatusBadge';
-import { PriorityBadge, getPriorityLabel } from './PriorityBadge';
+import { StatusBadge } from './StatusBadge';
+import { PriorityBadge } from './PriorityBadge';
+import { getStatusLabel, getPriorityLabel } from './badge-config';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 import { api } from '../lib/api';
 import type { Spec } from '../types/api';
