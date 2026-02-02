@@ -144,6 +144,7 @@ pub fn apply_checklist_toggles(
 ) -> Result<(String, Vec<ChecklistToggleResult>), String> {
     let mut lines: Vec<String> = body.lines().map(|l| l.to_string()).collect();
     let mut results = Vec::new();
+    let checkbox_re = Regex::new(r"- \[[ xX]\]").map_err(|e| e.to_string())?;
 
     for toggle in toggles {
         let target = toggle.item_text.trim().to_lowercase();
@@ -159,9 +160,7 @@ pub fn apply_checklist_toggles(
             .ok_or_else(|| format!("Checklist item not found: {}", toggle.item_text))?;
 
         let line = lines[index].clone();
-        let updated = Regex::new(r"- \[[ xX]\]")
-            .map_err(|e| e.to_string())?
-            .replace(&line, if toggle.checked { "- [x]" } else { "- [ ]" });
+        let updated = checkbox_re.replace(&line, if toggle.checked { "- [x]" } else { "- [ ]" });
         lines[index] = updated.to_string();
 
         results.push(ChecklistToggleResult {
