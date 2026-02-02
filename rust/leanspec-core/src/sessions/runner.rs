@@ -287,7 +287,7 @@ fn interpolate_env(value: &str) -> CoreResult<String> {
         if c == '$' && matches!(chars.peek(), Some('{')) {
             chars.next();
             let mut var_name = String::new();
-            while let Some(next) = chars.next() {
+            for next in chars.by_ref() {
                 if next == '}' {
                     break;
                 }

@@ -8,6 +8,7 @@ pub mod deps;
 pub mod link;
 pub mod list;
 pub mod rel;
+pub mod runner;
 pub mod search;
 pub mod session;
 pub mod stats;
@@ -16,7 +17,6 @@ pub mod unlink;
 pub mod update;
 pub mod validate;
 pub mod view;
-pub mod runner;
 
 // New commands
 pub mod analyze;
