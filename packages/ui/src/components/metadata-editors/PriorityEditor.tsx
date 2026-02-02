@@ -69,7 +69,7 @@ export function PriorityEditor({
       >
         <SelectTrigger
           className={cn(
-            'h-7 w-fit min-w-[100px] border-0 px-2 text-xs font-medium justify-start',
+            'h-7 w-fit min-w-0 sm:min-w-[100px] border-0 px-2 text-xs font-medium justify-center sm:justify-start',
             option.className,
             className,
             updating && 'opacity-70'
@@ -79,7 +79,7 @@ export function PriorityEditor({
           <div className="flex items-center gap-1.5">
             {updating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <option.Icon className="h-3.5 w-3.5" />}
             <SelectValue placeholder={t('specsPage.filters.priority')}>
-              {t(option.labelKey)}
+              <span className="hidden sm:inline">{t(option.labelKey)}</span>
             </SelectValue>
           </div>
         </SelectTrigger>

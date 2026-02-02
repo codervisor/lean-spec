@@ -6,11 +6,12 @@ interface PriorityBadgeProps {
   priority: string;
   className?: string;
   iconOnly?: boolean;
+  responsive?: boolean;
   editable?: boolean;
   onChange?: (priority: string) => void;
 }
 
-export function PriorityBadge({ priority, className, iconOnly = false, editable = false, onChange }: PriorityBadgeProps) {
+export function PriorityBadge({ priority, className, iconOnly = false, responsive = true, editable = false, onChange }: PriorityBadgeProps) {
   const config = priorityConfig[priority] || priorityConfig['medium'];
   const Icon = config.icon;
   const { t } = useTranslation('common');
@@ -27,7 +28,13 @@ export function PriorityBadge({ priority, className, iconOnly = false, editable 
       )}
     >
       <Icon className="h-3.5 w-3.5" />
-      {!iconOnly && t(config.labelKey)}
+      {!iconOnly && (
+        responsive ? (
+          <span className="hidden sm:inline">{t(config.labelKey)}</span>
+        ) : (
+          t(config.labelKey)
+        )
+      )}
     </Badge>
   );
 
