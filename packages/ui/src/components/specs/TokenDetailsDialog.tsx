@@ -2,18 +2,36 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { formatFullTokenCount, resolveTokenStatus, TOKEN_THRESHOLDS } from '../../lib/token-utils';
 import { TokenProgressBar } from '../TokenProgressBar';
 import type { SpecTokenResponse } from '../../types/api';
-import { FileText, Code, AlignLeft, ListChecks, FileCode2, Heading2 } from 'lucide-react';
+import { FileText, Code, AlignLeft, ListChecks, FileCode2, Heading2, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface TokenDetailsDialogProps {
   open: boolean;
   onClose: () => void;
   specName: string;
-  data: SpecTokenResponse;
+  data: SpecTokenResponse | null;
+  loading?: boolean;
 }
 
-export function TokenDetailsDialog({ open, onClose, specName, data }: TokenDetailsDialogProps) {
+export function TokenDetailsDialog({ open, onClose, specName, data, loading }: TokenDetailsDialogProps) {
   const { t } = useTranslation('common');
+
+  if (loading || !data) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('actions.loading')}</DialogTitle>
+            <DialogDescription>{t('tokens.detailedBreakdown')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const { tokenCount, tokenBreakdown } = data;
   const status = resolveTokenStatus(tokenCount);
   const formattedCount = formatFullTokenCount(tokenCount);

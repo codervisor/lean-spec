@@ -12,8 +12,7 @@ import {
   // Terminal,
   CornerDownRight,
   ChevronRight,
-  Link2,
-  Loader2
+  Link2
 } from 'lucide-react';
 import { useSpecDetailLayoutContext } from '../components/SpecDetailLayout.context';
 import {
@@ -725,7 +724,7 @@ export function SpecDetailPage() {
           onUpdated={() => void loadSpec()}
         />
       )}
-      {spec?.specName && tokenDialogOpen && tokenDialogData && (
+      {spec?.specName && tokenDialogOpen && (
         <TokenDetailsDialog
           open={tokenDialogOpen}
           onClose={() => {
@@ -734,22 +733,10 @@ export function SpecDetailPage() {
           }}
           specName={spec.specName}
           data={tokenDialogData}
+          loading={tokenDialogLoading}
         />
       )}
-      {spec?.specName && tokenDialogOpen && tokenDialogLoading && !tokenDialogData && (
-        <Dialog open={tokenDialogOpen} onOpenChange={() => setTokenDialogOpen(false)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('actions.loading')}</DialogTitle>
-              <DialogDescription>{t('tokens.detailedBreakdown')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-      {spec?.specName && validationDialogOpen && validationDialogData && (
+      {spec?.specName && validationDialogOpen && (
         <ValidationDialog
           open={validationDialogOpen}
           onClose={() => {
@@ -758,20 +745,8 @@ export function SpecDetailPage() {
           }}
           specName={spec.specName}
           data={validationDialogData}
+          loading={validationDialogLoading}
         />
-      )}
-      {spec?.specName && validationDialogOpen && validationDialogLoading && !validationDialogData && (
-        <Dialog open={validationDialogOpen} onOpenChange={() => setValidationDialogOpen(false)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('actions.loading')}</DialogTitle>
-              <DialogDescription>{t('validation.dialog.loading')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          </DialogContent>
-        </Dialog>
       )}
     </PageTransition>
   );

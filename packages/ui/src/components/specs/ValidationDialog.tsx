@@ -1,17 +1,35 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, cn } from '@leanspec/ui-components';
 import type { SpecValidationResponse } from '../../types/api';
-import { CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Info, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface ValidationDialogProps {
   open: boolean;
   onClose: () => void;
   specName: string;
-  data: SpecValidationResponse;
+  data: SpecValidationResponse | null;
+  loading?: boolean;
 }
 
-export function ValidationDialog({ open, onClose, specName, data }: ValidationDialogProps) {
+export function ValidationDialog({ open, onClose, specName, data, loading }: ValidationDialogProps) {
   const { t } = useTranslation('common');
+
+  if (loading || !data) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('actions.loading')}</DialogTitle>
+            <DialogDescription>{t('validation.dialog.loading')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const { status, errors } = data;
   // If pass but we have warnings/info messages (errors array not empty), treat as needing list view
   const isPass = status === 'pass' && (!errors || errors.length === 0);

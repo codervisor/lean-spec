@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { AlertCircle, FileQuestion, FilterX, RefreshCcw, Loader2 } from 'lucide-react';
-import { Button, Card, CardContent, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@leanspec/ui-components';
+import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
+import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import type { Spec, SpecStatus, ValidationStatus, HierarchyNode } from '../types/api';
@@ -653,50 +653,24 @@ export function SpecsPage() {
         )}
       </div>
 
-      {activeSpecName && tokenDialogOpen && tokenDialogData && (
+      {activeSpecName && tokenDialogOpen && (
         <TokenDetailsDialog
           open={tokenDialogOpen}
           onClose={closeTokenDialog}
           specName={activeSpecName}
           data={tokenDialogData}
+          loading={tokenDialogLoading}
         />
       )}
 
-      {activeSpecName && tokenDialogOpen && tokenDialogLoading && !tokenDialogData && (
-        <Dialog open={tokenDialogOpen} onOpenChange={closeTokenDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('actions.loading')}</DialogTitle>
-              <DialogDescription>{t('tokens.detailedBreakdown')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {activeSpecName && validationDialogOpen && validationDialogData && (
+      {activeSpecName && validationDialogOpen && (
         <ValidationDialog
           open={validationDialogOpen}
           onClose={closeValidationDialog}
           specName={activeSpecName}
           data={validationDialogData}
+          loading={validationDialogLoading}
         />
-      )}
-
-      {activeSpecName && validationDialogOpen && validationDialogLoading && !validationDialogData && (
-        <Dialog open={validationDialogOpen} onOpenChange={closeValidationDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('actions.loading')}</DialogTitle>
-              <DialogDescription>{t('validation.dialog.loading')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   );
