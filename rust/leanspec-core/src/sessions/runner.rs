@@ -15,6 +15,8 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use tokio::process::Command;
 
+pub const RUNNERS_SCHEMA_URL: &str = "https://leanspec.dev/schemas/runners.json";
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RunnerConfig {
     pub name: Option<String>,
@@ -171,11 +173,11 @@ impl RunnerRegistry {
     pub fn load(project_path: &Path) -> CoreResult<Self> {
         let mut registry = Self::builtins();
 
-        if let Some(global) = load_runners_file(&global_runners_path())? {
+        if let Some(global) = read_runners_file(&global_runners_path())? {
             registry.apply_config(global)?;
         }
 
-        if let Some(project) = load_runners_file(&project_runners_path(project_path))? {
+        if let Some(project) = read_runners_file(&project_runners_path(project_path))? {
             registry.apply_config(project)?;
         }
 
@@ -257,7 +259,15 @@ fn merge_runner(mut base: RunnerDefinition, override_config: RunnerConfig) -> Ru
     base
 }
 
-fn load_runners_file(path: &Path) -> CoreResult<Option<RunnersFile>> {
+pub fn default_runners_file() -> RunnersFile {
+    RunnersFile {
+        schema: Some(RUNNERS_SCHEMA_URL.to_string()),
+        runners: HashMap::new(),
+        default: None,
+    }
+}
+
+pub fn read_runners_file(path: &Path) -> CoreResult<Option<RunnersFile>> {
     if !path.exists() {
         return Ok(None);
     }
@@ -269,6 +279,27 @@ fn load_runners_file(path: &Path) -> CoreResult<Option<RunnersFile>> {
         .map_err(|e| CoreError::ConfigError(format!("Failed to parse runners: {}", e)))?;
 
     Ok(Some(parsed))
+}
+
+pub fn write_runners_file(path: &Path, file: &RunnersFile) -> CoreResult<()> {
+    let mut output = file.clone();
+
+    if output.schema.is_none() {
+        output.schema = Some(RUNNERS_SCHEMA_URL.to_string());
+    }
+
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| CoreError::ConfigError(format!("Failed to create runners dir: {}", e)))?;
+    }
+
+    let serialized = serde_json::to_string_pretty(&output)
+        .map_err(|e| CoreError::ConfigError(format!("Failed to serialize runners: {}", e)))?;
+
+    fs::write(path, serialized)
+        .map_err(|e| CoreError::ConfigError(format!("Failed to write runners: {}", e)))?;
+
+    Ok(())
 }
 
 pub fn global_runners_path() -> PathBuf {

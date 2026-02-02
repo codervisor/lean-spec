@@ -310,6 +310,7 @@
     "description": "Manage your preferences and configuration",
     "tabs": {
       "ai": "AI Models",
+      "runners": "Runners",
       "appearance": "Appearance"
     },
     "ai": {
@@ -352,6 +353,42 @@
         "modelIdExists": "This model ID already exists",
         "modelNameRequired": "Model name is required",
         "maxTokensInvalid": "Max tokens must be a number"
+      }
+    },
+    "runners": {
+      "title": "AI Runners",
+      "description": "Manage local runner commands used for AI sessions",
+      "addRunner": "Add Runner",
+      "editRunner": "Edit Runner",
+      "default": "Default",
+      "available": "Available",
+      "unavailable": "Not found",
+      "setDefault": "Set default",
+      "empty": "No runners configured yet.",
+      "dialogDescription": "Configure runner command, args, and environment overrides",
+      "confirmDelete": "Delete runner \"{{id}}\"?",
+      "fields": {
+        "id": "Runner ID",
+        "idHelp": "Lowercase identifier (e.g., claude, copilot)",
+        "name": "Display Name",
+        "command": "Command",
+        "args": "Arguments",
+        "argsHelp": "One argument per line",
+        "env": "Environment Variables",
+        "envHelp": "One KEY=VALUE per line"
+      },
+      "errors": {
+        "noProject": "Project path is required to manage runners.",
+        "loadFailed": "Failed to load runners.",
+        "saveFailed": "Failed to save runner.",
+        "deleteFailed": "Failed to delete runner.",
+        "validateFailed": "Failed to validate runner.",
+        "defaultFailed": "Failed to set default runner.",
+        "idRequired": "ID is required",
+        "idExists": "This ID already exists",
+        "idInvalid": "ID must be lowercase letters, numbers, and hyphens only",
+        "commandRequired": "Command is required",
+        "envInvalid": "Each environment line must be KEY=VALUE"
       }
     },
     "appearance": {

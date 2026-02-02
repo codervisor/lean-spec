@@ -197,7 +197,20 @@ pub fn create_router(state: AppState) -> Router {
             get(handlers::get_session_events),
         )
         .route("/api/sessions/{id}/stream", get(handlers::ws_session_logs))
-        .route("/api/runners", get(handlers::list_available_runners));
+        .route("/api/runners", get(handlers::list_runners))
+        .route("/api/runners", post(handlers::create_runner))
+        .route(
+            "/api/runners/available",
+            get(handlers::list_available_runners),
+        )
+        .route("/api/runners/default", put(handlers::set_default_runner))
+        .route("/api/runners/{id}", get(handlers::get_runner))
+        .route("/api/runners/{id}", put(handlers::update_runner))
+        .route("/api/runners/{id}", delete(handlers::delete_runner))
+        .route(
+            "/api/runners/{id}/validate",
+            post(handlers::validate_runner),
+        );
 
     // AI chat route (only when ai feature is enabled)
     #[cfg(feature = "ai")]

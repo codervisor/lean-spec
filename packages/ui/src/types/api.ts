@@ -54,6 +54,30 @@ export interface Session {
   tokenCount?: number | null;
 }
 
+export type RunnerSource = 'builtin' | 'global' | 'project';
+
+export interface RunnerDefinition {
+  id: string;
+  name?: string | null;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  available: boolean;
+  source: RunnerSource;
+}
+
+export interface RunnerListResponse {
+  default?: string | null;
+  runners: RunnerDefinition[];
+}
+
+export interface RunnerValidateResponse {
+  valid: boolean;
+  error?: string | null;
+}
+
+export type RunnerScope = 'project' | 'global';
+
 export interface SessionLog {
   id: number;
   timestamp: string;

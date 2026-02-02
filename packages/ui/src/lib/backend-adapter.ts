@@ -25,6 +25,10 @@ import type {
   SessionMode,
   SpecTokenResponse,
   SpecValidationResponse,
+  RunnerDefinition,
+  RunnerListResponse,
+  RunnerScope,
+  RunnerValidateResponse,
 } from '../types/api';
 
 export class APIError extends Error {
@@ -111,6 +115,42 @@ export interface BackendAdapter {
   getSessionLogs(sessionId: string): Promise<SessionLog[]>;
   getSessionEvents(sessionId: string): Promise<SessionEvent[]>;
   listAvailableRunners(projectPath?: string): Promise<string[]>;
+  listRunners(projectPath?: string): Promise<RunnerListResponse>;
+  getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition>;
+  createRunner(payload: {
+    projectPath: string;
+    runner: {
+      id: string;
+      name?: string | null;
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse>;
+  updateRunner(
+    runnerId: string,
+    payload: {
+      projectPath: string;
+      runner: {
+        name?: string | null;
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      };
+      scope?: RunnerScope;
+    }
+  ): Promise<RunnerListResponse>;
+  deleteRunner(
+    runnerId: string,
+    payload: { projectPath: string; scope?: RunnerScope }
+  ): Promise<RunnerListResponse>;
+  validateRunner(runnerId: string, projectPath?: string): Promise<RunnerValidateResponse>;
+  setDefaultRunner(payload: {
+    projectPath: string;
+    runnerId: string;
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse>;
 }
 
 /**
@@ -442,10 +482,101 @@ export class HttpBackendAdapter implements BackendAdapter {
   }
 
   async listAvailableRunners(projectPath?: string): Promise<string[]> {
+    const response = await this.listRunners(projectPath);
+    return response.runners.filter((runner) => runner.available).map((runner) => runner.id);
+  }
+
+  async listRunners(projectPath?: string): Promise<RunnerListResponse> {
     const endpoint = projectPath
       ? `/api/runners?project_path=${encodeURIComponent(projectPath)}`
       : '/api/runners';
-    return this.fetchAPI<string[]>(endpoint);
+    return this.fetchAPI<RunnerListResponse>(endpoint);
+  }
+
+  async getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition> {
+    const endpoint = projectPath
+      ? `/api/runners/${encodeURIComponent(runnerId)}?project_path=${encodeURIComponent(projectPath)}`
+      : `/api/runners/${encodeURIComponent(runnerId)}`;
+    return this.fetchAPI<RunnerDefinition>(endpoint);
+  }
+
+  async createRunner(payload: {
+    projectPath: string;
+    runner: {
+      id: string;
+      name?: string | null;
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse> {
+    return this.fetchAPI<RunnerListResponse>('/api/runners', {
+      method: 'POST',
+      body: JSON.stringify({
+        projectPath: payload.projectPath,
+        runner: payload.runner,
+        scope: payload.scope,
+      }),
+    });
+  }
+
+  async updateRunner(
+    runnerId: string,
+    payload: {
+      projectPath: string;
+      runner: {
+        name?: string | null;
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      };
+      scope?: RunnerScope;
+    }
+  ): Promise<RunnerListResponse> {
+    return this.fetchAPI<RunnerListResponse>(`/api/runners/${encodeURIComponent(runnerId)}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        projectPath: payload.projectPath,
+        runner: payload.runner,
+        scope: payload.scope,
+      }),
+    });
+  }
+
+  async deleteRunner(
+    runnerId: string,
+    payload: { projectPath: string; scope?: RunnerScope }
+  ): Promise<RunnerListResponse> {
+    return this.fetchAPI<RunnerListResponse>(`/api/runners/${encodeURIComponent(runnerId)}`, {
+      method: 'DELETE',
+      body: JSON.stringify({
+        projectPath: payload.projectPath,
+        scope: payload.scope,
+      }),
+    });
+  }
+
+  async validateRunner(runnerId: string, projectPath?: string): Promise<RunnerValidateResponse> {
+    const endpoint = projectPath
+      ? `/api/runners/${encodeURIComponent(runnerId)}/validate?project_path=${encodeURIComponent(projectPath)}`
+      : `/api/runners/${encodeURIComponent(runnerId)}/validate`;
+    return this.fetchAPI<RunnerValidateResponse>(endpoint, { method: 'POST' });
+  }
+
+  async setDefaultRunner(payload: {
+    projectPath: string;
+    runnerId: string;
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse> {
+    return this.fetchAPI<RunnerListResponse>('/api/runners/default', {
+      method: 'PUT',
+      body: JSON.stringify({
+        projectPath: payload.projectPath,
+        runnerId: payload.runnerId,
+        scope: payload.scope,
+      }),
+    });
   }
 }
 
@@ -656,7 +787,90 @@ export class TauriBackendAdapter implements BackendAdapter {
   }
 
   async listAvailableRunners(_projectPath?: string): Promise<string[]> {
-    throw new Error('listAvailableRunners is not implemented for the Tauri backend yet');
+    const response = await this.listRunners(_projectPath);
+    return response.runners.filter((runner) => runner.available).map((runner) => runner.id);
+  }
+
+  async listRunners(projectPath?: string): Promise<RunnerListResponse> {
+    return this.invoke<RunnerListResponse>('desktop_list_runners', {
+      projectPath,
+    });
+  }
+
+  async getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition> {
+    return this.invoke<RunnerDefinition>('desktop_get_runner', {
+      runnerId,
+      projectPath,
+    });
+  }
+
+  async createRunner(payload: {
+    projectPath: string;
+    runner: {
+      id: string;
+      name?: string | null;
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse> {
+    return this.invoke<RunnerListResponse>('desktop_create_runner', {
+      projectPath: payload.projectPath,
+      runner: payload.runner,
+      scope: payload.scope,
+    });
+  }
+
+  async updateRunner(
+    runnerId: string,
+    payload: {
+      projectPath: string;
+      runner: {
+        name?: string | null;
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      };
+      scope?: RunnerScope;
+    }
+  ): Promise<RunnerListResponse> {
+    return this.invoke<RunnerListResponse>('desktop_update_runner', {
+      runnerId,
+      projectPath: payload.projectPath,
+      runner: payload.runner,
+      scope: payload.scope,
+    });
+  }
+
+  async deleteRunner(
+    runnerId: string,
+    payload: { projectPath: string; scope?: RunnerScope }
+  ): Promise<RunnerListResponse> {
+    return this.invoke<RunnerListResponse>('desktop_delete_runner', {
+      runnerId,
+      projectPath: payload.projectPath,
+      scope: payload.scope,
+    });
+  }
+
+  async validateRunner(runnerId: string, projectPath?: string): Promise<RunnerValidateResponse> {
+    return this.invoke<RunnerValidateResponse>('desktop_validate_runner', {
+      runnerId,
+      projectPath,
+    });
+  }
+
+  async setDefaultRunner(payload: {
+    projectPath: string;
+    runnerId: string;
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse> {
+    return this.invoke<RunnerListResponse>('desktop_set_default_runner', {
+      projectPath: payload.projectPath,
+      runnerId: payload.runnerId,
+      scope: payload.scope,
+    });
   }
 }
 

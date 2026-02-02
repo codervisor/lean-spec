@@ -1,6 +1,20 @@
 import { getBackend, APIError, type BackendAdapter } from "./backend-adapter";
 import i18n from "./i18n";
-import type { ListParams, Spec, SpecDetail, Stats, DependencyGraph, MachinesResponse, Session, SessionLog, SessionMode } from "../types/api";
+import type {
+  ListParams,
+  Spec,
+  SpecDetail,
+  Stats,
+  DependencyGraph,
+  MachinesResponse,
+  Session,
+  SessionLog,
+  SessionMode,
+  RunnerDefinition,
+  RunnerListResponse,
+  RunnerScope,
+  RunnerValidateResponse,
+} from "../types/api";
 
 /**
  * Project-aware API wrapper
@@ -138,6 +152,60 @@ class ProjectAPI {
 
   listAvailableRunners(projectPath?: string): Promise<string[]> {
     return this.backend.listAvailableRunners(projectPath);
+  }
+
+  listRunners(projectPath?: string): Promise<RunnerListResponse> {
+    return this.backend.listRunners(projectPath);
+  }
+
+  getRunner(runnerId: string, projectPath?: string): Promise<RunnerDefinition> {
+    return this.backend.getRunner(runnerId, projectPath);
+  }
+
+  createRunner(payload: {
+    projectPath: string;
+    runner: {
+      id: string;
+      name?: string | null;
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse> {
+    return this.backend.createRunner(payload);
+  }
+
+  updateRunner(
+    runnerId: string,
+    payload: {
+      projectPath: string;
+      runner: {
+        name?: string | null;
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      };
+      scope?: RunnerScope;
+    }
+  ): Promise<RunnerListResponse> {
+    return this.backend.updateRunner(runnerId, payload);
+  }
+
+  deleteRunner(runnerId: string, payload: { projectPath: string; scope?: RunnerScope }): Promise<RunnerListResponse> {
+    return this.backend.deleteRunner(runnerId, payload);
+  }
+
+  validateRunner(runnerId: string, projectPath?: string): Promise<RunnerValidateResponse> {
+    return this.backend.validateRunner(runnerId, projectPath);
+  }
+
+  setDefaultRunner(payload: {
+    projectPath: string;
+    runnerId: string;
+    scope?: RunnerScope;
+  }): Promise<RunnerListResponse> {
+    return this.backend.setDefaultRunner(payload);
   }
 }
 

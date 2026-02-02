@@ -31,17 +31,39 @@ export interface HierarchyTreeProps {
 interface FlatNode {
   node: HierarchyNode;
   depth: number;
+  indentGuides: boolean[]; // Indicates true for each level that needs a vertical line
+  isLast: boolean;
 }
 
 // Helper to flatten the tree based on expanded status
-function flattenTree(nodes: HierarchyNode[], expandedIds: Set<string>, depth = 0, result: FlatNode[] = []) {
-  for (const node of nodes) {
-    result.push({ node, depth });
+function flattenTree(
+  nodes: HierarchyNode[], 
+  expandedIds: Set<string>, 
+  depth = 0, 
+  indentGuides: boolean[] = [], 
+  result: FlatNode[] = []
+) {
+  nodes.forEach((node, index) => {
+    const isLast = index === nodes.length - 1;
+    
+    result.push({ 
+      node, 
+      depth,
+      indentGuides,
+      isLast
+    });
+
     const id = node.id || node.specName;
     if (node.childNodes && node.childNodes.length > 0 && expandedIds.has(id)) {
-      flattenTree(node.childNodes, expandedIds, depth + 1, result);
+      flattenTree(
+        node.childNodes, 
+        expandedIds, 
+        depth + 1, 
+        [...indentGuides, !isLast],
+        result
+      );
     }
-  }
+  });
   return result;
 }
 
@@ -78,6 +100,9 @@ export function HierarchyTree({
 
   // Track whether we've done the initial scroll
   const hasScrolledToSelected = useRef(false);
+  
+  // Track the last spec ID we successfully auto-expanded to avoid fighting user interactions
+  const lastRevealedSpecId = useRef<string | null>(null);
 
   // Initialization: Expand all recursive nodes on mount or when specs change drastically
   useEffect(() => {
@@ -93,10 +118,6 @@ export function HierarchyTree({
   // Auto-expand/scroll logic
   useEffect(() => {
     if (!selectedSpecId) return;
-
-    // 1. Ensure the selected node's parents are expanded
-    let needsExpansion = false;
-    const newExpanded = new Set(expandedIds);
 
     // DFS to find path to selected node
     const findPath = (nodes: HierarchyNode[], target: string, path: string[]): string[] | undefined => {
@@ -114,23 +135,30 @@ export function HierarchyTree({
 
     const path = findPath(treeRoots, selectedSpecId, []);
 
-    if (path) {
+    // Only expand if we found a path AND strictly need to reveal it (new selection or first successful find)
+    if (path && lastRevealedSpecId.current !== selectedSpecId) {
+      let needsExpansion = false;
+      const newExpanded = new Set(expandedIds);
+
       for (const id of path) {
         if (!newExpanded.has(id)) {
           newExpanded.add(id);
           needsExpansion = true;
         }
       }
-    }
 
-    if (needsExpansion) {
-      if (isControlled) {
-        onExpandedChange?.(newExpanded);
-      } else {
-        setInternalExpandedIds(newExpanded);
+      if (needsExpansion) {
+        if (isControlled) {
+          onExpandedChange?.(newExpanded);
+        } else {
+          setInternalExpandedIds(newExpanded);
+        }
       }
+      
+      // Mark as revealed so we don't fight subsequent user collapses
+      lastRevealedSpecId.current = selectedSpecId;
     }
-  }, [selectedSpecId, treeRoots, expandedIds, isControlled, onExpandedChange]);
+  }, [selectedSpecId, treeRoots]); // IMPORTANT: Do not include expandedIds here to avoid fighting user interactions
 
   // Effect to scroll once flatData is ready and contains our item
   useEffect(() => {
@@ -173,29 +201,56 @@ export function HierarchyTree({
   };
 
   const Row = ({ index, style }: RowComponentProps) => {
-    const { node, depth } = flatData[index];
+    const { node, depth, indentGuides, isLast } = flatData[index];
     const id = node.id || node.specName;
     const hasChildren = node.childNodes && node.childNodes.length > 0;
     const isExpanded = expandedIds.has(id);
     const isSelected = selectedSpecId === id;
 
-    // We render the content with padding for depth
     return (
-      <div style={style}>
+      <div style={style} className="flex items-center">
+        {/* Indent guides */}
+        <div 
+          className="absolute top-0 bottom-0 pointer-events-none"
+          style={{ left: 0, width: `${depth * 16}px` }}
+        >
+          {indentGuides.map((hasLine, i) => hasLine && (
+            <div 
+              key={i} 
+              className="absolute top-0 bottom-0 w-px bg-border/40" 
+              style={{ left: `${i * 16 + 7}px` }} // +7 to center in 16px slot
+            />
+          ))}
+        </div>
+
+        {/* Current node connector/guide */}
+        {depth > 0 && (
+          <div 
+            className="absolute top-0 w-4 pointer-events-none" 
+            style={{ left: `${(depth - 1) * 16}px`, height: '100%' }}
+          >
+             <div 
+               className={cn(
+                 "absolute left-[7px] w-px bg-border/40",
+                 isLast ? "top-0 h-1/2" : "top-0 bottom-0"
+               )} 
+             />
+          </div>
+        )}
+
         <div
           className={cn(
-            "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group mr-2",
-            depth > 0 && "border-l-2 border-border/40 pl-2",
+            "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group mr-2 w-full",
             isSelected
               ? "bg-accent/80 font-medium text-accent-foreground"
               : "hover:bg-accent/50 text-foreground/80 hover:text-foreground"
           )}
-          style={{ marginLeft: `${depth * 16}px` }}
+          style={{ paddingLeft: `${depth * 16}px` }}
           onClick={() => onSpecClick?.(node)}
         >
           <div
             className={cn(
-              "mr-0.5 h-4 w-4 flex items-center justify-center rounded-sm transition-colors shrink-0",
+              "mr-0.5 h-4 w-4 flex items-center justify-center rounded-sm transition-colors shrink-0 z-10",
               !hasChildren && "invisible",
               !isSelected && "group-hover:bg-muted/50 text-muted-foreground/70 hover:text-foreground"
             )}

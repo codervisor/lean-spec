@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Palette, Cpu } from 'lucide-react';
+import { Settings, Palette, Cpu, Server } from 'lucide-react';
 import { Button, cn } from '@leanspec/ui-components';
 import { AISettingsTab } from '../components/settings/AISettingsTab';
 import { AppearanceSettingsTab } from '../components/settings/AppearanceSettingsTab';
+import { RunnerSettingsTab } from '../components/settings/RunnerSettingsTab';
 import { SettingsSkeleton } from '../components/shared/Skeletons';
 import { useProject } from '../contexts';
 
 export function SettingsPage() {
   const { t } = useTranslation('common');
   const { loading: projectLoading } = useProject();
-  const [activeTab, setActiveTab] = useState<'ai' | 'appearance'>('ai');
+  const [activeTab, setActiveTab] = useState<'ai' | 'appearance' | 'runners'>('ai');
 
   if (projectLoading) {
     return <SettingsSkeleton />;
@@ -18,6 +19,7 @@ export function SettingsPage() {
 
   const tabs = [
     { id: 'ai', label: t('settings.tabs.ai'), icon: Cpu },
+    { id: 'runners', label: t('settings.tabs.runners'), icon: Server },
     { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette },
   ] as const;
 
@@ -74,6 +76,7 @@ export function SettingsPage() {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto space-y-6">
             {activeTab === 'ai' && <AISettingsTab />}
+            {activeTab === 'runners' && <RunnerSettingsTab />}
             {activeTab === 'appearance' && <AppearanceSettingsTab />}
           </div>
         </main>

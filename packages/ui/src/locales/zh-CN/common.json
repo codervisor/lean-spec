@@ -305,6 +305,7 @@
     "description": "管理你的偏好和配置",
     "tabs": {
       "ai": "AI 模型",
+      "runners": "运行器",
       "appearance": "外观"
     },
     "ai": {
@@ -347,6 +348,42 @@
         "modelIdExists": "此模型 ID 已存在",
         "modelNameRequired": "模型名称是必需的",
         "maxTokensInvalid": "最大 Token 数必须是数字"
+      }
+    },
+    "runners": {
+      "title": "AI 运行器",
+      "description": "管理 AI 会话使用的本地运行器命令",
+      "addRunner": "添加运行器",
+      "editRunner": "编辑运行器",
+      "default": "默认",
+      "available": "可用",
+      "unavailable": "未找到",
+      "setDefault": "设为默认",
+      "empty": "暂无配置的运行器。",
+      "dialogDescription": "配置运行器命令、参数与环境变量",
+      "confirmDelete": "删除运行器 \"{{id}}\"？",
+      "fields": {
+        "id": "运行器 ID",
+        "idHelp": "小写标识符（例如：claude、copilot）",
+        "name": "显示名称",
+        "command": "命令",
+        "args": "参数",
+        "argsHelp": "每行一个参数",
+        "env": "环境变量",
+        "envHelp": "每行一个 KEY=VALUE"
+      },
+      "errors": {
+        "noProject": "需要项目路径才能管理运行器。",
+        "loadFailed": "加载运行器失败。",
+        "saveFailed": "保存运行器失败。",
+        "deleteFailed": "删除运行器失败。",
+        "validateFailed": "校验运行器失败。",
+        "defaultFailed": "设置默认运行器失败。",
+        "idRequired": "ID 为必填项",
+        "idExists": "此 ID 已存在",
+        "idInvalid": "ID 只能包含小写字母、数字和连字符",
+        "commandRequired": "命令为必填项",
+        "envInvalid": "每行环境变量必须为 KEY=VALUE"
       }
     },
     "appearance": {
