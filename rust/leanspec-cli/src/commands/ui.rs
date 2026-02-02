@@ -158,13 +158,17 @@ fn run_published_ui(
 
 fn build_ui_command(
     package_manager: &str,
-    _specs_dir: &str,
+    specs_dir: &str,
     port: &str,
     open_browser: bool,
 ) -> (String, Vec<String>) {
     let mut ui_args = vec!["@leanspec/ui".to_string()];
 
-    ui_args.push("--multi-project".to_string());
+    // Pass project directory to HTTP server using --project flag
+    if !specs_dir.is_empty() {
+        ui_args.push("--project".to_string());
+        ui_args.push(specs_dir.to_string());
+    }
 
     ui_args.push("--port".to_string());
     ui_args.push(port.to_string());

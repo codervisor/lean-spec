@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ComponentPropsWithoutRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -14,6 +14,16 @@ interface ContextFileDetailProps {
   file: ContextFileContent;
   projectRoot?: string;
   onBack?: () => void;
+}
+
+function Checkbox(props: ComponentPropsWithoutRef<'input'>) {
+  return (
+    <input
+      type="checkbox"
+      {...props}
+      className="appearance-none h-4 w-4 shrink-0 rounded-sm border border-input bg-background disabled:cursor-default checked:bg-primary checked:border-primary relative mr-2 top-[3px] align-middle after:content-[''] after:hidden checked:after:block after:absolute after:left-[5px] after:top-[1px] after:w-[4px] after:h-[8px] after:border-r-[2px] after:border-b-[2px] after:border-primary-foreground after:rotate-45"
+    />
+  );
 }
 
 function toVSCodeUri(projectRoot: string, filePath: string) {
@@ -117,6 +127,12 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeHighlight, rehypeSlug]}
                 components={{
+                  input: (props) => {
+                    if (props.type === 'checkbox') {
+                      return <Checkbox {...props} />;
+                    }
+                    return <input {...props} />;
+                  },
                   pre: ({ children, ...props }) => {
                     const childArray = Array.isArray(children) ? children : [children];
                     const firstChild = childArray[0];

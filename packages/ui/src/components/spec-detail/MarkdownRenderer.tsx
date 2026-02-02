@@ -5,7 +5,8 @@ import rehypeHighlight from 'rehype-highlight';
 import { Link } from 'react-router-dom';
 import { MermaidDiagram } from '../MermaidDiagram';
 import { EnhancedCodeBlock } from './EnhancedCodeBlock';
-import { EnhancedTable, extractTextFromNode } from './EnhancedTable';
+import { EnhancedTable } from './EnhancedTable';
+import { extractTextFromNode } from './utils';
 import { isValidElement, type ComponentPropsWithoutRef, type AnchorHTMLAttributes } from 'react';
 import type { Components } from 'react-markdown';
 
@@ -126,10 +127,26 @@ function MarkdownLink({ href, children, specName, basePath, ...props }: Markdown
   }
 }
 
+function Checkbox(props: ComponentPropsWithoutRef<'input'>) {
+  return (
+    <input
+      type="checkbox"
+      {...props}
+      className="appearance-none h-4 w-4 shrink-0 rounded-sm border border-input bg-background disabled:cursor-default checked:bg-primary checked:border-primary relative mr-2 top-[3px] after:content-[''] after:hidden checked:after:block after:absolute after:left-[5px] after:top-[1px] after:w-[4px] after:h-[8px] after:border-r-[2px] after:border-b-[2px] after:border-primary-foreground after:rotate-45"
+    />
+  );
+}
+
 function useMarkdownComponents(specName: string, basePath: string): Components {
   return {
+    input(props) {
+      if (props.type === 'checkbox') {
+        return <Checkbox {...props} />;
+      }
+      return <input {...props} />;
+    },
     pre({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
-      if (isValidElement(children) && (children.type === 'code' || (children.props as any).className?.includes('language-'))) {
+      if (isValidElement(children) && (children.type === 'code' || (children.props as { className?: string }).className?.includes('language-'))) {
         const childProps = children.props as ComponentPropsWithoutRef<'code'>;
         const className = childProps.className || '';
         const match = /language-(\w+)/.exec(className);

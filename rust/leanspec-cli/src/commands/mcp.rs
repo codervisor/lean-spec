@@ -36,29 +36,99 @@ pub fn run(specs_dir: &str) -> Result<(), Box<dyn Error>> {
 
         Ok(())
     } else {
-        // Fall back to TypeScript MCP server via npx
+        // Fall back to @leanspec/mcp package
+        run_published_mcp(&cwd, specs_dir)
+    }
+}
+
+fn run_published_mcp(cwd: &Path, specs_dir: &str) -> Result<(), Box<dyn Error>> {
+    eprintln!("{}\n", "→ Using published @leanspec/mcp package".dimmed());
+
+    // Detect package manager
+    let package_manager = detect_package_manager(cwd)?;
+
+    // Build command
+    let (cmd, args) = build_mcp_command(&package_manager, specs_dir);
+
+    let mut child = Command::new(&cmd)
+        .args(&args)
+        .current_dir(cwd)
+        .env("SPECS_DIR", specs_dir)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()?;
+
+    let status = child.wait()?;
+
+    if !status.success() {
+        let code = status.code().unwrap_or(1);
+        eprintln!();
         eprintln!(
             "{}",
-            "Rust MCP binary not found, falling back to TypeScript MCP server...".yellow()
+            format!("@leanspec/mcp exited with code {}", code).red()
         );
-        eprintln!("{}", "Starting LeanSpec MCP Server via npx...".cyan());
-
-        let mut child = Command::new("npx")
-            .args(["--yes", "lean-spec", "mcp"])
-            .current_dir(&cwd)
-            .stdin(Stdio::inherit())
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .spawn()?;
-
-        let status = child.wait()?;
-
-        if !status.success() {
-            return Err("MCP server exited with error".into());
-        }
-
-        Ok(())
+        eprintln!("{}", "Make sure npm can download @leanspec/mcp.".dimmed());
+        return Err("MCP server exited with error".into());
     }
+
+    Ok(())
+}
+
+fn build_mcp_command(package_manager: &str, specs_dir: &str) -> (String, Vec<String>) {
+    let mut mcp_args = vec!["@leanspec/mcp".to_string()];
+
+    // Pass project directory if specified
+    if !specs_dir.is_empty() {
+        mcp_args.push("--project".to_string());
+        mcp_args.push(specs_dir.to_string());
+    }
+
+    match package_manager {
+        "pnpm" => (
+            "pnpm".to_string(),
+            [vec!["dlx".to_string()], mcp_args].concat(),
+        ),
+        "yarn" => (
+            "yarn".to_string(),
+            [vec!["dlx".to_string()], mcp_args].concat(),
+        ),
+        _ => (
+            "npx".to_string(),
+            [vec!["--yes".to_string()], mcp_args].concat(),
+        ),
+    }
+}
+
+fn detect_package_manager(dir: &Path) -> Result<String, Box<dyn Error>> {
+    // Check for lockfiles
+    if dir.join("pnpm-lock.yaml").exists() {
+        return Ok("pnpm".to_string());
+    }
+    if dir.join("yarn.lock").exists() {
+        return Ok("yarn".to_string());
+    }
+    if dir.join("package-lock.json").exists() {
+        return Ok("npm".to_string());
+    }
+
+    // Check parent directories
+    let mut current = dir.to_path_buf();
+    while let Some(parent) = current.parent() {
+        if parent.join("pnpm-lock.yaml").exists() {
+            return Ok("pnpm".to_string());
+        }
+        if parent.join("yarn.lock").exists() {
+            return Ok("yarn".to_string());
+        }
+        if parent.join("package-lock.json").exists() {
+            return Ok("npm".to_string());
+        }
+        current = parent.to_path_buf();
+    }
+
+    // Default to npm
+    Ok("npm".to_string())
 }
 
 fn find_mcp_binary() -> Result<Option<String>, Box<dyn Error>> {

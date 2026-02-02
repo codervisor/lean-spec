@@ -366,7 +366,7 @@ html.changing-theme * {
 .prose table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5em 0;
+  margin: 0.5rem 0;
 }
 
 .prose th,
