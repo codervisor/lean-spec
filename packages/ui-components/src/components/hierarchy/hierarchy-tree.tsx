@@ -131,10 +131,17 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
 
     // Check if we found the item in the current flattened (visible) list
     const index = flatData.findIndex(item => (item.node.id || item.node.specName) === selectedSpecId);
+    console.debug('index', index)
 
     if (index >= 0) {
-      listRef.current.scrollToRow({ index, align: "smart" });
-      hasScrolledToSelected.current = true;
+      // Use requestAnimationFrame to ensure the list is fully rendered before scrolling
+      const rafId = requestAnimationFrame(() => {
+        if (listRef.current) {
+          listRef.current.scrollToRow({ index, align: "smart" });
+          hasScrolledToSelected.current = true;
+        }
+      });
+      return () => cancelAnimationFrame(rafId);
     }
   }, [selectedSpecId, flatData]);
 
