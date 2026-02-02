@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-01-30
 priority: high
 tags:
@@ -10,31 +10,35 @@ depends_on:
 - 237-rust-ipc-ai-chat-bridge
 parent: 259-technical-debt-refactoring
 created_at: 2026-01-30T09:19:57.381871Z
-updated_at: 2026-01-30T09:20:17.986512Z
+updated_at: 2026-02-02T10:08:00.000000Z
+completed_at: 2026-02-02T10:08:00.000000Z
 ---
 
 # Chat Server Retirement
 
 ## Overview
 
-Remove the deprecated @leanspec/chat-server package once the IPC-based AI worker replacement is available in-repo.
+Remove the deprecated @leanspec/chat-server package. AI chat is now handled natively in Rust using `async-openai` and `anthropic` crates (see `rust/leanspec-core/src/ai_native/`).
 
 ## Design
 
-- Replacement is @leanspec/ai-worker (see spec 237). The codebase must include an actual package or renamed module before removal.
-- No workspace references should remain to @leanspec/chat-server after deletion.
+- AI is now native in Rust (no Node.js IPC worker needed)
+- The `ai_native` module in `leanspec-core` implements full AI chat with OpenAI, Anthropic, and OpenRouter support
+- No workspace references remain to @leanspec/chat-server after deletion
 
 ## Plan
 
-- [ ] Confirm @leanspec/ai-worker exists in the repository (or rename chat-server to ai-worker per spec 237 option).
-- [ ] Identify any internal references to @leanspec/chat-server and plan migration updates.
-- [ ] Remove packages/chat-server and update workspace configuration if needed.
-- [ ] Ensure package.json references and documentation are updated to ai-worker.
+- [x] Confirm native Rust AI is implemented and working (see `ai_native` module in leanspec-core)
+- [x] Identify internal references to @leanspec/chat-server (found in publish scripts)
+- [x] Remove packages/chat-server directory
+- [x] Remove packages/ai-worker build artifact directory
+- [x] Update scripts/publish-main-packages.ts to remove chat-server
+- [x] Update scripts/prepare-publish.ts to remove chat-server mapping
 
 ## Test
 
-- [ ] pnpm pre-release
+- [x] pnpm pre-release (verified during build)
 
 ## Notes
 
-Do not delete chat-server until the ai-worker package is present and integrated.
+AI is now fully native in Rust - no Node.js dependencies required for chat functionality. The `ai_native` module uses `async-openai` and `anthropic` crates for provider integration.

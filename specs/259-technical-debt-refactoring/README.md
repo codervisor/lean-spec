@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-01-30
 priority: high
 tags:
@@ -7,10 +7,13 @@ tags:
 - tech-debt
 - cleanup
 created_at: 2026-01-30T03:54:24.939926Z
-updated_at: 2026-01-30T09:20:46.918577Z
+updated_at: 2026-02-02T10:11:00.000000Z
+completed_at: 2026-02-02T10:11:00.000000Z
 transitions:
 - status: in-progress
   at: 2026-01-30T09:20:46.918577Z
+- status: complete
+  at: 2026-02-02T10:11:00.000000Z
 ---
 
 # Technical Debt & Refactoring
@@ -50,9 +53,9 @@ Work is tracked in child specs:
 - [x] UI utilities consolidation: specs/261-ui-utilities-consolidation/README.md
 - [x] Type definitions consolidation: specs/262-type-definitions-consolidation/README.md
 - [x] Rust spec handler consolidation: specs/263-rust-spec-handler-consolidation/README.md
-- [ ] Chat server retirement: specs/264-chat-server-retirement/README.md
+- [x] Chat server retirement: specs/264-chat-server-retirement/README.md
 - [x] Config standardization: specs/265-config-standardization/README.md
-- [ ] Test coverage improvements: specs/266-test-coverage-improvements/README.md
+- [x] Test coverage improvements: specs/266-test-coverage-improvements/README.md
 
 ## Test
 
