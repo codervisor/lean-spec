@@ -3,14 +3,15 @@
  * Bump version to dev prerelease
  * 
  * This script creates a deterministic dev version based on a provided suffix.
- * It extracts the base version from package.json and appends -dev.<suffix>.
+ * It extracts the base version from package.json, bumps the patch version,
+ * and appends -dev.<suffix>.
  * 
  * Usage:
  *   tsx scripts/bump-dev-version.ts <suffix>
  *   
  * Example:
  *   tsx scripts/bump-dev-version.ts 12345
- *   # 0.2.15 -> 0.2.15-dev.12345
+ *   # 0.2.15 -> 0.2.16-dev.12345
  */
 
 import fs from 'node:fs/promises';
@@ -31,12 +32,21 @@ async function bumpDevVersion(suffix: string): Promise<void> {
   // Extract base version (remove any prerelease suffix)
   const baseVersion = currentVersion.replace(/-dev\..*$/, '');
 
+  // Bump to next patch version for dev releases
+  // e.g., 0.2.21 -> 0.2.22-dev.xxx
+  const versionParts = baseVersion.split('.');
+  const major = versionParts[0];
+  const minor = versionParts[1];
+  const patch = parseInt(versionParts[2], 10) + 1;
+  const nextPatchVersion = `${major}.${minor}.${patch}`;
+
   // Create dev version
-  const devVersion = `${baseVersion}-dev.${suffix}`;
+  const devVersion = `${nextPatchVersion}-dev.${suffix}`;
 
   console.log(`Bumping version:`);
   console.log(`  Current: ${currentVersion}`);
   console.log(`  Base:    ${baseVersion}`);
+  console.log(`  Next:    ${nextPatchVersion}`);
   console.log(`  New:     ${devVersion}`);
 
   // Update package.json

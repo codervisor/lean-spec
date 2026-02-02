@@ -8,78 +8,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Inline Metadata Editing in List/Board Views** - Quick status and priority updates without navigation
+  - Clickable status/priority badges with dropdown selectors
+  - Optimistic updates with immediate API sync
+  - Works in both ListView and BoardView components
+
 - **Structured Spec Hierarchy Management** ([spec 250](https://web.lean-spec.dev/specs/250)) - Parent-child relationships for umbrella specs
   - New `parent` field in frontmatter for organizational grouping (distinct from `depends_on` technical dependencies)
-  - Auto-detection of umbrella specs (specs with children get umbrella indicator 🌂)
+  - Auto-detection of umbrella specs (specs with children get umbrella indicator)
   - `lean-spec list --hierarchy` - Tree view showing parent-child nesting
   - `lean-spec children <spec>` - List all direct children of an umbrella spec
   - `lean-spec board --group-by parent` - Board view grouped by parent umbrellas
   - MCP tools: `set_parent`, `list_children`, `list_umbrellas` for AI agent workflows
-  - Enhanced `view` command/tool showing parent and children relationships
   - Hierarchy validation: circular parent detection, orphan detection, status consistency checks
-  - UI list view: `groupByParent` toggle with collapsible tree groups matching sidebar design
+  - UI list view: `groupByParent` toggle with collapsible tree groups
   - UI board view: de-emphasized child specs, auto-collapse after 3 children with "[+X more]" toggle
-  - **Related specs:** [252](https://web.lean-spec.dev/specs/252) (UI hierarchy display), [253](https://web.lean-spec.dev/specs/253) (relationships editing UI), [254](https://web.lean-spec.dev/specs/254) (streamlined commands), [258](https://web.lean-spec.dev/specs/258) (UI visualization enhancement)
+  - **Related specs:** [252](https://web.lean-spec.dev/specs/252), [253](https://web.lean-spec.dev/specs/253), [254](https://web.lean-spec.dev/specs/254), [258](https://web.lean-spec.dev/specs/258)
 
 - **Unified Relationships Editing UI** ([spec 253](https://web.lean-spec.dev/specs/253)) - ADO-style relationship management
-  - Single "Relationships" panel replacing separate "View Dependencies" and "View Hierarchy" buttons
+  - Single "Relationships" panel replacing separate buttons
   - Inline editing for all relationship types: parent, children, depends_on, required_by
-  - ADO-style searchable spec picker dropdown for adding relationships
-  - Click spec chips to navigate, [×] to remove relationships
-  - Enhanced `view` command/tool output with prominent Relationships section
+  - ADO-style searchable spec picker dropdown
 
 - **Streamlined Relationship Commands** ([spec 254](https://web.lean-spec.dev/specs/254)) - Unified CLI/MCP interface
   - New `lean-spec rel` command for all relationship operations (view/add/rm)
-  - `lean-spec rel <spec>` - View all relationships in one place
-  - `lean-spec rel add <spec> --parent/--depends-on/--child` - Add relationships
-  - `lean-spec rel rm <spec> --parent/--depends-on/--child` - Remove relationships
   - MCP `relationships` tool unifying all relationship operations
   - Deprecation notices on old `link`, `unlink`, `set-parent`, `deps`, `children` commands
 
 - **Write-Time Relationship Validation** ([spec 257](https://web.lean-spec.dev/specs/257)) - Prevent invalid relationship states
-  - Parent cycle detection: prevents circular parent chains (A→B→C→A)
-  - Dependency cycle detection: prevents circular depends_on chains
-  - Hierarchy/dependency conflict detection: prevents depends_on on parent or children
-  - Clear error messages with cycle path visualization
-  - Validation in MCP tools (`set_parent`, `link`, `relationships`) and CLI (`rel add`)
+  - Parent/dependency cycle detection with clear error messages
+  - Hierarchy/dependency conflict detection
 
-- **UI Utilities Consolidation** ([spec 261](https://web.lean-spec.dev/specs/261)) - Deduplicated shared code
-  - Consolidated duplicate utilities from `@leanspec/ui` into `@leanspec/ui-components`
-  - Moved date-utils, utils, use-local-storage to shared package
-  - Re-export stubs in `@leanspec/ui` for backwards compatibility
-
-- **Enhanced Markdown Rendering** - Improved spec content display
-  - New components for code blocks with copy button
-  - Better table rendering with improved styling
-  - Responsive sidebar visibility with resize observer
+- **UI Enhancements**
+  - Storage utilities consolidation with unified hooks ([spec 271](https://web.lean-spec.dev/specs/271))
+  - Wide mode toggle for compact/expanded list views
+  - Archived specs visibility toggle in filters
+  - Enhanced markdown rendering with code block copy button and table styling
+  - Token count and validation dialogs with i18n support
   - Spec edit history viewer via git integration
+  - Responsive sidebar visibility with resize observer
 
-- **Token Counting and Validation UI** - Interactive spec analysis
-  - Token count display with i18n support
-  - Validation dialogs showing spec health
-  - Visual design system for token/validation interactions
+- **UI Utilities Consolidation** ([spec 261](https://web.lean-spec.dev/specs/261)) - Deduplicated shared code into `@leanspec/ui-components`
 
 ### Changed
-- **Status-Only Archiving** ([spec 256](https://web.lean-spec.dev/specs/256)) - Simplified archive workflow
-  - Archiving now only sets `status: archived` in frontmatter (no file move)
-  - Specs stay in `specs/` folder, not moved to `archived/` subfolder
-  - Git history preserved, links never break
-  - **DEPRECATED**: `archived/` folder support - run `lean-spec migrate-archived` to migrate
-  - Legacy `archived/` folder still recognized with deprecation warning
-  - Added `lean-spec migrate-archived` command for migration
+- **Chat Server Retired** ([spec 264](https://web.lean-spec.dev/specs/264)) - AI now fully native in Rust
+  - Removed `@leanspec/chat-server` package completely
+  - AI chat handled natively using `async-openai` and `anthropic` Rust crates
 
-- **Rust Monorepo Architecture Refactoring** - Consolidated core modules
-  - Sessions, storage, and AI modules consolidated into leanspec-core
-  - Re-exported storage modules for cleaner API
-  - Improved database schema and fixed potential deadlocks
+- **Token Validation Performance** ([spec 270](https://web.lean-spec.dev/specs/270)) - Lazy static singletons for TokenCounter and validators
+
+- **Technical Debt Refactoring** ([spec 259](https://web.lean-spec.dev/specs/259))
+  - Type definitions consolidated ([spec 262](https://web.lean-spec.dev/specs/262))
+  - Rust spec handler consolidated ([spec 263](https://web.lean-spec.dev/specs/263))
+  - Config standardization ([spec 265](https://web.lean-spec.dev/specs/265))
+  - Hierarchy icon updated from Umbrella to FolderTree
+
+- **Status-Only Archiving** ([spec 256](https://web.lean-spec.dev/specs/256)) - Archiving now only sets `status: archived` (no file move)
+
+- **Rust Monorepo Architecture Refactoring** - Sessions, storage, and AI modules consolidated into leanspec-core
 
 ### Fixed
-- **Mermaid Diagram Rendering** - Fixed logic and empty chart handling
-- **Spec Navigation** - Fixed incorrect spec ID in dependency graph node data
-- **Clippy Warnings** - Resolved all Rust linter warnings across codebase
-- **Skills Path References** - Updated to relative paths for improved portability
-- **Sidebar Layout** - Adjusted row height for improved layout
-- **TypeCheck Errors** - Added type annotations in AI worker tests
+- Rust Cargo.toml version regex handling
+- Doctest assertions and missing `react-window` types
+- Mermaid diagram rendering logic and empty chart handling
+- Spec navigation with incorrect spec ID in dependency graph
+- Clippy warnings across Rust codebase
+- Skills path references (now relative)
+- Sidebar layout row height
+
+## [0.2.21] - 2026-01-27
+
+### Fixed
+- **Tailwind Typography Plugin** - Added typography plugin and fixed animation plugin import
 
 ## [0.2.20] - 2026-01-27
 
@@ -987,6 +987,8 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.21]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.21
+[0.2.20]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.20
 [0.2.11]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.11
 [0.2.10]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.10
 [0.2.9]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.9

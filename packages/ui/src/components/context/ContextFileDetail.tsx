@@ -1,6 +1,7 @@
 import { useMemo, useState, type ComponentPropsWithoutRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import { ArrowLeft, Clock, Copy, ExternalLink, FileText, Hash, Layers, Type } from 'lucide-react';
@@ -124,7 +125,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
           ) : isMarkdown ? (
             <article className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
               <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, remarkBreaks]}
                 rehypePlugins={[rehypeHighlight, rehypeSlug]}
                 components={{
                   input: (props) => {
