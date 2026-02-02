@@ -122,4 +122,13 @@ Rules enforced by hooks or CI:
    <input type="text" />
    ```
 
+6. **cursor-pointer on interactive items** - All clickable dropdown/select items must use `cursor-pointer`
+   ```typescript
+   // ✅ Good - cursor-pointer for clickable items
+   className="... cursor-pointer ..."
+   
+   // ❌ Bad - cursor-default on interactive items
+   className="... cursor-default ..."
+   ```
+
 **See [RULES.md](./references/RULES.md) for complete requirements.**

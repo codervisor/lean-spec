@@ -164,6 +164,30 @@ import { Textarea } from '@/components/ui/textarea';
 
 **Why**: Ensures consistent styling, accessibility (ARIA), keyboard navigation, and theme support across the application.
 
+### 8. Interactive Items Must Use cursor-pointer
+
+**All interactive shadcn/ui items MUST use `cursor-pointer`**, not `cursor-default`.
+
+```typescript
+// ✅ Correct - cursor-pointer for interactive items
+className="... cursor-pointer ..."
+
+// ❌ Wrong - cursor-default on clickable elements
+className="... cursor-default ..."
+```
+
+**Applies to:**
+- `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioItem`, `DropdownMenuSubTrigger`
+- `SelectItem`
+- `CommandItem`
+
+**Does NOT apply to:**
+- Labels (`DropdownMenuLabel`, `SelectLabel`)
+- Separators (`DropdownMenuSeparator`, `SelectSeparator`)
+- Non-interactive elements (shortcuts, icons)
+
+**Why**: Consistent visual feedback that elements are clickable improves UX. Users expect the pointer cursor on interactive items.
+
 ## Testing Rules
 
 ### What to Test
