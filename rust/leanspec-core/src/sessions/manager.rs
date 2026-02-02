@@ -6,8 +6,8 @@
 #![cfg(feature = "sessions")]
 
 use crate::error::{CoreError, CoreResult};
-use crate::sessions::adapter::ToolManager;
 use crate::sessions::database::SessionDatabase;
+use crate::sessions::runner::RunnerRegistry;
 use crate::sessions::types::*;
 use std::collections::HashMap;
 use std::fs::File;
@@ -30,8 +30,6 @@ use nix::unistd::Pid;
 pub struct SessionManager {
     /// Database for session persistence
     db: Arc<SessionDatabase>,
-    /// Tool manager for spawning processes
-    tool_manager: ToolManager,
     /// Active running sessions (session_id -> process handle)
     active_sessions: Arc<RwLock<HashMap<String, ActiveSessionHandle>>>,
     /// Log broadcast channels (session_id -> sender)
@@ -61,7 +59,6 @@ impl SessionManager {
     pub fn new(db: SessionDatabase) -> Self {
         Self {
             db: Arc::new(db),
-            tool_manager: ToolManager::new(),
             active_sessions: Arc::new(RwLock::new(HashMap::new())),
             log_broadcasts: Arc::new(RwLock::new(HashMap::new())),
         }
@@ -72,19 +69,35 @@ impl SessionManager {
         &self,
         project_path: String,
         spec_id: Option<String>,
-        tool: String,
+        runner: Option<String>,
         mode: SessionMode,
     ) -> CoreResult<Session> {
-        // Validate tool exists
-        if self.tool_manager.get(&tool).is_none() {
+        let registry = RunnerRegistry::load(PathBuf::from(&project_path).as_path())?;
+
+        let runner_id = match runner {
+            Some(value) if !value.trim().is_empty() => value,
+            _ => registry
+                .default()
+                .map(|value| value.to_string())
+                .ok_or_else(|| {
+                    CoreError::ConfigError("No default runner configured".to_string())
+                })?,
+        };
+
+        if registry.get(&runner_id).is_none() {
+            let available = registry
+                .list_ids()
+                .into_iter()
+                .collect::<Vec<_>>()
+                .join(", ");
             return Err(CoreError::ConfigError(format!(
-                "Unknown tool: {}. Available: claude, copilot, codex, opencode",
-                tool
+                "Unknown runner: {}. Available: {}",
+                runner_id, available
             )));
         }
 
         let session_id = Uuid::new_v4().to_string();
-        let session = Session::new(session_id, project_path, spec_id, tool, mode);
+        let session = Session::new(session_id, project_path, spec_id, runner_id, mode);
 
         self.db.insert_session(&session)?;
 
@@ -107,27 +120,35 @@ impl SessionManager {
         }
 
         // Get adapter
-        let adapter = self.tool_manager.get(&session.tool).ok_or_else(|| {
-            CoreError::ConfigError(format!("Tool not available: {}", session.tool))
+        let registry = RunnerRegistry::load(PathBuf::from(&session.project_path).as_path())?;
+        let runner = registry.get(&session.runner).ok_or_else(|| {
+            CoreError::ConfigError(format!("Runner not available: {}", session.runner))
         })?;
-
-        // Validate environment
-        adapter.validate_environment().await?;
+        runner.validate_command()?;
 
         // Build config
+        let mut env_vars = HashMap::new();
+        env_vars.insert(
+            "LEANSPEC_PROJECT_PATH".to_string(),
+            session.project_path.clone(),
+        );
+        if let Some(spec_id) = &session.spec_id {
+            env_vars.insert("LEANSPEC_SPEC_ID".to_string(), spec_id.clone());
+        }
+
         let config = SessionConfig {
             project_path: session.project_path.clone(),
             spec_id: session.spec_id.clone(),
-            tool: session.tool.clone(),
+            runner: session.runner.clone(),
             mode: session.mode,
             max_iterations: None,
             working_dir: Some(session.project_path.clone()),
-            env_vars: HashMap::new(),
-            tool_args: Vec::new(),
+            env_vars,
+            runner_args: Vec::new(),
         };
 
         // Build command
-        let mut cmd = adapter.build_command(&config)?;
+        let mut cmd = runner.build_command(&config)?;
 
         // Set up log broadcast channel
         let log_sender = {
@@ -498,9 +519,9 @@ impl SessionManager {
         &self,
         spec_id: Option<&str>,
         status: Option<SessionStatus>,
-        tool: Option<&str>,
+        runner: Option<&str>,
     ) -> CoreResult<Vec<Session>> {
-        self.db.list_sessions(spec_id, status, tool)
+        self.db.list_sessions(spec_id, status, runner)
     }
 
     /// Get session logs
@@ -575,14 +596,21 @@ impl SessionManager {
         Ok(sender.subscribe())
     }
 
-    /// List available tools
-    pub async fn list_available_tools(&self) -> Vec<String> {
-        self.tool_manager
+    /// List available runners
+    pub async fn list_available_runners(
+        &self,
+        project_path: Option<&str>,
+    ) -> CoreResult<Vec<String>> {
+        let registry = match project_path {
+            Some(path) => RunnerRegistry::load(PathBuf::from(path).as_path())?,
+            None => RunnerRegistry::load(PathBuf::from(".").as_path())?,
+        };
+
+        Ok(registry
             .list_available()
-            .await
             .into_iter()
-            .map(|t| t.name().to_string())
-            .collect()
+            .map(|runner| runner.id.clone())
+            .collect())
     }
 
     /// Clean up stale sessions (sessions that were running when server restarted)
@@ -682,7 +710,7 @@ mod tests {
             .create_session(
                 "/test/project".to_string(),
                 Some("spec-001".to_string()),
-                "claude".to_string(),
+                Some("claude".to_string()),
                 SessionMode::Autonomous,
             )
             .await
@@ -690,7 +718,7 @@ mod tests {
 
         assert_eq!(session.project_path, "/test/project");
         assert_eq!(session.spec_id, Some("spec-001".to_string()));
-        assert_eq!(session.tool, "claude");
+        assert_eq!(session.runner, "claude");
         assert!(matches!(session.status, SessionStatus::Pending));
     }
 
@@ -704,7 +732,7 @@ mod tests {
             .create_session(
                 "/test/project1".to_string(),
                 Some("spec-001".to_string()),
-                "claude".to_string(),
+                Some("claude".to_string()),
                 SessionMode::Autonomous,
             )
             .await
@@ -714,7 +742,7 @@ mod tests {
             .create_session(
                 "/test/project2".to_string(),
                 Some("spec-002".to_string()),
-                "copilot".to_string(),
+                Some("copilot".to_string()),
                 SessionMode::Guided,
             )
             .await
@@ -724,13 +752,13 @@ mod tests {
         let sessions = manager.list_sessions(None, None, None).await.unwrap();
         assert_eq!(sessions.len(), 2);
 
-        // Filter by tool
+        // Filter by runner
         let claude_sessions = manager
             .list_sessions(None, None, Some("claude"))
             .await
             .unwrap();
         assert_eq!(claude_sessions.len(), 1);
-        assert_eq!(claude_sessions[0].tool, "claude");
+        assert_eq!(claude_sessions[0].runner, "claude");
     }
 
     #[tokio::test]
@@ -743,7 +771,7 @@ mod tests {
             .create_session(
                 "/test/project".to_string(),
                 Some("spec-001".to_string()),
-                "claude".to_string(),
+                Some("claude".to_string()),
                 SessionMode::Autonomous,
             )
             .await

@@ -62,7 +62,7 @@ impl SessionDatabase {
                     id TEXT PRIMARY KEY,
                     project_path TEXT NOT NULL,
                     spec_id TEXT,
-                    tool TEXT NOT NULL,
+                    runner TEXT NOT NULL,
                     mode TEXT NOT NULL,
                     status TEXT NOT NULL,
                     exit_code INTEGER,
@@ -130,7 +130,7 @@ impl SessionDatabase {
         )
         .ok();
         conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_sessions_tool ON sessions(tool)",
+            "CREATE INDEX IF NOT EXISTS idx_sessions_runner ON sessions(runner)",
             [],
         )
         .ok();
@@ -153,7 +153,7 @@ impl SessionDatabase {
         let conn = self.conn()?;
         conn.execute(
             "INSERT INTO sessions (
-                    id, project_path, spec_id, tool, mode, status,
+                    id, project_path, spec_id, runner, mode, status,
                     exit_code, started_at, ended_at, duration_ms, token_count,
                     created_at, updated_at
                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
@@ -161,7 +161,7 @@ impl SessionDatabase {
                 session.id,
                 session.project_path,
                 session.spec_id,
-                session.tool,
+                session.runner,
                 format!("{:?}", session.mode).to_lowercase(),
                 format!("{:?}", session.status).to_snake_case(),
                 session.exit_code,
@@ -199,7 +199,7 @@ impl SessionDatabase {
             "UPDATE sessions SET
                     project_path = ?1,
                     spec_id = ?2,
-                    tool = ?3,
+                    runner = ?3,
                     mode = ?4,
                     status = ?5,
                     exit_code = ?6,
@@ -212,7 +212,7 @@ impl SessionDatabase {
             params![
                 session.project_path,
                 session.spec_id,
-                session.tool,
+                session.runner,
                 format!("{:?}", session.mode).to_lowercase(),
                 format!("{:?}", session.status).to_snake_case(),
                 session.exit_code,
@@ -254,7 +254,7 @@ impl SessionDatabase {
         let mut stmt = conn
             .prepare(
                 "SELECT
-                    id, project_path, spec_id, tool, mode, status,
+                    id, project_path, spec_id, runner, mode, status,
                     exit_code, started_at, ended_at, duration_ms, token_count,
                     created_at, updated_at
                 FROM sessions WHERE id = ?1",
@@ -280,12 +280,12 @@ impl SessionDatabase {
         &self,
         spec_id: Option<&str>,
         status: Option<SessionStatus>,
-        tool: Option<&str>,
+        runner: Option<&str>,
     ) -> CoreResult<Vec<Session>> {
         let conn = self.conn()?;
         let mut query = String::from(
             "SELECT
-                id, project_path, spec_id, tool, mode, status,
+                id, project_path, spec_id, runner, mode, status,
                 exit_code, started_at, ended_at, duration_ms, token_count,
                 created_at, updated_at
             FROM sessions WHERE 1=1",
@@ -300,9 +300,9 @@ impl SessionDatabase {
             query.push_str(" AND status = ?");
             params.push(Value::from(format!("{:?}", status).to_snake_case()));
         }
-        if let Some(tool) = tool {
-            query.push_str(" AND tool = ?");
-            params.push(Value::from(tool.to_string()));
+        if let Some(runner) = runner {
+            query.push_str(" AND runner = ?");
+            params.push(Value::from(runner.to_string()));
         }
         query.push_str(" ORDER BY created_at DESC");
 
@@ -495,7 +495,7 @@ impl SessionDatabase {
             id: row.get(0)?,
             project_path: row.get(1)?,
             spec_id: row.get(2)?,
-            tool: row.get(3)?,
+            runner: row.get(3)?,
             mode: parse_mode(&row.get::<_, String>(4)?),
             status: parse_status(&row.get::<_, String>(5)?),
             exit_code: row.get(6)?,
@@ -651,7 +651,7 @@ mod tests {
         let retrieved = db.get_session("test-id-1").unwrap().unwrap();
         assert_eq!(retrieved.id, "test-id-1");
         assert_eq!(retrieved.project_path, "/test/project");
-        assert_eq!(retrieved.tool, "claude");
+        assert_eq!(retrieved.runner, "claude");
 
         // Update
         let mut session = session;

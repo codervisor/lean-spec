@@ -16,6 +16,7 @@ pub mod unlink;
 pub mod update;
 pub mod validate;
 pub mod view;
+pub mod runner;
 
 // New commands
 pub mod analyze;

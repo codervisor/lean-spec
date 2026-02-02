@@ -18,8 +18,8 @@ pub struct Session {
     pub project_path: String,
     /// Optional spec ID this session implements
     pub spec_id: Option<String>,
-    /// AI tool used (claude, copilot, codex, opencode)
-    pub tool: String,
+    /// AI runner used (claude, copilot, codex, opencode)
+    pub runner: String,
     /// Session mode (guided, autonomous, ralph)
     pub mode: SessionMode,
     /// Current session status
@@ -48,7 +48,7 @@ impl Session {
         id: String,
         project_path: String,
         spec_id: Option<String>,
-        tool: String,
+        runner: String,
         mode: SessionMode,
     ) -> Self {
         let now = Utc::now();
@@ -56,7 +56,7 @@ impl Session {
             id,
             project_path,
             spec_id,
-            tool,
+            runner,
             mode,
             status: SessionStatus::Pending,
             exit_code: None,
@@ -233,8 +233,8 @@ pub struct SessionConfig {
     pub project_path: String,
     /// Optional spec ID
     pub spec_id: Option<String>,
-    /// AI tool to use
-    pub tool: String,
+    /// AI runner to use
+    pub runner: String,
     /// Session mode
     pub mode: SessionMode,
     /// Maximum iterations for Ralph mode
@@ -243,8 +243,8 @@ pub struct SessionConfig {
     pub working_dir: Option<String>,
     /// Environment variables
     pub env_vars: HashMap<String, String>,
-    /// Additional arguments for the tool
-    pub tool_args: Vec<String>,
+    /// Additional arguments for the runner
+    pub runner_args: Vec<String>,
 }
 
 impl Default for SessionConfig {
@@ -252,12 +252,12 @@ impl Default for SessionConfig {
         Self {
             project_path: String::new(),
             spec_id: None,
-            tool: "claude".to_string(),
+            runner: "claude".to_string(),
             mode: SessionMode::Autonomous,
             max_iterations: None,
             working_dir: None,
             env_vars: HashMap::new(),
-            tool_args: Vec::new(),
+            runner_args: Vec::new(),
         }
     }
 }

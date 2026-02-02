@@ -104,7 +104,7 @@
       "createAndStart": "创建并启动"
     },
     "labels": {
-      "tool": "工具",
+      "runner": "运行器",
       "mode": "模式",
       "started": "开始时间",
       "ended": "结束时间",
@@ -125,7 +125,7 @@
     },
     "dialogs": {
       "createTitle": "创建 AI 会话",
-      "createDescription": "选择工具和模式，然后启动会话。",
+      "createDescription": "选择运行器和模式，然后启动会话。",
       "logsTitle": "会话日志"
     },
     "errors": {
@@ -139,9 +139,9 @@
     "description": "跨规范监控 AI 编码会话。",
     "count": "{{count}} 个会话",
     "filters": {
-      "search": "按会话、规范或工具搜索",
+      "search": "按会话、规范或运行器搜索",
       "status": "状态",
-      "tool": "工具",
+      "runner": "运行器",
       "mode": "模式",
       "spec": "规范"
     },

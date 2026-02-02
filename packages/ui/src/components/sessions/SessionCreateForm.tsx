@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSessions } from '../../contexts/SessionsContext';
-import { Button } from '@leanspec/ui-components';
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { Play } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useTranslation } from 'react-i18next';
+import type { SessionMode } from '../../types/api';
 
 interface SessionCreateFormProps {
     onCancel: () => void;
@@ -15,28 +16,28 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
     const { t } = useTranslation('common');
     const { createSession } = useSessions();
     const [specId, setSpecId] = useState(defaultSpecId || '');
-    const [tools, setTools] = useState<string[]>([]);
-    const [tool, setTool] = useState('claude');
-    const [mode, setMode] = useState('autonomous');
+    const [runners, setRunners] = useState<string[]>([]);
+    const [runner, setRunner] = useState('claude');
+    const [mode, setMode] = useState<SessionMode>('autonomous');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const loadTools = async () => {
-          try {
-            const available = await api.listAvailableTools();
-            setTools(available.length ? available : ['claude', 'copilot', 'codex', 'opencode']);
-          } catch {
-            setTools(['claude', 'copilot', 'codex', 'opencode']);
-          }
+        const loadRunners = async () => {
+            try {
+                const available = await api.listAvailableRunners();
+                setRunners(available.length ? available : ['claude', 'copilot', 'codex', 'opencode', 'aider', 'cline']);
+            } catch {
+                setRunners(['claude', 'copilot', 'codex', 'opencode', 'aider', 'cline']);
+            }
         };
-        void loadTools();
+        void loadRunners();
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const session = await createSession({ specId, tool, mode: mode as any });
+            const session = await createSession({ specId, runner, mode });
             // Auto start session
             await api.startSession(session.id);
             onSuccess();
@@ -53,38 +54,41 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <div className="space-y-1">
                     <label className="text-xs font-medium">{t('sessions.labels.specId')}</label>
-                    <input 
-                        className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors"
-                        value={specId} 
-                        onChange={e => setSpecId(e.target.value)} 
+                    <Input
+                        value={specId}
+                        onChange={(event) => setSpecId(event.target.value)}
                         placeholder={t('sessions.labels.specIdPlaceholder')}
                     />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
                      <div className="space-y-1">
-                        <label className="text-xs font-medium">{t('sessions.labels.tool')}</label>
-                        <select 
-                            className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                            value={tool}
-                            onChange={e => setTool(e.target.value)}
-                        >
-                            {tools.map(t => (
-                                <option key={t} value={t}>{t}</option>
-                            ))}
-                        </select>
+                        <label className="text-xs font-medium">{t('sessions.labels.runner')}</label>
+                        <Select value={runner} onValueChange={setRunner}>
+                            <SelectTrigger className="h-8">
+                                <SelectValue placeholder={t('sessions.labels.runner')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {runners.map(value => (
+                                    <SelectItem key={value} value={value} className="cursor-pointer">
+                                        {value}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-medium">{t('sessions.labels.mode')}</label>
-                        <select 
-                            className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                            value={mode}
-                            onChange={e => setMode(e.target.value)}
-                        >
-                            <option value="autonomous">Autonomous</option>
-                            <option value="guided">Guided</option>
-                            <option value="ralph">Ralph</option>
-                        </select>
+                        <Select value={mode} onValueChange={(value) => setMode(value as SessionMode)}>
+                            <SelectTrigger className="h-8">
+                                <SelectValue placeholder={t('sessions.labels.mode')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="autonomous" className="cursor-pointer">Autonomous</SelectItem>
+                                <SelectItem value="guided" className="cursor-pointer">Guided</SelectItem>
+                                <SelectItem value="ralph" className="cursor-pointer">Ralph</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 

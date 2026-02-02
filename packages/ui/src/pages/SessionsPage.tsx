@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause } from 'lucide-react';
-import { Button, Card, CardContent } from '@leanspec/ui-components';
+import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { Session, SessionStatus, Spec } from '../types/api';
@@ -33,7 +33,7 @@ export function SessionsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [toolFilter, setToolFilter] = useState<string>('all');
+  const [runnerFilter, setRunnerFilter] = useState<string>('all');
   const [modeFilter, setModeFilter] = useState<string>('all');
   const [specFilter, setSpecFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('started-desc');
@@ -83,16 +83,16 @@ export function SessionsPage() {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [searchQuery, statusFilter, toolFilter, modeFilter, specFilter, sortBy]);
+  }, [searchQuery, statusFilter, runnerFilter, modeFilter, specFilter, sortBy]);
 
   const uniqueStatuses = useMemo(() => {
     const statuses = sessions.map((s) => s.status).filter(Boolean) as SessionStatus[];
     return Array.from(new Set(statuses));
   }, [sessions]);
 
-  const uniqueTools = useMemo(() => {
-    const tools = sessions.map((s) => s.tool).filter(Boolean);
-    return Array.from(new Set(tools));
+  const uniqueRunners = useMemo(() => {
+    const runners = sessions.map((s) => s.runner).filter(Boolean);
+    return Array.from(new Set(runners));
   }, [sessions]);
 
   const uniqueModes = useMemo(() => {
@@ -116,12 +116,12 @@ export function SessionsPage() {
         const matchesSearch =
           session.id.toLowerCase().includes(query) ||
           (session.specId ? session.specId.toLowerCase().includes(query) : false) ||
-          session.tool.toLowerCase().includes(query);
+          session.runner.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
 
       if (statusFilter !== 'all' && session.status !== statusFilter) return false;
-      if (toolFilter !== 'all' && session.tool !== toolFilter) return false;
+      if (runnerFilter !== 'all' && session.runner !== runnerFilter) return false;
       if (modeFilter !== 'all' && session.mode !== modeFilter) return false;
 
       if (specFilter !== 'all') {
@@ -154,7 +154,7 @@ export function SessionsPage() {
     }
 
     return sorted;
-  }, [modeFilter, searchQuery, sessions, sortBy, specFilter, statusFilter, toolFilter]);
+  }, [modeFilter, searchQuery, sessions, sortBy, specFilter, statusFilter, runnerFilter]);
 
   const visibleSessions = filteredSessions.slice(0, visibleCount);
 
@@ -183,7 +183,7 @@ export function SessionsPage() {
     await api.createSession({
       projectPath: currentProject.path,
       specId: session.specId ?? null,
-      tool: session.tool,
+      runner: session.runner,
       mode: session.mode,
     }).then((created) => api.startSession(created.id));
     await loadSessions();
@@ -235,62 +235,71 @@ export function SessionsPage() {
           <p className="text-sm text-muted-foreground">{t('sessionsPage.count', { count: filteredSessions.length })}</p>
 
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <input
+            <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t('sessionsPage.filters.search')}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm"
+              className="h-9"
             />
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-            >
-              <option value="all">{t('sessionsPage.filters.status')}</option>
-              {uniqueStatuses.map((status) => (
-                <option key={status} value={status}>{t(`sessions.status.${status}`)}</option>
-              ))}
-            </select>
-            <select
-              value={toolFilter}
-              onChange={(event) => setToolFilter(event.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-            >
-              <option value="all">{t('sessionsPage.filters.tool')}</option>
-              {uniqueTools.map((tool) => (
-                <option key={tool} value={tool}>{tool}</option>
-              ))}
-            </select>
-            <select
-              value={modeFilter}
-              onChange={(event) => setModeFilter(event.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-            >
-              <option value="all">{t('sessionsPage.filters.mode')}</option>
-              {uniqueModes.map((mode) => (
-                <option key={mode} value={mode}>{mode}</option>
-              ))}
-            </select>
-            <select
-              value={specFilter}
-              onChange={(event) => setSpecFilter(event.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-            >
-              <option value="all">{t('sessionsPage.filters.spec')}</option>
-              {specOptions.map((spec) => (
-                <option key={spec.id} value={spec.id}>{spec.label}</option>
-              ))}
-            </select>
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as SortOption)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-            >
-              <option value="started-desc">{t('sessionsPage.sort.startedDesc')}</option>
-              <option value="started-asc">{t('sessionsPage.sort.startedAsc')}</option>
-              <option value="duration-desc">{t('sessionsPage.sort.durationDesc')}</option>
-              <option value="status">{t('sessionsPage.sort.status')}</option>
-            </select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t('sessionsPage.filters.status')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.status')}</SelectItem>
+                {uniqueStatuses.map((status) => (
+                  <SelectItem key={status} value={status} className="cursor-pointer">
+                    {t(`sessions.status.${status}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={runnerFilter} onValueChange={setRunnerFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t('sessionsPage.filters.runner')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.runner')}</SelectItem>
+                {uniqueRunners.map((runner) => (
+                  <SelectItem key={runner} value={runner} className="cursor-pointer">
+                    {runner}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={modeFilter} onValueChange={setModeFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t('sessionsPage.filters.mode')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.mode')}</SelectItem>
+                {uniqueModes.map((mode) => (
+                  <SelectItem key={mode} value={mode} className="cursor-pointer">{mode}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={specFilter} onValueChange={setSpecFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t('sessionsPage.filters.spec')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="cursor-pointer">{t('sessionsPage.filters.spec')}</SelectItem>
+                {specOptions.map((spec) => (
+                  <SelectItem key={spec.id} value={spec.id} className="cursor-pointer">{spec.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t('sessionsPage.sort.startedDesc')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="started-desc" className="cursor-pointer">{t('sessionsPage.sort.startedDesc')}</SelectItem>
+                <SelectItem value="started-asc" className="cursor-pointer">{t('sessionsPage.sort.startedAsc')}</SelectItem>
+                <SelectItem value="duration-desc" className="cursor-pointer">{t('sessionsPage.sort.durationDesc')}</SelectItem>
+                <SelectItem value="status" className="cursor-pointer">{t('sessionsPage.sort.status')}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -316,7 +325,7 @@ export function SessionsPage() {
                   <Button variant="outline" size="sm" onClick={() => {
                     setSearchQuery('');
                     setStatusFilter('all');
-                    setToolFilter('all');
+                    setRunnerFilter('all');
                     setModeFilter('all');
                     setSpecFilter('all');
                   }}>
@@ -338,7 +347,7 @@ export function SessionsPage() {
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <span className={cn('inline-flex h-2.5 w-2.5 rounded-full', SESSION_STATUS_DOT_STYLES[session.status])} />
-                          {session.tool}
+                          {session.runner}
                           <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
                             {t(`sessions.status.${session.status}`)}
                           </span>

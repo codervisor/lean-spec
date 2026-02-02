@@ -22,7 +22,7 @@ export function SessionCard({ session, compact }: SessionCardProps) {
         return (
             <div className="flex items-center gap-2 text-xs text-muted-foreground p-1 hover:bg-muted/50 rounded cursor-pointer" onClick={() => setActiveSessionId(session.id)}>
                 {session.status === 'completed' ? <Check className="h-3 w-3 text-green-500" /> : <X className="h-3 w-3 text-red-500" />}
-                <span className="font-medium text-foreground">{session.tool}</span>
+                <span className="font-medium text-foreground">{session.runner}</span>
                 <span>•</span>
                 <span className="truncate flex-1">#{session.specId}</span>
                 <span>{formatRelativeTime(session.endedAt || session.startedAt, i18n.language)}</span>
@@ -43,7 +43,7 @@ export function SessionCard({ session, compact }: SessionCardProps) {
                         <span className="text-xs text-muted-foreground ml-auto">{session.durationMs ? `${Math.round(session.durationMs / 1000)}s` : ''}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                        {session.tool} • {session.mode}
+                        {session.runner} • {session.mode}
                     </div>
                     {session.specId && (
                         <div className="font-medium text-primary text-xs mt-1">

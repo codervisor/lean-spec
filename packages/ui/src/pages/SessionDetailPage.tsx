@@ -189,7 +189,7 @@ export function SessionDetailPage() {
     const created = await api.createSession({
       projectPath: currentProject.path,
       specId: session.specId ?? null,
-      tool: session.tool,
+      runner: session.runner,
       mode: session.mode,
     });
     await api.startSession(created.id);
@@ -280,7 +280,7 @@ export function SessionDetailPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  {session.tool}
+                  {session.runner}
                   <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
                     {t(`sessions.status.${session.status}`)}
                   </span>

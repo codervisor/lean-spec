@@ -122,7 +122,7 @@ export function SessionsProvider({ children }: { children: ReactNode }) {
     const newSession = await api.createSession({
       projectPath: currentProject.path,
       specId: data.specId,
-      tool: data.tool || 'claude',
+      runner: data.runner,
       mode: data.mode || 'autonomous'
     });
 

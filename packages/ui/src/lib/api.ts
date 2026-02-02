@@ -92,7 +92,7 @@ class ProjectAPI {
     return this.backend.getDependencies(this.getCurrentProjectId(), specName);
   }
 
-  listSessions(params?: { specId?: string; status?: string; tool?: string }): Promise<Session[]> {
+  listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
     return this.backend.listSessions(params);
   }
 
@@ -100,7 +100,7 @@ class ProjectAPI {
     return this.backend.getSession(sessionId);
   }
 
-  createSession(payload: { projectPath: string; specId?: string | null; tool: string; mode: SessionMode }): Promise<Session> {
+  createSession(payload: { projectPath: string; specId?: string | null; runner?: string; mode: SessionMode }): Promise<Session> {
     return this.backend.createSession(payload);
   }
 
@@ -136,8 +136,8 @@ class ProjectAPI {
     return this.backend.getSessionEvents(sessionId);
   }
 
-  listAvailableTools(): Promise<string[]> {
-    return this.backend.listAvailableTools();
+  listAvailableRunners(projectPath?: string): Promise<string[]> {
+    return this.backend.listAvailableRunners(projectPath);
   }
 }
 

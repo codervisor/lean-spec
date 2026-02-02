@@ -53,7 +53,7 @@ export function SessionLogsPanel({ sessionId, onBack }: SessionLogsPanelProps) {
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div className="font-semibold text-sm truncate">
-                    {session?.tool} • #{session?.specId}
+                    {session?.runner} • #{session?.specId}
                 </div>
             </div>
 

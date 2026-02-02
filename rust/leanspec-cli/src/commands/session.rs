@@ -46,15 +46,15 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
         SessionCommand::Create {
             project_path,
             spec,
-            tool,
+            runner,
             mode,
-        } => create_session(project_path, spec, tool, mode, false),
+        } => create_session(project_path, spec, runner, mode, false),
         SessionCommand::Run {
             project_path,
             spec,
-            tool,
+            runner,
             mode,
-        } => create_session(project_path, spec, tool, mode, true),
+        } => create_session(project_path, spec, runner, mode, true),
         SessionCommand::Start { session_id } => start_session(&session_id),
         SessionCommand::Pause { session_id } => pause_session(&session_id),
         SessionCommand::Resume { session_id } => resume_session(&session_id),
@@ -67,9 +67,12 @@ pub fn run(command: SessionCommand) -> Result<(), Box<dyn Error>> {
         SessionCommand::RotateLogs { session_id, keep } => rotate_logs(&session_id, keep),
         SessionCommand::Delete { session_id } => delete_session(&session_id),
         SessionCommand::View { session_id } => view_session(&session_id),
-        SessionCommand::List { spec, status, tool } => list_sessions(spec, status, tool),
+        SessionCommand::List {
+            spec,
+            status,
+            runner,
+        } => list_sessions(spec, status, runner),
         SessionCommand::Logs { session_id } => show_logs(&session_id),
-        SessionCommand::Tools => list_tools(),
     }
 }
 
@@ -77,13 +80,13 @@ pub enum SessionCommand {
     Create {
         project_path: String,
         spec: Option<String>,
-        tool: String,
+        runner: Option<String>,
         mode: String,
     },
     Run {
         project_path: String,
         spec: Option<String>,
-        tool: String,
+        runner: Option<String>,
         mode: String,
     },
     Start {
@@ -116,18 +119,17 @@ pub enum SessionCommand {
     List {
         spec: Option<String>,
         status: Option<String>,
-        tool: Option<String>,
+        runner: Option<String>,
     },
     Logs {
         session_id: String,
     },
-    Tools,
 }
 
 fn create_session(
     project_path: String,
     spec: Option<String>,
-    tool: String,
+    runner: Option<String>,
     mode: String,
     start: bool,
 ) -> Result<(), Box<dyn Error>> {
@@ -138,7 +140,7 @@ fn create_session(
         let manager = build_manager()?;
         let mode = parse_mode(&mode)?;
         let session = manager
-            .create_session(project_path, spec, tool, mode)
+            .create_session(project_path, spec, runner, mode)
             .await
             .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
 
@@ -146,7 +148,7 @@ fn create_session(
             "{} Created session {} ({})",
             "✓".green(),
             session.id.bold(),
-            session.tool
+            session.runner
         );
 
         if start {
@@ -338,7 +340,7 @@ fn view_session(session_id: &str) -> Result<(), Box<dyn Error>> {
         println!();
         println!("{}", "Session".bold());
         println!("  ID: {}", session.id);
-        println!("  Tool: {}", session.tool);
+        println!("  Runner: {}", session.runner);
         println!("  Mode: {:?}", session.mode);
         println!("  Status: {:?}", session.status);
         println!(
@@ -376,7 +378,7 @@ fn view_session(session_id: &str) -> Result<(), Box<dyn Error>> {
 fn list_sessions(
     spec: Option<String>,
     status: Option<String>,
-    tool: Option<String>,
+    runner: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -388,7 +390,7 @@ fn list_sessions(
             None => None,
         };
         let sessions = manager
-            .list_sessions(spec.as_deref(), status_filter, tool.as_deref())
+            .list_sessions(spec.as_deref(), status_filter, runner.as_deref())
             .await
             .map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
 
@@ -398,7 +400,7 @@ fn list_sessions(
             println!(
                 "  {} {} • {:?} • {}",
                 s.id.bold(),
-                s.tool,
+                s.runner,
                 s.status,
                 s.spec_id.unwrap_or_else(|| "-".to_string())
             );
@@ -428,25 +430,6 @@ fn show_logs(session_id: &str) -> Result<(), Box<dyn Error>> {
                 log.message
             );
         }
-
-        Ok(())
-    })
-}
-
-fn list_tools() -> Result<(), Box<dyn Error>> {
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()?;
-    rt.block_on(async move {
-        let manager = build_manager()?;
-        let tools = manager.list_available_tools().await;
-
-        println!();
-        println!("{}", "Available Tools".bold());
-        for tool in tools {
-            println!("  • {}", tool);
-        }
-        println!();
 
         Ok(())
     })

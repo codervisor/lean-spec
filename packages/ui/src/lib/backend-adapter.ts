@@ -94,12 +94,12 @@ export interface BackendAdapter {
   listDirectory(path?: string): Promise<DirectoryListResponse>;
 
   // Sessions
-  listSessions(params?: { specId?: string; status?: string; tool?: string }): Promise<Session[]>;
+  listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]>;
   getSession(sessionId: string): Promise<Session>;
   createSession(payload: {
     projectPath: string;
     specId?: string | null;
-    tool: string;
+    runner?: string;
     mode: SessionMode;
   }): Promise<Session>;
   startSession(sessionId: string): Promise<Session>;
@@ -110,7 +110,7 @@ export interface BackendAdapter {
   deleteSession(sessionId: string): Promise<void>;
   getSessionLogs(sessionId: string): Promise<SessionLog[]>;
   getSessionEvents(sessionId: string): Promise<SessionEvent[]>;
-  listAvailableTools(): Promise<string[]>;
+  listAvailableRunners(projectPath?: string): Promise<string[]>;
 }
 
 /**
@@ -358,7 +358,7 @@ export class HttpBackendAdapter implements BackendAdapter {
     });
   }
 
-  async listSessions(params?: { specId?: string; status?: string; tool?: string }): Promise<Session[]> {
+  async listSessions(params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
     const query = params
       ? new URLSearchParams(
         Object.entries(params).reduce<string[][]>((acc, [key, value]) => {
@@ -380,7 +380,7 @@ export class HttpBackendAdapter implements BackendAdapter {
   async createSession(payload: {
     projectPath: string;
     specId?: string | null;
-    tool: string;
+    runner?: string;
     mode: SessionMode;
   }): Promise<Session> {
     return this.fetchAPI<Session>('/api/sessions', {
@@ -388,7 +388,7 @@ export class HttpBackendAdapter implements BackendAdapter {
       body: JSON.stringify({
         project_path: payload.projectPath,
         spec_id: payload.specId ?? null,
-        tool: payload.tool,
+        runner: payload.runner,
         mode: payload.mode,
       }),
     });
@@ -441,8 +441,11 @@ export class HttpBackendAdapter implements BackendAdapter {
     return this.fetchAPI<SessionEvent[]>(`/api/sessions/${encodeURIComponent(sessionId)}/events`);
   }
 
-  async listAvailableTools(): Promise<string[]> {
-    return this.fetchAPI<string[]>('/api/tools');
+  async listAvailableRunners(projectPath?: string): Promise<string[]> {
+    const endpoint = projectPath
+      ? `/api/runners?project_path=${encodeURIComponent(projectPath)}`
+      : '/api/runners';
+    return this.fetchAPI<string[]>(endpoint);
   }
 }
 
@@ -603,7 +606,7 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('listDirectory is not implemented for the Tauri backend yet');
   }
 
-  async listSessions(): Promise<Session[]> {
+  async listSessions(_params?: { specId?: string; status?: string; runner?: string }): Promise<Session[]> {
     throw new Error('listSessions is not implemented for the Tauri backend yet');
   }
 
@@ -611,7 +614,12 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('getSession is not implemented for the Tauri backend yet');
   }
 
-  async createSession(): Promise<Session> {
+  async createSession(_payload: {
+    projectPath: string;
+    specId?: string | null;
+    runner?: string;
+    mode: SessionMode;
+  }): Promise<Session> {
     throw new Error('createSession is not implemented for the Tauri backend yet');
   }
 
@@ -647,8 +655,8 @@ export class TauriBackendAdapter implements BackendAdapter {
     throw new Error('getSessionEvents is not implemented for the Tauri backend yet');
   }
 
-  async listAvailableTools(): Promise<string[]> {
-    throw new Error('listAvailableTools is not implemented for the Tauri backend yet');
+  async listAvailableRunners(_projectPath?: string): Promise<string[]> {
+    throw new Error('listAvailableRunners is not implemented for the Tauri backend yet');
   }
 }
 

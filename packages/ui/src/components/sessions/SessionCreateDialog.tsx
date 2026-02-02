@@ -54,20 +54,21 @@ function SearchableSelect({
         >
           {value
             ? (options.find((option) => option.value === value)?.label ?? value)
-            : placeholder ?? "Select..."}
+            : placeholder ?? 'Select...'}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder={searchPlaceholder ?? "Search..."} />
+          <CommandInput placeholder={searchPlaceholder ?? 'Search...'} />
           <CommandList>
-            <CommandEmpty>{emptyText ?? "No results found."}</CommandEmpty>
+            <CommandEmpty>{emptyText ?? 'No results found.'}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.label}
+                  className="cursor-pointer"
                   onSelect={() => {
                     onValueChange(option.value);
                     setOpen(false);
@@ -75,8 +76,8 @@ function SearchableSelect({
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0"
+                      'mr-2 h-4 w-4',
+                      value === option.value ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   {option.label}
@@ -108,8 +109,8 @@ export function SessionCreateDialog({
   onCreated,
 }: SessionCreateDialogProps) {
   const { t } = useTranslation('common');
-  const [tools, setTools] = useState<string[]>([]);
-  const [tool, setTool] = useState('claude');
+  const [runners, setRunners] = useState<string[]>([]);
+  const [runner, setRunner] = useState('claude');
   const [mode, setMode] = useState<SessionMode>('autonomous');
   const [specId, setSpecId] = useState(defaultSpecId ?? '');
   const [creating, setCreating] = useState(false);
@@ -125,16 +126,16 @@ export function SessionCreateDialog({
   useEffect(() => {
     if (!open) return;
     setError(null);
-    const loadTools = async () => {
+    const loadRunners = async () => {
       try {
-        const available = await api.listAvailableTools();
-        setTools(available.length ? available : ['claude', 'copilot', 'codex', 'opencode']);
+        const available = await api.listAvailableRunners(projectPath ?? undefined);
+        setRunners(available.length ? available : ['claude', 'copilot', 'codex', 'opencode', 'aider', 'cline']);
       } catch {
-        setTools(['claude', 'copilot', 'codex', 'opencode']);
+        setRunners(['claude', 'copilot', 'codex', 'opencode', 'aider', 'cline']);
       }
     };
-    void loadTools();
-  }, [open]);
+    void loadRunners();
+  }, [open, projectPath]);
 
   const runCreate = useCallback(async () => {
     if (!projectPath) return;
@@ -144,7 +145,7 @@ export function SessionCreateDialog({
       const created = await api.createSession({
         projectPath,
         specId: showSpecSelect ? (specId || null) : (defaultSpecId ?? null),
-        tool,
+        runner,
         mode,
       });
       await api.startSession(created.id);
@@ -155,14 +156,14 @@ export function SessionCreateDialog({
     } finally {
       setCreating(false);
     }
-  }, [projectPath, showSpecSelect, specId, defaultSpecId, tool, mode, onCreated, onOpenChange, t]);
+  }, [projectPath, showSpecSelect, specId, defaultSpecId, runner, mode, onCreated, onOpenChange, t]);
 
   const specSelectOptions = [
     { value: '', label: t('sessions.labels.noSpec') },
-    ...(specOptions?.map((o) => ({ value: o.id, label: o.label })) ?? []),
+    ...(specOptions?.map((option) => ({ value: option.id, label: option.label })) ?? []),
   ];
-  const toolOptions = tools.map((t) => ({ value: t, label: t }));
-  const modeOptions = MODES.map((m) => ({ value: m, label: m }));
+  const runnerOptions = runners.map((value) => ({ value, label: value }));
+  const modeOptions = MODES.map((value) => ({ value, label: value }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -189,19 +190,19 @@ export function SessionCreateDialog({
             </div>
           )}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.tool')}</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.runner')}</label>
             <SearchableSelect
-              value={tool}
-              onValueChange={setTool}
-              options={toolOptions}
-              placeholder={t('sessions.labels.tool')}
+              value={runner}
+              onValueChange={setRunner}
+              options={runnerOptions}
+              placeholder={t('sessions.labels.runner')}
             />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">{t('sessions.labels.mode')}</label>
             <SearchableSelect
               value={mode}
-              onValueChange={(val) => setMode(val as SessionMode)}
+              onValueChange={(value) => setMode(value as SessionMode)}
               options={modeOptions}
               placeholder={t('sessions.labels.mode')}
             />

@@ -197,7 +197,7 @@ pub fn create_router(state: AppState) -> Router {
             get(handlers::get_session_events),
         )
         .route("/api/sessions/{id}/stream", get(handlers::ws_session_logs))
-        .route("/api/tools", get(handlers::list_available_tools));
+        .route("/api/runners", get(handlers::list_available_runners));
 
     // AI chat route (only when ai feature is enabled)
     #[cfg(feature = "ai")]

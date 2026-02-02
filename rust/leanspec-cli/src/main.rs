@@ -575,6 +575,12 @@ enum Commands {
         #[command(subcommand)]
         action: SessionSubcommand,
     },
+
+    /// Manage AI runner configurations
+    Runner {
+        #[command(subcommand)]
+        action: RunnerSubcommand,
+    },
 }
 
 #[derive(Subcommand)]
@@ -586,8 +592,8 @@ enum SessionSubcommand {
         #[arg(long)]
         spec: Option<String>,
 
-        #[arg(long, default_value = "claude")]
-        tool: String,
+        #[arg(long)]
+        runner: Option<String>,
 
         #[arg(long, default_value = "autonomous")]
         mode: String,
@@ -599,8 +605,8 @@ enum SessionSubcommand {
         #[arg(long)]
         spec: Option<String>,
 
-        #[arg(long, default_value = "claude")]
-        tool: String,
+        #[arg(long)]
+        runner: Option<String>,
 
         #[arg(long, default_value = "autonomous")]
         mode: String,
@@ -644,12 +650,47 @@ enum SessionSubcommand {
         #[arg(long)]
         status: Option<String>,
         #[arg(long)]
-        tool: Option<String>,
+        runner: Option<String>,
     },
     Logs {
         session_id: String,
     },
-    Tools,
+}
+
+#[derive(Subcommand)]
+enum RunnerSubcommand {
+    /// List configured runners
+    List {
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+    /// Show a runner configuration
+    Show {
+        runner_id: String,
+
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+    /// Validate runners by checking command availability
+    Validate {
+        runner_id: Option<String>,
+
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
+    /// Open runners config file
+    Config {
+        /// Use global config instead of project config
+        #[arg(long)]
+        global: bool,
+
+        /// Optional project path (defaults to current directory)
+        #[arg(long)]
+        project_path: Option<String>,
+    },
 }
 
 fn main() -> ExitCode {
@@ -902,23 +943,23 @@ fn main() -> ExitCode {
                 SessionSubcommand::Create {
                     project_path,
                     spec,
-                    tool,
+                    runner,
                     mode,
                 } => Cmd::Create {
                     project_path,
                     spec,
-                    tool,
+                    runner,
                     mode,
                 },
                 SessionSubcommand::Run {
                     project_path,
                     spec,
-                    tool,
+                    runner,
                     mode,
                 } => Cmd::Run {
                     project_path,
                     spec,
-                    tool,
+                    runner,
                     mode,
                 },
                 SessionSubcommand::Start { session_id } => Cmd::Start { session_id },
@@ -939,11 +980,46 @@ fn main() -> ExitCode {
                 }
                 SessionSubcommand::Delete { session_id } => Cmd::Delete { session_id },
                 SessionSubcommand::View { session_id } => Cmd::View { session_id },
-                SessionSubcommand::List { spec, status, tool } => Cmd::List { spec, status, tool },
+                SessionSubcommand::List {
+                    spec,
+                    status,
+                    runner,
+                } => Cmd::List {
+                    spec,
+                    status,
+                    runner,
+                },
                 SessionSubcommand::Logs { session_id } => Cmd::Logs { session_id },
-                SessionSubcommand::Tools => Cmd::Tools,
             };
             commands::session::run(cmd)
+        }
+        Commands::Runner { action } => {
+            use commands::runner::RunnerCommand as Cmd;
+            let cmd = match action {
+                RunnerSubcommand::List { project_path } => Cmd::List { project_path },
+                RunnerSubcommand::Show {
+                    runner_id,
+                    project_path,
+                } => Cmd::Show {
+                    runner_id,
+                    project_path,
+                },
+                RunnerSubcommand::Validate {
+                    runner_id,
+                    project_path,
+                } => Cmd::Validate {
+                    runner_id,
+                    project_path,
+                },
+                RunnerSubcommand::Config {
+                    global,
+                    project_path,
+                } => Cmd::Config {
+                    global,
+                    project_path,
+                },
+            };
+            commands::runner::run(cmd)
         }
         Commands::View { spec, raw } => commands::view::run(&specs_dir, &spec, raw, &cli.output),
     };

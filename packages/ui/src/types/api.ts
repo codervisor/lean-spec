@@ -45,7 +45,7 @@ export interface Session {
   id: string;
   projectPath: string;
   specId?: string | null;
-  tool: string;
+  runner: string;
   mode: SessionMode;
   status: SessionStatus;
   startedAt: string;

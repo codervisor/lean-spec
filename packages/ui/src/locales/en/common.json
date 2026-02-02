@@ -104,7 +104,7 @@
       "createAndStart": "Create & Start"
     },
     "labels": {
-      "tool": "Tool",
+      "runner": "Runner",
       "mode": "Mode",
       "started": "Started",
       "ended": "Ended",
@@ -125,7 +125,7 @@
     },
     "dialogs": {
       "createTitle": "Create AI Session",
-      "createDescription": "Choose the tool and mode, then start the session.",
+      "createDescription": "Choose the runner and mode, then start the session.",
       "logsTitle": "Session Logs"
     },
     "errors": {
@@ -139,9 +139,9 @@
     "description": "Monitor AI coding sessions across specs.",
     "count": "{{count}} sessions",
     "filters": {
-      "search": "Search by session, spec, or tool",
+      "search": "Search by session, spec, or runner",
       "status": "Status",
-      "tool": "Tool",
+      "runner": "Runner",
       "mode": "Mode",
       "spec": "Spec"
     },

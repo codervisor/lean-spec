@@ -22,10 +22,10 @@ use serde_json::json;
 
 /// Request to create a new session
 #[derive(Debug, Deserialize)]
-pub struct CreateToolSessionRequest {
+pub struct CreateRunnerSessionRequest {
     pub project_path: String,
     pub spec_id: Option<String>,
-    pub tool: String,
+    pub runner: Option<String>,
     #[serde(default)]
     pub mode: SessionMode,
 }
@@ -36,7 +36,7 @@ pub struct SessionResponse {
     pub id: String,
     pub project_path: String,
     pub spec_id: Option<String>,
-    pub tool: String,
+    pub runner: String,
     pub mode: SessionMode,
     pub status: SessionStatus,
     pub started_at: String,
@@ -81,7 +81,7 @@ impl From<Session> for SessionResponse {
             id: session.id,
             project_path: session.project_path,
             spec_id: session.spec_id,
-            tool: session.tool,
+            runner: session.runner,
             mode: session.mode,
             status: session.status,
             started_at: session.started_at.to_rfc3339(),
@@ -95,12 +95,12 @@ impl From<Session> for SessionResponse {
 /// Create a new session (does not start it)
 pub async fn create_session(
     State(state): State<AppState>,
-    Json(req): Json<CreateToolSessionRequest>,
+    Json(req): Json<CreateRunnerSessionRequest>,
 ) -> ApiResult<Json<SessionResponse>> {
     let manager = state.session_manager.clone();
 
     let session = manager
-        .create_session(req.project_path, req.spec_id, req.tool, req.mode)
+        .create_session(req.project_path, req.spec_id, req.runner, req.mode)
         .await
         .map_err(|e| {
             (
@@ -143,7 +143,7 @@ pub async fn get_session(
 pub struct ListSessionsRequest {
     pub spec_id: Option<String>,
     pub status: Option<SessionStatus>,
-    pub tool: Option<String>,
+    pub runner: Option<String>,
 }
 
 pub async fn list_sessions(
@@ -153,7 +153,7 @@ pub async fn list_sessions(
     let manager = state.session_manager.clone();
 
     let sessions = manager
-        .list_sessions(req.spec_id.as_deref(), req.status, req.tool.as_deref())
+        .list_sessions(req.spec_id.as_deref(), req.status, req.runner.as_deref())
         .await
         .map_err(|e| {
             (
@@ -447,11 +447,28 @@ pub async fn delete_session(
     Ok(())
 }
 
-/// List available tools
-pub async fn list_available_tools(State(state): State<AppState>) -> ApiResult<Json<Vec<String>>> {
-    let tools = state.session_manager.list_available_tools().await;
+/// List available runners
+#[derive(Debug, Deserialize)]
+pub struct ListRunnersRequest {
+    pub project_path: Option<String>,
+}
 
-    Ok(Json(tools))
+pub async fn list_available_runners(
+    State(state): State<AppState>,
+    axum::extract::Query(req): axum::extract::Query<ListRunnersRequest>,
+) -> ApiResult<Json<Vec<String>>> {
+    let runners = state
+        .session_manager
+        .list_available_runners(req.project_path.as_deref())
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::internal_error(&e.to_string())),
+            )
+        })?;
+
+    Ok(Json(runners))
 }
 
 /// WebSocket endpoint for real-time log streaming
@@ -570,6 +587,6 @@ mod tests {
         let response = SessionResponse::from(session);
         assert_eq!(response.id, "test-id");
         assert_eq!(response.project_path, "/test/project");
-        assert_eq!(response.tool, "claude");
+        assert_eq!(response.runner, "claude");
     }
 }

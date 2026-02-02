@@ -154,7 +154,7 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    {session.tool}
+                    {session.runner}
                     <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', SESSION_STATUS_STYLES[session.status])}>
                       {statusLabel(session.status)}
                     </span>
@@ -206,7 +206,7 @@ export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
           <DialogHeader>
             <DialogTitle>{t('sessions.dialogs.logsTitle')}</DialogTitle>
             <DialogDescription>
-              {selectedSession ? `${selectedSession.tool} • ${statusLabel(selectedSession.status)}` : ''}
+              {selectedSession ? `${selectedSession.runner} • ${statusLabel(selectedSession.status)}` : ''}
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs font-mono h-[50vh] overflow-y-auto whitespace-pre-wrap">
