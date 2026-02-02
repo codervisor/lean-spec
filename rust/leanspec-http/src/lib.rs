@@ -44,7 +44,6 @@ pub use project_registry::ProjectRegistry;
 pub use routes::create_router;
 pub use sessions::{
     Session, SessionConfig, SessionEvent, SessionLog, SessionManager, SessionMode, SessionStatus,
-    ToolAdapter, ToolManager,
 };
 pub use state::AppState;
 
