@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { StatusBadge } from '../spec/status-badge';
 import { PriorityBadge } from '../spec/priority-badge';
 import type { LightweightSpec } from '@/types/specs';
-import { buildHierarchy, type HierarchyNode, type SortOption } from '@/lib/hierarchy';
+import { buildHierarchy, type HierarchyNode, type SortOption, getAllParentIds } from '@/lib/hierarchy';
 import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 
 export interface HierarchyTreeProps {
@@ -22,6 +22,10 @@ export interface HierarchyTreeProps {
   width?: number | string;
   /** Sort option for the hierarchy (default: 'id-desc') */
   sortBy?: SortOption;
+  /** Set of expanded node IDs (controlled) */
+  expandedIds?: Set<string>;
+  /** Callback when expanded ids change (controlled) */
+  onExpandedChange?: (ids: Set<string>) => void;
 }
 
 interface FlatNode {
@@ -41,22 +45,18 @@ function flattenTree(nodes: HierarchyNode[], expandedIds: Set<string>, depth = 0
   return result;
 }
 
-// Helper to get all node IDs
-function getAllNodeIds(nodes: HierarchyNode[]): Set<string> {
-  const ids = new Set<string>();
-  const traverse = (n: HierarchyNode[]) => {
-    for (const node of n) {
-      if (node.childNodes && node.childNodes.length > 0) {
-        ids.add(node.id || node.specName);
-        traverse(node.childNodes);
-      }
-    }
-  };
-  traverse(nodes);
-  return ids;
-}
 
-export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, height = 600, width = "100%", sortBy = 'id-desc' }: HierarchyTreeProps) {
+export function HierarchyTree({
+  specs,
+  onSpecClick,
+  selectedSpecId,
+  className,
+  height = 600,
+  width = "100%",
+  sortBy = 'id-desc',
+  expandedIds: controlledExpandedIds,
+  onExpandedChange
+}: HierarchyTreeProps) {
   const listRef = useRef<ListImperativeAPI>(null);
 
   // Memoize tree construction
@@ -65,9 +65,11 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
   }, [specs, sortBy]);
 
   // State for expanded nodes
-  // Default to all expanded for initial view
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => getAllNodeIds(treeRoots));
+  const [internalExpandedIds, setInternalExpandedIds] = useState<Set<string>>(() => getAllParentIds(treeRoots));
   const hasInitialized = useRef(false);
+
+  const isControlled = controlledExpandedIds !== undefined;
+  const expandedIds = isControlled ? controlledExpandedIds : internalExpandedIds;
 
   // Flatten the tree for rendering
   const flatData = useMemo(() => {
@@ -80,10 +82,13 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
   // Initialization: Expand all recursive nodes on mount or when specs change drastically
   useEffect(() => {
     if (!hasInitialized.current && treeRoots.length > 0) {
-      setExpandedIds(getAllNodeIds(treeRoots));
+      // Only set internal state if uncontrolled
+      if (!isControlled) {
+        setInternalExpandedIds(getAllParentIds(treeRoots));
+      }
       hasInitialized.current = true;
     }
-  }, [treeRoots]);
+  }, [treeRoots, isControlled]);
 
   // Auto-expand/scroll logic
   useEffect(() => {
@@ -119,9 +124,13 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
     }
 
     if (needsExpansion) {
-      setExpandedIds(newExpanded);
+      if (isControlled) {
+        onExpandedChange?.(newExpanded);
+      } else {
+        setInternalExpandedIds(newExpanded);
+      }
     }
-  }, [selectedSpecId, treeRoots]);
+  }, [selectedSpecId, treeRoots, expandedIds, isControlled, onExpandedChange]);
 
   // Effect to scroll once flatData is ready and contains our item
   useEffect(() => {
@@ -155,7 +164,12 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
     } else {
       newExpanded.add(id);
     }
-    setExpandedIds(newExpanded);
+    
+    if (isControlled) {
+      onExpandedChange?.(newExpanded);
+    } else {
+      setInternalExpandedIds(newExpanded);
+    }
   };
 
   const Row = ({ index, style }: RowComponentProps) => {
@@ -171,6 +185,7 @@ export function HierarchyTree({ specs, onSpecClick, selectedSpecId, className, h
         <div
           className={cn(
             "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group mr-2",
+            depth > 0 && "border-l-2 border-border/40 pl-2",
             isSelected
               ? "bg-accent/80 font-medium text-accent-foreground"
               : "hover:bg-accent/50 text-foreground/80 hover:text-foreground"

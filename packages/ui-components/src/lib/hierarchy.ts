@@ -87,3 +87,20 @@ export function buildHierarchy(specs: LightweightSpec[], sortBy: SortOption = 'i
   sortNodes(roots);
   return roots;
 }
+
+/**
+ * Get all IDs of nodes that have children (expandable nodes)
+ */
+export function getAllParentIds(nodes: HierarchyNode[]): Set<string> {
+  const ids = new Set<string>();
+  const traverse = (n: HierarchyNode[]) => {
+    for (const node of n) {
+      if (node.childNodes && node.childNodes.length > 0) {
+        ids.add(node.id || node.specName);
+        traverse(node.childNodes);
+      }
+    }
+  };
+  traverse(nodes);
+  return ids;
+}

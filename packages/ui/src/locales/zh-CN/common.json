@@ -543,7 +543,11 @@
       "titleDesc": "标题 (Z-A)",
       "priorityHigh": "优先级（高→低）",
       "priorityLow": "优先级（低→高）"
-    }
+    },
+    "expandAll": "展开全部",
+    "collapseAll": "折叠全部",
+    "searchTags": "搜索标签...",
+    "noTagsFound": "未找到标签"
   },
   "specsPage": {
     "title": "规范列表",

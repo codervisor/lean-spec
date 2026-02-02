@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   SIDEBAR_FILTER_PRIORITY: 'leanspec:sidebar:filters:priority',
   SIDEBAR_FILTER_TAGS: 'leanspec:sidebar:filters:tags',
   SIDEBAR_SORT: 'leanspec:sidebar:sort',
+  SIDEBAR_EXPANDED_IDS: 'leanspec:sidebar:expandedNodes',
   
   // Specs Page Preferences
   PAGE_PREFERENCES: 'leanspec:page:preferences', // Keeping the object structure for now to minimize refactor risk unless simpler

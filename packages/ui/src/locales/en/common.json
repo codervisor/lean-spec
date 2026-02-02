@@ -548,7 +548,11 @@
       "titleDesc": "Title (Z-A)",
       "priorityHigh": "Priority (High-Low)",
       "priorityLow": "Priority (Low-High)"
-    }
+    },
+    "expandAll": "Expand",
+    "collapseAll": "Collapse",
+    "searchTags": "Search tags...",
+    "noTagsFound": "No tags found"
   },
   "specsPage": {
     "title": "Specifications",

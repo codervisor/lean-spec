@@ -1,7 +1,7 @@
 ---
-status: planned
+status: archived
 created: 2026-01-22
-priority: medium
+priority: low
 tags:
 - refactoring
 - chat
@@ -9,9 +9,8 @@ tags:
 - technical-debt
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-22T14:41:42.166295Z
-updated_at: 2026-01-22T14:41:42.166295Z
+updated_at: 2026-02-02T08:21:55.686683318Z
 ---
-
 # Refactor Chat Code to Align with Vercel AI SDK Terminology
 
 ## Overview

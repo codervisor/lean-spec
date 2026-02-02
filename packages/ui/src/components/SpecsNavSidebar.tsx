@@ -30,7 +30,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel
+  DropdownMenuLabel,
+  buildHierarchy,
+  getAllParentIds,
+  type SortOption
 } from '@leanspec/ui-components';
 import {
   List,
@@ -137,6 +140,13 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
   
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
+    if (stored) return new Set(stored);
+    return new Set();
+  });
+
   // Scroll uses sessionStorage (transient) - keeping it but using cleaner key?
   // Spec says: "Keep scroll position as sessionStorage (transient by nature)"
   // But usage of lib/storage.ts is good.
@@ -357,6 +367,33 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     });
   }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants, showArchived, sortBy]);
 
+
+  const treeRoots = useMemo(() => {
+    if (viewMode !== 'tree') return [];
+    return buildHierarchy(filteredSpecs as Spec[], sortBy as SortOption);
+  }, [filteredSpecs, sortBy, viewMode]);
+
+  const allParentIds = useMemo(() => getAllParentIds(treeRoots), [treeRoots]);
+  const hasInitializedExpansion = useRef(false);
+
+  // Initialize expansion state on first load (if no storage)
+  useEffect(() => {
+    if (viewMode === 'tree' && !hasInitializedExpansion.current && allParentIds.size > 0) {
+       const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
+       if (stored === null) {
+           setExpandedIds(allParentIds);
+       }
+       hasInitializedExpansion.current = true;
+    }
+  }, [viewMode, allParentIds]);
+
+  // Persist expandedIds
+  useEffect(() => {
+    if (viewMode === 'tree') {
+      storage.set(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, Array.from(expandedIds));
+    }
+  }, [expandedIds, viewMode]);
+
   const RowComponent = useCallback(
     (rowProps: { index: number; style: CSSProperties }) => {
       const { index, style } = rowProps;
@@ -566,6 +603,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           <div className="p-3 border-b space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
+              
               <div className="flex items-center gap-1">
                 <Button
                   variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
@@ -862,6 +900,8 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                   selectedSpecId={activeSpecActualId}
                   height={listHeight}
                   sortBy={sortBy as 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'title-desc' | 'priority-desc' | 'priority-asc'}
+                  expandedIds={expandedIds}
+                  onExpandedChange={setExpandedIds}
                 />
               </div>
             ) : (
