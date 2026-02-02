@@ -1,21 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Languages } from 'lucide-react';
 import { Button, cn } from '@leanspec/ui-components';
 
 const languages = [
   { code: 'en', labelKey: 'language.english', shortLabel: 'EN' },
-  { code: 'zh-CN', labelKey: 'language.chinese', shortLabel: '中文' },
+  { code: 'zh-CN', labelKey: 'language.chinese', shortLabel: 'ZH' },
 ];
+
+// Hydration-safe mounted check using useSyncExternalStore
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation('common');
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -52,10 +53,11 @@ export function LanguageSwitcher() {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'w-full justify-start h-8',
+                  'w-full justify-start h-8 gap-2',
                   i18n.language === language.code && 'bg-accent'
                 )}
               >
+                <span className="text-xs text-left font-mono text-muted-foreground w-4">{language.shortLabel}</span>
                 {t(language.labelKey)}
               </Button>
             ))}

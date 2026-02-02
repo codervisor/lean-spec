@@ -37,18 +37,7 @@ import type { Spec } from '../types/api';
 import { useTranslation } from 'react-i18next';
 import { useProject, useSpecs } from '../contexts';
 import { SpecsNavSidebarSkeleton } from './shared/Skeletons';
-
-const STORAGE_KEYS = {
-  collapsed: 'specs-nav-sidebar-collapsed',
-  scroll: 'specs-nav-sidebar-scroll-offset',
-  statusFilter: 'specs-nav-sidebar-status-filter',
-  priorityFilter: 'specs-nav-sidebar-priority-filter',
-  tagFilter: 'specs-nav-sidebar-tag-filter',
-  showArchived: 'specs-nav-sidebar-show-archived',
-};
-
-// Shared key for hierarchy view - synced with SpecsPage
-const HIERARCHY_VIEW_KEY = 'specs-hierarchy-view';
+import { storage, STORAGE_KEYS } from '../lib/storage';
 
 interface SpecsNavSidebarProps {
   mobileOpen?: boolean;
@@ -67,39 +56,80 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSearchQuery, setTagSearchQuery] = useState('');
+  
+  // Initialize from storage with legacy fallback
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = sessionStorage.getItem(STORAGE_KEYS.statusFilter);
-    return stored ? JSON.parse(stored) : [];
+    // Try new key
+    const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_STATUS, []);
+    if (val.length > 0) return val;
+    // Fallback to legacy
+    if (typeof window !== 'undefined') {
+      const legacy = sessionStorage.getItem('specs-nav-sidebar-status-filter');
+      if (legacy) return JSON.parse(legacy);
+    }
+    return [];
   });
+  
   const [priorityFilter, setPriorityFilter] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = sessionStorage.getItem(STORAGE_KEYS.priorityFilter);
-    return stored ? JSON.parse(stored) : [];
+    const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY, []);
+    if (val.length > 0) return val;
+    if (typeof window !== 'undefined') {
+        const legacy = sessionStorage.getItem('specs-nav-sidebar-priority-filter');
+        if (legacy) return JSON.parse(legacy);
+    }
+    return [];
   });
+  
   const [tagFilter, setTagFilter] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = sessionStorage.getItem(STORAGE_KEYS.tagFilter);
-    return stored ? JSON.parse(stored) : [];
+    const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_TAGS, []);
+    if (val.length > 0) return val;
+    if (typeof window !== 'undefined') {
+        const legacy = sessionStorage.getItem('specs-nav-sidebar-tag-filter');
+        if (legacy) return JSON.parse(legacy);
+    }
+    return [];
   });
+  
   const [showFilters, setShowFilters] = useState(false);
+  
   const [showArchived, setShowArchived] = useState<boolean>(() => {
+    // Boolean is tricky with empty strings or nulls, storage.get returns defaultValue if missing
+    // We need to check if key exists to know if we should fallback
     if (typeof window === 'undefined') return false;
-    return sessionStorage.getItem(STORAGE_KEYS.showArchived) === 'true';
+    
+    // Check if new key exists
+    if (localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) !== null) {
+        return storage.get(STORAGE_KEYS.SHOW_ARCHIVED, false);
+    }
+    
+    // Fallback
+    const legacy = sessionStorage.getItem('specs-nav-sidebar-show-archived');
+    return legacy === 'true';
   });
+  
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem(STORAGE_KEYS.collapsed) === 'true';
+    if (localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) !== null) {
+        return storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED, false);
+    }
+    return localStorage.getItem('specs-nav-sidebar-collapsed') === 'true';
   });
+  
   const [viewMode, setViewMode] = useState<'list' | 'tree'>(() => {
     if (typeof window === 'undefined') return 'list';
-    return sessionStorage.getItem(HIERARCHY_VIEW_KEY) === 'true' ? 'tree' : 'list';
+    if (localStorage.getItem(STORAGE_KEYS.HIERARCHY_VIEW) !== null) {
+         return storage.get(STORAGE_KEYS.HIERARCHY_VIEW, false) ? 'tree' : 'list';
+    }
+    return sessionStorage.getItem('specs-hierarchy-view') === 'true' ? 'tree' : 'list';
   });
+  
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
+  
+  // Scroll uses sessionStorage (transient) - keeping it but using cleaner key?
+  // Spec says: "Keep scroll position as sessionStorage (transient by nature)"
+  // But usage of lib/storage.ts is good.
   const [initialScrollOffset] = useState<number>(() => {
-    if (typeof window === 'undefined') return 0;
-    const stored = sessionStorage.getItem(STORAGE_KEYS.scroll);
-    return stored ? parseFloat(stored) : 0;
+    return storage.get(STORAGE_KEYS.SIDEBAR_SCROLL, 0, true);
   });
   const { t, i18n } = useTranslation('common');
 
@@ -149,22 +179,41 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       '--specs-nav-sidebar-width',
       collapsed ? '0px' : '280px'
     );
-    localStorage.setItem(STORAGE_KEYS.collapsed, String(collapsed));
+    storage.set(STORAGE_KEYS.SIDEBAR_COLLAPSED, collapsed);
   }, [collapsed]);
 
   useEffect(() => {
-    sessionStorage.setItem(HIERARCHY_VIEW_KEY, String(viewMode === 'tree'));
+    storage.set(STORAGE_KEYS.HIERARCHY_VIEW, viewMode === 'tree');
   }, [viewMode]);
 
   // Sync viewMode when changed from SpecsPage (storage event)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === HIERARCHY_VIEW_KEY && e.storageArea === sessionStorage) {
-        setViewMode(e.newValue === 'true' ? 'tree' : 'list');
+      if (e.key === STORAGE_KEYS.HIERARCHY_VIEW && e.storageArea === localStorage) {
+         // storage.set stores booleans as "true"/"false" strings
+         setViewMode(e.newValue === 'true' ? 'tree' : 'list');
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // One-time migration on mount
+  useEffect(() => {
+      if (typeof window === 'undefined') return;
+      
+      storage.migrateFromSessionToLocal('specs-nav-sidebar-status-filter', STORAGE_KEYS.SIDEBAR_FILTER_STATUS);
+      storage.migrateFromSessionToLocal('specs-nav-sidebar-priority-filter', STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY);
+      storage.migrateFromSessionToLocal('specs-nav-sidebar-tag-filter', STORAGE_KEYS.SIDEBAR_FILTER_TAGS);
+      storage.migrateFromSessionToLocal('specs-nav-sidebar-show-archived', STORAGE_KEYS.SHOW_ARCHIVED);
+      storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
+      
+      // Migrate Collapsed (local -> local)
+      const oldCollapsed = localStorage.getItem('specs-nav-sidebar-collapsed');
+      if (oldCollapsed !== null && localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === null) {
+           localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, oldCollapsed);
+           localStorage.removeItem('specs-nav-sidebar-collapsed');
+      }
   }, []);
 
   useEffect(() => {
@@ -351,21 +400,21 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const hasActiveFilters =
     statusFilter.length > 0 || priorityFilter.length > 0 || tagFilter.length > 0;
 
-  // Persist filters to sessionStorage
+  // Persist filters to localStorage
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.statusFilter, JSON.stringify(statusFilter));
+    storage.set(STORAGE_KEYS.SIDEBAR_FILTER_STATUS, statusFilter);
   }, [statusFilter]);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.priorityFilter, JSON.stringify(priorityFilter));
+    storage.set(STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY, priorityFilter);
   }, [priorityFilter]);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.tagFilter, JSON.stringify(tagFilter));
+    storage.set(STORAGE_KEYS.SIDEBAR_FILTER_TAGS, tagFilter);
   }, [tagFilter]);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.showArchived, String(showArchived));
+    storage.set(STORAGE_KEYS.SHOW_ARCHIVED, showArchived);
   }, [showArchived]);
 
   // Restore initial scroll position only once on mount
@@ -413,7 +462,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     if (!el) return;
 
     const onScroll = () => {
-      sessionStorage.setItem(STORAGE_KEYS.scroll, String(el.scrollTop));
+      storage.set(STORAGE_KEYS.SIDEBAR_SCROLL, el.scrollTop, true);
     };
 
     el.addEventListener('scroll', onScroll, { passive: true });

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-02-01
 priority: medium
 tags:

@@ -572,8 +572,8 @@
         "id-asc": "Oldest First",
         "updated-desc": "Recently Updated",
         "title-asc": "Title (A-Z)",
-        "token-desc": "Token Count (High → Low)",
-        "token-asc": "Token Count (Low → High)"
+        "priority-desc": "Priority (Critical → Low)",
+        "priority-asc": "Priority (Low → Critical)"
       }
     },
     "metadata": {

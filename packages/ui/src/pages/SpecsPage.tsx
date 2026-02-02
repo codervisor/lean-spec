@@ -17,13 +17,12 @@ import { EmptyState } from '../components/shared/EmptyState';
 import { useProject, useLayout, useMachine, useSpecs } from '../contexts';
 import { useSpecActionDialogs } from '../hooks/useSpecActionDialogs';
 import { useTranslation } from 'react-i18next';
+import { storage, STORAGE_KEYS } from '../lib/storage';
 
 type ViewMode = 'list' | 'board';
-type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'token-desc' | 'token-asc';
+type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'priority-desc' | 'priority-asc';
 
 const STORAGE_KEY = 'specs-page-preferences';
-// Shared key for hierarchy view - synced with SpecsNavSidebar
-const HIERARCHY_VIEW_KEY = 'specs-hierarchy-view';
 
 interface SpecsPagePreferences {
   viewMode: ViewMode;
@@ -31,7 +30,7 @@ interface SpecsPagePreferences {
   statusFilter: string[];
   priorityFilter: string[];
   tagFilter: string[];
-  // groupByParent moved to sessionStorage with shared key
+  // groupByParent moved to localStorage with shared key
   showValidationIssuesOnly: boolean;
   showArchived: boolean;
 }
@@ -47,13 +46,11 @@ const DEFAULT_PREFERENCES: SpecsPagePreferences = {
 };
 
 function loadHierarchyView(): boolean {
-  if (typeof window === 'undefined') return false;
-  return sessionStorage.getItem(HIERARCHY_VIEW_KEY) === 'true';
+  return storage.get(STORAGE_KEYS.HIERARCHY_VIEW, false);
 }
 
 function saveHierarchyView(value: boolean): void {
-  if (typeof window === 'undefined') return;
-  sessionStorage.setItem(HIERARCHY_VIEW_KEY, String(value));
+  storage.set(STORAGE_KEYS.HIERARCHY_VIEW, value);
 }
 
 function loadPreferences(): SpecsPagePreferences {
@@ -115,13 +112,18 @@ export function SpecsPage() {
 
   // Filters (initialized from localStorage)
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string[]>(savedPrefs.statusFilter);
+  const [statusFilter, setStatusFilter] = useState<string[]>(savedPrefs.statusFilter.filter(s => s !== 'archived'));
   const [priorityFilter, setPriorityFilter] = useState<string[]>(savedPrefs.priorityFilter);
   const [tagFilter, setTagFilter] = useState<string[]>(savedPrefs.tagFilter);
   const [sortBy, setSortBy] = useState<SortOption>(savedPrefs.sortBy);
   const [groupByParent, setGroupByParent] = useState(loadHierarchyView);
   const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(savedPrefs.showValidationIssuesOnly);
-  const [showArchived, setShowArchived] = useState<boolean>(savedPrefs.showArchived);
+  const [showArchived, setShowArchived] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) !== null) {
+      return storage.get(STORAGE_KEYS.SHOW_ARCHIVED, false);
+    }
+    return savedPrefs.showArchived;
+  });
 
   // Validation statuses fetched when showValidationIssuesOnly is enabled
   const [validationStatuses, setValidationStatuses] = useState<Record<string, ValidationStatus>>({});
@@ -270,7 +272,7 @@ export function SpecsPage() {
     });
   }, [viewMode, sortBy, statusFilter, priorityFilter, tagFilter, showValidationIssuesOnly, showArchived]);
 
-  // Persist groupByParent to sessionStorage (shared with sidebar)
+  // Persist groupByParent to localStorage (shared with sidebar)
   useEffect(() => {
     saveHierarchyView(groupByParent);
   }, [groupByParent]);
@@ -278,13 +280,29 @@ export function SpecsPage() {
   // Sync groupByParent when changed from sidebar (storage event)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === HIERARCHY_VIEW_KEY && e.storageArea === sessionStorage) {
+      if (e.key === STORAGE_KEYS.HIERARCHY_VIEW && e.storageArea === localStorage) {
         setGroupByParent(e.newValue === 'true');
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Sync showArchived to standalone storage
+  useEffect(() => {
+    storage.set(STORAGE_KEYS.SHOW_ARCHIVED, showArchived);
+  }, [showArchived]);
+
+  // Migration
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
+    
+    // Check if we need to migrate showArchived from combined object to standalone key
+    if (localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) === null && savedPrefs.showArchived) {
+        storage.set(STORAGE_KEYS.SHOW_ARCHIVED, true);
+    }
+  }, [savedPrefs]);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     if (machineModeEnabled && !isMachineAvailable) {
@@ -309,7 +327,8 @@ export function SpecsPage() {
   // Get unique values for filters
   const uniqueStatuses = useMemo(() => {
     const statuses = specs.map((s) => s.status).filter((s): s is SpecStatus => Boolean(s));
-    const uniqueSet = Array.from(new Set(statuses));
+    // Only include 'archived' when showArchived is enabled
+    const uniqueSet = Array.from(new Set(statuses)).filter(s => showArchived || s !== 'archived');
     // Sort by defined order: planned -> in-progress -> complete -> archived
     const statusOrder: Record<SpecStatus, number> = {
       'planned': 1,
@@ -318,7 +337,7 @@ export function SpecsPage() {
       'archived': 4,
     };
     return uniqueSet.sort((a, b) => statusOrder[a] - statusOrder[b]);
-  }, [specs]);
+  }, [specs, showArchived]);
   const uniquePriorities = useMemo(() => {
     const uniqueSet = Array.from(new Set(specs.map(s => s.priority).filter(Boolean) as string[]));
     // Sort by defined order: critical -> high -> medium -> low
@@ -388,8 +407,8 @@ export function SpecsPage() {
   // Filter specs based on search and filters
   const filteredSpecs = useMemo(() => {
     let filtered = specs.filter(spec => {
-      // Hide archived specs by default unless showArchived is true or archived is explicitly selected
-      if (!showArchived && !statusFilter.includes('archived') && spec.status === 'archived') {
+      // Hide archived specs by default unless showArchived is true
+      if (!showArchived && spec.status === 'archived') {
         return false;
       }
 
@@ -436,6 +455,32 @@ export function SpecsPage() {
       case 'id-asc':
         sorted.sort((a, b) => (a.specNumber || 0) - (b.specNumber || 0));
         break;
+      case 'priority-desc':
+        sorted.sort((a, b) => {
+          const priorityOrder: Record<string, number> = {
+            'critical': 4,
+            'high': 3,
+            'medium': 2,
+            'low': 1,
+          };
+          const scoreA = priorityOrder[a.priority || ''] || 0;
+          const scoreB = priorityOrder[b.priority || ''] || 0;
+          return scoreB - scoreA;
+        });
+        break;
+      case 'priority-asc':
+        sorted.sort((a, b) => {
+          const priorityOrder: Record<string, number> = {
+            'critical': 4,
+            'high': 3,
+            'medium': 2,
+            'low': 1,
+          };
+          const scoreA = priorityOrder[a.priority || ''] || 0;
+          const scoreB = priorityOrder[b.priority || ''] || 0;
+          return scoreA - scoreB;
+        });
+        break;
       case 'updated-desc':
         sorted.sort((a, b) => {
           if (!a.updatedAt) return 1;
@@ -450,20 +495,6 @@ export function SpecsPage() {
           const titleA = (a.title || a.specName).toLowerCase();
           const titleB = (b.title || b.specName).toLowerCase();
           return titleA.localeCompare(titleB);
-        });
-        break;
-      case 'token-desc':
-        sorted.sort((a, b) => {
-          const aTokens = a.tokenCount ?? -1;
-          const bTokens = b.tokenCount ?? -1;
-          return bTokens - aTokens;
-        });
-        break;
-      case 'token-asc':
-        sorted.sort((a, b) => {
-          const aTokens = a.tokenCount ?? Number.POSITIVE_INFINITY;
-          const bTokens = b.tokenCount ?? Number.POSITIVE_INFINITY;
-          return aTokens - bTokens;
         });
         break;
       case 'id-desc':
@@ -581,6 +612,7 @@ export function SpecsPage() {
             hierarchy={hierarchy}
             basePath={basePath}
             groupByParent={groupByParent}
+            sortBy={sortBy}
             onTokenClick={handleTokenClick}
             onValidationClick={handleValidationClick}
           />) : (

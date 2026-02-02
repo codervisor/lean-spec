@@ -52,7 +52,7 @@ export function WideModeToggle() {
                   currentMode === value && 'bg-accent'
                 )}
               >
-                <Icon className="h-4 w-4 mr-2" />
+                <Icon className="h-4 w-4" />
                 <span className="flex-1 text-left">{label}</span>
                 {currentMode === value && <Check className="h-3 w-3 ml-2" />}
               </Button>

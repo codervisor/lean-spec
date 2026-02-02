@@ -68,17 +68,20 @@ const SpecListItem = memo(function SpecListItem({
   );
 });
 
+type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'priority-desc' | 'priority-asc';
+
 interface ListViewProps {
   specs: Spec[];
   /** Pre-built hierarchy from server - if provided, skips client-side tree building */
   hierarchy?: HierarchyNode[];
   basePath?: string;
   groupByParent?: boolean;
+  sortBy?: SortOption;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
 }
 
-export function ListView({ specs, hierarchy, basePath = '/projects', groupByParent = false, onTokenClick, onValidationClick }: ListViewProps) {
+export function ListView({ specs, hierarchy, basePath = '/projects', groupByParent = false, sortBy = 'id-desc', onTokenClick, onValidationClick }: ListViewProps) {
   const { t } = useTranslation('common');
 
   if (specs.length === 0) {
@@ -95,6 +98,7 @@ export function ListView({ specs, hierarchy, basePath = '/projects', groupByPare
         specs={specs}
         hierarchy={hierarchy}
         basePath={basePath}
+        sortBy={sortBy}
         onTokenClick={onTokenClick}
         onValidationClick={onValidationClick}
       />

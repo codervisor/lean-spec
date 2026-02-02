@@ -567,8 +567,8 @@
         "id-asc": "最早优先",
         "updated-desc": "最近更新",
         "title-asc": "标题 (A-Z)",
-        "token-desc": "Token 数量（高 → 低)",
-        "token-asc": "Token 数量（低 → 高)"
+        "priority-desc": "优先级（紧急 → 低）",
+        "priority-asc": "优先级（低 → 紧急）"
       }
     },
     "metadata": {

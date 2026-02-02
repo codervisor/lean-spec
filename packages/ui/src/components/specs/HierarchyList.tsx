@@ -12,20 +12,84 @@ import { ValidationBadge } from '../ValidationBadge';
 // Use the API HierarchyNode or the ui-components one (they're compatible)
 type TreeNode = HierarchyNode | UiHierarchyNode;
 
+type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'priority-desc' | 'priority-asc';
+
 interface HierarchyListProps {
   specs: Spec[];
   /** Pre-built hierarchy from server - if provided, skips client-side tree building */
   hierarchy?: HierarchyNode[];
   basePath?: string;
+  sortBy?: SortOption;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
 }
 
+// Sort helper function for hierarchy nodes
+function sortNodes(nodes: TreeNode[], sortBy: SortOption): TreeNode[] {
+  const sorted = [...nodes];
+  switch (sortBy) {
+    case 'id-asc':
+      sorted.sort((a, b) => (a.specNumber || 0) - (b.specNumber || 0));
+      break;
+    case 'priority-desc':
+      sorted.sort((a, b) => {
+        const priorityOrder: Record<string, number> = {
+          'critical': 4,
+          'high': 3,
+          'medium': 2,
+          'low': 1,
+        };
+        const scoreA = priorityOrder[a.priority || ''] || 0;
+        const scoreB = priorityOrder[b.priority || ''] || 0;
+        return scoreB - scoreA;
+      });
+      break;
+    case 'priority-asc':
+      sorted.sort((a, b) => {
+        const priorityOrder: Record<string, number> = {
+          'critical': 4,
+          'high': 3,
+          'medium': 2,
+          'low': 1,
+        };
+        const scoreA = priorityOrder[a.priority || ''] || 0;
+        const scoreB = priorityOrder[b.priority || ''] || 0;
+        return scoreA - scoreB;
+      });
+      break;
+    case 'updated-desc':
+      sorted.sort((a, b) => {
+        // updatedAt exists on LightweightSpec (UiHierarchyNode) but not API HierarchyNode
+        const aUpdated = 'updatedAt' in a ? (a as UiHierarchyNode).updatedAt : undefined;
+        const bUpdated = 'updatedAt' in b ? (b as UiHierarchyNode).updatedAt : undefined;
+        if (!aUpdated) return 1;
+        if (!bUpdated) return -1;
+        const aTime = new Date(aUpdated).getTime();
+        const bTime = new Date(bUpdated).getTime();
+        return bTime - aTime;
+      });
+      break;
+    case 'title-asc':
+      sorted.sort((a, b) => {
+        const titleA = (a.title || a.specName).toLowerCase();
+        const titleB = (b.title || b.specName).toLowerCase();
+        return titleA.localeCompare(titleB);
+      });
+      break;
+    case 'id-desc':
+    default:
+      sorted.sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0));
+      break;
+  }
+  return sorted;
+}
+
 // Memoized recursive item component to prevent cascade re-renders
-const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, depth = 0, onTokenClick, onValidationClick }: {
+const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, depth = 0, sortBy = 'id-desc', onTokenClick, onValidationClick }: {
   node: TreeNode;
   basePath: string;
   depth: number;
+  sortBy?: SortOption;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
 }) {
@@ -42,7 +106,7 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
     <div className="space-y-1">
       <div className={cn(
         "border rounded-lg bg-background transition-colors",
-        "hover:bg-accent/5"
+        "hover:bg-secondary/50"
       )}>
         {/* Main Content */}
         <div className="flex items-start">
@@ -73,23 +137,23 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
                 </div>
                 <p className="text-sm text-muted-foreground truncate">{node.specName}</p>
               </div>
-              <div className="flex gap-2 items-center flex-shrink-0">
-                {node.status && <StatusBadge status={node.status as any} />}
-                {node.priority && <PriorityBadge priority={node.priority as any} />}
+              <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
+                {node.status && <StatusBadge status={node.status} />}
+                {node.priority && <PriorityBadge priority={node.priority} />}
                 <TokenBadge
-                  count={(node as any).tokenCount}
+                  count={(node as HierarchyNode).tokenCount}
                   size="sm"
                   onClick={onTokenClick ? () => onTokenClick(node.specName) : undefined}
                 />
                 <ValidationBadge
-                  status={(node as any).validationStatus}
+                  status={(node as HierarchyNode).validationStatus}
                   size="sm"
                   onClick={onValidationClick ? () => onValidationClick(node.specName) : undefined}
                 />
               </div>
             </div>
             {node.tags && node.tags.length > 0 && (
-              <div className="flex gap-2 mt-2 flex-wrap">
+              <div className="flex gap-2 mt-3 flex-wrap">
                 {node.tags.map((tag: string) => (
                   <span key={tag} className="text-xs px-2 py-0.5 bg-secondary rounded text-secondary-foreground">
                     {tag}
@@ -105,12 +169,13 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
         <Collapsible open={isExpanded}>
           <CollapsibleContent forceMount={isExpanded ? true : undefined}>
             <div className="ml-4 pl-4 border-l-2 border-border/40 space-y-2 mt-2 mb-4">
-              {node.childNodes.map(child => (
+              {sortNodes(node.childNodes, sortBy).map(child => (
                 <HierarchyListItem
                   key={child.specName}
                   node={child}
                   basePath={basePath}
                   depth={depth + 1}
+                  sortBy={sortBy}
                   onTokenClick={onTokenClick}
                   onValidationClick={onValidationClick}
                 />
@@ -123,17 +188,50 @@ const HierarchyListItem = memo(function HierarchyListItem({ node, basePath, dept
   );
 });
 
-export const HierarchyList = memo(function HierarchyList({ specs, hierarchy, basePath = '/projects', onTokenClick, onValidationClick }: HierarchyListProps) {
+// Filter hierarchy tree to only include nodes present in the filtered specs
+function filterHierarchy(nodes: TreeNode[], allowedIds: Set<string>): TreeNode[] {
+  const result: TreeNode[] = [];
+  for (const node of nodes) {
+    if (allowedIds.has(node.specName)) {
+      // Include this node, but also filter its children
+      const filteredChildren = node.childNodes
+        ? filterHierarchy(node.childNodes, allowedIds)
+        : [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result.push({ ...node, childNodes: filteredChildren } as any);
+    } else if (node.childNodes && node.childNodes.length > 0) {
+      // Node itself is not allowed, but check if any descendants are
+      const filteredChildren = filterHierarchy(node.childNodes, allowedIds);
+      if (filteredChildren.length > 0) {
+        // Include this node as a container for allowed children
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result.push({ ...node, childNodes: filteredChildren } as any);
+      }
+    }
+  }
+  return result;
+}
+
+export const HierarchyList = memo(function HierarchyList({ specs, hierarchy, basePath = '/projects', sortBy = 'id-desc', onTokenClick, onValidationClick }: HierarchyListProps) {
+  // Build a set of allowed spec IDs from the filtered specs
+  const allowedSpecIds = useMemo(() => {
+    return new Set(specs.map(s => s.specName));
+  }, [specs]);
+
   // Use pre-built hierarchy from server if available, otherwise build client-side
   const roots = useMemo(() => {
+    let baseRoots: TreeNode[];
     if (hierarchy && hierarchy.length > 0) {
-      // Server already built the tree - use it directly
-      return hierarchy;
+      // Server already built the tree - filter it to only include allowed specs
+      baseRoots = filterHierarchy(hierarchy, allowedSpecIds);
+    } else {
+      // Fallback to client-side building (already uses filtered specs)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      baseRoots = buildHierarchy(specs as any);
     }
-    // Fallback to client-side building
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return buildHierarchy(specs as any);
-  }, [hierarchy, specs]);
+    // Sort roots according to sortBy
+    return sortNodes(baseRoots, sortBy);
+  }, [hierarchy, specs, sortBy, allowedSpecIds]);
 
   if (specs.length === 0) {
     return null; // Parent handles empty state
@@ -147,6 +245,7 @@ export const HierarchyList = memo(function HierarchyList({ specs, hierarchy, bas
           node={node}
           basePath={basePath}
           depth={0}
+          sortBy={sortBy}
           onTokenClick={onTokenClick}
           onValidationClick={onValidationClick}
         />
