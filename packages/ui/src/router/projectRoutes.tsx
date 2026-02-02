@@ -4,12 +4,10 @@ import { SpecDetailLayout } from '../components/SpecDetailLayout';
 import { ContextPage } from '../pages/ContextPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DependenciesPage } from '../pages/DependenciesPage';
-// TODO: AI Chat temporarily disabled - not ready yet
-// import { ChatPage } from '../pages/ChatPage';
-// import { ChatSettingsPage } from '../pages/ChatSettingsPage';
-// TODO: AI Sessions temporarily disabled - not ready yet
-// import { SessionDetailPage } from '../pages/SessionDetailPage';
-// import { SessionsPage } from '../pages/SessionsPage';
+import { ChatPage } from '../pages/ChatPage';
+import { ChatSettingsPage } from '../pages/ChatSettingsPage';
+import { SessionDetailPage } from '../pages/SessionDetailPage';
+import { SessionsPage } from '../pages/SessionsPage';
 import { SpecDetailPage } from '../pages/SpecDetailPage';
 import { SpecsPage } from '../pages/SpecsPage';
 import { StatsPage } from '../pages/StatsPage';
@@ -34,20 +32,18 @@ export function createProjectRoutes(): RouteObject[] {
         },
       ],
     },
-    // TODO: AI Sessions temporarily disabled - not ready yet
-    // {
-    //   path: 'sessions',
-    //   children: [
-    //     { index: true, element: <SessionsPage /> },
-    //     { path: ':sessionId', element: <SessionDetailPage /> },
-    //   ],
-    // },
+    {
+      path: 'sessions',
+      children: [
+        { index: true, element: <SessionsPage /> },
+        { path: ':sessionId', element: <SessionDetailPage /> },
+      ],
+    },
     { path: 'stats', element: <StatsPage /> },
     { path: 'dependencies', element: <DependenciesPage /> },
     { path: 'dependencies/:specName', element: <DependenciesPage /> },
     { path: 'context', element: <ContextPage /> },
-    // TODO: AI Chat temporarily disabled - not ready yet
-    // { path: 'chat', element: <ChatPage /> },
-    // { path: 'chat/settings', element: <ChatSettingsPage /> },
+    { path: 'chat', element: <ChatPage /> },
+    { path: 'chat/settings', element: <ChatSettingsPage /> },
   ];
 }

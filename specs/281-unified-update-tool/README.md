@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-02-02
 priority: medium
 tags:
@@ -8,7 +8,11 @@ tags:
 - dx
 - optimization
 created_at: 2026-02-02T05:56:56.279069429Z
-updated_at: 2026-02-02T05:56:56.279069429Z
+updated_at: 2026-02-02T07:05:01.756170883Z
+completed_at: 2026-02-02T07:05:01.756170883Z
+transitions:
+- status: complete
+  at: 2026-02-02T07:05:01.756170883Z
 ---
 
 # Unified Update Tool for Combined Metadata and Content Changes
