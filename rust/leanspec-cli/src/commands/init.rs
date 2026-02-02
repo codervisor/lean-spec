@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 mod ai_tools;
 mod mcp_config;
 
+use crate::commands::skill;
 use ai_tools::{
     create_symlinks, default_ai_selection, detect_ai_tools, symlink_capable_tools, AiTool,
     DetectionResult as AiDetection,
@@ -14,7 +15,6 @@ use ai_tools::{
 use mcp_config::{
     all_tools as all_mcp_tools, configure_mcp, default_mcp_selection, detect_mcp_tools,
 };
-use crate::commands::skill;
 
 // Embedded AGENTS.md templates
 const AGENTS_MD_TEMPLATE_DETAILED: &str = include_str!("../../templates/AGENTS.md");
@@ -485,15 +485,8 @@ fn handle_skills_install(install_skills: bool) -> Result<(), Box<dyn Error>> {
 
     println!("\n{}", "Installing agent skills...".cyan());
     if let Err(err) = skill::install() {
-        println!(
-            "{} Failed to install agent skills: {}",
-            "⚠".yellow(),
-            err
-        );
-        println!(
-            "{} You can retry with: lean-spec skill install",
-            "•".cyan()
-        );
+        println!("{} Failed to install agent skills: {}", "⚠".yellow(), err);
+        println!("{} You can retry with: lean-spec skill install", "•".cyan());
     }
 
     Ok(())

@@ -28,9 +28,10 @@ fn list() -> Result<(), Box<dyn Error>> {
 }
 
 fn run_npx(args: &[&str]) -> Result<(), Box<dyn Error>> {
-    let status = Command::new("npx").args(args).status().map_err(|err| {
-        format!("Failed to run npx (is Node.js installed?): {err}")
-    })?;
+    let status = Command::new("npx")
+        .args(args)
+        .status()
+        .map_err(|err| format!("Failed to run npx (is Node.js installed?): {err}"))?;
 
     if status.success() {
         Ok(())

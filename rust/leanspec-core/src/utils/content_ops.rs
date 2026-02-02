@@ -84,7 +84,9 @@ pub fn apply_replacements(
 
         let matches = find_matches(&current, &replacement.old_string);
         if matches.is_empty() {
-            return Err("Found 0 matches for oldString. Check for typos or whitespace.".to_string());
+            return Err(
+                "Found 0 matches for oldString. Check for typos or whitespace.".to_string(),
+            );
         }
 
         let lines: Vec<usize> = matches.iter().map(|m| m.line).collect();
@@ -98,10 +100,20 @@ pub fn apply_replacements(
                         format_line_list(&lines)
                     ));
                 }
-                current = replace_first(&current, matches[0].start, &replacement.old_string, &replacement.new_string);
+                current = replace_first(
+                    &current,
+                    matches[0].start,
+                    &replacement.old_string,
+                    &replacement.new_string,
+                );
             }
             MatchMode::First => {
-                current = replace_first(&current, matches[0].start, &replacement.old_string, &replacement.new_string);
+                current = replace_first(
+                    &current,
+                    matches[0].start,
+                    &replacement.old_string,
+                    &replacement.new_string,
+                );
             }
             MatchMode::All => {
                 current = current.replace(&replacement.old_string, &replacement.new_string);
@@ -118,10 +130,7 @@ pub fn apply_replacements(
     Ok((current, results))
 }
 
-pub fn apply_section_updates(
-    body: &str,
-    updates: &[SectionUpdate],
-) -> Result<String, String> {
+pub fn apply_section_updates(body: &str, updates: &[SectionUpdate]) -> Result<String, String> {
     let mut current = body.to_string();
     for update in updates {
         current = update_section(&current, &update.section, &update.content, update.mode)?;
