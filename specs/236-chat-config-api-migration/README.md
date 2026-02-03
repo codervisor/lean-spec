@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 created: 2026-01-22
 priority: high
 tags:
@@ -9,7 +9,10 @@ tags:
 - rust
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-22T15:34:19.126101Z
-updated_at: 2026-01-22T15:34:19.126101Z
+updated_at: 2026-02-03T15:33:23.824324Z
+transitions:
+- status: archived
+  at: 2026-02-03T15:33:23.824324Z
 ---
 
 # Migrate AI Model Config API from Chat Server to Rust HTTP Server
