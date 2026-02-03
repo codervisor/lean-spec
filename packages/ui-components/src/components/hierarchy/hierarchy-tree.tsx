@@ -240,7 +240,7 @@ export function HierarchyTree({
 
         <div
           className={cn(
-            "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group mr-2 w-full",
+            "flex items-center py-1.5 pr-2 rounded-md cursor-pointer text-xs transition-colors group flex-1 min-w-0",
             isSelected
               ? "bg-accent/80 font-medium text-accent-foreground"
               : "hover:bg-accent/50 text-foreground/80 hover:text-foreground"
@@ -264,7 +264,7 @@ export function HierarchyTree({
             )}
           </div>
 
-          <span className="truncate flex-1" title={node.title || node.specName}>
+          <span className="truncate flex-1 min-w-0" title={node.title || node.specName}>
             {node.specNumber ? <span className="opacity-60 mr-1.5 font-mono text-xs">#{String(node.specNumber).padStart(3, '0')}</span> : ''}
             {node.title || node.specName}
           </span>

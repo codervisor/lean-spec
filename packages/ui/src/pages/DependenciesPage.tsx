@@ -517,9 +517,11 @@ export function DependenciesPage() {
   // Filter specs for selector dropdown
   const filteredSpecs = React.useMemo(() => {
     if (!data) return [];
-    if (!selectorQuery.trim()) return data.nodes.slice(0, 15);
+    // Sort by number descending (newest first)
+    const sortedNodes = [...data.nodes].sort((a, b) => b.number - a.number);
+    if (!selectorQuery.trim()) return sortedNodes.slice(0, 15);
     const q = selectorQuery.toLowerCase();
-    return data.nodes
+    return sortedNodes
       .filter(
         (n) =>
           n.name.toLowerCase().includes(q) ||

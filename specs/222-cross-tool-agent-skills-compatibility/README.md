@@ -2,6 +2,7 @@
 status: planned
 created: 2026-01-18
 priority: medium
+parent: 289-universal-skills-initiative
 tags:
 - agent-skills
 - compatibility

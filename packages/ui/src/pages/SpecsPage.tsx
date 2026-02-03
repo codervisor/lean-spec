@@ -500,7 +500,8 @@ export function SpecsPage() {
           };
           const scoreA = priorityOrder[a.priority || ''] || 0;
           const scoreB = priorityOrder[b.priority || ''] || 0;
-          return scoreB - scoreA;
+          const cmp = scoreB - scoreA;
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
         });
         break;
       case 'priority-asc':
@@ -513,7 +514,8 @@ export function SpecsPage() {
           };
           const scoreA = priorityOrder[a.priority || ''] || 0;
           const scoreB = priorityOrder[b.priority || ''] || 0;
-          return scoreA - scoreB;
+          const cmp = scoreA - scoreB;
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
         });
         break;
       case 'updated-desc':
@@ -522,14 +524,16 @@ export function SpecsPage() {
           if (!b.updatedAt) return -1;
           const aTime = new Date(a.updatedAt).getTime();
           const bTime = new Date(b.updatedAt).getTime();
-          return bTime - aTime;
+          const timeDiff = bTime - aTime;
+          return timeDiff !== 0 ? timeDiff : (b.specNumber || 0) - (a.specNumber || 0);
         });
         break;
       case 'title-asc':
         sorted.sort((a, b) => {
           const titleA = (a.title || a.specName).toLowerCase();
           const titleB = (b.title || b.specName).toLowerCase();
-          return titleA.localeCompare(titleB);
+          const cmp = titleA.localeCompare(titleB);
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
         });
         break;
       case 'id-desc':

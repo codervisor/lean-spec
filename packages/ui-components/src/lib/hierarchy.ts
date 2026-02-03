@@ -36,8 +36,8 @@ export function buildHierarchy(specs: LightweightSpec[], sortBy: SortOption = 'i
 
     if (parentId && nodeMap.has(parentId)) {
       const parentNode = nodeMap.get(parentId)!;
-      parentNode.childNodes.push(node);
-    } else {
+        parentNode.childNodes.push(node);
+      } else {
       // No parent, or parent not in this list -> it's a root
       roots.push(node);
     }
@@ -60,21 +60,28 @@ export function buildHierarchy(specs: LightweightSpec[], sortBy: SortOption = 'i
         case 'updated-desc': {
           if (!a.updatedAt) return 1;
           if (!b.updatedAt) return -1;
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+          const timeDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+          return timeDiff !== 0 ? timeDiff : (b.specNumber || 0) - (a.specNumber || 0);
         }
-        case 'title-asc':
-          return (a.title || a.specName || '').toLowerCase().localeCompare((b.title || b.specName || '').toLowerCase());
-        case 'title-desc':
-          return (b.title || b.specName || '').toLowerCase().localeCompare((a.title || a.specName || '').toLowerCase());
+        case 'title-asc': {
+          const cmp = (a.title || a.specName || '').toLowerCase().localeCompare((b.title || b.specName || '').toLowerCase());
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
+        }
+        case 'title-desc': {
+          const cmp = (b.title || b.specName || '').toLowerCase().localeCompare((a.title || a.specName || '').toLowerCase());
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
+        }
         case 'priority-desc': {
           const scoreA = priorityOrder[a.priority || ''] || 0;
           const scoreB = priorityOrder[b.priority || ''] || 0;
-          return scoreB - scoreA;
+          const cmp = scoreB - scoreA;
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
         }
         case 'priority-asc': {
           const scoreA = priorityOrder[a.priority || ''] || 0;
           const scoreB = priorityOrder[b.priority || ''] || 0;
-          return scoreA - scoreB;
+          const cmp = scoreA - scoreB;
+          return cmp !== 0 ? cmp : (b.specNumber || 0) - (a.specNumber || 0);
         }
         case 'id-desc':
         default:

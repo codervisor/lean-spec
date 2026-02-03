@@ -98,7 +98,10 @@ export function QuickSearch() {
   );
 
   const results = useMemo(() => {
-    if (!search) return specs.slice(0, 8);
+    if (!search) {
+      // Sort by specNumber descending (newest first) for default view
+      return [...specs].sort((a, b) => (b.specNumber ?? 0) - (a.specNumber ?? 0)).slice(0, 8);
+    }
     return fuse.search(search).map((result) => result.item).slice(0, 12);
   }, [search, fuse, specs]);
 

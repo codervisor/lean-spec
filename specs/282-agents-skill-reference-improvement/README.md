@@ -2,6 +2,7 @@
 status: planned
 created: 2026-02-02
 priority: medium
+parent: 289-universal-skills-initiative
 tags:
 - cli
 - init
