@@ -361,7 +361,7 @@ export class HttpBackendAdapter implements BackendAdapter {
 
   async listAvailableRunners(projectPath?: string): Promise<string[]> {
     const response = await this.listRunners(projectPath);
-    return response.runners.filter((runner) => runner.available).map((runner) => runner.id);
+    return (response?.runners ?? []).filter((runner) => runner.available).map((runner) => runner.id);
   }
 
   async listRunners(projectPath?: string): Promise<RunnerListResponse> {

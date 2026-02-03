@@ -56,8 +56,13 @@ export function RunnerSettingsTab() {
 
   const canManage = useMemo(() => Boolean(projectPath), [projectPath]);
 
-  const applyResponse = (response: RunnerListResponse) => {
-    setRunners(response.runners);
+  const applyResponse = (response: RunnerListResponse | undefined) => {
+    if (!response) {
+      setRunners([]);
+      setDefaultRunner(null);
+      return;
+    }
+    setRunners(Array.isArray(response.runners) ? response.runners : []);
     setDefaultRunner(response.default ?? null);
   };
 
