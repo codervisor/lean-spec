@@ -18,7 +18,7 @@ pub fn run(specs_dir: &str) -> Result<(), Box<dyn Error>> {
 
     if let Some(binary_path) = mcp_binary {
         // Launch the MCP server binary
-        eprintln!("{}", "Starting LeanSpec MCP Server...".cyan());
+        println!("{}", "Starting LeanSpec MCP Server...".cyan());
 
         let mut child = Command::new(&binary_path)
             .current_dir(&cwd)

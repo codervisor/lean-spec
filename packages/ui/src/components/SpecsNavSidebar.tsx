@@ -67,7 +67,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSearchQuery, setTagSearchQuery] = useState('');
-  
+
   // Initialize from storage with legacy fallback
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
     // Try new key
@@ -80,66 +80,66 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     }
     return [];
   });
-  
+
   const [priorityFilter, setPriorityFilter] = useState<string[]>(() => {
     const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY, []);
     if (val.length > 0) return val;
     if (typeof window !== 'undefined') {
-        const legacy = sessionStorage.getItem('specs-nav-sidebar-priority-filter');
-        if (legacy) return JSON.parse(legacy);
+      const legacy = sessionStorage.getItem('specs-nav-sidebar-priority-filter');
+      if (legacy) return JSON.parse(legacy);
     }
     return [];
   });
-  
+
   const [tagFilter, setTagFilter] = useState<string[]>(() => {
     const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_TAGS, []);
     if (val.length > 0) return val;
     if (typeof window !== 'undefined') {
-        const legacy = sessionStorage.getItem('specs-nav-sidebar-tag-filter');
-        if (legacy) return JSON.parse(legacy);
+      const legacy = sessionStorage.getItem('specs-nav-sidebar-tag-filter');
+      if (legacy) return JSON.parse(legacy);
     }
     return [];
   });
-  
+
   const [sortBy, setSortBy] = useState<string>(() => {
     return storage.get(STORAGE_KEYS.SIDEBAR_SORT, 'id-desc');
   });
-  
+
   const [showFilters, setShowFilters] = useState(false);
-  
+
   const [showArchived, setShowArchived] = useState<boolean>(() => {
     // Boolean is tricky with empty strings or nulls, storage.get returns defaultValue if missing
     // We need to check if key exists to know if we should fallback
     if (typeof window === 'undefined') return false;
-    
+
     // Check if new key exists
     if (localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) !== null) {
-        return storage.get(STORAGE_KEYS.SHOW_ARCHIVED, false);
+      return storage.get(STORAGE_KEYS.SHOW_ARCHIVED, false);
     }
-    
+
     // Fallback
     const legacy = sessionStorage.getItem('specs-nav-sidebar-show-archived');
     return legacy === 'true';
   });
-  
+
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     if (localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) !== null) {
-        return storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED, false);
+      return storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED, false);
     }
     return localStorage.getItem('specs-nav-sidebar-collapsed') === 'true';
   });
-  
+
   const [viewMode, setViewMode] = useState<'list' | 'tree'>(() => {
     if (typeof window === 'undefined') return 'list';
     if (localStorage.getItem(STORAGE_KEYS.HIERARCHY_VIEW) !== null) {
-         return storage.get(STORAGE_KEYS.HIERARCHY_VIEW, false) ? 'tree' : 'list';
+      return storage.get(STORAGE_KEYS.HIERARCHY_VIEW, false) ? 'tree' : 'list';
     }
     return sessionStorage.getItem('specs-hierarchy-view') === 'true' ? 'tree' : 'list';
   });
-  
+
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
-  
+
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set();
     const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
@@ -208,8 +208,8 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEYS.HIERARCHY_VIEW && e.storageArea === localStorage) {
-         // storage.set stores booleans as "true"/"false" strings
-         setViewMode(e.newValue === 'true' ? 'tree' : 'list');
+        // storage.set stores booleans as "true"/"false" strings
+        setViewMode(e.newValue === 'true' ? 'tree' : 'list');
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -218,20 +218,20 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
   // One-time migration on mount
   useEffect(() => {
-      if (typeof window === 'undefined') return;
-      
-      storage.migrateFromSessionToLocal('specs-nav-sidebar-status-filter', STORAGE_KEYS.SIDEBAR_FILTER_STATUS);
-      storage.migrateFromSessionToLocal('specs-nav-sidebar-priority-filter', STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY);
-      storage.migrateFromSessionToLocal('specs-nav-sidebar-tag-filter', STORAGE_KEYS.SIDEBAR_FILTER_TAGS);
-      storage.migrateFromSessionToLocal('specs-nav-sidebar-show-archived', STORAGE_KEYS.SHOW_ARCHIVED);
-      storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
-      
-      // Migrate Collapsed (local -> local)
-      const oldCollapsed = localStorage.getItem('specs-nav-sidebar-collapsed');
-      if (oldCollapsed !== null && localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === null) {
-           localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, oldCollapsed);
-           localStorage.removeItem('specs-nav-sidebar-collapsed');
-      }
+    if (typeof window === 'undefined') return;
+
+    storage.migrateFromSessionToLocal('specs-nav-sidebar-status-filter', STORAGE_KEYS.SIDEBAR_FILTER_STATUS);
+    storage.migrateFromSessionToLocal('specs-nav-sidebar-priority-filter', STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY);
+    storage.migrateFromSessionToLocal('specs-nav-sidebar-tag-filter', STORAGE_KEYS.SIDEBAR_FILTER_TAGS);
+    storage.migrateFromSessionToLocal('specs-nav-sidebar-show-archived', STORAGE_KEYS.SHOW_ARCHIVED);
+    storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
+
+    // Migrate Collapsed (local -> local)
+    const oldCollapsed = localStorage.getItem('specs-nav-sidebar-collapsed');
+    if (oldCollapsed !== null && localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === null) {
+      localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, oldCollapsed);
+      localStorage.removeItem('specs-nav-sidebar-collapsed');
+    }
   }, []);
 
   useEffect(() => {
@@ -292,9 +292,13 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const filteredSpecs = useMemo(() => {
     let result = specs;
 
+    // Create base specs list that respects archived filter for descendant expansion
+    let baseSpecs = specs;
+
     // Hide archived specs by default unless showArchived is true or archived is explicitly selected in status filter
     if (!showArchived && !statusFilter.includes('archived')) {
       result = result.filter((spec) => spec.status !== 'archived');
+      baseSpecs = result;
     }
 
     if (searchQuery) {
@@ -323,8 +327,9 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
 
     // For tree view, expand to include all descendants of matching specs
     // This ensures umbrella specs show their full hierarchy for progress visibility
+    // Use baseSpecs (which respects archived filter) instead of full specs
     if (viewMode === 'tree' && (statusFilter.length > 0 || priorityFilter.length > 0)) {
-      result = expandWithDescendants(result, specs);
+      result = expandWithDescendants(result, baseSpecs);
     }
 
     return [...result].sort((a, b) => {
@@ -382,11 +387,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   // Initialize expansion state on first load (if no storage)
   useEffect(() => {
     if (viewMode === 'tree' && !hasInitializedExpansion.current && allParentIds.size > 0) {
-       const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
-       if (stored === null) {
-           setExpandedIds(allParentIds);
-       }
-       hasInitializedExpansion.current = true;
+      const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
+      if (stored === null) {
+        setExpandedIds(allParentIds);
+      }
+      hasInitializedExpansion.current = true;
     }
   }, [viewMode, allParentIds]);
 
@@ -606,7 +611,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           <div className="p-3 border-b space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-sm">{t('specsNavSidebar.title')}</h2>
-              
+
               <div className="flex items-center gap-1">
                 <Button
                   variant={viewMode === 'tree' ? 'secondary' : 'ghost'}

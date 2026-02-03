@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: archived
 created: 2026-01-19
 priority: high
 tags:
@@ -12,10 +12,12 @@ depends_on:
 - 224-ai-chat-configuration-improvements
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-01-19T07:54:03.056027248Z
-updated_at: 2026-01-20T05:33:25.701006037Z
+updated_at: 2026-02-03T13:55:53.322404Z
 transitions:
 - status: in-progress
   at: 2026-01-20T05:33:25.701006037Z
+- status: archived
+  at: 2026-02-03T13:55:53.322404Z
 ---
 
 # Chat Message Persistence Strategy (Local & Cloud)
