@@ -39,7 +39,10 @@ fn get_api_key_env_var(provider_id: &str) -> String {
         "perplexity" => "${PERPLEXITY_API_KEY}".to_string(),
         "xai" => "${XAI_API_KEY}".to_string(),
         "azure" => "${AZURE_OPENAI_API_KEY}".to_string(),
-        _ => format!("${{{}_API_KEY}}", provider_id.to_uppercase().replace('-', "_")),
+        _ => format!(
+            "${{{}_API_KEY}}",
+            provider_id.to_uppercase().replace('-', "_")
+        ),
     }
 }
 
@@ -48,7 +51,10 @@ fn model_to_chat_model(model: &Model, is_default: bool) -> ChatModel {
     ChatModel {
         id: model.id.clone(),
         name: model.name.clone(),
-        max_tokens: model.limit.as_ref().and_then(|l| l.output.map(|o| o as u32)),
+        max_tokens: model
+            .limit
+            .as_ref()
+            .and_then(|l| l.output.map(|o| o as u32)),
         default: if is_default { Some(true) } else { None },
     }
 }
@@ -91,8 +97,14 @@ pub fn registry_to_chat_config(registry: &ModelRegistry) -> ChatConfig {
     // Sort providers by priority
     let mut providers: Vec<(&String, &Provider)> = registry.providers.iter().collect();
     providers.sort_by(|(a_id, _), (b_id, _)| {
-        let a_priority = PROVIDER_PRIORITY.iter().position(|p| p == a_id).unwrap_or(100);
-        let b_priority = PROVIDER_PRIORITY.iter().position(|p| p == b_id).unwrap_or(100);
+        let a_priority = PROVIDER_PRIORITY
+            .iter()
+            .position(|p| p == a_id)
+            .unwrap_or(100);
+        let b_priority = PROVIDER_PRIORITY
+            .iter()
+            .position(|p| p == b_id)
+            .unwrap_or(100);
         a_priority.cmp(&b_priority)
     });
 
@@ -107,7 +119,10 @@ pub fn registry_to_chat_config(registry: &ModelRegistry) -> ChatConfig {
     let (default_provider_id, default_model_id) = chat_providers
         .first()
         .map(|p| {
-            let default_model = p.models.iter().find(|m| m.default == Some(true))
+            let default_model = p
+                .models
+                .iter()
+                .find(|m| m.default == Some(true))
                 .or(p.models.first());
             (
                 p.id.clone(),
@@ -154,7 +169,7 @@ pub fn merge_user_preferences(
     user_providers: Option<Vec<ChatProvider>>,
 ) -> ChatConfig {
     let settings = user_settings.unwrap_or(auto_config.settings);
-    
+
     // If user has custom providers, merge them in
     let providers = if let Some(user_providers) = user_providers {
         let mut merged = auto_config.providers;
@@ -185,96 +200,111 @@ mod tests {
 
     fn sample_registry() -> ModelRegistry {
         let mut providers = HashMap::new();
-        
+
         // OpenAI provider
         let mut openai_models = HashMap::new();
-        openai_models.insert("gpt-4o".to_string(), Model {
-            id: "gpt-4o".to_string(),
-            name: "GPT-4o".to_string(),
-            family: Some("gpt".to_string()),
-            attachment: Some(true),
-            reasoning: Some(false),
-            tool_call: Some(true),
-            structured_output: Some(true),
-            temperature: Some(true),
-            knowledge: None,
-            release_date: None,
-            last_updated: None,
-            modalities: Some(ModelModalities {
-                input: vec!["text".to_string(), "image".to_string()],
-                output: vec!["text".to_string()],
-            }),
-            open_weights: Some(false),
-            cost: None,
-            limit: Some(ModelLimits {
-                context: Some(128000),
-                output: Some(16384),
-            }),
-        });
-        openai_models.insert("gpt-4o-mini".to_string(), Model {
-            id: "gpt-4o-mini".to_string(),
-            name: "GPT-4o Mini".to_string(),
-            family: Some("gpt".to_string()),
-            attachment: Some(true),
-            reasoning: Some(false),
-            tool_call: Some(true),
-            structured_output: Some(true),
-            temperature: Some(true),
-            knowledge: None,
-            release_date: None,
-            last_updated: None,
-            modalities: None,
-            open_weights: Some(false),
-            cost: None,
-            limit: Some(ModelLimits {
-                context: Some(128000),
-                output: Some(4096),
-            }),
-        });
-        
-        providers.insert("openai".to_string(), Provider {
-            id: "openai".to_string(),
-            name: "OpenAI".to_string(),
-            env: vec!["OPENAI_API_KEY".to_string()],
-            npm: Some("@ai-sdk/openai".to_string()),
-            api: None,
-            doc: Some("https://platform.openai.com/docs/models".to_string()),
-            models: openai_models,
-        });
-        
+        openai_models.insert(
+            "gpt-4o".to_string(),
+            Model {
+                id: "gpt-4o".to_string(),
+                name: "GPT-4o".to_string(),
+                family: Some("gpt".to_string()),
+                attachment: Some(true),
+                reasoning: Some(false),
+                tool_call: Some(true),
+                structured_output: Some(true),
+                temperature: Some(true),
+                knowledge: None,
+                release_date: None,
+                last_updated: None,
+                modalities: Some(ModelModalities {
+                    input: vec!["text".to_string(), "image".to_string()],
+                    output: vec!["text".to_string()],
+                }),
+                open_weights: Some(false),
+                cost: None,
+                limit: Some(ModelLimits {
+                    context: Some(128000),
+                    output: Some(16384),
+                }),
+            },
+        );
+        openai_models.insert(
+            "gpt-4o-mini".to_string(),
+            Model {
+                id: "gpt-4o-mini".to_string(),
+                name: "GPT-4o Mini".to_string(),
+                family: Some("gpt".to_string()),
+                attachment: Some(true),
+                reasoning: Some(false),
+                tool_call: Some(true),
+                structured_output: Some(true),
+                temperature: Some(true),
+                knowledge: None,
+                release_date: None,
+                last_updated: None,
+                modalities: None,
+                open_weights: Some(false),
+                cost: None,
+                limit: Some(ModelLimits {
+                    context: Some(128000),
+                    output: Some(4096),
+                }),
+            },
+        );
+
+        providers.insert(
+            "openai".to_string(),
+            Provider {
+                id: "openai".to_string(),
+                name: "OpenAI".to_string(),
+                env: vec!["OPENAI_API_KEY".to_string()],
+                npm: Some("@ai-sdk/openai".to_string()),
+                api: None,
+                doc: Some("https://platform.openai.com/docs/models".to_string()),
+                models: openai_models,
+            },
+        );
+
         // Anthropic provider
         let mut anthropic_models = HashMap::new();
-        anthropic_models.insert("claude-3-5-sonnet".to_string(), Model {
-            id: "claude-3-5-sonnet".to_string(),
-            name: "Claude 3.5 Sonnet".to_string(),
-            family: Some("claude".to_string()),
-            attachment: Some(true),
-            reasoning: Some(true),
-            tool_call: Some(true),
-            structured_output: Some(true),
-            temperature: Some(true),
-            knowledge: None,
-            release_date: None,
-            last_updated: None,
-            modalities: None,
-            open_weights: Some(false),
-            cost: None,
-            limit: Some(ModelLimits {
-                context: Some(200000),
-                output: Some(8192),
-            }),
-        });
-        
-        providers.insert("anthropic".to_string(), Provider {
-            id: "anthropic".to_string(),
-            name: "Anthropic".to_string(),
-            env: vec!["ANTHROPIC_API_KEY".to_string()],
-            npm: Some("@ai-sdk/anthropic".to_string()),
-            api: None,
-            doc: None,
-            models: anthropic_models,
-        });
-        
+        anthropic_models.insert(
+            "claude-3-5-sonnet".to_string(),
+            Model {
+                id: "claude-3-5-sonnet".to_string(),
+                name: "Claude 3.5 Sonnet".to_string(),
+                family: Some("claude".to_string()),
+                attachment: Some(true),
+                reasoning: Some(true),
+                tool_call: Some(true),
+                structured_output: Some(true),
+                temperature: Some(true),
+                knowledge: None,
+                release_date: None,
+                last_updated: None,
+                modalities: None,
+                open_weights: Some(false),
+                cost: None,
+                limit: Some(ModelLimits {
+                    context: Some(200000),
+                    output: Some(8192),
+                }),
+            },
+        );
+
+        providers.insert(
+            "anthropic".to_string(),
+            Provider {
+                id: "anthropic".to_string(),
+                name: "Anthropic".to_string(),
+                env: vec!["ANTHROPIC_API_KEY".to_string()],
+                npm: Some("@ai-sdk/anthropic".to_string()),
+                api: None,
+                doc: None,
+                models: anthropic_models,
+            },
+        );
+
         ModelRegistry { providers }
     }
 
@@ -282,13 +312,13 @@ mod tests {
     fn test_registry_to_chat_config() {
         let registry = sample_registry();
         let config = registry_to_chat_config(&registry);
-        
+
         assert_eq!(config.version, "2.0");
         assert!(!config.providers.is_empty());
-        
+
         // Anthropic should be first (highest priority)
         assert_eq!(config.providers[0].id, "anthropic");
-        
+
         // OpenAI should be second
         assert_eq!(config.providers[1].id, "openai");
     }
@@ -315,7 +345,7 @@ mod tests {
                 output: Some(8192),
             }),
         };
-        
+
         let chat_model = model_to_chat_model(&model, true);
         assert_eq!(chat_model.id, "test-model");
         assert_eq!(chat_model.name, "Test Model");
@@ -327,6 +357,9 @@ mod tests {
     fn test_api_key_env_var() {
         assert_eq!(get_api_key_env_var("openai"), "${OPENAI_API_KEY}");
         assert_eq!(get_api_key_env_var("anthropic"), "${ANTHROPIC_API_KEY}");
-        assert_eq!(get_api_key_env_var("custom-provider"), "${CUSTOM_PROVIDER_API_KEY}");
+        assert_eq!(
+            get_api_key_env_var("custom-provider"),
+            "${CUSTOM_PROVIDER_API_KEY}"
+        );
     }
 }

@@ -49,10 +49,9 @@ impl ModelsDevClient {
             )));
         }
 
-        let registry: ModelRegistry = response
-            .json()
-            .await
-            .map_err(|e| CoreError::ConfigError(format!("Failed to parse models.dev response: {}", e)))?;
+        let registry: ModelRegistry = response.json().await.map_err(|e| {
+            CoreError::ConfigError(format!("Failed to parse models.dev response: {}", e))
+        })?;
 
         Ok(registry)
     }
@@ -77,9 +76,9 @@ impl ModelsDevClient {
             )));
         }
 
-        let registry: ModelRegistry = response
-            .json()
-            .map_err(|e| CoreError::ConfigError(format!("Failed to parse models.dev response: {}", e)))?;
+        let registry: ModelRegistry = response.json().map_err(|e| {
+            CoreError::ConfigError(format!("Failed to parse models.dev response: {}", e))
+        })?;
 
         Ok(registry)
     }
@@ -107,7 +106,10 @@ mod tests {
             }
             Err(e) => {
                 // Network may be unavailable in CI
-                eprintln!("Warning: Could not fetch models.dev (expected in CI): {}", e);
+                eprintln!(
+                    "Warning: Could not fetch models.dev (expected in CI): {}",
+                    e
+                );
             }
         }
     }
