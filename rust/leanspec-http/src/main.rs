@@ -86,19 +86,52 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    // Initialize tracing
+    // Initialize tracing with improved configuration for dev experience
+    let is_dev_mode = std::env::var("LEANSPEC_DEV_MODE").is_ok();
+    let is_debug_mode = std::env::var("LEANSPEC_DEBUG").is_ok();
+
     let mut level = args.log_level.clone();
     if args.verbose && args.log_level == "info" {
         level = "debug".to_string();
     }
+    // In dev mode with debug enabled, default to debug level for better DX
+    if is_dev_mode && is_debug_mode && args.log_level == "info" {
+        level = "debug".to_string();
+    }
 
-    let filter = format!("leanspec_http={level},tower_http={level}");
+    // Include more modules in trace output when verbose/debug
+    let filter = if level == "trace" {
+        format!(
+            "leanspec_http={level},leanspec_core={level},tower_http={level},axum::rejection=trace"
+        )
+    } else if level == "debug" {
+        format!("leanspec_http={level},leanspec_core=info,tower_http={level},axum::rejection=debug")
+    } else {
+        format!("leanspec_http={level},tower_http={level}")
+    };
+
+    // Use pretty format in dev mode, compact in production
+    let fmt_layer = if is_dev_mode {
+        tracing_subscriber::fmt::layer()
+            .with_target(true)
+            .with_thread_ids(false)
+            .with_file(true)
+            .with_line_number(true)
+            .with_ansi(true)
+    } else {
+        tracing_subscriber::fmt::layer()
+            .with_target(true)
+            .with_thread_ids(false)
+            .with_file(false)
+            .with_line_number(false)
+            .with_ansi(true)
+    };
 
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| filter.into()),
         )
-        .with(tracing_subscriber::fmt::layer())
+        .with(fmt_layer)
         .init();
 
     // Load config

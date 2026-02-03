@@ -10,6 +10,7 @@ High-performance Rust HTTP server for LeanSpec UI.
 - **RESTful API**: JSON API for all spec operations
 - **Unified UI + API**: Serves the Vite UI and `/api/*` from one server
 - **CORS-enabled**: Configurable cross-origin resource sharing
+- **Detailed Logging**: Request tracing with error context for development
 
 ## Installation
 
@@ -28,7 +29,37 @@ npx leanspec-http
 Options:
 - `--host <host>` - Server host (default: 127.0.0.1)
 - `--port <port>` - Server port (default: 3000)
+- `-v, --verbose` - Enable verbose (debug) logging
+- `--log-level <level>` - Log level: trace, debug, info, warn, error (default: info)
 - `--help` - Show help message
+
+### Development Mode
+
+For improved developer experience, set environment variables to enable detailed logging:
+
+```bash
+# Enable debug mode with verbose logging
+LEANSPEC_DEBUG=1 LEANSPEC_DEV_MODE=1 npx leanspec-http -v
+
+# Or use RUST_LOG for fine-grained control
+RUST_LOG=leanspec_http=debug,tower_http=debug npx leanspec-http
+```
+
+In dev mode, the server provides:
+- **Request tracing**: Each request gets a unique ID for correlation
+- **Error context**: Full error details with status codes and stack context
+- **Latency tracking**: Response timing in milliseconds
+- **File/line info**: Source location for debugging
+
+### Log Levels
+
+| Level   | When to use | What you see                        |
+| ------- | ----------- | ----------------------------------- |
+| `error` | Production  | Only errors/failures                |
+| `warn`  | Production  | Warnings + errors                   |
+| `info`  | Default     | Requests + responses + errors       |
+| `debug` | Development | Detailed request/response info      |
+| `trace` | Debugging   | Everything including internal calls |
 
 ### As a library
 

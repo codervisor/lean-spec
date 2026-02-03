@@ -2,9 +2,13 @@
 	"folders": [
 		{
 			"path": "."
-		},
+		}
 	],
 	"settings": {
+		"[rust]": {
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "rust-lang.rust-analyzer"
+		},
 		"rust-analyzer.linkedProjects": [
 			"./rust/Cargo.toml"
 		],

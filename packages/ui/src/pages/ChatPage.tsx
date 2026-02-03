@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { ChatContainer } from '../components/chat';
 import { EnhancedModelSelector } from '../components/chat/EnhancedModelSelector';
+import { InlineModelSelector } from '../components/chat/InlineModelSelector';
 import { ChatSidebar } from '../components/chat/sidebar/ChatSidebar';
 import { ChatSkeleton } from '../components/shared/Skeletons';
 import { useLeanSpecChat } from '../lib/use-chat';
@@ -266,6 +267,13 @@ export function ChatPage() {
             error={error as Error | null}
             onRetry={reload}
             className="flex-1 min-h-0"
+            footerContent={
+              <InlineModelSelector
+                value={selectedModel}
+                onChange={setSelectedModel}
+                disabled={isLoading}
+              />
+            }
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">

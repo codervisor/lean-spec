@@ -16,7 +16,8 @@ use axum::{
 use std::path::PathBuf;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
-use tower_http::trace::TraceLayer;
+use tower_http::trace::{DefaultOnRequest, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
 use crate::config::ServerConfig;
 use crate::handlers;
@@ -229,7 +230,41 @@ pub fn create_router(state: AppState) -> Router {
     router
         // Add middleware
         .layer(cors)
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &Request<Body>| {
+                    let method = request.method();
+                    let uri = request.uri();
+                    let request_id = uuid::Uuid::new_v4().to_string();
+
+                    tracing::info_span!(
+                        "http_request",
+                        method = %method,
+                        uri = %uri,
+                        request_id = %request_id,
+                        status = tracing::field::Empty,
+                        latency_ms = tracing::field::Empty,
+                    )
+                })
+                .on_request(DefaultOnRequest::new().level(Level::DEBUG))
+                .on_response(
+                    DefaultOnResponse::new()
+                        .level(Level::INFO)
+                        .latency_unit(tower_http::LatencyUnit::Millis)
+                        .include_headers(true),
+                )
+                .on_failure(
+                    |error: tower_http::classify::ServerErrorsFailureClass,
+                     latency: std::time::Duration,
+                     _span: &tracing::Span| {
+                        tracing::error!(
+                            latency_ms = latency.as_millis(),
+                            error = %error,
+                            "Request failed"
+                        );
+                    },
+                ),
+        )
         .layer(middleware::from_fn_with_state(state, readonly_guard))
 }
 

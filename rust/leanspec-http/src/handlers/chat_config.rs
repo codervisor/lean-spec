@@ -21,6 +21,7 @@ pub async fn update_chat_config(
         )
     })?;
 
-    let config = state.chat_config.read().await.client_config();
+    // Use the already-held store to get client_config instead of acquiring another lock
+    let config = store.client_config();
     Ok(Json(config))
 }

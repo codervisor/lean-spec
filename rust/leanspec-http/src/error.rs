@@ -126,11 +126,42 @@ impl IntoResponse for ApiError {
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
+        // Log the error with appropriate level based on status code
+        match status {
+            StatusCode::INTERNAL_SERVER_ERROR => {
+                tracing::error!(
+                    code = %self.code,
+                    error = %self.error,
+                    details = ?self.details,
+                    status = %status.as_u16(),
+                    "API error response"
+                );
+            }
+            StatusCode::NOT_FOUND | StatusCode::BAD_REQUEST => {
+                tracing::debug!(
+                    code = %self.code,
+                    error = %self.error,
+                    details = ?self.details,
+                    status = %status.as_u16(),
+                    "API error response"
+                );
+            }
+            _ => {
+                tracing::warn!(
+                    code = %self.code,
+                    error = %self.error,
+                    details = ?self.details,
+                    status = %status.as_u16(),
+                    "API error response"
+                );
+            }
+        }
+
         (status, Json(self)).into_response()
     }
 }
 
-/// Helper to convert various errors to API errors
+/// Helper to convert various errors to API errors with logging
 pub fn to_api_error<E: std::fmt::Display>(code: &str, e: E) -> (StatusCode, Json<ApiError>) {
     let api_error = ApiError::new(code, e.to_string());
     let status = match code {
@@ -138,5 +169,34 @@ pub fn to_api_error<E: std::fmt::Display>(code: &str, e: E) -> (StatusCode, Json
         "NO_PROJECT" | "INVALID_REQUEST" => StatusCode::BAD_REQUEST,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     };
+
+    // Log the error with context
+    match status {
+        StatusCode::INTERNAL_SERVER_ERROR => {
+            tracing::error!(
+                code = %code,
+                error = %e,
+                status = %status.as_u16(),
+                "API error"
+            );
+        }
+        StatusCode::NOT_FOUND | StatusCode::BAD_REQUEST => {
+            tracing::debug!(
+                code = %code,
+                error = %e,
+                status = %status.as_u16(),
+                "API error"
+            );
+        }
+        _ => {
+            tracing::warn!(
+                code = %code,
+                error = %e,
+                status = %status.as_u16(),
+                "API error"
+            );
+        }
+    }
+
     (status, Json(api_error))
 }

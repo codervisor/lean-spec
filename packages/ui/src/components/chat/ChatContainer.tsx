@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { UIMessage } from '@ai-sdk/react';
+import type { ReactNode } from 'react';
 import { ChatMessage } from './ChatMessage';
 import {
   cn,
@@ -12,8 +13,10 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   Loader,
+  Alert,
+  AlertDescription,
 } from '@leanspec/ui-components';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ChatContainerProps {
   messages: UIMessage[];
@@ -22,6 +25,8 @@ interface ChatContainerProps {
   error?: Error | null;
   onRetry?: () => void;
   className?: string;
+  /** Additional content to render in the prompt input footer (e.g., model selector) */
+  footerContent?: ReactNode;
 }
 
 function EmptyState() {
@@ -47,6 +52,7 @@ export function ChatContainer({
   error,
   onRetry,
   className,
+  footerContent,
 }: ChatContainerProps) {
   const { t } = useTranslation('common');
   const hasMessages = messages.length > 0 || error;
@@ -74,17 +80,21 @@ export function ChatContainer({
                 />
               ))}
               {error && (
-                <div className="flex flex-col items-center gap-2 p-4 text-destructive">
-                  <span>{error.message}</span>
-                  {onRetry && (
-                    <button
-                      onClick={onRetry}
-                      className="text-sm underline hover:no-underline"
-                    >
-                      {t('actions.retry')}
-                    </button>
-                  )}
-                </div>
+                <Alert variant="destructive" className="mx-4 my-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{error.message || t('chat.error')}</span>
+                    {onRetry && (
+                      <button
+                        onClick={onRetry}
+                        className="ml-4 flex items-center gap-1 text-sm underline hover:no-underline"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        {t('actions.retry')}
+                      </button>
+                    )}
+                  </AlertDescription>
+                </Alert>
               )}
               {isLoading && <Loader size={20} />}
             </>
@@ -103,7 +113,7 @@ export function ChatContainer({
             />
           </PromptInputBody>
           <PromptInputFooter>
-            <div className="flex-1" />
+            {footerContent ?? <div className="flex-1" />}
             <PromptInputSubmit
               disabled={isLoading}
               status={isLoading ? 'submitted' : undefined}
