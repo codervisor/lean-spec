@@ -2,7 +2,7 @@
 
 use super::helpers::{
     create_content_description, get_next_spec_number, load_config, merge_frontmatter,
-    resolve_project_root, resolve_template_variables, to_title_case,
+    resolve_project_root, resolve_template_variables, to_title_case, MergeFrontmatterInput,
 };
 use chrono::Utc;
 use leanspec_core::hash_content;
@@ -169,17 +169,17 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
         resolve_template_variables(&template, &title, status, priority, &created_date)
     };
 
-    let content = merge_frontmatter(
-        &base_content,
+    let content = merge_frontmatter(&MergeFrontmatterInput {
+        content: &base_content,
         status,
         priority,
-        &tags,
-        &created_date,
+        tags: &tags,
+        created_date: &created_date,
         now,
-        &title,
+        title: &title,
         parent,
-        &depends_on,
-    )?;
+        depends_on: &depends_on,
+    })?;
 
     let spec_dir = std::path::Path::new(specs_dir).join(&spec_name);
     std::fs::create_dir_all(&spec_dir).map_err(|e| e.to_string())?;

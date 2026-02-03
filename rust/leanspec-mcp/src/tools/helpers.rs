@@ -109,47 +109,51 @@ pub(crate) fn resolve_template_variables(
     content
 }
 
-pub(crate) fn merge_frontmatter(
-    content: &str,
-    status: &str,
-    priority: Option<&str>,
-    tags: &[String],
-    created_date: &str,
-    now: chrono::DateTime<Utc>,
-    title: &str,
-    parent: Option<&str>,
-    depends_on: &[String],
-) -> Result<String, String> {
-    let parser = FrontmatterParser::new();
-    let status_parsed: SpecStatus = status
-        .parse()
-        .map_err(|_| format!("Invalid status: {}", status))?;
+pub(crate) struct MergeFrontmatterInput<'a> {
+    pub(crate) content: &'a str,
+    pub(crate) status: &'a str,
+    pub(crate) priority: Option<&'a str>,
+    pub(crate) tags: &'a [String],
+    pub(crate) created_date: &'a str,
+    pub(crate) now: chrono::DateTime<Utc>,
+    pub(crate) title: &'a str,
+    pub(crate) parent: Option<&'a str>,
+    pub(crate) depends_on: &'a [String],
+}
 
-    let priority_parsed: Option<SpecPriority> = priority
+pub(crate) fn merge_frontmatter(input: &MergeFrontmatterInput<'_>) -> Result<String, String> {
+    let parser = FrontmatterParser::new();
+    let status_parsed: SpecStatus = input
+        .status
+        .parse()
+        .map_err(|_| format!("Invalid status: {}", input.status))?;
+
+    let priority_parsed: Option<SpecPriority> = input
+        .priority
         .map(|p| p.parse().map_err(|_| format!("Invalid priority: {}", p)))
         .transpose()?;
 
-    match parser.parse(content) {
+    match parser.parse(input.content) {
         Ok((mut fm, body)) => {
             fm.status = status_parsed;
             if let Some(p) = priority_parsed {
                 fm.priority = Some(p);
             }
-            if !tags.is_empty() {
-                fm.tags = tags.to_vec();
+            if !input.tags.is_empty() {
+                fm.tags = input.tags.to_vec();
             }
             if fm.created.trim().is_empty() {
-                fm.created = created_date.to_string();
+                fm.created = input.created_date.to_string();
             }
             if fm.created_at.is_none() {
-                fm.created_at = Some(now);
+                fm.created_at = Some(input.now);
             }
-            fm.updated_at = Some(now);
-            if let Some(p) = parent {
+            fm.updated_at = Some(input.now);
+            if let Some(p) = input.parent {
                 fm.parent = Some(p.to_string());
             }
-            if !depends_on.is_empty() {
-                fm.depends_on = depends_on.to_vec();
+            if !input.depends_on.is_empty() {
+                fm.depends_on = input.depends_on.to_vec();
             }
 
             // Ensure H1 title is present in the body
@@ -157,44 +161,46 @@ pub(crate) fn merge_frontmatter(
             let final_body = if trimmed_body.starts_with("# ") || trimmed_body.starts_with("#\n") {
                 body
             } else {
-                format!("# {}\n\n{}", title, trimmed_body)
+                format!("# {}\n\n{}", input.title, trimmed_body)
             };
 
             Ok(parser.stringify(&fm, &final_body))
         }
-        Err(ParseError::NoFrontmatter) => build_frontmatter_from_scratch(
-            content,
-            status_parsed,
-            priority_parsed,
-            tags,
-            created_date,
-            title,
-            now,
-            parent,
-            depends_on,
-        ),
+        Err(ParseError::NoFrontmatter) => build_frontmatter_from_scratch(&BuildFrontmatterInput {
+            content: input.content,
+            status: status_parsed,
+            priority: priority_parsed,
+            tags: input.tags,
+            created_date: input.created_date,
+            title: input.title,
+            now: input.now,
+            parent: input.parent,
+            depends_on: input.depends_on,
+        }),
         Err(e) => Err(e.to_string()),
     }
 }
 
-fn build_frontmatter_from_scratch(
-    content: &str,
+struct BuildFrontmatterInput<'a> {
+    content: &'a str,
     status: SpecStatus,
     priority: Option<SpecPriority>,
-    tags: &[String],
-    created_date: &str,
-    title: &str,
+    tags: &'a [String],
+    created_date: &'a str,
+    title: &'a str,
     now: chrono::DateTime<Utc>,
-    parent: Option<&str>,
-    depends_on: &[String],
-) -> Result<String, String> {
+    parent: Option<&'a str>,
+    depends_on: &'a [String],
+}
+
+fn build_frontmatter_from_scratch(input: &BuildFrontmatterInput<'_>) -> Result<String, String> {
     let frontmatter = SpecFrontmatter {
-        status,
-        created: created_date.to_string(),
-        priority,
-        tags: tags.to_vec(),
-        depends_on: depends_on.to_vec(),
-        parent: parent.map(String::from),
+        status: input.status,
+        created: input.created_date.to_string(),
+        priority: input.priority,
+        tags: input.tags.to_vec(),
+        depends_on: input.depends_on.to_vec(),
+        parent: input.parent.map(String::from),
         assignee: None,
         reviewer: None,
         issue: None,
@@ -204,8 +210,8 @@ fn build_frontmatter_from_scratch(
         due: None,
         updated: None,
         completed: None,
-        created_at: Some(now),
-        updated_at: Some(now),
+        created_at: Some(input.now),
+        updated_at: Some(input.now),
         completed_at: None,
         transitions: Vec::new(),
         custom: std::collections::HashMap::new(),
@@ -214,11 +220,11 @@ fn build_frontmatter_from_scratch(
     let parser = FrontmatterParser::new();
 
     // Ensure H1 title is present in the body
-    let body = content.trim_start();
+    let body = input.content.trim_start();
     let final_body = if body.starts_with("# ") || body.starts_with("#\n") {
         body.to_string()
     } else {
-        format!("# {}\n\n{}", title, body)
+        format!("# {}\n\n{}", input.title, body)
     };
 
     Ok(parser.stringify(&frontmatter, &final_body))
