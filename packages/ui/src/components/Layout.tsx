@@ -10,7 +10,10 @@ import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useMediaQuery } from '../hooks/use-media-query';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { BackToTop } from './shared/BackToTop';
-import { useProject, LayoutProvider, useLayout, useKeyboardShortcuts, useMachine, useChat } from '../contexts';
+import { useKeyboardShortcuts, useChat } from '../contexts';
+import { useCurrentProject, useProjectMutations } from '../hooks/useProjectQuery';
+import { useLayoutStore } from '../stores/layout';
+import { useMachineStore } from '../stores/machine';
 import { cn } from '@leanspec/ui-components';
 
 /**
@@ -31,10 +34,11 @@ function LayoutContent({
 }) {
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject, switchProject } = useProject();
-  const { mobileSidebarOpen, toggleMobileSidebar } = useLayout();
+  const { currentProject } = useCurrentProject();
+  const { switchProject } = useProjectMutations();
+  const { isSidebarOpen, toggleSidebar } = useLayoutStore();
   const { toggleHelp } = useKeyboardShortcuts();
-  const { machineModeEnabled } = useMachine();
+  const { machineModeEnabled } = useMachineStore();
   const { isOpen: isChatOpen, sidebarWidth } = useChat();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -54,13 +58,13 @@ function LayoutContent({
   return (
     <div className={cn("min-h-screen flex flex-col bg-background", className)} style={style}>
       <Navigation
-        onToggleSidebar={toggleMobileSidebar}
+        onToggleSidebar={toggleSidebar}
         onShowShortcuts={toggleHelp}
         rightSlot={resolvedRightSlot}
         onHeaderDoubleClick={onNavigationDoubleClick}
       />
       <div className="flex w-full min-w-0">
-        <MainSidebar mobileOpen={mobileSidebarOpen} onMobileClose={toggleMobileSidebar} />
+        <MainSidebar mobileOpen={isSidebarOpen} onMobileClose={toggleSidebar} />
         <main
           className={cn(
             "flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out"
@@ -94,13 +98,11 @@ interface LayoutProps {
 
 export function Layout({ className, style, navigationRightSlot, onNavigationDoubleClick }: LayoutProps) {
   return (
-    <LayoutProvider>
-      <LayoutContent
-        className={className}
-        style={style}
-        navigationRightSlot={navigationRightSlot}
-        onNavigationDoubleClick={onNavigationDoubleClick}
-      />
-    </LayoutProvider>
+    <LayoutContent
+      className={className}
+      style={style}
+      navigationRightSlot={navigationRightSlot}
+      onNavigationDoubleClick={onNavigationDoubleClick}
+    />
   );
 }

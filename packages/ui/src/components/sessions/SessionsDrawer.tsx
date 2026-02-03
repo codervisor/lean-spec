@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { useSessions } from '../../contexts/SessionsContext';
+import { useSessions } from '../../hooks/useSessionsQuery';
+import { useSessionsUiStore } from '../../stores/sessions-ui';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '@leanspec/ui-components';
 import { Button } from '@leanspec/ui-components';
@@ -12,15 +14,16 @@ import { useTranslation } from 'react-i18next';
 
 export function SessionsDrawer() {
   const { t } = useTranslation('common');
+  const { currentProject } = useCurrentProject();
+  const { data: sessions = [] } = useSessions(currentProject?.id ?? null);
   const {
-    isOpen,
+    isDrawerOpen,
     toggleDrawer,
-    sessions,
     specFilter,
     setSpecFilter,
     activeSessionId,
-    setActiveSessionId
-  } = useSessions();
+    setActiveSessionId,
+  } = useSessionsUiStore();
   
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [width, setWidth] = useState(360);
@@ -46,7 +49,7 @@ export function SessionsDrawer() {
   return (
     <>
       {/* Backdrop for mobile */}
-      {isMobile && isOpen && (
+      {isMobile && isDrawerOpen && (
         <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
           onClick={toggleDrawer}
@@ -56,7 +59,7 @@ export function SessionsDrawer() {
       <aside
         className={cn(
           "fixed top-0 right-0 h-full bg-background border-l shadow-xl z-50 transition-transform duration-300 ease-in-out flex flex-col",
-          isOpen ? "translate-x-0" : "translate-x-full"
+          isDrawerOpen ? "translate-x-0" : "translate-x-full"
         )}
         style={{ width: effectiveWidth }}
       >

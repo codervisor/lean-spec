@@ -9,7 +9,8 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { WideModeToggle } from './WideModeToggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
 // import { useMediaQuery } from '../hooks/use-media-query';
-import { useProject, useChat } from '../contexts';
+import { useChat } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 
 interface BreadcrumbItem {
   label: string;
@@ -151,7 +152,7 @@ function Breadcrumb({ basePath }: { basePath: string }) {
 export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: NavigationProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
   const { toggleChat } = useChat();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';

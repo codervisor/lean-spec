@@ -1,7 +1,9 @@
 import type { Session } from '../../types/api';
 import { Button, Card, cn, formatRelativeTime } from '@leanspec/ui-components';
 import { Play, Square, Pause, RotateCcw, FileText, Check, X, Clock } from 'lucide-react';
-import { useSessions } from '../../contexts/SessionsContext';
+import { useSessionMutations } from '../../hooks/useSessionsQuery';
+import { useSessionsUiStore } from '../../stores/sessions-ui';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
 import { useTranslation } from 'react-i18next';
 
 interface SessionCardProps {
@@ -10,7 +12,9 @@ interface SessionCardProps {
 }
 
 export function SessionCard({ session, compact }: SessionCardProps) {
-    const { startSession, stopSession, pauseSession, setActiveSessionId } = useSessions();
+    const { currentProject } = useCurrentProject();
+    const { startSession, stopSession, pauseSession } = useSessionMutations(currentProject?.id ?? null);
+    const { setActiveSessionId } = useSessionsUiStore();
     const { t, i18n } = useTranslation('common');
 
     const handleAction = async (e: React.MouseEvent, action: () => Promise<void>) => {

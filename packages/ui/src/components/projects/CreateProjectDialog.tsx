@@ -10,7 +10,7 @@ import {
   DialogTitle,
   Input,
 } from '@leanspec/ui-components';
-import { useProject } from '../../contexts';
+import { useProjectMutations } from '../../hooks/useProjectQuery';
 import { DirectoryPicker } from './DirectoryPicker';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +21,7 @@ interface CreateProjectDialogProps {
 }
 
 export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
-  const { addProject } = useProject();
+  const { addProject } = useProjectMutations();
   const navigate = useNavigate();
   const [path, setPath] = useState('');
   const [mode, setMode] = useState<'picker' | 'manual'>('picker');

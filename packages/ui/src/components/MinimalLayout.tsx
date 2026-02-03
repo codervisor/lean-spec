@@ -4,7 +4,8 @@ import { ErrorBoundary } from './shared/ErrorBoundary';
 import { PageTransition } from './shared/PageTransition';
 import { BackToTop } from './shared/BackToTop';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
-import { LayoutProvider, useLayout, useKeyboardShortcuts } from '../contexts';
+import { useKeyboardShortcuts } from '../contexts';
+import { useLayoutStore } from '../stores/layout';
 import type { ReactNode } from 'react';
 
 /**
@@ -12,7 +13,7 @@ import type { ReactNode } from 'react';
  * Used for pages like ProjectsPage where sidebar navigation doesn't make sense.
  */
 function MinimalLayoutContent({ navigationRightSlot }: { navigationRightSlot?: ReactNode }) {
-  const { toggleMobileSidebar } = useLayout();
+  const { toggleSidebar } = useLayoutStore();
   const { toggleHelp } = useKeyboardShortcuts();
 
   // Register global keyboard shortcuts
@@ -21,7 +22,7 @@ function MinimalLayoutContent({ navigationRightSlot }: { navigationRightSlot?: R
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation
-        onToggleSidebar={toggleMobileSidebar}
+        onToggleSidebar={toggleSidebar}
         onShowShortcuts={toggleHelp}
         rightSlot={navigationRightSlot}
       />
@@ -43,9 +44,5 @@ function MinimalLayoutContent({ navigationRightSlot }: { navigationRightSlot?: R
  * This maintains API consistency with Layout component.
  */
 export function MinimalLayout({ navigationRightSlot }: { navigationRightSlot?: ReactNode } = {}) {
-  return (
-    <LayoutProvider>
-      <MinimalLayoutContent navigationRightSlot={navigationRightSlot} />
-    </LayoutProvider>
-  );
+  return <MinimalLayoutContent navigationRightSlot={navigationRightSlot} />;
 }

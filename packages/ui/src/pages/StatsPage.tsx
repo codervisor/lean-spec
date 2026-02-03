@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -16,12 +16,13 @@ import { AlertCircle, FileText, Clock, PlayCircle, CheckCircle2, TrendingUp } fr
 import { Button, Card, CardContent, CardHeader, CardTitle, cn } from '@leanspec/ui-components';
 import { Link } from 'react-router-dom';
 import { StatCard } from '../components/dashboard/StatCard';
-import { api } from '../lib/api';
 import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { useTranslation } from 'react-i18next';
-import { useProject, useLayout, useSpecs } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';
+import { useLayoutStore } from '../stores/layout';
 import { resolveTokenStatus, tokenProgressClasses } from '../lib/token-utils';
 
 const STATUS_COLORS = {
@@ -39,34 +40,16 @@ const PRIORITY_COLORS = {
 };
 
 export function StatsPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [specs, setSpecs] = useState<Spec[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { t, i18n } = useTranslation('common');
-  const { currentProject, loading: projectLoading } = useProject();
-  const { isWideMode } = useLayout();
-  const { refreshTrigger } = useSpecs();
-
-  const loadStats = useCallback(async () => {
-    if (projectLoading || !currentProject) return;
-    try {
-      setLoading(true);
-      const [statsData, specsData] = await Promise.all([api.getStats(), api.getSpecs()]);
-      setStats(statsData);
-      setSpecs(Array.isArray(specsData) ? specsData : []);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to load statistics', err);
-      setError(t('statsPage.state.errorDescription'));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentProject, projectLoading, t]);
-
-  useEffect(() => {
-    void loadStats();
-  }, [loadStats, refreshTrigger]);
+  const { currentProject, loading: projectLoading } = useCurrentProject();
+  const { isWideMode } = useLayoutStore();
+  const resolvedProjectId = currentProject?.id ?? null;
+  const statsQuery = useProjectStats(resolvedProjectId);
+  const specsQuery = useSpecsList(resolvedProjectId);
+  const stats = (statsQuery.data as Stats | undefined) ?? null;
+  const specs = (specsQuery.data as Spec[] | undefined) ?? [];
+  const loading = statsQuery.isLoading || specsQuery.isLoading;
+  const error = statsQuery.error || specsQuery.error ? t('statsPage.state.errorDescription') : null;
 
   // Prepare data for charts - must be before any conditional returns
   const statusCounts = useMemo(() => stats?.specsByStatus.reduce<Record<string, number>>((acc: Record<string, number>, entry: { status: string; count: number }) => {
@@ -182,7 +165,7 @@ export function StatsPage() {
           </div>
           <div className="text-lg font-semibold">{t('statsPage.state.errorTitle')}</div>
           <p className="text-sm text-muted-foreground">{error || t('statsPage.state.unknownError')}</p>
-          <Button variant="secondary" size="sm" onClick={loadStats} className="mt-2">
+          <Button variant="secondary" size="sm" onClick={() => void statsQuery.refetch()} className="mt-2">
             {t('actions.retry')}
           </Button>
         </CardContent>

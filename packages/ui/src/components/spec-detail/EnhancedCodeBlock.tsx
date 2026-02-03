@@ -21,14 +21,14 @@ export function EnhancedCodeBlock({ language, code, children }: EnhancedCodeBloc
   };
 
   return (
-    <div className="relative group my-4 rounded-lg bg-muted border dark:border-white/10">
-      <div className="flex items-center justify-between px-4 py-2 border-b dark:border-white/10 bg-muted/50 dark:bg-black/20 rounded-t-lg">
+    <div className="relative group my-4 rounded-lg bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-zinc-800 bg-slate-200/50 dark:bg-zinc-800/50 rounded-t-lg">
         {language ? (
-          <span className="text-xs text-muted-foreground font-mono uppercase">
+          <span className="text-xs text-slate-500 dark:text-zinc-400 font-mono uppercase">
             {language}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground font-mono">CODE</span>
+          <span className="text-xs text-slate-500 dark:text-zinc-400 font-mono">CODE</span>
         )}
         <button
           onClick={handleCopy}

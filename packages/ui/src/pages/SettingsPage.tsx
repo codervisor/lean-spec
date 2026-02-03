@@ -6,11 +6,11 @@ import { AISettingsTab } from '../components/settings/AISettingsTab';
 import { AppearanceSettingsTab } from '../components/settings/AppearanceSettingsTab';
 import { RunnerSettingsTab } from '../components/settings/RunnerSettingsTab';
 import { SettingsSkeleton } from '../components/shared/Skeletons';
-import { useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 
 export function SettingsPage() {
   const { t } = useTranslation('common');
-  const { loading: projectLoading } = useProject();
+  const { loading: projectLoading } = useCurrentProject();
   const [activeTab, setActiveTab] = useState<'ai' | 'appearance' | 'runners'>('ai');
 
   if (projectLoading) {

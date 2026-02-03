@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../contexts';
+import { useThemeStore } from '../stores/theme';
 import { Dialog, DialogContent } from '@leanspec/ui-components';
 import { cn } from '@leanspec/ui-components';
 
@@ -24,7 +24,7 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useThemeStore();
   const { t } = useTranslation(['common', 'errors']);
 
   useEffect(() => {

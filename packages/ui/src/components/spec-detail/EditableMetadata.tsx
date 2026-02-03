@@ -7,7 +7,7 @@ import { PriorityEditor } from '../metadata-editors/PriorityEditor';
 import { TagsEditor } from '../metadata-editors/TagsEditor';
 import type { SpecDetail } from '../../types/api';
 import { useTranslation } from 'react-i18next';
-import { useMachine } from '../../contexts';
+import { useMachineStore } from '../../stores/machine';
 
 interface EditableMetadataProps {
   spec: SpecDetail;
@@ -20,7 +20,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
   const githubUrl = spec.metadata?.github_url as string | undefined;
   const assignee = spec.metadata?.assignee as string | undefined;
   const { t, i18n } = useTranslation('common');
-  const { machineModeEnabled, isMachineAvailable } = useMachine();
+  const { machineModeEnabled, isMachineAvailable } = useMachineStore();
 
   return (
     <Card>
@@ -34,7 +34,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
                 specName={spec.specName}
                 value={spec.status}
                 expectedContentHash={spec.contentHash}
-                disabled={machineModeEnabled && !isMachineAvailable}
+                disabled={machineModeEnabled && !isMachineAvailable()}
                 onChange={(status) => onSpecChange?.({ status })}
               />
             </dd>
@@ -48,7 +48,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
                 specName={spec.specName}
                 value={spec.priority}
                 expectedContentHash={spec.contentHash}
-                disabled={machineModeEnabled && !isMachineAvailable}
+                disabled={machineModeEnabled && !isMachineAvailable()}
                 onChange={(priority) => onSpecChange?.({ priority })}
               />
             </dd>
@@ -104,7 +104,7 @@ export function EditableMetadata({ spec, onSpecChange }: EditableMetadataProps) 
                 specName={spec.specName}
                 value={spec.tags}
                 expectedContentHash={spec.contentHash}
-                disabled={machineModeEnabled && !isMachineAvailable}
+                disabled={machineModeEnabled && !isMachineAvailable()}
                 onChange={(tags) => onSpecChange?.({ tags })}
               />
             </dd>

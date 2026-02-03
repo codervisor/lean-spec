@@ -5,7 +5,7 @@ import { EnhancedModelSelector } from '../components/chat/EnhancedModelSelector'
 import { ChatSidebar } from '../components/chat/sidebar/ChatSidebar';
 import { ChatSkeleton } from '../components/shared/Skeletons';
 import { useLeanSpecChat } from '../lib/use-chat';
-import { useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 import { Trash2, Settings2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
@@ -28,7 +28,7 @@ function extractTextFromMessage(message: UIMessage): string {
 
 export function ChatPage() {
   const { t } = useTranslation('common');
-  const { currentProject, loading: projectLoading } = useProject();
+  const { currentProject, loading: projectLoading } = useCurrentProject();
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
     providerId: 'openai',

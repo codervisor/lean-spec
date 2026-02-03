@@ -13,10 +13,10 @@ import {
   cn,
 } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
-import { useMachine } from '../contexts';
+import { useMachineStore } from '../stores/machine';
 
 export function MachineSwitcher() {
-  const { machineModeEnabled, machines, currentMachine, selectMachine, loading } = useMachine();
+  const { machineModeEnabled, machines, currentMachine, selectMachine, loading } = useMachineStore();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 

@@ -12,7 +12,7 @@ import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { ContextFileDetail } from './ContextFileDetail';
 import { PageHeader } from '../shared/PageHeader';
-import { useLayout } from '../../contexts';
+import { useLayoutStore } from '../../stores/layout';
 
 interface ContextClientProps {
   context: ProjectContext;
@@ -249,7 +249,7 @@ export function ContextClient({ context }: ContextClientProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedFile, setSelectedFile] = React.useState<ContextFile | null>(null);
   const { t } = useTranslation('common');
-  const { isWideMode } = useLayout();
+  const { isWideMode } = useLayoutStore();
 
   // Collect all content for "Copy All" feature
   const handleCopyAll = async () => {

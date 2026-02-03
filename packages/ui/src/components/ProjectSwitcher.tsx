@@ -22,7 +22,7 @@ import {
   PopoverTrigger,
 } from '@leanspec/ui-components';
 import { Skeleton } from '@leanspec/ui-components';
-import { useProject } from '../contexts';
+import { useCurrentProject, useProjectMutations, useProjects } from '../hooks/useProjectQuery';
 import { CreateProjectDialog } from './projects/CreateProjectDialog';
 import { ProjectAvatar } from './shared/ProjectAvatar';
 import { useTranslation } from 'react-i18next';
@@ -34,12 +34,9 @@ interface ProjectSwitcherProps {
 }
 
 export function ProjectSwitcher({ collapsed }: ProjectSwitcherProps) {
-  const {
-    currentProject,
-    projects,
-    loading: isLoading,
-    switchProject,
-  } = useProject();
+  const { currentProject } = useCurrentProject();
+  const { projects, isLoading } = useProjects();
+  const { switchProject } = useProjectMutations();
   const { t } = useTranslation('common');
   const location = useLocation();
   const navigate = useNavigate();

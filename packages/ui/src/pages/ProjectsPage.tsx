@@ -24,7 +24,9 @@ import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvat
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { PageHeader } from '../components/shared/PageHeader';
 import { ProjectsSkeleton } from '../components/shared/Skeletons';
-import { useProject, useLayout, useMachine } from '../contexts';
+import { useProjects, useProjectMutations } from '../hooks/useProjectQuery';
+import { useLayoutStore } from '../stores/layout';
+import { useMachineStore } from '../stores/machine';
 import { api } from '../lib/api';
 import { cn } from '@leanspec/ui-components';
 
@@ -45,16 +47,10 @@ interface ProjectStats {
 export function ProjectsPage() {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
-  const {
-    projects,
-    switchProject,
-    toggleFavorite,
-    removeProject,
-    updateProject,
-    loading,
-  } = useProject();
-  const { machineModeEnabled, currentMachine } = useMachine();
-  const { isWideMode } = useLayout();
+  const { projects, isLoading: loading } = useProjects();
+  const { switchProject, toggleFavorite, removeProject, updateProject } = useProjectMutations();
+  const { machineModeEnabled, currentMachine } = useMachineStore();
+  const { isWideMode } = useLayoutStore();
 
   if (loading) {
     return <ProjectsSkeleton />;

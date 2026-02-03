@@ -17,7 +17,7 @@ import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
-import { useSpecs } from '../../contexts';
+import { useInvalidateSpecs } from '../../hooks/useSpecsQuery';
 
 interface TagsEditorProps {
   specName: string;
@@ -45,7 +45,7 @@ export function TagsEditor({
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const { t } = useTranslation('common');
-  const { triggerRefresh } = useSpecs();
+  const invalidateSpecs = useInvalidateSpecs();
 
   // Fetch all available tags for autocomplete when popover opens
   useEffect(() => {
@@ -73,7 +73,7 @@ export function TagsEditor({
     try {
       await api.updateSpec(specName, { tags: newTags, expectedContentHash });
       onChange?.(newTags);
-      triggerRefresh(); // Notify other components to refresh
+      invalidateSpecs();
     } catch (err) {
       setTags(previousTags); // Rollback
       const errorMessage = err instanceof Error ? err.message : t('editors.tagsError');

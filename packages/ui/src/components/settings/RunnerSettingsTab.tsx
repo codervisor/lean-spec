@@ -27,7 +27,7 @@ import {
 } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { RunnerDefinition, RunnerListResponse, RunnerScope } from '../../types/api';
-import { useProject } from '../../contexts';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
 
 const DEFAULT_SCOPE: RunnerScope = 'project';
 
@@ -44,7 +44,7 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
 
 export function RunnerSettingsTab() {
   const { t } = useTranslation('common');
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
   const projectPath = currentProject?.path;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

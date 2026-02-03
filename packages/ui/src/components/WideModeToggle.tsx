@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Monitor, Scan, Check } from 'lucide-react';
-import { useLayout } from '../contexts';
+import { useLayoutStore } from '../stores/layout';
 import { Button, cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
 export function WideModeToggle() {
-  const { isWideMode, toggleWideMode } = useLayout();
+  const { isWideMode, toggleWideMode } = useLayoutStore();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 

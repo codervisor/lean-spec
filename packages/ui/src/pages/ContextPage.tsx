@@ -9,13 +9,13 @@ import { AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@leanspec/ui-components';
 import { ContextClient } from '../components/context/ContextClient';
 import { ContextPageSkeleton } from '../components/shared/Skeletons';
-import { useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { ProjectContext } from '../types/api';
 
 export function ContextPage() {
-  const { currentProject, loading: projectLoading, error: projectError } = useProject();
+  const { currentProject, loading: projectLoading, error: projectError } = useCurrentProject();
   const { t } = useTranslation(['common', 'errors']);
   const [context, setContext] = useState<ProjectContext | null>(null);
   const [loading, setLoading] = useState(true);

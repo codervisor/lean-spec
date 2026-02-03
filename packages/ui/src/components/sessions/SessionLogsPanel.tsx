@@ -3,7 +3,8 @@ import { Button } from '@leanspec/ui-components';
 import { ArrowLeft, Pause, Square, Download } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { SessionLog, Session } from '../../types/api';
-import { useSessions } from '../../contexts/SessionsContext';
+import { useSessionMutations } from '../../hooks/useSessionsQuery';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
 import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +15,8 @@ interface SessionLogsPanelProps {
 
 export function SessionLogsPanel({ sessionId, onBack }: SessionLogsPanelProps) {
     const { t } = useTranslation('common');
-    const { stopSession, pauseSession } = useSessions();
+    const { currentProject } = useCurrentProject();
+    const { stopSession, pauseSession } = useSessionMutations(currentProject?.id ?? null);
     const [session, setSession] = useState<Session | null>(null);
     const [logs, setLogs] = useState<SessionLog[]>([]);
     const [loading, setLoading] = useState(true);

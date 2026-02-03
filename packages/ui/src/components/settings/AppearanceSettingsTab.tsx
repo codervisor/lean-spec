@@ -12,7 +12,7 @@ import {
   SelectValue,
   cn,
 } from '@leanspec/ui-components';
-import { useTheme } from '../../contexts/useTheme';
+import { useThemeStore } from '../../stores/theme';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
@@ -25,7 +25,7 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
 
 export function AppearanceSettingsTab() {
   const { t, i18n } = useTranslation('common');
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
 
   const handleLanguageChange = (locale: string) => {
     i18n.changeLanguage(locale);

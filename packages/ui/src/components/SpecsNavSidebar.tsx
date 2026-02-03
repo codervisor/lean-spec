@@ -43,10 +43,10 @@ import { StatusBadge } from './StatusBadge';
 import { PriorityBadge } from './PriorityBadge';
 import { getStatusLabel, getPriorityLabel } from './badge-config';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-import { api } from '../lib/api';
 import type { Spec } from '../types/api';
 import { useTranslation } from 'react-i18next';
-import { useProject, useSpecs } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useSpecsList } from '../hooks/useSpecsQuery';
 import { SpecsNavSidebarSkeleton } from './shared/Skeletons';
 import { storage, STORAGE_KEYS } from '../lib/storage';
 
@@ -59,9 +59,9 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const location = useLocation();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject } = useProject();
-  const { refreshTrigger } = useSpecs();
+  const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
+  const specsQuery = useSpecsList(resolvedProjectId ?? null);
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const [specs, setSpecs] = useState<Spec[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,25 +169,21 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const activeSpecActualId = activeSpec?.id || activeSpecId;
 
   useEffect(() => {
-    // Wait for project to be available before loading specs
     if (!currentProject) {
       setLoading(true);
       return;
     }
 
-    async function loadSpecs() {
-      try {
-        setLoading(true);
-        const data = await api.getSpecs();
-        setSpecs(data);
-      } catch (err) {
-        console.error('Failed to load specs for sidebar', err);
-      } finally {
-        setLoading(false);
-      }
+    if (specsQuery.data) {
+      setSpecs(specsQuery.data as Spec[]);
+      setLoading(false);
     }
-    loadSpecs();
-  }, [currentProject, refreshTrigger]);
+
+    if (specsQuery.error) {
+      console.error('Failed to load specs for sidebar', specsQuery.error);
+      setLoading(false);
+    }
+  }, [currentProject, specsQuery.data, specsQuery.error]);
 
   useEffect(() => {
     const handler = () => setListHeight(calculateListHeight());

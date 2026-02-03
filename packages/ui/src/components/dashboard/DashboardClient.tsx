@@ -20,7 +20,7 @@ import { StatCard } from './StatCard';
 import { SpecListItem, type DashboardSpec } from './SpecListItem';
 import { ActivityItem } from './ActivityItem';
 import { useTranslation } from 'react-i18next';
-import { useLayout } from '../../contexts';
+import { useLayoutStore } from '../../stores/layout';
 import { cn } from '@leanspec/ui-components';
 
 interface DashboardClientProps {
@@ -33,7 +33,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({ specs, stats, projectColor, projectName, basePath = '/projects' }: DashboardClientProps) {
   const { t } = useTranslation('common');
-  const { isWideMode } = useLayout();
+  const { isWideMode } = useLayoutStore();
   const inProgressSpecs = specs
     .filter((spec) => spec.status === 'in-progress')
     .sort((a, b) => (b.specNumber || 0) - (a.specNumber || 0))

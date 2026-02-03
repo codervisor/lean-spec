@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, FileQuestion, FilterX, RefreshCcw } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
-import type { Spec, SpecStatus, ValidationStatus, HierarchyNode } from '../types/api';
+import type { Spec, SpecStatus, ValidationStatus } from '../types/api';
 import { getBackend } from '../lib/backend-adapter';
 import { BoardView } from '../components/specs/BoardView';
 import { ListView } from '../components/specs/ListView';
@@ -14,7 +15,10 @@ import { cn } from '@leanspec/ui-components';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
-import { useProject, useLayout, useMachine, useSpecs } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { specKeys, useSpecsWithHierarchy } from '../hooks/useSpecsQuery';
+import { useLayoutStore } from '../stores/layout';
+import { useMachineStore } from '../stores/machine';
 import { useSpecActionDialogs } from '../hooks/useSpecActionDialogs';
 import { useTranslation } from 'react-i18next';
 import { storage, STORAGE_KEYS } from '../lib/storage';
@@ -76,22 +80,37 @@ function savePreferences(prefs: Partial<SpecsPagePreferences>): void {
 }
 
 export function SpecsPage() {
-  const [specs, setSpecs] = useState<Spec[]>([]);
-  // Pre-built hierarchy from server - used when groupByParent is true for performance
-  const [hierarchy, setHierarchy] = useState<HierarchyNode[] | undefined>(undefined);
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject, loading: projectLoading } = useProject();
+  const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayout();
-  const { machineModeEnabled, isMachineAvailable } = useMachine();
-  const { refreshTrigger } = useSpecs();
-  const projectReady = !projectId || currentProject?.id === projectId;
+  const { isWideMode } = useLayoutStore();
+  const { machineModeEnabled, isMachineAvailable } = useMachineStore();
+  const specsQuery = useSpecsWithHierarchy(resolvedProjectId ?? null, { hierarchy: true });
+  const specs = useMemo(() => specsQuery.data?.specs ?? [], [specsQuery.data]);
+  const queryClient = useQueryClient();
+
+  const updateSpecsCache = useCallback(
+    (updater: (items: Spec[]) => Spec[]) => {
+      queryClient.setQueriesData({ queryKey: specKeys.lists() }, (old) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          return updater(old as Spec[]);
+        }
+        if (typeof old === 'object' && old && 'specs' in old) {
+          const data = old as { specs: Spec[]; [key: string]: unknown };
+          return { ...data, specs: updater(data.specs ?? []) };
+        }
+        return old;
+      });
+    },
+    [queryClient]
+  );
+  // Pre-built hierarchy from server - used when groupByParent is true for performance
+  const hierarchy = useMemo(() => specsQuery.data?.hierarchy, [specsQuery.data]);
   const { t } = useTranslation('common');
-  // Track initial load separately from subsequent refreshes
-  // Only initial load shows skeleton, refreshes update silently
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const isInitialLoading = specsQuery.isLoading && !specsQuery.data;
+  const error = specsQuery.error ? t('specsPage.state.errorDescription') : null;
 
   const {
     activeSpecName,
@@ -110,13 +129,33 @@ export function SpecsPage() {
   // Load saved preferences
   const savedPrefs = useMemo(() => loadPreferences(), []);
 
+  const [searchParams] = useSearchParams();
+  const initialQueryParams = useMemo(() => ({
+    tag: searchParams.get('tag'),
+    query: searchParams.get('q'),
+    view: searchParams.get('view'),
+    groupByParent: searchParams.get('groupByParent'),
+  }), [searchParams]);
+
   // Filters (initialized from localStorage)
-  const [searchQuery, setSearchQuery] = useState('');
+  const initialQuery = initialQueryParams.query ?? '';
+  const initialTag = initialQueryParams.tag;
+  const initialView = initialQueryParams.view;
+  const initialGroupByParent = initialQueryParams.groupByParent;
+
+  // Filters (initialized from localStorage + query params)
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [statusFilter, setStatusFilter] = useState<string[]>(savedPrefs.statusFilter.filter(s => s !== 'archived'));
   const [priorityFilter, setPriorityFilter] = useState<string[]>(savedPrefs.priorityFilter);
-  const [tagFilter, setTagFilter] = useState<string[]>(savedPrefs.tagFilter);
+  const [tagFilter, setTagFilter] = useState<string[]>(
+    initialTag ? [initialTag] : savedPrefs.tagFilter
+  );
   const [sortBy, setSortBy] = useState<SortOption>(savedPrefs.sortBy);
-  const [groupByParent, setGroupByParent] = useState(loadHierarchyView);
+  const [groupByParent, setGroupByParent] = useState(
+    initialGroupByParent === '1' || initialGroupByParent === 'true'
+      ? true
+      : loadHierarchyView()
+  );
   const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(savedPrefs.showValidationIssuesOnly);
   const [showArchived, setShowArchived] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) !== null) {
@@ -131,37 +170,14 @@ export function SpecsPage() {
   const validationFetchedRef = useRef(false);
   const metadataFetchedRef = useRef(false);
 
-  const [searchParams] = useSearchParams();
-  const initializedFromQuery = useRef(false);
-
   // View State (initialized from localStorage)
-  const [viewMode, setViewMode] = useState<ViewMode>(savedPrefs.viewMode);
-
-  const loadSpecs = useCallback(async () => {
-    if (!projectReady || projectLoading) return;
-    try {
-      // Don't set loading state - initial load is already true, refreshes are silent
-      // Always request hierarchy data from server - server-side computation is faster
-      // and the hierarchy will be ready when user toggles "Group by Parent"
-      const response = await api.getSpecsWithHierarchy({ hierarchy: true });
-      setSpecs(response.specs);
-      setHierarchy(response.hierarchy);
-      setError(null);
-    } catch (err: unknown) {
-      console.error('Failed to load specs', err);
-      setError(t('specsPage.state.errorDescription'));
-    } finally {
-      setInitialLoading(false);
-    }
-  }, [projectLoading, projectReady, t]);
-
-  useEffect(() => {
-    void loadSpecs();
-  }, [loadSpecs, refreshTrigger]);
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    initialView === 'board' || initialView === 'list' ? initialView : savedPrefs.viewMode
+  );
 
   // Fetch batch metadata (tokens, validation) after specs load
   useEffect(() => {
-    if (metadataFetchedRef.current || specs.length === 0 || !resolvedProjectId || initialLoading) {
+    if (metadataFetchedRef.current || specs.length === 0 || !resolvedProjectId || isInitialLoading) {
       return;
     }
 
@@ -173,7 +189,7 @@ export function SpecsPage() {
         const batchResult = await backend.getBatchMetadata(resolvedProjectId, specNames);
 
         // Update specs with metadata
-        setSpecs((prevSpecs) =>
+        updateSpecsCache((prevSpecs) =>
           prevSpecs.map((spec) => {
             const metadata = batchResult.specs[spec.specName];
             if (metadata) {
@@ -203,7 +219,7 @@ export function SpecsPage() {
     };
 
     void fetchMetadata();
-  }, [specs, resolvedProjectId, initialLoading]);
+  }, [specs, resolvedProjectId, isInitialLoading, updateSpecsCache]);
 
   // Reset metadata fetch flag when project changes
   useEffect(() => {
@@ -242,22 +258,6 @@ export function SpecsPage() {
     void fetchValidation();
   }, [showValidationIssuesOnly, specs, resolvedProjectId]);
 
-  useEffect(() => {
-    if (initializedFromQuery.current) return;
-    const initialTag = searchParams.get('tag');
-    const initialQuery = searchParams.get('q');
-    const initialView = searchParams.get('view');
-    const initialGroupByParent = searchParams.get('groupByParent');
-    if (initialTag) setTagFilter([initialTag]);
-    if (initialQuery) setSearchQuery(initialQuery);
-    if (initialView === 'board' || initialView === 'list') {
-      setViewMode(initialView);
-    }
-    if (initialGroupByParent === '1' || initialGroupByParent === 'true') {
-      setGroupByParent(true);
-    }
-    initializedFromQuery.current = true;
-  }, [searchParams]);
 
   // Persist preferences to localStorage (except groupByParent which uses sessionStorage)
   useEffect(() => {
@@ -305,45 +305,59 @@ export function SpecsPage() {
   }, [savedPrefs]);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
-    if (machineModeEnabled && !isMachineAvailable) {
+    if (machineModeEnabled && !isMachineAvailable()) {
       return;
     }
     // Optimistic update
-    setSpecs(prev => prev.map(s =>
-      s.specName === spec.specName ? { ...s, status: newStatus } : s
-    ));
+    updateSpecsCache((prev) =>
+      prev.map((item) =>
+        item.specName === spec.specName ? { ...item, status: newStatus } : item
+      )
+    );
 
     try {
       await api.updateSpec(spec.specName, { status: newStatus, expectedContentHash: spec.contentHash });
+      queryClient.invalidateQueries({ queryKey: specKeys.lists() });
     } catch (err) {
       // Revert on error
-      setSpecs(prev => prev.map(s =>
-        s.specName === spec.specName ? { ...s, status: spec.status } : s
-      ));
+      updateSpecsCache((prev) =>
+        prev.map((item) =>
+          item.specName === spec.specName ? { ...item, status: spec.status } : item
+        )
+      );
       console.error('Failed to update status:', err);
     }
-  }, [isMachineAvailable, machineModeEnabled]);
+  }, [isMachineAvailable, machineModeEnabled, queryClient, updateSpecsCache]);
 
   const handlePriorityChange = useCallback(async (spec: Spec, newPriority: string) => {
-    if (machineModeEnabled && !isMachineAvailable) {
+    if (machineModeEnabled && !isMachineAvailable()) {
       return;
     }
     const oldPriority = spec.priority;
     // Optimistic update
-    setSpecs(prev => prev.map(s =>
-      s.specName === spec.specName ? { ...s, priority: newPriority } : s
-    ));
+    updateSpecsCache((prev) =>
+      prev.map((item) =>
+        item.specName === spec.specName ? { ...item, priority: newPriority } : item
+      )
+    );
 
     try {
       await api.updateSpec(spec.specName, { priority: newPriority, expectedContentHash: spec.contentHash });
+      queryClient.invalidateQueries({ queryKey: specKeys.lists() });
     } catch (err) {
       // Revert on error
-      setSpecs(prev => prev.map(s =>
-        s.specName === spec.specName ? { ...s, priority: oldPriority } : s
-      ));
+      updateSpecsCache((prev) =>
+        prev.map((item) =>
+          item.specName === spec.specName ? { ...item, priority: oldPriority } : item
+        )
+      );
       console.error('Failed to update priority:', err);
     }
-  }, [isMachineAvailable, machineModeEnabled]);
+  }, [isMachineAvailable, machineModeEnabled, queryClient, updateSpecsCache]);
+
+  const refreshSpecs = useCallback(() => {
+    void specsQuery.refetch();
+  }, [specsQuery]);
 
   // Get unique values for filters
   const uniqueStatuses = useMemo(() => {
@@ -527,7 +541,7 @@ export function SpecsPage() {
     return sorted;
   }, [priorityFilter, searchQuery, sortBy, specs, statusFilter, tagFilter, groupByParent, expandWithDescendants, showValidationIssuesOnly, showArchived, validationStatuses]);
 
-  if (initialLoading) {
+  if (isInitialLoading) {
     return (
       <div className="p-4 sm:p-6">
         <SpecListSkeleton />
@@ -545,7 +559,7 @@ export function SpecsPage() {
             </div>
             <div className="text-lg font-semibold">{t('specsPage.state.errorTitle')}</div>
             <p className="text-sm text-muted-foreground">{error || t('specsPage.state.errorDescription')}</p>
-            <Button variant="secondary" size="sm" onClick={loadSpecs} className="mt-2">
+            <Button variant="secondary" size="sm" onClick={refreshSpecs} className="mt-2">
               {t('actions.retry')}
             </Button>
           </CardContent>
@@ -562,7 +576,7 @@ export function SpecsPage() {
           description={t('specsPage.description')}
         />
 
-        {machineModeEnabled && !isMachineAvailable && (
+        {machineModeEnabled && !isMachineAvailable() && (
           <div className="text-xs text-destructive">
             {t('machines.unavailable')}
           </div>
@@ -604,7 +618,7 @@ export function SpecsPage() {
             title={t('specsPage.state.noSpecsTitle')}
             description={t('specsPage.state.noSpecsDescription')}
             actions={(
-              <Button variant="secondary" size="sm" onClick={loadSpecs}>
+              <Button variant="secondary" size="sm" onClick={refreshSpecs}>
                 <RefreshCcw className="h-4 w-4 mr-2" />
                 {t('specsPage.buttons.refreshList')}
               </Button>
@@ -620,7 +634,7 @@ export function SpecsPage() {
                 <Button variant="outline" size="sm" onClick={handleClearFilters}>
                   {t('specsNavSidebar.clearFilters')}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={loadSpecs}>
+                <Button variant="secondary" size="sm" onClick={refreshSpecs}>
                   <RefreshCcw className="h-4 w-4 mr-2" />
                   {t('specsPage.buttons.reloadData')}
                 </Button>
@@ -643,7 +657,7 @@ export function SpecsPage() {
             specs={filteredSpecs}
             onStatusChange={handleStatusChange}
             onPriorityChange={handlePriorityChange}
-            canEdit={!machineModeEnabled || isMachineAvailable}
+            canEdit={!machineModeEnabled || isMachineAvailable()}
             basePath={basePath}
             groupByParent={groupByParent}
             showArchived={showArchived}

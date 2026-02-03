@@ -28,7 +28,8 @@ import 'reactflow/dist/style.css';
 import { cn } from '@leanspec/ui-components';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
-import { useProject, useLayout } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useLayoutStore } from '../stores/layout';
 import { DependenciesSkeleton } from '../components/shared/Skeletons';
 
 import { nodeTypes } from '../components/dependencies/SpecNode';
@@ -43,8 +44,8 @@ export function DependenciesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
-  const { currentProject, loading: projectLoading } = useProject();
-  const { isWideMode } = useLayout();
+  const { currentProject, loading: projectLoading } = useCurrentProject();
+  const { isWideMode } = useLayoutStore();
   const projectReady = !projectId || currentProject?.id === projectId;
 
   const specParam = searchParams.get('spec');

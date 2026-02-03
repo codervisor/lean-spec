@@ -7,7 +7,7 @@ import type { Session, SessionLog, SessionStatus } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { SESSION_STATUS_STYLES } from '../../lib/session-utils';
 import { SessionCreateDialog } from '../sessions/SessionCreateDialog';
-import { useProject } from '../../contexts';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
 
 interface SessionPanelProps {
   specId: string;
@@ -17,7 +17,7 @@ interface SessionPanelProps {
 export function SessionPanel({ specId, projectPath }: SessionPanelProps) {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const [sessions, setSessions] = useState<Session[]>([]);

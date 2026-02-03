@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useLocalStorage } from '@leanspec/ui-components';
-import { useProject } from './ProjectContext';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 
 interface ChatContextType {
@@ -28,8 +28,7 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  // We can safely use useProject here because ChatProvider is inside ProjectProvider in App.tsx
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
 
   const [isOpen, setIsOpen] = useLocalStorage<boolean>('leanspec.chat.isOpen', false);
   const [sidebarWidth, setSidebarWidth] = useLocalStorage<number>('leanspec.chat.sidebarWidth', 400);

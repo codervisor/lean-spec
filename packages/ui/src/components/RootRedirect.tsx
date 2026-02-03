@@ -1,7 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useProject } from '../contexts';
-
-const STORAGE_KEY = 'leanspec-current-project';
+import { useCurrentProject, useProjects } from '../hooks/useProjectQuery';
 
 /**
  * Root redirect component that navigates to the appropriate page:
@@ -9,7 +7,8 @@ const STORAGE_KEY = 'leanspec-current-project';
  * - Otherwise, navigate to the projects list page
  */
 export function RootRedirect() {
-  const { currentProject, projects, loading } = useProject();
+  const { currentProject, loading } = useCurrentProject();
+  const { projects, storageKey } = useProjects();
 
   if (loading) {
     // Show nothing while loading to avoid flash of redirect
@@ -22,7 +21,7 @@ export function RootRedirect() {
   }
 
   // Check if there's a stored project ID
-  const storedId = localStorage.getItem(STORAGE_KEY);
+  const storedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
   if (storedId) {
     const storedProject = projects.find((p) => p.id === storedId);
     if (storedProject) {

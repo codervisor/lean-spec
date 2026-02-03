@@ -1,51 +1,39 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button, Card, CardContent } from '@leanspec/ui-components';
 import { Link } from 'react-router-dom';
-import { api } from '../lib/api';
 import type { Stats } from '../types/api';
-import { useProject, useSpecs } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';
 import { DashboardClient } from '../components/dashboard/DashboardClient';
 import type { DashboardSpec } from '../components/dashboard/SpecListItem';
 import { DashboardSkeleton } from '../components/shared/Skeletons';
 import { useTranslation } from 'react-i18next';
 
 export function DashboardPage() {
-  const { currentProject, loading: projectLoading } = useProject();
-  const { refreshTrigger } = useSpecs();
-  const [specs, setSpecs] = useState<DashboardSpec[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { currentProject, loading: projectLoading } = useCurrentProject();
+  const resolvedProjectId = currentProject?.id ?? null;
+  const specsQuery = useSpecsList(resolvedProjectId);
+  const statsQuery = useProjectStats(resolvedProjectId);
   const { t } = useTranslation('common');
   const projectColor = currentProject && 'color' in currentProject ? (currentProject as { color?: string }).color : undefined;
   const basePath = currentProject?.id ? `/projects/${currentProject.id}` : '/projects';
 
+  const specs = useMemo(
+    () => (Array.isArray(specsQuery.data) ? (specsQuery.data as DashboardSpec[]) : []),
+    [specsQuery.data]
+  );
+  const stats = (statsQuery.data as Stats | undefined) ?? null;
+
   const loadData = useCallback(async () => {
-    if (projectLoading || !currentProject) return;
-    try {
-      setLoading(true);
-      const [specsData, statsData] = await Promise.all([
-        api.getSpecs(),
-        api.getStats(),
-      ]);
+    await Promise.all([specsQuery.refetch(), statsQuery.refetch()]);
+  }, [specsQuery, statsQuery]);
 
-      setSpecs(Array.isArray(specsData) ? specsData : []);
-      setStats(statsData);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to load dashboard data', err);
-      setError(t('dashboard.state.errorDescription'));
-    } finally {
-      setLoading(false);
-    }
-  }, [currentProject, projectLoading, t]);
+  const isLoading = projectLoading || specsQuery.isLoading || statsQuery.isLoading;
+  const queryError = specsQuery.error || statsQuery.error;
+  const resolvedError = queryError ? t('dashboard.state.errorDescription') : null;
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData, refreshTrigger]);
-
-  if (projectLoading || loading) {
+  if (isLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -65,7 +53,7 @@ export function DashboardPage() {
     );
   }
 
-  if (error) {
+  if (resolvedError) {
     return (
       <Card>
         <CardContent className="py-10 text-center space-y-3">
@@ -73,7 +61,7 @@ export function DashboardPage() {
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
           <div className="text-lg font-semibold">{t('dashboard.state.errorTitle')}</div>
-          <p className="text-sm text-muted-foreground">{error || t('dashboard.state.errorDescription')}</p>
+          <p className="text-sm text-muted-foreground">{resolvedError || t('dashboard.state.errorDescription')}</p>
           <Button variant="secondary" size="sm" onClick={loadData} className="mt-2">
             {t('actions.retry')}
           </Button>

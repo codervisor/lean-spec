@@ -5,7 +5,7 @@ import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
-import { useSpecs } from '../../contexts';
+import { useInvalidateSpecs } from '../../hooks/useSpecsQuery';
 import { statusConfig } from '../badge-config';
 
 const STATUS_OPTIONS = Object.entries(statusConfig)
@@ -38,7 +38,7 @@ export function StatusEditor({
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
-  const { triggerRefresh } = useSpecs();
+  const invalidateSpecs = useInvalidateSpecs();
 
   const option = STATUS_OPTIONS.find((opt) => opt.value === status) || STATUS_OPTIONS[0];
 
@@ -52,7 +52,7 @@ export function StatusEditor({
     try {
       await api.updateSpec(specName, { status: next, expectedContentHash });
       onChange?.(next);
-      triggerRefresh(); // Notify other components to refresh
+      invalidateSpecs();
     } catch (err) {
       setStatus(previous);
       const message = err instanceof Error ? err.message : t('editors.statusError');

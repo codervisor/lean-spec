@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings, Terminal } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 import { ProjectSwitcher } from './ProjectSwitcher';
-import { useMachine, useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useMachineStore } from '../stores/machine';
 
 const STORAGE_KEY = 'main-sidebar-collapsed';
 
@@ -65,11 +66,11 @@ interface MainSidebarProps {
 export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarProps) {
   const location = useLocation();
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { t } = useTranslation('common');
-  const { machineModeEnabled } = useMachine();
+  const { machineModeEnabled } = useMachineStore();
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     const stored = localStorage.getItem(STORAGE_KEY);

@@ -5,7 +5,8 @@ import { Button, Card, CardContent, cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { Session, SessionEvent, SessionLog } from '../types/api';
-import { useLayout, useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useLayoutStore } from '../stores/layout';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader } from '../components/shared/PageHeader';
 import { PageTransition } from '../components/shared/PageTransition';
@@ -20,10 +21,10 @@ export function SessionDetailPage() {
   const { t } = useTranslation('common');
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const navigate = useNavigate();
-  const { currentProject, loading: projectLoading } = useProject();
+  const { currentProject, loading: projectLoading } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayout();
+  const { isWideMode } = useLayoutStore();
   const projectReady = !projectId || currentProject?.id === projectId;
 
   const [session, setSession] = useState<Session | null>(null);

@@ -28,7 +28,7 @@ import {
   StatusBadge,
   PriorityBadge,
 } from '@leanspec/ui-components';
-import { APIError, api } from '../lib/api';
+import { APIError } from '../lib/api';
 import { getBackend } from '../lib/backend-adapter';
 import { StatusEditor } from '../components/metadata-editors/StatusEditor';
 import { PriorityEditor } from '../components/metadata-editors/PriorityEditor';
@@ -39,7 +39,12 @@ import { SpecDetailSkeleton } from '../components/shared/Skeletons';
 import { EmptyState } from '../components/shared/EmptyState';
 import { MarkdownRenderer } from '../components/spec-detail/MarkdownRenderer';
 import { BackToTop } from '../components/shared/BackToTop';
-import { useProject, useLayout, useMachine, useSpecs, useSessions } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useSpecDetail } from '../hooks/useSpecsQuery';
+import { useSessions } from '../hooks/useSessionsQuery';
+import { useLayoutStore } from '../stores/layout';
+import { useMachineStore } from '../stores/machine';
+import { useSessionsUiStore } from '../stores/sessions-ui';
 import { useTranslation } from 'react-i18next';
 import type { SpecDetail } from '../types/api';
 import { PageTransition } from '../components/shared/PageTransition';
@@ -61,14 +66,12 @@ export function SpecDetailPage() {
   const { specName, projectId } = useParams<{ specName: string; projectId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { currentProject, loading: projectLoading } = useProject();
+  const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayout();
-  const { machineModeEnabled, isMachineAvailable } = useMachine();
-  const { refreshTrigger } = useSpecs();
+  const { isWideMode } = useLayoutStore();
+  const { machineModeEnabled, isMachineAvailable } = useMachineStore();
   const { t, i18n } = useTranslation(['common', 'errors']);
-  const projectReady = !projectId || currentProject?.id === projectId;
   const [spec, setSpec] = useState<SpecDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +93,10 @@ export function SpecDetailPage() {
     validationErrors?: number;
   }>({});
   const { setMobileOpen } = useSpecDetailLayoutContext();
-  const { openDrawer, sessions } = useSessions();
+  const { openDrawer } = useSessionsUiStore();
+  const sessionsQuery = useSessions(resolvedProjectId ?? null);
+  const sessions = sessionsQuery.data ?? [];
+  const specQuery = useSpecDetail(resolvedProjectId ?? null, specName ?? null);
   const backend = getBackend();
 
   const [showSidebar, setShowSidebar] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
@@ -145,18 +151,9 @@ export function SpecDetailPage() {
   }, [t]);
 
   const loadSpec = useCallback(async () => {
-    if (!specName || !projectReady || projectLoading) return;
     setLoading(true);
-    try {
-      const data = await api.getSpec(specName);
-      setSpec(data);
-      setError(null);
-    } catch (err) {
-      setError(describeError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [describeError, projectLoading, projectReady, specName]);
+    await specQuery.refetch();
+  }, [specQuery]);
 
   // Fetch tokens and validation asynchronously
   useEffect(() => {
@@ -199,8 +196,23 @@ export function SpecDetailPage() {
   }, [backend, resolvedProjectId, spec?.specName]);
 
   useEffect(() => {
-    void loadSpec();
-  }, [loadSpec, projectReady, refreshTrigger]);
+    if (!specQuery.data) return;
+    setSpec(specQuery.data);
+    setError(null);
+    setLoading(false);
+  }, [specQuery.data]);
+
+  useEffect(() => {
+    if (!specQuery.error) return;
+    setError(describeError(specQuery.error));
+    setLoading(false);
+  }, [describeError, specQuery.error]);
+
+  useEffect(() => {
+    if (specQuery.isLoading) {
+      setLoading(true);
+    }
+  }, [specQuery.isLoading, specName, resolvedProjectId]);
 
   useEffect(() => {
     if (!tokenDialogOpen || !resolvedProjectId || !spec?.specName) return;
@@ -468,14 +480,14 @@ export function SpecDetailPage() {
                     specName={spec.specName}
                     value={spec.status}
                     expectedContentHash={spec.contentHash}
-                    disabled={machineModeEnabled && !isMachineAvailable}
+                    disabled={machineModeEnabled && !isMachineAvailable()}
                     onChange={(status) => applySpecPatch({ status })}
                   />
                   <PriorityEditor
                     specName={spec.specName}
                     value={spec.priority}
                     expectedContentHash={spec.contentHash}
-                    disabled={machineModeEnabled && !isMachineAvailable}
+                    disabled={machineModeEnabled && !isMachineAvailable()}
                     onChange={(priority) => applySpecPatch({ priority })}
                   />
 
@@ -509,14 +521,14 @@ export function SpecDetailPage() {
                     specName={spec.specName}
                     value={tags}
                     expectedContentHash={spec.contentHash}
-                    disabled={machineModeEnabled && !isMachineAvailable}
+                    disabled={machineModeEnabled && !isMachineAvailable()}
                     onChange={(tags) => applySpecPatch({ tags })}
                     compact={true}
                     className="min-w-0"
                   />
                 </div>
 
-                {machineModeEnabled && !isMachineAvailable && (
+                {machineModeEnabled && !isMachineAvailable() && (
                   <div className="text-xs text-destructive mt-2">
                     {t('machines.unavailable')}
                   </div>
@@ -713,7 +725,7 @@ export function SpecDetailPage() {
           open={relationshipsDialogOpen}
           onOpenChange={setRelationshipsDialogOpen}
           basePath={basePath}
-          disabled={machineModeEnabled && !isMachineAvailable}
+          disabled={machineModeEnabled && !isMachineAvailable()}
           onUpdated={() => void loadSpec()}
         />
       )}

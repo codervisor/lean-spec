@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSessions } from '../../contexts/SessionsContext';
+import { useSessionMutations } from '../../hooks/useSessionsQuery';
+import { useCurrentProject } from '../../hooks/useProjectQuery';
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { Play } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -14,7 +15,8 @@ interface SessionCreateFormProps {
 
 export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: SessionCreateFormProps) {
     const { t } = useTranslation('common');
-    const { createSession } = useSessions();
+    const { currentProject } = useCurrentProject();
+    const { createSession, startSession } = useSessionMutations(currentProject?.id ?? null);
     const [specId, setSpecId] = useState(defaultSpecId || '');
     const [runners, setRunners] = useState<string[]>([]);
     const [runner, setRunner] = useState('claude');
@@ -37,9 +39,14 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
         e.preventDefault();
         setLoading(true);
         try {
-            const session = await createSession({ specId, runner, mode });
-            // Auto start session
-            await api.startSession(session.id);
+            if (!currentProject?.path) throw new Error('No project path');
+            const session = await createSession({
+                projectPath: currentProject.path,
+                specId,
+                runner,
+                mode,
+            });
+            await startSession(session.id);
             onSuccess();
         } catch (error) {
             console.error(error);

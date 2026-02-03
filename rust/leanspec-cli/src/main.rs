@@ -151,9 +151,9 @@ enum Commands {
         #[arg(short, long, default_value = "planned")]
         status: String,
 
-        /// Priority
-        #[arg(short, long)]
-        priority: Option<String>,
+        /// Priority level
+        #[arg(short, long, default_value = "medium")]
+        priority: String,
 
         /// Tags (comma-separated)
         #[arg(long)]
@@ -751,7 +751,7 @@ fn main() -> ExitCode {
             status,
             priority,
             tags,
-        } => commands::create::run(&specs_dir, &name, title, template, &status, priority, tags),
+        } => commands::create::run(&specs_dir, &name, title, template, &status, &priority, tags),
         Commands::Deps {
             spec,
             depth,

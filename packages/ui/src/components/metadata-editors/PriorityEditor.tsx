@@ -5,7 +5,7 @@ import { cn } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
-import { useSpecs } from '../../contexts';
+import { useInvalidateSpecs } from '../../hooks/useSpecsQuery';
 import { priorityConfig } from '../badge-config';
 
 const PRIORITY_OPTIONS = Object.entries(priorityConfig).map(([value, config]) => ({
@@ -37,7 +37,7 @@ export function PriorityEditor({
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
-  const { triggerRefresh } = useSpecs();
+  const invalidateSpecs = useInvalidateSpecs();
 
   const option = PRIORITY_OPTIONS.find((opt) => opt.value === priority) || PRIORITY_OPTIONS[1];
 
@@ -51,7 +51,7 @@ export function PriorityEditor({
     try {
       await api.updateSpec(specName, { priority: next, expectedContentHash });
       onChange?.(next);
-      triggerRefresh(); // Notify other components to refresh
+      invalidateSpecs();
     } catch (err) {
       setPriority(previous);
       const message = err instanceof Error ? err.message : t('editors.priorityError');

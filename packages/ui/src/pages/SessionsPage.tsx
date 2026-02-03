@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause } from 'lucide-react';
 import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
-import { api } from '../lib/api';
 import type { Session, SessionStatus, Spec } from '../types/api';
-import { useLayout, useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useSessions, useSessionMutations } from '../hooks/useSessionsQuery';
+import { useSpecsList } from '../hooks/useSpecsQuery';
+import { useLayoutStore } from '../stores/layout';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader } from '../components/shared/PageHeader';
 import { PageTransition } from '../components/shared/PageTransition';
@@ -20,16 +22,18 @@ type SortOption = 'started-desc' | 'started-asc' | 'duration-desc' | 'status';
 export function SessionsPage() {
   const { t } = useTranslation('common');
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject, loading: projectLoading } = useProject();
+  const { currentProject, loading: projectLoading } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayout();
-  const projectReady = !projectId || currentProject?.id === projectId;
+  const { isWideMode } = useLayoutStore();
+  const sessionsQuery = useSessions(resolvedProjectId ?? null);
+  const specsQuery = useSpecsList(resolvedProjectId ?? null);
+  const { createSession, startSession, stopSession, pauseSession, resumeSession } = useSessionMutations(resolvedProjectId ?? null);
 
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [specs, setSpecs] = useState<Spec[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const sessions = (sessionsQuery.data as Session[] | undefined) ?? [];
+  const specs = (specsQuery.data as Spec[] | undefined) ?? [];
+  const loading = projectLoading || sessionsQuery.isLoading;
+  const error = sessionsQuery.error ? t('sessions.errors.load') : null;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -44,33 +48,9 @@ export function SessionsPage() {
   const initializedFromQuery = useRef(false);
 
   const loadSessions = useCallback(async () => {
-    if (!projectReady || projectLoading) return;
-    setLoading(true);
-    try {
-      const data = await api.listSessions();
-      setSessions(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('sessions.errors.load'));
-    } finally {
-      setLoading(false);
-    }
-  }, [projectLoading, projectReady, t]);
-
-  const loadSpecs = useCallback(async () => {
-    if (!projectReady || projectLoading) return;
-    try {
-      const data = await api.getSpecs();
-      setSpecs(data);
-    } catch {
-      setSpecs([]);
-    }
-  }, [projectLoading, projectReady]);
-
-  useEffect(() => {
-    void loadSessions();
-    void loadSpecs();
-  }, [loadSessions, loadSpecs]);
+    await sessionsQuery.refetch();
+    await specsQuery.refetch();
+  }, [sessionsQuery, specsQuery]);
 
   useEffect(() => {
     if (initializedFromQuery.current) return;
@@ -159,35 +139,31 @@ export function SessionsPage() {
   const visibleSessions = filteredSessions.slice(0, visibleCount);
 
   const handleStart = useCallback(async (sessionId: string) => {
-    await api.startSession(sessionId);
-    await loadSessions();
-  }, [loadSessions]);
+    await startSession(sessionId);
+  }, [startSession]);
 
   const handleStop = useCallback(async (sessionId: string) => {
-    await api.stopSession(sessionId);
-    await loadSessions();
-  }, [loadSessions]);
+    await stopSession(sessionId);
+  }, [stopSession]);
 
   const handlePause = useCallback(async (sessionId: string) => {
-    await api.pauseSession(sessionId);
-    await loadSessions();
-  }, [loadSessions]);
+    await pauseSession(sessionId);
+  }, [pauseSession]);
 
   const handleResume = useCallback(async (sessionId: string) => {
-    await api.resumeSession(sessionId);
-    await loadSessions();
-  }, [loadSessions]);
+    await resumeSession(sessionId);
+  }, [resumeSession]);
 
   const handleRetry = useCallback(async (session: Session) => {
     if (!currentProject?.path) return;
-    await api.createSession({
+    const created = await createSession({
       projectPath: currentProject.path,
       specId: session.specId ?? null,
       runner: session.runner,
       mode: session.mode,
-    }).then((created) => api.startSession(created.id));
-    await loadSessions();
-  }, [currentProject?.path, loadSessions]);
+    });
+    await startSession(created.id);
+  }, [createSession, currentProject?.path, startSession]);
 
   if (loading) {
     return (

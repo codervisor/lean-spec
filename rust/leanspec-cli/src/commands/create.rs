@@ -15,7 +15,7 @@ pub fn run(
     title: Option<String>,
     _template: Option<String>,
     status: &str,
-    priority: Option<String>,
+    priority: &str,
     tags: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
     // Generate spec number
@@ -50,7 +50,7 @@ pub fn run(
         .unwrap_or_default();
 
     // Generate content from template
-    let content = load_and_populate_template(&title, status, priority.as_deref(), &tags_vec)?;
+    let content = load_and_populate_template(&title, status, Some(priority), &tags_vec)?;
 
     // Write file
     let readme_path = spec_dir.join("README.md");
@@ -60,9 +60,7 @@ pub fn run(
     println!("  {}: {}", "Path".bold(), spec_name);
     println!("  {}: {}", "Title".bold(), title);
     println!("  {}: {}", "Status".bold(), status);
-    if let Some(p) = &priority {
-        println!("  {}: {}", "Priority".bold(), p);
-    }
+    println!("  {}: {}", "Priority".bold(), priority);
     if !tags_vec.is_empty() {
         println!("  {}: {}", "Tags".bold(), tags_vec.join(", "));
     }

@@ -4,18 +4,19 @@ import { Button, Card, CardContent, CardHeader, cn, Input } from '@leanspec/ui-c
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/shared/PageHeader';
 import { MachinesSkeleton } from '../components/shared/Skeletons';
-import { useLayout, useMachine } from '../contexts';
+import { useLayoutStore } from '../stores/layout';
+import { useMachineStore } from '../stores/machine';
 
 export function MachinesPage() {
   const { t } = useTranslation('common');
-  const { isWideMode } = useLayout();
+  const { isWideMode } = useLayoutStore();
   const {
     machines,
     loading,
     renameMachine,
     revokeMachine,
     requestExecution,
-  } = useMachine();
+  } = useMachineStore();
 
   if (loading) {
     return <MachinesSkeleton />;

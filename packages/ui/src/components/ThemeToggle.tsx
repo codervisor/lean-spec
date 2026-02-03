@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
-import { useTheme } from '../contexts';
+import { useThemeStore } from '../stores/theme';
 import { Button, cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 

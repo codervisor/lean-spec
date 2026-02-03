@@ -6,7 +6,7 @@ import { Button, Card } from '@leanspec/ui-components';
 import { ChatContainer } from './chat';
 import { EnhancedModelSelector } from './chat/EnhancedModelSelector';
 import { useLeanSpecChat } from '../lib/use-chat';
-import { useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
 import { cn } from '@leanspec/ui-components';
@@ -35,7 +35,7 @@ export function GlobalChatWidget({ isOpen, onClose }: GlobalChatWidgetProps) {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
     providerId: 'openai',
