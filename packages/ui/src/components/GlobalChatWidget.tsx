@@ -6,10 +6,13 @@ import { Button, Card } from '@leanspec/ui-components';
 import { ChatContainer } from './chat';
 import { EnhancedModelSelector } from './chat/EnhancedModelSelector';
 import { useLeanSpecChat } from '../lib/use-chat';
+import { useModelsRegistry } from '../lib/use-models-registry';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
 import { cn } from '@leanspec/ui-components';
+
+const INITIAL_DEFAULT_MODEL = { providerId: 'openai', modelId: 'gpt-4o' };
 
 interface GlobalChatWidgetProps {
   isOpen: boolean;
@@ -36,10 +39,11 @@ export function GlobalChatWidget({ isOpen, onClose }: GlobalChatWidgetProps) {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useCurrentProject();
+  const { providers, defaultSelection } = useModelsRegistry();
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
-    providerId: 'openai',
-    modelId: 'gpt-4o',
+    providerId: INITIAL_DEFAULT_MODEL.providerId,
+    modelId: INITIAL_DEFAULT_MODEL.modelId,
   });
   const [showSettings, setShowSettings] = useState(false);
   const [threads, setThreads] = useState<ChatThread[]>([]);
@@ -82,6 +86,23 @@ export function GlobalChatWidget({ isOpen, onClose }: GlobalChatWidgetProps) {
     modelId: selectedModel.modelId,
     threadId: activeThreadId
   });
+
+  useEffect(() => {
+    if (!defaultSelection) {
+      return;
+    }
+    const isInitial =
+      selectedModel.providerId === INITIAL_DEFAULT_MODEL.providerId &&
+      selectedModel.modelId === INITIAL_DEFAULT_MODEL.modelId;
+    if (!isInitial) {
+      return;
+    }
+    const provider = providers.find((p) => p.id === selectedModel.providerId);
+    const modelExists = provider?.models.some((m) => m.id === selectedModel.modelId);
+    if (!modelExists || (provider && !provider.isConfigured)) {
+      setSelectedModel(defaultSelection);
+    }
+  }, [defaultSelection, providers, selectedModel]);
 
   // Title Generation Logic
   useEffect(() => {

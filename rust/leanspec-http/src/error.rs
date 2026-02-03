@@ -200,3 +200,28 @@ pub fn to_api_error<E: std::fmt::Display>(code: &str, e: E) -> (StatusCode, Json
 
     (status, Json(api_error))
 }
+
+/// Helper to create internal error with immediate logging and backtrace capture
+/// Use this in map_err closures for 500 errors to get better dev DX
+#[track_caller]
+pub fn internal_error<E: std::fmt::Display + std::fmt::Debug>(
+    e: E,
+) -> (StatusCode, Json<ApiError>) {
+    let caller = std::panic::Location::caller();
+    let backtrace = std::backtrace::Backtrace::capture();
+
+    tracing::error!(
+        error = %e,
+        error_debug = ?e,
+        file = %caller.file(),
+        line = %caller.line(),
+        column = %caller.column(),
+        backtrace = %backtrace,
+        "Internal server error"
+    );
+
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ApiError::internal_error(&e.to_string())),
+    )
+}

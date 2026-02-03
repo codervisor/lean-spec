@@ -3,6 +3,7 @@
 #![cfg(feature = "storage")]
 
 use crate::error::{CoreError, CoreResult};
+use crate::models_registry::{load_bundled_registry, registry_to_chat_config, ModelCache};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -210,6 +211,20 @@ fn resolve_api_key(template: &str) -> String {
 }
 
 fn default_chat_config() -> ChatConfig {
+    if let Ok(cache) = ModelCache::new() {
+        if let Ok(Some(registry)) = cache.load() {
+            return registry_to_chat_config(&registry);
+        }
+    }
+
+    if let Ok(registry) = load_bundled_registry() {
+        return registry_to_chat_config(&registry);
+    }
+
+    legacy_default_chat_config()
+}
+
+fn legacy_default_chat_config() -> ChatConfig {
     ChatConfig {
         version: "1.0".to_string(),
         providers: vec![

@@ -15,7 +15,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use tokio::sync::broadcast;
 
-use crate::error::{ApiError, ApiResult};
+use crate::error::{internal_error, ApiError, ApiResult};
 use crate::sessions::{
     ArchiveOptions, Session, SessionEvent, SessionLog, SessionMode, SessionStatus,
 };
@@ -128,12 +128,7 @@ pub async fn get_session(
     let session = manager
         .get_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
+        .map_err(internal_error)?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -161,12 +156,7 @@ pub async fn list_sessions(
     let sessions = manager
         .list_sessions(req.spec_id.as_deref(), req.status, req.runner.as_deref())
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
+        .map_err(internal_error)?;
 
     let responses: Vec<SessionResponse> = sessions.into_iter().map(SessionResponse::from).collect();
 
@@ -190,12 +180,7 @@ pub async fn start_session(
     let session = manager
         .get_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
+        .map_err(internal_error)?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -223,12 +208,7 @@ pub async fn stop_session(
     let session = manager
         .get_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
+        .map_err(internal_error)?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -306,12 +286,7 @@ pub async fn pause_session(
     let session = manager
         .get_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
+        .map_err(internal_error)?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -339,12 +314,7 @@ pub async fn resume_session(
     let session = manager
         .get_session(&session_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?
+        .map_err(internal_error)?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -365,12 +335,7 @@ pub async fn get_session_logs(
     let logs = manager
         .get_logs(&session_id, Some(1000))
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
+        .map_err(internal_error)?;
 
     let log_dto: Vec<SessionLogDto> = logs.into_iter().map(SessionLogDto::from).collect();
 
@@ -384,12 +349,10 @@ pub async fn get_session_events(
 ) -> ApiResult<Json<Vec<SessionEventDto>>> {
     let manager = state.session_manager.clone();
 
-    let events = manager.get_events(&session_id).await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let events = manager
+        .get_events(&session_id)
+        .await
+        .map_err(internal_error)?;
 
     let event_dto: Vec<SessionEventDto> = events.into_iter().map(SessionEventDto::from).collect();
 
@@ -551,12 +514,7 @@ pub async fn list_available_runners(
         .session_manager
         .list_available_runners(req.project_path.as_deref())
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::internal_error(&e.to_string())),
-            )
-        })?;
+        .map_err(internal_error)?;
 
     Ok(Json(runners))
 }
@@ -567,12 +525,7 @@ pub async fn list_runners(
 ) -> ApiResult<Json<RunnerListResponse>> {
     let project_path = req.project_path.unwrap_or_else(|| ".".to_string());
 
-    let response = build_runner_list_response(&project_path).map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::internal_error(&e.to_string())),
-        )
-    })?;
+    let response = build_runner_list_response(&project_path).map_err(internal_error)?;
 
     Ok(Json(response))
 }

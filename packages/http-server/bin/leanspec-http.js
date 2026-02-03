@@ -23,6 +23,7 @@ const __dirname = dirname(__filename);
 
 // Debug mode - enable with LEANSPEC_DEBUG=1
 const DEBUG = process.env.LEANSPEC_DEBUG === '1';
+const DEV_MODE = process.env.LEANSPEC_DEV_MODE === '1';
 const debug = (...args) => DEBUG && console.error('[leanspec-http debug]', ...args);
 
 // Platform detection mapping
@@ -51,6 +52,31 @@ function getBinaryPath() {
 
   debug('Binary info:', { platformKey, binaryName, packageName });
 
+  // In dev mode, prefer rust target directory first for faster iteration
+  if (DEV_MODE) {
+    // Try rust/target/debug directory first (faster builds)
+    try {
+      const rustDebugPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'debug', binaryName);
+      debug('Trying rust debug binary:', rustDebugPath);
+      accessSync(rustDebugPath);
+      debug('Found rust debug binary:', rustDebugPath);
+      return rustDebugPath;
+    } catch (e) {
+      debug('Rust debug binary not found:', e.message);
+    }
+
+    // Try rust/target/release directory
+    try {
+      const rustReleasePath = join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
+      debug('Trying rust release binary:', rustReleasePath);
+      accessSync(rustReleasePath);
+      debug('Found rust release binary:', rustReleasePath);
+      return rustReleasePath;
+    } catch (e) {
+      debug('Rust release binary not found:', e.message);
+    }
+  }
+
   // Try to resolve platform package
   try {
     const resolvedPath = require.resolve(`${packageName}/${binaryName}`);
@@ -71,7 +97,7 @@ function getBinaryPath() {
     debug('Local binary not found:', e.message);
   }
 
-  // Try rust/target/release directory (for local development)
+  // Try rust/target/release directory (fallback for local development)
   try {
     const rustTargetPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
     debug('Trying rust target binary:', rustTargetPath);

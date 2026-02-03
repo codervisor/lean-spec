@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
-import type { ChatConfig } from '../../types/chat-config';
+import { selectDefaultModelForProvider, useModelsRegistry } from '../../lib/use-models-registry';
 
 interface ModelPickerProps {
   value?: { providerId: string; modelId: string };
@@ -11,43 +10,23 @@ interface ModelPickerProps {
 
 export function ModelPicker({ value, onChange, disabled }: ModelPickerProps) {
   const { t } = useTranslation('common');
-  const [config, setConfig] = useState<ChatConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/chat/config')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load config');
-        return res.json();
-      })
-      .then((data) => {
-        setConfig(data);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const { providers, loading, error, defaultSelection } = useModelsRegistry();
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">{t('actions.loading')}</div>;
   }
 
-  if (error || !config) {
-    return <div className="text-sm text-destructive">{error || 'Failed to load config'}</div>;
+  if (error || providers.length === 0) {
+    return <div className="text-sm text-destructive">{error || t('chat.modelsLoadError')}</div>;
   }
 
-  const currentProvider = config.providers.find((p) => p.id === value?.providerId);
-  const selectedProviderId = value?.providerId ?? config.settings.defaultProviderId;
-  const selectedModelId = value?.modelId ?? config.settings.defaultModelId;
+  const selectedProviderId = value?.providerId ?? defaultSelection?.providerId ?? '';
+  const selectedModelId = value?.modelId ?? defaultSelection?.modelId ?? '';
+  const currentProvider = providers.find((provider) => provider.id === selectedProviderId);
 
   const handleProviderChange = (providerId: string) => {
-    const provider = config.providers.find((p) => p.id === providerId);
-    const defaultModel = provider?.models.find((m) => m.default) ?? provider?.models[0];
+    const provider = providers.find((p) => p.id === providerId);
+    const defaultModel = provider ? selectDefaultModelForProvider(provider) : undefined;
     if (defaultModel) {
       onChange({ providerId, modelId: defaultModel.id });
     }
@@ -68,10 +47,17 @@ export function ModelPicker({ value, onChange, disabled }: ModelPickerProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {config.providers.map((p) => (
-              <SelectItem key={p.id} value={p.id} disabled={!p.hasApiKey}>
-                {p.name}
-                {!p.hasApiKey && <span className="text-muted-foreground ml-1">(no key)</span>}
+            {providers.map((provider) => (
+              <SelectItem
+                key={provider.id}
+                value={provider.id}
+                disabled={!provider.isConfigured}
+                className="cursor-pointer"
+              >
+                {provider.name}
+                {!provider.isConfigured && (
+                  <span className="text-muted-foreground ml-1">(no key)</span>
+                )}
               </SelectItem>
             ))}
           </SelectContent>
@@ -87,9 +73,9 @@ export function ModelPicker({ value, onChange, disabled }: ModelPickerProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {currentProvider?.models.map((m) => (
-              <SelectItem key={m.id} value={m.id}>
-                {m.name}
+            {currentProvider?.models.map((model) => (
+              <SelectItem key={model.id} value={model.id} className="cursor-pointer">
+                {model.name}
               </SelectItem>
             ))}
           </SelectContent>

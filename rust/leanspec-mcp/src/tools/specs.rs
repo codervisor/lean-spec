@@ -137,6 +137,16 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
                 .collect()
         })
         .unwrap_or_default();
+    let parent = args.get("parent").and_then(|v| v.as_str());
+    let depends_on: Vec<String> = args
+        .get("dependsOn")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
 
     let next_number = get_next_spec_number(specs_dir)?;
     let spec_name = format!("{:03}-{}", next_number, name);
@@ -167,6 +177,8 @@ pub(crate) fn tool_create(specs_dir: &str, args: Value) -> Result<String, String
         &created_date,
         now,
         &title,
+        parent,
+        &depends_on,
     )?;
 
     let spec_dir = std::path::Path::new(specs_dir).join(&spec_name);
@@ -665,6 +677,15 @@ pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
                         "type": "array",
                         "items": { "type": "string" },
                         "description": "Tags for categorization"
+                    },
+                    "parent": {
+                        "type": "string",
+                        "description": "Parent umbrella spec path or number"
+                    },
+                    "dependsOn": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Specs this new spec depends on (blocking dependencies)"
                     }
                 },
                 "required": ["name"],

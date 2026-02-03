@@ -50,6 +50,9 @@ pub mod ai;
 #[cfg(feature = "ai")]
 pub mod ai_native;
 
+#[cfg(feature = "ai")]
+pub mod models_registry;
+
 // Re-exports for convenience
 pub use error::{CoreError, CoreResult};
 pub use parsers::FrontmatterParser;

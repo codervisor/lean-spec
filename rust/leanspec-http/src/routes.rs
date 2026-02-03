@@ -216,7 +216,15 @@ pub fn create_router(state: AppState) -> Router {
     // AI chat route (only when ai feature is enabled)
     #[cfg(feature = "ai")]
     {
-        router = router.route("/api/chat", post(handlers::chat_stream));
+        router = router
+            .route("/api/chat", post(handlers::chat_stream))
+            // Models registry routes
+            .route("/api/models/providers", get(handlers::list_providers))
+            .route(
+                "/api/models/providers/{provider_id}",
+                get(handlers::get_provider_models),
+            )
+            .route("/api/models/refresh", post(handlers::refresh_registry));
     }
 
     let mut router = router.with_state(state.clone());

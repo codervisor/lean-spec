@@ -7,7 +7,7 @@
     "leanspec-http": "./bin/leanspec-http.js"
   },
   "scripts": {
-    "dev": "LEANSPEC_DEBUG=1 LEANSPEC_DEV_MODE=1 nodemon --watch ./binaries --ignore '*.js' --ignore '*.json' --delay 1 --exec 'node ./bin/leanspec-http.js -v --no-open'",
+    "dev": "RUST_BACKTRACE=1 LEANSPEC_DEBUG=1 LEANSPEC_DEV_MODE=1 nodemon --watch ./binaries --ignore '*.js' --ignore '*.json' --delay 1 --exec 'node ./bin/leanspec-http.js -v --no-open'",
     "typecheck": "echo 'No TypeScript source to check'"
   },
   "keywords": [

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Popover,
@@ -13,7 +13,7 @@ import {
   Badge,
   Button,
 } from '@leanspec/ui-components';
-import type { ChatConfig } from '../../types/chat-config';
+import { useModelsRegistry } from '../../lib/use-models-registry';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 
@@ -35,28 +35,8 @@ export function InlineModelSelector({
   className,
 }: InlineModelSelectorProps) {
   const { t } = useTranslation('common');
-  const [config, setConfig] = useState<ChatConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/chat/config')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load config');
-        return res.json();
-      })
-      .then((data) => {
-        setConfig(data);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const { providers, loading, error, summary, defaultSelection } = useModelsRegistry();
 
   if (loading) {
     return (
@@ -72,7 +52,7 @@ export function InlineModelSelector({
     );
   }
 
-  if (error || !config) {
+  if (error || providers.length === 0) {
     return (
       <Button
         variant="ghost"
@@ -85,10 +65,10 @@ export function InlineModelSelector({
     );
   }
 
-  const selectedProviderId = value?.providerId ?? config.settings.defaultProviderId;
-  const selectedModelId = value?.modelId ?? config.settings.defaultModelId;
+  const selectedProviderId = value?.providerId ?? defaultSelection?.providerId ?? '';
+  const selectedModelId = value?.modelId ?? defaultSelection?.modelId ?? '';
 
-  const selectedProvider = config.providers.find((p) => p.id === selectedProviderId);
+  const selectedProvider = providers.find((p) => p.id === selectedProviderId);
   const selectedModel = selectedProvider?.models.find((m) => m.id === selectedModelId);
 
   return (
@@ -112,10 +92,16 @@ export function InlineModelSelector({
       </PopoverTrigger>
       <PopoverContent className="w-[350px] p-0" align="start">
         <Command>
+          <div className="border-b px-3 py-2 text-[11px] text-muted-foreground">
+            {t('chat.providersSummary', {
+              total: summary.total,
+              configured: summary.configuredCount,
+            })}
+          </div>
           <CommandInput placeholder={t('chat.searchModels')} className="h-9" />
           <CommandList className="max-h-[300px]">
             <CommandEmpty>{t('chat.noModelsFound')}</CommandEmpty>
-            {config.providers.map((provider) => (
+            {providers.map((provider) => (
               <CommandGroup key={provider.id} heading={provider.name}>
                 {provider.models.map((model) => (
                   <CommandItem
@@ -126,7 +112,7 @@ export function InlineModelSelector({
                       setOpen(false);
                     }}
                     className="flex items-center gap-2 py-2 cursor-pointer"
-                    disabled={!provider.hasApiKey}
+                    disabled={!provider.isConfigured}
                   >
                     <Check
                       className={cn(
@@ -138,7 +124,7 @@ export function InlineModelSelector({
                     />
                     <div className="flex-1">
                       <span className="font-medium text-sm">{model.name}</span>
-                      {!provider.hasApiKey && (
+                      {!provider.isConfigured && (
                         <Badge variant="outline" className="ml-2 text-[10px] px-1 h-4">
                           {t('chat.noKey')}
                         </Badge>

@@ -90,6 +90,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let is_dev_mode = std::env::var("LEANSPEC_DEV_MODE").is_ok();
     let is_debug_mode = std::env::var("LEANSPEC_DEBUG").is_ok();
 
+    // Enable backtraces in dev mode for better error diagnostics
+    if is_dev_mode && std::env::var("RUST_BACKTRACE").is_err() {
+        std::env::set_var("RUST_BACKTRACE", "1");
+    }
+
     let mut level = args.log_level.clone();
     if args.verbose && args.log_level == "info" {
         level = "debug".to_string();

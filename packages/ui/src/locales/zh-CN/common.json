@@ -197,6 +197,8 @@
     "searchModels": "搜索模型...",
     "noModelsFound": "未找到模型",
     "noKey": "无密钥",
+    "providersSummary": "{{total}} 个提供商，已配置 {{configured}} 个",
+    "modelsLoadError": "加载模型失败",
     "newChat": "新对话",
     "expandSidebar": "展开侧边栏",
     "collapseSidebar": "收起侧边栏",

@@ -197,6 +197,8 @@
     "searchModels": "Search models...",
     "noModelsFound": "No models found",
     "noKey": "No Key",
+    "providersSummary": "{{total}} providers, {{configured}} configured",
+    "modelsLoadError": "Failed to load models",
     "newChat": "New Chat",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",

@@ -117,6 +117,8 @@ pub(crate) fn merge_frontmatter(
     created_date: &str,
     now: chrono::DateTime<Utc>,
     title: &str,
+    parent: Option<&str>,
+    depends_on: &[String],
 ) -> Result<String, String> {
     let parser = FrontmatterParser::new();
     let status_parsed: SpecStatus = status
@@ -143,6 +145,12 @@ pub(crate) fn merge_frontmatter(
                 fm.created_at = Some(now);
             }
             fm.updated_at = Some(now);
+            if let Some(p) = parent {
+                fm.parent = Some(p.to_string());
+            }
+            if !depends_on.is_empty() {
+                fm.depends_on = depends_on.to_vec();
+            }
 
             // Ensure H1 title is present in the body
             let trimmed_body = body.trim_start();
@@ -162,6 +170,8 @@ pub(crate) fn merge_frontmatter(
             created_date,
             title,
             now,
+            parent,
+            depends_on,
         ),
         Err(e) => Err(e.to_string()),
     }
@@ -175,14 +185,16 @@ fn build_frontmatter_from_scratch(
     created_date: &str,
     title: &str,
     now: chrono::DateTime<Utc>,
+    parent: Option<&str>,
+    depends_on: &[String],
 ) -> Result<String, String> {
     let frontmatter = SpecFrontmatter {
         status,
         created: created_date.to_string(),
         priority,
         tags: tags.to_vec(),
-        depends_on: Vec::new(),
-        parent: None,
+        depends_on: depends_on.to_vec(),
+        parent: parent.map(String::from),
         assignee: None,
         reviewer: None,
         issue: None,

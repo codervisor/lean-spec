@@ -9,6 +9,8 @@ mod chat_sessions;
 mod events;
 mod health;
 mod local_projects;
+#[cfg(feature = "ai")]
+mod models_registry;
 mod projects;
 mod sessions;
 mod specs;
@@ -21,6 +23,8 @@ pub use chat_sessions::*;
 pub use events::*;
 pub use health::*;
 pub use local_projects::*;
+#[cfg(feature = "ai")]
+pub use models_registry::*;
 pub use projects::*;
 pub use sessions::*;
 pub use specs::*;
