@@ -10,8 +10,8 @@ export function WideModeToggle() {
   const [open, setOpen] = useState(false);
 
   const modes = [
-    { value: 'normal', icon: Scan, label: t('wideMode.normal') },
-    { value: 'wide', icon: Monitor, label: t('wideMode.wide') },
+    { value: 'normal', icon: Monitor, label: t('wideMode.normal') },
+    { value: 'wide', icon: Scan, label: t('wideMode.wide') },
   ] as const;
 
   const currentMode = isWideMode ? 'wide' : 'normal';
@@ -27,9 +27,9 @@ export function WideModeToggle() {
         data-tauri-drag-region="false"
       >
         {isWideMode ? (
-          <Monitor className="h-5 w-5" />
-        ) : (
           <Scan className="h-5 w-5" />
+        ) : (
+          <Monitor className="h-5 w-5" />
         )}
       </Button>
       {open && (
