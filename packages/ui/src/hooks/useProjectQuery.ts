@@ -66,7 +66,7 @@ export function useCurrentProject() {
   }, [projects, currentProjectId]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isLoading) return;
     if (currentProject?.id) {
       localStorage.setItem(storageKey, currentProject.id);
       api.setCurrentProjectId(currentProject.id);
@@ -74,7 +74,7 @@ export function useCurrentProject() {
       localStorage.removeItem(storageKey);
       api.setCurrentProjectId(null);
     }
-  }, [currentProject?.id, storageKey]);
+  }, [currentProject?.id, isLoading, storageKey]);
 
   return {
     currentProject,

@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useProject, useChat } from '../contexts';
+import { useChat } from '../contexts';
+import { useCurrentProject } from './useProjectQuery';
 
 export interface KeyboardShortcut {
   key: string;
@@ -45,7 +46,7 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 export function useGlobalShortcuts() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
   const { toggleChat } = useChat();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;

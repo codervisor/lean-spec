@@ -1,6 +1,6 @@
 import { useChat as useAIChat, type UIMessage } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useProject } from '../contexts';
+import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useMemo, useRef, useCallback, useEffect, useState } from 'react';
 import { ChatApi } from './chat-api';
 
@@ -14,7 +14,7 @@ interface UseLeanSpecChatOptions {
 }
 
 export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
-  const { currentProject } = useProject();
+  const { currentProject } = useCurrentProject();
   const messagesRef = useRef<UIMessage[]>([]);
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
