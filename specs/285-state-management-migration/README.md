@@ -32,7 +32,7 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
 
 ### Phase 1: Zustand Stores (Client State)
 
-- [ ] **1.1** Finalize `useThemeStore` and update consumers
+- [x] **1.1** Finalize `useThemeStore` and update consumers
   - Remove `ThemeContext.tsx`, `theme.ts`, `useTheme.ts`
   - Update consumers:
     - `components/ThemeToggle.tsx` (useTheme → useThemeStore)
@@ -40,7 +40,7 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
   - Update `contexts/index.ts` exports
   - Update test: `contexts/ThemeContext.test.tsx` → `stores/theme.test.ts`
   
-- [ ] **1.2** Create `useLayoutStore` 
+- [x] **1.2** Create `useLayoutStore` 
   - Migrate `LayoutContext.tsx` → `src/stores/layout.ts`
   - State: `{ isWideMode, isSidebarOpen, toggleWideMode, toggleSidebar }`
   - Update consumers (10 files):
@@ -55,7 +55,7 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
     - `pages/SpecDetailPage.tsx`
     - `pages/DependenciesPage.tsx`
 
-- [ ] **1.3** Create `useMachineStore`
+- [x] **1.3** Create `useMachineStore`
   - Migrate `MachineContext.tsx` → `src/stores/machine.ts`
   - State: `{ machines, currentMachine, machineModeEnabled, isMachineAvailable, ... }`
   - Keep API calls in store actions (Zustand supports async)
@@ -70,12 +70,12 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
 
 ### Phase 2: TanStack Query (Server State)
 
-- [ ] **2.1** Add `QueryClientProvider` to App
+- [x] **2.1** Add `QueryClientProvider` to App
   - Wrap app in `QueryClientProvider`
   - Use config from `src/lib/query-client.ts`
   - Add `@tanstack/react-query-devtools` (dev only)
 
-- [ ] **2.2** Migrate `SpecsContext` → query hooks
+- [x] **2.2** Migrate `SpecsContext` → query hooks
   - Existing PoC: `src/hooks/useSpecsQuery.ts`
   - Add SSE integration hook: `useSpecsSSE()`
     ```ts
@@ -91,7 +91,7 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
     - `pages/SpecDetailPage.tsx` (refreshTrigger → useSpecDetail)
     - Mount `useSpecsSSE()` in `App.tsx` or `Layout.tsx`
 
-- [ ] **2.3** Migrate `ProjectContext` → query hooks
+- [x] **2.3** Migrate `ProjectContext` → query hooks
   - Create `src/hooks/useProjectQuery.ts`:
     - `useProjects()` - fetch project list
     - `useCurrentProject()` - derive from list + localStorage
@@ -115,7 +115,7 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
     - `pages/ProjectsPage.tsx`
   - **Note**: ChatContext uses useProject → update after migration
 
-- [ ] **2.4** Migrate `SessionsContext` → query hooks
+- [x] **2.4** Migrate `SessionsContext` → query hooks
   - Create `src/hooks/useSessionsQuery.ts`:
     - `useSessions()` - fetch session list
     - `useSession(id)` - fetch single session
@@ -140,7 +140,7 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
 
 ### Phase 3: Cleanup
 
-- [ ] **3.1** Remove old context files
+- [x] **3.1** Remove old context files
   - Delete: `ThemeContext.tsx`, `theme.ts`, `useTheme.ts`
   - Delete: `LayoutContext.tsx`
   - Delete: `MachineContext.tsx`
@@ -154,12 +154,12 @@ Following evaluation in [284-state-management-library-evaluation](../284-state-m
     export { KeyboardShortcutsProvider, useKeyboardShortcuts } from './KeyboardShortcutsContext';
     ```
   
-- [ ] **3.2** Simplify provider tree in `App.tsx`
+- [x] **3.2** Simplify provider tree in `App.tsx`
   - Before: `MachineProvider > ProjectProvider > SessionsProvider > SpecsProvider > LayoutProvider > ThemeProvider > ...`
   - After: `QueryClientProvider > ChatProvider > ...`
   - Zustand stores require no providers
 
-- [ ] **3.3** Update tests
+- [x] **3.3** Update tests
   - Install: `pnpm add -D @tanstack/react-query`
   - Theme test: Mock Zustand with `zustand/testing`
   - Query tests: Use `QueryClientProvider` wrapper with fresh client
