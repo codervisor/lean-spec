@@ -92,16 +92,16 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
   }, [location.pathname, mobileOpen, onMobileClose]);
 
   const navItems = [
-    { path: basePath, label: t('navigation.home'), description: t('navigation.dashboard'), icon: Home },
-    { path: `${basePath}/specs`, label: t('navigation.specs'), description: t('navigation.allSpecifications'), icon: FileText },
-    { path: `${basePath}/sessions`, label: t('navigation.sessions'), description: t('navigation.sessionsDescription'), icon: Terminal },
-    { path: `${basePath}/dependencies`, label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
-    { path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
-    { path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },
-    { path: '/projects', label: t('navigation.projects'), description: t('navigation.manageProjects'), icon: Folder },
-    { path: '/settings', label: t('navigation.settings'), description: t('navigation.settingsDescription'), icon: Settings },
+    { id: 'home', path: basePath, label: t('navigation.home'), description: t('navigation.dashboard'), icon: Home },
+    { id: 'specs', path: `${basePath}/specs`, label: t('navigation.specs'), description: t('navigation.allSpecifications'), icon: FileText },
+    { id: 'sessions', path: `${basePath}/sessions`, label: t('navigation.sessions'), description: t('navigation.sessionsDescription'), icon: Terminal },
+    { id: 'dependencies', path: `${basePath}/dependencies`, label: t('navigation.dependencies'), description: t('navigation.dependencyGraph'), icon: Network },
+    { id: 'stats', path: `${basePath}/stats`, label: t('navigation.stats'), description: t('navigation.analytics'), icon: BarChart3 },
+    { id: 'context', path: `${basePath}/context`, label: t('navigation.context'), description: t('navigation.projectContext'), icon: BookOpen },
+    { id: 'projects', path: '/projects', label: t('navigation.projects'), description: t('navigation.manageProjects'), icon: Folder },
+    { id: 'settings', path: '/settings', label: t('navigation.settings'), description: t('navigation.settingsDescription'), icon: Settings },
     ...(machineModeEnabled
-      ? [{ path: '/machines', label: t('navigation.machines'), description: t('navigation.manageMachines'), icon: Cpu }]
+      ? [{ id: 'machines', path: '/machines', label: t('navigation.machines'), description: t('navigation.manageMachines'), icon: Cpu }]
       : []),
   ];
 
@@ -143,7 +143,7 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
             </div>
             {navItems.map((item) => (
               <SidebarLink
-                key={item.path}
+                key={item.id}
                 to={item.path}
                 icon={item.icon}
                 label={item.label}
