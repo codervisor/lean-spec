@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.23] - 2026-02-03
+
+### Added
+- **State Management Migration** - Migrated from React Context to Zustand + TanStack Query
+  - New `useProjectQuery`, `useSessionsQuery`, `useSpecsQuery` hooks with caching
+  - BackendAdapter for unified API communication
+  - Improved state management with `QueryClientProvider`
+
+- **AI Sessions & Chat** - Re-enabled AI Sessions and Chat functionality in navigation and routing
+  - Session management with runner integration
+  - Enhanced chat handler and spec update tool
+  - Unified Update Tool for combined metadata and content changes
+
+- **Runner Management** - Expanded agent runner support
+  - Runner management API and UI integration
+  - Settings pages for AI, runners, and appearance configuration
+  - Unified RunnerDefinition with detection config for IDE-based tools
+  - Environment variable interpolation fixes
+
+- **HierarchyTree Enhancements** - Improved hierarchy navigation
+  - Controlled expansion with `getAllParentIds` utility
+  - Sorting options integration
+  - Optimized scrolling with `requestAnimationFrame`
+
+- **UI Improvements**
+  - Responsive PriorityBadge and StatusBadge components
+  - Enhanced loading states in TokenDetailsDialog and ValidationDialog
+  - Skeleton components consolidation for better maintainability
+  - Unique IDs for navigation items in MainSidebar
+
+### Changed
+- **Session Management Terminology** - Replaced 'tool' with 'runner' across session management
+- **Skills Directory** - Removed symlink, now uses `.github/skills` directly
+- **Sorting Logic** - Enhanced sorting across components with parent references
+
+### Fixed
+- Icon swap for normal/wide modes in WideModeToggle component
+- Clippy errors in leanspec-http resolved
+- Better error handling for undefined response in `listAvailableRunners`
+- jiti version updated in dependencies
+
 ## [0.2.22] - 2026-02-02
 
 ### Added
@@ -989,6 +1030,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.23]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.23
 [0.2.22]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.22
 [0.2.21]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.21
 [0.2.20]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.20

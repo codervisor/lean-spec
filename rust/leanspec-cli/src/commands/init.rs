@@ -300,8 +300,8 @@ fn handle_ai_symlinks(
     let selected_symlinks = if options.yes {
         symlink_candidates
             .iter()
-            .cloned()
             .filter(|runner| default_ids.contains(&runner.id))
+            .cloned()
             .collect()
     } else {
         print_ai_detection(detections);
