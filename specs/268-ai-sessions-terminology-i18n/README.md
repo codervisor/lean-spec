@@ -6,13 +6,13 @@ tags:
 - i18n
 - ux
 - terminology
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-01-30T14:55:25.187144Z
-updated_at: 2026-01-30T14:58:52.637355Z
+updated_at: 2026-02-03T04:55:36.027530929Z
 transitions:
 - status: in-progress
   at: 2026-01-30T14:58:52.637355Z
 ---
-
 # AI Sessions Terminology & i18n Evaluation
 
 > **Status**: in-progress · **Priority**: medium · **Created**: 2026-01-30
