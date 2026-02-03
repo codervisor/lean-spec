@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.22] - 2026-02-02
+
 ### Added
 - **Inline Metadata Editing in List/Board Views** - Quick status and priority updates without navigation
   - Clickable status/priority badges with dropdown selectors
@@ -987,6 +989,7 @@ This UAT release operationalizes LeanSpec's five first principles:
 - Gray-matter for frontmatter parsing
 - Dayjs for date handling
 
+[0.2.22]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.22
 [0.2.21]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.21
 [0.2.20]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.20
 [0.2.11]: https://github.com/codervisor/lean-spec/releases/tag/v0.2.11
