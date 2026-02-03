@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { FilterX, RefreshCcw, FileQuestion, Play, Square, RotateCcw, ArrowUpRight, Plus, Pause } from 'lucide-react';
 import { Button, Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
@@ -30,40 +30,52 @@ export function SessionsPage() {
   const specsQuery = useSpecsList(resolvedProjectId ?? null);
   const { createSession, startSession, stopSession, pauseSession, resumeSession } = useSessionMutations(resolvedProjectId ?? null);
 
-  const sessions = (sessionsQuery.data as Session[] | undefined) ?? [];
-  const specs = (specsQuery.data as Spec[] | undefined) ?? [];
+  const sessions = useMemo(() => (sessionsQuery.data as Session[] | undefined) ?? [], [sessionsQuery.data]);
+  const specs = useMemo(() => (specsQuery.data as Spec[] | undefined) ?? [], [specsQuery.data]);
   const loading = projectLoading || sessionsQuery.isLoading;
   const error = sessionsQuery.error ? t('sessions.errors.load') : null;
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [runnerFilter, setRunnerFilter] = useState<string>('all');
-  const [modeFilter, setModeFilter] = useState<string>('all');
-  const [specFilter, setSpecFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('started-desc');
+  const [searchParams] = useSearchParams();
+
+  const [searchQuery, setSearchQueryRaw] = useState('');
+  const [statusFilter, setStatusFilterRaw] = useState<string>('all');
+  const [runnerFilter, setRunnerFilterRaw] = useState<string>('all');
+  const [modeFilter, setModeFilterRaw] = useState<string>('all');
+  const [specFilter, setSpecFilterRaw] = useState<string>(() => searchParams.get('spec') ?? 'all');
+  const [sortBy, setSortByRaw] = useState<SortOption>('started-desc');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const [searchParams] = useSearchParams();
-  const initializedFromQuery = useRef(false);
+  // Wrap filter setters to reset pagination
+  const setSearchQuery = useCallback((value: string) => {
+    setSearchQueryRaw(value);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const setStatusFilter = useCallback((value: string) => {
+    setStatusFilterRaw(value);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const setRunnerFilter = useCallback((value: string) => {
+    setRunnerFilterRaw(value);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const setModeFilter = useCallback((value: string) => {
+    setModeFilterRaw(value);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const setSpecFilter = useCallback((value: string) => {
+    setSpecFilterRaw(value);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+  const setSortBy = useCallback((value: SortOption) => {
+    setSortByRaw(value);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
   const loadSessions = useCallback(async () => {
     await sessionsQuery.refetch();
     await specsQuery.refetch();
   }, [sessionsQuery, specsQuery]);
-
-  useEffect(() => {
-    if (initializedFromQuery.current) return;
-    const initialSpec = searchParams.get('spec');
-    if (initialSpec) {
-      setSpecFilter(initialSpec);
-    }
-    initializedFromQuery.current = true;
-  }, [searchParams]);
-
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [searchQuery, statusFilter, runnerFilter, modeFilter, specFilter, sortBy]);
 
   const uniqueStatuses = useMemo(() => {
     const statuses = sessions.map((s) => s.status).filter(Boolean) as SessionStatus[];

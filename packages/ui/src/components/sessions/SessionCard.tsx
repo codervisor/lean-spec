@@ -17,7 +17,7 @@ export function SessionCard({ session, compact }: SessionCardProps) {
     const { setActiveSessionId } = useSessionsUiStore();
     const { t, i18n } = useTranslation('common');
 
-    const handleAction = async (e: React.MouseEvent, action: () => Promise<void>) => {
+    const handleAction = async (e: React.MouseEvent, action: () => Promise<unknown>) => {
         e.stopPropagation();
         await action();
     };

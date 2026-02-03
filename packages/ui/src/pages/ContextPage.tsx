@@ -20,6 +20,7 @@ export function ContextPage() {
   const [context, setContext] = useState<ProjectContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const projectErrorMessage = projectError instanceof Error ? projectError.message : projectError;
 
   useEffect(() => {
     async function loadContext() {
@@ -65,7 +66,7 @@ export function ContextPage() {
           </div>
           <div className="text-lg font-semibold">{t('contextPage.errors.loadFailed', { ns: 'common' })}</div>
           <p className="text-sm text-muted-foreground">
-            {projectError || error || t('errors.loadingError', { ns: 'errors' })}
+            {projectErrorMessage || error || t('errors.loadingError', { ns: 'errors' })}
           </p>
         </CardContent>
       </Card>
