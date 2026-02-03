@@ -21,26 +21,36 @@ Consolidate the two separate AI tool registries (`runner.rs` and `ai_tools.rs`) 
 
 ### Current State
 
-**Runners (`runner.rs` in leanspec-core)**: claude, copilot, codex, opencode, aider, cline (6 tools)
+**Runners ([rust/leanspec-core/src/sessions/runner.rs](rust/leanspec-core/src/sessions/runner.rs))**: claude, copilot, codex, opencode, aider, cline (6 CLI tools)
 - Purpose: Execution config (command, args, env)
 - Used by: `lean-spec run`, session management
+- `RunnerDefinition.command` is required (non-optional)
+- `runners.json` schema requires `command`
 
-**AI Tools (`ai_tools.rs` in leanspec-cli)**: Copilot, Claude, Gemini, Cursor, Windsurf, Aider, Codex, Droid (8 tools)
-- Purpose: Detection config (commands, config dirs, env vars, symlinks)
+**AI Tools ([rust/leanspec-cli/src/commands/init/ai_tools.rs](rust/leanspec-cli/src/commands/init/ai_tools.rs))**: Copilot, Claude, Gemini, Cursor, Windsurf, Aider, Codex, Droid (8 tools)
+- Purpose: Detection config (commands, config dirs, env vars, extensions, symlinks)
 - Used by: `lean-spec init` wizard
+- Detection checks commands via `which/where`, config dirs in $HOME (or LEAN_SPEC_HOME), env vars, and IDE extension folders
+- Symlinks only for Claude + Gemini (CLAUDE.md, GEMINI.md)
+- Includes IDE-based tools (Cursor, Windsurf) not in runner.rs
+
+**Known mismatches today**
+- Copilot runner executes `gh copilot suggest`, but detection looks for `copilot` command
+- Gemini/Cursor/Windsurf/Droid exist only in `ai_tools.rs` (not in runner registry)
+- `ai_tools.rs` has detection fields (commands, extensions) not represented in `RunnerDefinition`
 
 ### Problem
 
 1. Two files maintain overlapping but inconsistent tool lists
 2. Adding a new tool requires updating both files
-3. Tools in one registry may be missing from the other (e.g., Gemini in ai_tools but not runners)
+3. Tools in one registry may be missing from the other (e.g., Gemini, Cursor, Windsurf in ai_tools but not runners)
 4. No way for user-defined runners to participate in init detection
 
 ## Design
 
 ### Extended RunnerDefinition
 
-Add detection and symlink fields to `RunnerDefinition`:
+Add detection and symlink fields to `RunnerDefinition`. Make `command` optional to support IDE-based tools (Cursor, Windsurf) that are detected but not executed via CLI:
 
 ```rust
 // In runner.rs (leanspec-core)
@@ -48,8 +58,10 @@ Add detection and symlink fields to `RunnerDefinition`:
 pub struct RunnerDefinition {
     pub id: String,
     pub name: Option<String>,
-    pub command: String,
+    pub command: Option<String>,       // None for IDE-only tools (Cursor, Windsurf)
+    #[serde(default)]
     pub args: Vec<String>,
+    #[serde(default)]
     pub env: HashMap<String, String>,
     // New fields for detection/init
     #[serde(default)]
@@ -61,6 +73,8 @@ pub struct RunnerDefinition {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DetectionConfig {
     #[serde(default)]
+    pub commands: Vec<String>,         // e.g., ["claude", "copilot"]
+    #[serde(default)]
     pub config_dirs: Vec<String>,      // e.g., [".claude", ".cursor"]
     #[serde(default)]
     pub env_vars: Vec<String>,         // e.g., ["ANTHROPIC_API_KEY"]
@@ -71,15 +85,16 @@ pub struct DetectionConfig {
 
 ### Updated Builtins
 
-Each builtin runner includes detection config:
+Each builtin runner includes detection config. CLI runners have a command; IDE-based tools have `command: None`:
 
 ```rust
+// CLI runner example
 runners.insert(
     "claude".to_string(),
     RunnerDefinition {
         id: "claude".to_string(),
         name: Some("Claude Code".to_string()),
-        command: "claude".to_string(),
+        command: Some("claude".to_string()),
         args: vec!["--dangerously-skip-permissions".to_string(), "--print".to_string()],
         env: HashMap::from([
             ("ANTHROPIC_API_KEY".to_string(), "${ANTHROPIC_API_KEY}".to_string()),
@@ -90,6 +105,24 @@ runners.insert(
             extensions: vec![],
         }),
         symlink_file: Some("CLAUDE.md".to_string()),
+    },
+);
+
+// IDE-only example (detection only, not runnable)
+runners.insert(
+    "cursor".to_string(),
+    RunnerDefinition {
+        id: "cursor".to_string(),
+        name: Some("Cursor".to_string()),
+        command: None,  // IDE - not executable via lean-spec run
+        args: vec![],
+        env: HashMap::new(),
+        detection: Some(DetectionConfig {
+            config_dirs: vec![".cursor".to_string(), ".cursorules".to_string()],
+            env_vars: vec![],
+            extensions: vec![],
+        }),
+        symlink_file: None,  // Uses AGENTS.md directly
     },
 );
 ```
@@ -128,15 +161,31 @@ impl RunnerRegistry {
             .filter(|r| r.symlink_file.is_some())
             .collect()
     }
+    
+    /// Get only runnable runners (excludes IDE-only tools)
+    pub fn runnable_runners(&self) -> Vec<&RunnerDefinition> {
+        self.runners.values()
+            .filter(|r| r.command.is_some())
+            .collect()
+    }
+}
+
+impl RunnerDefinition {
+    /// Returns true if this runner can be executed via `lean-spec run`
+    pub fn is_runnable(&self) -> bool {
+        self.command.is_some()
+    }
 }
 ```
 
 ## Plan
 
-- [ ] **Phase 1: Extend RunnerDefinition**
+- [ ] **Phase 1: Extend RunnerDefinition + schema**
   - [ ] Add `DetectionConfig` struct to runner.rs
   - [ ] Add `detection` and `symlink_file` fields to `RunnerDefinition`
+  - [ ] Add `commands` field to `DetectionConfig` (for parity with init detection)
   - [ ] Update serde derives with `#[serde(default)]` for backward compatibility
+  - [ ] Make `command` optional in `RunnerDefinition`, `RunnerConfig`, and schema
   
 - [ ] **Phase 2: Migrate Builtin Detection Config**
   - [ ] Add detection config to claude runner
@@ -145,13 +194,19 @@ impl RunnerRegistry {
   - [ ] Add detection config to opencode runner
   - [ ] Add detection config to aider runner
   - [ ] Add detection config to cline runner
+  - [ ] Add gemini runner with detection config
+  - [ ] Add cursor as IDE-only runner (command: None)
+  - [ ] Add windsurf as IDE-only runner (command: None)
+  - [ ] Add droid runner with detection config
   - [ ] Add symlink_file to claude and gemini runners
+  - [ ] Align copilot detection to `copilot` (document assumptions if needed)
   
 - [ ] **Phase 3: Add Detection Methods to RunnerRegistry**
   - [ ] Implement `detect_runner()` method
   - [ ] Implement `detect_available()` method
   - [ ] Implement `symlink_runners()` method
-  - [ ] Add detection logic (command exists, config dir exists, env var set)
+  - [ ] Add detection logic (command exists, config dir exists, env var set, extension installed)
+  - [ ] Use $HOME or LEAN_SPEC_HOME for config/extension detection (to match current init behavior)
   
 - [ ] **Phase 4: Update Init Command**
   - [ ] Import `RunnerRegistry` in init module
@@ -171,12 +226,15 @@ impl RunnerRegistry {
 ## Test
 
 - [ ] Existing runner tests pass
-- [ ] Detection works for all builtin runners
+- [ ] Detection works for all builtin runners (CLI and IDE)
 - [ ] `RunnerRegistry::detect_available()` returns correct results
+- [ ] IDE-only runners (cursor, windsurf) are detected but not runnable
+- [ ] `lean-spec run cursor` returns appropriate error for IDE-only tools
 - [ ] Symlink creation works via `symlink_runners()`
 - [ ] `lean-spec init` wizard shows detected tools correctly
 - [ ] User-defined runners in `runners.json` with detection config are detected
 - [ ] Backward compatibility: runners.json without detection fields still works
+- [ ] Command/extension detection uses $HOME (or LEAN_SPEC_HOME) to match current behavior
 
 ## Notes
 
@@ -186,6 +244,15 @@ impl RunnerRegistry {
 2. **Extensibility**: User-defined runners can participate in init detection
 3. **Consistency**: No more out-of-sync tool lists
 4. **Maintainability**: Adding new tools requires one file change
+5. **IDE Support**: IDE-based tools (Cursor, Windsurf) are detected even though they're not runnable
+
+### IDE-Only Tools
+
+Tools like Cursor and Windsurf are IDEs, not CLI executables. They're included in the registry with `command: None`:
+- Detected during `lean-spec init` via config dirs (`.cursor`, `.windsurf`)
+- Shown in init wizard for AGENTS.md setup
+- Not runnable via `lean-spec run` (returns error if attempted)
+- Use AGENTS.md directly (no symlink needed)
 
 ### Migration Path
 
@@ -196,7 +263,7 @@ The migration is backward compatible:
 
 ### Schema Update
 
-The `runners.json` schema should be updated to allow detection config:
+The `runners.json` schema should be updated to allow detection config and optional command:
 
 ```json
 {
@@ -206,8 +273,16 @@ The `runners.json` schema should be updated to allow detection config:
       "name": "My Custom Agent",
       "command": "my-agent",
       "detection": {
+        "commands": ["my-agent"],
         "config_dirs": [".my-agent"],
         "env_vars": ["MY_AGENT_API_KEY"]
+      }
+    },
+    "my-ide-extension": {
+      "name": "My IDE Extension",
+      "detection": {
+        "config_dirs": [".my-ide"],
+        "extensions": ["my-ide.extension-name"]
       }
     }
   }
