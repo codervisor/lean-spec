@@ -59,7 +59,7 @@ export type RunnerSource = 'builtin' | 'global' | 'project';
 export interface RunnerDefinition {
   id: string;
   name?: string | null;
-  command: string;
+  command?: string | null;
   args: string[];
   env: Record<string, string>;
   available: boolean;

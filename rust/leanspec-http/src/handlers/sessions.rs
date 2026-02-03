@@ -503,7 +503,7 @@ pub struct RunnerDefaultRequest {
 pub struct RunnerConfigPayload {
     pub id: String,
     pub name: Option<String>,
-    pub command: String,
+    pub command: Option<String>,
     pub args: Option<Vec<String>>,
     pub env: Option<HashMap<String, String>>,
 }
@@ -512,7 +512,7 @@ pub struct RunnerConfigPayload {
 #[serde(rename_all = "camelCase")]
 pub struct RunnerUpdatePayload {
     pub name: Option<String>,
-    pub command: String,
+    pub command: Option<String>,
     pub args: Option<Vec<String>>,
     pub env: Option<HashMap<String, String>>,
 }
@@ -522,7 +522,7 @@ pub struct RunnerUpdatePayload {
 pub struct RunnerInfoResponse {
     pub id: String,
     pub name: Option<String>,
-    pub command: String,
+    pub command: Option<String>,
     pub args: Vec<String>,
     pub env: HashMap<String, String>,
     pub available: bool,
@@ -611,11 +611,13 @@ pub async fn create_runner(
     State(_state): State<AppState>,
     Json(req): Json<RunnerCreateRequest>,
 ) -> ApiResult<Json<RunnerListResponse>> {
-    if req.runner.command.trim().is_empty() {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            Json(ApiError::invalid_request("Runner command is required")),
-        ));
+    if let Some(command) = &req.runner.command {
+        if command.trim().is_empty() {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request("Runner command is required")),
+            ));
+        }
     }
 
     let scope = req.scope.unwrap_or_default();
@@ -631,9 +633,11 @@ pub async fn create_runner(
         req.runner.id.clone(),
         RunnerConfig {
             name: req.runner.name,
-            command: Some(req.runner.command),
+            command: req.runner.command,
             args: req.runner.args,
             env: req.runner.env,
+            detection: None,
+            symlink_file: None,
         },
     );
 
@@ -659,11 +663,13 @@ pub async fn update_runner(
     Path(runner_id): Path<String>,
     Json(req): Json<RunnerUpdateRequest>,
 ) -> ApiResult<Json<RunnerListResponse>> {
-    if req.runner.command.trim().is_empty() {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            Json(ApiError::invalid_request("Runner command is required")),
-        ));
+    if let Some(command) = &req.runner.command {
+        if command.trim().is_empty() {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(ApiError::invalid_request("Runner command is required")),
+            ));
+        }
     }
 
     let scope = req.scope.unwrap_or_default();
@@ -679,9 +685,11 @@ pub async fn update_runner(
         runner_id,
         RunnerConfig {
             name: req.runner.name,
-            command: Some(req.runner.command),
+            command: req.runner.command,
             args: req.runner.args,
             env: req.runner.env,
+            detection: None,
+            symlink_file: None,
         },
     );
 

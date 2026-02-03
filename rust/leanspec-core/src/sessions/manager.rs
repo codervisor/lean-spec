@@ -96,6 +96,16 @@ impl SessionManager {
             )));
         }
 
+        let runner = registry
+            .get(&runner_id)
+            .ok_or_else(|| CoreError::ConfigError(format!("Unknown runner: {}", runner_id)))?;
+        if !runner.is_runnable() {
+            return Err(CoreError::ConfigError(format!(
+                "Runner '{}' is not runnable",
+                runner_id
+            )));
+        }
+
         let session_id = Uuid::new_v4().to_string();
         let session = Session::new(session_id, project_path, spec_id, runner_id, mode);
 

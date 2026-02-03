@@ -92,11 +92,14 @@ export function RunnerSettingsTab() {
   const handleSaveRunner = async (payload: {
     id: string;
     name?: string | null;
-    command: string;
+    command?: string | null;
     args?: string[];
     env?: Record<string, string>;
   }) => {
     if (!projectPath) return;
+
+    const trimmedCommand = payload.command?.trim() ?? '';
+    const command = trimmedCommand.length > 0 ? trimmedCommand : undefined;
 
     try {
       const response = editingRunner
@@ -104,7 +107,7 @@ export function RunnerSettingsTab() {
           projectPath,
           runner: {
             name: payload.name ?? undefined,
-            command: payload.command,
+            command,
             args: payload.args,
             env: payload.env,
           },
@@ -112,7 +115,10 @@ export function RunnerSettingsTab() {
         })
         : await api.createRunner({
           projectPath,
-          runner: payload,
+          runner: {
+            ...payload,
+            command,
+          },
           scope: DEFAULT_SCOPE,
         });
 
@@ -241,15 +247,21 @@ export function RunnerSettingsTab() {
                           {t('settings.runners.default')}
                         </Badge>
                       )}
-                      {runner.available ? (
-                        <Badge variant="outline" className="text-xs gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          {t('settings.runners.available')}
-                        </Badge>
+                      {runner.command ? (
+                        runner.available ? (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            {t('settings.runners.available')}
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {t('settings.runners.unavailable')}
+                          </Badge>
+                        )
                       ) : (
-                        <Badge variant="destructive" className="text-xs gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {t('settings.runners.unavailable')}
+                        <Badge variant="secondary" className="text-xs">
+                          {t('settings.runners.ideOnly')}
                         </Badge>
                       )}
                       <Badge variant="outline" className="text-xs capitalize">
@@ -257,7 +269,7 @@ export function RunnerSettingsTab() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {runner.command}
+                      {runner.command ?? t('settings.runners.ideOnlyCommand')}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -287,12 +299,17 @@ export function RunnerSettingsTab() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleValidate(runner)}
-                    disabled={validatingId === runner.id}
+                    disabled={validatingId === runner.id || !runner.command}
                   >
                     {t('actions.validate')}
                   </Button>
                   {defaultRunner !== runner.id && (
-                    <Button variant="outline" size="sm" onClick={() => handleSetDefault(runner)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSetDefault(runner)}
+                      disabled={!runner.command}
+                    >
                       {t('settings.runners.setDefault')}
                     </Button>
                   )}
@@ -324,7 +341,7 @@ interface RunnerDialogProps {
   onSave: (payload: {
     id: string;
     name?: string | null;
-    command: string;
+    command?: string | null;
     args?: string[];
     env?: Record<string, string>;
   }) => void;
@@ -356,10 +373,6 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
       nextErrors.id = t('settings.runners.errors.idExists');
     } else if (!/^[a-z0-9-]+$/.test(formData.id)) {
       nextErrors.id = t('settings.runners.errors.idInvalid');
-    }
-
-    if (!formData.command.trim()) {
-      nextErrors.command = t('settings.runners.errors.commandRequired');
     }
 
     if (formData.env.trim()) {
@@ -400,7 +413,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
     onSave({
       id: formData.id.trim(),
       name: formData.name.trim() || null,
-      command: formData.command.trim(),
+      command: formData.command.trim() || undefined,
       args: args.length ? args : undefined,
       env: Object.keys(env).length ? env : undefined,
     });
@@ -443,9 +456,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="runner-command">
-              {t('settings.runners.fields.command')} <span className="text-destructive">*</span>
-            </Label>
+            <Label htmlFor="runner-command">{t('settings.runners.fields.command')}</Label>
             <Input
               id="runner-command"
               value={formData.command}

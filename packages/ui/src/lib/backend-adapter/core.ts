@@ -119,7 +119,7 @@ export interface BackendAdapter {
     runner: {
       id: string;
       name?: string | null;
-      command: string;
+      command?: string | null;
       args?: string[];
       env?: Record<string, string>;
     };
@@ -131,7 +131,7 @@ export interface BackendAdapter {
       projectPath: string;
       runner: {
         name?: string | null;
-        command: string;
+        command?: string | null;
         args?: string[];
         env?: Record<string, string>;
       };

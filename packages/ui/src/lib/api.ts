@@ -167,7 +167,7 @@ class ProjectAPI {
     runner: {
       id: string;
       name?: string | null;
-      command: string;
+      command?: string | null;
       args?: string[];
       env?: Record<string, string>;
     };
@@ -182,7 +182,7 @@ class ProjectAPI {
       projectPath: string;
       runner: {
         name?: string | null;
-        command: string;
+        command?: string | null;
         args?: string[];
         env?: Record<string, string>;
       };

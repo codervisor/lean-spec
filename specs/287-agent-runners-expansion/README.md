@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-03
 priority: high
 tags:
@@ -7,12 +7,16 @@ tags:
 - runners
 - ai-tools
 - integrations
+created_at: 2026-02-03T05:42:39.812085714Z
+updated_at: 2026-02-03T07:09:25.334780336Z
+transitions:
+- status: in-progress
+  at: 2026-02-03T07:09:25.334780336Z
 parent: 168-leanspec-orchestration-platform
 deps:
 - 288-runner-registry-consolidation
-created_at: 2026-02-03T05:42:39.812085714Z
-updated_at: 2026-02-03T06:19:51.438734320Z
 ---
+
 # Agent Runners Expansion
 
 > **Status**: planned · **Priority**: high · **Created**: 2026-02-03

@@ -65,10 +65,14 @@ fn list_runners(project_path: Option<String>) -> Result<(), Box<dyn Error>> {
     println!();
     println!("{}", "Runners".bold());
     for runner in runners {
-        let status = if runner.validate_command().is_ok() {
-            "available".green()
+        let status = if runner.is_runnable() {
+            if runner.validate_command().is_ok() {
+                "available".green()
+            } else {
+                "missing".red()
+            }
         } else {
-            "missing".red()
+            "ide-only".yellow()
         };
         let default_marker = if Some(runner.id.as_str()) == default_runner {
             " (default)".dimmed().to_string()
@@ -96,7 +100,11 @@ fn show_runner(runner_id: &str, project_path: Option<String>) -> Result<(), Box<
     println!("{}", "Runner".bold());
     println!("  ID: {}", runner.id);
     println!("  Name: {}", runner.display_name());
-    println!("  Command: {}", runner.command);
+    if let Some(command) = &runner.command {
+        println!("  Command: {}", command);
+    } else {
+        println!("  Command: (not runnable)");
+    }
     if !runner.args.is_empty() {
         println!("  Args: {}", runner.args.join(" "));
     }

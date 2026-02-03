@@ -24,6 +24,31 @@
             "command": {
               "type": "string"
             },
+            "detection": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "commands": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "config_dirs": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "env_vars": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "extensions": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            },
+            "symlink_file": {
+              "type": "string"
+            },
             "args": {
               "type": "array",
               "items": {
@@ -36,8 +61,7 @@
                 "type": "string"
               }
             }
-          },
-          "required": ["command"]
+          }
         }
       }
     }

@@ -285,7 +285,7 @@ export class TauriBackendAdapter implements BackendAdapter {
     runner: {
       id: string;
       name?: string | null;
-      command: string;
+      command?: string | null;
       args?: string[];
       env?: Record<string, string>;
     };
@@ -304,7 +304,7 @@ export class TauriBackendAdapter implements BackendAdapter {
       projectPath: string;
       runner: {
         name?: string | null;
-        command: string;
+        command?: string | null;
         args?: string[];
         env?: Record<string, string>;
       };

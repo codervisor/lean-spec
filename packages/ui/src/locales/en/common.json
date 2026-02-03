@@ -363,6 +363,8 @@
       "default": "Default",
       "available": "Available",
       "unavailable": "Not found",
+      "ideOnly": "IDE-only",
+      "ideOnlyCommand": "IDE-only (not runnable from CLI)",
       "setDefault": "Set default",
       "empty": "No runners configured yet.",
       "dialogDescription": "Configure runner command, args, and environment overrides",

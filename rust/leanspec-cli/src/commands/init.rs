@@ -9,9 +9,10 @@ mod mcp_config;
 
 use crate::commands::skill;
 use ai_tools::{
-    create_symlinks, default_ai_selection, detect_ai_tools, symlink_capable_tools, AiTool,
+    create_symlinks, default_symlink_selection, detect_ai_tools, symlink_capable_runners,
     DetectionResult as AiDetection,
 };
+use leanspec_core::sessions::RunnerRegistry;
 use mcp_config::{
     all_tools as all_mcp_tools, configure_mcp, default_mcp_selection, detect_mcp_tools,
 };
@@ -87,7 +88,9 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     }
 
     // Detect AI tools first (needed for skills and symlinks)
-    let ai_detections = detect_ai_tools(None);
+    let registry =
+        RunnerRegistry::load(&root).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+    let ai_detections = detect_ai_tools(&registry, None);
 
     // Determine if skills will be installed (before actual installation)
     let will_install_skills = decide_skill_install(&options)?;
@@ -100,7 +103,7 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     scaffold_agents(&root, &project_name, will_install_skills)?;
 
     // New: AI tool + MCP onboarding
-    handle_ai_symlinks(&root, &ai_detections, &options)?;
+    handle_ai_symlinks(&root, &registry, &ai_detections, &options)?;
     handle_mcp_configs(&root, &options)?;
     handle_skills_install(will_install_skills)?;
 
@@ -282,6 +285,7 @@ fn scaffold_agents(
 
 fn handle_ai_symlinks(
     root: &Path,
+    registry: &RunnerRegistry,
     detections: &[AiDetection],
     options: &InitOptions,
 ) -> Result<(), Box<dyn Error>> {
@@ -289,16 +293,16 @@ fn handle_ai_symlinks(
         return Ok(());
     }
 
-    let defaults = default_ai_selection(detections);
-    let symlink_candidates = symlink_capable_tools();
-    let default_symlink_tools: Vec<AiTool> = defaults
-        .iter()
-        .copied()
-        .filter(|tool| tool.uses_symlink())
-        .collect();
+    let defaults = default_symlink_selection(detections);
+    let symlink_candidates = symlink_capable_runners(registry);
+    let default_ids: std::collections::HashSet<String> = defaults.into_iter().collect();
 
     let selected_symlinks = if options.yes {
-        default_symlink_tools
+        symlink_candidates
+            .iter()
+            .cloned()
+            .filter(|runner| default_ids.contains(&runner.id))
+            .collect()
     } else {
         print_ai_detection(detections);
 
@@ -308,15 +312,15 @@ fn handle_ai_symlinks(
         } else {
             let labels: Vec<String> = symlink_candidates
                 .iter()
-                .map(|tool| {
-                    let file = tool.symlink_file().unwrap_or("AGENTS.md");
-                    format!("{} ({})", file, tool.description())
+                .map(|runner| {
+                    let file = runner.symlink_file.as_deref().unwrap_or("AGENTS.md");
+                    format!("{} ({})", file, runner.display_name())
                 })
                 .collect();
 
             let defaults_mask: Vec<bool> = symlink_candidates
                 .iter()
-                .map(|tool| default_symlink_tools.contains(tool))
+                .map(|runner| default_ids.contains(&runner.id))
                 .collect();
 
             let selected_indexes = MultiSelect::new()
@@ -327,7 +331,7 @@ fn handle_ai_symlinks(
 
             selected_indexes
                 .into_iter()
-                .map(|i| symlink_candidates[i])
+                .map(|i| symlink_candidates[i].clone())
                 .collect()
         }
     };
@@ -502,7 +506,11 @@ fn print_ai_detection(detections: &[AiDetection]) {
 
     println!("\n{}", "Detected AI tools:".cyan());
     for detection in detected_tools {
-        println!("  • {}", detection.tool.description());
+        if let Some(file) = &detection.runner.symlink_file {
+            println!("  • {} ({})", detection.runner.display_name(), file);
+        } else {
+            println!("  • {}", detection.runner.display_name());
+        }
         for reason in &detection.reasons {
             println!("    └─ {}", reason);
         }

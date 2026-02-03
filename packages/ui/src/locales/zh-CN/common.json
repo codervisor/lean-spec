@@ -358,6 +358,8 @@
       "default": "默认",
       "available": "可用",
       "unavailable": "未找到",
+      "ideOnly": "仅 IDE",
+      "ideOnlyCommand": "仅 IDE（无法从 CLI 运行）",
       "setDefault": "设为默认",
       "empty": "暂无配置的运行器。",
       "dialogDescription": "配置运行器命令、参数与环境变量",
