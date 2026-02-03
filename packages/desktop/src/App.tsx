@@ -19,16 +19,13 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import {
-  ThemeProvider,
   KeyboardShortcutsProvider,
-  ProjectProvider,
-  MachineProvider,
-  SpecsProvider,
   ChatProvider,
-  SessionsProvider,
-  useProject,
 } from '@leanspec/ui/src/contexts';
+import { queryClient } from '@leanspec/ui/src/lib/query-client';
+import { useProjectMutations } from '@leanspec/ui/src/hooks/useProjectQuery';
 import { Layout } from '@leanspec/ui/src/components/Layout';
 import { Navigation } from '@leanspec/ui/src/components/Navigation';
 import { ProjectsPage } from '@leanspec/ui/src/pages/ProjectsPage';
@@ -60,7 +57,7 @@ function DesktopRootLayout() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
 
-  const { switchProject: switchUiProject } = useProject();
+  const { switchProject: switchUiProject } = useProjectMutations();
 
   const {
     projects,
@@ -249,21 +246,13 @@ const router = createHashRouter([
 
 const App = () => {
   return (
-    <ThemeProvider>
-      <MachineProvider>
-        <ProjectProvider>
-          <SpecsProvider>
-            <KeyboardShortcutsProvider>
-              <ChatProvider>
-                <SessionsProvider>
-                  <RouterProvider router={router} />
-                </SessionsProvider>
-              </ChatProvider>
-            </KeyboardShortcutsProvider>
-          </SpecsProvider>
-        </ProjectProvider>
-      </MachineProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <KeyboardShortcutsProvider>
+        <ChatProvider>
+          <RouterProvider router={router} />
+        </ChatProvider>
+      </KeyboardShortcutsProvider>
+    </QueryClientProvider>
   );
 };
 

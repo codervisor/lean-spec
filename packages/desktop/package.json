@@ -18,8 +18,9 @@
     "bundle:windows": "tauri build --bundles nsis"
   },
   "dependencies": {
-    "@leanspec/ui-components": "workspace:*",
     "@leanspec/ui": "workspace:*",
+    "@leanspec/ui-components": "workspace:*",
+    "@tanstack/react-query": "^5.90.20",
     "@tauri-apps/api": "^2.9.1",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-notification": "^2.3.3",
