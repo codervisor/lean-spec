@@ -376,28 +376,19 @@ fn now_ms() -> i64 {
 fn resolve_db_path() -> CoreResult<PathBuf> {
     if let Some(xdg) = std::env::var_os("XDG_DATA_HOME") {
         let mut path = PathBuf::from(xdg);
-        path.push("leanspec");
+        path.push("lean-spec");
         path.push("chat.db");
         return Ok(path);
     }
 
     if let Some(dir) = dirs::data_dir() {
         let mut path = dir;
-        path.push("leanspec");
+        path.push("lean-spec");
         path.push("chat.db");
         return Ok(path);
     }
 
-    if let Some(home) = dirs::home_dir() {
-        let mut path = home;
-        path.push(".leanspec");
-        path.push("chat.db");
-        return Ok(path);
-    }
-
-    Err(CoreError::Other(
-        "Unable to resolve chat database path".to_string(),
-    ))
+    Ok(super::config::config_dir().join("chat.db"))
 }
 
 fn ensure_column(conn: &Connection, table: &str, column: &str, definition: &str) -> CoreResult<()> {

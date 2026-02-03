@@ -1,36 +1,40 @@
 ---
 status: planned
-created: '2026-02-03'
-tags: [cli, runners, ai-tools, integrations]
+created: 2026-02-03
 priority: high
-created_at: '2026-02-03T05:42:39.812085714+00:00'
+tags:
+- cli
+- runners
+- ai-tools
+- integrations
+parent: 168-leanspec-orchestration-platform
+deps:
+- 288-runner-registry-consolidation
+created_at: 2026-02-03T05:42:39.812085714Z
+updated_at: 2026-02-03T06:19:51.438734320Z
 ---
-
 # Agent Runners Expansion
 
 > **Status**: planned · **Priority**: high · **Created**: 2026-02-03
 
 ## Overview
 
-Expand the built-in agent runner registry and AI tool detection to support the growing ecosystem of AI coding assistants. The current implementation supports 6 runners (claude, copilot, codex, opencode, aider, cline) in the runner registry and 8 AI tools for detection. This spec adds support for new mainstream AI CLI tools.
+Expand the built-in agent runner registry to support the growing ecosystem of AI coding assistants. This spec adds 9 new runners to the unified registry.
 
-### Current State
-
-**Runners (`runner.rs`)**: claude, copilot, codex, opencode, aider, cline
-
-**AI Tools (`ai_tools.rs`)**: Copilot, Claude, Gemini, Cursor, Windsurf, Aider, Codex, Droid
+> **Depends on**: [288-runner-registry-consolidation](../288-runner-registry-consolidation/README.md) - Consolidates runner.rs and ai_tools.rs into a single registry with detection config.
 
 ### Tools to Add
 
 | Tool | Command | Install | Agent Instructions Support | Notes |
 |------|---------|---------|---------------------------|-------|
-| **Kiro CLI** | `kiro-cli` | `curl -fsSL https://cli.kiro.dev/install \| bash` | AGENTS.md, steering files | AWS product, successor to Amazon Q CLI. Includes MCP, custom agents, smart hooks |
-| **Amazon Q CLI** (deprecated) | `q` | brew/DMG/AppImage | AGENTS.md | Transitioned to Kiro CLI. Still usable but maintenance only |
+| **Kiro CLI** | `kiro-cli` | `curl -fsSL https://cli.kiro.dev/install \| bash` | AGENTS.md, steering files | AWS product. Includes MCP, custom agents, smart hooks |
+| **Kimi CLI** | `kimi` | `pip install kimi-cli` | AGENTS.md | MoonshotAI CLI, uses Kimi K2 model |
 | **Qodo CLI** | `qodo` | `npm install -g @qodo/command` | AGENTS.md | AI code review agents, CI/webhook modes, MCP server mode |
 | **Amp** | `amp` | `curl -fsSL https://ampcode.com/install.sh \| bash` | AGENTS.md | Frontier coding agent, terminal TUI + VS Code/Cursor/Windsurf/JetBrains/Neovim |
+| **Trae Agent** | `trae` | `pip install trae-agent` | AGENTS.md | ByteDance's AI coding agent CLI |
+| **Qwen Code** | `qwen-code` | `pip install qwen-code` | AGENTS.md | Alibaba's Qwen LLM coding assistant |
+| **Cursor CLI** | `agent` | `curl https://cursor.com/install -fsS \| bash` | AGENTS.md | Cursor IDE's CLI agent, interactive/plan/ask modes, Cloud Agent handoff |
 | **Gemini CLI** | `gemini` | `npm install -g @google/gemini-cli` or `brew install gemini-cli` | GEMINI.md | Already in AI tools detection, needs runner registry entry |
-| **Trae** | IDE only | Download from trae.ai | AGENTS.md | ByteDance's AI IDE. Has SOLO mode for autonomous coding. No standalone CLI |
-| **Qwen Agent** | Python API | `pip install qwen-agent` | AGENTS.md | Framework-based, not a standalone CLI. Skip for runners |
 
 ## Design
 
@@ -51,15 +55,17 @@ runners.insert(
     },
 );
 
-// Amazon Q CLI (deprecated, maps to Kiro)
+// Kimi CLI (MoonshotAI)
 runners.insert(
-    "amazon-q".to_string(),
+    "kimi".to_string(),
     RunnerDefinition {
-        id: "amazon-q".to_string(),
-        name: Some("Amazon Q CLI".to_string()),
-        command: "q".to_string(),
+        id: "kimi".to_string(),
+        name: Some("Kimi CLI".to_string()),
+        command: "kimi".to_string(),
         args: Vec::new(),
-        env: HashMap::new(),
+        env: HashMap::from([
+            ("MOONSHOT_API_KEY".to_string(), "${MOONSHOT_API_KEY}".to_string()),
+        ]),
     },
 );
 
@@ -101,6 +107,44 @@ runners.insert(
     },
 );
 
+// Trae Agent (ByteDance)
+runners.insert(
+    "trae".to_string(),
+    RunnerDefinition {
+        id: "trae".to_string(),
+        name: Some("Trae Agent".to_string()),
+        command: "trae".to_string(),
+        args: Vec::new(),
+        env: HashMap::new(),
+    },
+);
+
+// Qwen Code (Alibaba)
+runners.insert(
+    "qwen-code".to_string(),
+    RunnerDefinition {
+        id: "qwen-code".to_string(),
+        name: Some("Qwen Code".to_string()),
+        command: "qwen-code".to_string(),
+        args: Vec::new(),
+        env: HashMap::from([
+            ("DASHSCOPE_API_KEY".to_string(), "${DASHSCOPE_API_KEY}".to_string()),
+        ]),
+    },
+);
+
+// Cursor CLI
+runners.insert(
+    "cursor".to_string(),
+    RunnerDefinition {
+        id: "cursor".to_string(),
+        name: Some("Cursor CLI".to_string()),
+        command: "agent".to_string(),
+        args: Vec::new(),
+        env: HashMap::new(),
+    },
+);
+
 // Droid (already in ai_tools, add to runners)
 runners.insert(
     "droid".to_string(),
@@ -114,38 +158,23 @@ runners.insert(
 );
 ```
 
-### 2. AI Tools Detection Updates (`ai_tools.rs`)
+### 2. Detection Config for New Runners
 
-Add new tools to `AiTool` enum and detection config:
+Each new runner includes detection config (uses consolidated `RunnerDefinition` from spec 288):
 
-```rust
-pub enum AiTool {
-    Copilot,
-    Claude,
-    Gemini,
-    Cursor,
-    Windsurf,
-    Aider,
-    Codex,
-    Droid,
-    // New tools
-    Kiro,
-    AmazonQ,
-    Qodo,
-    Amp,
-    OpenCode,  // Already in runners, add detection
-}
-```
-
-Detection configurations for new tools:
-
-| Tool | Commands | Config Dirs | Env Vars |
-|------|----------|-------------|----------|
-| Kiro | `kiro-cli` | `.kiro` | `AWS_ACCESS_KEY_ID` |
-| AmazonQ | `q` | `.amazon-q` | `AWS_ACCESS_KEY_ID` |
-| Qodo | `qodo` | `.qodo` | - |
-| Amp | `amp` | `.amp` | - |
-| OpenCode | `opencode` | - | - |
+| Runner | Config Dirs | Env Vars | Symlink |
+|--------|-------------|----------|---------|
+| claude | `.claude` | `ANTHROPIC_API_KEY` | CLAUDE.md |
+| gemini | `.gemini` | `GEMINI_API_KEY` | GEMINI.md |
+| kiro | `.kiro` | `AWS_ACCESS_KEY_ID` | - |
+| kimi | `.kimi` | `MOONSHOT_API_KEY` | - |
+| qodo | `.qodo` | - | - |
+| trae | `.trae` | - | - |
+| qwen-code | `.qwen-code` | `DASHSCOPE_API_KEY` | - |
+| amp | `.amp` | - | - |
+| opencode | - | - | - |
+| cursor | `.cursor` | - | - |
+| windsurf | `.windsurf` | - | - |
 
 ### 3. LeanSpec Support Matrix (Documentation)
 
@@ -158,31 +187,37 @@ Update documentation with support matrix:
 | GitHub Copilot | ✅ | ✅ (slash commands) | AGENTS.md |
 | Cursor | ✅ | ✅ (slash commands) | AGENTS.md |
 | OpenCode | ✅ | ✅ (slash commands) | AGENTS.md |
-| Qwen Code | ✅ | ⚠️ (limited) | AGENTS.md |
+| Qwen Code | ✅ | ✅ (AGENTS.md) | AGENTS.md |
 | Gemini CLI | ✅ | ✅ (AGENTS.md) | GEMINI.md → AGENTS.md |
 | Amp | ✅ | ✅ (AGENTS.md) | AGENTS.md |
 | Kiro CLI | ✅ | ✅ (AGENTS.md) | AGENTS.md, steering files |
+| Kimi CLI | ✅ | ✅ (AGENTS.md) | AGENTS.md |
 | Droid CLI | ✅ | ✅ (AGENTS.md) | AGENTS.md |
 | Qodo CLI | ✅ | ⚠️ (via MCP) | AGENTS.md |
-| Trae | ✅ | ✅ (AGENTS.md) | AGENTS.md (IDE only) |
+| Trae Agent | ✅ | ✅ (AGENTS.md) | AGENTS.md |
 
 ## Plan
 
 - [ ] **Phase 1: Runner Registry** - Add new runners to `runner.rs`
   - [ ] Add Kiro CLI runner
-  - [ ] Add Amazon Q CLI runner (deprecated notice)
+  - [ ] Add Kimi CLI runner
   - [ ] Add Gemini CLI runner
   - [ ] Add Amp runner
   - [ ] Add Qodo CLI runner
+  - [ ] Add Trae Agent runner
+  - [ ] Add Qwen Code runner
+  - [ ] Add Cursor CLI runner
   - [ ] Add Droid runner (already in ai_tools, add to runners)
   
-- [ ] **Phase 2: AI Tool Detection** - Update `ai_tools.rs`
-  - [ ] Add Kiro detection config
-  - [ ] Add AmazonQ detection config
-  - [ ] Add Qodo detection config
-  - [ ] Add Amp detection config
-  - [ ] Add OpenCode detection config
-  - [ ] Update `all_tools()` function
+- [ ] **Phase 2: Detection Config** - Add detection config to new runners
+  - [ ] Add detection config to Kiro runner
+  - [ ] Add detection config to Kimi runner
+  - [ ] Add detection config to Qodo runner
+  - [ ] Add detection config to Trae runner
+  - [ ] Add detection config to Qwen Code runner
+  - [ ] Add detection config to Cursor CLI runner
+  - [ ] Add detection config to Amp runner
+  - [ ] Add detection config to OpenCode runner
   
 - [ ] **Phase 3: Symlink Support** - Review symlink requirements
   - [ ] Kiro: uses AGENTS.md or steering files (`.kiro/steering.md`)
@@ -200,10 +235,9 @@ Update documentation with support matrix:
 ## Test
 
 - [ ] All new runners compile and run with `cargo test`
-- [ ] `RunnerRegistry::builtins()` includes all new runners
-- [ ] `all_tools()` returns correct count (13 tools)
-- [ ] Detection works when command is available
-- [ ] Environment variable interpolation works for Gemini API key
+- [ ] `RunnerRegistry::builtins()` includes all new runners (15 total after expansion)
+- [ ] Detection config present for all new runners
+- [ ] Environment variable interpolation works for API keys
 - [ ] `lean-spec init` shows new tools in selection
 
 ## Notes
@@ -211,16 +245,17 @@ Update documentation with support matrix:
 ### Research Findings
 
 **Kiro CLI** (AWS):
-- Successor to Amazon Q CLI (open source → closed source transition)
 - Install: `curl -fsSL https://cli.kiro.dev/install | bash`
 - Command: `kiro-cli`
 - Features: Custom agents, MCP support, smart hooks, steering files
 - Agent instructions: AGENTS.md or `.kiro/steering.md`
 
-**Amazon Q CLI** (deprecated):
-- Command: `q` (CLI binary name)
-- Now in maintenance mode, users encouraged to migrate to Kiro CLI
-- Still works but no new features
+**Kimi CLI** (MoonshotAI):
+- GitHub: https://github.com/MoonshotAI/kimi-cli
+- Install: `pip install kimi-cli`
+- Command: `kimi`
+- Features: Uses Kimi K2 model, terminal-based coding assistant
+- Env: `MOONSHOT_API_KEY`
 
 **Qodo CLI** (formerly Codium):
 - Install: `npm install -g @qodo/command`
@@ -240,19 +275,23 @@ Update documentation with support matrix:
 - Features: 1M token context, Google Search grounding, GEMINI.md support
 - Already detected in ai_tools.rs, needs runner registry entry
 
-**Trae** (ByteDance):
-- No standalone CLI, IDE-only
-- Download from trae.ai
-- Features: SOLO mode (autonomous coding), CUE (completion), MCP support
-- Skip for runners, but supports AGENTS.md
+**Trae Agent** (ByteDance):
+- GitHub: https://github.com/bytedance/trae-agent
+- Install: `pip install trae-agent`
+- Command: `trae`
+- Features: ByteDance's AI coding agent, SOLO mode for autonomous coding
+- Agent instructions: AGENTS.md
 
-**Qwen Agent** (Alibaba):
-- Python framework, not CLI: `pip install qwen-agent`
-- Use programmatically, not as a runner
-- Skip for runners
+**Qwen Code** (Alibaba):
+- GitHub: https://github.com/QwenLM/qwen-code
+- Install: `pip install qwen-code`
+- Command: `qwen-code`
+- Features: Alibaba's Qwen LLM-based coding assistant
+- Env: `DASHSCOPE_API_KEY`
 
-### Excluded Tools
-
-- **Trae**: IDE-only, no CLI to run
-- **Qwen Agent**: Python framework, not a CLI tool
-- **Kimi/Moonshot**: Appears to be API/chat only, no dedicated CLI found
+**Cursor CLI** (Anysphere):
+- Website: https://cursor.com/docs/cli/overview
+- Install: `curl https://cursor.com/install -fsS | bash`
+- Command: `agent`
+- Features: Interactive mode, Plan mode, Ask mode, non-interactive/print mode, Cloud Agent handoff, session resume
+- Already in ai_tools.rs detection, needs runner registry entry

@@ -171,13 +171,7 @@ impl ChatConfigStore {
 }
 
 fn resolve_chat_config_path() -> CoreResult<PathBuf> {
-    if let Some(home) = dirs::home_dir() {
-        return Ok(home.join(".leanspec").join("chat-config.json"));
-    }
-
-    Err(CoreError::ConfigError(
-        "Unable to resolve chat config path".to_string(),
-    ))
+    Ok(super::config::config_dir().join("chat-config.json"))
 }
 
 fn load_chat_config(path: &PathBuf) -> CoreResult<ChatConfig> {
