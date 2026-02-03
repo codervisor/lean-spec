@@ -60,8 +60,7 @@ fn list_runners(project_path: Option<String>) -> Result<(), Box<dyn Error>> {
     let registry = load_registry(project_path)?;
     let default_runner = registry.default();
 
-    let mut runners = registry.list();
-    runners.sort_by(|a, b| a.id.cmp(&b.id));
+    let runners = registry.list();
 
     println!();
     println!("{}", "Runners".bold());

@@ -189,11 +189,15 @@ impl RunnerRegistry {
     }
 
     pub fn list(&self) -> Vec<&RunnerDefinition> {
-        self.runners.values().collect()
+        let mut runners: Vec<_> = self.runners.values().collect();
+        runners.sort_by(|a, b| a.id.cmp(&b.id));
+        runners
     }
 
     pub fn list_ids(&self) -> Vec<&str> {
-        self.runners.keys().map(|id| id.as_str()).collect()
+        let mut ids: Vec<_> = self.runners.keys().map(|id| id.as_str()).collect();
+        ids.sort();
+        ids
     }
 
     pub fn default(&self) -> Option<&str> {
@@ -201,10 +205,13 @@ impl RunnerRegistry {
     }
 
     pub fn list_available(&self) -> Vec<&RunnerDefinition> {
-        self.runners
+        let mut runners: Vec<_> = self
+            .runners
             .values()
             .filter(|runner| runner.validate_command().is_ok())
-            .collect()
+            .collect();
+        runners.sort_by(|a, b| a.id.cmp(&b.id));
+        runners
     }
 
     pub fn validate(&self, id: &str) -> CoreResult<()> {

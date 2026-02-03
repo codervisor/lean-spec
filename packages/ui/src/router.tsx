@@ -1,8 +1,11 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { MachinesPage } from './pages/MachinesPage';
-import { SettingsPage } from './pages/SettingsPage';
+import { SettingsLayout } from './layouts/SettingsLayout';
+import { AISettingsPage } from './pages/settings/AISettingsPage';
+import { RunnersSettingsPage } from './pages/settings/RunnersSettingsPage';
+import { AppearanceSettingsPage } from './pages/settings/AppearanceSettingsPage';
 import { RootRedirect } from './components/RootRedirect';
 import { createProjectRoutes } from './router/projectRoutes';
 
@@ -35,7 +38,17 @@ export const router = createBrowserRouter([
   {
     path: '/settings',
     element: <Layout />,
-    children: [{ index: true, element: <SettingsPage /> }],
+    children: [
+      {
+        element: <SettingsLayout />,
+        children: [
+          { index: true, element: <Navigate to="/settings/ai" replace /> },
+          { path: 'ai', element: <AISettingsPage /> },
+          { path: 'runners', element: <RunnersSettingsPage /> },
+          { path: 'appearance', element: <AppearanceSettingsPage /> },
+        ],
+      },
+    ],
   },
   {
     path: '/projects/:projectId',
