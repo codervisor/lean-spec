@@ -11,13 +11,12 @@ import { ListView } from '../components/specs/ListView';
 import { SpecsFilters } from '../components/specs/SpecsFilters';
 import { TokenDetailsDialog } from '../components/specs/TokenDetailsDialog';
 import { ValidationDialog } from '../components/specs/ValidationDialog';
-import { cn } from '@leanspec/ui-components';
 import { SpecListSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { specKeys, useSpecsWithHierarchy } from '../hooks/useSpecsQuery';
-import { useLayoutStore } from '../stores/layout';
 import { useMachineStore } from '../stores/machine';
 import { useSpecActionDialogs } from '../hooks/useSpecActionDialogs';
 import { useTranslation } from 'react-i18next';
@@ -84,7 +83,6 @@ export function SpecsPage() {
   const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayoutStore();
   const { machineModeEnabled, isMachineAvailable } = useMachineStore();
   const specsQuery = useSpecsWithHierarchy(resolvedProjectId ?? null, { hierarchy: true });
   const specs = useMemo(() => specsQuery.data?.specs ?? [], [specsQuery.data]);
@@ -98,7 +96,7 @@ export function SpecsPage() {
           return updater(old as Spec[]);
         }
         if (typeof old === 'object' && old && 'specs' in old) {
-          const data = old as { specs: Spec[]; [key: string]: unknown };
+          const data = old as { specs: Spec[];[key: string]: unknown };
           return { ...data, specs: updater(data.specs ?? []) };
         }
         return old;
@@ -297,10 +295,10 @@ export function SpecsPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
-    
+
     // Check if we need to migrate showArchived from combined object to standalone key
     if (localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) === null && savedPrefs.showArchived) {
-        storage.set(STORAGE_KEYS.SHOW_ARCHIVED, true);
+      storage.set(STORAGE_KEYS.SHOW_ARCHIVED, true);
     }
   }, [savedPrefs]);
 
@@ -547,15 +545,15 @@ export function SpecsPage() {
 
   if (isInitialLoading) {
     return (
-      <div className="p-4 sm:p-6">
+      <PageContainer>
         <SpecListSkeleton />
-      </div>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 sm:p-6">
+      <PageContainer>
         <Card>
           <CardContent className="py-10 text-center space-y-3">
             <div className="flex justify-center">
@@ -568,13 +566,16 @@ export function SpecsPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className={cn("h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
-      <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
+    <PageContainer
+      className="h-[calc(100vh-3.5rem)]"
+      contentClassName="flex h-full flex-col gap-4"
+    >
+      <div className="flex flex-col gap-4 sticky top-0 bg-background mt-0 py-2 z-10">
         <PageHeader
           title={t('specsPage.title')}
           description={t('specsPage.description')}
@@ -690,6 +691,6 @@ export function SpecsPage() {
           loading={validationDialogLoading}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

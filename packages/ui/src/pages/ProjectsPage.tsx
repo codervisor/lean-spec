@@ -24,11 +24,10 @@ import { ProjectAvatar, getColorForName } from '../components/shared/ProjectAvat
 import { ColorPicker } from '../components/shared/ColorPicker';
 import { PageHeader } from '../components/shared/PageHeader';
 import { ProjectsSkeleton } from '../components/shared/Skeletons';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useProjects, useProjectMutations } from '../hooks/useProjectQuery';
-import { useLayoutStore } from '../stores/layout';
 import { useMachineStore } from '../stores/machine';
 import { api } from '../lib/api';
-import { cn } from '@leanspec/ui-components';
 
 dayjs.extend(relativeTime);
 
@@ -50,7 +49,6 @@ export function ProjectsPage() {
   const { projects, isLoading: loading } = useProjects();
   const { switchProject, toggleFavorite, removeProject, updateProject } = useProjectMutations();
   const { machineModeEnabled, currentMachine } = useMachineStore();
-  const { isWideMode } = useLayoutStore();
 
   if (loading) {
     return <ProjectsSkeleton />;
@@ -229,7 +227,7 @@ export function ProjectsPage() {
     <div className="min-h-screen bg-background">
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className={cn("container mx-auto py-6 space-y-6 px-4", isWideMode ? "max-w-full" : "max-w-7xl")}>
+        <PageContainer contentClassName="space-y-6">
           <PageHeader
             title={t('projectsPage.title')}
             description={machineModeEnabled
@@ -254,10 +252,10 @@ export function ProjectsPage() {
               />
             </div>
           </div>
-        </div>
+        </PageContainer>
       </div>
 
-      <div className={cn("container mx-auto py-8 px-4", isWideMode ? "max-w-full" : "max-w-7xl")}>
+      <PageContainer className="py-8">
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProjects.map((project) => {
             const stats = statsCache[project.id];
@@ -439,7 +437,7 @@ export function ProjectsPage() {
         </div>
 
         <CreateProjectDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
-      </div>
+      </PageContainer>
     </div>
   );
 }

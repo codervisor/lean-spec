@@ -12,7 +12,7 @@ import { cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { ContextFileDetail } from './ContextFileDetail';
 import { PageHeader } from '../shared/PageHeader';
-import { useLayoutStore } from '../../stores/layout';
+import { PageContainer } from '../shared/PageContainer';
 
 interface ContextClientProps {
   context: ProjectContext;
@@ -249,7 +249,6 @@ export function ContextClient({ context }: ContextClientProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedFile, setSelectedFile] = React.useState<ContextFile | null>(null);
   const { t } = useTranslation('common');
-  const { isWideMode } = useLayoutStore();
 
   // Collect all content for "Copy All" feature
   const handleCopyAll = async () => {
@@ -325,7 +324,7 @@ export function ContextClient({ context }: ContextClientProps) {
   }
 
   return (
-    <div className={cn("space-y-6 p-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
+    <PageContainer contentClassName="space-y-6">
       <PageHeader
         title={t('contextPage.title')}
         description={t('contextPage.description')}
@@ -467,6 +466,6 @@ export function ContextClient({ context }: ContextClientProps) {
           </CardContent>
         </Card>
       )}
-    </div>
+    </PageContainer>
   );
 }

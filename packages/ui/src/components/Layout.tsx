@@ -65,7 +65,7 @@ function LayoutContent({
         <div className="flex-1 min-w-0 overflow-x-auto">
           <main
             className={cn(
-              "min-w-4xl w-full min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out"
+              "w-full min-h-[calc(100vh-3.5rem)] lg:min-w-4xl transition-all duration-300 ease-in-out"
             )}
           >
             <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>

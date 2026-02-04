@@ -4,12 +4,11 @@ import { Button, Card, CardContent, CardHeader, cn, Input } from '@leanspec/ui-c
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/shared/PageHeader';
 import { MachinesSkeleton } from '../components/shared/Skeletons';
-import { useLayoutStore } from '../stores/layout';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useMachineStore } from '../stores/machine';
 
 export function MachinesPage() {
   const { t } = useTranslation('common');
-  const { isWideMode } = useLayoutStore();
   const {
     machines,
     loading,
@@ -52,15 +51,15 @@ export function MachinesPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className={cn('container mx-auto py-6 space-y-6 px-4', isWideMode ? 'max-w-full' : 'max-w-7xl')}>
+        <PageContainer contentClassName="space-y-6">
           <PageHeader
             title={t('machines.title')}
             description={t('machines.description')}
           />
-        </div>
+        </PageContainer>
       </div>
 
-      <div className={cn('container mx-auto py-8 px-4', isWideMode ? 'max-w-full' : 'max-w-7xl')}>
+      <PageContainer className="py-8">
         {loading && (
           <div className="text-sm text-muted-foreground">{t('actions.loading')}</div>
         )}
@@ -144,7 +143,7 @@ export function MachinesPage() {
             </Card>
           ))}
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';
 import { DashboardClient } from '../components/dashboard/DashboardClient';
 import type { DashboardSpec } from '../components/dashboard/SpecListItem';
 import { DashboardSkeleton } from '../components/shared/Skeletons';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useTranslation } from 'react-i18next';
 
 export function DashboardPage() {
@@ -39,34 +40,38 @@ export function DashboardPage() {
 
   if (!currentProject) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="text-lg font-semibold">{t('dashboard.state.noProjectTitle', { defaultValue: 'No project selected' })}</div>
-          <p className="text-sm text-muted-foreground">
-            {t('dashboard.state.noProjectDescription', { defaultValue: 'Select or create a project to view the dashboard.' })}
-          </p>
-          <Link to="/projects" className="inline-flex">
-            <Button variant="secondary" size="sm">{t('projectsPage.title', { defaultValue: 'Projects' })}</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="text-lg font-semibold">{t('dashboard.state.noProjectTitle', { defaultValue: 'No project selected' })}</div>
+            <p className="text-sm text-muted-foreground">
+              {t('dashboard.state.noProjectDescription', { defaultValue: 'Select or create a project to view the dashboard.' })}
+            </p>
+            <Link to="/projects" className="inline-flex">
+              <Button variant="secondary" size="sm">{t('projectsPage.title', { defaultValue: 'Projects' })}</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 
   if (resolvedError) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-destructive" />
-          </div>
-          <div className="text-lg font-semibold">{t('dashboard.state.errorTitle')}</div>
-          <p className="text-sm text-muted-foreground">{resolvedError || t('dashboard.state.errorDescription')}</p>
-          <Button variant="secondary" size="sm" onClick={loadData} className="mt-2">
-            {t('actions.retry')}
-          </Button>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="flex justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <div className="text-lg font-semibold">{t('dashboard.state.errorTitle')}</div>
+            <p className="text-sm text-muted-foreground">{resolvedError || t('dashboard.state.errorDescription')}</p>
+            <Button variant="secondary" size="sm" onClick={loadData} className="mt-2">
+              {t('actions.retry')}
+            </Button>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 

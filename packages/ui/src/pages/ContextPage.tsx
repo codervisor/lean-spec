@@ -13,6 +13,7 @@ import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { ProjectContext } from '../types/api';
+import { PageContainer } from '../components/shared/PageContainer';
 
 export function ContextPage() {
   const { currentProject, loading: projectLoading, error: projectError } = useCurrentProject();
@@ -59,50 +60,56 @@ export function ContextPage() {
   // Handle actual API/project errors (only show project errors if they're real errors, not "no projects" state)
   if (error && currentProject) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-destructive" />
-          </div>
-          <div className="text-lg font-semibold">{t('contextPage.errors.loadFailed', { ns: 'common' })}</div>
-          <p className="text-sm text-muted-foreground">
-            {projectErrorMessage || error || t('errors.loadingError', { ns: 'errors' })}
-          </p>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="flex justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <div className="text-lg font-semibold">{t('contextPage.errors.loadFailed', { ns: 'common' })}</div>
+            <p className="text-sm text-muted-foreground">
+              {projectErrorMessage || error || t('errors.loadingError', { ns: 'errors' })}
+            </p>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 
   // No project selected - guide user to create/select one
   if (!currentProject) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div className="text-lg font-semibold">{t('contextPage.errors.noProject', { ns: 'common' })}</div>
-          <p className="text-sm text-muted-foreground">
-            {t('contextPage.errors.noProjectDescription', { ns: 'common' })}
-          </p>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="flex justify-center">
+              <AlertCircle className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="text-lg font-semibold">{t('contextPage.errors.noProject', { ns: 'common' })}</div>
+            <p className="text-sm text-muted-foreground">
+              {t('contextPage.errors.noProjectDescription', { ns: 'common' })}
+            </p>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 
   if (!context) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div className="text-lg font-semibold">{t('contextPage.emptyState.title')}</div>
-          <p className="text-sm text-muted-foreground">
-            {t('contextPage.emptyState.description')}
-          </p>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="flex justify-center">
+              <AlertCircle className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="text-lg font-semibold">{t('contextPage.emptyState.title')}</div>
+            <p className="text-sm text-muted-foreground">
+              {t('contextPage.emptyState.description')}
+            </p>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 

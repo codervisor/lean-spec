@@ -10,6 +10,7 @@ import { TableOfContents, TableOfContentsSidebar } from '../spec-detail/TableOfC
 import { MermaidDiagram } from '../MermaidDiagram';
 import type { ContextFileContent } from '../../types/api';
 import { useTranslation } from 'react-i18next';
+import { PageContainer } from '../shared/PageContainer';
 
 interface ContextFileDetailProps {
   file: ContextFileContent;
@@ -56,7 +57,7 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
   };
 
   return (
-    <div className="space-y-6 px-6 py-3">
+    <PageContainer contentClassName="space-y-6">
       <header className="flex flex-col gap-3 sticky top-14 bg-background py-2 z-10">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -174,6 +175,6 @@ export function ContextFileDetail({ file, projectRoot, onBack }: ContextFileDeta
           <TableOfContents content={headingContent} />
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

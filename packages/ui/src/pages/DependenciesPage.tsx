@@ -29,7 +29,6 @@ import { cn } from '@leanspec/ui-components';
 import { api } from '../lib/api';
 import type { DependencyGraph } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { useLayoutStore } from '../stores/layout';
 import { DependenciesSkeleton } from '../components/shared/Skeletons';
 
 import { nodeTypes } from '../components/dependencies/SpecNode';
@@ -38,6 +37,7 @@ import { getConnectionDepths, layoutGraph } from '../components/dependencies/uti
 import { DEPENDS_ON_COLOR, toneBgColors } from '../components/dependencies/constants';
 import type { SpecNodeData, GraphTone, FocusedNodeDetails, ConnectionStats } from '../components/dependencies/types';
 import { PageHeader } from '../components/shared/PageHeader';
+import { PageContainer } from '../components/shared/PageContainer';
 
 export function DependenciesPage() {
   const { specName, projectId } = useParams<{ specName?: string; projectId?: string }>();
@@ -45,7 +45,6 @@ export function DependenciesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { currentProject, loading: projectLoading } = useCurrentProject();
-  const { isWideMode } = useLayoutStore();
   const projectReady = !projectId || currentProject?.id === projectId;
 
   const specParam = searchParams.get('spec');
@@ -590,30 +589,33 @@ export function DependenciesPage() {
 
   if (error || !data) {
     return (
-      <div className="container mx-auto p-6">
+      <PageContainer>
         <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
           <div className="text-center">
             <p className="text-lg font-semibold text-destructive mb-2">{t('dependenciesPage.state.errorTitle')}</p>
             <p className="text-sm text-muted-foreground">{error || t('dependenciesPage.state.errorDescription')}</p>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (data.nodes.length === 0) {
     return (
-      <div className={cn("container mx-auto p-6", isWideMode ? "max-w-full" : "max-w-7xl")}>
+      <PageContainer>
         <div className="rounded-lg border border-border bg-muted/30 p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">{t('dependenciesPage.empty.noDependencies')}</h2>
           <p className="text-muted-foreground">{t('dependenciesPage.empty.noDependenciesDescription')}</p>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className={cn("mx-auto w-full p-6 h-[calc(100vh-7rem)]", isWideMode ? "max-w-full" : "max-w-7xl")}>
+    <PageContainer
+      className="h-[calc(100vh-7rem)]"
+      contentClassName="flex h-full flex-col gap-4"
+    >
       <div className="flex h-full flex-col gap-4">
         <PageHeader
           title={t('dependenciesPage.title')}
@@ -876,6 +878,6 @@ export function DependenciesPage() {
           </span>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

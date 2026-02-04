@@ -7,10 +7,10 @@ import type { Session, SessionStatus, Spec } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSessions, useSessionMutations } from '../hooks/useSessionsQuery';
 import { useSpecsList } from '../hooks/useSpecsQuery';
-import { useLayoutStore } from '../stores/layout';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader } from '../components/shared/PageHeader';
 import { PageTransition } from '../components/shared/PageTransition';
+import { PageContainer } from '../components/shared/PageContainer';
 import { SESSION_STATUS_DOT_STYLES, SESSION_STATUS_STYLES, formatSessionDuration } from '../lib/session-utils';
 import { SessionCreateDialog } from '../components/sessions/SessionCreateDialog';
 import { cn } from '@leanspec/ui-components';
@@ -25,7 +25,6 @@ export function SessionsPage() {
   const { currentProject, loading: projectLoading } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayoutStore();
   const sessionsQuery = useSessions(resolvedProjectId ?? null);
   const specsQuery = useSpecsList(resolvedProjectId ?? null);
   const { createSession, startSession, stopSession, pauseSession, resumeSession } = useSessionMutations(resolvedProjectId ?? null);
@@ -179,19 +178,19 @@ export function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
+      <PageContainer>
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {t('actions.loading')}
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 sm:p-6">
+      <PageContainer>
         <Card>
           <CardContent className="py-10 text-center space-y-3">
             <div className="text-lg font-semibold">{t('sessionsPage.state.errorTitle')}</div>
@@ -201,13 +200,16 @@ export function SessionsPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
     <PageTransition className={cn('flex-1 min-w-0')}>
-      <div className={cn('h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 mx-auto w-full', isWideMode ? 'max-w-full' : 'max-w-7xl')}>
+      <PageContainer
+        className="h-[calc(100vh-3.5rem)]"
+        contentClassName="flex h-full flex-col gap-4"
+      >
         <div className="flex flex-col gap-4 sticky top-14 bg-background mt-0 py-2 z-10">
           <PageHeader
             title={t('sessionsPage.title')}
@@ -417,7 +419,7 @@ export function SessionsPage() {
             </div>
           )}
         </div>
-      </div>
+      </PageContainer>
 
       <SessionCreateDialog
         open={createOpen}

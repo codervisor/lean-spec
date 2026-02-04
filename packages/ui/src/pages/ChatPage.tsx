@@ -12,6 +12,7 @@ import { Trash2, Settings2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
+import { PageContainer } from '../components/shared/PageContainer';
 
 const INITIAL_DEFAULT_MODEL = { providerId: 'openai', modelId: 'gpt-4o' };
 
@@ -213,14 +214,14 @@ export function ChatPage() {
 
   if (!currentProject) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <PageContainer>
         <Card>
           <CardContent className="p-6 space-y-2">
             <h1 className="text-xl font-semibold">{t('projects.errors.noProjectSelected')}</h1>
             <p className="text-sm text-muted-foreground">{t('projects.description')}</p>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 

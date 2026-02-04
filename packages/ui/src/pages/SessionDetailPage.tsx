@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import type { Session, SessionEvent, SessionLog } from '../types/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { useLayoutStore } from '../stores/layout';
 import { EmptyState } from '../components/shared/EmptyState';
 import { PageHeader } from '../components/shared/PageHeader';
 import { PageTransition } from '../components/shared/PageTransition';
+import { PageContainer } from '../components/shared/PageContainer';
 import {
   SESSION_STATUS_STYLES,
   estimateSessionCost,
@@ -24,7 +24,6 @@ export function SessionDetailPage() {
   const { currentProject, loading: projectLoading } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayoutStore();
   const projectReady = !projectId || currentProject?.id === projectId;
 
   const [session, setSession] = useState<Session | null>(null);
@@ -231,38 +230,43 @@ export function SessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
+      <PageContainer>
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {t('actions.loading')}
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (error || !session) {
     return (
-      <EmptyState
-        icon={AlertTriangle}
-        title={t('sessionDetail.state.notFoundTitle')}
-        description={error || t('sessionDetail.state.notFoundDescription')}
-        tone="error"
-        actions={(
-          <Link to={`${basePath}/sessions`} className="inline-flex">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              {t('sessions.actions.back')}
-            </Button>
-          </Link>
-        )}
-      />
+      <PageContainer>
+        <EmptyState
+          icon={AlertTriangle}
+          title={t('sessionDetail.state.notFoundTitle')}
+          description={error || t('sessionDetail.state.notFoundDescription')}
+          tone="error"
+          actions={(
+            <Link to={`${basePath}/sessions`} className="inline-flex">
+              <Button variant="outline" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {t('sessions.actions.back')}
+              </Button>
+            </Link>
+          )}
+        />
+      </PageContainer>
     );
   }
 
   return (
     <PageTransition className="flex-1 min-w-0">
-      <div className={cn('h-[calc(100vh-3.5rem)] flex flex-col gap-4 p-4 sm:p-6 mx-auto w-full', isWideMode ? 'max-w-full' : 'max-w-6xl')}>
+      <PageContainer
+        className="h-[calc(100vh-3.5rem)]"
+        contentClassName="flex h-full flex-col gap-4"
+      >
         <PageHeader
           title={t('sessionDetail.title', { id: session.id })}
           description={t('sessionDetail.description')}
@@ -466,7 +470,7 @@ export function SessionDetailPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </PageTransition>
   );
 }

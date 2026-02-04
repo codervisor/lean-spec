@@ -7,6 +7,7 @@ import { AppearanceSettingsTab } from '../components/settings/AppearanceSettings
 import { RunnerSettingsTab } from '../components/settings/RunnerSettingsTab';
 import { SettingsSkeleton } from '../components/shared/Skeletons';
 import { useCurrentProject } from '../hooks/useProjectQuery';
+import { PageContainer } from '../components/shared/PageContainer';
 
 export function SettingsPage() {
   const { t } = useTranslation('common');
@@ -25,14 +26,14 @@ export function SettingsPage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-background">
-      <div className="border-b p-6 flex-none">
-        <div className="flex items-center gap-3">
+      <div className="border-b flex-none">
+        <PageContainer contentClassName="flex items-center gap-3">
           <Settings className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
             <p className="text-sm text-muted-foreground">{t('settings.description')}</p>
           </div>
-        </div>
+        </PageContainer>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -56,8 +57,8 @@ export function SettingsPage() {
         </aside>
 
         {/* Mobile Tab Selector (visible only on small screens) */}
-        <div className="md:hidden p-4 border-b">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="md:hidden border-b">
+          <PageContainer contentClassName="flex gap-2 overflow-x-auto pb-2">
             {tabs.map((tab) => (
               <Button
                 key={tab.id}
@@ -70,15 +71,15 @@ export function SettingsPage() {
                 {tab.label}
               </Button>
             ))}
-          </div>
+          </PageContainer>
         </div>
 
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
+        <main className="flex-1 overflow-y-auto">
+          <PageContainer contentClassName="space-y-6">
             {activeTab === 'ai' && <AISettingsTab />}
             {activeTab === 'runners' && <RunnerSettingsTab />}
             {activeTab === 'appearance' && <AppearanceSettingsTab />}
-          </div>
+          </PageContainer>
         </main>
       </div>
     </div>

@@ -42,7 +42,7 @@ import { BackToTop } from '../components/shared/BackToTop';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecDetail } from '../hooks/useSpecsQuery';
 import { useSessions } from '../hooks/useSessionsQuery';
-import { useLayoutStore } from '../stores/layout';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useMachineStore } from '../stores/machine';
 import { useSessionsUiStore } from '../stores/sessions-ui';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +69,6 @@ export function SpecDetailPage() {
   const { currentProject } = useCurrentProject();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const { isWideMode } = useLayoutStore();
   const { machineModeEnabled, isMachineAvailable } = useMachineStore();
   const { t, i18n } = useTranslation(['common', 'errors']);
   const [spec, setSpec] = useState<SpecDetail | null>(null);
@@ -396,7 +395,13 @@ export function SpecDetailPage() {
 
         {/* Compact Header - sticky on desktop */}
         <header ref={headerRef} className="lg:sticky lg:top-0 lg:z-20 border-b bg-card">
-          <div className={cn("px-3 sm:px-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl", isFocusMode ? "py-1.5" : "py-2 sm:py-3")}>
+          <PageContainer
+            padding="none"
+            contentClassName={cn(
+              "px-4 sm:px-6 lg:px-8",
+              isFocusMode ? "py-1.5" : "py-2 sm:py-3"
+            )}
+          >
             {/* Focus mode: Single compact row */}
             {isFocusMode ? (
               <div className="flex items-center justify-between gap-3">
@@ -645,12 +650,12 @@ export function SpecDetailPage() {
                 </div>
               </>
             )}
-          </div>
+          </PageContainer>
 
           {/* Horizontal Tabs for Sub-specs */}
           {subSpecs.length > 0 && (
             <div className="border-t bg-muted/30">
-              <div className={cn("px-3 sm:px-6 overflow-x-auto mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
+              <PageContainer padding="none" contentClassName="px-4 sm:px-6 lg:px-8 overflow-x-auto">
                 <div className="flex gap-1 py-2 min-w-max">
                   {/* Overview tab (README.md) */}
                   <button
@@ -682,36 +687,38 @@ export function SpecDetailPage() {
                     );
                   })}
                 </div>
-              </div>
+              </PageContainer>
             </div>
           )}
         </header>
 
         {/* Main content with Sidebar */}
-        <div
-          ref={mainContentRef}
-          className={cn("flex flex-col mx-auto w-full",
-            showSidebar ? "flex-row items-start" : "",
-            isWideMode ? "max-w-full" : "max-w-7xl"
+        <PageContainer
+          padding="none"
+          contentClassName={cn(
+            "flex flex-col w-full",
+            showSidebar ? "lg:flex-row items-start" : ""
           )}
         >
-          <main className="flex-1 px-3 sm:px-6 py-3 sm:py-6 min-w-0">
-            <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
-          </main>
+          <div ref={mainContentRef} className="flex w-full">
+            <main className="flex-1 px-4 sm:px-6 lg:px-8 py-3 sm:py-6 min-w-0">
+              <MarkdownRenderer content={displayContent} specName={specName} basePath={basePath} />
+            </main>
 
-          {/* Right Sidebar for TOC (Desktop only) */}
-          <aside
-            className={cn(
-              "w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide",
-              showSidebar ? "block" : "hidden",
-              subSpecs.length > 0
-                ? "top-[calc(16.375rem-3.5rem)] h-[calc(100vh-16.375rem)]"
-                : "top-[calc(13.125rem-3.5rem)] h-[calc(100vh-13.125rem)]"
-            )}
-          >
-            <TableOfContentsSidebar content={displayContent} />
-          </aside>
-        </div>
+            {/* Right Sidebar for TOC (Desktop only) */}
+            <aside
+              className={cn(
+                "w-72 shrink-0 px-6 py-6 sticky overflow-y-auto scrollbar-auto-hide",
+                showSidebar ? "block" : "hidden",
+                subSpecs.length > 0
+                  ? "top-[calc(16.375rem-3.5rem)] h-[calc(100vh-16.375rem)]"
+                  : "top-[calc(13.125rem-3.5rem)] h-[calc(100vh-13.125rem)]"
+              )}
+            >
+              <TableOfContentsSidebar content={displayContent} />
+            </aside>
+          </div>
+        </PageContainer>
 
         {/* Floating action buttons (Mobile/Tablet only) */}
         <div className={showSidebar ? "hidden" : "block"}>

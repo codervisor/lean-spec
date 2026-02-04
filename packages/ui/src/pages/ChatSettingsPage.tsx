@@ -24,6 +24,7 @@ import {
 } from '@leanspec/ui-components';
 import { ArrowLeft, Plus, Trash2, Edit2, CheckCircle, AlertCircle } from 'lucide-react';
 import type { ChatConfig, Provider, Model } from '../types/chat-config';
+import { PageContainer } from '../components/shared/PageContainer';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -200,7 +201,7 @@ export function ChatSettingsPage() {
 
   if (error || !config) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <PageContainer>
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2 text-destructive">
@@ -212,13 +213,13 @@ export function ChatSettingsPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
     <div className="h-full overflow-auto">
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <PageContainer contentClassName="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/chat')}>
@@ -338,7 +339,7 @@ export function ChatSettingsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
 
       {/* Provider Dialog */}
       {showProviderDialog && (

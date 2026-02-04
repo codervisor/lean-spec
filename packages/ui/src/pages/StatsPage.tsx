@@ -19,10 +19,10 @@ import { StatCard } from '../components/dashboard/StatCard';
 import type { Stats, Spec } from '../types/api';
 import { StatsSkeleton } from '../components/shared/Skeletons';
 import { PageHeader } from '../components/shared/PageHeader';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useProjectStats, useSpecsList } from '../hooks/useSpecsQuery';
-import { useLayoutStore } from '../stores/layout';
 import { resolveTokenStatus, tokenProgressClasses } from '../lib/token-utils';
 
 const STATUS_COLORS = {
@@ -42,7 +42,6 @@ const PRIORITY_COLORS = {
 export function StatsPage() {
   const { t, i18n } = useTranslation('common');
   const { currentProject, loading: projectLoading } = useCurrentProject();
-  const { isWideMode } = useLayoutStore();
   const resolvedProjectId = currentProject?.id ?? null;
   const statsQuery = useProjectStats(resolvedProjectId);
   const specsQuery = useSpecsList(resolvedProjectId);
@@ -142,39 +141,43 @@ export function StatsPage() {
 
   if (!currentProject) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="text-lg font-semibold">{t('statsPage.state.noProjectTitle', { defaultValue: 'No project selected' })}</div>
-          <p className="text-sm text-muted-foreground">
-            {t('statsPage.state.noProjectDescription', { defaultValue: 'Select or create a project to view statistics.' })}
-          </p>
-          <Link to="/projects" className="inline-flex">
-            <Button variant="secondary" size="sm">{t('projectsPage.title', { defaultValue: 'Projects' })}</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="text-lg font-semibold">{t('statsPage.state.noProjectTitle', { defaultValue: 'No project selected' })}</div>
+            <p className="text-sm text-muted-foreground">
+              {t('statsPage.state.noProjectDescription', { defaultValue: 'Select or create a project to view statistics.' })}
+            </p>
+            <Link to="/projects" className="inline-flex">
+              <Button variant="secondary" size="sm">{t('projectsPage.title', { defaultValue: 'Projects' })}</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 
   if (error || !stats) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center space-y-3">
-          <div className="flex justify-center">
-            <AlertCircle className="h-6 w-6 text-destructive" />
-          </div>
-          <div className="text-lg font-semibold">{t('statsPage.state.errorTitle')}</div>
-          <p className="text-sm text-muted-foreground">{error || t('statsPage.state.unknownError')}</p>
-          <Button variant="secondary" size="sm" onClick={() => void statsQuery.refetch()} className="mt-2">
-            {t('actions.retry')}
-          </Button>
-        </CardContent>
-      </Card>
+      <PageContainer>
+        <Card>
+          <CardContent className="py-10 text-center space-y-3">
+            <div className="flex justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <div className="text-lg font-semibold">{t('statsPage.state.errorTitle')}</div>
+            <p className="text-sm text-muted-foreground">{error || t('statsPage.state.unknownError')}</p>
+            <Button variant="secondary" size="sm" onClick={() => void statsQuery.refetch()} className="mt-2">
+              {t('actions.retry')}
+            </Button>
+          </CardContent>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <div className={cn("space-y-6 p-6 mx-auto w-full", isWideMode ? "max-w-full" : "max-w-7xl")}>
+    <PageContainer contentClassName="space-y-6">
       <PageHeader
         title={t('statsPage.title')}
         description={t('statsPage.description')}
@@ -351,6 +354,6 @@ export function StatsPage() {
           </Card>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
