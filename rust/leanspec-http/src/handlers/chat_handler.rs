@@ -122,10 +122,10 @@ pub async fn chat_stream(
     }
 
     let response_stream = stream::unfold(result.stream, |mut receiver| async move {
-        match receiver.recv().await {
-            Some(event) => Some((Ok(event.to_sse_string()), receiver)),
-            None => None,
-        }
+        receiver
+            .recv()
+            .await
+            .map(|event| (Ok(event.to_sse_string()), receiver))
     })
     .chain(stream::once(async { Ok(sse_done()) }))
     .map(|item: Result<String, std::convert::Infallible>| {
