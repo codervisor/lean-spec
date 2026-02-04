@@ -347,3 +347,31 @@ fn test_regression_preserve_missing_templates() {
     // Templates should be recreated
     assert!(dir_exists(&templates_dir), "templates should be recreated");
 }
+
+#[test]
+fn test_regression_init_example_flag_is_handled() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    // Action: run init with example flag
+    let result = exec_cli(&["init", "--example", "dark-theme"], cwd);
+
+    // Assert: command should succeed and create example directory
+    assert!(result.success, "init --example should succeed");
+    assert!(
+        dir_exists(&cwd.join("dark-theme")),
+        "example directory should be created"
+    );
+    assert!(
+        file_exists(&cwd.join("dark-theme").join(".lean-spec").join("config.json")),
+        "example should include LeanSpec config"
+    );
+    assert!(
+        file_exists(&cwd.join("dark-theme").join("AGENTS.md")),
+        "example should include AGENTS.md"
+    );
+    assert!(
+        dir_exists(&cwd.join("dark-theme").join("specs")),
+        "example should include specs directory"
+    );
+}
