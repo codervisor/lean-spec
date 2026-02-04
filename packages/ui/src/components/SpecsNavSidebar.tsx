@@ -33,6 +33,7 @@ import {
   DropdownMenuLabel,
   buildHierarchy,
   getAllParentIds,
+  SearchInput,
   type SortOption
 } from '@leanspec/ui-components';
 import {
@@ -880,26 +881,13 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
               </div>
             </div>
 
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t('specsNavSidebar.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn("pl-8 h-9 text-sm", searchQuery && "pr-8")}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer"
-                  aria-label={t('specsNavSidebar.clearSearch') ?? 'Clear search'}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('specsNavSidebar.searchPlaceholder') ?? 'Search specs...'}
+              showShortcut={false}
+              className="h-9 text-sm"
+            />
 
           </div>
 
