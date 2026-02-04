@@ -6,6 +6,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+use crate::commands::package_manager::detect_package_manager;
+
 mod ai_tools;
 mod mcp_config;
 
@@ -191,8 +193,19 @@ fn print_example_next_steps(example_name: &str, target_dir: &Path) {
     println!("  1. cd {}", example_name.cyan());
 
     if let Some(command) = resolve_example_run_command(target_dir) {
-        println!("  2. npm install");
-        println!("  3. {}", command);
+        let package_manager = match detect_package_manager(target_dir) {
+            Ok(manager) => manager,
+            Err(err) => {
+                println!(
+                    "{} Failed to detect package manager (defaulting to npm): {}",
+                    "⚠".yellow(),
+                    err
+                );
+                "npm".to_string()
+            }
+        };
+        println!("  2. {} install", package_manager);
+        println!("  3. {}", build_run_command(&package_manager, &command));
     } else {
         println!("  2. Review the README.md for setup instructions");
     }
@@ -204,15 +217,28 @@ fn resolve_example_run_command(target_dir: &Path) -> Option<String> {
     let json: Value = serde_json::from_str(&content).ok()?;
     let scripts = json.get("scripts")?.as_object()?;
 
+    // Prefer start scripts since they map to production-like entry points.
     if scripts.contains_key("start") {
-        return Some("npm start".to_string());
+        return Some("start".to_string());
     }
 
     if scripts.contains_key("dev") {
-        return Some("npm run dev".to_string());
+        return Some("dev".to_string());
     }
 
     None
+}
+
+fn build_run_command(package_manager: &str, script: &str) -> String {
+    if is_builtin_script(script) {
+        format!("{} {}", package_manager, script)
+    } else {
+        format!("{} run {}", package_manager, script)
+    }
+}
+
+fn is_builtin_script(script: &str) -> bool {
+    matches!(script, "start" | "test" | "install")
 }
 
 fn to_absolute(root: &Path, path: &str) -> PathBuf {
@@ -337,7 +363,7 @@ fn resolve_examples_dir() -> Result<PathBuf, Box<dyn Error>> {
     }
 
     Err(format!(
-        "Example templates directory not found. Searched: {}",
+        "Example templates directory not found. Searched: {}. Ensure the CLI installation includes templates or rebuild the binary from the repository.",
         searched.join(", ")
     )
     .into())
@@ -352,12 +378,17 @@ fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
                     .file_name()
                     .to_str()
                     .map(|name| name != ".git")
-                    .unwrap_or(false)
+                    // Treat non-UTF-8 names as non-empty entries.
+                    .unwrap_or(true)
             })
             .peekable();
 
         if entries.peek().is_some() {
-            return Err(format!("Target directory must be empty: {}", target_dir.display()).into());
+            return Err(format!(
+                "Target directory must be empty (except for .git): {}",
+                target_dir.display()
+            )
+            .into());
         }
     }
 
