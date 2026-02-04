@@ -37,17 +37,17 @@ interface FlatNode {
 
 // Helper to flatten the tree based on expanded status
 function flattenTree(
-  nodes: HierarchyNode[], 
-  expandedIds: Set<string>, 
-  depth = 0, 
-  indentGuides: boolean[] = [], 
+  nodes: HierarchyNode[],
+  expandedIds: Set<string>,
+  depth = 0,
+  indentGuides: boolean[] = [],
   result: FlatNode[] = []
 ) {
   nodes.forEach((node, index) => {
     const isLast = index === nodes.length - 1;
-    
-    result.push({ 
-      node, 
+
+    result.push({
+      node,
       depth,
       indentGuides,
       isLast
@@ -56,9 +56,9 @@ function flattenTree(
     const id = node.id || node.specName;
     if (node.childNodes && node.childNodes.length > 0 && expandedIds.has(id)) {
       flattenTree(
-        node.childNodes, 
-        expandedIds, 
-        depth + 1, 
+        node.childNodes,
+        expandedIds,
+        depth + 1,
         [...indentGuides, !isLast],
         result
       );
@@ -100,7 +100,7 @@ export function HierarchyTree({
 
   // Track whether we've done the initial scroll
   const hasScrolledToSelected = useRef(false);
-  
+
   // Track the last spec ID we successfully auto-expanded to avoid fighting user interactions
   const lastRevealedSpecId = useRef<string | null>(null);
 
@@ -154,7 +154,7 @@ export function HierarchyTree({
           setInternalExpandedIds(newExpanded);
         }
       }
-      
+
       // Mark as revealed so we don't fight subsequent user collapses
       lastRevealedSpecId.current = selectedSpecId;
     }
@@ -192,7 +192,7 @@ export function HierarchyTree({
     } else {
       newExpanded.add(id);
     }
-    
+
     if (isControlled) {
       onExpandedChange?.(newExpanded);
     } else {
@@ -200,24 +200,24 @@ export function HierarchyTree({
     }
   };
 
-  const Row = ({ index, style }: RowComponentProps) => {
+  const Row = ({ index, style, selectedSpecId: rowSelectedSpecId }: RowComponentProps & { selectedSpecId?: string }) => {
     const { node, depth, indentGuides, isLast } = flatData[index];
     const id = node.id || node.specName;
     const hasChildren = node.childNodes && node.childNodes.length > 0;
     const isExpanded = expandedIds.has(id);
-    const isSelected = selectedSpecId === id;
+    const isSelected = rowSelectedSpecId === id;
 
     return (
       <div style={style} className="flex items-center">
         {/* Indent guides */}
-        <div 
+        <div
           className="absolute top-0 bottom-0 pointer-events-none"
           style={{ left: 0, width: `${depth * 16}px` }}
         >
           {indentGuides.map((hasLine, i) => hasLine && (
-            <div 
-              key={i} 
-              className="absolute top-0 bottom-0 w-px bg-border/40" 
+            <div
+              key={i}
+              className="absolute top-0 bottom-0 w-px bg-border/40"
               style={{ left: `${i * 16 + 7}px` }} // +7 to center in 16px slot
             />
           ))}
@@ -225,16 +225,16 @@ export function HierarchyTree({
 
         {/* Current node connector/guide */}
         {depth > 0 && (
-          <div 
-            className="absolute top-0 w-4 pointer-events-none" 
+          <div
+            className="absolute top-0 w-4 pointer-events-none"
             style={{ left: `${(depth - 1) * 16}px`, height: '100%' }}
           >
-             <div 
-               className={cn(
-                 "absolute left-[7px] w-px bg-border/40",
-                 isLast ? "top-0 h-1/2" : "top-0 bottom-0"
-               )} 
-             />
+            <div
+              className={cn(
+                "absolute left-[7px] w-px bg-border/40",
+                isLast ? "top-0 h-1/2" : "top-0 bottom-0"
+              )}
+            />
           </div>
         )}
 
@@ -295,7 +295,7 @@ export function HierarchyTree({
         style={{ height, width }}
         className="no-scrollbar" // Optional: custom scrollbar styling if needed
         rowComponent={Row}
-        rowProps={{}}
+        rowProps={{ selectedSpecId }}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { cn } from '@leanspec/ui-components';
@@ -38,6 +38,12 @@ export function PriorityEditor({
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
   const invalidateSpecs = useInvalidateSpecs();
+
+  useEffect(() => {
+    setPriority((value || 'medium') as NonNullable<Spec['priority']>);
+    setUpdating(false);
+    setError(null);
+  }, [value, specName]);
 
   const option = PRIORITY_OPTIONS.find((opt) => opt.value === priority) || PRIORITY_OPTIONS[1];
 

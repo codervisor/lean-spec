@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
 import { cn } from '@leanspec/ui-components';
@@ -39,6 +39,12 @@ export function StatusEditor({
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation('common');
   const invalidateSpecs = useInvalidateSpecs();
+
+  useEffect(() => {
+    setStatus((value || 'planned') as NonNullable<Spec['status']>);
+    setUpdating(false);
+    setError(null);
+  }, [value, specName]);
 
   const option = STATUS_OPTIONS.find((opt) => opt.value === status) || STATUS_OPTIONS[0];
 
