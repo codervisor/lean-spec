@@ -30,6 +30,11 @@ This project uses the Agent Skills framework for domain-specific guidance. **Rea
    - Use when: Triggering, monitoring, or debugging CI/CD workflows
    - Key: Use `gh` CLI for all workflow interactions
 
+5. **agent-browser** - Browser automation for testing web apps
+   - Location: [.agents/skills/agent-browser/SKILL.md](.agents/skills/agent-browser/SKILL.md)
+   - Use when: Testing web UIs, interacting with websites, filling forms, taking screenshots
+   - Key: Use `agent-browser` CLI instead of Playwright MCP for browser automation
+
 ## Project-Specific Rules
 
 1. **Use pnpm** - Never npm or yarn. All package management uses pnpm.

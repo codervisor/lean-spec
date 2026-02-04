@@ -7,17 +7,6 @@
 				"-y",
 				"@leanspec/mcp@0.2.23"
 			]
-		},
-		"playwright": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"@playwright/mcp@0.0.46"
-			],
-			"cwd": "${workspaceFolder}",
-			"env": {},
-			"envFile": "",
-			"dev": {}
-		},
+		}
 	}
 }
