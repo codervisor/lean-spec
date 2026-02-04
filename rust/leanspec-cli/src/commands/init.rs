@@ -287,9 +287,11 @@ fn resolve_examples_dir() -> Result<PathBuf, Box<dyn Error>> {
         .parent()
         .ok_or("Unable to resolve CLI binary directory")?;
 
+    let mut searched = Vec::new();
     let mut current = Some(exe_dir);
     while let Some(dir) = current {
         let candidate = dir.join("templates").join("examples");
+        searched.push(candidate.display().to_string());
         if candidate.exists() {
             return Ok(candidate);
         }
@@ -299,6 +301,7 @@ fn resolve_examples_dir() -> Result<PathBuf, Box<dyn Error>> {
             .join("cli")
             .join("templates")
             .join("examples");
+        searched.push(workspace_candidate.display().to_string());
         if workspace_candidate.exists() {
             return Ok(workspace_candidate);
         }
@@ -306,7 +309,11 @@ fn resolve_examples_dir() -> Result<PathBuf, Box<dyn Error>> {
         current = dir.parent();
     }
 
-    Err("Example templates directory not found.".into())
+    Err(format!(
+        "Example templates directory not found. Searched: {}",
+        searched.join(", ")
+    )
+    .into())
 }
 
 fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
@@ -323,7 +330,11 @@ fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
             .peekable();
 
         if entries.peek().is_some() {
-            return Err("Target directory must be empty.".into());
+            return Err(format!(
+                "Target directory must be empty: {}",
+                target_dir.display()
+            )
+            .into());
         }
     }
 

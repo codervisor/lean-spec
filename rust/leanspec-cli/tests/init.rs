@@ -363,7 +363,11 @@ fn test_regression_init_example_flag_is_handled() {
         "example directory should be created"
     );
     assert!(
-        file_exists(&cwd.join("dark-theme").join(".lean-spec").join("config.json")),
+        file_exists(
+            &cwd.join("dark-theme")
+                .join(".lean-spec")
+                .join("config.json")
+        ),
         "example should include LeanSpec config"
     );
     assert!(
