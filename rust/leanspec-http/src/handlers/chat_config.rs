@@ -211,7 +211,10 @@ async fn perform_provider_validation(
             if truncated.is_empty() {
                 format!("Provider validation failed (status {})", status)
             } else {
-                format!("Provider validation failed (status {}): {}", status, truncated)
+                format!(
+                    "Provider validation failed (status {}): {}",
+                    status, truncated
+                )
             }
         }
     };
