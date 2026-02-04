@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-04
 priority: high
 tags:
@@ -9,8 +9,12 @@ tags:
 - bug-fix
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-04T15:17:19.297574Z
-updated_at: 2026-02-04T15:19:06.014425Z
+updated_at: 2026-02-04T15:48:34.569426011Z
+transitions:
+- status: in-progress
+  at: 2026-02-04T15:48:34.569426011Z
 ---
+
 # AI Chat Missing Conversation History
 
 > **Status**: planned · **Priority**: high · **Created**: 2026-02-04

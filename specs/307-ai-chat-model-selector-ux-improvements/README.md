@@ -1,11 +1,15 @@
 ---
-status: planned
+status: in-progress
 created: 2026-02-04
 priority: high
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-04T15:08:09.981072Z
-updated_at: 2026-02-04T15:22:03.452434Z
+updated_at: 2026-02-04T15:48:34.565393798Z
+transitions:
+- status: in-progress
+  at: 2026-02-04T15:48:34.565393798Z
 ---
+
 # AI Chat Model Selector UX Improvements
 
 > **Status**: planned · **Priority**: high · **Created**: 2026-02-04
