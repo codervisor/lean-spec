@@ -39,6 +39,7 @@ import type { RunnerDefinition, RunnerListResponse, RunnerScope } from '../../ty
 import { useCurrentProject } from '../../hooks/useProjectQuery';
 import { SearchFilterBar } from '../shared/SearchFilterBar';
 import { useToast } from '../../contexts';
+import { useRunnerFiltersStore } from '../../stores/settings-filters';
 
 const DEFAULT_SCOPE: RunnerScope = 'project';
 
@@ -62,7 +63,6 @@ interface RunnerValidationState {
 }
 
 const RUNNER_VALIDATION_TTL_MS = 5 * 60 * 1000;
-const RUNNER_FILTERS_STORAGE_KEY = 'settings-runners-filters';
 
 const getRunnerValidationCacheKey = (projectPath?: string | null) =>
   `settings-runner-validation-cache:${projectPath ?? 'global'}`;
@@ -111,50 +111,19 @@ export function RunnerSettingsTab() {
   const [validatingAll, setValidatingAll] = useState(false);
   const [autoValidated, setAutoValidated] = useState(false);
 
-  // Filter/Search State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'available'>('name');
-  const [showUnavailable, setShowUnavailable] = useState(false);
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'builtin' | 'custom'>('all');
+  // Filter/Search State - persisted via zustand store
+  const {
+    searchQuery,
+    sortBy,
+    showUnavailable,
+    sourceFilter,
+    setSearchQuery,
+    setSortBy,
+    setShowUnavailable,
+    setSourceFilter,
+  } = useRunnerFiltersStore();
 
   const canManage = useMemo(() => Boolean(projectPath), [projectPath]);
-  const runnerFiltersStorageKey = useMemo(
-    () => `${RUNNER_FILTERS_STORAGE_KEY}:${projectPath ?? 'global'}`,
-    [projectPath]
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = localStorage.getItem(runnerFiltersStorageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        searchQuery?: string;
-        sortBy?: 'name' | 'available';
-        showUnavailable?: boolean;
-        sourceFilter?: 'all' | 'builtin' | 'custom';
-      };
-      if (typeof parsed.searchQuery === 'string') setSearchQuery(parsed.searchQuery);
-      if (parsed.sortBy === 'name' || parsed.sortBy === 'available') setSortBy(parsed.sortBy);
-      if (typeof parsed.showUnavailable === 'boolean') setShowUnavailable(parsed.showUnavailable);
-      if (parsed.sourceFilter === 'all' || parsed.sourceFilter === 'builtin' || parsed.sourceFilter === 'custom') {
-        setSourceFilter(parsed.sourceFilter);
-      }
-    } catch {
-      // Ignore storage errors
-    }
-  }, [runnerFiltersStorageKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const payload = {
-      searchQuery,
-      sortBy,
-      showUnavailable,
-      sourceFilter,
-    };
-    localStorage.setItem(runnerFiltersStorageKey, JSON.stringify(payload));
-  }, [runnerFiltersStorageKey, searchQuery, sortBy, showUnavailable, sourceFilter]);
 
   const applyResponse = (response: RunnerListResponse | undefined) => {
     if (!response) {
@@ -522,10 +491,14 @@ export function RunnerSettingsTab() {
             },
             {
               label: t('settings.runners.filters.source'),
-              options: [
-                { id: 'all', label: t('settings.runners.filters.allSources'), checked: sourceFilter === 'all', onCheckedChange: () => setSourceFilter('all') },
-                { id: 'builtin', label: t('settings.runners.filters.builtin'), checked: sourceFilter === 'builtin', onCheckedChange: (c) => c && setSourceFilter('builtin') },
-                { id: 'custom', label: t('settings.runners.filters.custom'), checked: sourceFilter === 'custom', onCheckedChange: (c) => c && setSourceFilter('custom') },
+              type: 'radio' as const,
+              options: [],
+              value: sourceFilter,
+              onValueChange: (v: string) => setSourceFilter(v as 'all' | 'builtin' | 'custom'),
+              radioOptions: [
+                { value: 'all', label: t('settings.runners.filters.allSources') },
+                { value: 'builtin', label: t('settings.runners.filters.builtin') },
+                { value: 'custom', label: t('settings.runners.filters.custom') },
               ]
             }
           ]}
@@ -543,7 +516,6 @@ export function RunnerSettingsTab() {
         ) : (
           filteredRunners.map((runner) => {
             const validation = runnerValidation[runner.id];
-            const validationStatus: ValidationStatus = validatingRunners[runner.id] ? 'checking' : validation?.status ?? 'idle';
             const lastCheckedLabel = formatTimestamp(validation?.checkedAt);
 
             const handleShortcut = (event: React.KeyboardEvent) => {
@@ -580,10 +552,15 @@ export function RunnerSettingsTab() {
                               </Badge>
                             )}
                             {runner.command ? (
-                              runner.available ? (
+                              validatingRunners[runner.id] ? (
+                                <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  {t('settings.runners.validation.checking')}
+                                </Badge>
+                              ) : runner.available ? (
                                 <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
                                   <CheckCircle className="h-3 w-3" />
-                                  {t('settings.runners.available')}
+                                  {runner.version ? `v${runner.version}` : t('settings.runners.available')}
                                 </Badge>
                               ) : (
                                 <Badge variant="destructive" className="text-xs gap-1 h-5 px-1.5">
@@ -594,24 +571,6 @@ export function RunnerSettingsTab() {
                             ) : (
                               <Badge variant="secondary" className="text-xs h-5 px-1.5">
                                 {t('settings.runners.ideOnly')}
-                              </Badge>
-                            )}
-                            {runner.command && validationStatus !== 'idle' && (
-                              <Badge
-                                variant={validationStatus === 'invalid' ? 'destructive' : 'outline'}
-                                className={cn(
-                                  'text-xs gap-1 h-5 px-1.5',
-                                  validationStatus === 'valid' && 'text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
-                                )}
-                              >
-                                {validationStatus === 'checking' && <Loader2 className="h-3 w-3 animate-spin" />}
-                                {validationStatus === 'valid' && <CheckCircle className="h-3 w-3" />}
-                                {validationStatus === 'invalid' && <AlertCircle className="h-3 w-3" />}
-                                {validationStatus === 'checking'
-                                  ? t('settings.runners.validation.checking')
-                                  : validationStatus === 'valid'
-                                    ? t('settings.runners.validation.valid')
-                                    : t('settings.runners.validation.invalid')}
                               </Badge>
                             )}
                           </div>
@@ -629,13 +588,18 @@ export function RunnerSettingsTab() {
                           <div className="text-xs text-muted-foreground">
                             {t('settings.runners.details.source', { source: runner.source })}
                           </div>
+                          {runner.version && (
+                            <div className="text-xs text-muted-foreground">
+                              {t('settings.runners.details.version')}: <span className="font-mono text-foreground">{runner.version}</span>
+                            </div>
+                          )}
                           {runner.command && lastCheckedLabel && (
                             <div className="text-xs text-muted-foreground">
                               {t('settings.runners.validation.lastChecked', { time: lastCheckedLabel })}
                             </div>
                           )}
-                          {validation?.error && (
-                            <div className="text-xs text-destructive">{validation.error}</div>
+                          {!runner.available && runner.command && (
+                            <div className="text-xs text-destructive">{t('settings.runners.details.notFound')}</div>
                           )}
                         </div>
                       </HoverCardContent>

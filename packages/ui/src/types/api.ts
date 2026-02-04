@@ -63,6 +63,7 @@ export interface RunnerDefinition {
   args: string[];
   env: Record<string, string>;
   available: boolean;
+  version?: string | null;
   source: RunnerSource;
 }
 

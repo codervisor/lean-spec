@@ -463,7 +463,9 @@
       "details": {
         "title": "Details",
         "id": "Runner ID",
-        "source": "Source: {{source}}"
+        "source": "Source: {{source}}",
+        "version": "Version",
+        "notFound": "Command not found in PATH"
       },
       "toasts": {
         "defaultRunner": "Default runner set to {{runner}}"

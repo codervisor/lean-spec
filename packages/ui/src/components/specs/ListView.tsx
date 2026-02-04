@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Spec, HierarchyNode, SpecStatus } from '../../types/api';
+import type { SpecsSortOption } from '../../stores/specs-preferences';
 import { StatusBadge } from '../StatusBadge';
 import { PriorityBadge } from '../PriorityBadge';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +33,7 @@ const SpecListItem = memo(function SpecListItem({
       className="block border rounded-lg hover:bg-secondary/50 transition-colors bg-background"
     >
       <div className="flex items-start">
-        <div className="w-8 h-full invisible flex items-center text-muted-foreground"/>
+        <div className="w-8 h-full invisible flex items-center text-muted-foreground" />
         <div className="flex-1 p-4 pl-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -46,15 +47,15 @@ const SpecListItem = memo(function SpecListItem({
             </div>
             <div className="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
               {spec.status && (
-                <StatusBadge 
-                  status={spec.status} 
+                <StatusBadge
+                  status={spec.status}
                   editable={!!onStatusChange}
                   onChange={(status) => onStatusChange?.(spec, status as SpecStatus)}
                 />
               )}
               {spec.priority && (
-                <PriorityBadge 
-                  priority={spec.priority} 
+                <PriorityBadge
+                  priority={spec.priority}
                   editable={!!onPriorityChange}
                   onChange={(priority) => onPriorityChange?.(spec, priority)}
                 />
@@ -89,15 +90,13 @@ const SpecListItem = memo(function SpecListItem({
   );
 });
 
-type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'priority-desc' | 'priority-asc';
-
 interface ListViewProps {
   specs: Spec[];
   /** Pre-built hierarchy from server - if provided, skips client-side tree building */
   hierarchy?: HierarchyNode[];
   basePath?: string;
   groupByParent?: boolean;
-  sortBy?: SortOption;
+  sortBy?: SpecsSortOption;
   onTokenClick?: (specName: string) => void;
   onValidationClick?: (specName: string) => void;
   onStatusChange?: (spec: Spec, status: SpecStatus) => void;

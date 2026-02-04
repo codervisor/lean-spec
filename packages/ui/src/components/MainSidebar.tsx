@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings, Terminal } from 'lucide-react';
@@ -7,8 +7,7 @@ import { ProjectSwitcher } from './ProjectSwitcher';
 import { SidebarLink } from './shared/SidebarLink';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useMachineStore } from '../stores/machine';
-
-const STORAGE_KEY = 'main-sidebar-collapsed';
+import { useLayoutStore } from '../stores/layout';
 
 interface MainSidebarProps {
   mobileOpen?: boolean;
@@ -23,17 +22,10 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const { t } = useTranslation('common');
   const { machineModeEnabled } = useMachineStore();
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'true';
-  });
+  const { mainSidebarCollapsed: collapsed, toggleMainSidebar } = useLayoutStore();
 
   useEffect(() => {
     document.documentElement.style.setProperty('--main-sidebar-width', collapsed ? '60px' : '240px');
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, String(collapsed));
-    }
   }, [collapsed]);
 
   // Close mobile sidebar when route changes
@@ -108,7 +100,7 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
 
           <div className="hidden lg:block p-2 border-t">
             <button
-              onClick={() => setCollapsed((prev) => !prev)}
+              onClick={toggleMainSidebar}
               className={cn(
                 'w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary transition-colors',
                 collapsed && 'px-2'

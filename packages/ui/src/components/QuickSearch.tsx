@@ -18,8 +18,7 @@ import { useTranslation } from 'react-i18next';
 import type { Spec } from '../types/api';
 import { api } from '../lib/api';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-
-const RECENT_STORAGE_KEY = 'leanspec-recent-searches';
+import { useSearchStore } from '../stores/search';
 
 const formatSpecNumber = (specNumber: number | null) =>
   specNumber != null ? specNumber.toString().padStart(3, '0') : null;
@@ -32,7 +31,7 @@ export function QuickSearch() {
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const { recentSearches, addRecentSearch } = useSearchStore();
   const [specs, setSpecs] = useState<Spec[]>([]);
   const { t } = useTranslation('common');
 
@@ -42,19 +41,6 @@ export function QuickSearch() {
       .catch(() => {
         // Quick search is best-effort; ignore failures
       });
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(RECENT_STORAGE_KEY);
-    if (!stored) return;
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        setRecentSearches(parsed.filter((item) => typeof item === 'string'));
-      }
-    } catch {
-      setRecentSearches([]);
-    }
   }, []);
 
   useEffect(() => {
@@ -114,15 +100,9 @@ export function QuickSearch() {
       .slice(0, 5);
   }, [specs, search]);
 
-  const persistRecentSearches = (entries: string[]) => {
-    setRecentSearches(entries);
-    localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(entries));
-  };
-
   const handleSelect = (spec: Spec) => {
     const label = spec.title || spec.specName;
-    const next = [label, ...recentSearches.filter((item) => item !== label)].slice(0, 5);
-    persistRecentSearches(next);
+    addRecentSearch(label);
     setOpen(false);
     setSearch('');
     navigate(`${basePath}/specs/${spec.specName}`);

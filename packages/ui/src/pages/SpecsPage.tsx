@@ -18,65 +18,11 @@ import { PageContainer } from '../components/shared/PageContainer';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { specKeys, useSpecsWithHierarchy } from '../hooks/useSpecsQuery';
 import { useMachineStore } from '../stores/machine';
+import { useSpecsPreferencesStore, type SpecsSortOption } from '../stores/specs-preferences';
 import { useSpecActionDialogs } from '../hooks/useSpecActionDialogs';
 import { useTranslation } from 'react-i18next';
-import { storage, STORAGE_KEYS } from '../lib/storage';
 
 type ViewMode = 'list' | 'board';
-type SortOption = 'id-desc' | 'id-asc' | 'updated-desc' | 'title-asc' | 'priority-desc' | 'priority-asc';
-
-const STORAGE_KEY = 'specs-page-preferences';
-
-interface SpecsPagePreferences {
-  viewMode: ViewMode;
-  sortBy: SortOption;
-  statusFilter: string[];
-  priorityFilter: string[];
-  tagFilter: string[];
-  // groupByParent moved to localStorage with shared key
-  showValidationIssuesOnly: boolean;
-  showArchived: boolean;
-}
-
-const DEFAULT_PREFERENCES: SpecsPagePreferences = {
-  viewMode: 'list',
-  sortBy: 'id-desc',
-  statusFilter: [],
-  priorityFilter: [],
-  tagFilter: [],
-  showValidationIssuesOnly: false,
-  showArchived: false,
-};
-
-function loadHierarchyView(): boolean {
-  return storage.get(STORAGE_KEYS.HIERARCHY_VIEW, false);
-}
-
-function saveHierarchyView(value: boolean): void {
-  storage.set(STORAGE_KEYS.HIERARCHY_VIEW, value);
-}
-
-function loadPreferences(): SpecsPagePreferences {
-  if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return DEFAULT_PREFERENCES;
-    const parsed = JSON.parse(saved) as Partial<SpecsPagePreferences>;
-    return { ...DEFAULT_PREFERENCES, ...parsed };
-  } catch {
-    return DEFAULT_PREFERENCES;
-  }
-}
-
-function savePreferences(prefs: Partial<SpecsPagePreferences>): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const current = loadPreferences();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }));
-  } catch {
-    // Ignore storage errors
-  }
-}
 
 export function SpecsPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -124,8 +70,25 @@ export function SpecsPage() {
     handleValidationClick,
   } = useSpecActionDialogs(resolvedProjectId);
 
-  // Load saved preferences
-  const savedPrefs = useMemo(() => loadPreferences(), []);
+  // Persisted preferences from zustand store
+  const {
+    statusFilter: storedStatusFilter,
+    priorityFilter,
+    tagFilter: storedTagFilter,
+    sortBy,
+    hierarchyView,
+    showArchived,
+    pageViewMode,
+    showValidationIssuesOnly,
+    setStatusFilter,
+    setPriorityFilter,
+    setTagFilter,
+    setSortBy,
+    setHierarchyView,
+    setShowArchived,
+    setPageViewMode,
+    setShowValidationIssuesOnly,
+  } = useSpecsPreferencesStore();
 
   const [searchParams] = useSearchParams();
   const initialQueryParams = useMemo(() => ({
@@ -135,43 +98,36 @@ export function SpecsPage() {
     groupByParent: searchParams.get('groupByParent'),
   }), [searchParams]);
 
-  // Filters (initialized from localStorage)
+  // URL params can override stored filters for deep linking
   const initialQuery = initialQueryParams.query ?? '';
   const initialTag = initialQueryParams.tag;
   const initialView = initialQueryParams.view;
   const initialGroupByParent = initialQueryParams.groupByParent;
 
-  // Filters (initialized from localStorage + query params)
+  // Local search query (not persisted)
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [statusFilter, setStatusFilter] = useState<string[]>(savedPrefs.statusFilter.filter(s => s !== 'archived'));
-  const [priorityFilter, setPriorityFilter] = useState<string[]>(savedPrefs.priorityFilter);
-  const [tagFilter, setTagFilter] = useState<string[]>(
-    initialTag ? [initialTag] : savedPrefs.tagFilter
+
+  // Compute effective values considering URL overrides
+  const statusFilter = useMemo(() => storedStatusFilter.filter(s => s !== 'archived'), [storedStatusFilter]);
+  const tagFilter = useMemo(() => initialTag ? [initialTag] : storedTagFilter, [initialTag, storedTagFilter]);
+  const groupByParent = useMemo(() =>
+    initialGroupByParent === '1' || initialGroupByParent === 'true' ? true : hierarchyView,
+    [initialGroupByParent, hierarchyView]
   );
-  const [sortBy, setSortBy] = useState<SortOption>(savedPrefs.sortBy);
-  const [groupByParent, setGroupByParent] = useState(
-    initialGroupByParent === '1' || initialGroupByParent === 'true'
-      ? true
-      : loadHierarchyView()
-  );
-  const [showValidationIssuesOnly, setShowValidationIssuesOnly] = useState(savedPrefs.showValidationIssuesOnly);
-  const [showArchived, setShowArchived] = useState<boolean>(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) !== null) {
-      return storage.get(STORAGE_KEYS.SHOW_ARCHIVED, false);
-    }
-    return savedPrefs.showArchived;
-  });
+  const viewMode = useMemo(() =>
+    (initialView === 'board' || initialView === 'list') ? initialView : pageViewMode,
+    [initialView, pageViewMode]
+  ) as ViewMode;
+
+  // Wrapper setters that update the store
+  const setGroupByParent = useCallback((value: boolean) => setHierarchyView(value), [setHierarchyView]);
+  const setViewMode = useCallback((mode: ViewMode) => setPageViewMode(mode), [setPageViewMode]);
 
   // Validation statuses fetched when showValidationIssuesOnly is enabled
   const [validationStatuses, setValidationStatuses] = useState<Record<string, ValidationStatus>>({});
   const [loadingValidation, setLoadingValidation] = useState(false);
   const validationFetchedRef = useRef(false);
   const metadataFetchedRef = useRef(false);
-
-  // View State (initialized from localStorage)
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    initialView === 'board' || initialView === 'list' ? initialView : savedPrefs.viewMode
-  );
 
   // Fetch batch metadata (tokens, validation) after specs load
   useEffect(() => {
@@ -255,52 +211,6 @@ export function SpecsPage() {
 
     void fetchValidation();
   }, [showValidationIssuesOnly, specs, resolvedProjectId]);
-
-
-  // Persist preferences to localStorage (except groupByParent which uses sessionStorage)
-  useEffect(() => {
-    savePreferences({
-      viewMode,
-      sortBy,
-      statusFilter,
-      priorityFilter,
-      tagFilter,
-      showValidationIssuesOnly,
-      showArchived,
-    });
-  }, [viewMode, sortBy, statusFilter, priorityFilter, tagFilter, showValidationIssuesOnly, showArchived]);
-
-  // Persist groupByParent to localStorage (shared with sidebar)
-  useEffect(() => {
-    saveHierarchyView(groupByParent);
-  }, [groupByParent]);
-
-  // Sync groupByParent when changed from sidebar (storage event)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEYS.HIERARCHY_VIEW && e.storageArea === localStorage) {
-        setGroupByParent(e.newValue === 'true');
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // Sync showArchived to standalone storage
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SHOW_ARCHIVED, showArchived);
-  }, [showArchived]);
-
-  // Migration
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
-
-    // Check if we need to migrate showArchived from combined object to standalone key
-    if (localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) === null && savedPrefs.showArchived) {
-      storage.set(STORAGE_KEYS.SHOW_ARCHIVED, true);
-    }
-  }, [savedPrefs]);
 
   const handleStatusChange = useCallback(async (spec: Spec, newStatus: SpecStatus) => {
     if (machineModeEnabled && !isMachineAvailable()) {
@@ -597,7 +507,7 @@ export function SpecsPage() {
           tagFilter={tagFilter}
           onTagFilterChange={setTagFilter}
           sortBy={sortBy}
-          onSortByChange={(value) => setSortBy(value as SortOption)}
+          onSortByChange={(value) => setSortBy(value as SpecsSortOption)}
           uniqueStatuses={uniqueStatuses}
           uniquePriorities={uniquePriorities}
           uniqueTags={uniqueTags}

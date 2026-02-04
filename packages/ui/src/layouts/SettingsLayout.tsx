@@ -7,24 +7,14 @@ import { SettingsSkeleton } from '../components/shared/Skeletons';
 import { SidebarLink } from '../components/shared/SidebarLink';
 import { PageContainer } from '../components/shared/PageContainer';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-
-const SETTINGS_SIDEBAR_STORAGE_KEY = 'settings-sidebar-collapsed';
+import { useLayoutStore } from '../stores/layout';
 
 export function SettingsLayout() {
   const { t } = useTranslation('common');
   const { loading: projectLoading } = useCurrentProject();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(SETTINGS_SIDEBAR_STORAGE_KEY) === 'true';
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(SETTINGS_SIDEBAR_STORAGE_KEY, String(collapsed));
-    }
-  }, [collapsed]);
+  const { settingsSidebarCollapsed: collapsed, toggleSettingsSidebar } = useLayoutStore();
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -101,7 +91,7 @@ export function SettingsLayout() {
             {/* Collapse/Expand toggle at bottom (desktop only) */}
             <div className="hidden lg:block p-2 border-t">
               <button
-                onClick={() => setCollapsed((prev) => !prev)}
+                onClick={toggleSettingsSidebar}
                 className={cn(
                   'w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary transition-colors',
                   collapsed && 'px-2'

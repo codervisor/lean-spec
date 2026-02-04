@@ -62,10 +62,11 @@ pub struct RunnerUpdatePayload {
 pub struct RunnerInfoResponse {
     pub id: String,
     pub name: Option<String>,
-    pub command: String,
+    pub command: Option<String>,
     pub args: Vec<String>,
     pub env: HashMap<String, String>,
     pub available: bool,
+    pub version: Option<String>,
     pub source: String,
 }
 
@@ -448,13 +449,21 @@ fn build_runner_info(
         "builtin"
     };
 
+    let available = runner.validate_command().is_ok();
+    let version = if available {
+        runner.detect_version()
+    } else {
+        None
+    };
+
     RunnerInfoResponse {
         id: runner.id.clone(),
         name: runner.name.clone(),
         command: runner.command.clone(),
         args: runner.args.clone(),
         env: runner.env.clone(),
-        available: runner.validate_command().is_ok(),
+        available,
+        version,
         source: source.to_string(),
     }
 }

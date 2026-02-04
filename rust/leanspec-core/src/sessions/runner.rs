@@ -112,6 +112,32 @@ impl RunnerDefinition {
         Ok(())
     }
 
+    /// Detect the version of the runner command.
+    /// Returns None if the command doesn't exist or version cannot be determined.
+    pub fn detect_version(&self) -> Option<String> {
+        let command = self.command.as_ref()?;
+
+        // Try common version flags in order of preference
+        let version_flags = ["--version", "-v", "version"];
+
+        for flag in &version_flags {
+            if let Ok(output) = std::process::Command::new(command).arg(flag).output() {
+                if output.status.success() || !output.stdout.is_empty() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let text = if stdout.is_empty() { stderr } else { stdout };
+
+                    // Extract version number from output
+                    if let Some(version) = extract_version(&text) {
+                        return Some(version);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn is_runnable(&self) -> bool {
         self.command.is_some()
     }
@@ -840,6 +866,26 @@ fn extension_installed(home: Option<&Path>, extension_prefix: &str) -> bool {
         }
     }
     false
+}
+
+/// Extract version number from command output.
+/// Handles common formats like "vX.Y.Z", "X.Y.Z", "version X.Y.Z", etc.
+fn extract_version(text: &str) -> Option<String> {
+    // Common patterns for version strings
+    let version_patterns = [
+        // Semantic version with optional v prefix: v1.2.3, 1.2.3, v1.2.3-beta
+        regex::Regex::new(r"v?(\d+\.\d+\.\d+(?:-[\w.]+)?)").ok()?,
+    ];
+
+    for pattern in &version_patterns {
+        if let Some(caps) = pattern.captures(text) {
+            if let Some(version) = caps.get(1) {
+                return Some(version.as_str().to_string());
+            }
+        }
+    }
+
+    None
 }
 
 fn interpolate_env(value: &str) -> CoreResult<String> {

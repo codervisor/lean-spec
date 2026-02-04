@@ -458,7 +458,9 @@
       "details": {
         "title": "详情",
         "id": "运行器 ID",
-        "source": "来源：{{source}}"
+        "source": "来源：{{source}}",
+        "version": "版本",
+        "notFound": "在 PATH 中未找到命令"
       },
       "toasts": {
         "defaultRunner": "默认运行器已设置为 {{runner}}"

@@ -49,6 +49,7 @@ import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useSpecsList } from '../hooks/useSpecsQuery';
 import { SpecsNavSidebarSkeleton } from './shared/Skeletons';
+import { useSpecsPreferencesStore, useSpecsSidebarStore } from '../stores/specs-preferences';
 import { storage, STORAGE_KEYS } from '../lib/storage';
 
 interface SpecsNavSidebarProps {
@@ -69,84 +70,42 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSearchQuery, setTagSearchQuery] = useState('');
 
-  // Initialize from storage with legacy fallback
-  const [statusFilter, setStatusFilter] = useState<string[]>(() => {
-    // Try new key
-    const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_STATUS, []);
-    if (val.length > 0) return val;
-    // Fallback to legacy
-    if (typeof window !== 'undefined') {
-      const legacy = sessionStorage.getItem('specs-nav-sidebar-status-filter');
-      if (legacy) return JSON.parse(legacy);
-    }
-    return [];
-  });
+  // Persisted preferences from zustand store
+  const {
+    statusFilter,
+    priorityFilter,
+    tagFilter,
+    sortBy,
+    hierarchyView,
+    showArchived,
+    expandedNodeIds,
+    setStatusFilter,
+    setPriorityFilter,
+    setTagFilter,
+    setSortBy,
+    setHierarchyView,
+    setShowArchived,
+    setExpandedNodeIds,
+    clearFilters,
+  } = useSpecsPreferencesStore();
 
-  const [priorityFilter, setPriorityFilter] = useState<string[]>(() => {
-    const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY, []);
-    if (val.length > 0) return val;
-    if (typeof window !== 'undefined') {
-      const legacy = sessionStorage.getItem('specs-nav-sidebar-priority-filter');
-      if (legacy) return JSON.parse(legacy);
-    }
-    return [];
-  });
+  const { collapsed, setCollapsed } = useSpecsSidebarStore();
 
-  const [tagFilter, setTagFilter] = useState<string[]>(() => {
-    const val = storage.get<string[]>(STORAGE_KEYS.SIDEBAR_FILTER_TAGS, []);
-    if (val.length > 0) return val;
-    if (typeof window !== 'undefined') {
-      const legacy = sessionStorage.getItem('specs-nav-sidebar-tag-filter');
-      if (legacy) return JSON.parse(legacy);
-    }
-    return [];
-  });
-
-  const [sortBy, setSortBy] = useState<string>(() => {
-    return storage.get(STORAGE_KEYS.SIDEBAR_SORT, 'id-desc');
-  });
-
+  // Local UI state (not persisted)
   const [showFilters, setShowFilters] = useState(false);
-
-  const [showArchived, setShowArchived] = useState<boolean>(() => {
-    // Boolean is tricky with empty strings or nulls, storage.get returns defaultValue if missing
-    // We need to check if key exists to know if we should fallback
-    if (typeof window === 'undefined') return false;
-
-    // Check if new key exists
-    if (localStorage.getItem(STORAGE_KEYS.SHOW_ARCHIVED) !== null) {
-      return storage.get(STORAGE_KEYS.SHOW_ARCHIVED, false);
-    }
-
-    // Fallback
-    const legacy = sessionStorage.getItem('specs-nav-sidebar-show-archived');
-    return legacy === 'true';
-  });
-
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    if (localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) !== null) {
-      return storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED, false);
-    }
-    return localStorage.getItem('specs-nav-sidebar-collapsed') === 'true';
-  });
-
-  const [viewMode, setViewMode] = useState<'list' | 'tree'>(() => {
-    if (typeof window === 'undefined') return 'list';
-    if (localStorage.getItem(STORAGE_KEYS.HIERARCHY_VIEW) !== null) {
-      return storage.get(STORAGE_KEYS.HIERARCHY_VIEW, false) ? 'tree' : 'list';
-    }
-    return sessionStorage.getItem('specs-hierarchy-view') === 'true' ? 'tree' : 'list';
-  });
-
   const [listHeight, setListHeight] = useState<number>(() => calculateListHeight());
 
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
-    const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
-    if (stored) return new Set(stored);
-    return new Set();
-  });
+  // Derived state
+  const viewMode = hierarchyView ? 'tree' : 'list';
+  const setViewMode = useCallback((mode: 'list' | 'tree') => {
+    setHierarchyView(mode === 'tree');
+  }, [setHierarchyView]);
+
+  // Convert expandedNodeIds array to Set for tree component
+  const expandedIds = useMemo(() => new Set(expandedNodeIds), [expandedNodeIds]);
+  const setExpandedIds = useCallback((ids: Set<string>) => {
+    setExpandedNodeIds(Array.from(ids));
+  }, [setExpandedNodeIds]);
 
   // Scroll uses sessionStorage (transient) - keeping it but using cleaner key?
   // Spec says: "Keep scroll position as sessionStorage (transient by nature)"
@@ -198,42 +157,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
       '--specs-nav-sidebar-width',
       collapsed ? '0px' : '280px'
     );
-    storage.set(STORAGE_KEYS.SIDEBAR_COLLAPSED, collapsed);
   }, [collapsed]);
-
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.HIERARCHY_VIEW, viewMode === 'tree');
-  }, [viewMode]);
-
-  // Sync viewMode when changed from SpecsPage (storage event)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEYS.HIERARCHY_VIEW && e.storageArea === localStorage) {
-        // storage.set stores booleans as "true"/"false" strings
-        setViewMode(e.newValue === 'true' ? 'tree' : 'list');
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // One-time migration on mount
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    storage.migrateFromSessionToLocal('specs-nav-sidebar-status-filter', STORAGE_KEYS.SIDEBAR_FILTER_STATUS);
-    storage.migrateFromSessionToLocal('specs-nav-sidebar-priority-filter', STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY);
-    storage.migrateFromSessionToLocal('specs-nav-sidebar-tag-filter', STORAGE_KEYS.SIDEBAR_FILTER_TAGS);
-    storage.migrateFromSessionToLocal('specs-nav-sidebar-show-archived', STORAGE_KEYS.SHOW_ARCHIVED);
-    storage.migrateFromSessionToLocal('specs-hierarchy-view', STORAGE_KEYS.HIERARCHY_VIEW);
-
-    // Migrate Collapsed (local -> local)
-    const oldCollapsed = localStorage.getItem('specs-nav-sidebar-collapsed');
-    if (oldCollapsed !== null && localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === null) {
-      localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, oldCollapsed);
-      localStorage.removeItem('specs-nav-sidebar-collapsed');
-    }
-  }, []);
 
   useEffect(() => {
     mobileOpenRef.current = mobileOpen;
@@ -385,23 +309,16 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const allParentIds = useMemo(() => getAllParentIds(treeRoots), [treeRoots]);
   const hasInitializedExpansion = useRef(false);
 
-  // Initialize expansion state on first load (if no storage)
+  // Initialize expansion state on first load (if no stored state)
   useEffect(() => {
     if (viewMode === 'tree' && !hasInitializedExpansion.current && allParentIds.size > 0) {
-      const stored = storage.get<string[] | null>(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, null);
-      if (stored === null) {
+      // Only expand all if no stored state exists
+      if (expandedNodeIds.length === 0) {
         setExpandedIds(allParentIds);
       }
       hasInitializedExpansion.current = true;
     }
-  }, [viewMode, allParentIds]);
-
-  // Persist expandedIds
-  useEffect(() => {
-    if (viewMode === 'tree') {
-      storage.set(STORAGE_KEYS.SIDEBAR_EXPANDED_IDS, Array.from(expandedIds));
-    }
-  }, [expandedIds, viewMode]);
+  }, [viewMode, allParentIds, expandedNodeIds.length, setExpandedIds]);
 
   const RowComponent = useCallback(
     (rowProps: { index: number; style: CSSProperties }) => {
@@ -491,27 +408,6 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const hasActiveFilters =
     statusFilter.length > 0 || priorityFilter.length > 0 || tagFilter.length > 0;
 
-  // Persist filters to localStorage
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SIDEBAR_FILTER_STATUS, statusFilter);
-  }, [statusFilter]);
-
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SIDEBAR_FILTER_PRIORITY, priorityFilter);
-  }, [priorityFilter]);
-
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SIDEBAR_FILTER_TAGS, tagFilter);
-  }, [tagFilter]);
-
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SIDEBAR_SORT, sortBy);
-  }, [sortBy]);
-
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SHOW_ARCHIVED, showArchived);
-  }, [showArchived]);
-
   // Restore initial scroll position only once on mount
   useEffect(() => {
     if (viewMode === 'tree') return; // Skip for tree view
@@ -564,28 +460,25 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return () => el.removeEventListener('scroll', onScroll);
   }, [viewMode]);
 
-  const resetFilters = () => {
-    setStatusFilter([]);
-    setPriorityFilter([]);
-    setTagFilter([]);
-  };
-
   const toggleStatus = (status: string) => {
-    setStatusFilter((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
-    );
+    const newFilter = statusFilter.includes(status)
+      ? statusFilter.filter((s) => s !== status)
+      : [...statusFilter, status];
+    setStatusFilter(newFilter);
   };
 
   const togglePriority = (priority: string) => {
-    setPriorityFilter((prev) =>
-      prev.includes(priority) ? prev.filter((p) => p !== priority) : [...prev, priority]
-    );
+    const newFilter = priorityFilter.includes(priority)
+      ? priorityFilter.filter((p) => p !== priority)
+      : [...priorityFilter, priority];
+    setPriorityFilter(newFilter);
   };
 
   const toggleTag = (tag: string) => {
-    setTagFilter((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+    const newFilter = tagFilter.includes(tag)
+      ? tagFilter.filter((t) => t !== tag)
+      : [...tagFilter, tag];
+    setTagFilter(newFilter);
   };
 
   const sidebarVisible = mobileOpen || !collapsed;
@@ -692,7 +585,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                           size="sm"
                           className="h-auto px-2 py-1 text-xs"
                           onClick={() => {
-                            resetFilters();
+                            clearFilters();
                             setShowArchived(false);
                           }}
                         >
@@ -839,7 +732,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                           setShowArchived(newValue);
                           // Clear archived from status filter when hiding archived specs
                           if (!newValue && statusFilter.includes('archived')) {
-                            setStatusFilter(prev => prev.filter(s => s !== 'archived'));
+                            setStatusFilter(statusFilter.filter(s => s !== 'archived'));
                           }
                         }}
                       >

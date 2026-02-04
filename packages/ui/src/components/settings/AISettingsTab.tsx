@@ -27,6 +27,7 @@ import type { RegistryProvider } from '../../types/models-registry';
 import { SearchFilterBar } from '../shared/SearchFilterBar';
 import { useToast } from '../../contexts';
 import { useModelsRegistry } from '../../lib/use-models-registry';
+import { useAIFiltersStore } from '../../stores/settings-filters';
 import { List, type RowComponentProps } from 'react-window';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
@@ -36,10 +37,6 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
     </label>
   );
 }
-
-
-
-const AI_FILTERS_STORAGE_KEY = 'settings-ai-filters';
 
 function isRegistryProvider(p: RegistryProvider | Provider): p is RegistryProvider {
   return 'isConfigured' in p;
@@ -67,10 +64,15 @@ export function AISettingsTab() {
   const [editingCustomProvider, setEditingCustomProvider] = useState<Provider | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filter/Search State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'models' | 'configured'>('name');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'configured' | 'unconfigured'>('all');
+  // Filter/Search State - persisted via zustand store
+  const {
+    searchQuery,
+    sortBy,
+    statusFilter,
+    setSearchQuery,
+    setSortBy,
+    setStatusFilter,
+  } = useAIFiltersStore();
 
   // Load chat config
   const loadConfig = async () => {
@@ -90,34 +92,6 @@ export function AISettingsTab() {
   useEffect(() => {
     loadConfig();
   }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = localStorage.getItem(AI_FILTERS_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        searchQuery?: string;
-        sortBy?: 'name' | 'models' | 'configured';
-        statusFilter?: 'all' | 'configured' | 'unconfigured';
-      };
-      if (typeof parsed.searchQuery === 'string') setSearchQuery(parsed.searchQuery);
-      if (parsed.sortBy === 'name' || parsed.sortBy === 'models' || parsed.sortBy === 'configured') setSortBy(parsed.sortBy);
-      if (parsed.statusFilter === 'all' || parsed.statusFilter === 'configured' || parsed.statusFilter === 'unconfigured') setStatusFilter(parsed.statusFilter);
-    } catch {
-      // Ignore storage errors
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const payload = {
-      searchQuery,
-      sortBy,
-      statusFilter,
-    };
-    localStorage.setItem(AI_FILTERS_STORAGE_KEY, JSON.stringify(payload));
-  }, [searchQuery, sortBy, statusFilter]);
 
   // Identify custom providers (in config but not in registry)
   const customProviders = useMemo(() => {
