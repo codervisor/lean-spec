@@ -1,5 +1,6 @@
 use colored::Colorize;
 use dialoguer::{Confirm, Input, MultiSelect};
+use serde_json::Value;
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -156,7 +157,7 @@ fn scaffold_example(
         target_dir.display()
     );
 
-    let original_dir = root;
+    let initial_dir = root;
     std::env::set_current_dir(&target_dir)?;
     let init_result = run_standard_init(
         specs_dir,
@@ -176,16 +177,42 @@ fn scaffold_example(
             no_skill: options.no_skill,
         },
     );
-    std::env::set_current_dir(&original_dir)?;
+    std::env::set_current_dir(&initial_dir)?;
     init_result?;
 
+    print_example_next_steps(example_name, &target_dir);
+
+    Ok(())
+}
+
+fn print_example_next_steps(example_name: &str, target_dir: &Path) {
     println!();
     println!("Next steps:");
     println!("  1. cd {}", example_name.cyan());
-    println!("  2. npm install");
-    println!("  3. npm start");
 
-    Ok(())
+    if let Some(command) = resolve_example_run_command(target_dir) {
+        println!("  2. npm install");
+        println!("  3. {}", command);
+    } else {
+        println!("  2. Review the README.md for setup instructions");
+    }
+}
+
+fn resolve_example_run_command(target_dir: &Path) -> Option<String> {
+    let package_json = target_dir.join("package.json");
+    let content = fs::read_to_string(package_json).ok()?;
+    let json: Value = serde_json::from_str(&content).ok()?;
+    let scripts = json.get("scripts")?.as_object()?;
+
+    if scripts.contains_key("start") {
+        return Some("npm start".to_string());
+    }
+
+    if scripts.contains_key("dev") {
+        return Some("npm run dev".to_string());
+    }
+
+    None
 }
 
 fn to_absolute(root: &Path, path: &str) -> PathBuf {
@@ -330,11 +357,7 @@ fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
             .peekable();
 
         if entries.peek().is_some() {
-            return Err(format!(
-                "Target directory must be empty: {}",
-                target_dir.display()
-            )
-            .into());
+            return Err(format!("Target directory must be empty: {}", target_dir.display()).into());
         }
     }
 
