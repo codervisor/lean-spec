@@ -96,14 +96,12 @@ Add provider icons to `InlineModelSelector`:
 
 ## Plan
 
-- [ ] Add `enabledModels` to `ChatSettings` in Rust backend
-- [ ] Add `enabledModels` filtering in `use-models-registry.ts`
-- [ ] Add settings UI to enable/disable models per provider
-- [ ] Fix `ChatPage.tsx` to not use hardcoded initial model
-- [ ] Initialize `selectedModel` properly from registry
-- [ ] Add provider validation before sending chat message
-- [ ] Add provider icons mapping to `InlineModelSelector`
-- [ ] Display provider icon in inline selector dropdown
+- [ ] Extend chat config schema to support `enabledModels` (providerId -> modelIds) in Rust and API: update `ChatSettings` in [rust/leanspec-core/src/storage/chat_config.rs](rust/leanspec-core/src/storage/chat_config.rs), plus `ChatConfigClient`/`ChatConfigUpdate` serialization in [rust/leanspec-http/src/handlers/chat_config.rs](rust/leanspec-http/src/handlers/chat_config.rs).
+- [ ] Update UI chat config types and settings UI to edit enabled models: [packages/ui/src/types/chat-config.ts](packages/ui/src/types/chat-config.ts), [packages/ui/src/pages/ChatSettingsPage.tsx](packages/ui/src/pages/ChatSettingsPage.tsx), and/or [packages/ui/src/components/settings/AISettingsTab.tsx](packages/ui/src/components/settings/AISettingsTab.tsx).
+- [ ] Filter registry models using enabled models in [packages/ui/src/lib/use-models-registry.ts](packages/ui/src/lib/use-models-registry.ts) and ensure `defaultSelection` respects the filtered list.
+- [ ] Remove hardcoded `INITIAL_DEFAULT_MODEL` and initialize `selectedModel` from registry once ready in [packages/ui/src/pages/ChatPage.tsx](packages/ui/src/pages/ChatPage.tsx); align defaults in [packages/ui/src/components/chat/ChatSidebar.tsx](packages/ui/src/components/chat/ChatSidebar.tsx).
+- [ ] Add provider/model icon mapping in [packages/ui/src/components/chat/InlineModelSelector.tsx](packages/ui/src/components/chat/InlineModelSelector.tsx) (and reuse in [packages/ui/src/components/chat/EnhancedModelSelector.tsx](packages/ui/src/components/chat/EnhancedModelSelector.tsx) if needed).
+- [ ] Validate provider/model on send: ensure transport uses current selection and session data includes provider/model; audit defaults in [packages/ui/src/lib/chat-api.ts](packages/ui/src/lib/chat-api.ts) and backend selection in [rust/leanspec-core/src/ai_native/providers.rs](rust/leanspec-core/src/ai_native/providers.rs).
 
 ## Test
 
@@ -115,12 +113,11 @@ Add provider icons to `InlineModelSelector`:
 
 ## Notes
 
-### Key Files
+### Codebase Findings
 
-- `packages/ui/src/pages/ChatPage.tsx` - Main chat page with model selection
-- `packages/ui/src/components/chat/InlineModelSelector.tsx` - Compact model selector
-- `packages/ui/src/components/chat/EnhancedModelSelector.tsx` - Full model selector
-- `packages/ui/src/lib/use-models-registry.ts` - Models registry hook
-- `packages/ui/src/lib/use-chat.ts` - Chat hook with transport
-- `rust/leanspec-core/src/ai_native/providers.rs` - Backend provider selection
-- `rust/leanspec-core/src/storage/chat_config.rs` - Chat config storage
+- [packages/ui/src/pages/ChatPage.tsx](packages/ui/src/pages/ChatPage.tsx) initializes `selectedModel` to a hardcoded `INITIAL_DEFAULT_MODEL` and only replaces it when the value still equals the hardcoded default.
+- [packages/ui/src/lib/use-models-registry.ts](packages/ui/src/lib/use-models-registry.ts) loads defaults from `/api/chat/config` but does not expose any enabled-models whitelist.
+- [packages/ui/src/lib/chat-api.ts](packages/ui/src/lib/chat-api.ts) defaults missing session provider/model to `openai/gpt-4o`, which can mask stored provider/model issues.
+- [packages/ui/src/components/chat/InlineModelSelector.tsx](packages/ui/src/components/chat/InlineModelSelector.tsx) renders text-only provider/model labels; no icon mapping exists.
+- [packages/ui/src/components/chat/ChatSidebar.tsx](packages/ui/src/components/chat/ChatSidebar.tsx) also hardcodes `openai/gpt-4o` for the sidebar chat model.
+- [rust/leanspec-core/src/storage/chat_config.rs](rust/leanspec-core/src/storage/chat_config.rs) `ChatSettings` only includes `max_steps`, `default_provider_id`, `default_model_id`, so `enabledModels` needs schema support here.
