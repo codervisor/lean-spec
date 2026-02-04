@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { useLocalStorage } from '@leanspec/ui-components';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
+import { useModelsRegistry } from '../lib/use-models-registry';
 
 interface ChatContextType {
   isOpen: boolean;
@@ -29,6 +30,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { currentProject } = useCurrentProject();
+  const { defaultSelection } = useModelsRegistry();
 
   const [isOpen, setIsOpen] = useLocalStorage<boolean>('leanspec.chat.isOpen', false);
   const [sidebarWidth, setSidebarWidth] = useLocalStorage<number>('leanspec.chat.sidebarWidth', 400);
@@ -63,12 +65,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const createConversation = async () => {
-    if (!currentProject?.id) return;
+    if (!currentProject?.id || !defaultSelection) return;
     try {
-      const thread = await ChatApi.createThread(currentProject.id, {
-        providerId: 'openai',
-        modelId: 'gpt-4o'
-      });
+      const thread = await ChatApi.createThread(currentProject.id, defaultSelection);
       await refreshConversations();
       setActiveConversationId(thread.id);
     } catch (error) {

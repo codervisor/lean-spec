@@ -138,6 +138,7 @@ pub fn registry_to_chat_config(registry: &ModelRegistry) -> ChatConfig {
             max_steps: 10,
             default_provider_id,
             default_model_id,
+            enabled_models: None,
         },
     }
 }

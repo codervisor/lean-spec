@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '@leanspec/ui-components';
@@ -6,6 +6,7 @@ import { ResizeHandle } from './ResizeHandle';
 import { ChatContainer } from './ChatContainer';
 import { InlineModelSelector } from './InlineModelSelector';
 import { useLeanSpecChat } from '../../lib/use-chat';
+import { useModelsRegistry } from '../../lib/use-models-registry';
 import { X, Plus, Settings } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
 
@@ -23,8 +24,16 @@ export function ChatSidebar() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [isResizing, setIsResizing] = useState(false);
 
-  // Model state (simplified for now, default to openai/gpt-4o)
-  const [model, setModel] = useState({ providerId: 'openai', modelId: 'gpt-4o' });
+  // Use registry for model selection
+  const { defaultSelection } = useModelsRegistry();
+  const [model, setModel] = useState<{ providerId: string; modelId: string } | null>(null);
+
+  // Initialize model from defaultSelection once registry is ready
+  useEffect(() => {
+    if (defaultSelection && !model) {
+      setModel(defaultSelection);
+    }
+  }, [defaultSelection, model]);
 
   const {
     messages,
@@ -33,8 +42,8 @@ export function ChatSidebar() {
     error,
     reload,
   } = useLeanSpecChat({
-    providerId: model.providerId,
-    modelId: model.modelId,
+    providerId: model?.providerId ?? '',
+    modelId: model?.modelId ?? '',
     threadId: activeConversationId || undefined
   });
 
@@ -110,11 +119,13 @@ export function ChatSidebar() {
             onRetry={reload}
             className="h-full"
             footerContent={
-              <InlineModelSelector
-                value={model}
-                onChange={setModel}
-                disabled={isLoading}
-              />
+              model ? (
+                <InlineModelSelector
+                  value={model}
+                  onChange={setModel}
+                  disabled={isLoading}
+                />
+              ) : null
             }
           />
         </div>
