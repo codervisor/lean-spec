@@ -1,5 +1,5 @@
 ---
-status: archived
+status: in-progress
 created: 2025-11-17
 priority: high
 tags:
@@ -11,9 +11,9 @@ depends_on:
 - 187-vite-spa-migration
 - 223-chat-persistence-strategy
 - 227-ai-chat-ui-ux-modernization
-parent: 221-ai-orchestration-integration
+parent: 291-cli-runtime-web-orchestrator
 created_at: 2025-11-17T06:31:22.346Z
-updated_at: 2026-02-03T15:33:23.822356Z
+updated_at: 2026-02-04T05:47:07.696674Z
 transitions:
 - status: in-progress
   at: 2026-01-19T08:17:48.521994193Z
@@ -23,6 +23,8 @@ transitions:
   at: 2026-02-03T14:11:17.912047Z
 - status: archived
   at: 2026-02-03T15:33:23.822356Z
+- status: in-progress
+  at: 2026-02-04T05:47:07.696674Z
 ---
 
 # AI Chatbot for Web UI
@@ -34,7 +36,9 @@ transitions:
 
 ## Overview
 
-Add an **AI agentic system** to `@leanspec/ui` (Vite SPA) that uses AI SDK tools to manage specs conversationally. Users can create, update, search, and orchestrate specs through natural language - no CLI or terminal required.
+Add an **AI agentic system** to `@leanspec/ui` (Vite SPA) that uses native Rust AI tools to manage specs conversationally. Users can create, update, search, and orchestrate specs through natural language - no CLI or terminal required.
+
+**Current implementation**: AI chat is handled in Rust via `leanspec-core/src/ai_native/` and streamed by `leanspec-http` at `/api/chat` (see spec 264 for the chat-server retirement).
 
 **Core Value**: Transform the web UI into a fully interactive spec management platform powered by AI tools. The chatbot acts as an **intelligent agent** that executes LeanSpec operations (create, update, search, link, validate) and basic utilities (web search, calculations) through function calling.
 
@@ -77,6 +81,27 @@ Add an **AI agentic system** to `@leanspec/ui` (Vite SPA) that uses AI SDK tools
 5. **Progressive Enhancement**: Chat is optional - traditional UI still works for viewing
 
 ## Design
+
+### Architecture (Current)
+
+**Native Rust AI chat** replaces the Node.js sidecar plan:
+
+```
+Browser (UI)
+  ↓ POST /api/chat { messages: [...] }
+Rust HTTP Server (:3030)
+  ↓ Native AI chat (leanspec-core/src/ai_native)
+  ↓ OpenAI/Anthropic providers + tool calling
+  ↓ SSE stream response
+Browser (UI) via useChat
+```
+
+**Key modules**:
+- `rust/leanspec-core/src/ai_native/chat.rs` - streaming chat
+- `rust/leanspec-core/src/ai_native/tools/mod.rs` - LeanSpec tool registry
+- `rust/leanspec-http/src/handlers/chat_handler.rs` - `/api/chat` SSE handler
+
+**Legacy note**: The Node.js `@leanspec/chat-server` plan below is deprecated and superseded by native Rust chat (spec 264).
 
 ### npm Package Details
 
@@ -222,7 +247,7 @@ Browser (UI) via useChat hook
 
 ### AI Tools (Function Calling)
 
-**LeanSpec Tools** (9 core operations):
+**LeanSpec Tools** (10 core operations):
 1. `list_specs` - Filter by status/priority/tags
 2. `search_specs` - Semantic search
 3. `get_spec` - Fetch full spec by ID/name
@@ -232,6 +257,7 @@ Browser (UI) via useChat hook
 7. `get_dependencies` - Show dependency graph
 8. `get_stats` - Project statistics
 9. `validate_spec` - Check structure quality
+10. `run_subagent` - Dispatch task to a runner
 
 **Content Editing Tools** (5 operations):
 1. `edit_spec_section` - Update Overview/Design/Plan/Test/Notes
@@ -305,6 +331,18 @@ Context economy: stay focused.`;
 ```
 
 ## Plan
+
+### Native Rust Plan (Current)
+- [x] Native Rust chat streaming (`ai_native/chat.rs`)
+- [x] Provider integration (OpenAI/Anthropic)
+- [x] Tool registry with 14 tools (including `run_subagent`)
+- [x] `/api/chat` SSE handler in `leanspec-http`
+- [ ] UI chat flow verification (send message → stream response → tool execution)
+- [ ] Mobile layout and message actions in UI
+- [ ] Multi-runner configuration testing for `run_subagent`
+- [ ] Update docs to reflect native Rust architecture
+
+### Legacy Node.js Plan (Deprecated)
 
 ### Phase 1: Node.js Chat Server Package Setup (2 days)
 - [x] Create `packages/chat-server` package with standalone build
@@ -467,8 +505,16 @@ MAX_STEPS=10
 - ✅ Chat feels "instant" (streaming UX)
 - ✅ 80%+ accuracy on natural language queries
 - ✅ No crashes or errors in 100-message chat session
-- ✅ Published to npm and installable: `npm install -g @leanspec/chat-server`
-- ✅ Works in all deployment scenarios: local dev, Docker, systemd, desktop
+- ⚠️ Legacy: npm publish for `@leanspec/chat-server` (deprecated by native Rust)
+- ✅ Works in local dev and desktop scenarios with native Rust chat
+
+### Progress Notes
+
+**2026-02-04**
+- Verified native Rust AI chat streaming and tool registry.
+- Added `run_subagent` tool for runner dispatch.
+- Tests: `cargo test -p leanspec-core --features full`.
+- Pending: UI chat flow verification and multi-runner testing.
 
 ## Notes
 

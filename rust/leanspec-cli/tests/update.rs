@@ -286,6 +286,39 @@ fn test_update_replace_content() {
 }
 
 #[test]
+fn test_update_content_preserves_title() {
+    let ctx = TestContext::new();
+    let cwd = ctx.path();
+
+    init_project(cwd, true);
+    create_spec(cwd, "my-spec");
+
+    let path = cwd.join("specs").join("001-my-spec").join("README.md");
+    let original = read_file(&path);
+    let original_title = original
+        .lines()
+        .find(|line| line.trim_start().starts_with("# "))
+        .expect("missing title line")
+        .to_string();
+
+    let result = exec_cli(
+        &[
+            "update",
+            "001-my-spec",
+            "--content",
+            "## Overview\n\nUpdated overview.",
+        ],
+        cwd,
+    );
+    assert!(result.success);
+
+    let updated = read_file(&path);
+    assert!(updated.contains(&original_title));
+    assert!(updated.matches(&original_title).count() == 1);
+    assert!(updated.contains("Updated overview."));
+}
+
+#[test]
 fn test_update_checklist_toggle() {
     let ctx = TestContext::new();
     let cwd = ctx.path();

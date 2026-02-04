@@ -95,44 +95,10 @@ export function useSessionsStream(projectId: string | null) {
   useEffect(() => {
     if (!projectId || typeof window === 'undefined') return;
 
-    const base = import.meta.env.VITE_API_URL || window.location.origin;
-    const wsUrl = base.replace(/^http/, 'ws') + '/api/sessions/stream';
-    let ws: WebSocket | null = null;
+    const interval = window.setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: sessionKeys.list(projectId) });
+    }, 5000);
 
-    try {
-      ws = new WebSocket(wsUrl);
-
-      ws.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-
-          if (payload.type === 'session.updated' || payload.type === 'session.status') {
-            if (payload.session?.id) {
-              queryClient.setQueryData(
-                sessionKeys.detail(projectId, payload.session.id),
-                payload.session
-              );
-            }
-            queryClient.invalidateQueries({ queryKey: sessionKeys.list(projectId) });
-          } else if (payload.type === 'session.created') {
-            queryClient.invalidateQueries({ queryKey: sessionKeys.list(projectId) });
-          } else if (payload.type === 'session.deleted') {
-            queryClient.invalidateQueries({ queryKey: sessionKeys.list(projectId) });
-          }
-        } catch (error) {
-          console.error('WebSocket message parse error', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error', error);
-      };
-    } catch (error) {
-      console.error('WebSocket connection error', error);
-    }
-
-    return () => {
-      if (ws) ws.close();
-    };
+    return () => window.clearInterval(interval);
   }, [projectId, queryClient]);
 }

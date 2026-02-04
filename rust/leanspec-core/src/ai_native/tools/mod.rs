@@ -1,6 +1,8 @@
 //! LeanSpec AI tools (native)
 
 use std::collections::HashMap;
+use std::io::Write;
+use std::process::Stdio;
 use std::sync::Arc;
 
 use async_openai::types::chat::{ChatCompletionTool, ChatCompletionTools, FunctionObject};
@@ -12,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::ai_native::error::AiError;
+use crate::ai_native::runner_config::{resolve_runner_config, ResolvedRunnerConfig};
 
 type ToolExecutor = Arc<dyn Fn(Value) -> Result<String, String> + Send + Sync + 'static>;
 
@@ -42,6 +45,8 @@ impl ToolRegistry {
 pub struct ToolContext {
     pub base_url: String,
     pub project_id: Option<String>,
+    pub project_path: Option<String>,
+    pub runner_config: Option<ResolvedRunnerConfig>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -139,6 +144,15 @@ pub struct UpdateSubSpecInput {
     pub file: String,
     pub content: String,
     pub expected_content_hash: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RunSubagentInput {
+    pub project_id: Option<String>,
+    pub spec_id: Option<String>,
+    pub runner_id: Option<String>,
+    pub task: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -259,6 +273,48 @@ fn update_subspec_raw(
         body["expectedContentHash"] = Value::String(expected);
     }
     fetch_json("PATCH", &url, Some(body))
+}
+
+fn run_subagent_task(
+    runner_config: &ResolvedRunnerConfig,
+    project_path: &str,
+    spec_id: Option<String>,
+    task: &str,
+) -> Result<serde_json::Value, String> {
+    let command = runner_config
+        .command
+        .as_ref()
+        .ok_or_else(|| format!("Runner '{}' is not runnable", runner_config.id))?;
+
+    let mut cmd = std::process::Command::new(command);
+    cmd.args(&runner_config.args)
+        .current_dir(project_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .envs(&runner_config.env);
+
+    if let Some(spec_id) = spec_id {
+        cmd.env("LEANSPEC_SPEC_ID", spec_id);
+    }
+
+    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    if let Some(stdin) = child.stdin.as_mut() {
+        stdin
+            .write_all(task.as_bytes())
+            .map_err(|e| e.to_string())?;
+    }
+
+    let output = child.wait_with_output().map_err(|e| e.to_string())?;
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+    Ok(serde_json::json!({
+        "runnerId": runner_config.id,
+        "exitCode": output.status.code(),
+        "stdout": stdout,
+        "stderr": stderr,
+    }))
 }
 
 fn split_frontmatter(content: &str) -> (Option<String>, String) {
@@ -390,6 +446,8 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
     let ToolContext {
         base_url,
         project_id,
+        project_path,
+        runner_config,
     } = context;
 
     let mut tools: Vec<ChatCompletionTools> = Vec::new();
@@ -690,6 +748,34 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
     tools.push(update_subspec_tool);
     executors.insert("update_subspec".to_string(), update_subspec_exec);
 
+    let context_project_path = project_path.clone();
+    let context_runner_config = runner_config.clone();
+    let (run_subagent_tool, run_subagent_exec) = make_tool::<_, RunSubagentInput>(
+        "run_subagent",
+        "Run a task via an AI runner",
+        move |value| {
+            let params: RunSubagentInput = tool_input(value)?;
+            let project_path = context_project_path
+                .as_deref()
+                .ok_or_else(|| "projectPath is required for runner dispatch".to_string())?;
+            let runner_config = if let Some(runner_id) = params.runner_id.as_deref() {
+                resolve_runner_config(Some(project_path), Some(runner_id))
+                    .map_err(|e| e.to_string())?
+            } else if let Some(config) = context_runner_config.clone() {
+                Some(config)
+            } else {
+                resolve_runner_config(Some(project_path), None).map_err(|e| e.to_string())?
+            }
+            .ok_or_else(|| "Runner registry unavailable".to_string())?;
+
+            let output =
+                run_subagent_task(&runner_config, project_path, params.spec_id, &params.task)?;
+            serde_json::to_string(&output).map_err(|e| e.to_string())
+        },
+    )?;
+    tools.push(run_subagent_tool);
+    executors.insert("run_subagent".to_string(), run_subagent_exec);
+
     Ok(ToolRegistry {
         tools,
         executors: Arc::new(executors),
@@ -856,12 +942,14 @@ mod tests {
         let context = ToolContext {
             base_url: "http://localhost:3000".to_string(),
             project_id: None,
+            project_path: None,
+            runner_config: None,
         };
         let registry = build_tools(context);
         assert!(registry.is_ok());
         let reg = registry.unwrap();
         assert!(!reg.tools().is_empty());
-        assert_eq!(reg.tools().len(), 13);
+        assert_eq!(reg.tools().len(), 14);
     }
 
     #[test]

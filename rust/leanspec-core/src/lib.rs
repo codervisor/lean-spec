@@ -66,12 +66,12 @@ pub use types::{
 };
 pub use utils::{
     apply_checklist_toggles, apply_replacements, apply_section_updates, global_token_counter,
-    hash_content, rebuild_content, split_frontmatter, ArchiveError, ChecklistToggle,
-    ChecklistToggleResult, CompleteDependencyGraph, DependencyGraph, DiscoveredProject,
-    DiscoveryError, ImpactRadius, Insights, LoadError, MatchMode, MetadataUpdate, ProjectDiscovery,
-    Replacement, ReplacementResult, SectionMode, SectionUpdate, SpecArchiver, SpecLoader,
-    SpecStats, SpecWriter, TemplateError, TemplateLoader, TokenCount, TokenCounter, TokenStatus,
-    WriteError,
+    hash_content, preserve_title_heading, rebuild_content, split_frontmatter, ArchiveError,
+    ChecklistToggle, ChecklistToggleResult, CompleteDependencyGraph, DependencyGraph,
+    DiscoveredProject, DiscoveryError, ImpactRadius, Insights, LoadError, MatchMode,
+    MetadataUpdate, ProjectDiscovery, Replacement, ReplacementResult, SectionMode, SectionUpdate,
+    SpecArchiver, SpecLoader, SpecStats, SpecWriter, TemplateError, TemplateLoader, TokenCount,
+    TokenCounter, TokenStatus, WriteError,
 };
 pub use validators::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,

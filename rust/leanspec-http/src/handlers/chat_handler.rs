@@ -37,6 +37,18 @@ pub async fn chat_stream(
     }
 
     let base_url = resolve_http_base_url(&state);
+    let project_path = if let Some(project_id) = payload.project_id.as_deref() {
+        let registry = state.registry.read().await;
+        let project = registry.get(project_id).ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                axum::Json(ApiError::project_not_found(project_id)),
+            )
+        })?;
+        Some(project.path.to_string_lossy().to_string())
+    } else {
+        None
+    };
     let mut provider_id = payload.provider_id.clone();
     let mut model_id = payload.model_id.clone();
 
@@ -57,6 +69,7 @@ pub async fn chat_stream(
     let request_context = ChatRequestContext {
         messages: payload.messages.clone(),
         project_id: payload.project_id.clone(),
+        project_path,
         provider_id: provider_id.clone(),
         model_id: model_id.clone(),
         session_id: payload.session_id.clone(),

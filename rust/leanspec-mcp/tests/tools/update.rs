@@ -188,6 +188,35 @@ async fn test_update_replacements() {
 }
 
 #[tokio::test]
+async fn test_update_content_preserves_title() {
+    let temp = create_test_project(&[("001-feature-a", "planned", None)]);
+    set_specs_dir_env(&temp);
+
+    let path = temp.path().join("specs/001-feature-a/README.md");
+    let original = std::fs::read_to_string(&path).unwrap();
+    let original_title = original
+        .lines()
+        .find(|line| line.trim_start().starts_with("# "))
+        .expect("missing title line")
+        .to_string();
+
+    let result = call_tool(
+        "update",
+        json!({
+            "specPath": "001",
+            "content": "## Overview\n\nUpdated overview."
+        }),
+    )
+    .await;
+    assert!(result.is_ok());
+
+    let updated = std::fs::read_to_string(&path).unwrap();
+    assert!(updated.contains(&original_title));
+    assert!(updated.matches(&original_title).count() == 1);
+    assert!(updated.contains("Updated overview."));
+}
+
+#[tokio::test]
 async fn test_update_section_update() {
     let temp = create_test_project(&[("001-feature-a", "planned", None)]);
     set_specs_dir_env(&temp);

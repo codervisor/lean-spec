@@ -7,10 +7,9 @@ import { MachineSwitcher } from './MachineSwitcher';
 import { ChatSidebar } from './chat/ChatSidebar';
 import { SessionsDrawer } from './sessions/SessionsDrawer';
 import { useGlobalShortcuts } from '../hooks/useKeyboardShortcuts';
-import { useMediaQuery } from '../hooks/use-media-query';
 import { ErrorBoundary } from './shared/ErrorBoundary';
 import { BackToTop } from './shared/BackToTop';
-import { useKeyboardShortcuts, useChat } from '../contexts';
+import { useKeyboardShortcuts } from '../contexts';
 import { useCurrentProject, useProjectMutations } from '../hooks/useProjectQuery';
 import { useLayoutStore } from '../stores/layout';
 import { useMachineStore } from '../stores/machine';
@@ -39,8 +38,6 @@ function LayoutContent({
   const { isSidebarOpen, toggleSidebar } = useLayoutStore();
   const { toggleHelp } = useKeyboardShortcuts();
   const { machineModeEnabled } = useMachineStore();
-  const { isOpen: isChatOpen, sidebarWidth } = useChat();
-  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const resolvedRightSlot = navigationRightSlot ?? (machineModeEnabled ? <MachineSwitcher /> : undefined);
 
@@ -65,21 +62,20 @@ function LayoutContent({
       />
       <div className="flex w-full min-w-0">
         <MainSidebar mobileOpen={isSidebarOpen} onMobileClose={toggleSidebar} />
-        <main
-          className={cn(
-            "flex-1 min-w-0 w-full lg:w-[calc(100vw-var(--main-sidebar-width,240px))] min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out"
-          )}
-          style={{
-            marginRight: (!isMobile && isChatOpen) ? `${sidebarWidth}px` : 0
-          }}
-        >
-          <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>
-            <Outlet />
-          </ErrorBoundary>
-        </main>
+        <div className="flex-1 min-w-0 overflow-x-auto">
+          <main
+            className={cn(
+              "min-w-4xl w-full min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out"
+            )}
+          >
+            <ErrorBoundary resetKey={location.pathname} onReset={() => window.location.reload()}>
+              <Outlet />
+            </ErrorBoundary>
+          </main>
+        </div>
+        <ChatSidebar />
       </div>
       <BackToTop />
-      <ChatSidebar />
       <SessionsDrawer />
     </div>
   );

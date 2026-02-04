@@ -14,6 +14,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::ai_native::error::AiError;
 use crate::ai_native::providers::{select_provider, ProviderClient};
+use crate::ai_native::runner_config::resolve_runner_config;
 use crate::ai_native::streaming::StreamEvent;
 use crate::ai_native::tools::{build_tools, ToolContext, ToolRegistry};
 use crate::ai_native::types::{MessageRole, UIMessage, UIMessagePart};
@@ -25,6 +26,7 @@ const SYSTEM_PROMPT: &str = "You are LeanSpec Assistant. Manage specs through to
 pub struct ChatRequestContext {
     pub messages: Vec<UIMessage>,
     pub project_id: Option<String>,
+    pub project_path: Option<String>,
     pub provider_id: Option<String>,
     pub model_id: Option<String>,
     pub session_id: Option<String>,
@@ -57,6 +59,7 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
     let ChatRequestContext {
         messages,
         project_id,
+        project_path,
         provider_id,
         model_id,
         session_id: _,
@@ -68,9 +71,12 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
     let model_id = model_id.unwrap_or_else(|| config.settings.default_model_id.clone());
 
     let selection = select_provider(&config, &provider_id, &model_id)?;
+    let runner_config = resolve_runner_config(project_path.as_deref(), None)?;
     let tools = build_tools(ToolContext {
         base_url: base_url.clone(),
         project_id: project_id.clone(),
+        project_path: project_path.clone(),
+        runner_config,
     })?;
 
     let (sender, receiver) = mpsc::unbounded_channel();
@@ -721,6 +727,7 @@ mod tests {
         let context = ChatRequestContext {
             messages: vec![],
             project_id: Some("test-project".to_string()),
+            project_path: Some("/tmp/test-project".to_string()),
             provider_id: Some("anthropic".to_string()),
             model_id: Some("claude".to_string()),
             session_id: Some("session-123".to_string()),

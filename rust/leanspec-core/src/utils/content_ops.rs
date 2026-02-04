@@ -70,6 +70,27 @@ pub fn rebuild_content(frontmatter: Option<String>, body: &str) -> String {
     }
 }
 
+pub fn preserve_title_heading(original_body: &str, new_body: &str) -> String {
+    let Some(existing_title) = extract_title_line(original_body) else {
+        return new_body.to_string();
+    };
+
+    let new_title = extract_title_line(new_body);
+    if let Some(new_title) = new_title {
+        if new_title.trim() == existing_title.trim() {
+            return new_body.to_string();
+        }
+    }
+
+    let stripped = strip_leading_h1(new_body);
+    let trimmed = stripped.trim_start_matches('\n');
+    if trimmed.is_empty() {
+        format!("{}\n", existing_title.trim_end())
+    } else {
+        format!("{}\n\n{}", existing_title.trim_end(), trimmed)
+    }
+}
+
 pub fn apply_replacements(
     body: &str,
     replacements: &[Replacement],
@@ -172,6 +193,45 @@ pub fn apply_checklist_toggles(
     }
 
     Ok((lines.join("\n"), results))
+}
+
+fn extract_title_line(body: &str) -> Option<String> {
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        if trimmed.starts_with("# ") {
+            return Some(line.to_string());
+        }
+
+        return None;
+    }
+
+    None
+}
+
+fn strip_leading_h1(body: &str) -> String {
+    let mut lines: Vec<&str> = body.lines().collect();
+    let mut first_non_empty = None;
+    for (index, line) in lines.iter().enumerate() {
+        if !line.trim().is_empty() {
+            first_non_empty = Some(index);
+            break;
+        }
+    }
+
+    if let Some(index) = first_non_empty {
+        if lines[index].trim().starts_with("# ") {
+            lines.remove(index);
+            if index < lines.len() && lines[index].trim().is_empty() {
+                lines.remove(index);
+            }
+        }
+    }
+
+    lines.join("\n")
 }
 
 fn update_section(

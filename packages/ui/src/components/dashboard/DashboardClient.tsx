@@ -75,7 +75,7 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
   const completionRate = stats.completionRate ?? 0;
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-8">
+    <div className="min-h-screen w-full bg-background p-4 sm:p-8">
       <div className={cn("mx-auto space-y-6 sm:space-y-8", isWideMode ? "max-w-full" : "max-w-7xl")}>
         <div>
           <div className="flex items-center gap-3">
@@ -219,3 +219,4 @@ export function DashboardClient({ specs, stats, projectColor, projectName, baseP
     </div>
   );
 }
+

@@ -11,13 +11,13 @@ tags:
 - sub-agents
 - umbrella
 depends_on:
-- 094-ai-chatbot-web-integration
 - 239-ai-coding-session-management
 - 267-ai-session-runner-configuration
 - 288-runner-registry-consolidation
 created_at: 2026-01-16T07:46:14.630001Z
-updated_at: 2026-02-04T00:00:00.000000Z
+updated_at: 2026-02-04T05:45:49.010966Z
 ---
+
 # AI Multi-Agent Orchestration Platform
 
 ## Overview

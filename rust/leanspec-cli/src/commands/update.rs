@@ -2,9 +2,9 @@
 
 use colored::Colorize;
 use leanspec_core::{
-    apply_checklist_toggles, apply_replacements, apply_section_updates, rebuild_content,
-    split_frontmatter, ChecklistToggle, CompletionVerifier, FrontmatterParser, MatchMode,
-    Replacement, SectionMode, SectionUpdate, SpecLoader,
+    apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
+    rebuild_content, split_frontmatter, ChecklistToggle, CompletionVerifier, FrontmatterParser,
+    MatchMode, Replacement, SectionMode, SectionUpdate, SpecLoader,
 };
 use std::collections::HashMap;
 use std::error::Error;
@@ -147,7 +147,7 @@ pub fn run(
         let mut checklist_results = Vec::new();
 
         if let Some(body_override) = content_override.clone() {
-            updated_body = body_override;
+            updated_body = preserve_title_heading(&body, &body_override);
             content_notes.push("content replacement".to_string());
         } else {
             let match_mode = if match_all {

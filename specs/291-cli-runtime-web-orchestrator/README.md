@@ -21,13 +21,15 @@ transitions:
   at: 2026-02-03T15:33:23.827581Z
 ---
 
-# AI Chat Sub-Agent Orchestrator
+# AI Chat + Sub-Agent Orchestrator
+
+> **Consolidates**: This umbrella now includes spec 094 (AI Chatbot for Web UI) as a child spec.
 
 ## Overview
 
 ### The Strategic Vision
 
-**Simplify AI tool orchestration by treating our existing AI chat (spec 094) as a primary agent and AI runners as sub-agents.** This approach eliminates the complexity of full PTY/TTY emulation while still providing unified access to multiple AI coding tools.
+**Unified AI chat orchestration**: The AI chat interface (spec 094) serves as the primary agent, with AI runners (Claude, Copilot, OpenCode, etc.) invoked as sub-agents via the `runSubagent` tool. This approach eliminates the complexity of full PTY/TTY emulation while providing unified access to multiple AI coding tools.
 
 ### Key Insight
 
@@ -118,14 +120,19 @@ We don't need to fully emulate PTY/TTY because we don't need to natively interac
 
 This revised approach simplifies the umbrella scope:
 
-### 1. Unarchive and Extend Spec 094
+### 1. Extend Native Rust AI Chat (Spec 094)
 
-**Purpose**: Restore the AI Chatbot Web Integration as the primary agent.
+**Purpose**: The AI chat is now native Rust in `leanspec-core/src/ai_native/`. Spec 094's implementation has been migrated from Node.js to Rust (spec 264 complete).
 
-**Enhancements**:
-- Integrate runner configuration loading (API keys, model settings)
-- Add `runSubagent` tool for delegating to AI runners
-- Extend tool registry with sub-agent dispatch
+**Current Implementation:**
+- `chat.rs` - Streaming chat with OpenAI/Anthropic
+- `providers.rs` - Provider selection and client creation
+- `tools/mod.rs` - 13 LeanSpec tools with JsonSchema
+
+**Enhancements Needed:**
+- Add file-context injection for `run_subagent` (workspace path only today)
+- Add multi-runner configuration tests
+- Expand sub-agent session lifecycle (spec 295)
 
 ### 2. Sub-Agent Tool Implementation (New Spec)
 
@@ -147,68 +154,84 @@ This revised approach simplifies the umbrella scope:
 - Result collection and formatting
 - Optional: session persistence for long tasks
 
-## Relationship to Existing Specs
+## Child Specs
 
-### Restored (Un-archived)
+### Active
 
-- **094-ai-chatbot-web-integration** → Becomes primary agent implementation
+| Spec                               | Purpose                                          | Status      |
+| ---------------------------------- | ------------------------------------------------ | ----------- |
+| **094-ai-chatbot-web-integration** | Primary agent: Chat UI + `@leanspec/chat-server` | in-progress |
+| **295-runtime-session-registry**   | Sub-agent session management                     | planned     |
 
-### Child Specs (Simplified)
+### Archived (PTY Approach Deprecated)
 
-- **292-pty-process-layer** → **No longer needed** (archived)
-- **293-headless-vte-terminal** → **No longer needed** (archived)
-- **294-hybrid-rendering-engine** → **No longer needed** (archived)
-- **295-runtime-abstraction-session-registry** → **Simplified** to sub-agent session management
-- **296-incremental-data-protocol** → **No longer needed** (archived)
+| Spec                              | Reason                          |
+| --------------------------------- | ------------------------------- |
+| **292-pty-process-layer**         | PTY emulation no longer needed  |
+| **293-headless-vte-terminal**     | Terminal emulation unnecessary  |
+| **294-hybrid-rendering-engine**   | TUI rendering out of scope      |
+| **296-incremental-data-protocol** | Dirty rect streaming not needed |
 
-### Dependencies (Unchanged)
+## Dependencies
 
-- **239-ai-coding-session-management** → Session management foundation
-- **267-ai-session-runner-configuration** → Runner configs used by primary agent
-- **288-runner-registry-consolidation** → Registry provides runner definitions
+| Spec                                    | Purpose                              |
+| --------------------------------------- | ------------------------------------ |
+| **239-ai-coding-session-management**    | Session management foundation        |
+| **267-ai-session-runner-configuration** | Runner configs used by primary agent |
+| **288-runner-registry-consolidation**   | Registry provides runner definitions |
+| **186-rust-http-server**                | HTTP/WebSocket server infrastructure |
+| **187-vite-spa-migration**              | UI foundation                        |
 
-## Relationship to Existing Specs
-
-### Supersedes (Archived)
-
-- **094-ai-chatbot-web-integration** → Replaced by this architecture
-- **223-chat-persistence-strategy** → Absorbed into session registry
-- **227-ai-chat-ui-ux-modernization** → Absorbed into hybrid rendering
-- **235-chat-terminology-refactoring** → No longer relevant
-- **236-chat-config-api-migration** → No longer relevant
-
-### Extends/Integrates
+## Extends/Integrates
 
 - **168-leanspec-orchestration-platform** → Uses this for AI execution
-- **221-ai-orchestration-integration** → This becomes the execution layer
-- **239-ai-coding-session-management** → Enhanced with PTY/VTE layer
-- **267-ai-session-runner-configuration** → Runner configs used by PTY layer
-- **287/288-runner-registry** → Registry provides runtime definitions
-
-### Dependencies
-
-- **186-rust-http-server** → HTTP/WebSocket server infrastructure
-- **187-vite-spa-migration** → UI foundation
+- **221-ai-orchestration-integration** → Parent umbrella
 
 ## Plan
 
-### Phase 1: Restore Spec 094 (Week 1)
-- [ ] Un-archive spec 094 (set status back to in-progress)
-- [ ] Review current implementation state
-- [ ] Identify gaps for runner config integration
-- [ ] Archive obsolete PTY-related child specs (292, 293, 294, 296)
+### Phase 1: Activate Spec 094 (Week 1)
+- [x] Set spec 094 status to in-progress (now a child of this umbrella)
+- [x] Review current chat-server implementation state
+- [x] Identify gaps for runner config integration
+- [x] Verify archived PTY-related child specs (292, 293, 294, 296)
+
+#### Implementation Review Findings (2026-02-04)
+
+**Key Finding**: The Node.js `@leanspec/chat-server` was retired (spec 264 complete). AI chat is now **native Rust** in `leanspec-core/src/ai_native/`.
+
+**Current State:**
+- ✅ Native Rust AI chat with streaming (`chat.rs`)
+- ✅ OpenAI and Anthropic providers (`providers.rs`)
+- ✅ 14 LeanSpec tools implemented (`tools/mod.rs`)
+- ✅ Multi-step conversation with tool calling
+- ✅ `run_subagent` tool implemented
+- ✅ Runner registry integration for sub-agents
+
+**Existing Tools (14):**
+1. `list_specs`, `search_specs`, `get_spec`
+2. `update_spec_status`, `link_specs`, `unlink_specs`
+3. `validate_specs`, `read_spec`, `update_spec`
+4. `update_spec_section`, `toggle_checklist_item`
+5. `read_subspec`, `update_subspec`
+6. `run_subagent`
+
+**Gap Analysis:**
+- Need `runSubagent` tool to invoke AI runners as sub-agents
+- Need to integrate `RunnerRegistry` (spec 288) with ai_native module
+- Need context injection (workspace path, spec context) for sub-agents
 
 ### Phase 2: Runner Config Integration (Week 1-2)
-- [ ] Add runner config loader to chat-server
-- [ ] Implement config resolution (API keys, model settings)
-- [ ] Add model selection based on runner type
+- [x] Add `RunnerRegistry` access to `ai_native` module
+- [x] Implement runner config resolution (API keys, model settings)
+- [x] Add runner selection based on config
 - [ ] Test with multiple runner configurations
 
 ### Phase 3: Sub-Agent Tool (Week 2)
-- [ ] Create `runSubagent` tool definition with Zod schema
-- [ ] Implement runner dispatch logic
+- [x] Create `RunSubagentInput` struct with JsonSchema derive
+- [x] Implement `run_subagent` tool in `tools/mod.rs`
+- [x] Implement runner dispatch logic (invoke CLI runners)
 - [ ] Handle context injection (workspace path, file context)
-- [ ] Return formatted results to primary agent
+- [x] Return formatted results to primary agent
 
 ### Phase 4: Session Management (Week 3)
 - [ ] Simplify spec 295 to sub-agent focus
@@ -254,16 +277,6 @@ This revised approach simplifies the umbrella scope:
 | **Implementation time** | 3-4 weeks               | Actual vs planned      |
 | **User adoption**       | 50% prefer web over CLI | User surveys           |
 
-## Success Metrics
-
-| Metric                 | Target                  | Measurement             |
-| ---------------------- | ----------------------- | ----------------------- |
-| **Supported runtimes** | 6+ at launch            | Count                   |
-| **Rendering latency**  | <100ms                  | Performance monitoring  |
-| **TUI fidelity**       | 95%+ accurate           | Visual comparison tests |
-| **Session recovery**   | <1s restore             | Performance testing     |
-| **User adoption**      | 50% prefer web over CLI | User surveys            |
-
 ## Notes
 
 ### Architecture Decision: Sub-Agent vs PTY Emulation
@@ -298,3 +311,11 @@ This revised approach simplifies the umbrella scope:
 - **Context sharing**: Share relevant context between sub-agents
 - **Result caching**: Cache sub-agent results for similar queries
 - **Runner recommendations**: Suggest best runner for task type
+
+### Progress Notes
+
+**2026-02-04**
+- Verified native AI chat integration and runner registry wiring in Rust.
+- Implemented `run_subagent` tool with runner dispatch and structured output.
+- Tests: `cargo test -p leanspec-core --features full`.
+- Pending: context injection for file context and multi-runner configuration testing.

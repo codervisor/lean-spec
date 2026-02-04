@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-02-03
 priority: high
 tags:
@@ -7,12 +7,15 @@ tags:
 - runners
 - refactor
 - architecture
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-02-03T06:30:00Z
-updated_at: 2026-02-03T07:09:25.347923577Z
+updated_at: 2026-02-04T03:52:53.340203Z
+completed_at: 2026-02-04T03:52:53.340203Z
 transitions:
 - status: in-progress
   at: 2026-02-03T07:09:25.347923577Z
-parent: 168-leanspec-orchestration-platform
+- status: complete
+  at: 2026-02-04T03:52:53.340203Z
 ---
 
 # Runner Registry Consolidation
@@ -184,61 +187,61 @@ impl RunnerDefinition {
 
 ## Plan
 
-- [ ] **Phase 1: Extend RunnerDefinition + schema**
-  - [ ] Add `DetectionConfig` struct to runner.rs
-  - [ ] Add `detection` and `symlink_file` fields to `RunnerDefinition`
-  - [ ] Add `commands` field to `DetectionConfig` (for parity with init detection)
-  - [ ] Update serde derives with `#[serde(default)]` for backward compatibility
-  - [ ] Make `command` optional in `RunnerDefinition`, `RunnerConfig`, and schema
+- [x] **Phase 1: Extend RunnerDefinition + schema**
+  - [x] Add `DetectionConfig` struct to runner.rs
+  - [x] Add `detection` and `symlink_file` fields to `RunnerDefinition`
+  - [x] Add `commands` field to `DetectionConfig` (for parity with init detection)
+  - [x] Update serde derives with `#[serde(default)]` for backward compatibility
+  - [x] Make `command` optional in `RunnerDefinition`, `RunnerConfig`, and schema
   
-- [ ] **Phase 2: Migrate Builtin Detection Config**
-  - [ ] Add detection config to claude runner
-  - [ ] Add detection config to copilot runner
-  - [ ] Add detection config to codex runner
-  - [ ] Add detection config to opencode runner
-  - [ ] Add detection config to aider runner
-  - [ ] Add detection config to cline runner
-  - [ ] Add gemini runner with detection config
-  - [ ] Add cursor as IDE-only runner (command: None)
-  - [ ] Add windsurf as IDE-only runner (command: None)
-  - [ ] Add droid runner with detection config
-  - [ ] Add symlink_file to claude and gemini runners
-  - [ ] Align copilot detection to `copilot` (document assumptions if needed)
+- [x] **Phase 2: Migrate Builtin Detection Config**
+  - [x] Add detection config to claude runner
+  - [x] Add detection config to copilot runner
+  - [x] Add detection config to codex runner
+  - [x] Add detection config to opencode runner
+  - [x] Add detection config to aider runner
+  - [x] Add detection config to cline runner
+  - [x] Add gemini runner with detection config
+  - [x] Add cursor as IDE-only runner (command: None)
+  - [x] Add windsurf as IDE-only runner (command: None)
+  - [x] Add droid runner with detection config
+  - [x] Add symlink_file to claude and gemini runners
+  - [x] Align copilot detection to `copilot` (document assumptions if needed)
   
-- [ ] **Phase 3: Add Detection Methods to RunnerRegistry**
-  - [ ] Implement `detect_runner()` method
-  - [ ] Implement `detect_available()` method
-  - [ ] Implement `symlink_runners()` method
-  - [ ] Add detection logic (command exists, config dir exists, env var set, extension installed)
-  - [ ] Use $HOME or LEAN_SPEC_HOME for config/extension detection (to match current init behavior)
+- [x] **Phase 3: Add Detection Methods to RunnerRegistry**
+  - [x] Implement `detect_runner()` method
+  - [x] Implement `detect_available()` method
+  - [x] Implement `symlink_runners()` method
+  - [x] Add detection logic (command exists, config dir exists, env var set, extension installed)
+  - [x] Use $HOME or LEAN_SPEC_HOME for config/extension detection (to match current init behavior)
   
-- [ ] **Phase 4: Update Init Command**
-  - [ ] Import `RunnerRegistry` in init module
-  - [ ] Replace `detect_ai_tools()` with `registry.detect_available()`
-  - [ ] Replace `create_symlinks()` to use `registry.symlink_runners()`
-  - [ ] Update prompts to use runner definitions
+- [x] **Phase 4: Update Init Command**
+  - [x] Import `RunnerRegistry` in init module
+  - [x] Replace `detect_ai_tools()` with `registry.detect_available()`
+  - [x] Replace `create_symlinks()` to use `registry.symlink_runners()`
+  - [x] Update prompts to use runner definitions
   
-- [ ] **Phase 5: Deprecate ai_tools.rs**
-  - [ ] Mark `AiTool` enum as deprecated
-  - [ ] Remove duplicate detection logic
-  - [ ] Keep only symlink creation utility (or move to runner.rs)
+- [x] **Phase 5: Deprecate ai_tools.rs**
+  - [x] Mark `AiTool` enum as deprecated
+  - [x] Remove duplicate detection logic
+  - [x] Keep only symlink creation utility (or move to runner.rs)
   
-- [ ] **Phase 6: Documentation**
-  - [ ] Update runners.json schema to include detection fields
-  - [ ] Document how user-defined runners can include detection config
+- [x] **Phase 6: Documentation**
+  - [x] Update runners.json schema to include detection fields
+  - [x] Document how user-defined runners can include detection config
 
 ## Test
 
-- [ ] Existing runner tests pass
-- [ ] Detection works for all builtin runners (CLI and IDE)
-- [ ] `RunnerRegistry::detect_available()` returns correct results
-- [ ] IDE-only runners (cursor, windsurf) are detected but not runnable
-- [ ] `lean-spec run cursor` returns appropriate error for IDE-only tools
-- [ ] Symlink creation works via `symlink_runners()`
-- [ ] `lean-spec init` wizard shows detected tools correctly
-- [ ] User-defined runners in `runners.json` with detection config are detected
-- [ ] Backward compatibility: runners.json without detection fields still works
-- [ ] Command/extension detection uses $HOME (or LEAN_SPEC_HOME) to match current behavior
+- [x] Existing runner tests pass
+- [x] Detection works for all builtin runners (CLI and IDE)
+- [x] `RunnerRegistry::detect_available()` returns correct results
+- [x] IDE-only runners (cursor, windsurf) are detected but not runnable
+- [x] `lean-spec run cursor` returns appropriate error for IDE-only tools
+- [x] Symlink creation works via `symlink_runners()`
+- [x] `lean-spec init` wizard shows detected tools correctly
+- [x] User-defined runners in `runners.json` with detection config are detected
+- [x] Backward compatibility: runners.json without detection fields still works
+- [x] Command/extension detection uses $HOME (or LEAN_SPEC_HOME) to match current behavior
 
 ## Notes
 

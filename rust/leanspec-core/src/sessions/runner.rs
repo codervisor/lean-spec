@@ -119,6 +119,20 @@ impl RunnerDefinition {
     pub fn display_name(&self) -> String {
         self.name.clone().unwrap_or_else(|| self.id.clone())
     }
+
+    pub fn resolve_env(
+        &self,
+        extra_env: &HashMap<String, String>,
+    ) -> CoreResult<HashMap<String, String>> {
+        let mut env = HashMap::new();
+        for (key, value) in &self.env {
+            env.insert(key.clone(), interpolate_env(value)?);
+        }
+        for (key, value) in extra_env {
+            env.insert(key.clone(), value.clone());
+        }
+        Ok(env)
+    }
 }
 
 pub struct RunnerRegistry {
@@ -412,6 +426,142 @@ impl RunnerRegistry {
                     config_dirs: vec![".qwen-code".to_string()],
                     env_vars: vec!["DASHSCOPE_API_KEY".to_string()],
                     extensions: Vec::new(),
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "goose".to_string(),
+            RunnerDefinition {
+                id: "goose".to_string(),
+                name: Some("Goose".to_string()),
+                command: Some("goose".to_string()),
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: vec!["goose".to_string()],
+                    config_dirs: vec![".goose".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: Vec::new(),
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "openhands".to_string(),
+            RunnerDefinition {
+                id: "openhands".to_string(),
+                name: Some("OpenHands".to_string()),
+                command: Some("openhands".to_string()),
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: vec!["openhands".to_string()],
+                    config_dirs: vec![".openhands".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: Vec::new(),
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "continue".to_string(),
+            RunnerDefinition {
+                id: "continue".to_string(),
+                name: Some("Continue".to_string()),
+                command: Some("continue".to_string()),
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: vec!["continue".to_string()],
+                    config_dirs: vec![".continue".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: vec!["continue.continue".to_string()],
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "crush".to_string(),
+            RunnerDefinition {
+                id: "crush".to_string(),
+                name: Some("Crush".to_string()),
+                command: Some("crush".to_string()),
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: vec!["crush".to_string()],
+                    config_dirs: vec![".crush".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: Vec::new(),
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "roo".to_string(),
+            RunnerDefinition {
+                id: "roo".to_string(),
+                name: Some("Roo Code".to_string()),
+                command: None,
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: Vec::new(),
+                    config_dirs: vec![".roo".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: vec!["rooveterinaryinc.roo-cline".to_string()],
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "codebuddy".to_string(),
+            RunnerDefinition {
+                id: "codebuddy".to_string(),
+                name: Some("CodeBuddy".to_string()),
+                command: None,
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: Vec::new(),
+                    config_dirs: vec![".codebuddy".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: vec!["codebuddy.codebuddy".to_string()],
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "kilo".to_string(),
+            RunnerDefinition {
+                id: "kilo".to_string(),
+                name: Some("Kilo Code".to_string()),
+                command: None,
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: Vec::new(),
+                    config_dirs: vec![".kilocode".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: vec!["kilocode.kilo-code".to_string()],
+                }),
+                symlink_file: None,
+            },
+        );
+        runners.insert(
+            "augment".to_string(),
+            RunnerDefinition {
+                id: "augment".to_string(),
+                name: Some("Augment".to_string()),
+                command: None,
+                args: Vec::new(),
+                env: HashMap::new(),
+                detection: Some(DetectionConfig {
+                    commands: Vec::new(),
+                    config_dirs: vec![".augment".to_string()],
+                    env_vars: Vec::new(),
+                    extensions: vec!["augment.vscode-augment".to_string()],
                 }),
                 symlink_file: None,
             },
@@ -768,6 +918,15 @@ mod tests {
         assert!(registry.get("amp").is_some());
         assert!(registry.get("trae").is_some());
         assert!(registry.get("qwen-code").is_some());
+        // New runners added from npx skills
+        assert!(registry.get("goose").is_some());
+        assert!(registry.get("openhands").is_some());
+        assert!(registry.get("continue").is_some());
+        assert!(registry.get("crush").is_some());
+        assert!(registry.get("roo").is_some());
+        assert!(registry.get("codebuddy").is_some());
+        assert!(registry.get("kilo").is_some());
+        assert!(registry.get("augment").is_some());
     }
 
     #[test]

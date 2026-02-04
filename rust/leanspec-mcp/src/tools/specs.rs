@@ -7,9 +7,9 @@ use super::helpers::{
 use chrono::Utc;
 use leanspec_core::hash_content;
 use leanspec_core::{
-    apply_checklist_toggles, apply_replacements, apply_section_updates, rebuild_content,
-    split_frontmatter, ChecklistToggle, CompletionVerifier, FrontmatterParser, MatchMode,
-    Replacement, SectionMode, SectionUpdate, SpecLoader, TemplateLoader,
+    apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
+    rebuild_content, split_frontmatter, ChecklistToggle, CompletionVerifier, FrontmatterParser,
+    MatchMode, Replacement, SectionMode, SectionUpdate, SpecLoader, TemplateLoader,
 };
 use serde_json::{json, Value};
 
@@ -319,7 +319,7 @@ pub(crate) fn tool_update(specs_dir: &str, args: Value) -> Result<String, String
     let mut checklist_results = Vec::new();
 
     if let Some(content_override) = content_override {
-        updated_body = content_override;
+        updated_body = preserve_title_heading(&body, &content_override);
         content_notes.push("content replacement".to_string());
     } else {
         if !replacements.is_empty() {

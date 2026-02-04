@@ -47,9 +47,6 @@ export function ChatSidebar() {
     setTimeout(refreshConversations, 2000);
   };
 
-  // Mobile behavior
-  const effectiveWidth = isMobile ? '100%' : `${sidebarWidth}px`;
-
   return (
     <>
       {/* Backdrop for mobile */}
@@ -62,10 +59,12 @@ export function ChatSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 right-0 h-full bg-background border-l shadow-xl z-50 transition-transform duration-300 ease-in-out flex flex-col",
-          isOpen ? "translate-x-0" : "translate-x-full"
+          "bg-background border-l shadow-xl transition-all duration-300 ease-in-out flex flex-col overflow-hidden",
+          isMobile
+            ? `fixed top-0 right-0 h-full z-50 ${isOpen ? "translate-x-0" : "translate-x-full"}`
+            : "sticky top-14 h-[calc(100vh-3.5rem)]"
         )}
-        style={{ width: effectiveWidth }}
+        style={{ width: isMobile ? '100%' : (isOpen ? `${sidebarWidth}px` : 0) }}
       >
         {!isMobile && (
           <ResizeHandle
