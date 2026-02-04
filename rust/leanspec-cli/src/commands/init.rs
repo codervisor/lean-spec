@@ -217,7 +217,7 @@ fn resolve_example_run_command(target_dir: &Path) -> Option<String> {
     let json: Value = serde_json::from_str(&content).ok()?;
     let scripts = json.get("scripts")?.as_object()?;
 
-    // Prefer start scripts since they map to production-like entry points.
+    // prefer start scripts since they map to production-like entry points.
     if scripts.contains_key("start") {
         return Some("start".to_string());
     }
@@ -378,7 +378,7 @@ fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
                     .file_name()
                     .to_str()
                     .map(|name| name != ".git")
-                    // Include non-UTF-8 names in the check (treat as non-empty).
+                    // Treat non-UTF-8 names as real entries that prevent an empty directory.
                     .unwrap_or(true)
             })
             .peekable();
