@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   ModelsRegistryResponse,
   ModelsRegistryProviderRaw,
@@ -49,6 +49,7 @@ const toRegistryProvider = (provider: ModelsRegistryProviderRaw): RegistryProvid
     name: provider.name,
     isConfigured: provider.isConfigured,
     configuredEnvVars: provider.configuredEnvVars ?? [],
+    requiredEnvVars: provider.env ?? [],
     models,
   };
 };
@@ -76,6 +77,7 @@ export const useModelsRegistry = () => {
     configuredCount: 0,
     configuredProviderIds: [] as string[],
   });
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +118,10 @@ export const useModelsRegistry = () => {
       cancelled = true;
       controller.abort();
     };
+  }, [reloadTrigger]);
+
+  const reload = useCallback(() => {
+    setReloadTrigger((prev) => prev + 1);
   }, []);
 
   const defaultSelection = useMemo(() => selectDefaultModel(providers), [providers]);
@@ -126,5 +132,6 @@ export const useModelsRegistry = () => {
     error,
     summary,
     defaultSelection,
+    reload,
   };
 };

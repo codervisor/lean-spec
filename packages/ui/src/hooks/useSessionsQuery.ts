@@ -89,16 +89,26 @@ export function useSessionMutations(projectId: string | null) {
   };
 }
 
-export function useSessionsStream(projectId: string | null) {
+/**
+ * Stream/poll sessions periodically.
+ * @param projectId - The project ID to poll sessions for
+ * @param options - Optional configuration
+ * @param options.enabled - Whether polling is enabled (default: true). Set to false to disable polling.
+ */
+export function useSessionsStream(
+  projectId: string | null,
+  options?: { enabled?: boolean }
+) {
   const queryClient = useQueryClient();
+  const enabled = options?.enabled ?? true;
 
   useEffect(() => {
-    if (!projectId || typeof window === 'undefined') return;
+    if (!projectId || typeof window === 'undefined' || !enabled) return;
 
     const interval = window.setInterval(() => {
       queryClient.invalidateQueries({ queryKey: sessionKeys.list(projectId) });
     }, 5000);
 
     return () => window.clearInterval(interval);
-  }, [projectId, queryClient]);
+  }, [projectId, queryClient, enabled]);
 }

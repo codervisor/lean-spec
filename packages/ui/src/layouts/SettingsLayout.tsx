@@ -5,15 +5,14 @@ import { Settings, Palette, Cpu, Server, ChevronLeft, ChevronRight, X } from 'lu
 import { cn } from '@leanspec/ui-components';
 import { SettingsSkeleton } from '../components/shared/Skeletons';
 import { SidebarLink } from '../components/shared/SidebarLink';
+import { PageContainer } from '../components/shared/PageContainer';
 import { useCurrentProject } from '../hooks/useProjectQuery';
-import { useDisplayStore } from '../stores/display';
 
 const SETTINGS_SIDEBAR_STORAGE_KEY = 'settings-sidebar-collapsed';
 
 export function SettingsLayout() {
   const { t } = useTranslation('common');
   const { loading: projectLoading } = useCurrentProject();
-  const { displayMode } = useDisplayStore();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
@@ -129,12 +128,11 @@ export function SettingsLayout() {
         </div>
 
         <main className="flex-1 overflow-y-auto lg:pt-0 pt-14">
-          <div className={cn(
-            "mx-auto p-6 space-y-6 transition-[max-width] duration-300",
-            displayMode === 'wide' ? 'max-w-7xl' : 'max-w-4xl'
-          )}>
-            <Outlet />
-          </div>
+          <PageContainer>
+            <div className="space-y-6">
+              <Outlet />
+            </div>
+          </PageContainer>
         </main>
       </div>
     </div>

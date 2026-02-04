@@ -7,11 +7,15 @@ import { queryClient } from './lib/query-client';
 import { useSpecsSSE } from './hooks/useSpecsSSE';
 import { useSessionsStream } from './hooks/useSessionsQuery';
 import { useCurrentProject } from './hooks/useProjectQuery';
+import { useSessionsUiStore } from './stores/sessions-ui';
 
 function AppDataSync() {
   const { currentProject } = useCurrentProject();
+  const isDrawerOpen = useSessionsUiStore((state) => state.isDrawerOpen);
+  
   useSpecsSSE();
-  useSessionsStream(currentProject?.id ?? null);
+  // Only poll sessions when the drawer is open to avoid unnecessary API calls
+  useSessionsStream(currentProject?.id ?? null, { enabled: isDrawerOpen });
   return null;
 }
 

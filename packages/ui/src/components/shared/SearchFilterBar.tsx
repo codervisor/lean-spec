@@ -44,6 +44,7 @@ interface SearchFilterBarProps<TSort extends string = string> {
 
   resultCount?: number;
   totalCount?: number;
+  filteredCountKey?: string;
   className?: string;
 }
 
@@ -57,6 +58,7 @@ export function SearchFilterBar<TSort extends string = string>({
   filters = [],
   resultCount,
   totalCount,
+  filteredCountKey = 'specsPage.filters.filteredCount',
   className
 }: SearchFilterBarProps<TSort>) {
   const { t } = useTranslation('common');
@@ -163,7 +165,7 @@ export function SearchFilterBar<TSort extends string = string>({
       {/* Results summary (if filtered) */}
       {(resultCount !== undefined && totalCount !== undefined && resultCount < totalCount) && (
         <div className="text-sm text-muted-foreground">
-          {t('specsPage.filters.filteredCount', { filtered: resultCount, total: totalCount })}
+          {t(filteredCountKey, { filtered: resultCount, total: totalCount })}
         </div>
       )}
     </div>

@@ -196,6 +196,9 @@ pub async fn refresh_registry(
 pub struct SetApiKeyRequest {
     /// The API key value (can be empty to clear the key)
     pub api_key: String,
+    /// Optional base URL override (useful for Azure OpenAI which needs resource-specific URL)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_url: Option<String>,
 }
 
 /// Response for setting an API key
@@ -237,9 +240,12 @@ pub async fn set_provider_api_key(
         .position(|p| p.id == provider_id);
 
     let new_providers = if let Some(idx) = existing_provider_idx {
-        // Update existing provider's API key
+        // Update existing provider's API key and optionally base_url
         let mut providers = current_config.providers.clone();
         providers[idx].api_key = request.api_key.clone();
+        if let Some(base_url) = &request.base_url {
+            providers[idx].base_url = Some(base_url.clone());
+        }
         providers
     } else if let Some(reg_provider) = registry_provider {
         // Add new provider from registry with the API key
@@ -252,13 +258,22 @@ pub async fn set_provider_api_key(
         {
             let mut new_provider = reg_chat_provider.clone();
             new_provider.api_key = request.api_key.clone();
+            // Use provided base_url if available, otherwise use registry default
+            if let Some(base_url) = &request.base_url {
+                new_provider.base_url = Some(base_url.clone());
+            }
             providers.push(new_provider);
         } else {
             // Fallback: create a minimal provider entry
+            // Use provided base_url if available, otherwise use registry default
+            let final_base_url = request
+                .base_url
+                .clone()
+                .or_else(|| reg_provider.api.clone());
             providers.push(ChatProvider {
                 id: provider_id.clone(),
                 name: reg_provider.name.clone(),
-                base_url: reg_provider.api.clone(),
+                base_url: final_base_url,
                 api_key: request.api_key.clone(),
                 models: reg_provider
                     .models

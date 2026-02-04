@@ -30,8 +30,8 @@ export function PageContainer({
       <div
         className={cn(
           'mx-auto w-full transition-[max-width] duration-300',
-          // Normal: 4xl (max-w-4xl), Wide: 7xl (max-w-7xl)
-          displayMode === 'wide' ? 'max-w-7xl' : 'max-w-4xl',
+          // Normal: 6xl (max-w-6xl), Wide: full (w-full)
+          displayMode === 'wide' ? 'w-full' : 'max-w-6xl',
           contentClassName
         )}
       >

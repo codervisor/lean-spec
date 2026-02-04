@@ -1,4 +1,7 @@
 {
+  "errors": {
+    "unknownError": "Unknown error"
+  },
   "navigation": {
     "home": "Home",
     "specs": "Specs",
@@ -326,6 +329,7 @@
     "ai": {
       "providers": "AI Providers",
       "providersDescription": "Configure API keys for AI providers from the models.dev registry",
+      "searchPlaceholder": "Search providers or models...",
       "models": "Models",
       "addProvider": "Add Provider",
       "editProvider": "Edit Provider",
@@ -381,6 +385,9 @@
       "custom": "Custom",
       "configureApiKey": "Configure API Key",
       "apiKeyDialogDescription": "Enter your API key for {{provider}}",
+      "azureApiKeyDialogDescription": "Configure Azure OpenAI with your resource name and API key",
+      "azureResourceName": "Azure Resource Name",
+      "azureResourceNameHelp": "The name of your Azure OpenAI resource (e.g., 'my-openai-resource')",
       "apiKeyStorageNote": "API key will be stored locally in your config file",
       "editCustomProvider": "Edit Custom Provider",
       "customProviderDialogDescription": "Configure a custom provider with API endpoint and models",
@@ -405,6 +412,12 @@
         "models": "Model Count",
         "configured": "Configured First"
       },
+      "filters": {
+        "status": "Status",
+        "showConfiguredOnly": "Show configured only",
+        "showUnconfiguredOnly": "Show unconfigured only"
+      },
+      "filteredCount": "{{filtered}} of {{total}} providers",
       "toasts": {
         "defaultProvider": "Default provider set to {{provider}}"
       },
@@ -419,6 +432,7 @@
         "modelNameRequired": "Model name is required",
         "maxTokensInvalid": "Max tokens must be a number",
         "apiKeyRequired": "API key is required",
+        "azureResourceNameRequired": "Azure resource name is required",
         "modelsRequired": "At least one model is required"
       }
     },
@@ -473,7 +487,22 @@
         "idInvalid": "ID must be lowercase letters, numbers, and hyphens only",
         "commandRequired": "Command is required",
         "envInvalid": "Each environment line must be KEY=VALUE"
-      }
+      },
+      "searchPlaceholder": "Search runners...",
+      "noResults": "No runners match your filters",
+      "sort": {
+        "name": "Name",
+        "available": "Available First"
+      },
+      "filters": {
+        "status": "Status",
+        "showUnavailable": "Show unavailable",
+        "source": "Source",
+        "allSources": "All Sources",
+        "builtin": "Built-in",
+        "custom": "Custom"
+      },
+      "filteredCount": "{{filtered}} of {{total}} runners"
     },
     "appearance": {
       "theme": "Theme",

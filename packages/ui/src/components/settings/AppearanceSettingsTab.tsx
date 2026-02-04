@@ -9,7 +9,7 @@ import {
 } from '@leanspec/ui-components';
 import { useThemeStore } from '../../stores/theme';
 import { useDisplayStore } from '../../stores/display';
-import { Sun, Moon, Monitor, Maximize2, Minimize2 } from 'lucide-react';
+import { Sun, Moon, Monitor, Scan } from 'lucide-react';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -35,9 +35,9 @@ export function AppearanceSettingsTab() {
     { value: 'system', icon: Monitor, label: t('settings.appearance.system'), description: t('settings.appearance.systemDescription') },
   ];
 
-  const displayModes: Array<{ value: 'normal' | 'wide'; icon: typeof Minimize2; label: string; description: string }> = [
-    { value: 'normal', icon: Minimize2, label: t('settings.appearance.normal'), description: t('settings.appearance.normalDescription') },
-    { value: 'wide', icon: Maximize2, label: t('settings.appearance.wide'), description: t('settings.appearance.wideDescription') },
+  const displayModes: Array<{ value: 'normal' | 'wide'; icon: typeof Monitor; label: string; description: string }> = [
+    { value: 'normal', icon: Monitor, label: t('settings.appearance.normal'), description: t('settings.appearance.normalDescription') },
+    { value: 'wide', icon: Scan, label: t('settings.appearance.wide'), description: t('settings.appearance.wideDescription') },
   ];
 
   return (

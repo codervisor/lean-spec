@@ -63,5 +63,7 @@ export interface RegistryProvider {
   name: string;
   isConfigured: boolean;
   configuredEnvVars: string[];
+  /** Required environment variables for this provider */
+  requiredEnvVars: string[];
   models: RegistryModel[];
 }

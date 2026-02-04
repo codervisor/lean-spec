@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
@@ -14,19 +14,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
   ModelSelectorLogo,
   cn,
 } from '@leanspec/ui-components';
-import { Plus, Trash2, Edit2, CheckCircle, AlertCircle, Key, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, XCircle, Loader2 } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star } from 'lucide-react';
 import type { ChatConfig, Provider } from '../../types/chat-config';
-import type { RegistryProvider, RegistryModel } from '../../types/models-registry';
+import type { RegistryProvider } from '../../types/models-registry';
 import { SearchFilterBar } from '../shared/SearchFilterBar';
 import { useToast } from '../../contexts';
-
-
+import { useModelsRegistry } from '../../lib/use-models-registry';
+import { List, type RowComponentProps } from 'react-window';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -36,85 +37,9 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
   );
 }
 
-interface RegistryProviderRaw {
-  id: string;
-  name: string;
-  env?: string[];
-  api?: string;
-  doc?: string;
-  models?: Record<string, RegistryModelRaw>;
-  isConfigured: boolean;
-  configuredEnvVars?: string[];
-}
 
-interface RegistryModelRaw {
-  id: string;
-  name: string;
-  tool_call?: boolean;
-  reasoning?: boolean;
-  modalities?: { input?: string[]; output?: string[] };
-  limit?: { context?: number; output?: number };
-}
 
-type ValidationStatus = 'idle' | 'checking' | 'valid' | 'invalid';
-
-interface ProviderValidationState {
-  status: ValidationStatus;
-  error?: string;
-  checkedAt?: number;
-}
-
-const PROVIDER_VALIDATION_TTL_MS = 5 * 60 * 1000;
-const PROVIDER_VALIDATION_CACHE_KEY = 'settings-provider-validation-cache';
-
-const formatTimestamp = (timestamp?: number) => {
-  if (!timestamp) return '';
-  return new Date(timestamp).toLocaleString();
-};
-
-const readProviderValidationCache = (): Record<string, { valid: boolean; error?: string | null; checkedAt: number }> => {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = localStorage.getItem(PROVIDER_VALIDATION_CACHE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, { valid: boolean; error?: string | null; checkedAt: number }>;
-    }
-  } catch {
-    return {};
-  }
-  return {};
-};
-
-const writeProviderValidationCache = (cache: Record<string, { valid: boolean; error?: string | null; checkedAt: number }>) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(PROVIDER_VALIDATION_CACHE_KEY, JSON.stringify(cache));
-};
-
-function toRegistryProvider(raw: RegistryProviderRaw): RegistryProvider {
-  const models: RegistryModel[] = Object.values(raw.models ?? {}).map((m) => ({
-    id: m.id,
-    name: m.name,
-    toolCall: Boolean(m.tool_call),
-    reasoning: Boolean(m.reasoning),
-    vision: m.modalities?.input?.includes('image') ?? false,
-    contextWindow: m.limit?.context,
-    maxOutput: m.limit?.output,
-  }));
-  // Sort: toolCall first, then by context window
-  models.sort((a, b) => {
-    if (a.toolCall !== b.toolCall) return b.toolCall ? 1 : -1;
-    return (b.contextWindow ?? 0) - (a.contextWindow ?? 0);
-  });
-  return {
-    id: raw.id,
-    name: raw.name,
-    isConfigured: raw.isConfigured,
-    configuredEnvVars: raw.configuredEnvVars ?? [],
-    models,
-  };
-}
+const AI_FILTERS_STORAGE_KEY = 'settings-ai-filters';
 
 function isRegistryProvider(p: RegistryProvider | Provider): p is RegistryProvider {
   return 'isConfigured' in p;
@@ -124,10 +49,13 @@ export function AISettingsTab() {
   const { t } = useTranslation('common');
   const { toast } = useToast();
 
-  // Registry providers (from models.dev)
-  const [registryProviders, setRegistryProviders] = useState<RegistryProvider[]>([]);
-  const [registryLoading, setRegistryLoading] = useState(true);
-  const [registryError, setRegistryError] = useState<string | null>(null);
+  // Registry providers (from models.dev) - use shared hook
+  const {
+    providers: registryProviders,
+    loading: registryLoading,
+    error: registryError,
+    reload: reloadRegistry,
+  } = useModelsRegistry();
 
   // Chat config (for defaults and custom providers)
   const [config, setConfig] = useState<ChatConfig | null>(null);
@@ -139,33 +67,11 @@ export function AISettingsTab() {
   const [editingCustomProvider, setEditingCustomProvider] = useState<Provider | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [providerValidation, setProviderValidation] = useState<Record<string, ProviderValidationState>>({});
-  const [validatingProviders, setValidatingProviders] = useState<Record<string, boolean>>({});
-  const [validatingAllProviders, setValidatingAllProviders] = useState(false);
-  const [autoValidated, setAutoValidated] = useState(false);
-
   // Filter/Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'models' | 'configured'>('name');
   const [filterConfigured, setFilterConfigured] = useState(false);
   const [filterUnconfigured, setFilterUnconfigured] = useState(false);
-
-  // Load registry providers
-  const loadRegistry = async () => {
-    try {
-      setRegistryLoading(true);
-      const res = await fetch('/api/models/providers?agenticOnly=true');
-      if (!res.ok) throw new Error('Failed to load models registry');
-      const data = await res.json();
-      const providers = (data.providers ?? []).map(toRegistryProvider);
-      setRegistryProviders(providers);
-      setRegistryError(null);
-    } catch (err) {
-      setRegistryError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setRegistryLoading(false);
-    }
-  };
 
   // Load chat config
   const loadConfig = async () => {
@@ -183,99 +89,39 @@ export function AISettingsTab() {
   };
 
   useEffect(() => {
-    loadRegistry();
     loadConfig();
   }, []);
 
-
-  const updateProviderValidationCache = (providerId: string, valid: boolean, error?: string | null) => {
-    const cache = readProviderValidationCache();
-    cache[providerId] = {
-      valid,
-      error,
-      checkedAt: Date.now(),
-    };
-    writeProviderValidationCache(cache);
-  };
-
-  const parseValidationError = useCallback(async (response: Response) => {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
-      const data = await response.json();
-      if (data?.error?.message) return data.error.message as string;
-      if (data?.message) return data.message as string;
+      const raw = localStorage.getItem(AI_FILTERS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        searchQuery?: string;
+        sortBy?: 'name' | 'models' | 'configured';
+        filterConfigured?: boolean;
+        filterUnconfigured?: boolean;
+      };
+      if (typeof parsed.searchQuery === 'string') setSearchQuery(parsed.searchQuery);
+      if (parsed.sortBy === 'name' || parsed.sortBy === 'models' || parsed.sortBy === 'configured') setSortBy(parsed.sortBy);
+      if (typeof parsed.filterConfigured === 'boolean') setFilterConfigured(parsed.filterConfigured);
+      if (typeof parsed.filterUnconfigured === 'boolean') setFilterUnconfigured(parsed.filterUnconfigured);
     } catch {
-      // ignore
+      // Ignore storage errors
     }
-    return response.statusText || t('errors.unknownError');
-  }, [t]);
+  }, []);
 
-  const validateProvider = useCallback(async (providerId: string) => {
-    if (!config) return;
-    setValidatingProviders((prev) => ({ ...prev, [providerId]: true }));
-    setProviderValidation((prev) => ({
-      ...prev,
-      [providerId]: {
-        ...prev[providerId],
-        status: 'checking',
-      },
-    }));
-
-    const providerConfig = config.providers.find((provider) => provider.id === providerId);
-    const modelId = providerConfig?.models?.[0]?.id;
-
-    try {
-      const response = await fetch('/api/chat/config/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ providerId, modelId }),
-      });
-
-      if (!response.ok) {
-        const message = await parseValidationError(response);
-        updateProviderValidationCache(providerId, false, message);
-        setProviderValidation((prev) => ({
-          ...prev,
-          [providerId]: {
-            status: 'invalid',
-            error: message,
-            checkedAt: Date.now(),
-          },
-        }));
-        return;
-      }
-
-      const data = await response.json();
-      const isValid = Boolean(data?.valid);
-      const errorMessage = data?.error ?? null;
-
-      updateProviderValidationCache(providerId, isValid, errorMessage);
-      setProviderValidation((prev) => ({
-        ...prev,
-        [providerId]: {
-          status: isValid ? 'valid' : 'invalid',
-          error: errorMessage || undefined,
-          checkedAt: Date.now(),
-        },
-      }));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t('errors.unknownError');
-      updateProviderValidationCache(providerId, false, message);
-      setProviderValidation((prev) => ({
-        ...prev,
-        [providerId]: {
-          status: 'invalid',
-          error: message,
-          checkedAt: Date.now(),
-        },
-      }));
-    } finally {
-      setValidatingProviders((prev) => {
-        const next = { ...prev };
-        delete next[providerId];
-        return next;
-      });
-    }
-  }, [config, parseValidationError, t]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const payload = {
+      searchQuery,
+      sortBy,
+      filterConfigured,
+      filterUnconfigured,
+    };
+    localStorage.setItem(AI_FILTERS_STORAGE_KEY, JSON.stringify(payload));
+  }, [searchQuery, sortBy, filterConfigured, filterUnconfigured]);
 
   // Identify custom providers (in config but not in registry)
   const customProviders = useMemo(() => {
@@ -284,59 +130,6 @@ export function AISettingsTab() {
     return config.providers.filter((p) => !registryIds.has(p.id));
   }, [config, registryProviders]);
 
-  const configuredProviderIds = useMemo(() => {
-    const ids = new Set<string>();
-    registryProviders.forEach((provider) => {
-      if (provider.isConfigured) ids.add(provider.id);
-    });
-    customProviders.forEach((provider) => {
-      if (provider.hasApiKey) ids.add(provider.id);
-    });
-    return Array.from(ids);
-  }, [registryProviders, customProviders]);
-
-  const handleRevalidateProviders = async () => {
-    if (configuredProviderIds.length === 0) return;
-    setValidatingAllProviders(true);
-    await Promise.allSettled(configuredProviderIds.map((providerId) => validateProvider(providerId)));
-    setValidatingAllProviders(false);
-  };
-
-  useEffect(() => {
-    if (autoValidated || configuredProviderIds.length === 0) return;
-    const cache = readProviderValidationCache();
-    const now = Date.now();
-    const cachedState: Record<string, ProviderValidationState> = {};
-    const toValidate: string[] = [];
-
-    configuredProviderIds.forEach((providerId) => {
-      const cached = cache[providerId];
-      if (cached && now - cached.checkedAt < PROVIDER_VALIDATION_TTL_MS) {
-        cachedState[providerId] = {
-          status: cached.valid ? 'valid' : 'invalid',
-          error: cached.error ?? undefined,
-          checkedAt: cached.checkedAt,
-        };
-      } else {
-        toValidate.push(providerId);
-      }
-    });
-
-    if (Object.keys(cachedState).length > 0) {
-      setProviderValidation((prev) => ({ ...prev, ...cachedState }));
-    }
-
-    if (toValidate.length === 0) {
-      setAutoValidated(true);
-      return;
-    }
-
-    setValidatingAllProviders(true);
-    Promise.allSettled(toValidate.map((providerId) => validateProvider(providerId))).finally(() => {
-      setValidatingAllProviders(false);
-      setAutoValidated(true);
-    });
-  }, [autoValidated, configuredProviderIds, validateProvider]);
 
   // Refresh registry from models.dev
   const handleRefreshRegistry = async () => {
@@ -344,7 +137,7 @@ export function AISettingsTab() {
       setRefreshing(true);
       const res = await fetch('/api/models/refresh', { method: 'POST' });
       if (!res.ok) throw new Error('Failed to refresh');
-      await loadRegistry();
+      reloadRegistry();
     } catch {
       // Ignore refresh errors
     } finally {
@@ -352,18 +145,18 @@ export function AISettingsTab() {
     }
   };
 
-  // Set API key for a provider
-  const handleSetApiKey = async (providerId: string, apiKey: string) => {
+  // Set API key for a provider (with optional base URL for providers like Azure)
+  const handleSetApiKey = async (providerId: string, apiKey: string, baseUrl?: string) => {
     try {
       const res = await fetch(`/api/models/providers/${providerId}/key`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey }),
+        body: JSON.stringify({ apiKey, baseUrl }),
       });
       if (!res.ok) throw new Error('Failed to set API key');
       // Reload both registry and config
-      await Promise.all([loadRegistry(), loadConfig()]);
-      void validateProvider(providerId);
+      reloadRegistry();
+      await loadConfig();
     } catch (err) {
       throw err;
     }
@@ -438,10 +231,6 @@ export function AISettingsTab() {
 
     await saveConfig(newConfig);
   };
-
-  useEffect(() => {
-    setAutoValidated(false);
-  }, [configuredProviderIds.join('|')]);
 
   // All providers for defaults dropdown
   const allProviders = useMemo(() => {
@@ -525,7 +314,7 @@ export function AISettingsTab() {
           <AlertCircle className="h-5 w-5" />
           <p>{registryError}</p>
         </div>
-        <Button onClick={loadRegistry} className="mt-4">
+        <Button onClick={reloadRegistry} className="mt-4">
           {t('actions.retry')}
         </Button>
       </div>
@@ -533,128 +322,106 @@ export function AISettingsTab() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col h-[calc(100vh-7rem)] overflow-hidden">
       {/* Registry Providers Section */}
-      <section className="space-y-4 relative">
-        <div className="sticky top-0 bg-background z-10 pb-2 -mt-1 pt-1 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-semibold">{t('settings.ai.providers')}</h3>
-              <p className="text-sm text-muted-foreground mt-0.5">{t('settings.ai.providersDescription')}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEditingCustomProvider(null);
-                  setShowCustomProviderDialog(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('settings.ai.addCustomProvider')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRevalidateProviders}
-                disabled={validatingAllProviders || configuredProviderIds.length === 0}
-              >
-                <Loader2 className={`h-4 w-4 mr-2 ${validatingAllProviders ? 'animate-spin' : ''}`} />
-                {t('settings.ai.validation.revalidateAll')}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleRefreshRegistry} disabled={refreshing}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                {t('settings.ai.refreshRegistry')}
-              </Button>
-            </div>
+      <div className="flex-none space-y-4 pb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold">{t('settings.ai.providers')}</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">{t('settings.ai.providersDescription')}</p>
           </div>
-
-          <SearchFilterBar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder={t('settings.ai.searchPlaceholder')}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            sortOptions={[
-              { value: 'name', label: t('settings.ai.sort.name') },
-              { value: 'models', label: t('settings.ai.sort.models') },
-              { value: 'configured', label: t('settings.ai.sort.configured') },
-            ]}
-            filters={[
-              {
-                label: t('settings.ai.filters.status'),
-                options: [
-                  {
-                    id: 'configured',
-                    label: t('settings.ai.filters.showConfiguredOnly'),
-                    checked: filterConfigured,
-                    onCheckedChange: setFilterConfigured
-                  },
-                  {
-                    id: 'unconfigured',
-                    label: t('settings.ai.filters.showUnconfiguredOnly'),
-                    checked: filterUnconfigured,
-                    onCheckedChange: setFilterUnconfigured
-                  }
-                ]
-              }
-            ]}
-            resultCount={filteredProviders.length}
-            totalCount={registryProviders.length + customProviders.length}
-          />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefreshRegistry} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {t('settings.ai.refreshRegistry')}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingCustomProvider(null);
+                setShowCustomProviderDialog(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('settings.ai.addCustomProvider')}
+            </Button>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {filteredProviders.map((provider) => {
-            const isRegistry = isRegistryProvider(provider);
-            if (isRegistry) {
-              return (
-                <RegistryProviderCard
-                  key={provider.id}
-                  provider={provider}
-                  isDefault={config?.settings.defaultProviderId === provider.id}
-                  validation={providerValidation[provider.id]}
-                  isValidating={Boolean(validatingProviders[provider.id])}
-                  onConfigureKey={() => setShowApiKeyDialog(provider.id)}
-                />
-              );
+        <SearchFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder={t('settings.ai.searchPlaceholder')}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          sortOptions={[
+            { value: 'name', label: t('settings.ai.sort.name') },
+            { value: 'models', label: t('settings.ai.sort.models') },
+            { value: 'configured', label: t('settings.ai.sort.configured') },
+          ]}
+          filters={[
+            {
+              label: t('settings.ai.filters.status'),
+              options: [
+                {
+                  id: 'configured',
+                  label: t('settings.ai.filters.showConfiguredOnly'),
+                  checked: filterConfigured,
+                  onCheckedChange: setFilterConfigured
+                },
+                {
+                  id: 'unconfigured',
+                  label: t('settings.ai.filters.showUnconfiguredOnly'),
+                  checked: filterUnconfigured,
+                  onCheckedChange: setFilterUnconfigured
+                }
+              ]
             }
+          ]}
+          resultCount={filteredProviders.length}
+          totalCount={registryProviders.length + customProviders.length}
+          filteredCountKey="settings.ai.filteredCount"
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-2">
+        {filteredProviders.map((provider) => {
+          const isRegistry = isRegistryProvider(provider);
+          if (isRegistry) {
             return (
-              <CustomProviderCard
+              <RegistryProviderCard
                 key={provider.id}
                 provider={provider}
                 isDefault={config?.settings.defaultProviderId === provider.id}
-                validation={providerValidation[provider.id]}
-                isValidating={Boolean(validatingProviders[provider.id])}
-                onEdit={() => {
-                  setEditingCustomProvider(provider);
-                  setShowCustomProviderDialog(true);
-                }}
-                onDelete={() => handleDeleteCustomProvider(provider.id)}
+                onSetDefault={() => handleSetDefaultProvider(provider.id)}
+                onConfigureKey={() => setShowApiKeyDialog(provider.id)}
               />
             );
-          })}
-        </div>
-      </section>
-
-
-
-
+          }
+          return (
+            <CustomProviderCard
+              key={provider.id}
+              provider={provider}
+              isDefault={config?.settings.defaultProviderId === provider.id}
+              onSetDefault={() => handleSetDefaultProvider(provider.id)}
+              onEdit={() => {
+                setEditingCustomProvider(provider);
+                setShowCustomProviderDialog(true);
+              }}
+              onDelete={() => handleDeleteCustomProvider(provider.id)}
+            />
+          );
+        })}
+      </div>
 
       {/* API Key Dialog */}
       {showApiKeyDialog && (
         <ApiKeyDialog
           providerId={showApiKeyDialog}
           providerName={registryProviders.find((p) => p.id === showApiKeyDialog)?.name ?? showApiKeyDialog}
-          isDefault={config?.settings.defaultProviderId === showApiKeyDialog}
-          onSave={async (apiKey) => {
-            await handleSetApiKey(showApiKeyDialog, apiKey);
-            setShowApiKeyDialog(null);
-          }}
-          onSetDefault={async (apiKey) => {
-            await handleSetApiKey(showApiKeyDialog, apiKey);
-            await handleSetDefaultProvider(showApiKeyDialog);
+          requiredEnvVars={registryProviders.find((p) => p.id === showApiKeyDialog)?.requiredEnvVars ?? []}
+          onSave={async (apiKey, baseUrl) => {
+            await handleSetApiKey(showApiKeyDialog, apiKey, baseUrl);
             setShowApiKeyDialog(null);
           }}
           onCancel={() => setShowApiKeyDialog(null)}
@@ -665,16 +432,9 @@ export function AISettingsTab() {
       {showCustomProviderDialog && (
         <CustomProviderDialog
           provider={editingCustomProvider}
-          isDefault={editingCustomProvider ? config?.settings.defaultProviderId === editingCustomProvider.id : false}
           existingIds={[...registryProviders.map((p) => p.id), ...customProviders.map((p) => p.id)]}
           onSave={async (provider) => {
             await handleSaveCustomProvider(provider);
-            setShowCustomProviderDialog(false);
-            setEditingCustomProvider(null);
-          }}
-          onSetDefault={async (provider) => {
-            await handleSaveCustomProvider(provider);
-            await handleSetDefaultProvider(provider.id);
             setShowCustomProviderDialog(false);
             setEditingCustomProvider(null);
           }}
@@ -692,20 +452,55 @@ export function AISettingsTab() {
 interface RegistryProviderCardProps {
   provider: RegistryProvider;
   isDefault: boolean;
-  validation?: ProviderValidationState;
-  isValidating?: boolean;
+  onSetDefault: () => void;
   onConfigureKey: () => void;
 }
 
-function RegistryProviderCard({ provider, isDefault, validation, isValidating, onConfigureKey }: RegistryProviderCardProps) {
+interface RowData {
+  models: RegistryProvider['models'];
+  t: (key: string, options?: any) => string;
+}
+
+function ModelRow({ index, style, models, t }: RowComponentProps<RowData>) {
+  const model = models[index];
+  return (
+    <div style={style} className="flex items-center gap-2 text-xs">
+      <span className="font-mono text-muted-foreground truncate flex-1">{model.id}</span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {model.toolCall && (
+          <span title={t('settings.ai.capabilities.toolCall')} className="text-blue-500">
+            <Zap className="h-3 w-3" />
+          </span>
+        )}
+        {model.reasoning && (
+          <span title={t('settings.ai.capabilities.reasoning')} className="text-purple-500">
+            <Brain className="h-3 w-3" />
+          </span>
+        )}
+        {model.vision && (
+          <span title={t('settings.ai.capabilities.vision')} className="text-green-500">
+            <ImageIcon className="h-3 w-3" />
+          </span>
+        )}
+        {model.contextWindow && (
+          <span className="text-muted-foreground tabular-nums">
+            {Math.round(model.contextWindow / 1000)}k
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RegistryProviderCard({ provider, isDefault, onSetDefault, onConfigureKey }: RegistryProviderCardProps) {
   const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
 
   const agenticModels = provider.models.filter((m) => m.toolCall);
   const modelCount = provider.models.length;
   const agenticCount = agenticModels.length;
-  const validationStatus: ValidationStatus = isValidating ? 'checking' : validation?.status ?? 'idle';
-  const lastCheckedLabel = formatTimestamp(validation?.checkedAt);
+
+  const itemData = useMemo(() => ({ models: agenticModels, t }), [agenticModels, t]);
 
   return (
     <div
@@ -744,24 +539,6 @@ function RegistryProviderCard({ provider, isDefault, validation, isValidating, o
                         {t('settings.ai.noKey')}
                       </Badge>
                     )}
-                    {provider.isConfigured && validationStatus !== 'idle' && (
-                      <Badge
-                        variant={validationStatus === 'invalid' ? 'destructive' : 'outline'}
-                        className={cn(
-                          'text-xs gap-1 h-5 px-1.5',
-                          validationStatus === 'valid' && 'text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
-                        )}
-                      >
-                        {validationStatus === 'checking' && <Loader2 className="h-3 w-3 animate-spin" />}
-                        {validationStatus === 'valid' && <CheckCircle className="h-3 w-3" />}
-                        {validationStatus === 'invalid' && <XCircle className="h-3 w-3" />}
-                        {validationStatus === 'checking'
-                          ? t('settings.ai.validation.checking')
-                          : validationStatus === 'valid'
-                            ? t('settings.ai.validation.valid')
-                            : t('settings.ai.validation.invalid')}
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded inline-block">
                     <span>{provider.id}</span>
@@ -782,14 +559,6 @@ function RegistryProviderCard({ provider, isDefault, validation, isValidating, o
                   <div className="text-xs text-muted-foreground">
                     {t('settings.ai.details.modelCount', { count: modelCount, agentic: agenticCount })}
                   </div>
-                  {provider.isConfigured && lastCheckedLabel && (
-                    <div className="text-xs text-muted-foreground">
-                      {t('settings.ai.validation.lastChecked', { time: lastCheckedLabel })}
-                    </div>
-                  )}
-                  {validation?.error && (
-                    <div className="text-xs text-destructive">{validation.error}</div>
-                  )}
                 </div>
               </HoverCardContent>
             </HoverCard>
@@ -797,17 +566,31 @@ function RegistryProviderCard({ provider, isDefault, validation, isValidating, o
 
           <div className="flex items-center gap-1 shrink-0">
             <Button
-              variant={provider.isConfigured ? 'ghost' : 'default'} // Highlight if not configured (call to action)
+              variant="ghost"
               size="sm"
-              className={cn("h-8 ml-2", provider.isConfigured && "text-muted-foreground hover:text-foreground hover:bg-muted")}
+              className="h-8 ml-2 text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={(e) => {
                 e.stopPropagation();
                 onConfigureKey();
               }}
             >
-              <Key className="h-3.5 w-3.5 mr-1.5" />
+              <Settings className="h-3.5 w-3.5 mr-1.5" />
               {provider.isConfigured ? t('settings.ai.configure') : t('settings.ai.setUp')}
             </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onSetDefault} disabled={isDefault}>
+                  <Star className={cn("h-4 w-4 mr-2", isDefault && "fill-current")} />
+                  {t('settings.ai.setDefault')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -827,43 +610,16 @@ function RegistryProviderCard({ provider, isDefault, validation, isValidating, o
         )}
       </div>
 
-      {/* Expanded models list */}
+      {/* Expanded models list with virtual scroll */}
       {expanded && agenticModels.length > 0 && (
         <div className="border-t bg-muted/30 pl-[72px] pr-4 py-3">
-          <div className="space-y-1.5">
-            {agenticModels.slice(0, 10).map((model) => (
-              <div key={model.id} className="flex items-center gap-2 text-xs">
-                <span className="font-mono text-muted-foreground truncate flex-1">{model.id}</span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {model.toolCall && (
-                    <span title={t('settings.ai.capabilities.toolCall')} className="text-blue-500">
-                      <Zap className="h-3 w-3" />
-                    </span>
-                  )}
-                  {model.reasoning && (
-                    <span title={t('settings.ai.capabilities.reasoning')} className="text-purple-500">
-                      <Brain className="h-3 w-3" />
-                    </span>
-                  )}
-                  {model.vision && (
-                    <span title={t('settings.ai.capabilities.vision')} className="text-green-500">
-                      <ImageIcon className="h-3 w-3" />
-                    </span>
-                  )}
-                  {model.contextWindow && (
-                    <span className="text-muted-foreground tabular-nums">
-                      {Math.round(model.contextWindow / 1000)}k
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-            {agenticModels.length > 10 && (
-              <p className="text-xs text-muted-foreground pt-1">
-                +{agenticModels.length - 10} {t('settings.ai.moreModels')}
-              </p>
-            )}
-          </div>
+          <List
+            rowCount={agenticModels.length}
+            rowHeight={28}
+            rowProps={itemData}
+            style={{ height: Math.min(agenticModels.length * 28, 400), width: '100%' }}
+            rowComponent={ModelRow}
+          />
         </div>
       )}
     </div>
@@ -874,17 +630,13 @@ function RegistryProviderCard({ provider, isDefault, validation, isValidating, o
 interface CustomProviderCardProps {
   provider: Provider;
   isDefault: boolean;
-  validation?: ProviderValidationState;
-  isValidating?: boolean;
+  onSetDefault: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function CustomProviderCard({ provider, isDefault, validation, isValidating, onEdit, onDelete }: CustomProviderCardProps) {
+function CustomProviderCard({ provider, isDefault, onSetDefault, onEdit, onDelete }: CustomProviderCardProps) {
   const { t } = useTranslation('common');
-  const validationStatus: ValidationStatus = isValidating ? 'checking' : validation?.status ?? 'idle';
-  const lastCheckedLabel = formatTimestamp(validation?.checkedAt);
-
   return (
     <div
       className="border rounded-lg p-4 transition-colors hover:border-border/80 group"
@@ -921,24 +673,6 @@ function CustomProviderCard({ provider, isDefault, validation, isValidating, onE
                       {t('settings.ai.noKey')}
                     </Badge>
                   )}
-                  {provider.hasApiKey && validationStatus !== 'idle' && (
-                    <Badge
-                      variant={validationStatus === 'invalid' ? 'destructive' : 'outline'}
-                      className={cn(
-                        'text-xs gap-1 h-5 px-1.5',
-                        validationStatus === 'valid' && 'text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
-                      )}
-                    >
-                      {validationStatus === 'checking' && <Loader2 className="h-3 w-3 animate-spin" />}
-                      {validationStatus === 'valid' && <CheckCircle className="h-3 w-3" />}
-                      {validationStatus === 'invalid' && <XCircle className="h-3 w-3" />}
-                      {validationStatus === 'checking'
-                        ? t('settings.ai.validation.checking')
-                        : validationStatus === 'valid'
-                          ? t('settings.ai.validation.valid')
-                          : t('settings.ai.validation.invalid')}
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded inline-block">
                   <span>{provider.id}</span>
@@ -967,22 +701,20 @@ function CustomProviderCard({ provider, isDefault, validation, isValidating, onE
                 <div className="text-xs text-muted-foreground">
                   {t('settings.ai.details.modelCount', { count: provider.models.length, agentic: provider.models.length })}
                 </div>
-                {provider.hasApiKey && lastCheckedLabel && (
-                  <div className="text-xs text-muted-foreground">
-                    {t('settings.ai.validation.lastChecked', { time: lastCheckedLabel })}
-                  </div>
-                )}
-                {validation?.error && (
-                  <div className="text-xs text-destructive">{validation.error}</div>
-                )}
               </div>
             </HoverCardContent>
           </HoverCard>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onEdit}>
-            <Edit2 className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 ml-2 text-muted-foreground hover:text-foreground hover:bg-muted"
+            onClick={onEdit}
+          >
+            <Settings className="h-3.5 w-3.5 mr-1.5" />
+            {t('settings.ai.configure')}
           </Button>
 
           <DropdownMenu>
@@ -992,6 +724,13 @@ function CustomProviderCard({ provider, isDefault, validation, isValidating, onE
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onSetDefault} disabled={isDefault}>
+                <Star className={cn("h-4 w-4 mr-2", isDefault && "fill-current")} />
+                {t('settings.ai.setDefault')}
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={onDelete}
@@ -1012,32 +751,42 @@ function CustomProviderCard({ provider, isDefault, validation, isValidating, onE
 interface ApiKeyDialogProps {
   providerId: string;
   providerName: string;
-  isDefault: boolean;
-  onSave: (apiKey: string) => Promise<void>;
-  onSetDefault: (apiKey: string) => Promise<void>;
+  requiredEnvVars: string[];
+  onSave: (apiKey: string, baseUrl?: string) => Promise<void>;
   onCancel: () => void;
 }
 
-function ApiKeyDialog({ providerId, providerName, isDefault, onSave, onSetDefault, onCancel }: ApiKeyDialogProps) {
+function ApiKeyDialog({ providerId, providerName, requiredEnvVars, onSave, onCancel }: ApiKeyDialogProps) {
   const { t } = useTranslation('common');
   const [apiKey, setApiKey] = useState('');
+  const [resourceName, setResourceName] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (setDefault: boolean = false) => {
+  // Check if this is Azure OpenAI (requires resource name)
+  const isAzure = providerId === 'azure' || requiredEnvVars.some(v => v.includes('AZURE_RESOURCE_NAME'));
+
+  const handleSubmit = async () => {
     if (!apiKey.trim()) {
       setError(t('settings.ai.errors.apiKeyRequired'));
+      return;
+    }
+    if (isAzure && !resourceName.trim()) {
+      setError(t('settings.ai.errors.azureResourceNameRequired'));
       return;
     }
     try {
       setSaving(true);
       setError(null);
-      if (setDefault) {
-        await onSetDefault(apiKey.trim());
-      } else {
-        await onSave(apiKey.trim());
+
+      // For Azure, construct the base URL from resource name
+      let baseUrl: string | undefined;
+      if (isAzure && resourceName.trim()) {
+        baseUrl = `https://${resourceName.trim()}.openai.azure.com/openai`;
       }
+
+      await onSave(apiKey.trim(), baseUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
@@ -1051,20 +800,39 @@ function ApiKeyDialog({ providerId, providerName, isDefault, onSave, onSetDefaul
         <DialogHeader>
           <DialogTitle>{t('settings.ai.configureApiKey')}</DialogTitle>
           <DialogDescription>
-            {t('settings.ai.apiKeyDialogDescription', { provider: providerName })}
+            {isAzure
+              ? t('settings.ai.azureApiKeyDialogDescription', { provider: providerName })
+              : t('settings.ai.apiKeyDialogDescription', { provider: providerName })
+            }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Azure Resource Name field */}
+          {isAzure && (
+            <div className="space-y-2">
+              <Label htmlFor="azure-resource-name">{t('settings.ai.azureResourceName')} <span className="text-destructive">*</span></Label>
+              <Input
+                id="azure-resource-name"
+                type="text"
+                value={resourceName}
+                onChange={(e) => setResourceName(e.target.value)}
+                placeholder="my-openai-resource"
+              />
+              <p className="text-xs text-muted-foreground">{t('settings.ai.azureResourceNameHelp')}</p>
+            </div>
+          )}
+
+          {/* API Key field */}
           <div className="space-y-2">
-            <Label htmlFor="api-key">{t('settings.ai.apiKey')}</Label>
+            <Label htmlFor="api-key">{t('settings.ai.apiKey')} <span className="text-destructive">*</span></Label>
             <div className="relative">
               <Input
                 id="api-key"
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={`${providerId.toUpperCase()}_API_KEY`}
+                placeholder={isAzure ? 'AZURE_API_KEY' : `${providerId.toUpperCase()}_API_KEY`}
                 className="pr-10"
               />
               <Button
@@ -1083,18 +851,10 @@ function ApiKeyDialog({ providerId, providerName, isDefault, onSave, onSetDefaul
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <div className="flex-1 flex gap-2 justify-start">
-            {!isDefault && (
-              <Button type="button" variant="secondary" onClick={() => handleSubmit(true)} disabled={saving}>
-                <Star className="h-4 w-4 mr-2" />
-                {t('settings.ai.saveAndSetDefault')}
-              </Button>
-            )}
-          </div>
           <Button variant="outline" onClick={onCancel} disabled={saving}>
             {t('actions.cancel')}
           </Button>
-          <Button onClick={() => handleSubmit(false)} disabled={saving}>
+          <Button onClick={handleSubmit} disabled={saving}>
             {saving ? t('actions.saving') : t('actions.save')}
           </Button>
         </DialogFooter>
@@ -1106,14 +866,12 @@ function ApiKeyDialog({ providerId, providerName, isDefault, onSave, onSetDefaul
 /** Custom Provider Dialog - full provider configuration */
 interface CustomProviderDialogProps {
   provider: Provider | null;
-  isDefault: boolean;
   existingIds: string[];
   onSave: (provider: Provider) => Promise<void>;
-  onSetDefault: (provider: Provider) => Promise<void>;
   onCancel: () => void;
 }
 
-function CustomProviderDialog({ provider, isDefault, existingIds, onSave, onSetDefault, onCancel }: CustomProviderDialogProps) {
+function CustomProviderDialog({ provider, existingIds, onSave, onCancel }: CustomProviderDialogProps) {
   const { t } = useTranslation('common');
   const [formData, setFormData] = useState({
     id: provider?.id ?? '',
@@ -1179,7 +937,7 @@ function CustomProviderDialog({ provider, isDefault, existingIds, onSave, onSetD
     });
   };
 
-  const handleSubmit = async (setDefault: boolean = false) => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
     try {
@@ -1193,11 +951,7 @@ function CustomProviderDialog({ provider, isDefault, existingIds, onSave, onSetD
         apiKey: formData.apiKey || provider?.apiKey,
       };
 
-      if (setDefault) {
-        await onSetDefault(providerData);
-      } else {
-        await onSave(providerData);
-      }
+      await onSave(providerData);
     } catch {
       // Error handled by parent
     } finally {
@@ -1338,18 +1092,10 @@ function CustomProviderDialog({ provider, isDefault, existingIds, onSave, onSetD
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <div className="flex-1 flex gap-2 justify-start">
-            {!isDefault && (
-              <Button type="button" variant="secondary" onClick={() => handleSubmit(true)} disabled={saving}>
-                <Star className="h-4 w-4 mr-2" />
-                {t('settings.ai.saveAndSetDefault')}
-              </Button>
-            )}
-          </div>
           <Button variant="outline" onClick={onCancel} disabled={saving}>
             {t('actions.cancel')}
           </Button>
-          <Button onClick={() => handleSubmit(false)} disabled={saving}>
+          <Button onClick={handleSubmit} disabled={saving}>
             {saving ? t('actions.saving') : t('actions.save')}
           </Button>
         </DialogFooter>

@@ -74,12 +74,19 @@ export function SettingsPage() {
           </PageContainer>
         </div>
 
-        <main className="flex-1 overflow-y-auto">
-          <PageContainer contentClassName="space-y-6">
-            {activeTab === 'ai' && <AISettingsTab />}
-            {activeTab === 'runners' && <RunnerSettingsTab />}
-            {activeTab === 'appearance' && <AppearanceSettingsTab />}
-          </PageContainer>
+        <main className="flex-1 overflow-hidden flex flex-col">
+          {activeTab === 'ai' ? (
+            <PageContainer className="h-full" contentClassName="h-full overflow-hidden">
+              <AISettingsTab />
+            </PageContainer>
+          ) : (
+            <div className="h-full overflow-y-auto">
+              <PageContainer contentClassName="space-y-6">
+                {activeTab === 'runners' && <RunnerSettingsTab />}
+                {activeTab === 'appearance' && <AppearanceSettingsTab />}
+              </PageContainer>
+            </div>
+          )}
         </main>
       </div>
     </div>

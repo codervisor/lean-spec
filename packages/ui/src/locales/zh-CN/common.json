@@ -308,6 +308,9 @@
     },
     "confirmRemove": "移除与 {{label}} 的关系？"
   },
+  "errors": {
+    "unknownError": "未知错误"
+  },
   "settings": {
     "title": "设置",
     "description": "管理你的偏好和配置",
@@ -321,6 +324,7 @@
     "ai": {
       "providers": "AI 提供商",
       "providersDescription": "为 models.dev 注册表中的 AI 提供商配置 API 密钥",
+      "searchPlaceholder": "搜索提供商或模型...",
       "models": "模型",
       "addProvider": "添加提供商",
       "editProvider": "编辑提供商",
@@ -372,12 +376,30 @@
       "custom": "自定义",
       "configureApiKey": "配置 API 密钥",
       "apiKeyDialogDescription": "输入 {{provider}} 的 API 密钥",
+      "azureApiKeyDialogDescription": "配置 Azure OpenAI 的资源名称和 API 密钥",
+      "azureResourceName": "Azure 资源名称",
+      "azureResourceNameHelp": "您的 Azure OpenAI 资源名称（例如 'my-openai-resource'）",
       "apiKeyStorageNote": "API 密钥将本地存储在配置文件中",
       "editCustomProvider": "编辑自定义提供商",
       "customProviderDialogDescription": "配置自定义提供商的 API 端点和模型",
       "leaveEmptyToKeep": "留空以保留现有值",
       "noModelsAdded": "尚未添加模型",
       "confirmDeleteProvider": "确定要删除此提供商吗？",
+      "builtIn": "内置",
+      "configure": "配置",
+      "setUp": "设置",
+      "saveAndSetDefault": "保存并设为默认",
+      "sort": {
+        "name": "名称",
+        "models": "模型数量",
+        "configured": "已配置优先"
+      },
+      "filters": {
+        "status": "状态",
+        "showConfiguredOnly": "仅显示已配置",
+        "showUnconfiguredOnly": "仅显示未配置"
+      },
+      "filteredCount": "{{filtered}} / {{total}} 个提供商",
       "validation": {
         "revalidateAll": "重新校验全部",
         "checking": "校验中",
@@ -405,6 +427,7 @@
         "modelNameRequired": "模型名称是必需的",
         "maxTokensInvalid": "最大 Token 数必须是数字",
         "apiKeyRequired": "API 密钥是必需的",
+        "azureResourceNameRequired": "Azure 资源名称是必需的",
         "modelsRequired": "至少需要一个模型"
       }
     },
@@ -459,7 +482,22 @@
         "idInvalid": "ID 只能包含小写字母、数字和连字符",
         "commandRequired": "命令为必填项",
         "envInvalid": "每行环境变量必须为 KEY=VALUE"
-      }
+      },
+      "searchPlaceholder": "搜索运行器...",
+      "noResults": "没有符合筛选条件的运行器",
+      "sort": {
+        "name": "名称",
+        "available": "可用优先"
+      },
+      "filters": {
+        "status": "状态",
+        "showUnavailable": "显示不可用",
+        "source": "来源",
+        "allSources": "全部来源",
+        "builtin": "内置",
+        "custom": "自定义"
+      },
+      "filteredCount": "{{filtered}} / {{total}} 个运行器"
     },
     "appearance": {
       "theme": "主题",
