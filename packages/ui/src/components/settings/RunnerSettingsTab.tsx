@@ -7,6 +7,11 @@ import {
   Plus,
   RefreshCw,
   Trash2,
+  MoreVertical,
+  Play,
+  Terminal,
+  Star,
+  Loader2,
 } from 'lucide-react';
 import {
   Badge,
@@ -19,10 +24,21 @@ import {
   DialogTitle,
   Input,
   Textarea,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+  cn,
 } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { RunnerDefinition, RunnerListResponse, RunnerScope } from '../../types/api';
 import { useCurrentProject } from '../../hooks/useProjectQuery';
+import { SearchFilterBar } from '../shared/SearchFilterBar';
+import { useToast } from '../../contexts';
 
 const DEFAULT_SCOPE: RunnerScope = 'project';
 
@@ -37,8 +53,50 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
   );
 }
 
+type ValidationStatus = 'idle' | 'checking' | 'valid' | 'invalid';
+
+interface RunnerValidationState {
+  status: ValidationStatus;
+  error?: string;
+  checkedAt?: number;
+}
+
+const RUNNER_VALIDATION_TTL_MS = 5 * 60 * 1000;
+
+const getRunnerValidationCacheKey = (projectPath?: string | null) =>
+  `settings-runner-validation-cache:${projectPath ?? 'global'}`;
+
+const formatTimestamp = (timestamp?: number) => {
+  if (!timestamp) return '';
+  return new Date(timestamp).toLocaleString();
+};
+
+const readRunnerValidationCache = (projectPath?: string | null): Record<string, { valid: boolean; error?: string | null; checkedAt: number }> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(getRunnerValidationCacheKey(projectPath));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, { valid: boolean; error?: string | null; checkedAt: number }>;
+    }
+  } catch {
+    return {};
+  }
+  return {};
+};
+
+const writeRunnerValidationCache = (
+  projectPath: string | null | undefined,
+  cache: Record<string, { valid: boolean; error?: string | null; checkedAt: number }>
+) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(getRunnerValidationCacheKey(projectPath), JSON.stringify(cache));
+};
+
 export function RunnerSettingsTab() {
   const { t } = useTranslation('common');
+  const { toast } = useToast();
   const { currentProject } = useCurrentProject();
   const projectPath = currentProject?.path;
   const [loading, setLoading] = useState(true);
@@ -47,7 +105,16 @@ export function RunnerSettingsTab() {
   const [defaultRunner, setDefaultRunner] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editingRunner, setEditingRunner] = useState<RunnerDefinition | null>(null);
-  const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [validatingRunners, setValidatingRunners] = useState<Record<string, boolean>>({});
+  const [runnerValidation, setRunnerValidation] = useState<Record<string, RunnerValidationState>>({});
+  const [validatingAll, setValidatingAll] = useState(false);
+  const [autoValidated, setAutoValidated] = useState(false);
+
+  // Filter/Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'available'>('name');
+  const [showUnavailable, setShowUnavailable] = useState(true);
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'builtin' | 'custom'>('all');
 
   const canManage = useMemo(() => Boolean(projectPath), [projectPath]);
 
@@ -83,6 +150,125 @@ export function RunnerSettingsTab() {
   useEffect(() => {
     void loadRunners();
   }, [loadRunners]);
+
+  const runnerIdsKey = useMemo(() => runners.map((runner) => runner.id).join('|'), [runners]);
+
+  useEffect(() => {
+    setAutoValidated(false);
+  }, [projectPath, runnerIdsKey]);
+
+  useEffect(() => {
+    setRunnerValidation({});
+  }, [projectPath]);
+
+  const updateRunnerValidationCache = useCallback(
+    (runnerId: string, valid: boolean, error?: string | null) => {
+      const cache = readRunnerValidationCache(projectPath);
+      cache[runnerId] = {
+        valid,
+        error,
+        checkedAt: Date.now(),
+      };
+      writeRunnerValidationCache(projectPath, cache);
+    },
+    [projectPath]
+  );
+
+  const validateRunner = useCallback(
+    async (runner: RunnerDefinition) => {
+      if (!projectPath || !runner.command) return;
+
+      setValidatingRunners((prev) => ({ ...prev, [runner.id]: true }));
+      setRunnerValidation((prev) => ({
+        ...prev,
+        [runner.id]: {
+          ...prev[runner.id],
+          status: 'checking',
+        },
+      }));
+
+      try {
+        const response = await api.validateRunner(runner.id, projectPath);
+        updateRunnerValidationCache(runner.id, response.valid, response.error ?? null);
+        setRunnerValidation((prev) => ({
+          ...prev,
+          [runner.id]: {
+            status: response.valid ? 'valid' : 'invalid',
+            error: response.error ?? undefined,
+            checkedAt: Date.now(),
+          },
+        }));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : t('settings.runners.errors.validateFailed');
+        updateRunnerValidationCache(runner.id, false, message);
+        setRunnerValidation((prev) => ({
+          ...prev,
+          [runner.id]: {
+            status: 'invalid',
+            error: message,
+            checkedAt: Date.now(),
+          },
+        }));
+        setError(message);
+      } finally {
+        setValidatingRunners((prev) => {
+          const next = { ...prev };
+          delete next[runner.id];
+          return next;
+        });
+      }
+    },
+    [projectPath, t, updateRunnerValidationCache]
+  );
+
+  const handleRevalidateAll = useCallback(async () => {
+    if (!projectPath) return;
+    const runnable = runners.filter((runner) => Boolean(runner.command));
+    if (runnable.length === 0) return;
+    setValidatingAll(true);
+    await Promise.allSettled(runnable.map((runner) => validateRunner(runner)));
+    await loadRunners();
+    setValidatingAll(false);
+  }, [loadRunners, projectPath, runners, validateRunner]);
+
+  useEffect(() => {
+    if (loading || autoValidated || !projectPath) return;
+    const cache = readRunnerValidationCache(projectPath);
+    const now = Date.now();
+    const cachedState: Record<string, RunnerValidationState> = {};
+    const toValidate: RunnerDefinition[] = [];
+
+    runners.forEach((runner) => {
+      if (!runner.command) return;
+      const cached = cache[runner.id];
+      if (cached && now - cached.checkedAt < RUNNER_VALIDATION_TTL_MS) {
+        cachedState[runner.id] = {
+          status: cached.valid ? 'valid' : 'invalid',
+          error: cached.error ?? undefined,
+          checkedAt: cached.checkedAt,
+        };
+      } else {
+        toValidate.push(runner);
+      }
+    });
+
+    if (Object.keys(cachedState).length > 0) {
+      setRunnerValidation((prev) => ({ ...prev, ...cachedState }));
+    }
+
+    if (toValidate.length === 0) {
+      setAutoValidated(true);
+      return;
+    }
+
+    setValidatingAll(true);
+    Promise.allSettled(toValidate.map((runner) => validateRunner(runner)))
+      .then(() => loadRunners())
+      .finally(() => {
+        setValidatingAll(false);
+        setAutoValidated(true);
+      });
+  }, [autoValidated, loading, loadRunners, projectPath, runners, validateRunner]);
 
   const handleSaveRunner = async (payload: {
     id: string;
@@ -144,15 +330,11 @@ export function RunnerSettingsTab() {
 
   const handleValidate = async (runner: RunnerDefinition) => {
     if (!projectPath) return;
-
-    setValidatingId(runner.id);
     try {
-      await api.validateRunner(runner.id, projectPath);
+      await validateRunner(runner);
       await loadRunners();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.runners.errors.validateFailed'));
-    } finally {
-      setValidatingId(null);
     }
   };
 
@@ -167,10 +349,54 @@ export function RunnerSettingsTab() {
       });
       applyResponse(response);
       setError(null);
+      toast({
+        title: t('settings.runners.toasts.defaultRunner', { runner: runner.name || runner.id }),
+        variant: 'success',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.runners.errors.defaultFailed'));
     }
   };
+
+  // Filter and Sort Runners
+  const filteredRunners = useMemo(() => {
+    let result = [...runners];
+
+    // Filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (r) =>
+          r.id.toLowerCase().includes(q) ||
+          r.name?.toLowerCase().includes(q) ||
+          r.command?.toLowerCase().includes(q)
+      );
+    }
+
+    if (!showUnavailable) {
+      // Only show available runners (or those without command like IDE extensions if handled that way, 
+      // but here unavailable usually means command check failed)
+      result = result.filter(r => r.available !== false);
+    }
+
+    if (sourceFilter !== 'all') {
+      result = result.filter(r => r.source === sourceFilter);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === 'available') {
+        // Available first
+        if (a.available !== b.available) return (b.available ? 1 : 0) - (a.available ? 1 : 0);
+      }
+      // Default to name
+      const nameA = a.name || a.id;
+      const nameB = b.name || b.id;
+      return nameA.localeCompare(nameB);
+    });
+
+    return result;
+  }, [runners, searchQuery, showUnavailable, sourceFilter, sortBy]);
 
   if (loading) {
     return (
@@ -205,6 +431,15 @@ export function RunnerSettingsTab() {
               {t('actions.refresh')}
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRevalidateAll}
+              disabled={validatingAll || !runners.some((runner) => runner.command)}
+            >
+              <Loader2 className={`h-4 w-4 mr-2 ${validatingAll ? 'animate-spin' : ''}`} />
+              {t('settings.runners.validation.revalidateAll')}
+            </Button>
+            <Button
               size="sm"
               onClick={() => {
                 setEditingRunner(null);
@@ -225,91 +460,208 @@ export function RunnerSettingsTab() {
             </div>
           )}
 
-          {runners.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">{t('settings.runners.empty')}</p>
-          ) : (
-            runners.map((runner) => (
-              <div key={runner.id} className="border rounded-lg p-4 space-y-3 hover:bg-accent/30 transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-medium">{runner.name || runner.id}</h4>
-                      {defaultRunner === runner.id && (
-                        <Badge variant="secondary" className="text-xs">
-                          {t('settings.runners.default')}
-                        </Badge>
-                      )}
-                      {runner.command ? (
-                        runner.available ? (
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <CheckCircle className="h-3 w-3" />
-                            {t('settings.runners.available')}
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive" className="text-xs gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            {t('settings.runners.unavailable')}
-                          </Badge>
-                        )
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          {t('settings.runners.ideOnly')}
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {runner.source}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1 font-mono">
-                      {runner.command ?? t('settings.runners.ideOnlyCommand')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setEditingRunner(runner);
-                        setShowDialog(true);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => handleDeleteRunner(runner)}
-                      disabled={runner.source === 'builtin'}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+          <SearchFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder={t('settings.runners.searchPlaceholder')}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: 'name', label: t('settings.runners.sort.name') },
+              { value: 'available', label: t('settings.runners.sort.available') },
+            ]}
+            filters={[
+              {
+                label: t('settings.runners.filters.status'),
+                options: [
+                  {
+                    id: 'unavailable',
+                    label: t('settings.runners.filters.showUnavailable'),
+                    checked: showUnavailable,
+                    onCheckedChange: setShowUnavailable
+                  }
+                ]
+              },
+              {
+                label: t('settings.runners.filters.source'),
+                options: [
+                  { id: 'all', label: t('settings.runners.filters.allSources'), checked: sourceFilter === 'all', onCheckedChange: () => setSourceFilter('all') },
+                  { id: 'builtin', label: t('settings.runners.filters.builtin'), checked: sourceFilter === 'builtin', onCheckedChange: (c) => c && setSourceFilter('builtin') },
+                  { id: 'custom', label: t('settings.runners.filters.custom'), checked: sourceFilter === 'custom', onCheckedChange: (c) => c && setSourceFilter('custom') },
+                ]
+              }
+            ]}
+            resultCount={filteredRunners.length}
+            totalCount={runners.length}
+          />
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleValidate(runner)}
-                    disabled={validatingId === runner.id || !runner.command}
-                  >
-                    {t('actions.validate')}
-                  </Button>
-                  {defaultRunner !== runner.id && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSetDefault(runner)}
-                      disabled={!runner.command}
-                    >
-                      {t('settings.runners.setDefault')}
-                    </Button>
-                  )}
+          {filteredRunners.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+              {runners.length === 0 ? t('settings.runners.empty') : t('settings.runners.noResults')}
+            </p>
+          ) : (
+            filteredRunners.map((runner) => {
+              const validation = runnerValidation[runner.id];
+              const validationStatus: ValidationStatus = validatingRunners[runner.id] ? 'checking' : validation?.status ?? 'idle';
+              const lastCheckedLabel = formatTimestamp(validation?.checkedAt);
+
+              const handleShortcut = (event: React.KeyboardEvent) => {
+                if (event.key.toLowerCase() !== 'd') return;
+                const target = event.target as HTMLElement | null;
+                if (target && ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName)) return;
+                if (!runner.command || defaultRunner === runner.id) return;
+                event.preventDefault();
+                handleSetDefault(runner);
+              };
+
+              return (
+                <div
+                  key={runner.id}
+                  className="border rounded-lg p-4 transition-colors hover:border-border/80 group"
+                  tabIndex={0}
+                  onKeyDown={handleShortcut}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                      <div className="h-10 w-10 shrink-0 rounded-md bg-muted flex items-center justify-center">
+                        <Terminal className="h-5 w-5 text-muted-foreground" />
+                      </div>
+
+                      <HoverCard openDelay={200} closeDelay={100}>
+                        <HoverCardTrigger asChild>
+                          <div className="space-y-1.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-base font-medium leading-none">{runner.name || runner.id}</h4>
+                              {defaultRunner === runner.id && (
+                                <Badge variant="secondary" className="text-xs h-5 px-1.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800">
+                                  <Star className="h-3 w-3 mr-1 fill-current" />
+                                  {t('settings.runners.default')}
+                                </Badge>
+                              )}
+                              {runner.command ? (
+                                runner.available ? (
+                                  <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
+                                    <CheckCircle className="h-3 w-3" />
+                                    {t('settings.runners.available')}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="destructive" className="text-xs gap-1 h-5 px-1.5">
+                                    <AlertCircle className="h-3 w-3" />
+                                    {t('settings.runners.unavailable')}
+                                  </Badge>
+                                )
+                              ) : (
+                                <Badge variant="secondary" className="text-xs h-5 px-1.5">
+                                  {t('settings.runners.ideOnly')}
+                                </Badge>
+                              )}
+                              {runner.command && validationStatus !== 'idle' && (
+                                <Badge
+                                  variant={validationStatus === 'invalid' ? 'destructive' : 'outline'}
+                                  className={cn(
+                                    'text-xs gap-1 h-5 px-1.5',
+                                    validationStatus === 'valid' && 'text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
+                                  )}
+                                >
+                                  {validationStatus === 'checking' && <Loader2 className="h-3 w-3 animate-spin" />}
+                                  {validationStatus === 'valid' && <CheckCircle className="h-3 w-3" />}
+                                  {validationStatus === 'invalid' && <AlertCircle className="h-3 w-3" />}
+                                  {validationStatus === 'checking'
+                                    ? t('settings.runners.validation.checking')
+                                    : validationStatus === 'valid'
+                                      ? t('settings.runners.validation.valid')
+                                      : t('settings.runners.validation.invalid')}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded inline-block">
+                              {runner.command ?? t('settings.runners.ideOnlyCommand')}
+                            </p>
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-72">
+                          <div className="space-y-2 text-sm">
+                            <div className="font-semibold">{t('settings.runners.details.title')}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {t('settings.runners.details.id')}: <span className="font-mono text-foreground">{runner.id}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {t('settings.runners.details.source', { source: runner.source })}
+                            </div>
+                            {runner.command && lastCheckedLabel && (
+                              <div className="text-xs text-muted-foreground">
+                                {t('settings.runners.validation.lastChecked', { time: lastCheckedLabel })}
+                              </div>
+                            )}
+                            {validation?.error && (
+                              <div className="text-xs text-destructive">{validation.error}</div>
+                            )}
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {/* Set Default Action (Primary) */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-8 w-8 text-muted-foreground hover:text-foreground",
+                          defaultRunner === runner.id && "text-yellow-500 hover:text-yellow-600"
+                        )}
+                        onClick={() => handleSetDefault(runner)}
+                        disabled={!runner.command || defaultRunner === runner.id}
+                        title={t('settings.runners.setDefault')}
+                      >
+                        <Star className={cn("h-4 w-4", defaultRunner === runner.id && "fill-current")} />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setEditingRunner(runner);
+                          setShowDialog(true);
+                        }}
+                        title={t('actions.edit')}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleValidate(runner)}
+                            disabled={Boolean(validatingRunners[runner.id]) || !runner.command}
+                          >
+                            <Play className="h-4 w-4 mr-2" />
+                            {t('actions.validate')}
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteRunner(runner)}
+                            disabled={runner.source === 'builtin'}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t('actions.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>

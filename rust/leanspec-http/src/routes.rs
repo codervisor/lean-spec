@@ -218,6 +218,10 @@ pub fn create_router(state: AppState) -> Router {
     {
         router = router
             .route("/api/chat", post(handlers::chat_stream))
+            .route(
+                "/api/chat/config/validate",
+                post(handlers::validate_provider_api_key),
+            )
             // Models registry routes
             .route("/api/models/providers", get(handlers::list_providers))
             .route(

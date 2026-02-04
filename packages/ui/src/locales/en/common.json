@@ -334,6 +334,10 @@
       "default": "Default",
       "keyConfigured": "Configured",
       "noKey": "No Key",
+      "builtIn": "Built-in",
+      "configure": "Configure",
+      "setUp": "Set Up",
+      "saveAndSetDefault": "Save & Set Default",
       "defaults": "Default Settings",
       "defaultsDescription": "Configure default provider, model, and behavior",
       "defaultProvider": "Default Provider",
@@ -383,6 +387,27 @@
       "leaveEmptyToKeep": "Leave empty to keep existing",
       "noModelsAdded": "No models added yet",
       "confirmDeleteProvider": "Are you sure you want to delete this provider?",
+      "validation": {
+        "revalidateAll": "Re-validate all",
+        "checking": "Checking",
+        "valid": "Valid",
+        "invalid": "Invalid",
+        "lastChecked": "Last checked: {{time}}"
+      },
+      "details": {
+        "title": "Details",
+        "providerId": "Provider ID",
+        "baseUrl": "Base URL",
+        "modelCount": "{{count}} models ({{agentic}} agentic)"
+      },
+      "sort": {
+        "name": "Name",
+        "models": "Model Count",
+        "configured": "Configured First"
+      },
+      "toasts": {
+        "defaultProvider": "Default provider set to {{provider}}"
+      },
       "errors": {
         "idRequired": "ID is required",
         "idExists": "This ID already exists",
@@ -411,6 +436,21 @@
       "empty": "No runners configured yet.",
       "dialogDescription": "Configure runner command, args, and environment overrides",
       "confirmDelete": "Delete runner \"{{id}}\"?",
+      "validation": {
+        "revalidateAll": "Re-validate all",
+        "checking": "Checking",
+        "valid": "Valid",
+        "invalid": "Invalid",
+        "lastChecked": "Last checked: {{time}}"
+      },
+      "details": {
+        "title": "Details",
+        "id": "Runner ID",
+        "source": "Source: {{source}}"
+      },
+      "toasts": {
+        "defaultRunner": "Default runner set to {{runner}}"
+      },
       "fields": {
         "id": "Runner ID",
         "idHelp": "Lowercase identifier (e.g., claude, copilot)",

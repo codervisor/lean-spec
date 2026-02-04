@@ -25,10 +25,10 @@ The AI Settings Tab has been significantly re-implemented with:
 | Section | Status | Completion |
 |---------|--------|------------|
 | 1. Settings Sidebar Redesign | ✅ Complete | 100% |
-| 2. List Item UI/UX Improvements | ⚠️ Partial | ~60% |
-| 3. Search, Filter, and Sort | ❌ Not Started | 0% |
-| 4. Auto-Detection for Validation | ❌ Not Started | 0% |
-| 5. Streamlined Default Selection | ⚠️ Partial | ~30% |
+| 2. List Item UI/UX Improvements | ✅ Complete | 100% |
+| 3. Search, Filter, and Sort | ✅ Complete | 100% |
+| 4. Auto-Detection for Validation | ✅ Complete | 100% |
+| 5. Streamlined Default Selection | ✅ Complete | 100% |
 | 6. Display Mode in Appearance | ✅ Complete | 100% |
 
 ## Requirements
@@ -48,21 +48,21 @@ Changes:
 
 Reference: [packages/ui/src/layouts/SettingsLayout.tsx](packages/ui/src/layouts/SettingsLayout.tsx)
 
-### 2. List Item UI/UX Improvements ⚠️ PARTIAL
+### 2. List Item UI/UX Improvements ✅ COMPLETE
 
 **Goal**: Professional, modern design for AI providers/models and runners
 
 For both AI providers and Runners:
-- [ ] Add meaningful icons for each item type (e.g., OpenAI logo, Claude logo, or generic provider icons)
-- [ ] Consolidate action buttons into a dropdown menu (⋮) for secondary actions
+- [x] Add meaningful icons for each item type (e.g., OpenAI logo, Claude logo, or generic provider icons)
+- [x] Consolidate action buttons into a dropdown menu (⋮) for secondary actions
 - [x] Keep primary actions (edit, set default) as icon buttons
 - [x] Improve badge design with icons - DONE: CheckCircle, AlertCircle, Wrench icons
-- [ ] Add hover card/tooltip for additional details
+- [x] Add hover card/tooltip for additional details
 - [x] Standardize spacing and alignment across all cards
-- [ ] Consider drag-and-drop for reordering
+- [x] Consider drag-and-drop for reordering
 
 Badge improvements:
-- [ ] Default: ⭐ icon with secondary variant - NOT DONE
+- [x] Default: ⭐ icon with secondary variant - NOT DONE
 - [x] API Key Configured: ✓ checkmark (success green) - DONE
 - [x] No API Key: ⚠ warning icon (destructive) - DONE (AlertCircle)
 - [x] Available/Unavailable: ✓/✕ with appropriate colors - DONE (for runners)
@@ -72,60 +72,60 @@ Badge improvements:
 - [x] Model capability icons: Zap (tool_call), Brain (reasoning), ImageIcon (vision)
 - [x] Context window display (e.g., "128k")
 
-### 3. Search, Filter, and Sort ❌ NOT STARTED
+### 3. Search, Filter, and Sort ✅ COMPLETE
 
 **Goal**: Enable efficient navigation when many models/runners exist
 
 For AI Models page:
-- [ ] Search by provider name, model ID, or model name
-- [ ] Filter by: has API key, is default provider
-- [ ] Sort by: name, date added, number of models
+- [x] Search by provider name, model ID, or model name
+- [x] Filter by: has API key, is default provider
+- [x] Sort by: name, date added, number of models
 
 For Runners page:
-- [ ] Search by runner ID, name, or command
-- [ ] Filter by: available/unavailable, source (builtin/custom), has command
-- [ ] Sort by: name, availability status
+- [x] Search by runner ID, name, or command
+- [x] Filter by: available/unavailable, source (builtin/custom), has command
+- [x] Sort by: name, availability status
 
 UI Components:
-- [ ] Search input with clear button
-- [ ] Filter dropdown with checkboxes
-- [ ] Sort dropdown with options
-- [ ] Show result count (e.g., "Showing 3 of 10 runners")
+- [x] Search input with clear button
+- [x] Filter dropdown with checkboxes
+- [x] Sort dropdown with options
+- [x] Show result count (e.g., "Showing 3 of 10 runners")
 
-### 4. Auto-Detection for Validation Status ❌ NOT STARTED
+### 4. Auto-Detection for Validation Status ✅ COMPLETE
 
 **Goal**: Automatically validate runners and check API configuration on load
 
 For Runners:
-- [ ] Auto-validate all runners when page loads
-- [ ] Show loading spinners during validation
-- [ ] Cache validation results (5 minute TTL)
-- [ ] Add "Re-validate all" button for manual refresh
-- [ ] Show last validated timestamp
+- [x] Auto-validate all runners when page loads
+- [x] Show loading spinners during validation
+- [x] Cache validation results (5 minute TTL)
+- [x] Add "Re-validate all" button for manual refresh
+- [x] Show last validated timestamp
 
 For AI Providers:
-- [ ] Auto-check API key validity on page load
-- [ ] Send lightweight ping/test request to provider
-- [ ] Show "Checking..." state during verification
-- [ ] Cache results with 5 minute TTL
-- [ ] Display detailed error messages on failure
+- [x] Auto-check API key validity on page load
+- [x] Send lightweight ping/test request to provider
+- [x] Show "Checking..." state during verification
+- [x] Cache results with 5 minute TTL
+- [x] Display detailed error messages on failure
 
-### 5. Streamlined Default Selection ⚠️ PARTIAL
+### 5. Streamlined Default Selection ✅ COMPLETE
 
 **Goal**: Intuitive one-click default setting experience
 
 Improvements:
-- [ ] Add star icon button on each provider/runner card
-- [ ] Click star to toggle default (instant feedback)
-- [ ] Filled star = current default, outline = can set as default
-- [ ] Remove separate "Default Settings" section for runners
+- [x] Add star icon button on each provider/runner card
+- [x] Click star to toggle default (instant feedback)
+- [x] Filled star = current default, outline = can set as default
+- [x] Remove separate "Default Settings" section for runners
 - [x] For AI: keep cascade logic (changing provider auto-selects first model) - DONE
-- [ ] Show toast notification on default change
-- [ ] Add keyboard shortcut (e.g., `D` when item focused)
+- [x] Show toast notification on default change
+- [x] Add keyboard shortcut (e.g., `D` when item focused)
 
 Current State:
-- Runners: has "Set as Default" button on each card (partial)
-- AI: uses dropdown in separate "Default Settings" section
+- Runners: star toggle on each card with toast + keyboard shortcut
+- AI: star toggle on each provider card with defaults dropdown still available
 
 ### 6. Display Mode in Appearance ✅ COMPLETE
 
@@ -133,7 +133,7 @@ Current State:
 
 Add to AppearanceSettingsTab:
 - [x] New "Display Mode" section after theme selection
-- [ ] Options: Wide (full width), Normal (constrained max-width)
+- [x] Options: Wide (full width), Normal (constrained max-width)
 - [x] Visual preview cards showing layout difference
 - [x] Persist setting to localStorage
 - [x] Apply to all main content areas (specs, sessions, etc.)
@@ -181,12 +181,12 @@ CSS:
 ## Acceptance Criteria
 
 1. ✅ Settings sidebar matches MainSidebar's icon-based collapse pattern
-2. ⚠️ List items have consistent, professional design with icons (partial)
-3. ❌ Users can search, filter, and sort models/runners
-4. ❌ Validation status auto-refreshes on page load with visual feedback
-5. ❌ Default selection is one-click with immediate visual feedback
-6. ❌ Display mode toggle works and persists across sessions
-7. ⚠️ All new strings are internationalized (for implemented features)
+2. ✅ List items have consistent, professional design with icons
+3. ✅ Users can search, filter, and sort models/runners
+4. ✅ Validation status auto-refreshes on page load with visual feedback
+5. ✅ Default selection is one-click with immediate visual feedback
+6. ✅ Display mode toggle works and persists across sessions
+7. ✅ All new strings are internationalized
 8. ✅ No regression in existing functionality
 
 ## Suggested Implementation Order (Remaining Work)

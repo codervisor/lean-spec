@@ -3,7 +3,7 @@
 use axum::{extract::State, Json};
 use leanspec_core::models_registry::{
     get_configured_providers, get_providers_with_availability, load_bundled_registry,
-    registry_to_chat_config, ModelsDevClient, ProviderWithAvailability,
+    load_registry, registry_to_chat_config, ModelsDevClient, ProviderWithAvailability,
 };
 use leanspec_core::storage::chat_config::{ChatModel, ChatProvider};
 use serde::{Deserialize, Serialize};
@@ -70,7 +70,7 @@ pub async fn list_providers(
     axum::extract::Query(query): axum::extract::Query<ProvidersQuery>,
 ) -> ApiResult<Json<ProvidersResponse>> {
     // Load registry (try bundled first for quick response)
-    let registry = load_bundled_registry().map_err(|e| {
+    let registry = load_registry().await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&format!(
@@ -111,7 +111,7 @@ pub async fn get_provider_models(
     State(_state): State<AppState>,
     axum::extract::Path(provider_id): axum::extract::Path<String>,
 ) -> ApiResult<Json<ProviderModelsResponse>> {
-    let registry = load_bundled_registry().map_err(|e| {
+    let registry = load_registry().await.map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&format!(
@@ -163,7 +163,7 @@ pub async fn refresh_registry(
 ) -> ApiResult<Json<serde_json::Value>> {
     let client = ModelsDevClient::new();
 
-    match client.fetch_blocking() {
+    match client.fetch().await {
         Ok(registry) => {
             // Try to save to cache
             if let Ok(cache) = leanspec_core::models_registry::ModelCache::new() {

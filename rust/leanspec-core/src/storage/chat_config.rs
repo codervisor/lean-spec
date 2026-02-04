@@ -199,7 +199,7 @@ fn save_chat_config(path: &PathBuf, config: &ChatConfig) -> CoreResult<()> {
     Ok(())
 }
 
-fn resolve_api_key(template: &str) -> String {
+pub fn resolve_api_key(template: &str) -> String {
     if let Some(start) = template.find("${") {
         if let Some(end) = template[start..].find('}') {
             let key = &template[start + 2..start + end];

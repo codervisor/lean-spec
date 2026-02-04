@@ -378,6 +378,22 @@
       "leaveEmptyToKeep": "留空以保留现有值",
       "noModelsAdded": "尚未添加模型",
       "confirmDeleteProvider": "确定要删除此提供商吗？",
+      "validation": {
+        "revalidateAll": "重新校验全部",
+        "checking": "校验中",
+        "valid": "有效",
+        "invalid": "无效",
+        "lastChecked": "上次校验：{{time}}"
+      },
+      "details": {
+        "title": "详情",
+        "providerId": "提供商 ID",
+        "baseUrl": "基础 URL",
+        "modelCount": "{{count}} 个模型（{{agentic}} 个代理）"
+      },
+      "toasts": {
+        "defaultProvider": "默认提供商已设置为 {{provider}}"
+      },
       "errors": {
         "idRequired": "ID 是必需的",
         "idExists": "此 ID 已存在",
@@ -406,6 +422,21 @@
       "empty": "暂无配置的运行器。",
       "dialogDescription": "配置运行器命令、参数与环境变量",
       "confirmDelete": "删除运行器 \"{{id}}\"？",
+      "validation": {
+        "revalidateAll": "重新校验全部",
+        "checking": "校验中",
+        "valid": "有效",
+        "invalid": "无效",
+        "lastChecked": "上次校验：{{time}}"
+      },
+      "details": {
+        "title": "详情",
+        "id": "运行器 ID",
+        "source": "来源：{{source}}"
+      },
+      "toasts": {
+        "defaultRunner": "默认运行器已设置为 {{runner}}"
+      },
       "fields": {
         "id": "运行器 ID",
         "idHelp": "小写标识符（例如：claude、copilot）",
