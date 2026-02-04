@@ -238,7 +238,7 @@ fn build_run_command(package_manager: &str, script: &str) -> String {
 }
 
 fn is_builtin_script(script: &str) -> bool {
-    matches!(script, "start" | "test" | "install")
+    matches!(script, "start" | "test")
 }
 
 fn to_absolute(root: &Path, path: &str) -> PathBuf {
@@ -378,7 +378,7 @@ fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
                     .file_name()
                     .to_str()
                     .map(|name| name != ".git")
-                    // Treat non-UTF-8 names as non-empty entries.
+                    // Include non-UTF-8 names in the check (treat as non-empty).
                     .unwrap_or(true)
             })
             .peekable();
