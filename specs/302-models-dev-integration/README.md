@@ -2,12 +2,14 @@
 status: in-progress
 created: 2026-02-03
 priority: medium
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-02-03T15:00:14.818091Z
-updated_at: 2026-02-03T15:00:24.572294Z
+updated_at: 2026-02-04T03:26:00.564488Z
 transitions:
 - status: in-progress
   at: 2026-02-03T15:00:24.572294Z
 ---
+
 # Integrate models.dev as Default Model Registry
 
 ## Why
