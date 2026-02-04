@@ -21,7 +21,7 @@ transitions:
   at: 2026-02-03T15:33:23.827581Z
 ---
 
-# Multi-Runtime AI CLI Web Orchestrator
+# AI Chat Sub-Agent Orchestrator
 
 ## Overview
 
@@ -105,14 +105,14 @@ We don't need to fully emulate PTY/TTY because we don't need to natively interac
 
 ### Comparison
 
-| Feature | PTY Emulation (old plan) | Sub-Agent Architecture (new) |
-|---------|-------------------------|------------------------------|
-| Implementation time | 10-12 weeks | 2-3 weeks |
-| Complexity | High (VTE, dirty rects) | Low (tool calling) |
-| Tool support | Any CLI with PTY | AI runners with API support |
-| Context handling | We manage | Sub-agent handles |
-| Maintenance burden | High | Low |
-| Feature reuse | Minimal | Leverages spec 094 |
+| Feature             | PTY Emulation (old plan) | Sub-Agent Architecture (new) |
+| ------------------- | ------------------------ | ---------------------------- |
+| Implementation time | 10-12 weeks              | 2-3 weeks                    |
+| Complexity          | High (VTE, dirty rects)  | Low (tool calling)           |
+| Tool support        | Any CLI with PTY         | AI runners with API support  |
+| Context handling    | We manage                | Sub-agent handles            |
+| Maintenance burden  | High                     | Low                          |
+| Feature reuse       | Minimal                  | Leverages spec 094           |
 
 ## Design
 
@@ -247,22 +247,22 @@ This revised approach simplifies the umbrella scope:
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **Supported runners** | 4+ at launch | Count |
-| **Sub-agent latency** | <5s for simple tasks | Performance monitoring |
-| **Implementation time** | 3-4 weeks | Actual vs planned |
-| **User adoption** | 50% prefer web over CLI | User surveys |
+| Metric                  | Target                  | Measurement            |
+| ----------------------- | ----------------------- | ---------------------- |
+| **Supported runners**   | 4+ at launch            | Count                  |
+| **Sub-agent latency**   | <5s for simple tasks    | Performance monitoring |
+| **Implementation time** | 3-4 weeks               | Actual vs planned      |
+| **User adoption**       | 50% prefer web over CLI | User surveys           |
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **Supported runtimes** | 6+ at launch | Count |
-| **Rendering latency** | <100ms | Performance monitoring |
-| **TUI fidelity** | 95%+ accurate | Visual comparison tests |
-| **Session recovery** | <1s restore | Performance testing |
-| **User adoption** | 50% prefer web over CLI | User surveys |
+| Metric                 | Target                  | Measurement             |
+| ---------------------- | ----------------------- | ----------------------- |
+| **Supported runtimes** | 6+ at launch            | Count                   |
+| **Rendering latency**  | <100ms                  | Performance monitoring  |
+| **TUI fidelity**       | 95%+ accurate           | Visual comparison tests |
+| **Session recovery**   | <1s restore             | Performance testing     |
+| **User adoption**      | 50% prefer web over CLI | User surveys            |
 
 ## Notes
 

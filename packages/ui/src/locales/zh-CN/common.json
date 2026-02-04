@@ -548,6 +548,7 @@
   "specsNavSidebar": {
     "title": "规范列表",
     "searchPlaceholder": "搜索规范...",
+    "clearSearch": "清除搜索",
     "noResults": "没有匹配的规范",
     "filtersLabel": "筛选",
     "toggleFilters": {

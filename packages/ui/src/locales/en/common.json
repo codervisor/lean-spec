@@ -553,6 +553,7 @@
   "specsNavSidebar": {
     "title": "Specifications",
     "searchPlaceholder": "Search specs...",
+    "clearSearch": "Clear search",
     "noResults": "No specs found",
     "filtersLabel": "Filters",
     "toggleFilters": {

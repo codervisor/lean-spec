@@ -887,8 +887,18 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                 placeholder={t('specsNavSidebar.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-9 text-sm"
+                className={cn("pl-8 h-9 text-sm", searchQuery && "pr-8")}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer"
+                  aria-label={t('specsNavSidebar.clearSearch') ?? 'Clear search'}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
           </div>
