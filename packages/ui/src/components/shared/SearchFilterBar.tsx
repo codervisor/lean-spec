@@ -23,6 +23,11 @@ export interface FilterOption {
   onCheckedChange: (checked: boolean) => void;
 }
 
+export interface RadioFilterOption<T extends string = string> {
+  value: T;
+  label: string;
+}
+
 export interface SortOption<T extends string = string> {
   value: T;
   label: string;
@@ -39,7 +44,12 @@ interface SearchFilterBarProps<TSort extends string = string> {
 
   filters?: {
     label: string;
+    type?: 'checkbox' | 'radio';
     options: FilterOption[];
+    // For radio type filters
+    value?: string;
+    onValueChange?: (value: string) => void;
+    radioOptions?: RadioFilterOption[];
   }[];
 
   resultCount?: number;
@@ -62,7 +72,13 @@ export function SearchFilterBar<TSort extends string = string>({
   className
 }: SearchFilterBarProps<TSort>) {
   const { t } = useTranslation('common');
-  const activeFilters = filters.flatMap(g => g.options).filter(o => o.checked).length;
+  const activeFilters = filters.reduce((count, group) => {
+    if (group.type === 'radio') {
+      // For radio groups, count as active only if value is not the first option (assumed to be 'all')
+      return count + (group.value && group.radioOptions && group.value !== group.radioOptions[0]?.value ? 1 : 0);
+    }
+    return count + group.options.filter(o => o.checked).length;
+  }, 0);
 
   return (
     <div className={cn("flex flex-col gap-4 mb-6", className)}>
@@ -108,15 +124,25 @@ export function SearchFilterBar<TSort extends string = string>({
                   <div key={group.label}>
                     {groupIndex > 0 && <DropdownMenuSeparator />}
                     <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
-                    {group.options.map((option) => (
-                      <DropdownMenuCheckboxItem
-                        key={option.id}
-                        checked={option.checked}
-                        onCheckedChange={option.onCheckedChange}
-                      >
-                        {option.label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                    {group.type === 'radio' && group.radioOptions && group.onValueChange ? (
+                      <DropdownMenuRadioGroup value={group.value} onValueChange={group.onValueChange}>
+                        {group.radioOptions.map((option) => (
+                          <DropdownMenuRadioItem key={option.value} value={option.value}>
+                            {option.label}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    ) : (
+                      group.options.map((option) => (
+                        <DropdownMenuCheckboxItem
+                          key={option.id}
+                          checked={option.checked}
+                          onCheckedChange={option.onCheckedChange}
+                        >
+                          {option.label}
+                        </DropdownMenuCheckboxItem>
+                      ))
+                    )}
                   </div>
                 ))}
                 {activeFilters > 0 && (
@@ -126,7 +152,11 @@ export function SearchFilterBar<TSort extends string = string>({
                       className="justify-center text-muted-foreground text-xs"
                       onClick={() => {
                         filters.forEach(group => {
-                          group.options.forEach(opt => opt.onCheckedChange(false));
+                          if (group.type === 'radio' && group.radioOptions && group.onValueChange) {
+                            group.onValueChange(group.radioOptions[0]?.value ?? '');
+                          } else {
+                            group.options.forEach(opt => opt.onCheckedChange(false));
+                          }
                         });
                       }}
                     >

@@ -414,6 +414,9 @@
       },
       "filters": {
         "status": "Status",
+        "all": "All",
+        "configured": "Configured",
+        "unconfigured": "Not Configured",
         "showConfiguredOnly": "Show configured only",
         "showUnconfiguredOnly": "Show unconfigured only"
       },

@@ -70,8 +70,7 @@ export function AISettingsTab() {
   // Filter/Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'models' | 'configured'>('name');
-  const [filterConfigured, setFilterConfigured] = useState(false);
-  const [filterUnconfigured, setFilterUnconfigured] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'configured' | 'unconfigured'>('all');
 
   // Load chat config
   const loadConfig = async () => {
@@ -100,13 +99,11 @@ export function AISettingsTab() {
       const parsed = JSON.parse(raw) as {
         searchQuery?: string;
         sortBy?: 'name' | 'models' | 'configured';
-        filterConfigured?: boolean;
-        filterUnconfigured?: boolean;
+        statusFilter?: 'all' | 'configured' | 'unconfigured';
       };
       if (typeof parsed.searchQuery === 'string') setSearchQuery(parsed.searchQuery);
       if (parsed.sortBy === 'name' || parsed.sortBy === 'models' || parsed.sortBy === 'configured') setSortBy(parsed.sortBy);
-      if (typeof parsed.filterConfigured === 'boolean') setFilterConfigured(parsed.filterConfigured);
-      if (typeof parsed.filterUnconfigured === 'boolean') setFilterUnconfigured(parsed.filterUnconfigured);
+      if (parsed.statusFilter === 'all' || parsed.statusFilter === 'configured' || parsed.statusFilter === 'unconfigured') setStatusFilter(parsed.statusFilter);
     } catch {
       // Ignore storage errors
     }
@@ -117,11 +114,10 @@ export function AISettingsTab() {
     const payload = {
       searchQuery,
       sortBy,
-      filterConfigured,
-      filterUnconfigured,
+      statusFilter,
     };
     localStorage.setItem(AI_FILTERS_STORAGE_KEY, JSON.stringify(payload));
-  }, [searchQuery, sortBy, filterConfigured, filterUnconfigured]);
+  }, [searchQuery, sortBy, statusFilter]);
 
   // Identify custom providers (in config but not in registry)
   const customProviders = useMemo(() => {
@@ -273,8 +269,8 @@ export function AISettingsTab() {
 
       // Filter
       const isConfigured = 'isConfigured' in p ? p.isConfigured : (p as Provider).hasApiKey;
-      if (filterConfigured && !isConfigured) return false;
-      if (filterUnconfigured && isConfigured) return false;
+      if (statusFilter === 'configured' && !isConfigured) return false;
+      if (statusFilter === 'unconfigured' && isConfigured) return false;
 
       return true;
     };
@@ -295,7 +291,7 @@ export function AISettingsTab() {
     }
 
     return [...registryProviders, ...customProviders].filter(match).sort(sorter);
-  }, [registryProviders, customProviders, searchQuery, sortBy, filterConfigured, filterUnconfigured]);
+  }, [registryProviders, customProviders, searchQuery, sortBy, statusFilter]);
 
   const loading = registryLoading || configLoading;
 
@@ -362,19 +358,14 @@ export function AISettingsTab() {
           filters={[
             {
               label: t('settings.ai.filters.status'),
-              options: [
-                {
-                  id: 'configured',
-                  label: t('settings.ai.filters.showConfiguredOnly'),
-                  checked: filterConfigured,
-                  onCheckedChange: setFilterConfigured
-                },
-                {
-                  id: 'unconfigured',
-                  label: t('settings.ai.filters.showUnconfiguredOnly'),
-                  checked: filterUnconfigured,
-                  onCheckedChange: setFilterUnconfigured
-                }
+              type: 'radio' as const,
+              options: [],
+              value: statusFilter,
+              onValueChange: (v: string) => setStatusFilter(v as 'all' | 'configured' | 'unconfigured'),
+              radioOptions: [
+                { value: 'all', label: t('settings.ai.filters.all') },
+                { value: 'configured', label: t('settings.ai.filters.configured') },
+                { value: 'unconfigured', label: t('settings.ai.filters.unconfigured') },
               ]
             }
           ]}

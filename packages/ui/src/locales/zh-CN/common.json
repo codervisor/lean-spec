@@ -396,6 +396,9 @@
       },
       "filters": {
         "status": "状态",
+        "all": "全部",
+        "configured": "已配置",
+        "unconfigured": "未配置",
         "showConfiguredOnly": "仅显示已配置",
         "showUnconfiguredOnly": "仅显示未配置"
       },
