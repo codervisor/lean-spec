@@ -4,7 +4,7 @@ description: Spec-Driven Development methodology for AI-assisted development. Us
 compatibility: Requires lean-spec CLI or @leanspec/mcp server
 metadata:
   author: LeanSpec
-  version: 0.1.0
+  version: 0.2.23
   homepage: https://leanspec.dev
 ---
 
@@ -102,26 +102,7 @@ See detailed guidance in:
 - [references/WORKFLOW.md](./references/WORKFLOW.md)
 - [references/BEST-PRACTICES.md](./references/BEST-PRACTICES.md)
 - [references/EXAMPLES.md](./references/EXAMPLES.md)
-
-## Setup & Activation
-
-### Project-level installation
-Place this folder in:
-
-- $PROJECT_ROOT/.lean-spec/skills/leanspec-sdd/
-
-### User-level installation (optional)
-Agent-specific skill folders may include:
-- ~/.codex/skills/leanspec-sdd/
-- ~/.cursor/skills/leanspec-sdd/
-
-Exact paths vary by tool. See https://agentskills.io for current locations.
-
-### Auto-activation hints
-If the tool supports auto-activation, detect:
-- .lean-spec/config.json
-- specs/ folder
-- AGENTS.md referencing the skill
+- [references/COMMANDS.md](./references/COMMANDS.md)
 
 ## Compatibility Notes
 
