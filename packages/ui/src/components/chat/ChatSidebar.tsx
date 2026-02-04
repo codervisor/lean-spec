@@ -27,6 +27,7 @@ export function ChatSidebar() {
   // Use registry for model selection
   const { defaultSelection } = useModelsRegistry();
   const [model, setModel] = useState<{ providerId: string; modelId: string } | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   // Initialize model from defaultSelection once registry is ready
   useEffect(() => {
@@ -47,15 +48,24 @@ export function ChatSidebar() {
     threadId: activeConversationId || undefined
   });
 
+  // Send pending message when thread becomes active
+  useEffect(() => {
+    if (activeConversationId && pendingMessage) {
+      sendMessage({ text: pendingMessage });
+      setPendingMessage(null);
+      setTimeout(refreshConversations, 2000);
+    }
+  }, [activeConversationId, pendingMessage, sendMessage, refreshConversations]);
+
   const handleSendMessage = async (text: string) => {
     if (!activeConversationId) {
+      // Store message to send after conversation is created
+      setPendingMessage(text);
       await createConversation();
-      // Note: The hook won't pick up the new threadId immediately for this message.
-      // This is a known limitation in this rough implementation.
+    } else {
+      sendMessage({ text });
+      setTimeout(refreshConversations, 2000);
     }
-
-    sendMessage({ text });
-    setTimeout(refreshConversations, 2000);
   };
 
   return (
