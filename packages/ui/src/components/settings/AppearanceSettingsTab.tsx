@@ -1,10 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Select,
   SelectContent,
   SelectItem,
@@ -13,7 +8,8 @@ import {
   cn,
 } from '@leanspec/ui-components';
 import { useThemeStore } from '../../stores/theme';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { useDisplayStore } from '../../stores/display';
+import { Sun, Moon, Monitor, Maximize2, Minimize2 } from 'lucide-react';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -26,6 +22,7 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
 export function AppearanceSettingsTab() {
   const { t, i18n } = useTranslation('common');
   const { theme, setTheme } = useThemeStore();
+  const { displayMode, setDisplayMode } = useDisplayStore();
 
   const handleLanguageChange = (locale: string) => {
     i18n.changeLanguage(locale);
@@ -38,57 +35,84 @@ export function AppearanceSettingsTab() {
     { value: 'system', icon: Monitor, label: t('settings.appearance.system'), description: t('settings.appearance.systemDescription') },
   ];
 
+  const displayModes: Array<{ value: 'normal' | 'wide'; icon: typeof Minimize2; label: string; description: string }> = [
+    { value: 'normal', icon: Minimize2, label: t('settings.appearance.normal'), description: t('settings.appearance.normalDescription') },
+    { value: 'wide', icon: Maximize2, label: t('settings.appearance.wide'), description: t('settings.appearance.wideDescription') },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Theme Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.appearance.theme')}</CardTitle>
-          <CardDescription>{t('settings.appearance.themeDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {themes.map(({ value, icon: Icon, label, description }) => (
-              <button
-                key={value}
-                onClick={() => setTheme(value)}
-                className={cn(
-                  'flex flex-col items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors hover:bg-accent',
-                  theme === value ? 'border-primary bg-accent' : 'border-border'
-                )}
-              >
-                <Icon className="h-8 w-8" />
-                <div className="text-center">
-                  <div className="font-semibold">{label}</div>
-                  <div className="text-xs text-muted-foreground">{description}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <div>
+          <h3 className="text-base font-semibold">{t('settings.appearance.theme')}</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('settings.appearance.themeDescription')}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {themes.map(({ value, icon: Icon, label, description }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              className={cn(
+                'flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-all hover:bg-accent/50',
+                theme === value ? 'border-primary bg-accent shadow-sm' : 'border-border hover:border-primary/50'
+              )}
+            >
+              <Icon className={cn('h-6 w-6', theme === value && 'text-primary')} />
+              <div className="text-center">
+                <div className="text-sm font-medium">{label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Display Mode Selection */}
+      <section className="space-y-4">
+        <div>
+          <h3 className="text-base font-semibold">{t('settings.appearance.displayMode')}</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('settings.appearance.displayModeDescription')}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+          {displayModes.map(({ value, icon: Icon, label, description }) => (
+            <button
+              key={value}
+              onClick={() => setDisplayMode(value)}
+              className={cn(
+                'flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-all hover:bg-accent/50',
+                displayMode === value ? 'border-primary bg-accent shadow-sm' : 'border-border hover:border-primary/50'
+              )}
+            >
+              <Icon className={cn('h-6 w-6', displayMode === value && 'text-primary')} />
+              <div className="text-center">
+                <div className="text-sm font-medium">{label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Language Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.appearance.language')}</CardTitle>
-          <CardDescription>{t('settings.appearance.languageDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="language-select">{t('settings.appearance.selectLanguage')}</Label>
-            <Select value={i18n.language} onValueChange={handleLanguageChange}>
-              <SelectTrigger id="language-select" className="w-full max-w-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="zh-CN">简体中文</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <div>
+          <h3 className="text-base font-semibold">{t('settings.appearance.language')}</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('settings.appearance.languageDescription')}</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="language-select">{t('settings.appearance.selectLanguage')}</Label>
+          <Select value={i18n.language} onValueChange={handleLanguageChange}>
+            <SelectTrigger id="language-select" className="w-full max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en" className="cursor-pointer">English</SelectItem>
+              <SelectItem value="zh-CN" className="cursor-pointer">简体中文</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </section>
     </div>
   );
 }

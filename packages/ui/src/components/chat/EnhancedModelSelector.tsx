@@ -14,7 +14,7 @@ import {
   Badge
 } from '@leanspec/ui-components';
 import { useModelsRegistry } from '../../lib/use-models-registry';
-import { Check, ChevronsUpDown, Cpu, Zap, Coins, Eye, Wrench } from 'lucide-react';
+import { Check, ChevronsUpDown, Cpu, Zap, Coins, Eye, Wrench, ChevronRight } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 
 interface EnhancedModelSelectorProps {
@@ -26,7 +26,21 @@ interface EnhancedModelSelectorProps {
 export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedModelSelectorProps) {
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set());
   const { providers, loading, error, summary, defaultSelection } = useModelsRegistry();
+
+  const toggleProvider = (providerId: string) => {
+    setCollapsedProviders(prev => {
+      const next = new Set(prev);
+      if (next.has(providerId)) {
+        next.delete(providerId);
+      } else {
+        next.add(providerId);
+      }
+      return next;
+    });
+  };
 
   if (loading) {
     return <Button variant="outline" disabled className="w-[200px] justify-between">{t('actions.loading')}</Button>;
@@ -75,75 +89,102 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
               configured: summary.configuredCount,
             })}
           </div>
-          <CommandInput placeholder={t('chat.searchModels')} />
+          <CommandInput
+            placeholder={t('chat.searchModels')}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList className="max-h-[500px]">
             <CommandEmpty>{t('chat.noModelsFound')}</CommandEmpty>
-            {providers.map(provider => (
-              <CommandGroup key={provider.id} heading={provider.name}>
-                {provider.models.map(model => (
-                  <CommandItem
-                    key={`${provider.id}-${model.id}`}
-                    value={`${provider.name} ${model.name}`}
-                    onSelect={() => {
-                      onChange({ providerId: provider.id, modelId: model.id });
-                      setOpen(false);
-                    }}
-                    className="flex items-start gap-2 py-3 cursor-pointer"
-                    disabled={!provider.isConfigured}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4 mt-1",
-                        selectedProviderId === provider.id && selectedModelId === model.id
-                          ? "opacity-100"
-                          : "opacity-0"
+            {providers.map(provider => {
+              const isCollapsed = collapsedProviders.has(provider.id) && search.length === 0;
+              return (
+                <CommandGroup
+                  key={provider.id}
+                  heading={
+                    <div
+                      className="flex items-center justify-between cursor-pointer hover:bg-muted/50 -mx-2 -my-1.5 px-2 py-1.5 rounded-sm group"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (search.length === 0) toggleProvider(provider.id);
+                      }}
+                    >
+                      <span className="font-medium text-foreground">{provider.name}</span>
+                      {search.length === 0 && (
+                        <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", !isCollapsed && "rotate-90")} />
                       )}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{model.name}</span>
-                        {!provider.isConfigured && (
-                          <Badge variant="outline" className="text-[10px] px-1 h-4">{t('chat.noKey')}</Badge>
-                        )}
-                        {model.toolCall && (
-                          <Badge variant="secondary" className="text-[10px] px-1 h-4">Tool</Badge>
-                        )}
-                        {model.reasoning && (
-                          <Badge variant="secondary" className="text-[10px] px-1 h-4">Reasoning</Badge>
-                        )}
-                        {model.vision && (
-                          <Badge variant="secondary" className="text-[10px] px-1 h-4">Vision</Badge>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-0.5" title="Context Window">
-                          <Cpu className="h-3 w-3" />
-                          {model.contextWindow ?? '—'}
-                        </span>
-                        <span className="flex items-center gap-0.5" title="Max Output">
-                          <Wrench className="h-3 w-3" />
-                          {model.maxOutput ?? '—'}
-                        </span>
-                        <span className="flex items-center gap-0.5" title="Input Cost">
-                          <Coins className="h-3 w-3" />
-                          {model.inputCost !== undefined ? `$${model.inputCost}/M` : '—'}
-                        </span>
-                        <span className="flex items-center gap-0.5" title="Output Cost">
-                          <Zap className="h-3 w-3" />
-                          {model.outputCost !== undefined ? `$${model.outputCost}/M` : '—'}
-                        </span>
-                        {model.vision && (
-                          <span className="flex items-center gap-0.5" title="Vision">
-                            <Eye className="h-3 w-3" />
-                            Vision
-                          </span>
-                        )}
-                      </div>
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            ))}
+                  }
+                >
+                  {!isCollapsed ? (
+                    provider.models.map(model => (
+                      <CommandItem
+                        key={`${provider.id}-${model.id}`}
+                        value={`${provider.name} ${model.name}`}
+                        onSelect={() => {
+                          onChange({ providerId: provider.id, modelId: model.id });
+                          setOpen(false);
+                        }}
+                        className="flex items-start gap-2 py-3 cursor-pointer"
+                        disabled={!provider.isConfigured}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 mt-1",
+                            selectedProviderId === provider.id && selectedModelId === model.id
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{model.name}</span>
+                            {!provider.isConfigured && (
+                              <Badge variant="outline" className="text-[10px] px-1 h-4">{t('chat.noKey')}</Badge>
+                            )}
+                            {model.toolCall && (
+                              <Badge variant="secondary" className="text-[10px] px-1 h-4">Tool</Badge>
+                            )}
+                            {model.reasoning && (
+                              <Badge variant="secondary" className="text-[10px] px-1 h-4">Reasoning</Badge>
+                            )}
+                            {model.vision && (
+                              <Badge variant="secondary" className="text-[10px] px-1 h-4">Vision</Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-0.5" title="Context Window">
+                              <Cpu className="h-3 w-3" />
+                              {model.contextWindow ?? '—'}
+                            </span>
+                            <span className="flex items-center gap-0.5" title="Max Output">
+                              <Wrench className="h-3 w-3" />
+                              {model.maxOutput ?? '—'}
+                            </span>
+                            <span className="flex items-center gap-0.5" title="Input Cost">
+                              <Coins className="h-3 w-3" />
+                              {model.inputCost !== undefined ? `$${model.inputCost}/M` : '—'}
+                            </span>
+                            <span className="flex items-center gap-0.5" title="Output Cost">
+                              <Zap className="h-3 w-3" />
+                              {model.outputCost !== undefined ? `$${model.outputCost}/M` : '—'}
+                            </span>
+                            {model.vision && (
+                              <span className="flex items-center gap-0.5" title="Vision">
+                                <Eye className="h-3 w-3" />
+                                Vision
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </CommandItem>
+                    ))
+                  ) : (
+                    <CommandItem value={`${provider.id}-dummy`} className="hidden" disabled aria-hidden>dummy</CommandItem>
+                  )}
+                </CommandGroup>
+              );
+            })}
           </CommandList>
         </Command>
       </PopoverContent>

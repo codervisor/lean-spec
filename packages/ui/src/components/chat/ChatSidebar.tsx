@@ -4,6 +4,7 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '@leanspec/ui-components';
 import { ResizeHandle } from './ResizeHandle';
 import { ChatContainer } from './ChatContainer';
+import { InlineModelSelector } from './InlineModelSelector';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { X, Plus, Settings } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
@@ -23,7 +24,7 @@ export function ChatSidebar() {
   const [isResizing, setIsResizing] = useState(false);
 
   // Model state (simplified for now, default to openai/gpt-4o)
-  const [model] = useState({ providerId: 'openai', modelId: 'gpt-4o' });
+  const [model, setModel] = useState({ providerId: 'openai', modelId: 'gpt-4o' });
 
   const {
     messages,
@@ -108,6 +109,13 @@ export function ChatSidebar() {
             error={error as Error | null}
             onRetry={reload}
             className="h-full"
+            footerContent={
+              <InlineModelSelector
+                value={model}
+                onChange={setModel}
+                disabled={isLoading}
+              />
+            }
           />
         </div>
       </aside>

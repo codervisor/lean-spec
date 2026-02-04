@@ -1,62 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, FileText, BarChart3, Network, ChevronLeft, ChevronRight, BookOpen, X, Folder, Cpu, Settings, Terminal } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
 import { ProjectSwitcher } from './ProjectSwitcher';
+import { SidebarLink } from './shared/SidebarLink';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useMachineStore } from '../stores/machine';
 
 const STORAGE_KEY = 'main-sidebar-collapsed';
-
-interface SidebarLinkProps {
-  to: string;
-  icon: typeof Home;
-  label: string;
-  description?: string;
-  currentPath: string;
-  isCollapsed: boolean;
-}
-
-function SidebarLink({ to, icon: Icon, label, description, currentPath, isCollapsed }: SidebarLinkProps) {
-  const normalize = (value: string) => value.replace(/\/$/, '') || '/';
-  const normalizedTo = normalize(to);
-  const normalizedPath = normalize(currentPath);
-
-  // Strip /projects/:id prefix so highlighting works for project-scoped routes
-  const stripProjectPrefix = (value: string) => {
-    const match = value.match(/^\/projects\/[^/]+(\/.*)?$/);
-    return match ? (match[1] || '/') : value;
-  };
-
-  const toWithoutProject = stripProjectPrefix(normalizedTo);
-  const pathWithoutProject = stripProjectPrefix(normalizedPath);
-
-  const isHome = toWithoutProject === '/' || toWithoutProject === '';
-  const isActive = isHome
-    ? pathWithoutProject === '/' || pathWithoutProject === ''
-    : pathWithoutProject === toWithoutProject || pathWithoutProject.startsWith(`${toWithoutProject}/`);
-
-  return (
-    <Link
-      to={to}
-      className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
-        'hover:bg-accent hover:text-accent-foreground',
-        isActive && 'bg-accent text-accent-foreground font-medium',
-        isCollapsed && 'justify-center px-2'
-      )}
-    >
-      <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary')} />
-      {!isCollapsed && (
-        <div className="flex flex-col">
-          <span className="text-sm">{label}</span>
-          {description && <span className="text-xs text-muted-foreground">{description}</span>}
-        </div>
-      )}
-    </Link>
-  );
-}
 
 interface MainSidebarProps {
   mobileOpen?: boolean;
@@ -148,8 +100,8 @@ export function MainSidebar({ mobileOpen = false, onMobileClose }: MainSidebarPr
                 icon={item.icon}
                 label={item.label}
                 description={!collapsed || mobileOpen ? item.description : undefined}
-                currentPath={location.pathname}
                 isCollapsed={collapsed && !mobileOpen}
+                stripProjectPrefix
               />
             ))}
           </nav>

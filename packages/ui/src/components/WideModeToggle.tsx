@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Monitor, Scan, Check } from 'lucide-react';
-import { useLayoutStore } from '../stores/layout';
+import { useDisplayStore } from '../stores/display';
 import { Button, cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 
 export function WideModeToggle() {
-  const { isWideMode, toggleWideMode } = useLayoutStore();
+  const { displayMode, setDisplayMode } = useDisplayStore();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 
@@ -13,8 +13,6 @@ export function WideModeToggle() {
     { value: 'normal', icon: Monitor, label: t('wideMode.normal') },
     { value: 'wide', icon: Scan, label: t('wideMode.wide') },
   ] as const;
-
-  const currentMode = isWideMode ? 'wide' : 'normal';
 
   return (
     <div className="relative">
@@ -26,7 +24,7 @@ export function WideModeToggle() {
         className={cn("h-9 w-9 sm:h-10 sm:w-10", open && "bg-accent")}
         data-tauri-drag-region="false"
       >
-        {isWideMode ? (
+        {displayMode === 'wide' ? (
           <Scan className="h-5 w-5" />
         ) : (
           <Monitor className="h-5 w-5" />
@@ -40,21 +38,19 @@ export function WideModeToggle() {
               <Button
                 key={value}
                 onClick={() => {
-                  if ((value === 'wide') !== isWideMode) {
-                    toggleWideMode();
-                  }
+                  setDisplayMode(value);
                   setOpen(false);
                 }}
                 variant="ghost"
                 size="sm"
                 className={cn(
                   'w-full justify-start h-8 px-2',
-                  currentMode === value && 'bg-accent'
+                  displayMode === value && 'bg-accent'
                 )}
               >
                 <Icon className="h-4 w-4" />
                 <span className="flex-1 text-left">{label}</span>
-                {currentMode === value && <Check className="h-3 w-3 ml-2" />}
+                {displayMode === value && <Check className="h-3 w-3 ml-2" />}
               </Button>
             ))}
           </div>

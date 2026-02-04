@@ -11,11 +11,6 @@ import {
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -187,45 +182,42 @@ export function RunnerSettingsTab() {
 
   if (!canManage) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertCircle className="h-5 w-5" />
-            <p>{t('settings.runners.errors.noProject')}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="p-6 border rounded-lg">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <p>{t('settings.runners.errors.noProject')}</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <CardTitle>{t('settings.runners.title')}</CardTitle>
-              <CardDescription>{t('settings.runners.description')}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => loadRunners()}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {t('actions.refresh')}
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setEditingRunner(null);
-                  setShowDialog(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('settings.runners.addRunner')}
-              </Button>
-            </div>
+    <div className="space-y-8">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-semibold">{t('settings.runners.title')}</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">{t('settings.runners.description')}</p>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => loadRunners()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {t('actions.refresh')}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingRunner(null);
+                setShowDialog(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('settings.runners.addRunner')}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
           {error && (
             <div className="flex items-center gap-2 text-destructive text-sm">
               <AlertCircle className="h-4 w-4" />
@@ -234,14 +226,14 @@ export function RunnerSettingsTab() {
           )}
 
           {runners.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('settings.runners.empty')}</p>
+            <p className="text-sm text-muted-foreground py-4">{t('settings.runners.empty')}</p>
           ) : (
             runners.map((runner) => (
-              <div key={runner.id} className="border rounded-lg p-4 space-y-3">
+              <div key={runner.id} className="border rounded-lg p-4 space-y-3 hover:bg-accent/30 transition-colors">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold">{runner.name || runner.id}</h3>
+                      <h4 className="text-sm font-medium">{runner.name || runner.id}</h4>
                       {defaultRunner === runner.id && (
                         <Badge variant="secondary" className="text-xs">
                           {t('settings.runners.default')}
@@ -268,7 +260,7 @@ export function RunnerSettingsTab() {
                         {runner.source}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 font-mono">
                       {runner.command ?? t('settings.runners.ideOnlyCommand')}
                     </p>
                   </div>
@@ -276,6 +268,7 @@ export function RunnerSettingsTab() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8"
                       onClick={() => {
                         setEditingRunner(runner);
                         setShowDialog(true);
@@ -286,6 +279,7 @@ export function RunnerSettingsTab() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8"
                       onClick={() => handleDeleteRunner(runner)}
                       disabled={runner.source === 'builtin'}
                     >
@@ -317,8 +311,8 @@ export function RunnerSettingsTab() {
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {showDialog && (
         <RunnerDialog

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@leanspec/ui-components';
-import { useLayoutStore } from '../../stores/layout';
+import { useDisplayStore } from '../../stores/display';
 
 type PageContainerPadding = 'default' | 'compact' | 'none';
 
@@ -23,14 +23,15 @@ export function PageContainer({
   contentClassName,
   padding = 'default',
 }: PageContainerProps) {
-  const { isWideMode } = useLayoutStore();
+  const { displayMode } = useDisplayStore();
 
   return (
     <div className={cn('w-full', paddingClasses[padding], className)}>
       <div
         className={cn(
-          'mx-auto w-full lg:min-w-4xl',
-          isWideMode ? 'max-w-full' : 'max-w-7xl',
+          'mx-auto w-full transition-[max-width] duration-300',
+          // Normal: 4xl (max-w-4xl), Wide: 7xl (max-w-7xl)
+          displayMode === 'wide' ? 'max-w-7xl' : 'max-w-4xl',
           contentClassName
         )}
       >

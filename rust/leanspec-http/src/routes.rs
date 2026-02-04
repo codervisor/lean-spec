@@ -224,6 +224,10 @@ pub fn create_router(state: AppState) -> Router {
                 "/api/models/providers/{provider_id}",
                 get(handlers::get_provider_models),
             )
+            .route(
+                "/api/models/providers/{provider_id}/key",
+                put(handlers::set_provider_api_key),
+            )
             .route("/api/models/refresh", post(handlers::refresh_registry));
     }
 
