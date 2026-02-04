@@ -12,7 +12,6 @@ transitions:
 - status: in-progress
   at: 2026-02-04T07:32:04.695038Z
 ---
-
 # UI Layout Alignment Overhaul
 
 ## Overview
@@ -28,8 +27,8 @@ The @leanspec/ui pages have inconsistent layout alignment, width constraints, an
 
 ## Plan
 
-- [ ] Audit all page-level components in @leanspec/ui for layout wrappers and width/padding rules.
-- [ ] Define a shared layout container (component or utility) and update pages to use it.
+- [x] Audit all page-level components in @leanspec/ui for layout wrappers and width/padding rules.
+- [x] Define a shared layout container (component or utility) and update pages to use it.
 - [ ] Align sub-elements that currently break the rules (full-bleed sections, mismatched padding).
 - [ ] Verify desktop min width and horizontal scroll behavior with sidebars open/closed.
 - [ ] Ensure mobile/responsive behavior is preserved.

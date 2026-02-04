@@ -20,6 +20,7 @@ export function ChatSidebar() {
   } = useChat();
 
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const [isResizing, setIsResizing] = useState(false);
 
   // Model state (simplified for now, default to openai/gpt-4o)
   const [model] = useState({ providerId: 'openai', modelId: 'gpt-4o' });
@@ -59,7 +60,8 @@ export function ChatSidebar() {
 
       <aside
         className={cn(
-          "bg-background border-l shadow-xl transition-all duration-300 ease-in-out flex flex-col overflow-hidden",
+          "bg-background border-l shadow-xl flex flex-col overflow-hidden",
+          !isResizing && "transition-all duration-300 ease-in-out",
           isMobile
             ? `fixed top-0 right-0 h-full z-50 ${isOpen ? "translate-x-0" : "translate-x-full"}`
             : "sticky top-14 h-[calc(100vh-3.5rem)]"
@@ -69,6 +71,8 @@ export function ChatSidebar() {
         {!isMobile && (
           <ResizeHandle
             onResize={setSidebarWidth}
+            onResizeStart={() => setIsResizing(true)}
+            onResizeEnd={() => setIsResizing(false)}
           />
         )}
 

@@ -3,11 +3,19 @@ import { cn } from '@leanspec/ui-components';
 
 interface ResizeHandleProps {
   onResize: (width: number) => void;
+  onResizeStart?: () => void;
+  onResizeEnd?: () => void;
   minWidth?: number;
   maxWidth?: number;
 }
 
-export function ResizeHandle({ onResize, minWidth = 300, maxWidth = Infinity }: ResizeHandleProps) {
+export function ResizeHandle({
+  onResize,
+  onResizeStart,
+  onResizeEnd,
+  minWidth = 300,
+  maxWidth = Infinity
+}: ResizeHandleProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
@@ -24,6 +32,7 @@ export function ResizeHandle({ onResize, minWidth = 300, maxWidth = Infinity }: 
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      onResizeEnd?.();
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
@@ -47,7 +56,10 @@ export function ResizeHandle({ onResize, minWidth = 300, maxWidth = Infinity }: 
         "absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors z-50",
         isDragging && "bg-primary/50 w-1.5"
       )}
-      onMouseDown={() => setIsDragging(true)}
+      onMouseDown={() => {
+        setIsDragging(true);
+        onResizeStart?.();
+      }}
     />
   );
 }
