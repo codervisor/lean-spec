@@ -24,7 +24,7 @@ interface AIFiltersState {
 
 const AI_FILTERS_DEFAULTS = {
   searchQuery: '',
-  sortBy: 'name' as AISortOption,
+  sortBy: 'configured' as AISortOption,
   statusFilter: 'all' as AIStatusFilter,
 };
 

@@ -167,7 +167,7 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
       data-tauri-drag-region="true"
       onDoubleClick={onHeaderDoubleClick}
     >
-      <div className="flex items-center justify-between h-full lg:px-1 px-4">
+      <div className="flex items-center justify-between h-full px-4">
         {/* Left: Mobile Menu + Logo + Breadcrumb */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           {/* Mobile hamburger menu */}

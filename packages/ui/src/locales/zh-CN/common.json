@@ -199,6 +199,7 @@
     "noModelsFound": "未找到模型",
     "noKey": "无密钥",
     "providersSummary": "{{total}} 个提供商，已配置 {{configured}} 个",
+    "availableProvidersSummary": "{{count}} 个可用提供商",
     "modelsLoadError": "加载模型失败",
     "newChat": "新对话",
     "expandSidebar": "展开侧边栏",
@@ -388,6 +389,7 @@
       "builtIn": "内置",
       "configure": "配置",
       "setUp": "设置",
+      "setDefault": "设为默认",
       "saveAndSetDefault": "保存并设为默认",
       "sort": {
         "name": "名称",

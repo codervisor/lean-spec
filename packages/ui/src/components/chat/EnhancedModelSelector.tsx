@@ -28,7 +28,7 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set());
-  const { providers, loading, error, summary, defaultSelection } = useModelsRegistry();
+  const { providers, loading, error, defaultSelection } = useModelsRegistry();
 
   const toggleProvider = (providerId: string) => {
     setCollapsedProviders(prev => {
@@ -84,9 +84,8 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
       <PopoverContent className="w-[420px] p-0" align="start">
         <Command>
           <div className="border-b px-3 py-2 text-[11px] text-muted-foreground">
-            {t('chat.providersSummary', {
-              total: summary.total,
-              configured: summary.configuredCount,
+            {t('chat.availableProvidersSummary', {
+              count: providers.length,
             })}
           </div>
           <CommandInput
@@ -126,7 +125,6 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
                           setOpen(false);
                         }}
                         className="flex items-start gap-2 py-3 cursor-pointer"
-                        disabled={!provider.isConfigured}
                       >
                         <Check
                           className={cn(
@@ -139,9 +137,6 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-sm">{model.name}</span>
-                            {!provider.isConfigured && (
-                              <Badge variant="outline" className="text-[10px] px-1 h-4">{t('chat.noKey')}</Badge>
-                            )}
                             {model.toolCall && (
                               <Badge variant="secondary" className="text-[10px] px-1 h-4">Tool</Badge>
                             )}

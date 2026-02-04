@@ -10,7 +10,6 @@ import {
   CommandList,
   CommandInput,
   CommandEmpty,
-  Badge,
   Button,
 } from '@leanspec/ui-components';
 import { useModelsRegistry } from '../../lib/use-models-registry';
@@ -36,7 +35,7 @@ export function InlineModelSelector({
 }: InlineModelSelectorProps) {
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
-  const { providers, loading, error, summary, defaultSelection } = useModelsRegistry();
+  const { providers, loading, error, defaultSelection } = useModelsRegistry();
 
   if (loading) {
     return (
@@ -93,9 +92,8 @@ export function InlineModelSelector({
       <PopoverContent className="w-[350px] p-0" align="start">
         <Command>
           <div className="border-b px-3 py-2 text-[11px] text-muted-foreground">
-            {t('chat.providersSummary', {
-              total: summary.total,
-              configured: summary.configuredCount,
+            {t('chat.availableProvidersSummary', {
+              count: providers.length,
             })}
           </div>
           <CommandInput placeholder={t('chat.searchModels')} className="h-9" />
@@ -112,7 +110,6 @@ export function InlineModelSelector({
                       setOpen(false);
                     }}
                     className="flex items-center gap-2 py-2 cursor-pointer"
-                    disabled={!provider.isConfigured}
                   >
                     <Check
                       className={cn(
@@ -122,14 +119,7 @@ export function InlineModelSelector({
                           : 'opacity-0'
                       )}
                     />
-                    <div className="flex-1">
-                      <span className="font-medium text-sm">{model.name}</span>
-                      {!provider.isConfigured && (
-                        <Badge variant="outline" className="ml-2 text-[10px] px-1 h-4">
-                          {t('chat.noKey')}
-                        </Badge>
-                      )}
-                    </div>
+                    <span className="font-medium text-sm">{model.name}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

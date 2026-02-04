@@ -197,13 +197,13 @@ impl RunnerRegistry {
             RunnerDefinition {
                 id: "copilot".to_string(),
                 name: Some("GitHub Copilot".to_string()),
-                command: Some("gh".to_string()),
-                args: vec!["copilot".to_string(), "suggest".to_string()],
+                command: Some("copilot".to_string()),
+                args: Vec::new(),
                 env: HashMap::new(),
                 detection: Some(DetectionConfig {
                     commands: vec!["copilot".to_string()],
-                    config_dirs: Vec::new(),
-                    env_vars: vec!["GITHUB_TOKEN".to_string()],
+                    config_dirs: vec![".copilot".to_string()],
+                    env_vars: vec!["GITHUB_TOKEN".to_string(), "GH_TOKEN".to_string()],
                     extensions: Vec::new(),
                 }),
                 symlink_file: None,

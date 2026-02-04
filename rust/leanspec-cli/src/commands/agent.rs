@@ -355,10 +355,8 @@ fn launch_agent(agent: &str, _spec_name: &str, content: &str) -> Result<(), Box<
                 .spawn()?;
         }
         "copilot" => {
-            // GitHub Copilot CLI
-            Command::new(&command)
-                .args(["copilot", "suggest"])
-                .spawn()?;
+            // GitHub Copilot CLI (https://github.com/github/copilot-cli)
+            Command::new(&command).spawn()?;
         }
         _ => {
             println!(

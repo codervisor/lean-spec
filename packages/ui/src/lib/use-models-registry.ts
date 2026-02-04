@@ -8,6 +8,21 @@ import type {
 } from '../types/models-registry';
 
 const API_URL = '/api/models/providers?agenticOnly=true';
+const CHAT_CONFIG_URL = '/api/chat/config';
+
+interface ChatConfigSettings {
+  defaultProviderId: string;
+  defaultModelId: string;
+}
+
+interface ChatConfigResponse {
+  settings: ChatConfigSettings;
+}
+
+interface UseModelsRegistryOptions {
+  /** Include unconfigured providers in the list (default: false) */
+  showUnconfigured?: boolean;
+}
 
 const toRegistryModel = (model: ModelsRegistryModelRaw): RegistryModel => {
   const inputModalities = model.modalities?.input ?? [];
@@ -68,8 +83,9 @@ export const selectDefaultModel = (providers: RegistryProvider[]) => {
   return { providerId: provider.id, modelId: model.id };
 };
 
-export const useModelsRegistry = () => {
-  const [providers, setProviders] = useState<RegistryProvider[]>([]);
+export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
+  const { showUnconfigured = false } = options;
+  const [allProviders, setAllProviders] = useState<RegistryProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState({
@@ -77,6 +93,7 @@ export const useModelsRegistry = () => {
     configuredCount: 0,
     configuredProviderIds: [] as string[],
   });
+  const [savedDefaults, setSavedDefaults] = useState<{ providerId: string; modelId: string } | null>(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
@@ -86,20 +103,38 @@ export const useModelsRegistry = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch(API_URL, { signal: controller.signal });
-        if (!res.ok) {
+
+        // Fetch both providers and chat config in parallel
+        const [providersRes, configRes] = await Promise.all([
+          fetch(API_URL, { signal: controller.signal }),
+          fetch(CHAT_CONFIG_URL, { signal: controller.signal }),
+        ]);
+
+        if (!providersRes.ok) {
           throw new Error('Failed to load models');
         }
-        const data: ModelsRegistryResponse = await res.json();
+        const data: ModelsRegistryResponse = await providersRes.json();
         if (cancelled) return;
 
         const mapped = data.providers.map(toRegistryProvider);
-        setProviders(mapped);
+        setAllProviders(mapped);
         setSummary({
           total: data.total,
           configuredCount: data.configuredCount,
           configuredProviderIds: data.configuredProviderIds ?? [],
         });
+
+        // Parse saved defaults from chat config
+        if (configRes.ok) {
+          const configData: ChatConfigResponse = await configRes.json();
+          if (configData.settings?.defaultProviderId && configData.settings?.defaultModelId) {
+            setSavedDefaults({
+              providerId: configData.settings.defaultProviderId,
+              modelId: configData.settings.defaultModelId,
+            });
+          }
+        }
+
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -124,14 +159,43 @@ export const useModelsRegistry = () => {
     setReloadTrigger((prev) => prev + 1);
   }, []);
 
-  const defaultSelection = useMemo(() => selectDefaultModel(providers), [providers]);
+  // Filter providers based on showUnconfigured option
+  const providers = useMemo(() => {
+    if (showUnconfigured) {
+      return allProviders;
+    }
+    return allProviders.filter((p) => p.isConfigured);
+  }, [allProviders, showUnconfigured]);
+
+  // Use saved defaults if available and valid, otherwise compute from providers
+  const defaultSelection = useMemo(() => {
+    if (savedDefaults) {
+      // Validate that the saved defaults are still valid (provider exists and is configured)
+      const provider = allProviders.find((p) => p.id === savedDefaults.providerId);
+      if (provider?.isConfigured) {
+        const model = provider.models.find((m) => m.id === savedDefaults.modelId);
+        if (model) {
+          return savedDefaults;
+        }
+        // Model not found, try to find a tool-enabled model from the same provider
+        const fallbackModel = selectDefaultModelForProvider(provider);
+        if (fallbackModel) {
+          return { providerId: provider.id, modelId: fallbackModel.id };
+        }
+      }
+    }
+    // Fall back to computed default
+    return selectDefaultModel(allProviders);
+  }, [allProviders, savedDefaults]);
 
   return {
     providers,
+    allProviders,
     loading,
     error,
     summary,
     defaultSelection,
+    savedDefaults,
     reload,
   };
 };
