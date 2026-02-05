@@ -14,7 +14,6 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::ai_native::error::AiError;
 use crate::ai_native::providers::{select_provider, ProviderClient};
-use crate::ai_native::runner_config::resolve_runner_config;
 use crate::ai_native::streaming::StreamEvent;
 use crate::ai_native::tools::{build_tools, ToolContext, ToolRegistry};
 use crate::ai_native::types::{MessageRole, UIMessage, UIMessagePart};
@@ -71,12 +70,11 @@ pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult
     let model_id = model_id.unwrap_or_else(|| config.settings.default_model_id.clone());
 
     let selection = select_provider(&config, &provider_id, &model_id)?;
-    let runner_config = resolve_runner_config(project_path.as_deref(), None)?;
     let tools = build_tools(ToolContext {
         base_url: base_url.clone(),
         project_id: project_id.clone(),
         project_path: project_path.clone(),
-        runner_config,
+        runner_config: None,
     })?;
 
     let (sender, receiver) = mpsc::unbounded_channel();
