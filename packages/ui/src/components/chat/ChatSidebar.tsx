@@ -1,14 +1,87 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { cn } from '@leanspec/ui-components';
+import { 
+  cn,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  CommandInput,
+  CommandEmpty,
+  Button 
+} from '@leanspec/ui-components';
 import { ResizeHandle } from './ResizeHandle';
 import { ChatContainer } from './ChatContainer';
 import { InlineModelSelector } from './InlineModelSelector';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { useModelsRegistry } from '../../lib/use-models-registry';
-import { X, Plus, Settings, History, MessageSquare } from 'lucide-react';
-import { Button } from '@leanspec/ui-components';
+import { X, Plus, Settings, Check, ChevronsUpDown } from 'lucide-react';
+
+function ConversationSelector({
+  conversations,
+  activeId,
+  onSelect,
+}: {
+  conversations: { id: string; title?: string }[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedConversation = activeId 
+    ? conversations.find((c) => c.id === activeId) 
+    : null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          role="combobox"
+          aria-expanded={open}
+          className="flex-1 justify-between text-sm font-semibold h-9 px-2 hover:bg-muted/50 truncate min-w-0"
+        >
+          <span className="truncate">
+            {selectedConversation?.title || (activeId ? "Untitled Chat" : "New Conversation")}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search history..." />
+          <CommandList>
+            <CommandEmpty>No conversations found.</CommandEmpty>
+            <CommandGroup heading="History">
+              {conversations.map((conv) => (
+                <CommandItem
+                  key={conv.id}
+                  value={conv.title || "New Chat"}
+                  onSelect={() => {
+                    onSelect(conv.id);
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      activeId === conv.id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <span className="truncate">{conv.title || "New Chat"}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export function ChatSidebar() {
   const {
@@ -20,8 +93,6 @@ export function ChatSidebar() {
     createConversation,
     refreshConversations,
     conversations,
-    showHistory,
-    toggleHistory,
     selectConversation,
   } = useChat();
 
@@ -115,20 +186,13 @@ export function ChatSidebar() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14">
-          <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-sm">AI Assistant</h2>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant={showHistory ? "secondary" : "ghost"} 
-              size="icon" 
-              className="h-8 w-8" 
-              onClick={toggleHistory} 
-              title="Chat History"
-            >
-              <History className="h-4 w-4" />
-            </Button>
+        <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14 gap-2">
+          <ConversationSelector
+            conversations={conversations}
+            activeId={activeConversationId}
+            onSelect={selectConversation}
+          />
+          <div className="flex items-center gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title="New Chat">
               <Plus className="h-4 w-4" />
             </Button>
@@ -145,39 +209,6 @@ export function ChatSidebar() {
             </Button>
           </div>
         </div>
-
-        {/* Conversation History Panel */}
-        {showHistory && (
-          <div className="border-b bg-muted/20 max-h-64 overflow-y-auto">
-            <div className="p-2 space-y-1">
-              {conversations.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No conversations yet</p>
-              ) : (
-                conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => {
-                      selectConversation(conv.id);
-                      toggleHistory();
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                      "hover:bg-muted/50",
-                      conv.id === activeConversationId 
-                        ? "bg-muted font-medium" 
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{conv.title || 'New Chat'}</span>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Chat Area */}
         <div className="flex-1 min-h-0 bg-background">

@@ -141,6 +141,14 @@ export function QuickSearch() {
           placeholder={t('quickSearch.placeholder')}
           value={search}
           onValueChange={setSearch}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+              setSearch('');
+            }
+          }}
         />
         <CommandList>
           <CommandEmpty>{t('search.noResults')}</CommandEmpty>

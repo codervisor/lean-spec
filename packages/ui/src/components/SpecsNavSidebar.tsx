@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import Fuse from 'fuse.js';
 import {
   Search,
   Filter,
@@ -65,8 +66,11 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const resolvedProjectId = projectId ?? currentProject?.id;
   const specsQuery = useSpecsList(resolvedProjectId ?? null);
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : '/projects';
-  const [specs, setSpecs] = useState<Spec[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Derive specs and loading from query (avoids cascading renders)
+  const specs = useMemo(() => (specsQuery.data as Spec[]) ?? [], [specsQuery.data]);
+  const loading = !currentProject || specsQuery.isLoading;
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [tagSearchQuery, setTagSearchQuery] = useState('');
 
@@ -128,22 +132,12 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
   const activeSpec = useMemo(() => specs.find(s => s.specName === activeSpecId), [specs, activeSpecId]);
   const activeSpecActualId = activeSpec?.id || activeSpecId;
 
+  // Log query errors (no setState needed)
   useEffect(() => {
-    if (!currentProject) {
-      setLoading(true);
-      return;
-    }
-
-    if (specsQuery.data) {
-      setSpecs(specsQuery.data as Spec[]);
-      setLoading(false);
-    }
-
     if (specsQuery.error) {
       console.error('Failed to load specs for sidebar', specsQuery.error);
-      setLoading(false);
     }
-  }, [currentProject, specsQuery.data, specsQuery.error]);
+  }, [specsQuery.error]);
 
   useEffect(() => {
     const handler = () => setListHeight(calculateListHeight());
@@ -214,6 +208,23 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     return allSpecs.filter(s => resultIds.has(s.specName || s.id || ''));
   }, []);
 
+  // Fuse.js instance for fuzzy search (matches QuickSearch behavior)
+  const fuse = useMemo(
+    () =>
+      new Fuse(specs, {
+        keys: [
+          { name: 'title', weight: 2 },
+          { name: 'specNumber', weight: 1.5 },
+          { name: 'specName', weight: 1 },
+          { name: 'tags', weight: 0.5 },
+        ],
+        threshold: 0.4,
+        includeScore: true,
+        minMatchCharLength: 2,
+      }),
+    [specs]
+  );
+
   const filteredSpecs = useMemo(() => {
     let result = specs;
 
@@ -227,13 +238,10 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
     }
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (spec) =>
-          spec.title?.toLowerCase().includes(query) ||
-          spec.specName.toLowerCase().includes(query) ||
-          spec.specNumber?.toString().includes(query)
-      );
+      // Use Fuse.js for fuzzy search (same as QuickSearch)
+      const fuseResults = fuse.search(searchQuery);
+      const matchedSpecNames = new Set(fuseResults.map((r) => r.item.specName));
+      result = result.filter((spec) => matchedSpecNames.has(spec.specName));
     }
 
     if (statusFilter.length > 0) {
@@ -298,7 +306,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
           return (b.specNumber || 0) - (a.specNumber || 0);
       }
     });
-  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants, showArchived, sortBy]);
+  }, [specs, searchQuery, statusFilter, priorityFilter, tagFilter, viewMode, expandWithDescendants, showArchived, sortBy, fuse]);
 
 
   const treeRoots = useMemo(() => {
