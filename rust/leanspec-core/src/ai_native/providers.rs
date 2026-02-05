@@ -126,6 +126,7 @@ mod tests {
                 default_provider_id: "openai".to_string(),
                 default_model_id: "gpt-4o".to_string(),
                 max_steps: 5,
+                enabled_models: None,
             },
             providers: vec![
                 ChatProvider {

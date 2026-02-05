@@ -9,7 +9,7 @@ import { useLeanSpecChat } from '../lib/use-chat';
 import { useModelsRegistry } from '../lib/use-models-registry';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { Trash2, Settings2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
 import { PageContainer } from '../components/shared/PageContainer';
@@ -55,27 +55,8 @@ export function ChatPage() {
   }, [currentProject?.id]);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!currentProject?.id) {
-      setThreads([]);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    ChatApi.getThreads(currentProject.id)
-      .then((loadedThreads) => {
-        if (!cancelled) {
-          setThreads(loadedThreads);
-        }
-      })
-      .catch((e) => {
-        console.error("Failed to load threads", e);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentProject?.id]);
+    loadThreads();
+  }, [loadThreads]);
 
   // Initialize selectedModel from defaultSelection once registry is ready
   useEffect(() => {
@@ -153,15 +134,17 @@ export function ChatPage() {
     }
   }, [activeThreadId, pendingMessage, sendMessage, loadThreads]);
 
+  // Update thread model when selectedModel changes
+  const currentThread = useMemo(() => 
+    threads.find(t => t.id === activeThreadId), 
+    [threads, activeThreadId]
+  );
+
   useEffect(() => {
-    if (!activeThreadId || !selectedModel) {
+    if (!activeThreadId || !selectedModel || !currentThread) {
       return;
     }
-    const thread = threads.find(t => t.id === activeThreadId);
-    if (!thread) {
-      return;
-    }
-    if (thread.model.providerId === selectedModel.providerId && thread.model.modelId === selectedModel.modelId) {
+    if (currentThread.model.providerId === selectedModel.providerId && currentThread.model.modelId === selectedModel.modelId) {
       return;
     }
     ChatApi.updateThread(activeThreadId, { model: selectedModel })
@@ -169,7 +152,7 @@ export function ChatPage() {
       .catch((error) => {
         console.warn('Failed to update chat model', error);
       });
-  }, [activeThreadId, selectedModel, threads, loadThreads]);
+  }, [activeThreadId, selectedModel, currentThread, loadThreads]);
 
   const handleCreateNewChat = async () => {
     if (!currentProject?.id || !selectedModel) {

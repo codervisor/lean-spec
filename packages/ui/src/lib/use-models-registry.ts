@@ -197,11 +197,21 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
         if (model) {
           return savedDefaults;
         }
-        // Model not found, try to find a tool-enabled model from the same provider
+        // Model not found (possibly filtered out by enabledModels), try to find a tool-enabled model from the same provider
+        console.warn(
+          `Saved default model "${savedDefaults.modelId}" not available for provider "${savedDefaults.providerId}". ` +
+          `It may have been filtered out by enabledModels configuration. Falling back to default model.`
+        );
         const fallbackModel = selectDefaultModelForProvider(provider);
         if (fallbackModel) {
           return { providerId: provider.id, modelId: fallbackModel.id };
         }
+      } else if (savedDefaults.providerId) {
+        // Provider exists but not configured, or provider not found
+        console.warn(
+          `Saved provider "${savedDefaults.providerId}" is not configured or not available. ` +
+          `Falling back to default provider.`
+        );
       }
     }
     // Fall back to computed default from filtered providers

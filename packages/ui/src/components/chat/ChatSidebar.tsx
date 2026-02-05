@@ -50,14 +50,19 @@ export function ChatSidebar() {
 
   // Send pending message when thread becomes active
   useEffect(() => {
-    if (activeConversationId && pendingMessage) {
+    if (activeConversationId && pendingMessage && model) {
       sendMessage({ text: pendingMessage });
       setPendingMessage(null);
       setTimeout(refreshConversations, 2000);
     }
-  }, [activeConversationId, pendingMessage, sendMessage, refreshConversations]);
+  }, [activeConversationId, pendingMessage, model, sendMessage, refreshConversations]);
 
   const handleSendMessage = async (text: string) => {
+    if (!model) {
+      // Don't allow sending messages until model is initialized
+      console.warn('Cannot send message: model not initialized');
+      return;
+    }
     if (!activeConversationId) {
       // Store message to send after conversation is created
       setPendingMessage(text);
