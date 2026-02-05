@@ -14,7 +14,7 @@ mod specs;
 mod validation;
 
 use crate::protocol::ToolDefinition;
-use helpers::{get_specs_dir, with_deprecation_warning};
+use helpers::get_specs_dir;
 use serde_json::Value;
 
 // Re-export the test helper
@@ -50,34 +50,8 @@ pub async fn call_tool(name: &str, args: Value) -> Result<String, String> {
         "board" => board::tool_board(&specs_dir, args),
         "stats" => board::tool_stats(&specs_dir),
 
-        // Relationship tools (current)
+        // Relationship tools
         "relationships" => relationships::tool_relationships(&specs_dir, args),
-
-        // Deprecated relationship tools (with warnings)
-        "deps" => with_deprecation_warning(
-            relationships::tool_deps(&specs_dir, args),
-            "Use relationships with action=view instead of deps",
-        ),
-        "link" => with_deprecation_warning(
-            relationships::tool_link(&specs_dir, args),
-            "Use relationships with action=add type=depends_on instead of link",
-        ),
-        "unlink" => with_deprecation_warning(
-            relationships::tool_unlink(&specs_dir, args),
-            "Use relationships with action=remove type=depends_on instead of unlink",
-        ),
-        "set_parent" => with_deprecation_warning(
-            relationships::tool_set_parent(&specs_dir, args),
-            "Use relationships with action=add/remove type=parent instead of set_parent",
-        ),
-        "list_children" => with_deprecation_warning(
-            relationships::tool_list_children(&specs_dir, args),
-            "Use relationships with action=view instead of list_children",
-        ),
-        "list_umbrellas" => with_deprecation_warning(
-            relationships::tool_list_umbrellas(&specs_dir),
-            "Use relationships with action=view instead of list_umbrellas",
-        ),
 
         _ => Err(format!("Unknown tool: {}", name)),
     }

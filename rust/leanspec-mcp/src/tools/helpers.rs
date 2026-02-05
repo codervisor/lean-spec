@@ -29,13 +29,6 @@ pub(crate) fn get_specs_dir() -> String {
         .unwrap_or_else(|| "specs".to_string())
 }
 
-pub(crate) fn with_deprecation_warning(
-    result: Result<String, String>,
-    warning: &str,
-) -> Result<String, String> {
-    result.map(|output| format!("DEPRECATED: {}\n{}", warning, output))
-}
-
 pub(crate) fn get_next_spec_number(specs_dir: &str) -> Result<u32, String> {
     let specs_path = std::path::Path::new(specs_dir);
 

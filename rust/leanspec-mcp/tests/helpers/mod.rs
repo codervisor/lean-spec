@@ -217,16 +217,6 @@ pub fn parse_tool_json_response(response: &Value) -> Option<Value> {
     serde_json::from_str(&text).ok()
 }
 
-/// Strip deprecation warning prefix from tool output, if present.
-pub fn strip_deprecation_warning(output: &str) -> &str {
-    if output.starts_with("DEPRECATED:") {
-        if let Some((_, json)) = output.split_once('\n') {
-            return json;
-        }
-    }
-    output
-}
-
 fn capitalize(s: &str) -> String {
     let mut chars = s.chars();
     match chars.next() {

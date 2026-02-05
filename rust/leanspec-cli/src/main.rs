@@ -160,24 +160,6 @@ enum Commands {
         tags: Option<String>,
     },
 
-    /// Show spec dependency graph
-    Deps {
-        /// Spec path or number
-        spec: String,
-
-        /// Maximum depth to traverse
-        #[arg(short = 'D', long, default_value = "3")]
-        depth: usize,
-
-        /// Show upstream dependencies only
-        #[arg(long)]
-        upstream: bool,
-
-        /// Show downstream dependents only
-        #[arg(long)]
-        downstream: bool,
-    },
-
     /// List example projects
     Examples,
 
@@ -192,7 +174,7 @@ enum Commands {
     ///   lean-spec rel rm 257 --depends-on 254
     Rel {
         /// Arguments: <spec> or <action> <spec>
-        #[arg(trailing_var_arg = true, required = true)]
+        #[arg(required = true, num_args = 1..=2)]
         args: Vec<String>,
 
         /// Set or clear parent relationship
@@ -287,16 +269,6 @@ enum Commands {
         action: String,
     },
 
-    /// Link specs together
-    Link {
-        /// Spec to link from
-        spec: String,
-
-        /// Spec(s) to depend on
-        #[arg(long, required = true, num_args = 1..)]
-        depends_on: Vec<String>,
-    },
-
     /// List all specs with optional filtering
     List {
         /// Filter by status: planned, in-progress, complete, archived
@@ -318,16 +290,6 @@ enum Commands {
         /// Show compact output
         #[arg(short, long)]
         compact: bool,
-
-        /// Show parent-child hierarchy tree
-        #[arg(long)]
-        hierarchy: bool,
-    },
-
-    /// List child specs for a parent
-    Children {
-        /// Spec path or number
-        spec: String,
     },
 
     /// Start MCP server for AI assistants
@@ -463,16 +425,6 @@ enum Commands {
         /// Preview without running
         #[arg(long)]
         dry_run: bool,
-    },
-
-    /// Remove a dependency link
-    Unlink {
-        /// Spec to unlink from
-        spec: String,
-
-        /// Spec(s) to remove from dependencies
-        #[arg(long, required = true, num_args = 1..)]
-        depends_on: Vec<String>,
     },
 
     /// Update a spec's frontmatter
@@ -756,12 +708,6 @@ fn main() -> ExitCode {
             priority,
             tags,
         } => commands::create::run(&specs_dir, &name, title, template, &status, &priority, tags),
-        Commands::Deps {
-            spec,
-            depth,
-            upstream,
-            downstream,
-        } => commands::deps::run(&specs_dir, &spec, depth, upstream, downstream, &cli.output),
         Commands::Rel {
             args,
             parent,
@@ -815,14 +761,12 @@ fn main() -> ExitCode {
             },
         ),
         Commands::Skill { action } => commands::skill::run(&action),
-        Commands::Link { spec, depends_on } => commands::link::run(&specs_dir, &spec, &depends_on),
         Commands::List {
             status,
             tag,
             priority,
             assignee,
             compact,
-            hierarchy,
         } => commands::list::run(
             &specs_dir,
             status,
@@ -830,10 +774,8 @@ fn main() -> ExitCode {
             priority,
             assignee,
             compact,
-            hierarchy,
             &cli.output,
         ),
-        Commands::Children { spec } => commands::children::run(&specs_dir, &spec, &cli.output),
         Commands::Mcp => commands::mcp::run(&specs_dir),
         Commands::Migrate {
             input_path,
@@ -889,9 +831,6 @@ fn main() -> ExitCode {
             dev,
             dry_run,
         } => commands::ui::run(&specs_dir, &port, no_open, true, dev, dry_run),
-        Commands::Unlink { spec, depends_on } => {
-            commands::unlink::run(&specs_dir, &spec, &depends_on)
-        }
         Commands::Update {
             specs,
             status,

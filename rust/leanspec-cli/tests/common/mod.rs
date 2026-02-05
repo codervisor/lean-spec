@@ -115,15 +115,15 @@ pub fn update_spec_force(cwd: &Path, spec: &str, options: &[(&str, &str)]) -> Ex
     exec_cli(&args_refs, cwd)
 }
 
-/// Link specs using the CLI
+/// Link specs using the CLI (rel add --depends-on)
 pub fn link_specs(cwd: &Path, spec: &str, depends_on: &str) -> ExecResult {
-    exec_cli(&["link", spec, "--depends-on", depends_on], cwd)
+    exec_cli(&["rel", "add", spec, "--depends-on", depends_on], cwd)
 }
 
-/// Unlink specs using the CLI
+/// Unlink specs using the CLI (rel rm --depends-on)
 #[allow(dead_code)]
 pub fn unlink_specs(cwd: &Path, spec: &str, depends_on: &str) -> ExecResult {
-    exec_cli(&["unlink", spec, "--depends-on", depends_on], cwd)
+    exec_cli(&["rel", "rm", spec, "--depends-on", depends_on], cwd)
 }
 
 /// Archive a spec using the CLI

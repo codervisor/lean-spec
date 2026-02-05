@@ -243,7 +243,8 @@ fn test_batch_update_and_link_workflow() {
 
     let link_result = exec_cli(
         &[
-            "link",
+            "rel",
+            "add",
             "003-frontend",
             "--depends-on",
             "001-auth",

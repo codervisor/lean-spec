@@ -1,51 +1,12 @@
-//! Relationship management tools (deps, link, unlink, set_parent, relationships, list_children, list_umbrellas)
+//! Relationship management tools
 
 use leanspec_core::{
-    validate_dependency_addition, validate_parent_assignment, DependencyGraph, SpecLoader,
+    validate_dependency_addition, validate_parent_assignment, SpecLoader,
 };
 use serde_json::{json, Value};
 
-pub(crate) fn tool_deps(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args
-        .get("specPath")
-        .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: specPath")?;
-
-    let _depth = args.get("depth").and_then(|v| v.as_u64()).unwrap_or(3) as usize;
-
-    let loader = SpecLoader::new(specs_dir);
-    let specs = loader.load_all().map_err(|e| e.to_string())?;
-
-    let spec = loader
-        .load(spec_path)
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-
-    let graph = DependencyGraph::new(&specs);
-    let complete = graph
-        .get_complete_graph(&spec.path)
-        .ok_or_else(|| "Spec not in graph".to_string())?;
-
-    let output = json!({
-        "spec": spec.path,
-        "title": spec.title,
-        "dependsOn": complete.depends_on.iter().map(|s| json!({
-            "path": s.path,
-            "title": s.title,
-            "status": s.frontmatter.status.to_string()
-        })).collect::<Vec<_>>(),
-        "requiredBy": complete.required_by.iter().map(|s| json!({
-            "path": s.path,
-            "title": s.title,
-            "status": s.frontmatter.status.to_string()
-        })).collect::<Vec<_>>(),
-        "hasCircular": graph.has_circular_dependency(&spec.path),
-    });
-
-    serde_json::to_string_pretty(&output).map_err(|e| e.to_string())
-}
-
-pub(crate) fn tool_link(specs_dir: &str, args: Value) -> Result<String, String> {
+/// Internal helper to link specs (add dependency)
+fn link_specs(specs_dir: &str, args: Value) -> Result<String, String> {
     let spec_path = args
         .get("specPath")
         .and_then(|v| v.as_str())
@@ -103,7 +64,8 @@ pub(crate) fn tool_link(specs_dir: &str, args: Value) -> Result<String, String> 
     Ok(format!("Linked: {} → {}", spec.path, target.path))
 }
 
-pub(crate) fn tool_unlink(specs_dir: &str, args: Value) -> Result<String, String> {
+/// Internal helper to unlink specs (remove dependency)
+fn unlink_specs(specs_dir: &str, args: Value) -> Result<String, String> {
     let spec_path = args
         .get("specPath")
         .and_then(|v| v.as_str())
@@ -160,7 +122,8 @@ pub(crate) fn tool_unlink(specs_dir: &str, args: Value) -> Result<String, String
     Ok(format!("Unlinked: {} ✗ {}", spec.path, target_path))
 }
 
-pub(crate) fn tool_set_parent(specs_dir: &str, args: Value) -> Result<String, String> {
+/// Internal helper to set parent relationship
+fn set_parent(specs_dir: &str, args: Value) -> Result<String, String> {
     let spec_path = args
         .get("specPath")
         .and_then(|v| v.as_str())
@@ -286,32 +249,32 @@ pub(crate) fn tool_relationships(specs_dir: &str, args: Value) -> Result<String,
             match rel_type {
                 "parent" => {
                     if action == "add" {
-                        tool_set_parent(
+                        set_parent(
                             specs_dir,
                             json!({ "specPath": spec_path, "parent": target }),
                         )
                     } else {
-                        tool_set_parent(specs_dir, json!({ "specPath": spec_path, "parent": null }))
+                        set_parent(specs_dir, json!({ "specPath": spec_path, "parent": null }))
                     }
                 }
                 "child" => {
                     if action == "add" {
-                        tool_set_parent(
+                        set_parent(
                             specs_dir,
                             json!({ "specPath": target, "parent": spec_path }),
                         )
                     } else {
-                        tool_set_parent(specs_dir, json!({ "specPath": target, "parent": null }))
+                        set_parent(specs_dir, json!({ "specPath": target, "parent": null }))
                     }
                 }
                 "depends_on" => {
                     if action == "add" {
-                        tool_link(
+                        link_specs(
                             specs_dir,
                             json!({ "specPath": spec_path, "dependsOn": target }),
                         )
                     } else {
-                        tool_unlink(
+                        unlink_specs(
                             specs_dir,
                             json!({ "specPath": spec_path, "dependsOn": target }),
                         )
@@ -324,207 +287,38 @@ pub(crate) fn tool_relationships(specs_dir: &str, args: Value) -> Result<String,
     }
 }
 
-pub(crate) fn tool_list_children(specs_dir: &str, args: Value) -> Result<String, String> {
-    let spec_path = args
-        .get("specPath")
-        .and_then(|v| v.as_str())
-        .ok_or("Missing required parameter: specPath")?;
-
-    let loader = SpecLoader::new(specs_dir);
-    let parent = loader
-        .load(spec_path)
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| format!("Spec not found: {}", spec_path))?;
-
-    let specs = loader.load_all().map_err(|e| e.to_string())?;
-    let children: Vec<_> = specs
-        .iter()
-        .filter(|s| s.frontmatter.parent.as_deref() == Some(parent.path.as_str()))
-        .map(|s| {
-            json!({
-                "path": s.path,
-                "title": s.title,
-                "status": s.frontmatter.status.to_string()
-            })
-        })
-        .collect();
-
-    serde_json::to_string_pretty(&json!({
-        "parent": parent.path,
-        "title": parent.title,
-        "count": children.len(),
-        "children": children
-    }))
-    .map_err(|e| e.to_string())
-}
-
-pub(crate) fn tool_list_umbrellas(specs_dir: &str) -> Result<String, String> {
-    let loader = SpecLoader::new(specs_dir);
-    let specs = loader.load_all().map_err(|e| e.to_string())?;
-
-    let mut child_counts: std::collections::HashMap<String, usize> =
-        std::collections::HashMap::new();
-    for spec in &specs {
-        if let Some(parent) = spec.frontmatter.parent.as_deref() {
-            *child_counts.entry(parent.to_string()).or_insert(0) += 1;
-        }
-    }
-
-    let umbrellas: Vec<_> = specs
-        .iter()
-        .filter(|s| child_counts.contains_key(&s.path))
-        .map(|s| {
-            json!({
-                "path": s.path,
-                "title": s.title,
-                "status": s.frontmatter.status.to_string(),
-                "childCount": child_counts.get(&s.path).cloned().unwrap_or(0)
-            })
-        })
-        .collect();
-
-    serde_json::to_string_pretty(&json!({
-        "count": umbrellas.len(),
-        "umbrellas": umbrellas
-    }))
-    .map_err(|e| e.to_string())
-}
-
 /// Get tool definitions for relationship management tools
 pub(crate) fn get_definitions() -> Vec<crate::protocol::ToolDefinition> {
     use crate::protocol::ToolDefinition;
 
-    vec![
-        ToolDefinition {
-            name: "deps".to_string(),
-            description: "Show dependency graph for a spec".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "specPath": {
-                        "type": "string",
-                        "description": "Spec path or number"
-                    },
-                    "depth": {
-                        "type": "integer",
-                        "description": "Maximum depth to traverse",
-                        "default": 3
-                    }
+    vec![ToolDefinition {
+        name: "relationships".to_string(),
+        description: "Manage spec relationships (hierarchy and dependencies)".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "specPath": {
+                    "type": "string",
+                    "description": "Spec path or number"
                 },
-                "required": ["specPath"],
-                "additionalProperties": false
-            }),
-        },
-        ToolDefinition {
-            name: "link".to_string(),
-            description: "Add a dependency link between specs".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "specPath": {
-                        "type": "string",
-                        "description": "Spec to link from"
-                    },
-                    "dependsOn": {
-                        "type": "string",
-                        "description": "Spec to depend on"
-                    }
+                "action": {
+                    "type": "string",
+                    "description": "Action to perform",
+                    "enum": ["view", "add", "remove"],
+                    "default": "view"
                 },
-                "required": ["specPath", "dependsOn"],
-                "additionalProperties": false
-            }),
-        },
-        ToolDefinition {
-            name: "unlink".to_string(),
-            description: "Remove a dependency link between specs".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "specPath": {
-                        "type": "string",
-                        "description": "Spec to unlink from"
-                    },
-                    "dependsOn": {
-                        "type": "string",
-                        "description": "Spec to remove from dependencies"
-                    }
+                "type": {
+                    "type": "string",
+                    "description": "Relationship type",
+                    "enum": ["parent", "child", "depends_on"]
                 },
-                "required": ["specPath", "dependsOn"],
-                "additionalProperties": false
-            }),
-        },
-        ToolDefinition {
-            name: "set_parent".to_string(),
-            description: "Assign or clear a parent umbrella for a spec".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "specPath": {
-                        "type": "string",
-                        "description": "Spec to update"
-                    },
-                    "parent": {
-                        "type": ["string", "null"],
-                        "description": "Parent spec path or number (null to clear)"
-                    }
-                },
-                "required": ["specPath"],
-                "additionalProperties": false
-            }),
-        },
-        ToolDefinition {
-            name: "relationships".to_string(),
-            description: "Manage spec relationships (hierarchy and dependencies)".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "specPath": {
-                        "type": "string",
-                        "description": "Spec path or number"
-                    },
-                    "action": {
-                        "type": "string",
-                        "description": "Action to perform",
-                        "enum": ["view", "add", "remove"],
-                        "default": "view"
-                    },
-                    "type": {
-                        "type": "string",
-                        "description": "Relationship type",
-                        "enum": ["parent", "child", "depends_on"]
-                    },
-                    "target": {
-                        "type": "string",
-                        "description": "Target spec path or number"
-                    }
-                },
-                "required": ["specPath"],
-                "additionalProperties": false
-            }),
-        },
-        ToolDefinition {
-            name: "list_children".to_string(),
-            description: "List direct children of a parent spec".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "specPath": {
-                        "type": "string",
-                        "description": "Parent spec path or number"
-                    }
-                },
-                "required": ["specPath"],
-                "additionalProperties": false
-            }),
-        },
-        ToolDefinition {
-            name: "list_umbrellas".to_string(),
-            description: "List umbrella specs (explicit or inferred)".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-            }),
-        },
-    ]
+                "target": {
+                    "type": "string",
+                    "description": "Target spec path or number"
+                }
+            },
+            "required": ["specPath"],
+            "additionalProperties": false
+        }),
+    }]
 }

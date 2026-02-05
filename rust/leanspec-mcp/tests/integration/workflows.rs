@@ -123,47 +123,52 @@ async fn test_stats_tokens_workflow() {
     assert!(tokens_result.is_ok() || tokens_result.is_err());
 }
 
-/// Test: Link → Deps → Unlink workflow
+/// Test: Relationships tool workflow (add, view, remove)
 #[tokio::test]
-async fn test_link_deps_unlink_workflow() {
+async fn test_relationships_workflow() {
     let temp = create_test_project(&[
         ("001-base", "complete", None),
         ("002-feature", "planned", None),
     ]);
     set_specs_dir_env(&temp);
 
-    // Step 1: Link specs
-    let link_result = call_tool(
-        "link",
+    // Step 1: Add dependency relationship
+    let add_result = call_tool(
+        "relationships",
         json!({
             "specPath": "002",
-            "dependsOn": "001"
+            "action": "add",
+            "type": "depends_on",
+            "target": "001"
         }),
     )
     .await;
-    assert!(link_result.is_ok());
+    assert!(add_result.is_ok());
 
-    // Step 2: Check dependencies
-    let deps_result = call_tool("deps", json!({ "specPath": "002" })).await;
-    assert!(deps_result.is_ok());
+    // Step 2: View relationships
+    let view_result = call_tool(
+        "relationships",
+        json!({ "specPath": "002", "action": "view" }),
+    )
+    .await;
+    assert!(view_result.is_ok());
 
-    let deps_raw = deps_result.unwrap();
-    let deps_text = strip_deprecation_warning(&deps_raw);
-    let deps_output: serde_json::Value = serde_json::from_str(deps_text).unwrap();
-    // Dependencies might be in dependsOn field
-    assert!(deps_output["dependsOn"].is_array());
+    let view_output: serde_json::Value = serde_json::from_str(&view_result.unwrap()).unwrap();
+    assert!(view_output["dependencies"]["depends_on"].is_array());
 
-    // Step 3: Unlink using full path from the spec's depends_on
-    let unlink_result = call_tool(
-        "unlink",
+    // Step 3: Remove dependency relationship
+    let remove_result = call_tool(
+        "relationships",
         json!({
             "specPath": "002-feature",
-            "dependsOn": "001-base"
+            "action": "remove",
+            "type": "depends_on",
+            "target": "001-base"
         }),
     )
     .await;
-    // Unlink may or may not succeed depending on internal state
-    assert!(unlink_result.is_ok() || unlink_result.is_err());
+    // Remove may or may not succeed depending on internal state
+    assert!(remove_result.is_ok() || remove_result.is_err());
 }
 
 /// Test: Multiple tool calls maintain state consistency
