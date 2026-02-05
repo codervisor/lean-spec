@@ -528,6 +528,8 @@ fn parse_checklist_toggles(args: &Value) -> Result<Vec<ChecklistToggle>, String>
 }
 
 pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String> {
+    use leanspec_core::{parse_query_terms, search_specs};
+
     let query = args
         .get("query")
         .and_then(|v| v.as_str())
@@ -538,57 +540,25 @@ pub(crate) fn tool_search(specs_dir: &str, args: Value) -> Result<String, String
     let loader = SpecLoader::new(specs_dir);
     let specs = loader.load_all().map_err(|e| e.to_string())?;
 
-    let query_lower = query.to_lowercase();
+    // Check for empty query
+    let terms = parse_query_terms(query);
+    if terms.is_empty() {
+        return serde_json::to_string_pretty(&json!({
+            "query": query,
+            "count": 0,
+            "results": [],
+            "error": "Empty search query"
+        }))
+        .map_err(|e| e.to_string());
+    }
 
-    let mut results: Vec<_> = specs
-        .iter()
-        .filter_map(|spec| {
-            let mut score = 0.0;
-
-            if spec.title.to_lowercase().contains(&query_lower) {
-                score += 10.0;
-            }
-            if spec.path.to_lowercase().contains(&query_lower) {
-                score += 5.0;
-            }
-            for tag in &spec.frontmatter.tags {
-                if tag.to_lowercase().contains(&query_lower) {
-                    score += 3.0;
-                }
-            }
-            let content_matches = spec.content.to_lowercase().matches(&query_lower).count();
-            if content_matches > 0 {
-                score += (content_matches as f64).min(5.0);
-            }
-
-            if score > 0.0 {
-                Some((spec, score))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-    results.truncate(limit);
-
-    let output: Vec<_> = results
-        .iter()
-        .map(|(spec, score)| {
-            json!({
-                "path": spec.path,
-                "title": spec.title,
-                "status": spec.frontmatter.status.to_string(),
-                "score": score,
-                "tags": spec.frontmatter.tags,
-            })
-        })
-        .collect();
+    // Use core search module
+    let results = search_specs(&specs, query, limit);
 
     serde_json::to_string_pretty(&json!({
         "query": query,
-        "count": output.len(),
-        "results": output
+        "count": results.len(),
+        "results": results
     }))
     .map_err(|e| e.to_string())
 }

@@ -477,6 +477,8 @@
       "noCustomProviders": "No custom providers configured",
       "custom": "Custom",
       "configureApiKey": "Configure API Key",
+      "configureModels": "Configure {{provider}} Models",
+      "configureModelsDescription": "Select which models to enable for this provider",
       "apiKeyDialogDescription": "Enter your API key for {{provider}}",
       "azureApiKeyDialogDescription": "Configure Azure OpenAI with your resource name and API key",
       "azureResourceName": "Azure Resource Name",
@@ -491,6 +493,8 @@
       "selectedOf": "selected of",
       "selectAll": "Select all",
       "deselectAll": "Deselect all",
+      "restricted": "Restricted",
+      "outOfTotal": "of {{total}} total",
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",

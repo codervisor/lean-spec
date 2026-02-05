@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
@@ -20,13 +20,9 @@ import {
   HoverCardTrigger,
   ModelSelectorLogo,
   Switch,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
   cn,
 } from '@leanspec/ui-components';
-import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, ListFilter, Check } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, ListFilter, Check, Key } from 'lucide-react';
 import type { ChatConfig, Provider } from '../../types/chat-config';
 import type { RegistryProvider } from '../../types/models-registry';
 import { SearchFilterBar } from '../shared/SearchFilterBar';
@@ -52,8 +48,9 @@ export function AISettingsTab() {
   const { toast } = useToast();
 
   // Registry providers (from models.dev) - use shared hook
+  // Settings page uses allProviders to show all providers for configuration
   const {
-    providers: registryProviders,
+    allProviders: registryProviders,
     loading: registryLoading,
     error: registryError,
     reload: reloadRegistry,
@@ -64,7 +61,8 @@ export function AISettingsTab() {
   const [configLoading, setConfigLoading] = useState(true);
 
   // UI state
-  const [showConfigDialog, setShowConfigDialog] = useState<string | null>(null);
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState<string | null>(null);
+  const [showModelsDialog, setShowModelsDialog] = useState<string | null>(null);
   const [showCustomProviderDialog, setShowCustomProviderDialog] = useState(false);
   const [editingCustomProvider, setEditingCustomProvider] = useState<Provider | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -164,7 +162,7 @@ export function AISettingsTab() {
   const handleSaveEnabledModels = async (providerId: string, enabledModels: string[] | undefined) => {
     if (!config) return;
     const newSettings = { ...config.settings };
-    
+
     // Initialize if missing
     if (!newSettings.enabledModels) {
       newSettings.enabledModels = {};
@@ -386,7 +384,8 @@ export function AISettingsTab() {
                 isDefault={config?.settings.defaultProviderId === provider.id}
                 enabledModels={config?.settings.enabledModels?.[provider.id]}
                 onSetDefault={() => handleSetDefaultProvider(provider.id)}
-                onConfigure={() => setShowConfigDialog(provider.id)}
+                onConfigureKey={() => setShowApiKeyDialog(provider.id)}
+                onConfigureModels={() => setShowModelsDialog(provider.id)}
               />
             );
           }
@@ -405,21 +404,30 @@ export function AISettingsTab() {
           );
         })}
       </div>
-
-      {/* Provider Config Dialog (Tabs) */}
-      {showConfigDialog && (
-        <ProviderConfigDialog
-          provider={registryProviders.find((p) => p.id === showConfigDialog)!}
-          initialEnabledModels={config?.settings.enabledModels?.[showConfigDialog]}
-          onSaveApiKey={async (apiKey, baseUrl) => {
-            await handleSetApiKey(showConfigDialog, apiKey, baseUrl);
+      {/* Provider API Key Dialog */}
+      {showApiKeyDialog && (
+        <ProviderApiKeyDialog
+          provider={registryProviders.find((p) => p.id === showApiKeyDialog)!}
+          onSave={async (apiKey, baseUrl) => {
+            await handleSetApiKey(showApiKeyDialog, apiKey, baseUrl);
             toast({ title: t('settings.ai.toasts.apiKeySaved'), variant: 'success' });
+            setShowApiKeyDialog(null);
           }}
-          onSaveModels={async (models) => {
-            await handleSaveEnabledModels(showConfigDialog, models);
+          onCancel={() => setShowApiKeyDialog(null)}
+        />
+      )}
+
+      {/* Provider Models Dialog */}
+      {showModelsDialog && (
+        <ProviderModelsDialog
+          provider={registryProviders.find((p) => p.id === showModelsDialog)!}
+          initialEnabledModels={config?.settings.enabledModels?.[showModelsDialog]}
+          onSave={async (models) => {
+            await handleSaveEnabledModels(showModelsDialog, models);
             toast({ title: t('settings.ai.toasts.modelsSaved'), variant: 'success' });
+            setShowModelsDialog(null);
           }}
-          onCancel={() => setShowConfigDialog(null)}
+          onCancel={() => setShowModelsDialog(null)}
         />
       )}
 
@@ -449,7 +457,8 @@ interface RegistryProviderCardProps {
   isDefault: boolean;
   enabledModels?: string[];
   onSetDefault: () => void;
-  onConfigure: () => void;
+  onConfigureKey: () => void;
+  onConfigureModels: () => void;
 }
 
 interface RowData {
@@ -488,7 +497,7 @@ function ModelRow({ index, style, models, t }: RowComponentProps<RowData>) {
   );
 }
 
-function RegistryProviderCard({ provider, isDefault, enabledModels, onSetDefault, onConfigure }: RegistryProviderCardProps) {
+function RegistryProviderCard({ provider, isDefault, enabledModels, onSetDefault, onConfigureKey, onConfigureModels }: RegistryProviderCardProps) {
   const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
 
@@ -581,11 +590,24 @@ function RegistryProviderCard({ provider, isDefault, enabledModels, onSetDefault
               className="h-8 ml-2 gap-1.5"
               onClick={(e) => {
                 e.stopPropagation();
-                onConfigure();
+                onConfigureKey();
+              }}
+            >
+              <Key className="h-3.5 w-3.5" />
+              {t('settings.ai.apiKey')}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onConfigureModels();
               }}
             >
               <Settings className="h-3.5 w-3.5" />
-              {t('settings.ai.configure')}
+              {t('settings.ai.models')}
             </Button>
 
             <DropdownMenu>
@@ -760,17 +782,15 @@ function CustomProviderCard({ provider, isDefault, onSetDefault, onEdit, onDelet
 
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@leanspec/ui-components';
 
-interface ProviderConfigDialogProps {
+interface ProviderApiKeyDialogProps {
   provider: RegistryProvider;
-  initialEnabledModels: string[] | undefined;
-  onSaveApiKey: (apiKey: string, baseUrl?: string) => Promise<void>;
-  onSaveModels: (models: string[] | undefined) => Promise<void>;
+  onSave: (apiKey: string, baseUrl?: string) => Promise<void>;
   onCancel: () => void;
 }
 
-function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, onSaveModels, onCancel }: ProviderConfigDialogProps) {
+function ProviderApiKeyDialog({ provider, onSave, onCancel }: ProviderApiKeyDialogProps) {
   const { t } = useTranslation('common');
-  
+
   // API Key State
   const [apiKey, setApiKey] = useState('');
   const [resourceName, setResourceName] = useState('');
@@ -778,56 +798,9 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
   const [savingKey, setSavingKey] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
 
-  // Models State
-  const [isRestricted, setIsRestricted] = useState(!!initialEnabledModels);
-  const [enabledSet, setEnabledSet] = useState<Set<string>>(
-    new Set(initialEnabledModels ?? provider.models.map(m => m.id))
-  );
-  const [savingModels, setSavingModels] = useState(false);
-
   // API Key Checks
   const requiredEnvVars = provider.requiredEnvVars ?? [];
   const isAzure = provider.id === 'azure' || requiredEnvVars.some(v => v.includes('AZURE_RESOURCE_NAME'));
-
-  // Models Effects
-  useEffect(() => {
-    if (isRestricted && enabledSet.size === 0 && (!initialEnabledModels || initialEnabledModels.length === 0)) {
-       // Only if we truly have nothing selected yet and just turned it on
-       if (!initialEnabledModels) {
-          setEnabledSet(new Set(provider.models.map(m => m.id)));
-       }
-    }
-  }, [isRestricted, provider.models, initialEnabledModels, enabledSet.size]);
-
-  const toggleModel = (id: string) => {
-    const next = new Set(enabledSet);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setEnabledSet(next);
-  };
-
-  const toggleAll = () => {
-    if (enabledSet.size === provider.models.length) {
-      setEnabledSet(new Set());
-    } else {
-      setEnabledSet(new Set(provider.models.map(m => m.id)));
-    }
-  };
-
-  const handleSaveModels = async () => {
-    try {
-      setSavingModels(true);
-      if (!isRestricted) {
-        await onSaveModels(undefined);
-      } else {
-        await onSaveModels(Array.from(enabledSet));
-      }
-    } catch {
-      // Error handled by parent usually, but we should probably handle it here
-    } finally {
-      setSavingModels(false);
-    }
-  };
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) {
@@ -848,7 +821,7 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
         baseUrl = `https://${resourceName.trim()}.openai.azure.com/openai`;
       }
 
-      await onSaveApiKey(apiKey.trim(), baseUrl);
+      await onSave(apiKey.trim(), baseUrl);
     } catch (err) {
       setKeyError(err instanceof Error ? err.message : t('settings.ai.errors.saveFailed'));
     } finally {
@@ -858,166 +831,228 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
 
   return (
     <Dialog open onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2 shrink-0 border-b">
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
           <DialogTitle>{t('settings.ai.configureProvider', { provider: provider.name })}</DialogTitle>
           <DialogDescription>{t('settings.ai.configureProviderDescription')}</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="apiKey" className="flex-1 flex flex-col min-h-0">
-          <div className="px-6 pt-4 shrink-0">
-             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="apiKey">{t('settings.ai.apiKey')}</TabsTrigger>
-                <TabsTrigger value="models">{t('settings.ai.models')}</TabsTrigger>
-             </TabsList>
+        <div className="space-y-4 py-4">
+          <div className="text-sm text-muted-foreground">
+            {isAzure
+              ? t('settings.ai.azureApiKeyDialogDescription', { provider: provider.name })
+              : t('settings.ai.apiKeyDialogDescription', { provider: provider.name })
+            }
           </div>
 
-          {/* API Key Tab */}
-          <TabsContent value="apiKey" className="flex-1 p-6 pt-4 min-h-0 overflow-y-auto outline-none">
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                {isAzure
-                  ? t('settings.ai.azureApiKeyDialogDescription', { provider: provider.name })
-                  : t('settings.ai.apiKeyDialogDescription', { provider: provider.name })
-                }
-              </div>
-
-               {isAzure && (
-                <div className="space-y-2">
-                  <Label htmlFor="azure-resource-name">{t('settings.ai.azureResourceName')} <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="azure-resource-name"
-                    type="text"
-                    value={resourceName}
-                    onChange={(e) => setResourceName(e.target.value)}
-                    placeholder={t('settings.ai.placeholders.azureResourceName')}
-                  />
-                  <p className="text-xs text-muted-foreground">{t('settings.ai.azureResourceNameHelp')}</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="api-key">{t('settings.ai.apiKey')} <span className="text-destructive">*</span></Label>
-                <div className="relative">
-                  <Input
-                    id="api-key"
-                    type={showKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={t('settings.ai.placeholders.apiKeyEnv', { provider: isAzure ? 'AZURE' : provider.id.toUpperCase() })}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => setShowKey(!showKey)}
-                  >
-                    {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-                {keyError && <p className="text-xs text-destructive">{keyError}</p>}
-                <p className="text-xs text-muted-foreground">{t('settings.ai.apiKeyStorageNote')}</p>
-              </div>
-
-              <div className="pt-4">
-                  <Button onClick={handleSaveApiKey} disabled={savingKey} className="w-full sm:w-auto">
-                    {savingKey ? t('actions.saving') : t('actions.save')}
-                  </Button>
-              </div>
+          {isAzure && (
+            <div className="space-y-2">
+              <Label htmlFor="azure-resource-name">{t('settings.ai.azureResourceName')} <span className="text-destructive">*</span></Label>
+              <Input
+                id="azure-resource-name"
+                type="text"
+                value={resourceName}
+                onChange={(e) => setResourceName(e.target.value)}
+                placeholder={t('settings.ai.placeholders.azureResourceName')}
+              />
+              <p className="text-xs text-muted-foreground">{t('settings.ai.azureResourceNameHelp')}</p>
             </div>
-          </TabsContent>
+          )}
 
-          {/* Models Tab */}
-          <TabsContent value="models" className="flex-1 p-0 min-h-0 flex flex-col outline-none">
-             <div className="px-6 py-2 shrink-0 flex items-center justify-between border-b bg-muted/20">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="restrict-mode"
-                  checked={isRestricted}
-                  onCheckedChange={setIsRestricted}
-                />
-                <Label htmlFor="restrict-mode" className="font-medium">
-                  {t('settings.ai.restrictModels')}
-                </Label>
-              </div>
-              
-              {isRestricted && (
-                 <div className="text-sm text-muted-foreground">
-                   {enabledSet.size} {t('settings.ai.selectedOf')} {provider.models.length}
-                 </div>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="api-key">{t('settings.ai.apiKey')} <span className="text-destructive">*</span></Label>
+            <div className="relative">
+              <Input
+                id="api-key"
+                type={showKey ? 'text' : 'password'}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={t('settings.ai.placeholders.apiKeyEnv', { provider: isAzure ? 'AZURE' : provider.id.toUpperCase() })}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setShowKey(!showKey)}
+              >
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
             </div>
+            {keyError && <p className="text-xs text-destructive">{keyError}</p>}
+            <p className="text-xs text-muted-foreground">{t('settings.ai.apiKeyStorageNote')}</p>
+          </div>
+        </div>
 
-            <div className="flex-1 min-h-0 relative">
-              {!isRestricted ? (
-                 <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-muted-foreground bg-muted/10">
-                   <div>
-                     <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                     <h3 className="text-lg font-medium text-foreground mb-2">{t('settings.ai.allModelsEnabled')}</h3>
-                     <p className="max-w-xs mx-auto text-sm">{t('settings.ai.allModelsEnabledDesc')}</p>
-                     <Button variant="outline" className="mt-6" onClick={() => setIsRestricted(true)}>
-                        {t('settings.ai.enableRestriction')}
-                     </Button>
-                   </div>
-                 </div>
-              ) : (
-                 <div className="absolute inset-0 flex flex-col">
-                   <div className="p-2 border-b flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs h-7">
-                        {enabledSet.size === provider.models.length ? t('settings.ai.deselectAll') : t('settings.ai.selectAll')}
-                      </Button>
-                   </div>
-                   <Command className="border-none">
-                     <CommandInput placeholder={t('chat.searchModels')} className="border-none focus:ring-0" />
-                     <CommandList className="max-h-full">
-                       <CommandEmpty>{t('chat.noModelsFound')}</CommandEmpty>
-                       <CommandGroup>
-                         {provider.models.map(model => (
-                           <CommandItem
-                             key={model.id}
-                             value={`${model.name} ${model.id}`}
-                             onSelect={() => toggleModel(model.id)}
-                             className="flex items-center gap-3 py-2 cursor-pointer"
-                           >
-                             <div className={cn(
-                               "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                               enabledSet.has(model.id)
-                                 ? "bg-primary text-primary-foreground"
-                                 : "opacity-50 [&_svg]:invisible"
-                             )}>
-                               <Check className={cn("h-3 w-3")} />
-                             </div>
-                             <div className="flex-1 min-w-0">
-                               <div className="flex items-center gap-2">
-                                 <span className="font-medium truncate">{model.name}</span>
-                                 {model.toolCall && <Badge variant="secondary" className="text-[10px] h-4 px-1">{t('chat.modelSelector.badges.tool')}</Badge>}
-                               </div>
-                               <div className="text-xs text-muted-foreground font-mono truncate">{model.id}</div>
-                             </div>
-                           </CommandItem>
-                         ))}
-                       </CommandGroup>
-                     </CommandList>
-                   </Command>
-                 </div>
-              )}
-            </div>
-            
-            <div className="p-4 border-t flex justify-end gap-2 bg-muted/10">
-                <Button onClick={handleSaveModels} disabled={savingModels}>
-                 {savingModels ? t('actions.saving') : t('actions.save')}
-                </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <DialogFooter className="p-4 border-t shrink-0">
+        <DialogFooter>
           <Button variant="outline" onClick={onCancel}>
             {t('actions.close')}
           </Button>
+          <Button onClick={handleSaveApiKey} disabled={savingKey}>
+            {savingKey ? t('actions.saving') : t('actions.save')}
+          </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface ProviderModelsDialogProps {
+  provider: RegistryProvider;
+  initialEnabledModels: string[] | undefined;
+  onSave: (models: string[] | undefined) => Promise<void>;
+  onCancel: () => void;
+}
+
+function ProviderModelsDialog({ provider, initialEnabledModels, onSave, onCancel }: ProviderModelsDialogProps) {
+  const { t } = useTranslation('common');
+
+  // Models State
+  const [isRestricted, setIsRestricted] = useState(!!initialEnabledModels);
+  const [enabledSet, setEnabledSet] = useState<Set<string>>(
+    new Set(initialEnabledModels ?? provider.models.map(m => m.id))
+  );
+  const [savingModels, setSavingModels] = useState(false);
+
+  // Track if user has interacted with selection (to avoid auto-selecting after manual deselect)
+  const hasUserInteracted = useRef(false);
+
+  // Models Effects - only auto-select all when first enabling restriction mode
+  useEffect(() => {
+    // Skip if user has already interacted with the selection
+    if (hasUserInteracted.current) return;
+
+    if (isRestricted && enabledSet.size === 0 && !initialEnabledModels) {
+      // Only auto-select all models when first turning on restriction mode with no prior config
+      setEnabledSet(new Set(provider.models.map(m => m.id)));
+    }
+  }, [isRestricted, provider.models, initialEnabledModels, enabledSet.size]);
+
+  const toggleModel = (id: string) => {
+    hasUserInteracted.current = true;
+    const next = new Set(enabledSet);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setEnabledSet(next);
+  };
+
+  const toggleAll = () => {
+    hasUserInteracted.current = true;
+    if (enabledSet.size === provider.models.length) {
+      setEnabledSet(new Set());
+    } else {
+      setEnabledSet(new Set(provider.models.map(m => m.id)));
+    }
+  };
+
+  const handleSaveModels = async () => {
+    try {
+      setSavingModels(true);
+      if (!isRestricted) {
+        await onSave(undefined);
+      } else {
+        await onSave(Array.from(enabledSet));
+      }
+    } catch {
+      // Error handled by parent usually, but we should probably handle it here
+    } finally {
+      setSavingModels(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onCancel}>
+      <DialogContent className="sm:max-w-xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2 shrink-0 border-b">
+          <DialogTitle>{t('settings.ai.configureModels', { provider: provider.name })}</DialogTitle>
+          <DialogDescription>{t('settings.ai.configureModelsDescription')}</DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="px-6 py-2 shrink-0 flex items-center justify-between border-b bg-muted/20">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="restrict-mode"
+                checked={isRestricted}
+                onCheckedChange={setIsRestricted}
+              />
+              <Label htmlFor="restrict-mode" className="font-medium">
+                {t('settings.ai.restrictModels')}
+              </Label>
+            </div>
+
+            {isRestricted && (
+              <div className="text-sm text-muted-foreground">
+                {enabledSet.size} {t('settings.ai.selectedOf')} {provider.models.length}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-h-0 relative">
+            {!isRestricted ? (
+              <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-muted-foreground bg-muted/10">
+                <div>
+                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">{t('settings.ai.allModelsEnabled')}</h3>
+                  <p className="max-w-xs mx-auto text-sm">{t('settings.ai.allModelsEnabledDesc')}</p>
+                  <Button variant="outline" className="mt-6" onClick={() => setIsRestricted(true)}>
+                    {t('settings.ai.enableRestriction')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex flex-col">
+                <div className="p-2 border-b flex justify-end">
+                  <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs h-7">
+                    {enabledSet.size === provider.models.length ? t('settings.ai.deselectAll') : t('settings.ai.selectAll')}
+                  </Button>
+                </div>
+                <Command className="border-none">
+                  <CommandInput placeholder={t('chat.searchModels')} className="border-none focus:ring-0" />
+                  <CommandList className="max-h-full">
+                    <CommandEmpty>{t('chat.noModelsFound')}</CommandEmpty>
+                    <CommandGroup>
+                      {provider.models.map(model => (
+                        <CommandItem
+                          key={model.id}
+                          value={`${model.name} ${model.id}`}
+                          onSelect={() => toggleModel(model.id)}
+                          className="flex items-center gap-3 py-2 cursor-pointer"
+                        >
+                          <div className={cn(
+                            "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                            enabledSet.has(model.id)
+                              ? "bg-primary text-primary-foreground"
+                              : "opacity-50 [&_svg]:invisible"
+                          )}>
+                            <Check className={cn("h-3 w-3")} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium truncate">{model.name}</span>
+                              {model.toolCall && <Badge variant="secondary" className="text-[10px] h-4 px-1">{t('chat.modelSelector.badges.tool')}</Badge>}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono truncate">{model.id}</div>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 border-t flex justify-end gap-2 bg-muted/10">
+            <Button variant="outline" onClick={onCancel}>
+              {t('actions.close')}
+            </Button>
+            <Button onClick={handleSaveModels} disabled={savingModels}>
+              {savingModels ? t('actions.saving') : t('actions.save')}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -472,6 +472,8 @@
       "noCustomProviders": "无自定义提供商",
       "custom": "自定义",
       "configureApiKey": "配置 API 密钥",
+      "configureModels": "配置 {{provider}} 模型",
+      "configureModelsDescription": "选择为此提供商启用的模型",
       "apiKeyDialogDescription": "输入 {{provider}} 的 API 密钥",
       "azureApiKeyDialogDescription": "配置 Azure OpenAI 的资源名称和 API 密钥",
       "azureResourceName": "Azure 资源名称",
@@ -486,6 +488,8 @@
       "selectedOf": "已选择，共",
       "selectAll": "全选",
       "deselectAll": "取消全选",
+      "restricted": "已限制",
+      "outOfTotal": "，共 {{total}} 个",
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",

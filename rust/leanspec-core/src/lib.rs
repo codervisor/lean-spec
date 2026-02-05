@@ -31,6 +31,7 @@
 pub mod error;
 pub mod parsers;
 pub mod relationships;
+pub mod search;
 pub mod types;
 pub mod utils;
 pub mod validators;
@@ -76,4 +77,10 @@ pub use utils::{
 pub use validators::{
     global_frontmatter_validator, global_structure_validator, global_token_count_validator,
     CompletionVerifier, FrontmatterValidator, StructureValidator, TokenCountValidator,
+};
+
+// Re-export search module
+pub use search::{
+    find_content_snippet, parse_query_terms, search_specs, search_specs_with_options,
+    SearchOptions, SearchResult,
 };
