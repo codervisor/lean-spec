@@ -27,6 +27,7 @@ pub mod files;
 pub mod gantt;
 pub mod init;
 pub mod open;
+pub mod package_manager;
 pub mod skill;
 pub mod timeline;
 
