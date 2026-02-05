@@ -68,6 +68,37 @@ Implementation approach:
 
 Fallback: If generation fails, use first 50 chars of user message
 
+## Implementation Notes (Codebase Findings)
+
+### Existing Chat Sidebar Context
+
+- The sidebar used in the app layout is [packages/ui/src/components/chat/ChatSidebar.tsx](../../packages/ui/src/components/chat/ChatSidebar.tsx). It is mounted in [packages/ui/src/components/Layout.tsx](../../packages/ui/src/components/Layout.tsx) and uses `useLeanSpecChat`.
+- A separate, full-page chat UI exists at [packages/ui/src/pages/ChatPage.tsx](../../packages/ui/src/pages/ChatPage.tsx) with its own sidebar component. This spec should only affect the layout sidebar unless explicitly extended.
+
+### Conversation History UI (Already Built)
+
+- There is an unused history panel component: [packages/ui/src/components/chat/ChatHistory.tsx](../../packages/ui/src/components/chat/ChatHistory.tsx).
+- `ChatContext` already tracks `showHistory` with `toggleHistory()` in [packages/ui/src/contexts/ChatContext.tsx](../../packages/ui/src/contexts/ChatContext.tsx).
+- Recommendation: reuse `ChatHistory` and wire it to a new history button instead of building from scratch.
+
+### Auto-Title Generation Reality Check
+
+- Backend defaults new titles to `New Chat` in [rust/leanspec-core/src/storage/chat_store.rs](../../rust/leanspec-core/src/storage/chat_store.rs).
+- There is no `/api/chat/sessions/:id/generate-title` endpoint. The only server write is `PATCH /api/chat/sessions/:id` via `ChatApi.updateThread()`.
+- Existing auto-title behavior already exists in [packages/ui/src/pages/ChatPage.tsx](../../packages/ui/src/pages/ChatPage.tsx) using a simple heuristic (first user message). Reuse or extract this logic to avoid duplication (DRY).
+
+### Keyboard Shortcuts Integration
+
+- Global shortcuts are registered via `useGlobalShortcuts()` in [packages/ui/src/hooks/useKeyboardShortcuts.ts](../../packages/ui/src/hooks/useKeyboardShortcuts.ts) and installed in [packages/ui/src/components/Layout.tsx](../../packages/ui/src/components/Layout.tsx).
+- `Ctrl/Cmd+Shift+I` already toggles the chat sidebar. New shortcuts should extend this system instead of adding another listener.
+- `useKeyboardShortcuts` already ignores inputs/selects, and the sidebar stops propagation for inputs in `ChatSidebar`.
+
+### Settings Navigation
+
+- Global settings live under `/settings/*` in [packages/ui/src/router.tsx](../../packages/ui/src/router.tsx).
+- Chat-specific settings route exists at `/projects/:projectId/chat/settings` in [packages/ui/src/router/projectRoutes.tsx](../../packages/ui/src/router/projectRoutes.tsx).
+- Decision: route the gear icon to global AI settings at `/settings/ai`.
+
 ### 3. Keyboard Shortcuts
 
 | Action | Shortcut (Mac) | Shortcut (Windows/Linux) |
@@ -117,34 +148,33 @@ Benefits:
 ## Plan
 
 ### Phase 1: History Button UI
-- [ ] Extract title display from `ConversationSelector` dropdown
-- [ ] Add dedicated history button (`Clock` or `History` icon from lucide)
-- [ ] Create `ChatHistoryPanel` component with slide-out or popover UI
-- [ ] Wire button to open history panel
+- [ ] Extract title display from `ConversationSelector` dropdown in [packages/ui/src/components/chat/ChatSidebar.tsx](../../packages/ui/src/components/chat/ChatSidebar.tsx)
+- [ ] Add dedicated history button (`History` icon from `lucide-react`) next to the new chat button
+- [ ] Reuse [packages/ui/src/components/chat/ChatHistory.tsx](../../packages/ui/src/components/chat/ChatHistory.tsx) as the history panel (popover or slide-out)
+- [ ] Wire the button to `toggleHistory()` from [packages/ui/src/contexts/ChatContext.tsx](../../packages/ui/src/contexts/ChatContext.tsx)
 
 ### Phase 2: Auto Title Generation
-- [ ] Add `/api/chat/sessions/:id/generate-title` endpoint (or use client-side generation)
-- [ ] Implement title generation prompt (simple: "Generate a 5-word title for this conversation")
-- [ ] Hook into conversation flow: generate after first AI response
-- [ ] Update UI to show generated title
+- [ ] Extract shared auto-title logic from [packages/ui/src/pages/ChatPage.tsx](../../packages/ui/src/pages/ChatPage.tsx) into a reusable helper/hook
+- [ ] Trigger title generation after the first assistant response when the thread title is still `New Chat`
+- [ ] Use `ChatApi.updateThread()` to persist the generated title (no new backend endpoint today)
+- [ ] Fallback: first 50 chars of the initial user message if generation fails
 
 ### Phase 3: Keyboard Shortcuts
-- [ ] Create `useChatShortcuts` hook for registering shortcuts
-- [ ] Implement toggle, focus, new, history shortcuts
-- [ ] Add tooltips showing shortcuts on hover
-- [ ] Respect focus context (don't trigger when typing in inputs)
+- [ ] Extend `useGlobalShortcuts()` in [packages/ui/src/hooks/useKeyboardShortcuts.ts](../../packages/ui/src/hooks/useKeyboardShortcuts.ts) with new chat actions
+- [ ] Implement toggle, focus, new conversation, history shortcuts (avoid conflicts with existing `Ctrl/Cmd+Shift+I`)
+- [ ] Add tooltips showing shortcuts on hover for buttons in [packages/ui/src/components/chat/ChatSidebar.tsx](../../packages/ui/src/components/chat/ChatSidebar.tsx)
+- [ ] Ensure shortcuts do not fire when typing in inputs or textareas
 
 ### Phase 4: Settings Navigation
-- [ ] Add `onClick` handler to settings button
-- [ ] Navigate to settings page with models tab active
-- [ ] Verify settings page has models tab or create if missing
+- [ ] Add `onClick` handler to settings button in [packages/ui/src/components/chat/ChatSidebar.tsx](../../packages/ui/src/components/chat/ChatSidebar.tsx)
+- [ ] Navigate to `/settings/ai` (global AI models/settings)
+- [ ] Ensure the models tab exists in [packages/ui/src/layouts/SettingsLayout.tsx](../../packages/ui/src/layouts/SettingsLayout.tsx)
 
 ### Phase 5: Loading Indicator Improvement
-- [ ] Create `ThinkingIndicator` component with typing dots animation
-- [ ] Style as assistant message bubble (match `ChatMessage` for assistant)
-- [ ] Replace centered `Loader` with new indicator in `ChatContainer`
-- [ ] Add optional "Thinking..." text label
-- [ ] Ensure smooth animation without layout shift
+- [ ] Create `ThinkingIndicator` component (suggested: [packages/ui/src/components/chat/ThinkingIndicator.tsx](../../packages/ui/src/components/chat/ThinkingIndicator.tsx))
+- [ ] Style as assistant message bubble using `Message`/`MessageContent` patterns from [packages/ui/src/components/chat/ChatMessage.tsx](../../packages/ui/src/components/chat/ChatMessage.tsx)
+- [ ] Replace `Loader` usage in [packages/ui/src/components/chat/ChatContainer.tsx](../../packages/ui/src/components/chat/ChatContainer.tsx)
+- [ ] Add optional "Thinking..." label, no layout shift when toggling
 
 ## Test
 
