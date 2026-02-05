@@ -1,8 +1,12 @@
 use colored::Colorize;
 use dialoguer::{Confirm, Input, MultiSelect};
+use serde_json::Value;
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
+
+use crate::commands::package_manager::detect_package_manager;
 
 mod ai_tools;
 mod mcp_config;
@@ -26,6 +30,7 @@ const SPEC_TEMPLATE: &str = include_str!("../../templates/spec-template.md");
 
 pub struct InitOptions {
     pub yes: bool,
+    pub example: Option<String>,
     pub no_ai_tools: bool,
     pub no_mcp: bool,
     pub skill: bool,
@@ -40,6 +45,13 @@ pub struct InitOptions {
 }
 
 pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> {
+    if let Some(example_name) = options.example.as_deref() {
+        return scaffold_example(specs_dir, &options, example_name);
+    }
+    run_standard_init(specs_dir, options)
+}
+
+fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> {
     let root = std::env::current_dir()?;
     let specs_path = to_absolute(&root, specs_dir);
 
@@ -119,6 +131,114 @@ pub fn run(specs_dir: &str, options: InitOptions) -> Result<(), Box<dyn Error>> 
     println!("  3. Read the docs: {}", "https://leanspec.dev".cyan());
 
     Ok(())
+}
+
+fn scaffold_example(
+    specs_dir: &str,
+    options: &InitOptions,
+    example_name: &str,
+) -> Result<(), Box<dyn Error>> {
+    let root = std::env::current_dir()?;
+    let examples_dir = resolve_examples_dir()?;
+    let template_dir = examples_dir.join(example_name);
+
+    if !template_dir.exists() {
+        return Err(format!("Example not found: {}", example_name).into());
+    }
+
+    let target_dir = root.join(example_name);
+    ensure_empty_directory(&target_dir)?;
+    if !target_dir.exists() {
+        fs::create_dir_all(&target_dir)?;
+    }
+
+    copy_example_template(&template_dir, &target_dir)?;
+    println!(
+        "{} Created example project: {}",
+        "✓".green(),
+        target_dir.display()
+    );
+
+    let initial_dir = root;
+    std::env::set_current_dir(&target_dir)?;
+    let init_result = run_standard_init(
+        specs_dir,
+        InitOptions {
+            yes: true,
+            example: None,
+            no_ai_tools: options.no_ai_tools,
+            no_mcp: options.no_mcp,
+            skill: options.skill,
+            skill_github: options.skill_github,
+            skill_claude: options.skill_claude,
+            skill_cursor: options.skill_cursor,
+            skill_codex: options.skill_codex,
+            skill_gemini: options.skill_gemini,
+            skill_vscode: options.skill_vscode,
+            skill_user: options.skill_user,
+            no_skill: options.no_skill,
+        },
+    );
+    std::env::set_current_dir(&initial_dir)?;
+    init_result?;
+
+    print_example_next_steps(example_name, &target_dir);
+
+    Ok(())
+}
+
+fn print_example_next_steps(example_name: &str, target_dir: &Path) {
+    println!();
+    println!("Next steps:");
+    println!("  1. cd {}", example_name.cyan());
+
+    if let Some(command) = resolve_example_run_command(target_dir) {
+        let package_manager = match detect_package_manager(target_dir) {
+            Ok(manager) => manager,
+            Err(err) => {
+                println!(
+                    "{} Failed to detect package manager (defaulting to npm): {}",
+                    "⚠".yellow(),
+                    err
+                );
+                "npm".to_string()
+            }
+        };
+        println!("  2. {} install", package_manager);
+        println!("  3. {}", build_run_command(&package_manager, &command));
+    } else {
+        println!("  2. Review the README.md for setup instructions");
+    }
+}
+
+fn resolve_example_run_command(target_dir: &Path) -> Option<String> {
+    let package_json = target_dir.join("package.json");
+    let content = fs::read_to_string(package_json).ok()?;
+    let json: Value = serde_json::from_str(&content).ok()?;
+    let scripts = json.get("scripts")?.as_object()?;
+
+    // prefer start scripts since they map to production-like entry points.
+    if scripts.contains_key("start") {
+        return Some("start".to_string());
+    }
+
+    if scripts.contains_key("dev") {
+        return Some("dev".to_string());
+    }
+
+    None
+}
+
+fn build_run_command(package_manager: &str, script: &str) -> String {
+    if is_builtin_script(script) {
+        format!("{} {}", package_manager, script)
+    } else {
+        format!("{} run {}", package_manager, script)
+    }
+}
+
+fn is_builtin_script(script: &str) -> bool {
+    matches!(script, "start" | "test")
 }
 
 fn to_absolute(root: &Path, path: &str) -> PathBuf {
@@ -209,6 +329,87 @@ Visit [leanspec.dev](https://leanspec.dev) for documentation.
         fs::create_dir_all(&archived_dir)?;
         fs::write(archived_dir.join(".gitkeep"), "")?;
         println!("{} Created archived directory", "✓".green());
+    }
+
+    Ok(())
+}
+
+fn resolve_examples_dir() -> Result<PathBuf, Box<dyn Error>> {
+    let exe_path = std::env::current_exe()?;
+    let exe_dir = exe_path
+        .parent()
+        .ok_or("Unable to resolve CLI binary directory")?;
+
+    let mut searched = Vec::new();
+    let mut current = Some(exe_dir);
+    while let Some(dir) = current {
+        let candidate = dir.join("templates").join("examples");
+        searched.push(candidate.display().to_string());
+        if candidate.exists() {
+            return Ok(candidate);
+        }
+
+        let workspace_candidate = dir
+            .join("packages")
+            .join("cli")
+            .join("templates")
+            .join("examples");
+        searched.push(workspace_candidate.display().to_string());
+        if workspace_candidate.exists() {
+            return Ok(workspace_candidate);
+        }
+
+        current = dir.parent();
+    }
+
+    Err(format!(
+        "Example templates directory not found. Searched: {}. Ensure the CLI installation includes templates or rebuild the binary from the repository.",
+        searched.join(", ")
+    )
+    .into())
+}
+
+fn ensure_empty_directory(target_dir: &Path) -> Result<(), Box<dyn Error>> {
+    if target_dir.exists() {
+        let mut entries = fs::read_dir(target_dir)?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry
+                    .file_name()
+                    .to_str()
+                    .map(|name| name != ".git")
+                    // Treat non-UTF-8 names as real entries that prevent an empty directory.
+                    .unwrap_or(true)
+            })
+            .peekable();
+
+        if entries.peek().is_some() {
+            return Err(format!(
+                "Target directory must be empty (except for .git): {}",
+                target_dir.display()
+            )
+            .into());
+        }
+    }
+
+    Ok(())
+}
+
+fn copy_example_template(from: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
+    for entry in WalkDir::new(from) {
+        let entry = entry?;
+        let path = entry.path();
+        let relative_path = path.strip_prefix(from)?;
+        let target_path = to.join(relative_path);
+
+        if entry.file_type().is_dir() {
+            fs::create_dir_all(&target_path)?;
+        } else if entry.file_type().is_file() {
+            if let Some(parent) = target_path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::copy(path, &target_path)?;
+        }
     }
 
     Ok(())

@@ -8,6 +8,8 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
+use crate::commands::package_manager::detect_package_manager;
+
 pub fn run(
     specs_dir: &str,
     port: &str,
@@ -191,37 +193,6 @@ fn build_ui_command(
             [vec!["--yes".to_string()], ui_args].concat(),
         ),
     }
-}
-
-fn detect_package_manager(dir: &Path) -> Result<String, Box<dyn Error>> {
-    // Check for lockfiles
-    if dir.join("pnpm-lock.yaml").exists() {
-        return Ok("pnpm".to_string());
-    }
-    if dir.join("yarn.lock").exists() {
-        return Ok("yarn".to_string());
-    }
-    if dir.join("package-lock.json").exists() {
-        return Ok("npm".to_string());
-    }
-
-    // Check parent directories
-    let mut current = dir.to_path_buf();
-    while let Some(parent) = current.parent() {
-        if parent.join("pnpm-lock.yaml").exists() {
-            return Ok("pnpm".to_string());
-        }
-        if parent.join("yarn.lock").exists() {
-            return Ok("yarn".to_string());
-        }
-        if parent.join("package-lock.json").exists() {
-            return Ok("npm".to_string());
-        }
-        current = parent.to_path_buf();
-    }
-
-    // Default to npm
-    Ok("npm".to_string())
 }
 
 fn open_url(url: &str) {

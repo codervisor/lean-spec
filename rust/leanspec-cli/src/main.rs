@@ -231,6 +231,10 @@ enum Commands {
         #[arg(short, long)]
         yes: bool,
 
+        /// Initialize an example project
+        #[arg(long)]
+        example: Option<String>,
+
         /// Skip AI tool configuration (symlinks)
         #[arg(long)]
         no_ai_tools: bool,
@@ -780,6 +784,7 @@ fn main() -> ExitCode {
         Commands::Gantt { status } => commands::gantt::run(&specs_dir, status, &cli.output),
         Commands::Init {
             yes,
+            example,
             no_ai_tools,
             no_mcp,
             skill,
@@ -795,6 +800,7 @@ fn main() -> ExitCode {
             &specs_dir,
             commands::init::InitOptions {
                 yes,
+                example,
                 no_ai_tools,
                 no_mcp,
                 skill,
