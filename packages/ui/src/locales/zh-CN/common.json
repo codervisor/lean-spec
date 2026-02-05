@@ -460,6 +460,7 @@
       "hideModels": "隐藏模型",
       "showModels": "显示模型",
       "moreModels": "更多模型",
+      "modelsAvailable": "个可用模型",
       "capabilities": {
         "toolCall": "工具调用",
         "reasoning": "推理",
@@ -476,6 +477,15 @@
       "azureResourceName": "Azure 资源名称",
       "azureResourceNameHelp": "您的 Azure OpenAI 资源名称（例如 'my-openai-resource'）",
       "apiKeyStorageNote": "API 密钥将本地存储在配置文件中",
+      "configureProvider": "配置 {{provider}}",
+      "configureProviderDescription": "配置提供商详情和模型访问权限",
+      "restrictModels": "限制可用模型",
+      "allModelsEnabled": "所有模型均已启用",
+      "allModelsEnabledDesc": "此提供商的所有模型目前均可在聊天中使用。",
+      "enableRestriction": "启用限制",
+      "selectedOf": "已选择，共",
+      "selectAll": "全选",
+      "deselectAll": "取消全选",
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",

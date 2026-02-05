@@ -465,6 +465,7 @@
       "hideModels": "Hide models",
       "showModels": "Show models",
       "moreModels": "more models",
+      "modelsAvailable": "models available",
       "capabilities": {
         "toolCall": "Tool calling",
         "reasoning": "Reasoning",
@@ -481,6 +482,15 @@
       "azureResourceName": "Azure Resource Name",
       "azureResourceNameHelp": "The name of your Azure OpenAI resource (e.g., 'my-openai-resource')",
       "apiKeyStorageNote": "API key will be stored locally in your config file",
+      "configureProvider": "Configure {{provider}}",
+      "configureProviderDescription": "Configure provider details and model access",
+      "restrictModels": "Restrict available models",
+      "allModelsEnabled": "All models enabled",
+      "allModelsEnabledDesc": "All models from this provider are currently available in the chat.",
+      "enableRestriction": "Enable restriction",
+      "selectedOf": "selected of",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",
