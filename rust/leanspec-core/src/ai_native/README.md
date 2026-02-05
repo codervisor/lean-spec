@@ -88,7 +88,7 @@ cargo build -p leanspec-core --features ai
 cargo build -p leanspec-http --features ai
 
 # Run full build
-make rust-build
+pnpm build:rust
 ```
 
 ## References

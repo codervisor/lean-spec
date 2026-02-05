@@ -53,6 +53,24 @@ function getBinaryPath() {
     // Local binary not found
   }
 
+  // Try rust/target/debug directory first (for local development with `pnpm build:rust:dev`)
+  try {
+    const rustDebugPath = path.join(__dirname, '..', '..', '..', 'rust', 'target', 'debug', binaryName);
+    require('fs').accessSync(rustDebugPath);
+    return rustDebugPath;
+  } catch (e) {
+    // Rust debug binary not found
+  }
+
+  // Try rust/target/release directory (for local development with `pnpm build:rust`)
+  try {
+    const rustReleasePath = path.join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
+    require('fs').accessSync(rustReleasePath);
+    return rustReleasePath;
+  } catch (e) {
+    // Rust release binary not found
+  }
+
   console.error(`MCP binary not found for ${platform}-${arch}`);
   console.error(`Expected package: ${packageName}`);
   console.error('');

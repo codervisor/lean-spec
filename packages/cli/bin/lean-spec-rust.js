@@ -130,18 +130,32 @@ function getBinaryPath() {
     debug('Local binary not found:', e.message);
   }
 
-  // Try rust/target/release directory (for local development)
+  // Try rust/target/debug directory first (for local development with `pnpm build:rust:dev`)
+  try {
+    const rustDebugPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'debug', binaryName);
+    debug('Trying rust debug binary:', rustDebugPath);
+    accessSync(rustDebugPath);
+    if (isExecutableBinary(rustDebugPath, platform)) {
+      debug('Found rust debug binary:', rustDebugPath);
+      return rustDebugPath;
+    }
+    debug('Rust debug binary is invalid:', rustDebugPath);
+  } catch (e) {
+    debug('Rust debug binary not found:', e.message);
+  }
+
+  // Try rust/target/release directory (for local development with `pnpm build:rust`)
   try {
     const rustTargetPath = join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
-    debug('Trying rust target binary:', rustTargetPath);
+    debug('Trying rust release binary:', rustTargetPath);
     accessSync(rustTargetPath);
     if (isExecutableBinary(rustTargetPath, platform)) {
-      debug('Found rust target binary:', rustTargetPath);
+      debug('Found rust release binary:', rustTargetPath);
       return rustTargetPath;
     }
-    debug('Rust target binary is invalid:', rustTargetPath);
+    debug('Rust release binary is invalid:', rustTargetPath);
   } catch (e) {
-    debug('Rust target binary not found:', e.message);
+    debug('Rust release binary not found:', e.message);
   }
 
   console.error(`Binary not found for ${platform}-${arch}`);

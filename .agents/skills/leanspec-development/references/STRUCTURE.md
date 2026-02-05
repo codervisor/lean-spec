@@ -38,7 +38,6 @@ lean-spec/
 | `turbo.json`          | Turborepo task pipeline and caching   |
 | `tsconfig.json`       | Shared TypeScript config              |
 | `vitest.config.ts`    | Test configuration                    |
-| `Makefile`            | Rust build shortcuts                  |
 
 ### Rust
 

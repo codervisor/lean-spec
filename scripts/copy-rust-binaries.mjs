@@ -2,11 +2,12 @@
 /**
  * copy-rust-binaries.mjs
  * 
- * Copies Rust binaries from rust/target/release to packages/{cli,mcp}/binaries/{platform}/
+ * Copies Rust binaries from rust/target/{release,debug} to packages/{cli,mcp}/binaries/{platform}/
  * Automatically detects current platform and copies the appropriate binary.
  * 
  * Usage:
- *   node scripts/copy-rust-binaries.mjs           # Copy current platform
+ *   node scripts/copy-rust-binaries.mjs           # Copy current platform (release)
+ *   node scripts/copy-rust-binaries.mjs --debug   # Copy current platform (debug build)
  *   node scripts/copy-rust-binaries.mjs --all     # Copy all platforms (requires cross-compilation)
  */
 import { promises as fs } from 'node:fs';
@@ -235,7 +236,7 @@ async function killProcessesUsingBinary(binaryPath) {
   }
 }
 
-async function copyBinary(binaryName, platformKey, version) {
+async function copyBinary(binaryName, platformKey, version, useDebug = false) {
   const config = BINARY_CONFIG[binaryName];
 
   if (!config) {
@@ -244,7 +245,8 @@ async function copyBinary(binaryName, platformKey, version) {
 
   const isWindows = platformKey.startsWith('windows-');
   const binaryFileName = getBinaryFileName(binaryName, platformKey);
-  const sourcePath = path.join(ROOT, 'rust', 'target', 'release', binaryFileName);
+  const targetDir = useDebug ? 'debug' : 'release';
+  const sourcePath = path.join(ROOT, 'rust', 'target', targetDir, binaryFileName);
   const destDir = path.join(ROOT, 'packages', config.packagePath, 'binaries', platformKey);
   const destPath = path.join(destDir, binaryFileName);
 
@@ -313,10 +315,11 @@ async function copyUiDist(destDir) {
 async function main() {
   const args = process.argv.slice(2);
   const copyAll = args.includes('--all');
+  const useDebug = args.includes('--debug');
 
   const rootVersion = await resolveTargetVersion();
 
-  console.log('🔧 Copying Rust binaries...\n');
+  console.log(`🔧 Copying Rust binaries (${useDebug ? 'debug' : 'release'})...\n`);
 
   const binaries = ['lean-spec', 'leanspec-mcp', 'leanspec-http'];
 
@@ -326,7 +329,7 @@ async function main() {
     for (const platformKey of ALL_PLATFORMS) {
       console.log(`\nPlatform: ${platformKey}`);
       for (const binary of binaries) {
-        await copyBinary(binary, platformKey, rootVersion);
+        await copyBinary(binary, platformKey, rootVersion, useDebug);
       }
     }
   } else {
@@ -334,7 +337,7 @@ async function main() {
     console.log(`📦 Copying for current platform: ${currentPlatform}\n`);
 
     for (const binary of binaries) {
-      await copyBinary(binary, currentPlatform, rootVersion);
+      await copyBinary(binary, currentPlatform, rootVersion, useDebug);
     }
   }
 
