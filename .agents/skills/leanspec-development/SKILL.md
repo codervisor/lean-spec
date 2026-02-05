@@ -91,11 +91,15 @@ pnpm dev:watch            # Same + auto-rebuild Rust on changes
 pnpm dev:web              # Web UI only
 pnpm build:rust           # Build Rust (debug)
 
-# Validation (run before PR)
-pnpm pre-release          # Full validation: typecheck, test, build, lint
+# Validation (run before PR) - ⚠️ ALL REQUIRED
+pnpm typecheck            # ← NEVER SKIP - Check TypeScript errors
 pnpm test                 # All tests
+pnpm lint                 # Lint checks
 pnpm lint:rust            # Rust clippy checks
+pnpm pre-release          # Full validation: typecheck, test, build, lint
 ```
+
+**⚠️ Always run `pnpm typecheck` before marking work complete.**
 
 **All commands in root `package.json`. For full reference, use skill: `leanspec-scripts`.**
 

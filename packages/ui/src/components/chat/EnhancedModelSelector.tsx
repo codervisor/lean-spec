@@ -11,7 +11,8 @@ import {
   CommandList,
   CommandInput,
   CommandEmpty,
-  Badge
+  Badge,
+  ModelSelectorLogo
 } from '@leanspec/ui-components';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { Check, ChevronsUpDown, Cpu, Zap, Coins, Eye, Wrench, ChevronRight } from 'lucide-react';
@@ -71,9 +72,14 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
           disabled={disabled}
         >
           {selectedModel ? (
-            <div className="flex flex-col items-start gap-0.5 text-left">
-              <span className="text-sm font-medium leading-none">{selectedModel.name}</span>
-              <span className="text-xs text-muted-foreground leading-none">{selectedProvider?.name}</span>
+            <div className="flex items-center gap-2 text-left">
+               {selectedProviderId && (
+                <ModelSelectorLogo provider={selectedProviderId} className="h-6 w-6 shrink-0 rounded-sm" />
+               )}
+               <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium leading-none">{selectedModel.name}</span>
+                <span className="text-xs text-muted-foreground leading-none">{selectedProvider?.name}</span>
+               </div>
             </div>
           ) : (
             "Select model..."
@@ -108,7 +114,10 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
                         if (search.length === 0) toggleProvider(provider.id);
                       }}
                     >
-                      <span className="font-medium text-foreground">{provider.name}</span>
+                      <div className="flex items-center gap-2">
+                        <ModelSelectorLogo provider={provider.id} className="h-4 w-4" />
+                        <span className="font-medium text-foreground">{provider.name}</span>
+                      </div>
                       {search.length === 0 && (
                         <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", !isCollapsed && "rotate-90")} />
                       )}

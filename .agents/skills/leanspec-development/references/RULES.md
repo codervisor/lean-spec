@@ -321,13 +321,23 @@ pnpm pre-release
 
 ## Validation Checklist
 
-Before submitting PR:
+**⚠️ MANDATORY: Run these commands and verify zero errors before marking work complete:**
 
 ```bash
-pnpm pre-release  # Automated checks
+pnpm typecheck    # Must show no TypeScript errors
+pnpm test         # Must pass all tests
+pnpm lint         # Must pass linting
+
+# Or run all at once:
+pnpm pre-release  # Full validation suite
 ```
 
+**DO NOT skip `pnpm typecheck`.** This is the most commonly forgotten check.
+
 **Manual checks:**
+- [ ] `pnpm typecheck` passes with zero errors
+- [ ] `pnpm test` passes all tests
+- [ ] `pnpm lint` passes
 - [ ] i18n updated (both en and zh-CN)
 - [ ] Light/dark theme tested
 - [ ] Regression test added (if bug fix)

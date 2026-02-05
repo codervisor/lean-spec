@@ -146,8 +146,7 @@ describe('ChatContainer', () => {
     const messages = [{ id: '1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Test' }] }];
     render(<ChatContainer messages={messages} onSubmit={() => { }} isLoading />);
 
-    // The component shows a Loader spinner (with title "Loader") when loading
-    expect(screen.getByTitle('Loader')).toBeInTheDocument();
+    expect(screen.getByTestId('thinking-indicator')).toBeInTheDocument();
   });
 
   it('shows error with retry button', () => {

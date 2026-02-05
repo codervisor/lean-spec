@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { 
@@ -6,84 +7,19 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-  CommandInput,
-  CommandEmpty,
   Button 
 } from '@leanspec/ui-components';
 import { ResizeHandle } from './ResizeHandle';
 import { ChatContainer } from './ChatContainer';
+import { ChatHistory } from './ChatHistory';
 import { InlineModelSelector } from './InlineModelSelector';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { useModelsRegistry } from '../../lib/use-models-registry';
-import { X, Plus, Settings, Check, ChevronsUpDown } from 'lucide-react';
-
-function ConversationSelector({
-  conversations,
-  activeId,
-  onSelect,
-}: {
-  conversations: { id: string; title?: string }[];
-  activeId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const selectedConversation = activeId 
-    ? conversations.find((c) => c.id === activeId) 
-    : null;
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          role="combobox"
-          aria-expanded={open}
-          className="flex-1 justify-between text-sm font-semibold h-9 px-2 hover:bg-muted/50 truncate min-w-0"
-        >
-          <span className="truncate">
-            {selectedConversation?.title || (activeId ? "Untitled Chat" : "New Conversation")}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search history..." />
-          <CommandList>
-            <CommandEmpty>No conversations found.</CommandEmpty>
-            <CommandGroup heading="History">
-              {conversations.map((conv) => (
-                <CommandItem
-                  key={conv.id}
-                  value={conv.title || "New Chat"}
-                  onSelect={() => {
-                    onSelect(conv.id);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      activeId === conv.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <span className="truncate">{conv.title || "New Chat"}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
+import { useAutoTitle } from '../../hooks/useAutoTitle';
+import { X, Plus, Settings, History } from 'lucide-react';
 
 export function ChatSidebar() {
+  const navigate = useNavigate();
   const {
     toggleSidebar,
     isOpen,
@@ -93,7 +29,8 @@ export function ChatSidebar() {
     createConversation,
     refreshConversations,
     conversations,
-    selectConversation,
+    showHistory,
+    toggleHistory,
   } = useChat();
 
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -105,6 +42,9 @@ export function ChatSidebar() {
   const pendingMessageRef = useRef<string | null>(null);
 
   const effectiveModel = model ?? defaultSelection ?? null;
+  const currentTitle = activeConversationId 
+    ? conversations.find(c => c.id === activeConversationId)?.title 
+    : "New Chat";
 
   const {
     messages,
@@ -116,6 +56,13 @@ export function ChatSidebar() {
     providerId: effectiveModel?.providerId ?? '',
     modelId: effectiveModel?.modelId ?? '',
     threadId: activeConversationId || undefined
+  });
+
+  useAutoTitle({
+    activeThreadId: activeConversationId,
+    messages,
+    threads: conversations,
+    onUpdate: refreshConversations
   });
 
   // Send pending message when thread becomes active
@@ -187,16 +134,30 @@ export function ChatSidebar() {
 
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14 gap-2">
-          <ConversationSelector
-            conversations={conversations}
-            activeId={activeConversationId}
-            onSelect={selectConversation}
-          />
+          {/* Chat Title */}
+          <div className="flex items-center flex-1 min-w-0 mr-2" title={currentTitle || "New Chat"}>
+             <span className="font-semibold text-sm truncate">
+                {currentTitle || "New Chat"}
+             </span>
+          </div>
+
           <div className="flex items-center gap-1 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title="New Chat">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title="New Chat (Cmd+Shift+N)">
               <Plus className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" title="Settings">
+            
+            <Popover open={showHistory} onOpenChange={(open) => { if (open !== showHistory) toggleHistory(); }}>
+               <PopoverTrigger asChild>
+                 <Button variant="ghost" size="icon" className="h-8 w-8" title="History (Cmd+Shift+H)">
+                   <History className="h-4 w-4" />
+                 </Button>
+               </PopoverTrigger>
+               <PopoverContent className="w-[280px] p-0" align="end">
+                  <ChatHistory />
+               </PopoverContent>
+             </Popover>
+            
+            <Button variant="ghost" size="icon" className="h-8 w-8" title="Settings" onClick={() => navigate('/settings?tab=models')}>
               <Settings className="h-4 w-4" />
             </Button>
             <Button
@@ -204,6 +165,7 @@ export function ChatSidebar() {
               size="icon"
               className="h-8 w-8"
               onClick={toggleSidebar}
+              title="Close (Cmd+Shift+I)"
             >
               <X className="h-4 w-4" />
             </Button>

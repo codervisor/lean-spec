@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { UIMessage } from '@ai-sdk/react';
 import type { ReactNode } from 'react';
 import { ChatMessage } from './ChatMessage';
+import { ThinkingIndicator } from './ThinkingIndicator';
 import {
   cn,
   Conversation,
@@ -12,7 +13,6 @@ import {
   PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
-  Loader,
   Alert,
   AlertDescription,
 } from '@leanspec/ui-components';
@@ -96,7 +96,7 @@ export function ChatContainer({
                   </AlertDescription>
                 </Alert>
               )}
-              {isLoading && <Loader size={20} />}
+              {isLoading && <ThinkingIndicator />}
             </>
           )}
         </ConversationContent>

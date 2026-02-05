@@ -3,6 +3,8 @@ import { DefaultChatTransport } from 'ai';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useMemo, useRef, useCallback, useEffect, useState } from 'react';
 import { ChatApi } from './chat-api';
+import { useChatMessages, chatKeys } from '../hooks/useChatQuery';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UseLeanSpecChatOptions {
   /** Provider ID (e.g., 'openai', 'anthropic') */
@@ -17,32 +19,16 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   const { currentProject } = useCurrentProject();
   const messagesRef = useRef<UIMessage[]>([]);
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const queryClient = useQueryClient();
+  const messagesQuery = useChatMessages(options.threadId ?? null);
 
-  // Load initial messages when threadId changes
   useEffect(() => {
-    let active = true;
     if (options.threadId) {
-        setLoadingHistory(true);
-        ChatApi.getMessages(options.threadId)
-          .then((msgs) => {
-            if (active) {
-              setInitialMessages(msgs);
-              setLoadingHistory(false);
-            }
-          })
-          .catch(() => {
-            if (active) {
-              setInitialMessages([]);
-              setLoadingHistory(false);
-            }
-          });
+      setInitialMessages(messagesQuery.data ?? []);
     } else {
-        setInitialMessages([]);
-        setLoadingHistory(false);
+      setInitialMessages([]);
     }
-    return () => { active = false; };
-  }, [options.threadId]);
+  }, [messagesQuery.data, options.threadId]);
 
   const baseUrl = import.meta.env.VITE_API_URL || '';
   const api = `${baseUrl}/api/chat`;
@@ -69,6 +55,7 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
             providerId: options.providerId,
             modelId: options.modelId,
           });
+          queryClient.setQueryData(chatKeys.messages(options.threadId), messages);
         } catch (error) {
           console.warn('[LeanSpec Chat] Failed to persist messages:', error);
         }
@@ -105,7 +92,7 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   }, [chatHook, options.modelId, options.providerId, options.threadId]);
 
   // Map the new API to our expected interface
-  const isLoading = chatHook.status === 'submitted' || chatHook.status === 'streaming' || loadingHistory;
+  const isLoading = chatHook.status === 'submitted' || chatHook.status === 'streaming' || messagesQuery.isLoading;
 
   return {
     messages: chatHook.messages,

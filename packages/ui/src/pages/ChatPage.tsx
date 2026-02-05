@@ -8,26 +8,11 @@ import { ChatSkeleton } from '../components/shared/Skeletons';
 import { useLeanSpecChat } from '../lib/use-chat';
 import { useModelsRegistry } from '../lib/use-models-registry';
 import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useAutoTitle } from '../hooks/useAutoTitle';
+import { useChatThreadMutations, useChatThreads } from '../hooks/useChatQuery';
 import { Trash2, Settings2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChatApi, type ChatThread } from '../lib/chat-api';
-import type { UIMessage } from '@ai-sdk/react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { PageContainer } from '../components/shared/PageContainer';
-
-// Helper to extract text content from UIMessage parts
-function extractTextFromMessage(message: UIMessage): string {
-  if (!message.parts) return '';
-  return message.parts
-    .filter((p): p is { type: 'text'; text: string } =>
-      typeof p === 'object' &&
-      p !== null &&
-      'type' in p &&
-      (p as { type: unknown }).type === 'text' &&
-      'text' in p
-    )
-    .map(p => p.text)
-    .join('');
-}
 
 export function ChatPage() {
   const { t } = useTranslation('common');
@@ -36,34 +21,11 @@ export function ChatPage() {
 
   const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [threads, setThreads] = useState<ChatThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>(undefined);
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-
-  // Load threads
-  const loadThreads = useCallback(async () => {
-    try {
-      if (!currentProject?.id) {
-        setThreads([]);
-        return;
-      }
-      const loadedThreads = await ChatApi.getThreads(currentProject.id);
-      setThreads(loadedThreads);
-    } catch (e) {
-      console.error("Failed to load threads", e);
-    }
-  }, [currentProject?.id]);
-
-  useEffect(() => {
-    loadThreads();
-  }, [loadThreads]);
-
-  // Initialize selectedModel from defaultSelection once registry is ready
-  useEffect(() => {
-    if (defaultSelection && !selectedModel) {
-      setSelectedModel(defaultSelection);
-    }
-  }, [defaultSelection, selectedModel]);
+  const pendingMessageRef = useRef<string | null>(null);
+  const { data: threads = [] } = useChatThreads(currentProject?.id ?? null);
+  const { createThread, updateThread, deleteThread } = useChatThreadMutations(currentProject?.id ?? null);
+  const effectiveModel = selectedModel ?? defaultSelection ?? null;
 
   const {
     messages,
@@ -73,34 +35,17 @@ export function ChatPage() {
     reload,
     clearChat,
   } = useLeanSpecChat({
-    providerId: selectedModel?.providerId ?? '',
-    modelId: selectedModel?.modelId ?? '',
+    providerId: effectiveModel?.providerId ?? '',
+    modelId: effectiveModel?.modelId ?? '',
     threadId: activeThreadId
   });
 
   // Title Generation Logic
-  useEffect(() => {
-    if (activeThreadId && messages.length >= 2) {
-      const thread = threads.find(t => t.id === activeThreadId);
-      // Only update if title is default 'New Chat'
-      if (thread && thread.title === 'New Chat') {
-        const timer = setTimeout(async () => {
-          let generatedTitle = "Conversation";
-          const userMsg = messages.find((m: UIMessage) => m.role === 'user');
-          if (userMsg) {
-            // Simple heuristic for now: first 30 chars of user message
-            // In production this should call an LLM
-            const text = extractTextFromMessage(userMsg);
-            generatedTitle = text.slice(0, 30) + (text.length > 30 ? "..." : "");
-          }
-
-          await ChatApi.updateThread(activeThreadId, { title: generatedTitle });
-          loadThreads();
-        }, 2000); // Wait a bit to not flicker too fast
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [messages, activeThreadId, threads, loadThreads]);
+  useAutoTitle({
+    activeThreadId,
+    messages,
+    threads,
+  });
 
   // Handle threads
   const handleSelectThread = (id: string) => {
@@ -113,26 +58,23 @@ export function ChatPage() {
 
   const handleSendMessage = async (text: string) => {
     if (!activeThreadId) {
-      if (!currentProject?.id || !selectedModel) {
+      if (!currentProject?.id || !effectiveModel) {
         return;
       }
-      const thread = await ChatApi.createThread(currentProject.id, selectedModel);
+      const thread = await createThread({ model: effectiveModel });
       setActiveThreadId(thread.id);
-      await loadThreads();
-      setPendingMessage(text);
+      pendingMessageRef.current = text;
     } else {
       sendMessage({ text });
-      setTimeout(loadThreads, 1000);
     }
   };
 
   useEffect(() => {
-    if (activeThreadId && pendingMessage) {
-      sendMessage({ text: pendingMessage });
-      setPendingMessage(null);
-      setTimeout(loadThreads, 1000);
+    if (activeThreadId && pendingMessageRef.current) {
+      sendMessage({ text: pendingMessageRef.current });
+      pendingMessageRef.current = null;
     }
-  }, [activeThreadId, pendingMessage, sendMessage, loadThreads]);
+  }, [activeThreadId, sendMessage]);
 
   // Update thread model when selectedModel changes
   const currentThread = useMemo(() => 
@@ -141,39 +83,35 @@ export function ChatPage() {
   );
 
   useEffect(() => {
-    if (!activeThreadId || !selectedModel || !currentThread) {
+    if (!activeThreadId || !effectiveModel || !currentThread) {
       return;
     }
-    if (currentThread.model.providerId === selectedModel.providerId && currentThread.model.modelId === selectedModel.modelId) {
+    if (currentThread.model.providerId === effectiveModel.providerId && currentThread.model.modelId === effectiveModel.modelId) {
       return;
     }
-    ChatApi.updateThread(activeThreadId, { model: selectedModel })
-      .then(() => loadThreads())
-      .catch((error) => {
+    updateThread({ id: activeThreadId, updates: { model: effectiveModel } })
+      .catch((error: Error) => {
         console.warn('Failed to update chat model', error);
       });
-  }, [activeThreadId, selectedModel, currentThread, loadThreads]);
+  }, [activeThreadId, effectiveModel, currentThread, updateThread]);
 
   const handleCreateNewChat = async () => {
-    if (!currentProject?.id || !selectedModel) {
+    if (!currentProject?.id || !effectiveModel) {
       return;
     }
-    const thread = await ChatApi.createThread(currentProject.id, selectedModel);
+    const thread = await createThread({ model: effectiveModel });
     setActiveThreadId(thread.id);
-    loadThreads();
   }
 
   const handleDeleteThread = async (id: string) => {
-    await ChatApi.deleteThread(id);
+    await deleteThread(id);
     if (activeThreadId === id) {
       setActiveThreadId(undefined);
     }
-    loadThreads();
   }
 
   const handleRenameThread = async (id: string, newTitle: string) => {
-    await ChatApi.updateThread(id, { title: newTitle });
-    loadThreads();
+    await updateThread({ id, updates: { title: newTitle } });
   }
 
   if (projectLoading) {
@@ -194,7 +132,7 @@ export function ChatPage() {
   }
 
   // Show loading state while registry is loading
-  if (registryLoading || !selectedModel) {
+  if (registryLoading || !effectiveModel) {
     return (
       <PageContainer>
         <ChatSkeleton />
@@ -248,7 +186,7 @@ export function ChatPage() {
         {showSettings && (
           <div className="px-4 py-2 border-b bg-muted/50">
             <EnhancedModelSelector
-              value={selectedModel}
+              value={effectiveModel}
               onChange={(m) => {
                 setSelectedModel(m);
               }}
@@ -268,7 +206,7 @@ export function ChatPage() {
             className="flex-1 min-h-0"
             footerContent={
               <InlineModelSelector
-                value={selectedModel}
+                value={effectiveModel}
                 onChange={setSelectedModel}
                 disabled={isLoading}
               />

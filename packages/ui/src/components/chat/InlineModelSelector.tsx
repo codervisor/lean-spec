@@ -11,6 +11,7 @@ import {
   CommandInput,
   CommandEmpty,
   Button,
+  ModelSelectorLogo,
 } from '@leanspec/ui-components';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
@@ -84,6 +85,9 @@ export function InlineModelSelector({
           )}
           disabled={disabled}
         >
+          {selectedProviderId && (
+            <ModelSelectorLogo provider={selectedProviderId} className="h-3 w-3 mr-1" />
+          )}
           <span className="font-medium">{selectedModel?.name ?? 'Select model'}</span>
           <span className="text-muted-foreground">({selectedProvider?.name})</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
@@ -119,6 +123,7 @@ export function InlineModelSelector({
                           : 'opacity-0'
                       )}
                     />
+                    <ModelSelectorLogo provider={provider.id} className="h-4 w-4 mr-1" />
                     <span className="font-medium text-sm">{model.name}</span>
                   </CommandItem>
                 ))}

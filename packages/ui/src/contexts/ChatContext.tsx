@@ -1,9 +1,11 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useLocalStorage } from '@leanspec/ui-components';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { useProjectScopedStorage } from '../hooks/useProjectScopedStorage';
-import { ChatApi, type ChatThread } from '../lib/chat-api';
+import { useChatThreadMutations, useChatThreads, chatKeys } from '../hooks/useChatQuery';
+import type { ChatThread } from '../lib/chat-api';
 import { useModelsRegistry } from '../lib/use-models-registry';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ChatContextType {
   isOpen: boolean;
@@ -32,6 +34,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { currentProject } = useCurrentProject();
   const { defaultSelection } = useModelsRegistry();
+  const queryClient = useQueryClient();
 
   // Global preferences (same across all projects)
   const [isOpen, setIsOpen] = useLocalStorage<boolean>('leanspec.chat.isOpen', false);
@@ -40,27 +43,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Project-scoped preferences (different per project)
   const [showHistory, setShowHistory] = useProjectScopedStorage<boolean>('leanspec.chat.historyExpanded', false);
   const [activeConversationId, setActiveConversationId] = useProjectScopedStorage<string | null>('leanspec.chat.activeConversationId', null);
-
-  const [conversations, setConversations] = useState<ChatThread[]>([]);
-
-  const refreshConversations = async () => {
-    if (!currentProject?.id) {
-      setConversations([]);
-      return;
-    }
-    try {
-      const threads = await ChatApi.getThreads(currentProject.id);
-      setConversations(threads);
-    } catch (error) {
-      console.error('Failed to load threads:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      refreshConversations();
-    }
-  }, [isOpen, currentProject?.id]);
+  const { data: conversations = [] } = useChatThreads(currentProject?.id ?? null);
+  const { createThread, deleteThread } = useChatThreadMutations(currentProject?.id ?? null);
 
   const toggleSidebar = () => setIsOpen((prev: boolean) => !prev);
 
@@ -71,8 +55,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const createConversation = async () => {
     if (!currentProject?.id || !defaultSelection) return;
     try {
-      const thread = await ChatApi.createThread(currentProject.id, defaultSelection);
-      await refreshConversations();
+      const thread = await createThread({ model: defaultSelection });
       setActiveConversationId(thread.id);
     } catch (error) {
       console.error('Failed to create thread:', error);
@@ -81,8 +64,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const deleteConversation = async (id: string) => {
     try {
-      await ChatApi.deleteThread(id);
-      setConversations((prev: ChatThread[]) => prev.filter(c => c.id !== id));
+      await deleteThread(id);
       if (activeConversationId === id) {
         setActiveConversationId(null);
       }
@@ -92,6 +74,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleHistory = () => setShowHistory((prev: boolean) => !prev);
+  const refreshConversations = async () => {
+    if (!currentProject?.id) return;
+    await queryClient.invalidateQueries({ queryKey: chatKeys.threads(currentProject.id) });
+  };
 
   // Legacy compatibility
   const openChat = () => setIsOpen(true);

@@ -47,7 +47,7 @@ export function useGlobalShortcuts() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useCurrentProject();
-  const { toggleChat } = useChat();
+  const { toggleChat, createConversation, toggleHistory, isOpen, openChat } = useChat();
   const resolvedProjectId = projectId ?? currentProject?.id;
   const basePath = resolvedProjectId ? `/projects/${resolvedProjectId}` : null;
 
@@ -89,13 +89,52 @@ export function useGlobalShortcuts() {
       }, [toggleChat]),
     },
     {
-      key: 'i',
+      key: 'l',
       ctrl: true,
       shift: true,
       description: 'Toggle AI chat sidebar',
       action: useCallback(() => {
         toggleChat();
       }, [toggleChat]),
+    },
+    {
+      key: 'i',
+      ctrl: true,
+      shift: true,
+      description: 'Focus chat input',
+      action: useCallback(() => {
+        if (!isOpen) {
+          openChat();
+          // Give it a moment to render
+          setTimeout(() => {
+            const input = document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Type a message..."]');
+            input?.focus();
+          }, 100);
+        } else {
+          const input = document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Type a message..."]');
+          input?.focus();
+        }
+      }, [isOpen, openChat]),
+    },
+    {
+      key: 'n',
+      ctrl: true,
+      shift: true,
+      description: 'New conversation',
+      action: useCallback(() => {
+        if (!isOpen) openChat();
+        createConversation();
+      }, [isOpen, openChat, createConversation]),
+    },
+    {
+      key: 'h',
+      ctrl: true,
+      shift: true,
+      description: 'View history',
+      action: useCallback(() => {
+        if (!isOpen) openChat();
+        toggleHistory();
+      }, [isOpen, openChat, toggleHistory]),
     },
     {
       key: ',',

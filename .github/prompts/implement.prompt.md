@@ -44,13 +44,29 @@ Implement the specified spec(s) following the Spec-Driven Development workflow.
 - Run tests frequently during implementation
 - Document any discoveries or deviations in the spec
 
-### 4. Verify Implementation
+### 4. Verify Implementation (MANDATORY)
 
-**Run validation:**
-- Execute tests: `pnpm test` or project-specific command
-- Run linting: `pnpm lint`
-- Check for type errors: `pnpm typecheck`
-- Use `lean-spec validate` to check spec completeness
+> **⚠️ DO NOT skip this step. DO NOT mark spec complete until ALL checks pass.**
+
+**Run these commands and verify zero errors:**
+
+```bash
+# Required validation sequence - run ALL of these
+pnpm typecheck    # Must show no TypeScript errors
+pnpm test         # Must pass all tests  
+pnpm lint         # Must pass linting
+```
+
+**Verification checklist (all must pass):**
+- [ ] `pnpm typecheck` - Zero type errors
+- [ ] `pnpm test` - All tests pass
+- [ ] `pnpm lint` - No lint errors
+- [ ] `lean-spec validate` - Spec is complete
+
+**If any check fails:**
+1. Fix the issues before proceeding
+2. Re-run failing command to confirm fix
+3. Only continue when ALL checks pass
 
 **Cross-check requirements:**
 - Verify each checklist item is implemented
@@ -83,4 +99,5 @@ Implement the specified spec(s) following the Spec-Driven Development workflow.
 - **Parent specs** - Implement children first; parent completes when all children complete
 - **Stay in scope** - Out-of-scope discoveries become new specs
 - **Update status immediately** - in-progress before coding, complete after verification
-- **Validate before completing** - Tests must pass, checklist must be done
+- **⚠️ ALWAYS run `pnpm typecheck`** - Never skip type checking before completing
+- **Validate before completing** - Tests, typecheck, and lint must ALL pass

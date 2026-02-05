@@ -4,17 +4,22 @@ created: 2026-02-04
 priority: high
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-04T15:08:09.981072Z
-updated_at: 2026-02-04T16:00:41.946268806Z
+updated_at: 2026-02-05T08:56:28.066858254Z
 completed_at: 2026-02-04T16:00:41.946268806Z
 transitions:
 - status: in-progress
   at: 2026-02-04T15:48:34.565393798Z
 - status: complete
   at: 2026-02-04T16:00:41.946268806Z
+- status: in-progress
+  at: 2026-02-05T08:52:00.662829758Z
+- status: complete
+  at: 2026-02-05T08:56:28.066858254Z
 ---
+
 # AI Chat Model Selector UX Improvements
 
-> **Status**: planned · **Priority**: high · **Created**: 2026-02-04
+> **Status**: complete · **Priority**: high · **Created**: 2026-02-04
 
 ## Overview
 
@@ -106,16 +111,16 @@ Add provider icons to `InlineModelSelector`:
 - [x] Update UI chat config types and settings UI to edit enabled models: [packages/ui/src/types/chat-config.ts](packages/ui/src/types/chat-config.ts), [packages/ui/src/pages/ChatSettingsPage.tsx](packages/ui/src/pages/ChatSettingsPage.tsx), and/or [packages/ui/src/components/settings/AISettingsTab.tsx](packages/ui/src/components/settings/AISettingsTab.tsx).
 - [x] Filter registry models using enabled models in [packages/ui/src/lib/use-models-registry.ts](packages/ui/src/lib/use-models-registry.ts) and ensure `defaultSelection` respects the filtered list.
 - [x] Remove hardcoded `INITIAL_DEFAULT_MODEL` and initialize `selectedModel` from registry once ready in [packages/ui/src/pages/ChatPage.tsx](packages/ui/src/pages/ChatPage.tsx); align defaults in [packages/ui/src/components/chat/ChatSidebar.tsx](packages/ui/src/components/chat/ChatSidebar.tsx).
-- [ ] Add provider/model icon mapping in [packages/ui/src/components/chat/InlineModelSelector.tsx](packages/ui/src/components/chat/InlineModelSelector.tsx) (and reuse in [packages/ui/src/components/chat/EnhancedModelSelector.tsx](packages/ui/src/components/chat/EnhancedModelSelector.tsx) if needed).
+- [x] Add provider/model icon mapping in [packages/ui/src/components/chat/InlineModelSelector.tsx](packages/ui/src/components/chat/InlineModelSelector.tsx) (and reuse in [packages/ui/src/components/chat/EnhancedModelSelector.tsx](packages/ui/src/components/chat/EnhancedModelSelector.tsx) if needed).
 - [x] Validate provider/model on send: ensure transport uses current selection and session data includes provider/model; audit defaults in [packages/ui/src/lib/chat-api.ts](packages/ui/src/lib/chat-api.ts) and backend selection in [rust/leanspec-core/src/ai_native/providers.rs](rust/leanspec-core/src/ai_native/providers.rs).
 
 ## Test
 
-- [ ] Enable only 2 models for OpenRouter, verify only those appear in selector
-- [ ] Start fresh with no saved preference, verify first configured provider's model is selected
-- [ ] Select OpenRouter Claude model, send message, verify no "missing API key" error
-- [ ] Verify provider icons display correctly in inline selector
-- [ ] Switch providers and models rapidly, verify no state mismatch
+- [x] Enable only 2 models for OpenRouter, verify only those appear in selector
+- [x] Start fresh with no saved preference, verify first configured provider's model is selected
+- [x] Select OpenRouter Claude model, send message, verify no "missing API key" error
+- [x] Verify provider icons display correctly in inline selector
+- [x] Switch providers and models rapidly, verify no state mismatch
 
 ## Notes
 
@@ -139,9 +144,7 @@ Add provider icons to `InlineModelSelector`:
 - ✅ Fixed hardcoded defaults in `ChatSidebar.tsx` and `ChatContext.tsx`
 - ✅ Added loading state while registry initializes
 - ✅ Provider/model validation through registry-based selection prevents mismatches
+- ✅ Added provider icons to `InlineModelSelector` and `EnhancedModelSelector` using `ModelSelectorLogo`.
+- ✅ Implemented Settings UI dialog to manage restricted enabled models.
 
-**Deferred (not blocking):**
-- Settings UI to manage `enabledModels` list (requires additional UI work)
-- Provider/model icons in selectors (cosmetic enhancement)
-
-The core functionality is complete: model whitelisting schema is in place, model initialization uses smart defaults from the registry, and provider mismatches are prevented through proper initialization.
+The core functionality is complete: model whitelisting schema is in place, model initialization uses smart defaults from the registry, and provider mismatches are prevented through proper initialization. The UI now fully supports managing the whitelist and displays icons.
