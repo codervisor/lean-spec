@@ -8,4 +8,24 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Stage any Rust files that were formatted
+git add -u "*.rs" 2>/dev/null || true
+cd ..
+
 echo "✅ Rust code formatted!"
+
+# Check that pnpm-lock.yaml doesn't contain platform-specific binaries
+# These are generated locally and should not be committed
+if grep -q "packages/cli/binaries/" pnpm-lock.yaml 2>/dev/null || \
+   grep -q "packages/http-server/binaries/" pnpm-lock.yaml 2>/dev/null; then
+  echo "❌ pnpm-lock.yaml contains platform binaries references!"
+  echo ""
+  echo "This happens when you run 'pnpm install' after building platform binaries."
+  echo "To fix, run:"
+  echo "  rm -rf packages/cli/binaries/*/ packages/http-server/binaries/*/"
+  echo "  git checkout pnpm-lock.yaml"
+  echo ""
+  exit 1
+fi
+
+echo "✅ pnpm-lock.yaml is clean!"
