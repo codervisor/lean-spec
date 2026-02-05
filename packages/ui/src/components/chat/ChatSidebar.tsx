@@ -7,7 +7,7 @@ import { ChatContainer } from './ChatContainer';
 import { InlineModelSelector } from './InlineModelSelector';
 import { useLeanSpecChat } from '../../lib/use-chat';
 import { useModelsRegistry } from '../../lib/use-models-registry';
-import { X, Plus, Settings } from 'lucide-react';
+import { X, Plus, Settings, History, MessageSquare } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
 
 export function ChatSidebar() {
@@ -18,7 +18,11 @@ export function ChatSidebar() {
     setSidebarWidth,
     activeConversationId,
     createConversation,
-    refreshConversations
+    refreshConversations,
+    conversations,
+    showHistory,
+    toggleHistory,
+    selectConversation,
   } = useChat();
 
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -116,6 +120,15 @@ export function ChatSidebar() {
             <h2 className="font-semibold text-sm">AI Assistant</h2>
           </div>
           <div className="flex items-center gap-1">
+            <Button 
+              variant={showHistory ? "secondary" : "ghost"} 
+              size="icon" 
+              className="h-8 w-8" 
+              onClick={toggleHistory} 
+              title="Chat History"
+            >
+              <History className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title="New Chat">
               <Plus className="h-4 w-4" />
             </Button>
@@ -133,6 +146,39 @@ export function ChatSidebar() {
           </div>
         </div>
 
+        {/* Conversation History Panel */}
+        {showHistory && (
+          <div className="border-b bg-muted/20 max-h-64 overflow-y-auto">
+            <div className="p-2 space-y-1">
+              {conversations.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">No conversations yet</p>
+              ) : (
+                conversations.map((conv) => (
+                  <button
+                    key={conv.id}
+                    onClick={() => {
+                      selectConversation(conv.id);
+                      toggleHistory();
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                      "hover:bg-muted/50",
+                      conv.id === activeConversationId 
+                        ? "bg-muted font-medium" 
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{conv.title || 'New Chat'}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Chat Area */}
         <div className="flex-1 min-h-0 bg-background">
           <ChatContainer
@@ -143,9 +189,9 @@ export function ChatSidebar() {
             onRetry={reload}
             className="h-full"
             footerContent={
-              model ? (
+              effectiveModel ? (
                 <InlineModelSelector
-                  value={model}
+                  value={effectiveModel}
                   onChange={setModel}
                   disabled={isLoading}
                 />

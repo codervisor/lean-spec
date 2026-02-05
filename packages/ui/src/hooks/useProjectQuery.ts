@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { Project, ProjectValidationResponse, ProjectsResponse } from '../types/api';
 import { useMachineStore } from '../stores/machine';
+import { rehydrateProjectScopedStores } from '../lib/project-store-sync';
 
 const STORAGE_KEY = 'leanspec-current-project';
 
@@ -93,6 +94,8 @@ export function useProjectMutations() {
       localStorage.setItem(storageKey, projectId);
     }
     api.setCurrentProjectId(projectId);
+    // Rehydrate stores before query invalidation triggers re-renders
+    rehydrateProjectScopedStores();
     await queryClient.invalidateQueries({ queryKey: projectKeys.list(storageKey) });
   };
 
