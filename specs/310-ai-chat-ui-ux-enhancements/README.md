@@ -39,35 +39,6 @@ Loading indicator ([ChatContainer.tsx](../../packages/ui/src/components/chat/Cha
 - Appears after messages when `isLoading` is true
 - No contextual styling or typing indicator pattern
 
-## Design
-
-### 1. Separate Chat History Button
-
-**Current:** History buried in conversation selector dropdown  
-**Proposed:** Add dedicated history button next to new chat button
-
-```
-[ Chat Title                     ] [+] [📜] [⚙️] [×]
-                                   New|Hist|Set|Close
-```
-
-- History button opens a slide-out panel or popover with full conversation list
-- Keep the conversation title display as static text (not a dropdown trigger)
-- History panel should show: title, preview, timestamp, search
-
-### 2. Auto-Generate Chat Title
-
-**Trigger:** After first user message is sent and AI responds  
-**Method:** Use LLM to generate a concise title (5-7 words max) based on query
-
-Implementation approach:
-- Add title generation API endpoint or use inline inference
-- Call after first message exchange completes
-- Update conversation in backend with generated title
-- Refresh conversation list to show new title
-
-Fallback: If generation fails, use first 50 chars of user message
-
 ## Implementation Notes (Codebase Findings)
 
 ### Existing Chat Sidebar Context
@@ -98,6 +69,35 @@ Fallback: If generation fails, use first 50 chars of user message
 - Global settings live under `/settings/*` in [packages/ui/src/router.tsx](../../packages/ui/src/router.tsx).
 - Chat-specific settings route exists at `/projects/:projectId/chat/settings` in [packages/ui/src/router/projectRoutes.tsx](../../packages/ui/src/router/projectRoutes.tsx).
 - Decision: route the gear icon to global AI settings at `/settings/ai`.
+
+## Design
+
+### 1. Separate Chat History Button
+
+**Current:** History buried in conversation selector dropdown  
+**Proposed:** Add dedicated history button next to new chat button
+
+```
+[ Chat Title                     ] [+] [📜] [⚙️] [×]
+                                   New|Hist|Set|Close
+```
+
+- History button opens a slide-out panel or popover with full conversation list
+- Keep the conversation title display as static text (not a dropdown trigger)
+- History panel should show: title, preview, timestamp, search
+
+### 2. Auto-Generate Chat Title
+
+**Trigger:** After first user message is sent and AI responds  
+**Method:** Use LLM to generate a concise title (5-7 words max) based on query
+
+Implementation approach:
+- Add title generation API endpoint or use inline inference
+- Call after first message exchange completes
+- Update conversation in backend with generated title
+- Refresh conversation list to show new title
+
+Fallback: If generation fails, use first 50 chars of user message
 
 ### 3. Keyboard Shortcuts
 
