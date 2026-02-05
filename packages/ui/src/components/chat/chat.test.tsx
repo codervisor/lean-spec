@@ -117,7 +117,7 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={message} />);
 
     expect(screen.getByText('list_specs')).toBeInTheDocument();
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('chat.toolExecution.status.completed')).toBeInTheDocument();
   });
 });
 
