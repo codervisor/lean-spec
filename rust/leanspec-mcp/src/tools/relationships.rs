@@ -1,8 +1,6 @@
 //! Relationship management tools
 
-use leanspec_core::{
-    validate_dependency_addition, validate_parent_assignment, SpecLoader,
-};
+use leanspec_core::{validate_dependency_addition, validate_parent_assignment, SpecLoader};
 use serde_json::{json, Value};
 
 /// Internal helper to link specs (add dependency)
