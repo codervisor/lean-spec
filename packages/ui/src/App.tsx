@@ -8,6 +8,7 @@ import { useSpecsSSE } from './hooks/useSpecsSSE';
 import { useSessionsStream } from './hooks/useSessionsQuery';
 import { useCurrentProject } from './hooks/useProjectQuery';
 import { useSessionsUiStore } from './stores/sessions-ui';
+import { useProjectScopedStoreSync } from './lib/project-store-sync';
 
 function AppDataSync() {
   const { currentProject } = useCurrentProject();
@@ -16,6 +17,10 @@ function AppDataSync() {
   useSpecsSSE();
   // Only poll sessions when the drawer is open to avoid unnecessary API calls
   useSessionsStream(currentProject?.id ?? null, { enabled: isDrawerOpen });
+  
+  // Rehydrate project-scoped stores when project changes
+  useProjectScopedStoreSync();
+  
   return null;
 }
 

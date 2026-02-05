@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ModelsRegistryResponse,
   ModelsRegistryProviderRaw,
@@ -84,85 +85,86 @@ export const selectDefaultModel = (providers: RegistryProvider[]) => {
   return { providerId: provider.id, modelId: model.id };
 };
 
+// Query keys for React Query
+const QUERY_KEYS = {
+  providers: ['models', 'providers'] as const,
+  chatConfig: ['chat', 'config'] as const,
+};
+
+// Fetch functions for React Query
+const fetchProviders = async (): Promise<{
+  providers: RegistryProvider[];
+  summary: { total: number; configuredCount: number; configuredProviderIds: string[] };
+}> => {
+  const res = await fetch(API_URL);
+  if (!res.ok) {
+    throw new Error('Failed to load models');
+  }
+  const data: ModelsRegistryResponse = await res.json();
+  return {
+    providers: data.providers.map(toRegistryProvider),
+    summary: {
+      total: data.total,
+      configuredCount: data.configuredCount,
+      configuredProviderIds: data.configuredProviderIds ?? [],
+    },
+  };
+};
+
+const fetchChatConfig = async (): Promise<{
+  savedDefaults: { providerId: string; modelId: string } | null;
+  enabledModels: Record<string, string[]> | null;
+}> => {
+  const res = await fetch(CHAT_CONFIG_URL);
+  if (!res.ok) {
+    return { savedDefaults: null, enabledModels: null };
+  }
+  const data: ChatConfigResponse = await res.json();
+  return {
+    savedDefaults:
+      data.settings?.defaultProviderId && data.settings?.defaultModelId
+        ? { providerId: data.settings.defaultProviderId, modelId: data.settings.defaultModelId }
+        : null,
+    enabledModels: data.settings?.enabledModels ?? null,
+  };
+};
+
 export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
   const { showUnconfigured = false } = options;
-  const [allProviders, setAllProviders] = useState<RegistryProvider[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState({
-    total: 0,
-    configuredCount: 0,
-    configuredProviderIds: [] as string[],
+  const queryClient = useQueryClient();
+
+  // Fetch providers
+  const providersQuery = useQuery({
+    queryKey: QUERY_KEYS.providers,
+    queryFn: fetchProviders,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-  const [savedDefaults, setSavedDefaults] = useState<{ providerId: string; modelId: string } | null>(null);
-  const [enabledModels, setEnabledModels] = useState<Record<string, string[]> | null>(null);
-  const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
+  // Fetch chat config
+  const configQuery = useQuery({
+    queryKey: QUERY_KEYS.chatConfig,
+    queryFn: fetchChatConfig,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    const load = async () => {
-      try {
-        setLoading(true);
+  const allProviders = useMemo(
+    () => providersQuery.data?.providers ?? [],
+    [providersQuery.data?.providers]
+  );
+  const summary = useMemo(
+    () => providersQuery.data?.summary ?? { total: 0, configuredCount: 0, configuredProviderIds: [] },
+    [providersQuery.data?.summary]
+  );
+  const savedDefaults = configQuery.data?.savedDefaults ?? null;
+  const enabledModels = configQuery.data?.enabledModels ?? null;
 
-        // Fetch both providers and chat config in parallel
-        const [providersRes, configRes] = await Promise.all([
-          fetch(API_URL, { signal: controller.signal }),
-          fetch(CHAT_CONFIG_URL, { signal: controller.signal }),
-        ]);
+  const loading = providersQuery.isLoading || configQuery.isLoading;
+  const error = providersQuery.error?.message ?? configQuery.error?.message ?? null;
 
-        if (!providersRes.ok) {
-          throw new Error('Failed to load models');
-        }
-        const data: ModelsRegistryResponse = await providersRes.json();
-        if (cancelled) return;
-
-        const mapped = data.providers.map(toRegistryProvider);
-        setAllProviders(mapped);
-        setSummary({
-          total: data.total,
-          configuredCount: data.configuredCount,
-          configuredProviderIds: data.configuredProviderIds ?? [],
-        });
-
-        // Parse saved defaults and enabled models from chat config
-        if (configRes.ok) {
-          const configData: ChatConfigResponse = await configRes.json();
-          if (configData.settings?.defaultProviderId && configData.settings?.defaultModelId) {
-            setSavedDefaults({
-              providerId: configData.settings.defaultProviderId,
-              modelId: configData.settings.defaultModelId,
-            });
-          }
-          if (configData.settings?.enabledModels) {
-            setEnabledModels(configData.settings.enabledModels);
-          }
-        }
-
-        setError(null);
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        setError(err instanceof Error ? err.message : 'Failed to load models');
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [reloadTrigger]);
-
-  const reload = useCallback(() => {
-    setReloadTrigger((prev) => prev + 1);
-  }, []);
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.providers });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chatConfig });
+  };
 
   // Filter providers based on showUnconfigured option and enabled models
   const providers = useMemo(() => {
