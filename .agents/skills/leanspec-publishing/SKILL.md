@@ -187,7 +187,7 @@ chmod +x /path/to/binary
 For comprehensive documentation, see:
 - [references/NPM-DISTRIBUTION.md](./references/NPM-DISTRIBUTION.md) - Architecture details
 - [references/DEV-PUBLISHING.md](./references/DEV-PUBLISHING.md) - Development workflow
-- [references/SCRIPTS.md](./references/SCRIPTS.md) - All available scripts
+- For all scripts, use skill: `leanspec-scripts`
 
 ## Package Structure
 

@@ -27,7 +27,7 @@ Activate when:
 |------|-----------|
 | **Mandatory rules & conventions** | [RULES.md](./references/RULES.md) |
 | **Monorepo structure & packages** | [STRUCTURE.md](./references/STRUCTURE.md) |
-| **All scripts & commands** | [SCRIPTS.md](./references/SCRIPTS.md) |
+| **All scripts & commands** | Use skill: `leanspec-scripts` |
 
 **Everything else**: Read root `README.md`, `package.json` scripts, or explore the codebase.
 
@@ -85,18 +85,19 @@ The 20% you need 80% of the time:
 pnpm install              # Install dependencies
 pnpm build                # Build all packages
 
-# Development (see package.json for all scripts)
-pnpm dev                  # Start all dev servers
-pnpm dev:cli              # CLI watch mode
+# Development
+pnpm dev                  # Start web UI + HTTP server
+pnpm dev:watch            # Same + auto-rebuild Rust on changes
 pnpm dev:web              # Web UI only
+pnpm build:rust           # Build Rust (debug)
 
 # Validation (run before PR)
 pnpm pre-release          # Full validation: typecheck, test, build, lint
-pnpm test:run             # All tests (CI mode)
+pnpm test                 # All tests
 pnpm lint:rust            # Rust clippy checks
 ```
 
-**All commands are in root `package.json` - AI agents should read it directly.**
+**All commands in root `package.json`. For full reference, use skill: `leanspec-scripts`.**
 
 ## Critical Rules
 
