@@ -53,7 +53,7 @@ function getBinaryPath() {
     // Local binary not found
   }
 
-  // Try rust/target/debug directory first (for local development with `pnpm build:rust:dev`)
+  // Try rust/target/debug directory first (for local development with `pnpm build:rust`)
   try {
     const rustDebugPath = path.join(__dirname, '..', '..', '..', 'rust', 'target', 'debug', binaryName);
     require('fs').accessSync(rustDebugPath);
@@ -62,7 +62,7 @@ function getBinaryPath() {
     // Rust debug binary not found
   }
 
-  // Try rust/target/release directory (for local development with `pnpm build:rust`)
+  // Try rust/target/release directory (for local development with `pnpm build:rust:release`)
   try {
     const rustReleasePath = path.join(__dirname, '..', '..', '..', 'rust', 'target', 'release', binaryName);
     require('fs').accessSync(rustReleasePath);

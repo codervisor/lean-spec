@@ -8,20 +8,20 @@
     "pnpm": ">=10.0.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "husky": "^9.1.7",
     "tsx": "^4.19.2",
     "turbo": "^2.7.2"
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "npm run dev:all",
-    "dev:all": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
-    "build:node": "turbo run build",
+    "dev": "turbo run dev --filter=@leanspec/ui --filter=@leanspec/http-server",
+    "dev:watch": "concurrently -n rust,dev -c blue,green \"cargo watch -w rust --ignore 'target/**' -x build -s 'node scripts/copy-rust-binaries.mjs --debug'\" \"pnpm dev\"",
     "dev:web": "turbo run dev:web --filter=@leanspec/ui",
     "dev:desktop": "turbo run dev:desktop --filter=@leanspec/desktop",
     "build": "turbo run build",
-    "build:rust": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",
-    "build:rust:dev": "cd rust && cargo build && cd .. && node scripts/copy-rust-binaries.mjs --debug",
+    "build:rust": "cd rust && cargo build && cd .. && node scripts/copy-rust-binaries.mjs --debug",
+    "build:rust:release": "cd rust && cargo build --release && cd .. && node scripts/copy-rust-binaries.mjs",
     "test": "turbo run test",
     "test:rust": "cargo test --manifest-path rust/Cargo.toml",
     "test:watch": "vitest",

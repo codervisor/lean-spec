@@ -1,6 +1,25 @@
 # Scripts Reference
 
-This document contains less frequently used scripts that have been removed from `package.json` to keep it clean.
+Less frequently used commands. Most daily commands are in root `package.json`.
+
+## Quick Reference
+
+Most common daily commands:
+
+```bash
+pnpm dev              # Start web UI + Rust HTTP server
+pnpm dev:watch        # Same + auto-rebuild Rust on changes
+pnpm dev:web          # Start web UI only
+pnpm dev:desktop      # Start desktop app
+pnpm build            # Build all TS packages
+pnpm build:rust       # Build Rust (debug)
+pnpm build:rust:release # Build Rust (release)
+pnpm test             # Run tests
+pnpm typecheck        # Type check all packages
+pnpm format           # Format all code
+pnpm cli              # Run LeanSpec CLI
+pnpm pre-release      # Full pre-release check
+```
 
 ## Publishing & Release
 
@@ -49,23 +68,24 @@ vitest run --coverage
 ## Rust Development
 
 ```bash
-# Build release binaries
+# Build debug binaries (default for development)
+cargo build --manifest-path rust/Cargo.toml
+node scripts/copy-rust-binaries.mjs --debug
+
+# Build release binaries (for publishing)
 cargo build --release --manifest-path rust/Cargo.toml
 node scripts/copy-rust-binaries.mjs
 
-# Build dev binaries
-cargo build --manifest-path rust/Cargo.toml
-node scripts/copy-rust-binaries.mjs
-
-# Build all platforms
+# Build all platforms (requires cross-compilation)
 cargo build --release --manifest-path rust/Cargo.toml
 node scripts/copy-rust-binaries.mjs --all
 
 # Build HTTP server only
-cargo build --release --manifest-path rust/Cargo.toml -p leanspec-http
+cargo build --manifest-path rust/Cargo.toml -p leanspec-http
 
 # Copy binaries
-node scripts/copy-rust-binaries.mjs
+node scripts/copy-rust-binaries.mjs --debug  # from debug
+node scripts/copy-rust-binaries.mjs          # from release
 
 # Run Rust tests
 cargo test --manifest-path rust/Cargo.toml
@@ -104,20 +124,4 @@ cd packages/desktop
 pnpm bundle:linux   # Debian package
 pnpm bundle:macos   # DMG
 pnpm bundle:windows # NSIS installer
-```
-
-## Quick Reference
-
-Most common daily commands (available in `package.json`):
-
-```bash
-pnpm dev              # Start web UI + Rust HTTP server
-pnpm dev:web          # Start web UI only
-pnpm dev:desktop      # Start desktop app
-pnpm build            # Build all packages
-pnpm test             # Run tests
-pnpm typecheck        # Type check all packages
-pnpm format           # Format all code
-pnpm cli              # Run LeanSpec CLI
-pnpm pre-release      # Full pre-release check
 ```

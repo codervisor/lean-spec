@@ -27,6 +27,7 @@ Activate when:
 |------|-----------|
 | **Mandatory rules & conventions** | [RULES.md](./references/RULES.md) |
 | **Monorepo structure & packages** | [STRUCTURE.md](./references/STRUCTURE.md) |
+| **All scripts & commands** | [SCRIPTS.md](./references/SCRIPTS.md) |
 
 **Everything else**: Read root `README.md`, `package.json` scripts, or explore the codebase.
 
