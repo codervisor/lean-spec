@@ -1,9 +1,11 @@
 /**
  * Zustand store for search-related persisted state.
  * Uses persist middleware for automatic localStorage sync.
+ * Search history is scoped per project for relevant results.
  */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createProjectScopedStorage, migrateToProjectScoped } from '../lib/project-scoped-storage';
 
 interface SearchState {
   // Recent search history (max 5 items)
@@ -27,9 +29,15 @@ export const useSearchStore = create<SearchState>()(
     }),
     {
       name: 'leanspec-recent-searches',
+      storage: createJSONStorage(() => createProjectScopedStorage()),
       partialize: (state) => ({
         recentSearches: state.recentSearches,
       }),
     }
   )
 );
+
+// Migrate global search history to project-scoped
+if (typeof window !== 'undefined') {
+  migrateToProjectScoped('leanspec-recent-searches');
+}

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useLocalStorage } from '@leanspec/ui-components';
 import { useCurrentProject } from '../hooks/useProjectQuery';
+import { useProjectScopedStorage } from '../hooks/useProjectScopedStorage';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import { useModelsRegistry } from '../lib/use-models-registry';
 
@@ -32,10 +33,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { currentProject } = useCurrentProject();
   const { defaultSelection } = useModelsRegistry();
 
+  // Global preferences (same across all projects)
   const [isOpen, setIsOpen] = useLocalStorage<boolean>('leanspec.chat.isOpen', false);
   const [sidebarWidth, setSidebarWidth] = useLocalStorage<number>('leanspec.chat.sidebarWidth', 400);
-  const [showHistory, setShowHistory] = useLocalStorage<boolean>('leanspec.chat.historyExpanded', false);
-  const [activeConversationId, setActiveConversationId] = useLocalStorage<string | null>('leanspec.chat.activeConversationId', null);
+  
+  // Project-scoped preferences (different per project)
+  const [showHistory, setShowHistory] = useProjectScopedStorage<boolean>('leanspec.chat.historyExpanded', false);
+  const [activeConversationId, setActiveConversationId] = useProjectScopedStorage<string | null>('leanspec.chat.activeConversationId', null);
 
   const [conversations, setConversations] = useState<ChatThread[]>([]);
 

@@ -83,12 +83,14 @@ export function useLeanSpecChat(options: UseLeanSpecChatOptions = {}) {
   messagesRef.current = chatHook.messages;
 
   // Sync messages when initialMessages change (e.g. loading a different thread)
-  // useAIChat doesn't automatically reset messages when initialMessages prop changes unless we force it or use key
+  // Only sync when threadId or initialMessages actually change, NOT on status changes
+  // to avoid overwriting streamed messages when streaming finishes
   useEffect(() => {
-     if (options.threadId && chatHook.status !== 'submitted' && chatHook.status !== 'streaming') {
+     if (options.threadId) {
          chatHook.setMessages(initialMessages);
      }
-  }, [initialMessages, options.threadId, chatHook.status]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMessages, options.threadId]);
 
   const clearChat = useCallback(() => {
     chatHook.setMessages([]);

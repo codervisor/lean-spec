@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '@leanspec/ui-components';
@@ -27,14 +27,9 @@ export function ChatSidebar() {
   // Use registry for model selection
   const { defaultSelection } = useModelsRegistry();
   const [model, setModel] = useState<{ providerId: string; modelId: string } | null>(null);
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const pendingMessageRef = useRef<string | null>(null);
 
-  // Initialize model from defaultSelection once registry is ready
-  useEffect(() => {
-    if (defaultSelection && !model) {
-      setModel(defaultSelection);
-    }
-  }, [defaultSelection, model]);
+  const effectiveModel = model ?? defaultSelection ?? null;
 
   const {
     messages,
@@ -43,33 +38,46 @@ export function ChatSidebar() {
     error,
     reload,
   } = useLeanSpecChat({
-    providerId: model?.providerId ?? '',
-    modelId: model?.modelId ?? '',
+    providerId: effectiveModel?.providerId ?? '',
+    modelId: effectiveModel?.modelId ?? '',
     threadId: activeConversationId || undefined
   });
 
   // Send pending message when thread becomes active
   useEffect(() => {
-    if (activeConversationId && pendingMessage && model) {
-      sendMessage({ text: pendingMessage });
-      setPendingMessage(null);
+    if (activeConversationId && pendingMessageRef.current && effectiveModel) {
+      sendMessage({ text: pendingMessageRef.current });
+      pendingMessageRef.current = null;
       setTimeout(refreshConversations, 2000);
     }
-  }, [activeConversationId, pendingMessage, model, sendMessage, refreshConversations]);
+  }, [activeConversationId, effectiveModel, sendMessage, refreshConversations]);
 
   const handleSendMessage = async (text: string) => {
-    if (!model) {
+    if (!effectiveModel) {
       // Don't allow sending messages until model is initialized
       console.warn('Cannot send message: model not initialized');
       return;
     }
     if (!activeConversationId) {
       // Store message to send after conversation is created
-      setPendingMessage(text);
+      pendingMessageRef.current = text;
       await createConversation();
     } else {
       sendMessage({ text });
       setTimeout(refreshConversations, 2000);
+    }
+  };
+
+  // Prevent keyboard shortcuts from triggering when typing in the chat sidebar
+  const handleSidebarKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    // Stop propagation for inputs/textareas to prevent global shortcuts
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target.isContentEditable
+    ) {
+      e.stopPropagation();
     }
   };
 
@@ -92,6 +100,7 @@ export function ChatSidebar() {
             : "sticky top-14 h-[calc(100vh-3.5rem)]"
         )}
         style={{ width: isMobile ? '100%' : (isOpen ? `${sidebarWidth}px` : 0) }}
+        onKeyDown={handleSidebarKeyDown}
       >
         {!isMobile && (
           <ResizeHandle

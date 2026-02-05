@@ -1,6 +1,7 @@
 /**
  * Zustand store for Specs page/sidebar preferences.
  * Uses persist middleware for automatic localStorage sync.
+ * Preferences are scoped per project for independent settings.
  * 
  * Consolidates all specs-related UI state that should persist across sessions:
  * - Sidebar filters (status, priority, tags)
@@ -10,7 +11,8 @@
  * - Expanded tree nodes
  */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createProjectScopedStorage, migrateToProjectScoped } from '../lib/project-scoped-storage';
 
 // ============================================================================
 // Types
@@ -97,6 +99,7 @@ export const useSpecsPreferencesStore = create<SpecsPreferencesState>()(
     }),
     {
       name: 'leanspec:specs:preferences',
+      storage: createJSONStorage(() => createProjectScopedStorage()),
       partialize: (state) => ({
         statusFilter: state.statusFilter,
         priorityFilter: state.priorityFilter,
@@ -111,6 +114,11 @@ export const useSpecsPreferencesStore = create<SpecsPreferencesState>()(
     }
   )
 );
+
+// Migrate global preferences to project-scoped on first load
+if (typeof window !== 'undefined') {
+  migrateToProjectScoped('leanspec:specs:preferences');
+}
 
 // ============================================================================
 // Sidebar Collapsed State
@@ -131,6 +139,12 @@ export const useSpecsSidebarStore = create<SpecsSidebarState>()(
     }),
     {
       name: 'leanspec:ui:sidebarCollapsed',
+      storage: createJSONStorage(() => createProjectScopedStorage()),
     }
   )
 );
+
+// Migrate global sidebar state to project-scoped
+if (typeof window !== 'undefined') {
+  migrateToProjectScoped('leanspec:ui:sidebarCollapsed');
+}
