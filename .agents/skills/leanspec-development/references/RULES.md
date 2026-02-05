@@ -40,24 +40,35 @@ className="text-blue-300 bg-blue-950/60"
 
 **Why**: Breaks user experience for ~50% of users.
 
-### 3. Internationalization (i18n)
+### 3. Internationalization (i18n) ⚠️ CRITICAL
 
-**Update BOTH en and zh-CN locales** for all user-facing strings.
+**Update BOTH en and zh-CN locales** for ALL user-facing strings. This is the most commonly missed requirement.
 
 **Files to update:**
 ```
 packages/ui/src/locales/
-├── en/common.json        ← English
-└── zh-CN/common.json     ← Chinese (Simplified)
-
-packages/mcp/src/locales/
-├── en/common.json
-└── zh-CN/common.json
+├── en/
+│   ├── common.json        ← General UI strings
+│   ├── errors.json        ← Error messages  
+│   └── help.json          ← Help text
+└── zh-CN/
+    ├── common.json        ← 对应英文翻译
+    ├── errors.json        ← 错误消息
+    └── help.json          ← 帮助文本
 
 docs-site/
-├── docs/                 ← English docs
-└── i18n/zh-Hans/         ← Chinese docs
+├── docs/                  ← English docs
+└── i18n/zh-Hans/
+    ├── docusaurus-plugin-content-docs/  ← Chinese docs
+    ├── TERMINOLOGY_GLOSSARY.md          ← Term mappings
+    └── TRANSLATION_STYLE_GUIDE.md       ← Guidelines
 ```
+
+**Verification checklist:**
+- [ ] New UI strings added to BOTH `en/*.json` AND `zh-CN/*.json`
+- [ ] New doc pages created in BOTH `docs/` AND `i18n/zh-Hans/`
+- [ ] Keys match exactly between language files
+- [ ] No English text left in zh-CN files
 
 **Example:**
 ```json
@@ -68,7 +79,9 @@ docs-site/
 {"status": {"planned": "计划中", "in_progress": "进行中"}}
 ```
 
-**Why**: Incomplete translations break Chinese user experience.
+**If unsure of translation:** Add the key with English text and a `TODO: translate` comment, then notify in PR.
+
+**Why**: Incomplete translations break Chinese user experience (~30% of users).
 
 ### 4. Regression Tests Required
 
@@ -338,7 +351,8 @@ pnpm pre-release  # Full validation suite
 - [ ] `pnpm typecheck` passes with zero errors
 - [ ] `pnpm test` passes all tests
 - [ ] `pnpm lint` passes
-- [ ] i18n updated (both en and zh-CN)
+- [ ] **i18n: New strings added to BOTH en AND zh-CN** ← COMMONLY MISSED
+- [ ] **i18n: New docs added to BOTH docs/ AND i18n/zh-Hans/** ← COMMONLY MISSED
 - [ ] Light/dark theme tested
 - [ ] Regression test added (if bug fix)
 - [ ] No console.log or debug code

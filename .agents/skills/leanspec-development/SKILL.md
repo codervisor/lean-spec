@@ -26,6 +26,7 @@ Activate when:
 | Goal | Reference |
 |------|-----------|
 | **Mandatory rules & conventions** | [RULES.md](./references/RULES.md) |
+| **i18n file locations & patterns** | [I18N.md](./references/I18N.md) |
 | **Monorepo structure & packages** | [STRUCTURE.md](./references/STRUCTURE.md) |
 | **All scripts & commands** | Use skill: `leanspec-scripts` |
 
@@ -39,7 +40,7 @@ The non-negotiable mental model:
 2. **DRY** - Extract shared logic, avoid duplication
 3. **Test What Matters** - Business logic and data integrity, not presentation
 4. **Leverage Turborepo** - Smart caching (19s → 126ms builds)
-5. **Maintain i18n** - Update both en and zh-CN translations
+5. **i18n is MANDATORY** - Every user-facing string needs both en AND zh-CN (see [I18N.md](./references/I18N.md))
 6. **Follow Rust Quality** - All code must pass `cargo clippy -- -D warnings`
 7. **Delegate Complex Tasks** - Use `runSubagent` for multi-step investigations
 
@@ -108,34 +109,10 @@ pnpm pre-release          # Full validation: typecheck, test, build, lint
 Rules enforced by hooks or CI:
 
 1. **Light/Dark Theme** - ALL UI must support both themes
-   ```typescript
-   // ✅ Good
-   className="text-blue-700 dark:text-blue-300"
-   ```
-
-2. **i18n** - Update BOTH en and zh-CN locales
-
+2. **i18n** - Update BOTH en and zh-CN → [I18N.md](./references/I18N.md) ⚠️ commonly forgotten
 3. **Regression Tests** - Bug fixes MUST include failing-then-passing tests
-
 4. **Rust Quality** - Must pass `cargo clippy -- -D warnings`
-
-5. **Use shadcn/ui** - No native HTML form elements (`<input>`, `<select>`, `<button>`, etc.)
-   ```typescript
-   // ✅ Good - shadcn/ui
-   import { Input } from '@/components/ui/input';
-   <Input placeholder="..." />
-   
-   // ❌ Bad - native HTML
-   <input type="text" />
-   ```
-
-6. **cursor-pointer on interactive items** - All clickable dropdown/select items must use `cursor-pointer`
-   ```typescript
-   // ✅ Good - cursor-pointer for clickable items
-   className="... cursor-pointer ..."
-   
-   // ❌ Bad - cursor-default on interactive items
-   className="... cursor-default ..."
-   ```
+5. **Use shadcn/ui** - No native HTML form elements
+6. **cursor-pointer** - All clickable items must use `cursor-pointer`
 
 **See [RULES.md](./references/RULES.md) for complete requirements.**
