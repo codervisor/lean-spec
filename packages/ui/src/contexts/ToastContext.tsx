@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as ToastPrimitive from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
 import { cn } from '@leanspec/ui-components';
@@ -30,6 +31,7 @@ const VARIANT_STYLES: Record<ToastVariant, string> = {
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation('common');
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const removeToast = useCallback((id: string) => {
@@ -81,7 +83,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 className="rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Close"
+                aria-label={t('actions.close')}
                 onClick={() => removeToast(toastItem.id)}
               >
                 <X className="h-4 w-4" />

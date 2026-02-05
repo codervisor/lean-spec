@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UIMessage } from '@ai-sdk/react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import { useCurrentProject } from './useProjectQuery';
@@ -30,18 +31,33 @@ export function useAutoTitle({
   threads: ChatThread[];
   onUpdate?: () => void;
 }) {
+  const { t } = useTranslation('common');
   const { currentProject } = useCurrentProject();
   const inFlightRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
+  const placeholderTitle = t('chat.autoTitle.generating');
+  const defaultTitle = t('chat.newChat');
 
   useEffect(() => {
     if (activeThreadId && messages.length >= 2) {
       const thread = threads.find(t => t.id === activeThreadId);
       // Only update if title is default 'New Chat'
       // Also check if assistant has responded (length >= 2 usually implies user + assistant)
-      if (thread && (thread.title === 'New Chat' || !thread.title)) {
+      if (thread && (thread.title === defaultTitle || thread.title === 'New Chat' || !thread.title)) {
         if (inFlightRef.current === activeThreadId) return;
         inFlightRef.current = activeThreadId;
+
+        if (currentProject?.id) {
+          queryClient.setQueryData<ChatThread[]>(
+            chatKeys.threads(currentProject.id),
+            (prev = []) =>
+              prev.map((item) =>
+                item.id === activeThreadId && (item.title === defaultTitle || item.title === 'New Chat' || !item.title)
+                  ? { ...item, title: placeholderTitle }
+                  : item
+              )
+          );
+        }
 
         const timer = setTimeout(async () => {
           let generatedTitle = '';
@@ -77,6 +93,10 @@ export function useAutoTitle({
             } catch (error) {
               console.error('Failed to auto-update title', error);
             }
+          } else if (currentProject?.id) {
+            queryClient.invalidateQueries({
+              queryKey: chatKeys.threads(currentProject.id),
+            });
           }
 
           inFlightRef.current = null;
@@ -85,5 +105,5 @@ export function useAutoTitle({
         return () => clearTimeout(timer);
       }
     }
-  }, [messages, activeThreadId, threads, onUpdate, currentProject?.id, queryClient]);
+  }, [messages, activeThreadId, threads, onUpdate, currentProject?.id, queryClient, placeholderTitle, defaultTitle]);
 }

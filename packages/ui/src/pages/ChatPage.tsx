@@ -215,8 +215,8 @@ export function ChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="mb-4">Select a conversation or start a new one.</p>
-              <Button onClick={handleCreateNewChat}>New Chat</Button>
+              <p className="mb-4">{t('chat.emptyState.prompt')}</p>
+              <Button onClick={handleCreateNewChat}>{t('chat.newChat')}</Button>
             </div>
           </div>
         )}

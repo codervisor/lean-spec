@@ -7,7 +7,10 @@ use axum::response::Response;
 use futures_util::{stream, StreamExt};
 use serde::Deserialize;
 
-use crate::ai::{sse_done, stream_chat, ChatRequestContext, MessageRole, UIMessage, UIMessagePart};
+use crate::ai::{
+    generate_text, sse_done, stream_chat, ChatRequestContext, GenerateTextContext, MessageRole,
+    UIMessage, UIMessagePart,
+};
 use crate::chat_store::ChatMessageInput;
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
@@ -211,4 +214,58 @@ fn extract_text(message: &UIMessage) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GenerateTitleRequest {
+    pub text: String,
+    pub provider_id: Option<String>,
+    pub model_id: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct GenerateTitleResponse {
+    pub title: String,
+}
+
+const TITLE_SYSTEM_PROMPT: &str =
+    "You generate concise chat titles. Return only the title, no quotes, no punctuation at the end. Limit to 5 to 7 words.";
+
+/// POST /api/chat/generate-title - Generate a title for a chat conversation
+pub async fn generate_title(
+    State(state): State<AppState>,
+    axum::Json(payload): axum::Json<GenerateTitleRequest>,
+) -> ApiResult<axum::Json<GenerateTitleResponse>> {
+    if payload.text.trim().is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            axum::Json(ApiError::invalid_request("text must not be empty")),
+        ));
+    }
+
+    let config = state.chat_config.read().await.config();
+    let user_prompt = format!(
+        "Generate a short title for this message:\n\n{}",
+        payload.text
+    );
+
+    let context = GenerateTextContext {
+        system_prompt: TITLE_SYSTEM_PROMPT.to_string(),
+        user_prompt,
+        provider_id: payload.provider_id,
+        model_id: payload.model_id,
+        config,
+    };
+
+    let result = generate_text(context).await.map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            axum::Json(ApiError::invalid_request(&e.to_string())),
+        )
+    })?;
+
+    let title = result.text.trim().replace(['\"', '"', '"'], "");
+
+    Ok(axum::Json(GenerateTitleResponse { title }))
 }

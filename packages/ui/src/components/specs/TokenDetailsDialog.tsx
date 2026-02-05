@@ -83,10 +83,10 @@ export function TokenDetailsDialog({ open, onClose, specName, data, loading }: T
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>0</span>
-                <span>2k</span>
-                <span>3.5k</span>
-                <span>5k+</span>
+                <span>{t('tokens.progressTicks.zero')}</span>
+                <span>{t('tokens.progressTicks.twoK')}</span>
+                <span>{t('tokens.progressTicks.threePointFiveK')}</span>
+                <span>{t('tokens.progressTicks.fiveKPlus')}</span>
               </div>
               <TokenProgressBar current={tokenCount} max={Math.max(tokenCount, TOKEN_THRESHOLDS.warning)} />
               <p className="text-xs text-muted-foreground text-center pt-1">
@@ -115,7 +115,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data, loading }: T
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="flex items-center gap-2 text-muted-foreground">
-                      <AlignLeft className="h-3.5 w-3.5" /> {t('tokens.prose', 'Prose')}
+                      <AlignLeft className="h-3.5 w-3.5" /> {t('tokens.prose')}
                     </span>
                     <span>{formatFullTokenCount(detailed.prose)} ({prosePercent}%)</span>
                   </div>
@@ -129,7 +129,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data, loading }: T
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="flex items-center gap-2 text-muted-foreground">
-                        <FileCode2 className="h-3.5 w-3.5" /> {t('tokens.codeBlocks', 'Code Blocks')}
+                        <FileCode2 className="h-3.5 w-3.5" /> {t('tokens.codeBlocks')}
                       </span>
                       <span>{formatFullTokenCount(detailed.codeBlocks)} ({codePercent}%)</span>
                     </div>
@@ -144,7 +144,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data, loading }: T
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="flex items-center gap-2 text-muted-foreground">
-                        <ListChecks className="h-3.5 w-3.5" /> {t('tokens.checklists', 'Checklists')}
+                        <ListChecks className="h-3.5 w-3.5" /> {t('tokens.checklists')}
                       </span>
                       <span>{formatFullTokenCount(detailed.checklists)} ({checklistPercent}%)</span>
                     </div>
@@ -161,7 +161,7 @@ export function TokenDetailsDialog({ open, onClose, specName, data, loading }: T
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                   <Heading2 className="h-4 w-4" />
-                  {t('tokens.sectionBreakdown', 'Section Breakdown')}
+                  {t('tokens.sectionBreakdown')}
                 </h4>
                 <div className="space-y-2">
                   {detailed.sections.map((section, idx) => {

@@ -105,8 +105,8 @@ export function MermaidDiagram({ chart, className = '' }: MermaidDiagramProps) {
         dangerouslySetInnerHTML={{ __html: svg }}
         onClick={() => setIsOpen(true)}
         role="button"
-        aria-label="Click to enlarge diagram"
-        title="Click to enlarge"
+        aria-label={t('mermaid.clickToEnlarge')}
+        title={t('mermaid.clickToEnlarge')}
       />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

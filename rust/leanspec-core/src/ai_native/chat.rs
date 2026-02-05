@@ -1,5 +1,6 @@
 //! Chat streaming implementation using async-openai and anthropic
 
+use async_openai::config::OpenAIConfig;
 use async_openai::types::chat::{
     ChatCompletionMessageToolCall, ChatCompletionMessageToolCallChunk,
     ChatCompletionMessageToolCalls, ChatCompletionRequestAssistantMessage,
@@ -9,6 +10,7 @@ use async_openai::types::chat::{
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
     CreateChatCompletionRequestArgs, FinishReason, FunctionCall, FunctionCallStream,
 };
+use async_openai::Client as OpenAIClient;
 use futures_util::StreamExt;
 use tokio::sync::{mpsc, oneshot};
 
@@ -52,6 +54,134 @@ struct ToolCall {
     id: String,
     name: String,
     arguments: String,
+}
+
+/// Request context for simple text generation (no streaming, no tools).
+#[derive(Debug, Clone)]
+pub struct GenerateTextContext {
+    pub system_prompt: String,
+    pub user_prompt: String,
+    pub provider_id: Option<String>,
+    pub model_id: Option<String>,
+    pub config: ChatConfig,
+}
+
+/// Result of a text generation request.
+#[derive(Debug, Clone)]
+pub struct GenerateTextResult {
+    pub text: String,
+    pub provider_id: String,
+    pub model_id: String,
+}
+
+/// Generate text using a simple non-streaming request (useful for short tasks like title generation).
+pub async fn generate_text(context: GenerateTextContext) -> Result<GenerateTextResult, AiError> {
+    let GenerateTextContext {
+        system_prompt,
+        user_prompt,
+        provider_id,
+        model_id,
+        config,
+    } = context;
+
+    let provider_id = provider_id.unwrap_or_else(|| config.settings.default_provider_id.clone());
+    let model_id = model_id.unwrap_or_else(|| config.settings.default_model_id.clone());
+
+    let selection = select_provider(&config, &provider_id, &model_id)?;
+
+    let text = match selection.provider {
+        ProviderClient::OpenAI(client) | ProviderClient::OpenRouter(client) => {
+            generate_text_openai(&client, &selection.model_id, &system_prompt, &user_prompt).await?
+        }
+        ProviderClient::Anthropic(client) => {
+            generate_text_anthropic(client, &selection.model_id, &system_prompt, &user_prompt)
+                .await?
+        }
+    };
+
+    Ok(GenerateTextResult {
+        text,
+        provider_id: selection.provider_id,
+        model_id: selection.model_id,
+    })
+}
+
+async fn generate_text_openai(
+    client: &OpenAIClient<OpenAIConfig>,
+    model_id: &str,
+    system_prompt: &str,
+    user_prompt: &str,
+) -> Result<String, AiError> {
+    let messages = vec![
+        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt.to_string()),
+            name: None,
+        }),
+        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+            content: ChatCompletionRequestUserMessageContent::Text(user_prompt.to_string()),
+            name: None,
+        }),
+    ];
+
+    let request = CreateChatCompletionRequestArgs::default()
+        .model(model_id)
+        .messages(messages)
+        .max_completion_tokens(100u32)
+        .build()
+        .map_err(|e| AiError::Provider(e.to_string()))?;
+
+    let response = client
+        .chat()
+        .create(request)
+        .await
+        .map_err(|e| AiError::Provider(e.to_string()))?;
+
+    let text = response
+        .choices
+        .first()
+        .and_then(|c| c.message.content.clone())
+        .unwrap_or_default();
+
+    Ok(text)
+}
+
+async fn generate_text_anthropic(
+    client: anthropic::client::Client,
+    model_id: &str,
+    system_prompt: &str,
+    user_prompt: &str,
+) -> Result<String, AiError> {
+    let messages = vec![anthropic::types::Message {
+        role: anthropic::types::Role::User,
+        content: vec![anthropic::types::ContentBlock::Text {
+            text: user_prompt.to_string(),
+        }],
+    }];
+
+    let request = anthropic::types::MessagesRequestBuilder::default()
+        .model(model_id.to_string())
+        .messages(messages)
+        .system(system_prompt.to_string())
+        .max_tokens(100usize)
+        .build()
+        .map_err(|e| AiError::Provider(e.to_string()))?;
+
+    let response = client
+        .messages(request)
+        .await
+        .map_err(|e| AiError::Provider(e.to_string()))?;
+
+    let text = response
+        .content
+        .iter()
+        .filter_map(|block| match block {
+            anthropic::types::ContentBlock::Text { text } => Some(text.clone()),
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join("");
+
+    Ok(text)
 }
 
 pub async fn stream_chat(context: ChatRequestContext) -> Result<StreamChatResult, AiError> {

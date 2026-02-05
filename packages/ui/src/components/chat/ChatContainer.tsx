@@ -110,6 +110,7 @@ export function ChatContainer({
             <PromptInputTextarea
               placeholder={t('chat.placeholder')}
               disabled={isLoading}
+              data-chat-input="true"
             />
           </PromptInputBody>
           <PromptInputFooter>

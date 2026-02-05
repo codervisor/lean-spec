@@ -24,7 +24,11 @@
     "settingsDescription": "配置 AI 模型、外观和偏好",
     "toggleMenu": "切换菜单",
     "docsTooltip": "查看文档",
-    "githubTooltip": "GitHub 仓库"
+    "githubTooltip": "GitHub 仓库",
+    "logoAlt": "LeanSpec",
+    "githubAlt": "GitHub",
+    "brandName": "LeanSpec",
+    "openMenu": "打开菜单"
   },
   "search": {
     "placeholder": "搜索规范...",
@@ -124,6 +128,11 @@
       "logs": "日志",
       "completed": "已完成"
     },
+    "modes": {
+      "autonomous": "自主",
+      "guided": "引导",
+      "ralph": "Ralph"
+    },
     "dialogs": {
       "createTitle": "创建 AI 会话",
       "createDescription": "选择运行器和模式，然后启动会话。",
@@ -201,10 +210,44 @@
     "providersSummary": "{{total}} 个提供商，已配置 {{configured}} 个",
     "availableProvidersSummary": "{{count}} 个可用提供商",
     "modelsLoadError": "加载模型失败",
+    "autoTitle": {
+      "generating": "正在生成标题..."
+    },
     "newChat": "新对话",
     "expandSidebar": "展开侧边栏",
     "collapseSidebar": "收起侧边栏",
     "searchPlaceholder": "搜索对话...",
+    "history": {
+      "searchPlaceholder": "搜索历史...",
+      "empty": "未找到对话"
+    },
+    "shortcuts": {
+      "newChat": "新对话 (Cmd+Shift+N)",
+      "history": "历史记录 (Cmd+Shift+H)",
+      "closeSidebar": "关闭 (Cmd+Shift+I)"
+    },
+    "emptyState": {
+      "prompt": "选择一个对话或开始新的对话。"
+    },
+    "noSearchResults": "未找到对话",
+    "noConversations": "暂无对话",
+    "startConversation": "点击“新对话”开始聊天",
+    "noMessagesYet": "暂无消息",
+    "modelSelector": {
+      "selectPlaceholder": "选择模型...",
+      "badges": {
+        "tool": "工具",
+        "reasoning": "推理",
+        "vision": "视觉"
+      },
+      "metrics": {
+        "contextWindow": "上下文窗口",
+        "maxOutput": "最大输出",
+        "inputCost": "输入成本",
+        "outputCost": "输出成本",
+        "vision": "视觉"
+      }
+    },
     "today": "今天",
     "yesterday": "昨天",
     "previous7Days": "过去 7 天",
@@ -212,6 +255,14 @@
     "storageUsage": "已用存储：{{size}}",
     "storageLocation": "位置：{{path}}",
     "storageUnavailable": "无法获取存储信息",
+    "storageUnits": {
+      "zero": "0 B",
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB"
+    },
     "deleteConversation": "删除对话",
     "renameConversation": "重命名对话",
     "disabledTitle": "AI 聊天已禁用",
@@ -219,6 +270,20 @@
     "toggleModelSettings": "切换模型设置",
     "openChat": "打开 AI 聊天",
     "openFullChat": "完整聊天",
+    "toolExecution": {
+      "status": {
+        "failed": "失败",
+        "completed": "已完成",
+        "running": "运行中...",
+        "success": "成功",
+        "error": "错误"
+      },
+      "labels": {
+        "input": "输入",
+        "output": "输出",
+        "error": "错误"
+      }
+    },
     "settings": {
       "title": "聊天配置",
       "description": "配置 AI 提供商、模型和聊天行为",
@@ -255,7 +320,22 @@
       "modelName": "显示名称",
       "maxTokens": "最大令牌数",
       "maxTokensHelp": "上下文窗口大小（可选）",
+      "deleteProviderTitle": "删除提供商",
+      "deleteModelTitle": "删除模型",
+      "placeholders": {
+        "providerId": "openai",
+        "providerName": "OpenAI",
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKeyMasked": "••••••••",
+        "apiKeyEnv": "${OPENAI_API_KEY}",
+        "modelId": "gpt-4o",
+        "modelName": "GPT-4o",
+        "maxTokens": "128000"
+      },
       "errors": {
+        "loadConfig": "加载配置失败",
+        "saveConfig": "保存配置失败",
+        "loadConfiguration": "加载配置失败",
         "idRequired": "ID 为必填项",
         "idExists": "此 ID 已存在",
         "idInvalid": "ID 只能包含小写字母、数字和连字符",
@@ -381,6 +461,11 @@
       "azureResourceName": "Azure 资源名称",
       "azureResourceNameHelp": "您的 Azure OpenAI 资源名称（例如 'my-openai-resource'）",
       "apiKeyStorageNote": "API 密钥将本地存储在配置文件中",
+      "placeholders": {
+        "azureResourceName": "my-openai-resource",
+        "apiKeyEnv": "{{provider}}_API_KEY",
+        "apiKeyPrefix": "sk-..."
+      },
       "editCustomProvider": "编辑自定义提供商",
       "customProviderDialogDescription": "配置自定义提供商的 API 端点和模型",
       "leaveEmptyToKeep": "留空以保留现有值",
@@ -419,9 +504,16 @@
         "modelCount": "{{count}} 个模型（{{agentic}} 个代理）"
       },
       "toasts": {
-        "defaultProvider": "默认提供商已设置为 {{provider}}"
+        "defaultProvider": "默认提供商已设置为 {{provider}}",
+        "apiKeySaved": "API 密钥已保存",
+        "modelsSaved": "模型偏好已保存"
       },
       "errors": {
+        "loadConfig": "加载配置失败",
+        "refreshFailed": "刷新失败",
+        "setApiKeyFailed": "设置 API 密钥失败",
+        "saveConfigFailed": "保存配置失败",
+        "saveFailed": "保存失败",
         "idRequired": "ID 是必需的",
         "idExists": "此 ID 已存在",
         "idInvalid": "ID 只能包含小写字母、数字和连字符",
@@ -476,6 +568,13 @@
         "argsHelp": "每行一个参数",
         "env": "环境变量",
         "envHelp": "每行一个 KEY=VALUE"
+      },
+      "placeholders": {
+        "id": "claude",
+        "name": "Claude Code",
+        "command": "claude",
+        "args": "--dangerously-skip-permissions\n--print",
+        "env": "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
       },
       "errors": {
         "noProject": "需要项目路径才能管理运行器。",
@@ -616,7 +715,12 @@
       "dependencies": "跳转到依赖",
       "settings": "跳转到设置",
       "search": "聚焦搜索框",
-      "quickSearch": "打开快速搜索"
+      "quickSearch": "打开快速搜索",
+      "toggleChat": "切换 AI 聊天",
+      "toggleChatSidebar": "切换 AI 聊天侧边栏",
+      "focusChatInput": "聚焦聊天输入框",
+      "newConversation": "新建对话",
+      "viewHistory": "查看历史记录"
     }
   },
   "tableOfContents": {
@@ -782,6 +886,16 @@
   },
   "specDetail": {
     "toggleSidebar": "展开或收起规范列表",
+    "codeBlock": {
+      "label": "代码",
+      "copy": "复制代码",
+      "copyToClipboard": "复制到剪贴板"
+    },
+    "table": {
+      "copyTsv": "复制为 TSV（Excel）",
+      "exportCsv": "导出为 CSV",
+      "defaultFileName": "table-export.csv"
+    },
     "metadata": {
       "created": "创建时间",
       "updated": "更新时间",
@@ -1010,6 +1124,9 @@
       "pending": "等待更新"
     }
   },
+  "mermaid": {
+    "clickToEnlarge": "点击放大图表"
+  },
   "dependencyGraph": {
     "header": {
       "title": "依赖地图",
@@ -1154,6 +1271,12 @@
     "progressThresholds": {
       "optimal": "最佳限制 (2k)",
       "good": "良好限制 (3.5k)"
+    },
+    "progressTicks": {
+      "zero": "0",
+      "twoK": "2k",
+      "threePointFiveK": "3.5k",
+      "fiveKPlus": "5k+"
     }
   },
   "validation": {

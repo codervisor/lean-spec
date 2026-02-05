@@ -218,6 +218,7 @@ pub fn create_router(state: AppState) -> Router {
     {
         router = router
             .route("/api/chat", post(handlers::chat_stream))
+            .route("/api/chat/generate-title", post(handlers::generate_title))
             .route(
                 "/api/chat/config/validate",
                 post(handlers::validate_provider_api_key),

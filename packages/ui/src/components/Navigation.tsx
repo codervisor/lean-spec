@@ -189,15 +189,15 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
           >
             <img
               src="/logo-with-bg.svg"
-              alt="LeanSpec"
+              alt={t('navigation.logoAlt')}
               className="h-7 w-7 sm:h-8 sm:w-8 dark:hidden"
             />
             <img
               src="/logo-dark-bg.svg"
-              alt="LeanSpec"
+              alt={t('navigation.logoAlt')}
               className="h-7 w-7 sm:h-8 sm:w-8 hidden dark:block"
             />
-            <span className="font-bold text-lg sm:text-xl hidden sm:inline">LeanSpec</span>
+            <span className="font-bold text-lg sm:text-xl hidden sm:inline">{t('navigation.brandName')}</span>
           </Link>
           <div className="hidden md:block min-w-0" data-tauri-drag-region="false">
             <Breadcrumb basePath={basePath} />
@@ -256,12 +256,12 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
                   >
                     <img
                       src="/github-mark-white.svg"
-                      alt="GitHub"
+                      alt={t('navigation.githubAlt')}
                       className="hidden dark:block w-5 h-5"
                     />
                     <img
                       src="/github-mark.svg"
-                      alt="GitHub"
+                      alt={t('navigation.githubAlt')}
                       className="dark:hidden w-5 h-5"
                     />
                   </a>
@@ -282,11 +282,11 @@ export function Navigation({ onToggleSidebar, rightSlot, onHeaderDoubleClick }: 
                   data-tauri-drag-region="false"
                 >
                   <BotMessageSquare className="h-5 w-5" />
-                  <span className="sr-only">{t('chat.openChat', 'Open AI Chat')}</span>
+                  <span className="sr-only">{t('chat.openChat')}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t('chat.openChat', 'Open AI Chat')}</p>
+                <p>{t('chat.openChat')}</p>
               </TooltipContent>
             </Tooltip>
 

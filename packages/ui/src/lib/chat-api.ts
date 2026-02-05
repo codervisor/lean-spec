@@ -201,83 +201,21 @@ export class ChatApi {
     providerId?: string;
     modelId?: string;
   }): Promise<string> {
-    const systemPrompt =
-      'You generate concise chat titles. Return only the title, no quotes, no punctuation at the end. ' +
-      'Limit to 5 to 7 words.';
-    const userPrompt = `Generate a short title for this message:\n\n${options.text}`;
-
-    const res = await fetch(`${API_BASE}/api/chat`, {
+    const res = await fetch(`${API_BASE}/api/chat/generate-title`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        projectId: options.projectId,
+        text: options.text,
         providerId: options.providerId,
         modelId: options.modelId,
-        messages: [
-          {
-            id: 'title-system',
-            role: 'system',
-            parts: [{ type: 'text', text: systemPrompt }],
-          },
-          {
-            id: 'title-user',
-            role: 'user',
-            parts: [{ type: 'text', text: userPrompt }],
-          },
-        ] as UIMessage[],
       }),
     });
 
-    if (!res.ok || !res.body) {
+    if (!res.ok) {
       throw new Error('Failed to generate title');
     }
 
-    const rawTitle = await readSseText(res.body);
-    return rawTitle.trim().replace(/^"|"$/g, '');
+    const data = await res.json();
+    return data.title;
   }
-}
-
-async function readSseText(stream: ReadableStream<Uint8Array>): Promise<string> {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let result = '';
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const chunks = buffer.split('\n\n');
-    buffer = chunks.pop() ?? '';
-
-    for (const chunk of chunks) {
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (!data) continue;
-        if (data === '[DONE]') return result;
-
-        try {
-          const event = JSON.parse(data) as { type?: string; delta?: string; errorText?: string };
-          if (event.type === 'text-delta' && typeof event.delta === 'string') {
-            result += event.delta;
-          }
-          if (event.type === 'error' && typeof event.errorText === 'string') {
-            throw new Error(event.errorText);
-          }
-        } catch (error) {
-          if (error instanceof Error) {
-            throw error;
-          }
-        }
-      }
-    }
-  }
-
-  return result;
 }

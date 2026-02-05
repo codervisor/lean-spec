@@ -12,6 +12,7 @@ import {
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { cn } from '@leanspec/ui-components';
+import { useTranslation } from 'react-i18next';
 
 export interface ToolExecutionProps {
   toolCallId: string;
@@ -23,6 +24,7 @@ export interface ToolExecutionProps {
 }
 
 export function ToolExecution({ toolName, input, output, state, errorMessage }: ToolExecutionProps) {
+  const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
 
   const isComplete = state === 'result' || output !== undefined || state === 'error';
@@ -46,13 +48,13 @@ export function ToolExecution({ toolName, input, output, state, errorMessage }: 
            <div className="flex flex-col">
               <span className="text-sm font-medium leading-none">{toolName}</span>
               <span className="text-[10px] text-muted-foreground">
-                  {isError ? "Failed" : isComplete ? "Completed" : "Running..."}
+                  {isError ? t('chat.toolExecution.status.failed') : isComplete ? t('chat.toolExecution.status.completed') : t('chat.toolExecution.status.running')}
               </span>
            </div>
         </div>
         <div className="flex items-center gap-2">
-            {isComplete && <Badge variant="outline" className="text-[10px] h-5">Success</Badge>}
-            {isError && <Badge variant="destructive" className="text-[10px] h-5">Error</Badge>}
+            {isComplete && <Badge variant="outline" className="text-[10px] h-5">{t('chat.toolExecution.status.success')}</Badge>}
+            {isError && <Badge variant="destructive" className="text-[10px] h-5">{t('chat.toolExecution.status.error')}</Badge>}
             {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
         </div>
       </div>
@@ -61,7 +63,7 @@ export function ToolExecution({ toolName, input, output, state, errorMessage }: 
         <div className="border-t bg-muted/20">
             {(input && (
                 <div className="p-2 border-b last:border-0 relative group">
-                    <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase px-1">Input</div>
+                  <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase px-1">{t('chat.toolExecution.labels.input')}</div>
                     <div className="rounded-md overflow-hidden text-xs">
                         <SyntaxHighlighter 
                             language="json" 
@@ -76,7 +78,7 @@ export function ToolExecution({ toolName, input, output, state, errorMessage }: 
             
             {(output && (
                 <div className="p-2 relative group">
-                    <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase px-1">Output</div>
+                  <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase px-1">{t('chat.toolExecution.labels.output')}</div>
                     <div className="rounded-md overflow-hidden text-xs">
                          <SyntaxHighlighter 
                             language="json" 
@@ -90,7 +92,7 @@ export function ToolExecution({ toolName, input, output, state, errorMessage }: 
             )) as React.ReactNode}
              {errorMessage && (
                 <div className="p-2 relative group">
-                    <div className="text-[10px] font-semibold text-destructive mb-1 uppercase px-1">Error</div>
+                  <div className="text-[10px] font-semibold text-destructive mb-1 uppercase px-1">{t('chat.toolExecution.labels.error')}</div>
                      <div className="p-3 bg-destructive/10 text-destructive text-xs rounded-md font-mono">
                         {errorMessage}
                      </div>

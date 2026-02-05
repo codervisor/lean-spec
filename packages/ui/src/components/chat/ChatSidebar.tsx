@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { 
@@ -19,6 +20,7 @@ import { useAutoTitle } from '../../hooks/useAutoTitle';
 import { X, Plus, Settings, History } from 'lucide-react';
 
 export function ChatSidebar() {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const {
     toggleSidebar,
@@ -42,9 +44,10 @@ export function ChatSidebar() {
   const pendingMessageRef = useRef<string | null>(null);
 
   const effectiveModel = model ?? defaultSelection ?? null;
+  const defaultTitle = t('chat.newChat');
   const currentTitle = activeConversationId 
     ? conversations.find(c => c.id === activeConversationId)?.title 
-    : "New Chat";
+    : defaultTitle;
 
   const {
     messages,
@@ -135,20 +138,20 @@ export function ChatSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14 gap-2">
           {/* Chat Title */}
-          <div className="flex items-center flex-1 min-w-0 mr-2" title={currentTitle || "New Chat"}>
+           <div className="flex items-center flex-1 min-w-0 mr-2" title={currentTitle || defaultTitle}>
              <span className="font-semibold text-sm truncate">
-                {currentTitle || "New Chat"}
+               {currentTitle || defaultTitle}
              </span>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title="New Chat (Cmd+Shift+N)">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title={t('chat.shortcuts.newChat')}>
               <Plus className="h-4 w-4" />
             </Button>
             
             <Popover open={showHistory} onOpenChange={(open) => { if (open !== showHistory) toggleHistory(); }}>
                <PopoverTrigger asChild>
-                 <Button variant="ghost" size="icon" className="h-8 w-8" title="History (Cmd+Shift+H)">
+                 <Button variant="ghost" size="icon" className="h-8 w-8" title={t('chat.shortcuts.history')}>
                    <History className="h-4 w-4" />
                  </Button>
                </PopoverTrigger>
@@ -157,7 +160,7 @@ export function ChatSidebar() {
                </PopoverContent>
              </Popover>
             
-            <Button variant="ghost" size="icon" className="h-8 w-8" title="Settings" onClick={() => navigate('/settings?tab=models')}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" title={t('navigation.settings')} onClick={() => navigate('/settings?tab=models')}>
               <Settings className="h-4 w-4" />
             </Button>
             <Button
@@ -165,7 +168,7 @@ export function ChatSidebar() {
               size="icon"
               className="h-8 w-8"
               onClick={toggleSidebar}
-              title="Close (Cmd+Shift+I)"
+              title={t('chat.shortcuts.closeSidebar')}
             >
               <X className="h-4 w-4" />
             </Button>

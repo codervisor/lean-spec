@@ -82,7 +82,7 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
                </div>
             </div>
           ) : (
-            "Select model..."
+            t('chat.modelSelector.selectPlaceholder')
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -147,36 +147,36 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-sm">{model.name}</span>
                             {model.toolCall && (
-                              <Badge variant="secondary" className="text-[10px] px-1 h-4">Tool</Badge>
+                              <Badge variant="secondary" className="text-[10px] px-1 h-4">{t('chat.modelSelector.badges.tool')}</Badge>
                             )}
                             {model.reasoning && (
-                              <Badge variant="secondary" className="text-[10px] px-1 h-4">Reasoning</Badge>
+                              <Badge variant="secondary" className="text-[10px] px-1 h-4">{t('chat.modelSelector.badges.reasoning')}</Badge>
                             )}
                             {model.vision && (
-                              <Badge variant="secondary" className="text-[10px] px-1 h-4">Vision</Badge>
+                              <Badge variant="secondary" className="text-[10px] px-1 h-4">{t('chat.modelSelector.badges.vision')}</Badge>
                             )}
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-0.5" title="Context Window">
+                            <span className="flex items-center gap-0.5" title={t('chat.modelSelector.metrics.contextWindow')}>
                               <Cpu className="h-3 w-3" />
                               {model.contextWindow ?? '—'}
                             </span>
-                            <span className="flex items-center gap-0.5" title="Max Output">
+                            <span className="flex items-center gap-0.5" title={t('chat.modelSelector.metrics.maxOutput')}>
                               <Wrench className="h-3 w-3" />
                               {model.maxOutput ?? '—'}
                             </span>
-                            <span className="flex items-center gap-0.5" title="Input Cost">
+                            <span className="flex items-center gap-0.5" title={t('chat.modelSelector.metrics.inputCost')}>
                               <Coins className="h-3 w-3" />
                               {model.inputCost !== undefined ? `$${model.inputCost}/M` : '—'}
                             </span>
-                            <span className="flex items-center gap-0.5" title="Output Cost">
+                            <span className="flex items-center gap-0.5" title={t('chat.modelSelector.metrics.outputCost')}>
                               <Zap className="h-3 w-3" />
                               {model.outputCost !== undefined ? `$${model.outputCost}/M` : '—'}
                             </span>
                             {model.vision && (
-                              <span className="flex items-center gap-0.5" title="Vision">
+                              <span className="flex items-center gap-0.5" title={t('chat.modelSelector.metrics.vision')}>
                                 <Eye className="h-3 w-3" />
-                                Vision
+                                {t('chat.modelSelector.metrics.vision')}
                               </span>
                             )}
                           </div>
@@ -184,7 +184,9 @@ export function EnhancedModelSelector({ value, onChange, disabled }: EnhancedMod
                       </CommandItem>
                     ))
                   ) : (
-                    <CommandItem value={`${provider.id}-dummy`} className="hidden" disabled aria-hidden>dummy</CommandItem>
+                    <CommandItem value={`${provider.id}-dummy`} className="hidden" disabled aria-hidden>
+                      {t('chat.modelSelector.hiddenItem')}
+                    </CommandItem>
                   )}
                 </CommandGroup>
               );

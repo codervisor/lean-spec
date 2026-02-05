@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CheckIcon, CopyIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface EnhancedCodeBlockProps {
   language: string | null;
@@ -8,6 +9,7 @@ interface EnhancedCodeBlockProps {
 }
 
 export function EnhancedCodeBlock({ language, code, children }: EnhancedCodeBlockProps) {
+  const { t } = useTranslation('common');
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -28,13 +30,13 @@ export function EnhancedCodeBlock({ language, code, children }: EnhancedCodeBloc
             {language}
           </span>
         ) : (
-          <span className="text-xs text-slate-500 dark:text-zinc-400 font-mono">CODE</span>
+          <span className="text-xs text-slate-500 dark:text-zinc-400 font-mono">{t('specDetail.codeBlock.label')}</span>
         )}
         <button
           onClick={handleCopy}
           className="p-1 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
-          aria-label="Copy code"
-          title="Copy to clipboard"
+          aria-label={t('specDetail.codeBlock.copy')}
+          title={t('specDetail.codeBlock.copyToClipboard')}
         >
           {copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
         </button>

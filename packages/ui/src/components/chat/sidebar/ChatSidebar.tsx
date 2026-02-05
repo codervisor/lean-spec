@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   Button,
   Input,
@@ -101,10 +102,10 @@ export function ChatSidebar({
   if (collapsed) {
     return (
       <div className={cn("flex flex-col border-r w-[60px] items-center py-4 gap-4 bg-muted/10", className)}>
-        <Button variant="ghost" size="icon" onClick={() => setCollapsed(false)} title={t('chat.expandSidebar') || "Expand"}>
+        <Button variant="ghost" size="icon" onClick={() => setCollapsed(false)} title={t('chat.expandSidebar')}>
           <PanelLeftOpen className="h-5 w-5" />
         </Button>
-        <Button variant="outline" size="icon" onClick={onNewChat} title={t('chat.newChat') || "New Chat"}>
+        <Button variant="outline" size="icon" onClick={onNewChat} title={t('chat.newChat')}>
           <Plus className="h-5 w-5" />
         </Button>
       </div>
@@ -116,20 +117,20 @@ export function ChatSidebar({
       <div className="p-4 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           {/* Logo or Title could go here, for now just sidebar toggle */}
-          <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} className="ml-auto" title={t('chat.collapseSidebar') || "Collapse"}>
+          <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} className="ml-auto" title={t('chat.collapseSidebar')}>
             <PanelLeftClose className="h-5 w-5" />
           </Button>
         </div>
 
         <Button onClick={onNewChat} className="justify-start gap-2 w-full" variant="outline">
           <Plus className="h-4 w-4" />
-          {t('chat.newChat') || "New Chat"}
+          {t('chat.newChat')}
         </Button>
 
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('chat.searchPlaceholder') || "Search chats..."}
+            placeholder={t('chat.searchPlaceholder')}
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,20 +145,20 @@ export function ChatSidebar({
           <div className="flex flex-col items-center justify-center h-full text-center p-6 text-muted-foreground">
             <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
             <p className="text-sm mb-2">
-              {searchQuery ? t('chat.noSearchResults') || "No conversations found" : t('chat.noConversations') || "No conversations yet"}
+              {searchQuery ? t('chat.noSearchResults') : t('chat.noConversations')}
             </p>
             {!searchQuery && (
               <p className="text-xs">
-                {t('chat.startConversation') || "Click 'New Chat' to start a conversation"}
+                {t('chat.startConversation')}
               </p>
             )}
           </div>
         ) : (
           <>
-            <ThreadListGroup title={t('chat.today') || "Today"} threads={groupedThreads.today} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
-            <ThreadListGroup title={t('chat.yesterday') || "Yesterday"} threads={groupedThreads.yesterday} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
-            <ThreadListGroup title={t('chat.previous7Days') || "Previous 7 Days"} threads={groupedThreads.previous7days} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
-            <ThreadListGroup title={t('chat.older') || "Older"} threads={groupedThreads.older} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.today')} threads={groupedThreads.today} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.yesterday')} threads={groupedThreads.yesterday} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.previous7Days')} threads={groupedThreads.previous7days} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.older')} threads={groupedThreads.older} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
           </>
         )}
       </div>
@@ -166,7 +167,7 @@ export function ChatSidebar({
       <div className="px-4 py-3 text-xs text-muted-foreground space-y-1">
         {storageInfo ? (
           <>
-            <div>{t('chat.storageUsage', { size: formatBytes(storageInfo.sizeBytes) })}</div>
+            <div>{t('chat.storageUsage', { size: formatBytes(storageInfo.sizeBytes, t) })}</div>
             <div className="truncate" title={storageInfo.path}>
               {t('chat.storageLocation', { path: storageInfo.path })}
             </div>
@@ -179,10 +180,16 @@ export function ChatSidebar({
   );
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+function formatBytes(bytes: number, t: TFunction<'common'>): string {
+  if (bytes === 0) return t('chat.storageUnits.zero');
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = [
+    t('chat.storageUnits.byte'),
+    t('chat.storageUnits.kilobyte'),
+    t('chat.storageUnits.megabyte'),
+    t('chat.storageUnits.gigabyte'),
+    t('chat.storageUnits.terabyte'),
+  ];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const value = bytes / Math.pow(k, i);
   return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${sizes[i]}`;
@@ -235,6 +242,8 @@ function ConversationItem({
   onDelete: () => void,
   onRename: (newTitle: string) => void
 }) {
+  const { t } = useTranslation('common');
+
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(thread.title);
 
@@ -270,7 +279,7 @@ function ConversationItem({
         <div className="flex-1 overflow-hidden">
           <div className="truncate font-medium">{thread.title}</div>
           <div className="truncate text-xs text-muted-foreground opacity-70">
-            {thread.preview || "No messages yet"}
+            {thread.preview || t('chat.noMessagesYet')}
           </div>
         </div>
       )}

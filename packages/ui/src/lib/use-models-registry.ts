@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import i18next from 'i18next';
 import type {
   ModelsRegistryResponse,
   ModelsRegistryProviderRaw,
@@ -98,7 +99,7 @@ const fetchProviders = async (): Promise<{
 }> => {
   const res = await fetch(API_URL);
   if (!res.ok) {
-    throw new Error('Failed to load models');
+    throw new Error(i18next.t('chat.modelsLoadError'));
   }
   const data: ModelsRegistryResponse = await res.json();
   return {

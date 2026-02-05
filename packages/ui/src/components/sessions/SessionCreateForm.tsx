@@ -91,9 +91,9 @@ export function SessionCreateForm({ onCancel, onSuccess, defaultSpecId }: Sessio
                                 <SelectValue placeholder={t('sessions.labels.mode')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="autonomous" className="cursor-pointer">Autonomous</SelectItem>
-                                <SelectItem value="guided" className="cursor-pointer">Guided</SelectItem>
-                                <SelectItem value="ralph" className="cursor-pointer">Ralph</SelectItem>
+                                <SelectItem value="autonomous" className="cursor-pointer">{t('sessions.modes.autonomous')}</SelectItem>
+                                <SelectItem value="guided" className="cursor-pointer">{t('sessions.modes.guided')}</SelectItem>
+                                <SelectItem value="ralph" className="cursor-pointer">{t('sessions.modes.ralph')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

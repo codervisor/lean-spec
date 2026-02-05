@@ -56,7 +56,7 @@ export function ModelPicker({ value, onChange, disabled }: ModelPickerProps) {
               >
                 {provider.name}
                 {!provider.isConfigured && (
-                  <span className="text-muted-foreground ml-1">(no key)</span>
+                  <span className="text-muted-foreground ml-1">({t('chat.noKey')})</span>
                 )}
               </SelectItem>
             ))}

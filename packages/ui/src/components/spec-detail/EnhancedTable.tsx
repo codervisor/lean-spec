@@ -2,8 +2,10 @@ import React from 'react';
 import { ClipboardIcon, DownloadIcon, CheckIcon } from 'lucide-react';
 import { Button } from '@leanspec/ui-components';
 import { extractTableData } from './utils';
+import { useTranslation } from 'react-i18next';
 
 export function EnhancedTable({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation('common');
   const [copied, setCopied] = React.useState(false);
 
   // Extract data on render
@@ -33,7 +35,7 @@ export function EnhancedTable({ children }: { children: React.ReactNode }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'table-export.csv';
+      a.download = t('specDetail.table.defaultFileName');
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -47,10 +49,10 @@ export function EnhancedTable({ children }: { children: React.ReactNode }) {
     <div className="relative group">
       {tableData.length > 0 && (
         <div className="absolute -top-3.5 right-0 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity bg-background/80 backdrop-blur-sm p-1 rounded-lg border shadow-sm z-10">
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={copyAsExcel} title="Copy as TSV (Excel)">
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={copyAsExcel} title={t('specDetail.table.copyTsv')}>
             {copied ? <CheckIcon className="h-4 w-4" /> : <ClipboardIcon className="h-4 w-4" />}
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={exportCsv} title="Export as CSV">
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={exportCsv} title={t('specDetail.table.exportCsv')}>
             <DownloadIcon className="h-4 w-4" />
           </Button>
         </div>

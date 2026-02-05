@@ -8,7 +8,10 @@ pub mod streaming;
 pub mod tools;
 pub mod types;
 
-pub use chat::{stream_chat, ChatRequestContext, StreamChatResult};
+pub use chat::{
+    generate_text, stream_chat, ChatRequestContext, GenerateTextContext, GenerateTextResult,
+    StreamChatResult,
+};
 pub use error::AiError;
 pub use runner_config::{resolve_runner_config, ResolvedRunnerConfig};
 pub use streaming::{sse_done, StreamEvent};

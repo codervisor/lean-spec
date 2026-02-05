@@ -55,12 +55,12 @@ export function ChatSettingsPage() {
     try {
       setLoading(true);
       const res = await fetch('/api/chat/config');
-      if (!res.ok) throw new Error('Failed to load config');
+      if (!res.ok) throw new Error(t('chat.settings.errors.loadConfig'));
       const data = await res.json();
       setConfig(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : t('errors.unknownError'));
     } finally {
       setLoading(false);
     }
@@ -73,12 +73,12 @@ export function ChatSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newConfig),
       });
-      if (!res.ok) throw new Error('Failed to save config');
+      if (!res.ok) throw new Error(t('chat.settings.errors.saveConfig'));
       const data = await res.json();
       setConfig(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : t('errors.unknownError'));
       throw err;
     }
   };
@@ -206,7 +206,7 @@ export function ChatSettingsPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
-              <p>{error || 'Failed to load configuration'}</p>
+              <p>{error || t('chat.settings.errors.loadConfiguration')}</p>
             </div>
             <Button onClick={loadConfig} className="mt-4">
               {t('actions.retry')}
@@ -374,12 +374,12 @@ export function ChatSettingsPage() {
       <Dialog open={!!providerToDelete} onOpenChange={(open) => !open && setProviderToDelete(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Provider</DialogTitle>
+            <DialogTitle>{t('chat.settings.deleteProviderTitle')}</DialogTitle>
             <DialogDescription>{t('chat.settings.confirmDeleteProvider')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setProviderToDelete(null)}>{t('actions.cancel')}</Button>
-            <Button variant="destructive" onClick={executeDeleteProvider}>Delete</Button>
+            <Button variant="destructive" onClick={executeDeleteProvider}>{t('actions.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -388,12 +388,12 @@ export function ChatSettingsPage() {
       <Dialog open={!!modelToDelete} onOpenChange={(open) => !open && setModelToDelete(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Model</DialogTitle>
+            <DialogTitle>{t('chat.settings.deleteModelTitle')}</DialogTitle>
             <DialogDescription>{t('chat.settings.confirmDeleteModel')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModelToDelete(null)}>{t('actions.cancel')}</Button>
-            <Button variant="destructive" onClick={executeDeleteModel}>Delete</Button>
+            <Button variant="destructive" onClick={executeDeleteModel}>{t('actions.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -573,7 +573,7 @@ function ProviderDialog({ provider, existingIds, onSave, onCancel }: ProviderDia
               id="provider-id"
               value={formData.id}
               onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-              placeholder="openai"
+              placeholder={t('chat.settings.placeholders.providerId')}
               disabled={isEditing}
             />
             {errors.id && <p className="text-xs text-destructive">{errors.id}</p>}
@@ -588,7 +588,7 @@ function ProviderDialog({ provider, existingIds, onSave, onCancel }: ProviderDia
               id="provider-name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="OpenAI"
+              placeholder={t('chat.settings.placeholders.providerName')}
             />
             {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
           </div>
@@ -599,7 +599,7 @@ function ProviderDialog({ provider, existingIds, onSave, onCancel }: ProviderDia
               id="provider-baseurl"
               value={formData.baseURL}
               onChange={(e) => setFormData({ ...formData, baseURL: e.target.value })}
-              placeholder="https://api.openai.com/v1"
+              placeholder={t('chat.settings.placeholders.baseUrl')}
             />
             {errors.baseURL && <p className="text-xs text-destructive">{errors.baseURL}</p>}
             <p className="text-xs text-muted-foreground">{t('chat.settings.baseURLHelp')}</p>
@@ -612,7 +612,7 @@ function ProviderDialog({ provider, existingIds, onSave, onCancel }: ProviderDia
               type="password"
               value={formData.apiKey}
               onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-              placeholder={isEditing ? '••••••••' : '${OPENAI_API_KEY}'}
+              placeholder={isEditing ? t('chat.settings.placeholders.apiKeyMasked') : t('chat.settings.placeholders.apiKeyEnv')}
             />
             <p className="text-xs text-muted-foreground">{t('chat.settings.apiKeyHelp')}</p>
           </div>
@@ -696,7 +696,7 @@ function ModelDialog({ model, existingIds, onSave, onCancel }: ModelDialogProps)
               id="model-id"
               value={formData.id}
               onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-              placeholder="gpt-4o"
+              placeholder={t('chat.settings.placeholders.modelId')}
               disabled={isEditing}
             />
             {errors.id && <p className="text-xs text-destructive">{errors.id}</p>}
@@ -710,7 +710,7 @@ function ModelDialog({ model, existingIds, onSave, onCancel }: ModelDialogProps)
               id="model-name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="GPT-4o"
+              placeholder={t('chat.settings.placeholders.modelName')}
             />
             {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
           </div>
@@ -722,7 +722,7 @@ function ModelDialog({ model, existingIds, onSave, onCancel }: ModelDialogProps)
               type="number"
               value={formData.maxTokens}
               onChange={(e) => setFormData({ ...formData, maxTokens: e.target.value })}
-              placeholder="128000"
+              placeholder={t('chat.settings.placeholders.maxTokens')}
             />
             {errors.maxTokens && <p className="text-xs text-destructive">{errors.maxTokens}</p>}
             <p className="text-xs text-muted-foreground">{t('chat.settings.maxTokensHelp')}</p>

@@ -381,7 +381,7 @@ export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = 
       <Link to={`${basePath}/specs/${spec.specName}`} className="select-none h-full flex flex-col">
         {/* Parent Spec Icon */}
         {(spec.children && spec.children.length > 0 && !isChild) && (
-          <div className="absolute top-3 right-3 text-primary/50" title={t('specs.hierarchy.umbrella', 'Parent Spec')}>
+          <div className="absolute top-3 right-3 text-primary/50" title={t('specs.hierarchy.umbrella')}>
             <FolderTree className="w-4 h-4" />
           </div>
         )}
@@ -409,7 +409,7 @@ export function BoardView({ specs, onStatusChange, onPriorityChange, basePath = 
           {spec.parent && !groupByParent && (
             <div className="flex items-center text-xs text-muted-foreground mt-1 bg-muted/30 p-1 rounded w-fit max-w-full">
               <CornerDownRight className="h-3 w-3 mr-1 flex-shrink-0" />
-              <span className="truncate">In: {spec.parent}</span>
+              <span className="truncate">{t('specs.hierarchy.inParent', { parent: spec.parent })}</span>
             </div>
           )}
         </div>

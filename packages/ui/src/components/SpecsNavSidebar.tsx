@@ -785,7 +785,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder={t('specsNavSidebar.searchPlaceholder') ?? 'Search specs...'}
+              placeholder={t('specsNavSidebar.searchPlaceholder')}
               showShortcut={false}
               className="h-9 text-sm"
             />

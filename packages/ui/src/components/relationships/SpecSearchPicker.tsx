@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Check, Plus, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   Command,
@@ -31,11 +32,14 @@ export function SpecSearchPicker({
   onSelect,
   disabled,
   excludeSpecNames = [],
-  placeholder = 'Search specs...',
-  emptyLabel = 'No specs found',
+  placeholder,
+  emptyLabel,
 }: SpecSearchPickerProps) {
+  const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const resolvedPlaceholder = placeholder ?? t('search.placeholder');
+  const resolvedEmptyLabel = emptyLabel ?? t('relationships.empty.noSpecs');
   const excludeSet = useMemo(() => new Set(excludeSpecNames), [excludeSpecNames]);
 
   const filtered = useMemo(() => {
@@ -64,7 +68,7 @@ export function SpecSearchPicker({
           className="h-7 px-2 text-xs gap-1"
         >
           <Plus className="h-3.5 w-3.5" />
-          {placeholder}
+          {resolvedPlaceholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
@@ -72,14 +76,14 @@ export function SpecSearchPicker({
           <div className="flex items-center px-3 border-b">
             <Search className="h-4 w-4 text-muted-foreground" />
             <CommandInput
-              placeholder={placeholder}
+              placeholder={resolvedPlaceholder}
               value={query}
               onValueChange={setQuery}
               className="border-0 focus:ring-0"
             />
           </div>
           <CommandList>
-            <CommandEmpty>{emptyLabel}</CommandEmpty>
+            <CommandEmpty>{resolvedEmptyLabel}</CommandEmpty>
             {filtered.map((spec) => {
               const specNumber = formatSpecNumber(spec.specNumber ?? null);
               const label = spec.title || spec.specName;

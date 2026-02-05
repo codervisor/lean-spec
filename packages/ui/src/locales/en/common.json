@@ -27,7 +27,11 @@
     "settingsDescription": "Configure AI models, appearance, and preferences",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
-    "githubTooltip": "GitHub repository"
+    "githubTooltip": "GitHub repository",
+    "logoAlt": "LeanSpec",
+    "githubAlt": "GitHub",
+    "brandName": "LeanSpec",
+    "openMenu": "Open menu"
   },
   "search": {
     "placeholder": "Search specs...",
@@ -127,6 +131,11 @@
       "logs": "Logs",
       "completed": "Completed"
     },
+    "modes": {
+      "autonomous": "Autonomous",
+      "guided": "Guided",
+      "ralph": "Ralph"
+    },
     "dialogs": {
       "createTitle": "Create AI Session",
       "createDescription": "Choose the runner and mode, then start the session.",
@@ -204,10 +213,44 @@
     "providersSummary": "{{total}} providers, {{configured}} configured",
     "availableProvidersSummary": "{{count}} available providers",
     "modelsLoadError": "Failed to load models",
+    "autoTitle": {
+      "generating": "Generating title..."
+    },
     "newChat": "New Chat",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
     "searchPlaceholder": "Search conversations...",
+    "history": {
+      "searchPlaceholder": "Search history...",
+      "empty": "No conversations found"
+    },
+    "shortcuts": {
+      "newChat": "New Chat (Cmd+Shift+N)",
+      "history": "History (Cmd+Shift+H)",
+      "closeSidebar": "Close (Cmd+Shift+I)"
+    },
+    "emptyState": {
+      "prompt": "Select a conversation or start a new one."
+    },
+    "noSearchResults": "No conversations found",
+    "noConversations": "No conversations yet",
+    "startConversation": "Click 'New Chat' to start a conversation",
+    "noMessagesYet": "No messages yet",
+    "modelSelector": {
+      "selectPlaceholder": "Select model...",
+      "badges": {
+        "tool": "Tool",
+        "reasoning": "Reasoning",
+        "vision": "Vision"
+      },
+      "metrics": {
+        "contextWindow": "Context Window",
+        "maxOutput": "Max Output",
+        "inputCost": "Input Cost",
+        "outputCost": "Output Cost",
+        "vision": "Vision"
+      }
+    },
     "today": "Today",
     "yesterday": "Yesterday",
     "previous7Days": "Previous 7 Days",
@@ -215,6 +258,14 @@
     "storageUsage": "Storage used: {{size}}",
     "storageLocation": "Location: {{path}}",
     "storageUnavailable": "Storage info unavailable",
+    "storageUnits": {
+      "zero": "0 B",
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB"
+    },
     "deleteConversation": "Delete conversation",
     "renameConversation": "Rename conversation",
     "disabledTitle": "AI chat is disabled",
@@ -222,6 +273,20 @@
     "toggleModelSettings": "Toggle model settings",
     "openChat": "Open AI Chat",
     "openFullChat": "Full Chat",
+    "toolExecution": {
+      "status": {
+        "failed": "Failed",
+        "completed": "Completed",
+        "running": "Running...",
+        "success": "Success",
+        "error": "Error"
+      },
+      "labels": {
+        "input": "Input",
+        "output": "Output",
+        "error": "Error"
+      }
+    },
     "settings": {
       "title": "Chat Configuration",
       "description": "Configure AI providers, models, and chat behavior",
@@ -258,7 +323,22 @@
       "modelName": "Display Name",
       "maxTokens": "Max Tokens",
       "maxTokensHelp": "Context window size (optional)",
+      "deleteProviderTitle": "Delete Provider",
+      "deleteModelTitle": "Delete Model",
+      "placeholders": {
+        "providerId": "openai",
+        "providerName": "OpenAI",
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKeyMasked": "••••••••",
+        "apiKeyEnv": "${OPENAI_API_KEY}",
+        "modelId": "gpt-4o",
+        "modelName": "GPT-4o",
+        "maxTokens": "128000"
+      },
       "errors": {
+        "loadConfig": "Failed to load config",
+        "saveConfig": "Failed to save config",
+        "loadConfiguration": "Failed to load configuration",
         "idRequired": "ID is required",
         "idExists": "This ID already exists",
         "idInvalid": "ID must be lowercase letters, numbers, and hyphens only",
@@ -391,6 +471,11 @@
       "azureResourceName": "Azure Resource Name",
       "azureResourceNameHelp": "The name of your Azure OpenAI resource (e.g., 'my-openai-resource')",
       "apiKeyStorageNote": "API key will be stored locally in your config file",
+      "placeholders": {
+        "azureResourceName": "my-openai-resource",
+        "apiKeyEnv": "{{provider}}_API_KEY",
+        "apiKeyPrefix": "sk-..."
+      },
       "editCustomProvider": "Edit Custom Provider",
       "customProviderDialogDescription": "Configure a custom provider with API endpoint and models",
       "leaveEmptyToKeep": "Leave empty to keep existing",
@@ -424,9 +509,16 @@
       },
       "filteredCount": "{{filtered}} of {{total}} providers",
       "toasts": {
-        "defaultProvider": "Default provider set to {{provider}}"
+        "defaultProvider": "Default provider set to {{provider}}",
+        "apiKeySaved": "API key saved",
+        "modelsSaved": "Model preferences saved"
       },
       "errors": {
+        "loadConfig": "Failed to load config",
+        "refreshFailed": "Failed to refresh",
+        "setApiKeyFailed": "Failed to set API key",
+        "saveConfigFailed": "Failed to save config",
+        "saveFailed": "Failed to save",
         "idRequired": "ID is required",
         "idExists": "This ID already exists",
         "idInvalid": "ID must be lowercase letters, numbers, and hyphens only",
@@ -481,6 +573,13 @@
         "argsHelp": "One argument per line",
         "env": "Environment Variables",
         "envHelp": "One KEY=VALUE per line"
+      },
+      "placeholders": {
+        "id": "claude",
+        "name": "Claude Code",
+        "command": "claude",
+        "args": "--dangerously-skip-permissions\n--print",
+        "env": "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
       },
       "errors": {
         "noProject": "Project path is required to manage runners.",
@@ -621,7 +720,12 @@
       "dependencies": "Go to dependencies",
       "settings": "Go to settings",
       "search": "Focus search",
-      "quickSearch": "Open quick search"
+      "quickSearch": "Open quick search",
+      "toggleChat": "Toggle AI chat",
+      "toggleChatSidebar": "Toggle AI chat sidebar",
+      "focusChatInput": "Focus chat input",
+      "newConversation": "New conversation",
+      "viewHistory": "View history"
     }
   },
   "tableOfContents": {
@@ -787,6 +891,16 @@
   },
   "specDetail": {
     "toggleSidebar": "Toggle specs list",
+    "codeBlock": {
+      "label": "Code",
+      "copy": "Copy code",
+      "copyToClipboard": "Copy to clipboard"
+    },
+    "table": {
+      "copyTsv": "Copy as TSV (Excel)",
+      "exportCsv": "Export as CSV",
+      "defaultFileName": "table-export.csv"
+    },
     "metadata": {
       "created": "Created",
       "updated": "Updated",
@@ -1016,6 +1130,9 @@
       "pending": "Pending update"
     }
   },
+  "mermaid": {
+    "clickToEnlarge": "Click to enlarge diagram"
+  },
   "dependencyGraph": {
     "header": {
       "title": "Dependency Map",
@@ -1160,6 +1277,12 @@
     "progressThresholds": {
       "optimal": "Optimal Limit (2k)",
       "good": "Good Limit (3.5k)"
+    },
+    "progressTicks": {
+      "zero": "0",
+      "twoK": "2k",
+      "threePointFiveK": "3.5k",
+      "fiveKPlus": "5k+"
     }
   },
   "validation": {

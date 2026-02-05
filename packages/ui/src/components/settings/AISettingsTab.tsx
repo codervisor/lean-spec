@@ -84,7 +84,7 @@ export function AISettingsTab() {
     try {
       setConfigLoading(true);
       const res = await fetch('/api/chat/config');
-      if (!res.ok) throw new Error('Failed to load config');
+      if (!res.ok) throw new Error(t('settings.ai.errors.loadConfig'));
       const data = await res.json();
       setConfig(data);
     } catch {
@@ -111,7 +111,7 @@ export function AISettingsTab() {
     try {
       setRefreshing(true);
       const res = await fetch('/api/models/refresh', { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to refresh');
+      if (!res.ok) throw new Error(t('settings.ai.errors.refreshFailed'));
       reloadRegistry();
     } catch {
       // Ignore refresh errors
@@ -127,7 +127,7 @@ export function AISettingsTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ apiKey, baseUrl }),
     });
-    if (!res.ok) throw new Error('Failed to set API key');
+    if (!res.ok) throw new Error(t('settings.ai.errors.setApiKeyFailed'));
     // Reload both registry and config
     reloadRegistry();
     await loadConfig();
@@ -140,7 +140,7 @@ export function AISettingsTab() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newConfig),
     });
-    if (!res.ok) throw new Error('Failed to save config');
+    if (!res.ok) throw new Error(t('settings.ai.errors.saveConfigFailed'));
     const data = await res.json();
     setConfig(data);
   };
@@ -413,11 +413,11 @@ export function AISettingsTab() {
           initialEnabledModels={config?.settings.enabledModels?.[showConfigDialog]}
           onSaveApiKey={async (apiKey, baseUrl) => {
             await handleSetApiKey(showConfigDialog, apiKey, baseUrl);
-            toast({ title: t('settings.ai.toasts.apiKeySaved', 'API Key saved'), variant: 'success' });
+            toast({ title: t('settings.ai.toasts.apiKeySaved'), variant: 'success' });
           }}
           onSaveModels={async (models) => {
             await handleSaveEnabledModels(showConfigDialog, models);
-            toast({ title: t('settings.ai.toasts.modelsSaved', 'Model preferences saved'), variant: 'success' });
+            toast({ title: t('settings.ai.toasts.modelsSaved'), variant: 'success' });
           }}
           onCancel={() => setShowConfigDialog(null)}
         />
@@ -850,7 +850,7 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
 
       await onSaveApiKey(apiKey.trim(), baseUrl);
     } catch (err) {
-      setKeyError(err instanceof Error ? err.message : 'Failed to save');
+      setKeyError(err instanceof Error ? err.message : t('settings.ai.errors.saveFailed'));
     } finally {
       setSavingKey(false);
     }
@@ -890,7 +890,7 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
                     type="text"
                     value={resourceName}
                     onChange={(e) => setResourceName(e.target.value)}
-                    placeholder="my-openai-resource"
+                    placeholder={t('settings.ai.placeholders.azureResourceName')}
                   />
                   <p className="text-xs text-muted-foreground">{t('settings.ai.azureResourceNameHelp')}</p>
                 </div>
@@ -904,7 +904,7 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
                     type={showKey ? 'text' : 'password'}
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={isAzure ? 'AZURE_API_KEY' : `${provider.id.toUpperCase()}_API_KEY`}
+                    placeholder={t('settings.ai.placeholders.apiKeyEnv', { provider: isAzure ? 'AZURE' : provider.id.toUpperCase() })}
                     className="pr-10"
                   />
                   <Button
@@ -992,7 +992,7 @@ function ProviderConfigDialog({ provider, initialEnabledModels, onSaveApiKey, on
                              <div className="flex-1 min-w-0">
                                <div className="flex items-center gap-2">
                                  <span className="font-medium truncate">{model.name}</span>
-                                 {model.toolCall && <Badge variant="secondary" className="text-[10px] h-4 px-1">Tool</Badge>}
+                                 {model.toolCall && <Badge variant="secondary" className="text-[10px] h-4 px-1">{t('chat.modelSelector.badges.tool')}</Badge>}
                                </div>
                                <div className="text-xs text-muted-foreground font-mono truncate">{model.id}</div>
                              </div>
@@ -1138,7 +1138,7 @@ function CustomProviderDialog({ provider, existingIds, onSave, onCancel }: Custo
               id="provider-id"
               value={formData.id}
               onChange={(e) => setFormData({ ...formData, id: e.target.value.toLowerCase() })}
-              placeholder="my-provider"
+              placeholder={t('settings.ai.placeholders.customProviderId')}
               disabled={isEditing}
             />
             {errors.id && <p className="text-xs text-destructive">{errors.id}</p>}
@@ -1152,7 +1152,7 @@ function CustomProviderDialog({ provider, existingIds, onSave, onCancel }: Custo
               id="provider-name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="My Provider"
+              placeholder={t('settings.ai.placeholders.customProviderName')}
             />
             {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
           </div>
@@ -1165,7 +1165,7 @@ function CustomProviderDialog({ provider, existingIds, onSave, onCancel }: Custo
               id="provider-baseurl"
               value={formData.baseURL}
               onChange={(e) => setFormData({ ...formData, baseURL: e.target.value })}
-              placeholder="https://api.example.com/v1"
+              placeholder={t('settings.ai.placeholders.customProviderBaseUrl')}
             />
             {errors.baseURL && <p className="text-xs text-destructive">{errors.baseURL}</p>}
           </div>
@@ -1179,7 +1179,7 @@ function CustomProviderDialog({ provider, existingIds, onSave, onCancel }: Custo
               type="password"
               value={formData.apiKey}
               onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-              placeholder={isEditing ? t('settings.ai.leaveEmptyToKeep') : 'sk-...'}
+              placeholder={isEditing ? t('settings.ai.leaveEmptyToKeep') : t('settings.ai.placeholders.apiKeyPrefix')}
             />
             {errors.apiKey && <p className="text-xs text-destructive">{errors.apiKey}</p>}
           </div>

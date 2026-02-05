@@ -126,7 +126,7 @@ export function QuickSearch() {
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">{t('quickSearch.button')}</span>
         <kbd className="hidden md:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
-          <span className="text-xs">⌘</span>K
+          <span className="text-xs">{t('quickSearch.shortcut.modifier')}</span>{t('quickSearch.shortcut.key')}
         </kbd>
       </Button>
 

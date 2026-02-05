@@ -784,7 +784,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
               id="runner-id"
               value={formData.id}
               onChange={(event) => setFormData({ ...formData, id: event.target.value })}
-              placeholder="claude"
+              placeholder={t('settings.runners.placeholders.id')}
               disabled={isEditing}
             />
             {errors.id && <p className="text-xs text-destructive">{errors.id}</p>}
@@ -797,7 +797,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
               id="runner-name"
               value={formData.name}
               onChange={(event) => setFormData({ ...formData, name: event.target.value })}
-              placeholder="Claude Code"
+              placeholder={t('settings.runners.placeholders.name')}
             />
           </div>
 
@@ -807,7 +807,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
               id="runner-command"
               value={formData.command}
               onChange={(event) => setFormData({ ...formData, command: event.target.value })}
-              placeholder="claude"
+              placeholder={t('settings.runners.placeholders.command')}
             />
             {errors.command && <p className="text-xs text-destructive">{errors.command}</p>}
           </div>
@@ -818,7 +818,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
               id="runner-args"
               value={formData.args}
               onChange={(event) => setFormData({ ...formData, args: event.target.value })}
-              placeholder="--dangerously-skip-permissions\n--print"
+              placeholder={t('settings.runners.placeholders.args')}
             />
             <p className="text-xs text-muted-foreground">{t('settings.runners.fields.argsHelp')}</p>
           </div>
@@ -829,7 +829,7 @@ function RunnerDialog({ runner, existingIds, onSave, onCancel }: RunnerDialogPro
               id="runner-env"
               value={formData.env}
               onChange={(event) => setFormData({ ...formData, env: event.target.value })}
-              placeholder="ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
+              placeholder={t('settings.runners.placeholders.env')}
             />
             {errors.env && <p className="text-xs text-destructive">{errors.env}</p>}
             <p className="text-xs text-muted-foreground">{t('settings.runners.fields.envHelp')}</p>

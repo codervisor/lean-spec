@@ -3,13 +3,16 @@ import { useChat } from '../../contexts/ChatContext';
 import { Input } from '@leanspec/ui-components';
 import { cn } from '@leanspec/ui-components';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function ChatHistory() {
+  const { t } = useTranslation('common');
   const { conversations, selectConversation, activeConversationId, deleteConversation } = useChat();
   const [search, setSearch] = useState('');
+  const defaultTitle = t('chat.newChat');
 
   const filteredConversations = conversations.filter(c =>
-    (c.title || "New Chat").toLowerCase().includes(search.toLowerCase())
+    (c.title || defaultTitle).toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -18,7 +21,7 @@ export function ChatHistory() {
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search history..."
+            placeholder={t('chat.history.searchPlaceholder')}
             className="h-8 pl-8 text-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -28,7 +31,7 @@ export function ChatHistory() {
 
       <div className="overflow-y-auto flex-1 p-2 space-y-1">
         {filteredConversations.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">No conversations found</p>
+          <p className="text-xs text-muted-foreground text-center py-4">{t('chat.history.empty')}</p>
         ) : (
           filteredConversations.map(conv => (
             <div
@@ -41,7 +44,7 @@ export function ChatHistory() {
             >
               <div className="flex items-center gap-2 truncate flex-1 min-w-0">
                 <MessageSquare className="h-3 w-3 flex-shrink-0 opacity-70" />
-                <span className="truncate text-xs">{conv.title || "New Chat"}</span>
+                <span className="truncate text-xs">{conv.title || defaultTitle}</span>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}

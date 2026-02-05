@@ -93,7 +93,7 @@ export function ProjectsPage() {
         } catch {
           setValidationStates(prev => ({
             ...prev,
-            [project.id]: { status: 'invalid', error: 'Validation failed' }
+            [project.id]: { status: 'invalid', error: t('projects.validationFailed') }
           }));
         }
       }
@@ -324,7 +324,7 @@ export function ProjectsPage() {
                         <PopoverTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                             <MoreVertical className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
+                            <span className="sr-only">{t('navigation.openMenu')}</span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent align="end" className="w-56 p-1">

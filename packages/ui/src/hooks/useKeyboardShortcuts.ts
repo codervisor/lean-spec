@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useChat } from '../contexts';
 import { useCurrentProject } from './useProjectQuery';
 
@@ -44,6 +45,7 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 }
 
 export function useGlobalShortcuts() {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject } = useCurrentProject();
@@ -54,12 +56,12 @@ export function useGlobalShortcuts() {
   const shortcuts: KeyboardShortcut[] = [
     {
       key: 'h',
-      description: 'Go to dashboard (home)',
+      description: t('keyboardShortcuts.items.dashboard'),
       action: useCallback(() => navigate(basePath ?? '/projects'), [basePath, navigate]),
     },
     {
       key: 'g',
-      description: 'Go to specs list',
+      description: t('keyboardShortcuts.items.specs'),
       action: useCallback(() => {
         if (!basePath) return;
         navigate(`${basePath}/specs`);
@@ -67,7 +69,7 @@ export function useGlobalShortcuts() {
     },
     {
       key: 's',
-      description: 'Go to stats',
+      description: t('keyboardShortcuts.items.stats'),
       action: useCallback(() => {
         if (!basePath) return;
         navigate(`${basePath}/stats`);
@@ -75,7 +77,7 @@ export function useGlobalShortcuts() {
     },
     {
       key: 'd',
-      description: 'Go to dependencies',
+      description: t('keyboardShortcuts.items.dependencies'),
       action: useCallback(() => {
         if (!basePath) return;
         navigate(`${basePath}/dependencies`);
@@ -83,7 +85,7 @@ export function useGlobalShortcuts() {
     },
     {
       key: 'c',
-      description: 'Toggle AI chat',
+      description: t('keyboardShortcuts.items.toggleChat'),
       action: useCallback(() => {
         toggleChat();
       }, [toggleChat]),
@@ -92,7 +94,7 @@ export function useGlobalShortcuts() {
       key: 'l',
       ctrl: true,
       shift: true,
-      description: 'Toggle AI chat sidebar',
+      description: t('keyboardShortcuts.items.toggleChatSidebar'),
       action: useCallback(() => {
         toggleChat();
       }, [toggleChat]),
@@ -101,17 +103,17 @@ export function useGlobalShortcuts() {
       key: 'i',
       ctrl: true,
       shift: true,
-      description: 'Focus chat input',
+      description: t('keyboardShortcuts.items.focusChatInput'),
       action: useCallback(() => {
         if (!isOpen) {
           openChat();
           // Give it a moment to render
           setTimeout(() => {
-            const input = document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Type a message..."]');
+            const input = document.querySelector<HTMLTextAreaElement>('textarea[data-chat-input="true"]');
             input?.focus();
           }, 100);
         } else {
-          const input = document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Type a message..."]');
+          const input = document.querySelector<HTMLTextAreaElement>('textarea[data-chat-input="true"]');
           input?.focus();
         }
       }, [isOpen, openChat]),
@@ -120,7 +122,7 @@ export function useGlobalShortcuts() {
       key: 'n',
       ctrl: true,
       shift: true,
-      description: 'New conversation',
+      description: t('keyboardShortcuts.items.newConversation'),
       action: useCallback(() => {
         if (!isOpen) openChat();
         createConversation();
@@ -130,7 +132,7 @@ export function useGlobalShortcuts() {
       key: 'h',
       ctrl: true,
       shift: true,
-      description: 'View history',
+      description: t('keyboardShortcuts.items.viewHistory'),
       action: useCallback(() => {
         if (!isOpen) openChat();
         toggleHistory();
@@ -138,7 +140,7 @@ export function useGlobalShortcuts() {
     },
     {
       key: ',',
-      description: 'Go to settings',
+      description: t('keyboardShortcuts.items.settings'),
       action: useCallback(() => {
         if (!basePath) return;
         navigate(`${basePath}/settings`);
@@ -146,7 +148,7 @@ export function useGlobalShortcuts() {
     },
     {
       key: '/',
-      description: 'Focus search (on specs page)',
+      description: t('keyboardShortcuts.items.search'),
       action: useCallback(() => {
         const searchInput = document.querySelector<HTMLInputElement>('input[type="text"]');
         searchInput?.focus();

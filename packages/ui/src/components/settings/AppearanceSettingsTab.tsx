@@ -107,8 +107,8 @@ export function AppearanceSettingsTab() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en" className="cursor-pointer">English</SelectItem>
-              <SelectItem value="zh-CN" className="cursor-pointer">简体中文</SelectItem>
+              <SelectItem value="en" className="cursor-pointer">{t('language.english')}</SelectItem>
+              <SelectItem value="zh-CN" className="cursor-pointer">{t('language.chinese')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
