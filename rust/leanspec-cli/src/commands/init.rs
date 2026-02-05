@@ -117,7 +117,7 @@ fn run_standard_init(specs_dir: &str, options: InitOptions) -> Result<(), Box<dy
     // New: AI tool + MCP onboarding
     handle_ai_symlinks(&root, &registry, &ai_detections, &options)?;
     handle_mcp_configs(&root, &options)?;
-    handle_skills_install(will_install_skills)?;
+    handle_skills_install(will_install_skills, &ai_detections)?;
 
     println!();
     println!("{}", "LeanSpec initialized successfully! 🎉".green().bold());
@@ -299,13 +299,10 @@ lean-spec validate
 Each spec lives in a numbered directory with a `README.md` file:
 
 ```
-
 ├── 001-feature-name/
 │   └── README.md
-├── 002-another-feature/
-│   └── README.md
-└── archived/
-    └── old-specs...
+└── 002-another-feature/
+    └── README.md
 ```
 
 ## Spec Status Values
@@ -321,14 +318,6 @@ Visit [leanspec.dev](https://leanspec.dev) for documentation.
 "#;
         fs::write(&specs_readme, readme_content)?;
         println!("{} Created specs README", "✓".green());
-    }
-
-    // Create archived directory
-    let archived_dir = specs_path.join("archived");
-    if !archived_dir.exists() {
-        fs::create_dir_all(&archived_dir)?;
-        fs::write(archived_dir.join(".gitkeep"), "")?;
-        println!("{} Created archived directory", "✓".green());
     }
 
     Ok(())
@@ -683,13 +672,56 @@ fn decide_skill_install(options: &InitOptions) -> Result<bool, Box<dyn Error>> {
     Ok(confirm)
 }
 
-fn handle_skills_install(install_skills: bool) -> Result<(), Box<dyn Error>> {
+/// Maps runner IDs to skills.sh agent names
+fn runner_to_skills_agent(runner_id: &str) -> Option<&'static str> {
+    match runner_id {
+        "claude" => Some("claude-code"),
+        "copilot" => Some("github-copilot"),
+        "cursor" => Some("cursor"),
+        "gemini" => Some("gemini-cli"),
+        "codex" => Some("codex"),
+        "cline" => Some("cline"),
+        "continue" => Some("continue"),
+        "windsurf" => Some("windsurf"),
+        "aider" => Some("aider"),
+        "opencode" => Some("opencode"),
+        _ => None,
+    }
+}
+
+fn handle_skills_install(
+    install_skills: bool,
+    detections: &[AiDetection],
+) -> Result<(), Box<dyn Error>> {
     if !install_skills {
         return Ok(());
     }
 
+    // Convert detected AI tools to skills.sh agent names
+    let agents: Vec<String> = detections
+        .iter()
+        .filter(|d| d.detected)
+        .filter_map(|d| runner_to_skills_agent(&d.runner.id))
+        .map(|s| s.to_string())
+        .collect();
+
     println!("\n{}", "Installing agent skills...".cyan());
-    if let Err(err) = skill::install() {
+    if !agents.is_empty() {
+        println!(
+            "{} Installing to detected tools: {}",
+            "•".cyan(),
+            agents.join(", ")
+        );
+    }
+
+    // Pass None if no agents detected (will install to all), otherwise pass the list
+    let agents_opt = if agents.is_empty() {
+        None
+    } else {
+        Some(agents.as_slice())
+    };
+
+    if let Err(err) = skill::install(agents_opt) {
         println!("{} Failed to install agent skills: {}", "⚠".yellow(), err);
         println!("{} You can retry with: lean-spec skill install", "•".cyan());
     }

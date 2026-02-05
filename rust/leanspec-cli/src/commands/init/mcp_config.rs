@@ -29,8 +29,11 @@ impl McpTool {
         }
     }
 
-    fn uses_project_variable(&self) -> bool {
-        matches!(self, McpTool::Claude)
+    fn servers_key(&self) -> &'static str {
+        match self {
+            McpTool::VsCode => "servers",
+            _ => "mcpServers",
+        }
     }
 
     fn detection_directories(&self) -> &'static [&'static str] {
@@ -115,7 +118,7 @@ pub fn configure_mcp(root: &Path, tools: &[McpTool]) -> Vec<McpConfigResult> {
         let config_relative = tool.config_path();
         let config_path = root.join(config_relative);
 
-        let result = match write_mcp_config(&config_path, *tool, &project_path) {
+        let result = match write_mcp_config(&config_path, *tool) {
             Ok(McpWriteOutcome::Created) => McpConfigResult {
                 tool: *tool,
                 config_path: PathBuf::from(config_relative),
@@ -159,23 +162,19 @@ pub fn configure_mcp(root: &Path, tools: &[McpTool]) -> Vec<McpConfigResult> {
 fn write_mcp_config(
     path: &Path,
     tool: McpTool,
-    project_path: &Path,
 ) -> Result<McpWriteOutcome, Box<dyn std::error::Error>> {
     let parent = path.parent().ok_or("Invalid MCP config path")?;
     fs::create_dir_all(parent)?;
 
+    let servers_key = tool.servers_key();
     let existing = read_json(path);
-    let mut config = existing
-        .clone()
-        .unwrap_or_else(|| json!({"mcpServers": {}}));
+    let mut config = existing.clone().unwrap_or_else(|| json!({servers_key: {}}));
 
-    let servers_map = match config.get_mut("mcpServers").and_then(Value::as_object_mut) {
+    let servers_map = match config.get_mut(servers_key).and_then(Value::as_object_mut) {
         Some(map) => map,
         None => {
-            config["mcpServers"] = Value::Object(Map::new());
-            config["mcpServers"]
-                .as_object_mut()
-                .expect("mcpServers object")
+            config[servers_key] = Value::Object(Map::new());
+            config[servers_key].as_object_mut().expect("servers object")
         }
     };
 
@@ -183,7 +182,7 @@ fn write_mcp_config(
         return Ok(McpWriteOutcome::Skipped);
     }
 
-    let mcp_entry = build_mcp_entry(tool, project_path);
+    let mcp_entry = build_mcp_entry();
     servers_map.insert("lean-spec".to_string(), mcp_entry);
 
     write_json(path, &config)?;
@@ -195,16 +194,10 @@ fn write_mcp_config(
     }
 }
 
-fn build_mcp_entry(tool: McpTool, project_path: &Path) -> Value {
-    let project_arg = if tool.uses_project_variable() {
-        "${workspaceFolder}".to_string()
-    } else {
-        project_path.to_string_lossy().to_string()
-    };
-
+fn build_mcp_entry() -> Value {
     json!({
         "command": "npx",
-        "args": ["-y", "@leanspec/mcp", "--project", project_arg]
+        "args": ["-y", "@leanspec/mcp"]
     })
 }
 

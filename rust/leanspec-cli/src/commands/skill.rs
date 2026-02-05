@@ -4,7 +4,7 @@ use std::process::Command;
 
 pub fn run(action: &str) -> Result<(), Box<dyn Error>> {
     match action {
-        "install" => install(),
+        "install" => install(None),
         "update" => update(),
         "list" => list(),
         "help" | "-h" | "--help" => {
@@ -15,8 +15,26 @@ pub fn run(action: &str) -> Result<(), Box<dyn Error>> {
     }
 }
 
-pub fn install() -> Result<(), Box<dyn Error>> {
-    run_npx(&["skills", "add", "codervisor/lean-spec", "-y"])
+/// Install skills, optionally limited to specific agents.
+/// If agents is None or empty, installs to all detected agents.
+pub fn install(agents: Option<&[String]>) -> Result<(), Box<dyn Error>> {
+    let mut args = vec!["skills", "add", "codervisor/lean-spec", "-y"];
+
+    // Build agent flags if specific agents are provided
+    let agent_args: Vec<String>;
+    if let Some(agent_list) = agents {
+        if !agent_list.is_empty() {
+            agent_args = agent_list
+                .iter()
+                .flat_map(|a| vec!["--agent".to_string(), a.clone()])
+                .collect();
+            for arg in &agent_args {
+                args.push(arg.as_str());
+            }
+        }
+    }
+
+    run_npx(&args)
 }
 
 fn update() -> Result<(), Box<dyn Error>> {
