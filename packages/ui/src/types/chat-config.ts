@@ -23,5 +23,6 @@ export interface ChatConfig {
     maxSteps: number;
     defaultProviderId: string;
     defaultModelId: string;
+    enabledModels?: Record<string, string[]>;
   };
 }

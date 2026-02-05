@@ -1,5 +1,5 @@
 ---
-status: planned
+status: complete
 created: 2026-02-04
 priority: high
 tags:
@@ -9,7 +9,13 @@ tags:
 - bug-fix
 parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-04T15:17:19.297574Z
-updated_at: 2026-02-04T15:19:06.014425Z
+updated_at: 2026-02-04T16:00:41.950128229Z
+completed_at: 2026-02-04T16:00:41.950128229Z
+transitions:
+- status: in-progress
+  at: 2026-02-04T15:48:34.569426011Z
+- status: complete
+  at: 2026-02-04T16:00:41.950128229Z
 ---
 # AI Chat Missing Conversation History
 
@@ -101,3 +107,25 @@ Users cannot see or access their historical AI chat conversations in the web UI.
 - [packages/ui/src/components/chat/ChatSidebar.tsx](packages/ui/src/components/chat/ChatSidebar.tsx) sends a message immediately after `createConversation()` but notes the `threadId` won’t be available yet, which can lead to messages not being persisted.
 - [packages/ui/src/lib/use-chat.ts](packages/ui/src/lib/use-chat.ts) loads messages whenever `threadId` changes, so selection should populate history if the active thread ID is set before sending.
 - [packages/ui/src/lib/chat-api.ts](packages/ui/src/lib/chat-api.ts) requires `projectId` for `/api/chat/sessions` and defaults missing provider/model to `openai/gpt-4o`, which can obscure session data issues.
+
+### Implementation Summary
+
+**Completed:**
+- ✅ Identified Chat page as primary UI (works correctly)
+- ✅ Fixed "first message before session" bug in Layout sidebar by implementing pending message pattern
+- ✅ Verified conversations load on mount and project change (Chat page already working)
+- ✅ Confirmed messages load when selecting conversation via `useLeanSpecChat` hook
+- ✅ Sessions already created before first message in Chat page
+- ✅ Messages persist after send via `onFinish` callback in `use-chat.ts`
+- ✅ Active session kept across refreshes via localStorage
+- ✅ Added empty state UI for when no conversations exist
+- ✅ Message preview already shown in conversation list
+- ✅ Conversation rename already available in Chat page sidebar
+
+**Key Findings:**
+- The Chat page (`/pages/ChatPage.tsx`) already had proper conversation history management
+- The Layout sidebar (`/components/chat/ChatSidebar.tsx`) had the "send before session created" race condition
+- Backend API (`/api/chat/sessions`) works correctly
+- The `useLeanSpecChat` hook properly loads messages on thread change
+
+The conversation history functionality is now complete and working as expected.

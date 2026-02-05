@@ -140,10 +140,26 @@ export function ChatSidebar({
       <Separator />
 
       <div className="flex-1 overflow-y-auto overscroll-contain p-2 space-y-6">
-        <ThreadListGroup title={t('chat.today') || "Today"} threads={groupedThreads.today} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
-        <ThreadListGroup title={t('chat.yesterday') || "Yesterday"} threads={groupedThreads.yesterday} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
-        <ThreadListGroup title={t('chat.previous7Days') || "Previous 7 Days"} threads={groupedThreads.previous7days} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
-        <ThreadListGroup title={t('chat.older') || "Older"} threads={groupedThreads.older} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+        {filteredThreads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-6 text-muted-foreground">
+            <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+            <p className="text-sm mb-2">
+              {searchQuery ? t('chat.noSearchResults') || "No conversations found" : t('chat.noConversations') || "No conversations yet"}
+            </p>
+            {!searchQuery && (
+              <p className="text-xs">
+                {t('chat.startConversation') || "Click 'New Chat' to start a conversation"}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <ThreadListGroup title={t('chat.today') || "Today"} threads={groupedThreads.today} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.yesterday') || "Yesterday"} threads={groupedThreads.yesterday} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.previous7Days') || "Previous 7 Days"} threads={groupedThreads.previous7days} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+            <ThreadListGroup title={t('chat.older') || "Older"} threads={groupedThreads.older} activeId={activeThreadId} onSelect={onSelectThread} onDelete={onDeleteThread} onRename={onRenameThread} />
+          </>
+        )}
       </div>
 
       <Separator />

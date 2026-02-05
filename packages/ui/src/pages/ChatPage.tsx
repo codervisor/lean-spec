@@ -9,12 +9,10 @@ import { useLeanSpecChat } from '../lib/use-chat';
 import { useModelsRegistry } from '../lib/use-models-registry';
 import { useCurrentProject } from '../hooks/useProjectQuery';
 import { Trash2, Settings2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import type { UIMessage } from '@ai-sdk/react';
 import { PageContainer } from '../components/shared/PageContainer';
-
-const INITIAL_DEFAULT_MODEL = { providerId: 'openai', modelId: 'gpt-4o' };
 
 // Helper to extract text content from UIMessage parts
 function extractTextFromMessage(message: UIMessage): string {
@@ -34,12 +32,9 @@ function extractTextFromMessage(message: UIMessage): string {
 export function ChatPage() {
   const { t } = useTranslation('common');
   const { currentProject, loading: projectLoading } = useCurrentProject();
-  const { providers, defaultSelection } = useModelsRegistry();
+  const { defaultSelection, loading: registryLoading } = useModelsRegistry();
 
-  const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string }>({
-    providerId: INITIAL_DEFAULT_MODEL.providerId,
-    modelId: INITIAL_DEFAULT_MODEL.modelId,
-  });
+  const [selectedModel, setSelectedModel] = useState<{ providerId: string; modelId: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>(undefined);
@@ -60,27 +55,15 @@ export function ChatPage() {
   }, [currentProject?.id]);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!currentProject?.id) {
-      setThreads([]);
-      return () => {
-        cancelled = true;
-      };
-    }
+    loadThreads();
+  }, [loadThreads]);
 
-    ChatApi.getThreads(currentProject.id)
-      .then((loadedThreads) => {
-        if (!cancelled) {
-          setThreads(loadedThreads);
-        }
-      })
-      .catch((e) => {
-        console.error("Failed to load threads", e);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentProject?.id]);
+  // Initialize selectedModel from defaultSelection once registry is ready
+  useEffect(() => {
+    if (defaultSelection && !selectedModel) {
+      setSelectedModel(defaultSelection);
+    }
+  }, [defaultSelection, selectedModel]);
 
   const {
     messages,
@@ -90,27 +73,10 @@ export function ChatPage() {
     reload,
     clearChat,
   } = useLeanSpecChat({
-    providerId: selectedModel.providerId,
-    modelId: selectedModel.modelId,
+    providerId: selectedModel?.providerId ?? '',
+    modelId: selectedModel?.modelId ?? '',
     threadId: activeThreadId
   });
-
-  useEffect(() => {
-    if (!defaultSelection) {
-      return;
-    }
-    const isInitial =
-      selectedModel.providerId === INITIAL_DEFAULT_MODEL.providerId &&
-      selectedModel.modelId === INITIAL_DEFAULT_MODEL.modelId;
-    if (!isInitial) {
-      return;
-    }
-    const provider = providers.find((p) => p.id === selectedModel.providerId);
-    const modelExists = provider?.models.some((m) => m.id === selectedModel.modelId);
-    if (!modelExists || (provider && !provider.isConfigured)) {
-      setSelectedModel(defaultSelection);
-    }
-  }, [defaultSelection, providers, selectedModel]);
 
   // Title Generation Logic
   useEffect(() => {
@@ -147,7 +113,7 @@ export function ChatPage() {
 
   const handleSendMessage = async (text: string) => {
     if (!activeThreadId) {
-      if (!currentProject?.id) {
+      if (!currentProject?.id || !selectedModel) {
         return;
       }
       const thread = await ChatApi.createThread(currentProject.id, selectedModel);
@@ -168,15 +134,17 @@ export function ChatPage() {
     }
   }, [activeThreadId, pendingMessage, sendMessage, loadThreads]);
 
+  // Update thread model when selectedModel changes
+  const currentThread = useMemo(() => 
+    threads.find(t => t.id === activeThreadId), 
+    [threads, activeThreadId]
+  );
+
   useEffect(() => {
-    if (!activeThreadId) {
+    if (!activeThreadId || !selectedModel || !currentThread) {
       return;
     }
-    const thread = threads.find(t => t.id === activeThreadId);
-    if (!thread) {
-      return;
-    }
-    if (thread.model.providerId === selectedModel.providerId && thread.model.modelId === selectedModel.modelId) {
+    if (currentThread.model.providerId === selectedModel.providerId && currentThread.model.modelId === selectedModel.modelId) {
       return;
     }
     ChatApi.updateThread(activeThreadId, { model: selectedModel })
@@ -184,10 +152,10 @@ export function ChatPage() {
       .catch((error) => {
         console.warn('Failed to update chat model', error);
       });
-  }, [activeThreadId, selectedModel, threads, loadThreads]);
+  }, [activeThreadId, selectedModel, currentThread, loadThreads]);
 
   const handleCreateNewChat = async () => {
-    if (!currentProject?.id) {
+    if (!currentProject?.id || !selectedModel) {
       return;
     }
     const thread = await ChatApi.createThread(currentProject.id, selectedModel);
@@ -221,6 +189,15 @@ export function ChatPage() {
             <p className="text-sm text-muted-foreground">{t('projects.description')}</p>
           </CardContent>
         </Card>
+      </PageContainer>
+    );
+  }
+
+  // Show loading state while registry is loading
+  if (registryLoading || !selectedModel) {
+    return (
+      <PageContainer>
+        <ChatSkeleton />
       </PageContainer>
     );
   }

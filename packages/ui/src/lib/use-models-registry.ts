@@ -13,6 +13,7 @@ const CHAT_CONFIG_URL = '/api/chat/config';
 interface ChatConfigSettings {
   defaultProviderId: string;
   defaultModelId: string;
+  enabledModels?: Record<string, string[]>;
 }
 
 interface ChatConfigResponse {
@@ -94,6 +95,7 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
     configuredProviderIds: [] as string[],
   });
   const [savedDefaults, setSavedDefaults] = useState<{ providerId: string; modelId: string } | null>(null);
+  const [enabledModels, setEnabledModels] = useState<Record<string, string[]> | null>(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
@@ -124,7 +126,7 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
           configuredProviderIds: data.configuredProviderIds ?? [],
         });
 
-        // Parse saved defaults from chat config
+        // Parse saved defaults and enabled models from chat config
         if (configRes.ok) {
           const configData: ChatConfigResponse = await configRes.json();
           if (configData.settings?.defaultProviderId && configData.settings?.defaultModelId) {
@@ -132,6 +134,9 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
               providerId: configData.settings.defaultProviderId,
               modelId: configData.settings.defaultModelId,
             });
+          }
+          if (configData.settings?.enabledModels) {
+            setEnabledModels(configData.settings.enabledModels);
           }
         }
 
@@ -159,34 +164,59 @@ export const useModelsRegistry = (options: UseModelsRegistryOptions = {}) => {
     setReloadTrigger((prev) => prev + 1);
   }, []);
 
-  // Filter providers based on showUnconfigured option
+  // Filter providers based on showUnconfigured option and enabled models
   const providers = useMemo(() => {
-    if (showUnconfigured) {
-      return allProviders;
+    let filteredProviders = showUnconfigured ? allProviders : allProviders.filter((p) => p.isConfigured);
+    
+    // Apply enabled models filter if specified
+    if (enabledModels) {
+      filteredProviders = filteredProviders.map(provider => {
+        const enabledModelIds = enabledModels[provider.id];
+        if (enabledModelIds && enabledModelIds.length > 0) {
+          // Filter models to only include enabled ones
+          return {
+            ...provider,
+            models: provider.models.filter(model => enabledModelIds.includes(model.id))
+          };
+        }
+        // If no enabled models specified for this provider, include all models
+        return provider;
+      }).filter(provider => provider.models.length > 0); // Remove providers with no models
     }
-    return allProviders.filter((p) => p.isConfigured);
-  }, [allProviders, showUnconfigured]);
+    
+    return filteredProviders;
+  }, [allProviders, showUnconfigured, enabledModels]);
 
   // Use saved defaults if available and valid, otherwise compute from providers
   const defaultSelection = useMemo(() => {
     if (savedDefaults) {
       // Validate that the saved defaults are still valid (provider exists and is configured)
-      const provider = allProviders.find((p) => p.id === savedDefaults.providerId);
+      const provider = providers.find((p) => p.id === savedDefaults.providerId);
       if (provider?.isConfigured) {
         const model = provider.models.find((m) => m.id === savedDefaults.modelId);
         if (model) {
           return savedDefaults;
         }
-        // Model not found, try to find a tool-enabled model from the same provider
+        // Model not found (possibly filtered out by enabledModels), try to find a tool-enabled model from the same provider
+        console.warn(
+          `Saved default model "${savedDefaults.modelId}" not available for provider "${savedDefaults.providerId}". ` +
+          `It may have been filtered out by enabledModels configuration. Falling back to default model.`
+        );
         const fallbackModel = selectDefaultModelForProvider(provider);
         if (fallbackModel) {
           return { providerId: provider.id, modelId: fallbackModel.id };
         }
+      } else if (savedDefaults.providerId) {
+        // Provider exists but not configured, or provider not found
+        console.warn(
+          `Saved provider "${savedDefaults.providerId}" is not configured or not available. ` +
+          `Falling back to default provider.`
+        );
       }
     }
-    // Fall back to computed default
-    return selectDefaultModel(allProviders);
-  }, [allProviders, savedDefaults]);
+    // Fall back to computed default from filtered providers
+    return selectDefaultModel(providers);
+  }, [providers, savedDefaults]);
 
   return {
     providers,

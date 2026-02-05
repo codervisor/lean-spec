@@ -22,6 +22,8 @@ pub struct ChatSettings {
     pub max_steps: u32,
     pub default_provider_id: String,
     pub default_model_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enabled_models: Option<HashMap<String, Vec<String>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -289,6 +291,7 @@ fn legacy_default_chat_config() -> ChatConfig {
             max_steps: 10,
             default_provider_id: "openai".to_string(),
             default_model_id: "gpt-4o".to_string(),
+            enabled_models: None,
         },
     }
 }
