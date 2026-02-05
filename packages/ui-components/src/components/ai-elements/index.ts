@@ -35,6 +35,7 @@ export * from './plan';
 export * from './prompt-input';
 export * from './queue';
 export * from './reasoning';
+export * from './runner-logo';
 export * from './sandbox';
 export * from './schema-display';
 export * from './shimmer';

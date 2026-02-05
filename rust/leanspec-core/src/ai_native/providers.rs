@@ -100,12 +100,15 @@ fn build_provider(provider: &ChatProvider, api_key: &str) -> Result<ProviderClie
             ))
         }
         "openrouter" => {
-            let mut config = OpenAIConfig::new().with_api_key(api_key.to_string());
-            if let Some(base_url) = provider.base_url.clone() {
-                if !base_url.is_empty() {
-                    config = config.with_api_base(base_url);
-                }
-            }
+            // OpenRouter requires its specific base URL - use configured or default
+            let base_url = provider
+                .base_url
+                .clone()
+                .filter(|u| !u.is_empty())
+                .unwrap_or_else(|| "https://openrouter.ai/api/v1".to_string());
+            let config = OpenAIConfig::new()
+                .with_api_key(api_key.to_string())
+                .with_api_base(base_url);
             Ok(ProviderClient::OpenRouter(OpenAIClient::with_config(
                 config,
             )))

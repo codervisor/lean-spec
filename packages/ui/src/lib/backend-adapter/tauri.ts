@@ -20,6 +20,9 @@ import type {
   SessionEvent,
   SessionLog,
   SessionMode,
+  ChatConfig,
+  ChatStorageInfo,
+  ModelsRegistryResponse,
   SpecTokenResponse,
   SpecValidationResponse,
   RunnerDefinition,
@@ -264,12 +267,13 @@ export class TauriBackendAdapter implements BackendAdapter {
   async listAvailableRunners(projectPath?: string): Promise<string[]> {
     const response = await this.listRunners(projectPath);
     const runners = response?.runners ?? [];
-    return runners.filter((runner) => runner.available).map((runner) => runner.id);
+    return runners.filter((runner) => runner.available === true).map((runner) => runner.id);
   }
 
-  async listRunners(projectPath?: string): Promise<RunnerListResponse> {
+  async listRunners(projectPath?: string, options?: { skipValidation?: boolean }): Promise<RunnerListResponse> {
     return this.invoke<RunnerListResponse>('desktop_list_runners', {
       projectPath,
+      skipValidation: options?.skipValidation ?? false,
     });
   }
 
@@ -346,6 +350,38 @@ export class TauriBackendAdapter implements BackendAdapter {
       projectPath: payload.projectPath,
       runnerId: payload.runnerId,
       scope: payload.scope,
+    });
+  }
+
+  async getChatConfig(): Promise<ChatConfig> {
+    return this.invoke<ChatConfig>('desktop_get_chat_config');
+  }
+
+  async updateChatConfig(config: ChatConfig): Promise<ChatConfig> {
+    return this.invoke<ChatConfig>('desktop_update_chat_config', {
+      config,
+    });
+  }
+
+  async getChatStorageInfo(): Promise<ChatStorageInfo> {
+    return this.invoke<ChatStorageInfo>('desktop_get_chat_storage_info');
+  }
+
+  async getModelsProviders(options?: { agenticOnly?: boolean }): Promise<ModelsRegistryResponse> {
+    return this.invoke<ModelsRegistryResponse>('desktop_get_models_providers', {
+      agenticOnly: options?.agenticOnly ?? false,
+    });
+  }
+
+  async refreshModelsRegistry(): Promise<void> {
+    await this.invoke('desktop_refresh_models_registry');
+  }
+
+  async setProviderApiKey(providerId: string, apiKey: string, baseUrl?: string): Promise<void> {
+    await this.invoke('desktop_set_provider_api_key', {
+      providerId,
+      apiKey,
+      baseUrl,
     });
   }
 }

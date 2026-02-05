@@ -418,8 +418,12 @@ pub async fn delete_session(
 
 /// List available runners
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListRunnersRequest {
     pub project_path: Option<String>,
+    /// When true, skip command validation and version detection for faster response
+    #[serde(default)]
+    pub skip_validation: bool,
 }
 
 #[derive(Debug, Default, Deserialize, Clone, Copy)]
@@ -488,7 +492,8 @@ pub struct RunnerInfoResponse {
     pub command: Option<String>,
     pub args: Vec<String>,
     pub env: HashMap<String, String>,
-    pub available: bool,
+    /// None means validation hasn't been performed yet (pending state)
+    pub available: Option<bool>,
     pub version: Option<String>,
     pub source: String,
 }
@@ -526,7 +531,8 @@ pub async fn list_runners(
 ) -> ApiResult<Json<RunnerListResponse>> {
     let project_path = req.project_path.unwrap_or_else(|| ".".to_string());
 
-    let response = build_runner_list_response(&project_path).map_err(internal_error)?;
+    let response =
+        build_runner_list_response(&project_path, req.skip_validation).map_err(internal_error)?;
 
     Ok(Json(response))
 }
@@ -558,7 +564,12 @@ pub async fn get_runner(
         )
     })?;
 
-    Ok(Json(build_runner_info(runner, &sources)))
+    // When getting a single runner, always validate (skip_validation = false)
+    Ok(Json(build_runner_info(
+        runner,
+        &sources,
+        req.skip_validation,
+    )))
 }
 
 pub async fn create_runner(
@@ -602,7 +613,7 @@ pub async fn create_runner(
         )
     })?;
 
-    let response = build_runner_list_response(&req.project_path).map_err(|e| {
+    let response = build_runner_list_response(&req.project_path, false).map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -654,7 +665,7 @@ pub async fn update_runner(
         )
     })?;
 
-    let response = build_runner_list_response(&req.project_path).map_err(|e| {
+    let response = build_runner_list_response(&req.project_path, false).map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -692,7 +703,7 @@ pub async fn delete_runner(
         )
     })?;
 
-    let response = build_runner_list_response(&req.project_path).map_err(|e| {
+    let response = build_runner_list_response(&req.project_path, false).map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -771,7 +782,7 @@ pub async fn set_default_runner(
         )
     })?;
 
-    let response = build_runner_list_response(&req.project_path).map_err(|e| {
+    let response = build_runner_list_response(&req.project_path, false).map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError::internal_error(&e.to_string())),
@@ -912,6 +923,7 @@ fn load_runner_sources(
 fn build_runner_info(
     runner: &RunnerDefinition,
     sources: &(HashSet<String>, HashSet<String>),
+    skip_validation: bool,
 ) -> RunnerInfoResponse {
     let (global_sources, project_sources) = sources;
     let source = if project_sources.contains(&runner.id) {
@@ -922,11 +934,20 @@ fn build_runner_info(
         "builtin"
     };
 
-    let available = runner.validate_command().is_ok();
-    let version = if available {
-        runner.detect_version()
+    // When skip_validation is true, return availability as None (pending)
+    // to indicate validation hasn't been performed yet
+    let (available, version) = if skip_validation {
+        // Return None for available to indicate pending validation state
+        // The frontend will show a loading state and trigger async validation
+        (None, None)
     } else {
-        None
+        let is_available = runner.validate_command().is_ok();
+        let ver = if is_available {
+            runner.detect_version()
+        } else {
+            None
+        };
+        (Some(is_available), ver)
     };
 
     RunnerInfoResponse {
@@ -941,13 +962,16 @@ fn build_runner_info(
     }
 }
 
-fn build_runner_list_response(project_path: &str) -> leanspec_core::CoreResult<RunnerListResponse> {
+fn build_runner_list_response(
+    project_path: &str,
+    skip_validation: bool,
+) -> leanspec_core::CoreResult<RunnerListResponse> {
     let registry = RunnerRegistry::load(PathBuf::from(project_path).as_path())?;
     let sources = load_runner_sources(project_path)?;
     let runners = registry
         .list()
         .into_iter()
-        .map(|runner| build_runner_info(runner, &sources))
+        .map(|runner| build_runner_info(runner, &sources, skip_validation))
         .collect::<Vec<_>>();
 
     Ok(RunnerListResponse {

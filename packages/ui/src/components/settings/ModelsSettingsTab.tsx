@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
@@ -22,14 +22,16 @@ import {
   Switch,
   cn,
 } from '@leanspec/ui-components';
-import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, ListFilter, Check, Key } from 'lucide-react';
-import type { ChatConfig, Provider } from '../../types/chat-config';
+import { Plus, Trash2, CheckCircle, AlertCircle, Settings, RefreshCw, ChevronDown, Wrench, Eye, EyeOff, Zap, Brain, ImageIcon, MoreVertical, Star, ListFilter, Check, Key, ArrowUp, ArrowDown } from 'lucide-react';
+import type { Provider } from '../../types/chat-config';
 import type { RegistryProvider } from '../../types/models-registry';
 import { SearchFilterBar } from '../shared/SearchFilterBar';
 import { useToast } from '../../contexts';
 import { useModelsRegistry } from '../../lib/use-models-registry';
 import { useAIFiltersStore } from '../../stores/settings-filters';
 import { List, type RowComponentProps } from 'react-window';
+import { useChatConfig, useChatConfigMutations } from '../../hooks/useChatConfigQuery';
+import { useModelsRegistryMutations } from '../../hooks/useModelsQuery';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -56,16 +58,16 @@ export function ModelsSettingsTab() {
     reload: reloadRegistry,
   } = useModelsRegistry();
 
-  // Chat config (for defaults and custom providers)
-  const [config, setConfig] = useState<ChatConfig | null>(null);
-  const [configLoading, setConfigLoading] = useState(true);
+  // Chat config (for defaults and custom providers) - use TanStack Query
+  const { data: config, isLoading: configLoading } = useChatConfig();
+  const { updateConfig, updateDefaults } = useChatConfigMutations();
+  const { refreshRegistry, setApiKey, isRefreshing } = useModelsRegistryMutations();
 
   // UI state
   const [showApiKeyDialog, setShowApiKeyDialog] = useState<string | null>(null);
   const [showModelsDialog, setShowModelsDialog] = useState<string | null>(null);
   const [showCustomProviderDialog, setShowCustomProviderDialog] = useState(false);
   const [editingCustomProvider, setEditingCustomProvider] = useState<Provider | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Filter/Search State - persisted via zustand store
   const {
@@ -76,25 +78,6 @@ export function ModelsSettingsTab() {
     setSortBy,
     setStatusFilter,
   } = useAIFiltersStore();
-
-  // Load chat config
-  const loadConfig = async () => {
-    try {
-      setConfigLoading(true);
-      const res = await fetch('/api/chat/config');
-      if (!res.ok) throw new Error(t('settings.ai.errors.loadConfig'));
-      const data = await res.json();
-      setConfig(data);
-    } catch {
-      // Config load failure is not critical for registry-based UI
-    } finally {
-      setConfigLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadConfig();
-  }, []);
 
   // Identify custom providers (in config but not in registry)
   const customProviders = useMemo(() => {
@@ -107,56 +90,24 @@ export function ModelsSettingsTab() {
   // Refresh registry from models.dev
   const handleRefreshRegistry = async () => {
     try {
-      setRefreshing(true);
-      const res = await fetch('/api/models/refresh', { method: 'POST' });
-      if (!res.ok) throw new Error(t('settings.ai.errors.refreshFailed'));
+      await refreshRegistry();
       reloadRegistry();
     } catch {
       // Ignore refresh errors
-    } finally {
-      setRefreshing(false);
     }
   };
 
   // Set API key for a provider (with optional base URL for providers like Azure)
   const handleSetApiKey = async (providerId: string, apiKey: string, baseUrl?: string) => {
-    const res = await fetch(`/api/models/providers/${providerId}/key`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey, baseUrl }),
-    });
-    if (!res.ok) throw new Error(t('settings.ai.errors.setApiKeyFailed'));
-    // Reload both registry and config
+    await setApiKey({ providerId, apiKey, baseUrl });
+    // Reload registry to reflect updated isConfigured status
     reloadRegistry();
-    await loadConfig();
-  };
-
-  // Save config (for defaults)
-  const saveConfig = async (newConfig: ChatConfig) => {
-    const res = await fetch('/api/chat/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newConfig),
-    });
-    if (!res.ok) throw new Error(t('settings.ai.errors.saveConfigFailed'));
-    const data = await res.json();
-    setConfig(data);
   };
 
   const handleUpdateDefaults = async (field: 'maxSteps' | 'defaultProviderId' | 'defaultModelId', value: string | number) => {
     if (!config) return;
 
-    const newSettings = { ...config.settings, [field]: value };
-
-    if (field === 'defaultProviderId') {
-      // Find model from registry or config
-      const regProvider = registryProviders.find((p) => p.id === value);
-      const cfgProvider = config.providers.find((p) => p.id === value);
-      const firstModel = regProvider?.models[0]?.id ?? cfgProvider?.models[0]?.id ?? '';
-      newSettings.defaultModelId = firstModel;
-    }
-
-    await saveConfig({ ...config, settings: newSettings });
+    await updateDefaults({ config, field, value });
   };
 
   const handleSaveEnabledModels = async (providerId: string, enabledModels: string[] | undefined) => {
@@ -181,7 +132,7 @@ export function ModelsSettingsTab() {
       };
     }
 
-    await saveConfig({ ...config, settings: newSettings });
+    await updateConfig({ ...config, settings: newSettings });
     reloadRegistry();
   };
 
@@ -207,7 +158,7 @@ export function ModelsSettingsTab() {
       newProviders.push(provider);
     }
 
-    await saveConfig({ ...config, providers: newProviders });
+    await updateConfig({ ...config, providers: newProviders });
   };
 
   const handleDeleteCustomProvider = async (providerId: string) => {
@@ -224,7 +175,7 @@ export function ModelsSettingsTab() {
       newConfig.settings.defaultModelId = '';
     }
 
-    await saveConfig(newConfig);
+    await updateConfig(newConfig);
   };
 
   // All providers for defaults dropdown
@@ -326,8 +277,8 @@ export function ModelsSettingsTab() {
             <p className="text-sm text-muted-foreground mt-0.5">{t('settings.ai.providersDescription')}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefreshRegistry} disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <Button variant="outline" size="sm" onClick={handleRefreshRegistry} disabled={isRefreshing}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               {t('settings.ai.refreshRegistry')}
             </Button>
             <Button
@@ -941,6 +892,9 @@ function ProviderApiKeyDialog({ provider, onSave, onCancel }: ProviderApiKeyDial
   );
 }
 
+type ModelSortField = 'name' | 'tokens';
+type ModelSortDirection = 'asc' | 'desc';
+
 interface ProviderModelsDialogProps {
   provider: RegistryProvider;
   initialEnabledModels: string[] | undefined;
@@ -958,6 +912,10 @@ function ProviderModelsDialog({ provider, initialEnabledModels, onSave, onCancel
   );
   const [savingModels, setSavingModels] = useState(false);
 
+  // Sorting State
+  const [sortField, setSortField] = useState<ModelSortField>('name');
+  const [sortDirection, setSortDirection] = useState<ModelSortDirection>('asc');
+
   // Track if user has interacted with selection (to avoid auto-selecting after manual deselect)
   const hasUserInteracted = useRef(false);
 
@@ -971,6 +929,32 @@ function ProviderModelsDialog({ provider, initialEnabledModels, onSave, onCancel
       setEnabledSet(new Set(provider.models.map(m => m.id)));
     }
   }, [isRestricted, provider.models, initialEnabledModels, enabledSet.size]);
+
+  // Sorted models
+  const sortedModels = useMemo(() => {
+    return [...provider.models].sort((a, b) => {
+      let comparison = 0;
+      if (sortField === 'name') {
+        comparison = a.name.localeCompare(b.name);
+      } else if (sortField === 'tokens') {
+        const aTokens = a.contextWindow ?? 0;
+        const bTokens = b.contextWindow ?? 0;
+        comparison = aTokens - bTokens;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [provider.models, sortField, sortDirection]);
+
+  const toggleSort = (field: ModelSortField) => {
+    if (sortField === field) {
+      // Toggle direction
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Change field, default to asc
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const toggleModel = (id: string) => {
     hasUserInteracted.current = true;
@@ -1046,7 +1030,32 @@ function ProviderModelsDialog({ provider, initialEnabledModels, onSave, onCancel
               </div>
             ) : (
               <div className="absolute inset-0 flex flex-col">
-                <div className="p-2 border-b flex justify-end">
+                <div className="p-2 border-b flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground mr-2">{t('settings.ai.modelSort.sortBy')}:</span>
+                    <Button
+                      variant={sortField === 'name' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleSort('name')}
+                      className="text-xs h-7 gap-1"
+                    >
+                      {t('settings.ai.modelSort.name')}
+                      {sortField === 'name' && (
+                        sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      )}
+                    </Button>
+                    <Button
+                      variant={sortField === 'tokens' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleSort('tokens')}
+                      className="text-xs h-7 gap-1"
+                    >
+                      {t('settings.ai.modelSort.tokens')}
+                      {sortField === 'tokens' && (
+                        sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
                   <Button variant="ghost" size="sm" onClick={toggleAll} className="text-xs h-7">
                     {enabledSet.size === provider.models.length ? t('settings.ai.deselectAll') : t('settings.ai.selectAll')}
                   </Button>
@@ -1056,7 +1065,7 @@ function ProviderModelsDialog({ provider, initialEnabledModels, onSave, onCancel
                   <CommandList className="max-h-full">
                     <CommandEmpty>{t('chat.noModelsFound')}</CommandEmpty>
                     <CommandGroup>
-                      {provider.models.map(model => (
+                      {sortedModels.map(model => (
                         <CommandItem
                           key={model.id}
                           value={`${model.name} ${model.id}`}
@@ -1075,6 +1084,11 @@ function ProviderModelsDialog({ provider, initialEnabledModels, onSave, onCancel
                             <div className="flex items-center gap-2">
                               <span className="font-medium truncate">{model.name}</span>
                               {model.toolCall && <Badge variant="secondary" className="text-[10px] h-4 px-1">{t('chat.modelSelector.badges.tool')}</Badge>}
+                              {model.contextWindow && (
+                                <Badge variant="outline" className="text-[10px] h-4 px-1 font-mono">
+                                  {Math.round(model.contextWindow / 1000)}k
+                                </Badge>
+                              )}
                             </div>
                             <div className="text-xs text-muted-foreground font-mono truncate">{model.id}</div>
                           </div>

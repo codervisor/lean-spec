@@ -24,7 +24,7 @@
     "analytics": "Analytics",
     "projectContext": "Project Context",
     "settings": "Settings",
-    "settingsDescription": "Preferences and configuration",
+    "settingsDescription": "Preferences and config",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
     "githubTooltip": "GitHub repository",
@@ -526,6 +526,11 @@
         "name": "Name",
         "models": "Model Count",
         "configured": "Configured First"
+      },
+      "modelSort": {
+        "sortBy": "Sort by",
+        "name": "Name",
+        "tokens": "Tokens"
       },
       "filters": {
         "status": "Status",

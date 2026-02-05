@@ -112,79 +112,112 @@ export type ModelSelectorLogoProps = Omit<
   "src" | "alt"
 > & {
   provider:
-    | "moonshotai-cn"
-    | "lucidquery"
-    | "moonshotai"
-    | "zai-coding-plan"
-    | "alibaba"
-    | "xai"
-    | "vultr"
-    | "nvidia"
-    | "upstage"
-    | "groq"
-    | "github-copilot"
-    | "mistral"
-    | "vercel"
-    | "nebius"
-    | "deepseek"
-    | "alibaba-cn"
-    | "google-vertex-anthropic"
-    | "venice"
-    | "chutes"
-    | "cortecs"
-    | "github-models"
-    | "togetherai"
-    | "azure"
-    | "baseten"
-    | "huggingface"
-    | "opencode"
-    | "fastrouter"
-    | "google"
-    | "google-vertex"
-    | "cloudflare-workers-ai"
-    | "inception"
-    | "wandb"
-    | "openai"
-    | "zhipuai-coding-plan"
-    | "perplexity"
-    | "openrouter"
-    | "zenmux"
-    | "v0"
-    | "iflowcn"
-    | "synthetic"
-    | "deepinfra"
-    | "zhipuai"
-    | "submodel"
-    | "zai"
-    | "inference"
-    | "requesty"
-    | "morph"
-    | "lmstudio"
-    | "anthropic"
-    | "aihubmix"
-    | "fireworks-ai"
-    | "modelscope"
-    | "llama"
-    | "scaleway"
-    | "amazon-bedrock"
-    | "cerebras"
-    | (string & {});
+  | "moonshotai-cn"
+  | "lucidquery"
+  | "moonshotai"
+  | "zai-coding-plan"
+  | "alibaba"
+  | "xai"
+  | "vultr"
+  | "nvidia"
+  | "upstage"
+  | "groq"
+  | "github-copilot"
+  | "mistral"
+  | "vercel"
+  | "nebius"
+  | "deepseek"
+  | "alibaba-cn"
+  | "google-vertex-anthropic"
+  | "venice"
+  | "chutes"
+  | "cortecs"
+  | "github-models"
+  | "togetherai"
+  | "azure"
+  | "baseten"
+  | "huggingface"
+  | "opencode"
+  | "fastrouter"
+  | "google"
+  | "google-vertex"
+  | "cloudflare-workers-ai"
+  | "inception"
+  | "wandb"
+  | "openai"
+  | "zhipuai-coding-plan"
+  | "perplexity"
+  | "openrouter"
+  | "zenmux"
+  | "v0"
+  | "iflowcn"
+  | "synthetic"
+  | "deepinfra"
+  | "zhipuai"
+  | "submodel"
+  | "zai"
+  | "inference"
+  | "requesty"
+  | "morph"
+  | "lmstudio"
+  | "anthropic"
+  | "aihubmix"
+  | "fireworks-ai"
+  | "modelscope"
+  | "llama"
+  | "scaleway"
+  | "amazon-bedrock"
+  | "cerebras"
+  | (string & {});
 };
+
+/**
+ * Providers that should be rendered with their original colors.
+ * All other providers will be rendered as monochrome masks (adapting to text color).
+ */
+const coloredProviders = new Set([
+  "google",
+  "google-vertex",
+]);
 
 export const ModelSelectorLogo = ({
   provider,
   className,
   ...props
-}: ModelSelectorLogoProps) => (
-  <img
-    {...props}
-    alt={`${provider} logo`}
-    className={cn("size-3 dark:invert", className)}
-    height={12}
-    src={`https://models.dev/logos/${provider}.svg`}
-    width={12}
-  />
-);
+}: ModelSelectorLogoProps) => {
+  const isMonochrome = !coloredProviders.has(provider);
+  const logoUrl = `https://models.dev/logos/${provider}.svg`;
+
+  if (isMonochrome) {
+    return (
+      <div
+        className={cn("size-3 bg-current", className)}
+        style={{
+          maskImage: `url(${logoUrl})`,
+          maskSize: "contain",
+          maskPosition: "center",
+          maskRepeat: "no-repeat",
+          WebkitMaskImage: `url(${logoUrl})`,
+          WebkitMaskSize: "contain",
+          WebkitMaskPosition: "center",
+          WebkitMaskRepeat: "no-repeat",
+        }}
+        {...(props as any)}
+      />
+    );
+  }
+
+  return (
+    <img
+      {...props}
+      alt={`${provider} logo`}
+      className={cn("size-3", className)}
+      height={12}
+      src={logoUrl}
+      width={12}
+    />
+  );
+};
 
 export type ModelSelectorLogoGroupProps = ComponentProps<"div">;
 
@@ -194,7 +227,7 @@ export const ModelSelectorLogoGroup = ({
 }: ModelSelectorLogoGroupProps) => (
   <div
     className={cn(
-      "-space-x-1 flex shrink-0 items-center [&>img]:rounded-full [&>img]:bg-background [&>img]:p-px [&>img]:ring-1 dark:[&>img]:bg-foreground",
+      "-space-x-1 flex shrink-0 items-center [&>*]:rounded-full [&>*]:bg-background [&>*]:p-px [&>*]:ring-1",
       className
     )}
     {...props}

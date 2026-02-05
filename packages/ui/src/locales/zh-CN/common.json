@@ -514,6 +514,11 @@
         "models": "模型数量",
         "configured": "已配置优先"
       },
+      "modelSort": {
+        "sortBy": "排序方式",
+        "name": "名称",
+        "tokens": "令牌数"
+      },
       "filters": {
         "status": "状态",
         "all": "全部",

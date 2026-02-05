@@ -8,7 +8,6 @@ import {
   Trash2,
   MoreVertical,
   Play,
-  Terminal,
   Star,
   Loader2,
   Settings,
@@ -32,6 +31,7 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
+  RunnerLogo,
   cn,
 } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
@@ -54,45 +54,15 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
   );
 }
 
-type ValidationStatus = 'idle' | 'checking' | 'valid' | 'invalid';
-
-interface RunnerValidationState {
-  status: ValidationStatus;
-  error?: string;
-  checkedAt?: number;
-}
-
-const RUNNER_VALIDATION_TTL_MS = 5 * 60 * 1000;
-
-const getRunnerValidationCacheKey = (projectPath?: string | null) =>
-  `settings-runner-validation-cache:${projectPath ?? 'global'}`;
-
-const formatTimestamp = (timestamp?: number) => {
-  if (!timestamp) return '';
-  return new Date(timestamp).toLocaleString();
-};
-
-const readRunnerValidationCache = (projectPath?: string | null): Record<string, { valid: boolean; error?: string | null; checkedAt: number }> => {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = localStorage.getItem(getRunnerValidationCacheKey(projectPath));
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, { valid: boolean; error?: string | null; checkedAt: number }>;
-    }
-  } catch {
-    return {};
-  }
-  return {};
-};
-
-const writeRunnerValidationCache = (
-  projectPath: string | null | undefined,
-  cache: Record<string, { valid: boolean; error?: string | null; checkedAt: number }>
-) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(getRunnerValidationCacheKey(projectPath), JSON.stringify(cache));
+/**
+ * Helper to determine runner availability.
+ * Uses `runner.available` from API (PATH check result) as the source of truth.
+ * Returns: true = available, false = unavailable, undefined = pending/checking
+ */
+const getRunnerAvailability = (runner: RunnerDefinition): boolean | undefined => {
+  // IDE-only runners (no command) are always considered "N/A available"
+  if (!runner.command) return undefined;
+  return runner.available;
 };
 
 export function RunnerSettingsTab() {
@@ -101,15 +71,12 @@ export function RunnerSettingsTab() {
   const { currentProject } = useCurrentProject();
   const projectPath = currentProject?.path;
   const [loading, setLoading] = useState(true);
+  const [revalidating, setRevalidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [runners, setRunners] = useState<RunnerDefinition[]>([]);
   const [defaultRunner, setDefaultRunner] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editingRunner, setEditingRunner] = useState<RunnerDefinition | null>(null);
-  const [validatingRunners, setValidatingRunners] = useState<Record<string, boolean>>({});
-  const [runnerValidation, setRunnerValidation] = useState<Record<string, RunnerValidationState>>({});
-  const [validatingAll, setValidatingAll] = useState(false);
-  const [autoValidated, setAutoValidated] = useState(false);
 
   // Filter/Search State - persisted via zustand store
   const {
@@ -144,7 +111,11 @@ export function RunnerSettingsTab() {
 
     try {
       setLoading(true);
-      const response = await api.listRunners(projectPath);
+      // skipValidation=false to get PATH check results (cheap)
+      // Version detection only runs for available runners
+      const response = await api.listRunners(projectPath, {
+        skipValidation: false
+      });
       applyResponse(response);
       setError(null);
     } catch (err) {
@@ -158,124 +129,23 @@ export function RunnerSettingsTab() {
     void loadRunners();
   }, [loadRunners]);
 
-  const runnerIdsKey = useMemo(() => runners.map((runner) => runner.id).join('|'), [runners]);
-
-  useEffect(() => {
-    setAutoValidated(false);
-  }, [projectPath, runnerIdsKey]);
-
-  useEffect(() => {
-    setRunnerValidation({});
-  }, [projectPath]);
-
-  const updateRunnerValidationCache = useCallback(
-    (runnerId: string, valid: boolean, error?: string | null) => {
-      const cache = readRunnerValidationCache(projectPath);
-      cache[runnerId] = {
-        valid,
-        error,
-        checkedAt: Date.now(),
-      };
-      writeRunnerValidationCache(projectPath, cache);
-    },
-    [projectPath]
-  );
-
-  const validateRunner = useCallback(
-    async (runner: RunnerDefinition) => {
-      if (!projectPath || !runner.command) return;
-
-      setValidatingRunners((prev) => ({ ...prev, [runner.id]: true }));
-      setRunnerValidation((prev) => ({
-        ...prev,
-        [runner.id]: {
-          ...prev[runner.id],
-          status: 'checking',
-        },
-      }));
-
-      try {
-        const response = await api.validateRunner(runner.id, projectPath);
-        updateRunnerValidationCache(runner.id, response.valid, response.error ?? null);
-        setRunnerValidation((prev) => ({
-          ...prev,
-          [runner.id]: {
-            status: response.valid ? 'valid' : 'invalid',
-            error: response.error ?? undefined,
-            checkedAt: Date.now(),
-          },
-        }));
-      } catch (err) {
-        const message = err instanceof Error ? err.message : t('settings.runners.errors.validateFailed');
-        updateRunnerValidationCache(runner.id, false, message);
-        setRunnerValidation((prev) => ({
-          ...prev,
-          [runner.id]: {
-            status: 'invalid',
-            error: message,
-            checkedAt: Date.now(),
-          },
-        }));
-        setError(message);
-      } finally {
-        setValidatingRunners((prev) => {
-          const next = { ...prev };
-          delete next[runner.id];
-          return next;
-        });
-      }
-    },
-    [projectPath, t, updateRunnerValidationCache]
-  );
-
   const handleRevalidateAll = useCallback(async () => {
     if (!projectPath) return;
     const runnable = runners.filter((runner) => Boolean(runner.command));
     if (runnable.length === 0) return;
-    setValidatingAll(true);
-    await Promise.allSettled(runnable.map((runner) => validateRunner(runner)));
-    await loadRunners();
-    setValidatingAll(false);
-  }, [loadRunners, projectPath, runners, validateRunner]);
 
-  useEffect(() => {
-    if (loading || autoValidated || !projectPath) return;
-    const cache = readRunnerValidationCache(projectPath);
-    const now = Date.now();
-    const cachedState: Record<string, RunnerValidationState> = {};
-    const toValidate: RunnerDefinition[] = [];
-
-    runners.forEach((runner) => {
-      if (!runner.command) return;
-      const cached = cache[runner.id];
-      if (cached && now - cached.checkedAt < RUNNER_VALIDATION_TTL_MS) {
-        cachedState[runner.id] = {
-          status: cached.valid ? 'valid' : 'invalid',
-          error: cached.error ?? undefined,
-          checkedAt: cached.checkedAt,
-        };
-      } else {
-        toValidate.push(runner);
-      }
-    });
-
-    if (Object.keys(cachedState).length > 0) {
-      setRunnerValidation((prev) => ({ ...prev, ...cachedState }));
+    setRevalidating(true);
+    try {
+      // Just reload with full validation
+      const response = await api.listRunners(projectPath, { skipValidation: false });
+      applyResponse(response);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('settings.runners.errors.loadFailed'));
+    } finally {
+      setRevalidating(false);
     }
-
-    if (toValidate.length === 0) {
-      setAutoValidated(true);
-      return;
-    }
-
-    setValidatingAll(true);
-    Promise.allSettled(toValidate.map((runner) => validateRunner(runner)))
-      .then(() => loadRunners())
-      .finally(() => {
-        setValidatingAll(false);
-        setAutoValidated(true);
-      });
-  }, [autoValidated, loading, loadRunners, projectPath, runners, validateRunner]);
+  }, [projectPath, runners, t]);
 
   const handleSaveRunner = async (payload: {
     id: string;
@@ -336,9 +206,9 @@ export function RunnerSettingsTab() {
   };
 
   const handleValidate = async (runner: RunnerDefinition) => {
-    if (!projectPath) return;
+    if (!projectPath || !runner.command) return;
     try {
-      await validateRunner(runner);
+      // Single runner validation - just reload to get updated state
       await loadRunners();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.runners.errors.validateFailed'));
@@ -369,7 +239,7 @@ export function RunnerSettingsTab() {
   const filteredRunners = useMemo(() => {
     let result = [...runners];
 
-    // Filter
+    // Filter by search query
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -380,12 +250,13 @@ export function RunnerSettingsTab() {
       );
     }
 
+    // Filter out unavailable runners (unless showUnavailable is true)
     if (!showUnavailable) {
-      // Only show available runners (or those without command like IDE extensions if handled that way, 
-      // but here unavailable usually means command check failed)
-      result = result.filter(r => r.available !== false);
+      // Only show available runners (or IDE-only / pending)
+      result = result.filter(r => getRunnerAvailability(r) !== false);
     }
 
+    // Filter by source
     if (sourceFilter !== 'all') {
       result = result.filter(r => r.source === sourceFilter);
     }
@@ -394,7 +265,11 @@ export function RunnerSettingsTab() {
     result.sort((a, b) => {
       if (sortBy === 'available') {
         // Available first
-        if (a.available !== b.available) return (b.available ? 1 : 0) - (a.available ? 1 : 0);
+        const aAvailable = getRunnerAvailability(a) === true;
+        const bAvailable = getRunnerAvailability(b) === true;
+        if (aAvailable !== bAvailable) {
+          return bAvailable ? 1 : -1;
+        }
       }
       // Default to name
       const nameA = a.name || a.id;
@@ -434,17 +309,17 @@ export function RunnerSettingsTab() {
             <p className="text-sm text-muted-foreground mt-0.5">{t('settings.runners.description')}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => loadRunners()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => loadRunners()} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {t('actions.refresh')}
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRevalidateAll}
-              disabled={validatingAll || !runners.some((runner) => runner.command)}
+              disabled={revalidating || !runners.some((runner) => runner.command)}
             >
-              <Loader2 className={`h-4 w-4 mr-2 ${validatingAll ? 'animate-spin' : ''}`} />
+              <Loader2 className={`h-4 w-4 mr-2 ${revalidating ? 'animate-spin' : ''}`} />
               {t('settings.runners.validation.revalidateAll')}
             </Button>
             <Button
@@ -515,9 +390,6 @@ export function RunnerSettingsTab() {
           </p>
         ) : (
           filteredRunners.map((runner) => {
-            const validation = runnerValidation[runner.id];
-            const lastCheckedLabel = formatTimestamp(validation?.checkedAt);
-
             const handleShortcut = (event: React.KeyboardEvent) => {
               if (event.key.toLowerCase() !== 'd') return;
               const target = event.target as HTMLElement | null;
@@ -536,9 +408,7 @@ export function RunnerSettingsTab() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className="h-10 w-10 shrink-0 rounded-md bg-muted flex items-center justify-center">
-                      <Terminal className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                    <RunnerLogo runnerId={runner.id} size={40} />
 
                     <HoverCard openDelay={200} closeDelay={100}>
                       <HoverCardTrigger asChild>
@@ -552,22 +422,33 @@ export function RunnerSettingsTab() {
                               </Badge>
                             )}
                             {runner.command ? (
-                              validatingRunners[runner.id] ? (
-                                <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  {t('settings.runners.validation.checking')}
-                                </Badge>
-                              ) : runner.available ? (
-                                <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
-                                  <CheckCircle className="h-3 w-3" />
-                                  {runner.version ? `v${runner.version}` : t('settings.runners.available')}
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive" className="text-xs gap-1 h-5 px-1.5">
-                                  <AlertCircle className="h-3 w-3" />
-                                  {t('settings.runners.unavailable')}
-                                </Badge>
-                              )
+                              // Show availability status from API
+                              (() => {
+                                const availability = getRunnerAvailability(runner);
+
+                                if (availability === true) {
+                                  return (
+                                    <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
+                                      <CheckCircle className="h-3 w-3" />
+                                      {runner.version ? `v${runner.version}` : t('settings.runners.available')}
+                                    </Badge>
+                                  );
+                                } else if (availability === false) {
+                                  return (
+                                    <Badge variant="destructive" className="text-xs gap-1 h-5 px-1.5">
+                                      <AlertCircle className="h-3 w-3" />
+                                      {t('settings.runners.unavailable')}
+                                    </Badge>
+                                  );
+                                }
+                                // availability === undefined: pending/loading
+                                return (
+                                  <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-muted-foreground">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    {t('settings.runners.validation.checking')}
+                                  </Badge>
+                                );
+                              })()
                             ) : (
                               <Badge variant="secondary" className="text-xs h-5 px-1.5">
                                 {t('settings.runners.ideOnly')}
@@ -593,12 +474,7 @@ export function RunnerSettingsTab() {
                               {t('settings.runners.details.version')}: <span className="font-mono text-foreground">{runner.version}</span>
                             </div>
                           )}
-                          {runner.command && lastCheckedLabel && (
-                            <div className="text-xs text-muted-foreground">
-                              {t('settings.runners.validation.lastChecked', { time: lastCheckedLabel })}
-                            </div>
-                          )}
-                          {!runner.available && runner.command && (
+                          {runner.command && runner.available === false && (
                             <div className="text-xs text-destructive">{t('settings.runners.details.notFound')}</div>
                           )}
                         </div>
@@ -640,7 +516,7 @@ export function RunnerSettingsTab() {
 
                         <DropdownMenuItem
                           onClick={() => handleValidate(runner)}
-                          disabled={Boolean(validatingRunners[runner.id]) || !runner.command}
+                          disabled={loading || revalidating || !runner.command}
                         >
                           <Play className="h-4 w-4 mr-2" />
                           {t('actions.validate')}

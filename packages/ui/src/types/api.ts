@@ -62,7 +62,11 @@ export interface RunnerDefinition {
   command?: string | null;
   args: string[];
   env: Record<string, string>;
-  available: boolean;
+  /** 
+   * True if command is available, false if not, undefined if validation pending.
+   * When skipValidation=true on list request, this will be undefined.
+   */
+  available?: boolean;
   version?: string | null;
   source: RunnerSource;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,8 +23,9 @@ import {
   Badge,
 } from '@leanspec/ui-components';
 import { ArrowLeft, Plus, Trash2, Edit2, CheckCircle, AlertCircle } from 'lucide-react';
-import type { ChatConfig, Provider, Model } from '../types/chat-config';
+import type { Provider, Model } from '../types/chat-config';
 import { PageContainer } from '../components/shared/PageContainer';
+import { useChatConfig, useChatConfigMutations } from '../hooks/useChatConfigQuery';
 
 function Label({ htmlFor, children, className = '' }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -37,9 +38,12 @@ function Label({ htmlFor, children, className = '' }: { htmlFor?: string; childr
 export function ChatSettingsPage() {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
-  const [config, setConfig] = useState<ChatConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Use TanStack Query for config loading
+  const { data: config, isLoading: loading, error: queryError, refetch } = useChatConfig();
+  const { updateProvider, deleteProvider, updateModel, deleteModel, updateDefaults } = useChatConfigMutations();
+  const error = queryError?.message ?? null;
+
   const [showProviderDialog, setShowProviderDialog] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [showModelDialog, setShowModelDialog] = useState(false);
@@ -47,82 +51,21 @@ export function ChatSettingsPage() {
   const [providerToDelete, setProviderToDelete] = useState<string | null>(null);
   const [modelToDelete, setModelToDelete] = useState<{ providerId: string; modelId: string } | null>(null);
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/chat/config');
-      if (!res.ok) throw new Error(t('chat.settings.errors.loadConfig'));
-      const data = await res.json();
-      setConfig(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.unknownError'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveConfig = async (newConfig: ChatConfig) => {
-    try {
-      const res = await fetch('/api/chat/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newConfig),
-      });
-      if (!res.ok) throw new Error(t('chat.settings.errors.saveConfig'));
-      const data = await res.json();
-      setConfig(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.unknownError'));
-      throw err;
-    }
-  };
-
   const handleDeleteProvider = (providerId: string) => {
     setProviderToDelete(providerId);
   };
 
   const executeDeleteProvider = async () => {
     if (!config || !providerToDelete) return;
-    const providerId = providerToDelete;
 
-    const newConfig = {
-      ...config,
-      providers: config.providers.filter((p) => p.id !== providerId),
-    };
-
-    // Update default provider if it was deleted
-    if (config.settings.defaultProviderId === providerId) {
-      newConfig.settings.defaultProviderId = newConfig.providers[0]?.id ?? '';
-      newConfig.settings.defaultModelId = newConfig.providers[0]?.models[0]?.id ?? '';
-    }
-
-    await saveConfig(newConfig);
+    await deleteProvider({ config, providerId: providerToDelete });
     setProviderToDelete(null);
   };
 
   const handleSaveProvider = async (provider: Provider) => {
     if (!config) return;
 
-    const existingIndex = config.providers.findIndex((p) => p.id === provider.id);
-    const newProviders = [...config.providers];
-
-    if (existingIndex >= 0) {
-      newProviders[existingIndex] = provider;
-    } else {
-      newProviders.push(provider);
-    }
-
-    await saveConfig({
-      ...config,
-      providers: newProviders,
-    });
-
+    await updateProvider({ config, provider });
     setShowProviderDialog(false);
     setEditingProvider(null);
   };
@@ -130,26 +73,7 @@ export function ChatSettingsPage() {
   const handleSaveModel = async (providerId: string, model: Model) => {
     if (!config) return;
 
-    const newProviders = config.providers.map((p) => {
-      if (p.id !== providerId) return p;
-
-      const existingIndex = p.models.findIndex((m) => m.id === model.id);
-      const newModels = [...p.models];
-
-      if (existingIndex >= 0) {
-        newModels[existingIndex] = model;
-      } else {
-        newModels.push(model);
-      }
-
-      return { ...p, models: newModels };
-    });
-
-    await saveConfig({
-      ...config,
-      providers: newProviders,
-    });
-
+    await updateModel({ config, providerId, model });
     setShowModelDialog(false);
     setEditingModel(null);
   };
@@ -160,35 +84,15 @@ export function ChatSettingsPage() {
 
   const executeDeleteModel = async () => {
     if (!config || !modelToDelete) return;
-    const { providerId, modelId } = modelToDelete;
 
-    const newProviders = config.providers.map((p) => {
-      if (p.id !== providerId) return p;
-      return { ...p, models: p.models.filter((m) => m.id !== modelId) };
-    });
-
-    await saveConfig({
-      ...config,
-      providers: newProviders,
-    });
+    await deleteModel({ config, providerId: modelToDelete.providerId, modelId: modelToDelete.modelId });
     setModelToDelete(null);
   };
 
   const handleUpdateDefaults = async (field: 'maxSteps' | 'defaultProviderId' | 'defaultModelId', value: string | number) => {
     if (!config) return;
 
-    const newSettings = { ...config.settings, [field]: value };
-
-    // If changing provider, update model to first available
-    if (field === 'defaultProviderId') {
-      const provider = config.providers.find((p) => p.id === value);
-      newSettings.defaultModelId = provider?.models[0]?.id ?? '';
-    }
-
-    await saveConfig({
-      ...config,
-      settings: newSettings,
-    });
+    await updateDefaults({ config, field, value });
   };
 
   if (loading) {
@@ -208,7 +112,7 @@ export function ChatSettingsPage() {
               <AlertCircle className="h-5 w-5" />
               <p>{error || t('chat.settings.errors.loadConfiguration')}</p>
             </div>
-            <Button onClick={loadConfig} className="mt-4">
+            <Button onClick={() => refetch()} className="mt-4">
               {t('actions.retry')}
             </Button>
           </CardContent>

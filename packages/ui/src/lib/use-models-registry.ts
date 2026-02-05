@@ -1,26 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import i18next from 'i18next';
+import { api } from './api';
 import type {
-  ModelsRegistryResponse,
   ModelsRegistryProviderRaw,
   ModelsRegistryModelRaw,
   RegistryProvider,
   RegistryModel,
 } from '../types/models-registry';
-
-const API_URL = '/api/models/providers?agenticOnly=true';
-const CHAT_CONFIG_URL = '/api/chat/config';
-
-interface ChatConfigSettings {
-  defaultProviderId: string;
-  defaultModelId: string;
-  enabledModels?: Record<string, string[]>;
-}
-
-interface ChatConfigResponse {
-  settings: ChatConfigSettings;
-}
 
 const toRegistryModel = (model: ModelsRegistryModelRaw): RegistryModel => {
   const inputModalities = model.modalities?.input ?? [];
@@ -92,11 +78,7 @@ const fetchProviders = async (): Promise<{
   providers: RegistryProvider[];
   summary: { total: number; configuredCount: number; configuredProviderIds: string[] };
 }> => {
-  const res = await fetch(API_URL);
-  if (!res.ok) {
-    throw new Error(i18next.t('chat.modelsLoadError'));
-  }
-  const data: ModelsRegistryResponse = await res.json();
+  const data = await api.getModelsProviders({ agenticOnly: true });
   return {
     providers: data.providers.map(toRegistryProvider),
     summary: {
@@ -111,18 +93,18 @@ const fetchChatConfig = async (): Promise<{
   savedDefaults: { providerId: string; modelId: string } | null;
   enabledModels: Record<string, string[]> | null;
 }> => {
-  const res = await fetch(CHAT_CONFIG_URL);
-  if (!res.ok) {
+  try {
+    const data = await api.getChatConfig();
+    return {
+      savedDefaults:
+        data.settings?.defaultProviderId && data.settings?.defaultModelId
+          ? { providerId: data.settings.defaultProviderId, modelId: data.settings.defaultModelId }
+          : null,
+      enabledModels: data.settings?.enabledModels ?? null,
+    };
+  } catch {
     return { savedDefaults: null, enabledModels: null };
   }
-  const data: ChatConfigResponse = await res.json();
-  return {
-    savedDefaults:
-      data.settings?.defaultProviderId && data.settings?.defaultModelId
-        ? { providerId: data.settings.defaultProviderId, modelId: data.settings.defaultModelId }
-        : null,
-    enabledModels: data.settings?.enabledModels ?? null,
-  };
 };
 
 export const useModelsRegistry = () => {
