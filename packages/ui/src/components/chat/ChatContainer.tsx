@@ -108,6 +108,7 @@ export function ChatContainer({
         <PromptInput onSubmit={handleSubmit}>
           <PromptInputBody>
             <PromptInputTextarea
+              className="text-sm"
               placeholder={t('chat.placeholder')}
               disabled={isLoading}
               data-chat-input="true"

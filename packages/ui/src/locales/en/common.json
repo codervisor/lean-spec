@@ -24,7 +24,7 @@
     "analytics": "Analytics",
     "projectContext": "Project Context",
     "settings": "Settings",
-    "settingsDescription": "Configure AI models, appearance, and preferences",
+    "settingsDescription": "Preferences and configuration",
     "toggleMenu": "Toggle menu",
     "docsTooltip": "Documentation",
     "githubTooltip": "GitHub repository",
@@ -413,7 +413,7 @@
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
     "tabs": {
-      "ai": "AI Models",
+      "models": "Models",
       "runners": "Runners",
       "appearance": "Appearance"
     },

@@ -21,7 +21,7 @@
     "analytics": "数据分析",
     "projectContext": "项目上下文",
     "settings": "设置",
-    "settingsDescription": "配置 AI 模型、外观和偏好",
+    "settingsDescription": "偏好和配置",
     "toggleMenu": "切换菜单",
     "docsTooltip": "查看文档",
     "githubTooltip": "GitHub 仓库",
@@ -413,7 +413,7 @@
     "collapseSidebar": "收起侧边栏",
     "expandSidebar": "展开侧边栏",
     "tabs": {
-      "ai": "AI 模型",
+      "models": "模型",
       "runners": "运行器",
       "appearance": "外观"
     },

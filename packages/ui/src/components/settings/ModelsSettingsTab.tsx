@@ -43,7 +43,7 @@ function isRegistryProvider(p: RegistryProvider | Provider): p is RegistryProvid
   return 'isConfigured' in p;
 }
 
-export function AISettingsTab() {
+export function ModelsSettingsTab() {
   const { t } = useTranslation('common');
   const { toast } = useToast();
 

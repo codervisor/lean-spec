@@ -26,7 +26,7 @@ export function SettingsLayout() {
   }
 
   const tabs = [
-    { id: 'ai', path: '/settings/ai', label: t('settings.tabs.ai'), icon: Cpu },
+    { id: 'models', path: '/settings/models', label: t('settings.tabs.models'), icon: Cpu },
     { id: 'runners', path: '/settings/runners', label: t('settings.tabs.runners'), icon: Server },
     { id: 'appearance', path: '/settings/appearance', label: t('settings.tabs.appearance'), icon: Palette },
   ];

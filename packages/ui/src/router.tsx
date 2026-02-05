@@ -3,7 +3,7 @@ import { Layout } from './components/Layout';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { MachinesPage } from './pages/MachinesPage';
 import { SettingsLayout } from './layouts/SettingsLayout';
-import { AISettingsPage } from './pages/settings/AISettingsPage';
+import { ModelsSettingsPage } from './pages/settings/ModelsSettingsPage';
 import { RunnersSettingsPage } from './pages/settings/RunnersSettingsPage';
 import { AppearanceSettingsPage } from './pages/settings/AppearanceSettingsPage';
 import { RootRedirect } from './components/RootRedirect';
@@ -42,8 +42,8 @@ export const router = createBrowserRouter([
       {
         element: <SettingsLayout />,
         children: [
-          { index: true, element: <Navigate to="/settings/ai" replace /> },
-          { path: 'ai', element: <AISettingsPage /> },
+          { index: true, element: <Navigate to="/settings/models" replace /> },
+          { path: 'models', element: <ModelsSettingsPage /> },
           { path: 'runners', element: <RunnersSettingsPage /> },
           { path: 'appearance', element: <AppearanceSettingsPage /> },
         ],
