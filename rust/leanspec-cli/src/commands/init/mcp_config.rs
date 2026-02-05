@@ -111,7 +111,6 @@ pub fn default_mcp_selection(detections: &[McpDetectionResult]) -> Vec<McpTool> 
 }
 
 pub fn configure_mcp(root: &Path, tools: &[McpTool]) -> Vec<McpConfigResult> {
-    let project_path = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
     let mut results = Vec::new();
 
     for tool in tools {
