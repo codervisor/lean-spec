@@ -182,6 +182,7 @@ export function AISettingsTab() {
     }
 
     await saveConfig({ ...config, settings: newSettings });
+    reloadRegistry();
   };
 
   const handleSetDefaultProvider = async (providerId: string) => {
@@ -410,7 +411,10 @@ export function AISettingsTab() {
           provider={registryProviders.find((p) => p.id === showApiKeyDialog)!}
           onSave={async (apiKey, baseUrl) => {
             await handleSetApiKey(showApiKeyDialog, apiKey, baseUrl);
-            toast({ title: t('settings.ai.toasts.apiKeySaved'), variant: 'success' });
+            toast({
+              title: apiKey ? t('settings.ai.toasts.apiKeySaved') : t('settings.ai.toasts.apiKeyCleared'),
+              variant: 'success',
+            });
             setShowApiKeyDialog(null);
           }}
           onCancel={() => setShowApiKeyDialog(null)}
@@ -829,12 +833,46 @@ function ProviderApiKeyDialog({ provider, onSave, onCancel }: ProviderApiKeyDial
     }
   };
 
+  const handleClearApiKey = async () => {
+    try {
+      setSavingKey(true);
+      setKeyError(null);
+      await onSave('');
+      setApiKey('');
+      setResourceName('');
+    } catch (err) {
+      setKeyError(err instanceof Error ? err.message : t('settings.ai.errors.saveFailed'));
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
   return (
     <Dialog open onOpenChange={onCancel}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('settings.ai.configureProvider', { provider: provider.name })}</DialogTitle>
-          <DialogDescription>{t('settings.ai.configureProviderDescription')}</DialogDescription>
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 shrink-0 rounded-md bg-muted flex items-center justify-center border">
+              <ModelSelectorLogo provider={provider.id} className="size-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <DialogTitle>{t('settings.ai.configureProvider', { provider: provider.name })}</DialogTitle>
+                {provider.isConfigured ? (
+                  <Badge variant="outline" className="text-xs gap-1 h-5 px-1.5 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
+                    <CheckCircle className="h-3 w-3" />
+                    {t('settings.ai.keyConfigured')}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs gap-1 h-5 px-1.5">
+                    <AlertCircle className="h-3 w-3" />
+                    {t('settings.ai.noKey')}
+                  </Badge>
+                )}
+              </div>
+              <DialogDescription className="text-left">{t('settings.ai.configureProviderDescription')}</DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -889,6 +927,11 @@ function ProviderApiKeyDialog({ provider, onSave, onCancel }: ProviderApiKeyDial
           <Button variant="outline" onClick={onCancel}>
             {t('actions.close')}
           </Button>
+          {provider.isConfigured && (
+            <Button variant="destructive" onClick={handleClearApiKey} disabled={savingKey}>
+              {t('settings.ai.clearApiKey')}
+            </Button>
+          )}
           <Button onClick={handleSaveApiKey} disabled={savingKey}>
             {savingKey ? t('actions.saving') : t('actions.save')}
           </Button>

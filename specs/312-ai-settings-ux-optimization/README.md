@@ -57,15 +57,17 @@ The user wants to optimize this UX by separating these into distinct action butt
 
 ## Test
 
-- [ ] Verify "API Key" button opens the key dialog.
+- [x] Verify "API Key" button opens the key dialog.
 - [ ] Verify saving API key works.
-- [ ] Verify "Models" button opens the models dialog.
+- [x] Verify "Models" button opens the models dialog.
 - [ ] Verify saving model restrictions works.
-- [ ] Verify Custom Providers (which use a different dialog) are unaffected or updated if applicable (focus is on Registry Providers first).
+- [x] Verify Custom Providers (which use a different dialog) are unaffected or updated if applicable (focus is on Registry Providers first).
 
 ## Progress
 
 - Date: 2026-02-05
-- Verified complete: UI split into API key and models dialogs; Registry provider card shows separate actions; new dialog state and render wiring in AI settings.
-- Pending: Manual verification of API key save, model restrictions save, and custom provider behavior.
+- Verified: API key and models dialogs open; custom providers unaffected.
+- Issues: API key save did not mark configured; model restrictions applied only after refresh.
+- Fixes applied: registry now treats saved chat config keys as configured; model restrictions invalidate registry cache on save.
+- Pending: Re-verify API key save and model restrictions update chat immediately.
 - Blockers: None

@@ -477,6 +477,7 @@
       "noCustomProviders": "No custom providers configured",
       "custom": "Custom",
       "configureApiKey": "Configure API Key",
+      "clearApiKey": "Clear API key",
       "configureModels": "Configure {{provider}} Models",
       "configureModelsDescription": "Select which models to enable for this provider",
       "apiKeyDialogDescription": "Enter your API key for {{provider}}",
@@ -538,6 +539,7 @@
       "toasts": {
         "defaultProvider": "Default provider set to {{provider}}",
         "apiKeySaved": "API key saved",
+        "apiKeyCleared": "API key cleared",
         "modelsSaved": "Model preferences saved"
       },
       "errors": {

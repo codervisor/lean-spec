@@ -472,6 +472,7 @@
       "noCustomProviders": "无自定义提供商",
       "custom": "自定义",
       "configureApiKey": "配置 API 密钥",
+      "clearApiKey": "清除 API 密钥",
       "configureModels": "配置 {{provider}} 模型",
       "configureModelsDescription": "选择为此提供商启用的模型",
       "apiKeyDialogDescription": "输入 {{provider}} 的 API 密钥",
@@ -538,6 +539,7 @@
       "toasts": {
         "defaultProvider": "默认提供商已设置为 {{provider}}",
         "apiKeySaved": "API 密钥已保存",
+        "apiKeyCleared": "API 密钥已清除",
         "modelsSaved": "模型偏好已保存"
       },
       "errors": {
