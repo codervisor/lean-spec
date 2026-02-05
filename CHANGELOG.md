@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **AI Chat Model Whitelisting** ([spec 307](https://web.lean-spec.dev/specs/307)) - Control which models appear in the chat selector
+  - New `enabledModels` field in chat config to filter model list per provider
+  - Smart default selection uses first configured provider's tool-enabled model
+  - Fixed provider mismatch bug ("missing API key for provider: OpenAI" when using OpenRouter)
+  - Loading state shown while registry initializes
+
+- **AI Chat Conversation History** ([spec 308](https://web.lean-spec.dev/specs/308)) - Fixed missing conversation history in web UI
+  - Fixed "first message before session" race condition in layout sidebar
+  - Added empty state UI for when no conversations exist
+  - Conversations now properly persist and load across page refreshes
+
+- **Models.dev Integration** ([spec 302](https://web.lean-spec.dev/specs/302)) - Default model registry for automatic AI model discovery
+  - Uses models.dev API as source of truth for available AI models
+  - Auto-detects configured API keys and shows only usable providers
+  - Caches model data locally with 24h TTL and offline fallback
+  - Shows model capabilities (tool_call, reasoning, vision) with context window info
+
+- **Settings Page Optimization** ([spec 306](https://web.lean-spec.dev/specs/306)) - Comprehensive UX improvements
+  - Settings sidebar matches MainSidebar icon-only collapse pattern
+  - Search, filter, and sort for AI providers and runners
+  - Display mode toggle (Wide/Normal) in Appearance settings
+  - Auto-validation of runners and API keys with status badges
+  - One-click default selection with star buttons
+
+### Changed
+- **UI Layout Alignment** ([spec 305](https://web.lean-spec.dev/specs/305)) - Consistent layout across all pages
+  - Shared page container with min-w-4xl desktop width
+  - Centered column with consistent padding and max-w-7xl
+  - Horizontal scroll behavior for sidebars
+
+- **Init Example Improvements** - Enhanced `lean-spec init --example` guidance
+  - Polished example comments and next steps
+  - Clearer onboarding for new users
+
+### Fixed
+- Chat sidebar now properly creates session before sending first message
+- Model selector initializes from registry defaults instead of hardcoded values
+- Status and priority editors sync with prop changes correctly
+
 ## [0.2.23] - 2026-02-03
 
 ### Added
