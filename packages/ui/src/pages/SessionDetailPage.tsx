@@ -202,7 +202,7 @@ export function SessionDetailPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `session-${sessionId ?? 'logs'}.txt`;
+    link.download = `session-${sessionId ?? t('sessions.export.fallbackName')}.txt`;
     document.body.appendChild(link);
     link.click();
     link.remove();

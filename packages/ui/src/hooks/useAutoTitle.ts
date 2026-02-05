@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18next from 'i18next';
 import type { UIMessage } from '@ai-sdk/react';
 import { ChatApi, type ChatThread } from '../lib/chat-api';
 import { useCurrentProject } from './useProjectQuery';
@@ -37,13 +38,14 @@ export function useAutoTitle({
   const queryClient = useQueryClient();
   const placeholderTitle = t('chat.autoTitle.generating');
   const defaultTitle = t('chat.newChat');
+  const legacyDefaultTitle = i18next.t('chat.newChat', { lng: 'en' });
 
   useEffect(() => {
     if (activeThreadId && messages.length >= 2) {
       const thread = threads.find(t => t.id === activeThreadId);
       // Only update if title is default 'New Chat'
       // Also check if assistant has responded (length >= 2 usually implies user + assistant)
-      if (thread && (thread.title === defaultTitle || thread.title === 'New Chat' || !thread.title)) {
+      if (thread && (thread.title === defaultTitle || thread.title === legacyDefaultTitle || !thread.title)) {
         if (inFlightRef.current === activeThreadId) return;
         inFlightRef.current = activeThreadId;
 
@@ -52,7 +54,7 @@ export function useAutoTitle({
             chatKeys.threads(currentProject.id),
             (prev = []) =>
               prev.map((item) =>
-                item.id === activeThreadId && (item.title === defaultTitle || item.title === 'New Chat' || !item.title)
+                item.id === activeThreadId && (item.title === defaultTitle || item.title === legacyDefaultTitle || !item.title)
                   ? { ...item, title: placeholderTitle }
                   : item
               )
@@ -105,5 +107,5 @@ export function useAutoTitle({
         return () => clearTimeout(timer);
       }
     }
-  }, [messages, activeThreadId, threads, onUpdate, currentProject?.id, queryClient, placeholderTitle, defaultTitle]);
+  }, [messages, activeThreadId, threads, onUpdate, currentProject?.id, queryClient, placeholderTitle, defaultTitle, legacyDefaultTitle]);
 }

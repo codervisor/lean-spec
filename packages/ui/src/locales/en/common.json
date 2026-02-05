@@ -136,6 +136,14 @@
       "guided": "Guided",
       "ralph": "Ralph"
     },
+    "select": {
+      "placeholder": "Select...",
+      "search": "Search...",
+      "empty": "No results found."
+    },
+    "export": {
+      "fallbackName": "logs"
+    },
     "dialogs": {
       "createTitle": "Create AI Session",
       "createDescription": "Choose the runner and mode, then start the session.",
@@ -249,7 +257,8 @@
         "inputCost": "Input Cost",
         "outputCost": "Output Cost",
         "vision": "Vision"
-      }
+      },
+      "hiddenItem": "Hidden"
     },
     "today": "Today",
     "yesterday": "Yesterday",
@@ -365,7 +374,8 @@
   },
   "specs": {
     "hierarchy": {
-      "umbrella": "Umbrella Spec"
+      "umbrella": "Umbrella Spec",
+      "inParent": "In: {{parent}}"
     }
   },
   "relationships": {
@@ -474,7 +484,10 @@
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",
-        "apiKeyPrefix": "sk-..."
+        "apiKeyPrefix": "sk-...",
+        "customProviderId": "my-provider",
+        "customProviderName": "My Provider",
+        "customProviderBaseUrl": "https://api.example.com/v1"
       },
       "editCustomProvider": "Edit Custom Provider",
       "customProviderDialogDescription": "Configure a custom provider with API endpoint and models",
@@ -703,7 +716,11 @@
     "filterHeading": "Filter by Tag",
     "filterPrefix": "Filter by:",
     "open": "Open quick search",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "shortcut": {
+      "modifier": "⌘",
+      "key": "K"
+    }
   },
   "projectSwitcher": {
     "switching": "Switching...",

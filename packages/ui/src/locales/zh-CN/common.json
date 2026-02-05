@@ -133,6 +133,14 @@
       "guided": "引导",
       "ralph": "Ralph"
     },
+    "select": {
+      "placeholder": "选择...",
+      "search": "搜索...",
+      "empty": "未找到结果。"
+    },
+    "export": {
+      "fallbackName": "logs"
+    },
     "dialogs": {
       "createTitle": "创建 AI 会话",
       "createDescription": "选择运行器和模式，然后启动会话。",
@@ -246,7 +254,8 @@
         "inputCost": "输入成本",
         "outputCost": "输出成本",
         "vision": "视觉"
-      }
+      },
+      "hiddenItem": "隐藏"
     },
     "today": "今天",
     "yesterday": "昨天",
@@ -360,6 +369,12 @@
     "updatedAt": "更新时间",
     "completedAt": "完成时间"
   },
+  "specs": {
+    "hierarchy": {
+      "umbrella": "伞形规范",
+      "inParent": "所属：{{parent}}"
+    }
+  },
   "relationships": {
     "title": "关系",
     "description": "管理当前规范的层级与依赖关系。",
@@ -464,7 +479,10 @@
       "placeholders": {
         "azureResourceName": "my-openai-resource",
         "apiKeyEnv": "{{provider}}_API_KEY",
-        "apiKeyPrefix": "sk-..."
+        "apiKeyPrefix": "sk-...",
+        "customProviderId": "my-provider",
+        "customProviderName": "My Provider",
+        "customProviderBaseUrl": "https://api.example.com/v1"
       },
       "editCustomProvider": "编辑自定义提供商",
       "customProviderDialogDescription": "配置自定义提供商的 API 端点和模型",
@@ -698,7 +716,11 @@
     "filterHeading": "按标签筛选",
     "filterPrefix": "筛选：",
     "open": "打开快速搜索",
-    "noResults": "未找到结果"
+    "noResults": "未找到结果",
+    "shortcut": {
+      "modifier": "⌘",
+      "key": "K"
+    }
   },
   "projectSwitcher": {
     "switching": "正在切换...",

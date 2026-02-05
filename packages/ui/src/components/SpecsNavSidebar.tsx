@@ -531,42 +531,42 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                       variant={sortBy !== 'id-desc' ? 'secondary' : 'ghost'}
                       size="sm"
                       className="h-7 w-7 p-0"
-                      title={t('specsNavSidebar.sort.label') ?? 'Sort'}
+                      title={t('specsNavSidebar.sort.label')}
                     >
                       <ArrowUpDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuLabel>{t('specsNavSidebar.sort.label') ?? 'Sort By'}</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('specsNavSidebar.sort.label')}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setSortBy('id-desc')}>
-                      {t('specsNavSidebar.sort.newest') ?? 'Newest First'}
+                      {t('specsNavSidebar.sort.newest')}
                       {sortBy === 'id-desc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSortBy('id-asc')}>
-                      {t('specsNavSidebar.sort.oldest') ?? 'Oldest First'}
+                      {t('specsNavSidebar.sort.oldest')}
                       {sortBy === 'id-asc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSortBy('updated-desc')}>
-                      {t('specsNavSidebar.sort.updated') ?? 'Recently Updated'}
+                      {t('specsNavSidebar.sort.updated')}
                       {sortBy === 'updated-desc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setSortBy('title-asc')}>
-                      {t('specsNavSidebar.sort.titleAsc') ?? 'Title (A-Z)'}
+                      {t('specsNavSidebar.sort.titleAsc')}
                       {sortBy === 'title-asc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSortBy('title-desc')}>
-                      {t('specsNavSidebar.sort.titleDesc') ?? 'Title (Z-A)'}
+                      {t('specsNavSidebar.sort.titleDesc')}
                       {sortBy === 'title-desc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setSortBy('priority-desc')}>
-                      {t('specsNavSidebar.sort.priorityHigh') ?? 'Priority (High-Low)'}
+                      {t('specsNavSidebar.sort.priorityHigh')}
                       {sortBy === 'priority-desc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSortBy('priority-asc')}>
-                      {t('specsNavSidebar.sort.priorityLow') ?? 'Priority (Low-High)'}
+                      {t('specsNavSidebar.sort.priorityLow')}
                       {sortBy === 'priority-asc' && <Check className="ml-auto h-4 w-4" />}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -697,7 +697,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                                   <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                                   <Input
                                     type="text"
-                                    placeholder={t('specsNavSidebar.searchTags') ?? 'Search tags...'}
+                                    placeholder={t('specsNavSidebar.searchTags')}
                                     value={tagSearchQuery}
                                     onChange={(e) => setTagSearchQuery(e.target.value)}
                                     className="h-8 pl-8 text-xs bg-background"
@@ -723,7 +723,7 @@ export function SpecsNavSidebar({ mobileOpen = false, onMobileOpenChange }: Spec
                                   ))}
                                 {allTags.filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase())).length === 0 && (
                                   <div className="text-xs text-muted-foreground text-center py-2">
-                                    {t('specsNavSidebar.noTagsFound') ?? 'No tags found'}
+                                    {t('specsNavSidebar.noTagsFound')}
                                   </div>
                                 )}
                               </div>

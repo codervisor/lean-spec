@@ -41,6 +41,7 @@ function SearchableSelect({
   searchPlaceholder,
   emptyText,
 }: SearchableSelectProps) {
+  const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 
   return (
@@ -54,15 +55,15 @@ function SearchableSelect({
         >
           {value
             ? (options.find((option) => option.value === value)?.label ?? value)
-            : placeholder ?? 'Select...'}
+            : placeholder ?? t('sessions.select.placeholder')}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder={searchPlaceholder ?? 'Search...'} />
+          <CommandInput placeholder={searchPlaceholder ?? t('sessions.select.search')} />
           <CommandList>
-            <CommandEmpty>{emptyText ?? 'No results found.'}</CommandEmpty>
+            <CommandEmpty>{emptyText ?? t('sessions.select.empty')}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
