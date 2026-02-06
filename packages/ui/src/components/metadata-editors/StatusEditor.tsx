@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { cn, statusConfig } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { useInvalidateSpecs } from '../../hooks/useSpecsQuery';
-import { statusConfig } from '../badge-config';
 
 const STATUS_OPTIONS = Object.entries(statusConfig)
   .map(([value, config]) => ({

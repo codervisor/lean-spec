@@ -1,4 +1,4 @@
-import { Badge, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, cn } from '@leanspec/ui-components';
+import { PriorityBadge as UIPriorityBadge, cn } from '@leanspec/ui-components';
 import { useTranslation } from 'react-i18next';
 import { priorityConfig } from './badge-config';
 
@@ -12,59 +12,27 @@ interface PriorityBadgeProps {
 }
 
 export function PriorityBadge({ priority, className, iconOnly = false, responsive = true, editable = false, onChange }: PriorityBadgeProps) {
-  const config = priorityConfig[priority] || priorityConfig['medium'];
-  const Icon = config.icon;
   const { t } = useTranslation('common');
-
-  const content = (
-    <Badge
-      variant="outline"
-      className={cn(
-        'flex items-center w-fit h-5 px-2 py-0.5 text-xs font-medium border-transparent',
-        !iconOnly && 'gap-1.5',
-        config.className,
-        className,
-        editable && "cursor-pointer hover:opacity-80 transition-opacity"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {!iconOnly && (
-        responsive ? (
-          <span className="hidden sm:inline">{t(config.labelKey)}</span>
-        ) : (
-          t(config.labelKey)
-        )
-      )}
-    </Badge>
-  );
-
-  if (!editable || !onChange) {
-    return content;
-  }
+  const config = priorityConfig[priority] || priorityConfig['medium'];
+  
+  // Get translated label
+  const label = !iconOnly ? t(config.labelKey) : undefined;
+  
+  // Handle responsive mode by controlling iconOnly
+  const isIconOnly = iconOnly || (responsive && false); // Note: responsive logic needs screen size detection
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-        {content}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
-        {Object.entries(priorityConfig).map(([key, config]) => {
-          const ItemIcon = config.icon;
-          return (
-            <DropdownMenuItem
-              key={key}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(key);
-              }}
-              className="gap-2"
-            >
-              <ItemIcon className={cn("h-3.5 w-3.5", key === priority ? "opacity-100" : "opacity-50")} />
-              {t(config.labelKey)}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <UIPriorityBadge
+      priority={priority}
+      className={cn(
+        'h-5 px-2 py-0.5 text-xs font-medium border-transparent',
+        responsive && !iconOnly && 'hidden sm:flex',
+        className
+      )}
+      iconOnly={isIconOnly}
+      label={label}
+      editable={editable}
+      onChange={onChange}
+    />
   );
 }

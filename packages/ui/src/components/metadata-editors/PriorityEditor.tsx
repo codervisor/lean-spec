@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@leanspec/ui-components';
-import { cn } from '@leanspec/ui-components';
+import { cn, priorityConfig } from '@leanspec/ui-components';
 import { api } from '../../lib/api';
 import type { Spec } from '../../types/api';
 import { useTranslation } from 'react-i18next';
 import { useInvalidateSpecs } from '../../hooks/useSpecsQuery';
-import { priorityConfig } from '../badge-config';
 
 const PRIORITY_OPTIONS = Object.entries(priorityConfig).map(([value, config]) => ({
   value: value as NonNullable<Spec['priority']>,
