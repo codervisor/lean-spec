@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: complete
 created: 2026-02-05
 priority: medium
 tags:
@@ -8,7 +8,7 @@ tags:
 - settings
 - ai
 created_at: 2026-02-05T13:25:57.767830Z
-updated_at: 2026-02-05T13:25:57.767830Z
+updated_at: 2026-02-06T13:44:25.456144Z
 ---
 # AI Settings UX Optimization
 
@@ -58,9 +58,9 @@ The user wants to optimize this UX by separating these into distinct action butt
 ## Test
 
 - [x] Verify "API Key" button opens the key dialog.
-- [ ] Verify saving API key works.
+- [x] Verify saving API key works.
 - [x] Verify "Models" button opens the models dialog.
-- [ ] Verify saving model restrictions works.
+- [x] Verify saving model restrictions works.
 - [x] Verify Custom Providers (which use a different dialog) are unaffected or updated if applicable (focus is on Registry Providers first).
 
 ## Progress
