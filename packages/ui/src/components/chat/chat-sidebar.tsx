@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import dayjs from 'dayjs';
 import { useChat } from '../../contexts/ChatContext';
 import { useMediaQuery } from '../../hooks/use-media-query';
-import { 
+import {
   cn,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Button 
+  Button
 } from '@/library';
 import { ResizeHandle } from './resize-handle';
 import { ChatContainer } from './chat-container';
@@ -28,6 +29,7 @@ export function ChatSidebar() {
     sidebarWidth,
     setSidebarWidth,
     activeConversationId,
+    selectConversation,
     createConversation,
     refreshConversations,
     conversations,
@@ -42,11 +44,12 @@ export function ChatSidebar() {
   const { defaultSelection } = useModelsRegistry();
   const [model, setModel] = useState<{ providerId: string; modelId: string } | null>(null);
   const pendingMessageRef = useRef<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const effectiveModel = model ?? defaultSelection ?? null;
   const defaultTitle = t('chat.newChat');
-  const currentTitle = activeConversationId 
-    ? conversations.find(c => c.id === activeConversationId)?.title 
+  const currentTitle = activeConversationId
+    ? conversations.find(c => c.id === activeConversationId)?.title
     : defaultTitle;
 
   const {
@@ -67,6 +70,49 @@ export function ChatSidebar() {
     threads: conversations,
     onUpdate: refreshConversations
   });
+
+  const focusInput = useCallback(() => {
+    // Small timeout to allow render/transition
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
+  }, []);
+
+  // Optimization: Auto focus input triggers
+  useEffect(() => {
+    if (isOpen) focusInput();
+  }, [isOpen, focusInput]);
+
+  useEffect(() => {
+    if (!isLoading) focusInput();
+  }, [isLoading, focusInput]);
+
+  useEffect(() => {
+    // When model changes
+    focusInput();
+  }, [effectiveModel, focusInput]);
+
+  useEffect(() => {
+    // When conversation switches
+    focusInput();
+  }, [activeConversationId, focusInput]);
+
+  // Optimization: New conversation if outdated
+  useEffect(() => {
+    if (isOpen && activeConversationId) {
+      const thread = conversations.find(c => c.id === activeConversationId);
+      if (thread) {
+        const lastUpdate = dayjs(thread.updatedAt);
+        // If > 4 hours old, start fresh
+        if (dayjs().diff(lastUpdate, 'hour') > 4) {
+          selectConversation(null);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Send pending message when thread becomes active
   useEffect(() => {
@@ -138,28 +184,28 @@ export function ChatSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b bg-muted/30 h-14 gap-2">
           {/* Chat Title */}
-           <div className="flex items-center flex-1 min-w-0 mr-2" title={currentTitle || defaultTitle}>
-             <span className="font-semibold text-sm truncate">
-               {currentTitle || defaultTitle}
-             </span>
+          <div className="flex items-center flex-1 min-w-0 mr-2" title={currentTitle || defaultTitle}>
+            <span className="font-semibold text-sm truncate">
+              {currentTitle || defaultTitle}
+            </span>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={createConversation} title={t('chat.shortcuts.newChat')}>
               <Plus className="h-4 w-4" />
             </Button>
-            
+
             <Popover open={showHistory} onOpenChange={(open) => { if (open !== showHistory) toggleHistory(); }}>
-               <PopoverTrigger asChild>
-                 <Button variant="ghost" size="icon" className="h-8 w-8" title={t('chat.shortcuts.history')}>
-                   <History className="h-4 w-4" />
-                 </Button>
-               </PopoverTrigger>
-               <PopoverContent className="w-[280px] p-0" align="end">
-                  <ChatHistory />
-               </PopoverContent>
-             </Popover>
-            
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" title={t('chat.shortcuts.history')}>
+                  <History className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[280px] p-0" align="end">
+                <ChatHistory />
+              </PopoverContent>
+            </Popover>
+
             <Button variant="ghost" size="icon" className="h-8 w-8" title={t('navigation.settings')} onClick={() => navigate('/settings?tab=models')}>
               <Settings className="h-4 w-4" />
             </Button>
@@ -184,6 +230,7 @@ export function ChatSidebar() {
             error={error as Error | null}
             onRetry={reload}
             className="h-full"
+            inputRef={inputRef}
             footerContent={
               effectiveModel ? (
                 <InlineModelSelector

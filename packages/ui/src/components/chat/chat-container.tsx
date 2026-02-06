@@ -27,6 +27,8 @@ interface ChatContainerProps {
   className?: string;
   /** Additional content to render in the prompt input footer (e.g., model selector) */
   footerContent?: ReactNode;
+  /** Ref to the prompt input textarea */
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 function EmptyState() {
@@ -53,6 +55,7 @@ export function ChatContainer({
   onRetry,
   className,
   footerContent,
+  inputRef,
 }: ChatContainerProps) {
   const { t } = useTranslation('common');
   const hasMessages = messages.length > 0 || error;
@@ -108,6 +111,7 @@ export function ChatContainer({
         <PromptInput onSubmit={handleSubmit}>
           <PromptInputBody>
             <PromptInputTextarea
+              ref={inputRef}
               className="text-sm"
               placeholder={t('chat.placeholder')}
               disabled={isLoading}
