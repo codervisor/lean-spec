@@ -1,4 +1,8 @@
 //! LeanSpec AI tools (native)
+//!
+//! Tool names and schemas mirror the MCP server tools exactly.
+//! The AI chat uses HTTP API calls while MCP operates on the filesystem directly.
+//! `run_subagent` is the only AI-chat-specific tool.
 
 use std::collections::HashMap;
 use std::io::Write;
@@ -6,7 +10,6 @@ use std::process::Stdio;
 use std::sync::Arc;
 
 use async_openai::types::chat::{ChatCompletionTool, ChatCompletionTools, FunctionObject};
-use regex::Regex;
 use schemars::schema_for;
 use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
@@ -15,6 +18,11 @@ use serde_json::Value;
 
 use crate::ai_native::error::AiError;
 use crate::ai_native::runner_config::{resolve_runner_config, ResolvedRunnerConfig};
+use crate::{
+    apply_checklist_toggles, apply_replacements, apply_section_updates, preserve_title_heading,
+    rebuild_content, split_frontmatter, ChecklistToggle, MatchMode, Replacement, SectionMode,
+    SectionUpdate,
+};
 
 type ToolExecutor = Arc<dyn Fn(Value) -> Result<String, String> + Send + Sync + 'static>;
 
@@ -49,101 +57,168 @@ pub struct ToolContext {
     pub runner_config: Option<ResolvedRunnerConfig>,
 }
 
+// ---------------------------------------------------------------------------
+// Input structs — aligned 1:1 with MCP tool schemas
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ListSpecsInput {
+pub struct ListInput {
     pub project_id: Option<String>,
+    /// Filter by status: planned, in-progress, complete, archived
     pub status: Option<String>,
-    pub priority: Option<String>,
+    /// Filter by tags (spec must have ALL specified tags)
     pub tags: Option<Vec<String>>,
+    /// Filter by priority: low, medium, high, critical
+    pub priority: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchSpecsInput {
+pub struct ViewInput {
     pub project_id: Option<String>,
-    pub query: String,
+    /// Spec path or number (e.g., '170' or '170-cli-mcp')
+    pub spec_path: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateInput {
+    pub project_id: Option<String>,
+    /// Short spec name in kebab-case (e.g., 'my-feature'). Number is auto-generated.
+    pub name: String,
+    /// Human-readable title
+    pub title: Option<String>,
+    /// Initial status
     pub status: Option<String>,
+    /// Priority level
     pub priority: Option<String>,
+    /// Template name to load from .lean-spec/templates
+    pub template: Option<String>,
+    /// Body content (markdown sections, no frontmatter)
+    pub content: Option<String>,
+    /// Tags for categorization
     pub tags: Option<Vec<String>>,
+    /// Parent umbrella spec path or number
+    pub parent: Option<String>,
+    /// Specs this new spec depends on (blocking dependencies)
+    pub depends_on: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct SpecIdInput {
-    pub project_id: Option<String>,
-    pub spec_id: String,
+pub struct ReplacementInput {
+    /// Exact text to find
+    pub old_string: String,
+    /// Replacement text
+    pub new_string: String,
+    /// unique=error if multiple matches, all=replace all, first=first only
+    pub match_mode: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateSpecStatusInput {
-    pub project_id: Option<String>,
-    pub spec_id: String,
-    pub status: String,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct LinkSpecsInput {
-    pub project_id: Option<String>,
-    pub spec_id: String,
-    pub depends_on: String,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct ValidateSpecsInput {
-    pub project_id: Option<String>,
-    pub spec_id: Option<String>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateSpecInput {
-    pub project_id: Option<String>,
-    pub spec_id: String,
-    pub content: String,
-    pub expected_content_hash: Option<String>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateSpecSectionInput {
-    pub project_id: Option<String>,
-    pub spec_id: String,
+pub struct SectionUpdateInput {
+    /// Section heading to find
     pub section: String,
+    /// New content for section
     pub content: String,
+    /// replace, append, or prepend
     pub mode: Option<String>,
-    pub expected_content_hash: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ToggleChecklistInput {
-    pub project_id: Option<String>,
-    pub spec_id: String,
+pub struct ChecklistToggleInput {
     pub item_text: String,
     pub checked: bool,
-    pub expected_content_hash: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct SubSpecInput {
+pub struct UpdateInput {
     pub project_id: Option<String>,
-    pub spec_id: String,
-    pub file: String,
+    /// Spec path or number
+    pub spec_path: String,
+    /// New status
+    pub status: Option<String>,
+    /// New priority
+    pub priority: Option<String>,
+    /// New assignee
+    pub assignee: Option<String>,
+    /// Tags to add
+    pub add_tags: Option<Vec<String>>,
+    /// Tags to remove
+    pub remove_tags: Option<Vec<String>>,
+    /// String replacements (preferred). Include context lines for unique matching.
+    pub replacements: Option<Vec<ReplacementInput>>,
+    /// Replace or append/prepend content in a section by heading.
+    pub section_updates: Option<Vec<SectionUpdateInput>>,
+    /// Check or uncheck checklist items (partial match).
+    pub checklist_toggles: Option<Vec<ChecklistToggleInput>>,
+    /// Full body replacement (frontmatter preserved); other content ops ignored
+    pub content: Option<String>,
+    /// Optimistic concurrency check for content updates
+    pub expected_content_hash: Option<String>,
+    /// Skip completion verification when setting status to complete
+    pub force: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateSubSpecInput {
+pub struct SearchInput {
     pub project_id: Option<String>,
-    pub spec_id: String,
-    pub file: String,
-    pub content: String,
-    pub expected_content_hash: Option<String>,
+    /// Search query
+    pub query: String,
+    /// Maximum results
+    pub limit: Option<u64>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ValidateInput {
+    pub project_id: Option<String>,
+    /// Specific spec to validate (validates all if not provided)
+    pub spec_path: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TokensInput {
+    pub project_id: Option<String>,
+    /// Specific spec to count (counts all specs if not provided)
+    pub spec_path: Option<String>,
+    /// Path to any file (markdown, code, text) to count tokens
+    pub file_path: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct BoardInput {
+    pub project_id: Option<String>,
+    /// Group by: status, priority, assignee, tag, parent
+    pub group_by: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct StatsInput {
+    pub project_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RelationshipsInput {
+    pub project_id: Option<String>,
+    /// Spec path or number
+    pub spec_path: String,
+    /// Action to perform: view, add, remove
+    pub action: Option<String>,
+    /// Relationship type: parent, child, depends_on
+    #[serde(rename = "type")]
+    pub rel_type: Option<String>,
+    /// Target spec path or number
+    pub target: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -155,12 +230,20 @@ pub struct RunSubagentInput {
     pub task: String,
 }
 
+// ---------------------------------------------------------------------------
+// Internal types
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecRawResponse {
     pub content: String,
     pub content_hash: String,
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 fn tool_input<T: DeserializeOwned>(value: Value) -> Result<T, String> {
     serde_json::from_value(value).map_err(|e| e.to_string())
@@ -236,45 +319,6 @@ fn update_spec_raw(
     fetch_json("PATCH", &url, Some(body))
 }
 
-fn get_subspec_raw(
-    base_url: &str,
-    project_id: &str,
-    spec_id: &str,
-    file: &str,
-) -> Result<SpecRawResponse, String> {
-    let url = format!(
-        "{}/api/projects/{}/specs/{}/subspecs/{}/raw",
-        normalize_base_url(base_url),
-        urlencoding::encode(project_id),
-        urlencoding::encode(spec_id),
-        urlencoding::encode(file)
-    );
-    let value = fetch_json("GET", &url, None)?;
-    serde_json::from_value(value).map_err(|e| e.to_string())
-}
-
-fn update_subspec_raw(
-    base_url: &str,
-    project_id: &str,
-    spec_id: &str,
-    file: &str,
-    content: &str,
-    expected: Option<String>,
-) -> Result<Value, String> {
-    let url = format!(
-        "{}/api/projects/{}/specs/{}/subspecs/{}/raw",
-        normalize_base_url(base_url),
-        urlencoding::encode(project_id),
-        urlencoding::encode(spec_id),
-        urlencoding::encode(file)
-    );
-    let mut body = serde_json::json!({ "content": content });
-    if let Some(expected) = expected {
-        body["expectedContentHash"] = Value::String(expected);
-    }
-    fetch_json("PATCH", &url, Some(body))
-}
-
 fn run_subagent_task(
     runner_config: &ResolvedRunnerConfig,
     project_path: &str,
@@ -317,105 +361,52 @@ fn run_subagent_task(
     }))
 }
 
-fn split_frontmatter(content: &str) -> (Option<String>, String) {
-    let re = regex::Regex::new(r"(?s)^---\s*\n(.*?)\n---\s*\n?").unwrap();
-    if let Some(caps) = re.captures(content) {
-        let full = caps.get(0).map(|m| m.as_str()).unwrap_or("");
-        let frontmatter = full.trim_end().to_string();
-        let body = content[full.len()..].to_string();
-        (Some(frontmatter), body)
-    } else {
-        (None, content.to_string())
-    }
-}
-
-fn rebuild_content(frontmatter: Option<String>, body: &str) -> String {
-    if let Some(frontmatter) = frontmatter {
-        let trimmed = body.trim_start_matches('\n');
-        format!("{}\n{}", frontmatter, trimmed)
-    } else {
-        body.to_string()
-    }
-}
-
-fn update_section(
-    body: &str,
-    section: &str,
-    new_content: &str,
-    mode: &str,
-) -> Result<String, String> {
-    let mut lines: Vec<String> = body.lines().map(|l| l.to_string()).collect();
-    let target = section.trim().to_lowercase();
-    let mut start: Option<usize> = None;
-    for (i, line) in lines.iter().enumerate() {
-        let trimmed = line.trim();
-        if let Some(stripped) = trimmed.strip_prefix("## ") {
-            let title = stripped.trim().to_lowercase();
-            if title == target {
-                start = Some(i + 1);
-                break;
-            }
-        }
-    }
-
-    let start = start.ok_or_else(|| format!("Section not found: {}", section))?;
-    let mut end = lines.len();
-    for (i, line) in lines.iter().enumerate().skip(start) {
-        if line.trim().starts_with("## ") {
-            end = i;
-            break;
-        }
-    }
-
-    let mut updated_lines: Vec<String> = if new_content.trim().is_empty() {
-        Vec::new()
-    } else {
-        new_content.trim().lines().map(|l| l.to_string()).collect()
-    };
-
-    if mode == "append" {
-        lines.splice(
-            end..end,
-            std::iter::once(String::new())
-                .chain(updated_lines.drain(..))
-                .chain(std::iter::once(String::new())),
-        );
-    } else {
-        let mut insert = vec![String::new()];
-        insert.append(&mut updated_lines);
-        insert.push(String::new());
-        lines.splice(start..end, insert);
-    }
-
-    Ok(lines.join("\n"))
-}
-
-fn toggle_checklist_item_in_body(
-    body: &str,
-    item_text: &str,
-    checked: bool,
-) -> Result<String, String> {
-    let mut lines: Vec<String> = body.lines().map(|l| l.to_string()).collect();
-    let target = item_text.trim().to_lowercase();
-
-    let index = lines
+fn parse_replacements(inputs: &[ReplacementInput]) -> Result<Vec<Replacement>, String> {
+    inputs
         .iter()
-        .position(|line| {
-            let normalized = line.trim().to_lowercase();
-            (normalized.starts_with("- [ ]")
-                || normalized.starts_with("- [x]")
-                || normalized.starts_with("- [X]"))
-                && normalized.contains(&target)
+        .map(|r| {
+            let match_mode = match r.match_mode.as_deref().unwrap_or("unique") {
+                "unique" => MatchMode::Unique,
+                "all" => MatchMode::All,
+                "first" => MatchMode::First,
+                other => return Err(format!("Invalid matchMode: {}", other)),
+            };
+            Ok(Replacement {
+                old_string: r.old_string.clone(),
+                new_string: r.new_string.clone(),
+                match_mode,
+            })
         })
-        .ok_or_else(|| format!("Checklist item not found: {}", item_text))?;
+        .collect()
+}
 
-    let line = lines[index].clone();
-    let updated = Regex::new(r"- \[[ xX]\]")
-        .map_err(|e| e.to_string())?
-        .replace(&line, if checked { "- [x]" } else { "- [ ]" });
-    lines[index] = updated.to_string();
+fn parse_section_updates(inputs: &[SectionUpdateInput]) -> Result<Vec<SectionUpdate>, String> {
+    inputs
+        .iter()
+        .map(|s| {
+            let mode = match s.mode.as_deref().unwrap_or("replace") {
+                "replace" => SectionMode::Replace,
+                "append" => SectionMode::Append,
+                "prepend" => SectionMode::Prepend,
+                other => return Err(format!("Invalid section mode: {}", other)),
+            };
+            Ok(SectionUpdate {
+                section: s.section.clone(),
+                content: s.content.clone(),
+                mode,
+            })
+        })
+        .collect()
+}
 
-    Ok(lines.join("\n"))
+fn parse_checklist_toggles(inputs: &[ChecklistToggleInput]) -> Vec<ChecklistToggle> {
+    inputs
+        .iter()
+        .map(|c| ChecklistToggle {
+            item_text: c.item_text.clone(),
+            checked: c.checked,
+        })
+        .collect()
 }
 
 fn make_tool<F, I>(
@@ -442,6 +433,10 @@ where
     Ok((tool, Arc::new(execute)))
 }
 
+// ---------------------------------------------------------------------------
+// Tool registry builder
+// ---------------------------------------------------------------------------
+
 pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
     let ToolContext {
         base_url,
@@ -453,304 +448,550 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
     let mut tools: Vec<ChatCompletionTools> = Vec::new();
     let mut executors: HashMap<String, ToolExecutor> = HashMap::new();
 
-    let base_url_list = base_url.clone();
-    let project_id_list = project_id.clone();
-    let (list_specs_tool, list_specs_exec) = make_tool::<_, ListSpecsInput>(
-        "list_specs",
-        "List specs with optional filters",
+    // ── list ───────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, ListInput>(
+        "list",
+        "List all specs with optional filtering by status, tags, or priority",
         move |value| {
-            let params: ListSpecsInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_list)?;
+            let p: ListInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
             let mut url = format!(
                 "{}/api/projects/{}/specs",
-                normalize_base_url(&base_url_list),
+                normalize_base_url(&bu),
                 urlencoding::encode(&project_id)
             );
-            let mut query = Vec::new();
-            if let Some(status) = params.status {
-                query.push(format!("status={}", urlencoding::encode(&status)));
+            let mut q = Vec::new();
+            if let Some(status) = p.status {
+                q.push(format!("status={}", urlencoding::encode(&status)));
             }
-            if let Some(priority) = params.priority {
-                query.push(format!("priority={}", urlencoding::encode(&priority)));
+            if let Some(priority) = p.priority {
+                q.push(format!("priority={}", urlencoding::encode(&priority)));
             }
-            if let Some(tags) = params.tags {
+            if let Some(tags) = p.tags {
                 if !tags.is_empty() {
-                    query.push(format!("tags={}", urlencoding::encode(&tags.join(","))));
+                    q.push(format!("tags={}", urlencoding::encode(&tags.join(","))));
                 }
             }
-            if !query.is_empty() {
+            if !q.is_empty() {
                 url.push('?');
-                url.push_str(&query.join("&"));
+                url.push_str(&q.join("&"));
             }
-            let value = fetch_json("GET", &url, None)?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
+            let v = fetch_json("GET", &url, None)?;
+            serde_json::to_string(&v).map_err(|e| e.to_string())
         },
     )?;
-    tools.push(list_specs_tool);
-    executors.insert("list_specs".to_string(), list_specs_exec);
+    tools.push(tool);
+    executors.insert("list".to_string(), exec);
 
-    let base_url_search = base_url.clone();
-    let project_id_search = project_id.clone();
-    let (search_specs_tool, search_specs_exec) =
-        make_tool::<_, SearchSpecsInput>("search_specs", "Search specs by query", move |value| {
-            let params: SearchSpecsInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_search)?;
-            let url = format!(
-                "{}/api/projects/{}/search",
-                normalize_base_url(&base_url_search),
-                urlencoding::encode(&project_id)
-            );
-            let body = serde_json::json!({
-                "query": params.query,
-                "filters": {
-                    "status": params.status,
-                    "priority": params.priority,
-                    "tags": params.tags,
-                }
-            });
-            let value = fetch_json("POST", &url, Some(body))?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        })?;
-    tools.push(search_specs_tool);
-    executors.insert("search_specs".to_string(), search_specs_exec);
-
-    let base_url_get = base_url.clone();
-    let project_id_get = project_id.clone();
-    let (get_spec_tool, get_spec_exec) =
-        make_tool::<_, SpecIdInput>("get_spec", "Get a spec by name or number", move |value| {
-            let params: SpecIdInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_get)?;
+    // ── view ──────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, ViewInput>(
+        "view",
+        "View a spec's full content and metadata",
+        move |value| {
+            let p: ViewInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
             let url = format!(
                 "{}/api/projects/{}/specs/{}",
-                normalize_base_url(&base_url_get),
+                normalize_base_url(&bu),
                 urlencoding::encode(&project_id),
-                urlencoding::encode(&params.spec_id)
+                urlencoding::encode(&p.spec_path)
             );
-            let value = fetch_json("GET", &url, None)?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        })?;
-    tools.push(get_spec_tool);
-    executors.insert("get_spec".to_string(), get_spec_exec);
-
-    let base_url_status = base_url.clone();
-    let project_id_status = project_id.clone();
-    let (update_spec_status_tool, update_spec_status_exec) = make_tool::<_, UpdateSpecStatusInput>(
-        "update_spec_status",
-        "Update spec status",
-        move |value| {
-            let params: UpdateSpecStatusInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_status)?;
-            let url = format!(
-                "{}/api/projects/{}/specs/{}/status",
-                normalize_base_url(&base_url_status),
-                urlencoding::encode(&project_id),
-                urlencoding::encode(&params.spec_id)
-            );
-            let body = serde_json::json!({ "status": params.status });
-            let value = fetch_json("POST", &url, Some(body))?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
+            let v = fetch_json("GET", &url, None)?;
+            serde_json::to_string(&v).map_err(|e| e.to_string())
         },
     )?;
-    tools.push(update_spec_status_tool);
-    executors.insert("update_spec_status".to_string(), update_spec_status_exec);
+    tools.push(tool);
+    executors.insert("view".to_string(), exec);
 
-    let base_url_link = base_url.clone();
-    let project_id_link = project_id.clone();
-    let (link_specs_tool, link_specs_exec) =
-        make_tool::<_, LinkSpecsInput>("link_specs", "Link spec dependency", move |value| {
-            let params: LinkSpecsInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_link)?;
-            let url = format!(
-                "{}/api/projects/{}/specs/{}/dependencies",
-                normalize_base_url(&base_url_link),
-                urlencoding::encode(&project_id),
-                urlencoding::encode(&params.spec_id)
-            );
-            let body = serde_json::json!({ "dependsOn": params.depends_on });
-            let value = fetch_json("POST", &url, Some(body))?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        })?;
-    tools.push(link_specs_tool);
-    executors.insert("link_specs".to_string(), link_specs_exec);
+    // ── create ────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, CreateInput>("create", "Create a new spec", move |value| {
+        let p: CreateInput = tool_input(value)?;
+        let project_id = ensure_project_id(p.project_id, &pid)?;
+        let url = format!(
+            "{}/api/projects/{}/specs",
+            normalize_base_url(&bu),
+            urlencoding::encode(&project_id)
+        );
+        let mut body = serde_json::json!({ "name": p.name });
+        if let Some(v) = p.title {
+            body["title"] = Value::String(v);
+        }
+        if let Some(v) = p.status {
+            body["status"] = Value::String(v);
+        }
+        if let Some(v) = p.priority {
+            body["priority"] = Value::String(v);
+        }
+        if let Some(v) = p.template {
+            body["template"] = Value::String(v);
+        }
+        if let Some(v) = p.content {
+            body["content"] = Value::String(v);
+        }
+        if let Some(v) = p.tags {
+            body["tags"] = serde_json::json!(v);
+        }
+        if let Some(v) = p.parent {
+            body["parent"] = Value::String(v);
+        }
+        if let Some(v) = p.depends_on {
+            body["dependsOn"] = serde_json::json!(v);
+        }
+        let v = fetch_json("POST", &url, Some(body))?;
+        serde_json::to_string(&v).map_err(|e| e.to_string())
+    })?;
+    tools.push(tool);
+    executors.insert("create".to_string(), exec);
 
-    let base_url_unlink = base_url.clone();
-    let project_id_unlink = project_id.clone();
-    let (unlink_specs_tool, unlink_specs_exec) =
-        make_tool::<_, LinkSpecsInput>("unlink_specs", "Remove spec dependency", move |value| {
-            let params: LinkSpecsInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_unlink)?;
-            let url = format!(
-                "{}/api/projects/{}/specs/{}/dependencies/{}",
-                normalize_base_url(&base_url_unlink),
-                urlencoding::encode(&project_id),
-                urlencoding::encode(&params.spec_id),
-                urlencoding::encode(&params.depends_on)
-            );
-            let value = fetch_json("DELETE", &url, None)?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        })?;
-    tools.push(unlink_specs_tool);
-    executors.insert("unlink_specs".to_string(), unlink_specs_exec);
-
-    let base_url_validate = base_url.clone();
-    let project_id_validate = project_id.clone();
-    let (validate_specs_tool, validate_specs_exec) = make_tool::<_, ValidateSpecsInput>(
-        "validate_specs",
-        "Validate all specs or a single spec",
+    // ── update (consolidated) ─────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, UpdateInput>(
+        "update",
+        "Update a spec's metadata and/or content. Use replacements for surgical edits. When setting status to 'complete', verifies checklist items unless force=true.",
         move |value| {
-            let params: ValidateSpecsInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_validate)?;
+            let p: UpdateInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
+
+            let has_content_ops = p.content.is_some()
+                || p.replacements.as_ref().map_or(false, |r| !r.is_empty())
+                || p.section_updates.as_ref().map_or(false, |s| !s.is_empty())
+                || p.checklist_toggles.as_ref().map_or(false, |c| !c.is_empty());
+
+            let has_metadata = p.status.is_some()
+                || p.priority.is_some()
+                || p.assignee.is_some()
+                || p.add_tags.as_ref().map_or(false, |t| !t.is_empty())
+                || p.remove_tags.as_ref().map_or(false, |t| !t.is_empty());
+
+            if !has_content_ops && !has_metadata {
+                return Ok("No updates specified".to_string());
+            }
+
+            let mut results = Vec::new();
+
+            // Content updates via read-modify-write on raw endpoint
+            if has_content_ops {
+                let raw = get_spec_raw(&bu, &project_id, &p.spec_path)?;
+                let (frontmatter, body) = split_frontmatter(&raw.content);
+                let mut updated_body = body.clone();
+
+                if let Some(new_content) = &p.content {
+                    updated_body = preserve_title_heading(&body, new_content);
+                    results.push("content replaced".to_string());
+                } else {
+                    if let Some(ref repls) = p.replacements {
+                        if !repls.is_empty() {
+                            let parsed = parse_replacements(repls)?;
+                            let (new_body, rep_results) =
+                                apply_replacements(&updated_body, &parsed)?;
+                            updated_body = new_body;
+                            results.push(format!("{} replacement(s)", rep_results.len()));
+                        }
+                    }
+                    if let Some(ref sections) = p.section_updates {
+                        if !sections.is_empty() {
+                            let parsed = parse_section_updates(sections)?;
+                            updated_body = apply_section_updates(&updated_body, &parsed)?;
+                            results.push(format!("{} section update(s)", sections.len()));
+                        }
+                    }
+                    if let Some(ref toggles) = p.checklist_toggles {
+                        if !toggles.is_empty() {
+                            let parsed = parse_checklist_toggles(toggles);
+                            let (new_body, toggle_results) =
+                                apply_checklist_toggles(&updated_body, &parsed)?;
+                            updated_body = new_body;
+                            results.push(format!("{} toggle(s)", toggle_results.len()));
+                        }
+                    }
+                }
+
+                let rebuilt = rebuild_content(frontmatter, &updated_body);
+                update_spec_raw(
+                    &bu,
+                    &project_id,
+                    &p.spec_path,
+                    &rebuilt,
+                    p.expected_content_hash.or(Some(raw.content_hash)),
+                )?;
+            }
+
+            // Metadata updates via dedicated endpoint
+            if has_metadata {
+                let url = format!(
+                    "{}/api/projects/{}/specs/{}/metadata",
+                    normalize_base_url(&bu),
+                    urlencoding::encode(&project_id),
+                    urlencoding::encode(&p.spec_path)
+                );
+                let mut body = serde_json::json!({});
+                if let Some(v) = &p.status {
+                    body["status"] = Value::String(v.clone());
+                    results.push(format!("status -> {}", v));
+                }
+                if let Some(v) = &p.priority {
+                    body["priority"] = Value::String(v.clone());
+                    results.push(format!("priority -> {}", v));
+                }
+                if let Some(v) = &p.assignee {
+                    body["assignee"] = Value::String(v.clone());
+                    results.push(format!("assignee -> {}", v));
+                }
+                if let Some(v) = &p.add_tags {
+                    if !v.is_empty() {
+                        body["addTags"] = serde_json::json!(v);
+                    }
+                }
+                if let Some(v) = &p.remove_tags {
+                    if !v.is_empty() {
+                        body["removeTags"] = serde_json::json!(v);
+                    }
+                }
+                if let Some(force) = p.force {
+                    body["force"] = Value::Bool(force);
+                }
+                fetch_json("PATCH", &url, Some(body))?;
+            }
+
+            let summary = if results.is_empty() {
+                format!("Updated {}", p.spec_path)
+            } else {
+                format!("Updated {}: {}", p.spec_path, results.join(", "))
+            };
+            Ok(summary)
+        },
+    )?;
+    tools.push(tool);
+    executors.insert("update".to_string(), exec);
+
+    // ── search ────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) =
+        make_tool::<_, SearchInput>("search", "Search specs by query", move |value| {
+            let p: SearchInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
             let url = format!(
-                "{}/api/projects/{}/validate",
-                normalize_base_url(&base_url_validate),
+                "{}/api/projects/{}/search",
+                normalize_base_url(&bu),
                 urlencoding::encode(&project_id)
             );
-            let body = params
-                .spec_id
-                .map(|spec_id| serde_json::json!({ "specId": spec_id }))
-                .unwrap_or_else(|| serde_json::json!({}));
-            let value = fetch_json("POST", &url, Some(body))?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
-        },
-    )?;
-    tools.push(validate_specs_tool);
-    executors.insert("validate_specs".to_string(), validate_specs_exec);
-
-    let base_url_read = base_url.clone();
-    let project_id_read = project_id.clone();
-    let (read_spec_tool, read_spec_exec) =
-        make_tool::<_, SpecIdInput>("read_spec", "Read raw spec content", move |value| {
-            let params: SpecIdInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_read)?;
-            let value = get_spec_raw(&base_url_read, &project_id, &params.spec_id)?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
+            let mut body = serde_json::json!({ "query": p.query });
+            if let Some(limit) = p.limit {
+                body["limit"] = serde_json::json!(limit);
+            }
+            let v = fetch_json("POST", &url, Some(body))?;
+            serde_json::to_string(&v).map_err(|e| e.to_string())
         })?;
-    tools.push(read_spec_tool);
-    executors.insert("read_spec".to_string(), read_spec_exec);
+    tools.push(tool);
+    executors.insert("search".to_string(), exec);
 
-    let base_url_update = base_url.clone();
-    let project_id_update = project_id.clone();
-    let (update_spec_tool, update_spec_exec) = make_tool::<_, UpdateSpecInput>(
-        "update_spec",
-        "Update spec content with full replacement",
+    // ── validate ──────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, ValidateInput>(
+        "validate",
+        "Validate specs for issues (frontmatter, structure, dependencies)",
         move |value| {
-            let params: UpdateSpecInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_update)?;
-            let value = update_spec_raw(
-                &base_url_update,
-                &project_id,
-                &params.spec_id,
-                &params.content,
-                params.expected_content_hash,
-            )?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
+            let p: ValidateInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
+            let url = format!(
+                "{}/api/projects/{}/validate",
+                normalize_base_url(&bu),
+                urlencoding::encode(&project_id)
+            );
+            let mut body = serde_json::json!({});
+            if let Some(spec_path) = p.spec_path {
+                body["specId"] = Value::String(spec_path);
+            }
+            let v = fetch_json("POST", &url, Some(body))?;
+            serde_json::to_string(&v).map_err(|e| e.to_string())
         },
     )?;
-    tools.push(update_spec_tool);
-    executors.insert("update_spec".to_string(), update_spec_exec);
+    tools.push(tool);
+    executors.insert("validate".to_string(), exec);
 
-    let base_url_section = base_url.clone();
-    let project_id_section = project_id.clone();
-    let (update_spec_section_tool, update_spec_section_exec) =
-        make_tool::<_, UpdateSpecSectionInput>(
-            "update_spec_section",
-            "Replace or append a section in spec content",
-            move |value| {
-                let params: UpdateSpecSectionInput = tool_input(value)?;
-                let project_id = ensure_project_id(params.project_id, &project_id_section)?;
-                let raw = get_spec_raw(&base_url_section, &project_id, &params.spec_id)?;
-                let (frontmatter, body) = split_frontmatter(&raw.content);
-                let mode = params.mode.unwrap_or_else(|| "replace".to_string());
-                let updated_body = update_section(&body, &params.section, &params.content, &mode)?;
-                let rebuilt = rebuild_content(frontmatter, &updated_body);
-                let value = update_spec_raw(
-                    &base_url_section,
-                    &project_id,
-                    &params.spec_id,
-                    &rebuilt,
-                    params.expected_content_hash.or(Some(raw.content_hash)),
-                )?;
-                serde_json::to_string(&value).map_err(|e| e.to_string())
-            },
-        )?;
-    tools.push(update_spec_section_tool);
-    executors.insert("update_spec_section".to_string(), update_spec_section_exec);
-
-    let base_url_checklist = base_url.clone();
-    let project_id_checklist = project_id.clone();
-    let (toggle_checklist_item_tool, toggle_checklist_item_exec) =
-        make_tool::<_, ToggleChecklistInput>(
-            "toggle_checklist_item",
-            "Check or uncheck a checklist item in a spec",
-            move |value| {
-                let params: ToggleChecklistInput = tool_input(value)?;
-                let project_id = ensure_project_id(params.project_id, &project_id_checklist)?;
-                let raw = get_spec_raw(&base_url_checklist, &project_id, &params.spec_id)?;
-                let (frontmatter, body) = split_frontmatter(&raw.content);
-                let updated =
-                    toggle_checklist_item_in_body(&body, &params.item_text, params.checked)?;
-                let rebuilt = rebuild_content(frontmatter, &updated);
-                let value = update_spec_raw(
-                    &base_url_checklist,
-                    &project_id,
-                    &params.spec_id,
-                    &rebuilt,
-                    params.expected_content_hash.or(Some(raw.content_hash)),
-                )?;
-                serde_json::to_string(&value).map_err(|e| e.to_string())
-            },
-        )?;
-    tools.push(toggle_checklist_item_tool);
-    executors.insert(
-        "toggle_checklist_item".to_string(),
-        toggle_checklist_item_exec,
-    );
-
-    let base_url_subspec = base_url.clone();
-    let project_id_subspec = project_id.clone();
-    let (read_subspec_tool, read_subspec_exec) = make_tool::<_, SubSpecInput>(
-        "read_subspec",
-        "Read raw content of a sub-spec file",
+    // ── tokens ────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, TokensInput>(
+        "tokens",
+        "Count tokens in spec(s) or any file for context economy",
         move |value| {
-            let params: SubSpecInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_subspec)?;
-            let value = get_subspec_raw(
-                &base_url_subspec,
-                &project_id,
-                &params.spec_id,
-                &params.file,
-            )?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
+            let p: TokensInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
+            if let Some(spec_path) = p.spec_path {
+                let url = format!(
+                    "{}/api/projects/{}/specs/{}/tokens",
+                    normalize_base_url(&bu),
+                    urlencoding::encode(&project_id),
+                    urlencoding::encode(&spec_path)
+                );
+                let v = fetch_json("GET", &url, None)?;
+                serde_json::to_string(&v).map_err(|e| e.to_string())
+            } else {
+                // No spec specified - return stats which include token overview
+                let url = format!(
+                    "{}/api/projects/{}/stats",
+                    normalize_base_url(&bu),
+                    urlencoding::encode(&project_id)
+                );
+                let v = fetch_json("GET", &url, None)?;
+                serde_json::to_string(&v).map_err(|e| e.to_string())
+            }
         },
     )?;
-    tools.push(read_subspec_tool);
-    executors.insert("read_subspec".to_string(), read_subspec_exec);
+    tools.push(tool);
+    executors.insert("tokens".to_string(), exec);
 
-    let base_url_update_subspec = base_url.clone();
-    let project_id_update_subspec = project_id.clone();
-    let (update_subspec_tool, update_subspec_exec) = make_tool::<_, UpdateSubSpecInput>(
-        "update_subspec",
-        "Update raw content of a sub-spec file",
+    // ── board ─────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, BoardInput>(
+        "board",
+        "Show project board view grouped by status, priority, or assignee",
         move |value| {
-            let params: UpdateSubSpecInput = tool_input(value)?;
-            let project_id = ensure_project_id(params.project_id, &project_id_update_subspec)?;
-            let value = update_subspec_raw(
-                &base_url_update_subspec,
-                &project_id,
-                &params.spec_id,
-                &params.file,
-                &params.content,
-                params.expected_content_hash,
-            )?;
-            serde_json::to_string(&value).map_err(|e| e.to_string())
+            let p: BoardInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
+            let group_by = p.group_by.as_deref().unwrap_or("status");
+
+            // Fetch all specs via list endpoint
+            let url = format!(
+                "{}/api/projects/{}/specs",
+                normalize_base_url(&bu),
+                urlencoding::encode(&project_id)
+            );
+            let list_value = fetch_json("GET", &url, None)?;
+
+            // Group client-side
+            let specs = list_value.as_array().cloned().unwrap_or_default();
+
+            let mut groups: HashMap<String, Vec<Value>> = HashMap::new();
+            for spec in &specs {
+                let key = match group_by {
+                    "status" => spec
+                        .get("status")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string(),
+                    "priority" => spec
+                        .get("priority")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("none")
+                        .to_string(),
+                    "assignee" => spec
+                        .get("assignee")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unassigned")
+                        .to_string(),
+                    "tag" => {
+                        if let Some(tags) = spec.get("tags").and_then(|v| v.as_array()) {
+                            for tag in tags {
+                                if let Some(t) = tag.as_str() {
+                                    groups.entry(t.to_string()).or_default().push(
+                                        serde_json::json!({
+                                            "path": spec.get("path"),
+                                            "title": spec.get("title"),
+                                            "status": spec.get("status"),
+                                        }),
+                                    );
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    "parent" => spec
+                        .get("parent")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("(no-parent)")
+                        .to_string(),
+                    _ => "unknown".to_string(),
+                };
+                groups.entry(key).or_default().push(serde_json::json!({
+                    "path": spec.get("path"),
+                    "title": spec.get("title"),
+                    "status": spec.get("status"),
+                }));
+            }
+
+            let output: Vec<_> = groups
+                .into_iter()
+                .map(|(name, specs)| {
+                    serde_json::json!({
+                        "name": name,
+                        "count": specs.len(),
+                        "specs": specs,
+                    })
+                })
+                .collect();
+
+            serde_json::to_string(&serde_json::json!({
+                "groupBy": group_by,
+                "total": specs.len(),
+                "groups": output
+            }))
+            .map_err(|e| e.to_string())
         },
     )?;
-    tools.push(update_subspec_tool);
-    executors.insert("update_subspec".to_string(), update_subspec_exec);
+    tools.push(tool);
+    executors.insert("board".to_string(), exec);
 
+    // ── stats ─────────────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) =
+        make_tool::<_, StatsInput>("stats", "Show spec statistics and insights", move |value| {
+            let p: StatsInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
+            let url = format!(
+                "{}/api/projects/{}/stats",
+                normalize_base_url(&bu),
+                urlencoding::encode(&project_id)
+            );
+            let v = fetch_json("GET", &url, None)?;
+            serde_json::to_string(&v).map_err(|e| e.to_string())
+        })?;
+    tools.push(tool);
+    executors.insert("stats".to_string(), exec);
+
+    // ── relationships ─────────────────────────────────────────────────────
+    let bu = base_url.clone();
+    let pid = project_id.clone();
+    let (tool, exec) = make_tool::<_, RelationshipsInput>(
+        "relationships",
+        "Manage spec relationships (hierarchy and dependencies)",
+        move |value| {
+            let p: RelationshipsInput = tool_input(value)?;
+            let project_id = ensure_project_id(p.project_id, &pid)?;
+            let action = p.action.as_deref().unwrap_or("view");
+
+            match action {
+                "view" => {
+                    let url = format!(
+                        "{}/api/projects/{}/specs/{}",
+                        normalize_base_url(&bu),
+                        urlencoding::encode(&project_id),
+                        urlencoding::encode(&p.spec_path)
+                    );
+                    let spec = fetch_json("GET", &url, None)?;
+
+                    // Also fetch the dependency graph for required_by info
+                    let deps_url = format!(
+                        "{}/api/projects/{}/dependencies",
+                        normalize_base_url(&bu),
+                        urlencoding::encode(&project_id)
+                    );
+                    let deps = fetch_json("GET", &deps_url, None)?;
+
+                    let spec_path_str = spec
+                        .get("path")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or(&p.spec_path);
+                    let required_by: Vec<String> = deps
+                        .get("edges")
+                        .and_then(|v| v.as_array())
+                        .map(|edges| {
+                            edges
+                                .iter()
+                                .filter(|e| {
+                                    e.get("target").and_then(|v| v.as_str()) == Some(spec_path_str)
+                                })
+                                .filter_map(|e| {
+                                    e.get("source").and_then(|v| v.as_str()).map(String::from)
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+
+                    let output = serde_json::json!({
+                        "spec": {
+                            "path": spec.get("path"),
+                            "title": spec.get("title"),
+                            "status": spec.get("status"),
+                        },
+                        "hierarchy": {
+                            "parent": spec.get("parent"),
+                            "children": spec.get("children"),
+                        },
+                        "dependencies": {
+                            "depends_on": spec.get("dependsOn").or_else(|| spec.get("depends_on")),
+                            "required_by": required_by,
+                        }
+                    });
+                    serde_json::to_string(&output).map_err(|e| e.to_string())
+                }
+                "add" | "remove" => {
+                    let rel_type = p
+                        .rel_type
+                        .as_deref()
+                        .ok_or("Missing required parameter: type")?;
+                    let target = p
+                        .target
+                        .as_deref()
+                        .ok_or("Missing required parameter: target")?;
+
+                    let metadata_url = format!(
+                        "{}/api/projects/{}/specs/{}/metadata",
+                        normalize_base_url(&bu),
+                        urlencoding::encode(&project_id),
+                        urlencoding::encode(if rel_type == "child" {
+                            target
+                        } else {
+                            &p.spec_path
+                        })
+                    );
+
+                    let body = match rel_type {
+                        "depends_on" => {
+                            if action == "add" {
+                                serde_json::json!({ "addDependsOn": [target] })
+                            } else {
+                                serde_json::json!({ "removeDependsOn": [target] })
+                            }
+                        }
+                        "parent" => {
+                            if action == "add" {
+                                serde_json::json!({ "parent": target })
+                            } else {
+                                serde_json::json!({ "parent": null })
+                            }
+                        }
+                        "child" => {
+                            if action == "add" {
+                                serde_json::json!({ "parent": p.spec_path })
+                            } else {
+                                serde_json::json!({ "parent": null })
+                            }
+                        }
+                        _ => return Err(format!("Invalid relationship type: {}", rel_type)),
+                    };
+
+                    fetch_json("PATCH", &metadata_url, Some(body))?;
+
+                    let verb = if action == "add" { "Added" } else { "Removed" };
+                    Ok(format!(
+                        "{} {} relationship: {} <-> {}",
+                        verb, rel_type, p.spec_path, target
+                    ))
+                }
+                _ => Err(format!("Invalid action: {}", action)),
+            }
+        },
+    )?;
+    tools.push(tool);
+    executors.insert("relationships".to_string(), exec);
+
+    // ── run_subagent (AI chat only) ───────────────────────────────────────
     let context_project_path = project_path.clone();
     let context_runner_config = runner_config.clone();
-    let (run_subagent_tool, run_subagent_exec) = make_tool::<_, RunSubagentInput>(
+    let (tool, exec) = make_tool::<_, RunSubagentInput>(
         "run_subagent",
         "Run a task via an AI runner",
         move |value| {
@@ -773,8 +1014,8 @@ pub fn build_tools(context: ToolContext) -> Result<ToolRegistry, AiError> {
             serde_json::to_string(&output).map_err(|e| e.to_string())
         },
     )?;
-    tools.push(run_subagent_tool);
-    executors.insert("run_subagent".to_string(), run_subagent_exec);
+    tools.push(tool);
+    executors.insert("run_subagent".to_string(), exec);
 
     Ok(ToolRegistry {
         tools,
@@ -826,106 +1067,11 @@ mod tests {
 
     #[test]
     fn test_tool_input_parsing() {
-        let value = serde_json::json!({ "projectId": "test", "specId": "123" });
-        let result: Result<SpecIdInput, _> = tool_input(value);
+        let value = serde_json::json!({ "projectId": "test", "specPath": "123" });
+        let result: Result<ViewInput, _> = tool_input(value);
         assert!(result.is_ok());
         let input = result.unwrap();
-        assert_eq!(input.spec_id, "123");
-    }
-
-    #[test]
-    fn test_split_frontmatter_with_frontmatter() {
-        let content = "---\ntitle: Test\n---\n\n# Body";
-        let (fm, body) = split_frontmatter(content);
-        assert!(fm.is_some());
-        assert!(body.contains("# Body"));
-    }
-
-    #[test]
-    fn test_split_frontmatter_without_frontmatter() {
-        let content = "# Just Body";
-        let (fm, body) = split_frontmatter(content);
-        assert!(fm.is_none());
-        assert_eq!(body, "# Just Body");
-    }
-
-    #[test]
-    fn test_rebuild_content_with_frontmatter() {
-        let frontmatter = Some("---\ntitle: Test\n---".to_string());
-        let body = "# Header\nContent";
-        let result = rebuild_content(frontmatter, body);
-        assert!(result.contains("---"));
-        assert!(result.contains("# Header"));
-    }
-
-    #[test]
-    fn test_rebuild_content_without_frontmatter() {
-        let result = rebuild_content(None, "# Header");
-        assert_eq!(result, "# Header");
-    }
-
-    #[test]
-    fn test_update_section_replace() {
-        let body = "# Title\n\n## Section A\nContent A\n\n## Section B\nContent B";
-        let result = update_section(body, "Section A", "New Content", "replace");
-        assert!(result.is_ok());
-        let updated = result.unwrap();
-        assert!(updated.contains("New Content"));
-        assert!(!updated.contains("Content A"));
-    }
-
-    #[test]
-    fn test_update_section_append() {
-        let body = "# Title\n\n## Section A\nContent A";
-        let result = update_section(body, "Section A", "New Content", "append");
-        assert!(result.is_ok());
-        let updated = result.unwrap();
-        assert!(updated.contains("Content A"));
-        assert!(updated.contains("New Content"));
-    }
-
-    #[test]
-    fn test_update_section_not_found() {
-        let body = "# Title\n\n## Section A\nContent A";
-        let result = update_section(body, "NonExistent", "Content", "replace");
-        assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Section not found"));
-    }
-
-    #[test]
-    fn test_toggle_checklist_item_check() {
-        let body = "- [ ] Item 1\n- [ ] Item 2";
-        let result = toggle_checklist_item_in_body(body, "Item 1", true);
-        assert!(result.is_ok());
-        let updated = result.unwrap();
-        assert!(updated.contains("- [x] Item 1"));
-        assert!(updated.contains("- [ ] Item 2"));
-    }
-
-    #[test]
-    fn test_toggle_checklist_item_uncheck() {
-        let body = "- [x] Item 1\n- [x] Item 2";
-        let result = toggle_checklist_item_in_body(body, "Item 2", false);
-        assert!(result.is_ok());
-        let updated = result.unwrap();
-        assert!(updated.contains("- [x] Item 1"));
-        assert!(updated.contains("- [ ] Item 2"));
-    }
-
-    #[test]
-    fn test_toggle_checklist_item_not_found() {
-        let body = "- [ ] Item 1";
-        let result = toggle_checklist_item_in_body(body, "NonExistent", true);
-        assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Checklist item not found"));
-    }
-
-    #[test]
-    fn test_toggle_checklist_item_case_insensitive() {
-        let body = "- [ ] ITEM ONE";
-        let result = toggle_checklist_item_in_body(body, "item one", true);
-        assert!(result.is_ok());
-        assert!(result.unwrap().contains("- [x] ITEM ONE"));
+        assert_eq!(input.spec_path, "123");
     }
 
     #[test]
@@ -938,7 +1084,7 @@ mod tests {
     }
 
     #[test]
-    fn test_build_tools_empty_context() {
+    fn test_build_tools_produces_11_tools() {
         let context = ToolContext {
             base_url: "http://localhost:3000".to_string(),
             project_id: None,
@@ -948,22 +1094,113 @@ mod tests {
         let registry = build_tools(context);
         assert!(registry.is_ok());
         let reg = registry.unwrap();
-        assert!(!reg.tools().is_empty());
-        assert_eq!(reg.tools().len(), 14);
+        // 10 MCP-aligned tools + 1 AI-chat-only (run_subagent) = 11
+        assert_eq!(reg.tools().len(), 11);
     }
 
     #[test]
-    fn test_list_specs_input_schema() {
-        let schema = schema_for!(ListSpecsInput);
+    fn test_tool_names_match_mcp() {
+        let context = ToolContext {
+            base_url: "http://localhost:3000".to_string(),
+            project_id: None,
+            project_path: None,
+            runner_config: None,
+        };
+        let reg = build_tools(context).unwrap();
+
+        let tool_names: Vec<String> = reg
+            .tools()
+            .iter()
+            .filter_map(|t| match t {
+                ChatCompletionTools::Function(f) => Some(f.function.name.clone()),
+                _ => None,
+            })
+            .collect();
+
+        // MCP tools
+        assert!(tool_names.contains(&"list".to_string()));
+        assert!(tool_names.contains(&"view".to_string()));
+        assert!(tool_names.contains(&"create".to_string()));
+        assert!(tool_names.contains(&"update".to_string()));
+        assert!(tool_names.contains(&"search".to_string()));
+        assert!(tool_names.contains(&"validate".to_string()));
+        assert!(tool_names.contains(&"tokens".to_string()));
+        assert!(tool_names.contains(&"board".to_string()));
+        assert!(tool_names.contains(&"stats".to_string()));
+        assert!(tool_names.contains(&"relationships".to_string()));
+        // AI-chat only
+        assert!(tool_names.contains(&"run_subagent".to_string()));
+    }
+
+    #[test]
+    fn test_list_input_schema() {
+        let schema = schema_for!(ListInput);
         let schema_json = serde_json::to_value(&schema).unwrap();
         assert!(schema_json.get("properties").is_some());
     }
 
     #[test]
-    fn test_search_specs_input_schema() {
-        let schema = schema_for!(SearchSpecsInput);
+    fn test_update_input_schema() {
+        let schema = schema_for!(UpdateInput);
         let schema_json = serde_json::to_value(&schema).unwrap();
-        assert!(schema_json.get("properties").is_some());
-        assert!(schema_json["properties"].get("query").is_some());
+        let props = schema_json.get("properties").unwrap();
+        assert!(props.get("specPath").is_some());
+        assert!(props.get("status").is_some());
+        assert!(props.get("replacements").is_some());
+        assert!(props.get("sectionUpdates").is_some());
+        assert!(props.get("checklistToggles").is_some());
+    }
+
+    #[test]
+    fn test_relationships_input_schema() {
+        let schema = schema_for!(RelationshipsInput);
+        let schema_json = serde_json::to_value(&schema).unwrap();
+        let props = schema_json.get("properties").unwrap();
+        assert!(props.get("specPath").is_some());
+        assert!(props.get("action").is_some());
+        assert!(props.get("type").is_some());
+        assert!(props.get("target").is_some());
+    }
+
+    #[test]
+    fn test_parse_replacements() {
+        let inputs = vec![
+            ReplacementInput {
+                old_string: "foo".to_string(),
+                new_string: "bar".to_string(),
+                match_mode: Some("unique".to_string()),
+            },
+            ReplacementInput {
+                old_string: "baz".to_string(),
+                new_string: "qux".to_string(),
+                match_mode: None,
+            },
+        ];
+        let result = parse_replacements(&inputs);
+        assert!(result.is_ok());
+        let repls = result.unwrap();
+        assert_eq!(repls.len(), 2);
+    }
+
+    #[test]
+    fn test_parse_section_updates() {
+        let inputs = vec![SectionUpdateInput {
+            section: "Plan".to_string(),
+            content: "New plan content".to_string(),
+            mode: Some("append".to_string()),
+        }];
+        let result = parse_section_updates(&inputs);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_parse_checklist_toggles() {
+        let inputs = vec![ChecklistToggleInput {
+            item_text: "Task 1".to_string(),
+            checked: true,
+        }];
+        let result = parse_checklist_toggles(&inputs);
+        assert_eq!(result.len(), 1);
+        assert!(result[0].checked);
     }
 }

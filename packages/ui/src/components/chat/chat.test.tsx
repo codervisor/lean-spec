@@ -105,7 +105,7 @@ describe('ChatMessage', () => {
       parts: [
         { type: 'text' as const, text: 'Looking up specs...' },
         {
-          type: 'tool-list_specs' as const,
+          type: 'tool-list' as const,
           toolCallId: 'tc1',
           state: 'output-available' as const,
           input: { status: 'in-progress' },
@@ -116,7 +116,7 @@ describe('ChatMessage', () => {
 
     render(<ChatMessage message={message} />);
 
-    expect(screen.getByText('list_specs')).toBeInTheDocument();
+    expect(screen.getByText('list')).toBeInTheDocument();
     expect(screen.getByText('chat.toolExecution.status.completed')).toBeInTheDocument();
   });
 });

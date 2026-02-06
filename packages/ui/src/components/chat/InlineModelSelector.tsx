@@ -89,7 +89,6 @@ export function InlineModelSelector({
             <ModelSelectorLogo provider={selectedProviderId} className="h-3 w-3 mr-1" />
           )}
           <span className="font-medium">{selectedModel?.name ?? t('chat.modelSelector.selectPlaceholder')}</span>
-          <span className="text-muted-foreground">({selectedProvider?.name})</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </PopoverTrigger>
