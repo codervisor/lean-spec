@@ -7,8 +7,9 @@ tags:
 - rust
 - architecture
 - providers
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-02-06T13:19:22.393941Z
-updated_at: 2026-02-06T13:19:22.393941Z
+updated_at: 2026-02-06T14:20:41.880201Z
 ---
 
 # AI Provider Abstraction Layer (Inspired by Vercel AI SDK)

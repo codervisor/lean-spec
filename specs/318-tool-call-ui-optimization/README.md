@@ -6,8 +6,9 @@ tags:
 - ui
 - performance
 - chat
+parent: 094-ai-chatbot-web-integration
 created_at: 2026-02-06T14:12:40.736315Z
-updated_at: 2026-02-06T14:12:40.736315Z
+updated_at: 2026-02-06T14:20:41.906671Z
 ---
 
 # Tool Call Result UI Performance Optimization

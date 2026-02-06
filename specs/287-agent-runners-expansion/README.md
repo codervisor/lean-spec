@@ -7,12 +7,14 @@ tags:
 - runners
 - ai-tools
 - integrations
+depends_on:
+- 288-runner-registry-consolidation
+parent: 168-leanspec-orchestration-platform
 created_at: 2026-02-03T05:42:39.812085714Z
-updated_at: 2026-02-03T07:09:25.334780336Z
+updated_at: 2026-02-06T14:19:23.539762Z
 transitions:
 - status: in-progress
   at: 2026-02-03T07:09:25.334780336Z
-parent: 168-leanspec-orchestration-platform
 deps:
 - 288-runner-registry-consolidation
 ---

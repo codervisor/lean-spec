@@ -6,9 +6,11 @@ tags:
 - validation
 - ux
 - workflow
+parent: 319-spec-lifecycle-enhancements
 created_at: 2026-02-01T07:36:06.783810Z
-updated_at: 2026-02-02T08:12:54.676887766Z
+updated_at: 2026-02-06T14:20:09.055104Z
 ---
+
 # Flexible Spec Completion Validation
 
 ## Overview
