@@ -5,7 +5,6 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "../ui/src",
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "6.0",
     "noEmit": true,
     "paths": {
       "@/*": ["./*"]

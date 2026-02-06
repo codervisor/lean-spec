@@ -144,3 +144,10 @@ Component **exports remain PascalCase** (only file names change). Barrel `index.
   - `TagsEditor`: ui-components normalizes tags to lowercase and lacks compact/overflow display; UI preserves user casing, supports `compact` and hidden tags count, and fetches tags from API. Decide whether to extend the library component or keep a UI wrapper.
   - `PriorityEditor`/`StatusEditor`: ui versions call API and invalidate queries; library versions are callback-based with configurable labels. Plan to wrap library editors in UI app (or extend with optional async handlers + i18n labels) without leaking API details into the library.
   - `Tooltip`: ui uses popover colors/z-index (`bg-popover`, `border`, `z-[100]`) vs library `bg-primary` and `z-50`. Choose a unified style or switch to CSS variables so app can theme safely.
+
+### Progress Check (2026-02-06)
+
+- Verified: workspace excludes `packages/ui-components` (still present as shim), library build + exports configured in `@leanspec/ui`, deprecation shim re-exports `@leanspec/ui`, desktop imports updated to `@leanspec/ui` styles, and no PascalCase component filenames remain under `packages/ui/src/components`.
+- Pending: `packages/ui-components/` directory still exists with `src/` content; spec item “Remove `packages/ui-components/` from monorepo” not fully verified.
+- Tests: not run/verified; `pnpm typecheck` currently failing (exit code 2).
+- Open question: tags editor behavior divergence (library lowercases tags; app preserves casing + compact/overflow logic) remains as two implementations.
